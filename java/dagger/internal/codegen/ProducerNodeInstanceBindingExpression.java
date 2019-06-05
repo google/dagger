@@ -33,14 +33,14 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
   private final ProducerEntryPointView producerEntryPointView;
 
   ProducerNodeInstanceBindingExpression(
-      ResolvedBindings resolvedBindings,
+      ContributionBinding binding,
       FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
       DaggerElements elements,
       ComponentImplementation componentImplementation) {
-    super(resolvedBindings, frameworkInstanceSupplier, types, elements);
+    super(binding, frameworkInstanceSupplier, types, elements);
     this.componentImplementation = checkNotNull(componentImplementation);
-    this.key = resolvedBindings.key();
+    this.key = binding.key();
     this.producerEntryPointView = new ProducerEntryPointView(types);
   }
 

@@ -26,9 +26,9 @@ final class SubcomponentCreatorBindingExpression extends SimpleInvocationBinding
   private final String creatorImplementationName;
 
   SubcomponentCreatorBindingExpression(
-      ResolvedBindings resolvedBindings, String creatorImplementationName) {
-    super(resolvedBindings);
-    this.creatorType = resolvedBindings.key().type();
+      ContributionBinding binding, String creatorImplementationName) {
+    super(binding);
+    this.creatorType = binding.key().type();
     this.creatorImplementationName = creatorImplementationName;
   }
 

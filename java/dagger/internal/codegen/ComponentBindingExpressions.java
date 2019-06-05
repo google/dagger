@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
-import static dagger.internal.codegen.BindingType.MEMBERS_INJECTION;
 import static dagger.internal.codegen.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
 import static dagger.internal.codegen.MemberSelect.staticFactoryCreation;
 import static dagger.internal.codegen.RequestKinds.isDerivedFromProvider;
@@ -47,6 +46,7 @@ import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
+import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.HashMap;
 import java.util.Map;
@@ -273,7 +273,8 @@ final class ComponentBindingExpressions {
     switch (resolvedBindings.bindingType()) {
       case MEMBERS_INJECTION:
         checkArgument(request.isRequestKind(RequestKind.MEMBERS_INJECTION));
-        return new MembersInjectionBindingExpression(resolvedBindings, membersInjectionMethods);
+        return new MembersInjectionBindingExpression(
+            resolvedBindings.membersInjectionBinding().get(), membersInjectionMethods);
 
       case PROVISION:
         return provisionBindingExpression(resolvedBindings, request);
@@ -290,38 +291,37 @@ final class ComponentBindingExpressions {
    */
   private BindingExpression frameworkInstanceBindingExpression(ResolvedBindings resolvedBindings) {
     // TODO(user): Consider merging the static factory creation logic into CreationExpressions?
+    ContributionBinding binding = resolvedBindings.contributionBinding();
     Optional<MemberSelect> staticMethod =
-        useStaticFactoryCreation(resolvedBindings.contributionBinding())
-            ? staticFactoryCreation(resolvedBindings)
-            : Optional.empty();
+        useStaticFactoryCreation(binding) ? staticFactoryCreation(binding) : Optional.empty();
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
-        resolvedBindings.scope().isPresent()
-            ? scope(resolvedBindings, frameworkInstanceCreationExpression(resolvedBindings))
-            : frameworkInstanceCreationExpression(resolvedBindings);
+        binding.scope().isPresent()
+            ? scope(binding, frameworkInstanceCreationExpression(binding))
+            : frameworkInstanceCreationExpression(binding);
     FrameworkInstanceSupplier frameworkInstanceSupplier =
         staticMethod.isPresent()
             ? staticMethod::get
             : new FrameworkFieldInitializer(
                 componentImplementation, resolvedBindings, frameworkInstanceCreationExpression);
 
-    switch (resolvedBindings.bindingType()) {
+    switch (binding.bindingType()) {
       case PROVISION:
         return new ProviderInstanceBindingExpression(
-            resolvedBindings, frameworkInstanceSupplier, types, elements);
+            binding, frameworkInstanceSupplier, types, elements);
       case PRODUCTION:
         return new ProducerNodeInstanceBindingExpression(
-            resolvedBindings, frameworkInstanceSupplier, types, elements, componentImplementation);
+            binding, frameworkInstanceSupplier, types, elements, componentImplementation);
       default:
-        throw new AssertionError("invalid binding type: " + resolvedBindings.bindingType());
+        throw new AssertionError("invalid binding type: " + binding.bindingType());
     }
   }
 
   private FrameworkInstanceCreationExpression scope(
-      ResolvedBindings resolvedBindings, FrameworkInstanceCreationExpression unscoped) {
+      ContributionBinding binding, FrameworkInstanceCreationExpression unscoped) {
     return () ->
         CodeBlock.of(
             "$T.provider($L)",
-            resolvedBindings.scope().get().isReusable() ? SINGLE_CHECK : DOUBLE_CHECK,
+            binding.scope().get().isReusable() ? SINGLE_CHECK : DOUBLE_CHECK,
             unscoped.creationExpression());
   }
 
@@ -330,9 +330,7 @@ final class ComponentBindingExpressions {
    * {@link dagger.producers.Producer} for production bindings.
    */
   private FrameworkInstanceCreationExpression frameworkInstanceCreationExpression(
-      ResolvedBindings resolvedBindings) {
-    checkArgument(!resolvedBindings.bindingType().equals(MEMBERS_INJECTION));
-    ContributionBinding binding = resolvedBindings.contributionBinding();
+      ContributionBinding binding) {
     switch (binding.kind()) {
       case COMPONENT:
         // The cast can be removed when we drop java 7 source support
@@ -413,6 +411,7 @@ final class ComponentBindingExpressions {
       return producerFromProviderBindingExpression(resolvedBindings);
     }
     RequestKind requestKind = request.requestKind().get();
+    Key key = request.key();
     switch (requestKind) {
       case INSTANCE:
         return instanceBindingExpression(resolvedBindings);
@@ -424,13 +423,13 @@ final class ComponentBindingExpressions {
       case PRODUCED:
       case PROVIDER_OF_LAZY:
         return new DerivedFromFrameworkInstanceBindingExpression(
-            resolvedBindings.key(), FrameworkType.PROVIDER, requestKind, this, types);
+            key, FrameworkType.PROVIDER, requestKind, this, types);
 
       case PRODUCER:
         return producerFromProviderBindingExpression(resolvedBindings);
 
       case FUTURE:
-        return new ImmediateFutureBindingExpression(resolvedBindings, this, types, sourceVersion);
+        return new ImmediateFutureBindingExpression(key, this, types, sourceVersion);
 
       case MEMBERS_INJECTION:
         throw new IllegalArgumentException();
@@ -448,14 +447,14 @@ final class ComponentBindingExpressions {
       // If no FrameworkType is present, a RequestKind is guaranteed to be present.
       RequestKind requestKind = request.requestKind().get();
       return new DerivedFromFrameworkInstanceBindingExpression(
-          resolvedBindings.key(), FrameworkType.PRODUCER_NODE, requestKind, this, types);
+          request.key(), FrameworkType.PRODUCER_NODE, requestKind, this, types);
     }
   }
 
   /**
    * Returns a binding expression for {@link RequestKind#PROVIDER} requests.
    *
-   * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching(ResolvedBindings) need to be
+   * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching(ContributionBinding) need to be
    * cached} can use a {@link DelegateBindingExpression}.
    *
    * <p>In fastInit mode, use an {@link InnerSwitchingProviders inner switching provider} unless
@@ -465,18 +464,18 @@ final class ComponentBindingExpressions {
    * <p>Otherwise, return a {@link FrameworkInstanceBindingExpression}.
    */
   private BindingExpression providerBindingExpression(ResolvedBindings resolvedBindings) {
-    if (resolvedBindings.contributionBinding().kind().equals(DELEGATE)
-        && !needsCaching(resolvedBindings)) {
+    ContributionBinding binding = resolvedBindings.contributionBinding();
+    if (binding.kind().equals(DELEGATE) && !needsCaching(binding)) {
       return new DelegateBindingExpression(
-          resolvedBindings, RequestKind.PROVIDER, this, types, elements);
+          binding, RequestKind.PROVIDER, this, types, elements);
     } else if (compilerOptions.fastInit()
-        && frameworkInstanceCreationExpression(resolvedBindings).useInnerSwitchingProvider()
+        && frameworkInstanceCreationExpression(binding).useInnerSwitchingProvider()
         && !(instanceBindingExpression(resolvedBindings)
             instanceof DerivedFromFrameworkInstanceBindingExpression)) {
       return wrapInMethod(
           resolvedBindings,
-          bindingRequest(resolvedBindings.key(), RequestKind.PROVIDER),
-          innerSwitchingProviders.newBindingExpression(resolvedBindings.contributionBinding()));
+          bindingRequest(binding.key(), RequestKind.PROVIDER),
+          innerSwitchingProviders.newBindingExpression(binding));
     }
     return frameworkInstanceBindingExpression(resolvedBindings);
   }
@@ -487,14 +486,14 @@ final class ComponentBindingExpressions {
    */
   private FrameworkInstanceBindingExpression producerFromProviderBindingExpression(
       ResolvedBindings resolvedBindings) {
-    checkArgument(resolvedBindings.bindingType().equals(BindingType.PROVISION));
+    ContributionBinding binding = resolvedBindings.contributionBinding();
+    checkArgument(binding.bindingType().equals(BindingType.PROVISION));
     return new ProducerNodeInstanceBindingExpression(
-        resolvedBindings,
+        binding,
         new FrameworkFieldInitializer(
             componentImplementation,
             resolvedBindings,
-            new ProducerFromProviderCreationExpression(
-                resolvedBindings.contributionBinding(), componentImplementation, this)),
+            new ProducerFromProviderCreationExpression(binding, componentImplementation, this)),
         types,
         elements,
         componentImplementation);
@@ -505,26 +504,25 @@ final class ComponentBindingExpressions {
    *
    * <p>If there is a direct expression (not calling {@link Provider#get()}) we can use for an
    * instance of this binding, return it, wrapped in a method if the binding {@linkplain
-   * #needsCaching(ResolvedBindings) needs to be cached} or the expression has dependencies.
+   * #needsCaching(ContributionBinding) needs to be cached} or the expression has dependencies.
    *
    * <p>In fastInit mode, we can use direct expressions unless the binding needs to be cached.
    */
   private BindingExpression instanceBindingExpression(ResolvedBindings resolvedBindings) {
+    ContributionBinding binding = resolvedBindings.contributionBinding();
     Optional<BindingExpression> maybeDirectInstanceExpression =
-        unscopedDirectInstanceExpression(resolvedBindings);
-    if (canUseDirectInstanceExpression(resolvedBindings)
-        && maybeDirectInstanceExpression.isPresent()) {
+        unscopedDirectInstanceExpression(binding);
+    if (canUseDirectInstanceExpression(binding) && maybeDirectInstanceExpression.isPresent()) {
       BindingExpression directInstanceExpression = maybeDirectInstanceExpression.get();
-      return directInstanceExpression.requiresMethodEncapsulation()
-              || needsCaching(resolvedBindings)
+      return directInstanceExpression.requiresMethodEncapsulation() || needsCaching(binding)
           ? wrapInMethod(
               resolvedBindings,
-              bindingRequest(resolvedBindings.key(), RequestKind.INSTANCE),
+              bindingRequest(binding.key(), RequestKind.INSTANCE),
               directInstanceExpression)
           : directInstanceExpression;
     }
     return new DerivedFromFrameworkInstanceBindingExpression(
-        resolvedBindings.key(), FrameworkType.PROVIDER, RequestKind.INSTANCE, this, types);
+        binding.key(), FrameworkType.PROVIDER, RequestKind.INSTANCE, this, types);
   }
 
   /**
@@ -532,62 +530,62 @@ final class ComponentBindingExpressions {
    * {@code get()} on its provider, if there is one.
    */
   private Optional<BindingExpression> unscopedDirectInstanceExpression(
-      ResolvedBindings resolvedBindings) {
-    switch (resolvedBindings.contributionBinding().kind()) {
+      ContributionBinding binding) {
+    switch (binding.kind()) {
       case DELEGATE:
         return Optional.of(
-            new DelegateBindingExpression(
-                resolvedBindings, RequestKind.INSTANCE, this, types, elements));
+            new DelegateBindingExpression(binding, RequestKind.INSTANCE, this, types, elements));
 
       case COMPONENT:
         return Optional.of(
-            new ComponentInstanceBindingExpression(
-                resolvedBindings, componentImplementation.name()));
+            new ComponentInstanceBindingExpression(binding, componentImplementation.name()));
 
       case COMPONENT_DEPENDENCY:
         return Optional.of(
             new ComponentRequirementBindingExpression(
-                resolvedBindings,
-                ComponentRequirement.forDependency(resolvedBindings.key().type()),
+                binding,
+                ComponentRequirement.forDependency(binding.key().type()),
                 componentRequirementExpressions));
 
       case COMPONENT_PROVISION:
         return Optional.of(
             new ComponentProvisionBindingExpression(
-                resolvedBindings, graph, componentRequirementExpressions, compilerOptions));
+                (ProvisionBinding) binding,
+                graph,
+                componentRequirementExpressions,
+                compilerOptions));
 
       case SUBCOMPONENT_CREATOR:
         return Optional.of(
             new SubcomponentCreatorBindingExpression(
-                resolvedBindings,
-                componentImplementation.getSubcomponentCreatorSimpleName(resolvedBindings.key())));
+                binding, componentImplementation.getSubcomponentCreatorSimpleName(binding.key())));
 
       case MULTIBOUND_SET:
         return Optional.of(
             new SetBindingExpression(
-                resolvedBindings, componentImplementation, graph, this, types, elements));
+                (ProvisionBinding) binding, componentImplementation, graph, this, types, elements));
 
       case MULTIBOUND_MAP:
         return Optional.of(
             new MapBindingExpression(
-                resolvedBindings, componentImplementation, graph, this, types, elements));
+                (ProvisionBinding) binding, componentImplementation, graph, this, types, elements));
 
       case OPTIONAL:
         return Optional.of(
-            new OptionalBindingExpression(resolvedBindings, this, types, sourceVersion));
+            new OptionalBindingExpression((ProvisionBinding) binding, this, types, sourceVersion));
 
       case BOUND_INSTANCE:
         return Optional.of(
             new ComponentRequirementBindingExpression(
-                resolvedBindings,
-                ComponentRequirement.forBoundInstance(resolvedBindings.contributionBinding()),
+                binding,
+                ComponentRequirement.forBoundInstance(binding),
                 componentRequirementExpressions));
 
       case INJECTION:
       case PROVISION:
         return Optional.of(
             new SimpleMethodBindingExpression(
-                resolvedBindings,
+                (ProvisionBinding) binding,
                 compilerOptions,
                 this,
                 membersInjectionMethods,
@@ -602,8 +600,7 @@ final class ComponentBindingExpressions {
       case MEMBERS_INJECTION:
       case COMPONENT_PRODUCTION:
       case PRODUCTION:
-        throw new IllegalArgumentException(
-            resolvedBindings.contributionBinding().kind().toString());
+        throw new IllegalArgumentException(binding.kind().toString());
     }
     throw new AssertionError();
   }
@@ -624,14 +621,14 @@ final class ComponentBindingExpressions {
 
   /**
    * Returns {@code true} if we can use a direct (not {@code Provider.get()}) expression for this
-   * binding. If the binding doesn't {@linkplain #needsCaching(ResolvedBindings) need to be cached},
-   * we can.
+   * binding. If the binding doesn't {@linkplain #needsCaching(ContributionBinding) need to be
+   * cached}, we can.
    *
    * <p>In fastInit mode, we can use a direct expression even if the binding {@linkplain
-   * #needsCaching(ResolvedBindings) needs to be cached}.
+   * #needsCaching(ContributionBinding) needs to be cached}.
    */
-  private boolean canUseDirectInstanceExpression(ResolvedBindings resolvedBindings) {
-    return !needsCaching(resolvedBindings) || compilerOptions.fastInit();
+  private boolean canUseDirectInstanceExpression(ContributionBinding binding) {
+    return !needsCaching(binding) || compilerOptions.fastInit();
   }
 
   /**
@@ -651,7 +648,7 @@ final class ComponentBindingExpressions {
     }
 
     MethodImplementationStrategy methodImplementationStrategy =
-        methodImplementationStrategy(resolvedBindings, request);
+        methodImplementationStrategy(resolvedBindings.contributionBinding(), request);
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
         graph.componentDescriptor().firstMatchingComponentMethod(request);
 
@@ -682,12 +679,12 @@ final class ComponentBindingExpressions {
   }
 
   private MethodImplementationStrategy methodImplementationStrategy(
-      ResolvedBindings resolvedBindings, BindingRequest request) {
+      ContributionBinding binding, BindingRequest request) {
     if (compilerOptions.fastInit()) {
       if (request.isRequestKind(RequestKind.PROVIDER)) {
         return MethodImplementationStrategy.SINGLE_CHECK;
-      } else if (request.isRequestKind(RequestKind.INSTANCE) && needsCaching(resolvedBindings)) {
-        return resolvedBindings.scope().get().isReusable()
+      } else if (request.isRequestKind(RequestKind.INSTANCE) && needsCaching(binding)) {
+        return binding.scope().get().isReusable()
             ? MethodImplementationStrategy.SINGLE_CHECK
             : MethodImplementationStrategy.DOUBLE_CHECK;
       }
@@ -701,12 +698,12 @@ final class ComponentBindingExpressions {
    * <p>The component needs to cache the value for scoped bindings except for {@code @Binds}
    * bindings whose scope is no stronger than their delegate's.
    */
-  private boolean needsCaching(ResolvedBindings resolvedBindings) {
-    if (!resolvedBindings.scope().isPresent()) {
+  private boolean needsCaching(ContributionBinding binding) {
+    if (!binding.scope().isPresent()) {
       return false;
     }
-    if (resolvedBindings.contributionBinding().kind().equals(DELEGATE)) {
-      return isBindsScopeStrongerThanDependencyScope(resolvedBindings, graph);
+    if (binding.kind().equals(DELEGATE)) {
+      return isBindsScopeStrongerThanDependencyScope(binding, graph);
     }
     return true;
   }

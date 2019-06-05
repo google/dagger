@@ -20,15 +20,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /** A simple binding expression for instance requests. Does not scope. */
 abstract class SimpleInvocationBindingExpression extends BindingExpression {
-  // TODO(dpb): Take ContributionBinding instead of ResolvedBindings.
-  private final ResolvedBindings resolvedBindings;
+  private final ContributionBinding binding;
 
-  SimpleInvocationBindingExpression(ResolvedBindings resolvedBindings) {
-    this.resolvedBindings = checkNotNull(resolvedBindings);
+  SimpleInvocationBindingExpression(ContributionBinding binding) {
+    this.binding = checkNotNull(binding);
   }
 
   @Override
   boolean requiresMethodEncapsulation() {
-    return !resolvedBindings.contributionBinding().dependencies().isEmpty();
+    return !binding.dependencies().isEmpty();
   }
 }

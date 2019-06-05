@@ -52,14 +52,14 @@ final class MapBindingExpression extends MultibindingExpression {
   private final DaggerElements elements;
 
   MapBindingExpression(
-      ResolvedBindings resolvedBindings,
+      ProvisionBinding binding,
       ComponentImplementation componentImplementation,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       DaggerElements elements) {
-    super(resolvedBindings, componentImplementation);
-    this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
+    super(binding, componentImplementation);
+    this.binding = binding;
     BindingKind bindingKind = this.binding.kind();
     checkArgument(bindingKind.equals(MULTIBOUND_MAP), bindingKind);
     this.componentBindingExpressions = componentBindingExpressions;

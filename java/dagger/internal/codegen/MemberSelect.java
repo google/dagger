@@ -106,21 +106,7 @@ abstract class MemberSelect {
    * this method returns the static member select that returns the factory or no-op members
    * injector.
    */
-  static Optional<MemberSelect> staticFactoryCreation(ResolvedBindings resolvedBindings) {
-    if (resolvedBindings.contributionBindings().isEmpty()) {
-      throw new AssertionError(
-          "Expected a contribution binding, but none found. *THIS IS A DAGGER BUG* - please "
-              + "report it on Github with as much context as you can provide. Thanks!"
-              + "\n\nKey: "
-              + resolvedBindings.key()
-              + "\nMultibinding declarations: "
-              + resolvedBindings.multibindingDeclarations()
-              + "\nSubcomponent declarations: "
-              + resolvedBindings.subcomponentDeclarations()
-              + "\nOptional binding declarations: "
-              + resolvedBindings.optionalBindingDeclarations());
-    }
-    ContributionBinding contributionBinding = resolvedBindings.contributionBinding();
+  static Optional<MemberSelect> staticFactoryCreation(ContributionBinding contributionBinding) {
     if (contributionBinding.factoryCreationStrategy().equals(SINGLETON_INSTANCE)
         && !contributionBinding.scope().isPresent()) {
       switch (contributionBinding.kind()) {
@@ -132,7 +118,7 @@ abstract class MemberSelect {
 
         case INJECTION:
         case PROVISION:
-          TypeMirror keyType = resolvedBindings.key().type();
+          TypeMirror keyType = contributionBinding.key().type();
           if (keyType.getKind().equals(DECLARED)) {
             ImmutableList<TypeVariableName> typeVariables =
                 bindingTypeElementTypeVariableNames(contributionBinding);

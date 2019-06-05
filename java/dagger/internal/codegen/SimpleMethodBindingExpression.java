@@ -58,7 +58,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final SourceVersion sourceVersion;
 
   SimpleMethodBindingExpression(
-      ResolvedBindings resolvedBindings,
+      ProvisionBinding binding,
       CompilerOptions compilerOptions,
       ComponentBindingExpressions componentBindingExpressions,
       MembersInjectionMethods membersInjectionMethods,
@@ -66,9 +66,9 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       DaggerTypes types,
       DaggerElements elements,
       SourceVersion sourceVersion) {
-    super(resolvedBindings);
+    super(binding);
     this.compilerOptions = compilerOptions;
-    this.provisionBinding = (ProvisionBinding) resolvedBindings.contributionBinding();
+    this.provisionBinding = binding;
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
         "framework deps are not currently supported");

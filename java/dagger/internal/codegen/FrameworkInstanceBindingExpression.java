@@ -30,17 +30,17 @@ import javax.lang.model.type.TypeMirror;
 
 /** A binding expression that uses a {@link FrameworkType} field. */
 abstract class FrameworkInstanceBindingExpression extends BindingExpression {
-  private final ResolvedBindings resolvedBindings;
+  private final ContributionBinding binding;
   private final FrameworkInstanceSupplier frameworkInstanceSupplier;
   private final DaggerTypes types;
   private final DaggerElements elements;
 
   FrameworkInstanceBindingExpression(
-      ResolvedBindings resolvedBindings,
+      ContributionBinding binding,
       FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
       DaggerElements elements) {
-    this.resolvedBindings = checkNotNull(resolvedBindings);
+    this.binding = checkNotNull(binding);
     this.frameworkInstanceSupplier = checkNotNull(frameworkInstanceSupplier);
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
@@ -55,11 +55,10 @@ abstract class FrameworkInstanceBindingExpression extends BindingExpression {
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     MemberSelect memberSelect = frameworkInstanceSupplier.memberSelect();
-    TypeMirror contributedType = resolvedBindings.contributionBinding().contributedType();
     TypeMirror expressionType =
-        isTypeAccessibleFrom(contributedType, requestingClass.packageName())
+        isTypeAccessibleFrom(binding.contributedType(), requestingClass.packageName())
                 || isInlinedFactoryCreation(memberSelect)
-            ? types.wrapType(contributedType, frameworkType().frameworkClass())
+            ? types.wrapType(binding.contributedType(), frameworkType().frameworkClass())
             : rawFrameworkType();
     return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));
   }

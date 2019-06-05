@@ -38,12 +38,12 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
 
   @Inject
   OptionalBindingExpression(
-      ResolvedBindings resolvedBindings,
+      ProvisionBinding binding,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       SourceVersion sourceVersion) {
-    super(resolvedBindings);
-    this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
+    super(binding);
+    this.binding = binding;
     this.componentBindingExpressions = componentBindingExpressions;
     this.types = types;
     this.sourceVersion = sourceVersion;

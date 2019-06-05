@@ -34,10 +34,10 @@ abstract class MultibindingExpression extends SimpleInvocationBindingExpression 
   private final ComponentImplementation componentImplementation;
 
   MultibindingExpression(
-      ResolvedBindings resolvedBindings, ComponentImplementation componentImplementation) {
-    super(resolvedBindings);
+      ProvisionBinding binding, ComponentImplementation componentImplementation) {
+    super(binding);
+    this.binding = binding;
     this.componentImplementation = componentImplementation;
-    this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
   }
 
   @Override

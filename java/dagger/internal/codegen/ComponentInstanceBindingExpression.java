@@ -25,10 +25,10 @@ final class ComponentInstanceBindingExpression extends SimpleInvocationBindingEx
   private final ClassName componentName;
   private final ContributionBinding binding;
 
-  ComponentInstanceBindingExpression(ResolvedBindings resolvedBindings, ClassName componentName) {
-    super(resolvedBindings);
+  ComponentInstanceBindingExpression(ContributionBinding binding, ClassName componentName) {
+    super(binding);
+    this.binding = binding;
     this.componentName = componentName;
-    this.binding = resolvedBindings.contributionBinding();
   }
 
   @Override

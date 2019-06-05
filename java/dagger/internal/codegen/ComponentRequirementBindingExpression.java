@@ -29,10 +29,10 @@ final class ComponentRequirementBindingExpression extends SimpleInvocationBindin
   private final ComponentRequirementExpressions componentRequirementExpressions;
 
   ComponentRequirementBindingExpression(
-      ResolvedBindings resolvedBindings,
+      ContributionBinding binding,
       ComponentRequirement componentRequirement,
       ComponentRequirementExpressions componentRequirementExpressions) {
-    super(resolvedBindings);
+    super(binding);
     this.componentRequirement = componentRequirement;
     this.componentRequirementExpressions = componentRequirementExpressions;
   }

@@ -23,12 +23,12 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 final class ProviderInstanceBindingExpression extends FrameworkInstanceBindingExpression {
 
   ProviderInstanceBindingExpression(
-      ResolvedBindings resolvedBindings,
+      ContributionBinding binding,
       FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
       DaggerElements elements) {
     super(
-        resolvedBindings,
+        binding,
         frameworkInstanceSupplier,
         types,
         elements);

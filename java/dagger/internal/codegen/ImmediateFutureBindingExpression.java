@@ -30,21 +30,20 @@ import dagger.model.RequestKind;
 import javax.lang.model.SourceVersion;
 
 final class ImmediateFutureBindingExpression extends BindingExpression {
-
+  private final Key key;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final DaggerTypes types;
   private final SourceVersion sourceVersion;
-  private final Key key;
 
   ImmediateFutureBindingExpression(
-      ResolvedBindings resolvedBindings,
+      Key key,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       SourceVersion sourceVersion) {
+    this.key = key;
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.types = checkNotNull(types);
     this.sourceVersion = checkNotNull(sourceVersion);
-    this.key = resolvedBindings.key();
   }
 
   @Override

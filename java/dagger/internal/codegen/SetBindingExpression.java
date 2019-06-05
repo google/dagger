@@ -44,14 +44,14 @@ final class SetBindingExpression extends MultibindingExpression {
   private final DaggerElements elements;
 
   SetBindingExpression(
-      ResolvedBindings resolvedBindings,
+      ProvisionBinding binding,
       ComponentImplementation componentImplementation,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       DaggerElements elements) {
-    super(resolvedBindings, componentImplementation);
-    this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
+    super(binding, componentImplementation);
+    this.binding = binding;
     this.graph = graph;
     this.componentBindingExpressions = componentBindingExpressions;
     this.types = types;

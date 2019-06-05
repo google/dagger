@@ -40,12 +40,12 @@ final class DelegateBindingExpression extends BindingExpression {
   private final BindsTypeChecker bindsTypeChecker;
 
   DelegateBindingExpression(
-      ResolvedBindings resolvedBindings,
+      ContributionBinding binding,
       RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       DaggerElements elements) {
-    this.binding = checkNotNull(resolvedBindings.contributionBinding());
+    this.binding = checkNotNull(binding);
     this.requestKind = checkNotNull(requestKind);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.types = checkNotNull(types);
@@ -57,8 +57,7 @@ final class DelegateBindingExpression extends BindingExpression {
    * binding it depends on.
    */
   static boolean isBindsScopeStrongerThanDependencyScope(
-      ResolvedBindings resolvedBindings, BindingGraph graph) {
-    ContributionBinding bindsBinding = resolvedBindings.contributionBinding();
+      ContributionBinding bindsBinding, BindingGraph graph) {
     checkArgument(bindsBinding.kind().equals(DELEGATE));
     Binding dependencyBinding =
         graph

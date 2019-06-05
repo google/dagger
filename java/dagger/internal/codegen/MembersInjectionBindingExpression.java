@@ -35,8 +35,8 @@ final class MembersInjectionBindingExpression extends BindingExpression {
   private final MembersInjectionMethods membersInjectionMethods;
 
   MembersInjectionBindingExpression(
-      ResolvedBindings resolvedBindings, MembersInjectionMethods membersInjectionMethods) {
-    this.binding = resolvedBindings.membersInjectionBinding().get();
+      MembersInjectionBinding binding, MembersInjectionMethods membersInjectionMethods) {
+    this.binding = binding;
     this.membersInjectionMethods = membersInjectionMethods;
   }
 

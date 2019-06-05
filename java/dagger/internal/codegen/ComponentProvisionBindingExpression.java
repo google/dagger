@@ -31,12 +31,12 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
   private final CompilerOptions compilerOptions;
 
   ComponentProvisionBindingExpression(
-      ResolvedBindings resolvedBindings,
+      ProvisionBinding binding,
       BindingGraph bindingGraph,
       ComponentRequirementExpressions componentRequirementExpressions,
       CompilerOptions compilerOptions) {
-    super(resolvedBindings);
-    this.binding = (ProvisionBinding) resolvedBindings.contributionBinding();
+    super(binding);
+    this.binding = binding;
     this.bindingGraph = checkNotNull(bindingGraph);
     this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
     this.compilerOptions = checkNotNull(compilerOptions);

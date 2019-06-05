@@ -28,6 +28,7 @@ import static dagger.internal.codegen.SourceFiles.bindingTypeElementTypeVariable
 import static dagger.internal.codegen.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.SourceFiles.parameterizedGeneratedTypeNameForBinding;
+import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.FUTURE_RETURN_VALUE_IGNORED;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
@@ -48,8 +49,8 @@ import static javax.lang.model.element.Modifier.STATIC;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -58,6 +59,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
+import dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.model.DependencyRequest;
@@ -115,12 +117,6 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
 
     TypeSpec.Builder factoryBuilder =
         classBuilder(generatedTypeName)
-            .addAnnotation(
-                // TODO(beder): examine if we can remove this or prevent subtypes of Future from
-                // being produced
-                AnnotationSpec.builder(SuppressWarnings.class)
-                    .addMember("value", "$S", "FutureReturnValueIgnored")
-                    .build())
             .addModifiers(PUBLIC, FINAL)
             .addTypeVariables(bindingTypeElementTypeVariableNames(binding));
 
@@ -549,5 +545,11 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
   private FluentIterable<? extends TypeName> getThrownTypeNames(
       Iterable<? extends TypeMirror> thrownTypes) {
     return FluentIterable.from(thrownTypes).transform(TypeName::get);
+  }
+
+  @Override
+  protected ImmutableSet<Suppression> warningSuppressions() {
+    // TODO(beder): examine if we can remove this or prevent subtypes of Future from being produced
+    return ImmutableSet.of(FUTURE_RETURN_VALUE_IGNORED);
   }
 }

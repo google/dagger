@@ -27,7 +27,7 @@ import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.ComponentCreatorKind.FACTORY;
 import static dagger.internal.codegen.ComponentKind.COMPONENT;
 import static dagger.internal.codegen.ErrorMessages.componentMessagesFor;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.common.collect.ImmutableList;
@@ -95,7 +95,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
             "test.DaggerSimpleComponent",
             "package test;",
             "",
-            GENERATED_ANNOTATION,
+            GENERATED_CODE_ANNOTATIONS,
             "final class DaggerSimpleComponent implements SimpleComponent {",
             "  private static final class Builder implements SimpleComponent.Builder {",
             "    @Override",
@@ -149,7 +149,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
             "",
             IMPORT_GENERATED_ANNOTATION,
             "",
-            GENERATED_ANNOTATION,
+            GENERATED_CODE_ANNOTATIONS,
             "final class DaggerTestComponent implements TestComponent {",
             "  private final TestModule testModule;",
             "",
@@ -347,7 +347,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
                 "import dagger.internal.Preconditions;",
                 IMPORT_GENERATED_ANNOTATION,
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerSimpleComponent implements SimpleComponent {",
                 "  private final Object object;",
                 "",
@@ -448,7 +448,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
                 "import dagger.internal.Preconditions;",
                 IMPORT_GENERATED_ANNOTATION,
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerSimpleComponent implements SimpleComponent {",
                 "  private final Integer i;",
                 "",

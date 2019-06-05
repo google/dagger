@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.auto.value.processor.AutoAnnotationProcessor;
@@ -73,7 +73,7 @@ public class MapKeyProcessorTest {
             "import com.google.auto.value.AutoAnnotation;",
             IMPORT_GENERATED_ANNOTATION,
             "",
-            GENERATED_ANNOTATION,
+            GENERATED_CODE_ANNOTATIONS,
             "public final class PathKeyCreator {",
             "  private PathKeyCreator() {}",
             "",
@@ -122,7 +122,7 @@ public class MapKeyProcessorTest {
             "import com.google.auto.value.AutoAnnotation;",
             IMPORT_GENERATED_ANNOTATION,
             "",
-            GENERATED_ANNOTATION,
+            GENERATED_CODE_ANNOTATIONS,
             "public final class Container_PathKeyCreator {",
             "  private Container_PathKeyCreator() {}",
             "",

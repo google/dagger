@@ -21,7 +21,7 @@ import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -128,7 +128,7 @@ public class MapBindingExpressionWithGuavaTest {
             .addLines(
                 "package test;",
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
                 FAST_INIT_MODE,
@@ -403,7 +403,7 @@ public class MapBindingExpressionWithGuavaTest {
             "import other.UsesInaccessible;",
             "import other.UsesInaccessible_Factory;",
             "",
-            GENERATED_ANNOTATION,
+            GENERATED_CODE_ANNOTATIONS,
             "final class DaggerTestComponent implements TestComponent {",
             "  @Override",
             "  public UsesInaccessible usesInaccessible() {",
@@ -466,7 +466,7 @@ public class MapBindingExpressionWithGuavaTest {
             "test.DaggerParent",
             "package test;",
             "",
-            GENERATED_ANNOTATION,
+            GENERATED_CODE_ANNOTATIONS,
             "final class DaggerParent implements Parent {",
             "  private final ParentModule parentModule;",
             "",
@@ -522,7 +522,7 @@ public class MapBindingExpressionWithGuavaTest {
             "",
             "import dagger.producers.internal.CancellationListener;",
             "",
-            GENERATED_ANNOTATION,
+            GENERATED_CODE_ANNOTATIONS,
             "final class DaggerTestComponent implements TestComponent, "
                 + "CancellationListener {",
             "  @Override",

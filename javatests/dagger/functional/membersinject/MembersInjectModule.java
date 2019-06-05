@@ -26,7 +26,7 @@ class MembersInjectModule {
   
   @Provides int[] provideIntArray() { return new int[10]; }
   
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Provides MembersInjectGenericParent<String[]>[] provideFooArrayOfStringArray() { return new MembersInjectGenericParent[10]; }
 
 }

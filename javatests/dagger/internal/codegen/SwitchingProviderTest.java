@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
@@ -68,7 +68,7 @@ public class SwitchingProviderTest {
         JavaFileObjects.forSourceLines(
             "test.DaggerTestComponent",
                 "package test;",
-                GENERATED_ANNOTATION,
+            GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerTestComponent implements TestComponent {",
                 "  private final class SwitchingProvider<T> implements Provider<T> {",
                 "    @SuppressWarnings(\"unchecked\")",
@@ -248,7 +248,7 @@ public class SwitchingProviderTest {
                 "test.DaggerTestComponent",
                 "package test;",
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerTestComponent implements TestComponent {",
                 "  private volatile Provider<String> sProvider;",
                 "",
@@ -333,7 +333,7 @@ public class SwitchingProviderTest {
                 "test.DaggerTestComponent",
                 "package test;",
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerTestComponent implements TestComponent {",
                 "  private volatile Object charSequence = new MemoizedSentinel();",
                 "  private volatile Provider<CharSequence> cProvider;",
@@ -424,7 +424,7 @@ public class SwitchingProviderTest {
                 "test.DaggerTestComponent",
                 "package test;",
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerTestComponent implements TestComponent {",
                 "  @Override",
                 "  public Provider<Set<String>> setProvider() {",
@@ -469,7 +469,7 @@ public class SwitchingProviderTest {
                 "test.DaggerTestComponent",
                 "package test;",
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerTestComponent implements TestComponent {",
                 "  private Provider<MembersInjector<Foo>> fooMembersInjectorProvider;",
                 "",
@@ -540,7 +540,7 @@ public class SwitchingProviderTest {
                 "test.DaggerTestComponent",
                 "package test;",
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerTestComponent implements TestComponent {",
                 "  @SuppressWarnings(\"rawtypes\")",
                 "  private static final Provider ABSENT_JDK_OPTIONAL_PROVIDER =",

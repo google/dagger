@@ -16,34 +16,38 @@
 
 package dagger.internal.codegen.javapoet;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.common.base.Ascii;
-import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.squareup.javapoet.AnnotationSpec;
-import java.util.Arrays;
 
 /** Static factories to create {@link AnnotationSpec}s. */
 public final class AnnotationSpecs {
   /** Values for an {@link SuppressWarnings} annotation. */
   public enum Suppression {
-    RAWTYPES,
-    UNCHECKED,
+    RAWTYPES("rawtypes"),
+    UNCHECKED("unchecked"),
+    FUTURE_RETURN_VALUE_IGNORED("FutureReturnValueIgnored"),
     ;
 
-    @Override
-    public String toString() {
-      return Ascii.toLowerCase(name());
+    private final String value;
+
+    Suppression(String value) {
+      this.value = value;
     }
   }
 
   /** Creates an {@link AnnotationSpec} for {@link SuppressWarnings}. */
   public static AnnotationSpec suppressWarnings(Suppression first, Suppression... rest) {
-    checkNotNull(first);
-    Arrays.stream(rest).forEach(Preconditions::checkNotNull);
+    return suppressWarnings(ImmutableSet.copyOf(Lists.asList(first, rest)));
+  }
+
+  /** Creates an {@link AnnotationSpec} for {@link SuppressWarnings}. */
+  public static AnnotationSpec suppressWarnings(ImmutableSet<Suppression> suppressions) {
+    checkArgument(!suppressions.isEmpty());
     AnnotationSpec.Builder builder = AnnotationSpec.builder(SuppressWarnings.class);
-    Lists.asList(first, rest).forEach(suppression -> builder.addMember("value", "$S", suppression));
+    suppressions.forEach(suppression -> builder.addMember("value", "$S", suppression.value));
     return builder.build();
   }
 

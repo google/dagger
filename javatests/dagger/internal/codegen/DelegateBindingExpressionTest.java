@@ -20,7 +20,7 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.CompilationSubject;
@@ -144,7 +144,7 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "package test;",
                     "",
-                    GENERATED_ANNOTATION,
+                    GENERATED_CODE_ANNOTATIONS,
                     "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     FAST_INIT_MODE,
@@ -223,7 +223,7 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "package test;",
                     "",
-                    GENERATED_ANNOTATION,
+                    GENERATED_CODE_ANNOTATIONS,
                     "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     FAST_INIT_MODE,
@@ -299,7 +299,7 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "package test;",
                     "",
-                    GENERATED_ANNOTATION,
+                    GENERATED_CODE_ANNOTATIONS,
                     "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     FAST_INIT_MODE,
@@ -402,7 +402,7 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "package test;",
                     "",
-                    GENERATED_ANNOTATION,
+                    GENERATED_CODE_ANNOTATIONS,
                     "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     DEFAULT_MODE,
@@ -511,7 +511,7 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "package test;",
                     "",
-                    GENERATED_ANNOTATION,
+                    GENERATED_CODE_ANNOTATIONS,
                     "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     DEFAULT_MODE,
@@ -602,7 +602,7 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "package test;",
                     "",
-                    GENERATED_ANNOTATION,
+                    GENERATED_CODE_ANNOTATIONS,
                     "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     DEFAULT_MODE,
@@ -704,7 +704,7 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "package test;",
                     "",
-                    GENERATED_ANNOTATION,
+                    GENERATED_CODE_ANNOTATIONS,
                     "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     DEFAULT_MODE,
@@ -810,7 +810,7 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "package test;",
                     "",
-                    GENERATED_ANNOTATION,
+                    GENERATED_CODE_ANNOTATIONS,
                     "final class DaggerRequestsSubtypeAsProvider",
                     "    implements RequestsSubtypeAsProvider {")
                 .addLinesIn(
@@ -903,7 +903,7 @@ public class DelegateBindingExpressionTest {
                 .addLines(
                     "package test;",
                     "",
-                    GENERATED_ANNOTATION,
+                    GENERATED_CODE_ANNOTATIONS,
                     "final class DaggerTestComponent implements TestComponent {")
                 .addLinesIn(
                     DEFAULT_MODE,

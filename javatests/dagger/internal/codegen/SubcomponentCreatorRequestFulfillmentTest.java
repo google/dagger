@@ -23,7 +23,7 @@ import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.SUBCOMPONENT_BUILDER;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.SUBCOMPONENT_FACTORY;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.common.collect.ImmutableList;
@@ -100,7 +100,7 @@ public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorT
             "",
             IMPORT_GENERATED_ANNOTATION,
             "",
-            GENERATED_ANNOTATION,
+            GENERATED_CODE_ANNOTATIONS,
             "final class DaggerC implements C {",
             "  @Override",
             "  public Sub.Builder sBuilder() {",

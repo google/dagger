@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.testing.compile.Compilation;
@@ -84,7 +84,7 @@ public class ElidedFactoriesTest {
             "",
             IMPORT_GENERATED_ANNOTATION,
             "",
-            GENERATED_ANNOTATION,
+            GENERATED_CODE_ANNOTATIONS,
             "final class DaggerSimpleComponent implements SimpleComponent {",
             "  private DaggerSimpleComponent() {}",
             "",
@@ -185,7 +185,7 @@ public class ElidedFactoriesTest {
                 IMPORT_GENERATED_ANNOTATION,
                 "import javax.inject.Provider;",
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerSimpleComponent implements SimpleComponent {",
                 "  private volatile Object scopedType = new MemoizedSentinel();",
                 "  private volatile Provider<DependsOnScoped> dependsOnScopedProvider;",
@@ -267,7 +267,7 @@ public class ElidedFactoriesTest {
                 IMPORT_GENERATED_ANNOTATION,
                 "import javax.inject.Provider;",
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerSimpleComponent implements SimpleComponent {",
                 "  private Provider<ScopedType> scopedTypeProvider;",
                 "  private Provider<DependsOnScoped> dependsOnScopedProvider;",
@@ -379,7 +379,7 @@ public class ElidedFactoriesTest {
                 "import dagger.internal.MemoizedSentinel;",
                 IMPORT_GENERATED_ANNOTATION,
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerSimpleComponent implements SimpleComponent {",
                 "  private volatile Object scopedType = new MemoizedSentinel();",
                 "",
@@ -440,7 +440,7 @@ public class ElidedFactoriesTest {
                 IMPORT_GENERATED_ANNOTATION,
                 "import javax.inject.Provider;",
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerSimpleComponent implements SimpleComponent {",
                 "  private Provider<ScopedType> scopedTypeProvider;",
                 "",

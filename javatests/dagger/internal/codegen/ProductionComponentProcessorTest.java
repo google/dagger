@@ -20,7 +20,7 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
+import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
 import com.google.testing.compile.Compilation;
@@ -248,7 +248,7 @@ public class ProductionComponentProcessorTest {
                 IMPORT_GENERATED_ANNOTATION,
                 "import javax.inject.Provider;",
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerTestClass_SimpleComponent",
                 "    implements TestClass.SimpleComponent, CancellationListener {",
                 "  private final TestClass.BModule bModule;",
@@ -443,7 +443,7 @@ public class ProductionComponentProcessorTest {
                 IMPORT_GENERATED_ANNOTATION,
                 "import javax.inject.Provider;",
                 "",
-                GENERATED_ANNOTATION,
+                GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerTestClass_SimpleComponent",
                 "    implements TestClass.SimpleComponent, CancellationListener {",
                 "  private Producer<TestClass.A> aEntryPoint;",
@@ -651,7 +651,7 @@ public class ProductionComponentProcessorTest {
             new JavaFileBuilder(compilerMode, "test.DaggerRoot")
                 .addLines(
                     "package test;",
-                    GENERATED_ANNOTATION,
+                    GENERATED_CODE_ANNOTATIONS,
                     "final class DaggerParent implements Parent, CancellationListener {",
                     "  private final class ChildImpl implements Child, CancellationListener {",
                     "    @Override",

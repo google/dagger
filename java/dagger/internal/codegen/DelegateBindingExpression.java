@@ -65,8 +65,8 @@ final class DelegateBindingExpression extends BindingExpression {
             .contributionBindings()
             .get(getOnlyElement(bindsBinding.dependencies()).key())
             .binding();
-    ScopeKind bindsScope = ScopeKind.get(bindsBinding, graph);
-    ScopeKind dependencyScope = ScopeKind.get(dependencyBinding, graph);
+    ScopeKind bindsScope = ScopeKind.get(bindsBinding);
+    ScopeKind dependencyScope = ScopeKind.get(dependencyBinding);
     return bindsScope.isStrongerScopeThan(dependencyScope);
   }
 
@@ -119,7 +119,7 @@ final class DelegateBindingExpression extends BindingExpression {
     DOUBLE_CHECK,
     ;
 
-    static ScopeKind get(Binding binding, BindingGraph graph) {
+    static ScopeKind get(Binding binding) {
       return binding
           .scope()
           .map(scope -> scope.isReusable() ? SINGLE_CHECK : DOUBLE_CHECK)

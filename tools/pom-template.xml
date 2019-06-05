@@ -32,7 +32,7 @@
   <packaging>{packaging}</packaging>
 
   <scm>
-    <url>http://github.com/google/dagger/</url>
+    <url>https://github.com/google/dagger/</url>
     <connection>scm:git:git://github.com/google/dagger.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/google/dagger.git</developerConnection>
     <tag>HEAD</tag>
@@ -40,19 +40,19 @@
 
   <issueManagement>
     <system>GitHub Issues</system>
-    <url>http://github.com/google/dagger/issues</url>
+    <url>https://github.com/google/dagger/issues</url>
   </issueManagement>
 
   <licenses>
     <license>
       <name>Apache 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
     </license>
   </licenses>
 
   <organization>
     <name>Google, Inc.</name>
-    <url>http://www.google.com</url>
+    <url>https://www.google.com</url>
   </organization>
 
   <dependencies>

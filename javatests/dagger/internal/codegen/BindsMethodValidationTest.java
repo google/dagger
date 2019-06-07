@@ -25,7 +25,6 @@ import dagger.Module;
 import dagger.multibindings.IntKey;
 import dagger.multibindings.LongKey;
 import dagger.producers.ProducerModule;
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.util.Collection;
@@ -79,9 +78,8 @@ public class BindsMethodValidationTest {
 
   @Test
   public void throwsException() {
-    assertThatMethod("@Binds abstract Object throwsException(String s1) throws IOException;")
-        .importing(IOException.class)
-        .hasError("only throw unchecked");
+    assertThatMethod("@Binds abstract Object throwsException(String s1) throws RuntimeException;")
+        .hasError("may not throw");
   }
 
   @Test

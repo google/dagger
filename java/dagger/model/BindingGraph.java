@@ -258,7 +258,7 @@ public abstract class BindingGraph {
   }
 
   /**
-   * Returns the bindings that a given binding directly request as a dependency. Does not include
+   * Returns the bindings that a given binding directly requests as a dependency. Does not include
    * any {@link MissingBinding}s.
    *
    * @see #requestedMaybeMissingBindings(Binding)

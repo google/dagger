@@ -175,10 +175,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
           bindsInstanceProcessingStep,
           moduleProcessingStep,
           compilerOptions.headerCompilation()
-                  // Ahead Of Time subcomponents use the regular hjar filtering in
-                  // HjarSourceFileGenerator since they must retain protected implementation methods
-                  // between subcomponents
-                  && !compilerOptions.aheadOfTimeSubcomponents()
               ? componentHjarProcessingStep
               : componentProcessingStep,
           bindingMethodProcessingStep);

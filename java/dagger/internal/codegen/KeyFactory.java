@@ -39,7 +39,6 @@ import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.internal.codegen.serialization.KeyProto;
 import dagger.model.Key;
 import dagger.model.Key.MultibindingContributionIdentifier;
 import dagger.model.RequestKind;
@@ -68,19 +67,11 @@ import javax.lang.model.type.TypeMirror;
 final class KeyFactory {
   private final DaggerTypes types;
   private final DaggerElements elements;
-  private final TypeProtoConverter typeProtoConverter;
-  private final AnnotationProtoConverter annotationProtoConverter;
 
   @Inject
-  KeyFactory(
-      DaggerTypes types,
-      DaggerElements elements,
-      TypeProtoConverter typeProtoConverter,
-      AnnotationProtoConverter annotationProtoConverter) {
+  KeyFactory(DaggerTypes types, DaggerElements elements) {
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
-    this.typeProtoConverter = typeProtoConverter;
-    this.annotationProtoConverter = annotationProtoConverter;
   }
 
   private TypeMirror boxPrimitives(TypeMirror type) {
@@ -433,37 +424,5 @@ final class KeyFactory {
         key.toBuilder()
             .type(extractKeyType(getRequestKind(optionalValueType), optionalValueType))
             .build());
-  }
-
-  /** Translates a {@link Key} to a proto representation. */
-  static KeyProto toProto(Key key) {
-    KeyProto.Builder builder =
-        KeyProto.newBuilder().setType(TypeProtoConverter.toProto(key.type()));
-    key.qualifier().map(AnnotationProtoConverter::toProto).ifPresent(builder::setQualifier);
-    key.multibindingContributionIdentifier()
-        .ifPresent(
-            mci ->
-                builder
-                    .getMultibindingContributionIdentifierBuilder()
-                    .setModule(mci.module())
-                    .setBindingElement(mci.bindingElement()));
-    return builder.build();
-  }
-
-  /** Creates a {@link Key} from its proto representation. */
-  Key fromProto(KeyProto key) {
-    Key.Builder builder = Key.builder(typeProtoConverter.fromProto(key.getType()));
-    if (key.hasQualifier()) {
-      builder.qualifier(annotationProtoConverter.fromProto(key.getQualifier()));
-    }
-    if (key.hasMultibindingContributionIdentifier()) {
-      KeyProto.MultibindingContributionIdentifier multibindingContributionIdentifier =
-          key.getMultibindingContributionIdentifier();
-      builder.multibindingContributionIdentifier(
-          new MultibindingContributionIdentifier(
-              multibindingContributionIdentifier.getBindingElement(),
-              multibindingContributionIdentifier.getModule()));
-    }
-    return builder.build();
   }
 }

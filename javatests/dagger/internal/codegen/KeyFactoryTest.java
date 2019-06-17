@@ -64,9 +64,7 @@ public class KeyFactoryTest {
   @Before public void setUp() {
     this.elements = new DaggerElements(compilationRule.getElements(), compilationRule.getTypes());
     this.types = new DaggerTypes(compilationRule.getTypes(), elements);
-    TypeProtoConverter typeProtoConverter = new TypeProtoConverter(types, elements);
-    this.keyFactory = new KeyFactory(
-        types, elements, typeProtoConverter, new AnnotationProtoConverter(typeProtoConverter));
+    this.keyFactory = new KeyFactory(types, elements);
   }
 
   @Test public void forInjectConstructorWithResolvedType() {

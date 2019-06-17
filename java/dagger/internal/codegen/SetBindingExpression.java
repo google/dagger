@@ -31,12 +31,11 @@ import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
 import java.util.Collections;
-import java.util.Optional;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** A binding expression for multibound sets. */
-final class SetBindingExpression extends MultibindingExpression {
+final class SetBindingExpression extends SimpleInvocationBindingExpression {
   private final ProvisionBinding binding;
   private final BindingGraph graph;
   private final ComponentBindingExpressions componentBindingExpressions;
@@ -45,12 +44,11 @@ final class SetBindingExpression extends MultibindingExpression {
 
   SetBindingExpression(
       ProvisionBinding binding,
-      ComponentImplementation componentImplementation,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       DaggerElements elements) {
-    super(binding, componentImplementation);
+    super(binding);
     this.binding = binding;
     this.graph = graph;
     this.componentBindingExpressions = componentBindingExpressions;
@@ -59,14 +57,11 @@ final class SetBindingExpression extends MultibindingExpression {
   }
 
   @Override
-  protected Expression buildDependencyExpression(ClassName requestingClass) {
-    Optional<CodeBlock> superMethodCall = superMethodCall();
+  Expression getDependencyExpression(ClassName requestingClass) {
     // TODO(ronshapiro): We should also make an ImmutableSet version of SetFactory
     boolean isImmutableSetAvailable = isImmutableSetAvailable();
     // TODO(ronshapiro, gak): Use Sets.immutableEnumSet() if it's available?
-    if (isImmutableSetAvailable
-        && binding.dependencies().stream().allMatch(this::isSingleValue)
-        && !superMethodCall.isPresent()) {
+    if (isImmutableSetAvailable && binding.dependencies().stream().allMatch(this::isSingleValue)) {
       return Expression.create(
           immutableSetType(),
           CodeBlock.builder()
@@ -114,13 +109,10 @@ final class SetBindingExpression extends MultibindingExpression {
         } else {
           instantiation.add("newSetBuilder($L)", binding.dependencies().size());
         }
-        for (DependencyRequest dependency : getNewContributions(binding.dependencies())) {
+        for (DependencyRequest dependency : binding.dependencies()) {
           String builderMethod = isSingleValue(dependency) ? "add" : "addAll";
           instantiation.add(
               ".$L($L)", builderMethod, getContributionExpression(dependency, requestingClass));
-        }
-        if (superMethodCall.isPresent()) {
-          instantiation.add(CodeBlock.of(".addAll($L)", superMethodCall.get()));
         }
         instantiation.add(".build()");
         return Expression.create(

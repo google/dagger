@@ -40,12 +40,6 @@ abstract class ComponentCreatorImplementation {
   /** The name of the creator implementation class. */
   abstract ClassName name();
 
-  /**
-   * All fields that are present in this implementation or its supertype.
-   *
-   * <p>In the case of ahead-of-time subcomponents, not all fields will necessarily be passed to
-   * the component's constructor (because, for example, it turns out that a particular module that
-   * the creator can set is actually inherited from an ancestor module).
-   */
+  /** All fields that are present in this implementation. */
   abstract ImmutableMap<ComponentRequirement, FieldSpec> fields();
 }

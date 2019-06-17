@@ -17,15 +17,6 @@
 # The key will be appended to the generated test names to ensure uniqueness.
 BUILD_VARIANTS = {
     "FastInit": ["-Adagger.fastInit=enabled"],
-    "AheadOfTimeSubcomponents": ["-Adagger.experimentalAheadOfTimeSubcomponents=enabled"],
-    "FastInitAndAheadOfTimeSubcomponents": [
-        "-Adagger.fastInit=enabled",
-        "-Adagger.experimentalAheadOfTimeSubcomponents=enabled",
-    ],
-    "AheadOfTimeSubcomponents_ForceUseSerializedComponentImplementations": [
-        "-Adagger.experimentalAheadOfTimeSubcomponents=enabled",
-        "-Adagger.forceUseSerializedComponentImplementations=enabled",
-    ],
 }
 
 # TODO(ronshapiro): convert this to use bazel_common

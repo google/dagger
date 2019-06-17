@@ -16,25 +16,18 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.CaseFormat.LOWER_CAMEL;
-import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Suppliers.memoize;
-import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
 import static dagger.internal.codegen.ModuleProxies.newModuleInstance;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PROTECTED;
 
 import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.HashMap;
@@ -59,7 +52,6 @@ final class ComponentRequirementExpressions {
       componentRequirementExpressions = new HashMap<>();
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
-  private final CompilerOptions compilerOptions;
   private final DaggerElements elements;
 
   // TODO(ronshapiro): give ComponentImplementation a graph() method
@@ -68,12 +60,10 @@ final class ComponentRequirementExpressions {
       @ParentComponent Optional<ComponentRequirementExpressions> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      CompilerOptions compilerOptions,
       DaggerElements elements) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
-    this.compilerOptions = compilerOptions;
     this.elements = elements;
   }
 
@@ -101,29 +91,14 @@ final class ComponentRequirementExpressions {
   ComponentRequirementExpression getExpression(ComponentRequirement componentRequirement) {
     if (graph.componentRequirements().contains(componentRequirement)) {
       return componentRequirementExpressions.computeIfAbsent(
-          componentRequirement, this::createMethodOrField);
+          componentRequirement, this::createField);
     }
     if (parent.isPresent()) {
       return parent.get().getExpression(componentRequirement);
     }
 
-    if (componentRequirement.kind().isModule() && compilerOptions.aheadOfTimeSubcomponents()) {
-      return new PrunedModifiableModule(componentRequirement);
-    }
-
     throw new IllegalStateException(
         "no component requirement expression found for " + componentRequirement);
-  }
-
-  /**
-   * If {@code requirement} is a module that may be owned by a future ancestor component, returns a
-   * modifiable module method. Otherwise, returns a field for {@code requirement}.
-   */
-  private ComponentRequirementExpression createMethodOrField(ComponentRequirement requirement) {
-    if (componentImplementation.isAbstract() && requirement.kind().isModule()) {
-      return new ModifiableModule(requirement);
-    }
-    return createField(requirement);
   }
 
   /** Returns a field for a {@link ComponentRequirement}. */
@@ -180,12 +155,8 @@ final class ComponentRequirementExpressions {
     }
 
     private FieldSpec createField() {
-      FieldSpec.Builder field =
-          FieldSpec.builder(TypeName.get(componentRequirement.type()), fieldName, PRIVATE);
-      if (!componentImplementation.isAbstract()) {
-        field.addModifiers(FINAL);
-      }
-      return field.build();
+      return FieldSpec.builder(TypeName.get(componentRequirement.type()), fieldName, PRIVATE, FINAL)
+          .build();
     }
 
     /** Returns the {@link CodeBlock} that initializes the component field during construction. */
@@ -227,7 +198,6 @@ final class ComponentRequirementExpressions {
         ComponentImplementation componentImplementation,
         Optional<String> name) {
       super(componentRequirement, componentImplementation);
-      componentImplementation.addComponentRequirementParameter(componentRequirement);
       // Get the name that the component implementation will use for its parameter for the
       // requirement. If the given name is different than the name of the field created for the
       // requirement (as may be the case when the parameter name is derived from a user-written
@@ -256,79 +226,6 @@ final class ComponentRequirementExpressions {
       // Don't checkNotNull here because the parameter may be nullable; if it isn't, the caller
       // should handle checking that before passing the parameter.
       return CodeBlock.of("this.$N = $L;", componentField, parameterName);
-    }
-  }
-
-  private final class ModifiableModule implements ComponentRequirementExpression {
-    private final ComponentRequirement module;
-    private final Supplier<MemberSelect> method = Suppliers.memoize(this::methodSelect);
-
-    private ModifiableModule(ComponentRequirement module) {
-      checkArgument(module.kind().isModule());
-      this.module = module;
-    }
-
-    @Override
-    public CodeBlock getExpression(ClassName requestingClass) {
-      return method.get().getExpressionFor(requestingClass);
-    }
-
-    private MemberSelect methodSelect() {
-      String methodName =
-          componentImplementation
-              .supertypeModifiableModuleMethodName(module)
-              .orElseGet(this::createMethod);
-      return MemberSelect.localMethod(componentImplementation.name(), methodName);
-    }
-
-    private String createMethod() {
-      String methodName =
-          UPPER_CAMEL.to(
-              LOWER_CAMEL,
-              componentImplementation.getUniqueMethodName(
-                  module.typeElement().getSimpleName().toString()));
-      MethodSpec.Builder methodBuilder =
-          methodBuilder(methodName)
-              .addModifiers(PROTECTED)
-              .returns(TypeName.get(module.type()));
-      // TODO(b/117833324): if the module is instantiable, we could provide an implementation here
-      // too. Then, if no ancestor ever repeats the module, there's nothing to do in subclasses.
-      if (graph.componentDescriptor().creatorDescriptor().isPresent()) {
-        methodBuilder.addStatement(
-            "return $L",
-            createField(module).getExpression(componentImplementation.name()));
-      } else {
-        methodBuilder.addModifiers(ABSTRACT);
-      }
-      componentImplementation.addModifiableModuleMethod(module, methodBuilder.build());
-      return methodName;
-    }
-  }
-
-  private static final class PrunedModifiableModule implements ComponentRequirementExpression {
-    private final ComponentRequirement module;
-
-    private PrunedModifiableModule(ComponentRequirement module) {
-      checkArgument(module.kind().isModule());
-      this.module = module;
-    }
-
-    @Override
-    public CodeBlock getExpression(ClassName requestingClass) {
-      throw new UnsupportedOperationException(module + " is pruned - it cannot be requested");
-    }
-
-    @Override
-    public CodeBlock getModifiableModuleMethodExpression(ClassName requestingClass) {
-      return CodeBlock.builder()
-          .add(
-              "// $L has been pruned from the final resolved binding graph. The result of this "
-                  + "method should never be used, but it may be called in an initialize() method "
-                  + "when creating a framework instance of a now-pruned binding. Those framework "
-                  + "instances should never be used.\n",
-              module.typeElement())
-          .add("return null")
-          .build();
     }
   }
 }

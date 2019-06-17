@@ -70,10 +70,7 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
 
     builder.add("builder($L)", binding.dependencies().size());
 
-    superContributions()
-        .ifPresent(superContributions -> builder.add(".putAll($L)", superContributions));
-
-    for (DependencyRequest dependency : dependenciesToImplement()) {
+    for (DependencyRequest dependency : binding.dependencies()) {
       ContributionBinding contributionBinding =
           graph.contributionBindings().get(dependency.key()).contributionBinding();
       builder.add(
@@ -82,8 +79,6 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
           multibindingDependencyExpression(dependency));
     }
     builder.add(".build()");
-
-    componentImplementation.registerImplementedMultibinding(binding, bindingRequest());
 
     return builder.build();
   }

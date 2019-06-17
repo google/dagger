@@ -35,7 +35,6 @@ GenJavaTests(
         "//java/dagger/internal/codegen:writing",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
-        "//java/dagger/internal/codegen/serialization",
         "//java/dagger/model",
         "//java/dagger/model/testing",
         "//java/dagger/producers",

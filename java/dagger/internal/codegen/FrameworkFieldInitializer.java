@@ -101,8 +101,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
         CodeBlock fieldInitialization = frameworkInstanceCreationExpression.creationExpression();
         CodeBlock initCode = CodeBlock.of("this.$N = $L;", getOrCreateField(), fieldInitialization);
 
-        if (isReplacingSuperclassFrameworkInstance()
-            || fieldInitializationState == InitializationState.DELEGATED) {
+        if (fieldInitializationState == InitializationState.DELEGATED) {
           codeBuilder.add(
               "$T.setDelegate($N, $L);", delegateType(), fieldSpec, fieldInitialization);
         } else {
@@ -150,36 +149,10 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));
     }
 
-    if (isReplacingSuperclassFrameworkInstance()) {
-      // If a binding is modified in a subclass, the framework instance will be replaced in the
-      // subclass implementation. The superclass framework instance initialization will run first,
-      // however, and may refer to the modifiable binding method returning this type's modified
-      // framework instance before it is initialized, so we use a delegate factory as a placeholder
-      // until it has properly been initialized.
-      contributionField.initializer("new $T<>()", delegateType());
-    }
-
     fieldSpec = contributionField.build();
     componentImplementation.addField(FRAMEWORK_FIELD, fieldSpec);
 
     return fieldSpec;
-  }
-
-  /**
-   * Returns true if this framework field is replacing a superclass's implementation of the
-   * framework field.
-   */
-  private boolean isReplacingSuperclassFrameworkInstance() {
-    return componentImplementation
-        .superclassImplementation()
-        .flatMap(
-            superclassImplementation ->
-                // TODO(b/117833324): can we constrain this further?
-                superclassImplementation.getModifiableBindingMethod(
-                    BindingRequest.bindingRequest(
-                        resolvedBindings.key(),
-                        isProvider() ? FrameworkType.PROVIDER : FrameworkType.PRODUCER_NODE)))
-        .isPresent();
   }
 
   private Class<?> delegateType() {

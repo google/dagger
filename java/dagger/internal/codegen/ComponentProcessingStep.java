@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
@@ -135,7 +136,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     if (!isValid(componentDescriptor)) {
       return;
     }
-    if (!isFullBindingGraphValid(componentDescriptor)) {
+    if (!validateFullBindingGraph(componentDescriptor)) {
       return;
     }
     BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor, false);
@@ -145,8 +146,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   }
 
   private void processSubcomponent(TypeElement subcomponent) {
-    if (!compilerOptions.aheadOfTimeSubcomponents()
-        && compilerOptions.fullBindingGraphValidationType(subcomponent).equals(NONE)) {
+    if (compilerOptions.fullBindingGraphValidationType(subcomponent).equals(NONE)) {
       return;
     }
     if (!isSubcomponentValid(subcomponent)) {
@@ -155,15 +155,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     ComponentDescriptor subcomponentDescriptor =
         componentDescriptorFactory.subcomponentDescriptor(subcomponent);
     // TODO(dpb): ComponentDescriptorValidator for subcomponents, as we do for root components.
-    if (!isFullBindingGraphValid(subcomponentDescriptor)) {
-      return;
-    }
-    if (compilerOptions.aheadOfTimeSubcomponents()) {
-      BindingGraph bindingGraph = bindingGraphFactory.create(subcomponentDescriptor, false);
-      if (isValid(bindingGraph)) {
-        generateComponent(bindingGraph);
-      }
-    }
+    validateFullBindingGraph(subcomponentDescriptor);
   }
 
   private void generateComponent(BindingGraph bindingGraph) {
@@ -233,7 +225,8 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     return subcomponentReport == null || subcomponentReport.isClean();
   }
 
-  private boolean isFullBindingGraphValid(ComponentDescriptor componentDescriptor) {
+  @CanIgnoreReturnValue
+  private boolean validateFullBindingGraph(ComponentDescriptor componentDescriptor) {
     if (compilerOptions
         .fullBindingGraphValidationType(componentDescriptor.typeElement())
         .equals(NONE)) {

@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ComponentImplementation.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
@@ -31,7 +30,6 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.DoubleCheck;
 import dagger.internal.MemoizedSentinel;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.internal.codegen.ModifiableBindingMethods.ModifiableBindingMethod;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.RequestKind;
@@ -78,35 +76,13 @@ abstract class MethodBindingExpression extends BindingExpression {
       // TODO(b/121196706): use a less hacky approach to fix this bug
       Object unused = methodBody();
     }
-    
+
     addMethod();
     return Expression.create(
         returnType(),
         requestingClass.equals(componentImplementation.name())
             ? CodeBlock.of("$N()", methodName())
             : CodeBlock.of("$T.this.$N()", componentImplementation.name(), methodName()));
-  }
-
-  @Override
-  final CodeBlock getModifiableBindingMethodImplementation(
-      ModifiableBindingMethod modifiableBindingMethod,
-      ComponentImplementation component,
-      DaggerTypes types) {
-    // A matching modifiable binding method means that we have previously created the binding method
-    // and we are now implementing it. If there is no matching method we need to first create the
-    // method. We create the method by deferring to getDependencyExpression (defined above) via a
-    // call to super.getModifiableBindingMethodImplementation().
-    if (supertypeModifiableBindingMethod().isPresent()) {
-      checkState(
-          supertypeModifiableBindingMethod().get().fulfillsSameRequestAs(modifiableBindingMethod));
-      return methodBody();
-    }
-    return super.getModifiableBindingMethodImplementation(
-        modifiableBindingMethod, component, types);
-  }
-
-  protected final Optional<ModifiableBindingMethod> supertypeModifiableBindingMethod() {
-    return componentImplementation.supertypeModifiableBindingMethod(request);
   }
 
   @Override
@@ -123,14 +99,6 @@ abstract class MethodBindingExpression extends BindingExpression {
 
   /** Returns the name of the method to call. */
   protected abstract String methodName();
-
-  /**
-   * Returns {@code true} if the method of this binding expression is modifiable and is not a
-   * component method.
-   */
-  protected boolean isModifiableImplementationMethod() {
-    return false;
-  }
 
   /** The method's body. */
   protected final CodeBlock methodBody() {
@@ -178,15 +146,8 @@ abstract class MethodBindingExpression extends BindingExpression {
       return matchingComponentMethod().get().resolvedReturnType(types);
     }
 
-    // If the component is abstract, this method may be overridden by another implementation in a
-    // different package for which requestedType is inaccessible. In order to make that method
-    // overridable, we use the publicly accessible type. If the method is private, we don't need to
-    // worry about this, and instead just need to check accessibility of the file we're about to
-    // write
     TypeMirror requestedType = request.requestedType(binding.contributedType(), types);
-    return isModifiableImplementationMethod()
-        ? types.publiclyAccessibleType(requestedType)
-        : types.accessibleType(requestedType, componentImplementation.name());
+    return types.accessibleType(requestedType, componentImplementation.name());
   }
 
   private Optional<ComponentMethodDescriptor> matchingComponentMethod() {

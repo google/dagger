@@ -22,12 +22,9 @@ import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.model.DependencyRequest;
 import dagger.producers.Produced;
-import java.util.Optional;
 
 /** A factory creation expression for a multibound set. */
 final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpression {
-
-  private final ComponentImplementation componentImplementation;
   private final BindingGraph graph;
   private final ContributionBinding binding;
 
@@ -38,7 +35,6 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
       BindingGraph graph) {
     super(binding, componentImplementation, componentBindingExpressions);
     this.binding = checkNotNull(binding);
-    this.componentImplementation = checkNotNull(componentImplementation);
     this.graph = checkNotNull(graph);
   }
 
@@ -60,17 +56,7 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
     String methodNameSuffix =
         binding.bindingType().equals(BindingType.PROVISION) ? "Provider" : "Producer";
 
-    Optional<CodeBlock> superContributions = superContributions();
-    if (superContributions.isPresent()) {
-      // TODO(b/117833324): consider decomposing the Provider<Set<Provider>> and adding the
-      // individual contributions separately from the collection contributions. Though this may
-      // actually not be doable/desirable if the super provider instance is a DelegateFactory or
-      // another internal type that is not SetFactory
-      builderMethodCalls.add(".addCollection$N($L)", methodNameSuffix, superContributions.get());
-      setProviders++;
-    }
-
-    for (DependencyRequest dependency : dependenciesToImplement()) {
+    for (DependencyRequest dependency : binding.dependencies()) {
       ContributionType contributionType =
           graph.contributionBindings().get(dependency.key()).contributionType();
       String methodNamePrefix;
@@ -95,8 +81,6 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
     }
     builder.add("builder($L, $L)", individualProviders, setProviders);
     builder.add(builderMethodCalls.build());
-
-    componentImplementation.registerImplementedMultibinding(binding, bindingRequest());
 
     return builder.add(".build()").build();
   }

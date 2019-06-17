@@ -36,12 +36,11 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import java.util.Collections;
-import java.util.Optional;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** A {@link BindingExpression} for multibound maps. */
-final class MapBindingExpression extends MultibindingExpression {
+final class MapBindingExpression extends SimpleInvocationBindingExpression {
   /** Maximum number of key-value pairs that can be passed to ImmutableMap.of(K, V, K, V, ...). */
   private static final int MAX_IMMUTABLE_MAP_OF_KEY_VALUE_PAIRS = 5;
 
@@ -53,12 +52,11 @@ final class MapBindingExpression extends MultibindingExpression {
 
   MapBindingExpression(
       ProvisionBinding binding,
-      ComponentImplementation componentImplementation,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       DaggerElements elements) {
-    super(binding, componentImplementation);
+    super(binding);
     this.binding = binding;
     BindingKind bindingKind = this.binding.kind();
     checkArgument(bindingKind.equals(MULTIBOUND_MAP), bindingKind);
@@ -72,14 +70,11 @@ final class MapBindingExpression extends MultibindingExpression {
   }
 
   @Override
-  protected Expression buildDependencyExpression(ClassName requestingClass) {
-    Optional<CodeBlock> superMethodCall = superMethodCall();
+  Expression getDependencyExpression(ClassName requestingClass) {
     // TODO(ronshapiro): We should also make an ImmutableMap version of MapFactory
     boolean isImmutableMapAvailable = isImmutableMapAvailable();
     // TODO(ronshapiro, gak): Use Maps.immutableEnumMap() if it's available?
-    if (isImmutableMapAvailable
-        && dependencies.size() <= MAX_IMMUTABLE_MAP_OF_KEY_VALUE_PAIRS
-        && !superMethodCall.isPresent()) {
+    if (isImmutableMapAvailable && dependencies.size() <= MAX_IMMUTABLE_MAP_OF_KEY_VALUE_PAIRS) {
       return Expression.create(
           immutableMapType(),
           CodeBlock.builder()
@@ -115,11 +110,8 @@ final class MapBindingExpression extends MultibindingExpression {
         } else {
           instantiation.add("newMapBuilder($L)", dependencies.size());
         }
-        for (DependencyRequest dependency : getNewContributions(dependencies.keySet())) {
+        for (DependencyRequest dependency : dependencies.keySet()) {
           instantiation.add(".put($L)", keyAndValueExpression(dependency, requestingClass));
-        }
-        if (superMethodCall.isPresent()) {
-          instantiation.add(CodeBlock.of(".putAll($L)", superMethodCall.get()));
         }
         return Expression.create(
             isImmutableMapAvailable ? immutableMapType() : binding.key().type(),

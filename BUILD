@@ -65,7 +65,6 @@ jarjar_library(
         "//java/dagger/internal/codegen:writing",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
-        "//java/dagger/internal/codegen/serialization",
         "//java/dagger/model:internal-proxies",
         "//java/dagger/errorprone",
         "@com_google_auto_auto_common//jar",

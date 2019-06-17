@@ -26,10 +26,8 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeSpecs.addSupertype;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -79,31 +77,12 @@ final class ComponentCreatorImplementationFactory {
     Optional<ComponentCreatorDescriptor> creatorDescriptor =
         componentImplementation.componentDescriptor().creatorDescriptor();
 
-    if (componentImplementation.isAbstract()
-        && (hasNoSetterMethods(creatorDescriptor)
-            || componentImplementation.superclassImplementation().isPresent())) {
-      // 1. Factory-like creators (those with no setter methods) are only generated in concrete
-      //    components, because they only have a factory method and the factory method must call
-      //    a concrete component's constructor.
-      // 2. The component builder in ahead-of-time mode is generated with the base subcomponent
-      //    implementation, with the exception of the build method since that requires invoking the
-      //    constructor of a concrete component implementation. Intermediate component
-      //    implementations, because they still can't invoke the eventual constructor and have no
-      //    additional extensions to the builder, can ignore generating a builder implementation.
-      return Optional.empty();
-    }
-
     Builder builder =
         creatorDescriptor.isPresent()
             ? new BuilderForCreatorDescriptor(
                 componentImplementation, creatorDescriptor.get(), graph)
             : new BuilderForGeneratedRootComponentBuilder(componentImplementation);
     return Optional.of(builder.build());
-  }
-
-  private static boolean hasNoSetterMethods(
-      Optional<ComponentCreatorDescriptor> creatorDescriptor) {
-    return creatorDescriptor.filter(descriptor -> descriptor.setterMethods().isEmpty()).isPresent();
   }
 
   /** Base class for building a creator implementation. */
@@ -124,7 +103,7 @@ final class ComponentCreatorImplementationFactory {
     ComponentCreatorImplementation build() {
       setModifiers();
       setSupertype();
-      this.fields = getOrAddFields();
+      this.fields = addFields();
       addConstructor();
       addSetterMethods();
       addFactoryMethod();
@@ -141,7 +120,7 @@ final class ComponentCreatorImplementationFactory {
      * they must be passed.
      */
     final ImmutableSet<ComponentRequirement> componentConstructorRequirements() {
-      return componentImplementation.requirements();
+      return componentImplementation.graph().componentRequirements();
     }
 
     /** Returns the requirements that have setter methods on the creator type. */
@@ -174,7 +153,7 @@ final class ComponentCreatorImplementationFactory {
       if (!componentImplementation.isNested()) {
         classBuilder.addModifiers(STATIC);
       }
-      classBuilder.addModifiers(componentImplementation.isAbstract() ? ABSTRACT : FINAL);
+      classBuilder.addModifiers(FINAL);
     }
 
     /** Returns the visibility modifier the generated class should have, if any. */
@@ -186,18 +165,8 @@ final class ComponentCreatorImplementationFactory {
     /** Adds a constructor for the creator type, if needed. */
     protected abstract void addConstructor();
 
-    private ImmutableMap<ComponentRequirement, FieldSpec> getOrAddFields() {
-      // If a base implementation is present, any fields are already defined there and don't need to
-      // be created in this implementation.
-      return componentImplementation
-          .baseCreatorImplementation()
-          .map(ComponentCreatorImplementation::fields)
-          .orElseGet(this::addFields);
-    }
-
     private ImmutableMap<ComponentRequirement, FieldSpec> addFields() {
       // Fields in an abstract creator class need to be visible from subclasses.
-      Modifier modifier = componentImplementation.isAbstract() ? PROTECTED : PRIVATE;
       UniqueNameSet fieldNames = new UniqueNameSet();
       ImmutableMap<ComponentRequirement, FieldSpec> result =
           Maps.toMap(
@@ -206,7 +175,7 @@ final class ComponentCreatorImplementationFactory {
                   FieldSpec.builder(
                           TypeName.get(requirement.type()),
                           fieldNames.getUniqueName(requirement.variableName()),
-                          modifier)
+                          PRIVATE)
                       .build());
       classBuilder.addFields(result.values());
       return result;
@@ -231,8 +200,6 @@ final class ComponentCreatorImplementationFactory {
           return Optional.of(noopSetterMethod(requirement));
         case UNSETTABLE_REPEATED_MODULE:
           return Optional.of(repeatedModuleSetterMethod(requirement));
-        case IMPLEMENTED_IN_SUPERTYPE:
-          return Optional.empty();
       }
       throw new AssertionError();
     }
@@ -284,9 +251,7 @@ final class ComponentCreatorImplementationFactory {
     }
 
     private void addFactoryMethod() {
-      if (!componentImplementation.isAbstract()) {
-        classBuilder.addMethod(factoryMethod());
-      }
+      classBuilder.addMethod(factoryMethod());
     }
 
     MethodSpec factoryMethod() {
@@ -301,11 +266,7 @@ final class ComponentCreatorImplementationFactory {
           .keySet()
           .forEach(
               requirement -> {
-                if (fields.containsKey(requirement)
-                    && componentConstructorRequirements().contains(requirement)) {
-                  // In AOT mode, there can be a field for a requirement even if the component's
-                  // constructor doesn't need it, because the base class for the creator was created
-                  // before the final graph for the component was known.
+                if (fields.containsKey(requirement)) {
                   FieldSpec field = fields.get(requirement);
                   addNullHandlingForField(requirement, field, factoryMethod);
                 } else if (factoryMethodParameters.containsKey(requirement)) {
@@ -399,23 +360,12 @@ final class ComponentCreatorImplementationFactory {
 
     @Override
     protected Optional<Modifier> visibility() {
-      if (componentImplementation.isAbstract()) {
-        // The component creator class of a top-level component implementation in ahead-of-time
-        // subcomponents mode must be public, not protected, because the creator's subclass will
-        // be a sibling of the component subclass implementation, not nested.
-        return Optional.of(componentImplementation.isNested() ? PROTECTED : PUBLIC);
-      }
       return Optional.of(PRIVATE);
     }
 
     @Override
     protected void setSupertype() {
-      if (componentImplementation.baseCreatorImplementation().isPresent()) {
-        // If an abstract base implementation for this creator exists, extend that class.
-        classBuilder.superclass(componentImplementation.baseCreatorImplementation().get().name());
-      } else {
-        addSupertype(classBuilder, creatorDescriptor.typeElement());
-      }
+      addSupertype(classBuilder, creatorDescriptor.typeElement());
     }
 
     @Override
@@ -446,18 +396,8 @@ final class ComponentCreatorImplementationFactory {
     }
 
     private RequirementStatus requirementStatus(ComponentRequirement requirement) {
-      // In ahead-of-time subcomponents mode, all builder methods are defined at the base
-      // implementation. The only case where a method needs to be overridden is for a repeated
-      // module, which is unknown at the point when a base implementation is generated. We do this
-      // at the root for simplicity (and as an aside, repeated modules are never used in google
-      // as of 11/28/18, and thus the additional cost of including these methods at the root is
-      // negligible).
       if (isRepeatedModule(requirement)) {
         return RequirementStatus.UNSETTABLE_REPEATED_MODULE;
-      }
-
-      if (hasBaseCreatorImplementation()) {
-        return RequirementStatus.IMPLEMENTED_IN_SUPERTYPE;
       }
 
       return componentConstructorRequirements().contains(requirement)
@@ -479,11 +419,6 @@ final class ComponentCreatorImplementationFactory {
      */
     private boolean isOwnedModule(ComponentRequirement requirement) {
       return graph.map(g -> g.ownedModuleTypes().contains(requirement.typeElement())).orElse(true);
-    }
-
-    private boolean hasBaseCreatorImplementation() {
-      return !componentImplementation.isAbstract()
-          && componentImplementation.baseImplementation().isPresent();
     }
 
     @Override
@@ -578,12 +513,6 @@ final class ComponentCreatorImplementationFactory {
      * inherited from an ancestor component. Any setter method for it should throw an exception.
      */
     UNSETTABLE_REPEATED_MODULE,
-
-    /**
-     * The requirement is settable by the creator, but the setter method implementation already
-     * exists in a supertype.
-     */
-    IMPLEMENTED_IN_SUPERTYPE,
     ;
   }
 }

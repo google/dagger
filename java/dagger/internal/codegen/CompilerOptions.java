@@ -16,8 +16,6 @@
 
 package dagger.internal.codegen;
 
-import com.squareup.javapoet.AnnotationSpec;
-import dagger.internal.GenerationOptions;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
@@ -64,23 +62,6 @@ abstract class CompilerOptions {
 
   abstract boolean headerCompilation();
 
-  abstract boolean aheadOfTimeSubcomponents();
-
-  /**
-   * Enables a testing configuration where all superclass {@link ComponentImplementation}s are
-   * derived from their serialized forms.
-   */
-  abstract boolean forceUseSerializedComponentImplementations();
-
-  /**
-   * If {@code true}, in {@link #aheadOfTimeSubcomponents()} mode, Dagger will emit metadata
-   * annotations to deserialize aspects of the {@link ComponentImplementation}.
-   *
-   * This should only be disabled in compile-testing tests that want to ignore the annotations when
-   * asserting on generated source.
-   */
-  abstract boolean emitModifiableMetadataAnnotations();
-
   abstract boolean useGradleIncrementalProcessing();
 
   /**
@@ -93,27 +74,4 @@ abstract class CompilerOptions {
   abstract Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind();
 
   abstract ValidationType explicitBindingConflictsWithInjectValidationType();
-
-  /**
-   * Creates a new {@link CompilerOptions} from the serialized {@link GenerationOptions} of a base
-   * component implementation.
-   */
-  final CompilerOptions withGenerationOptions(GenerationOptions generationOptions) {
-    return new ForwardingCompilerOptions(this) {
-      @Override
-      public boolean fastInit() {
-        return generationOptions.fastInit();
-      }
-    };
-  }
-
-  /**
-   * Returns a {@link GenerationOptions} annotation that serializes any options for this compilation
-   * that should be reused in future compilations.
-   */
-  final AnnotationSpec toGenerationOptionsAnnotation() {
-    return AnnotationSpec.builder(GenerationOptions.class)
-        .addMember("fastInit", "$L", fastInit())
-        .build();
-  }
 }

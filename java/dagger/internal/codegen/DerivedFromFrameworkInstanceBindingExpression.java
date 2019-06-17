@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.ClassName;
@@ -26,7 +25,6 @@ import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;
 import dagger.model.RequestKind;
-import javax.lang.model.type.TypeMirror;
 
 /** A binding expression that depends on a framework instance. */
 final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpression {
@@ -64,19 +62,6 @@ final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpress
     Expression frameworkInstance =
         componentBindingExpressions.getDependencyExpressionForComponentMethod(
             frameworkRequest, componentMethod, component);
-    Expression forRequestKind = frameworkType.to(requestKind, frameworkInstance, types);
-    TypeMirror rawReturnType = types.erasure(componentMethod.resolvedReturnType(types));
-    if (!types.isAssignable(forRequestKind.type(), rawReturnType)) {
-      checkState(
-          component.isAbstract(),
-          "FrameworkType.to() should always return an accessible type unless we're in "
-              + "ahead-of-time mode, where the framework instance type is erased since it's not "
-              + "publicly accessible, but the return type is accessible to the package. "
-              + "\n  Component: %s, method: %s",
-          component.name(),
-          componentMethod);
-      return forRequestKind.castTo(rawReturnType);
-    }
-    return forRequestKind;
+    return frameworkType.to(requestKind, frameworkInstance, types);
   }
 }

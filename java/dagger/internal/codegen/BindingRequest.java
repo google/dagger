@@ -20,9 +20,6 @@ import static dagger.internal.codegen.RequestKinds.requestType;
 
 import com.google.auto.value.AutoValue;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.internal.codegen.serialization.BindingRequestProto;
-import dagger.internal.codegen.serialization.FrameworkTypeWrapper;
-import dagger.internal.codegen.serialization.RequestKindWrapper;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -100,26 +97,5 @@ abstract class BindingRequest {
             ? requestKind().get()
             : frameworkType().get().frameworkClass().getSimpleName();
     return requestKindObject.toString();
-  }
-
-  /** Returns {@code true} if this request can be satisfied by a production binding. */
-  final boolean canBeSatisfiedByProductionBinding() {
-    if (requestKind().isPresent()) {
-      return RequestKinds.canBeSatisfiedByProductionBinding(requestKind().get());
-    }
-    return frameworkType().get().equals(FrameworkType.PRODUCER_NODE);
-  }
-
-  /** Creates a proto representation of this binding request. */
-  BindingRequestProto toProto() {
-    BindingRequestProto.Builder builder =
-        BindingRequestProto.newBuilder().setKey(KeyFactory.toProto(key()));
-    if (frameworkType().isPresent()) {
-      builder.setFrameworkType(
-          FrameworkTypeWrapper.FrameworkType.valueOf(frameworkType().get().name()));
-    } else {
-      builder.setRequestKind(RequestKindWrapper.RequestKind.valueOf(requestKind().get().name()));
-    }
-    return builder.build();
   }
 }

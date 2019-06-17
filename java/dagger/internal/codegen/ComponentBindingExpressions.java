@@ -22,17 +22,14 @@ import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
 import static dagger.internal.codegen.MemberSelect.staticFactoryCreation;
-import static dagger.internal.codegen.RequestKinds.isDerivedFromProvider;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
-import static dagger.internal.codegen.langmodel.Accessibility.isRawTypePubliclyAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.model.BindingKind.MULTIBOUND_SET;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
@@ -74,7 +71,6 @@ final class ComponentBindingExpressions {
   private final CompilerOptions compilerOptions;
   private final MembersInjectionMethods membersInjectionMethods;
   private final InnerSwitchingProviders innerSwitchingProviders;
-  private final ModifiableBindingExpressions modifiableBindingExpressions;
   private final Map<BindingRequest, BindingExpression> expressions = new HashMap<>();
 
   @Inject
@@ -87,7 +83,7 @@ final class ComponentBindingExpressions {
       DaggerTypes types,
       DaggerElements elements,
       SourceVersion sourceVersion,
-      @GenerationCompilerOptions CompilerOptions compilerOptions) {
+      CompilerOptions compilerOptions) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
@@ -101,19 +97,6 @@ final class ComponentBindingExpressions {
         new MembersInjectionMethods(componentImplementation, this, graph, elements, types);
     this.innerSwitchingProviders =
         new InnerSwitchingProviders(componentImplementation, this, types);
-    this.modifiableBindingExpressions =
-        new ModifiableBindingExpressions(
-            parent.map(cbe -> cbe.modifiableBindingExpressions),
-            this,
-            graph,
-            componentImplementation,
-            compilerOptions,
-            types);
-  }
-
-  /* Returns the {@link ModifiableBindingExpressions} for this component. */
-  ModifiableBindingExpressions modifiableBindingExpressions() {
-    return modifiableBindingExpressions;
   }
 
   /**
@@ -185,21 +168,6 @@ final class ComponentBindingExpressions {
     BindingRequest bindingRequest = bindingRequest(dependencyRequest);
     Expression dependencyExpression = getDependencyExpression(bindingRequest, requestingClass);
 
-    if (compilerOptions.aheadOfTimeSubcomponents()) {
-      TypeMirror requestedType =
-          bindingRequest.requestedType(dependencyRequest.key().type(), types);
-      // If dependencyExpression.type() has been erased to it's publicly accessible type in AOT,
-      // we must sometimes cast the expression so that it is usable in the current component. To do
-      // so, we check that without the cast the assignment would fail, that argument to this proxy
-      // method erased the type, and that the raw type of the requested type is actually accessible
-      // in the current class so that the cast is valid.
-      if (!types.isAssignable(dependencyExpression.type(), requestedType)
-          && !isRawTypePubliclyAccessible(requestedType)
-          && isRawTypeAccessible(requestedType, requestingClass.packageName())) {
-        return dependencyExpression.castTo(types.erasure(requestedType));
-      }
-    }
-
     if (dependencyRequest.kind().equals(RequestKind.INSTANCE)
         && !isTypeAccessibleFrom(dependencyType, requestingClass.packageName())
         && isRawTypeAccessible(dependencyType, requestingClass.packageName())) {
@@ -224,13 +192,7 @@ final class ComponentBindingExpressions {
     CodeBlock methodBody =
         getBindingExpression(request)
             .getComponentMethodImplementation(componentMethod, componentImplementation);
-    if (!componentImplementation.superclassImplementation().isPresent()
-        && !modifiableBindingExpressions
-            .getModifiableBindingType(request)
-            .hasBaseClassImplementation()
-        && !componentImplementation.getModifiableBindingMethod(request).isPresent()) {
-      return method.addModifiers(ABSTRACT).build();
-    }
+
     return method.addCode(methodBody).build();
   }
 
@@ -239,30 +201,14 @@ final class ComponentBindingExpressions {
     if (expressions.containsKey(request)) {
       return expressions.get(request);
     }
-    Optional<BindingExpression> expression =
-        modifiableBindingExpressions.maybeCreateModifiableBindingExpression(request);
-    if (!expression.isPresent()) {
-      ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
-      if (resolvedBindings != null
-          && !resolvedBindings.bindingsOwnedBy(graph.componentDescriptor()).isEmpty()) {
-        expression = Optional.of(createBindingExpression(resolvedBindings, request));
-      }
-    }
-    if (!expression.isPresent()
-        && compilerOptions.aheadOfTimeSubcomponents()
-        && request.requestKind().isPresent()
-        && isDerivedFromProvider(request.requestKind().get())) {
-      RequestKind requestKind = request.requestKind().get();
-      expression =
-          Optional.of(
-              new DerivedFromFrameworkInstanceBindingExpression(
-                  request.key(), FrameworkType.PROVIDER, requestKind, this, types));
+    ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
+    if (resolvedBindings != null
+        && !resolvedBindings.bindingsOwnedBy(graph.componentDescriptor()).isEmpty()) {
+      BindingExpression expression = createBindingExpression(resolvedBindings, request);
+      expressions.put(request, expression);
+      return expression;
     }
 
-    if (expression.isPresent()) {
-      expressions.put(request, expression.get());
-      return expression.get();
-    }
     checkArgument(parent.isPresent(), "no expression found for %s", request);
     return parent.get().getBindingExpression(request);
   }
@@ -562,13 +508,11 @@ final class ComponentBindingExpressions {
 
       case MULTIBOUND_SET:
         return Optional.of(
-            new SetBindingExpression(
-                (ProvisionBinding) binding, componentImplementation, graph, this, types, elements));
+            new SetBindingExpression((ProvisionBinding) binding, graph, this, types, elements));
 
       case MULTIBOUND_MAP:
         return Optional.of(
-            new MapBindingExpression(
-                (ProvisionBinding) binding, componentImplementation, graph, this, types, elements));
+            new MapBindingExpression((ProvisionBinding) binding, graph, this, types, elements));
 
       case OPTIONAL:
         return Optional.of(
@@ -652,12 +596,7 @@ final class ComponentBindingExpressions {
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
         graph.componentDescriptor().firstMatchingComponentMethod(request);
 
-    if (modifiableBindingExpressions.getModifiableBindingType(request).isModifiable()
-        && (componentImplementation.superclassImplementation().isPresent()
-            || !matchingComponentMethod.isPresent())) {
-      return modifiableBindingExpressions.wrapInModifiableMethodBindingExpression(
-          request, resolvedBindings, methodImplementationStrategy, bindingExpression);
-    } else if (matchingComponentMethod.isPresent()) {
+    if (matchingComponentMethod.isPresent()) {
       ComponentMethodDescriptor componentMethod = matchingComponentMethod.get();
       return new ComponentMethodBindingExpression(
           request,

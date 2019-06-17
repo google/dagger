@@ -86,21 +86,6 @@ class ForwardingCompilerOptions extends CompilerOptions {
   }
 
   @Override
-  boolean aheadOfTimeSubcomponents() {
-    return delegate.aheadOfTimeSubcomponents();
-  }
-
-  @Override
-  boolean forceUseSerializedComponentImplementations() {
-    return delegate.forceUseSerializedComponentImplementations();
-  }
-
-  @Override
-  boolean emitModifiableMetadataAnnotations() {
-    return delegate.emitModifiableMetadataAnnotations();
-  }
-
-  @Override
   boolean useGradleIncrementalProcessing() {
     return delegate.useGradleIncrementalProcessing();
   }

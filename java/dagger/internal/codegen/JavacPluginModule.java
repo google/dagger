@@ -101,21 +101,6 @@ abstract class JavacPluginModule {
       }
 
       @Override
-      boolean aheadOfTimeSubcomponents() {
-        return false;
-      }
-
-      @Override
-      boolean forceUseSerializedComponentImplementations() {
-        return false;
-      }
-
-      @Override
-      boolean emitModifiableMetadataAnnotations() {
-        return false;
-      }
-
-      @Override
       boolean useGradleIncrementalProcessing() {
         return false;
       }

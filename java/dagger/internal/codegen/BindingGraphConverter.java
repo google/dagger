@@ -21,7 +21,6 @@ import static dagger.internal.codegen.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.DaggerGraphs.unreachableNodes;
 import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.graph.MutableNetwork;
@@ -33,7 +32,6 @@ import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.MissingBinding;
 import dagger.model.BindingGraph.Node;
 import dagger.model.BindingGraphProxies;
-import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
@@ -81,18 +79,11 @@ final class BindingGraphConverter {
   private final class Traverser extends ComponentTreeTraverser {
     private final MutableNetwork<Node, Edge> network =
         NetworkBuilder.directed().allowsParallelEdges(true).allowsSelfLoops(true).build();
-    private final boolean isRootSubcomponent;
-    private final boolean isFullBindingGraph;
-
-    private final ComponentPath rootComponentPath;
     private ComponentNode parentComponent;
     private ComponentNode currentComponent;
 
     Traverser(BindingGraph graph) {
       super(graph);
-      rootComponentPath = ComponentPath.create(ImmutableList.of(graph.componentTypeElement()));
-      isRootSubcomponent = graph.componentDescriptor().isSubcomponent();
-      isFullBindingGraph = graph.isFullBindingGraph();
     }
 
     @Override
@@ -220,12 +211,10 @@ final class BindingGraphConverter {
     }
 
     private MissingBinding missingBindingNode(ResolvedBindings dependencies) {
-      // TODO(b/117833324): Revisit whether limiting missing binding nodes to the root component is
-      // necessary to limit the amount of missing binding nodes in the network, or if perhaps *all*
-      // missing binding nodes should be structured this way.
-      return BindingGraphProxies.missingBindingNode(
-          isRootSubcomponent && !isFullBindingGraph ? rootComponentPath : componentPath(),
-          dependencies.key());
+      // TODO(ronshapiro): Revisit whether missing binding nodes should all use the root component
+      // path, and the component(s) that have the missing bindings should be determined by the
+      // predecessors of missing binding nodes.
+      return BindingGraphProxies.missingBindingNode(componentPath(), dependencies.key());
     }
 
     private ComponentNode subcomponentNode(TypeMirror subcomponentBuilderType, BindingGraph graph) {

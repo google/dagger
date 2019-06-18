@@ -39,7 +39,6 @@ import javax.lang.model.type.TypeMirror;
 /** A binding expression that wraps another in a nullary method on the component. */
 abstract class MethodBindingExpression extends BindingExpression {
   private final BindingRequest request;
-  private final ResolvedBindings resolvedBindings;
   private final ContributionBinding binding;
   private final BindingMethodImplementation bindingMethodImplementation;
   private final ComponentImplementation componentImplementation;
@@ -49,14 +48,13 @@ abstract class MethodBindingExpression extends BindingExpression {
 
   protected MethodBindingExpression(
       BindingRequest request,
-      ResolvedBindings resolvedBindings,
+      ContributionBinding binding,
       MethodImplementationStrategy methodImplementationStrategy,
       BindingExpression wrappedBindingExpression,
       ComponentImplementation componentImplementation,
       DaggerTypes types) {
     this.request = checkNotNull(request);
-    this.resolvedBindings = resolvedBindings;
-    this.binding = resolvedBindings.contributionBinding();
+    this.binding = checkNotNull(binding);
     this.bindingMethodImplementation = bindingMethodImplementation(methodImplementationStrategy);
     this.wrappedBindingExpression = checkNotNull(wrappedBindingExpression);
     this.componentImplementation = checkNotNull(componentImplementation);
@@ -215,10 +213,7 @@ abstract class MethodBindingExpression extends BindingExpression {
           componentImplementation.getUniqueFieldName(
               request.isRequestKind(RequestKind.INSTANCE)
                   ? KeyVariableNamer.name(binding.key())
-                  // TODO(ronshapiro): Use KeyVariableNamer directly so we don't need to use a
-                  // ResolvedBindings instance and construct a whole framework field just to get the
-                  // name
-                  : FrameworkField.forResolvedBindings(resolvedBindings, Optional.empty()).name());
+                  : FrameworkField.forBinding(binding, Optional.empty()).name());
 
       FieldSpec.Builder builder = FieldSpec.builder(fieldType(), name, PRIVATE, VOLATILE);
       if (isNullable()) {

@@ -67,17 +67,17 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
   }
 
   private final ComponentImplementation componentImplementation;
-  private final ResolvedBindings resolvedBindings;
+  private final ContributionBinding binding;
   private final FrameworkInstanceCreationExpression frameworkInstanceCreationExpression;
   private FieldSpec fieldSpec;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
   FrameworkFieldInitializer(
       ComponentImplementation componentImplementation,
-      ResolvedBindings resolvedBindings,
+      ContributionBinding binding,
       FrameworkInstanceCreationExpression frameworkInstanceCreationExpression) {
     this.componentImplementation = checkNotNull(componentImplementation);
-    this.resolvedBindings = checkNotNull(resolvedBindings);
+    this.binding = checkNotNull(binding);
     this.frameworkInstanceCreationExpression = checkNotNull(frameworkInstanceCreationExpression);
   }
 
@@ -133,10 +133,10 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     if (fieldSpec != null) {
       return fieldSpec;
     }
-    boolean useRawType = !componentImplementation.isTypeAccessible(resolvedBindings.key().type());
+    boolean useRawType = !componentImplementation.isTypeAccessible(binding.key().type());
     FrameworkField contributionBindingField =
-        FrameworkField.forResolvedBindings(
-            resolvedBindings, frameworkInstanceCreationExpression.alternativeFrameworkClass());
+        FrameworkField.forBinding(
+            binding, frameworkInstanceCreationExpression.alternativeFrameworkClass());
 
     TypeName fieldType =
         useRawType ? contributionBindingField.type().rawType : contributionBindingField.type();
@@ -160,7 +160,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
   }
 
   private boolean isProvider() {
-    return resolvedBindings.bindingType().equals(BindingType.PROVISION)
+    return binding.bindingType().equals(BindingType.PROVISION)
         && frameworkInstanceCreationExpression
             .alternativeFrameworkClass()
             .map(TypeNames.PROVIDER::equals)

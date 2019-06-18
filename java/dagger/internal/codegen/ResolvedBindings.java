@@ -201,14 +201,6 @@ abstract class ResolvedBindings implements HasContributionType {
   }
 
   /**
-   * {@code true} if this is a multibinding contribution.
-   */
-  boolean isMultibindingContribution() {
-    return contributionBindings().size() == 1
-        && contributionBinding().contributionType().isMultibinding();
-  }
-
-  /**
    * Returns the single contribution binding.
    *
    * @throws IllegalStateException if there is not exactly one element in

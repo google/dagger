@@ -62,38 +62,33 @@ abstract class FrameworkField {
   }
 
   /**
-   * A framework field for a {@link ResolvedBindings}.
+   * A framework field for a {@link ContributionBinding}.
    * 
    * @param frameworkClass if present, the field will use this framework class instead of the normal
-   *     one for the bindings
+   *     one for the binding's type.
    */
-  static FrameworkField forResolvedBindings(
-      ResolvedBindings resolvedBindings, Optional<ClassName> frameworkClass) {
+  static FrameworkField forBinding(
+      ContributionBinding binding, Optional<ClassName> frameworkClass) {
     return create(
         frameworkClass.orElse(
             ClassName.get(
-                FrameworkType.forBindingType(resolvedBindings.bindingType()).frameworkClass())),
-        TypeName.get(fieldValueType(resolvedBindings)),
-        frameworkFieldName(resolvedBindings));
+                FrameworkType.forBindingType(binding.bindingType()).frameworkClass())),
+        TypeName.get(fieldValueType(binding)),
+        frameworkFieldName(binding));
   }
 
-  private static TypeMirror fieldValueType(ResolvedBindings resolvedBindings) {
-    return resolvedBindings.isMultibindingContribution()
-        ? resolvedBindings.contributionBinding().contributedType()
-        : resolvedBindings.key().type();
+  private static TypeMirror fieldValueType(ContributionBinding binding) {
+    return binding.contributionType().isMultibinding()
+        ? binding.contributedType()
+        : binding.key().type();
   }
 
-  private static String frameworkFieldName(ResolvedBindings resolvedBindings) {
-    if (!resolvedBindings.contributionBindings().isEmpty()) {
-      ContributionBinding binding = resolvedBindings.contributionBinding();
-      if (binding.bindingElement().isPresent()) {
-        String name = BINDING_ELEMENT_NAME.visit(binding.bindingElement().get(), binding);
-        return binding.kind().equals(MEMBERS_INJECTOR)
-            ? name + "MembersInjector"
-            : name;
-      }
+  private static String frameworkFieldName(ContributionBinding binding) {
+    if (binding.bindingElement().isPresent()) {
+      String name = BINDING_ELEMENT_NAME.visit(binding.bindingElement().get(), binding);
+      return binding.kind().equals(MEMBERS_INJECTOR) ? name + "MembersInjector" : name;
     }
-    return KeyVariableNamer.name(resolvedBindings.key());
+    return KeyVariableNamer.name(binding.key());
   }
 
   private static final ElementVisitor<String, Binding> BINDING_ELEMENT_NAME =

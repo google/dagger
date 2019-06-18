@@ -36,7 +36,7 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
 
   ComponentMethodBindingExpression(
       BindingRequest request,
-      ResolvedBindings resolvedBindings,
+      ContributionBinding binding,
       MethodImplementationStrategy methodImplementationStrategy,
       BindingExpression wrappedBindingExpression,
       ComponentImplementation componentImplementation,
@@ -44,7 +44,7 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
       DaggerTypes types) {
     super(
         request,
-        resolvedBindings,
+        binding,
         methodImplementationStrategy,
         wrappedBindingExpression,
         componentImplementation,

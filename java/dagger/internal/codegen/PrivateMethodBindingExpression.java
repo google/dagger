@@ -37,14 +37,14 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
 
   PrivateMethodBindingExpression(
       BindingRequest request,
-      ResolvedBindings resolvedBindings,
+      ContributionBinding binding,
       MethodImplementationStrategy methodImplementationStrategy,
       BindingExpression wrappedBindingExpression,
       ComponentImplementation componentImplementation,
       DaggerTypes types) {
     super(
         request,
-        resolvedBindings,
+        binding,
         methodImplementationStrategy,
         wrappedBindingExpression,
         componentImplementation,

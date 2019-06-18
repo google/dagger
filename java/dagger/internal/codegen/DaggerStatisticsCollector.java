@@ -41,6 +41,8 @@ final class DaggerStatisticsCollector {
   private DaggerStatistics.RoundStatistics.Builder roundBuilder = DaggerStatistics.roundBuilder();
 
   private final Optional<DaggerStatisticsRecorder> statisticsRecorder;
+  private int injectFactoriesGenerated;
+  private int membersInjectorsGenerated;
 
   @Inject
   DaggerStatisticsCollector(Ticker ticker, Optional<DaggerStatisticsRecorder> statisticsRecorder) {
@@ -79,10 +81,21 @@ final class DaggerStatisticsCollector {
   void processingStopped() {
     checkState(totalRuntimeStopwatch.isRunning());
     totalRuntimeStopwatch.stop();
-    statisticsBuilder.setTotalProcessingTime(elapsedTime(totalRuntimeStopwatch));
+    statisticsBuilder
+        .setTotalProcessingTime(elapsedTime(totalRuntimeStopwatch))
+        .setInjectFactoriesGenerated(injectFactoriesGenerated)
+        .setMembersInjectorsGenerated(membersInjectorsGenerated);
 
     statisticsRecorder.ifPresent(
         recorder -> recorder.recordStatistics(statisticsBuilder.build()));
+  }
+
+  void recordInjectFactoryGenerated() {
+    injectFactoriesGenerated++;
+  }
+
+  void recordMembersInjectorGenerated() {
+    membersInjectorsGenerated++;
   }
 
   @SuppressWarnings("StopwatchNanosToDuration") // intentional

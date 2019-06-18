@@ -21,6 +21,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.CheckReturnValue;
 import java.time.Duration;
 
 /** Statistics collected over the course of Dagger annotation processing. */
@@ -42,24 +43,37 @@ abstract class DaggerStatistics {
   /** List of statistics for processing rounds that the Dagger processor handled. */
   abstract ImmutableList<RoundStatistics> rounds();
 
+  /** Records the number of {@code @Inject} constructor factories generated in this compilation. */
+  abstract int injectFactoriesGenerated();
+
+  /** Records the number of {@link dagger.MembersInjector}s generated in this compilation. */
+  abstract int membersInjectorsGenerated();
+
   /** Builder for {@link DaggerStatistics}. */
   @AutoValue.Builder
+  @CanIgnoreReturnValue
   abstract static class Builder {
     /** Sets the given duration for the total time spent in Dagger processing. */
-    @CanIgnoreReturnValue
     abstract Builder setTotalProcessingTime(Duration totalProcessingTime);
 
     /** Returns a builder for adding processing round statistics. */
+    @CheckReturnValue
     abstract ImmutableList.Builder<RoundStatistics> roundsBuilder();
 
     /** Adds the given {@code round} statistics. */
-    @CanIgnoreReturnValue
     final Builder addRound(RoundStatistics round) {
       roundsBuilder().add(round);
       return this;
     }
 
+    /** Sets the number of {@code @Inject} constructor factories generated in this compilation. */
+    abstract Builder setInjectFactoriesGenerated(int count);
+
+    /** Sets the number of {@link dagger.MembersInjector}s generated in this compilation. */
+    abstract Builder setMembersInjectorsGenerated(int count);
+
     /** Creates a new {@link DaggerStatistics} instance. */
+    @CheckReturnValue
     abstract DaggerStatistics build();
   }
 

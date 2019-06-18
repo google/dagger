@@ -66,13 +66,19 @@ import javax.lang.model.element.Element;
 final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectionBinding> {
   private final DaggerTypes types;
   private final DaggerElements elements;
+  private final DaggerStatisticsCollector statisticsCollector;
 
   @Inject
   MembersInjectorGenerator(
-      Filer filer, DaggerElements elements, DaggerTypes types, SourceVersion sourceVersion) {
+      Filer filer,
+      DaggerElements elements,
+      DaggerTypes types,
+      SourceVersion sourceVersion,
+      DaggerStatisticsCollector statisticsCollector) {
     super(filer, elements, sourceVersion);
     this.types = types;
     this.elements = elements;
+    this.statisticsCollector = statisticsCollector;
   }
 
   @Override
@@ -91,6 +97,9 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
     if (binding.injectionSites().isEmpty()) {
       return Optional.empty();
     }
+    
+    statisticsCollector.recordMembersInjectorGenerated();
+
     // We don't want to write out resolved bindings -- we want to write out the generic version.
     checkState(
         !binding.unresolved().isPresent(),

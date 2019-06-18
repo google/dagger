@@ -8,6 +8,8 @@ import "google/protobuf/duration.proto";
 message DaggerBuildStatistics {
   optional google.protobuf.Duration total_processing_time = 1;
   repeated DaggerRound rounds = 2;
+  optional int32 inject_factories_generated = 3;
+  optional int32 members_injectors_generated = 4;
 }
 
 // Duration of each Dagger ProcessingStep for a single annotation processing

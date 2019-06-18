@@ -35,6 +35,7 @@ import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHE
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.factoryOf;
+import static dagger.model.BindingKind.INJECTION;
 import static dagger.model.BindingKind.PROVISION;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -74,6 +75,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
+  private final DaggerStatisticsCollector statisticsCollector;
 
   @Inject
   FactoryGenerator(
@@ -81,11 +83,13 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
       SourceVersion sourceVersion,
       DaggerTypes types,
       DaggerElements elements,
-      CompilerOptions compilerOptions) {
+      CompilerOptions compilerOptions,
+      DaggerStatisticsCollector statisticsCollector) {
     super(filer, elements, sourceVersion);
     this.types = types;
     this.elements = elements;
     this.compilerOptions = compilerOptions;
+    this.statisticsCollector = statisticsCollector;
   }
 
   @Override
@@ -105,9 +109,15 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     checkArgument(!binding.unresolved().isPresent());
     checkArgument(binding.bindingElement().isPresent());
 
-    return binding.factoryCreationStrategy().equals(DELEGATE)
-        ? Optional.empty()
-        : Optional.of(factoryBuilder(binding));
+    if (binding.factoryCreationStrategy().equals(DELEGATE)) {
+      return Optional.empty();
+    }
+
+    if (binding.kind().equals(INJECTION)) {
+      statisticsCollector.recordInjectFactoryGenerated();
+    }
+
+    return Optional.of(factoryBuilder(binding));
   }
 
   private TypeSpec.Builder factoryBuilder(ProvisionBinding binding) {

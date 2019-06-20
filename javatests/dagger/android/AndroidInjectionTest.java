@@ -38,7 +38,7 @@ public final class AndroidInjectionTest {
     String tag;
   }
 
-  private static AndroidInjector<Fragment> fakeFragmentInjector(String tag) {
+  private static AndroidInjector<Object> fakeFragmentInjector(String tag) {
     return instance -> {
       if (instance instanceof InjectableFragment) {
         ((InjectableFragment) instance).tag = tag;
@@ -46,10 +46,9 @@ public final class AndroidInjectionTest {
     };
   }
 
-  public static class ApplicationInjectsFragment extends Application
-      implements HasFragmentInjector {
+  public static class ApplicationInjectsFragment extends Application implements HasAndroidInjector {
     @Override
-    public AndroidInjector<Fragment> fragmentInjector() {
+    public AndroidInjector<Object> androidInjector() {
       return fakeFragmentInjector("injected by app");
     }
   }
@@ -66,9 +65,9 @@ public final class AndroidInjectionTest {
     assertThat(fragment.tag).isEqualTo("injected by app");
   }
 
-  public static class ActivityInjectsFragment extends Activity implements HasFragmentInjector {
+  public static class ActivityInjectsFragment extends Activity implements HasAndroidInjector {
     @Override
-    public AndroidInjector<Fragment> fragmentInjector() {
+    public AndroidInjector<Object> androidInjector() {
       return fakeFragmentInjector("injected by activity");
     }
   }
@@ -86,9 +85,9 @@ public final class AndroidInjectionTest {
   }
 
   public static class ParentFragmentInjectsChildFragment extends Fragment
-      implements HasFragmentInjector {
+      implements HasAndroidInjector {
     @Override
-    public AndroidInjector<Fragment> fragmentInjector() {
+    public AndroidInjector<Object> androidInjector() {
       return fakeFragmentInjector("injected by parent fragment");
     }
   }
@@ -112,7 +111,7 @@ public final class AndroidInjectionTest {
   }
 
   @Test
-  public void injectActivity_applicationDoesntImplementHasActivityInjector() {
+  public void injectActivity_applicationDoesntImplementHasAndroidInjector() {
     Activity activity = Robolectric.setupActivity(Activity.class);
 
     try {
@@ -138,15 +137,9 @@ public final class AndroidInjectionTest {
     }
   }
 
-  private static class ApplicationReturnsNull extends Application
-      implements HasActivityInjector, HasFragmentInjector {
+  private static class ApplicationReturnsNull extends Application implements HasAndroidInjector {
     @Override
-    public AndroidInjector<Activity> activityInjector() {
-      return null;
-    }
-
-    @Override
-    public AndroidInjector<Fragment> fragmentInjector() {
+    public AndroidInjector<Object> androidInjector() {
       return null;
     }
   }
@@ -160,7 +153,7 @@ public final class AndroidInjectionTest {
       AndroidInjection.inject(activity);
       fail();
     } catch (Exception e) {
-      assertThat(e).hasMessageThat().contains("activityInjector() returned null");
+      assertThat(e).hasMessageThat().contains("androidInjector() returned null");
     }
   }
 
@@ -174,7 +167,7 @@ public final class AndroidInjectionTest {
       AndroidInjection.inject(fragment);
       fail();
     } catch (Exception e) {
-      assertThat(e).hasMessageThat().contains("fragmentInjector() returned null");
+      assertThat(e).hasMessageThat().contains("androidInjector() returned null");
     }
   }
 

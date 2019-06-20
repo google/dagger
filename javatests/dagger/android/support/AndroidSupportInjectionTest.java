@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 import android.app.Application;
 import android.support.v4.app.Fragment;
 import dagger.android.AndroidInjector;
+import dagger.android.HasAndroidInjector;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -44,9 +45,9 @@ public final class AndroidSupportInjectionTest {
   }
 
   private static class ApplicationReturnsNull extends Application
-      implements HasSupportFragmentInjector {
+      implements HasAndroidInjector {
     @Override
-    public AndroidInjector<Fragment> supportFragmentInjector() {
+    public AndroidInjector<Object> androidInjector() {
       return null;
     }
   }
@@ -61,7 +62,7 @@ public final class AndroidSupportInjectionTest {
       AndroidSupportInjection.inject(fragment);
       fail();
     } catch (Exception e) {
-      assertThat(e).hasMessageThat().contains("supportFragmentInjector() returned null");
+      assertThat(e).hasMessageThat().contains("androidInjector() returned null");
     }
   }
 

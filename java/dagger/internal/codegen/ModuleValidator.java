@@ -35,7 +35,6 @@ import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.ValidationType.NONE;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
-import static java.util.EnumSet.noneOf;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -45,10 +44,12 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.common.Visibility;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.FormatMethod;
 import dagger.Module;
@@ -59,6 +60,7 @@ import dagger.model.BindingGraph;
 import dagger.producers.ProducerModule;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -75,15 +77,14 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 import javax.lang.model.util.SimpleTypeVisitor8;
 
-/**
- * A {@linkplain ValidationReport validator} for {@link Module}s or {@link ProducerModule}s.
- */
+/** A {@linkplain ValidationReport validator} for {@link Module}s or {@link ProducerModule}s. */
 @Singleton
 final class ModuleValidator {
   private static final ImmutableSet<Class<? extends Annotation>> SUBCOMPONENT_TYPES =
@@ -175,23 +176,19 @@ final class ModuleValidator {
     ValidationReport.Builder<TypeElement> builder = ValidationReport.about(module);
     ModuleKind moduleKind = ModuleKind.forAnnotatedElement(module).get();
 
-    ListMultimap<String, ExecutableElement> allMethodsByName = ArrayListMultimap.create();
-    ListMultimap<String, ExecutableElement> bindingMethodsByName = ArrayListMultimap.create();
-
-    Set<ModuleMethodKind> methodKinds = noneOf(ModuleMethodKind.class);
     TypeElement contributesAndroidInjectorElement =
         elements.getTypeElement(CONTRIBUTES_ANDROID_INJECTOR_NAME);
     TypeMirror contributesAndroidInjector =
         contributesAndroidInjectorElement != null
             ? contributesAndroidInjectorElement.asType()
             : null;
-    for (ExecutableElement moduleMethod : methodsIn(module.getEnclosedElements())) {
+    List<ExecutableElement> moduleMethods = methodsIn(module.getEnclosedElements());
+    List<ExecutableElement> bindingMethods = new ArrayList<>();
+    for (ExecutableElement moduleMethod : moduleMethods) {
       if (anyBindingMethodValidator.isBindingMethod(moduleMethod)) {
         builder.addSubreport(anyBindingMethodValidator.validate(moduleMethod));
-        bindingMethodsByName.put(moduleMethod.getSimpleName().toString(), moduleMethod);
-        methodKinds.add(ModuleMethodKind.ofMethod(moduleMethod));
+        bindingMethods.add(moduleMethod);
       }
-      allMethodsByName.put(moduleMethod.getSimpleName().toString(), moduleMethod);
 
       for (AnnotationMirror annotation : moduleMethod.getAnnotationMirrors()) {
         if (!ANDROID_PROCESSOR.isPresent()
@@ -209,8 +206,11 @@ final class ModuleValidator {
       }
     }
 
-    if (methodKinds.containsAll(
-        EnumSet.of(ModuleMethodKind.ABSTRACT_DECLARATION, ModuleMethodKind.INSTANCE_BINDING))) {
+    if (bindingMethods.stream()
+        .map(ModuleMethodKind::ofMethod)
+        .collect(toImmutableSet())
+        .containsAll(
+            EnumSet.of(ModuleMethodKind.ABSTRACT_DECLARATION, ModuleMethodKind.INSTANCE_BINDING))) {
       builder.addError(
           String.format(
               "A @%s may not contain both non-static and abstract binding methods",
@@ -218,9 +218,17 @@ final class ModuleValidator {
     }
 
     validateModuleVisibility(module, moduleKind, builder);
+
+    ImmutableListMultimap<Name, ExecutableElement> bindingMethodsByName =
+        Multimaps.index(bindingMethods, ExecutableElement::getSimpleName);
+
     validateMethodsWithSameName(builder, bindingMethodsByName);
     if (module.getKind() != ElementKind.INTERFACE) {
-      validateBindingMethodOverrides(module, builder, allMethodsByName, bindingMethodsByName);
+      validateBindingMethodOverrides(
+          module,
+          builder,
+          Multimaps.index(moduleMethods, ExecutableElement::getSimpleName),
+          bindingMethodsByName);
     }
     validateModifiers(module, builder);
     validateReferencedModules(module, moduleKind, visitedModules, builder);
@@ -350,8 +358,8 @@ final class ModuleValidator {
 
   private void validateMethodsWithSameName(
       ValidationReport.Builder<TypeElement> builder,
-      ListMultimap<String, ExecutableElement> bindingMethodsByName) {
-    for (Entry<String, Collection<ExecutableElement>> entry :
+      ListMultimap<Name, ExecutableElement> bindingMethodsByName) {
+    for (Entry<Name, Collection<ExecutableElement>> entry :
         bindingMethodsByName.asMap().entrySet()) {
       if (entry.getValue().size() > 1) {
         for (ExecutableElement offendingMethod : entry.getValue()) {
@@ -423,8 +431,7 @@ final class ModuleValidator {
                         "%s is listed as a module, but is not annotated with %s",
                         module.getQualifiedName(),
                         (validModuleAnnotations.size() > 1 ? "one of " : "")
-                            + validModuleAnnotations
-                                .stream()
+                            + validModuleAnnotations.stream()
                                 .map(otherClass -> "@" + otherClass.getSimpleName())
                                 .collect(joining(", ")));
                   } else if (knownModules.contains(module)
@@ -458,8 +465,8 @@ final class ModuleValidator {
   private void validateBindingMethodOverrides(
       TypeElement subject,
       ValidationReport.Builder<TypeElement> builder,
-      ListMultimap<String, ExecutableElement> allMethodsByName,
-      ListMultimap<String, ExecutableElement> bindingMethodsByName) {
+      ImmutableListMultimap<Name, ExecutableElement> moduleMethodsByName,
+      ImmutableListMultimap<Name, ExecutableElement> bindingMethodsByName) {
     // For every binding method, confirm it overrides nothing *and* nothing overrides it.
     // Consider the following hierarchy:
     // class Parent {
@@ -479,11 +486,14 @@ final class ModuleValidator {
     TypeMirror objectType = elements.getTypeElement(Object.class).asType();
     // We keep track of methods that failed so we don't spam with multiple failures.
     Set<ExecutableElement> failedMethods = Sets.newHashSet();
+    ListMultimap<Name, ExecutableElement> allMethodsByName =
+        MultimapBuilder.hashKeys().arrayListValues().build(moduleMethodsByName);
+
     while (!types.isSameType(currentClass.getSuperclass(), objectType)) {
       currentClass = MoreElements.asType(types.asElement(currentClass.getSuperclass()));
       List<ExecutableElement> superclassMethods = methodsIn(currentClass.getEnclosedElements());
       for (ExecutableElement superclassMethod : superclassMethods) {
-        String name = superclassMethod.getSimpleName().toString();
+        Name name = superclassMethod.getSimpleName();
         // For each method in the superclass, confirm our binding methods don't override it
         for (ExecutableElement bindingMethod : bindingMethodsByName.get(name)) {
           if (failedMethods.add(bindingMethod)
@@ -508,7 +518,7 @@ final class ModuleValidator {
             }
           }
         }
-        allMethodsByName.put(superclassMethod.getSimpleName().toString(), superclassMethod);
+        allMethodsByName.put(superclassMethod.getSimpleName(), superclassMethod);
       }
     }
   }
@@ -561,8 +571,8 @@ final class ModuleValidator {
   }
 
   /**
-   * Returns {@code true} if a module instance is needed for any of the binding methods on the
-   * given {@code module}. This is the case when the module has any binding methods that are neither
+   * Returns {@code true} if a module instance is needed for any of the binding methods on the given
+   * {@code module}. This is the case when the module has any binding methods that are neither
    * {@code abstract} nor {@code static}.
    */
   private boolean requiresModuleInstance(TypeElement module) {

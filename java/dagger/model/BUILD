@@ -22,6 +22,7 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
+load("//tools:maven.bzl", "POM_VERSION")
 
 INTERNAL_PROXIES = ["BindingGraphProxies.java"]
 
@@ -37,6 +38,7 @@ java_library(
     name = "model",
     srcs = [":model-srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    tags = ["maven_coordinates=com.google.dagger:dagger-spi:" + POM_VERSION],
     deps = [
         "//java/dagger:core",
         "//java/dagger/internal/codegen:jdk-and-guava-extras",

@@ -21,7 +21,6 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
 import static dagger.internal.codegen.Formatter.INDENT;
-import static dagger.internal.codegen.Optionals.emptiesLast;
 import static dagger.model.BindingKind.INJECTION;
 import static dagger.model.BindingKind.MEMBERS_INJECTION;
 import static java.util.Comparator.comparing;
@@ -57,22 +56,6 @@ import javax.tools.Diagnostic.Kind;
 
 /** Reports errors for conflicting bindings with the same key. */
 final class DuplicateBindingsValidator implements BindingGraphPlugin {
-
-  // 1. contributing module or enclosing type
-  // 2. binding element's simple name
-  // 3. binding element's type
-  private static final Comparator<BindingDeclaration> BINDING_DECLARATION_COMPARATOR =
-      comparing(
-              (BindingDeclaration declaration) ->
-                  declaration.contributingModule().isPresent()
-                      ? declaration.contributingModule()
-                      : declaration.bindingTypeElement(),
-              emptiesLast(comparing((TypeElement type) -> type.getQualifiedName().toString())))
-          .thenComparing(
-              (BindingDeclaration declaration) -> declaration.bindingElement(),
-              emptiesLast(
-                  comparing((Element element) -> element.getSimpleName().toString())
-                      .thenComparing((Element element) -> element.asType().toString())));
 
   private static final Comparator<Binding> BY_LENGTH_OF_COMPONENT_PATH =
       comparing(binding -> binding.componentPath().components().size());
@@ -267,7 +250,7 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
     return bindings.stream()
         .flatMap(binding -> declarations(graph, binding).stream())
         .distinct()
-        .sorted(BINDING_DECLARATION_COMPARATOR)
+        .sorted(BindingDeclaration.COMPARATOR)
         .collect(toImmutableSet());
   }
 

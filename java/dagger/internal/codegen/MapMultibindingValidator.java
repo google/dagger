@@ -26,6 +26,7 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
@@ -133,8 +134,9 @@ final class MapMultibindingValidator implements BindingGraphPlugin {
       dagger.model.Binding multiboundMapBinding,
       ImmutableSet<ContributionBinding> contributions,
       DiagnosticReporter diagnosticReporter) {
-    ImmutableSetMultimap<Object, ContributionBinding> contributionsByMapKey =
-        ImmutableSetMultimap.copyOf(Multimaps.index(contributions, ContributionBinding::mapKey));
+    ImmutableSetMultimap<?, ContributionBinding> contributionsByMapKey =
+        ImmutableSetMultimap.copyOf(
+            Multimaps.index(contributions, ContributionBinding::wrappedMapKeyAnnotation));
 
     for (Set<ContributionBinding> contributionsForOneMapKey :
         Multimaps.asMap(contributionsByMapKey).values()) {
@@ -193,7 +195,11 @@ final class MapMultibindingValidator implements BindingGraphPlugin {
       Set<ContributionBinding> contributionsForOneMapKey, Key mapBindingKey) {
     StringBuilder message =
         new StringBuilder("The same map key is bound more than once for ").append(mapBindingKey);
-    bindingDeclarationFormatter.formatIndentedList(message, contributionsForOneMapKey, 1);
+
+    bindingDeclarationFormatter.formatIndentedList(
+        message,
+        ImmutableList.sortedCopyOf(BindingDeclaration.COMPARATOR, contributionsForOneMapKey),
+        1);
     return message.toString();
   }
 }

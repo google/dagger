@@ -16,15 +16,44 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.Optionals.emptiesLast;
+import static java.util.Comparator.comparing;
+
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.model.BindingKind;
 import dagger.model.Key;
+import java.util.Comparator;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 /** An object that declares or specifies a binding. */
 abstract class BindingDeclaration {
+  /**
+    * A comparator that compares binding declarations with elements.
+    *
+    * Compares, in order:
+    *
+    * <ol>
+    * <li>Contributing module or enclosing type name
+    * <li>Binding element's simple name
+    * <li>Binding element's type
+    * </ol>
+    *
+    * Any binding declarations without elements are last.
+    */
+  static final Comparator<BindingDeclaration> COMPARATOR =
+      comparing(
+              (BindingDeclaration declaration) ->
+                  declaration.contributingModule().isPresent()
+                      ? declaration.contributingModule()
+                      : declaration.bindingTypeElement(),
+              emptiesLast(comparing((TypeElement type) -> type.getQualifiedName().toString())))
+          .thenComparing(
+              (BindingDeclaration declaration) -> declaration.bindingElement(),
+              emptiesLast(
+                  comparing((Element element) -> element.getSimpleName().toString())
+                      .thenComparing((Element element) -> element.asType().toString())));
 
   /** The {@link Key} of this declaration. */
   abstract Key key();
@@ -48,7 +77,7 @@ abstract class BindingDeclaration {
   final Optional<TypeElement> bindingTypeElement() {
     return bindingElement().map(DaggerElements::closestEnclosingTypeElement);
   }
-  
+
   /**
    * The installed module class that contributed the {@link #bindingElement()}. May be a subclass of
    * the class that contains {@link #bindingElement()}. Absent if {@link #bindingElement()} is

@@ -16,11 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.CLASS_CONSTRUCTOR;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.DELEGATE;
 import static dagger.internal.codegen.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
-import static dagger.internal.codegen.MapKeys.unwrapValue;
 import static dagger.internal.codegen.MoreAnnotationMirrors.unwrapOptionalEquivalence;
 import static java.util.Arrays.asList;
 
@@ -34,7 +32,6 @@ import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -54,17 +51,6 @@ abstract class ContributionBinding extends Binding implements HasContributionTyp
 
   final Optional<AnnotationMirror> mapKeyAnnotation() {
     return unwrapOptionalEquivalence(wrappedMapKeyAnnotation());
-  }
-
-  /**
-   * If this is a map contribution, returns the key of its map entry.
-   *
-   * @throws IllegalStateException if {@link #mapKeyAnnotation()} returns an empty value.
-   */
-  final Object mapKey() {
-    checkState(mapKeyAnnotation().isPresent());
-    AnnotationMirror mapKeyAnnotation = mapKeyAnnotation().get();
-    return unwrapValue(mapKeyAnnotation).map(AnnotationValue::getValue).orElse(mapKeyAnnotation);
   }
 
   /** If {@link #bindingElement()} is a method that returns a primitive type, returns that type. */

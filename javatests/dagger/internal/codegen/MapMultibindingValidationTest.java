@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.TestUtils.message;
 
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
@@ -30,7 +31,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class MapMultibindingValidationTest {
   @Test
-  public void duplicateMapKeys() {
+  public void duplicateMapKeys_UnwrappedMapKey() {
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
             "test.MapModule",
@@ -156,6 +157,56 @@ public class MapMultibindingValidationTest {
             "The same map key is bound more than once for "
                 + "java.util.Map<java.lang.String,dagger.producers.Producer<java.lang.Object>>");
     assertThat(compilation).hadErrorCount(1);
+  }
+
+  @Test
+  public void duplicateMapKeys_WrappedMapKey() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.MapModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.MapKey;",
+            "",
+            "@Module",
+            "abstract class MapModule {",
+            "",
+            "  @MapKey(unwrapValue = false)",
+            "  @interface WrappedMapKey {",
+            "    String value();",
+            "  }",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @WrappedMapKey(\"foo\")",
+            "  static String stringMapEntry1() { return \"\"; }",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @WrappedMapKey(\"foo\")",
+            "  static String stringMapEntry2() { return \"\"; }",
+            "}");
+
+    JavaFileObject component = component("Map<test.MapModule.WrappedMapKey, String> objects();");
+
+    Compilation compilation = daggerCompiler().compile(component, module);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "[Dagger/MapKeys] The same map key is bound more than once for "
+                    + "java.util.Map<test.MapModule.WrappedMapKey,java.lang.String>",
+                "    @Provides @dagger.multibindings.IntoMap "
+                    + "@test.MapModule.WrappedMapKey(\"foo\") String "
+                    + "test.MapModule.stringMapEntry1()",
+                "    @Provides @dagger.multibindings.IntoMap "
+                    + "@test.MapModule.WrappedMapKey(\"foo\") String "
+                    + "test.MapModule.stringMapEntry2()"))
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
   }
 
   @Test

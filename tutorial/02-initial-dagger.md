@@ -47,7 +47,7 @@ final class CommandRouter {
 The [`@Inject`] annotation indicates to Dagger that when we ask for a
 `CommandRouter`, Dagger should call `new CommandRouter()`.
 
-> **Aside:*** See [these instructions] for how to properly add Dagger to your
+> **Aside:** See [these instructions] for how to properly add Dagger to your
 > build.
 
 [these instructions]: https://github.com/google/dagger#installation

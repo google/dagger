@@ -1,4 +1,7 @@
-## A new command
+---
+layout: default
+title: A new command
+---
 
 Let's add a new command for logging in to the ATM:
 

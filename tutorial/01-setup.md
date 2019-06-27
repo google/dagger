@@ -1,4 +1,7 @@
-## Tutorial setup
+---
+layout: default
+title: Tutorial setup
+---
 
 To explain how to use Dagger, we will build a command line
 [ATM](https://en.wikipedia.org/wiki/Automated_teller_machine) application. It

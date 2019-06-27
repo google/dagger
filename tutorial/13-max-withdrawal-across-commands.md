@@ -1,4 +1,7 @@
-# Enforcing the maximum withdrawal across commands
+---
+layout: default
+title: Enforcing the maximum withdrawal across commands
+---
 
 We've configured the maximum withdrawal, but multiple "withdraw \<maximum>"
 commands can be executed back-to-back. What if we wanted to enforce that all

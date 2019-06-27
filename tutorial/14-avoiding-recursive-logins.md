@@ -1,4 +1,7 @@
-# Avoiding recursive logins
+---
+layout: default
+title: Avoiding recursive logins
+---
 
 If you run the application and try to run `login first-username` followed by
 `login second-username`, you'll notice that it works! How/why is this working?

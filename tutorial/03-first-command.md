@@ -1,4 +1,7 @@
-# Adding our first `Command`
+---
+layout: default
+title: Adding our first `Command`
+---
 
 If you've tried to run the example so far, you'll see that it doesn't know how
 to respond to any commands. Let's change that!

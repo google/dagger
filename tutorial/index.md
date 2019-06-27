@@ -1,4 +1,7 @@
-# Dagger Tutorial
+---
+layout: default
+title: Dagger Tutorial
+---
 
 ## How to read this tutorial
 

@@ -1,4 +1,7 @@
-# Maintaining state
+---
+layout: default
+title: Maintaining state
+---
 
 There's a bug in our code—do you spot it? It's subtle, so you may need to look
 closely.

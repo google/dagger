@@ -1,4 +1,7 @@
-# Logging out
+---
+layout: default
+title: Logging out
+---
 
 Our ATM currently supports logging in users, but there's no way to log out.
 Let's add support for that.

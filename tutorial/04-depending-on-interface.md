@@ -1,4 +1,7 @@
-# Depending on an interface
+---
+layout: default
+title: Depending on an interface
+---
 
 But wait: why does `CommandRouter`'s constructor need a `HelloWorldCommand`
 specifically? Shouldn't it be able to use any kind of `Command`?

@@ -1,4 +1,7 @@
-## Adding a withdraw command
+---
+layout: default
+title: Adding a withdraw command
+---
 
 Let's add a command for withdrawing funds from your account:
 

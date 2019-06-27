@@ -1,4 +1,7 @@
-# Initial Dagger setup
+---
+layout: default
+title: Initial Dagger setup
+---
 
 Let's change our example to actually use Dagger to create an instance of
 `CommandRouter`. We'll start by creating a [`@Component`] interface:

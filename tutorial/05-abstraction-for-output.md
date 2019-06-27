@@ -1,4 +1,7 @@
-# An abstraction for output
+---
+layout: default
+title: An abstraction for output
+---
 
 Right now, `HelloWorldCommand` uses `System.out.println()` to write its output.
 In the spirit of dependency injection, let's use an abstraction so that we can

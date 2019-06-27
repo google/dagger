@@ -1,4 +1,7 @@
-## Two commands for the price of one
+---
+layout: default
+title: Two commands for the price of one
+---
 
 So far, `CommandRouter` only supports a single command at a time, but we'd like
 to have it support many commands.

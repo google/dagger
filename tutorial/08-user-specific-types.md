@@ -1,4 +1,7 @@
-## User-specific types
+---
+layout: default
+title: User-specific types
+---
 
 Now that users can log in, let's add some code that is specific to the logged in
 user.

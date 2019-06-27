@@ -1,4 +1,7 @@
-# Only allow depositing after logging in
+---
+layout: default
+title: Only allow depositing after logging in
+---
 
 The current UX design of this ATM can be improved by only supporting `deposit`
 commands after one has already logged in. To do that, let's first perform a

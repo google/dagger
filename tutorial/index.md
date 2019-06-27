@@ -21,7 +21,9 @@ ideas introduced in the section.
 *   A glossary <!-- TODO: discuss why not -->
 *   A complete document of all features of Dagger / all possible usages
 *   Further reading includes:
-    *   Javadoc
+    *   [Javadoc]
 
 [Next](01-setup)
 {@paragraph style="text-align: center"}
+
+[Javadoc]: http://dagger.dev/api/latest

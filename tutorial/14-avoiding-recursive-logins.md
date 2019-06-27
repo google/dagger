@@ -79,7 +79,7 @@ different logic in both cases!
 >     whether Dagger knows how to create an instance of `ReturnType`, and it can
 >     be present in a subcomponent but absent in its parent.
 
-[Previous](13-max-withdrawal-across-commands)
+[Previous](13-max-withdrawal-across-commands) · [Next](15-conclusion)
 {@paragraph style="text-align: center"}
 
 [`@BindsOptionalOf`]: https://dagger.dev/api/latest/dagger/BindsOptionalOf.html

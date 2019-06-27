@@ -51,7 +51,6 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
@@ -143,6 +142,10 @@ final class ComponentValidator {
     private final ValidationReport.Builder<TypeElement> report;
     private final ImmutableSet<ComponentKind> componentKinds;
 
+    // Populated by ComponentMethodValidators
+    private final SetMultimap<Element, ExecutableElement> referencedSubcomponents =
+        LinkedHashMultimap.create();
+
     ElementValidator(
         TypeElement component,
         Set<? extends Element> validatedSubcomponents,
@@ -166,23 +169,48 @@ final class ComponentValidator {
       return asDeclared(component.asType());
     }
 
+    private ComponentValidationReport createValidationReport(ImmutableSet<Element> subcomponents) {
+      return new AutoValue_ComponentValidator_ComponentValidationReport(
+          subcomponents, report.build());
+    }
+
     ComponentValidationReport validateElement() {
       if (componentKinds.size() > 1) {
-        String error =
-            "Components may not be annotated with more than one component annotation: found "
-                + annotationsFor(componentKinds);
-        report.addError(error, component);
-        return new AutoValue_ComponentValidator_ComponentValidationReport(
-            ImmutableSet.of(), report.build());
+        return moreThanOneComponentAnnotation();
       }
 
+      validateUseOfCancellationPolicy();
+      validateIsAbstractType();
+      validateNumberOfCreators();
+      validateNoReusableAnnotation();
+      validateComponentMethods();
+      validateNoConflictingEntryPoints();
+      validateSubcomponentReferences();
+      validateComponentDependencies();
+      validateReferencedModules();
+
+      ImmutableSet<Element> allSubcomponents = validateSubcomponents();
+      return createValidationReport(allSubcomponents);
+    }
+
+    private ComponentValidationReport moreThanOneComponentAnnotation() {
+      String error =
+          "Components may not be annotated with more than one component annotation: found "
+              + annotationsFor(componentKinds);
+      report.addError(error, component);
+      return createValidationReport(ImmutableSet.of());
+    }
+
+    private void validateUseOfCancellationPolicy() {
       if (isAnnotationPresent(component, CancellationPolicy.class)
           && !componentKind().isProducer()) {
         report.addError(
             "@CancellationPolicy may only be applied to production components and subcomponents",
             component);
       }
+    }
 
+    private void validateIsAbstractType() {
       if (!component.getKind().equals(INTERFACE)
           && !(component.getKind().equals(CLASS) && component.getModifiers().contains(ABSTRACT))) {
         report.addError(
@@ -191,7 +219,9 @@ final class ComponentValidator {
                 componentKind().annotation().getSimpleName()),
             component);
       }
+    }
 
+    private void validateNumberOfCreators() {
       ImmutableList<DeclaredType> creators =
           creatorAnnotationsFor(componentAnnotation()).stream()
               .flatMap(annotation -> enclosedAnnotatedTypes(component, annotation).stream())
@@ -202,7 +232,9 @@ final class ComponentValidator {
                 ErrorMessages.componentMessagesFor(componentKind()).moreThanOne(), creators),
             component);
       }
+    }
 
+    private void validateNoReusableAnnotation() {
       Optional<AnnotationMirror> reusableAnnotation =
           getAnnotationMirror(component, Reusable.class);
       if (reusableAnnotation.isPresent()) {
@@ -211,120 +243,187 @@ final class ComponentValidator {
             component,
             reusableAnnotation.get());
       }
-
-      SetMultimap<Element, ExecutableElement> referencedSubcomponents = LinkedHashMultimap.create();
-      getLocalAndInheritedMethods(component, types, elements).stream()
-          .filter(method -> method.getModifiers().contains(ABSTRACT))
-          .forEachOrdered(
-              method -> {
-                ExecutableType resolvedMethod =
-                    asExecutable(types.asMemberOf(componentType(), method));
-                List<? extends TypeMirror> parameterTypes = resolvedMethod.getParameterTypes();
-                List<? extends VariableElement> parameters = method.getParameters();
-                TypeMirror returnType = resolvedMethod.getReturnType();
-
-                if (!resolvedMethod.getTypeVariables().isEmpty()) {
-                  report.addError("Component methods cannot have type variables", method);
-                }
-
-                // abstract methods are ones we have to implement, so they each need to be validated
-                // first, check the return type. if it's a subcomponent, validate that method as
-                // such.
-                Optional<AnnotationMirror> subcomponentAnnotation =
-                    checkForAnnotations(
-                        returnType,
-                        componentKind().legalSubcomponentKinds().stream()
-                            .map(ComponentKind::annotation)
-                            .collect(toImmutableSet()));
-                Optional<AnnotationMirror> subcomponentCreatorAnnotation =
-                    checkForAnnotations(
-                        returnType,
-                        componentAnnotation().isProduction()
-                            ? intersection(
-                                subcomponentCreatorAnnotations(), productionCreatorAnnotations())
-                            : subcomponentCreatorAnnotations());
-                if (subcomponentAnnotation.isPresent()) {
-                  referencedSubcomponents.put(MoreTypes.asElement(returnType), method);
-                  validateSubcomponentMethod(
-                      ComponentKind.forAnnotatedElement(MoreTypes.asTypeElement(returnType)).get(),
-                      method,
-                      parameters,
-                      parameterTypes,
-                      returnType,
-                      subcomponentAnnotation);
-                } else if (subcomponentCreatorAnnotation.isPresent()) {
-                  referencedSubcomponents.put(
-                      MoreTypes.asElement(returnType).getEnclosingElement(), method);
-                  validateSubcomponentCreatorMethod(
-                      method, parameters, returnType, validatedSubcomponentCreators);
-                } else {
-                  // if it's not a subcomponent...
-                  switch (parameters.size()) {
-                    case 0:
-                      // no parameters means that it is a provision method
-                      dependencyRequestValidator.validateDependencyRequest(
-                          report, method, returnType);
-                      break;
-                    case 1:
-                      // one parameter means that it's a members injection method
-                      TypeMirror parameterType = Iterables.getOnlyElement(parameterTypes);
-                      report.addSubreport(
-                          membersInjectionValidator.validateMembersInjectionMethod(
-                              method, parameterType));
-                      if (!(returnType.getKind().equals(VOID)
-                          || types.isSameType(returnType, parameterType))) {
-                        report.addError(
-                            "Members injection methods may only return the injected type or void.",
-                            method);
-                      }
-                      break;
-                    default:
-                      // this isn't any method that we know how to implement...
-                      report.addError(
-                          "This method isn't a valid provision method, members injection method or "
-                              + "subcomponent factory method. Dagger cannot implement this method",
-                          method);
-                      break;
-                  }
-                }
-              });
-
-      checkConflictingEntryPoints();
-
-      Maps.filterValues(referencedSubcomponents.asMap(), methods -> methods.size() > 1)
-          .forEach(
-              (subcomponent, methods) ->
-                  report.addError(
-                      String.format(moreThanOneRefToSubcomponent(), subcomponent, methods),
-                      component));
-
-      validateComponentDependencies();
-      report.addSubreport(
-          moduleValidator.validateReferencedModules(
-              component,
-              componentAnnotation().annotation(),
-              componentKind().legalModuleKinds(),
-              new HashSet<>()));
-
-      // Make sure we validate any subcomponents we're referencing, unless we know we validated
-      // them already in this pass.
-      // TODO(sameb): If subcomponents refer to each other and both aren't in
-      //              'validatedSubcomponents' (e.g, both aren't compiled in this pass),
-      //              then this can loop forever.
-      ImmutableSet.Builder<Element> allSubcomponents =
-          ImmutableSet.<Element>builder().addAll(referencedSubcomponents.keySet());
-      for (Element subcomponent :
-          Sets.difference(referencedSubcomponents.keySet(), validatedSubcomponents)) {
-        ComponentValidationReport subreport =
-            validate(asType(subcomponent), validatedSubcomponents, validatedSubcomponentCreators);
-        report.addItems(subreport.report().items());
-        allSubcomponents.addAll(subreport.referencedSubcomponents());
-      }
-      return new AutoValue_ComponentValidator_ComponentValidationReport(
-          allSubcomponents.build(), report.build());
     }
 
-    private void checkConflictingEntryPoints() {
+    private void validateComponentMethods() {
+      getLocalAndInheritedMethods(component, types, elements).stream()
+          .filter(method -> method.getModifiers().contains(ABSTRACT))
+          .map(ComponentMethodValidator::new)
+          .forEachOrdered(ComponentMethodValidator::validateMethod);
+    }
+
+    private class ComponentMethodValidator {
+      private final ExecutableElement method;
+      private final ExecutableType resolvedMethod;
+      private final List<? extends TypeMirror> parameterTypes;
+      private final List<? extends VariableElement> parameters;
+      private final TypeMirror returnType;
+
+      ComponentMethodValidator(ExecutableElement method) {
+        this.method = method;
+        this.resolvedMethod = asExecutable(types.asMemberOf(componentType(), method));
+        this.parameterTypes = resolvedMethod.getParameterTypes();
+        this.parameters = method.getParameters();
+        this.returnType = resolvedMethod.getReturnType();
+      }
+
+      void validateMethod() {
+        validateNoTypeVariables();
+
+        // abstract methods are ones we have to implement, so they each need to be validated
+        // first, check the return type. if it's a subcomponent, validate that method as
+        // such.
+        Optional<AnnotationMirror> subcomponentAnnotation = subcomponentAnnotation();
+        if (subcomponentAnnotation.isPresent()) {
+          validateSubcomponentFactoryMethod(subcomponentAnnotation.get());
+        } else if (subcomponentCreatorAnnotation().isPresent()) {
+          validateSubcomponentCreatorMethod();
+        } else {
+          // if it's not a subcomponent...
+          switch (parameters.size()) {
+            case 0:
+              validateProvisionMethod();
+              break;
+            case 1:
+              validateMembersInjectionMethod();
+              break;
+            default:
+              reportInvalidMethod();
+              break;
+          }
+        }
+      }
+
+      private void validateNoTypeVariables() {
+        if (!resolvedMethod.getTypeVariables().isEmpty()) {
+          report.addError("Component methods cannot have type variables", method);
+        }
+      }
+
+      private Optional<AnnotationMirror> subcomponentAnnotation() {
+        return checkForAnnotations(
+            returnType,
+            componentKind().legalSubcomponentKinds().stream()
+                .map(ComponentKind::annotation)
+                .collect(toImmutableSet()));
+      }
+
+      private Optional<AnnotationMirror> subcomponentCreatorAnnotation() {
+        return checkForAnnotations(
+            returnType,
+            componentAnnotation().isProduction()
+                ? intersection(subcomponentCreatorAnnotations(), productionCreatorAnnotations())
+                : subcomponentCreatorAnnotations());
+      }
+
+      private void validateSubcomponentFactoryMethod(AnnotationMirror subcomponentAnnotation) {
+        referencedSubcomponents.put(MoreTypes.asElement(returnType), method);
+
+        ComponentKind subcomponentKind =
+            ComponentKind.forAnnotatedElement(MoreTypes.asTypeElement(returnType)).get();
+        ImmutableSet<TypeElement> moduleTypes =
+            ComponentAnnotation.componentAnnotation(subcomponentAnnotation).modules();
+
+        // TODO(gak): This logic maybe/probably shouldn't live here as it requires us to traverse
+        // subcomponents and their modules separately from how it is done in ComponentDescriptor and
+        // ModuleDescriptor
+        @SuppressWarnings("deprecation")
+        ImmutableSet<TypeElement> transitiveModules =
+            getTransitiveModules(types, elements, moduleTypes);
+
+        Set<TypeElement> variableTypes = Sets.newHashSet();
+
+        for (int i = 0; i < parameterTypes.size(); i++) {
+          VariableElement parameter = parameters.get(i);
+          TypeMirror parameterType = parameterTypes.get(i);
+          Optional<TypeElement> moduleType =
+              parameterType.accept(
+                  new SimpleTypeVisitor8<Optional<TypeElement>, Void>() {
+                    @Override
+                    protected Optional<TypeElement> defaultAction(TypeMirror e, Void p) {
+                      return Optional.empty();
+                    }
+
+                    @Override
+                    public Optional<TypeElement> visitDeclared(DeclaredType t, Void p) {
+                      for (ModuleKind moduleKind : subcomponentKind.legalModuleKinds()) {
+                        if (isAnnotationPresent(t.asElement(), moduleKind.annotation())) {
+                          return Optional.of(MoreTypes.asTypeElement(t));
+                        }
+                      }
+                      return Optional.empty();
+                    }
+                  },
+                  null);
+          if (moduleType.isPresent()) {
+            if (variableTypes.contains(moduleType.get())) {
+              report.addError(
+                  String.format(
+                      "A module may only occur once an an argument in a Subcomponent factory "
+                          + "method, but %s was already passed.",
+                      moduleType.get().getQualifiedName()),
+                  parameter);
+            }
+            if (!transitiveModules.contains(moduleType.get())) {
+              report.addError(
+                  String.format(
+                      "%s is present as an argument to the %s factory method, but is not one of the"
+                          + " modules used to implement the subcomponent.",
+                      moduleType.get().getQualifiedName(),
+                      MoreTypes.asTypeElement(returnType).getQualifiedName()),
+                  method);
+            }
+            variableTypes.add(moduleType.get());
+          } else {
+            report.addError(
+                String.format(
+                    "Subcomponent factory methods may only accept modules, but %s is not.",
+                    parameterType),
+                parameter);
+          }
+        }
+      }
+
+      private void validateSubcomponentCreatorMethod() {
+        referencedSubcomponents.put(MoreTypes.asElement(returnType).getEnclosingElement(), method);
+
+        if (!parameters.isEmpty()) {
+          report.addError(builderMethodRequiresNoArgs(), method);
+        }
+
+        // If we haven't already validated the subcomponent creator itself, validate it now.
+        TypeElement creatorElement = MoreTypes.asTypeElement(returnType);
+        if (!validatedSubcomponentCreators.contains(creatorElement)) {
+          // TODO(sameb): The creator validator right now assumes the element is being compiled
+          // in this pass, which isn't true here.  We should change error messages to spit out
+          // this method as the subject and add the original subject to the message output.
+          report.addItems(creatorValidator.validate(creatorElement).items());
+        }
+      }
+
+      private void validateProvisionMethod() {
+        dependencyRequestValidator.validateDependencyRequest(report, method, returnType);
+      }
+
+      private void validateMembersInjectionMethod() {
+        TypeMirror parameterType = getOnlyElement(parameterTypes);
+        report.addSubreport(
+            membersInjectionValidator.validateMembersInjectionMethod(method, parameterType));
+        if (!(returnType.getKind().equals(VOID) || types.isSameType(returnType, parameterType))) {
+          report.addError(
+              "Members injection methods may only return the injected type or void.", method);
+        }
+      }
+
+      private void reportInvalidMethod() {
+        report.addError(
+            "This method isn't a valid provision method, members injection method or "
+                + "subcomponent factory method. Dagger cannot implement this method",
+            method);
+      }
+    }
+
+    private void validateNoConflictingEntryPoints() {
       // Collect entry point methods that are not overridden by others. If the "same" method is
       // inherited from more than one supertype, each will be in the multimap.
       SetMultimap<String, ExecutableElement> entryPointMethods = HashMultimap.create();
@@ -343,20 +442,6 @@ final class ComponentValidator {
           reportConflictingEntryPoints(methods);
         }
       }
-    }
-
-    private ImmutableSet<Key> distinctKeys(Set<ExecutableElement> methods) {
-      return methods.stream()
-          .map(this::dependencyRequest)
-          .map(DependencyRequest::key)
-          .collect(toImmutableSet());
-    }
-
-    private DependencyRequest dependencyRequest(ExecutableElement method) {
-      ExecutableType methodType = asExecutable(types.asMemberOf(componentType(), method));
-      return ComponentKind.forAnnotatedElement(component).get().isProducer()
-          ? dependencyRequestFactory.forComponentProductionMethod(method, methodType)
-          : dependencyRequestFactory.forComponentProvisionMethod(method, methodType);
     }
 
     private void reportConflictingEntryPoints(Collection<ExecutableElement> methods) {
@@ -378,99 +463,60 @@ final class ComponentValidator {
       report.addError(message.toString());
     }
 
-    private void validateSubcomponentMethod(
-        ComponentKind subcomponentKind,
-        ExecutableElement method,
-        List<? extends VariableElement> parameters,
-        List<? extends TypeMirror> parameterTypes,
-        TypeMirror returnType,
-        Optional<AnnotationMirror> subcomponentAnnotation) {
-      ImmutableSet<TypeElement> moduleTypes =
-          ComponentAnnotation.componentAnnotation(subcomponentAnnotation.get()).modules();
-
-      // TODO(gak): This logic maybe/probably shouldn't live here as it requires us to traverse
-      // subcomponents and their modules separately from how it is done in ComponentDescriptor and
-      // ModuleDescriptor
-      @SuppressWarnings("deprecation")
-      ImmutableSet<TypeElement> transitiveModules =
-          getTransitiveModules(types, elements, moduleTypes);
-
-      Set<TypeElement> variableTypes = Sets.newHashSet();
-
-      for (int i = 0; i < parameterTypes.size(); i++) {
-        VariableElement parameter = parameters.get(i);
-        TypeMirror parameterType = parameterTypes.get(i);
-        Optional<TypeElement> moduleType =
-            parameterType.accept(
-                new SimpleTypeVisitor8<Optional<TypeElement>, Void>() {
-                  @Override
-                  protected Optional<TypeElement> defaultAction(TypeMirror e, Void p) {
-                    return Optional.empty();
-                  }
-
-                  @Override
-                  public Optional<TypeElement> visitDeclared(DeclaredType t, Void p) {
-                    for (ModuleKind moduleKind : subcomponentKind.legalModuleKinds()) {
-                      if (isAnnotationPresent(t.asElement(), moduleKind.annotation())) {
-                        return Optional.of(MoreTypes.asTypeElement(t));
-                      }
-                    }
-                    return Optional.empty();
-                  }
-                },
-                null);
-        if (moduleType.isPresent()) {
-          if (variableTypes.contains(moduleType.get())) {
-            report.addError(
-                String.format(
-                    "A module may only occur once an an argument in a Subcomponent factory "
-                        + "method, but %s was already passed.",
-                    moduleType.get().getQualifiedName()),
-                parameter);
-          }
-          if (!transitiveModules.contains(moduleType.get())) {
-            report.addError(
-                String.format(
-                    "%s is present as an argument to the %s factory method, but is not one of the"
-                        + " modules used to implement the subcomponent.",
-                    moduleType.get().getQualifiedName(),
-                    MoreTypes.asTypeElement(returnType).getQualifiedName()),
-                method);
-          }
-          variableTypes.add(moduleType.get());
-        } else {
-          report.addError(
-              String.format(
-                  "Subcomponent factory methods may only accept modules, but %s is not.",
-                  parameterType),
-              parameter);
-        }
-      }
-    }
-
-    private void validateSubcomponentCreatorMethod(
-        ExecutableElement method,
-        List<? extends VariableElement> parameters,
-        TypeMirror returnType,
-        Set<? extends Element> validatedSubcomponentCreators) {
-      if (!parameters.isEmpty()) {
-        report.addError(builderMethodRequiresNoArgs(), method);
-      }
-
-      // If we haven't already validated the subcomponent creator itself, validate it now.
-      TypeElement creatorElement = MoreTypes.asTypeElement(returnType);
-      if (!validatedSubcomponentCreators.contains(creatorElement)) {
-        // TODO(sameb): The creator validator right now assumes the element is being compiled
-        // in this pass, which isn't true here.  We should change error messages to spit out
-        // this method as the subject and add the original subject to the message output.
-        report.addItems(creatorValidator.validate(creatorElement).items());
-      }
+    private void validateSubcomponentReferences() {
+      Maps.filterValues(referencedSubcomponents.asMap(), methods -> methods.size() > 1)
+          .forEach(
+              (subcomponent, methods) ->
+                  report.addError(
+                      String.format(moreThanOneRefToSubcomponent(), subcomponent, methods),
+                      component));
     }
 
     private void validateComponentDependencies() {
       for (TypeMirror type : componentAnnotation().dependencyTypes()) {
         type.accept(CHECK_DEPENDENCY_TYPES, report);
       }
+    }
+
+    private void validateReferencedModules() {
+      report.addSubreport(
+          moduleValidator.validateReferencedModules(
+              component,
+              componentAnnotation().annotation(),
+              componentKind().legalModuleKinds(),
+              new HashSet<>()));
+    }
+
+    private ImmutableSet<Element> validateSubcomponents() {
+      // Make sure we validate any subcomponents we're referencing, unless we know we validated
+      // them already in this pass.
+      // TODO(sameb): If subcomponents refer to each other and both aren't in
+      //              'validatedSubcomponents' (e.g, both aren't compiled in this pass),
+      //              then this can loop forever.
+      ImmutableSet.Builder<Element> allSubcomponents =
+          ImmutableSet.<Element>builder().addAll(referencedSubcomponents.keySet());
+      for (Element subcomponent :
+          Sets.difference(referencedSubcomponents.keySet(), validatedSubcomponents)) {
+        ComponentValidationReport subreport =
+            validate(asType(subcomponent), validatedSubcomponents, validatedSubcomponentCreators);
+        report.addItems(subreport.report().items());
+        allSubcomponents.addAll(subreport.referencedSubcomponents());
+      }
+      return allSubcomponents.build();
+    }
+
+    private ImmutableSet<Key> distinctKeys(Set<ExecutableElement> methods) {
+      return methods.stream()
+          .map(this::dependencyRequest)
+          .map(DependencyRequest::key)
+          .collect(toImmutableSet());
+    }
+
+    private DependencyRequest dependencyRequest(ExecutableElement method) {
+      ExecutableType methodType = asExecutable(types.asMemberOf(componentType(), method));
+      return ComponentKind.forAnnotatedElement(component).get().isProducer()
+          ? dependencyRequestFactory.forComponentProductionMethod(method, methodType)
+          : dependencyRequestFactory.forComponentProvisionMethod(method, methodType);
     }
   }
 

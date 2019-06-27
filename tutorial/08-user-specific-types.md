@@ -60,5 +60,8 @@ Try logging in with your name, and then again with `jesse`. Ignore for now that
 you can run `login` multiple times in a row without logging out. We'll address
 that later.
 
+<section style="text-align: center">
+
 [Previous](07-two-for-the-price-of-one) · [Next](09-maintaining-state)
-{@paragraph style="text-align: center"}
+
+</section>

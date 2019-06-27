@@ -100,8 +100,11 @@ separate instance of `WithdrawalLimiter` for each instance of
 >     a [`@Singleton`]-annotated type can be created if multiple
 >     [`@Singleton`]-annotated [`@Component`]s are instantiated in a single JVM.
 
+<section style="text-align: center">
+
 [Previous](12-logging-out) · [Next](14-avoiding-recursive-logins)
-{@paragraph style="text-align: center"}
+
+</section>
 
 [`@Component`]: https://dagger.dev/api/latest/dagger/Component.html
 [`@Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html

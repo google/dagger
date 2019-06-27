@@ -68,8 +68,11 @@ application! Run the application again to see it in action.
 > *   **[`@Inject`]** on a constructor tells Dagger how to instantiate that
 >     class. We'll see more shortly.
 
+<section style="text-align: center">
+
 [Previous](01-setup) · [Next](03-first-command)
-{@paragraph style="text-align: center"}
+
+</section>
 
 [`@Component`]: https://dagger.dev/api/latest/dagger/Component.html
 [`@Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html

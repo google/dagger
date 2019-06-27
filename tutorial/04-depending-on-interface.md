@@ -84,8 +84,11 @@ kind of `Command`.
 >     type that Dagger doesn't yet know how to construct (the method's return
 >     type).
 
+<section style="text-align: center">
+
 [Previous](03-first-command) · [Next](05-abstraction-for-output)
-{@paragraph style="text-align: center"}
+
+</section>
 
 [`@Binds`]: https://dagger.dev/api/latest/dagger/Binds.html
 [`@Component`]: https://dagger.dev/api/latest/dagger/Component.html

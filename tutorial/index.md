@@ -23,7 +23,10 @@ ideas introduced in the section.
 *   Further reading includes:
     *   [Javadoc]
 
+<section style="text-align: center">
+
 [Next](01-setup)
-{@paragraph style="text-align: center"}
+
+</section>
 
 [Javadoc]: http://dagger.dev/api/latest

@@ -88,8 +88,11 @@ Try rerunning again. Now the login and deposit commands share a single
 > *   It's not yet clear why you have to annotate the component with
 >     [`@Singleton`] as well, but it will become clearer later.
 
+<section style="text-align: center">
+
 [Previous](08-user-specific-types) · [Next](10-deposit-after-login)
-{@paragraph style="text-align: center"}
+
+</section>
 
 [`@Binds`]: https://dagger.dev/api/latest/dagger/Binds.html
 [`@Component`]: https://dagger.dev/api/latest/dagger/Component.html

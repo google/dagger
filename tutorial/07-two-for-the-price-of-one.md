@@ -75,8 +75,11 @@ both modules.
 >     called "multibindings", where a collection contains elements from several
 >     different binding methods.
 
+<section style="text-align: center">
+
 [Previous](06-new-command) · [Next](08-user-specific-types)
-{@paragraph style="text-align: center"}
+
+</section>
 
 [`@Binds`]: https://dagger.dev/api/latest/dagger/Binds.html
 [`@Component`]: https://dagger.dev/api/latest/dagger/Component.html

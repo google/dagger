@@ -167,8 +167,11 @@ adjust the minimum balance and maximum withdrawal amounts if desired.
 >     types such as primitive types and `String`, which may be used in many
 >     places in a program for very different reasons.
 
+<section style="text-align: center">
+
 [Previous](10-deposit-after-login) · [Next](12-logging-out)
-{@paragraph style="text-align: center"}
+
+</section>
 
 [`@IntoMap`]: https://dagger.dev/api/latest/dagger/multibindings/IntoMap.html
 [`@IntoSet`]: https://dagger.dev/api/latest/dagger/multibindings/IntoSet.html

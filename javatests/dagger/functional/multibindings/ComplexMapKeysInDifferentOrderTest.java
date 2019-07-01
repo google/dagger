@@ -17,6 +17,7 @@
 package dagger.functional.multibindings;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.google.auto.value.AutoAnnotation;
 import dagger.Component;
@@ -24,6 +25,7 @@ import dagger.MapKey;
 import dagger.Module;
 import dagger.Provides;
 import dagger.multibindings.IntoMap;
+import java.lang.annotation.Retention;
 import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,6 +33,7 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public final class ComplexMapKeysInDifferentOrderTest {
+  @Retention(RUNTIME)
   @MapKey(unwrapValue = false)
   @interface ComplexMapKey {
     int i();

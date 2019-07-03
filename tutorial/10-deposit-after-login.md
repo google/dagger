@@ -164,7 +164,7 @@ final class LoginCommand extends SingleArgCommand {
     outputter.output(
         username + " is logged in with balance: " + account.balance());
     return Result.enterNestedCommandSet(
-        userCommandsRouterFactory.create(account).commandRouter());
+        userCommandsRouterFactory.create(account).router());
   }
 }
 ```

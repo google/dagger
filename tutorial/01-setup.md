@@ -91,6 +91,6 @@ class CommandLineAtm {
 Congratulations! We now have a working command line ATM! It doesn't do anything
 just yet, but very soon we'll change that.
 
-<section style="text-align: center">
+<section style="text-align: center" markdown="1">
   [Previous](index) · [Next](02-initial-dagger)
 </section>

@@ -12,7 +12,7 @@ input.isEmpty() ? Result.inputCompleted() : Result.invalid();`.
 Configure `LogoutCommand` like we've done for the other commands in
 `UserCommandsRouter`.
 
-<section style="text-align: center">
+<section style="text-align: center" markdown="1">
 
 [Previous](11-withdraw-command) · [Next](13-max-withdrawal-across-commands)
 

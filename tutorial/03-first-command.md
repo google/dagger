@@ -73,7 +73,7 @@ the application will respond `world!`. We're making progress!
 >         constructor. These different uses of the word "injects" can get
 >         confusing, so we're using the more explicit terms in this tutorial.
 
-<section style="text-align: center">
+<section style="text-align: center" markdown="1">
 
 [Previous](02-initial-dagger) · [Next](04-depending-on-interface)
 

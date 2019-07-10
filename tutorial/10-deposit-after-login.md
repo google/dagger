@@ -210,7 +210,7 @@ final class DepositCommand extends BigDecimalCommand {
 > *   **[`@BindsInstance`]** parameters let you make arbitrary objects
 >     requestable by other binding methods in the component.
 
-<section style="text-align: center">
+<section style="text-align: center" markdown="1">
 
 [Previous](09-maintaining-state) · [Next](11-withdraw-command)
 

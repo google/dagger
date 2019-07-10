@@ -75,7 +75,7 @@ both modules.
 >     called "multibindings", where a collection contains elements from several
 >     different binding methods.
 
-<section style="text-align: center">
+<section style="text-align: center" markdown="1">
 
 [Previous](06-new-command) · [Next](08-user-specific-types)
 

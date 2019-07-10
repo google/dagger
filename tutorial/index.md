@@ -23,7 +23,7 @@ ideas introduced in the section.
 *   Further reading includes:
     *   [Javadoc]
 
-<section style="text-align: center">
+<section style="text-align: center" markdown="1">
 
 [Next](01-setup)
 

@@ -84,7 +84,7 @@ kind of `Command`.
 >     type that Dagger doesn't yet know how to construct (the method's return
 >     type).
 
-<section style="text-align: center">
+<section style="text-align: center" markdown="1">
 
 [Previous](03-first-command) · [Next](05-abstraction-for-output)
 

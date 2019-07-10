@@ -51,7 +51,7 @@ _declarative_ change, we were able to change what `Command` was received by
 approach, you can write many different versions of your application and reuse
 code without massive changes.
 
-<section style="text-align: center">
+<section style="text-align: center" markdown="1">
 
 [Previous](05-abstraction-for-output) · [Next](07-two-for-the-price-of-one)
 

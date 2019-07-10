@@ -93,7 +93,7 @@ write to `System.out`.
 >         detail. Going forward, we'll use the term "provided" instead of
 >         "created", as that is more accurate for what is happening.
 
-<section style="text-align: center">
+<section style="text-align: center" markdown="1">
 
 [Previous](04-depending-on-interface) · [Next](06-new-command)
 

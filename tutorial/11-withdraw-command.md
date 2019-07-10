@@ -167,7 +167,7 @@ adjust the minimum balance and maximum withdrawal amounts if desired.
 >     types such as primitive types and `String`, which may be used in many
 >     places in a program for very different reasons.
 
-<section style="text-align: center">
+<section style="text-align: center" markdown="1">
 
 [Previous](10-deposit-after-login) · [Next](12-logging-out)
 

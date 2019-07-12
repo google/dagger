@@ -659,6 +659,97 @@ public class ScopingValidationTest {
   }
 
   @Test
+  public void componentScopeWithMultipleScopedDependenciesMustNotCycle() {
+    JavaFileObject type =
+        JavaFileObjects.forSourceLines(
+            "test.SimpleType",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class SimpleType {",
+            "  @Inject SimpleType() {}",
+            "}");
+    JavaFileObject scopeA =
+        JavaFileObjects.forSourceLines(
+            "test.ScopeA",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope @interface ScopeA {}");
+    JavaFileObject scopeB =
+        JavaFileObjects.forSourceLines(
+            "test.ScopeB",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope @interface ScopeB {}");
+    JavaFileObject longLifetime =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentLong",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@ScopeA",
+            "@Component",
+            "interface ComponentLong {",
+            "  SimpleType type();",
+            "}");
+    JavaFileObject mediumLifetime1 =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentMedium1",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@ScopeB",
+            "@Component(dependencies = ComponentLong.class)",
+            "interface ComponentMedium1 {",
+            "  SimpleType type();",
+            "}");
+    JavaFileObject mediumLifetime2 =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentMedium2",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@ScopeB",
+            "@Component",
+            "interface ComponentMedium2 {",
+            "}");
+    JavaFileObject shortLifetime =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentShort",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@ScopeA",
+            "@Component(dependencies = {ComponentMedium1.class, ComponentMedium2.class})",
+            "interface ComponentShort {",
+            "  SimpleType type();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
+                type, scopeA, scopeB, longLifetime, mediumLifetime1, mediumLifetime2, shortLifetime);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            message(
+                "test.ComponentShort depends on scoped components in a non-hierarchical scope "
+                    + "ordering:",
+                "    @test.ScopeA test.ComponentLong",
+                "    @test.ScopeB test.ComponentMedium1",
+                "    @test.ScopeA test.ComponentShort"));
+  }
+
+  @Test
   public void componentScopeAncestryMustNotCycle() {
     // The dependency relationship of components is necessarily from shorter lifetimes to
     // longer lifetimes.  The scoping annotations must reflect this, and so one cannot declare

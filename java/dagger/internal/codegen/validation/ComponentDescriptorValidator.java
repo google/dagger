@@ -433,15 +433,17 @@ public final class ComponentDescriptorValidator {
                 componentAnnotation -> {
                   ImmutableSet<TypeElement> scopedDependencies =
                       scopedTypesIn(componentAnnotation.dependencies());
-                  if (scopedDependencies.size() == 1) {
-                    // empty can be ignored (base-case), and > 1 is a separately-reported error.
+                  if (!scopedDependencies.isEmpty()) {
+                    // empty can be ignored (base-case)
                     scopeStack.push(scopes);
                     scopedDependencyStack.push(dependency);
-                    validateDependencyScopeHierarchy(
-                        component,
-                        getOnlyElement(scopedDependencies),
-                        scopeStack,
-                        scopedDependencyStack);
+                    for (TypeElement scopedDependency : scopedDependencies) {
+                      validateDependencyScopeHierarchy(
+                          component,
+                          scopedDependency,
+                          scopeStack,
+                          scopedDependencyStack);
+                    }
                     scopedDependencyStack.pop();
                     scopeStack.pop();
                   }

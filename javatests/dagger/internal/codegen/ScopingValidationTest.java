@@ -464,6 +464,97 @@ public class ScopingValidationTest {
   }
 
   @Test
+  public void componentWithScopeCanDependOnMultipleScopedComponentsEvenDoingADiamond() {
+    JavaFileObject type =
+        JavaFileObjects.forSourceLines(
+            "test.SimpleType",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class SimpleType {",
+            "  @Inject SimpleType() {}",
+            "}");
+    JavaFileObject simpleScope =
+        JavaFileObjects.forSourceLines(
+            "test.SimpleScope",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope @interface SimpleScope {}");
+    JavaFileObject scopeA =
+        JavaFileObjects.forSourceLines(
+            "test.ScopeA",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope @interface ScopeA {}");
+    JavaFileObject scopeB =
+        JavaFileObjects.forSourceLines(
+            "test.ScopeB",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope @interface ScopeB {}");
+    JavaFileObject longLifetime =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentLong",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@ScopeA",
+            "@Component",
+            "interface ComponentLong {",
+            "  SimpleType type();",
+            "}");
+    JavaFileObject mediumLifetime1 =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentMedium1",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@ScopeB",
+            "@Component(dependencies = ComponentLong.class)",
+            "interface ComponentMedium1 {",
+            "  SimpleType type();",
+            "}");
+    JavaFileObject mediumLifetime2 =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentMedium2",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@ScopeB",
+            "@Component(dependencies = ComponentLong.class)",
+            "interface ComponentMedium2 {",
+            "}");
+    JavaFileObject shortLifetime =
+        JavaFileObjects.forSourceLines(
+            "test.ComponentShort",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@SimpleScope",
+            "@Component(dependencies = {ComponentMedium1.class, ComponentMedium2.class})",
+            "interface ComponentShort {",
+            "  SimpleType type();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
+                type, simpleScope, scopeA, scopeB, longLifetime, mediumLifetime1, mediumLifetime2, shortLifetime);
+    assertThat(compilation).succeededWithoutWarnings();
+  }
+
+  @Test
   public void componentWithoutScopeCannotDependOnScopedComponent() {
     JavaFileObject type =
         JavaFileObjects.forSourceLines(

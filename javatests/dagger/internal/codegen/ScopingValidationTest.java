@@ -384,9 +384,8 @@ public class ScopingValidationTest {
   }
 
   @Test
-  public void componentWithScopeMayDependOnOnlyOneScopedComponent() {
-    // If a scoped component will have dependencies, they must only include, at most, a single
-    // scoped component
+  public void componentWithScopeCanDependOnMultipleScopedComponents() {
+    // If a scoped component will have dependencies, they can include multiple scoped component
     JavaFileObject type =
         JavaFileObjects.forSourceLines(
             "test.SimpleType",
@@ -461,14 +460,7 @@ public class ScopingValidationTest {
         daggerCompiler()
             .compile(
                 type, simpleScope, simpleScoped, singletonScopedA, singletonScopedB, scopeless);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            message(
-                "@test.SimpleScope test.SimpleScopedComponent depends on more than one scoped "
-                    + "component:",
-                "    @Singleton test.SingletonComponentA",
-                "    @Singleton test.SingletonComponentB"));
+    assertThat(compilation).succeededWithoutWarnings();
   }
 
   @Test

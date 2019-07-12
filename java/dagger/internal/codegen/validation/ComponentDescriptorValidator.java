@@ -193,8 +193,8 @@ public final class ComponentDescriptorValidator {
     }
 
     /**
-     * Validates that among the dependencies are at most one scoped dependency, that there are no
-     * cycles within the scoping chain, and that singleton components have no scoped dependencies.
+     * Validates that among the dependencies there are no cycles within the scoping chain, and that
+     * singleton components have no scoped dependencies.
      */
     private void validateDependencyScopes(ComponentDescriptor component) {
       ImmutableSet<Scope> scopes = component.scopes();
@@ -222,17 +222,6 @@ public final class ComponentDescriptorValidator {
                 component,
                 message.toString());
           }
-        } else if (scopedDependencies.size() > 1) {
-          // Scoped components may depend on at most one scoped component.
-          StringBuilder message = new StringBuilder();
-          for (Scope scope : scopes) {
-            message.append(getReadableSource(scope)).append(' ');
-          }
-          message
-              .append(component.typeElement().getQualifiedName())
-              .append(" depends on more than one scoped component:\n");
-          appendIndentedComponentsList(message, scopedDependencies);
-          reportComponentError(component, message.toString());
         } else {
           // Dagger 1.x scope compatibility requires this be suppress-able.
           if (!compilerOptions.scopeCycleValidationType().equals(ValidationType.NONE)) {

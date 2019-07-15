@@ -50,6 +50,5 @@ GenJavaTests(
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/mockito",
         "@google_bazel_common//third_party/java/truth",
-        "@google_bazel_common//third_party/java/truth:truth8",
     ],
 )

@@ -27,7 +27,7 @@ GenJavaTests(
     test_only_deps = [
         "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/junit",
-        "@google_bazel_common//third_party/java/truth:truth8",
+        "@google_bazel_common//third_party/java/truth",
     ],
     deps = [
         "//:dagger_with_compiler",

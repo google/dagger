@@ -4,7 +4,8 @@ title: User-specific types
 ---
 
 Now that users can log in, let's add some code that is specific to the logged in
-user.
+user. The following `Database` class keeps track of each user and their account
+balance. It can keep track of multiple users and different balances.
 
 ```java
 class Database {

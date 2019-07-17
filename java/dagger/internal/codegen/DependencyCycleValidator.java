@@ -190,6 +190,8 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
   }
 
   private boolean breaksCycle(DependencyEdge edge, BindingGraph graph) {
+    // Map<K, V> multibindings depend on Map<K, Provider<V>> entries, but those don't break any
+    // cycles, so ignore them.
     if (edge.dependencyRequest().key().multibindingContributionIdentifier().isPresent()) {
       return false;
     }

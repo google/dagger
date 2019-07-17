@@ -85,8 +85,8 @@ write to `System.out`.
 >     constructors, they can have parameters: those parameters are their
 >     dependencies.
 > *   [`@Provides`] methods can contain arbitrary code as long as they return an
->     instance of the provided type. They need not create a new instance on each
->     invocation.
+>     instance of the provided type. They do not need to create a new instance
+>     on each invocation.
 >     *   This highlights an important aspect of Dagger (and dependency
 >         injection as a whole): when a type is requested, whether or not a new
 >         instance is created to satisfy that request is an implementation

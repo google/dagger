@@ -183,6 +183,7 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
     noLongerRecognized(EXPERIMENTAL_ANDROID_MODE);
     noLongerRecognized(FLOATING_BINDS_METHODS);
     noLongerRecognized(EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS);
+    noLongerRecognized(USE_GRADLE_INCREMENTAL_PROCESSING);
     return this;
   }
 

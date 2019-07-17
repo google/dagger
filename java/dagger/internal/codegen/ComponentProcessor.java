@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.DYNAMIC;
+import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import com.google.auto.common.BasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
@@ -24,6 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.BindsInstance;
@@ -48,7 +49,7 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
  *
  * <p>TODO(gak): give this some better documentation
  */
-@IncrementalAnnotationProcessor(DYNAMIC)
+@IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
 public class ComponentProcessor extends BasicAnnotationProcessor {
   private final Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins;
@@ -95,13 +96,10 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Override
   public Set<String> getSupportedOptions() {
-    ImmutableSet.Builder<String> options = ImmutableSet.builder();
-    options.addAll(ProcessingEnvironmentCompilerOptions.supportedOptions());
-    options.addAll(bindingGraphPlugins.allSupportedOptions());
-    if (compilerOptions.useGradleIncrementalProcessing()) {
-      options.add("org.gradle.annotation.processing.isolating");
-    }
-    return options.build();
+    return Sets.union(
+            ProcessingEnvironmentCompilerOptions.supportedOptions(),
+            bindingGraphPlugins.allSupportedOptions())
+        .immutableCopy();
   }
 
   @Override

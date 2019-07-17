@@ -98,7 +98,7 @@ final class DaggerStatisticsCollector {
     membersInjectorsGenerated++;
   }
 
-  @SuppressWarnings("StopwatchNanosToDuration") // intentional
+  @SuppressWarnings({"GoodTime", "StopwatchNanosToDuration"}) // intentional
   private Duration elapsedTime(Stopwatch stopwatch) {
     // Using the java 7 method here as opposed to the Duration-returning version to avoid issues
     // when other annotation processors rely on java 7's guava

@@ -25,6 +25,7 @@ import com.google.common.base.Ticker;
  * A monitor that measures the timing of the execution of a producer method, and logs those timings
  * with the given recorder.
  */
+@SuppressWarnings("GoodTime") // should use java.time.Duration
 final class TimingProducerMonitor extends ProducerMonitor {
   private final ProducerTimingRecorder recorder;
   private final Stopwatch stopwatch;

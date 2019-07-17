@@ -34,7 +34,6 @@ GenJavaTests(
         "//:dagger_with_compiler",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",
-        "@google_bazel_common//third_party/java/truth:truth8",
         "//java/dagger/android",
         "//java/dagger/android/processor",
         "//java/dagger/internal/codegen:processor",

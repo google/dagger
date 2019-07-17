@@ -340,12 +340,6 @@ final class BindingGraphFactory implements ClearableCache {
      *         <li>{@code Map<K, Provider<V>>} if the requested key's type is {@code Map<K,
      *             Producer<V>>}.
      *       </ul>
-     *   <li>A synthetic binding that depends on {@code Map<K, Producer<V>>} if the requested key's
-     *       type is {@code Map<K, V>} and there are some explicit bindings for {@code Map<K,
-     *       Producer<V>>}.
-     *   <li>A synthetic binding that depends on {@code Map<K, Provider<V>>} if the requested key's
-     *       type is {@code Map<K, V>} and there are some explicit bindings for {@code Map<K,
-     *       Provider<V>>} but no explicit bindings for {@code Map<K, Producer<V>>}.
      *   <li>An implicit {@link Inject @Inject}-annotated constructor binding if there is one and
      *       there are no explicit bindings or synthetic bindings.
      * </ul>

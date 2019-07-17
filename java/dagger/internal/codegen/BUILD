@@ -17,6 +17,7 @@
 
 package(default_visibility = ["//:src"])
 
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 load("//tools:maven.bzl", "POM_VERSION", "pom_file")
 
@@ -456,8 +457,6 @@ java_plugin(
     processor_class = "dagger.internal.codegen.ComponentProcessor",
     deps = [":bootstrap_compiler"],
 )
-
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "codegen-javadoc",

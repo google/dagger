@@ -5,8 +5,12 @@ title: Tutorial setup
 
 To explain how to use Dagger, we will build a command line
 [ATM](https://en.wikipedia.org/wiki/Automated_teller_machine) application. It
-will accept commands on the command line like "deposit 20", "withdraw 10" and
-track the balance of accounts.
+will track the balance of accounts, and accept commands on the command line:
+
+```
+> deposit 20
+> withdraw 10
+```
 
 Let's start with building the shell of this application, first without Dagger.
 If some aspects appear to be overly complicated, bear with us, as Dagger starts

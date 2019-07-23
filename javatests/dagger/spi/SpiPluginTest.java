@@ -53,7 +53,9 @@ public final class SpiPluginTest {
         javac()
             .withProcessors(new ComponentProcessor())
             .withOptions(
-                "-Aerror_on_binding=java.lang.Integer", "-Adagger.fullBindingGraphValidation=ERROR")
+                "-Aerror_on_binding=java.lang.Integer",
+                "-Adagger.fullBindingGraphValidation=ERROR",
+                "-Adagger.pluginsVisitFullBindingGraphs=ENABLED")
             .compile(module);
     assertThat(compilation).failed();
     assertThat(compilation)

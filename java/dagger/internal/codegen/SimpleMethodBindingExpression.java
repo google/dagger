@@ -16,13 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.asExecutable;
-import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.InjectionMethods.ProvisionMethod.requiresInjectionMethod;
-import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
-import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
-import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
-
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -42,6 +35,13 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+
+import static com.google.auto.common.MoreElements.asExecutable;
+import static com.google.common.base.Preconditions.checkArgument;
+import static dagger.internal.codegen.InjectionMethods.ProvisionMethod.requiresInjectionMethod;
+import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
+import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
+import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 
 /**
  * A binding expression that invokes methods or constructors directly (without attempting to scope)
@@ -176,13 +176,16 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   }
 
   private Optional<CodeBlock> moduleReference(ClassName requestingClass) {
-    return provisionBinding.requiresModuleInstance()
-        ? provisionBinding
-            .contributingModule()
-            .map(Element::asType)
-            .map(ComponentRequirement::forModule)
-            .map(module -> componentRequirementExpressions.getExpression(module, requestingClass))
-        : Optional.empty();
+    if (provisionBinding.requiresModuleInstance(compilerOptions)) {
+      return provisionBinding.contributingModule()
+          .map(Element::asType)
+          .map(ComponentRequirement::forModule)
+          .map(module -> componentRequirementExpressions.getExpression(module, requestingClass));
+    } else if (compilerOptions.kotlinMetadata() && provisionBinding.isModuleKotlinObject()) {
+      return Optional.of(CodeBlock.of("$T.INSTANCE", provisionBinding.bindingTypeElement().get()));
+    } {
+      return Optional.empty();
+    }
   }
 
   private TypeMirror simpleMethodReturnType() {

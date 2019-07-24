@@ -53,6 +53,9 @@ CODEGEN_SHARED_DEPS = [
     "//java/dagger/model",
     "//java/dagger/spi",
     "//java/dagger/model:internal-proxies",
+    "@org_jetbrains_kotlinx_kotlinx_metadata_jvm//jar",
+    "@org_jetbrains_kotlin_kotlin_stdlib//jar",
+    "@org_jetbrains_annotations//jar"
 ]
 
 CODEGEN_DEPS = CODEGEN_SHARED_DEPS + [

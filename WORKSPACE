@@ -24,6 +24,21 @@ load("@google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules
 
 google_common_workspace_rules()
 
+maven_jar(
+    name = "org_jetbrains_kotlinx_kotlinx_metadata_jvm",
+    artifact = "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0",
+)
+
+maven_jar(
+    name = "org_jetbrains_kotlin_kotlin_stdlib",
+    artifact = "org.jetbrains.kotlin:kotlin-stdlib:1.3.41",
+)
+
+maven_jar(
+    name = "org_jetbrains_annotations",
+    artifact = "org.jetbrains:annotations:13.0",
+)
+
 # This fixes an issue with protobuf starting to use zlib by default in 3.7.0.
 # TODO(ronshapiro): Figure out if this is in fact necessary, or if proto can depend on the
 # @bazel_tools library directly. See discussion in

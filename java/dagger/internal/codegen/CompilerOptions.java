@@ -74,4 +74,6 @@ abstract class CompilerOptions {
   abstract Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind();
 
   abstract ValidationType explicitBindingConflictsWithInjectValidationType();
+
+  abstract boolean kotlinMetadata();
 }

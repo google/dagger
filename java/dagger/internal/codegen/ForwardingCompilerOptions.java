@@ -16,10 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /** A {@link CompilerOptions} object that delegates to another one. */
 class ForwardingCompilerOptions extends CompilerOptions {
@@ -103,5 +103,10 @@ class ForwardingCompilerOptions extends CompilerOptions {
   @Override
   ValidationType explicitBindingConflictsWithInjectValidationType() {
     return delegate.explicitBindingConflictsWithInjectValidationType();
+  }
+
+  @Override
+  boolean kotlinMetadata() {
+    return delegate.kotlinMetadata();
   }
 }

@@ -16,9 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.ValidationType.NONE;
-import static javax.tools.Diagnostic.Kind.NOTE;
-
 import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.model.JavacTypes;
 import com.sun.tools.javac.util.Context;
@@ -35,6 +32,9 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
+
+import static dagger.internal.codegen.ValidationType.NONE;
+import static javax.tools.Diagnostic.Kind.NOTE;
 
 /**
  * A module that provides a {@link BindingGraphFactory} and {@link ComponentDescriptorFactory} for
@@ -118,6 +118,11 @@ abstract class JavacPluginModule {
       @Override
       ValidationType explicitBindingConflictsWithInjectValidationType() {
         return NONE;
+      }
+
+      @Override
+      boolean kotlinMetadata() {
+        return false;
       }
     };
   }

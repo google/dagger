@@ -101,8 +101,8 @@ abstract class ProvisionBinding extends ContributionBinding {
   // performance improvement for large components.
   @Memoized
   @Override
-  boolean requiresModuleInstance() {
-    return super.requiresModuleInstance();
+  boolean requiresModuleInstance(CompilerOptions options) {
+    return super.requiresModuleInstance(options);
   }
 
   @Memoized

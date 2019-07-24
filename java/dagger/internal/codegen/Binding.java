@@ -16,13 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Suppliers.memoize;
-import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
-import static java.util.stream.Collectors.toSet;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.STATIC;
-
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -49,6 +42,16 @@ import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleTypeVisitor6;
+import kotlinx.metadata.Flag;
+import kotlinx.metadata.KmClass;
+
+import static com.google.common.base.Suppliers.memoize;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.KotlinUtil.kmClassOf;
+import static java.util.stream.Collectors.toSet;
+import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.STATIC;
 
 /**
  * An abstract type for classes representing a Dagger binding. Particularly, contains the {@link
@@ -58,16 +61,22 @@ import javax.lang.model.util.SimpleTypeVisitor6;
  */
 abstract class Binding extends BindingDeclaration {
 
+  final boolean isModuleKotlinObject() {
+    Optional<KmClass> classOptional = moduleKmClass.get();
+    return classOptional.filter(kmClass -> Flag.Class.IS_OBJECT.invoke(kmClass.getFlags()))
+        .isPresent();
+  }
+
   /**
    * Returns {@code true} if using this binding requires an instance of the {@link
    * #contributingModule()}.
    */
-  boolean requiresModuleInstance() {
+  boolean requiresModuleInstance(CompilerOptions options) {
     if (!bindingElement().isPresent() || !contributingModule().isPresent()) {
       return false;
     }
     Set<Modifier> modifiers = bindingElement().get().getModifiers();
-    return !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC);
+    return !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC) && (options.kotlinMetadata() && !isModuleKotlinObject());
   }
 
   /**
@@ -129,6 +138,11 @@ abstract class Binding extends BindingDeclaration {
                   .stream()
                   .map(DependencyAssociation::frameworkDependency)
                   .collect(toImmutableList()));
+
+  // TODO this would be better optimized to share the parsed metadata for all bindings originating
+  //  from a given contributing module
+  private final Supplier<Optional<KmClass>> moduleKmClass =
+      memoize(() -> kmClassOf(contributingModule()));
 
   /**
    * The framework dependencies of {@code binding}. There will be one element for each different

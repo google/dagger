@@ -83,7 +83,7 @@ abstract class MembersInjectionBinding extends Binding {
   }
 
   @Override
-  boolean requiresModuleInstance() {
+  boolean requiresModuleInstance(CompilerOptions options) {
     return false;
   }
 

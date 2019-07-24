@@ -16,6 +16,22 @@
 
 package dagger.internal.codegen;
 
+import com.google.common.base.Ascii;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import dagger.producers.Produces;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
+
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -32,6 +48,7 @@ import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Featu
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.WRITE_PRODUCER_NAME_IN_TOKEN;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.KeyOnlyOption.HEADER_COMPILATION;
+import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.KeyOnlyOption.KOTLIN_METADATA;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.KeyOnlyOption.USE_GRADLE_INCREMENTAL_PROCESSING;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.DISABLE_INTER_COMPONENT_SCOPE_VALIDATION;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.EXPLICIT_BINDING_CONFLICTS_WITH_INJECT;
@@ -45,22 +62,6 @@ import static dagger.internal.codegen.ValidationType.NONE;
 import static dagger.internal.codegen.ValidationType.WARNING;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Stream.concat;
-
-import com.google.common.base.Ascii;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import dagger.producers.Produces;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Stream;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.TypeElement;
-import javax.tools.Diagnostic;
 
 final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   /** Returns a valid {@link CompilerOptions} parsed from the processing environment. */
@@ -157,6 +158,10 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
     return parseOption(EXPLICIT_BINDING_CONFLICTS_WITH_INJECT);
   }
 
+  @Override boolean kotlinMetadata() {
+    return isEnabled(KOTLIN_METADATA);
+  }
+
   private boolean isEnabled(KeyOnlyOption keyOnlyOption) {
     return processingEnvironment.getOptions().containsKey(keyOnlyOption.toString());
   }
@@ -236,6 +241,13 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
       @Override
       public String toString() {
         return "dagger.gradle.incremental";
+      }
+    },,
+
+    KOTLIN_METADATA {
+      @Override
+      public String toString() {
+        return "dagger.kotlin.metadata";
       }
     },
   }

@@ -99,6 +99,7 @@ java_library(
         "FrameworkTypes.java",
         "InjectionAnnotations.java",
         "Keys.java",
+        "KotlinUtil.java",
         "MapKeyAccessibility.java",
         "MapType.java",
         "ModuleAnnotation.java",

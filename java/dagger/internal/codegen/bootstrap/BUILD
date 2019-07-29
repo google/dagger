@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Dagger Authors.
+# Copyright (C) 2019 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,19 +13,19 @@
 # limitations under the License.
 
 # Description:
-#   Dagger-specific extensions to the javax.lang.model APIs
+#   Bootstrap libraries for building Dagger with Dagger.
 
 package(default_visibility = ["//:src"])
 
-java_library(
-    name = "langmodel",
-    srcs = glob(["*.java"]),
-    plugins = ["//java/dagger/internal/codegen/bootstrap"],
-    tags = ["maven:merged"],
-    deps = [
-        "//java/dagger:core",
-        "@google_bazel_common//third_party/java/auto:common",
-        "@google_bazel_common//third_party/java/guava",
-        "@google_bazel_common//third_party/java/javapoet",
-    ],
+java_plugin(
+    name = "bootstrap",
+    generates_api = 1,
+    processor_class = "dagger.internal.codegen.ComponentProcessor",
+    deps = [":bootstrap_compiler"],
+)
+
+java_import(
+    name = "bootstrap_compiler",
+    jars = ["bootstrap_compiler_deploy.jar"],
+    visibility = ["//visibility:private"],
 )

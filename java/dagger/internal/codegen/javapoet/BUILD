@@ -20,7 +20,7 @@ package(default_visibility = ["//:src"])
 java_library(
     name = "javapoet",
     srcs = glob(["*.java"]),
-    plugins = ["//java/dagger/internal/codegen:bootstrap_compiler_plugin"],
+    plugins = ["//java/dagger/internal/codegen/bootstrap"],
     tags = ["maven:merged"],
     deps = [
         "//java/dagger:core",

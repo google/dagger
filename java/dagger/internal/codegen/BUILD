@@ -35,7 +35,9 @@ CODEGEN_SRCS = glob(
               JAVAC_PLUGIN_MODULE_SRCS,
 )
 
-CODEGEN_PLUGINS = [":bootstrap_compiler_plugin"]
+CODEGEN_PLUGINS = [
+    "//java/dagger/internal/codegen/bootstrap",
+]
 
 CODEGEN_SHARED_DEPS = [
     "@google_bazel_common//third_party/java/auto:service",
@@ -443,19 +445,6 @@ java_import(
     name = "kythe_plugin",
     jars = ["kythe_plugin_deploy.jar"],
     neverlink = 1,
-)
-
-java_import(
-    name = "bootstrap_compiler",
-    jars = ["bootstrap_compiler_deploy.jar"],
-    visibility = ["//visibility:private"],
-)
-
-java_plugin(
-    name = "bootstrap_compiler_plugin",
-    generates_api = 1,
-    processor_class = "dagger.internal.codegen.ComponentProcessor",
-    deps = [":bootstrap_compiler"],
 )
 
 javadoc_library(

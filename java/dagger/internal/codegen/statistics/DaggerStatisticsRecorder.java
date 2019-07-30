@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.statistics;
 
 /** Records collected {@link DaggerStatistics}. */
-interface DaggerStatisticsRecorder {
+public interface DaggerStatisticsRecorder {
   /** Records the given {@code statistics}. */
   void recordStatistics(DaggerStatistics statistics);
 }

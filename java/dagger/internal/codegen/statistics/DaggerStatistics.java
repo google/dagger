@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.statistics;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.value.AutoValue;
@@ -26,7 +26,7 @@ import java.time.Duration;
 
 /** Statistics collected over the course of Dagger annotation processing. */
 @AutoValue
-abstract class DaggerStatistics {
+public abstract class DaggerStatistics {
   /** Returns a new {@link Builder}. */
   static Builder builder() {
     return new AutoValue_DaggerStatistics.Builder();
@@ -38,16 +38,16 @@ abstract class DaggerStatistics {
   }
 
   /** Total time spent in Dagger annotation processing. */
-  abstract Duration totalProcessingTime();
+  public abstract Duration totalProcessingTime();
 
   /** List of statistics for processing rounds that the Dagger processor handled. */
-  abstract ImmutableList<RoundStatistics> rounds();
+  public abstract ImmutableList<RoundStatistics> rounds();
 
   /** Records the number of {@code @Inject} constructor factories generated in this compilation. */
-  abstract int injectFactoriesGenerated();
+  public abstract int injectFactoriesGenerated();
 
   /** Records the number of {@link dagger.MembersInjector}s generated in this compilation. */
-  abstract int membersInjectorsGenerated();
+  public abstract int membersInjectorsGenerated();
 
   /** Builder for {@link DaggerStatistics}. */
   @AutoValue.Builder
@@ -79,9 +79,9 @@ abstract class DaggerStatistics {
 
   /** Statistics for each processing step in a single processing round. */
   @AutoValue
-  abstract static class RoundStatistics {
+  public abstract static class RoundStatistics {
     /** Map of processing step class to duration of that step for this round. */
-    abstract ImmutableMap<Class<? extends ProcessingStep>, Duration> stepDurations();
+    public abstract ImmutableMap<Class<? extends ProcessingStep>, Duration> stepDurations();
 
     /** Builder for {@link RoundStatistics}. */
     @AutoValue.Builder

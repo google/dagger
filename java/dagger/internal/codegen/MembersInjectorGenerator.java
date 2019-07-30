@@ -52,6 +52,7 @@ import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
 import dagger.model.Key;
 import java.util.Map.Entry;
 import java.util.Optional;

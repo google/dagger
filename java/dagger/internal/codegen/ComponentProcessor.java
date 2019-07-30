@@ -32,6 +32,8 @@ import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import dagger.internal.codegen.SpiModule.TestingPlugins;
+import dagger.internal.codegen.statistics.DaggerStatisticsCollectingProcessingStep;
+import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
 import dagger.spi.BindingGraphPlugin;
 import java.util.Arrays;
 import java.util.Optional;

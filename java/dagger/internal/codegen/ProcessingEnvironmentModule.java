@@ -23,6 +23,7 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.Reusable;
 import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.statistics.DaggerStatisticsRecorder;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Filer;

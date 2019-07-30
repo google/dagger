@@ -59,6 +59,7 @@ import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
 import dagger.model.Key;
 import java.util.List;
 import java.util.Optional;

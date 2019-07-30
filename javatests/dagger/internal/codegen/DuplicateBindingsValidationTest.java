@@ -82,7 +82,10 @@ public class DuplicateBindingsValidationTest {
         "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
+        daggerCompiler()
+            .withOptions(
+                fullBindingGraphValidationOption())
+            .compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -134,7 +137,10 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
+        daggerCompiler()
+            .withOptions(
+                fullBindingGraphValidationOption())
+            .compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -200,7 +206,10 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
+        daggerCompiler()
+            .withOptions(
+                fullBindingGraphValidationOption())
+            .compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -268,7 +277,10 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
+        daggerCompiler()
+            .withOptions(
+                fullBindingGraphValidationOption())
+            .compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -337,7 +349,10 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
+        daggerCompiler()
+            .withOptions(
+                fullBindingGraphValidationOption())
+            .compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -394,7 +409,10 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
+        daggerCompiler()
+            .withOptions(
+                fullBindingGraphValidationOption())
+            .compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -447,7 +465,10 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
+        daggerCompiler()
+            .withOptions(
+                fullBindingGraphValidationOption())
+            .compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -574,7 +595,10 @@ public class DuplicateBindingsValidationTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(fullBindingGraphValidationOption()).compile(component);
+        daggerCompiler()
+            .withOptions(
+                fullBindingGraphValidationOption())
+            .compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
@@ -647,7 +671,8 @@ public class DuplicateBindingsValidationTest {
 
     Compilation compilation =
         daggerCompiler()
-            .withOptions(fullBindingGraphValidationOption())
+            .withOptions(
+                fullBindingGraphValidationOption())
             .compile(aComponent, bComponent);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -728,7 +753,8 @@ public class DuplicateBindingsValidationTest {
 
     Compilation compilation =
         daggerCompiler()
-            .withOptions(fullBindingGraphValidationOption())
+            .withOptions(
+                fullBindingGraphValidationOption())
             .compile(aComponent, bComponent, cComponent);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -804,7 +830,8 @@ public class DuplicateBindingsValidationTest {
 
     Compilation compilation =
         daggerCompiler()
-            .withOptions(fullBindingGraphValidationOption())
+            .withOptions(
+                fullBindingGraphValidationOption())
             .compile(aComponent, bComponent, cComponent);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -992,7 +1019,9 @@ public class DuplicateBindingsValidationTest {
 
     Compilation compilation =
         daggerCompiler()
-            .withOptions("-Adagger.nullableValidation=WARNING", fullBindingGraphValidationOption())
+            .withOptions(
+                "-Adagger.nullableValidation=WARNING",
+                fullBindingGraphValidationOption())
             .compile(parentConflictsWithChild, child);
     assertThat(compilation).failed();
     assertThat(compilation)

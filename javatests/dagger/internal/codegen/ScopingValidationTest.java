@@ -243,7 +243,8 @@ public class ScopingValidationTest {
 
     compilation =
         daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
+            .withOptions(
+                "-Adagger.fullBindingGraphValidation=ERROR")
             .compile(componentFile, scopeFile, scopeWithAttribute, typeFile, moduleFile);
     // The @Inject binding for ScopedType should not appear here, but the @Singleton binding should.
     assertThat(compilation)

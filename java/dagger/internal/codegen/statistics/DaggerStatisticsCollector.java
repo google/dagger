@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.statistics;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -31,7 +31,7 @@ import javax.inject.Singleton;
 
 /** Collects {@link DaggerStatistics} over the course of Dagger annotation processing. */
 @Singleton // for state sharing
-final class DaggerStatisticsCollector {
+public final class DaggerStatisticsCollector {
 
   private final Ticker ticker;
   private final Stopwatch totalRuntimeStopwatch;
@@ -52,7 +52,7 @@ final class DaggerStatisticsCollector {
   }
 
   /** Called when Dagger annotation processing starts. */
-  void processingStarted() {
+  public void processingStarted() {
     checkState(!totalRuntimeStopwatch.isRunning());
     totalRuntimeStopwatch.start();
   }
@@ -72,13 +72,13 @@ final class DaggerStatisticsCollector {
   }
 
   /** Called when Dagger finishes a processing round. */
-  void roundFinished() {
+  public void roundFinished() {
     statisticsBuilder.addRound(roundBuilder.build());
     roundBuilder = DaggerStatistics.roundBuilder();
   }
 
   /** Called when Dagger annotation processing completes. */
-  void processingStopped() {
+  public void processingStopped() {
     checkState(totalRuntimeStopwatch.isRunning());
     totalRuntimeStopwatch.stop();
     statisticsBuilder
@@ -90,11 +90,11 @@ final class DaggerStatisticsCollector {
         recorder -> recorder.recordStatistics(statisticsBuilder.build()));
   }
 
-  void recordInjectFactoryGenerated() {
+  public void recordInjectFactoryGenerated() {
     injectFactoriesGenerated++;
   }
 
-  void recordMembersInjectorGenerated() {
+  public void recordMembersInjectorGenerated() {
     membersInjectorsGenerated++;
   }
 

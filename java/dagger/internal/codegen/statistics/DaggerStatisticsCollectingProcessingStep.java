@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.statistics;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -28,12 +28,12 @@ import javax.lang.model.element.Element;
  * {@link ProcessingStep} that delegates to another {@code ProcessingStep} and collects timing
  * statistics for each processing round for that step.
  */
-final class DaggerStatisticsCollectingProcessingStep implements ProcessingStep {
+public final class DaggerStatisticsCollectingProcessingStep implements ProcessingStep {
 
   private final ProcessingStep delegate;
   private final DaggerStatisticsCollector statisticsCollector;
 
-  DaggerStatisticsCollectingProcessingStep(
+  public DaggerStatisticsCollectingProcessingStep(
       ProcessingStep delegate, DaggerStatisticsCollector statisticsCollector) {
     this.delegate = checkNotNull(delegate);
     this.statisticsCollector = checkNotNull(statisticsCollector);

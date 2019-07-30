@@ -86,10 +86,6 @@ java_library(
         "CompilerOptions.java",
         "ComponentAnnotation.java",
         "ContributionType.java",
-        "DaggerStatistics.java",
-        "DaggerStatisticsCollectingProcessingStep.java",
-        "DaggerStatisticsCollector.java",
-        "DaggerStatisticsRecorder.java",
         "DiagnosticFormatting.java",
         "ElementFormatter.java",
         "FeatureStatus.java",
@@ -338,6 +334,7 @@ java_library(
         ":binding",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/statistics",
     ],
 )
 
@@ -377,6 +374,7 @@ java_library(
         ":validation",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/statistics",
         "@google_bazel_common//third_party/java/incap",
     ],
 )
@@ -463,6 +461,7 @@ java_library(
     deps = CODEGEN_DEPS + [
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/javapoet",
+        "//java/dagger/internal/codegen/statistics",
         "@google_bazel_common//third_party/java/incap",
     ],
 )

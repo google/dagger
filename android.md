@@ -216,7 +216,7 @@ public class YourFragment extends Fragment {
 
   @Override
   public void onAttach(Activity activity) {
-    AndroidInjection.inject(this);
+    AndroidSupportInjection.inject(this);
     super.onAttach(activity);
     // ...
   }

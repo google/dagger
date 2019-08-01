@@ -53,7 +53,7 @@ import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
-import dagger.model.Key;
+import dagger.model.DependencyRequest;
 import java.util.Map.Entry;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
@@ -123,9 +123,11 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
             .addAnnotation(Override.class)
             .addParameter(injectedTypeName, "instance");
 
-    ImmutableMap<Key, FrameworkField> fields = generateBindingFieldsForDependencies(binding);
+    ImmutableMap<DependencyRequest, FrameworkField> fields =
+        generateBindingFieldsForDependencies(binding);
 
-    ImmutableMap.Builder<Key, FieldSpec> dependencyFieldsBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<DependencyRequest, FieldSpec> dependencyFieldsBuilder =
+        ImmutableMap.builder();
 
     MethodSpec.Builder constructorBuilder = constructorBuilder().addModifiers(PUBLIC);
 
@@ -144,14 +146,14 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
 
     boolean usesRawFrameworkTypes = false;
     UniqueNameSet fieldNames = new UniqueNameSet();
-    for (Entry<Key, FrameworkField> fieldEntry : fields.entrySet()) {
-      Key dependencyKey = fieldEntry.getKey();
+    for (Entry<DependencyRequest, FrameworkField> fieldEntry : fields.entrySet()) {
+      DependencyRequest dependency = fieldEntry.getKey();
       FrameworkField bindingField = fieldEntry.getValue();
 
       // If the dependency type is not visible to this members injector, then use the raw framework
       // type for the field.
       boolean useRawFrameworkType =
-          !isTypeAccessibleFrom(dependencyKey.type(), generatedTypeName.packageName());
+          !isTypeAccessibleFrom(dependency.key().type(), generatedTypeName.packageName());
 
       String fieldName = fieldNames.getUniqueName(bindingField.name());
       TypeName fieldType = useRawFrameworkType ? bindingField.type().rawType : bindingField.type();
@@ -172,7 +174,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
       FieldSpec field = fieldBuilder.build();
       injectorTypeBuilder.addField(field);
       constructorBuilder.addStatement("this.$1N = $1N", field);
-      dependencyFieldsBuilder.put(dependencyKey, field);
+      dependencyFieldsBuilder.put(dependency, field);
       constructorInvocationParameters.add(CodeBlock.of("$N", field));
     }
 
@@ -183,7 +185,7 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
     injectorTypeBuilder.addMethod(constructorBuilder.build());
     injectorTypeBuilder.addMethod(createMethodBuilder.build());
 
-    ImmutableMap<Key, FieldSpec> dependencyFields = dependencyFieldsBuilder.build();
+    ImmutableMap<DependencyRequest, FieldSpec> dependencyFields = dependencyFieldsBuilder.build();
 
     injectMembersBuilder.addCode(
         InjectionSiteMethod.invokeAll(

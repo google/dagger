@@ -17,29 +17,19 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Suppliers.memoize;
-import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
-import static java.util.stream.Collectors.toSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import com.google.auto.value.AutoValue;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
-import dagger.model.Key;
 import dagger.model.Scope;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.Element;
@@ -98,7 +88,6 @@ abstract class Binding extends BindingDeclaration {
    * The set of {@link DependencyRequest dependencies} that are added by the framework rather than a
    * user-defined injection site. This returns an unmodifiable set.
    */
-  // TODO(gak): this will eventually get changed to return a set of FrameworkDependency
   ImmutableSet<DependencyRequest> implicitDependencies() {
     return ImmutableSet.of();
   }
@@ -120,144 +109,6 @@ abstract class Binding extends BindingDeclaration {
    */
   final ImmutableSet<DependencyRequest> dependencies() {
     return dependencies.get();
-  }
-
-  private final Supplier<ImmutableList<FrameworkDependency>> frameworkDependencies =
-      memoize(
-          () ->
-              dependencyAssociations()
-                  .stream()
-                  .map(DependencyAssociation::frameworkDependency)
-                  .collect(toImmutableList()));
-
-  /**
-   * The framework dependencies of {@code binding}. There will be one element for each different
-   * binding key in the <em>{@linkplain Binding#unresolved() unresolved}</em> version of {@code
-   * binding}.
-   *
-   * <p>For example, given the following modules:
-   *
-   * <pre><code>
-   *   {@literal @Module} abstract class {@literal BaseModule<T>} {
-   *     {@literal @Provides} Foo provideFoo(T t, String string) {
-   *       return …;
-   *     }
-   *   }
-   *
-   *   {@literal @Module} class StringModule extends {@literal BaseModule<String>} {}
-   * </code></pre>
-   *
-   * Both dependencies of {@code StringModule.provideFoo} have the same binding key: {@code String}.
-   * But there are still two dependencies, because in the unresolved binding they have different
-   * binding keys:
-   *
-   * <dl>
-   *   <dt>{@code T}
-   *   <dd>{@code String t}
-   *   <dt>{@code String}
-   *   <dd>{@code String string}
-   * </dl>
-   *
-   * <p>Note that the sets returned by this method when called on the same binding will be equal,
-   * and their elements will be in the same order.
-   */
-  /* TODO(dpb): The stable-order postcondition is actually hard to verify in code for two equal
-   * instances of Binding, because it really depends on the order of the binding's dependencies,
-   * and two equal instances of Binding may have the same dependencies in a different order. */
-  final ImmutableList<FrameworkDependency> frameworkDependencies() {
-    return frameworkDependencies.get();
-  }
-
-  /**
-   * Associates a {@link FrameworkDependency} with the set of {@link DependencyRequest} instances
-   * that correlate for a binding.
-   */
-  @AutoValue
-  abstract static class DependencyAssociation {
-    abstract FrameworkDependency frameworkDependency();
-
-    abstract ImmutableSet<DependencyRequest> dependencyRequests();
-
-    static DependencyAssociation create(
-        FrameworkDependency frameworkDependency, Iterable<DependencyRequest> dependencyRequests) {
-      return new AutoValue_Binding_DependencyAssociation(
-          frameworkDependency, ImmutableSet.copyOf(dependencyRequests));
-    }
-  }
-
-  private final Supplier<ImmutableList<DependencyAssociation>> dependencyAssociations =
-      memoize(
-          () -> {
-            FrameworkTypeMapper frameworkTypeMapper =
-                FrameworkTypeMapper.forBindingType(bindingType());
-            ImmutableList.Builder<DependencyAssociation> list = ImmutableList.builder();
-            for (Set<DependencyRequest> requests : groupByUnresolvedKey()) {
-              list.add(
-                  DependencyAssociation.create(
-                      FrameworkDependency.create(
-                          getOnlyElement(
-                              requests.stream().map(DependencyRequest::key).collect(toSet())),
-                          frameworkTypeMapper.getFrameworkType(requests)),
-                      requests));
-            }
-            return list.build();
-          });
-
-  /**
-   * Returns the same {@link FrameworkDependency} instances from {@link #frameworkDependencies}, but
-   * with the set of {@link DependencyRequest} instances with which each is associated.
-   *
-   * <p>Ths method returns a list of {@link Map.Entry entries} rather than a {@link Map} or {@link
-   * com.google.common.collect.Multimap} because any given {@link FrameworkDependency} may appear
-   * multiple times if the {@linkplain Binding#unresolved() unresolved} binding requires it. If that
-   * distinction is not important, the entries can be merged into a single mapping.
-   */
-  final ImmutableList<DependencyAssociation> dependencyAssociations() {
-    return dependencyAssociations.get();
-  }
-
-  private final Supplier<ImmutableMap<DependencyRequest, FrameworkDependency>>
-      frameworkDependenciesMap =
-          memoize(
-              () -> {
-                ImmutableMap.Builder<DependencyRequest, FrameworkDependency> frameworkDependencies =
-                    ImmutableMap.builder();
-                for (DependencyAssociation dependencyAssociation : dependencyAssociations()) {
-                  for (DependencyRequest dependencyRequest :
-                      dependencyAssociation.dependencyRequests()) {
-                    frameworkDependencies.put(
-                        dependencyRequest, dependencyAssociation.frameworkDependency());
-                  }
-                }
-                return frameworkDependencies.build();
-              });
-
-  /**
-   * Returns the mapping from each {@linkplain #dependencies dependency} to its associated {@link
-   * FrameworkDependency}.
-   */
-  final ImmutableMap<DependencyRequest, FrameworkDependency>
-      dependenciesToFrameworkDependenciesMap() {
-    return frameworkDependenciesMap.get();
-  }
-
-  /**
-   * Groups {@code binding}'s implicit dependencies by their binding key, using the dependency keys
-   * from the {@link Binding#unresolved()} binding if it exists.
-   */
-  private ImmutableList<Set<DependencyRequest>> groupByUnresolvedKey() {
-    ImmutableSetMultimap.Builder<Key, DependencyRequest> dependenciesByKeyBuilder =
-        ImmutableSetMultimap.builder();
-    Iterator<DependencyRequest> dependencies = dependencies().iterator();
-    Binding unresolved = unresolved().isPresent() ? unresolved().get() : this;
-    Iterator<DependencyRequest> unresolvedDependencies = unresolved.dependencies().iterator();
-    while (dependencies.hasNext()) {
-      dependenciesByKeyBuilder.put(unresolvedDependencies.next().key(), dependencies.next());
-    }
-    return ImmutableList.copyOf(
-        Multimaps.asMap(
-                dependenciesByKeyBuilder.orderValuesBy(SourceFiles.DEPENDENCY_ORDERING).build())
-            .values());
   }
 
   /**

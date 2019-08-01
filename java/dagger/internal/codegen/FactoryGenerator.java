@@ -60,7 +60,7 @@ import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
-import dagger.model.Key;
+import dagger.model.DependencyRequest;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
@@ -69,8 +69,8 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 
 /**
- * Generates {@link Factory} implementations from {@link ProvisionBinding} instances for
- * {@link Inject} constructors.
+ * Generates {@link Factory} implementations from {@link ProvisionBinding} instances for {@link
+ * Inject} constructors.
  */
 final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   private final DaggerTypes types;
@@ -170,7 +170,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
     return Optional.empty();
   }
 
-  private ImmutableMap<Key, FieldSpec> frameworkFields(ProvisionBinding binding) {
+  private ImmutableMap<DependencyRequest, FieldSpec> frameworkFields(ProvisionBinding binding) {
     UniqueNameSet uniqueFieldNames = new UniqueNameSet();
     // TODO(user, dpb): Add a test for the case when a Factory parameter is named "module".
     if (binding.requiresModuleInstance()) {
@@ -232,7 +232,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
             .addModifiers(PUBLIC)
             .returns(providedTypeName);
 
-    ImmutableMap<Key, FieldSpec> frameworkFields = frameworkFields(binding);
+    ImmutableMap<DependencyRequest, FieldSpec> frameworkFields = frameworkFields(binding);
     CodeBlock parametersCodeBlock =
         makeParametersCodeBlock(
             frameworkFieldUsages(binding.provisionDependencies(), frameworkFields).values());
@@ -247,7 +247,7 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
               binding,
               request ->
                   frameworkTypeUsageStatement(
-                      CodeBlock.of("$N", frameworkFields.get(request.key())), request.kind()),
+                      CodeBlock.of("$N", frameworkFields.get(request)), request.kind()),
               nameGeneratedType(binding),
               binding.requiresModuleInstance()
                   ? Optional.of(CodeBlock.of("module"))

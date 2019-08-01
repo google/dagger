@@ -142,13 +142,22 @@ final class ComponentBindingExpressions {
               componentImplementation.name()));
     }
 
-    binding.frameworkDependencies().stream()
-        .map(BindingRequest::bindingRequest)
+    binding.dependencies().stream()
+        .map(dependency -> frameworkRequest(binding, dependency))
         .map(request -> getDependencyExpression(request, componentImplementation.name()))
         .map(Expression::codeBlock)
         .forEach(arguments::add);
 
     return arguments.build();
+  }
+
+  private static BindingRequest frameworkRequest(
+      ContributionBinding binding, DependencyRequest dependency) {
+    // TODO(user): See if we can get rid of FrameworkTypeMatcher
+    FrameworkType frameworkType =
+        FrameworkTypeMapper.forBindingType(binding.bindingType())
+            .getFrameworkType(dependency.kind());
+    return BindingRequest.bindingRequest(dependency.key(), frameworkType);
   }
 
   /**

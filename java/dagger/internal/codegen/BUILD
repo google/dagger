@@ -158,7 +158,6 @@ java_library(
         "DependencyRequestFormatter.java",
         "DependencyVariableNamer.java",  # Used by SourceFiles
         "ErrorMessages.java",  # Consider splitting this up as it pulls in too much
-        "FrameworkDependency.java",
         "FrameworkField.java",  # Used by SourceFiles
         "FrameworkType.java",
         "FrameworkTypeMapper.java",

@@ -64,11 +64,6 @@ abstract class BindingRequest {
         key, frameworkType.requestKind(), Optional.of(frameworkType));
   }
 
-  /** Creates a {@link BindingRequest} for the given {@link FrameworkDependency}. */
-  static BindingRequest bindingRequest(FrameworkDependency frameworkDependency) {
-    return bindingRequest(frameworkDependency.key(), frameworkDependency.frameworkType());
-  }
-
   /** Returns the {@link Key} for the requested binding. */
   abstract Key key();
 

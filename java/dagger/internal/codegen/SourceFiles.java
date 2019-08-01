@@ -22,8 +22,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.Optionals.optionalComparator;
 import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.javapoet.TypeNames.MAP_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.MAP_OF_PRODUCED_PRODUCER;
@@ -37,11 +35,9 @@ import static dagger.internal.codegen.javapoet.TypeNames.SET_PRODUCER;
 import static dagger.model.BindingKind.INJECTION;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.model.BindingKind.MULTIBOUND_SET;
-import static java.util.Comparator.comparing;
 import static javax.lang.model.SourceVersion.isName;
 
 import com.google.auto.common.MoreElements;
-import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -56,46 +52,23 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.SetFactory;
 import dagger.model.DependencyRequest;
-import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.internal.SetOfProducedProducer;
 import dagger.producers.internal.SetProducer;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import javax.inject.Provider;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 
-/**
- * Utilities for generating files.
- */
+/** Utilities for generating files. */
 class SourceFiles {
 
   private static final Joiner CLASS_FILE_NAME_JOINER = Joiner.on('_');
-
-  /**
-   * Sorts {@link DependencyRequest} instances in an order likely to reflect their logical
-   * importance.
-   */
-  static final Comparator<DependencyRequest> DEPENDENCY_ORDERING =
-      // put fields before parameters
-      comparing(
-              (DependencyRequest request) -> request.requestElement().map(Element::getKind),
-              optionalComparator())
-          // order by dependency kind
-          .thenComparing(DependencyRequest::kind)
-          // then sort by name
-          .thenComparing(
-              request ->
-                  request.requestElement().map(element -> element.getSimpleName().toString()),
-              optionalComparator());
 
   /**
    * Generates names and keys for the factory class fields needed to hold the framework classes for
@@ -109,44 +82,21 @@ class SourceFiles {
    *
    * @param binding must be an unresolved binding (type parameters must match its type element's)
    */
-  static ImmutableMap<Key, FrameworkField> generateBindingFieldsForDependencies(
+  static ImmutableMap<DependencyRequest, FrameworkField> generateBindingFieldsForDependencies(
       Binding binding) {
     checkArgument(!binding.unresolved().isPresent(), "binding must be unresolved: %s", binding);
 
-    ImmutableMap.Builder<Key, FrameworkField> bindingFields = ImmutableMap.builder();
-    for (Binding.DependencyAssociation dependencyAssociation : binding.dependencyAssociations()) {
-      FrameworkDependency frameworkDependency = dependencyAssociation.frameworkDependency();
-      bindingFields.put(
-          frameworkDependency.key(),
-          FrameworkField.create(
-              ClassName.get(frameworkDependency.frameworkClass()),
-              TypeName.get(frameworkDependency.key().type()),
-              fieldNameForDependency(dependencyAssociation.dependencyRequests())));
-    }
-    return bindingFields.build();
-  }
+    FrameworkTypeMapper frameworkTypeMapper =
+        FrameworkTypeMapper.forBindingType(binding.bindingType());
 
-  private static String fieldNameForDependency(ImmutableSet<DependencyRequest> dependencyRequests) {
-    // collect together all of the names that we would want to call the provider
-    ImmutableSet<String> dependencyNames =
-        dependencyRequests.stream().map(DependencyVariableNamer::name).collect(toImmutableSet());
-
-    if (dependencyNames.size() == 1) {
-      // if there's only one name, great! use it!
-      return Iterables.getOnlyElement(dependencyNames);
-    } else {
-      // in the event that a field is being used for a bunch of deps with different names,
-      // add all the names together with "And"s in the middle. E.g.: stringAndS
-      Iterator<String> namesIterator = dependencyNames.iterator();
-      String first = namesIterator.next();
-      StringBuilder compositeNameBuilder = new StringBuilder(first);
-      while (namesIterator.hasNext()) {
-        compositeNameBuilder
-            .append("And")
-            .append(CaseFormat.LOWER_CAMEL.to(UPPER_CAMEL, namesIterator.next()));
-      }
-      return compositeNameBuilder.toString();
-    }
+    return Maps.toMap(
+        binding.dependencies(),
+        dependency ->
+            FrameworkField.create(
+                ClassName.get(
+                    frameworkTypeMapper.getFrameworkType(dependency.kind()).frameworkClass()),
+                TypeName.get(dependency.key().type()),
+                DependencyVariableNamer.name(dependency)));
   }
 
   static CodeBlock frameworkTypeUsageStatement(
@@ -172,16 +122,14 @@ class SourceFiles {
    * #frameworkTypeUsageStatement(CodeBlock, RequestKind) use them}.
    */
   static ImmutableMap<DependencyRequest, CodeBlock> frameworkFieldUsages(
-      ImmutableSet<DependencyRequest> dependencies, ImmutableMap<Key, FieldSpec> fields) {
+      ImmutableSet<DependencyRequest> dependencies,
+      ImmutableMap<DependencyRequest, FieldSpec> fields) {
     return Maps.toMap(
         dependencies,
-        dep ->
-            frameworkTypeUsageStatement(CodeBlock.of("$N", fields.get(dep.key())), dep.kind()));
+        dep -> frameworkTypeUsageStatement(CodeBlock.of("$N", fields.get(dep)), dep.kind()));
   }
 
-  /**
-   * Returns the generated factory or members injector name for a binding.
-   */
+  /** Returns the generated factory or members injector name for a binding. */
   static ClassName generatedClassNameForBinding(Binding binding) {
     switch (binding.bindingType()) {
       case PROVISION:
@@ -256,9 +204,9 @@ class SourceFiles {
    * The {@link java.util.Set} factory class name appropriate for set bindings.
    *
    * <ul>
-   * <li>{@link SetFactory} for provision bindings.
-   * <li>{@link SetProducer} for production bindings for {@code Set<T>}.
-   * <li>{@link SetOfProducedProducer} for production bindings for {@code Set<Produced<T>>}.
+   *   <li>{@link SetFactory} for provision bindings.
+   *   <li>{@link SetProducer} for production bindings for {@code Set<T>}.
+   *   <li>{@link SetOfProducedProducer} for production bindings for {@code Set<Produced<T>>}.
    * </ul>
    */
   static ClassName setFactoryClassName(ContributionBinding binding) {

@@ -16,15 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.BindingType.PRODUCTION;
-import static java.util.stream.Collectors.toSet;
 
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
 import dagger.model.RequestKind;
 import dagger.producers.Producer;
-import java.util.Set;
 import javax.inject.Provider;
 
 /**
@@ -72,14 +67,4 @@ enum FrameworkTypeMapper {
   }
 
   abstract FrameworkType getFrameworkType(RequestKind requestKind);
-
-  /**
-   * Returns the {@link FrameworkType} to use for a collection of requests of the same {@link Key}.
-   * This allows factories to only take a single argument for multiple requests of the same key.
-   */
-  FrameworkType getFrameworkType(Set<DependencyRequest> requests) {
-    Set<FrameworkType> frameworkTypes =
-        requests.stream().map(request -> getFrameworkType(request.kind())).collect(toSet());
-    return frameworkTypes.size() == 1 ? getOnlyElement(frameworkTypes) : FrameworkType.PROVIDER;
-  }
 }

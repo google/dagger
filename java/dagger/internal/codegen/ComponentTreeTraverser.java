@@ -37,7 +37,7 @@ import javax.lang.model.element.TypeElement;
  * component in the tree, and {@link #visitSubcomponentFactoryMethod(BindingGraph, BindingGraph,
  * ExecutableElement)} to perform custom logic at each subcomponent factory method.
  */
-public class ComponentTreeTraverser {
+class ComponentTreeTraverser {
 
   /** The path from the root graph to the currently visited graph. */
   private final Deque<BindingGraph> bindingGraphPath = new ArrayDeque<>();

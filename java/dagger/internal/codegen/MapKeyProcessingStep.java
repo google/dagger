@@ -37,7 +37,7 @@ import javax.lang.model.type.DeclaredType;
  * The annotation processor responsible for validating the mapKey annotation and auto-generate
  * implementation of annotations marked with {@link MapKey @MapKey} where necessary.
  */
-public class MapKeyProcessingStep extends TypeCheckingProcessingStep<TypeElement> {
+final class MapKeyProcessingStep extends TypeCheckingProcessingStep<TypeElement> {
   private final Messager messager;
   private final DaggerTypes types;
   private final MapKeyValidator mapKeyValidator;

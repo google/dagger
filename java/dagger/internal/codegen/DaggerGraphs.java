@@ -30,7 +30,7 @@ import java.util.Queue;
 import java.util.Set;
 
 /** Utility methods for {@link com.google.common.graph} types. */
-public final class DaggerGraphs {
+final class DaggerGraphs {
   /**
    * Returns a shortest path from {@code nodeU} to {@code nodeV} in {@code graph} as a list of the
    * nodes visited in sequence, including both {@code nodeU} and {@code nodeV}. (Note that there may

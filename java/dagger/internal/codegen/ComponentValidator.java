@@ -32,11 +32,11 @@ import static dagger.internal.codegen.ComponentCreatorAnnotation.subcomponentCre
 import static dagger.internal.codegen.ComponentKind.annotationsFor;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedAnnotatedTypes;
 import static dagger.internal.codegen.ConfigurationAnnotations.getTransitiveModules;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages.builderMethodRequiresNoArgs;
 import static dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
 import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnyAnnotation;
 import static java.util.Comparator.comparing;

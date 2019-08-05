@@ -18,7 +18,7 @@ package dagger.model.testing;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.truth.Truth.assertAbout;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.FailureMetadata;

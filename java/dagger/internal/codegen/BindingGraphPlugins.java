@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;

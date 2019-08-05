@@ -1,4 +1,4 @@
-# Copyright (C) 2018 The Dagger Authors.
+# Copyright (C) 2019 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,27 +13,21 @@
 # limitations under the License.
 
 # Description:
-#   Test utilities for the Dagger model
+#   Extra features for the JDK and Guava. This code is merged into both
+#   the dagger-compiler and dagger-spi artifacts that are sent to Maven
 
 package(default_visibility = ["//:src"])
 
-load(
-    "//:build_defs.bzl",
-    "DOCLINT_HTML_AND_SYNTAX",
-    "DOCLINT_REFERENCES",
-)
-
 java_library(
-    name = "testing",
-    testonly = 1,
-    srcs = glob(["*.java"]),
-    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    name = "extension",
+    srcs = [
+        "DaggerGraphs.java",
+        "DaggerStreams.java",
+        "Optionals.java",
+    ],
+    plugins = ["//java/dagger/internal/codegen/bootstrap"],
+    tags = ["maven:merged"],
     deps = [
-        "//java/dagger/internal/codegen/extension",
-        "//java/dagger/model",
-        "@google_bazel_common//third_party/java/auto:value",
-        "@google_bazel_common//third_party/java/checker_framework_annotations",
         "@google_bazel_common//third_party/java/guava",
-        "@google_bazel_common//third_party/java/truth",
     ],
 )

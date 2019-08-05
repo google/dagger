@@ -41,7 +41,7 @@ java_library(
     tags = ["maven_coordinates=com.google.dagger:dagger-spi:" + POM_VERSION],
     deps = [
         "//java/dagger:core",
-        "//java/dagger/internal/codegen:jdk-and-guava-extras",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/producers",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:value",

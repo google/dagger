@@ -20,9 +20,9 @@ import static com.google.common.collect.Sets.intersection;
 import static com.google.common.graph.Graphs.inducedSubgraph;
 import static com.google.common.graph.Graphs.reachableNodes;
 import static com.google.common.graph.Graphs.transpose;
-import static dagger.internal.codegen.DaggerStreams.instancesOf;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSetMultimap;
+import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSetMultimap;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;

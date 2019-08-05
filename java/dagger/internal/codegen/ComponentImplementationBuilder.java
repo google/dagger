@@ -30,7 +30,7 @@ import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.CON
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.INITIALIZE_METHOD;
 import static dagger.internal.codegen.ComponentImplementation.TypeSpecKind.COMPONENT_CREATOR;
 import static dagger.internal.codegen.ComponentImplementation.TypeSpecKind.SUBCOMPONENT;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.javapoet.CodeBlocks.parameterNames;
 import static dagger.producers.CancellationPolicy.Propagation.PROPAGATE;

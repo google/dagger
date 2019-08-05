@@ -58,25 +58,9 @@ CODEGEN_SHARED_DEPS = [
 ]
 
 CODEGEN_DEPS = CODEGEN_SHARED_DEPS + [
-    ":jdk-and-guava-extras",
+    "//java/dagger/internal/codegen/extension",
     "@google_bazel_common//third_party/java/guava",
 ]
-
-# Extra features for the JDK and Guava. This code is merged into both
-# the dagger-compiler and dagger-spi artifacts that are sent to Maven
-java_library(
-    name = "jdk-and-guava-extras",
-    srcs = [
-        "DaggerGraphs.java",
-        "DaggerStreams.java",
-        "Optionals.java",
-    ],
-    plugins = CODEGEN_PLUGINS,
-    tags = ["maven:merged"],
-    deps = [
-        "@google_bazel_common//third_party/java/guava",
-    ],
-)
 
 # Common types needed across all of the codegen package
 java_library(

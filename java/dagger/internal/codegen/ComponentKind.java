@@ -18,9 +18,9 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Sets.immutableEnumSet;
-import static dagger.internal.codegen.DaggerStreams.stream;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.DaggerStreams.valuesOf;
+import static dagger.internal.codegen.extension.DaggerStreams.stream;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.extension.DaggerStreams.valuesOf;
 import static java.util.EnumSet.allOf;
 
 import com.google.common.collect.ImmutableSet;

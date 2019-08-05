@@ -17,8 +17,8 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.MoreAnnotationValues.asAnnotationValues;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
 import com.google.auto.common.AnnotationMirrors;
 import com.google.common.base.Equivalence;

@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.Optionals.emptiesLast;
+import static dagger.internal.codegen.extension.Optionals.emptiesLast;
 import static java.util.Comparator.comparing;
 
 import dagger.internal.codegen.langmodel.DaggerElements;

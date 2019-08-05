@@ -17,8 +17,8 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.DaggerStreams.presentValues;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.extension.DaggerStreams.presentValues;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableSet;

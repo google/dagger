@@ -21,12 +21,12 @@ import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.limit;
 import static com.google.common.collect.Iterables.skip;
 import static com.google.common.collect.Sets.newHashSetWithExpectedSize;
-import static dagger.internal.codegen.DaggerGraphs.shortestPath;
-import static dagger.internal.codegen.DaggerStreams.instancesOf;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.RequestKinds.getRequestKind;
+import static dagger.internal.codegen.extension.DaggerGraphs.shortestPath;
+import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.auto.value.AutoValue;

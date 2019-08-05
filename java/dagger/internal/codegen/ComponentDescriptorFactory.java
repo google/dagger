@@ -25,10 +25,10 @@ import static dagger.internal.codegen.ComponentCreatorAnnotation.creatorAnnotati
 import static dagger.internal.codegen.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.ConfigurationAnnotations.enclosedAnnotatedTypes;
 import static dagger.internal.codegen.ConfigurationAnnotations.isSubcomponentCreator;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.Scopes.productionScope;
 import static dagger.internal.codegen.Scopes.scopesOf;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 import static javax.lang.model.util.ElementFilter.methodsIn;

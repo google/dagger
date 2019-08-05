@@ -16,9 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.DaggerStreams.instancesOf;
-import static dagger.internal.codegen.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;

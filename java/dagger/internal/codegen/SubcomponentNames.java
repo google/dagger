@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.DaggerStreams.toImmutableMap;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static java.lang.Character.isUpperCase;
 import static java.lang.String.format;
 

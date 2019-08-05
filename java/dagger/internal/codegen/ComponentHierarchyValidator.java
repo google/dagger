@@ -20,9 +20,9 @@ import static com.google.common.base.Functions.constant;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.Scopes.getReadableSource;
 import static dagger.internal.codegen.Scopes.uniqueScopeOf;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Joiner;

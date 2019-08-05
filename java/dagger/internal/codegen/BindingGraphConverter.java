@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.BindingRequest.bindingRequest;
-import static dagger.internal.codegen.DaggerGraphs.unreachableNodes;
+import static dagger.internal.codegen.extension.DaggerGraphs.unreachableNodes;
 import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 
 import com.google.common.collect.ImmutableSet;

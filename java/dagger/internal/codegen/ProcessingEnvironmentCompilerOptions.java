@@ -20,7 +20,6 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Sets.immutableEnumSet;
-import static dagger.internal.codegen.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.FeatureStatus.DISABLED;
 import static dagger.internal.codegen.FeatureStatus.ENABLED;
 import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS;
@@ -43,6 +42,7 @@ import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Valid
 import static dagger.internal.codegen.ValidationType.ERROR;
 import static dagger.internal.codegen.ValidationType.NONE;
 import static dagger.internal.codegen.ValidationType.WARNING;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Stream.concat;
 

@@ -17,10 +17,10 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Verify.verify;
-import static dagger.internal.codegen.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.RequestKinds.canBeSatisfiedByProductionBinding;
+import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import dagger.internal.codegen.langmodel.DaggerTypes;

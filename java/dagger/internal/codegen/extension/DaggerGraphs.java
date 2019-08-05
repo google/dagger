@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.extension;
 
 import static com.google.common.collect.Sets.difference;
 import static com.google.common.graph.Graphs.reachableNodes;
@@ -30,7 +30,7 @@ import java.util.Queue;
 import java.util.Set;
 
 /** Utility methods for {@link com.google.common.graph} types. */
-final class DaggerGraphs {
+public final class DaggerGraphs {
   /**
    * Returns a shortest path from {@code nodeU} to {@code nodeV} in {@code graph} as a list of the
    * nodes visited in sequence, including both {@code nodeU} and {@code nodeV}. (Note that there may

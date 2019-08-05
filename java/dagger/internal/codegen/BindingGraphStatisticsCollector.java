@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.errorprone.util.ASTHelpers.getSymbol;
-import static dagger.internal.codegen.ComponentAnnotation.rootComponentAnnotation;
+import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotation;
 
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.bugpatterns.BugChecker;

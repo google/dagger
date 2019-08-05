@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.SourceFiles.setFactoryClassName;
 
 import com.squareup.javapoet.CodeBlock;
+import dagger.internal.codegen.base.ContributionType;
+import dagger.internal.codegen.base.SetType;
 import dagger.model.DependencyRequest;
 import dagger.producers.Produced;
 

@@ -20,7 +20,7 @@ import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.SourceFiles.simpleVariableName;
-import static dagger.internal.codegen.Util.componentCanMakeNewInstances;
+import static dagger.internal.codegen.base.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;

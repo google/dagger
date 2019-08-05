@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 
@@ -28,7 +28,8 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 
-final class MapKeyAccessibility extends SimpleAnnotationValueVisitor8<Boolean, Void> {
+/** Utility class for checking the visibility of an annotation.  */
+public final class MapKeyAccessibility extends SimpleAnnotationValueVisitor8<Boolean, Void> {
   private final Predicate<TypeMirror> accessibilityChecker;
 
   private MapKeyAccessibility(Predicate<TypeMirror> accessibilityChecker) {
@@ -66,12 +67,13 @@ final class MapKeyAccessibility extends SimpleAnnotationValueVisitor8<Boolean, V
     return true;
   }
 
-  static boolean isMapKeyAccessibleFrom(AnnotationMirror annotation, String accessingPackage) {
+  public static boolean isMapKeyAccessibleFrom(
+      AnnotationMirror annotation, String accessingPackage) {
     return new MapKeyAccessibility(type -> isTypeAccessibleFrom(type, accessingPackage))
         .visitAnnotation(annotation, null);
   }
 
-  static boolean isMapKeyPubliclyAccessible(AnnotationMirror annotation) {
+  public static boolean isMapKeyPubliclyAccessible(AnnotationMirror annotation) {
     return new MapKeyAccessibility(Accessibility::isTypePubliclyAccessible)
         .visitAnnotation(annotation, null);
   }

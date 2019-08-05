@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import dagger.internal.codegen.base.SourceFileGenerator;
 import java.lang.annotation.Retention;
 import javax.inject.Qualifier;
 

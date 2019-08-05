@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.MoreAnnotationValues.asAnnotationValues;
+import static dagger.internal.codegen.base.MoreAnnotationValues.asAnnotationValues;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnyAnnotation;
 
@@ -38,18 +38,18 @@ import javax.lang.model.element.TypeElement;
 
 /** A {@code @Module} or {@code @ProducerModule} annotation. */
 @AutoValue
-abstract class ModuleAnnotation {
+public abstract class ModuleAnnotation {
   private static final ImmutableSet<Class<? extends Annotation>> MODULE_ANNOTATIONS =
       ImmutableSet.of(Module.class, ProducerModule.class);
 
   /** The annotation itself. */
   // This does not use AnnotationMirrors.equivalence() because we want the actual annotation
   // instance.
-  abstract AnnotationMirror annotation();
+  public abstract AnnotationMirror annotation();
 
   /** The type of the annotation. */
   @Memoized
-  Class<?> annotationClass() {
+  public Class<?> annotationClass() {
     try {
       return Class.forName(
           asTypeElement(annotation().getAnnotationType()).getQualifiedName().toString());
@@ -66,7 +66,7 @@ abstract class ModuleAnnotation {
    * @throws IllegalArgumentException if any of the values are error types
    */
   @Memoized
-  ImmutableList<TypeElement> includes() {
+  public ImmutableList<TypeElement> includes() {
     return includesAsAnnotationValues().stream()
         .map(MoreAnnotationValues::asType)
         .map(MoreTypes::asTypeElement)
@@ -75,7 +75,7 @@ abstract class ModuleAnnotation {
 
   /** The values specified in the {@code includes} attribute. */
   @Memoized
-  ImmutableList<AnnotationValue> includesAsAnnotationValues() {
+  public ImmutableList<AnnotationValue> includesAsAnnotationValues() {
     return asAnnotationValues(getAnnotationValue(annotation(), "includes"));
   }
 
@@ -85,7 +85,7 @@ abstract class ModuleAnnotation {
    * @throws IllegalArgumentException if any of the values are error types
    */
   @Memoized
-  ImmutableList<TypeElement> subcomponents() {
+  public ImmutableList<TypeElement> subcomponents() {
     return subcomponentsAsAnnotationValues().stream()
         .map(MoreAnnotationValues::asType)
         .map(MoreTypes::asTypeElement)
@@ -94,19 +94,19 @@ abstract class ModuleAnnotation {
 
   /** The values specified in the {@code subcomponents} attribute. */
   @Memoized
-  ImmutableList<AnnotationValue> subcomponentsAsAnnotationValues() {
+  public ImmutableList<AnnotationValue> subcomponentsAsAnnotationValues() {
     return asAnnotationValues(getAnnotationValue(annotation(), "subcomponents"));
   }
 
   /** Returns {@code true} if the argument is a {@code @Module} or {@code @ProducerModule}. */
-  static boolean isModuleAnnotation(AnnotationMirror annotation) {
+  public static boolean isModuleAnnotation(AnnotationMirror annotation) {
     return MODULE_ANNOTATIONS.stream()
         .map(Class::getCanonicalName)
         .anyMatch(asTypeElement(annotation.getAnnotationType()).getQualifiedName()::contentEquals);
   }
 
   /** The module annotation types. */
-  static ImmutableSet<Class<? extends Annotation>> moduleAnnotations() {
+  public static ImmutableSet<Class<? extends Annotation>> moduleAnnotations() {
     return MODULE_ANNOTATIONS;
   }
 
@@ -116,7 +116,7 @@ abstract class ModuleAnnotation {
    * @throws IllegalArgumentException if {@link #isModuleAnnotation(AnnotationMirror)} returns
    *     {@code false}
    */
-  static ModuleAnnotation moduleAnnotation(AnnotationMirror annotation) {
+  public static ModuleAnnotation moduleAnnotation(AnnotationMirror annotation) {
     checkArgument(
         isModuleAnnotation(annotation),
         "%s is not a Module or ProducerModule annotation",
@@ -128,7 +128,7 @@ abstract class ModuleAnnotation {
    * Returns an object representing the {@code @Module} or {@code @ProducerModule} annotation if one
    * annotates {@code typeElement}.
    */
-  static Optional<ModuleAnnotation> moduleAnnotation(TypeElement typeElement) {
+  public static Optional<ModuleAnnotation> moduleAnnotation(TypeElement typeElement) {
     return getAnyAnnotation(typeElement, Module.class, ProducerModule.class)
         .map(ModuleAnnotation::moduleAnnotation);
   }

@@ -58,6 +58,8 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.base.SourceFileGenerator;
+import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression;
@@ -97,18 +99,18 @@ final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBindi
   }
 
   @Override
-  ClassName nameGeneratedType(ProductionBinding binding) {
+  public ClassName nameGeneratedType(ProductionBinding binding) {
     return generatedClassNameForBinding(binding);
   }
 
   @Override
-  Element originatingElement(ProductionBinding binding) {
+  public Element originatingElement(ProductionBinding binding) {
     // we only create factories for bindings that have a binding element
     return binding.bindingElement().get();
   }
 
   @Override
-  Optional<TypeSpec.Builder> write(ClassName generatedTypeName, ProductionBinding binding) {
+  public Optional<TypeSpec.Builder> write(ClassName generatedTypeName, ProductionBinding binding) {
     // We don't want to write out resolved bindings -- we want to write out the generic version.
     checkArgument(!binding.unresolved().isPresent());
     checkArgument(binding.bindingElement().isPresent());

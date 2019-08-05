@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;

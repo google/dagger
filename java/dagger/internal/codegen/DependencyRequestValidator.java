@@ -16,14 +16,15 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
-import static dagger.internal.codegen.RequestKinds.extractKeyType;
-import static dagger.internal.codegen.RequestKinds.getRequestKind;
+import static dagger.internal.codegen.base.InjectionAnnotations.getQualifiers;
+import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
+import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static javax.lang.model.type.TypeKind.WILDCARD;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.MembersInjector;
+import dagger.internal.codegen.base.FrameworkTypes;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;

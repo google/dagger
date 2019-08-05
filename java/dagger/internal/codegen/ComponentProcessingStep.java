@@ -17,12 +17,12 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Sets.union;
-import static dagger.internal.codegen.ComponentAnnotation.allComponentAnnotations;
-import static dagger.internal.codegen.ComponentAnnotation.rootComponentAnnotations;
-import static dagger.internal.codegen.ComponentAnnotation.subcomponentAnnotations;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.allCreatorAnnotations;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
+import static dagger.internal.codegen.base.ComponentAnnotation.allComponentAnnotations;
+import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotations;
+import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotations;
 import static dagger.internal.codegen.compileroption.ValidationType.NONE;
 import static java.util.Collections.disjoint;
 
@@ -35,6 +35,7 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
+import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;

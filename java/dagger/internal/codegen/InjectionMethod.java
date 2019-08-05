@@ -35,6 +35,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
+import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.List;

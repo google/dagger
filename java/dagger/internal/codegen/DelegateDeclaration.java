@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.MapKeys.getMapKey;
-import static dagger.internal.codegen.MoreAnnotationMirrors.wrapOptionalInEquivalence;
+import static dagger.internal.codegen.base.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -27,7 +27,8 @@ import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.Iterables;
 import dagger.Binds;
-import dagger.internal.codegen.ContributionType.HasContributionType;
+import dagger.internal.codegen.base.ContributionType;
+import dagger.internal.codegen.base.ContributionType.HasContributionType;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
 import java.util.Optional;

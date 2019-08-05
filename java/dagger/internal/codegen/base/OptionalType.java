@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -40,10 +40,10 @@ import javax.lang.model.util.SimpleTypeVisitor8;
  * <p>{@link com.google.common.base.Optional} and {@link java.util.Optional} are supported.
  */
 @AutoValue
-abstract class OptionalType {
+public abstract class OptionalType {
 
   /** A variant of {@code Optional}. */
-  enum OptionalKind {
+  public enum OptionalKind {
     /** {@link com.google.common.base.Optional}. */
     GUAVA_OPTIONAL(com.google.common.base.Optional.class, "absent"),
 
@@ -60,24 +60,24 @@ abstract class OptionalType {
     }
 
     /** Returns {@code valueType} wrapped in the correct class. */
-    ParameterizedTypeName of(TypeName valueType) {
+    public ParameterizedTypeName of(TypeName valueType) {
       return ParameterizedTypeName.get(ClassName.get(clazz), valueType);
     }
 
     /** Returns an expression for the absent/empty value. */
-    CodeBlock absentValueExpression() {
+    public CodeBlock absentValueExpression() {
       return CodeBlock.of("$T.$L()", clazz, absentFactoryMethodName);
     }
 
     /**
      * Returns an expression for the absent/empty value, parameterized with {@link #valueType()}.
      */
-    CodeBlock parameterizedAbsentValueExpression(OptionalType optionalType) {
+    public CodeBlock parameterizedAbsentValueExpression(OptionalType optionalType) {
       return CodeBlock.of("$T.<$T>$L()", clazz, optionalType.valueType(), absentFactoryMethodName);
     }
 
     /** Returns an expression for the present {@code value}. */
-    CodeBlock presentExpression(CodeBlock value) {
+    public CodeBlock presentExpression(CodeBlock value) {
       return CodeBlock.of("$T.of($L)", clazz, value);
     }
 
@@ -85,7 +85,7 @@ abstract class OptionalType {
      * Returns an expression for the present {@code value}, returning {@code Optional<Object>} no
      * matter what type the value is.
      */
-    CodeBlock presentObjectExpression(CodeBlock value) {
+    public CodeBlock presentObjectExpression(CodeBlock value) {
       return CodeBlock.of("$T.<$T>of($L)", clazz, Object.class, value);
     }
   }
@@ -114,27 +114,27 @@ abstract class OptionalType {
 
   /** The optional type itself. */
   @SuppressWarnings("deprecation")
-  DeclaredType declaredOptionalType() {
+  private DeclaredType declaredOptionalType() {
     return wrappedDeclaredOptionalType().get();
   }
-  
+
   /** Which {@code Optional} type is used. */
-  OptionalKind kind() {
+  public OptionalKind kind() {
     return declaredOptionalType().accept(OPTIONAL_KIND, null).get();
   }
 
   /** The value type. */
-  TypeMirror valueType() {
+  public TypeMirror valueType() {
     return declaredOptionalType().getTypeArguments().get(0);
   }
 
   /** Returns {@code true} if {@code type} is an {@code Optional} type. */
-  static boolean isOptional(TypeMirror type) {
+  private static boolean isOptional(TypeMirror type) {
     return type.accept(OPTIONAL_KIND, null).isPresent();
   }
 
   /** Returns {@code true} if {@code key.type()} is an {@code Optional} type. */
-  static boolean isOptional(Key key) {
+  public static boolean isOptional(Key key) {
     return isOptional(key.type());
   }
 
@@ -143,7 +143,7 @@ abstract class OptionalType {
    *
    * @throws IllegalArgumentException if {@code type} is not an {@code Optional} type
    */
-  static OptionalType from(TypeMirror type) {
+  public static OptionalType from(TypeMirror type) {
     checkArgument(isOptional(type), "%s must be an Optional", type);
     return new AutoValue_OptionalType(MoreTypes.equivalence().wrap(MoreTypes.asDeclared(type)));
   }
@@ -153,7 +153,7 @@ abstract class OptionalType {
    *
    * @throws IllegalArgumentException if {@code key.type()} is not an {@code Optional} type
    */
-  static OptionalType from(Key key) {
+  public static OptionalType from(Key key) {
     return from(key.type());
   }
 }

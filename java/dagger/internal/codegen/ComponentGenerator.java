@@ -22,6 +22,7 @@ import static dagger.internal.codegen.SourceFiles.classFileName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.Component;
+import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
@@ -47,7 +48,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   }
 
   @Override
-  ClassName nameGeneratedType(BindingGraph input) {
+  public ClassName nameGeneratedType(BindingGraph input) {
     return componentName(input.componentTypeElement());
   }
 
@@ -57,12 +58,12 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   }
 
   @Override
-  Element originatingElement(BindingGraph input) {
+  public Element originatingElement(BindingGraph input) {
     return input.componentTypeElement();
   }
 
   @Override
-  Optional<TypeSpec.Builder> write(ClassName componentName, BindingGraph bindingGraph) {
+  public Optional<TypeSpec.Builder> write(ClassName componentName, BindingGraph bindingGraph) {
     ComponentImplementation componentImplementation =
         componentImplementationFactory.createComponentImplementation(bindingGraph);
     verify(componentImplementation.name().equals(componentName));

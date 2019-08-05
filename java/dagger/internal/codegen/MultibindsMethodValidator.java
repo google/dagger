@@ -20,11 +20,13 @@ import static dagger.internal.codegen.BindingElementValidator.AllowsMultibinding
 import static dagger.internal.codegen.BindingElementValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
-import static dagger.internal.codegen.FrameworkTypes.isFrameworkType;
+import static dagger.internal.codegen.base.FrameworkTypes.isFrameworkType;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.Module;
+import dagger.internal.codegen.base.MapType;
+import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.multibindings.Multibinds;

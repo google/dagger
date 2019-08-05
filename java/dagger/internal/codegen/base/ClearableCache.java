@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 /** A cache of objects that can be cleared. */
-interface ClearableCache {
+public interface ClearableCache {
   /** Releases cached references. */
   void clearCache();
 }

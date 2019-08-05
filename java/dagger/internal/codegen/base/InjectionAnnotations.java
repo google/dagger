@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -35,8 +35,8 @@ import javax.lang.model.element.TypeElement;
 /**
  * Utilities relating to annotations defined in the {@code javax.inject} package.
  */
-final class InjectionAnnotations {
-  static Optional<AnnotationMirror> getQualifier(Element e) {
+public final class InjectionAnnotations {
+  public static Optional<AnnotationMirror> getQualifier(Element e) {
     if (!SuperficialValidation.validateElement(e)) {
       throw new TypeNotPresentException(e.toString(), null);
     }
@@ -53,12 +53,12 @@ final class InjectionAnnotations {
     }
   }
 
-  static ImmutableSet<? extends AnnotationMirror> getQualifiers(Element element) {
+  public static ImmutableSet<? extends AnnotationMirror> getQualifiers(Element element) {
     return AnnotationMirrors.getAnnotatedAnnotations(element, Qualifier.class);
   }
 
   /** Returns the constructors in {@code type} that are annotated with {@link Inject}. */
-  static ImmutableSet<ExecutableElement> injectedConstructors(TypeElement type) {
+  public static ImmutableSet<ExecutableElement> injectedConstructors(TypeElement type) {
     return FluentIterable.from(constructorsIn(type.getEnclosedElements()))
         .filter(constructor -> isAnnotationPresent(constructor, Inject.class))
         .toSet();

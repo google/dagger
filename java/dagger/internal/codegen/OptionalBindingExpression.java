@@ -22,7 +22,8 @@ import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFr
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import dagger.internal.codegen.OptionalType.OptionalKind;
+import dagger.internal.codegen.base.OptionalType;
+import dagger.internal.codegen.base.OptionalType.OptionalKind;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;

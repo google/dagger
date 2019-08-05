@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static dagger.internal.codegen.langmodel.DaggerElements.getAllAnnotations;
 
@@ -29,8 +29,8 @@ import javax.lang.model.element.Element;
  * Utility methods related to processing {@link IntoSet}, {@link ElementsIntoSet}, and {@link
  * IntoMap}.
  */
-final class MultibindingAnnotations {
-  static ImmutableSet<AnnotationMirror> forElement(Element method) {
+public final class MultibindingAnnotations {
+  public static ImmutableSet<AnnotationMirror> forElement(Element method) {
     return getAllAnnotations(method, IntoSet.class, ElementsIntoSet.class, IntoMap.class);
   }
 }

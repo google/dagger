@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.Formatter.INDENT;
+import static dagger.internal.codegen.base.Formatter.INDENT;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSetMultimap;
 import static dagger.model.BindingKind.INJECTION;
@@ -37,6 +37,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
+import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.model.Binding;
 import dagger.model.BindingGraph;

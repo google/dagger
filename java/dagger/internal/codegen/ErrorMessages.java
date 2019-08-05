@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import dagger.internal.codegen.base.ComponentAnnotation;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;

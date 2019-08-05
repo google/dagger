@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.tools.Diagnostic.Kind.ERROR;
@@ -31,7 +31,7 @@ import javax.lang.model.element.Element;
  * other errors that might have been caught upon further processing. Use a {@link ValidationReport}
  * for that.
  */
-final class SourceFileGenerationException extends Exception {
+public final class SourceFileGenerationException extends Exception {
   private final Element associatedElement;
 
   SourceFileGenerationException(
@@ -48,7 +48,7 @@ final class SourceFileGenerationException extends Exception {
         message);
   }
 
-  void printMessageTo(Messager messager) {
+  public void printMessageTo(Messager messager) {
     messager.printMessage(ERROR, getMessage(), associatedElement);
   }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.common.base.Preconditions.checkElementIndex;
 
@@ -27,10 +27,10 @@ import com.google.common.collect.Iterables;
  *
  * @param <T> the type of the object to be transformed.
  */
-abstract class Formatter<T> implements Function<T, String> {
+public abstract class Formatter<T> implements Function<T, String> {
 
-  static final String INDENT = "    ";
-  static final String DOUBLE_INDENT = INDENT + INDENT;
+  public static final String INDENT = "    ";
+  public static final String DOUBLE_INDENT = INDENT + INDENT;
   private static final int LIST_LIMIT = 10;
 
   /**
@@ -81,7 +81,7 @@ abstract class Formatter<T> implements Function<T, String> {
     }
   }
 
-  static String formatArgumentInList(int index, int size, CharSequence name) {
+  public static String formatArgumentInList(int index, int size, CharSequence name) {
     checkElementIndex(index, size);
     StringBuilder builder = new StringBuilder();
     if (index > 0) {

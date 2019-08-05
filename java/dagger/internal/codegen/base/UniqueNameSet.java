@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import java.util.HashSet;
 import java.util.Set;
 
 /** A collector for names to be used in the same namespace that should not conflict. */
-final class UniqueNameSet {
+public final class UniqueNameSet {
   private final Set<String> uniqueNames = new HashSet<>();
 
   /**
    * Generates a unique name using {@code base}. If {@code base} has not yet been added, it will be
    * returned as-is. If your {@code base} is healthy, this will always return {@code base}.
    */
-  String getUniqueName(CharSequence base) {
+  public String getUniqueName(CharSequence base) {
     String name = base.toString();
     for (int differentiator = 2; !uniqueNames.add(name); differentiator++) {
       name = base.toString() + differentiator;
@@ -39,7 +39,7 @@ final class UniqueNameSet {
    * Adds {@code name} without any modification to the name set. Has no effect if {@code name} is
    * already present in the set.
    */
-  void claim(CharSequence name) {
+  public void claim(CharSequence name) {
     uniqueNames.add(name.toString());
   }
 }

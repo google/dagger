@@ -21,7 +21,7 @@ import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.getCreatorAnnotations;
-import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
+import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.common.MoreTypes;

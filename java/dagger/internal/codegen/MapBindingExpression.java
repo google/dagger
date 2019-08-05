@@ -30,6 +30,7 @@ import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.MapBuilder;
+import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;

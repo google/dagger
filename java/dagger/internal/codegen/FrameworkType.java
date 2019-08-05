@@ -29,6 +29,7 @@ import com.squareup.javapoet.TypeName;
 import dagger.Lazy;
 import dagger.internal.DoubleCheck;
 import dagger.internal.ProviderOfLazy;
+import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;

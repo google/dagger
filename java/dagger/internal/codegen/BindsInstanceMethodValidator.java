@@ -17,11 +17,12 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.ComponentAnnotation.anyComponentAnnotation;
-import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
+import static dagger.internal.codegen.base.ComponentAnnotation.anyComponentAnnotation;
+import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.common.MoreElements;
+import dagger.internal.codegen.base.ModuleAnnotation;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;

@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.RequestKinds.requestType;
+import static dagger.internal.codegen.base.RequestKinds.requestType;
 
 import com.google.auto.value.AutoValue;
 import dagger.internal.codegen.langmodel.DaggerTypes;

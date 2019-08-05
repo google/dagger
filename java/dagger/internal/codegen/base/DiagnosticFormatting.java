@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 /**
  * Utility methods for formatting diagnostics to the {@link javax.annotation.processing.Messager}.
  */
-final class DiagnosticFormatting {
+public final class DiagnosticFormatting {
 
   /**
    * A regular expression to match a small list of specific packages deemed to be unhelpful to
@@ -54,7 +54,7 @@ final class DiagnosticFormatting {
    * <p>TODO(cgruber): Tighten these to take type representations (mirrors and elements) to avoid
    * accidental mis-use by running errors through this method.
    */
-  static String stripCommonTypePrefixes(String type) {
+  public static String stripCommonTypePrefixes(String type) {
     // Do regex magic to remove common packages we care to shorten.
     Matcher matcher = COMMON_PACKAGE_PATTERN.matcher(type);
     StringBuilder result = new StringBuilder();

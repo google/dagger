@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
+import static dagger.internal.codegen.base.InjectionAnnotations.getQualifiers;
 
 import com.google.auto.common.MoreElements;
 import javax.inject.Inject;

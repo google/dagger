@@ -28,6 +28,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
@@ -54,17 +55,17 @@ final class ModuleConstructorProxyGenerator extends SourceFileGenerator<TypeElem
   }
 
   @Override
-  ClassName nameGeneratedType(TypeElement moduleElement) {
+  public ClassName nameGeneratedType(TypeElement moduleElement) {
     return ModuleProxies.constructorProxyTypeName(moduleElement);
   }
 
   @Override
-  Element originatingElement(TypeElement moduleElement) {
+  public Element originatingElement(TypeElement moduleElement) {
     return moduleElement;
   }
 
   @Override
-  Optional<TypeSpec.Builder> write(ClassName generatedTypeName, TypeElement moduleElement) {
+  public Optional<TypeSpec.Builder> write(ClassName generatedTypeName, TypeElement moduleElement) {
     checkIsModule(moduleElement);
     return nonPublicNullaryConstructor(moduleElement, elements).isPresent()
         ? Optional.of(buildProxy(generatedTypeName, moduleElement))

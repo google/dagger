@@ -20,9 +20,9 @@ import static dagger.internal.codegen.BindingElementValidator.AllowsMultibinding
 import static dagger.internal.codegen.BindingElementValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
-import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
-import static dagger.internal.codegen.InjectionAnnotations.injectedConstructors;
-import static dagger.internal.codegen.Keys.isValidImplicitProvisionKey;
+import static dagger.internal.codegen.base.InjectionAnnotations.getQualifiers;
+import static dagger.internal.codegen.base.InjectionAnnotations.injectedConstructors;
+import static dagger.internal.codegen.base.Keys.isValidImplicitProvisionKey;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;

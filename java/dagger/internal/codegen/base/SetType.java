@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -30,38 +30,38 @@ import javax.lang.model.type.TypeMirror;
  * Information about a {@link Set} {@link TypeMirror}.
  */
 @AutoValue
-abstract class SetType {
+public abstract class SetType {
   /**
    * The set type itself, wrapped using {@link MoreTypes#equivalence()}. Use
    * {@link #declaredSetType()} instead.
    */
   protected abstract Equivalence.Wrapper<DeclaredType> wrappedDeclaredSetType();
-  
+
   /**
    * The set type itself.
    */
-  DeclaredType declaredSetType() {
+  private DeclaredType declaredSetType() {
     return wrappedDeclaredSetType().get();
   }
 
   /**
    * {@code true} if the set type is the raw {@link Set} type.
    */
-  boolean isRawType() {
+  public boolean isRawType() {
     return declaredSetType().getTypeArguments().isEmpty();
   }
 
   /**
    * The element type.
    */
-  TypeMirror elementType() {
+  public TypeMirror elementType() {
     return declaredSetType().getTypeArguments().get(0);
   }
 
   /**
    * {@code true} if {@link #elementType()} is a {@code clazz}.
    */
-  boolean elementsAreTypeOf(Class<?> clazz) {
+  public boolean elementsAreTypeOf(Class<?> clazz) {
     return MoreTypes.isType(elementType()) && MoreTypes.isTypeOf(clazz, elementType());
   }
 
@@ -72,7 +72,7 @@ abstract class SetType {
    * @throws IllegalArgumentException if {@code wrappingClass} does not have exactly one type
    *     parameter
    */
-  TypeMirror unwrappedElementType(Class<?> wrappingClass) {
+  public TypeMirror unwrappedElementType(Class<?> wrappingClass) {
     checkArgument(
         wrappingClass.getTypeParameters().length == 1,
         "%s must have exactly one type parameter",
@@ -88,14 +88,14 @@ abstract class SetType {
   /**
    * {@code true} if {@code type} is a {@link Set} type.
    */
-  static boolean isSet(TypeMirror type) {
+  public static boolean isSet(TypeMirror type) {
     return MoreTypes.isType(type) && MoreTypes.isTypeOf(Set.class, type);
   }
 
   /**
    * {@code true} if {@code key.type()} is a {@link Set} type.
    */
-  static boolean isSet(Key key) {
+  public static boolean isSet(Key key) {
     return isSet(key.type());
   }
 
@@ -104,7 +104,7 @@ abstract class SetType {
    *
    * @throws IllegalArgumentException if {@code type} is not a {@link Set} type
    */
-  static SetType from(TypeMirror type) {
+  public static SetType from(TypeMirror type) {
     checkArgument(isSet(type), "%s must be a Set", type);
     return new AutoValue_SetType(MoreTypes.equivalence().wrap(MoreTypes.asDeclared(type)));
   }
@@ -114,7 +114,7 @@ abstract class SetType {
    *
    * @throws IllegalArgumentException if {@code key.type()} is not a {@link Set} type
    */
-  static SetType from(Key key) {
+  public static SetType from(Key key) {
     return from (key.type());
   }
 }

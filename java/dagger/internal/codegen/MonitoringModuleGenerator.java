@@ -31,6 +31,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.Module;
 import dagger.Provides;
+import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.multibindings.Multibinds;
 import dagger.producers.ProductionScope;
@@ -52,17 +53,18 @@ final class MonitoringModuleGenerator extends SourceFileGenerator<TypeElement> {
   }
 
   @Override
-  ClassName nameGeneratedType(TypeElement componentElement) {
+  public ClassName nameGeneratedType(TypeElement componentElement) {
     return SourceFiles.generatedMonitoringModuleName(componentElement);
   }
 
   @Override
-  Element originatingElement(TypeElement componentElement) {
+  public Element originatingElement(TypeElement componentElement) {
     return componentElement;
   }
 
   @Override
-  Optional<TypeSpec.Builder> write(ClassName generatedTypeName, TypeElement componentElement) {
+  public Optional<TypeSpec.Builder> write(
+      ClassName generatedTypeName, TypeElement componentElement) {
     return Optional.of(
         classBuilder(generatedTypeName)
             .addAnnotation(Module.class)

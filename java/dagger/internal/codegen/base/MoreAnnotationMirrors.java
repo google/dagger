@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-import static dagger.internal.codegen.MoreAnnotationValues.asAnnotationValues;
+import static dagger.internal.codegen.base.MoreAnnotationValues.asAnnotationValues;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
 import com.google.auto.common.AnnotationMirrors;
@@ -32,7 +32,7 @@ import javax.lang.model.type.TypeMirror;
  * A utility class for working with {@link AnnotationMirror} instances, similar to {@link
  * AnnotationMirrors}.
  */
-final class MoreAnnotationMirrors {
+public final class MoreAnnotationMirrors {
 
   private MoreAnnotationMirrors() {}
 
@@ -40,7 +40,7 @@ final class MoreAnnotationMirrors {
    * Wraps an {@link Optional} of a type in an {@code Optional} of a {@link Equivalence.Wrapper} for
    * that type.
    */
-  static Optional<Equivalence.Wrapper<AnnotationMirror>> wrapOptionalInEquivalence(
+  public static Optional<Equivalence.Wrapper<AnnotationMirror>> wrapOptionalInEquivalence(
       Optional<AnnotationMirror> optional) {
     return optional.map(AnnotationMirrors.equivalence()::wrap);
   }
@@ -49,12 +49,12 @@ final class MoreAnnotationMirrors {
    * Unwraps an {@link Optional} of a {@link Equivalence.Wrapper} into an {@code Optional} of the
    * underlying type.
    */
-  static Optional<AnnotationMirror> unwrapOptionalEquivalence(
+  public static Optional<AnnotationMirror> unwrapOptionalEquivalence(
       Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedOptional) {
     return wrappedOptional.map(Equivalence.Wrapper::get);
   }
 
-  static Name simpleName(AnnotationMirror annotationMirror) {
+  public static Name simpleName(AnnotationMirror annotationMirror) {
     return annotationMirror.getAnnotationType().asElement().getSimpleName();
   }
 
@@ -63,7 +63,7 @@ final class MoreAnnotationMirrors {
    *
    * @throws IllegalArgumentException unless that member represents an array of types
    */
-  static ImmutableList<TypeMirror> getTypeListValue(
+  public static ImmutableList<TypeMirror> getTypeListValue(
       AnnotationMirror annotationMirror, String name) {
     return asAnnotationValues(getAnnotationValue(annotationMirror, name))
         .stream()

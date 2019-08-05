@@ -21,8 +21,8 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDe
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static dagger.internal.codegen.MapKeyAccessibility.isMapKeyPubliclyAccessible;
 import static dagger.internal.codegen.SourceFiles.elementBasedClassName;
+import static dagger.internal.codegen.base.MapKeyAccessibility.isMapKeyPubliclyAccessible;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -35,6 +35,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.MapKey;
+import dagger.internal.codegen.base.MapKeyAccessibility;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.NoSuchElementException;

@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 import static java.util.stream.Collectors.joining;

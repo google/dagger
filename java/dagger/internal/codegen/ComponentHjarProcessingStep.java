@@ -21,9 +21,9 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
-import static dagger.internal.codegen.ComponentAnnotation.rootComponentAnnotations;
 import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
+import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotations;
 import static dagger.internal.codegen.javapoet.TypeSpecs.addSupertype;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -42,6 +42,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.BindsInstance;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
+import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.producers.internal.CancellationListener;
@@ -127,17 +128,17 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
     }
 
     @Override
-    ClassName nameGeneratedType(ComponentDescriptor input) {
+    public ClassName nameGeneratedType(ComponentDescriptor input) {
       return componentName(input.typeElement());
     }
 
     @Override
-    Element originatingElement(ComponentDescriptor input) {
+    public Element originatingElement(ComponentDescriptor input) {
       return input.typeElement();
     }
 
     @Override
-    Optional<TypeSpec.Builder> write(
+    public Optional<TypeSpec.Builder> write(
         ClassName generatedTypeName, ComponentDescriptor componentDescriptor) {
       TypeSpec.Builder generatedComponent =
           TypeSpec.classBuilder(generatedTypeName)

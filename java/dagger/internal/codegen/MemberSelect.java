@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeVariableName;
+import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import java.util.List;
 import java.util.Optional;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.isType;
@@ -47,9 +47,10 @@ import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
 /** Utility methods for {@link RequestKind}s. */
-final class RequestKinds {
+public final class RequestKinds {
   /** Returns the type of a request of this kind for a key with a given type. */
-  static TypeMirror requestType(RequestKind requestKind, TypeMirror type, DaggerTypes types) {
+  public static TypeMirror requestType(
+      RequestKind requestKind, TypeMirror type, DaggerTypes types) {
     switch (requestKind) {
       case INSTANCE:
         return type;
@@ -66,7 +67,7 @@ final class RequestKinds {
   }
 
   /** Returns the type of a request of this kind for a key with a given type. */
-  static TypeName requestTypeName(RequestKind requestKind, TypeName keyType) {
+  public static TypeName requestTypeName(RequestKind requestKind, TypeName keyType) {
     switch (requestKind) {
       case INSTANCE:
         return keyType;
@@ -102,7 +103,7 @@ final class RequestKinds {
           PRODUCED, Produced.class);
 
   /** Returns the {@link RequestKind} that matches the wrapping types (if any) of {@code type}. */
-  static RequestKind getRequestKind(TypeMirror type) {
+  public static RequestKind getRequestKind(TypeMirror type) {
     checkTypePresent(type);
     for (RequestKind kind : FRAMEWORK_CLASSES.keySet()) {
       if (matchesKind(kind, type)) {
@@ -134,7 +135,7 @@ final class RequestKinds {
    * @throws IllegalArgumentException if {@code type} is not wrapped with {@code requestKind}'s
    *     framework class(es).
    */
-  static TypeMirror extractKeyType(RequestKind requestKind, TypeMirror type) {
+  public static TypeMirror extractKeyType(RequestKind requestKind, TypeMirror type) {
     checkTypePresent(type);
     switch (requestKind) {
       case INSTANCE:
@@ -159,7 +160,7 @@ final class RequestKinds {
    * classes, and {@link RequestKind#FUTURE} is wrapped with a {@link ListenableFuture}, but for
    * historical/implementation reasons has not had an associated framework class.
    */
-  static Class<?> frameworkClass(RequestKind requestKind) {
+  public static Class<?> frameworkClass(RequestKind requestKind) {
     Class<?> result = FRAMEWORK_CLASSES.get(requestKind);
     checkArgument(result != null, "no framework class for %s", requestKind);
     return result;
@@ -169,7 +170,7 @@ final class RequestKinds {
    * Returns {@code true} if requests for {@code requestKind} can be satisfied by a production
    * binding.
    */
-  static boolean canBeSatisfiedByProductionBinding(RequestKind requestKind) {
+  public static boolean canBeSatisfiedByProductionBinding(RequestKind requestKind) {
     switch (requestKind) {
       case INSTANCE:
       case PROVIDER:
@@ -183,20 +184,6 @@ final class RequestKinds {
         return true;
     }
     throw new AssertionError();
-  }
-
-  /**
-   * Returns true if {@code requestKind} is always derived from a {@link RequestKind#PROVIDER}
-   * instance.
-   */
-  static boolean isDerivedFromProvider(RequestKind requestKind) {
-    switch (requestKind) {
-      case LAZY:
-      case PROVIDER_OF_LAZY:
-        return true;
-      default:
-        return false;
-    }
   }
 
   private RequestKinds() {}

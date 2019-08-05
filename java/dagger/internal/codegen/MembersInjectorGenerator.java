@@ -50,6 +50,8 @@ import com.squareup.javapoet.TypeVariableName;
 import dagger.MembersInjector;
 import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.MembersInjectionBinding.InjectionSite;
+import dagger.internal.codegen.base.SourceFileGenerator;
+import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
@@ -83,22 +85,23 @@ final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectio
   }
 
   @Override
-  ClassName nameGeneratedType(MembersInjectionBinding binding) {
+  public ClassName nameGeneratedType(MembersInjectionBinding binding) {
     return membersInjectorNameForType(binding.membersInjectedType());
   }
 
   @Override
-  Element originatingElement(MembersInjectionBinding binding) {
+  public Element originatingElement(MembersInjectionBinding binding) {
     return binding.membersInjectedType();
   }
 
   @Override
-  Optional<TypeSpec.Builder> write(ClassName generatedTypeName, MembersInjectionBinding binding) {
+  public Optional<TypeSpec.Builder> write(
+      ClassName generatedTypeName, MembersInjectionBinding binding) {
     // Empty members injection bindings are special and don't need source files.
     if (binding.injectionSites().isEmpty()) {
       return Optional.empty();
     }
-    
+
     statisticsCollector.recordMembersInjectorGenerated();
 
     // We don't want to write out resolved bindings -- we want to write out the generic version.

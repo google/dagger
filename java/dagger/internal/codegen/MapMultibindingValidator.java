@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Multimaps.filterKeys;
-import static dagger.internal.codegen.Formatter.INDENT;
+import static dagger.internal.codegen.base.Formatter.INDENT;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSetMultimap;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
+import dagger.internal.codegen.base.MapType;
 import dagger.model.BindingGraph;
 import dagger.model.Key;
 import dagger.producers.Producer;

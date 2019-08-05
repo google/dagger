@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
+import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.common.AnnotationMirrors;
@@ -29,37 +29,33 @@ import java.lang.annotation.Annotation;
 import java.util.Optional;
 import javax.inject.Singleton;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 
 /** Common names and convenience methods for {@link Scope}s. */
-final class Scopes {
-  /**
-   * Creates a {@link Scope} object from the {@link javax.inject.Scope}-annotated annotation type.
-   */
-  static Scope scope(TypeElement scopeType) {
-    return Scope.scope(SimpleAnnotationMirror.of(scopeType));
-  }
+public final class Scopes {
 
   /** Returns a representation for {@link ProductionScope @ProductionScope} scope. */
-  static Scope productionScope(DaggerElements elements) {
+  public static Scope productionScope(DaggerElements elements) {
     return scope(elements, ProductionScope.class);
   }
 
   /** Returns a representation for {@link Singleton @Singleton} scope. */
-  static Scope singletonScope(DaggerElements elements) {
+  public static Scope singletonScope(DaggerElements elements) {
     return scope(elements, Singleton.class);
   }
 
+  /**
+   * Creates a {@link Scope} object from the {@link javax.inject.Scope}-annotated annotation type.
+   */
   private static Scope scope(
       DaggerElements elements, Class<? extends Annotation> scopeAnnotationClass) {
-    return scope(elements.getTypeElement(scopeAnnotationClass));
+    return Scope.scope(SimpleAnnotationMirror.of(elements.getTypeElement(scopeAnnotationClass)));
   }
 
   /**
    * Returns at most one associated scoped annotation from the source code element, throwing an
    * exception if there are more than one.
    */
-  static Optional<Scope> uniqueScopeOf(Element element) {
+  public static Optional<Scope> uniqueScopeOf(Element element) {
     // TODO(ronshapiro): Use MoreCollectors.toOptional() once we can use guava-jre
     return Optional.ofNullable(getOnlyElement(scopesOf(element), null));
   }
@@ -70,12 +66,12 @@ final class Scopes {
    * <p>It's readable source because it has had common package prefixes removed, e.g.
    * {@code @javax.inject.Singleton} is returned as {@code @Singleton}.
    */
-  static String getReadableSource(Scope scope) {
+  public static String getReadableSource(Scope scope) {
     return stripCommonTypePrefixes(scope.toString());
   }
 
   /** Returns all of the associated scopes for a source code element. */
-  static ImmutableSet<Scope> scopesOf(Element element) {
+  public static ImmutableSet<Scope> scopesOf(Element element) {
     return AnnotationMirrors.getAnnotatedAnnotations(element, javax.inject.Scope.class)
         .stream()
         .map(Scope::scope)

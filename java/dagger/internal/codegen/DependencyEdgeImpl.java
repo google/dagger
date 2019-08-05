@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import dagger.internal.codegen.base.ElementFormatter;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.DependencyRequest;
 

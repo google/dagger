@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -30,12 +30,12 @@ import javax.lang.model.element.TypeElement;
 /**
  * Utilities for handling types in annotation processors
  */
-final class Util {
+public final class Util {
   /**
    * Returns true if and only if a component can instantiate new instances (typically of a module)
    * rather than requiring that they be passed.
    */
-  static boolean componentCanMakeNewInstances(TypeElement typeElement) {
+  public static boolean componentCanMakeNewInstances(TypeElement typeElement) {
     switch (typeElement.getKind()) {
       case CLASS:
         break;
@@ -86,7 +86,7 @@ final class Util {
    * A version of {@link Map#computeIfAbsent(Object, Function)} that allows {@code mappingFunction}
    * to update {@code map}.
    */
-  static <K, V> V reentrantComputeIfAbsent(
+  public static <K, V> V reentrantComputeIfAbsent(
       Map<K, V> map, K key, Function<? super K, ? extends V> mappingFunction) {
     V value = map.get(key);
     if (value == null) {

@@ -24,6 +24,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Optional;
@@ -49,18 +50,18 @@ final class InaccessibleMapKeyProxyGenerator extends SourceFileGenerator<Contrib
   }
 
   @Override
-  ClassName nameGeneratedType(ContributionBinding binding) {
+  public ClassName nameGeneratedType(ContributionBinding binding) {
     return MapKeys.mapKeyProxyClassName(binding);
   }
 
   @Override
-  Element originatingElement(ContributionBinding binding) {
+  public Element originatingElement(ContributionBinding binding) {
     // a map key is only ever present on bindings that have a binding element
     return binding.bindingElement().get();
   }
 
   @Override
-  Optional<TypeSpec.Builder> write(ClassName generatedName, ContributionBinding binding) {
+  public Optional<TypeSpec.Builder> write(ClassName generatedName, ContributionBinding binding) {
     return MapKeys.mapKeyFactoryMethod(binding, types, elements)
         .map(
             method ->

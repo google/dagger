@@ -38,6 +38,7 @@ import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.Component;
 import dagger.Module;
 import dagger.Subcomponent;
+import dagger.internal.codegen.base.ComponentAnnotation;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;

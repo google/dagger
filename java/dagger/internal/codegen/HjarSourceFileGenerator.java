@@ -25,6 +25,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.base.SourceFileGenerator;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
@@ -46,17 +47,17 @@ final class HjarSourceFileGenerator<T> extends SourceFileGenerator<T> {
   }
 
   @Override
-  ClassName nameGeneratedType(T input) {
+  public ClassName nameGeneratedType(T input) {
     return delegate.nameGeneratedType(input);
   }
 
   @Override
-  Element originatingElement(T input) {
+  public Element originatingElement(T input) {
     return delegate.originatingElement(input);
   }
 
   @Override
-  Optional<TypeSpec.Builder> write(ClassName generatedTypeName, T input) {
+  public Optional<TypeSpec.Builder> write(ClassName generatedTypeName, T input) {
     return delegate
         .write(generatedTypeName, input)
         .map(completeType -> skeletonType(completeType.build()));

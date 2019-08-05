@@ -25,6 +25,7 @@ import static java.util.stream.Collectors.mapping;
 import com.google.common.collect.ImmutableSet;
 import dagger.Component;
 import dagger.Subcomponent;
+import dagger.internal.codegen.base.ComponentAnnotation;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;

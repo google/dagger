@@ -1,0 +1,64 @@
+# Copyright (C) 2019 The Dagger Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Description:
+#   Sources related to compiler options.
+
+package(default_visibility = ["//:src"])
+
+java_library(
+    name = "base",
+    srcs = [
+        "ClearableCache.java",
+        "ComponentAnnotation.java",
+        "ContributionType.java",
+        "DiagnosticFormatting.java",
+        "ElementFormatter.java",
+        "Formatter.java",
+        "FrameworkTypes.java",
+        "InjectionAnnotations.java",
+        "Keys.java",
+        "MapKeyAccessibility.java",
+        "MapType.java",
+        "ModuleAnnotation.java",
+        "MoreAnnotationMirrors.java",
+        "MoreAnnotationValues.java",
+        "MultibindingAnnotations.java",
+        "OptionalType.java",
+        "RequestKinds.java",
+        "Scopes.java",
+        "SetType.java",
+        "SimpleAnnotationMirror.java",
+        "SimpleTypeAnnotationValue.java",
+        "SourceFileGenerationException.java",
+        "SourceFileGenerator.java",
+        "UniqueNameSet.java",
+        "Util.java",
+    ],
+    plugins = ["//java/dagger/internal/codegen/bootstrap"],
+    tags = ["maven:merged"],
+    deps = [
+        "//java/dagger:core",
+        "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/javapoet",
+        "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/model",
+        "//java/dagger/producers",
+        "@google_bazel_common//third_party/java/auto:common",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/guava",
+        "@google_bazel_common//third_party/java/javapoet",
+        "@google_bazel_common//third_party/java/jsr330_inject",
+    ],
+)

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 
@@ -25,7 +25,7 @@ import dagger.multibindings.IntoSet;
 import javax.lang.model.element.Element;
 
 /** Whether a binding or declaration is for a unique contribution or a map or set multibinding. */
-enum ContributionType {
+public enum ContributionType {
   /** Represents map bindings. */
   MAP,
   /** Represents set bindings. */
@@ -37,24 +37,24 @@ enum ContributionType {
   ;
 
   /** An object that is associated with a {@link ContributionType}. */
-  interface HasContributionType {
+  public interface HasContributionType {
 
     /** The contribution type of this object. */
     ContributionType contributionType();
   }
 
   /** {@code true} if this is for a multibinding. */
-  boolean isMultibinding() {
+  public boolean isMultibinding() {
     return !this.equals(UNIQUE);
   }
 
   /**
    * The contribution type from a binding element's annotations. Presumes a well-formed binding
    * element (at most one of @IntoSet, @IntoMap, @ElementsIntoSet and @Provides.type). {@link
-   * BindingMethodValidator} and {@link BindsInstanceProcessingStep} validate correctness on their
-   * own.
+   * dagger.internal.codegen.BindingMethodValidator} and {@link
+   * dagger.internal.codegen.BindsInstanceProcessingStep} validate correctness on their own.
    */
-  static ContributionType fromBindingElement(Element element) {
+  public static ContributionType fromBindingElement(Element element) {
     if (isAnnotationPresent(element, IntoMap.class)) {
       return ContributionType.MAP;
     } else if (isAnnotationPresent(element, IntoSet.class)) {

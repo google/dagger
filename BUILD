@@ -56,12 +56,12 @@ SHADE_RULES = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"]
 jarjar_library(
     name = "shaded_compiler",
     jars = [
-        "//java/dagger/internal/codegen:base",
         "//java/dagger/internal/codegen:binding",
         "//java/dagger/internal/codegen:binding_graph_validation",
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/codegen:validation",
         "//java/dagger/internal/codegen:writing",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
@@ -77,12 +77,12 @@ jarjar_library(
 jarjar_library(
     name = "shaded_compiler_src",
     jars = [
-        "//java/dagger/internal/codegen:libbase-src.jar",
         "//java/dagger/internal/codegen:libbinding-src.jar",
         "//java/dagger/internal/codegen:libbinding_graph_validation-src.jar",
         "//java/dagger/internal/codegen:libprocessor-src.jar",
         "//java/dagger/internal/codegen:libvalidation-src.jar",
         "//java/dagger/internal/codegen:libwriting-src.jar",
+        "//java/dagger/internal/codegen/base:libbase-src.jar",
         "//java/dagger/internal/codegen/compileroption:libcompileroption-src.jar",
         "//java/dagger/internal/codegen/javapoet:libjavapoet-src.jar",
         "//java/dagger/internal/codegen/langmodel:liblangmodel-src.jar",

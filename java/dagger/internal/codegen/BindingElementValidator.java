@@ -17,10 +17,10 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Verify.verifyNotNull;
-import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.MapKeys.getMapKeys;
-import static dagger.internal.codegen.Scopes.scopesOf;
-import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.base.InjectionAnnotations.getQualifiers;
+import static dagger.internal.codegen.base.Scopes.scopesOf;
+import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static javax.lang.model.type.TypeKind.ARRAY;
 import static javax.lang.model.type.TypeKind.DECLARED;
@@ -31,6 +31,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
 import dagger.MapKey;
 import dagger.Provides;
+import dagger.internal.codegen.base.ContributionType;
+import dagger.internal.codegen.base.FrameworkTypes;
+import dagger.internal.codegen.base.MultibindingAnnotations;
+import dagger.internal.codegen.base.SetType;
 import dagger.model.Key;
 import dagger.model.Scope;
 import dagger.multibindings.ElementsIntoSet;

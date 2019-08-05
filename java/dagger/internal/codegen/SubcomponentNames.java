@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimaps;
+import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.model.Key;
 import java.util.Collection;
 import java.util.Iterator;

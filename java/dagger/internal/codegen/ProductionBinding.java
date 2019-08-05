@@ -24,6 +24,8 @@ import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.codegen.base.ContributionType;
+import dagger.internal.codegen.base.SetType;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import java.util.Optional;

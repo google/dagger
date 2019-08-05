@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -31,8 +31,8 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleTypeVisitor6;
 
 /** Utility methods related to {@link Key}s. */
-final class Keys {
-  static boolean isValidMembersInjectionKey(Key key) {
+public final class Keys {
+  public static boolean isValidMembersInjectionKey(Key key) {
     return !key.qualifier().isPresent()
         && !key.multibindingContributionIdentifier().isPresent()
         && key.type().getKind().equals(TypeKind.DECLARED);
@@ -42,7 +42,7 @@ final class Keys {
    * Returns {@code true} if this is valid as an implicit key (that is, if it's valid for a
    * just-in-time binding by discovering an {@code @Inject} constructor).
    */
-  static boolean isValidImplicitProvisionKey(Key key, DaggerTypes types) {
+  public static boolean isValidImplicitProvisionKey(Key key, DaggerTypes types) {
     return isValidImplicitProvisionKey(key.qualifier(), key.type(), types);
   }
 
@@ -51,7 +51,7 @@ final class Keys {
    * key (that is, if it's valid for a just-in-time binding by discovering an {@code @Inject}
    * constructor).
    */
-  static boolean isValidImplicitProvisionKey(
+  public static boolean isValidImplicitProvisionKey(
       Optional<? extends AnnotationMirror> qualifier, TypeMirror type, final DaggerTypes types) {
     // Qualifiers disqualify implicit provisioning.
     if (qualifier.isPresent()) {

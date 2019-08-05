@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.auto.common.MoreTypes.isType;
 
@@ -32,7 +32,7 @@ import javax.lang.model.type.TypeMirror;
  * A collection of utility methods for dealing with Dagger framework types. A framework type is any
  * type that the framework itself defines.
  */
-final class FrameworkTypes {
+public final class FrameworkTypes {
   private static final ImmutableSet<Class<?>> PROVISION_TYPES =
       ImmutableSet.of(Provider.class, Lazy.class, MembersInjector.class);
 
@@ -42,12 +42,12 @@ final class FrameworkTypes {
       ImmutableSet.of(Produced.class, Producer.class);
 
   /** Returns true if the type represents a producer-related framework type. */
-  static boolean isProducerType(TypeMirror type) {
+  public static boolean isProducerType(TypeMirror type) {
     return isType(type) && typeIsOneOf(PRODUCTION_TYPES, type);
   }
 
   /** Returns true if the type represents a framework type. */
-  static boolean isFrameworkType(TypeMirror type) {
+  public static boolean isFrameworkType(TypeMirror type) {
     return isType(type)
         && (typeIsOneOf(PROVISION_TYPES, type)
             || typeIsOneOf(PRODUCTION_TYPES, type));

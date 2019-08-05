@@ -17,11 +17,12 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.DiagnosticFormatting.stripCommonTypePrefixes;
-import static dagger.internal.codegen.InjectionAnnotations.getQualifier;
+import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
+import static dagger.internal.codegen.base.InjectionAnnotations.getQualifier;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Iterator;
 import java.util.List;

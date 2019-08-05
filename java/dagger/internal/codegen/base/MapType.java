@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -31,7 +31,7 @@ import javax.lang.model.type.TypeMirror;
  * Information about a {@link Map} {@link TypeMirror}.
  */
 @AutoValue
-abstract class MapType {
+public abstract class MapType {
   /**
    * The map type itself, wrapped using {@link MoreTypes#equivalence()}. Use
    * {@link #declaredMapType()} instead.
@@ -41,43 +41,43 @@ abstract class MapType {
   /**
    * The map type itself.
    */
-  DeclaredType declaredMapType() {
+  private DeclaredType declaredMapType() {
     return wrappedDeclaredMapType().get();
   }
 
   /**
    * {@code true} if the map type is the raw {@link Map} type.
    */
-  boolean isRawType() {
+  public boolean isRawType() {
     return declaredMapType().getTypeArguments().isEmpty();
   }
 
   /**
    * The map key type.
-   * 
+   *
    * @throws IllegalStateException if {@link #isRawType()} is true.
    */
-  TypeMirror keyType() {
+  public TypeMirror keyType() {
     checkState(!isRawType());
     return declaredMapType().getTypeArguments().get(0);
   }
 
   /**
    * The map value type.
-   * 
+   *
    * @throws IllegalStateException if {@link #isRawType()} is true.
    */
-  TypeMirror valueType() {
+  public TypeMirror valueType() {
     checkState(!isRawType());
     return declaredMapType().getTypeArguments().get(1);
   }
 
   /**
    * {@code true} if {@link #valueType()} is a {@code clazz}.
-   * 
+   *
    * @throws IllegalStateException if {@link #isRawType()} is true.
    */
-  boolean valuesAreTypeOf(Class<?> clazz) {
+  public boolean valuesAreTypeOf(Class<?> clazz) {
     return MoreTypes.isType(valueType()) && MoreTypes.isTypeOf(clazz, valueType());
   }
 
@@ -85,7 +85,7 @@ abstract class MapType {
    * Returns {@code true} if the {@linkplain #valueType() value type} of the {@link Map} is a
    * {@linkplain FrameworkTypes#isFrameworkType(TypeMirror) framework type}.
    */
-  boolean valuesAreFrameworkType() {
+  public boolean valuesAreFrameworkType() {
     return FrameworkTypes.isFrameworkType(valueType());
   }
 
@@ -96,7 +96,7 @@ abstract class MapType {
    * @throws IllegalStateException if {@link #isRawType()} is true or {@link #valueType()} is not a
    *     framework type
    */
-  TypeMirror unwrappedFrameworkValueType() {
+  public TypeMirror unwrappedFrameworkValueType() {
     checkState(
         valuesAreFrameworkType(), "called unwrappedFrameworkValueType() on %s", declaredMapType());
     return uncheckedUnwrappedValueType();
@@ -110,7 +110,7 @@ abstract class MapType {
    * @throws IllegalArgumentException if {@code wrappingClass} does not have exactly one type
    *     parameter
    */
-  TypeMirror unwrappedValueType(Class<?> wrappingClass) {
+  public TypeMirror unwrappedValueType(Class<?> wrappingClass) {
     checkArgument(
         wrappingClass.getTypeParameters().length == 1,
         "%s must have exactly one type parameter",
@@ -126,14 +126,14 @@ abstract class MapType {
   /**
    * {@code true} if {@code type} is a {@link Map} type.
    */
-  static boolean isMap(TypeMirror type) {
+  public static boolean isMap(TypeMirror type) {
     return MoreTypes.isType(type) && MoreTypes.isTypeOf(Map.class, type);
   }
 
   /**
    * {@code true} if {@code key.type()} is a {@link Map} type.
    */
-  static boolean isMap(Key key) {
+  public static boolean isMap(Key key) {
     return isMap(key.type());
   }
 
@@ -142,7 +142,7 @@ abstract class MapType {
    *
    * @throws IllegalArgumentException if {@code type} is not a {@link Map} type
    */
-  static MapType from(TypeMirror type) {
+  public static MapType from(TypeMirror type) {
     checkArgument(isMap(type), "%s is not a Map", type);
     return new AutoValue_MapType(MoreTypes.equivalence().wrap(MoreTypes.asDeclared(type)));
   }
@@ -152,7 +152,7 @@ abstract class MapType {
    *
    * @throws IllegalArgumentException if {@code key.type()} is not a {@link Map} type
    */
-  static MapType from(Key key) {
+  public static MapType from(Key key) {
     return from(key.type());
   }
 }

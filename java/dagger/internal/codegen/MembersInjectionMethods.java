@@ -19,7 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.MEMBERS_INJECTION_METHOD;
-import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static javax.lang.model.element.Modifier.PRIVATE;
 

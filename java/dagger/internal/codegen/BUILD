@@ -58,47 +58,17 @@ CODEGEN_SHARED_DEPS = [
 ]
 
 CODEGEN_DEPS = CODEGEN_SHARED_DEPS + [
+    ":package_info",
     "//java/dagger/internal/codegen/extension",
     "@google_bazel_common//third_party/java/guava",
 ]
 
-# Common types needed across all of the codegen package
 java_library(
-    name = "base",
-    srcs = [
-        "ClearableCache.java",
-        "ComponentAnnotation.java",
-        "ContributionType.java",
-        "DiagnosticFormatting.java",
-        "ElementFormatter.java",
-        "Formatter.java",
-        "FrameworkTypes.java",
-        "InjectionAnnotations.java",
-        "Keys.java",
-        "MapKeyAccessibility.java",
-        "MapType.java",
-        "ModuleAnnotation.java",
-        "MoreAnnotationMirrors.java",
-        "MoreAnnotationValues.java",
-        "MultibindingAnnotations.java",
-        "OptionalType.java",
-        "RequestKinds.java",
-        "Scopes.java",
-        "SetType.java",
-        "SimpleAnnotationMirror.java",
-        "SimpleTypeAnnotationValue.java",
-        "SourceFileGenerationException.java",  # Used in :writing and :processor
-        "SourceFileGenerator.java",  # Needed by InjectBindingRegistry in :binding and also :writing
-        "TypeCheckingProcessingStep.java",
-        "UniqueNameSet.java",
-        "Util.java",
-        "package-info.java",
-    ],
-    plugins = CODEGEN_PLUGINS,
+    name = "package_info",
+    srcs = ["package-info.java"],
     tags = ["maven:merged"],
-    deps = CODEGEN_DEPS + [
-        "//java/dagger/internal/codegen/javapoet",
-        "//java/dagger/internal/codegen/langmodel",
+    deps = [
+        "@google_bazel_common//third_party/java/error_prone:annotations",
     ],
 )
 
@@ -161,7 +131,7 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
-        ":base",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/javapoet",
@@ -194,19 +164,23 @@ java_library(
         "MapKeyValidator.java",
         "MembersInjectionValidator.java",
         "ModuleValidator.java",
+        "MonitoringModuleGenerator.java",
+        "MonitoringModuleProcessingStep.java",
         "MultibindingAnnotationsProcessingStep.java",
         "MultibindsMethodValidator.java",
         "ProducesMethodValidator.java",
         "ProvidesMethodValidator.java",
+        "TypeCheckingProcessingStep.java",
         "Validation.java",
         "ValidationReport.java",
     ],
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
-        ":base",
         ":binding",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
     ],
 )
@@ -228,9 +202,9 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
-        ":base",
         ":binding",
         ":validation",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/langmodel",
     ],
@@ -281,8 +255,6 @@ java_library(
         "ModuleConstructorProxyGenerator.java",
         "ModuleGenerator.java",
         "ModuleProxies.java",
-        "MonitoringModuleGenerator.java",
-        "MonitoringModuleProcessingStep.java",
         "MultibindingFactoryCreationExpression.java",
         "OptionalBindingExpression.java",
         "OptionalFactories.java",
@@ -310,8 +282,8 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
-        ":base",
         ":binding",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
@@ -348,11 +320,11 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
     deps = CODEGEN_DEPS + [
-        ":base",
         ":binding",
         ":binding_graph_validation",
         ":writing",
         ":validation",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
@@ -367,11 +339,11 @@ pom_file(
     artifact_name = "Dagger Compiler",
     targets = [
         ":processor",
-        ":base",
         ":binding",
         ":binding_graph_validation",
         ":writing",
         ":validation",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/javapoet",
     ],
 )
@@ -382,9 +354,9 @@ java_library(
     plugins = [":component-codegen"],
     visibility = ["//visibility:private"],
     deps = [
-        ":base",
         ":javac",
         "//java/dagger:core",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/langmodel",
     ],
@@ -395,13 +367,14 @@ java_library(
     srcs = KYTHE_SRCS,
     plugins = [":component-codegen"],
     deps = [
-        ":base",
         ":binding",
         ":javac",
         ":javac-plugin-module",
         ":kythe_plugin",
+        ":package_info",
         ":processor",
         "//java/dagger:core",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/model",
         "//java/dagger/producers",
@@ -441,6 +414,7 @@ java_library(
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     plugins = CODEGEN_PLUGINS,
     deps = CODEGEN_DEPS + [
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/javapoet",
@@ -468,12 +442,13 @@ java_library(
     srcs = STATISTICS_COLLECTOR_SRCS,
     plugins = [":component-codegen"],
     deps = [
-        ":base",
         ":binding",
         ":javac",
         ":javac-plugin-module",
+        ":package_info",
         ":processor",
         "//java/dagger:core",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/model",
         "@google_bazel_common//third_party/java/error_prone:check_api",
     ],

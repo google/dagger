@@ -44,6 +44,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
+import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;

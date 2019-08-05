@@ -19,10 +19,10 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.consumingIterable;
-import static dagger.internal.codegen.ComponentAnnotation.subcomponentAnnotation;
 import static dagger.internal.codegen.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
-import static dagger.internal.codegen.ModuleAnnotation.moduleAnnotation;
-import static dagger.internal.codegen.MoreAnnotationMirrors.getTypeListValue;
+import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotation;
+import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
+import static dagger.internal.codegen.base.MoreAnnotationMirrors.getTypeListValue;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 import static javax.lang.model.util.ElementFilter.typesIn;
 

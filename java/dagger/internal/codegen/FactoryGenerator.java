@@ -56,6 +56,8 @@ import dagger.internal.Factory;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.InjectionMethods.ProvisionMethod;
+import dagger.internal.codegen.base.SourceFileGenerator;
+import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.langmodel.DaggerElements;
@@ -95,18 +97,18 @@ final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   }
 
   @Override
-  ClassName nameGeneratedType(ProvisionBinding binding) {
+  public ClassName nameGeneratedType(ProvisionBinding binding) {
     return generatedClassNameForBinding(binding);
   }
 
   @Override
-  Element originatingElement(ProvisionBinding binding) {
+  public Element originatingElement(ProvisionBinding binding) {
     // we only create factories for bindings that have a binding element
     return binding.bindingElement().get();
   }
 
   @Override
-  Optional<TypeSpec.Builder> write(ClassName generatedTypeName, ProvisionBinding binding) {
+  public Optional<TypeSpec.Builder> write(ClassName generatedTypeName, ProvisionBinding binding) {
     // We don't want to write out resolved bindings -- we want to write out the generic version.
     checkArgument(!binding.unresolved().isPresent());
     checkArgument(binding.bindingElement().isPresent());

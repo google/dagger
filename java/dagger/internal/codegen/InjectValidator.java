@@ -17,9 +17,9 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static dagger.internal.codegen.InjectionAnnotations.getQualifiers;
-import static dagger.internal.codegen.InjectionAnnotations.injectedConstructors;
-import static dagger.internal.codegen.Scopes.scopesOf;
+import static dagger.internal.codegen.base.InjectionAnnotations.getQualifiers;
+import static dagger.internal.codegen.base.InjectionAnnotations.injectedConstructors;
+import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;

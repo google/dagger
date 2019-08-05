@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.ElementFormatter.elementToString;
+import static dagger.internal.codegen.base.ElementFormatter.elementToString;
 
 import dagger.model.BindingGraph.ChildFactoryMethodEdge;
 import javax.lang.model.element.ExecutableElement;

@@ -22,6 +22,7 @@ import static dagger.internal.codegen.SourceFiles.mapFactoryClassName;
 
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.CodeBlock;
+import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.model.DependencyRequest;
 import dagger.producers.Produced;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.base;
 
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -24,13 +24,13 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 
 /** Utility methods for working with {@link AnnotationValue} instances. */
-final class MoreAnnotationValues {
+public final class MoreAnnotationValues {
   /**
    * Returns the list of values represented by an array annotation value.
    *
    * @throws IllegalArgumentException unless {@code annotationValue} represents an array
    */
-  static ImmutableList<AnnotationValue> asAnnotationValues(AnnotationValue annotationValue) {
+  public static ImmutableList<AnnotationValue> asAnnotationValues(AnnotationValue annotationValue) {
     return annotationValue.accept(AS_ANNOTATION_VALUES, null);
   }
 
@@ -54,7 +54,7 @@ final class MoreAnnotationValues {
    *
    * @throws IllegalArgumentException unless {@code annotationValue} represents a single type
    */
-  static TypeMirror asType(AnnotationValue annotationValue) {
+  public static TypeMirror asType(AnnotationValue annotationValue) {
     return AS_TYPE.visit(annotationValue);
   }
 

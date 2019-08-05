@@ -19,6 +19,8 @@ package dagger.internal.codegen;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Component;
 import dagger.Provides;
+import dagger.internal.codegen.base.SourceFileGenerationException;
+import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;

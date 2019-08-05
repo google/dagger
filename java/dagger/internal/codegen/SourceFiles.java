@@ -51,6 +51,8 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.SetFactory;
+import dagger.internal.codegen.base.MapType;
+import dagger.internal.codegen.base.SetType;
 import dagger.model.DependencyRequest;
 import dagger.model.RequestKind;
 import dagger.producers.Produced;

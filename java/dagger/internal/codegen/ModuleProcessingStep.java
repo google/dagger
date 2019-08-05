@@ -29,6 +29,7 @@ import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.internal.codegen.DelegateDeclaration.Factory;
+import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import java.lang.annotation.Annotation;

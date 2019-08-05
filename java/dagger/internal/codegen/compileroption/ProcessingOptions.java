@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.compileroption;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -27,4 +27,4 @@ import javax.inject.Qualifier;
  */
 @Retention(RUNTIME)
 @Qualifier
-@interface ProcessingOptions {}
+public @interface ProcessingOptions {}

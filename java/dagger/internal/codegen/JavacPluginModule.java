@@ -16,15 +16,14 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.ValidationType.NONE;
-import static javax.tools.Diagnostic.Kind.NOTE;
-
 import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.model.JavacTypes;
 import com.sun.tools.javac.util.Context;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.compileroption.JavacPluginCompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.annotation.processing.Messager;
@@ -32,7 +31,6 @@ import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
@@ -40,87 +38,10 @@ import javax.tools.Diagnostic;
  * A module that provides a {@link BindingGraphFactory} and {@link ComponentDescriptorFactory} for
  * use in {@code javac} plugins. Requires a binding for the {@code javac} {@link Context}.
  */
-@Module(includes = InjectBindingRegistryModule.class)
+@Module
 abstract class JavacPluginModule {
-  @Provides
-  static CompilerOptions compilerOptions() {
-    return new CompilerOptions() {
-      @Override
-      boolean usesProducers() {
-        return true;
-      }
-
-      @Override
-      boolean fastInit() {
-        return false;
-      }
-
-      @Override
-      boolean formatGeneratedSource() {
-        return false;
-      }
-
-      @Override
-      boolean writeProducerNameInToken() {
-        return true;
-      }
-
-      @Override
-      Diagnostic.Kind nullableValidationKind() {
-        return NOTE;
-      }
-
-      @Override
-      Diagnostic.Kind privateMemberValidationKind() {
-        return NOTE;
-      }
-
-      @Override
-      Diagnostic.Kind staticMemberValidationKind() {
-        return NOTE;
-      }
-
-      @Override
-      boolean ignorePrivateAndStaticInjectionForComponent() {
-        return false;
-      }
-
-      @Override
-      ValidationType scopeCycleValidationType() {
-        return NONE;
-      }
-
-      @Override
-      boolean warnIfInjectionFactoryNotGeneratedUpstream() {
-        return false;
-      }
-
-      @Override
-      boolean headerCompilation() {
-        return false;
-      }
-
-      @Override
-      boolean useGradleIncrementalProcessing() {
-        return false;
-      }
-
-      @Override
-      ValidationType fullBindingGraphValidationType(TypeElement element) {
-        return NONE;
-      }
-
-      @Override
-      Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind() {
-        return NOTE;
-      }
-
-      @Override
-      ValidationType explicitBindingConflictsWithInjectValidationType() {
-        return NONE;
-      }
-    };
-  }
+  @Binds
+  abstract CompilerOptions compilerOptions(JavacPluginCompilerOptions compilerOptions);
 
   @Binds
   abstract Messager messager(NullMessager nullMessager);

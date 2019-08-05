@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.compileroption;
 
 /** Allows options to control how features in component processing are enabled. */
-enum FeatureStatus {
+public enum FeatureStatus {
   ENABLED,
   DISABLED;
 }

@@ -43,8 +43,7 @@ public final class Optionals {
   @SafeVarargs
   public static <T> Optional<T> firstPresent(
       Optional<T> first, Optional<T> second, Optional<T>... rest) {
-    return asList(first, second, rest)
-        .stream()
+    return asList(first, second, rest).stream()
         .filter(Optional::isPresent)
         .findFirst()
         .orElse(Optional.empty());

@@ -26,6 +26,7 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.model.Binding;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.ComponentNode;

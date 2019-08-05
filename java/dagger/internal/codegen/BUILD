@@ -67,14 +67,11 @@ java_library(
     name = "base",
     srcs = [
         "ClearableCache.java",
-        "CompilerOptions.java",
         "ComponentAnnotation.java",
         "ContributionType.java",
         "DiagnosticFormatting.java",
         "ElementFormatter.java",
-        "FeatureStatus.java",
         "Formatter.java",
-        "ForwardingCompilerOptions.java",
         "FrameworkTypes.java",
         "InjectionAnnotations.java",
         "Keys.java",
@@ -85,8 +82,6 @@ java_library(
         "MoreAnnotationValues.java",
         "MultibindingAnnotations.java",
         "OptionalType.java",
-        "ProcessingEnvironmentCompilerOptions.java",
-        "ProcessingOptions.java",
         "RequestKinds.java",
         "Scopes.java",
         "SetType.java",
@@ -97,7 +92,6 @@ java_library(
         "TypeCheckingProcessingStep.java",
         "UniqueNameSet.java",
         "Util.java",
-        "ValidationType.java",
         "package-info.java",
     ],
     plugins = CODEGEN_PLUGINS,
@@ -168,6 +162,7 @@ java_library(
     tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
         ":base",
+        "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/javapoet",
     ],
@@ -211,6 +206,7 @@ java_library(
     deps = CODEGEN_DEPS + [
         ":base",
         ":binding",
+        "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/langmodel",
     ],
 )
@@ -235,6 +231,7 @@ java_library(
         ":base",
         ":binding",
         ":validation",
+        "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/langmodel",
     ],
 )
@@ -315,6 +312,7 @@ java_library(
     deps = CODEGEN_DEPS + [
         ":base",
         ":binding",
+        "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/statistics",
@@ -355,6 +353,7 @@ java_library(
         ":binding_graph_validation",
         ":writing",
         ":validation",
+        "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/statistics",
@@ -385,8 +384,8 @@ java_library(
     deps = [
         ":base",
         ":javac",
-        ":processor",
         "//java/dagger:core",
+        "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/langmodel",
     ],
 )
@@ -442,6 +441,7 @@ java_library(
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     plugins = CODEGEN_PLUGINS,
     deps = CODEGEN_DEPS + [
+        "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/statistics",

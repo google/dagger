@@ -179,7 +179,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   }
 
   @Singleton
-  @Component(modules = JavacPluginModule.class)
+  @Component(modules = {InjectBindingRegistryModule.class, JavacPluginModule.class})
   interface PluginComponent {
     void inject(DaggerKythePlugin plugin);
 

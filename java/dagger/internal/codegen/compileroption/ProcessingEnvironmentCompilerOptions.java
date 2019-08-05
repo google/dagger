@@ -14,34 +14,34 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.compileroption;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Sets.immutableEnumSet;
-import static dagger.internal.codegen.FeatureStatus.DISABLED;
-import static dagger.internal.codegen.FeatureStatus.ENABLED;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_ANDROID_MODE;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.FAST_INIT;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.FLOATING_BINDS_METHODS;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.FORMAT_GENERATED_SOURCE;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Feature.WRITE_PRODUCER_NAME_IN_TOKEN;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.KeyOnlyOption.HEADER_COMPILATION;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.KeyOnlyOption.USE_GRADLE_INCREMENTAL_PROCESSING;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.DISABLE_INTER_COMPONENT_SCOPE_VALIDATION;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.EXPLICIT_BINDING_CONFLICTS_WITH_INJECT;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.FULL_BINDING_GRAPH_VALIDATION;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.MODULE_HAS_DIFFERENT_SCOPES_VALIDATION;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.NULLABLE_VALIDATION;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.PRIVATE_MEMBER_VALIDATION;
-import static dagger.internal.codegen.ProcessingEnvironmentCompilerOptions.Validation.STATIC_MEMBER_VALIDATION;
-import static dagger.internal.codegen.ValidationType.ERROR;
-import static dagger.internal.codegen.ValidationType.NONE;
-import static dagger.internal.codegen.ValidationType.WARNING;
+import static dagger.internal.codegen.compileroption.FeatureStatus.DISABLED;
+import static dagger.internal.codegen.compileroption.FeatureStatus.ENABLED;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FAST_INIT;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FLOATING_BINDS_METHODS;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FORMAT_GENERATED_SOURCE;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.WRITE_PRODUCER_NAME_IN_TOKEN;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.KeyOnlyOption.HEADER_COMPILATION;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.KeyOnlyOption.USE_GRADLE_INCREMENTAL_PROCESSING;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.DISABLE_INTER_COMPONENT_SCOPE_VALIDATION;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.EXPLICIT_BINDING_CONFLICTS_WITH_INJECT;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.FULL_BINDING_GRAPH_VALIDATION;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.MODULE_HAS_DIFFERENT_SCOPES_VALIDATION;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.NULLABLE_VALIDATION;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.PRIVATE_MEMBER_VALIDATION;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.STATIC_MEMBER_VALIDATION;
+import static dagger.internal.codegen.compileroption.ValidationType.ERROR;
+import static dagger.internal.codegen.compileroption.ValidationType.NONE;
+import static dagger.internal.codegen.compileroption.ValidationType.WARNING;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Stream.concat;
@@ -62,9 +62,10 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
-final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
+/** {@link CompilerOptions} for the given {@link ProcessingEnvironment}. */
+public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   /** Returns a valid {@link CompilerOptions} parsed from the processing environment. */
-  static CompilerOptions create(ProcessingEnvironment processingEnvironment) {
+  public static CompilerOptions create(ProcessingEnvironment processingEnvironment) {
     return new ProcessingEnvironmentCompilerOptions(processingEnvironment).checkValid();
   }
 
@@ -78,68 +79,68 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   }
 
   @Override
-  boolean usesProducers() {
+  public boolean usesProducers() {
     return processingEnvironment.getElementUtils().getTypeElement(Produces.class.getCanonicalName())
         != null;
   }
 
   @Override
-  boolean headerCompilation() {
+  public boolean headerCompilation() {
     return isEnabled(HEADER_COMPILATION);
   }
 
   @Override
-  boolean fastInit() {
+  public boolean fastInit() {
     return isEnabled(FAST_INIT);
   }
 
   @Override
-  boolean formatGeneratedSource() {
+  public boolean formatGeneratedSource() {
     return isEnabled(FORMAT_GENERATED_SOURCE);
   }
 
   @Override
-  boolean writeProducerNameInToken() {
+  public boolean writeProducerNameInToken() {
     return isEnabled(WRITE_PRODUCER_NAME_IN_TOKEN);
   }
 
   @Override
-  Diagnostic.Kind nullableValidationKind() {
+  public Diagnostic.Kind nullableValidationKind() {
     return diagnosticKind(NULLABLE_VALIDATION);
   }
 
   @Override
-  Diagnostic.Kind privateMemberValidationKind() {
+  public Diagnostic.Kind privateMemberValidationKind() {
     return diagnosticKind(PRIVATE_MEMBER_VALIDATION);
   }
 
   @Override
-  Diagnostic.Kind staticMemberValidationKind() {
+  public Diagnostic.Kind staticMemberValidationKind() {
     return diagnosticKind(STATIC_MEMBER_VALIDATION);
   }
 
   @Override
-  boolean ignorePrivateAndStaticInjectionForComponent() {
+  public boolean ignorePrivateAndStaticInjectionForComponent() {
     return isEnabled(IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT);
   }
 
   @Override
-  ValidationType scopeCycleValidationType() {
+  public ValidationType scopeCycleValidationType() {
     return parseOption(DISABLE_INTER_COMPONENT_SCOPE_VALIDATION);
   }
 
   @Override
-  boolean warnIfInjectionFactoryNotGeneratedUpstream() {
+  public boolean warnIfInjectionFactoryNotGeneratedUpstream() {
     return isEnabled(WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM);
   }
 
   @Override
-  boolean useGradleIncrementalProcessing() {
+  public boolean useGradleIncrementalProcessing() {
     return isEnabled(USE_GRADLE_INCREMENTAL_PROCESSING);
   }
 
   @Override
-  ValidationType fullBindingGraphValidationType(TypeElement element) {
+  public ValidationType fullBindingGraphValidationType(TypeElement element) {
     return fullBindingGraphValidationType();
   }
 
@@ -148,12 +149,12 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   }
 
   @Override
-  Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind() {
+  public Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind() {
     return diagnosticKind(MODULE_HAS_DIFFERENT_SCOPES_VALIDATION);
   }
 
   @Override
-  ValidationType explicitBindingConflictsWithInjectValidationType() {
+  public ValidationType explicitBindingConflictsWithInjectValidationType() {
     return parseOption(EXPLICIT_BINDING_CONFLICTS_WITH_INJECT);
   }
 
@@ -356,7 +357,7 @@ final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   }
 
   /** The supported command-line options. */
-  static ImmutableSet<String> supportedOptions() {
+  public static ImmutableSet<String> supportedOptions() {
     // need explicit type parameter to avoid a runtime stream error
     return Stream.<CommandLineOption[]>of(
             KeyOnlyOption.values(), Feature.values(), Validation.values())

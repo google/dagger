@@ -43,6 +43,8 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages;
+import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.compileroption.ValidationType;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Scope;

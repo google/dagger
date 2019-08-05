@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
 import static dagger.internal.codegen.Util.reentrantComputeIfAbsent;
 
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

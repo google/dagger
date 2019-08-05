@@ -41,7 +41,7 @@ public abstract class BindingGraphStatisticsCollector extends BugChecker
   private boolean isInjected;
 
   @Singleton
-  @Component(modules = JavacPluginModule.class)
+  @Component(modules = {InjectBindingRegistryModule.class, JavacPluginModule.class})
   interface Injector {
     void inject(BindingGraphStatisticsCollector collector);
 

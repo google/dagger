@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.compileroption;
 
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 /** A collection of options that dictate how the compiler will run. */
-abstract class CompilerOptions {
-  abstract boolean usesProducers();
+public abstract class CompilerOptions {
+  public abstract boolean usesProducers();
 
   /**
    * Returns true if the fast initialization flag, {@code fastInit}, is enabled.
@@ -31,21 +31,21 @@ abstract class CompilerOptions {
    * number of eagerly initialized fields at the cost of potential memory leaks and higher
    * per-provision instantiation time.
    */
-  abstract boolean fastInit();
+  public abstract boolean fastInit();
 
-  abstract boolean formatGeneratedSource();
+  public abstract boolean formatGeneratedSource();
 
-  abstract boolean writeProducerNameInToken();
+  public abstract boolean writeProducerNameInToken();
 
-  abstract Diagnostic.Kind nullableValidationKind();
+  public abstract Diagnostic.Kind nullableValidationKind();
 
-  final boolean doCheckForNulls() {
+  public final boolean doCheckForNulls() {
     return nullableValidationKind().equals(Diagnostic.Kind.ERROR);
   }
 
-  abstract Diagnostic.Kind privateMemberValidationKind();
+  public abstract Diagnostic.Kind privateMemberValidationKind();
 
-  abstract Diagnostic.Kind staticMemberValidationKind();
+  public abstract Diagnostic.Kind staticMemberValidationKind();
 
   /**
    * If {@code true}, Dagger will generate factories and components even if some members-injected
@@ -54,24 +54,24 @@ abstract class CompilerOptions {
    * <p>This should only ever be enabled by the TCK tests. Disabling this validation could lead to
    * generating code that does not compile.
    */
-  abstract boolean ignorePrivateAndStaticInjectionForComponent();
+  public abstract boolean ignorePrivateAndStaticInjectionForComponent();
 
-  abstract ValidationType scopeCycleValidationType();
+  public abstract ValidationType scopeCycleValidationType();
 
-  abstract boolean warnIfInjectionFactoryNotGeneratedUpstream();
+  public abstract boolean warnIfInjectionFactoryNotGeneratedUpstream();
 
-  abstract boolean headerCompilation();
+  public abstract boolean headerCompilation();
 
-  abstract boolean useGradleIncrementalProcessing();
+  public abstract boolean useGradleIncrementalProcessing();
 
   /**
    * Returns the validation that should be done for the full binding graph for the element.
    *
    * @throws IllegalArgumentException if {@code element} is not a module or (sub)component
    */
-  abstract ValidationType fullBindingGraphValidationType(TypeElement element);
+  public abstract ValidationType fullBindingGraphValidationType(TypeElement element);
 
-  abstract Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind();
+  public abstract Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind();
 
-  abstract ValidationType explicitBindingConflictsWithInjectValidationType();
+  public abstract ValidationType explicitBindingConflictsWithInjectValidationType();
 }

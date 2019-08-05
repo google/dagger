@@ -23,6 +23,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.spi.BindingGraphPlugin;

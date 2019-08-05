@@ -38,6 +38,7 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.model.Scope;
 import java.util.Collection;
 import java.util.Formatter;

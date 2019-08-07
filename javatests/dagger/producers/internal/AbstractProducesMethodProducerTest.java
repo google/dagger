@@ -18,7 +18,8 @@ package dagger.producers.internal;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -55,7 +56,7 @@ public class AbstractProducesMethodProducerTest {
   public void initMocks() {
     MockitoAnnotations.initMocks(this);
     monitor = Mockito.mock(ProducerMonitor.class, Mockito.CALLS_REAL_METHODS);
-    when(componentMonitor.producerMonitorFor(any(ProducerToken.class))).thenReturn(monitor);
+    when(componentMonitor.producerMonitorFor(nullable(ProducerToken.class))).thenReturn(monitor);
     componentMonitorProvider =
         new Provider<ProductionComponentMonitor>() {
           @Override

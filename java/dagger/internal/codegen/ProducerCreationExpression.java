@@ -17,10 +17,11 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.SourceFiles.generatedClassNameForBinding;
+import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.binding.ContributionBinding;
 
 /**
  * A {@link dagger.producers.Producer} creation expression for a {@link

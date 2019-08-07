@@ -24,6 +24,8 @@ import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.internal.codegen.binding.ModuleKind;
+import dagger.internal.codegen.binding.SourceFiles;
 import dagger.internal.codegen.langmodel.Accessibility;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;

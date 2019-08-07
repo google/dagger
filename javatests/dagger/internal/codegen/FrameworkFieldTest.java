@@ -24,6 +24,7 @@ import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 
 import com.google.testing.compile.CompilationRule;
 import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.binding.FrameworkField;
 import javax.inject.Inject;
 import org.junit.Before;
 import org.junit.Rule;

@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import dagger.internal.codegen.binding.KeyFactory;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.MaybeBinding;

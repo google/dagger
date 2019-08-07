@@ -23,6 +23,8 @@ import static dagger.model.RequestKind.PRODUCED;
 import static dagger.model.RequestKind.PRODUCER;
 import static dagger.model.RequestKind.PROVIDER;
 
+import dagger.internal.codegen.binding.FrameworkType;
+import dagger.internal.codegen.binding.FrameworkTypeMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

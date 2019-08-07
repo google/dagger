@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen;
 
+import dagger.internal.codegen.binding.ContributionBinding;
+import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 

@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import dagger.Binds;
 import dagger.Module;
+import dagger.internal.codegen.binding.InjectBindingRegistry;
 
 @Module
 interface InjectBindingRegistryModule {

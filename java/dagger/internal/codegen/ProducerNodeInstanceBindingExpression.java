@@ -19,7 +19,9 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.squareup.javapoet.ClassName;
-import dagger.internal.codegen.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.binding.ContributionBinding;
+import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;

@@ -17,13 +17,14 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.BindingRequest.bindingRequest;
+import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.base.OptionalType.OptionalKind;
+import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;

@@ -17,12 +17,14 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.MapKeys.getMapKeyExpression;
-import static dagger.internal.codegen.SourceFiles.mapFactoryClassName;
+import static dagger.internal.codegen.binding.MapKeys.getMapKeyExpression;
+import static dagger.internal.codegen.binding.SourceFiles.mapFactoryClassName;
 
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.base.MapType;
+import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.model.DependencyRequest;
 import dagger.producers.Produced;

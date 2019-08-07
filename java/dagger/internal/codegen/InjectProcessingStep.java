@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
+import dagger.internal.codegen.binding.InjectBindingRegistry;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.inject.Inject;

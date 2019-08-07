@@ -17,12 +17,13 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Verify.verify;
-import static dagger.internal.codegen.SourceFiles.classFileName;
+import static dagger.internal.codegen.binding.SourceFiles.classFileName;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.Component;
 import dagger.internal.codegen.base.SourceFileGenerator;
+import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
 import javax.annotation.processing.Filer;

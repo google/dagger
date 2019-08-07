@@ -25,6 +25,8 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.base.SourceFileGenerator;
+import dagger.internal.codegen.binding.ContributionBinding;
+import dagger.internal.codegen.binding.MapKeys;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Optional;

@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.BindingRequest.bindingRequest;
+import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static javax.lang.model.util.ElementFilter.methodsIn;
@@ -28,6 +28,8 @@ import com.squareup.javapoet.CodeBlock;
 import dagger.internal.SetBuilder;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.SetType;
+import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;

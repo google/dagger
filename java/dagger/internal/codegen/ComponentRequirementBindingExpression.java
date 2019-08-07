@@ -17,6 +17,8 @@
 package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.binding.ComponentRequirement;
+import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 
 /**

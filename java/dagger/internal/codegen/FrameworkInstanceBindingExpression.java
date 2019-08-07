@@ -22,6 +22,8 @@ import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFr
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import dagger.internal.codegen.binding.ContributionBinding;
+import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;

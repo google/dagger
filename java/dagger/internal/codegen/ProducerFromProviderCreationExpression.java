@@ -17,11 +17,13 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.BindingRequest.bindingRequest;
+import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.binding.ContributionBinding;
+import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.model.RequestKind;
 import dagger.producers.Producer;

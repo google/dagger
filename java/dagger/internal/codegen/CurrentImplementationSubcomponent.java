@@ -20,6 +20,7 @@ import dagger.BindsInstance;
 import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentImplementationBuilder.RootComponentImplementationBuilder;
 import dagger.internal.codegen.ComponentImplementationBuilder.SubcomponentImplementationBuilder;
+import dagger.internal.codegen.binding.BindingGraph;
 import java.util.Optional;
 
 /**

@@ -23,6 +23,7 @@ import static dagger.internal.codegen.base.RequestKinds.canBeSatisfiedByProducti
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import dagger.internal.codegen.binding.InjectBindingRegistry;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.ComponentNode;

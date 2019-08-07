@@ -33,6 +33,10 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.binding.ComponentRequirement;
+import dagger.internal.codegen.binding.ContributionBinding;
+import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import javax.lang.model.element.Element;
 

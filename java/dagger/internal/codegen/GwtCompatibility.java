@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.squareup.javapoet.AnnotationSpec;
+import dagger.internal.codegen.binding.Binding;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;

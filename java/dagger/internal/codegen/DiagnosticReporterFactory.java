@@ -51,6 +51,7 @@ import com.google.common.collect.Table;
 import com.google.errorprone.annotations.FormatMethod;
 import dagger.internal.codegen.base.ElementFormatter;
 import dagger.internal.codegen.base.Formatter;
+import dagger.internal.codegen.binding.DependencyRequestFormatter;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ValidationType;
 import dagger.internal.codegen.langmodel.DaggerTypes;

@@ -18,18 +18,19 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.ComponentCreatorAnnotation.SUBCOMPONENT_BUILDER;
-import static dagger.internal.codegen.ComponentCreatorAnnotation.SUBCOMPONENT_FACTORY;
-import static dagger.internal.codegen.ComponentCreatorKind.BUILDER;
-import static dagger.internal.codegen.ComponentCreatorKind.FACTORY;
-import static dagger.internal.codegen.ComponentKind.SUBCOMPONENT;
-import static dagger.internal.codegen.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
-import static dagger.internal.codegen.ErrorMessages.componentMessagesFor;
 import static dagger.internal.codegen.TestUtils.message;
+import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.SUBCOMPONENT_BUILDER;
+import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.SUBCOMPONENT_FACTORY;
+import static dagger.internal.codegen.binding.ComponentCreatorKind.BUILDER;
+import static dagger.internal.codegen.binding.ComponentCreatorKind.FACTORY;
+import static dagger.internal.codegen.binding.ComponentKind.SUBCOMPONENT;
+import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
+import static dagger.internal.codegen.binding.ErrorMessages.componentMessagesFor;
 
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.internal.codegen.binding.ComponentCreatorAnnotation;
 import java.util.Collection;
 import javax.tools.JavaFileObject;
 import org.junit.Test;

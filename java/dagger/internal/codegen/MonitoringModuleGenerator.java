@@ -32,6 +32,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.Module;
 import dagger.Provides;
 import dagger.internal.codegen.base.SourceFileGenerator;
+import dagger.internal.codegen.binding.SourceFiles;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.multibindings.Multibinds;
 import dagger.producers.ProductionScope;

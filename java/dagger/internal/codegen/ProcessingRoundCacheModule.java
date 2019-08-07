@@ -19,6 +19,8 @@ package dagger.internal.codegen;
 import dagger.Binds;
 import dagger.Module;
 import dagger.internal.codegen.base.ClearableCache;
+import dagger.internal.codegen.binding.BindingGraphFactory;
+import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.multibindings.IntoSet;
 
 /**

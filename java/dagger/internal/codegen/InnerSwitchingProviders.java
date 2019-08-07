@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
-import static dagger.internal.codegen.BindingRequest.bindingRequest;
+import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.model.RequestKind.INSTANCE;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -26,6 +26,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;

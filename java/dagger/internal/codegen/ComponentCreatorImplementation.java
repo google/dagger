@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.binding.ComponentRequirement;
 
 /** The implementation of a component creator type. */
 @AutoValue

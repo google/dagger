@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.MapKeys.getUnwrappedMapKeyType;
+import static dagger.internal.codegen.binding.MapKeys.getUnwrappedMapKeyType;
 import static javax.lang.model.element.ElementKind.ANNOTATION_TYPE;
 
 import com.google.auto.common.MoreElements;

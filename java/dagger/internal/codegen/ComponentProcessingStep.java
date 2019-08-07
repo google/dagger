@@ -17,12 +17,12 @@
 package dagger.internal.codegen;
 
 import static com.google.common.collect.Sets.union;
-import static dagger.internal.codegen.ComponentCreatorAnnotation.allCreatorAnnotations;
-import static dagger.internal.codegen.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
-import static dagger.internal.codegen.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static dagger.internal.codegen.base.ComponentAnnotation.allComponentAnnotations;
 import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotations;
 import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotations;
+import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.allCreatorAnnotations;
+import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
+import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static dagger.internal.codegen.compileroption.ValidationType.NONE;
 import static java.util.Collections.disjoint;
 
@@ -36,6 +36,11 @@ import com.google.common.collect.SetMultimap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.codegen.ComponentValidator.ComponentValidationReport;
 import dagger.internal.codegen.base.SourceFileGenerator;
+import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.binding.BindingGraphConverter;
+import dagger.internal.codegen.binding.BindingGraphFactory;
+import dagger.internal.codegen.binding.ComponentDescriptor;
+import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;

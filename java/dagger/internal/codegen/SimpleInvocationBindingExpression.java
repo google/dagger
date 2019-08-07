@@ -18,6 +18,8 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import dagger.internal.codegen.binding.ContributionBinding;
+
 /** A simple binding expression for instance requests. Does not scope. */
 abstract class SimpleInvocationBindingExpression extends BindingExpression {
   private final ContributionBinding binding;

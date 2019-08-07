@@ -22,6 +22,8 @@ import com.sun.tools.javac.util.Context;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import dagger.internal.codegen.binding.BindingGraphFactory;
+import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.JavacPluginCompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;

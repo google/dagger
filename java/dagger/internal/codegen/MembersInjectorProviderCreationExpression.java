@@ -18,13 +18,14 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.SourceFiles.membersInjectorNameForType;
+import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.javapoet.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.MEMBERS_INJECTORS;
 
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.binding.ProvisionBinding;
 import javax.lang.model.type.TypeMirror;
 
 /** A {@code Provider<MembersInjector<Foo>>} creation expression. */

@@ -23,6 +23,8 @@ import static dagger.internal.codegen.ComponentImplementation.MethodSpecKind.PRI
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.squareup.javapoet.TypeName;
+import dagger.internal.codegen.binding.BindingRequest;
+import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 
 /**

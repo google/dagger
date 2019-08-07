@@ -23,6 +23,10 @@ import dagger.internal.codegen.SourceFileGeneratorsModule.MembersInjectionModule
 import dagger.internal.codegen.SourceFileGeneratorsModule.ProductionModule;
 import dagger.internal.codegen.SourceFileGeneratorsModule.ProvisionModule;
 import dagger.internal.codegen.base.SourceFileGenerator;
+import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.binding.MembersInjectionBinding;
+import dagger.internal.codegen.binding.ProductionBinding;
+import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import javax.lang.model.element.TypeElement;
 

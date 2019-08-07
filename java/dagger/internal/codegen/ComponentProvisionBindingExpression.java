@@ -21,6 +21,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.Preconditions;
+import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.binding.ComponentRequirement;
+import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.Expression;
 

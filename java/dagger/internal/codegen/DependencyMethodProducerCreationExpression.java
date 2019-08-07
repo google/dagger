@@ -30,6 +30,9 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.binding.ComponentRequirement;
+import dagger.internal.codegen.binding.ContributionBinding;
 
 /**
  * A {@link dagger.producers.Producer} creation expression for a production method on a production

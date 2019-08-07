@@ -17,10 +17,10 @@
 package dagger.internal.codegen;
 
 import static com.google.common.base.Verify.verifyNotNull;
-import static dagger.internal.codegen.MapKeys.getMapKeys;
 import static dagger.internal.codegen.base.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.binding.MapKeys.getMapKeys;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static javax.lang.model.type.TypeKind.ARRAY;
 import static javax.lang.model.type.TypeKind.DECLARED;

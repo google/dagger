@@ -18,11 +18,12 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.ComponentCreatorAnnotation.SUBCOMPONENT_BUILDER;
-import static dagger.internal.codegen.ErrorMessages.creatorMessagesFor;
+import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.SUBCOMPONENT_BUILDER;
+import static dagger.internal.codegen.binding.ErrorMessages.creatorMessagesFor;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.internal.codegen.binding.ErrorMessages;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;

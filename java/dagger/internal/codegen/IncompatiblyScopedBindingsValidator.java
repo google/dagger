@@ -27,6 +27,7 @@ import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
 import dagger.internal.codegen.base.Scopes;
+import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.model.Binding;
 import dagger.model.BindingGraph;

@@ -19,7 +19,7 @@
 // the regular kythe/java tree.
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.BindingRequest.bindingRequest;
+import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 
 import com.google.auto.service.AutoService;
@@ -35,6 +35,15 @@ import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.util.Context;
 import dagger.BindsInstance;
 import dagger.Component;
+import dagger.internal.codegen.binding.Binding;
+import dagger.internal.codegen.binding.BindingDeclaration;
+import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.binding.BindingGraphFactory;
+import dagger.internal.codegen.binding.BindingRequest;
+import dagger.internal.codegen.binding.ComponentDescriptor;
+import dagger.internal.codegen.binding.ComponentDescriptorFactory;
+import dagger.internal.codegen.binding.ModuleDescriptor;
+import dagger.internal.codegen.binding.ResolvedBindings;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.producers.ProductionComponent;

@@ -59,7 +59,6 @@ CODEGEN_SHARED_DEPS = [
 
 CODEGEN_DEPS = CODEGEN_SHARED_DEPS + [
     ":package_info",
-    "//java/dagger/internal/codegen/extension",
     "@google_bazel_common//third_party/java/guava",
 ]
 
@@ -69,72 +68,6 @@ java_library(
     tags = ["maven:merged"],
     deps = [
         "@google_bazel_common//third_party/java/error_prone:annotations",
-    ],
-)
-
-# Classes that help to build a model of the binding graph
-java_library(
-    name = "binding",
-    srcs = [
-        "AnnotationExpression.java",
-        "Binding.java",
-        "BindingDeclaration.java",
-        "BindingDeclarationFormatter.java",
-        "BindingFactory.java",
-        "BindingGraph.java",
-        "BindingGraphConverter.java",
-        "BindingGraphFactory.java",
-        "BindingNode.java",
-        "BindingRequest.java",
-        "BindingType.java",
-        "BindsTypeChecker.java",
-        "ChildFactoryMethodEdgeImpl.java",
-        "ComponentCreatorAnnotation.java",
-        "ComponentCreatorDescriptor.java",
-        "ComponentCreatorKind.java",
-        "ComponentDescriptor.java",
-        "ComponentDescriptorFactory.java",
-        "ComponentKind.java",
-        "ComponentNodeImpl.java",
-        "ComponentRequirement.java",
-        "ComponentTreeTraverser.java",
-        "ConfigurationAnnotations.java",  # Uses ModuleDescriptors
-        "ContributionBinding.java",
-        "DelegateDeclaration.java",
-        "DependencyEdgeImpl.java",
-        "DependencyRequestFactory.java",
-        "DependencyRequestFormatter.java",
-        "DependencyVariableNamer.java",  # Used by SourceFiles
-        "ErrorMessages.java",  # Consider splitting this up as it pulls in too much
-        "FrameworkField.java",  # Used by SourceFiles
-        "FrameworkType.java",
-        "FrameworkTypeMapper.java",
-        "InjectBindingRegistry.java",
-        "InjectionSiteFactory.java",
-        "KeyFactory.java",
-        "KeyVariableNamer.java",  # needs ConfigurationAnnotations, SourceFiles
-        "MapKeys.java",
-        "MembersInjectionBinding.java",
-        "MethodSignature.java",
-        "MethodSignatureFormatter.java",
-        "ModuleDescriptor.java",
-        "ModuleKind.java",
-        "MultibindingDeclaration.java",
-        "OptionalBindingDeclaration.java",
-        "ProductionBinding.java",
-        "ProvisionBinding.java",
-        "ResolvedBindings.java",
-        "SourceFiles.java",  # Consider splitting this up?
-        "SubcomponentCreatorBindingEdgeImpl.java",
-        "SubcomponentDeclaration.java",
-    ],
-    plugins = CODEGEN_PLUGINS,
-    tags = ["maven:merged"],
-    deps = CODEGEN_DEPS + [
-        "//java/dagger/internal/codegen/base",
-        "//java/dagger/internal/codegen/compileroption",
-        "//java/dagger/internal/codegen/langmodel",
-        "//java/dagger/internal/codegen/javapoet",
     ],
 )
 
@@ -177,9 +110,10 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
-        ":binding",
         "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
     ],
@@ -202,10 +136,11 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
-        ":binding",
         ":validation",
         "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/langmodel",
     ],
 )
@@ -282,9 +217,10 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
-        ":binding",
         "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/statistics",
@@ -320,12 +256,13 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
     deps = CODEGEN_DEPS + [
-        ":binding",
         ":binding_graph_validation",
         ":writing",
         ":validation",
         "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/statistics",
@@ -339,12 +276,16 @@ pom_file(
     artifact_name = "Dagger Compiler",
     targets = [
         ":processor",
-        ":binding",
         ":binding_graph_validation",
         ":writing",
         ":validation",
         "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
+        "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/javapoet",
+        "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/statistics",
     ],
 )
 
@@ -356,7 +297,7 @@ java_library(
     deps = [
         ":javac",
         "//java/dagger:core",
-        "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/langmodel",
     ],
@@ -367,14 +308,13 @@ java_library(
     srcs = KYTHE_SRCS,
     plugins = [":component-codegen"],
     deps = [
-        ":binding",
         ":javac",
         ":javac-plugin-module",
         ":kythe_plugin",
         ":package_info",
         ":processor",
         "//java/dagger:core",
-        "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/model",
         "//java/dagger/producers",
@@ -415,7 +355,9 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     deps = CODEGEN_DEPS + [
         "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/statistics",
@@ -442,13 +384,13 @@ java_library(
     srcs = STATISTICS_COLLECTOR_SRCS,
     plugins = [":component-codegen"],
     deps = [
-        ":binding",
         ":javac",
         ":javac-plugin-module",
         ":package_info",
         ":processor",
         "//java/dagger:core",
         "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
         "//java/dagger/model",
         "@google_bazel_common//third_party/java/error_prone:check_api",
     ],

@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.internal.codegen.binding.ComponentRequirement;
 
 /**
  * A factory for expressions of {@link ComponentRequirement}s in the generated component. This is

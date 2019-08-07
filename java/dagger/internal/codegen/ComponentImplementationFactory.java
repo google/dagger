@@ -20,6 +20,8 @@ import static dagger.internal.codegen.ComponentGenerator.componentName;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 
 import dagger.internal.codegen.base.ClearableCache;
+import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.binding.KeyFactory;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import java.util.HashMap;
 import java.util.Map;

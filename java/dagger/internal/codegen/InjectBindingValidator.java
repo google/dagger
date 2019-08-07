@@ -19,7 +19,9 @@ package dagger.internal.codegen;
 import static dagger.model.BindingKind.INJECTION;
 
 import com.google.auto.common.MoreTypes;
-import dagger.internal.codegen.ValidationReport.Item;
+import dagger.internal.codegen.validation.InjectValidator;
+import dagger.internal.codegen.validation.ValidationReport;
+import dagger.internal.codegen.validation.ValidationReport.Item;
 import dagger.model.BindingGraph;
 import dagger.spi.BindingGraphPlugin;
 import dagger.spi.DiagnosticReporter;

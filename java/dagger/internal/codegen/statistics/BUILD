@@ -19,12 +19,7 @@ package(default_visibility = ["//:src"])
 
 java_library(
     name = "statistics",
-    srcs = [
-        "DaggerStatistics.java",
-        "DaggerStatisticsCollectingProcessingStep.java",
-        "DaggerStatisticsCollector.java",
-        "DaggerStatisticsRecorder.java",
-    ],
+    srcs = glob(["*.java"]),
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     tags = ["maven:merged"],
     deps = [

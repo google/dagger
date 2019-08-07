@@ -20,11 +20,7 @@ package(default_visibility = ["//:src"])
 
 java_library(
     name = "extension",
-    srcs = [
-        "DaggerGraphs.java",
-        "DaggerStreams.java",
-        "Optionals.java",
-    ],
+    srcs = glob(["*.java"]),
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     tags = ["maven:merged"],
     deps = [

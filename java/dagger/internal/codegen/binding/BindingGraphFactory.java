@@ -254,7 +254,8 @@ public final class BindingGraphFactory implements ClearableCache {
 
   /**
    * Returns a descriptor for a generated module that handles monitoring for production components.
-   * This module is generated in the {@link dagger.internal.codegen.MonitoringModuleProcessingStep}.
+   * This module is generated in the {@link
+   * dagger.internal.codegen.validation.MonitoringModuleProcessingStep}.
    *
    * @throws TypeNotPresentException if the module has not been generated yet. This will cause the
    *     processor to retry in a later processing round.

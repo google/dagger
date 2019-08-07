@@ -46,6 +46,8 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.validation.InjectValidator;
+import dagger.internal.codegen.validation.ValidationReport;
 import dagger.model.Key;
 import java.util.ArrayDeque;
 import java.util.Deque;

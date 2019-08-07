@@ -24,6 +24,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import com.google.common.collect.ImmutableSet;
 import dagger.Module;
 import dagger.Provides;
+import dagger.internal.codegen.validation.BindingGraphValidator;
 import dagger.spi.BindingGraphPlugin;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;

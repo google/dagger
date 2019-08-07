@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-/** Tests {@link BindsOptionalOfMethodValidator}. */
+/** Tests {@link dagger.internal.codegen.validation.BindsOptionalOfMethodValidator}. */
 @RunWith(Parameterized.class)
 public class BindsOptionalOfMethodValidationTest {
   @Parameters(name = "{0}")

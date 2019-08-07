@@ -34,8 +34,8 @@ import javax.lang.model.type.TypeMirror;
 
 /**
  * Checks the assignability of one type to another, given a {@link ContributionType} context. This
- * is used by {@link dagger.internal.codegen.BindsMethodValidator} to validate that the right-hand-
- * side of a {@link dagger.Binds} method is valid, as well as in {@link
+ * is used by {@link dagger.internal.codegen.validation.BindsMethodValidator} to validate that the
+ * right-hand- side of a {@link dagger.Binds} method is valid, as well as in {@link
  * dagger.internal.codegen.DelegateBindingExpression} when the right-hand-side in generated code
  * might be an erased type due to accessibility.
  */

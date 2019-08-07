@@ -58,7 +58,6 @@ jarjar_library(
     jars = [
         "//java/dagger/internal/codegen:binding_graph_validation",
         "//java/dagger/internal/codegen:processor",
-        "//java/dagger/internal/codegen:validation",
         "//java/dagger/internal/codegen:writing",
         "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/binding",
@@ -67,6 +66,7 @@ jarjar_library(
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/statistics",
+        "//java/dagger/internal/codegen/validation",
         "//java/dagger/model:internal-proxies",
         "//java/dagger/errorprone",
         "@com_google_auto_auto_common//jar",
@@ -79,7 +79,6 @@ jarjar_library(
     jars = [
         "//java/dagger/internal/codegen:libbinding_graph_validation-src.jar",
         "//java/dagger/internal/codegen:libprocessor-src.jar",
-        "//java/dagger/internal/codegen:libvalidation-src.jar",
         "//java/dagger/internal/codegen:libwriting-src.jar",
         "//java/dagger/internal/codegen/base:libbase-src.jar",
         "//java/dagger/internal/codegen/binding:libbinding-src.jar",
@@ -88,6 +87,7 @@ jarjar_library(
         "//java/dagger/internal/codegen/javapoet:libjavapoet-src.jar",
         "//java/dagger/internal/codegen/langmodel:liblangmodel-src.jar",
         "//java/dagger/internal/codegen/statistics:libstatistics-src.jar",
+        "//java/dagger/internal/codegen/validation:libvalidation-src.jar",
         # TODO(ronshapiro): is there a generated src.jar for protos in Bazel?
         "//java/dagger/errorprone:liberrorprone-src.jar",
     ],

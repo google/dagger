@@ -71,54 +71,6 @@ java_library(
     ],
 )
 
-# Code related to validating the user-written Dagger code
-java_library(
-    name = "validation",
-    srcs = [
-        "AnyBindingMethodValidator.java",
-        "BindingElementValidator.java",
-        "BindingGraphPlugins.java",
-        "BindingGraphValidator.java",
-        "BindingMethodProcessingStep.java",
-        "BindingMethodValidator.java",
-        "BindsInstanceElementValidator.java",
-        "BindsInstanceMethodValidator.java",
-        "BindsInstanceParameterValidator.java",
-        "BindsInstanceProcessingStep.java",
-        "BindsMethodValidator.java",
-        "BindsOptionalOfMethodValidator.java",
-        "ComponentCreatorValidator.java",
-        "ComponentDescriptorValidator.java",
-        "ComponentHierarchyValidator.java",
-        "ComponentValidator.java",
-        "DependencyRequestValidator.java",
-        "DiagnosticReporterFactory.java",
-        "InjectValidator.java",
-        "MapKeyValidator.java",
-        "MembersInjectionValidator.java",
-        "ModuleValidator.java",
-        "MonitoringModuleGenerator.java",
-        "MonitoringModuleProcessingStep.java",
-        "MultibindingAnnotationsProcessingStep.java",
-        "MultibindsMethodValidator.java",
-        "ProducesMethodValidator.java",
-        "ProvidesMethodValidator.java",
-        "TypeCheckingProcessingStep.java",
-        "Validation.java",
-        "ValidationReport.java",
-    ],
-    plugins = CODEGEN_PLUGINS,
-    tags = ["maven:merged"],
-    deps = CODEGEN_DEPS + [
-        "//java/dagger/internal/codegen/base",
-        "//java/dagger/internal/codegen/binding",
-        "//java/dagger/internal/codegen/compileroption",
-        "//java/dagger/internal/codegen/extension",
-        "//java/dagger/internal/codegen/javapoet",
-        "//java/dagger/internal/codegen/langmodel",
-    ],
-)
-
 java_library(
     name = "binding_graph_validation",
     srcs = [
@@ -136,12 +88,12 @@ java_library(
     plugins = CODEGEN_PLUGINS,
     tags = ["maven:merged"],
     deps = CODEGEN_DEPS + [
-        ":validation",
         "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/validation",
     ],
 )
 
@@ -232,7 +184,6 @@ java_library(
     name = "processor",
     srcs = [
         "BindingGraphValidationModule.java",
-        "BindingMethodValidatorsModule.java",
         "ComponentCreatorImplementationFactory.java",
         "ComponentGenerator.java",
         "ComponentHjarProcessingStep.java",
@@ -258,7 +209,6 @@ java_library(
     deps = CODEGEN_DEPS + [
         ":binding_graph_validation",
         ":writing",
-        ":validation",
         "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/compileroption",
@@ -266,6 +216,7 @@ java_library(
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/statistics",
+        "//java/dagger/internal/codegen/validation",
         "@google_bazel_common//third_party/java/incap",
     ],
 )
@@ -278,7 +229,6 @@ pom_file(
         ":processor",
         ":binding_graph_validation",
         ":writing",
-        ":validation",
         "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/compileroption",
@@ -286,6 +236,7 @@ pom_file(
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/statistics",
+        "//java/dagger/internal/codegen/validation",
     ],
 )
 
@@ -361,6 +312,7 @@ java_library(
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/statistics",
+        "//java/dagger/internal/codegen/validation",
         "@google_bazel_common//third_party/java/incap",
     ],
 )

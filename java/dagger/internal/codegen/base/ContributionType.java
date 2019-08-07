@@ -51,8 +51,9 @@ public enum ContributionType {
   /**
    * The contribution type from a binding element's annotations. Presumes a well-formed binding
    * element (at most one of @IntoSet, @IntoMap, @ElementsIntoSet and @Provides.type). {@link
-   * dagger.internal.codegen.BindingMethodValidator} and {@link
-   * dagger.internal.codegen.BindsInstanceProcessingStep} validate correctness on their own.
+   * dagger.internal.codegen.validation.BindingMethodValidator} and {@link
+   * dagger.internal.codegen.validation.BindsInstanceProcessingStep} validate correctness on their
+   * own.
    */
   public static ContributionType fromBindingElement(Element element) {
     if (isAnnotationPresent(element, IntoMap.class)) {

@@ -13,23 +13,32 @@
 # limitations under the License.
 
 # Description:
-#   Sources related to compiler options.
+#   Code related to validating the user-written Dagger code
 
 package(default_visibility = ["//:src"])
 
 java_library(
-    name = "compileroption",
+    name = "validation",
     srcs = glob(["*.java"]),
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     tags = ["maven:merged"],
     deps = [
         "//java/dagger:core",
+        "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
+        "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/javapoet",
+        "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/model",
         "//java/dagger/producers",
-        "@bazel_tools//tools/jdk:langtools-neverlink",
+        "//java/dagger/spi",
         "@google_bazel_common//third_party/java/auto:common",
-        "@google_bazel_common//third_party/java/google_java_format",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/checker_framework_annotations",
+        "@google_bazel_common//third_party/java/error_prone:annotations",
         "@google_bazel_common//third_party/java/guava",
+        "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )

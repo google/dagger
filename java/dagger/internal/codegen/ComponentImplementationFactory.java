@@ -23,6 +23,8 @@ import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.KeyFactory;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.writing.ComponentImplementation;
+import dagger.internal.codegen.writing.SubcomponentNames;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

@@ -52,6 +52,9 @@ import dagger.internal.codegen.binding.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.writing.ComponentCreatorImplementation;
+import dagger.internal.codegen.writing.ComponentImplementation;
+import dagger.internal.codegen.writing.ModuleProxies;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
@@ -61,7 +64,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 
 /** Factory for creating {@link ComponentCreatorImplementation} instances. */
-final class ComponentCreatorImplementationFactory {
+public final class ComponentCreatorImplementationFactory {
 
   private final DaggerElements elements;
   private final DaggerTypes types;

@@ -27,6 +27,8 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.validation.MapKeyValidator;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
+import dagger.internal.codegen.writing.AnnotationCreatorGenerator;
+import dagger.internal.codegen.writing.UnwrappedMapKeyGenerator;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 import javax.annotation.processing.Messager;

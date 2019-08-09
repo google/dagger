@@ -38,6 +38,8 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.validation.ModuleValidator;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
+import dagger.internal.codegen.writing.InaccessibleMapKeyProxyGenerator;
+import dagger.internal.codegen.writing.ModuleGenerator;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import java.lang.annotation.Annotation;

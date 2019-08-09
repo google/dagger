@@ -21,6 +21,11 @@ import dagger.Subcomponent;
 import dagger.internal.codegen.ComponentImplementationBuilder.RootComponentImplementationBuilder;
 import dagger.internal.codegen.ComponentImplementationBuilder.SubcomponentImplementationBuilder;
 import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.writing.ComponentBindingExpressions;
+import dagger.internal.codegen.writing.ComponentImplementation;
+import dagger.internal.codegen.writing.ComponentRequirementExpressions;
+import dagger.internal.codegen.writing.ParentComponent;
+import dagger.internal.codegen.writing.PerComponentImplementation;
 import java.util.Optional;
 
 /**

@@ -19,6 +19,9 @@ package dagger.internal.codegen;
 import dagger.BindsInstance;
 import dagger.Module;
 import dagger.Subcomponent;
+import dagger.internal.codegen.writing.ComponentImplementation;
+import dagger.internal.codegen.writing.PerGeneratedFile;
+import dagger.internal.codegen.writing.TopLevel;
 
 /**
  * A shared subcomponent for a top-level {@link ComponentImplementation} and any nested child

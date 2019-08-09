@@ -38,6 +38,7 @@ import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.InjectBindingRegistry;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
+import dagger.internal.codegen.bindinggraphvalidation.BindingGraphValidationModule;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions;
 import dagger.internal.codegen.statistics.DaggerStatisticsCollectingProcessingStep;
@@ -71,12 +72,10 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   private final Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins;
 
   @Inject InjectBindingRegistry injectBindingRegistry;
-  @Inject
-  SourceFileGenerator<ProvisionBinding> factoryGenerator;
+  @Inject SourceFileGenerator<ProvisionBinding> factoryGenerator;
   @Inject SourceFileGenerator<MembersInjectionBinding> membersInjectorGenerator;
   @Inject ImmutableList<ProcessingStep> processingSteps;
   @Inject BindingGraphPlugins bindingGraphPlugins;
-  @Inject CompilerOptions compilerOptions;
   @Inject DaggerStatisticsCollector statisticsCollector;
   @Inject Set<ClearableCache> clearableCaches;
 

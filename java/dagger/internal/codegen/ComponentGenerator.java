@@ -25,6 +25,7 @@ import dagger.Component;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.writing.ComponentImplementation;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;

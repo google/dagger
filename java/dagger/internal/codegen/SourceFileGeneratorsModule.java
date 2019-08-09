@@ -28,6 +28,12 @@ import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.binding.ProductionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.writing.FactoryGenerator;
+import dagger.internal.codegen.writing.HjarSourceFileGenerator;
+import dagger.internal.codegen.writing.MembersInjectorGenerator;
+import dagger.internal.codegen.writing.ModuleConstructorProxyGenerator;
+import dagger.internal.codegen.writing.ModuleGenerator;
+import dagger.internal.codegen.writing.ProducerFactoryGenerator;
 import javax.lang.model.element.TypeElement;
 
 @Module(

@@ -17,22 +17,29 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.auto.common.MoreTypes.asTypeElement;
+import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.extension.DaggerGraphs.unreachableNodes;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.Network;
 import com.google.common.graph.NetworkBuilder;
+import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.MissingBinding;
 import dagger.model.BindingGraph.Node;
 import dagger.model.BindingGraphProxies;
+import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -52,8 +59,8 @@ public final class BindingGraphConverter {
    * BindingGraph}.
    */
   public dagger.model.BindingGraph convert(BindingGraph bindingGraph) {
-    Traverser traverser = new Traverser(bindingGraph);
-    traverser.traverseComponents();
+    MutableNetwork<Node, Edge> network =
+        Converter.convert(bindingGraph, bindingDeclarationFormatter);
 
     // When bindings are copied down into child graphs because they transitively depend on local
     // multibindings or optional bindings, the parent-owned binding is still there. If that
@@ -61,11 +68,10 @@ public final class BindingGraphConverter {
     // because it will never be used. So remove all nodes that are not reachable from the root
     // component—unless we're converting a full binding graph.
     if (!bindingGraph.isFullBindingGraph()) {
-      unreachableNodes(traverser.network.asGraph(), rootComponentNode(traverser.network))
-          .forEach(traverser.network::removeNode);
+      unreachableNodes(network.asGraph(), rootComponentNode(network)).forEach(network::removeNode);
     }
 
-    return BindingGraphProxies.bindingGraph(traverser.network, bindingGraph.isFullBindingGraph());
+    return BindingGraphProxies.bindingGraph(network, bindingGraph.isFullBindingGraph());
   }
 
   // TODO(dpb): Example of BindingGraph logic applied to derived networks.
@@ -76,27 +82,79 @@ public final class BindingGraphConverter {
             node -> node instanceof ComponentNode && node.componentPath().atRoot());
   }
 
-  private final class Traverser extends ComponentTreeTraverser {
-    private final MutableNetwork<Node, Edge> network =
-        NetworkBuilder.directed().allowsParallelEdges(true).allowsSelfLoops(true).build();
-    private ComponentNode parentComponent;
-    private ComponentNode currentComponent;
-
-    Traverser(BindingGraph graph) {
-      super(graph);
+  private static final class Converter {
+    /**
+     * Calls {@link #visitComponent(BindingGraph)} for the root component.
+     *
+     * @throws IllegalStateException if a traversal is in progress
+     */
+    private static MutableNetwork<Node, Edge> convert(
+        BindingGraph graph, BindingDeclarationFormatter bindingDeclarationFormatter) {
+      Converter converter = new Converter(bindingDeclarationFormatter);
+      converter.visitRootComponent(graph);
+      return converter.network;
     }
 
-    @Override
-    protected void visitComponent(BindingGraph graph) {
-      ComponentNode grandparentComponent = parentComponent;
-      parentComponent = currentComponent;
-      currentComponent = ComponentNodeImpl.create(componentPath(), graph.componentDescriptor());
+    /** The path from the root graph to the currently visited graph. */
+    private final Deque<BindingGraph> bindingGraphPath = new ArrayDeque<>();
+
+    /** The {@link ComponentPath} for each component in {@link #bindingGraphPath}. */
+    private final Deque<ComponentPath> componentPaths = new ArrayDeque<>();
+
+    private final BindingDeclarationFormatter bindingDeclarationFormatter;
+    private final MutableNetwork<Node, Edge> network =
+        NetworkBuilder.directed().allowsParallelEdges(true).allowsSelfLoops(true).build();
+
+    /** Constructs a converter for a root (component, not subcomponent) binding graph. */
+    private Converter(BindingDeclarationFormatter bindingDeclarationFormatter) {
+      this.bindingDeclarationFormatter = bindingDeclarationFormatter;
+    }
+
+    private void visitRootComponent(BindingGraph graph) {
+      visitComponent(graph, null);
+    }
+
+    /**
+     * Called once for each component in a component hierarchy.
+     *
+     * <p>This implementation does the following:
+     *
+     * <ol>
+     *   <li>If this component is installed in its parent by a subcomponent factory method, calls
+     *       {@link #visitSubcomponentFactoryMethod(ComponentNode, ComponentNode,
+     *       ExecutableElement)}.
+     *   <li>For each entry point in the component, calls {@link #visitEntryPoint(ComponentNode,
+     *       DependencyRequest)}.
+     *   <li>For each child component, calls {@link #visitComponent(BindingGraph)}, updating the
+     *       traversal state.
+     * </ol>
+     *
+     * @param graph the currently visited graph
+     */
+    private void visitComponent(BindingGraph graph, ComponentNode parentComponent) {
+      bindingGraphPath.addLast(graph);
+      ComponentPath graphPath =
+          ComponentPath.create(
+              bindingGraphPath.stream()
+                  .map(BindingGraph::componentTypeElement)
+                  .collect(toImmutableList()));
+      componentPaths.addLast(graphPath);
+      ComponentNode currentComponent =
+          ComponentNodeImpl.create(componentPath(), graph.componentDescriptor());
 
       network.addNode(currentComponent);
 
+      for (ComponentMethodDescriptor entryPointMethod :
+          graph.componentDescriptor().entryPointMethods()) {
+        visitEntryPoint(currentComponent, entryPointMethod.dependencyRequest().get());
+      }
+
       for (ResolvedBindings resolvedBindings : graph.resolvedBindings()) {
         for (BindingNode binding : bindingNodes(resolvedBindings)) {
-          addBinding(binding);
+          network.addNode(binding);
+          for (DependencyRequest dependencyRequest : binding.dependencies()) {
+            addDependencyEdges(binding, dependencyRequest);
+          }
           if (binding.kind().equals(SUBCOMPONENT_CREATOR)
               && binding.componentPath().equals(currentComponent.componentPath())) {
             network.addEdge(
@@ -108,24 +166,89 @@ public final class BindingGraphConverter {
         }
       }
 
-      super.visitComponent(graph);
+      if (bindingGraphPath.size() > 1) {
+        BindingGraph parent = Iterators.get(bindingGraphPath.descendingIterator(), 1);
+        parent
+            .componentDescriptor()
+            .getFactoryMethodForChildComponent(graph.componentDescriptor())
+            .ifPresent(
+                childFactoryMethod ->
+                    visitSubcomponentFactoryMethod(
+                        parentComponent, currentComponent, childFactoryMethod.methodElement()));
+      }
 
-      currentComponent = parentComponent;
-      parentComponent = grandparentComponent;
+      for (BindingGraph child : graph.subgraphs()) {
+        visitComponent(child, currentComponent);
+      }
+
+      verify(bindingGraphPath.removeLast().equals(graph));
+      verify(componentPaths.removeLast().equals(graphPath));
     }
 
-    @Override
-    protected void visitEntryPoint(DependencyRequest entryPoint, BindingGraph graph) {
-      addDependencyEdges(currentComponent, entryPoint);
-      super.visitEntryPoint(entryPoint, graph);
+    /**
+     * Called once for each entry point in a component.
+     *
+     * @param componentNode the component that contains the entry point
+     * @param entryPoint the entry point to visit
+     */
+    private void visitEntryPoint(ComponentNode componentNode, DependencyRequest entryPoint) {
+      addDependencyEdges(componentNode, entryPoint);
     }
 
-    @Override
-    protected void visitSubcomponentFactoryMethod(
-        BindingGraph graph, BindingGraph parent, ExecutableElement factoryMethod) {
+    /**
+     * Called if this component was installed in its parent by a subcomponent factory method.
+     *
+     * @param parentComponent the parent graph
+     * @param currentComponent the currently visited graph
+     * @param factoryMethod the factory method in the parent component that declares that the
+     *     current component is a child
+     */
+    private void visitSubcomponentFactoryMethod(
+        ComponentNode parentComponent,
+        ComponentNode currentComponent,
+        ExecutableElement factoryMethod) {
       network.addEdge(
-          parentComponent, currentComponent, new ChildFactoryMethodEdgeImpl(factoryMethod));
-      super.visitSubcomponentFactoryMethod(graph, parent, factoryMethod);
+          parentComponent,
+          currentComponent,
+          new ChildFactoryMethodEdgeImpl(factoryMethod));
+    }
+
+    /**
+     * Returns an immutable snapshot of the path from the root component to the currently visited
+     * component.
+     */
+    private ComponentPath componentPath() {
+      return componentPaths.getLast();
+    }
+
+    /**
+     * Returns the subpath from the root component to the matching {@code ancestor} of the current
+     * component.
+     */
+    private ComponentPath pathFromRootToAncestor(TypeElement ancestor) {
+      for (ComponentPath componentPath : componentPaths) {
+        if (componentPath.currentComponent().equals(ancestor)) {
+          return componentPath;
+        }
+      }
+      throw new IllegalArgumentException(
+          String.format(
+              "%s is not in the current path: %s", ancestor.getQualifiedName(), componentPath()));
+    }
+
+    /**
+     * Returns the BindingGraph for {@code ancestor}, where {@code ancestor} is in the component
+     * path of the current traversal.
+     */
+    private BindingGraph graphForAncestor(TypeElement ancestor) {
+      for (BindingGraph graph : bindingGraphPath) {
+        if (graph.componentTypeElement().equals(ancestor)) {
+          return graph;
+        }
+      }
+      throw new IllegalArgumentException(
+          String.format(
+              "%s is not in the current path: %s", ancestor.getQualifiedName(), componentPath()));
     }
 
     /**
@@ -175,14 +298,6 @@ public final class BindingGraphConverter {
         Node source, DependencyRequest dependencyRequest) {
       return graphForAncestor(source.componentPath().currentComponent())
           .resolvedBindings(bindingRequest(dependencyRequest));
-    }
-
-    /** Adds a binding and all its dependencies. */
-    private void addBinding(BindingNode binding) {
-      network.addNode(binding);
-      for (DependencyRequest dependencyRequest : binding.dependencies()) {
-        addDependencyEdges(binding, dependencyRequest);
-      }
     }
 
     private ImmutableSet<BindingNode> bindingNodes(ResolvedBindings resolvedBindings) {

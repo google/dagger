@@ -23,6 +23,7 @@ import static dagger.internal.codegen.extension.DaggerGraphs.unreachableNodes;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
@@ -326,10 +327,11 @@ public final class BindingGraphConverter {
     }
 
     private MissingBinding missingBindingNode(ResolvedBindings dependencies) {
-      // TODO(ronshapiro): Revisit whether missing binding nodes should all use the root component
-      // path, and the component(s) that have the missing bindings should be determined by the
-      // predecessors of missing binding nodes.
-      return BindingGraphProxies.missingBindingNode(componentPath(), dependencies.key());
+      // Put all missing binding nodes in the root component. This simplifies the binding graph
+      // and produces better error messages for users since all dependents point to the same node.
+      return BindingGraphProxies.missingBindingNode(
+          ComponentPath.create(ImmutableList.of(componentPath().rootComponent())),
+          dependencies.key());
     }
 
     private ComponentNode subcomponentNode(TypeMirror subcomponentBuilderType, BindingGraph graph) {

@@ -18,7 +18,6 @@
 package(default_visibility = ["//:src"])
 
 load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 load("//tools:maven.bzl", "POM_VERSION", "pom_file")
 
 DAGGER_DEPS = [
@@ -62,9 +61,10 @@ java_library(
 )
 
 java_library(
-    name = "codegen-deps",
-    visibility = ["//visibility:private"],
-    exports = [
+    name = "processor",
+    srcs = [":codegen-srcs"],
+    tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
+    deps = [
         ":codegen-shared-deps",
         "@google_bazel_common//third_party/java/guava",
     ],
@@ -81,14 +81,6 @@ java_library(
     srcs = ["package-info.java"],
     tags = ["maven:merged"],
     deps = ["@google_bazel_common//third_party/java/error_prone:annotations"],
-)
-
-# The processor's "main", if you will
-java_library(
-    name = "processor",
-    srcs = [":codegen-srcs"],
-    tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
-    deps = [":codegen-deps"],
 )
 
 pom_file(

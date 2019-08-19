@@ -21,7 +21,6 @@ package(default_visibility = ["//:src"])
 java_library(
     name = "extension",
     srcs = glob(["*.java"]),
-    plugins = ["//java/dagger/internal/codegen/bootstrap"],
     tags = ["maven:merged"],
     deps = [
         "@google_bazel_common//third_party/java/guava",

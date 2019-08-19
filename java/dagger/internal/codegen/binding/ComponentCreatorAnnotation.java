@@ -49,6 +49,7 @@ public enum ComponentCreatorAnnotation {
   private final ComponentCreatorKind creatorKind;
   private final Class<? extends Annotation> componentAnnotation;
 
+  @SuppressWarnings("unchecked") // Builder/factory annotations live within their parent annotation.
   ComponentCreatorAnnotation(Class<? extends Annotation> annotation) {
     this.annotation = annotation;
     this.creatorKind = ComponentCreatorKind.valueOf(toUpperCase(annotation.getSimpleName()));

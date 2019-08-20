@@ -41,6 +41,8 @@ import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -105,6 +107,7 @@ public final class BindingGraphConverter {
     private final BindingDeclarationFormatter bindingDeclarationFormatter;
     private final MutableNetwork<Node, Edge> network =
         NetworkBuilder.directed().allowsParallelEdges(true).allowsSelfLoops(true).build();
+    private final Set<BindingNode> bindings = new HashSet<>();
 
     /** Constructs a converter for a root (component, not subcomponent) binding graph. */
     private Converter(BindingDeclarationFormatter bindingDeclarationFormatter) {
@@ -152,9 +155,11 @@ public final class BindingGraphConverter {
 
       for (ResolvedBindings resolvedBindings : graph.resolvedBindings()) {
         for (BindingNode binding : bindingNodes(resolvedBindings)) {
-          network.addNode(binding);
-          for (DependencyRequest dependencyRequest : binding.dependencies()) {
-            addDependencyEdges(binding, dependencyRequest);
+          if (bindings.add(binding)) {
+            network.addNode(binding);
+            for (DependencyRequest dependencyRequest : binding.dependencies()) {
+              addDependencyEdges(binding, dependencyRequest);
+            }
           }
           if (binding.kind().equals(SUBCOMPONENT_CREATOR)
               && binding.componentPath().equals(currentComponent.componentPath())) {

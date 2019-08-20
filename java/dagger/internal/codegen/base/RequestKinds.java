@@ -35,6 +35,7 @@ import static dagger.model.RequestKind.PROVIDER;
 import static dagger.model.RequestKind.PROVIDER_OF_LAZY;
 
 import com.google.auto.common.MoreTypes;
+import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.TypeName;
@@ -43,11 +44,17 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
+import java.util.HashMap;
+import java.util.Map;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
 /** Utility methods for {@link RequestKind}s. */
 public final class RequestKinds {
+  private static final Equivalence<TypeMirror> EQUIVALENCE = MoreTypes.equivalence();
+  private static final Map<Equivalence.Wrapper<TypeMirror>, RequestKind> requestKindMap =
+      new HashMap<>();
+
   /** Returns the type of a request of this kind for a key with a given type. */
   public static TypeMirror requestType(
       RequestKind requestKind, TypeMirror type, DaggerTypes types) {
@@ -104,6 +111,11 @@ public final class RequestKinds {
 
   /** Returns the {@link RequestKind} that matches the wrapping types (if any) of {@code type}. */
   public static RequestKind getRequestKind(TypeMirror type) {
+    return requestKindMap.computeIfAbsent(
+        EQUIVALENCE.wrap(type), unused -> getRequestKindUncached(type));
+  }
+
+  public static RequestKind getRequestKindUncached(TypeMirror type) {
     checkTypePresent(type);
     for (RequestKind kind : FRAMEWORK_CLASSES.keySet()) {
       if (matchesKind(kind, type)) {

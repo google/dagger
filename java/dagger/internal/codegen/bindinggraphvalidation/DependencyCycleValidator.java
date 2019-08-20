@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.graph.EndpointPair;
+import com.google.common.graph.Graphs;
 import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.NetworkBuilder;
@@ -76,6 +77,10 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
     ImmutableNetwork<Node, DependencyEdge> dependencyGraph =
         nonCycleBreakingDependencyGraph(bindingGraph);
+    // First check the graph for a cycle. If there is one, then we'll do more work to report where.
+    if (!Graphs.hasCycle(dependencyGraph)) {
+      return;
+    }
     // Check each endpoint pair only once, no matter how many parallel edges connect them.
     Set<EndpointPair<Node>> dependencyEndpointPairs = dependencyGraph.asGraph().edges();
     Set<EndpointPair<Node>> visited = newHashSetWithExpectedSize(dependencyEndpointPairs.size());

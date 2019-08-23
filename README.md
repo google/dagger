@@ -113,25 +113,11 @@ parallelizable execution graphs), then add this to your maven configuration:
 </dependencies>
 ```
 
-#### Java Gradle
-```groovy
-// Add plugin https://plugins.gradle.org/plugin/net.ltgt.apt
-plugins {
-  id "net.ltgt.apt" version "0.10"
-}
-
-// Add Dagger dependencies
-dependencies {
-  compile 'com.google.dagger:dagger:2.x'
-  apt 'com.google.dagger:dagger-compiler:2.x'
-}
-```
-
-#### Android Gradle
+#### Gradle
 ```groovy
 // Add Dagger dependencies
 dependencies {
-  compile 'com.google.dagger:dagger:2.x'
+  api 'com.google.dagger:dagger:2.x'
   annotationProcessor 'com.google.dagger:dagger-compiler:2.x'
 }
 ```
@@ -139,13 +125,20 @@ dependencies {
 If you're using classes in `dagger.android` you'll also want to include:
 
 ```groovy
-compile 'com.google.dagger:dagger-android:2.x'
-compile 'com.google.dagger:dagger-android-support:2.x' // if you use the support libraries
+api 'com.google.dagger:dagger-android:2.x'
+api 'com.google.dagger:dagger-android-support:2.x' // if you use the support libraries
 annotationProcessor 'com.google.dagger:dagger-android-processor:2.x'
 ```
 
-If you're using a version of the Android gradle plugin below `2.2`, see
-https://bitbucket.org/hvisser/android-apt.
+Notes:
+
+-   Some projects will want to use `implementation` instead of `api` for better
+    compilation performance.
+    -   See the [Gradle documentation][gradle-api-implementation] for more
+        information on how to select appropriately, and the [Android Gradle
+        plugin documentation][gradle-api-implementation-android] for Android
+        projects.
+-   For Kotlin projects, use [`kapt`] in place of `annotationProcessor`.
 
 If you're using the [Android Databinding library][databinding], you may want to
 increase the number of errors that `javac` will print. When Dagger prints an
@@ -203,7 +196,10 @@ See [the CONTRIBUTING.md docs][Building Dagger].
 [databinding]: https://developer.android.com/topic/libraries/data-binding/
 [gaktalk]: https://www.youtube.com/watch?v=oK_XtfXPkqw
 [GitHub Issues]: https://github.com/google/dagger/issues
+[gradle-api-implementation]: https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_separation
+[gradle-api-implementation-android]: https://developer.android.com/studio/build/dependencies#dependency_configurations
 [Guava]: https://github.com/google/guava
+[`kapt`]: https://kotlinlang.org/docs/reference/kapt.html
 [latestapi]: https://dagger.dev/api/latest/
 [mavenbadge-svg]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger/badge.svg
 [mavencentral]: https://search.maven.org/artifact/com.google.dagger/dagger

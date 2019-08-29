@@ -28,6 +28,7 @@ import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompil
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FLOATING_BINDS_METHODS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FORMAT_GENERATED_SOURCE;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.PLUGINS_VISIT_FULL_BINDING_GRAPHS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.WRITE_PRODUCER_NAME_IN_TOKEN;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.KeyOnlyOption.HEADER_COMPILATION;
@@ -140,12 +141,13 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
-  public ValidationType fullBindingGraphValidationType(TypeElement element) {
-    return fullBindingGraphValidationType();
+  public ValidationType fullBindingGraphValidationType() {
+    return parseOption(FULL_BINDING_GRAPH_VALIDATION);
   }
 
-  private ValidationType fullBindingGraphValidationType() {
-    return parseOption(FULL_BINDING_GRAPH_VALIDATION);
+  @Override
+  public boolean pluginsVisitFullBindingGraphs(TypeElement component) {
+    return isEnabled(PLUGINS_VISIT_FULL_BINDING_GRAPHS);
   }
 
   @Override
@@ -263,6 +265,8 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     FORCE_USE_SERIALIZED_COMPONENT_IMPLEMENTATIONS,
 
     EMIT_MODIFIABLE_METADATA_ANNOTATIONS(ENABLED),
+
+    PLUGINS_VISIT_FULL_BINDING_GRAPHS,
 
     FLOATING_BINDS_METHODS,
     ;

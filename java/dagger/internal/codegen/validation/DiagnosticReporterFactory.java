@@ -25,7 +25,6 @@ import static com.google.common.collect.Iterables.indexOf;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
-import static dagger.internal.codegen.compileroption.ValidationType.NONE;
 import static dagger.internal.codegen.extension.DaggerGraphs.shortestPath;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.extension.DaggerStreams.presentValues;
@@ -53,7 +52,6 @@ import dagger.internal.codegen.base.ElementFormatter;
 import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
 import dagger.internal.codegen.compileroption.CompilerOptions;
-import dagger.internal.codegen.compileroption.ValidationType;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.ChildFactoryMethodEdge;
@@ -83,7 +81,6 @@ final class DiagnosticReporterFactory {
   private final Messager messager;
   private final DependencyRequestFormatter dependencyRequestFormatter;
   private final ElementFormatter elementFormatter;
-  private final CompilerOptions compilerOptions;
 
   @Inject
   DiagnosticReporterFactory(
@@ -96,12 +93,12 @@ final class DiagnosticReporterFactory {
     this.messager = messager;
     this.dependencyRequestFormatter = dependencyRequestFormatter;
     this.elementFormatter = elementFormatter;
-    this.compilerOptions = compilerOptions;
   }
 
   /** Creates a reporter for a binding graph and a plugin. */
-  DiagnosticReporterImpl reporter(BindingGraph graph, BindingGraphPlugin plugin) {
-    return new DiagnosticReporterImpl(graph, plugin.pluginName());
+  DiagnosticReporterImpl reporter(
+      BindingGraph graph, BindingGraphPlugin plugin, boolean reportErrorsAsWarnings) {
+    return new DiagnosticReporterImpl(graph, plugin.pluginName(), reportErrorsAsWarnings);
   }
 
   private static <K, V> Function<K, V> memoize(Function<K, V> uncached) {
@@ -141,12 +138,14 @@ final class DiagnosticReporterFactory {
     private final BindingGraph graph;
     private final String plugin;
     private final TypeElement rootComponent;
+    private final boolean reportErrorsAsWarnings;
     private final ImmutableSet.Builder<Diagnostic.Kind> reportedDiagnosticKinds =
         ImmutableSet.builder();
 
-    DiagnosticReporterImpl(BindingGraph graph, String plugin) {
+    DiagnosticReporterImpl(BindingGraph graph, String plugin, boolean reportErrorsAsWarnings) {
       this.graph = graph;
       this.plugin = plugin;
+      this.reportErrorsAsWarnings = reportErrorsAsWarnings;
       this.rootComponent = graph.rootComponentNode().componentPath().currentComponent();
     }
 
@@ -241,15 +240,8 @@ final class DiagnosticReporterFactory {
         Diagnostic.Kind diagnosticKind,
         CharSequence message,
         @NullableDecl Element elementToReport) {
-      if (graph.isFullBindingGraph()) {
-        ValidationType validationType =
-            compilerOptions.fullBindingGraphValidationType(rootComponent);
-        if (validationType.equals(NONE)) {
-          return;
-        }
-        if (diagnosticKind.equals(ERROR)) {
-          diagnosticKind = validationType.diagnosticKind().get();
-        }
+      if (diagnosticKind.equals(ERROR) && reportErrorsAsWarnings) {
+        diagnosticKind = Diagnostic.Kind.WARNING;
       }
       reportedDiagnosticKinds.add(diagnosticKind);
       StringBuilder fullMessage = new StringBuilder();

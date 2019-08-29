@@ -73,8 +73,7 @@ public class MapMultibindingValidationTest {
 
     compilation =
         daggerCompiler()
-            .withOptions(
-                "-Adagger.fullBindingGraphValidation=ERROR")
+            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(module);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -267,8 +266,7 @@ public class MapMultibindingValidationTest {
 
     compilation =
         daggerCompiler()
-            .withOptions(
-                "-Adagger.fullBindingGraphValidation=ERROR")
+            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(module, stringKeyTwoFile);
     assertThat(compilation).failed();
     assertThat(compilation)

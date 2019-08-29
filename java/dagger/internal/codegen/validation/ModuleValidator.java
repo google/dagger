@@ -31,7 +31,6 @@ import static dagger.internal.codegen.base.MoreAnnotationValues.asType;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.getCreatorAnnotations;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getSubcomponentCreator;
-import static dagger.internal.codegen.compileroption.ValidationType.NONE;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
@@ -61,7 +60,6 @@ import dagger.internal.codegen.binding.ComponentCreatorAnnotation;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.binding.ModuleKind;
-import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.BindingGraph;
@@ -126,7 +124,6 @@ public final class ModuleValidator {
   private final BindingGraphFactory bindingGraphFactory;
   private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphValidator bindingGraphValidator;
-  private final CompilerOptions compilerOptions;
   private final Map<TypeElement, ValidationReport<TypeElement>> cache = new HashMap<>();
   private final Set<TypeElement> knownModules = new HashSet<>();
 
@@ -139,8 +136,7 @@ public final class ModuleValidator {
       ComponentDescriptorFactory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       BindingGraphConverter bindingGraphConverter,
-      BindingGraphValidator bindingGraphValidator,
-      CompilerOptions compilerOptions) {
+      BindingGraphValidator bindingGraphValidator) {
     this.types = types;
     this.elements = elements;
     this.anyBindingMethodValidator = anyBindingMethodValidator;
@@ -149,7 +145,6 @@ public final class ModuleValidator {
     this.bindingGraphFactory = bindingGraphFactory;
     this.bindingGraphConverter = bindingGraphConverter;
     this.bindingGraphValidator = bindingGraphValidator;
-    this.compilerOptions = compilerOptions;
   }
 
   /**
@@ -245,7 +240,7 @@ public final class ModuleValidator {
     validateSelfCycles(module, builder);
 
     if (builder.build().isClean()
-        && !compilerOptions.fullBindingGraphValidationType(module).equals(NONE)) {
+        && bindingGraphValidator.shouldDoFullBindingGraphValidation(module)) {
       validateModuleBindings(module, builder);
     }
 

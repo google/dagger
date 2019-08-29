@@ -23,7 +23,6 @@ import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnot
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.allCreatorAnnotations;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
-import static dagger.internal.codegen.compileroption.ValidationType.NONE;
 import static java.util.Collections.disjoint;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
@@ -40,7 +39,6 @@ import dagger.internal.codegen.binding.BindingGraphConverter;
 import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
-import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.validation.BindingGraphValidator;
 import dagger.internal.codegen.validation.ComponentCreatorValidator;
 import dagger.internal.codegen.validation.ComponentDescriptorValidator;
@@ -71,7 +69,6 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   private final SourceFileGenerator<BindingGraph> componentGenerator;
   private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphValidator bindingGraphValidator;
-  private final CompilerOptions compilerOptions;
   private ImmutableSet<Element> subcomponentElements;
   private ImmutableSet<Element> subcomponentCreatorElements;
   private ImmutableMap<Element, ValidationReport<TypeElement>> creatorReportsByComponent;
@@ -88,8 +85,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       BindingGraphFactory bindingGraphFactory,
       SourceFileGenerator<BindingGraph> componentGenerator,
       BindingGraphConverter bindingGraphConverter,
-      BindingGraphValidator bindingGraphValidator,
-      CompilerOptions compilerOptions) {
+      BindingGraphValidator bindingGraphValidator) {
     super(MoreElements::asType);
     this.messager = messager;
     this.componentValidator = componentValidator;
@@ -100,7 +96,6 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     this.componentGenerator = componentGenerator;
     this.bindingGraphConverter = bindingGraphConverter;
     this.bindingGraphValidator = bindingGraphValidator;
-    this.compilerOptions = compilerOptions;
   }
 
   @Override
@@ -159,7 +154,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   }
 
   private void processSubcomponent(TypeElement subcomponent) {
-    if (compilerOptions.fullBindingGraphValidationType(subcomponent).equals(NONE)) {
+    if (!bindingGraphValidator.shouldDoFullBindingGraphValidation(subcomponent)) {
       return;
     }
     if (!isSubcomponentValid(subcomponent)) {
@@ -240,9 +235,8 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
 
   @CanIgnoreReturnValue
   private boolean validateFullBindingGraph(ComponentDescriptor componentDescriptor) {
-    if (compilerOptions
-        .fullBindingGraphValidationType(componentDescriptor.typeElement())
-        .equals(NONE)) {
+    TypeElement component = componentDescriptor.typeElement();
+    if (!bindingGraphValidator.shouldDoFullBindingGraphValidation(component)) {
       return true;
     }
     BindingGraph fullBindingGraph = bindingGraphFactory.create(componentDescriptor, true);

@@ -64,12 +64,14 @@ public abstract class CompilerOptions {
 
   public abstract boolean useGradleIncrementalProcessing();
 
+  public abstract ValidationType fullBindingGraphValidationType();
+
   /**
-   * Returns the validation that should be done for the full binding graph for the element.
+   * If {@code true}, each plugin will visit the full binding graph for the given element.
    *
    * @throws IllegalArgumentException if {@code element} is not a module or (sub)component
    */
-  public abstract ValidationType fullBindingGraphValidationType(TypeElement element);
+  public abstract boolean pluginsVisitFullBindingGraphs(TypeElement element);
 
   public abstract Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind();
 

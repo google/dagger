@@ -90,8 +90,13 @@ public final class JavacPluginCompilerOptions extends CompilerOptions {
   }
 
   @Override
-  public ValidationType fullBindingGraphValidationType(TypeElement element) {
+  public ValidationType fullBindingGraphValidationType() {
     return NONE;
+  }
+
+  @Override
+  public boolean pluginsVisitFullBindingGraphs(TypeElement element) {
+    return false;
   }
 
   @Override

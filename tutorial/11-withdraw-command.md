@@ -110,7 +110,6 @@ Here's how we might define annotations for qualifying our `BigDecimal` values:
 
 ```java
 @Qualifier
-@Documented
 @Retention(RUNTIME)
 @interface MinimumBalance {}
 

@@ -22,11 +22,13 @@ import com.google.googlejavaformat.java.filer.FormattingFiler;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Reusable;
+import dagger.internal.codegen.SpiModule.ProcessorClassLoader;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions;
 import dagger.internal.codegen.compileroption.ProcessingOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.statistics.DaggerStatisticsRecorder;
+import dagger.internal.codegen.validation.BindingGraphValidator;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
@@ -89,5 +91,11 @@ final class ProcessingEnvironmentModule {
   @Provides
   Optional<DaggerStatisticsRecorder> daggerStatisticsRecorder() {
     return Optional.empty();
+  }
+
+  @Provides
+  @ProcessorClassLoader
+  ClassLoader processorClassloader() {
+    return BindingGraphValidator.class.getClassLoader();
   }
 }

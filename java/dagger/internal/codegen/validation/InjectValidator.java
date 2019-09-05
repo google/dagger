@@ -17,9 +17,8 @@
 package dagger.internal.codegen.validation;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static dagger.internal.codegen.base.InjectionAnnotations.getQualifiers;
-import static dagger.internal.codegen.base.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
+import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -29,6 +28,7 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.Accessibility;
 import dagger.internal.codegen.langmodel.DaggerElements;
@@ -59,14 +59,22 @@ public final class InjectValidator {
   private final CompilerOptions compilerOptions;
   private final DependencyRequestValidator dependencyRequestValidator;
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
+  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
   InjectValidator(
       DaggerTypes types,
       DaggerElements elements,
       DependencyRequestValidator dependencyRequestValidator,
-      CompilerOptions compilerOptions) {
-    this(types, elements, compilerOptions, dependencyRequestValidator, Optional.empty());
+      CompilerOptions compilerOptions,
+      InjectionAnnotations injectionAnnotations) {
+    this(
+        types,
+        elements,
+        compilerOptions,
+        dependencyRequestValidator,
+        Optional.empty(),
+        injectionAnnotations);
   }
 
   private InjectValidator(
@@ -74,12 +82,14 @@ public final class InjectValidator {
       DaggerElements elements,
       CompilerOptions compilerOptions,
       DependencyRequestValidator dependencyRequestValidator,
-      Optional<Kind> privateAndStaticInjectionDiagnosticKind) {
+      Optional<Kind> privateAndStaticInjectionDiagnosticKind,
+      InjectionAnnotations injectionAnnotations) {
     this.types = types;
     this.elements = elements;
     this.compilerOptions = compilerOptions;
     this.dependencyRequestValidator = dependencyRequestValidator;
     this.privateAndStaticInjectionDiagnosticKind = privateAndStaticInjectionDiagnosticKind;
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   /**
@@ -95,7 +105,8 @@ public final class InjectValidator {
             elements,
             compilerOptions,
             dependencyRequestValidator,
-            Optional.of(Diagnostic.Kind.ERROR));
+            Optional.of(Diagnostic.Kind.ERROR),
+            injectionAnnotations);
   }
 
   public ValidationReport<TypeElement> validateConstructor(ExecutableElement constructorElement) {
@@ -106,7 +117,7 @@ public final class InjectValidator {
           "Dagger does not support injection into private constructors", constructorElement);
     }
 
-    for (AnnotationMirror qualifier : getQualifiers(constructorElement)) {
+    for (AnnotationMirror qualifier : injectionAnnotations.getQualifiers(constructorElement)) {
       builder.addError(
           "@Qualifier annotations are not allowed on @Inject constructors",
           constructorElement,

@@ -22,7 +22,6 @@ import static com.google.auto.common.MoreTypes.isType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.base.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
@@ -74,12 +73,14 @@ import javax.lang.model.type.TypeMirror;
 public final class KeyFactory {
   private final DaggerTypes types;
   private final DaggerElements elements;
+  private final InjectionAnnotations injectionAnnotations;
 
-  // TODO(user): Make this pkg-private. This is used by KeyFactoryTest.
   @Inject
-  public KeyFactory(DaggerTypes types, DaggerElements elements) {
+  KeyFactory(
+      DaggerTypes types, DaggerElements elements, InjectionAnnotations injectionAnnotations) {
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   private TypeMirror boxPrimitives(TypeMirror type) {
@@ -241,7 +242,7 @@ public final class KeyFactory {
   }
 
   private Key forMethod(ExecutableElement method, TypeMirror keyType) {
-    return forQualifiedType(getQualifier(method), keyType);
+    return forQualifiedType(injectionAnnotations.getQualifier(method), keyType);
   }
 
   public Key forInjectConstructorWithResolvedType(TypeMirror type) {

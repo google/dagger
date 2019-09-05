@@ -17,7 +17,6 @@
 package dagger.internal.codegen.validation;
 
 import static com.google.common.base.Verify.verifyNotNull;
-import static dagger.internal.codegen.base.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.MapKeys.getMapKeys;
@@ -35,6 +34,7 @@ import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.FrameworkTypes;
 import dagger.internal.codegen.base.MultibindingAnnotations;
 import dagger.internal.codegen.base.SetType;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.model.Key;
 import dagger.model.Scope;
 import dagger.multibindings.ElementsIntoSet;
@@ -58,6 +58,7 @@ public abstract class BindingElementValidator<E extends Element> {
   private final AllowsMultibindings allowsMultibindings;
   private final AllowsScoping allowsScoping;
   private final Map<E, ValidationReport<E>> cache = new HashMap<>();
+  private final InjectionAnnotations injectionAnnotations;
 
   /**
    * Creates a validator object.
@@ -67,10 +68,12 @@ public abstract class BindingElementValidator<E extends Element> {
   protected BindingElementValidator(
       Class<? extends Annotation> bindingAnnotation,
       AllowsMultibindings allowsMultibindings,
-      AllowsScoping allowsScoping) {
+      AllowsScoping allowsScoping,
+      InjectionAnnotations injectionAnnotations) {
     this.bindingAnnotation = bindingAnnotation;
     this.allowsMultibindings = allowsMultibindings;
     this.allowsScoping = allowsScoping;
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   /** Returns a {@link ValidationReport} for {@code element}. */
@@ -234,7 +237,8 @@ public abstract class BindingElementValidator<E extends Element> {
      * Adds an error if the element has more than one {@linkplain Qualifier qualifier} annotation.
      */
     private void checkQualifiers() {
-      ImmutableSet<? extends AnnotationMirror> qualifiers = getQualifiers(element);
+      ImmutableSet<? extends AnnotationMirror> qualifiers =
+          injectionAnnotations.getQualifiers(element);
       if (qualifiers.size() > 1) {
         for (AnnotationMirror qualifier : qualifiers) {
           report.addError(

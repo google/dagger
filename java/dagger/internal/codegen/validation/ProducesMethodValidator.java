@@ -25,6 +25,7 @@ import static dagger.internal.codegen.validation.BindingMethodValidator.Exceptio
 import com.google.auto.common.MoreTypes;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.codegen.binding.ConfigurationAnnotations;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.multibindings.ElementsIntoSet;
@@ -44,7 +45,8 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   ProducesMethodValidator(
       DaggerElements elements,
       DaggerTypes types,
-      DependencyRequestValidator dependencyRequestValidator) {
+      DependencyRequestValidator dependencyRequestValidator,
+      InjectionAnnotations injectionAnnotations) {
     super(
         elements,
         types,
@@ -54,7 +56,8 @@ final class ProducesMethodValidator extends BindingMethodValidator {
         MUST_BE_CONCRETE,
         EXCEPTION,
         ALLOWS_MULTIBINDINGS,
-        NO_SCOPING);
+        NO_SCOPING,
+        injectionAnnotations);
   }
 
   @Override

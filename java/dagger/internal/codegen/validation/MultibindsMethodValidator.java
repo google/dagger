@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableSet;
 import dagger.Module;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.multibindings.Multibinds;
@@ -43,7 +44,8 @@ class MultibindsMethodValidator extends BindingMethodValidator {
   MultibindsMethodValidator(
       DaggerElements elements,
       DaggerTypes types,
-      DependencyRequestValidator dependencyRequestValidator) {
+      DependencyRequestValidator dependencyRequestValidator,
+      InjectionAnnotations injectionAnnotations) {
     super(
         elements,
         types,
@@ -53,7 +55,8 @@ class MultibindsMethodValidator extends BindingMethodValidator {
         MUST_BE_ABSTRACT,
         NO_EXCEPTIONS,
         NO_MULTIBINDINGS,
-        NO_SCOPING);
+        NO_SCOPING,
+        injectionAnnotations);
   }
 
   @Override

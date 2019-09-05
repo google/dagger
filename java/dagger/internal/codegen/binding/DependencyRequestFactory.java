@@ -34,7 +34,6 @@ import static dagger.model.RequestKind.PROVIDER;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Lazy;
-import dagger.internal.codegen.base.InjectionAnnotations;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -62,11 +61,14 @@ import javax.lang.model.type.TypeMirror;
 public final class DependencyRequestFactory {
   private final KeyFactory keyFactory;
   private final DaggerTypes types;
+  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
-  DependencyRequestFactory(KeyFactory keyFactory, DaggerTypes types) {
+  DependencyRequestFactory(
+      KeyFactory keyFactory, DaggerTypes types, InjectionAnnotations injectionAnnotations) {
     this.keyFactory = keyFactory;
     this.types = types;
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   ImmutableSet<DependencyRequest> forRequiredResolvedVariables(
@@ -134,7 +136,7 @@ public final class DependencyRequestFactory {
       VariableElement variableElement, TypeMirror resolvedType) {
     checkNotNull(variableElement);
     checkNotNull(resolvedType);
-    Optional<AnnotationMirror> qualifier = InjectionAnnotations.getQualifier(variableElement);
+    Optional<AnnotationMirror> qualifier = injectionAnnotations.getQualifier(variableElement);
     return newDependencyRequest(variableElement, resolvedType, qualifier);
   }
 
@@ -146,7 +148,7 @@ public final class DependencyRequestFactory {
         provisionMethod.getParameters().isEmpty(),
         "Component provision methods must be empty: %s",
         provisionMethod);
-    Optional<AnnotationMirror> qualifier = InjectionAnnotations.getQualifier(provisionMethod);
+    Optional<AnnotationMirror> qualifier = injectionAnnotations.getQualifier(provisionMethod);
     return newDependencyRequest(provisionMethod, provisionMethodType.getReturnType(), qualifier);
   }
 
@@ -159,7 +161,7 @@ public final class DependencyRequestFactory {
         "Component production methods must be empty: %s",
         productionMethod);
     TypeMirror type = productionMethodType.getReturnType();
-    Optional<AnnotationMirror> qualifier = InjectionAnnotations.getQualifier(productionMethod);
+    Optional<AnnotationMirror> qualifier = injectionAnnotations.getQualifier(productionMethod);
     // Only a component production method can be a request for a ListenableFuture, so we
     // special-case it here.
     if (isTypeOf(ListenableFuture.class, type)) {
@@ -178,7 +180,7 @@ public final class DependencyRequestFactory {
     checkNotNull(membersInjectionMethod);
     checkNotNull(membersInjectionMethodType);
     Optional<AnnotationMirror> qualifier =
-        InjectionAnnotations.getQualifier(membersInjectionMethod);
+        injectionAnnotations.getQualifier(membersInjectionMethod);
     checkArgument(!qualifier.isPresent());
     TypeMirror membersInjectedType = getOnlyElement(membersInjectionMethodType.getParameterTypes());
     return DependencyRequest.builder()

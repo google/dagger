@@ -17,11 +17,16 @@
 package dagger.internal.codegen.validation;
 
 import dagger.BindsInstance;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import javax.lang.model.element.Element;
 
 abstract class BindsInstanceElementValidator<E extends Element> extends BindingElementValidator<E> {
-  BindsInstanceElementValidator() {
-    super(BindsInstance.class, AllowsMultibindings.NO_MULTIBINDINGS, AllowsScoping.NO_SCOPING);
+  BindsInstanceElementValidator(InjectionAnnotations injectionAnnotations) {
+    super(
+        BindsInstance.class,
+        AllowsMultibindings.NO_MULTIBINDINGS,
+        AllowsScoping.NO_SCOPING,
+        injectionAnnotations);
   }
 
   @Override

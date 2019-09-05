@@ -14,29 +14,38 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.base;
+package dagger.internal.codegen.binding;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import com.google.auto.common.AnnotationMirrors;
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.SuperficialValidation;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
-/**
- * Utilities relating to annotations defined in the {@code javax.inject} package.
- */
+/** Utilities relating to annotations defined in the {@code javax.inject} package. */
 public final class InjectionAnnotations {
-  public static Optional<AnnotationMirror> getQualifier(Element e) {
+  private final KotlinMetadataUtil kotlinMetadataUtil;
+
+  @Inject
+  InjectionAnnotations(KotlinMetadataUtil kotlinMetadataUtil) {
+    this.kotlinMetadataUtil = kotlinMetadataUtil;
+  }
+
+  public Optional<AnnotationMirror> getQualifier(Element e) {
     if (!SuperficialValidation.validateElement(e)) {
       throw new TypeNotPresentException(e.toString(), null);
     }
@@ -53,8 +62,18 @@ public final class InjectionAnnotations {
     }
   }
 
-  public static ImmutableSet<? extends AnnotationMirror> getQualifiers(Element element) {
-    return AnnotationMirrors.getAnnotatedAnnotations(element, Qualifier.class);
+  public ImmutableSet<? extends AnnotationMirror> getQualifiers(Element element) {
+    ImmutableSet<? extends AnnotationMirror> qualifiers =
+        AnnotationMirrors.getAnnotatedAnnotations(element, Qualifier.class);
+    if (kotlinMetadataUtil.hasMetadata(element) && element.getKind() == ElementKind.FIELD) {
+      return Sets.union(
+              qualifiers,
+              kotlinMetadataUtil.getSyntheticPropertyAnnotations(
+                  MoreElements.asVariable(element), Qualifier.class))
+          .immutableCopy();
+    } else {
+      return qualifiers;
+    }
   }
 
   /** Returns the constructors in {@code type} that are annotated with {@link Inject}. */
@@ -63,6 +82,4 @@ public final class InjectionAnnotations {
         .filter(constructor -> isAnnotationPresent(constructor, Inject.class))
         .toSet();
   }
-
-  private InjectionAnnotations() {}
 }

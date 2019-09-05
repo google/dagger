@@ -24,6 +24,7 @@ import static dagger.internal.codegen.validation.BindingMethodValidator.Exceptio
 import com.google.common.collect.ImmutableSet;
 import dagger.Module;
 import dagger.Provides;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.producers.ProducerModule;
@@ -40,7 +41,8 @@ final class ProvidesMethodValidator extends BindingMethodValidator {
   ProvidesMethodValidator(
       DaggerElements elements,
       DaggerTypes types,
-      DependencyRequestValidator dependencyRequestValidator) {
+      DependencyRequestValidator dependencyRequestValidator,
+      InjectionAnnotations injectionAnnotations) {
     super(
         elements,
         types,
@@ -50,7 +52,8 @@ final class ProvidesMethodValidator extends BindingMethodValidator {
         MUST_BE_CONCRETE,
         RUNTIME_EXCEPTION,
         ALLOWS_MULTIBINDINGS,
-        ALLOWS_SCOPING);
+        ALLOWS_SCOPING,
+        injectionAnnotations);
     this.dependencyRequestValidator = dependencyRequestValidator;
   }
 

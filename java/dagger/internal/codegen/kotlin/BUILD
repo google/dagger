@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Dagger Authors.
+# Copyright (C) 2019 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,30 +13,22 @@
 # limitations under the License.
 
 # Description:
-#   JavaPoet extensions for use in Dagger
+#   Sources related to Kotlin metadata.
 
 package(default_visibility = ["//:src"])
 
 java_library(
-    name = "binding",
+    name = "kotlin",
     srcs = glob(["*.java"]),
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     tags = ["maven:merged"],
     deps = [
-        "//java/dagger:core",
         "//java/dagger/internal/codegen/base",
-        "//java/dagger/internal/codegen/compileroption",
-        "//java/dagger/internal/codegen/extension",
-        "//java/dagger/internal/codegen/javapoet",
-        "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/codegen/langmodel",
-        "//java/dagger/model",
-        "//java/dagger/model:internal-proxies",
-        "//java/dagger/producers",
         "@google_bazel_common//third_party/java/auto:common",
-        "@google_bazel_common//third_party/java/auto:value",
-        "@google_bazel_common//third_party/java/error_prone:annotations",
         "@google_bazel_common//third_party/java/guava",
-        "@google_bazel_common//third_party/java/javapoet",
+        "@google_bazel_common//third_party/java/jsr330_inject",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_metadata_jvm",
     ],
 )

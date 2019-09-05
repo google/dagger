@@ -23,6 +23,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import com.google.auto.common.MoreElements;
 import dagger.internal.codegen.base.ModuleAnnotation;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -33,7 +34,9 @@ import javax.lang.model.type.TypeMirror;
 
 final class BindsInstanceMethodValidator extends BindsInstanceElementValidator<ExecutableElement> {
   @Inject
-  BindsInstanceMethodValidator() {}
+  BindsInstanceMethodValidator(InjectionAnnotations injectionAnnotations) {
+    super(injectionAnnotations);
+  }
 
   @Override
   protected ElementValidator elementValidator(ExecutableElement element) {

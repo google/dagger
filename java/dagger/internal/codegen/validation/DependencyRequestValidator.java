@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.validation;
 
-import static dagger.internal.codegen.base.InjectionAnnotations.getQualifiers;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static javax.lang.model.type.TypeKind.WILDCARD;
@@ -25,6 +24,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.MembersInjector;
 import dagger.internal.codegen.base.FrameworkTypes;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -35,10 +35,14 @@ import javax.lang.model.type.TypeMirror;
 /** Validation for dependency requests. */
 final class DependencyRequestValidator {
   private final MembersInjectionValidator membersInjectionValidator;
+  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
-  DependencyRequestValidator(MembersInjectionValidator membersInjectionValidator) {
+  DependencyRequestValidator(
+      MembersInjectionValidator membersInjectionValidator,
+      InjectionAnnotations injectionAnnotations) {
     this.membersInjectionValidator = membersInjectionValidator;
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   /**
@@ -47,7 +51,8 @@ final class DependencyRequestValidator {
    */
   void validateDependencyRequest(
       ValidationReport.Builder<?> report, Element requestElement, TypeMirror requestType) {
-    ImmutableSet<? extends AnnotationMirror> qualifiers = getQualifiers(requestElement);
+    ImmutableSet<? extends AnnotationMirror> qualifiers =
+        injectionAnnotations.getQualifiers(requestElement);
     if (qualifiers.size() > 1) {
       for (AnnotationMirror qualifier : qualifiers) {
         report.addError(

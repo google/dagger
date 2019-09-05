@@ -25,6 +25,7 @@ GenJavaTests(
     srcs = glob(["*.java"]),
     functional = False,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
+    plugins = ["//java/dagger/internal/codegen/bootstrap"],
     deps = [
         "//java/dagger:core",
         "//java/dagger/internal/codegen:package_info",
@@ -34,6 +35,7 @@ GenJavaTests(
         "//java/dagger/internal/codegen/bindinggraphvalidation",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/javapoet",
+        "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/writing",

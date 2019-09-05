@@ -21,7 +21,6 @@ import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotation;
-import static dagger.internal.codegen.base.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.base.Scopes.productionScope;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.creatorAnnotationsFor;
@@ -58,17 +57,20 @@ public final class ComponentDescriptorFactory {
   private final DaggerTypes types;
   private final DependencyRequestFactory dependencyRequestFactory;
   private final ModuleDescriptor.Factory moduleDescriptorFactory;
+  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
   ComponentDescriptorFactory(
       DaggerElements elements,
       DaggerTypes types,
       DependencyRequestFactory dependencyRequestFactory,
-      ModuleDescriptor.Factory moduleDescriptorFactory) {
+      ModuleDescriptor.Factory moduleDescriptorFactory,
+      InjectionAnnotations injectionAnnotations) {
     this.elements = elements;
     this.types = types;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.moduleDescriptorFactory = moduleDescriptorFactory;
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   /** Returns a descriptor for a root component type. */
@@ -221,7 +223,8 @@ public final class ComponentDescriptorFactory {
         MoreTypes.asExecutable(
             types.asMemberOf(MoreTypes.asDeclared(componentElement.asType()), componentMethod));
     TypeMirror returnType = resolvedComponentMethod.getReturnType();
-    if (returnType.getKind().equals(DECLARED) && !getQualifier(componentMethod).isPresent()) {
+    if (returnType.getKind().equals(DECLARED)
+        && !injectionAnnotations.getQualifier(componentMethod).isPresent()) {
       TypeElement returnTypeElement = asTypeElement(returnType);
       if (subcomponentAnnotation(returnTypeElement).isPresent()) {
         // It's a subcomponent factory method. There is no dependency request, and there could be

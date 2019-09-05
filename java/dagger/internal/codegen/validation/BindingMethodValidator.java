@@ -23,6 +23,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.lang.annotation.Annotation;
@@ -58,7 +59,8 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
       Abstractness abstractness,
       ExceptionSuperclass exceptionSuperclass,
       AllowsMultibindings allowsMultibindings,
-      AllowsScoping allowsScoping) {
+      AllowsScoping allowsScoping,
+      InjectionAnnotations injectionAnnotations) {
     this(
         elements,
         types,
@@ -68,7 +70,8 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
         abstractness,
         exceptionSuperclass,
         allowsMultibindings,
-        allowsScoping);
+        allowsScoping,
+        injectionAnnotations);
   }
 
   /**
@@ -87,8 +90,9 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
       Abstractness abstractness,
       ExceptionSuperclass exceptionSuperclass,
       AllowsMultibindings allowsMultibindings,
-      AllowsScoping allowsScoping) {
-    super(methodAnnotation, allowsMultibindings, allowsScoping);
+      AllowsScoping allowsScoping,
+      InjectionAnnotations injectionAnnotations) {
+    super(methodAnnotation, allowsMultibindings, allowsScoping, injectionAnnotations);
     this.elements = elements;
     this.types = types;
     this.methodAnnotation = methodAnnotation;

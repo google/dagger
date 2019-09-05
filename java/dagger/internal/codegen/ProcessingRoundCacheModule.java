@@ -21,6 +21,7 @@ import dagger.Module;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.ModuleDescriptor;
+import dagger.internal.codegen.kotlin.KotlinMetadataFactory;
 import dagger.multibindings.IntoSet;
 
 /**
@@ -40,4 +41,8 @@ interface ProcessingRoundCacheModule {
   @Binds
   @IntoSet
   ClearableCache componentImplementationFactory(ComponentImplementationFactory cache);
+
+  @Binds
+  @IntoSet
+  ClearableCache kotlinMetadata(KotlinMetadataFactory cache);
 }

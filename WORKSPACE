@@ -32,3 +32,26 @@ bind(
     name = "zlib",
     actual = "@bazel_tools//third_party/zlib",
 )
+
+RULES_JVM_EXTERNAL_TAG = "2.7"
+
+RULES_JVM_EXTERNAL_SHA = "f04b1466a00a2845106801e0c5cec96841f49ea4e7d1df88dc8e4bf31523df74"
+
+http_archive(
+    name = "rules_jvm_external",
+    sha256 = RULES_JVM_EXTERNAL_SHA,
+    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+)
+
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+maven_install(
+    artifacts = [
+        "org.jetbrains.kotlin:kotlin-stdlib:1.3.50",
+        "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0",
+    ],
+    repositories = [
+        "https://repo1.maven.org/maven2",
+    ],
+)

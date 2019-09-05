@@ -22,7 +22,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.base.InjectionAnnotations.getQualifier;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.base.Scopes.uniqueScopeOf;
 import static dagger.internal.codegen.binding.Binding.hasNonDefaultTypeParameters;
@@ -83,6 +82,7 @@ public final class BindingFactory {
   private final DependencyRequestFactory dependencyRequestFactory;
   private final InjectionSiteFactory injectionSiteFactory;
   private final DaggerElements elements;
+  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
   BindingFactory(
@@ -90,12 +90,14 @@ public final class BindingFactory {
       DaggerElements elements,
       KeyFactory keyFactory,
       DependencyRequestFactory dependencyRequestFactory,
-      InjectionSiteFactory injectionSiteFactory) {
+      InjectionSiteFactory injectionSiteFactory,
+      InjectionAnnotations injectionAnnotations) {
     this.types = types;
     this.elements = elements;
     this.keyFactory = keyFactory;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.injectionSiteFactory = injectionSiteFactory;
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   /**
@@ -110,7 +112,7 @@ public final class BindingFactory {
       ExecutableElement constructorElement, Optional<TypeMirror> resolvedType) {
     checkArgument(constructorElement.getKind().equals(CONSTRUCTOR));
     checkArgument(isAnnotationPresent(constructorElement, Inject.class));
-    checkArgument(!getQualifier(constructorElement).isPresent());
+    checkArgument(!injectionAnnotations.getQualifier(constructorElement).isPresent());
 
     ExecutableType constructorType = MoreTypes.asExecutable(constructorElement.asType());
     DeclaredType constructedType =

@@ -18,7 +18,6 @@ package dagger.internal.codegen.binding;
 
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
-import static dagger.internal.codegen.base.InjectionAnnotations.getQualifier;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -39,10 +38,12 @@ import javax.lang.model.type.TypeMirror;
 /** Formats the signature of an {@link ExecutableElement} suitable for use in error messages. */
 public final class MethodSignatureFormatter extends Formatter<ExecutableElement> {
   private final DaggerTypes types;
+  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
-  public MethodSignatureFormatter(DaggerTypes types) {
+  public MethodSignatureFormatter(DaggerTypes types, InjectionAnnotations injectionAnnotations) {
     this.types = types;
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   /**
@@ -119,9 +120,9 @@ public final class MethodSignatureFormatter extends Formatter<ExecutableElement>
     return builder.toString();
   }
 
-  private static void appendParameter(StringBuilder builder, VariableElement parameter,
-      TypeMirror type) {
-    getQualifier(parameter)
+  private void appendParameter(StringBuilder builder, VariableElement parameter, TypeMirror type) {
+    injectionAnnotations
+        .getQualifier(parameter)
         .ifPresent(
             qualifier -> {
               builder.append(formatAnnotation(qualifier)).append(' ');

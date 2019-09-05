@@ -28,6 +28,7 @@ import dagger.Module;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.BindsTypeChecker;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.producers.ProducerModule;
@@ -46,7 +47,8 @@ final class BindsMethodValidator extends BindingMethodValidator {
       DaggerElements elements,
       DaggerTypes types,
       BindsTypeChecker bindsTypeChecker,
-      DependencyRequestValidator dependencyRequestValidator) {
+      DependencyRequestValidator dependencyRequestValidator,
+      InjectionAnnotations injectionAnnotations) {
     super(
         elements,
         types,
@@ -56,7 +58,8 @@ final class BindsMethodValidator extends BindingMethodValidator {
         MUST_BE_ABSTRACT,
         NO_EXCEPTIONS,
         ALLOWS_MULTIBINDINGS,
-        ALLOWS_SCOPING);
+        ALLOWS_SCOPING,
+        injectionAnnotations);
     this.types = types;
     this.bindsTypeChecker = bindsTypeChecker;
   }

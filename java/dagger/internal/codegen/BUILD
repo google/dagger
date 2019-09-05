@@ -27,6 +27,7 @@ DAGGER_DEPS = [
     "//java/dagger/internal/codegen/compileroption",
     "//java/dagger/internal/codegen/extension",
     "//java/dagger/internal/codegen/javapoet",
+    "//java/dagger/internal/codegen/kotlin",
     "//java/dagger/internal/codegen/langmodel",
     "//java/dagger/internal/codegen/statistics",
     "//java/dagger/internal/codegen/validation",

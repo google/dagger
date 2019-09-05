@@ -17,9 +17,9 @@
 package dagger.internal.codegen.validation;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.base.InjectionAnnotations.getQualifiers;
 
 import com.google.auto.common.MoreElements;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -36,9 +36,12 @@ import javax.lang.model.util.SimpleTypeVisitor8;
  * {@code MembersInjector<Foo>}).
  */
 final class MembersInjectionValidator {
+  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
-  MembersInjectionValidator() {}
+  MembersInjectionValidator(InjectionAnnotations injectionAnnotations) {
+    this.injectionAnnotations = injectionAnnotations;
+  }
 
   /** Reports errors if a request for a {@code MembersInjector<Foo>}) is invalid. */
   ValidationReport<Element> validateMembersInjectionRequest(
@@ -67,7 +70,7 @@ final class MembersInjectionValidator {
   }
 
   private void checkQualifiers(ValidationReport.Builder<?> report, Element element) {
-    for (AnnotationMirror qualifier : getQualifiers(element)) {
+    for (AnnotationMirror qualifier : injectionAnnotations.getQualifiers(element)) {
       report.addError("Cannot inject members into qualified types", element, qualifier);
       break; // just report on the first qualifier, in case there is more than one
     }

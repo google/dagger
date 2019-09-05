@@ -172,12 +172,17 @@ public abstract class BindingGraph {
 
   private ImmutableSet<TypeElement> requiredModuleElements() {
     return stream(SUBGRAPH_TRAVERSER.depthFirstPostOrder(this))
-        .flatMap(graph -> graph.contributionBindings().values().stream())
+        .flatMap(graph -> graph.bindingModules().stream())
+        .filter(ownedModuleTypes()::contains)
+        .collect(toImmutableSet());
+  }
+
+  @Memoized
+  protected ImmutableSet<TypeElement> bindingModules() {
+    return contributionBindings().values().stream()
         .flatMap(bindings -> bindings.contributionBindings().stream())
         .map(ContributionBinding::contributingModule)
-        .distinct()
         .flatMap(presentValues())
-        .filter(ownedModuleTypes()::contains)
         .collect(toImmutableSet());
   }
 

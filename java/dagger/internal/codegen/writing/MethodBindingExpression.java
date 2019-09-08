@@ -153,7 +153,7 @@ abstract class MethodBindingExpression extends BindingExpression {
   }
 
   private Optional<ComponentMethodDescriptor> matchingComponentMethod() {
-    return componentImplementation.componentDescriptor().matchingComponentMethod(request);
+    return componentImplementation.componentDescriptor().firstMatchingComponentMethod(request);
   }
 
   /** Strateg for implementing the body of this method. */

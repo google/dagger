@@ -45,8 +45,6 @@ import dagger.model.DependencyRequest;
 import dagger.model.Scope;
 import dagger.producers.CancellationPolicy;
 import dagger.producers.ProductionComponent;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -240,25 +238,21 @@ public abstract class ComponentDescriptor {
 
   public abstract ImmutableSet<ComponentMethodDescriptor> componentMethods();
 
-  /**
-   * Returns the component method associated with this binding request, if one exists.
-   *
-   * <p>If multiple component methods are associated with the binding request, this method will
-   * always return the same (unspecified) one.
-   */
-  public Optional<ComponentMethodDescriptor> matchingComponentMethod(BindingRequest request) {
-    return Optional.ofNullable(componentMethodsMap().get(request));
+  /** Returns the first component method associated with this binding request, if one exists. */
+  public Optional<ComponentMethodDescriptor> firstMatchingComponentMethod(BindingRequest request) {
+    return componentMethods().stream()
+        .filter(method -> doesComponentMethodMatch(method, request))
+        .findFirst();
   }
 
-  @Memoized
-  protected ImmutableMap<BindingRequest, ComponentMethodDescriptor> componentMethodsMap() {
-    Map<BindingRequest, ComponentMethodDescriptor> componentMethodsMap = new HashMap<>();
-    for (ComponentMethodDescriptor componentMethod : componentMethods()) {
-      componentMethod.dependencyRequest()
-          .map(BindingRequest::bindingRequest)
-          .ifPresent(bindingRequest -> componentMethodsMap.put(bindingRequest, componentMethod));
-    }
-    return ImmutableMap.copyOf(componentMethodsMap);
+  /** Returns true if the component method matches the binding request. */
+  private static boolean doesComponentMethodMatch(
+      ComponentMethodDescriptor componentMethod, BindingRequest request) {
+    return componentMethod
+        .dependencyRequest()
+        .map(BindingRequest::bindingRequest)
+        .filter(request::equals)
+        .isPresent();
   }
 
   /** The entry point methods on the component type. Each has a {@link DependencyRequest}. */

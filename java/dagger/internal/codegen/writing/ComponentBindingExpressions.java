@@ -610,7 +610,7 @@ public final class ComponentBindingExpressions {
     MethodImplementationStrategy methodImplementationStrategy =
         methodImplementationStrategy(binding, request);
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
-        graph.componentDescriptor().firstMatchingComponentMethod(request);
+        graph.componentDescriptor().matchingComponentMethod(request);
 
     if (matchingComponentMethod.isPresent()) {
       ComponentMethodDescriptor componentMethod = matchingComponentMethod.get();

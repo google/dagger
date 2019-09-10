@@ -28,7 +28,7 @@ import dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptio
 import dagger.internal.codegen.compileroption.ProcessingOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.statistics.DaggerStatisticsRecorder;
-import dagger.internal.codegen.validation.BindingGraphValidator;
+import dagger.spi.BindingGraphPlugin;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Filer;
@@ -96,6 +96,7 @@ final class ProcessingEnvironmentModule {
   @Provides
   @ProcessorClassLoader
   ClassLoader processorClassloader() {
-    return BindingGraphValidator.class.getClassLoader();
+    return BindingGraphPlugin.class.getClassLoader();
   }
+
 }

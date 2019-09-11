@@ -18,10 +18,6 @@ package dagger.internal.codegen;
 
 import dagger.Module;
 import dagger.Provides;
-import dagger.internal.codegen.SourceFileGeneratorsModule.ComponentModule;
-import dagger.internal.codegen.SourceFileGeneratorsModule.MembersInjectionModule;
-import dagger.internal.codegen.SourceFileGeneratorsModule.ProductionModule;
-import dagger.internal.codegen.SourceFileGeneratorsModule.ProvisionModule;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
@@ -36,42 +32,42 @@ import dagger.internal.codegen.writing.ModuleGenerator;
 import dagger.internal.codegen.writing.ProducerFactoryGenerator;
 import javax.lang.model.element.TypeElement;
 
-@Module(
-    includes = {
-      ProvisionModule.class,
-      ProductionModule.class,
-      MembersInjectionModule.class,
-      ComponentModule.class
-    })
-interface SourceFileGeneratorsModule {
-  @Module
-  abstract class GeneratorModule<T, G extends SourceFileGenerator<T>> {
-    @Provides
-    SourceFileGenerator<T> generator(G generator, CompilerOptions compilerOptions) {
-      return compilerOptions.headerCompilation()
-          ? HjarSourceFileGenerator.wrap(generator)
-          : generator;
-    }
+@Module
+abstract class SourceFileGeneratorsModule {
+
+  @Provides
+  static SourceFileGenerator<ProvisionBinding> provisionBindingGenerator(
+      FactoryGenerator generator, CompilerOptions compilerOptions) {
+    return hjarWrapper(generator, compilerOptions);
   }
 
-  @Module
-  class ProvisionModule extends GeneratorModule<ProvisionBinding, FactoryGenerator> {}
+  @Provides
+  static SourceFileGenerator<ProductionBinding> productionBindingGenerator(
+      ProducerFactoryGenerator generator, CompilerOptions compilerOptions) {
+    return hjarWrapper(generator, compilerOptions);
+  }
 
-  @Module
-  class ProductionModule extends GeneratorModule<ProductionBinding, ProducerFactoryGenerator> {}
+  @Provides
+  static SourceFileGenerator<MembersInjectionBinding> membersInjectionBindingGenerator(
+      MembersInjectorGenerator generator, CompilerOptions compilerOptions) {
+    return hjarWrapper(generator, compilerOptions);
+  }
 
-  @Module
-  class MembersInjectionModule
-      extends GeneratorModule<MembersInjectionBinding, MembersInjectorGenerator> {}
+  @Provides
+  static SourceFileGenerator<BindingGraph> bindingGraphGenerator(
+      ComponentGenerator generator, CompilerOptions compilerOptions) {
+    return hjarWrapper(generator, compilerOptions);
+  }
 
-  @Module
-  class ComponentModule extends GeneratorModule<BindingGraph, ComponentGenerator> {}
-
-  // the abstract module is not available because we're using a qualifier
   @Provides
   @ModuleGenerator
-  static SourceFileGenerator<TypeElement> generator(
+  static SourceFileGenerator<TypeElement> moduleProxyGenerator(
       ModuleConstructorProxyGenerator generator, CompilerOptions compilerOptions) {
+    return hjarWrapper(generator, compilerOptions);
+  }
+
+  private static <T> SourceFileGenerator<T> hjarWrapper(
+      SourceFileGenerator<T> generator, CompilerOptions compilerOptions) {
     return compilerOptions.headerCompilation()
         ? HjarSourceFileGenerator.wrap(generator)
         : generator;

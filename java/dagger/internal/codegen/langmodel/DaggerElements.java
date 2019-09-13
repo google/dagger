@@ -28,6 +28,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.graph.Traverser;
@@ -419,6 +420,14 @@ public final class DaggerElements implements Elements {
   public Map<? extends ExecutableElement, ? extends AnnotationValue> getElementValuesWithDefaults(
       AnnotationMirror a) {
     return elements.getElementValuesWithDefaults(a);
+  }
+
+  /** Returns a map of annotation values keyed by attribute name. */
+  public Map<String, ? extends AnnotationValue> getElementValuesWithDefaultsByName(
+      AnnotationMirror a) {
+    ImmutableMap.Builder<String, AnnotationValue> builder = ImmutableMap.builder();
+    getElementValuesWithDefaults(a).forEach((k, v) -> builder.put(k.getSimpleName().toString(), v));
+    return builder.build();
   }
 
   @Override

@@ -51,6 +51,7 @@ import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.producers.Produces;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -60,23 +61,24 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.inject.Inject;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 /** {@link CompilerOptions} for the given {@link ProcessingEnvironment}. */
 public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
-  /** Returns a valid {@link CompilerOptions} parsed from the processing environment. */
-  public static CompilerOptions create(ProcessingEnvironment processingEnvironment) {
-    return new ProcessingEnvironmentCompilerOptions(processingEnvironment).checkValid();
-  }
-
   private final ProcessingEnvironment processingEnvironment;
+  private final DaggerElements daggerElements;
   private final Map<EnumOption<?>, Object> enumOptions = new HashMap<>();
   private final Map<EnumOption<?>, ImmutableMap<String, ? extends Enum<?>>> allCommandLineOptions =
       new HashMap<>();
 
-  private ProcessingEnvironmentCompilerOptions(ProcessingEnvironment processingEnvironment) {
+  @Inject
+  ProcessingEnvironmentCompilerOptions(
+      ProcessingEnvironment processingEnvironment, DaggerElements daggerElements) {
     this.processingEnvironment = processingEnvironment;
+    this.daggerElements = daggerElements;
+    checkValid();
   }
 
   @Override

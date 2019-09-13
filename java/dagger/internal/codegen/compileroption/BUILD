@@ -25,6 +25,7 @@ java_library(
     deps = [
         "//java/dagger:core",
         "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/producers",
         "@bazel_tools//tools/jdk:langtools-neverlink",
         "@google_bazel_common//third_party/java/auto:common",

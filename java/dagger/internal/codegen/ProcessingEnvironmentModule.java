@@ -16,9 +16,8 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.googlejavaformat.java.filer.FormattingFiler;
+import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Reusable;
@@ -39,27 +38,25 @@ import javax.lang.model.util.Types;
 
 /** Bindings that depend on the {@link ProcessingEnvironment}. */
 @Module
-final class ProcessingEnvironmentModule {
-
-  private final ProcessingEnvironment processingEnvironment;
-
-  ProcessingEnvironmentModule(ProcessingEnvironment processingEnvironment) {
-    this.processingEnvironment = checkNotNull(processingEnvironment);
-  }
+interface ProcessingEnvironmentModule {
+  @Binds
+  @Reusable // to avoid parsing options more than once
+  CompilerOptions bindCompilerOptions(
+      ProcessingEnvironmentCompilerOptions processingEnvironmentCompilerOptions);
 
   @Provides
   @ProcessingOptions
-  Map<String, String> processingOptions() {
+  static Map<String, String> processingOptions(ProcessingEnvironment processingEnvironment) {
     return processingEnvironment.getOptions();
   }
 
   @Provides
-  Messager messager() {
+  static Messager messager(ProcessingEnvironment processingEnvironment) {
     return processingEnvironment.getMessager();
   }
 
   @Provides
-  Filer filer(CompilerOptions compilerOptions) {
+  static Filer filer(CompilerOptions compilerOptions, ProcessingEnvironment processingEnvironment) {
     if (compilerOptions.headerCompilation() || !compilerOptions.formatGeneratedSource()) {
       return processingEnvironment.getFiler();
     } else {
@@ -68,34 +65,29 @@ final class ProcessingEnvironmentModule {
   }
 
   @Provides
-  Types types() {
+  static Types types(ProcessingEnvironment processingEnvironment) {
     return processingEnvironment.getTypeUtils();
   }
 
   @Provides
-  SourceVersion sourceVersion() {
+  static SourceVersion sourceVersion(ProcessingEnvironment processingEnvironment) {
     return processingEnvironment.getSourceVersion();
   }
 
   @Provides
-  DaggerElements daggerElements() {
+  static DaggerElements daggerElements(ProcessingEnvironment processingEnvironment) {
     return new DaggerElements(processingEnvironment);
   }
 
   @Provides
-  @Reusable // to avoid parsing options more than once
-  CompilerOptions compilerOptions() {
-    return ProcessingEnvironmentCompilerOptions.create(processingEnvironment);
-  }
-
-  @Provides
-  Optional<DaggerStatisticsRecorder> daggerStatisticsRecorder() {
+  static Optional<DaggerStatisticsRecorder> daggerStatisticsRecorder(
+      ProcessingEnvironment processingEnvironment) {
     return Optional.empty();
   }
 
   @Provides
   @ProcessorClassLoader
-  ClassLoader processorClassloader() {
+  static ClassLoader processorClassloader(ProcessingEnvironment processingEnvironment) {
     return BindingGraphPlugin.class.getClassLoader();
   }
 

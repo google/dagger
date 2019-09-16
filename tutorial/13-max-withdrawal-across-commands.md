@@ -43,7 +43,9 @@ if (amount.compareTo(remainingWithdrawalLimit) > 0) {
 
 account.withdraw(amount);
 withdrawalLimiter.recordWithdrawal(amount);
+```
 
+```java
 // in DepositCommand
 account.deposit(amount);
 withdrawalLimiter.recordDeposit(amount);

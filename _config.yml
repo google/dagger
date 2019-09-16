@@ -11,7 +11,16 @@ description:
 
 themeColor: blue
 
-exclude: [_site, CHANGELOG.md, LICENSE, README.md, Gemfile, Gemfile.lock]
+exclude:
+  - CHANGELOG.md
+  - Gemfile
+  - Gemfile.lock
+  - LICENSE
+  - README.md
+  - _site
+  - node_modules
+  - vendor
+
 sass:
   style: compressed
 

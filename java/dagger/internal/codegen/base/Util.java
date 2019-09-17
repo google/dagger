@@ -16,71 +16,11 @@
 
 package dagger.internal.codegen.base;
 
-import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.STATIC;
-
 import java.util.Map;
 import java.util.function.Function;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
-/**
- * Utilities for handling types in annotation processors
- */
+/** General utilities for the annotation processor. */
 public final class Util {
-  /**
-   * Returns true if and only if a component can instantiate new instances (typically of a module)
-   * rather than requiring that they be passed.
-   */
-  public static boolean componentCanMakeNewInstances(TypeElement typeElement) {
-    switch (typeElement.getKind()) {
-      case CLASS:
-        break;
-      case ENUM:
-      case ANNOTATION_TYPE:
-      case INTERFACE:
-        return false;
-      default:
-        throw new AssertionError("TypeElement cannot have kind: " + typeElement.getKind());
-    }
-
-    if (typeElement.getModifiers().contains(ABSTRACT)) {
-      return false;
-    }
-
-    if (requiresEnclosingInstance(typeElement)) {
-      return false;
-    }
-
-    for (Element enclosed : typeElement.getEnclosedElements()) {
-      if (enclosed.getKind().equals(CONSTRUCTOR)
-          && ((ExecutableElement) enclosed).getParameters().isEmpty()
-          && !enclosed.getModifiers().contains(PRIVATE)) {
-        return true;
-      }
-    }
-
-    // TODO(gak): still need checks for visibility
-
-    return false;
-  }
-
-  private static boolean requiresEnclosingInstance(TypeElement typeElement) {
-    switch (typeElement.getNestingKind()) {
-      case TOP_LEVEL:
-        return false;
-      case MEMBER:
-        return !typeElement.getModifiers().contains(STATIC);
-      case ANONYMOUS:
-      case LOCAL:
-        return true;
-    }
-    throw new AssertionError(
-        "TypeElement cannot have nesting kind: " + typeElement.getNestingKind());
-  }
 
   /**
    * A version of {@link Map#computeIfAbsent(Object, Function)} that allows {@code mappingFunction}

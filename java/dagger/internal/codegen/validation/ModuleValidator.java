@@ -60,6 +60,7 @@ import dagger.internal.codegen.binding.ComponentCreatorAnnotation;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.binding.ModuleKind;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.BindingGraph;
@@ -124,6 +125,7 @@ public final class ModuleValidator {
   private final BindingGraphFactory bindingGraphFactory;
   private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphValidator bindingGraphValidator;
+  private final KotlinMetadataUtil metadataUtil;
   private final Map<TypeElement, ValidationReport<TypeElement>> cache = new HashMap<>();
   private final Set<TypeElement> knownModules = new HashSet<>();
 
@@ -136,7 +138,8 @@ public final class ModuleValidator {
       ComponentDescriptorFactory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       BindingGraphConverter bindingGraphConverter,
-      BindingGraphValidator bindingGraphValidator) {
+      BindingGraphValidator bindingGraphValidator,
+      KotlinMetadataUtil metadataUtil) {
     this.types = types;
     this.elements = elements;
     this.anyBindingMethodValidator = anyBindingMethodValidator;
@@ -145,6 +148,7 @@ public final class ModuleValidator {
     this.bindingGraphFactory = bindingGraphFactory;
     this.bindingGraphConverter = bindingGraphConverter;
     this.bindingGraphValidator = bindingGraphValidator;
+    this.metadataUtil = metadataUtil;
   }
 
   /**
@@ -576,7 +580,8 @@ public final class ModuleValidator {
   /**
    * Returns {@code true} if a module instance is needed for any of the binding methods on the given
    * {@code module}. This is the case when the module has any binding methods that are neither
-   * {@code abstract} nor {@code static}.
+   * {@code abstract} nor {@code static}. Alternatively, if the module is a Kotlin Object then the
+   * binding methods are considered {@code static}, requiring no module instance.
    */
   private boolean requiresModuleInstance(TypeElement module) {
     // Note elements.getAllMembers(module) rather than module.getEnclosedElements() here: we need to
@@ -584,10 +589,11 @@ public final class ModuleValidator {
     // done in this class, which assume that supertype binding methods will be validated in a
     // separate call to the validator since the supertype itself must be a @Module, we need to look
     // at all the binding methods in the module's type hierarchy here.
-    return methodsIn(elements.getAllMembers(module)).stream()
-        .filter(method -> anyBindingMethodValidator.isBindingMethod(method))
-        .map(ExecutableElement::getModifiers)
-        .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
+    return !metadataUtil.isObjectClass(module)
+        && methodsIn(elements.getAllMembers(module)).stream()
+            .filter(anyBindingMethodValidator::isBindingMethod)
+            .map(ExecutableElement::getModifiers)
+            .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
   }
 
   private void validateNoScopeAnnotationsOnModuleElement(

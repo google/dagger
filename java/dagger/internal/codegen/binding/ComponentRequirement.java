@@ -19,12 +19,14 @@ package dagger.internal.codegen.binding;
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.base.Util.componentCanMakeNewInstances;
 import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
+import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
@@ -34,6 +36,7 @@ import com.squareup.javapoet.TypeName;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.Provides;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.BindingKind;
@@ -41,6 +44,7 @@ import dagger.model.Key;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produces;
 import java.util.Optional;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -117,15 +121,18 @@ public abstract class ComponentRequirement {
   abstract Optional<NullPolicy> overrideNullPolicy();
 
   /** The requirement's null policy. */
-  public NullPolicy nullPolicy(DaggerElements elements, DaggerTypes types) {
+  public NullPolicy nullPolicy(
+      DaggerElements elements, DaggerTypes types, KotlinMetadataUtil metadataUtil) {
     if (overrideNullPolicy().isPresent()) {
       return overrideNullPolicy().get();
     }
     switch (kind()) {
       case MODULE:
-        return componentCanMakeNewInstances(typeElement())
+        return componentCanMakeNewInstances(typeElement(), metadataUtil)
             ? NullPolicy.NEW
-            : requiresAPassedInstance(elements, types) ? NullPolicy.THROW : NullPolicy.ALLOW;
+            : requiresAPassedInstance(elements, types, metadataUtil)
+                ? NullPolicy.THROW
+                : NullPolicy.ALLOW;
       case DEPENDENCY:
       case BOUND_INSTANCE:
         return NullPolicy.THROW;
@@ -137,12 +144,14 @@ public abstract class ComponentRequirement {
    * Returns true if the passed {@link ComponentRequirement} requires a passed instance in order to
    * be used within a component.
    */
-  public boolean requiresAPassedInstance(DaggerElements elements, DaggerTypes types) {
+  public boolean requiresAPassedInstance(
+      DaggerElements elements, DaggerTypes types, KotlinMetadataUtil metadataUtil) {
     if (!kind().isModule()) {
       // Bound instances and dependencies always require the user to provide an instance.
       return true;
     }
-    return requiresModuleInstance(elements, types) && !componentCanMakeNewInstances(typeElement());
+    return requiresModuleInstance(elements, types, metadataUtil)
+        && !componentCanMakeNewInstances(typeElement(), metadataUtil);
   }
 
   /**
@@ -151,14 +160,19 @@ public abstract class ComponentRequirement {
    * <p>An instance is only needed if there is a binding method on the module that is neither {@code
    * abstract} nor {@code static}; if all bindings are one of those, then there should be no
    * possible dependency on instance state in the module's bindings.
+   *
+   * <p>Alternatively, if the module is a Kotlin Object then the binding methods are considered
+   * {@code static}, requiring no module instance.
    */
-  private boolean requiresModuleInstance(DaggerElements elements, DaggerTypes types) {
+  private boolean requiresModuleInstance(
+      DaggerElements elements, DaggerTypes types, KotlinMetadataUtil metadataUtil) {
     ImmutableSet<ExecutableElement> methods =
         getLocalAndInheritedMethods(typeElement(), types, elements);
-    return methods.stream()
-        .filter(this::isBindingMethod)
-        .map(ExecutableElement::getModifiers)
-        .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
+    return !metadataUtil.isObjectClass(typeElement())
+        && methods.stream()
+            .filter(this::isBindingMethod)
+            .map(ExecutableElement::getModifiers)
+            .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
   }
 
   private boolean isBindingMethod(ExecutableElement method) {
@@ -219,5 +233,62 @@ public abstract class ComponentRequirement {
         binding.key(),
         binding.nullableType().isPresent(),
         binding.bindingElement().get().getSimpleName().toString());
+  }
+
+  /**
+   * Returns true if and only if a component can instantiate new instances (typically of a module)
+   * rather than requiring that they be passed.
+   */
+  // TODO(user): Should this method throw if its called knowing that an instance is not needed?
+  public static boolean componentCanMakeNewInstances(
+      TypeElement typeElement, KotlinMetadataUtil metadataUtil) {
+    switch (typeElement.getKind()) {
+      case CLASS:
+        break;
+      case ENUM:
+      case ANNOTATION_TYPE:
+      case INTERFACE:
+        return false;
+      default:
+        throw new AssertionError("TypeElement cannot have kind: " + typeElement.getKind());
+    }
+
+    if (typeElement.getModifiers().contains(ABSTRACT)) {
+      return false;
+    }
+
+    if (requiresEnclosingInstance(typeElement)) {
+      return false;
+    }
+
+    if (metadataUtil.isObjectClass(typeElement)) {
+      return false;
+    }
+
+    for (Element enclosed : typeElement.getEnclosedElements()) {
+      if (enclosed.getKind().equals(CONSTRUCTOR)
+          && MoreElements.asExecutable(enclosed).getParameters().isEmpty()
+          && !enclosed.getModifiers().contains(PRIVATE)) {
+        return true;
+      }
+    }
+
+    // TODO(gak): still need checks for visibility
+
+    return false;
+  }
+
+  private static boolean requiresEnclosingInstance(TypeElement typeElement) {
+    switch (typeElement.getNestingKind()) {
+      case TOP_LEVEL:
+        return false;
+      case MEMBER:
+        return !typeElement.getModifiers().contains(STATIC);
+      case ANONYMOUS:
+      case LOCAL:
+        return true;
+    }
+    throw new AssertionError(
+        "TypeElement cannot have nesting kind: " + typeElement.getNestingKind());
   }
 }

@@ -28,6 +28,7 @@ java_library(
         "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/model",

@@ -59,6 +59,7 @@ import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.CodeBlocks;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
@@ -81,6 +82,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
   private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
   private final DaggerStatisticsCollector statisticsCollector;
+  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
   FactoryGenerator(
@@ -89,12 +91,14 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
       DaggerTypes types,
       DaggerElements elements,
       CompilerOptions compilerOptions,
-      DaggerStatisticsCollector statisticsCollector) {
+      DaggerStatisticsCollector statisticsCollector,
+      KotlinMetadataUtil metadataUtil) {
     super(filer, elements, sourceVersion);
     this.types = types;
     this.elements = elements;
     this.compilerOptions = compilerOptions;
     this.statisticsCollector = statisticsCollector;
+    this.metadataUtil = metadataUtil;
   }
 
   @Override
@@ -137,7 +141,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
     addCreateMethod(binding, factoryBuilder);
 
     factoryBuilder.addMethod(
-        ProvisionMethod.create(binding, compilerOptions, elements).toMethodSpec());
+        ProvisionMethod.create(binding, compilerOptions, elements, metadataUtil).toMethodSpec());
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
 
     return factoryBuilder;
@@ -257,7 +261,8 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
                   ? Optional.of(CodeBlock.of("module"))
                   : Optional.empty(),
               compilerOptions,
-              elements));
+              elements,
+              metadataUtil));
     } else if (!binding.injectionSites().isEmpty()) {
       CodeBlock instance = CodeBlock.of("instance");
       getMethod
@@ -270,7 +275,8 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
                   binding.key().type(),
                   types,
                   frameworkFieldUsages(binding.dependencies(), frameworkFields)::get,
-                  elements))
+                  elements,
+                  metadataUtil))
           .addStatement("return $L", instance);
     } else {
       getMethod.addStatement(

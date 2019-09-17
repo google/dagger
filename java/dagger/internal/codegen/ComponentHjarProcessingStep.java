@@ -49,6 +49,7 @@ import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.MethodSignature;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.validation.ComponentValidator;
@@ -89,6 +90,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
   private final Messager messager;
   private final ComponentValidator componentValidator;
   private final ComponentDescriptorFactory componentDescriptorFactory;
+  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
   ComponentHjarProcessingStep(
@@ -98,7 +100,8 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
       Filer filer,
       Messager messager,
       ComponentValidator componentValidator,
-      ComponentDescriptorFactory componentDescriptorFactory) {
+      ComponentDescriptorFactory componentDescriptorFactory,
+      KotlinMetadataUtil metadataUtil) {
     super(MoreElements::asType);
     this.sourceVersion = sourceVersion;
     this.elements = elements;
@@ -107,6 +110,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
     this.messager = messager;
     this.componentValidator = componentValidator;
     this.componentDescriptorFactory = componentDescriptorFactory;
+    this.metadataUtil = metadataUtil;
   }
 
   @Override
@@ -194,7 +198,9 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
       if (noArgFactoryMethod
           && !hasBindsInstanceMethods(componentDescriptor)
           && componentRequirements(componentDescriptor)
-              .noneMatch(requirement -> requirement.requiresAPassedInstance(elements, types))) {
+              .noneMatch(
+                  requirement ->
+                      requirement.requiresAPassedInstance(elements, types, metadataUtil))) {
         generatedComponent.addMethod(createMethod(componentDescriptor));
       }
 

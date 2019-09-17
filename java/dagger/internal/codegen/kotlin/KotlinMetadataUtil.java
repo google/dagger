@@ -25,6 +25,7 @@ import java.lang.annotation.Annotation;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import kotlin.Metadata;
 
@@ -59,5 +60,10 @@ public final class KotlinMetadataUtil {
         .flatMap(metadata -> metadata.getSyntheticAnnotationMethod(fieldElement))
         .map(methodElement -> getAnnotatedAnnotations(methodElement, annotationType))
         .orElse(ImmutableSet.of());
+  }
+
+  /** Returns true if this type element is a Kotlin Object. */
+  public boolean isObjectClass(TypeElement typeElement) {
+    return metadataFactory.create(typeElement).map(KotlinMetadata::isObjectClass).orElse(false);
   }
 }

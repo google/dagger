@@ -53,6 +53,7 @@ import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.FrameworkField;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
@@ -72,6 +73,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final DaggerStatisticsCollector statisticsCollector;
+  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
   MembersInjectorGenerator(
@@ -79,11 +81,13 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
       DaggerElements elements,
       DaggerTypes types,
       SourceVersion sourceVersion,
-      DaggerStatisticsCollector statisticsCollector) {
+      DaggerStatisticsCollector statisticsCollector,
+      KotlinMetadataUtil metadataUtil) {
     super(filer, elements, sourceVersion);
     this.types = types;
     this.elements = elements;
     this.statisticsCollector = statisticsCollector;
+    this.metadataUtil = metadataUtil;
   }
 
   @Override
@@ -200,7 +204,8 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
             binding.key().type(),
             types,
             frameworkFieldUsages(binding.dependencies(), dependencyFields)::get,
-            elements));
+            elements,
+            metadataUtil));
 
     if (usesRawFrameworkTypes) {
       injectMembersBuilder.addAnnotation(suppressWarnings(UNCHECKED));
@@ -210,7 +215,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
     for (InjectionSite injectionSite : binding.injectionSites()) {
       if (injectionSite.element().getEnclosingElement().equals(binding.membersInjectedType())) {
         injectorTypeBuilder.addMethod(
-            InjectionSiteMethod.create(injectionSite, elements).toMethodSpec());
+            InjectionSiteMethod.create(injectionSite, elements, metadataUtil).toMethodSpec());
       }
     }
 

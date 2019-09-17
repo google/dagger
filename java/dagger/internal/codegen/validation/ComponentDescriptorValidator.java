@@ -52,6 +52,7 @@ import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ValidationType;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Scope;
@@ -93,6 +94,7 @@ public final class ComponentDescriptorValidator {
   private final CompilerOptions compilerOptions;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final ComponentHierarchyValidator componentHierarchyValidator;
+  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
   ComponentDescriptorValidator(
@@ -100,12 +102,14 @@ public final class ComponentDescriptorValidator {
       DaggerTypes types,
       CompilerOptions compilerOptions,
       MethodSignatureFormatter methodSignatureFormatter,
-      ComponentHierarchyValidator componentHierarchyValidator) {
+      ComponentHierarchyValidator componentHierarchyValidator,
+      KotlinMetadataUtil metadataUtil) {
     this.elements = elements;
     this.types = types;
     this.compilerOptions = compilerOptions;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.componentHierarchyValidator = componentHierarchyValidator;
+    this.metadataUtil = metadataUtil;
   }
 
   public ValidationReport<TypeElement> validate(ComponentDescriptor component) {
@@ -323,7 +327,7 @@ public final class ComponentDescriptorValidator {
       Set<ComponentRequirement> mustBePassed =
           Sets.filter(
               componentModuleAndDependencyRequirements,
-              input -> input.nullPolicy(elements, types).equals(NullPolicy.THROW));
+              input -> input.nullPolicy(elements, types, metadataUtil).equals(NullPolicy.THROW));
       // Component requirements that the creator must be able to set, but can't
       Set<ComponentRequirement> missingRequirements =
           Sets.difference(mustBePassed, creatorModuleAndDependencyRequirements);

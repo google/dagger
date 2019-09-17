@@ -50,6 +50,7 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.binding.ResolvedBindings;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
@@ -84,6 +85,7 @@ public final class ComponentBindingExpressions {
   private final MembersInjectionMethods membersInjectionMethods;
   private final InnerSwitchingProviders innerSwitchingProviders;
   private final Map<BindingRequest, BindingExpression> expressions = new HashMap<>();
+  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
   ComponentBindingExpressions(
@@ -95,7 +97,8 @@ public final class ComponentBindingExpressions {
       DaggerTypes types,
       DaggerElements elements,
       SourceVersion sourceVersion,
-      CompilerOptions compilerOptions) {
+      CompilerOptions compilerOptions,
+      KotlinMetadataUtil metadataUtil) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
@@ -106,9 +109,11 @@ public final class ComponentBindingExpressions {
     this.sourceVersion = checkNotNull(sourceVersion);
     this.compilerOptions = checkNotNull(compilerOptions);
     this.membersInjectionMethods =
-        new MembersInjectionMethods(componentImplementation, this, graph, elements, types);
+        new MembersInjectionMethods(
+            componentImplementation, this, graph, elements, types, metadataUtil);
     this.innerSwitchingProviders =
         new InnerSwitchingProviders(componentImplementation, this, types);
+    this.metadataUtil = metadataUtil;
   }
 
   /**
@@ -552,7 +557,8 @@ public final class ComponentBindingExpressions {
                 componentRequirementExpressions,
                 types,
                 elements,
-                sourceVersion));
+                sourceVersion,
+                metadataUtil));
 
       case MEMBERS_INJECTOR:
         return Optional.empty();

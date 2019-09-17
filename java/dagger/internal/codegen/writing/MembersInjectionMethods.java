@@ -35,6 +35,7 @@ import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.binding.ResolvedBindings;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
@@ -53,18 +54,21 @@ final class MembersInjectionMethods {
   private final BindingGraph graph;
   private final DaggerElements elements;
   private final DaggerTypes types;
+  private final KotlinMetadataUtil metadataUtil;
 
   MembersInjectionMethods(
       ComponentImplementation componentImplementation,
       ComponentBindingExpressions bindingExpressions,
       BindingGraph graph,
       DaggerElements elements,
-      DaggerTypes types) {
+      DaggerTypes types,
+      KotlinMetadataUtil metadataUtil) {
     this.componentImplementation = checkNotNull(componentImplementation);
     this.bindingExpressions = checkNotNull(bindingExpressions);
     this.graph = checkNotNull(graph);
     this.elements = checkNotNull(elements);
     this.types = checkNotNull(types);
+    this.metadataUtil = metadataUtil;
   }
 
   /**
@@ -112,7 +116,8 @@ final class MembersInjectionMethods {
                 bindingExpressions
                     .getDependencyArgumentExpression(request, componentImplementation.name())
                     .codeBlock(),
-            elements));
+            elements,
+            metadataUtil));
     methodBuilder.addStatement("return $L", instance);
 
     MethodSpec method = methodBuilder.build();

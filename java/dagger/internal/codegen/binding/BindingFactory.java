@@ -56,6 +56,7 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProductionBinding.ProductionKind;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
@@ -83,6 +84,7 @@ public final class BindingFactory {
   private final InjectionSiteFactory injectionSiteFactory;
   private final DaggerElements elements;
   private final InjectionAnnotations injectionAnnotations;
+  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
   BindingFactory(
@@ -91,13 +93,15 @@ public final class BindingFactory {
       KeyFactory keyFactory,
       DependencyRequestFactory dependencyRequestFactory,
       InjectionSiteFactory injectionSiteFactory,
-      InjectionAnnotations injectionAnnotations) {
+      InjectionAnnotations injectionAnnotations,
+      KotlinMetadataUtil metadataUtil) {
     this.types = types;
     this.elements = elements;
     this.keyFactory = keyFactory;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.injectionSiteFactory = injectionSiteFactory;
     this.injectionAnnotations = injectionAnnotations;
+    this.metadataUtil = metadataUtil;
   }
 
   /**
@@ -214,6 +218,7 @@ public final class BindingFactory {
         .contributionType(ContributionType.fromBindingElement(method))
         .bindingElement(method)
         .contributingModule(contributedBy)
+        .isModuleKotlinObject(metadataUtil.isObjectClass(contributedBy))
         .key(key)
         .dependencies(
             dependencyRequestFactory.forRequiredResolvedVariables(
@@ -419,6 +424,8 @@ public final class BindingFactory {
         .contributionType(delegateDeclaration.contributionType())
         .bindingElement(delegateDeclaration.bindingElement().get())
         .contributingModule(delegateDeclaration.contributingModule().get())
+        .isModuleKotlinObject(
+            metadataUtil.isObjectClass(delegateDeclaration.contributingModule().get()))
         .key(keyFactory.forDelegateBinding(delegateDeclaration, frameworkType))
         .dependencies(delegateDeclaration.delegateRequest())
         .wrappedMapKeyAnnotation(delegateDeclaration.wrappedMapKey())

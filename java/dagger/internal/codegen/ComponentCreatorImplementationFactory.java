@@ -50,6 +50,7 @@ import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentCreatorImplementation;
@@ -68,11 +69,14 @@ public final class ComponentCreatorImplementationFactory {
 
   private final DaggerElements elements;
   private final DaggerTypes types;
+  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
-  ComponentCreatorImplementationFactory(DaggerElements elements, DaggerTypes types) {
+  ComponentCreatorImplementationFactory(
+      DaggerElements elements, DaggerTypes types, KotlinMetadataUtil metadataUtil) {
     this.elements = elements;
     this.types = types;
+    this.metadataUtil = metadataUtil;
   }
 
   /** Returns a new creator implementation for the given component, if necessary. */
@@ -218,7 +222,7 @@ public final class ComponentCreatorImplementationFactory {
       method.addStatement(
           "this.$N = $L",
           fields.get(requirement),
-          requirement.nullPolicy(elements, types).equals(NullPolicy.ALLOW)
+          requirement.nullPolicy(elements, types, metadataUtil).equals(NullPolicy.ALLOW)
               ? CodeBlock.of("$N", parameter)
               : CodeBlock.of("$T.checkNotNull($N)", Preconditions.class, parameter));
       return maybeReturnThis(method);
@@ -291,7 +295,7 @@ public final class ComponentCreatorImplementationFactory {
 
     private void addNullHandlingForField(
         ComponentRequirement requirement, FieldSpec field, MethodSpec.Builder factoryMethod) {
-      switch (requirement.nullPolicy(elements, types)) {
+      switch (requirement.nullPolicy(elements, types, metadataUtil)) {
         case NEW:
           checkState(requirement.kind().isModule());
           factoryMethod
@@ -315,7 +319,7 @@ public final class ComponentCreatorImplementationFactory {
 
     private void addNullHandlingForParameter(
         ComponentRequirement requirement, String parameter, MethodSpec.Builder factoryMethod) {
-      if (!requirement.nullPolicy(elements, types).equals(NullPolicy.ALLOW)) {
+      if (!requirement.nullPolicy(elements, types, metadataUtil).equals(NullPolicy.ALLOW)) {
         // Factory method parameters are always required unless they are a nullable
         // binds-instance (i.e. ALLOW)
         factoryMethod.addStatement("$T.checkNotNull($L)", Preconditions.class, parameter);

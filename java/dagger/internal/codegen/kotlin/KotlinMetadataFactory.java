@@ -17,10 +17,12 @@
 package dagger.internal.codegen.kotlin;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
+import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static dagger.internal.codegen.base.MoreAnnotationValues.asAnnotationValues;
 import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 
+import com.google.common.base.Preconditions;
 import dagger.internal.codegen.base.ClearableCache;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,6 +52,9 @@ public final class KotlinMetadataFactory implements ClearableCache {
 
   public Optional<KotlinMetadata> create(Element element) {
     TypeElement enclosingElement = closestEnclosingTypeElement(element);
+    if (!isAnnotationPresent(enclosingElement, Metadata.class)) {
+      return Optional.empty();
+    }
     return metadataCache.computeIfAbsent(
         enclosingElement,
         typeElement ->
@@ -60,9 +65,7 @@ public final class KotlinMetadataFactory implements ClearableCache {
   private static Optional<KmClass> kmClassOf(TypeElement typeElement) {
     Optional<AnnotationMirror> metadataAnnotation =
         getAnnotationMirror(typeElement, Metadata.class);
-    if (!metadataAnnotation.isPresent()) {
-      return Optional.empty();
-    }
+    Preconditions.checkState(metadataAnnotation.isPresent());
     KotlinClassHeader header =
         new KotlinClassHeader(
             getIntValue(metadataAnnotation.get(), "k"),

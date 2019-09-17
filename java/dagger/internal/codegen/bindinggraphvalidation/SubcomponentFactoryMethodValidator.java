@@ -20,7 +20,7 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.auto.common.MoreTypes.asTypeElements;
 import static com.google.common.collect.Sets.union;
-import static dagger.internal.codegen.base.Util.componentCanMakeNewInstances;
+import static dagger.internal.codegen.binding.ComponentRequirement.componentCanMakeNewInstances;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.tools.Diagnostic.Kind.ERROR;
@@ -31,6 +31,7 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import dagger.internal.codegen.base.Util;
 import dagger.internal.codegen.binding.ComponentNodeImpl;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.BindingGraph;
 import dagger.model.BindingGraph.ChildFactoryMethodEdge;
@@ -50,11 +51,13 @@ import javax.lang.model.type.ExecutableType;
 final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
 
   private final DaggerTypes types;
+  private final KotlinMetadataUtil metadataUtil;
   private final Map<ComponentNode, Set<TypeElement>> inheritedModulesCache = new HashMap<>();
 
   @Inject
-  SubcomponentFactoryMethodValidator(DaggerTypes types) {
+  SubcomponentFactoryMethodValidator(DaggerTypes types, KotlinMetadataUtil metadataUtil) {
     this.types = types;
+    this.metadataUtil = metadataUtil;
   }
 
   @Override
@@ -100,7 +103,7 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
         // module not in the method parameters
         .filter(module -> !factoryMethodParameters.contains(module))
         // module doesn't have an accessible no-arg constructor
-        .filter(moduleType -> !componentCanMakeNewInstances(moduleType))
+        .filter(moduleType -> !componentCanMakeNewInstances(moduleType, metadataUtil))
         .collect(toImmutableSet());
   }
 

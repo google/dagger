@@ -63,6 +63,7 @@ import dagger.internal.codegen.binding.MethodSignature;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.CodeBlocks;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentBindingExpressions;
@@ -106,6 +107,7 @@ abstract class ComponentImplementationBuilder {
   @Inject CompilerOptions compilerOptions;
   @Inject ComponentImplementationFactory componentImplementationFactory;
   @Inject TopLevelImplementationComponent topLevelImplementationComponent;
+  @Inject KotlinMetadataUtil metadataUtil;
   private boolean done;
 
   /**
@@ -462,7 +464,7 @@ abstract class ComponentImplementationBuilder {
     private boolean canInstantiateAllRequirements() {
       return !Iterables.any(
           graph.componentRequirements(),
-          dependency -> dependency.requiresAPassedInstance(elements, types));
+          dependency -> dependency.requiresAPassedInstance(elements, types, metadataUtil));
     }
 
     private ClassName componentCreatorName() {

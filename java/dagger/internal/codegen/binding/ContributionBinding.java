@@ -24,6 +24,7 @@ import static java.util.Arrays.asList;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
+import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.internal.codegen.base.ContributionType;
@@ -65,9 +66,16 @@ public abstract class ContributionBinding extends Binding implements HasContribu
   }
 
   @Override
+  public boolean requiresModuleInstance() {
+    return !isModuleKotlinObject().orElse(false) && super.requiresModuleInstance();
+  }
+
+  @Override
   public final boolean isNullable() {
     return nullableType().isPresent();
   }
+
+  abstract Optional<Boolean> isModuleKotlinObject();
 
   /** The strategy for getting an instance of a factory for a {@link ContributionBinding}. */
   public enum FactoryCreationStrategy {
@@ -158,7 +166,9 @@ public abstract class ContributionBinding extends Binding implements HasContribu
 
     public abstract B bindingElement(Element bindingElement);
 
-    public abstract B contributingModule(TypeElement contributingModule);
+    abstract B contributingModule(TypeElement contributingModule);
+
+    abstract B isModuleKotlinObject(boolean isModuleKotlinObject);
 
     public abstract B key(Key key);
 
@@ -170,6 +180,15 @@ public abstract class ContributionBinding extends Binding implements HasContribu
     public abstract B kind(BindingKind kind);
 
     @CheckReturnValue
-    public abstract C build();
+    abstract C autoBuild();
+
+    @CheckReturnValue
+    public C build() {
+      C binding = autoBuild();
+      Preconditions.checkState(
+          binding.contributingModule().isPresent() == binding.isModuleKotlinObject().isPresent(),
+          "The contributionModule and isModuleKotlinObject must both be set together.");
+      return binding;
+    }
   }
 }

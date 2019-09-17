@@ -46,6 +46,7 @@ import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
@@ -108,7 +109,10 @@ final class InjectionMethods {
      * constructor} and injects the instance's members.
      */
     static InjectionMethod create(
-        ProvisionBinding binding, CompilerOptions compilerOptions, DaggerElements elements) {
+        ProvisionBinding binding,
+        CompilerOptions compilerOptions,
+        DaggerElements elements,
+        KotlinMetadataUtil metadataUtil) {
       ClassName proxyEnclosingClass = generatedClassNameForBinding(binding);
       ExecutableElement element = MoreElements.asExecutable(binding.bindingElement().get());
       switch (element.getKind()) {
@@ -121,7 +125,8 @@ final class InjectionMethods {
               methodName(element),
               ReceiverAccessibility.IGNORE,
               CheckNotNullPolicy.get(binding, compilerOptions),
-              elements);
+              elements,
+              metadataUtil);
         default:
           throw new AssertionError(element);
       }
@@ -139,14 +144,16 @@ final class InjectionMethods {
         ClassName requestingClass,
         Optional<CodeBlock> moduleReference,
         CompilerOptions compilerOptions,
-        DaggerElements elements) {
+        DaggerElements elements,
+        KotlinMetadataUtil metadataUtil) {
       ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
       moduleReference.ifPresent(arguments::add);
       arguments.addAll(
           injectionMethodArguments(
               binding.provisionDependencies(), dependencyUsage, requestingClass));
       // TODO(ronshapiro): make InjectionMethods @Injectable
-      return create(binding, compilerOptions, elements).invoke(arguments.build(), requestingClass);
+      return create(binding, compilerOptions, elements, metadataUtil)
+          .invoke(arguments.build(), requestingClass);
     }
 
     private static InjectionMethod constructorProxy(
@@ -247,7 +254,8 @@ final class InjectionMethods {
      * receives its own method, as the subclass may need to inject them in a different order from
      * the parent class.
      */
-    static InjectionMethod create(InjectionSite injectionSite, DaggerElements elements) {
+    static InjectionMethod create(
+        InjectionSite injectionSite, DaggerElements elements, KotlinMetadataUtil metadataUtil) {
       String methodName = methodName(injectionSite);
       ClassName proxyEnclosingClass = membersInjectorNameForType(
           MoreElements.asType(injectionSite.element().getEnclosingElement()));
@@ -259,7 +267,8 @@ final class InjectionMethods {
               methodName,
               ReceiverAccessibility.CAST_IF_NOT_PUBLIC,
               CheckNotNullPolicy.IGNORE,
-              elements);
+              elements,
+              metadataUtil);
         case FIELD:
           return fieldProxy(
               proxyEnclosingClass,
@@ -283,9 +292,9 @@ final class InjectionMethods {
         TypeMirror instanceType,
         DaggerTypes types,
         Function<DependencyRequest, CodeBlock> dependencyUsage,
-        DaggerElements elements) {
-      return injectionSites
-          .stream()
+        DaggerElements elements,
+        KotlinMetadataUtil metadataUtil) {
+      return injectionSites.stream()
           .map(
               injectionSite -> {
                 TypeMirror injectSiteType =
@@ -308,7 +317,8 @@ final class InjectionMethods {
                         generatedTypeName,
                         maybeCastedInstance,
                         dependencyUsage,
-                        elements));
+                        elements,
+                        metadataUtil));
               })
           .collect(toConcatenatedCodeBlock());
     }
@@ -322,7 +332,8 @@ final class InjectionMethods {
         ClassName generatedTypeName,
         CodeBlock instanceCodeBlock,
         Function<DependencyRequest, CodeBlock> dependencyUsage,
-        DaggerElements elements) {
+        DaggerElements elements,
+        KotlinMetadataUtil metadataUtil) {
       List<CodeBlock> arguments = new ArrayList<>();
       arguments.add(instanceCodeBlock);
       if (!injectionSite.dependencies().isEmpty()) {
@@ -333,7 +344,7 @@ final class InjectionMethods {
                 .map(dependencyUsage)
                 .collect(toList()));
       }
-      return create(injectionSite, elements).invoke(arguments, generatedTypeName);
+      return create(injectionSite, elements, metadataUtil).invoke(arguments, generatedTypeName);
     }
 
     /*
@@ -481,12 +492,14 @@ final class InjectionMethods {
       String methodName,
       ReceiverAccessibility receiverAccessibility,
       CheckNotNullPolicy checkNotNullPolicy,
-      DaggerElements elements) {
+      DaggerElements elements,
+      KotlinMetadataUtil metadataUtil) {
     TypeElement enclosingType = MoreElements.asType(method.getEnclosingElement());
+    boolean isMethodInKotlinObject = metadataUtil.isObjectClass(enclosingType);
     InjectionMethod.Builder injectionMethod =
         InjectionMethod.builder(elements).name(methodName).enclosingClass(proxyEnclosingClass);
     ParameterSpec instance = null;
-    if (!method.getModifiers().contains(STATIC)) {
+    if (!isMethodInKotlinObject && !method.getModifiers().contains(STATIC)) {
       instance =
           injectionMethod.addParameter(
               "instance", receiverAccessibility.parameterType(enclosingType.asType(), elements));
@@ -500,7 +513,11 @@ final class InjectionMethods {
       injectionMethod.methodBodyBuilder().add("return ");
     }
     CodeBlock.Builder proxyInvocation = CodeBlock.builder();
-    if (method.getModifiers().contains(STATIC)) {
+    if (isMethodInKotlinObject) {
+      // Call through the singleton instance.
+      // See: https://kotlinlang.org/docs/reference/java-to-kotlin-interop.html#static-methods
+      proxyInvocation.add("$T.INSTANCE", rawTypeName(TypeName.get(enclosingType.asType())));
+    } else if (method.getModifiers().contains(STATIC)) {
       proxyInvocation.add("$T", rawTypeName(TypeName.get(enclosingType.asType())));
     } else {
       injectionMethod.copyTypeParameters(enclosingType);

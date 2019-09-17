@@ -34,6 +34,7 @@ import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
@@ -59,6 +60,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final SourceVersion sourceVersion;
+  private final KotlinMetadataUtil metadataUtil;
 
   SimpleMethodBindingExpression(
       ProvisionBinding binding,
@@ -68,10 +70,12 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       ComponentRequirementExpressions componentRequirementExpressions,
       DaggerTypes types,
       DaggerElements elements,
-      SourceVersion sourceVersion) {
+      SourceVersion sourceVersion,
+      KotlinMetadataUtil metadataUtil) {
     super(binding);
     this.compilerOptions = compilerOptions;
     this.provisionBinding = binding;
+    this.metadataUtil = metadataUtil;
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
         "framework deps are not currently supported");
@@ -150,7 +154,8 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
             requestingClass,
             moduleReference(requestingClass),
             compilerOptions,
-            elements));
+            elements,
+            metadataUtil));
   }
 
   private Expression dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {

@@ -31,6 +31,9 @@ nav:
       name: Home
       url: /
   - item:
+      name: Tutorial
+      url: /tutorial
+  - item:
       name: "User's Guide"
       url: /users-guide
   - item:

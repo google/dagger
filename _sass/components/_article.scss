@@ -37,6 +37,16 @@
     color: rgba($c__black, .7);
   }
 
+  /*
+   * The stylesheet sets a default margin of 0 on everything. Then it overrides
+   * it above -- but only for direct children of the main article div. To
+   * restore the margin for paragraphs nested inside other elements (like
+   * lists), we need another rule.
+   */
+  * p {
+    margin-bottom: 1.8rem;
+  }
+
   a:not(.c-btn) {
     text-decoration: underline;
   }

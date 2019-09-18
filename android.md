@@ -27,7 +27,7 @@ ensure that the Java source that it generates is consistently compatible with
 ProGuard optimizations.
 
 Of course, not all issues can be addressed in that manner, but it is the primary
-mechanism by which Android-specific compatbility will be provided.
+mechanism by which Android-specific compatibility will be provided.
 
 ### tl;dr
 

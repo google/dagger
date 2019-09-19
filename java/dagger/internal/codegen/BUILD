@@ -35,12 +35,13 @@ DAGGER_DEPS = [
 ]
 
 java_library(
-    name = "codegen-shared-deps",
-    exported_plugins = [
+    name = "processor",
+    srcs = glob(["*.java"]),
+    plugins = [
         "//java/dagger/internal/codegen/bootstrap",
     ],
-    visibility = ["//visibility:private"],
-    exports = DAGGER_DEPS + [
+    tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
+    deps = DAGGER_DEPS + [
         ":package_info",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/auto:value",
@@ -58,23 +59,8 @@ java_library(
         "//java/dagger/spi",
         "//java/dagger/model:internal-proxies",
         "@google_bazel_common//third_party/java/incap",
-    ],
-)
-
-java_library(
-    name = "processor",
-    srcs = [":codegen-srcs"],
-    tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
-    deps = [
-        ":codegen-shared-deps",
         "@google_bazel_common//third_party/java/guava",
     ],
-)
-
-filegroup(
-    name = "codegen-srcs",
-    srcs = glob(["*.java"]),
-    visibility = ["//visibility:private"],
 )
 
 java_library(

@@ -15,14 +15,21 @@
 # Description:
 #   Dagger's core APIs exposed for plugins
 
-package(default_visibility = ["//:src"])
+package(
+    default_visibility = [
+        # The dagger/spi should be the only direct dependent on this target.
+        # If you need to depend on :model, depend on dagger/spi instead so
+        # that pom files correctly pick up the spi maven dependency.
+        # TODO(user): Consider if :model should have its own maven coordinates.
+        "//java/dagger/spi:__pkg__",
+    ],
+)
 
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
-load("//tools:maven.bzl", "POM_VERSION")
 
 INTERNAL_PROXIES = ["BindingGraphProxies.java"]
 
@@ -38,7 +45,6 @@ java_library(
     name = "model",
     srcs = [":model-srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
-    tags = ["maven_coordinates=com.google.dagger:dagger-spi:" + POM_VERSION],
     deps = [
         "//java/dagger:core",
         "//java/dagger/internal/codegen/extension",
@@ -56,6 +62,7 @@ java_library(
     name = "internal-proxies",
     srcs = INTERNAL_PROXIES,
     tags = ["maven:merged"],
+    visibility = ["//:src"],
     deps = [
         ":model",
         "@google_bazel_common//third_party/java/guava",

@@ -32,7 +32,6 @@ GenJavaTests(
     deps = [
         "//java/dagger:core",
         "//java/dagger/internal/codegen:processor",
-        "//java/dagger/model",
         "//java/dagger/spi",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/compile_testing",

@@ -61,9 +61,9 @@ deploy_library \
   java/dagger/producers/pom.xml
 
 deploy_library \
-  shaded_spi.jar \
-  shaded_spi_src.jar \
-  spi-javadoc.jar \
+  java/dagger/spi/shaded_spi.jar \
+  java/dagger/spi/shaded_spi_src.jar \
+  java/dagger/spi/spi-javadoc.jar \
   java/dagger/spi/pom.xml
 
 deploy_library \

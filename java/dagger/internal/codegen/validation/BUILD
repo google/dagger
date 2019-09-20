@@ -31,7 +31,6 @@ java_library(
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/codegen/langmodel",
-        "//java/dagger/model",
         "//java/dagger/producers",
         "//java/dagger/spi",
         "@google_bazel_common//third_party/java/auto:common",

@@ -96,42 +96,6 @@ jarjar_library(
 )
 
 jarjar_library(
-    name = "shaded_spi",
-    jars = [
-        "//java/dagger/internal/codegen/extension",
-        "//java/dagger/model",
-        "//java/dagger/spi",
-        "@com_google_auto_auto_common//jar",
-    ],
-    rules = SHADE_RULES,
-)
-
-jarjar_library(
-    name = "shaded_spi_src",
-    jars = [
-        "//java/dagger/internal/codegen/extension:libextension-src.jar",
-        "//java/dagger/model:libmodel-src.jar",
-        "//java/dagger/spi:libspi-src.jar",
-    ],
-)
-
-javadoc_library(
-    name = "spi-javadoc",
-    srcs = [
-        "//java/dagger/model:model-srcs",
-        "//java/dagger/spi:spi-srcs",
-    ],
-    root_packages = [
-        "dagger.model",
-        "dagger.spi",
-    ],
-    deps = [
-        "//java/dagger/model",
-        "//java/dagger/spi",
-    ],
-)
-
-jarjar_library(
     name = "shaded_android_processor",
     jars = [
         "//java/dagger/android/processor",
@@ -158,7 +122,6 @@ javadoc_library(
         "//java/dagger/android/support:support-srcs",
         "//java/dagger/grpc/server:javadoc-srcs",
         "//java/dagger/grpc/server/processor:javadoc-srcs",
-        "//java/dagger/model:model-srcs",
         "//java/dagger/producers:producers-srcs",
         "//java/dagger/spi:spi-srcs",
     ],
@@ -177,7 +140,6 @@ javadoc_library(
         "//java/dagger/android/support",
         "//java/dagger/grpc/server",
         "//java/dagger/grpc/server/processor",
-        "//java/dagger/model",
         "//java/dagger/producers",
         "//java/dagger/spi",
     ],

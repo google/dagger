@@ -43,7 +43,6 @@ java_library(
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/google_java_format",
         "//java/dagger:core",
-        "//java/dagger/model",
         "//java/dagger/spi",
         # https://github.com/bazelbuild/bazel/issues/2517
         ":dagger-android-jar",

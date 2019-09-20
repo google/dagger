@@ -55,7 +55,6 @@ java_library(
         "@google_bazel_common//third_party/java/jsr330_inject",
         "//java/dagger:core",
         "//java/dagger/producers",
-        "//java/dagger/model",
         "//java/dagger/spi",
         "//java/dagger/model:internal-proxies",
         "@google_bazel_common//third_party/java/incap",

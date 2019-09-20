@@ -39,7 +39,6 @@ GenJavaTests(
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/writing",
-        "//java/dagger/model",
         "//java/dagger/model/testing",
         "//java/dagger/producers",
         "//java/dagger/spi",

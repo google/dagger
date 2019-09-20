@@ -21,7 +21,6 @@ java_plugin(
     name = "binding-graph-visualizer",
     srcs = glob(["*.java"]),
     deps = [
-        "//java/dagger/model",
         "//java/dagger/spi",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/error_prone:annotations",

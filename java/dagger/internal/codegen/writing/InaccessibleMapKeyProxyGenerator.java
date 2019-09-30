@@ -64,11 +64,11 @@ public final class InaccessibleMapKeyProxyGenerator
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(ClassName generatedName, ContributionBinding binding) {
+  public Optional<TypeSpec.Builder> write(ContributionBinding binding) {
     return MapKeys.mapKeyFactoryMethod(binding, types, elements)
         .map(
             method ->
-                classBuilder(generatedName)
+                classBuilder(nameGeneratedType(binding))
                     .addModifiers(PUBLIC, FINAL)
                     .addMethod(constructorBuilder().addModifiers(PRIVATE).build())
                     .addMethod(method));

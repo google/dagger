@@ -65,10 +65,10 @@ public final class ModuleConstructorProxyGenerator extends SourceFileGenerator<T
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(ClassName generatedTypeName, TypeElement moduleElement) {
+  public Optional<TypeSpec.Builder> write(TypeElement moduleElement) {
     checkIsModule(moduleElement);
     return nonPublicNullaryConstructor(moduleElement, elements).isPresent()
-        ? Optional.of(buildProxy(generatedTypeName, moduleElement))
+        ? Optional.of(buildProxy(nameGeneratedType(moduleElement), moduleElement))
         : Optional.empty();
   }
 

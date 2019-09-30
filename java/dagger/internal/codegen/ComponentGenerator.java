@@ -65,10 +65,10 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(ClassName componentName, BindingGraph bindingGraph) {
+  public Optional<TypeSpec.Builder> write(BindingGraph bindingGraph) {
     ComponentImplementation componentImplementation =
         componentImplementationFactory.createComponentImplementation(bindingGraph);
-    verify(componentImplementation.name().equals(componentName));
+    verify(componentImplementation.name().equals(nameGeneratedType(bindingGraph)));
     return Optional.of(componentImplementation.generate());
   }
 }

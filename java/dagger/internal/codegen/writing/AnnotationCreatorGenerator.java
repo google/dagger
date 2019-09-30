@@ -98,7 +98,8 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement>
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(ClassName generatedTypeName, TypeElement annotationType) {
+  public Optional<TypeSpec.Builder> write(TypeElement annotationType) {
+    ClassName generatedTypeName = nameGeneratedType(annotationType);
     TypeSpec.Builder annotationCreatorBuilder =
         classBuilder(generatedTypeName)
             .addModifiers(PUBLIC, FINAL)

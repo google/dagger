@@ -113,7 +113,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(ClassName generatedTypeName, ProvisionBinding binding) {
+  public Optional<TypeSpec.Builder> write(ProvisionBinding binding) {
     // We don't want to write out resolved bindings -- we want to write out the generic version.
     checkArgument(!binding.unresolved().isPresent());
     checkArgument(binding.bindingElement().isPresent());

@@ -64,10 +64,9 @@ final class MonitoringModuleGenerator extends SourceFileGenerator<TypeElement> {
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(
-      ClassName generatedTypeName, TypeElement componentElement) {
+  public Optional<TypeSpec.Builder> write(TypeElement componentElement) {
     return Optional.of(
-        classBuilder(generatedTypeName)
+        classBuilder(nameGeneratedType(componentElement))
             .addAnnotation(Module.class)
             .addModifiers(ABSTRACT)
             .addMethod(privateConstructor())

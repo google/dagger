@@ -57,10 +57,8 @@ public final class HjarSourceFileGenerator<T> extends SourceFileGenerator<T> {
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(ClassName generatedTypeName, T input) {
-    return delegate
-        .write(generatedTypeName, input)
-        .map(completeType -> skeletonType(completeType.build()));
+  public Optional<TypeSpec.Builder> write(T input) {
+    return delegate.write(input).map(completeType -> skeletonType(completeType.build()));
   }
 
   private TypeSpec.Builder skeletonType(TypeSpec completeType) {

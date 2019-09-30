@@ -115,7 +115,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(ClassName generatedTypeName, ProductionBinding binding) {
+  public Optional<TypeSpec.Builder> write(ProductionBinding binding) {
     // We don't want to write out resolved bindings -- we want to write out the generic version.
     checkArgument(!binding.unresolved().isPresent());
     checkArgument(binding.bindingElement().isPresent());
@@ -123,6 +123,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
     TypeName providedTypeName = TypeName.get(binding.contributedType());
     TypeName futureTypeName = listenableFutureOf(providedTypeName);
 
+    ClassName generatedTypeName = nameGeneratedType(binding);
     TypeSpec.Builder factoryBuilder =
         classBuilder(generatedTypeName)
             .addModifiers(PUBLIC, FINAL)

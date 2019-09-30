@@ -101,8 +101,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(
-      ClassName generatedTypeName, MembersInjectionBinding binding) {
+  public Optional<TypeSpec.Builder> write(MembersInjectionBinding binding) {
     // Empty members injection bindings are special and don't need source files.
     if (binding.injectionSites().isEmpty()) {
       return Optional.empty();
@@ -116,6 +115,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
         "tried to generate a MembersInjector for a binding of a resolved generic type: %s",
         binding);
 
+    ClassName generatedTypeName = nameGeneratedType(binding);
     ImmutableList<TypeVariableName> typeParameters = bindingTypeElementTypeVariableNames(binding);
     TypeSpec.Builder injectorTypeBuilder =
         classBuilder(generatedTypeName)

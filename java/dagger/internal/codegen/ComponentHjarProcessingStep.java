@@ -151,8 +151,8 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
     }
 
     @Override
-    public Optional<TypeSpec.Builder> write(
-        ClassName generatedTypeName, ComponentDescriptor componentDescriptor) {
+    public Optional<TypeSpec.Builder> write(ComponentDescriptor componentDescriptor) {
+      ClassName generatedTypeName = nameGeneratedType(componentDescriptor);
       TypeSpec.Builder generatedComponent =
           TypeSpec.classBuilder(generatedTypeName)
               .addModifiers(FINAL)

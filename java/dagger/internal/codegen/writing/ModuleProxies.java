@@ -16,26 +16,83 @@
 
 package dagger.internal.codegen.writing;
 
+import static com.squareup.javapoet.MethodSpec.constructorBuilder;
+import static com.squareup.javapoet.MethodSpec.methodBuilder;
+import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibleFrom;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.ModuleKind;
 import dagger.internal.codegen.binding.SourceFiles;
 import dagger.internal.codegen.langmodel.Accessibility;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
+import javax.annotation.processing.Filer;
+import javax.inject.Inject;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
 /** Convenience methods for generating and using module constructor proxy methods. */
 public final class ModuleProxies {
+
+  /** Generates a {@code public static} proxy method for constructing module instances. */
+  // TODO(dpb): See if this can become a SourceFileGenerator<ModuleDescriptor> instead. Doing so may
+  // cause ModuleProcessingStep to defer elements multiple times.
+  public static final class ModuleConstructorProxyGenerator
+      extends SourceFileGenerator<TypeElement> {
+    private final DaggerElements elements;
+
+    @Inject
+    ModuleConstructorProxyGenerator(
+        Filer filer, DaggerElements elements, SourceVersion sourceVersion) {
+      super(filer, elements, sourceVersion);
+      this.elements = elements;
+    }
+
+    @Override
+    public ClassName nameGeneratedType(TypeElement moduleElement) {
+      return constructorProxyTypeName(moduleElement);
+    }
+
+    @Override
+    public Element originatingElement(TypeElement moduleElement) {
+      return moduleElement;
+    }
+
+    @Override
+    public Optional<TypeSpec.Builder> write(TypeElement moduleElement) {
+      ModuleKind.checkIsModule(moduleElement);
+      return nonPublicNullaryConstructor(moduleElement, elements).isPresent()
+          ? Optional.of(buildProxy(moduleElement))
+          : Optional.empty();
+    }
+
+    private TypeSpec.Builder buildProxy(TypeElement moduleElement) {
+      return classBuilder(nameGeneratedType(moduleElement))
+          .addModifiers(PUBLIC, FINAL)
+          .addMethod(constructorBuilder().addModifiers(PRIVATE).build())
+          .addMethod(
+              methodBuilder("newInstance")
+                  .addModifiers(PUBLIC, STATIC)
+                  .returns(ClassName.get(moduleElement))
+                  .addStatement("return new $T()", moduleElement)
+                  .build());
+    }
+  }
+
   /** The name of the class that hosts the module constructor proxy method. */
-  static ClassName constructorProxyTypeName(TypeElement moduleElement) {
+  private static ClassName constructorProxyTypeName(TypeElement moduleElement) {
     ModuleKind.checkIsModule(moduleElement);
     ClassName moduleClassName = ClassName.get(moduleElement);
     return moduleClassName
@@ -49,7 +106,7 @@ public final class ModuleProxies {
    * abstract, no proxy method can be generated.
    */
   // TODO(ronshapiro): make this an @Injectable class that injects DaggerElements
-  static Optional<ExecutableElement> nonPublicNullaryConstructor(
+  private static Optional<ExecutableElement> nonPublicNullaryConstructor(
       TypeElement moduleElement, DaggerElements elements) {
     ModuleKind.checkIsModule(moduleElement);
     if (moduleElement.getModifiers().contains(ABSTRACT)

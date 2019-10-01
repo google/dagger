@@ -31,7 +31,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.squareup.javapoet.ClassName;
 import dagger.Component;
 import dagger.MembersInjector;
 import dagger.Provides;
@@ -120,7 +119,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
      * bindings, this will try to generate the unresolved version of the binding.
      */
     void tryToGenerateBinding(B binding, boolean warnIfNotAlreadyGenerated) {
-      if (shouldGenerateBinding(binding, generatedClassNameForBinding(binding))) {
+      if (shouldGenerateBinding(binding)) {
         bindingsRequiringGeneration.offer(binding);
         if (compilerOptions.warnIfInjectionFactoryNotGeneratedUpstream()
             && warnIfNotAlreadyGenerated) {
@@ -136,11 +135,11 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     }
 
     /** Returns true if the binding needs to be generated. */
-    private boolean shouldGenerateBinding(B binding, ClassName factoryName) {
+    private boolean shouldGenerateBinding(B binding) {
       return !binding.unresolved().isPresent()
           && !materializedBindingKeys.contains(binding.key())
           && !bindingsRequiringGeneration.contains(binding)
-          && elements.getTypeElement(factoryName) == null;
+          && elements.getTypeElement(generatedClassNameForBinding(binding)) == null;
     }
 
     /** Caches the binding for future lookups by key. */

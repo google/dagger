@@ -30,7 +30,6 @@ import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibl
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypePubliclyAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.writing.FactoryGenerator.checkNotNullProvidesMethod;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -42,6 +41,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
+import dagger.internal.Preconditions;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
@@ -475,10 +475,13 @@ final class InjectionMethods {
   private enum CheckNotNullPolicy {
     IGNORE, CHECK_FOR_NULL;
     CodeBlock checkForNull(CodeBlock maybeNull) {
-      if (this.equals(IGNORE)) {
-        return maybeNull;
-      }
-      return checkNotNullProvidesMethod(maybeNull);
+      return this.equals(IGNORE)
+          ? maybeNull
+          : CodeBlock.of(
+              "$T.checkNotNull($L, $S)",
+              Preconditions.class,
+              maybeNull,
+              "Cannot return null from a non-@Nullable @Provides method");
     }
 
     static CheckNotNullPolicy get(ProvisionBinding binding, CompilerOptions compilerOptions) {

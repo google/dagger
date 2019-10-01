@@ -53,7 +53,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.Factory;
-import dagger.internal.Preconditions;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.ProvisionBinding;
@@ -295,17 +294,5 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
 
   private static ParameterSpec toParameter(FieldSpec field) {
     return ParameterSpec.builder(field.type, field.name).build();
-  }
-
-  /**
-   * Returns {@code Preconditions.checkNotNull(providesMethodInvocation)} with a message suitable
-   * for {@code @Provides} methods.
-   */
-  static CodeBlock checkNotNullProvidesMethod(CodeBlock providesMethodInvocation) {
-    return CodeBlock.of(
-        "$T.checkNotNull($L, $S)",
-        Preconditions.class,
-        providesMethodInvocation,
-        "Cannot return null from a non-@Nullable @Provides method");
   }
 }

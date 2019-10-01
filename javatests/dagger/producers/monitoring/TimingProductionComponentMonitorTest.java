@@ -16,7 +16,7 @@
 
 package dagger.producers.monitoring;
 
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -46,7 +46,7 @@ public final class TimingProductionComponentMonitorTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    when(productionComponentTimingRecorderFactory.create(any(Object.class)))
+    when(productionComponentTimingRecorderFactory.create(nullable(Object.class)))
         .thenReturn(productionComponentTimingRecorder);
     when(
             productionComponentTimingRecorder.producerTimingRecorderFor(

@@ -17,6 +17,7 @@
 package dagger.producers.monitoring;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doThrow;
@@ -73,8 +74,7 @@ public final class TimingRecordersTest {
 
   @Test
   public void singleRecorder_nullProductionComponentTimingRecorder() {
-    when(mockProductionComponentTimingRecorderFactory.create(nullable(Object.class)))
-        .thenReturn(null);
+    when(mockProductionComponentTimingRecorderFactory.create(any(Object.class))).thenReturn(null);
     ProductionComponentTimingRecorder.Factory factory =
         TimingRecorders.delegatingProductionComponentTimingRecorderFactory(
             ImmutableList.of(mockProductionComponentTimingRecorderFactory));
@@ -84,7 +84,7 @@ public final class TimingRecordersTest {
 
   @Test
   public void singleRecorder_throwingProductionComponentTimingRecorderFactory() {
-    when(mockProductionComponentTimingRecorderFactory.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactory.create(any(Object.class)))
         .thenThrow(new RuntimeException("monkey"));
     ProductionComponentTimingRecorder.Factory factory =
         TimingRecorders.delegatingProductionComponentTimingRecorderFactory(
@@ -95,7 +95,7 @@ public final class TimingRecordersTest {
 
   @Test
   public void singleRecorder_nullProducerTimingRecorder() {
-    when(mockProductionComponentTimingRecorderFactory.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactory.create(any(Object.class)))
         .thenReturn(mockProductionComponentTimingRecorder);
     when(mockProductionComponentTimingRecorder.producerTimingRecorderFor(
             nullable(ProducerToken.class)))
@@ -110,7 +110,7 @@ public final class TimingRecordersTest {
 
   @Test
   public void singleRecorder_throwingProductionComponentTimingRecorder() {
-    when(mockProductionComponentTimingRecorderFactory.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactory.create(any(Object.class)))
         .thenReturn(mockProductionComponentTimingRecorder);
     when(mockProductionComponentTimingRecorder.producerTimingRecorderFor(
             nullable(ProducerToken.class)))
@@ -186,12 +186,9 @@ public final class TimingRecordersTest {
 
   @Test
   public void multipleRecorders_nullProductionComponentTimingRecorders() {
-    when(mockProductionComponentTimingRecorderFactoryA.create(nullable(Object.class)))
-        .thenReturn(null);
-    when(mockProductionComponentTimingRecorderFactoryB.create(nullable(Object.class)))
-        .thenReturn(null);
-    when(mockProductionComponentTimingRecorderFactoryC.create(nullable(Object.class)))
-        .thenReturn(null);
+    when(mockProductionComponentTimingRecorderFactoryA.create(any(Object.class))).thenReturn(null);
+    when(mockProductionComponentTimingRecorderFactoryB.create(any(Object.class))).thenReturn(null);
+    when(mockProductionComponentTimingRecorderFactoryC.create(any(Object.class))).thenReturn(null);
     ProductionComponentTimingRecorder.Factory factory =
         TimingRecorders.delegatingProductionComponentTimingRecorderFactory(
             ImmutableList.of(
@@ -204,11 +201,11 @@ public final class TimingRecordersTest {
 
   @Test
   public void multipleRecorders_throwingProductionComponentTimingRecorderFactories() {
-    when(mockProductionComponentTimingRecorderFactoryA.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactoryA.create(any(Object.class)))
         .thenThrow(new RuntimeException("monkey"));
-    when(mockProductionComponentTimingRecorderFactoryB.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactoryB.create(any(Object.class)))
         .thenThrow(new RuntimeException("monkey"));
-    when(mockProductionComponentTimingRecorderFactoryC.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactoryC.create(any(Object.class)))
         .thenThrow(new RuntimeException("monkey"));
     ProductionComponentTimingRecorder.Factory factory =
         TimingRecorders.delegatingProductionComponentTimingRecorderFactory(
@@ -222,12 +219,10 @@ public final class TimingRecordersTest {
 
   @Test
   public void multipleRecorders_someNullProductionComponentTimingRecorders() {
-    when(mockProductionComponentTimingRecorderFactoryA.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactoryA.create(any(Object.class)))
         .thenReturn(mockProductionComponentTimingRecorderA);
-    when(mockProductionComponentTimingRecorderFactoryB.create(nullable(Object.class)))
-        .thenReturn(null);
-    when(mockProductionComponentTimingRecorderFactoryC.create(nullable(Object.class)))
-        .thenReturn(null);
+    when(mockProductionComponentTimingRecorderFactoryB.create(any(Object.class))).thenReturn(null);
+    when(mockProductionComponentTimingRecorderFactoryC.create(any(Object.class))).thenReturn(null);
     when(mockProductionComponentTimingRecorderA.producerTimingRecorderFor(
             nullable(ProducerToken.class)))
         .thenReturn(mockProducerTimingRecorderA);
@@ -252,11 +247,11 @@ public final class TimingRecordersTest {
 
   @Test
   public void multipleRecorders_someThrowingProductionComponentTimingRecorderFactories() {
-    when(mockProductionComponentTimingRecorderFactoryA.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactoryA.create(any(Object.class)))
         .thenReturn(mockProductionComponentTimingRecorderA);
-    when(mockProductionComponentTimingRecorderFactoryB.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactoryB.create(any(Object.class)))
         .thenThrow(new RuntimeException("monkey"));
-    when(mockProductionComponentTimingRecorderFactoryC.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactoryC.create(any(Object.class)))
         .thenThrow(new RuntimeException("monkey"));
     when(mockProductionComponentTimingRecorderA.producerTimingRecorderFor(
             nullable(ProducerToken.class)))
@@ -348,7 +343,7 @@ public final class TimingRecordersTest {
   }
 
   private void setUpNormalSingleRecorder() {
-    when(mockProductionComponentTimingRecorderFactory.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactory.create(any(Object.class)))
         .thenReturn(mockProductionComponentTimingRecorder);
     when(mockProductionComponentTimingRecorder.producerTimingRecorderFor(
             nullable(ProducerToken.class)))
@@ -356,11 +351,11 @@ public final class TimingRecordersTest {
   }
 
   private void setUpNormalMultipleRecorders() {
-    when(mockProductionComponentTimingRecorderFactoryA.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactoryA.create(any(Object.class)))
         .thenReturn(mockProductionComponentTimingRecorderA);
-    when(mockProductionComponentTimingRecorderFactoryB.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactoryB.create(any(Object.class)))
         .thenReturn(mockProductionComponentTimingRecorderB);
-    when(mockProductionComponentTimingRecorderFactoryC.create(nullable(Object.class)))
+    when(mockProductionComponentTimingRecorderFactoryC.create(any(Object.class)))
         .thenReturn(mockProductionComponentTimingRecorderC);
     when(mockProductionComponentTimingRecorderA.producerTimingRecorderFor(
             nullable(ProducerToken.class)))

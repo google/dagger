@@ -1195,7 +1195,7 @@ public class MembersInjectionTest {
             "",
             "  @Override",
             "  public InjectedType get() {",
-            "    InjectedType instance = new InjectedType();",
+            "    InjectedType instance = newInstance();",
             "    InjectedType_MembersInjector.injectPrimitiveInt(",
             "        instance, primitiveIntProvider.get());",
             "    InjectedType_MembersInjector.injectBoxedInt(instance, boxedIntProvider.get());",

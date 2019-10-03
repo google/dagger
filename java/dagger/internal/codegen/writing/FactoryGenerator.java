@@ -240,17 +240,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
             .returns(providedTypeName);
 
     ImmutableMap<DependencyRequest, FieldSpec> frameworkFields = frameworkFields(binding);
-    CodeBlock parametersCodeBlock =
-        makeParametersCodeBlock(
-            frameworkFieldUsages(binding.provisionDependencies(), frameworkFields).values());
-
-    if (binding.kind().equals(PROVISION)) {
-      binding
-          .nullableType()
-          .ifPresent(nullableType -> CodeBlocks.addAnnotation(getMethod, nullableType));
-      getMethod.addStatement(
-          "return $L",
-          ProvisionMethod.invoke(
+    CodeBlock invokeNewInstance = ProvisionMethod.invoke(
               binding,
               request ->
                   frameworkTypeUsageStatement(
@@ -261,11 +251,17 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
                   : Optional.empty(),
               compilerOptions,
               elements,
-              metadataUtil));
+              metadataUtil);
+
+    if (binding.kind().equals(PROVISION)) {
+      binding
+          .nullableType()
+          .ifPresent(nullableType -> CodeBlocks.addAnnotation(getMethod, nullableType));
+      getMethod.addStatement("return $L", invokeNewInstance);
     } else if (!binding.injectionSites().isEmpty()) {
       CodeBlock instance = CodeBlock.of("instance");
       getMethod
-          .addStatement("$1T $2L = new $1T($3L)", providedTypeName, instance, parametersCodeBlock)
+          .addStatement("$T $L = $L", providedTypeName, instance, invokeNewInstance)
           .addCode(
               InjectionSiteMethod.invokeAll(
                   binding.injectionSites(),
@@ -278,8 +274,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
                   metadataUtil))
           .addStatement("return $L", instance);
     } else {
-      getMethod.addStatement(
-          "return new $T($L)", providedTypeName, parametersCodeBlock);
+      getMethod.addStatement("return $L", invokeNewInstance);
     }
     return getMethod.build();
   }

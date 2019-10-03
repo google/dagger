@@ -23,7 +23,7 @@ load(
     "DOCLINT_REFERENCES",
     "SOURCE_7_TARGET_7",
 )
-load("//tools:maven.bzl", "pom_file", "POM_VERSION")
+load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
 
 # Work around b/70476182 which prevents Kythe from connecting :producers to the .java files it
 # contains.
@@ -53,22 +53,15 @@ java_library(
     ],
 )
 
-pom_file(
-    name = "pom",
+gen_maven_artifact(
+    name = "artifact",
     artifact_id = "dagger-producers",
     artifact_name = "Dagger Producers",
-    targets = [":producers"],
-)
-
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
-
-javadoc_library(
-    name = "producers-javadoc",
-    srcs = SRCS,
-    exclude_packages = [
+    artifact_target = ":producers",
+    javadoc_exclude_packages = [
         "dagger.producers.internal",
         "dagger.producers.monitoring.internal",
     ],
-    root_packages = ["dagger.producers"],
-    deps = [":producers"],
+    javadoc_root_packages = ["dagger.producers"],
+    javadoc_srcs = SRCS,
 )

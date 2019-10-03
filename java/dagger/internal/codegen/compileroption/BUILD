@@ -27,7 +27,6 @@ java_library(
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/producers",
-        "@bazel_tools//tools/jdk:langtools-neverlink",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/google_java_format",
         "@google_bazel_common//third_party/java/guava",

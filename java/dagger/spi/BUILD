@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@google_bazel_common//tools/jarjar:jarjar.bzl", "jarjar_library")
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
-
 # Description:
 #   The Service Provider Interface for Dagger's binding graph model
 
@@ -25,7 +22,7 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
-load("//tools:maven.bzl", "POM_VERSION", "pom_file")
+load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
 
 filegroup(
     name = "spi-srcs",
@@ -50,50 +47,21 @@ java_library(
     ],
 )
 
-javadoc_library(
-    name = "spi-javadoc",
-    srcs = [
-        ":spi-srcs",
-        "//java/dagger/model:model-srcs",
-    ],
-    root_packages = [
+gen_maven_artifact(
+    name = "artifact",
+    artifact_id = "dagger-spi",
+    artifact_name = "Dagger SPI",
+    artifact_target = ":spi",
+    javadoc_root_packages = [
         "dagger.model",
         "dagger.spi",
     ],
-    deps = [
-        ":spi",
-        "//java/dagger/model",
+    javadoc_srcs = [
+        ":spi-srcs",
+        "//java/dagger/model:model-srcs",
     ],
-)
-
-jarjar_library(
-    name = "shaded_spi",
-    jars = [
-        # TODO(user): Look into why this depends on internal/codegen/extension, and how this
-        # doesn't break gradle users since maven doesn't know to pull in the codegen dependency.
+    deps = [
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/model",
-        "//java/dagger/spi",
-        "@com_google_auto_auto_common//jar",
-    ],
-    rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
-)
-
-jarjar_library(
-    name = "shaded_spi_src",
-    jars = [
-        "//java/dagger/internal/codegen/extension:libextension-src.jar",
-        "//java/dagger/model:libmodel-src.jar",
-        "//java/dagger/spi:libspi-src.jar",
-    ],
-)
-
-pom_file(
-    name = "pom",
-    artifact_id = "dagger-spi",
-    artifact_name = "Dagger SPI",
-    targets = [
-        "//java/dagger/model",
-        ":spi",
     ],
 )

@@ -49,21 +49,21 @@ deploy_library \
   gwt/pom.xml
 
 deploy_library \
-  shaded_compiler.jar \
-  shaded_compiler_src.jar \
-  java/dagger/internal/codegen/codegen-javadoc.jar \
+  java/dagger/internal/codegen/artifact.jar \
+  java/dagger/internal/codegen/artifact-src.jar \
+  java/dagger/internal/codegen/artifact-javadoc.jar \
   java/dagger/internal/codegen/pom.xml
 
 deploy_library \
-  java/dagger/producers/libproducers.jar \
-  java/dagger/producers/libproducers-src.jar \
-  java/dagger/producers/producers-javadoc.jar \
+  java/dagger/producers/artifact.jar \
+  java/dagger/producers/artifact-src.jar \
+  java/dagger/producers/artifact-javadoc.jar \
   java/dagger/producers/pom.xml
 
 deploy_library \
-  java/dagger/spi/shaded_spi.jar \
-  java/dagger/spi/shaded_spi_src.jar \
-  java/dagger/spi/spi-javadoc.jar \
+  java/dagger/spi/artifact.jar \
+  java/dagger/spi/artifact-src.jar \
+  java/dagger/spi/artifact-javadoc.jar \
   java/dagger/spi/pom.xml
 
 deploy_library \

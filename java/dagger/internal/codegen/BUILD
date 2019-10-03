@@ -17,48 +17,46 @@
 
 package(default_visibility = ["//:src"])
 
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
-load("//tools:maven.bzl", "POM_VERSION", "pom_file")
-
-DAGGER_DEPS = [
-    "//java/dagger/internal/codegen/base",
-    "//java/dagger/internal/codegen/binding",
-    "//java/dagger/internal/codegen/bindinggraphvalidation",
-    "//java/dagger/internal/codegen/compileroption",
-    "//java/dagger/internal/codegen/extension",
-    "//java/dagger/internal/codegen/javapoet",
-    "//java/dagger/internal/codegen/kotlin",
-    "//java/dagger/internal/codegen/langmodel",
-    "//java/dagger/internal/codegen/statistics",
-    "//java/dagger/internal/codegen/validation",
-    "//java/dagger/internal/codegen/writing",
-]
+load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
 
 java_library(
     name = "processor",
-    srcs = glob(["*.java"]),
+    srcs = glob(
+        ["*.java"],
+        exclude = ["package-info.java"],
+    ),
     plugins = [
         "//java/dagger/internal/codegen/bootstrap",
     ],
     tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
-    deps = DAGGER_DEPS + [
+    deps = [
         ":package_info",
+        "//java/dagger:core",
+        "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
+        "//java/dagger/internal/codegen/bindinggraphvalidation",
+        "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/javapoet",
+        "//java/dagger/internal/codegen/kotlin",
+        "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/statistics",
+        "//java/dagger/internal/codegen/validation",
+        "//java/dagger/internal/codegen/writing",
+        "//java/dagger/model:internal-proxies",
+        "//java/dagger/producers",
+        "//java/dagger/spi",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/auto:value",
-        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/checker_framework_annotations",
         "@google_bazel_common//third_party/java/error_prone:annotations",
         "@google_bazel_common//third_party/java/google_java_format",
+        "@google_bazel_common//third_party/java/guava",
+        "@google_bazel_common//third_party/java/incap",
         "@google_bazel_common//third_party/java/javapoet",
-        "@bazel_tools//tools/jdk:langtools-neverlink",
         "@google_bazel_common//third_party/java/jsr250_annotations",
         "@google_bazel_common//third_party/java/jsr330_inject",
-        "//java/dagger:core",
-        "//java/dagger/producers",
-        "//java/dagger/spi",
-        "//java/dagger/model:internal-proxies",
-        "@google_bazel_common//third_party/java/incap",
-        "@google_bazel_common//third_party/java/guava",
     ],
 )
 
@@ -69,20 +67,29 @@ java_library(
     deps = ["@google_bazel_common//third_party/java/error_prone:annotations"],
 )
 
-pom_file(
-    name = "pom",
+gen_maven_artifact(
+    name = "artifact",
     artifact_id = "dagger-compiler",
     artifact_name = "Dagger Compiler",
-    targets = DAGGER_DEPS + [":processor"],
-)
-
-# The javadocs should only include ComponentProcessor.java, since that is the only class used
-# externally. Specifically, ComponentProcessor.forTesting() is required for testing SPI plugins.
-javadoc_library(
-    name = "codegen-javadoc",
-    srcs = ["ComponentProcessor.java"],
-    root_packages = ["dagger.internal.codegen"],
-    deps = [":processor"],
+    artifact_target = ":processor",
+    javadoc_root_packages = ["dagger.internal.codegen"],
+    # The javadocs should only include ComponentProcessor.java, since that is the only class used
+    # externally. Specifically, ComponentProcessor.forTesting() is required for testing SPI plugins.
+    javadoc_srcs = ["ComponentProcessor.java"],
+    deps = [
+        ":package_info",
+        "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
+        "//java/dagger/internal/codegen/bindinggraphvalidation",
+        "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/javapoet",
+        "//java/dagger/internal/codegen/kotlin",
+        "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/statistics",
+        "//java/dagger/internal/codegen/validation",
+        "//java/dagger/internal/codegen/writing",
+        "//java/dagger/model:internal-proxies",
+    ],
 )
 
 java_plugin(

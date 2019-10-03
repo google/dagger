@@ -54,48 +54,6 @@ load("@google_bazel_common//tools/jarjar:jarjar.bzl", "jarjar_library")
 SHADE_RULES = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"]
 
 jarjar_library(
-    name = "shaded_compiler",
-    jars = [
-        "//java/dagger/internal/codegen:processor",
-        "//java/dagger/internal/codegen/base",
-        "//java/dagger/internal/codegen/binding",
-        "//java/dagger/internal/codegen/bindinggraphvalidation",
-        "//java/dagger/internal/codegen/compileroption",
-        "//java/dagger/internal/codegen/extension",
-        "//java/dagger/internal/codegen/javapoet",
-        "//java/dagger/internal/codegen/kotlin",
-        "//java/dagger/internal/codegen/langmodel",
-        "//java/dagger/internal/codegen/statistics",
-        "//java/dagger/internal/codegen/validation",
-        "//java/dagger/internal/codegen/writing",
-        "//java/dagger/model:internal-proxies",
-        "//java/dagger/errorprone",
-        "@com_google_auto_auto_common//jar",
-    ],
-    rules = SHADE_RULES,
-)
-
-jarjar_library(
-    name = "shaded_compiler_src",
-    jars = [
-        "//java/dagger/internal/codegen:libprocessor-src.jar",
-        "//java/dagger/internal/codegen/base:libbase-src.jar",
-        "//java/dagger/internal/codegen/binding:libbinding-src.jar",
-        "//java/dagger/internal/codegen/bindinggraphvalidation:libbindinggraphvalidation-src.jar",
-        "//java/dagger/internal/codegen/compileroption:libcompileroption-src.jar",
-        "//java/dagger/internal/codegen/extension:libextension-src.jar",
-        "//java/dagger/internal/codegen/javapoet:libjavapoet-src.jar",
-        "//java/dagger/internal/codegen/kotlin:libkotlin-src.jar",
-        "//java/dagger/internal/codegen/langmodel:liblangmodel-src.jar",
-        "//java/dagger/internal/codegen/statistics:libstatistics-src.jar",
-        "//java/dagger/internal/codegen/validation:libvalidation-src.jar",
-        "//java/dagger/internal/codegen/writing:libwriting-src.jar",
-        # TODO(ronshapiro): is there a generated src.jar for protos in Bazel?
-        "//java/dagger/errorprone:liberrorprone-src.jar",
-    ],
-)
-
-jarjar_library(
     name = "shaded_android_processor",
     jars = [
         "//java/dagger/android/processor",

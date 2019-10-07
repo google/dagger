@@ -211,11 +211,16 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
         if (!bindingTypeElementTypeVariableNames(binding).isEmpty()) {
           // If the factory has type parameters, ignore them in the field declaration & initializer
           instanceFieldBuilder.addAnnotation(suppressWarnings(RAWTYPES));
-
           createMethodBuilder.addAnnotation(suppressWarnings(UNCHECKED));
         }
-        createMethodBuilder.addStatement("return INSTANCE");
-        factoryBuilder.addField(instanceFieldBuilder.build());
+
+        ClassName instanceHolderName = nameGeneratedType(binding).nestedClass("InstanceHolder");
+        createMethodBuilder.addStatement("return $T.INSTANCE", instanceHolderName);
+        factoryBuilder.addType(
+            TypeSpec.classBuilder(instanceHolderName)
+                .addModifiers(PRIVATE, STATIC, FINAL)
+                .addField(instanceFieldBuilder.build())
+                .build());
         break;
       case CLASS_CONSTRUCTOR:
         List<ParameterSpec> params = constructorParams(binding);

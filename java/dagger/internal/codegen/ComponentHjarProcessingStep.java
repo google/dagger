@@ -20,11 +20,15 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Predicates.in;
+import static com.google.common.collect.Sets.union;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static dagger.internal.codegen.ComponentGenerator.componentName;
 import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotations;
+import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
 import static dagger.internal.codegen.binding.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.javapoet.TypeSpecs.addSupertype;
+import static java.util.Collections.disjoint;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -34,7 +38,10 @@ import static javax.lang.model.element.Modifier.STATIC;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Ascii;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
@@ -52,11 +59,15 @@ import dagger.internal.codegen.binding.MethodSignature;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.validation.ComponentCreatorValidator;
 import dagger.internal.codegen.validation.ComponentValidator;
 import dagger.internal.codegen.validation.ComponentValidator.ComponentValidationReport;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
+import dagger.internal.codegen.validation.ValidationReport;
 import dagger.producers.internal.CancellationListener;
 import java.lang.annotation.Annotation;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -89,8 +100,10 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
   private final Filer filer;
   private final Messager messager;
   private final ComponentValidator componentValidator;
+  private final ComponentCreatorValidator creatorValidator;
   private final ComponentDescriptorFactory componentDescriptorFactory;
   private final KotlinMetadataUtil metadataUtil;
+  private ImmutableMap<Element, ValidationReport<TypeElement>> creatorReportsByComponent;
 
   @Inject
   ComponentHjarProcessingStep(
@@ -100,6 +113,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
       Filer filer,
       Messager messager,
       ComponentValidator componentValidator,
+      ComponentCreatorValidator creatorValidator,
       ComponentDescriptorFactory componentDescriptorFactory,
       KotlinMetadataUtil metadataUtil) {
     super(MoreElements::asType);
@@ -109,30 +123,64 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
     this.filer = filer;
     this.messager = messager;
     this.componentValidator = componentValidator;
+    this.creatorValidator = creatorValidator;
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.metadataUtil = metadataUtil;
   }
 
   @Override
   public Set<Class<? extends Annotation>> annotations() {
-    return rootComponentAnnotations();
+    return union(rootComponentAnnotations(), rootComponentCreatorAnnotations());
+  }
+
+  // TODO(ronshapiro): Validation might not even be necessary. We should measure it and figure out
+  // if it's worth seeing if removing it will still work. We could potentially add a new catch
+  // clause for any exception that's not TypeNotPresentException and ignore the component entirely
+  // in that case.
+  @Override
+  public ImmutableSet<Element> process(
+      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+    creatorReportsByComponent = creatorReportsByComponent(elementsByAnnotation);
+    return super.process(elementsByAnnotation);
   }
 
   @Override
   protected void process(
-      TypeElement componentTypeElement, ImmutableSet<Class<? extends Annotation>> annotations) {
-    // TODO(ronshapiro): component validation might not be necessary. We should measure it and
-    // figure out if it's worth seeing if removing it will still work. We could potentially add a
-    // new catch clause for any exception that's not TypeNotPresentException and ignore the
-    // component entirely in that case.
+      TypeElement element, ImmutableSet<Class<? extends Annotation>> annotations) {
+    // Skip creator validation because those have already been validated.
+    if (!disjoint(annotations, rootComponentCreatorAnnotations())) {
+      return;
+    }
+    // Skip component validation if its creator validation already failed.
+    if (creatorReportsByComponent.get(element) != null
+            && !creatorReportsByComponent.get(element).isClean()) {
+      return;
+    }
     ComponentValidationReport validationReport =
-        componentValidator.validate(componentTypeElement, ImmutableSet.of(), ImmutableSet.of());
+        componentValidator.validate(element, ImmutableSet.of(), ImmutableSet.of());
     validationReport.report().printMessagesTo(messager);
     if (validationReport.report().isClean()) {
       new EmptyComponentGenerator(filer, elements, sourceVersion)
-          .generate(
-              componentDescriptorFactory.rootComponentDescriptor(componentTypeElement), messager);
+          .generate(componentDescriptorFactory.rootComponentDescriptor(element), messager);
     }
+  }
+
+  private ImmutableMap<Element, ValidationReport<TypeElement>> creatorReportsByComponent(
+      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+    ImmutableSet<Element> creatorElements =
+        ImmutableSet.copyOf(
+            Multimaps.filterKeys(elementsByAnnotation, in(rootComponentCreatorAnnotations()))
+                .values());
+    // Can't use an ImmutableMap.Builder here because a component may have (invalidly) more than one
+    // builder type, and that would make ImmutableMap.Builder throw.
+    Map<Element, ValidationReport<TypeElement>> reports = new HashMap<>();
+    for (Element element : creatorElements) {
+      ValidationReport<TypeElement> report =
+          creatorValidator.validate(MoreElements.asType(element));
+      report.printMessagesTo(messager);
+      reports.put(element.getEnclosingElement(), report);
+    }
+    return ImmutableMap.copyOf(reports);
   }
 
   private final class EmptyComponentGenerator extends SourceFileGenerator<ComponentDescriptor> {

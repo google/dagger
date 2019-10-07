@@ -170,7 +170,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     componentGenerator.generate(bindingGraph, messager);
   }
 
-  static ImmutableSet<Element> getElementsFromAnnotations(
+  private static ImmutableSet<Element> getElementsFromAnnotations(
       final SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation,
       Set<Class<? extends Annotation>> annotations) {
     return ImmutableSet.copyOf(

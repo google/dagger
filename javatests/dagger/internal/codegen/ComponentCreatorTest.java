@@ -16,11 +16,12 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.collect.Sets.immutableEnumSet;
+import static com.google.common.truth.TruthJUnit.assume;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.ComponentCreatorTest.CompilerType.JAVAC;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.COMPONENT_BUILDER;
@@ -31,14 +32,10 @@ import static dagger.internal.codegen.binding.ComponentKind.COMPONENT;
 import static dagger.internal.codegen.binding.ErrorMessages.componentMessagesFor;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.internal.codegen.binding.ComponentCreatorAnnotation;
 import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,22 +45,34 @@ import org.junit.runners.Parameterized.Parameters;
 /** Tests for properties of component creators shared by both builders and factories. */
 @RunWith(Parameterized.class)
 public class ComponentCreatorTest extends ComponentCreatorTestHelper {
+  enum CompilerType {
+    JAVAC
+  }
+
+  private final CompilerType compilerType;
+  private final CompilerMode compilerMode;
+
   @Parameters(name = "compilerMode={0}, creatorKind={1}")
   public static Collection<Object[]> parameters() {
-    Set<List<Object>> params =
-        Sets.<Object>cartesianProduct(
-            immutableEnumSet(DEFAULT_MODE, FAST_INIT_MODE),
-            immutableEnumSet(COMPONENT_BUILDER, COMPONENT_FACTORY));
-    return ImmutableList.copyOf(Iterables.transform(params, Collection::toArray));
+    return ImmutableList.of(
+      new Object[]{DEFAULT_MODE, COMPONENT_BUILDER, JAVAC},
+      new Object[]{DEFAULT_MODE, COMPONENT_FACTORY, JAVAC},
+      new Object[]{FAST_INIT_MODE, COMPONENT_BUILDER, JAVAC},
+      new Object[]{FAST_INIT_MODE, COMPONENT_FACTORY, JAVAC});
   }
 
   public ComponentCreatorTest(
-      CompilerMode compilerMode, ComponentCreatorAnnotation componentCreatorAnnotation) {
+      CompilerMode compilerMode,
+      ComponentCreatorAnnotation componentCreatorAnnotation,
+      CompilerType compilerType) {
     super(compilerMode, componentCreatorAnnotation);
+    this.compilerMode = compilerMode;
+    this.compilerType = compilerType;
   }
 
   @Test
   public void testEmptyCreator() {
+    assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject injectableTypeFile =
         JavaFileObjects.forSourceLines(
             "test.SomeInjectableType",
@@ -114,6 +123,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
 
   @Test
   public void testCanInstantiateModulesUserCannotSet() {
+    assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
             "test.TestModule",
@@ -311,6 +321,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
 
   @Test
   public void testCreatorWithBindsInstanceNoStaticCreateGenerated() {
+    assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject componentFile =
         javaFileBuilder("test.SimpleComponent")
             .addLines(
@@ -411,6 +422,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
 
   @Test
   public void testCreatorWithPrimitiveBindsInstance() {
+    assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject componentFile =
         javaFileBuilder("test.SimpleComponent")
             .addLines(
@@ -780,6 +792,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
 
   @Test
   public void testMultipleSettersPerTypeFails() {
+    assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject moduleFile =
         JavaFileObjects.forSourceLines(
             "test.TestModule",
@@ -838,6 +851,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
 
   @Test
   public void testMultipleSettersPerTypeIncludingResolvedGenericsFails() {
+    assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject moduleFile =
         JavaFileObjects.forSourceLines(
             "test.TestModule",
@@ -901,6 +915,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
 
   @Test
   public void testExtraSettersFails() {
+    assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject componentFile =
         javaFileBuilder("test.SimpleComponent")
             .addLines(
@@ -1033,6 +1048,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
 
   @Test
   public void covariantFactoryMethodReturnType() {
+    assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject foo =
         JavaFileObjects.forSourceLines(
             "test.Foo",
@@ -1073,6 +1089,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
 
   @Test
   public void covariantFactoryMethodReturnType_hasNewMethod() {
+    assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject foo =
         JavaFileObjects.forSourceLines(
             "test.Foo",
@@ -1134,6 +1151,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
 
   @Test
   public void covariantFactoryMethodReturnType_hasNewMethod_factoryMethodInherited() {
+    assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject foo =
         JavaFileObjects.forSourceLines(
             "test.Foo",
@@ -1250,5 +1268,14 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
                 messages.inheritedMethodsMayNotHaveTypeParameters(), process("<T>build()")))
         .inFile(componentFile)
         .onLineContaining(process("interface Builder"));
+  }
+
+  /** Compiles the given files with the set compiler mode's javacopts. */
+  @Override
+  Compilation compile(JavaFileObject... files) {
+    ImmutableList.Builder<Object> options =
+        ImmutableList.builder().addAll(compilerMode.javacopts());
+
+    return daggerCompiler().withOptions(options.build()).compile(files);
   }
 }

@@ -30,6 +30,7 @@ import java.util.logging.Logger;
  */
 // TODO(beder): Reduce the visibility of this class to package-private.
 @Beta
+@SuppressWarnings("GoodTime") // Should be using java.time.Instant/Duration as opposed to nanos
 public final class TimingRecorders {
   private static final Logger logger = Logger.getLogger(TimingRecorders.class.getName());
 

@@ -118,7 +118,7 @@ public final class BindingDeclarationFormatter extends Formatter<BindingDeclarat
 
     return String.format(
         "@%s(subcomponents = %s) for %s",
-        subcomponentDeclaration.moduleAnnotation().annotationClass().getSimpleName(),
+        subcomponentDeclaration.moduleAnnotation().annotationName(),
         annotationValue,
         subcomponentDeclaration.contributingModule().get());
   }

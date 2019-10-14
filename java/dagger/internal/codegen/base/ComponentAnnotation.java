@@ -17,19 +17,21 @@
 package dagger.internal.codegen.base;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
+import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asTypeElements;
 import static com.google.auto.common.MoreTypes.isTypeOf;
 import static dagger.internal.codegen.base.MoreAnnotationValues.asAnnotationValues;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.javapoet.TypeNames.PRODUCER_MODULE;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnyAnnotation;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
 import dagger.Component;
 import dagger.Subcomponent;
-import dagger.producers.ProducerModule;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;
 import java.lang.annotation.Annotation;
@@ -288,7 +290,8 @@ public abstract class ComponentAnnotation {
 
     @Override
     public boolean isProduction() {
-      return moduleAnnotation().annotationClass().equals(ProducerModule.class);
+      return ClassName.get(asType(moduleAnnotation().annotation().getAnnotationType().asElement()))
+          .equals(PRODUCER_MODULE);
     }
 
     @Override

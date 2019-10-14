@@ -620,7 +620,7 @@ public final class ModuleValidator {
                       @Override
                       public Void visitType(TypeMirror includedModule, Void aVoid) {
                         if (MoreTypes.equivalence().equivalent(module.asType(), includedModule)) {
-                          String moduleKind = moduleAnnotation.annotationClass().getSimpleName();
+                          String moduleKind = moduleAnnotation.annotationName();
                           builder.addError(
                               String.format("@%s cannot include themselves.", moduleKind),
                               module,

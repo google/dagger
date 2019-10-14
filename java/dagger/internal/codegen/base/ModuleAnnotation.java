@@ -47,17 +47,9 @@ public abstract class ModuleAnnotation {
   // instance.
   public abstract AnnotationMirror annotation();
 
-  /** The type of the annotation. */
-  @Memoized
-  public Class<?> annotationClass() {
-    try {
-      return Class.forName(
-          asTypeElement(annotation().getAnnotationType()).getQualifiedName().toString());
-    } catch (ClassNotFoundException e) {
-      AssertionError assertionError = new AssertionError();
-      assertionError.initCause(e);
-      throw assertionError;
-    }
+  /** The simple name of the annotation. */
+  public String annotationName() {
+    return annotation().getAnnotationType().asElement().getSimpleName().toString();
   }
 
   /**

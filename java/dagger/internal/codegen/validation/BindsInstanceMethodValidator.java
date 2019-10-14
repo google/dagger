@@ -83,6 +83,6 @@ final class BindsInstanceMethodValidator extends BindsInstanceElementValidator<E
   private static String didYouMeanBinds(ModuleAnnotation moduleAnnotation) {
     return String.format(
         "@BindsInstance methods should not be included in @%ss. Did you mean @Binds?",
-        moduleAnnotation.annotationClass().getSimpleName());
+        moduleAnnotation.annotationName());
   }
 }

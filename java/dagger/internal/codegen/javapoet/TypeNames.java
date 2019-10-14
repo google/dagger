@@ -34,6 +34,7 @@ import dagger.internal.SetFactory;
 import dagger.internal.SingleCheck;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
+import dagger.producers.ProducerModule;
 import dagger.producers.internal.AbstractProducer;
 import dagger.producers.internal.DependencyMethodProducer;
 import dagger.producers.internal.MapOfProducedProducer;
@@ -74,6 +75,7 @@ public final class TypeNames {
   public static final ClassName PRODUCED = ClassName.get(Produced.class);
   public static final ClassName PRODUCER = ClassName.get(Producer.class);
   public static final ClassName PRODUCERS = ClassName.get(Producers.class);
+  public static final ClassName PRODUCER_MODULE = ClassName.get(ProducerModule.class);
   public static final ClassName PRODUCTION_COMPONENT_MONITOR_FACTORY =
       ClassName.get(ProductionComponentMonitor.Factory.class);
   public static final ClassName PROVIDER = ClassName.get(Provider.class);

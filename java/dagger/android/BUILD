@@ -59,7 +59,7 @@ android_library(
     tags = ["maven_coordinates=com.android.support:support-annotations:25.0.0"],
     visibility = ["//visibility:private"],
     exports = [
-        "@androidsdk//com.android.support:support-annotations-25.0.0",
+        "@maven//:com_android_support_support_annotations",
     ],
 )
 

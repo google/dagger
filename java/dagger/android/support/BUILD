@@ -50,9 +50,9 @@ android_library(
     ],
     visibility = ["//visibility:private"],
     exports = [
-        "@androidsdk//com.android.support:appcompat-v7-25.0.0",
-        "@androidsdk//com.android.support:support-annotations-25.0.0",
-        "@androidsdk//com.android.support:support-fragment-25.0.0",
+        "@maven//:com_android_support_appcompat_v7",
+        "@maven//:com_android_support_support_annotations",
+        "@maven//:com_android_support_support_fragment",
     ],
 )
 

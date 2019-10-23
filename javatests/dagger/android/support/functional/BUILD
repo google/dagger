@@ -27,8 +27,8 @@ android_library(
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
-        "@androidsdk//com.android.support:support-fragment-25.0.0",
-        "@androidsdk//com.android.support:appcompat-v7-25.0.0",
+        "@maven//:com_android_support_support_fragment",
+        "@maven//:com_android_support_appcompat_v7",
         "@google_bazel_common//third_party/java/guava",
         "//:dagger_with_compiler",
         "//:android",
@@ -48,9 +48,9 @@ GenRobolectricTests(
         "//:android",
         "//:android-support",
         "//:dagger_with_compiler",
-        "@androidsdk//com.android.support:support-fragment-25.0.0",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/robolectric",
         "@google_bazel_common//third_party/java/truth",
+        "@maven//:com_android_support_support_fragment",
     ],
 )

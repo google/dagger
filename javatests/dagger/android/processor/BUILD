@@ -27,7 +27,7 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "@google_bazel_common//third_party/java/guava",
-        "@androidsdk//com.android.support:support-fragment-25.0.0",
+        "@maven//:com_android_support_support_fragment",
         # TODO(ronshapiro): create a common location to define the current Android version
         "@androidsdk//:platforms/android-26/android.jar",
         "@google_bazel_common//third_party/java/compile_testing",

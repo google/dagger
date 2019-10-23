@@ -29,6 +29,7 @@ android_library(
     deps = [
         "@maven//:com_android_support_support_fragment",
         "@maven//:com_android_support_appcompat_v7",
+        "@maven//:com_android_support_support_annotations",
         "@google_bazel_common//third_party/java/guava",
         "//:dagger_with_compiler",
         "//:android",

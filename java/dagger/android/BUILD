@@ -45,20 +45,9 @@ android_library(
     proguard_specs = ["proguard.cfg"],
     tags = ["maven_coordinates=com.google.dagger:dagger-android:" + POM_VERSION],
     deps = [
-        ":manual-maven-deps",
         "//:dagger_with_compiler",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
-    ],
-)
-
-# Our pom.xml generator does not have a way to add manual maven deps. This target exports the
-# targets that don't have the necessary maven_coordinates tags.
-android_library(
-    name = "manual-maven-deps",
-    tags = ["maven_coordinates=com.android.support:support-annotations:25.0.0"],
-    visibility = ["//visibility:private"],
-    exports = [
         "@maven//:com_android_support_support_annotations",
     ],
 )

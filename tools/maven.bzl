@@ -40,8 +40,6 @@ def pom_file(name, targets, artifact_name, artifact_id, packaging = None, **kwar
 
 POM_VERSION = "${project.version}"
 
-_SHADE_RULES = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"]
-
 def gen_maven_artifact(
         name,
         artifact_name,
@@ -53,7 +51,9 @@ def gen_maven_artifact(
         javadoc_root_packages = None,
         javadoc_exclude_packages = None,
         javadoc_android_api_level = None,
-        deps = None):
+        deps = None,
+        shaded_deps = None,
+        shaded_rules = None):
     """Generates the files required for a maven artifact.
 
     This macro generates the following targets:
@@ -81,6 +81,8 @@ def gen_maven_artifact(
       javadoc_exclude_packages: The packages to exclude from the javadocs.
       javadoc_android_api_level: The android api level for the javadocs.
       deps: The required deps to include with the target.
+      shaded_deps: The shaded deps for the jarjar.
+      shaded_rules: The shaded rules for the jarjar
     """
     _validate_maven_deps(
         name = name + "-validation",
@@ -88,6 +90,8 @@ def gen_maven_artifact(
         deps = deps,
     )
 
+    shaded_deps = shaded_deps or []
+    shaded_rules = shaded_rules or []
     artifact_targets = [artifact_target] + (deps or [])
 
     pom_file(
@@ -109,8 +113,8 @@ def gen_maven_artifact(
 
     jarjar_library(
         name = name,
-        jars = artifact_targets,
-        rules = _SHADE_RULES,
+        jars = artifact_targets + shaded_deps,
+        rules = shaded_rules,
     )
 
     jarjar_library(

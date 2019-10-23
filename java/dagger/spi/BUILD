@@ -60,6 +60,8 @@ gen_maven_artifact(
         ":spi-srcs",
         "//java/dagger/model:model-srcs",
     ],
+    shaded_deps = ["@com_google_auto_auto_common//jar"],
+    shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
     deps = [
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/model",

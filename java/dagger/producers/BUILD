@@ -64,4 +64,5 @@ gen_maven_artifact(
     ],
     javadoc_root_packages = ["dagger.producers"],
     javadoc_srcs = SRCS,
+    # TODO(user): Look more into why auto/common shading isn't needed here.
 )

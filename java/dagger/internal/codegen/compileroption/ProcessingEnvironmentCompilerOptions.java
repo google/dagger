@@ -138,11 +138,6 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
-  public boolean useGradleIncrementalProcessing() {
-    return isEnabled(USE_GRADLE_INCREMENTAL_PROCESSING);
-  }
-
-  @Override
   public ValidationType fullBindingGraphValidationType() {
     return parseOption(FULL_BINDING_GRAPH_VALIDATION);
   }

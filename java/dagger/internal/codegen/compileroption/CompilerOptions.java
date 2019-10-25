@@ -62,8 +62,6 @@ public abstract class CompilerOptions {
 
   public abstract boolean headerCompilation();
 
-  public abstract boolean useGradleIncrementalProcessing();
-
   public abstract ValidationType fullBindingGraphValidationType();
 
   /**

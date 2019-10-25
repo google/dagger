@@ -85,11 +85,6 @@ public final class JavacPluginCompilerOptions extends CompilerOptions {
   }
 
   @Override
-  public boolean useGradleIncrementalProcessing() {
-    return false;
-  }
-
-  @Override
   public ValidationType fullBindingGraphValidationType() {
     return NONE;
   }

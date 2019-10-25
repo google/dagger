@@ -19,8 +19,8 @@ android:
   components:
     - tools
     - tools # Duplicated as per https://github.com/travis-ci/travis-ci/issues/6040#issuecomment-219367943
-    - build-tools-26.0.2
-    - android-26
+    - build-tools-29.0.2
+    - android-29
     - platform-tools
     - extra-android-m2repository
 
@@ -53,7 +53,7 @@ env:
     # permission to push to the repo.
     - secure: "UpTUhCQzAGbr5JetRg2GZxp/dPDep/7Il3yGeyDECopciWdx41OPk/QNqAXBhNtKuEaMVsmASyoteuhgaTryQdV4qUIGVOMhES6kbOlYy3nwK44VdsNeeepwVospyDyZbxMtXq5LuHWuTADmAl1mdjNPNoziXc523zjnUzUx/EQ="
     - JDK_FOR_PUBLISHING: *jdk_for_publishing
-    - BAZEL_VERSION="0.27.1"
+    - BAZEL_VERSION="1.1.0"
 
 after_success:
   - util/generate-latest-docs.sh

@@ -34,7 +34,7 @@ Dagger is built with [`bazel`](https://bazel.build).
 *   Build the Dagger project with `bazel build <target>`
     *   Learn more about Bazel targets [here][bazel targets].
     *   If you see an error similar to `ERROR: missing input file
-        '@androidsdk//:build-tools/26.0.2/aapt'`, install the missing build
+        '@androidsdk//:build-tools/29.0.2/aapt'`, install the missing build
         tools version with the android `sdkmanager` tool.
 *   Run tests with `bazel test <target>`, or `bazel test //...` to run all
     tests

@@ -29,7 +29,7 @@ GenJavaTests(
         "@google_bazel_common//third_party/java/guava",
         "@maven//:com_android_support_support_fragment",
         # TODO(ronshapiro): create a common location to define the current Android version
-        "@androidsdk//:platforms/android-26/android.jar",
+        "@androidsdk//:platforms/android-29/android.jar",
         "@google_bazel_common//third_party/java/compile_testing",
         "//:dagger_with_compiler",
         "@google_bazel_common//third_party/java/junit",

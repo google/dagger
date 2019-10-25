@@ -54,7 +54,7 @@ load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 javadoc_library(
     name = "support-javadoc",
     srcs = [":support-srcs"],
-    android_api_level = 26,
+    android_api_level = 29,
     root_packages = ["dagger.android.support"],
     deps = [":support"],
 )

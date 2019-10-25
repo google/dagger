@@ -2,8 +2,10 @@
 
 set -ex
 
+readonly TEST_PARAMS="$@"
+
 # Run tests with bazel
-bazel test //...
+bazel test $TEST_PARAMS //...
 
 # Also run the gradle examples on the local maven snapshots.
 readonly _SIMPLE_EXAMPLE_DIR=java/dagger/example/gradle/simple

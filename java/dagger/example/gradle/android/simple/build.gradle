@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Dagger Authors.
+ * Copyright (C) 2019 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-package dagger.example.android.simple;
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.5.0'
+    }
+}
 
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+allprojects {
+    repositories {
+      google()
+      jcenter()
+      mavenCentral()
+      mavenLocal()
+    }
+}
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import javax.inject.Qualifier;
-
-/** Qualifies bindings relating to {@link android.os.Build#MODEL}. */
-@Qualifier
-@Retention(RUNTIME)
-@Documented
-@interface Model {}

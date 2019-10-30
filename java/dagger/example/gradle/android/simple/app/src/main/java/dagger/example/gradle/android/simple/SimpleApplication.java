@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Dagger Authors.
+ * Copyright (C) 2019 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package dagger.example.android.simple;
+package dagger.example.gradle.android.simple;
 
 import android.util.Log;
+import dagger.Component;
 import dagger.android.AndroidInjectionModule;
 import dagger.android.AndroidInjector;
 import dagger.android.DaggerApplication;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * A simple, skeletal application that demonstrates a dependency-injected application using the
@@ -29,12 +31,17 @@ import javax.inject.Inject;
 public class SimpleApplication extends DaggerApplication {
   private static final String TAG = SimpleApplication.class.getSimpleName();
 
-  @dagger.Component(
-      modules = {AndroidInjectionModule.class, MainActivity.Module.class, BuildModule.class})
-  /* @ApplicationScoped and/or @Singleton */
-  interface Component extends AndroidInjector<SimpleApplication> {
-    @dagger.Component.Builder
-    abstract class Builder extends AndroidInjector.Builder<SimpleApplication> {}
+  @Singleton
+  @Component(
+      modules = {
+        AndroidInjectionModule.class,
+        SimpleActivity.InjectorModule.class,
+        BuildModule.class
+      }
+  )
+  interface SimpleComponent extends AndroidInjector<SimpleApplication> {
+    @Component.Factory
+    interface Factory extends AndroidInjector.Factory<SimpleApplication> {}
   }
 
   @Inject
@@ -49,6 +56,6 @@ public class SimpleApplication extends DaggerApplication {
 
   @Override
   protected AndroidInjector<SimpleApplication> applicationInjector() {
-    return DaggerSimpleApplication_Component.builder().create(this);
+    return DaggerSimpleApplication_SimpleComponent.factory().create(this);
   }
 }

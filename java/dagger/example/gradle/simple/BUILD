@@ -16,3 +16,11 @@
 #   A skeleton example that uses gradle to test the LOCAL-SNAPSHOTs.
 
 package(default_visibility = ["//:src"])
+
+java_binary(
+    name = "simple",
+    srcs = glob(["*.java"]),
+    deps = [
+        "//:dagger_with_compiler",
+    ],
+)

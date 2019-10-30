@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Dagger Authors.
+ * Copyright (C) 2019 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package dagger.example.android.simple;
+package dagger.example.gradle.android.simple;
 
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 import dagger.Binds;
+import dagger.Module;
+import dagger.Subcomponent;
 import dagger.android.AndroidInjector;
 import dagger.android.support.DaggerAppCompatActivity;
 import dagger.multibindings.ClassKey;
@@ -27,33 +29,35 @@ import dagger.multibindings.IntoMap;
 import javax.inject.Inject;
 
 /**
- * The main activity application. It can be injected with any binding from both {@link Component}
- * and {@link dagger.example.android.simple.SimpleApplication.Component}.
+ * The main activity of the application.
+ *
+ * <p>It can be injected with any binding from both {@link SimpleActivityComponent} and {@link
+ * SimpleApplication.SimpleComponent}.
  */
-public class MainActivity extends DaggerAppCompatActivity {
-  @dagger.Subcomponent
-  interface Component extends AndroidInjector<MainActivity> {
+public class SimpleActivity extends DaggerAppCompatActivity {
+  @Subcomponent
+  interface SimpleActivityComponent extends AndroidInjector<SimpleActivity> {
 
-    @dagger.Subcomponent.Builder
-    abstract class Builder extends AndroidInjector.Builder<MainActivity> {}
+    @Subcomponent.Factory
+    interface Factory extends AndroidInjector.Factory<SimpleActivity> {}
   }
 
-  @dagger.Module(subcomponents = Component.class)
-  abstract class Module {
+  @Module(subcomponents = SimpleActivityComponent.class)
+  abstract static class InjectorModule {
 
     @Binds
     @IntoMap
-    @ClassKey(MainActivity.class)
-    abstract AndroidInjector.Factory<?> bind(Component.Builder builder);
+    @ClassKey(SimpleActivity.class)
+    abstract AndroidInjector.Factory<?> bind(SimpleActivityComponent.Factory factory);
   }
 
-  private static final String TAG = MainActivity.class.getSimpleName();
+  private static final String TAG = SimpleActivity.class.getSimpleName();
 
   @Inject @Model String model;
 
   @Inject
   void logInjection() {
-    Log.i(TAG, "Injecting " + MainActivity.class.getSimpleName());
+    Log.i(TAG, "Injecting");
   }
 
   @Override

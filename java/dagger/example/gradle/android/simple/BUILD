@@ -17,26 +17,16 @@
 
 package(default_visibility = ["//:src"])
 
-android_library(
-    name = "simple_lib",
-    srcs = glob(["*.java"]),
-    manifest = "AndroidManifest.xml",
-    resource_files = glob(["res/**"]),
+android_binary(
+    name = "simple",
+    srcs = glob(["app/src/main/java/**/*.java"]),
+    aapt_version = "aapt",
+    manifest = "app/src/main/AndroidManifest.xml",
+    resource_files = glob(["app/src/main/res/**"]),
     deps = [
         "//:android",
         "//:android-support",
         "//:dagger_with_compiler",
         "@maven//:com_android_support_appcompat_v7",
-        "@maven//:com_android_support_support_annotations",
-        "@maven//:com_android_support_support_fragment",
-    ],
-)
-
-android_binary(
-    name = "simple",
-    aapt_version = "aapt",
-    manifest = "AndroidManifest.xml",
-    deps = [
-        ":simple_lib",
     ],
 )

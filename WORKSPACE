@@ -16,6 +16,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "google_bazel_common",
+    sha256 = "f20aaaf1d80fa5fbe9843792cd199ab213ab63ee8a0f3931dd14ae7a9d528f05",
     strip_prefix = "bazel-common-4c4c70bdf2a9f5bc9afdf2c27dfcb905cac2eea1",
     urls = ["https://github.com/google/bazel-common/archive/4c4c70bdf2a9f5bc9afdf2c27dfcb905cac2eea1.zip"],
 )

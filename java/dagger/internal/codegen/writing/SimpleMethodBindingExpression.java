@@ -23,6 +23,7 @@ import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod.requiresInjectionMethod;
 
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -122,9 +123,17 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
         invocation = CodeBlock.of("new $T($L)", constructorTypeName(requestingClass), arguments);
         break;
       case METHOD:
-        CodeBlock module =
-            moduleReference(requestingClass)
-                .orElse(CodeBlock.of("$T", provisionBinding.bindingTypeElement().get()));
+        CodeBlock module;
+        Optional<CodeBlock> requiredModuleInstance = moduleReference(requestingClass);
+        if (requiredModuleInstance.isPresent()) {
+          module = requiredModuleInstance.get();
+        } else if (metadataUtil.isObjectClass(MoreElements.asType(method.getEnclosingElement()))) {
+          // Call through the singleton instance.
+          // See: https://kotlinlang.org/docs/reference/java-to-kotlin-interop.html#static-methods
+          module = CodeBlock.of("$T.INSTANCE", provisionBinding.bindingTypeElement().get());
+        } else {
+          module = CodeBlock.of("$T", provisionBinding.bindingTypeElement().get());
+        }
         invocation = CodeBlock.of("$L.$L($L)", module, method.getSimpleName(), arguments);
         break;
       default:

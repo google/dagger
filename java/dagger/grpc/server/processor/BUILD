@@ -1,7 +1,8 @@
-package(default_visibility = ["//:src"])
-
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-load("//tools:maven.bzl", "pom_file", "POM_VERSION")
+load("//tools:maven.bzl", "POM_VERSION", "pom_file")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
+
+package(default_visibility = ["//:src"])
 
 java_library(
     name = "processor",
@@ -38,8 +39,6 @@ filegroup(
     name = "javadoc-srcs",
     srcs = glob(["*.java"]),
 )
-
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "javadoc",

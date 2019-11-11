@@ -15,10 +15,11 @@
 # Description:
 #   Public Dagger API for Android that interacts with the Android support libraries
 
-package(default_visibility = ["//:src"])
-
 load("//:build_defs.bzl", "SOURCE_7_TARGET_7")
-load("//tools:maven.bzl", "pom_file", "POM_VERSION")
+load("//tools:maven.bzl", "POM_VERSION", "pom_file")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
+
+package(default_visibility = ["//:src"])
 
 filegroup(
     name = "support-srcs",
@@ -48,8 +49,6 @@ pom_file(
     packaging = "aar",
     targets = [":support"],
 )
-
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "support-javadoc",

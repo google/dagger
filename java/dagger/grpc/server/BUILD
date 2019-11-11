@@ -1,9 +1,10 @@
 # A framework supporting Dagger-injected gRPC servers.
 
-package(default_visibility = ["//:src"])
-
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
-load("//tools:maven.bzl", "pom_file", "POM_VERSION")
+load("//tools:maven.bzl", "POM_VERSION", "pom_file")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
+
+package(default_visibility = ["//:src"])
 
 ANNOTATIONS_SRCS = [
     "CallScoped.java",
@@ -63,8 +64,6 @@ filegroup(
     name = "javadoc-srcs",
     srcs = glob(["*.java"]),
 )
-
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "javadoc",

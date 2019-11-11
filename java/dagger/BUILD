@@ -15,14 +15,15 @@
 # Description:
 #   A JSR-330 compliant dependency injection system for android and java
 
-package(default_visibility = ["//:src"])
-
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "SOURCE_7_TARGET_7",
 )
 load("//tools:maven.bzl", "POM_VERSION", "pom_file")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
+
+package(default_visibility = ["//:src"])
 
 java_library(
     name = "core",
@@ -46,8 +47,6 @@ filegroup(
     name = "javadoc-srcs",
     srcs = glob(["**/*"]),
 )
-
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "core-javadoc",

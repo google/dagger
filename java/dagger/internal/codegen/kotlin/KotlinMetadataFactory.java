@@ -16,29 +16,21 @@
 
 package dagger.internal.codegen.kotlin;
 
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static dagger.internal.codegen.base.MoreAnnotationValues.asAnnotationValues;
 import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
-import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 
-import com.google.common.base.Preconditions;
 import dagger.internal.codegen.base.ClearableCache;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import kotlin.Metadata;
-import kotlinx.metadata.KmClass;
-import kotlinx.metadata.jvm.KotlinClassHeader;
-import kotlinx.metadata.jvm.KotlinClassMetadata;
 
 /**
- * Factory for parsing and creating Kotlin metadata data object.
+ * Factory creating Kotlin metadata data objects.
  *
  * <p>The metadata is cache since it can be expensive to parse the information stored in a proto
  * binary string format in the metadata annotation values.
@@ -55,59 +47,7 @@ public final class KotlinMetadataFactory implements ClearableCache {
     if (!isAnnotationPresent(enclosingElement, Metadata.class)) {
       return Optional.empty();
     }
-    return metadataCache.computeIfAbsent(
-        enclosingElement,
-        typeElement ->
-            kmClassOf(typeElement)
-                .map(classMetadata -> new KotlinMetadata(typeElement, classMetadata)));
-  }
-
-  private static Optional<KmClass> kmClassOf(TypeElement typeElement) {
-    Optional<AnnotationMirror> metadataAnnotation =
-        getAnnotationMirror(typeElement, Metadata.class);
-    Preconditions.checkState(metadataAnnotation.isPresent());
-    KotlinClassHeader header =
-        new KotlinClassHeader(
-            getIntValue(metadataAnnotation.get(), "k"),
-            getIntArrayValue(metadataAnnotation.get(), "mv"),
-            getIntArrayValue(metadataAnnotation.get(), "bv"),
-            getStringArrayValue(metadataAnnotation.get(), "d1"),
-            getStringArrayValue(metadataAnnotation.get(), "d2"),
-            getStringValue(metadataAnnotation.get(), "xs"),
-            getStringValue(metadataAnnotation.get(), "pn"),
-            getIntValue(metadataAnnotation.get(), "xi"));
-    KotlinClassMetadata metadata = KotlinClassMetadata.read(header);
-    if (metadata == null) {
-      // Should only happen on Kotlin < 1.0 (i.e. metadata version < 1.1)
-      return Optional.empty();
-    }
-    if (metadata instanceof KotlinClassMetadata.Class) {
-      // TODO(user): If when we need other types of metadata then move to right method.
-      return Optional.of(((KotlinClassMetadata.Class) metadata).toKmClass());
-    } else {
-      // Unsupported
-      return Optional.empty();
-    }
-  }
-
-  private static int getIntValue(AnnotationMirror annotation, String valueName) {
-    return (int) getAnnotationValue(annotation, valueName).getValue();
-  }
-
-  private static String getStringValue(AnnotationMirror annotation, String valueName) {
-    return getAnnotationValue(annotation, valueName).getValue().toString();
-  }
-
-  private static int[] getIntArrayValue(AnnotationMirror annotation, String valueName) {
-    return asAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
-        .mapToInt(it -> (int) it.getValue())
-        .toArray();
-  }
-
-  private static String[] getStringArrayValue(AnnotationMirror annotation, String valueName) {
-    return asAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
-        .map(it -> it.getValue().toString())
-        .toArray(String[]::new);
+    return metadataCache.computeIfAbsent(enclosingElement, KotlinMetadata::from);
   }
 
   @Override

@@ -25,8 +25,10 @@ java_library(
     deps = [
         "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/guava:annotations",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:common",
-        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/jsr330_inject",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
         "@maven//:org_jetbrains_kotlinx_kotlinx_metadata_jvm",

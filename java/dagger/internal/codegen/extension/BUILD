@@ -23,6 +23,8 @@ java_library(
     srcs = glob(["*.java"]),
     tags = ["maven:merged"],
     deps = [
-        "@google_bazel_common//third_party/java/guava",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
+        "//java/dagger/internal/guava:graph",
     ],
 )

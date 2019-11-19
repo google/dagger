@@ -26,10 +26,12 @@ java_library(
         "//java/dagger:core",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/guava:annotations",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
         "//java/dagger/producers",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/google_java_format",
-        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )

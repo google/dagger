@@ -48,11 +48,13 @@ java_library(
     deps = [
         "//java/dagger:core",
         "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
+        "//java/dagger/internal/guava:graph",
         "//java/dagger/producers",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
-        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
@@ -65,6 +67,7 @@ java_library(
     visibility = ["//:src"],
     deps = [
         ":model",
-        "@google_bazel_common//third_party/java/guava",
+        "//java/dagger/internal/guava:collect",
+        "//java/dagger/internal/guava:graph",
     ],
 )

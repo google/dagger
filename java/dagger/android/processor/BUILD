@@ -35,7 +35,8 @@ java_library(
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     tags = ["maven_coordinates=com.google.dagger:dagger-android-processor:" + POM_VERSION],
     deps = [
-        "@google_bazel_common//third_party/java/guava",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/auto:common",

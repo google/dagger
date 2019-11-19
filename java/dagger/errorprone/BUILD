@@ -8,8 +8,8 @@ java_library(
     srcs = glob(["*.java"]),
     deps = [
         "//java/dagger:core",
+        "//java/dagger/internal/guava:collect",
         "@bazel_tools//tools/jdk:langtools-neverlink",
         "@google_bazel_common//third_party/java/error_prone:check_api",
-        "@google_bazel_common//third_party/java/guava",
     ],
 )

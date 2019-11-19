@@ -21,10 +21,12 @@ java_plugin(
     name = "binding-graph-visualizer",
     srcs = glob(["*.java"]),
     deps = [
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
+        "//java/dagger/internal/guava:graph",
         "//java/dagger/spi",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/error_prone:annotations",
-        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/javapoet",
     ],
 )

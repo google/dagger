@@ -31,8 +31,9 @@ GenJavaTests(
     functional = 0,
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_REFERENCES + DOCLINT_HTML_AND_SYNTAX,
     deps = [
+        "//java/dagger/internal/guava:collect",
+        "//java/dagger/internal/guava:concurrent",
         "//java/dagger/producers",
-        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/guava:testlib",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/mockito",

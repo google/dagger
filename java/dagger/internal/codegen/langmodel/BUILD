@@ -24,8 +24,11 @@ java_library(
     tags = ["maven:merged"],
     deps = [
         "//java/dagger:core",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
+        "//java/dagger/internal/guava:concurrent",
+        "//java/dagger/internal/guava:graph",
         "@google_bazel_common//third_party/java/auto:common",
-        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/javapoet",
     ],
 )

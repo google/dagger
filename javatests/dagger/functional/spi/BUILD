@@ -23,9 +23,10 @@ java_plugin(
     name = "test_plugin",
     srcs = ["TestPlugin.java"],
     deps = [
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
         "//java/dagger/spi",
         "@google_bazel_common//third_party/java/auto:service",
-        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/javapoet",
     ],
 )

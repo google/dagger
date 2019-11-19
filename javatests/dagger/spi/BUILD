@@ -32,10 +32,12 @@ GenJavaTests(
     deps = [
         "//java/dagger:core",
         "//java/dagger/internal/codegen:processor",
+        "//java/dagger/internal/guava:annotations",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
         "//java/dagger/spi",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/compile_testing",
-        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/jsr330_inject",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",

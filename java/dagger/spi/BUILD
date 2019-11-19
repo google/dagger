@@ -39,10 +39,12 @@ java_library(
     ],
     deps = [
         "//java/dagger:core",
+        "//java/dagger/internal/guava:annotations",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
         "//java/dagger/model",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
-        "@google_bazel_common//third_party/java/guava",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )

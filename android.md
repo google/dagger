@@ -33,12 +33,7 @@ mechanism by which Android-specific compatibility will be provided.
 
 Dagger assumes that users on Android will use ProGuard.
 
-## Recommended ProGuard Settings
-
-Watch this space for ProGuard settings that are relevant to applications using
-Dagger.
-
-## `dagger.android`
+## Why Dagger on Android is hard
 
 One of the central difficulties of writing an Android application using Dagger
 is that many Android framework classes are instantiated by the OS itself, like
@@ -76,8 +71,25 @@ This has a few problems:
    dependency injection: a class shouldn't know anything about how it is
    injected.
 
-The classes in [`dagger.android`] offer one approach to simplify this pattern.
+## `dagger.android`
 
+The classes in [`dagger.android`] offer one approach to simplify the above
+problems. This requires learning some extra APIs and concepts but gives you
+reduced boilerplate and injection in your Android classes at the right place in
+the lifecycle.
+
+Another approach is to just use the normal Dagger APIs and follow guides such as
+the one
+[here](https://developer.android.com/training/dependency-injection/dagger-android).
+This may be simpler to understand but comes with the downside of having to write
+extra boilerplate manually.
+
+
+The Jetpack and Dagger teams are working together on a
+[new initiative](https://medium.com/androiddevelopers/dependency-injection-guidance-on-android-ads-2019-b0b56d774bc2)
+for Dagger on Android that hopes to be a large shift from the current status
+quo. While it is unfortunately not ready yet, this may be something to consider
+when choosing how to use Dagger in your Android projects today.
 
 ### Injecting `Activity` objects
 

@@ -236,4 +236,39 @@ public class MembersInjectionValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining("static fields").inFile(injected).onLine(6);
   }
+
+  @Test
+  public void missingMembersInjectorForKotlinProperty() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.internal.codegen.KotlinInjectedQualifier;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  void inject(KotlinInjectedQualifier injected);",
+            "}");
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Named;",
+            "",
+            "@Module",
+            "class TestModule {",
+            "  @Provides",
+            "  @Named(\"TheString\")",
+            "  String theString() { return \"\"; }",
+            "}");
+    Compilation compilation = daggerCompiler().compile(component, module);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Unable to read annotations on an injected Kotlin property.");
+  }
 }

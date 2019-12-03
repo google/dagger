@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
@@ -37,6 +38,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.javapoet.CodeBlocks;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.List;
 import java.util.Optional;
@@ -80,6 +82,10 @@ abstract class InjectionMethod {
 
   abstract ClassName enclosingClass();
 
+  abstract Optional<String> injectedFieldSignature();
+
+  abstract Optional<AnnotationSpec> qualifierSpec();
+
   MethodSpec toMethodSpec() {
     MethodSpec.Builder builder =
         methodBuilder(name())
@@ -91,6 +97,14 @@ abstract class InjectionMethod {
     returnType().map(TypeName::get).ifPresent(builder::returns);
     nullableAnnotation().ifPresent(nullableType -> CodeBlocks.addAnnotation(builder, nullableType));
     exceptions().stream().map(TypeName::get).forEach(builder::addException);
+    injectedFieldSignature()
+        .ifPresent(
+            fieldSignature ->
+                builder.addAnnotation(
+                    AnnotationSpec.builder(TypeNames.INJECTED_FIELD_SIGNATURE)
+                        .addMember("value", "$S", fieldSignature)
+                        .build()));
+    qualifierSpec().ifPresent(builder::addAnnotation);
     return builder.build();
   }
 
@@ -142,6 +156,10 @@ abstract class InjectionMethod {
     abstract Builder nullableAnnotation(Optional<DeclaredType> nullableAnnotation);
 
     abstract Builder methodBody(CodeBlock methodBody);
+
+    abstract Builder injectedFieldSignature(String injectedFieldSignature);
+
+    abstract Builder qualifierSpec(AnnotationSpec qualifierSpec);
 
     final CodeBlock.Builder methodBodyBuilder() {
       return methodBody;

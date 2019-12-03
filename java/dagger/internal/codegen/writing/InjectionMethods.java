@@ -19,9 +19,11 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.MoreCollectors.onlyElement;
 import static dagger.internal.codegen.base.RequestKinds.requestTypeName;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
+import static dagger.internal.codegen.binding.SourceFiles.memberInjectedFieldSignatureForVariable;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toConcatenatedCodeBlock;
@@ -37,6 +39,7 @@ import static javax.lang.model.type.TypeKind.VOID;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterSpec;
@@ -55,6 +58,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -270,10 +274,16 @@ final class InjectionMethods {
               elements,
               metadataUtil);
         case FIELD:
+          Optional<AnnotationMirror> qualifier =
+              injectionSite.dependencies().stream()
+                  .collect(onlyElement()) // methods for fields have a single dependency request
+                  .key()
+                  .qualifier();
           return fieldProxy(
               proxyEnclosingClass,
               MoreElements.asVariable(injectionSite.element()),
               methodName,
+              qualifier,
               elements);
       }
       throw new AssertionError(injectionSite);
@@ -545,10 +555,16 @@ final class InjectionMethods {
       ClassName proxyEnclosingClass,
       VariableElement field,
       String methodName,
+      Optional<AnnotationMirror> qualifierAnnotation,
       DaggerElements elements) {
     TypeElement enclosingType = MoreElements.asType(field.getEnclosingElement());
     InjectionMethod.Builder injectionMethod =
-        InjectionMethod.builder(elements).name(methodName).enclosingClass(proxyEnclosingClass);
+        InjectionMethod.builder(elements)
+            .name(methodName)
+            .enclosingClass(proxyEnclosingClass)
+            .injectedFieldSignature(memberInjectedFieldSignatureForVariable(field));
+    qualifierAnnotation.ifPresent(
+        qualifier -> injectionMethod.qualifierSpec(AnnotationSpec.get(qualifier)));
     injectionMethod.copyTypeParameters(enclosingType);
 
     ParameterSpec instance =

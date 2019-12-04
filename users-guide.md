@@ -38,7 +38,7 @@ guiding principle is to generate code that mimics the code that a user might
 have hand-written to ensure that dependency injection is as simple, traceable
 and performant as it can be. For more background on the design, watch
 [this talk](https://youtu.be/oK_XtfXPkqw) ([slides][Dagger Talk Slides]) by
-[+Gregory Kick].
+Gregory Kick.
 
 ## Using Dagger
 
@@ -608,7 +608,6 @@ limitations under the License.
 [Documented]: http://docs.oracle.com/javase/7/docs/api/java/lang/annotation/Documented.html
 [Factory Pattern]: https://en.wikipedia.org/wiki/Factory_(object-oriented_programming)
 [installation]: https://github.com/google/dagger/blob/master/README.md#installation
-[+Gregory Kick]: https://google.com/+GregoryKick/
 [guava-optional]: https://google.github.io/guava/releases/27.0-jre/api/docs/com/google/common/base/Optional.html
 [`javax.inject.Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
 [`javax.inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/package-summary.html

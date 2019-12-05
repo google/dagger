@@ -31,7 +31,7 @@ public abstract class CompilerOptions {
    * number of eagerly initialized fields at the cost of potential memory leaks and higher
    * per-provision instantiation time.
    */
-  public abstract boolean fastInit();
+  public abstract boolean fastInit(TypeElement element);
 
   public abstract boolean formatGeneratedSource();
 

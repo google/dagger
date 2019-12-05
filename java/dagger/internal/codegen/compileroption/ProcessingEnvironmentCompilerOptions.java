@@ -93,7 +93,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
-  public boolean fastInit() {
+  public boolean fastInit(TypeElement component) {
     return isEnabled(FAST_INIT);
   }
 
@@ -381,6 +381,10 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     @SuppressWarnings("unchecked") // we only put covariant values into the map
     T value = (T) enumOptions.computeIfAbsent(option, this::parseOptionUncached);
     return value;
+  }
+
+  private boolean isSetOnCommandLine(Feature feature) {
+    return getUsedNames(feature).count() > 0;
   }
 
   private <T extends Enum<T>> T parseOptionUncached(EnumOption<T> option) {

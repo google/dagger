@@ -35,7 +35,7 @@ public final class JavacPluginCompilerOptions extends CompilerOptions {
   }
 
   @Override
-  public boolean fastInit() {
+  public boolean fastInit(TypeElement element) {
     return false;
   }
 

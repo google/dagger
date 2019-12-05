@@ -76,6 +76,7 @@ public final class ComponentBindingExpressions {
   private final Optional<ComponentBindingExpressions> parent;
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
+  private final ComponentImplementation topLevelComponentImplementation;
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final OptionalFactories optionalFactories;
   private final DaggerTypes types;
@@ -92,6 +93,7 @@ public final class ComponentBindingExpressions {
       @ParentComponent Optional<ComponentBindingExpressions> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
+      @TopLevel ComponentImplementation topLevelComponentImplementation,
       ComponentRequirementExpressions componentRequirementExpressions,
       OptionalFactories optionalFactories,
       DaggerTypes types,
@@ -102,6 +104,7 @@ public final class ComponentBindingExpressions {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
+    this.topLevelComponentImplementation = topLevelComponentImplementation;
     this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
     this.optionalFactories = checkNotNull(optionalFactories);
     this.types = checkNotNull(types);
@@ -437,7 +440,8 @@ public final class ComponentBindingExpressions {
     if (binding.kind().equals(DELEGATE) && !needsCaching(binding)) {
       return new DelegateBindingExpression(
           binding, RequestKind.PROVIDER, this, types, elements);
-    } else if (compilerOptions.fastInit()
+    } else if (compilerOptions.fastInit(
+            topLevelComponentImplementation.componentDescriptor().typeElement())
         && frameworkInstanceCreationExpression(binding).useInnerSwitchingProvider()
         && !(instanceBindingExpression(binding)
             instanceof DerivedFromFrameworkInstanceBindingExpression)) {
@@ -580,7 +584,8 @@ public final class ComponentBindingExpressions {
    * MapFactory} or {@code SetFactory}.
    */
   private boolean useStaticFactoryCreation(ContributionBinding binding) {
-    return !compilerOptions.fastInit()
+    return !compilerOptions.fastInit(
+            topLevelComponentImplementation.componentDescriptor().typeElement())
         || binding.kind().equals(MULTIBOUND_MAP)
         || binding.kind().equals(MULTIBOUND_SET);
   }
@@ -594,7 +599,9 @@ public final class ComponentBindingExpressions {
    * #needsCaching(ContributionBinding) needs to be cached}.
    */
   private boolean canUseDirectInstanceExpression(ContributionBinding binding) {
-    return !needsCaching(binding) || compilerOptions.fastInit();
+    return !needsCaching(binding)
+        || compilerOptions.fastInit(
+            topLevelComponentImplementation.componentDescriptor().typeElement());
   }
 
   /**
@@ -641,7 +648,8 @@ public final class ComponentBindingExpressions {
 
   private MethodImplementationStrategy methodImplementationStrategy(
       ContributionBinding binding, BindingRequest request) {
-    if (compilerOptions.fastInit()) {
+    if (compilerOptions.fastInit(
+        topLevelComponentImplementation.componentDescriptor().typeElement())) {
       if (request.isRequestKind(RequestKind.PROVIDER)) {
         return MethodImplementationStrategy.SINGLE_CHECK;
       } else if (request.isRequestKind(RequestKind.INSTANCE) && needsCaching(binding)) {

@@ -163,13 +163,17 @@ final class KotlinMetadata {
   }
 
   /** Parse Kotlin class metadata from a given type element * */
-  static KotlinMetadata from(TypeElement typeElement) {
-    MetadataVisitor visitor = new MetadataVisitor();
-    metadataOf(typeElement).accept(visitor);
-    return new KotlinMetadata(typeElement, visitor.classFlags, visitor.classProperties);
+  static Optional<KotlinMetadata> from(TypeElement typeElement) {
+    return metadataOf(typeElement)
+        .map(
+            metadata -> {
+              MetadataVisitor visitor = new MetadataVisitor();
+              metadata.accept(visitor);
+              return new KotlinMetadata(typeElement, visitor.classFlags, visitor.classProperties);
+            });
   }
 
-  private static KotlinClassMetadata.Class metadataOf(TypeElement typeElement) {
+  private static Optional<KotlinClassMetadata.Class> metadataOf(TypeElement typeElement) {
     Optional<AnnotationMirror> metadataAnnotation =
         getAnnotationMirror(typeElement, Metadata.class);
     Preconditions.checkState(metadataAnnotation.isPresent());
@@ -186,14 +190,14 @@ final class KotlinMetadata {
     KotlinClassMetadata metadata = KotlinClassMetadata.read(header);
     if (metadata == null) {
       // Should only happen on Kotlin < 1.0 (i.e. metadata version < 1.1)
-      throw new IllegalStateException(
-          "Unsupported metadata version. Check that your Kotlin version is >= 1.0");
+      return Optional.empty();
     }
     if (metadata instanceof KotlinClassMetadata.Class) {
       // TODO(user): If when we need other types of metadata then move to right method.
-      return (KotlinClassMetadata.Class) metadata;
+      return Optional.of((KotlinClassMetadata.Class) metadata);
     } else {
-      throw new IllegalStateException("Unsupported metadata type: " + metadata);
+      // Unsupported
+      return Optional.empty();
     }
   }
 

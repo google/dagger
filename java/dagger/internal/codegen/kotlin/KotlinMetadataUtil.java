@@ -57,7 +57,7 @@ public final class KotlinMetadataUtil {
       VariableElement fieldElement, Class<? extends Annotation> annotationType) {
     return metadataFactory
         .create(fieldElement)
-        .getSyntheticAnnotationMethod(fieldElement)
+        .flatMap(metadata -> metadata.getSyntheticAnnotationMethod(fieldElement))
         .map(methodElement -> getAnnotatedAnnotations(methodElement, annotationType))
         .orElse(ImmutableSet.of());
   }
@@ -68,11 +68,14 @@ public final class KotlinMetadataUtil {
    * method is not found since it is synthetic and ignored by the processor.
    */
   public boolean isMissingSyntheticPropertyForAnnotations(VariableElement fieldElement) {
-    return metadataFactory.create(fieldElement).isMissingSyntheticAnnotationMethod(fieldElement);
+    return metadataFactory
+        .create(fieldElement)
+        .map(metadata -> metadata.isMissingSyntheticAnnotationMethod(fieldElement))
+        .orElseThrow(() -> new IllegalStateException("Missing metadata for: " + fieldElement));
   }
 
   /** Returns true if this type element is a Kotlin Object. */
   public boolean isObjectClass(TypeElement typeElement) {
-    return hasMetadata(typeElement) && metadataFactory.create(typeElement).isObjectClass();
+    return metadataFactory.create(typeElement).map(KotlinMetadata::isObjectClass).orElse(false);
   }
 }

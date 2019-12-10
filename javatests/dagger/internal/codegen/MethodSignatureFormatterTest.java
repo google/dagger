@@ -22,10 +22,7 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.testing.compile.CompilationRule;
-import dagger.BindsInstance;
 import dagger.Component;
-import dagger.Module;
-import dagger.Provides;
 import dagger.internal.codegen.MethodSignatureFormatterTest.OuterClass.InnerClass;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
@@ -45,8 +42,6 @@ import org.junit.runners.JUnit4;
 public class MethodSignatureFormatterTest {
   @Rule public CompilationRule compilationRule = new CompilationRule();
 
-  @Inject DaggerElements elements;
-  @Inject DaggerTypes types;
   @Inject InjectionAnnotations injectionAnnotations;
 
   static class OuterClass {
@@ -67,10 +62,13 @@ public class MethodSignatureFormatterTest {
 
   @Before
   public void setUp() {
-    DaggerMethodSignatureFormatterTest_TestComponent.factory().create(compilationRule).inject(this);
+    DaggerMethodSignatureFormatterTest_TestComponent.create().inject(this);
   }
 
   @Test public void methodSignatureTest() {
+    DaggerElements elements =
+        new DaggerElements(compilationRule.getElements(), compilationRule.getTypes());
+    DaggerTypes types = new DaggerTypes(compilationRule.getTypes(), elements);
     TypeElement inner = elements.getTypeElement(InnerClass.class);
     ExecutableElement method = Iterables.getOnlyElement(methodsIn(inner.getEnclosedElements()));
     String formatted = new MethodSignatureFormatter(types, injectionAnnotations).format(method);
@@ -87,26 +85,8 @@ public class MethodSignatureFormatterTest {
   }
 
   @Singleton
-  @Component(modules = TestModule.class)
+  @Component
   interface TestComponent {
     void inject(MethodSignatureFormatterTest test);
-
-    @Component.Factory
-    interface Factory {
-      TestComponent create(@BindsInstance CompilationRule compilationRule);
-    }
-  }
-
-  @Module
-  static class TestModule {
-    @Provides
-    static DaggerElements elements(CompilationRule compilationRule) {
-      return new DaggerElements(compilationRule.getElements(), compilationRule.getTypes());
-    }
-
-    @Provides
-    static DaggerTypes types(CompilationRule compilationRule, DaggerElements elements) {
-      return new DaggerTypes(compilationRule.getTypes(), elements);
-    }
   }
 }

@@ -16,11 +16,8 @@
 
 package dagger.internal.codegen.base;
 
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-
 import com.google.common.collect.ImmutableList;
 import java.util.List;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
 import javax.lang.model.type.TypeMirror;
@@ -73,30 +70,6 @@ public final class MoreAnnotationValues {
           throw new TypeNotPresentException(o.toString(), null);
         }
       };
-
-  /** Returns the int value of an annotation */
-  public static int getIntValue(AnnotationMirror annotation, String valueName) {
-    return (int) getAnnotationValue(annotation, valueName).getValue();
-  }
-
-  /** Returns the String value of an annotation */
-  public static String getStringValue(AnnotationMirror annotation, String valueName) {
-    return (String) getAnnotationValue(annotation, valueName).getValue();
-  }
-
-  /** Returns the int array value of an annotation */
-  public static int[] getIntArrayValue(AnnotationMirror annotation, String valueName) {
-    return asAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
-        .mapToInt(it -> (int) it.getValue())
-        .toArray();
-  }
-
-  /** Returns the String array value of an annotation */
-  public static String[] getStringArrayValue(AnnotationMirror annotation, String valueName) {
-    return asAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
-        .map(it -> (String) it.getValue())
-        .toArray(String[]::new);
-  }
 
   private MoreAnnotationValues() {}
 }

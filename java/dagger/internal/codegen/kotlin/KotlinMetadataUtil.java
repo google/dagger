@@ -62,18 +62,6 @@ public final class KotlinMetadataUtil {
         .orElse(ImmutableSet.of());
   }
 
-  /**
-   * Returns true if the synthetic method for annotations is missing. This can occur when the Kotlin
-   * metadata of the property reports that it contains a synthetic method for annotations but such
-   * method is not found since it is synthetic and ignored by the processor.
-   */
-  public boolean isMissingSyntheticPropertyForAnnotations(VariableElement fieldElement) {
-    return metadataFactory
-        .create(fieldElement)
-        .map(metadata -> metadata.isMissingSyntheticAnnotationMethod(fieldElement))
-        .orElseThrow(() -> new IllegalStateException("Missing metadata for: " + fieldElement));
-  }
-
   /** Returns true if this type element is a Kotlin Object. */
   public boolean isObjectClass(TypeElement typeElement) {
     return metadataFactory.create(typeElement).map(KotlinMetadata::isObjectClass).orElse(false);

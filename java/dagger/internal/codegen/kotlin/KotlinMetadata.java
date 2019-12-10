@@ -16,19 +16,15 @@
 
 package dagger.internal.codegen.kotlin;
 
+import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.base.MoreAnnotationValues.getIntArrayValue;
-import static dagger.internal.codegen.base.MoreAnnotationValues.getIntValue;
-import static dagger.internal.codegen.base.MoreAnnotationValues.getStringArrayValue;
-import static dagger.internal.codegen.base.MoreAnnotationValues.getStringValue;
+import static dagger.internal.codegen.base.MoreAnnotationValues.asAnnotationValues;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
-import static dagger.internal.codegen.langmodel.DaggerElements.getFieldDescriptor;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.MoreCollectors;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +63,7 @@ final class KotlinMetadata {
   private final int flags;
 
   // Map that associates @Inject field elements with its Kotlin synthetic method for annotations.
-  private final Supplier<Map<VariableElement, Optional<MethodForAnnotations>>>
+  private final Supplier<Map<VariableElement, Optional<ExecutableElement>>>
       elementFieldAnnotationMethodMap;
 
   private KotlinMetadata(TypeElement typeElement, int flags, List<Property> properties) {
@@ -87,39 +83,18 @@ final class KotlinMetadata {
                       .collect(
                           Collectors.toMap(
                               DaggerElements::getMethodDescriptor, Function.identity()));
-              return mapFieldToAnnotationMethod(propertyDescriptors, methodDescriptors);
+              return ElementFilter.fieldsIn(typeElement.getEnclosedElements()).stream()
+                  .filter(field -> isAnnotationPresent(field, Inject.class))
+                  .collect(
+                      Collectors.toMap(
+                          Function.identity(),
+                          field ->
+                              Optional.ofNullable(
+                                      propertyDescriptors.get(
+                                          DaggerElements.getFieldDescriptor(field)))
+                                  .flatMap(Property::getMethodForAnnotationsSignature)
+                                  .map(methodDescriptors::get)));
             });
-  }
-
-  private Map<VariableElement, Optional<MethodForAnnotations>> mapFieldToAnnotationMethod(
-      Map<String, Property> propertyDescriptors, Map<String, ExecutableElement> methodDescriptors) {
-    return ElementFilter.fieldsIn(typeElement.getEnclosedElements()).stream()
-        .filter(field -> isAnnotationPresent(field, Inject.class))
-        .collect(
-            Collectors.toMap(
-                Function.identity(),
-                field ->
-                    findProperty(field, propertyDescriptors)
-                        .getMethodForAnnotationsSignature()
-                        .map(
-                            signature ->
-                                Optional.ofNullable(methodDescriptors.get(signature))
-                                    .map(MethodForAnnotations::new)
-                                    // The method may be missing across different compilations.
-                                    // See https://youtrack.jetbrains.com/issue/KT-34684
-                                    .orElse(MethodForAnnotations.MISSING))));
-  }
-
-  private Property findProperty(VariableElement field, Map<String, Property> propertyDescriptors) {
-    String fieldDescriptor = getFieldDescriptor(field);
-    if (propertyDescriptors.containsKey(fieldDescriptor)) {
-      return propertyDescriptors.get(fieldDescriptor);
-    } else {
-      // Fallback to finding property by name, see: https://youtrack.jetbrains.com/issue/KT-35124
-      return propertyDescriptors.values().stream()
-          .filter(property -> field.getSimpleName().contentEquals(property.name))
-          .collect(MoreCollectors.onlyElement());
-    }
   }
 
   TypeElement getTypeElement() {
@@ -129,33 +104,7 @@ final class KotlinMetadata {
   /** Gets the synthetic method for annotations of a given @Inject annotated field element. */
   Optional<ExecutableElement> getSyntheticAnnotationMethod(VariableElement fieldElement) {
     checkArgument(elementFieldAnnotationMethodMap.get().containsKey(fieldElement));
-    return elementFieldAnnotationMethodMap
-        .get()
-        .get(fieldElement)
-        .map(
-            methodForAnnotations -> {
-              if (methodForAnnotations == MethodForAnnotations.MISSING) {
-                throw new IllegalStateException(
-                    "Method for annotations is missing for " + fieldElement);
-              }
-              return methodForAnnotations.getMethod();
-            });
-  }
-
-  /**
-   * Returns true if the synthetic method for annotations is missing. This can occur when inspecting
-   * the Kotlin metadata of a property from another compilation unit.
-   */
-  boolean isMissingSyntheticAnnotationMethod(VariableElement fieldElement) {
-    checkArgument(elementFieldAnnotationMethodMap.get().containsKey(fieldElement));
-    return elementFieldAnnotationMethodMap
-        .get()
-        .get(fieldElement)
-        .map(methodForAnnotations -> methodForAnnotations == MethodForAnnotations.MISSING)
-        // This can be missing if there was no property annotation at all (e.g. no annotations or
-        // the qualifier is already properly attached to the field). For these cases, it isn't
-        // considered missing since there was no method to look for in the first place.
-        .orElse(false);
+    return elementFieldAnnotationMethodMap.get().get(fieldElement);
   }
 
   boolean isObjectClass() {
@@ -199,6 +148,26 @@ final class KotlinMetadata {
       // Unsupported
       return Optional.empty();
     }
+  }
+
+  private static int getIntValue(AnnotationMirror annotation, String valueName) {
+    return (int) getAnnotationValue(annotation, valueName).getValue();
+  }
+
+  private static String getStringValue(AnnotationMirror annotation, String valueName) {
+    return getAnnotationValue(annotation, valueName).getValue().toString();
+  }
+
+  private static int[] getIntArrayValue(AnnotationMirror annotation, String valueName) {
+    return asAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
+        .mapToInt(it -> (int) it.getValue())
+        .toArray();
+  }
+
+  private static String[] getStringArrayValue(AnnotationMirror annotation, String valueName) {
+    return asAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
+        .map(it -> it.getValue().toString())
+        .toArray(String[]::new);
   }
 
   private static final class MetadataVisitor extends KmClassVisitor {
@@ -299,22 +268,6 @@ final class KotlinMetadata {
     /** Returns JVM method descriptor of the synthetic method for property annotations. */
     Optional<String> getMethodForAnnotationsSignature() {
       return methodForAnnotationsSignature;
-    }
-  }
-
-  /* Data class that wraps the Kotlin property executable element for annotations */
-  private static final class MethodForAnnotations {
-
-    static final MethodForAnnotations MISSING = new MethodForAnnotations(null);
-
-    private final ExecutableElement method;
-
-    MethodForAnnotations(ExecutableElement method) {
-      this.method = method;
-    }
-
-    public ExecutableElement getMethod() {
-      return method;
     }
   }
 }

@@ -20,7 +20,8 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import java.lang.annotation.Annotation;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
@@ -53,13 +54,25 @@ public final class KotlinMetadataUtil {
    * <p>Note that this method only looks for additional annotations in the synthetic property
    * method, if any, of a Kotlin property and not for annotations in its backing field.
    */
-  public ImmutableSet<? extends AnnotationMirror> getSyntheticPropertyAnnotations(
+  public ImmutableCollection<? extends AnnotationMirror> getSyntheticPropertyAnnotations(
       VariableElement fieldElement, Class<? extends Annotation> annotationType) {
     return metadataFactory
         .create(fieldElement)
         .flatMap(metadata -> metadata.getSyntheticAnnotationMethod(fieldElement))
-        .map(methodElement -> getAnnotatedAnnotations(methodElement, annotationType))
-        .orElse(ImmutableSet.of());
+        .map(methodElement -> getAnnotatedAnnotations(methodElement, annotationType).asList())
+        .orElse(ImmutableList.of());
+  }
+
+  /**
+   * Returns true if the synthetic method for annotations is missing. This can occur when the Kotlin
+   * metadata of the property reports that it contains a synthetic method for annotations but such
+   * method is not found since it is synthetic and ignored by the processor.
+   */
+  public boolean isMissingSyntheticPropertyForAnnotations(VariableElement fieldElement) {
+    return metadataFactory
+        .create(fieldElement)
+        .map(metadata -> metadata.isMissingSyntheticAnnotationMethod(fieldElement))
+        .orElseThrow(() -> new IllegalStateException("Missing metadata for: " + fieldElement));
   }
 
   /** Returns true if this type element is a Kotlin Object. */

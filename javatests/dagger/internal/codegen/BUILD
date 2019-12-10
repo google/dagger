@@ -15,10 +15,19 @@
 # Description:
 #   Tests for the Dagger compiler/codegen
 
-package(default_visibility = ["//:src"])
-
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenJavaTests")
+
+package(default_visibility = ["//:src"])
+
+kt_jvm_library(
+    name = "kotlin_injected_qualifier",
+    srcs = ["KotlinInjectedQualifier.kt"],
+    deps = [
+        "//java/dagger:core",
+    ],
+)
 
 GenJavaTests(
     name = "compiler_tests",
@@ -27,6 +36,7 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     deps = [
+        ":kotlin_injected_qualifier",
         "//java/dagger:core",
         "//java/dagger/internal/codegen:package_info",
         "//java/dagger/internal/codegen:processor",

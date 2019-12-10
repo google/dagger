@@ -26,6 +26,7 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.TYPEVAR;
 import static javax.lang.model.type.TypeKind.VOID;
 
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
 import dagger.MapKey;
@@ -237,7 +238,7 @@ public abstract class BindingElementValidator<E extends Element> {
      * Adds an error if the element has more than one {@linkplain Qualifier qualifier} annotation.
      */
     private void checkQualifiers() {
-      ImmutableSet<? extends AnnotationMirror> qualifiers =
+      ImmutableCollection<? extends AnnotationMirror> qualifiers =
           injectionAnnotations.getQualifiers(element);
       if (qualifiers.size() > 1) {
         for (AnnotationMirror qualifier : qualifiers) {

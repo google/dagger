@@ -22,7 +22,6 @@ import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingT
 import dagger.internal.codegen.base.ClearableCache;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.element.Element;
@@ -37,15 +36,22 @@ import kotlin.Metadata;
  */
 @Singleton
 public final class KotlinMetadataFactory implements ClearableCache {
-  private final Map<TypeElement, Optional<KotlinMetadata>> metadataCache = new HashMap<>();
+  private final Map<TypeElement, KotlinMetadata> metadataCache = new HashMap<>();
 
   @Inject
   KotlinMetadataFactory() {}
 
-  public Optional<KotlinMetadata> create(Element element) {
+  /**
+   * Parses and returns the {@link KotlinMetadata} out of a given element.
+   *
+   * @throws IllegalStateException if the element has no metadata or is not enclosed in a type
+   *     element with metadata. To check if an element has metadata use {@link
+   *     KotlinMetadataUtil#hasMetadata(Element)}
+   */
+  public KotlinMetadata create(Element element) {
     TypeElement enclosingElement = closestEnclosingTypeElement(element);
     if (!isAnnotationPresent(enclosingElement, Metadata.class)) {
-      return Optional.empty();
+      throw new IllegalStateException("Missing @Metadata for: " + enclosingElement);
     }
     return metadataCache.computeIfAbsent(enclosingElement, KotlinMetadata::from);
   }

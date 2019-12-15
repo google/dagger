@@ -22,7 +22,7 @@ In order to achieve the goals of both idiomatic and portable code, Dagger
 relies on [ProGuard] to post-process the compiled bytecode.  This allows Dagger
 to emit source that looks and feels natural on both the server and Android,
 while using the different toolchains to produce bytecode that executes
-efficiently in both environements.  Moreover, Dagger has an explicit goal to
+efficiently in both environments.  Moreover, Dagger has an explicit goal to
 ensure that the Java source that it generates is consistently compatible with
 ProGuard optimizations.
 

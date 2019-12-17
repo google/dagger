@@ -28,12 +28,47 @@ deploy_library() {
   bazel build --define=pom_version="$VERSION_NAME" \
     $library $srcjar $javadoc $pomfile
 
+  # TODO(user): Consider moving this into the "gen_maven_artifact" macro, this
+  # requires having the version checked-in for the build system.
+  add_tracking_version \
+    $(bazel_output_file $library) \
+    $(bazel_output_file $pomfile)
+
   mvn $MVN_GOAL \
     -Dfile=$(bazel_output_file $library) \
     -Djavadoc=$(bazel_output_file $javadoc) \
     -DpomFile=$(bazel_output_file $pomfile) \
     -Dsources=$(bazel_output_file $srcjar) \
     "${EXTRA_MAVEN_ARGS[@]:+${EXTRA_MAVEN_ARGS[@]}}"
+}
+
+add_tracking_version() {
+  local library=$1
+  local pomfile=$2
+  local group_id=$(find_pom_value $pomfile "groupId")
+  local artifact_id=$(find_pom_value $pomfile "artifactId")
+  local temp_dir=$(mktemp -d)
+  local version_file="META-INF/${group_id}_${artifact_id}.version"
+  mkdir -p "$temp_dir/META-INF/"
+  echo $VERSION_NAME >> "$temp_dir/$version_file"
+  if [[ $library =~ \.jar$ ]]; then
+    jar uf $library -C $temp_dir $version_file
+  elif [[ $library =~ \.aar$ ]]; then
+    unzip $library classes.jar -d $temp_dir
+    jar uf $temp_dir/classes.jar -C $temp_dir $version_file
+    jar uf $library -C $temp_dir classes.jar
+  else
+    echo "Could not add tracking version file to $library"
+    exit 1
+  fi
+}
+
+find_pom_value() {
+  local pomfile=$1
+  local attribute=$2
+  # Using Python here because `mvn help:evaluate` doesn't work with our gen pom
+  # files since they don't include the aar packaging plugin.
+  python $(dirname $0)/find_pom_value.py $pomfile $attribute
 }
 
 deploy_library \

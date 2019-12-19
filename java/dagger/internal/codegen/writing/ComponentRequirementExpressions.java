@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Suppliers.memoize;
 import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
-import static dagger.internal.codegen.writing.ModuleProxies.newModuleInstance;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
@@ -54,7 +53,7 @@ public final class ComponentRequirementExpressions {
       componentRequirementExpressions = new HashMap<>();
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
-  private final DaggerElements elements;
+  private final ModuleProxies moduleProxies;
 
   // TODO(ronshapiro): give ComponentImplementation a graph() method
   @Inject
@@ -62,11 +61,12 @@ public final class ComponentRequirementExpressions {
       @ParentComponent Optional<ComponentRequirementExpressions> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      DaggerElements elements) {
+      DaggerElements elements,
+      ModuleProxies moduleProxies) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
-    this.elements = elements;
+    this.moduleProxies = moduleProxies;
   }
 
   /**
@@ -184,7 +184,7 @@ public final class ComponentRequirementExpressions {
       return CodeBlock.of(
           "this.$N = $L;",
           componentField,
-          newModuleInstance(moduleElement, componentImplementation.name(), elements));
+          moduleProxies.newModuleInstance(moduleElement, componentImplementation.name()));
     }
   }
 

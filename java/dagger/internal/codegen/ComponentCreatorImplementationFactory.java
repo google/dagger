@@ -70,13 +70,18 @@ public final class ComponentCreatorImplementationFactory {
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final KotlinMetadataUtil metadataUtil;
+  private final ModuleProxies moduleProxies;
 
   @Inject
   ComponentCreatorImplementationFactory(
-      DaggerElements elements, DaggerTypes types, KotlinMetadataUtil metadataUtil) {
+      DaggerElements elements,
+      DaggerTypes types,
+      KotlinMetadataUtil metadataUtil,
+      ModuleProxies moduleProxies) {
     this.elements = elements;
     this.types = types;
     this.metadataUtil = metadataUtil;
+    this.moduleProxies = moduleProxies;
   }
 
   /** Returns a new creator implementation for the given component, if necessary. */
@@ -347,7 +352,7 @@ public final class ComponentCreatorImplementationFactory {
 
     private CodeBlock newModuleInstance(ComponentRequirement requirement) {
       checkArgument(requirement.kind().isModule()); // this should be guaranteed to be true here
-      return ModuleProxies.newModuleInstance(requirement.typeElement(), className, elements);
+      return moduleProxies.newModuleInstance(requirement.typeElement(), className);
     }
   }
 

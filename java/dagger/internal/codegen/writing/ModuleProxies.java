@@ -46,23 +46,34 @@ import javax.lang.model.element.TypeElement;
 /** Convenience methods for generating and using module constructor proxy methods. */
 public final class ModuleProxies {
 
+  private final DaggerElements elements;
+
+  @Inject
+  public ModuleProxies(DaggerElements elements) {
+    this.elements = elements;
+  }
+
   /** Generates a {@code public static} proxy method for constructing module instances. */
   // TODO(dpb): See if this can become a SourceFileGenerator<ModuleDescriptor> instead. Doing so may
   // cause ModuleProcessingStep to defer elements multiple times.
   public static final class ModuleConstructorProxyGenerator
       extends SourceFileGenerator<TypeElement> {
-    private final DaggerElements elements;
+
+    private final ModuleProxies moduleProxies;
 
     @Inject
     ModuleConstructorProxyGenerator(
-        Filer filer, DaggerElements elements, SourceVersion sourceVersion) {
+        Filer filer,
+        DaggerElements elements,
+        SourceVersion sourceVersion,
+        ModuleProxies moduleProxies) {
       super(filer, elements, sourceVersion);
-      this.elements = elements;
+      this.moduleProxies = moduleProxies;
     }
 
     @Override
     public ClassName nameGeneratedType(TypeElement moduleElement) {
-      return constructorProxyTypeName(moduleElement);
+      return moduleProxies.constructorProxyTypeName(moduleElement);
     }
 
     @Override
@@ -73,7 +84,7 @@ public final class ModuleProxies {
     @Override
     public Optional<TypeSpec.Builder> write(TypeElement moduleElement) {
       ModuleKind.checkIsModule(moduleElement);
-      return nonPublicNullaryConstructor(moduleElement, elements).isPresent()
+      return moduleProxies.nonPublicNullaryConstructor(moduleElement).isPresent()
           ? Optional.of(buildProxy(moduleElement))
           : Optional.empty();
     }
@@ -92,7 +103,7 @@ public final class ModuleProxies {
   }
 
   /** The name of the class that hosts the module constructor proxy method. */
-  private static ClassName constructorProxyTypeName(TypeElement moduleElement) {
+  private ClassName constructorProxyTypeName(TypeElement moduleElement) {
     ModuleKind.checkIsModule(moduleElement);
     ClassName moduleClassName = ClassName.get(moduleElement);
     return moduleClassName
@@ -105,9 +116,7 @@ public final class ModuleProxies {
    * has no arguments. If an implicit reference to the enclosing class exists, or the module is
    * abstract, no proxy method can be generated.
    */
-  // TODO(ronshapiro): make this an @Injectable class that injects DaggerElements
-  private static Optional<ExecutableElement> nonPublicNullaryConstructor(
-      TypeElement moduleElement, DaggerElements elements) {
+  private Optional<ExecutableElement> nonPublicNullaryConstructor(TypeElement moduleElement) {
     ModuleKind.checkIsModule(moduleElement);
     if (moduleElement.getModifiers().contains(ABSTRACT)
         || (moduleElement.getNestingKind().isNested()
@@ -126,11 +135,10 @@ public final class ModuleProxies {
    * constructor if it's accessible from {@code requestingClass} or else by invoking the
    * constructor's generated proxy method.
    */
-  public static CodeBlock newModuleInstance(
-      TypeElement moduleElement, ClassName requestingClass, DaggerElements elements) {
+  public CodeBlock newModuleInstance(TypeElement moduleElement, ClassName requestingClass) {
     ModuleKind.checkIsModule(moduleElement);
     String packageName = requestingClass.packageName();
-    return nonPublicNullaryConstructor(moduleElement, elements)
+    return nonPublicNullaryConstructor(moduleElement)
         .filter(constructor -> !isElementAccessibleFrom(constructor, packageName))
         .map(
             constructor ->

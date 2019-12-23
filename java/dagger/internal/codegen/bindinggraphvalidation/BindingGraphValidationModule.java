@@ -16,64 +16,48 @@
 
 package dagger.internal.codegen.bindinggraphvalidation;
 
-import dagger.Binds;
+import com.google.common.collect.ImmutableSet;
 import dagger.Module;
+import dagger.Provides;
+import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.validation.CompositeBindingGraphPlugin;
 import dagger.internal.codegen.validation.Validation;
-import dagger.multibindings.IntoSet;
 import dagger.spi.BindingGraphPlugin;
 
 /** Binds the set of {@link BindingGraphPlugin}s used to implement Dagger validation. */
 @Module
 public interface BindingGraphValidationModule {
 
-  @Binds
-  @IntoSet
+  @Provides
   @Validation
-  BindingGraphPlugin dependencyCycle(DependencyCycleValidator validation);
-
-  @Binds
-  @IntoSet
-  @Validation
-  BindingGraphPlugin dependsOnProductionExecutor(DependsOnProductionExecutorValidator validation);
-
-  @Binds
-  @IntoSet
-  @Validation
-  BindingGraphPlugin duplicateBindings(DuplicateBindingsValidator validation);
-
-  @Binds
-  @IntoSet
-  @Validation
-  BindingGraphPlugin incompatiblyScopedBindings(IncompatiblyScopedBindingsValidator validation);
-
-  @Binds
-  @IntoSet
-  @Validation
-  BindingGraphPlugin injectBinding(InjectBindingValidator validation);
-
-  @Binds
-  @IntoSet
-  @Validation
-  BindingGraphPlugin mapMultibinding(MapMultibindingValidator validation);
-
-  @Binds
-  @IntoSet
-  @Validation
-  BindingGraphPlugin missingBinding(MissingBindingValidator validation);
-
-  @Binds
-  @IntoSet
-  @Validation
-  BindingGraphPlugin nullableBinding(NullableBindingValidator validation);
-
-  @Binds
-  @IntoSet
-  @Validation
-  BindingGraphPlugin provisionDependencyOnProducerBinding(
-      ProvisionDependencyOnProducerBindingValidator validation);
-
-  @Binds
-  @IntoSet
-  @Validation
-  BindingGraphPlugin subcomponentFactoryMethod(SubcomponentFactoryMethodValidator validation);
+  static ImmutableSet<BindingGraphPlugin> providePlugins(
+      CompositeBindingGraphPlugin.Factory factory,
+      CompilerOptions compilerOptions,
+      DependencyCycleValidator validation1,
+      DependsOnProductionExecutorValidator validation2,
+      DuplicateBindingsValidator validation3,
+      IncompatiblyScopedBindingsValidator validation4,
+      InjectBindingValidator validation5,
+      MapMultibindingValidator validation6,
+      MissingBindingValidator validation7,
+      NullableBindingValidator validation8,
+      ProvisionDependencyOnProducerBindingValidator validation9,
+      SubcomponentFactoryMethodValidator validation10) {
+    ImmutableSet<BindingGraphPlugin> plugins = ImmutableSet.of(
+        validation1,
+        validation2,
+        validation3,
+        validation4,
+        validation5,
+        validation6,
+        validation7,
+        validation8,
+        validation9,
+        validation10);
+    if (compilerOptions.experimentalDaggerErrorMessages()) {
+      return ImmutableSet.of(factory.create(plugins, "Dagger/Validation"));
+    } else {
+      return plugins;
+    }
+  }
 }

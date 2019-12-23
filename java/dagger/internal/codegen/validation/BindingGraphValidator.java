@@ -25,7 +25,6 @@ import dagger.internal.codegen.compileroption.ValidationType;
 import dagger.internal.codegen.validation.DiagnosticReporterFactory.DiagnosticReporterImpl;
 import dagger.model.BindingGraph;
 import dagger.spi.BindingGraphPlugin;
-import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.element.TypeElement;
@@ -40,12 +39,12 @@ public final class BindingGraphValidator {
 
   @Inject
   BindingGraphValidator(
-      @Validation Set<BindingGraphPlugin> validationPlugins,
+      @Validation ImmutableSet<BindingGraphPlugin> validationPlugins,
       ImmutableSet<BindingGraphPlugin> externalPlugins,
       DiagnosticReporterFactory diagnosticReporterFactory,
       CompilerOptions compilerOptions) {
-    this.validationPlugins = ImmutableSet.copyOf(validationPlugins);
-    this.externalPlugins = ImmutableSet.copyOf(externalPlugins);
+    this.validationPlugins = validationPlugins;
+    this.externalPlugins = externalPlugins;
     this.diagnosticReporterFactory = checkNotNull(diagnosticReporterFactory);
     this.compilerOptions = compilerOptions;
   }

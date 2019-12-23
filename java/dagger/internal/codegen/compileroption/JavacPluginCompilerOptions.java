@@ -103,4 +103,9 @@ public final class JavacPluginCompilerOptions extends CompilerOptions {
   public ValidationType explicitBindingConflictsWithInjectValidationType() {
     return NONE;
   }
+
+  @Override
+  public boolean experimentalDaggerErrorMessages() {
+    return false;
+  }
 }

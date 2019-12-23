@@ -24,6 +24,7 @@ import static dagger.internal.codegen.compileroption.FeatureStatus.DISABLED;
 import static dagger.internal.codegen.compileroption.FeatureStatus.ENABLED;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_ANDROID_MODE;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_DAGGER_ERROR_MESSAGES;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FAST_INIT;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FLOATING_BINDS_METHODS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FORMAT_GENERATED_SOURCE;
@@ -157,6 +158,11 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     return parseOption(EXPLICIT_BINDING_CONFLICTS_WITH_INJECT);
   }
 
+  @Override
+  public boolean experimentalDaggerErrorMessages() {
+    return isEnabled(EXPERIMENTAL_DAGGER_ERROR_MESSAGES);
+  }
+
   private boolean isEnabled(KeyOnlyOption keyOnlyOption) {
     return processingEnvironment.getOptions().containsKey(keyOnlyOption.toString());
   }
@@ -266,6 +272,8 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     PLUGINS_VISIT_FULL_BINDING_GRAPHS,
 
     FLOATING_BINDS_METHODS,
+
+    EXPERIMENTAL_DAGGER_ERROR_MESSAGES,
     ;
 
     final FeatureStatus defaultValue;

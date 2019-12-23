@@ -40,7 +40,7 @@ public final class BindingGraphPlugins {
 
   @Inject
   BindingGraphPlugins(
-      @Validation Set<BindingGraphPlugin> validationPlugins,
+      @Validation ImmutableSet<BindingGraphPlugin> validationPlugins,
       ImmutableSet<BindingGraphPlugin> externalPlugins,
       Filer filer,
       DaggerTypes types,

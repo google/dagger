@@ -17,7 +17,6 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite.Kind.METHOD;
 import static dagger.internal.codegen.langmodel.DaggerElements.DECLARATION_ORDER;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -38,7 +37,6 @@ import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -49,33 +47,6 @@ import javax.lang.model.util.ElementKindVisitor8;
 
 /** A factory for {@link Binding} objects. */
 final class InjectionSiteFactory {
-  private final ElementVisitor<Optional<InjectionSite>, DeclaredType> injectionSiteVisitor =
-      new ElementKindVisitor8<Optional<InjectionSite>, DeclaredType>(Optional.empty()) {
-        @Override
-        public Optional<InjectionSite> visitExecutableAsMethod(
-            ExecutableElement method, DeclaredType type) {
-          ExecutableType resolved = MoreTypes.asExecutable(types.asMemberOf(type, method));
-          return Optional.of(
-              InjectionSite.method(
-                  method,
-                  dependencyRequestFactory.forRequiredResolvedVariables(
-                      method.getParameters(), resolved.getParameterTypes())));
-        }
-
-        @Override
-        public Optional<InjectionSite> visitVariableAsField(
-            VariableElement field, DeclaredType type) {
-          if (!isAnnotationPresent(field, Inject.class)
-              || field.getModifiers().contains(PRIVATE)
-              || field.getModifiers().contains(STATIC)) {
-            return Optional.empty();
-          }
-          TypeMirror resolved = types.asMemberOf(type, field);
-          return Optional.of(
-              InjectionSite.field(
-                  field, dependencyRequestFactory.forRequiredResolvedVariable(field, resolved)));
-        }
-      };
 
   private final DaggerTypes types;
   private final DaggerElements elements;
@@ -95,27 +66,14 @@ final class InjectionSiteFactory {
   ImmutableSortedSet<InjectionSite> getInjectionSites(DeclaredType declaredType) {
     Set<InjectionSite> injectionSites = new HashSet<>();
     List<TypeElement> ancestors = new ArrayList<>();
-    SetMultimap<String, ExecutableElement> overriddenMethodMap = LinkedHashMultimap.create();
+    InjectionSiteVisitor injectionSiteVisitor = new InjectionSiteVisitor();
     for (Optional<DeclaredType> currentType = Optional.of(declaredType);
         currentType.isPresent();
         currentType = types.nonObjectSuperclass(currentType.get())) {
       DeclaredType type = currentType.get();
       ancestors.add(MoreElements.asType(type.asElement()));
       for (Element enclosedElement : type.asElement().getEnclosedElements()) {
-        Optional<InjectionSite> maybeInjectionSite =
-            injectionSiteVisitor.visit(enclosedElement, type);
-        if (maybeInjectionSite.isPresent()) {
-          InjectionSite injectionSite = maybeInjectionSite.get();
-          if (shouldBeInjected(injectionSite.element(), overriddenMethodMap)) {
-            injectionSites.add(injectionSite);
-          }
-          if (injectionSite.kind().equals(METHOD)) {
-            ExecutableElement injectionSiteMethod =
-                MoreElements.asExecutable(injectionSite.element());
-            overriddenMethodMap.put(
-                injectionSiteMethod.getSimpleName().toString(), injectionSiteMethod);
-          }
-        }
+        injectionSiteVisitor.visit(enclosedElement, type).ifPresent(injectionSites::add);
       }
     }
     return ImmutableSortedSet.copyOf(
@@ -132,30 +90,57 @@ final class InjectionSiteFactory {
         injectionSites);
   }
 
-  private boolean shouldBeInjected(
-      Element injectionSite, SetMultimap<String, ExecutableElement> overriddenMethodMap) {
-    if (!isAnnotationPresent(injectionSite, Inject.class)
-        || injectionSite.getModifiers().contains(PRIVATE)
-        || injectionSite.getModifiers().contains(STATIC)) {
-      return false;
+  private final class InjectionSiteVisitor
+      extends ElementKindVisitor8<Optional<InjectionSite>, DeclaredType> {
+    private final SetMultimap<String, ExecutableElement> subclassMethodMap =
+        LinkedHashMultimap.create();
+
+    InjectionSiteVisitor() {
+      super(Optional.empty());
     }
 
-    if (injectionSite.getKind().isField()) { // Inject all fields (self and ancestors)
-      return true;
-    }
-
-    // For each method with the same name belonging to any descendant class, return false if any
-    // method has already overridden the injectionSite method. To decrease the number of methods
-    // that are checked, we store the already injected methods in a SetMultimap and only
-    // check the methods with the same name.
-    ExecutableElement injectionSiteMethod = MoreElements.asExecutable(injectionSite);
-    TypeElement injectionSiteType = MoreElements.asType(injectionSite.getEnclosingElement());
-    for (ExecutableElement method :
-        overriddenMethodMap.get(injectionSiteMethod.getSimpleName().toString())) {
-      if (elements.overrides(method, injectionSiteMethod, injectionSiteType)) {
-        return false;
+    @Override
+    public Optional<InjectionSite> visitExecutableAsMethod(
+        ExecutableElement method, DeclaredType type) {
+      subclassMethodMap.put(method.getSimpleName().toString(), method);
+      if (!shouldBeInjected(method)) {
+        return Optional.empty();
       }
+      // This visitor assumes that subclass methods are visited before superclass methods, so we can
+      // skip any overridden method that has already been visited. To decrease the number of methods
+      // that are checked, we store the already injected methods in a SetMultimap and only check the
+      // methods with the same name.
+      String methodName = method.getSimpleName().toString();
+      TypeElement enclosingType = MoreElements.asType(method.getEnclosingElement());
+      for (ExecutableElement subclassMethod : subclassMethodMap.get(methodName)) {
+        if (method != subclassMethod && elements.overrides(subclassMethod, method, enclosingType)) {
+          return Optional.empty();
+        }
+      }
+      ExecutableType resolved = MoreTypes.asExecutable(types.asMemberOf(type, method));
+      return Optional.of(
+          InjectionSite.method(
+              method,
+              dependencyRequestFactory.forRequiredResolvedVariables(
+                  method.getParameters(), resolved.getParameterTypes())));
     }
-    return true;
+
+    @Override
+    public Optional<InjectionSite> visitVariableAsField(
+        VariableElement field, DeclaredType type) {
+      if (!shouldBeInjected(field)) {
+        return Optional.empty();
+      }
+      TypeMirror resolved = types.asMemberOf(type, field);
+      return Optional.of(
+          InjectionSite.field(
+              field, dependencyRequestFactory.forRequiredResolvedVariable(field, resolved)));
+    }
+
+    private boolean shouldBeInjected(Element injectionSite) {
+      return isAnnotationPresent(injectionSite, Inject.class)
+          && !injectionSite.getModifiers().contains(PRIVATE)
+          && !injectionSite.getModifiers().contains(STATIC);
+    }
   }
 }

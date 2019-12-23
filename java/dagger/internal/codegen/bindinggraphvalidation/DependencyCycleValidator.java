@@ -213,7 +213,7 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
        * breaks the cycle, so does the optional binding. */
       TypeMirror optionalValueType = OptionalType.from(edge.dependencyRequest().key()).valueType();
       RequestKind requestKind = getRequestKind(optionalValueType);
-      return breaksCycle(extractKeyType(requestKind, optionalValueType), requestKind);
+      return breaksCycle(extractKeyType(optionalValueType), requestKind);
     }
     return false;
   }

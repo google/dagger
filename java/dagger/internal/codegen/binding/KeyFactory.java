@@ -23,12 +23,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
-import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 import static dagger.internal.codegen.binding.MapKeys.mapKeyType;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.Optionals.firstPresent;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
+import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 import static java.util.Arrays.asList;
 import static javax.lang.model.element.ElementKind.METHOD;
 
@@ -172,7 +172,7 @@ public final class KeyFactory {
         if (isFutureType(setType.elementType())) {
           returnType =
               types.getDeclaredType(
-                  elements.getTypeElement(Set.class), types.unwrapType(setType.elementType()));
+                  elements.getTypeElement(Set.class), unwrapType(setType.elementType()));
         }
       }
     }
@@ -429,9 +429,6 @@ public final class KeyFactory {
     }
 
     TypeMirror optionalValueType = OptionalType.from(key).valueType();
-    return Optional.of(
-        key.toBuilder()
-            .type(extractKeyType(getRequestKind(optionalValueType), optionalValueType))
-            .build());
+    return Optional.of(key.toBuilder().type(extractKeyType(optionalValueType)).build());
   }
 }

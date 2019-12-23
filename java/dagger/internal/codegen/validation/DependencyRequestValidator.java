@@ -19,7 +19,6 @@ package dagger.internal.codegen.validation;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.asVariable;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
-import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
 import static javax.lang.model.type.TypeKind.WILDCARD;
 
@@ -100,7 +99,7 @@ final class DependencyRequestValidator {
 
   private void checkType(
       ValidationReport.Builder<?> report, Element requestElement, TypeMirror requestType) {
-    TypeMirror keyType = extractKeyType(getRequestKind(requestType), requestType);
+    TypeMirror keyType = extractKeyType(requestType);
     if (keyType.getKind().equals(WILDCARD)) {
       // TODO(ronshapiro): Explore creating this message using RequestKinds.
       report.addError(

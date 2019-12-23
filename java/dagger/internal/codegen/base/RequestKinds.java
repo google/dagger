@@ -20,19 +20,18 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.javapoet.TypeNames.lazyOf;
 import static dagger.internal.codegen.javapoet.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.javapoet.TypeNames.producedOf;
 import static dagger.internal.codegen.javapoet.TypeNames.producerOf;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 import static dagger.internal.codegen.langmodel.DaggerTypes.checkTypePresent;
-import static dagger.model.RequestKind.INSTANCE;
 import static dagger.model.RequestKind.LAZY;
 import static dagger.model.RequestKind.PRODUCED;
 import static dagger.model.RequestKind.PRODUCER;
 import static dagger.model.RequestKind.PROVIDER;
 import static dagger.model.RequestKind.PROVIDER_OF_LAZY;
+import static javax.lang.model.type.TypeKind.DECLARED;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Equivalence;
@@ -117,15 +116,20 @@ public final class RequestKinds {
 
   public static RequestKind getRequestKindUncached(TypeMirror type) {
     checkTypePresent(type);
+    if (!type.getKind().equals(DECLARED) || asDeclared(type).getTypeArguments().isEmpty()) {
+      // If the type is not a declared type (i.e. class or interface) with type arguments, then we
+      // know it can't be a parameterized type of one of the framework classes, so return INSTANCE.
+      return RequestKind.INSTANCE;
+    }
     for (RequestKind kind : FRAMEWORK_CLASSES.keySet()) {
-      if (matchesKind(kind, type)) {
+      if (isTypeOf(frameworkClass(kind), type)) {
         if (kind.equals(PROVIDER) && matchesKind(LAZY, extractKeyType(kind, type))) {
           return PROVIDER_OF_LAZY;
         }
         return kind;
       }
     }
-    return INSTANCE;
+    return RequestKind.INSTANCE;
   }
 
   /**
@@ -147,16 +151,19 @@ public final class RequestKinds {
    * @throws IllegalArgumentException if {@code type} is not wrapped with {@code requestKind}'s
    *     framework class(es).
    */
-  public static TypeMirror extractKeyType(RequestKind requestKind, TypeMirror type) {
-    checkTypePresent(type);
+  public static TypeMirror extractKeyType(TypeMirror type) {
+    return extractKeyType(getRequestKind(type), type);
+  }
+
+  private static TypeMirror extractKeyType(RequestKind requestKind, TypeMirror type) {
     switch (requestKind) {
       case INSTANCE:
         return type;
       case PROVIDER_OF_LAZY:
         return extractKeyType(LAZY, extractKeyType(PROVIDER, type));
       default:
-        checkArgument(isType(type) && isTypeOf(frameworkClass(requestKind), type));
-        return getOnlyElement(MoreTypes.asDeclared(type).getTypeArguments());
+        checkArgument(isType(type));
+        return DaggerTypes.unwrapType(type);
     }
   }
 

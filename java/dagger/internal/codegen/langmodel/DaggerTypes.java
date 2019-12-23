@@ -83,7 +83,7 @@ public final class DaggerTypes implements Types {
    * @throws IllegalArgumentException if {@code type} is not a declared type or has zero or more
    *     than one type arguments.
    */
-  public TypeMirror unwrapType(TypeMirror type) {
+  public static TypeMirror unwrapType(TypeMirror type) {
     TypeMirror unwrapped = unwrapTypeOrDefault(type, null);
     checkArgument(unwrapped != null, "%s is a raw type", type);
     return unwrapped;
@@ -101,7 +101,7 @@ public final class DaggerTypes implements Types {
     return unwrapTypeOrDefault(type, elements.getTypeElement(Object.class).asType());
   }
 
-  private TypeMirror unwrapTypeOrDefault(TypeMirror type, TypeMirror defaultType) {
+  private static TypeMirror unwrapTypeOrDefault(TypeMirror type, TypeMirror defaultType) {
     DeclaredType declaredType = MoreTypes.asDeclared(type);
     TypeElement typeElement = MoreElements.asType(declaredType.asElement());
     checkArgument(

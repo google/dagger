@@ -25,6 +25,7 @@ import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.base.RequestKinds.frameworkClass;
 import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
+import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 import static dagger.model.RequestKind.FUTURE;
 import static dagger.model.RequestKind.INSTANCE;
 import static dagger.model.RequestKind.MEMBERS_INJECTION;
@@ -36,7 +37,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Lazy;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -60,14 +60,11 @@ import javax.lang.model.type.TypeMirror;
  */
 public final class DependencyRequestFactory {
   private final KeyFactory keyFactory;
-  private final DaggerTypes types;
   private final InjectionAnnotations injectionAnnotations;
 
   @Inject
-  DependencyRequestFactory(
-      KeyFactory keyFactory, DaggerTypes types, InjectionAnnotations injectionAnnotations) {
+  DependencyRequestFactory(KeyFactory keyFactory, InjectionAnnotations injectionAnnotations) {
     this.keyFactory = keyFactory;
-    this.types = types;
     this.injectionAnnotations = injectionAnnotations;
   }
 
@@ -167,7 +164,7 @@ public final class DependencyRequestFactory {
     if (isTypeOf(ListenableFuture.class, type)) {
       return DependencyRequest.builder()
           .kind(FUTURE)
-          .key(keyFactory.forQualifiedType(qualifier, types.unwrapType(type)))
+          .key(keyFactory.forQualifiedType(qualifier, unwrapType(type)))
           .requestElement(productionMethod)
           .build();
     } else {
@@ -224,7 +221,7 @@ public final class DependencyRequestFactory {
     RequestKind requestKind = getRequestKind(type);
     return DependencyRequest.builder()
         .kind(requestKind)
-        .key(keyFactory.forQualifiedType(qualifier, extractKeyType(requestKind, type)))
+        .key(keyFactory.forQualifiedType(qualifier, extractKeyType(type)))
         .requestElement(requestElement)
         .isNullable(allowsNull(requestKind, getNullableType(requestElement)))
         .build();

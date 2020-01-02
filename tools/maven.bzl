@@ -139,7 +139,7 @@ def _validate_maven_deps_impl(ctx):
     exactly.
     """
     target = ctx.attr.target
-    if not target[MavenInfo].maven_artifacts:
+    if not target[MavenInfo].artifact:
         fail("\t[Error]: %s is not a maven artifact" % target.label)
 
     deps = [dep.label for dep in getattr(ctx.attr, "deps", [])]

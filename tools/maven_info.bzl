@@ -18,16 +18,14 @@
 # TODO(b/142057516): Unfork this file once we've settled on a more general API.
 MavenInfo = provider(
     fields = {
-        "maven_artifacts": """
-        The Maven coordinates for the artifacts that are exported by this target: i.e. the target
-        itself and its transitively exported targets.
+        "artifact": """
+        The Maven coordinate for the artifact that is exported by this target, if one exists.
         """,
-        "maven_dependencies": """
-        The Maven coordinates of the direct dependencies, and the transitively exported targets, of
-        this target.
+        "has_srcs": """
+        True if this library contains srcs..
         """,
         "all_transitive_deps": """
-        All transitive deps of the target.
+        All transitive deps of the target with srcs.
         """,
         "maven_transitive_deps": """
         All transitive deps that are included in some maven dependency.
@@ -36,30 +34,28 @@ MavenInfo = provider(
 )
 
 _EMPTY_MAVEN_INFO = MavenInfo(
-    maven_artifacts = depset(),
-    maven_dependencies = depset(),
+    artifact = None,
+    has_srcs = False,
     maven_transitive_deps = depset(),
     all_transitive_deps = depset(),
 )
 
 _MAVEN_COORDINATES_PREFIX = "maven_coordinates="
 
-def _maven_artifacts(targets):
-    return [target[MavenInfo].maven_artifacts for target in targets if MavenInfo in target]
-
 def _collect_maven_info_impl(target, ctx):
     tags = getattr(ctx.rule.attr, "tags", [])
+    srcs = getattr(ctx.rule.attr, "srcs", [])
     deps = getattr(ctx.rule.attr, "deps", [])
     exports = getattr(ctx.rule.attr, "exports", [])
 
-    maven_artifacts = []
+    artifact = None
     for tag in tags:
         if tag in ("maven:compile_only", "maven:shaded"):
             return [_EMPTY_MAVEN_INFO]
         if tag.startswith(_MAVEN_COORDINATES_PREFIX):
-            maven_artifacts.append(tag[len(_MAVEN_COORDINATES_PREFIX):])
+            artifact = tag[len(_MAVEN_COORDINATES_PREFIX):]
 
-    all_deps = [dep.label for dep in (deps + exports)]
+    all_deps = [dep.label for dep in (deps + exports) if dep[MavenInfo].has_srcs]
     all_transitive_deps = [dep[MavenInfo].all_transitive_deps for dep in (deps + exports)]
 
     maven_deps = []
@@ -67,15 +63,15 @@ def _collect_maven_info_impl(target, ctx):
     for dep in (deps + exports):
         # If the dep is itself a maven artifact, add it and all of its transitive deps.
         # Otherwise, just propagate its transitive maven deps.
-        if dep[MavenInfo].maven_artifacts or dep[MavenInfo] == _EMPTY_MAVEN_INFO:
+        if dep[MavenInfo].artifact or dep[MavenInfo] == _EMPTY_MAVEN_INFO:
             maven_deps.append(dep.label)
             maven_transitive_deps.append(dep[MavenInfo].all_transitive_deps)
         else:
             maven_transitive_deps.append(dep[MavenInfo].maven_transitive_deps)
 
     return [MavenInfo(
-        maven_artifacts = depset(maven_artifacts, transitive = _maven_artifacts(exports)),
-        maven_dependencies = depset([], transitive = _maven_artifacts(deps + exports)),
+        artifact = artifact,
+        has_srcs = len(srcs) > 0,
         maven_transitive_deps = depset(maven_deps, transitive = maven_transitive_deps),
         all_transitive_deps = depset(all_deps, transitive = all_transitive_deps),
     )]

@@ -15,9 +15,9 @@
 # Description:
 #   A JSR-330 compliant dependency injection system for android and java
 
-package(default_visibility = ["//:src"])
-
 load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
+
+package(default_visibility = ["//:src"])
 
 java_library(
     name = "processor",

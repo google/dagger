@@ -84,11 +84,13 @@ def gen_maven_artifact(
       shaded_deps: The shaded deps for the jarjar.
       shaded_rules: The shaded rules for the jarjar
     """
+
     _validate_maven_deps(
         name = name + "-validation",
         target = artifact_target,
         deps = deps,
     )
+
 
     shaded_deps = shaded_deps or []
     shaded_rules = shaded_rules or []

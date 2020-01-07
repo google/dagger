@@ -32,10 +32,10 @@ import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.MoreCollectors;
 import dagger.internal.InjectedFieldSignature;
+import dagger.internal.codegen.extension.DaggerCollectors;
+import dagger.internal.codegen.extension.DaggerStreams;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
@@ -92,7 +92,7 @@ public final class InjectionAnnotations {
           .map(EQUIVALENCE::wrap) // Wrap in equivalence to deduplicate
           .distinct()
           .map(Wrapper::get)
-          .collect(ImmutableList.toImmutableList());
+          .collect(DaggerStreams.toImmutableList());
     } else {
       return qualifiers.asList();
     }
@@ -133,7 +133,7 @@ public final class InjectionAnnotations {
                         .map(memberInjectedFieldSignature::equals)
                         // If a method is not an @InjectedFieldSignature method then filter it out
                         .orElse(false))
-            .collect(MoreCollectors.toOptional())
+            .collect(DaggerCollectors.toOptional())
             .map(this::getQualifiers)
             .orElseThrow(
                 () ->

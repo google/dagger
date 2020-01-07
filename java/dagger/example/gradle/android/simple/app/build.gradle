@@ -34,4 +34,7 @@ dependencies {
   implementation 'com.google.dagger:dagger-android-support:LOCAL-SNAPSHOT'
   annotationProcessor 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'
   annotationProcessor 'com.google.dagger:dagger-android-processor:LOCAL-SNAPSHOT'
+
+  // To help us catch usages of Guava APIs for Java 8 in the '-jre' variant.
+  annotationProcessor'com.google.guava:guava:28.1-android'
 }

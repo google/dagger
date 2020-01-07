@@ -19,7 +19,6 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.MoreCollectors.onlyElement;
 import static dagger.internal.codegen.base.RequestKinds.requestTypeName;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
@@ -48,6 +47,7 @@ import dagger.internal.Preconditions;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.extension.DaggerCollectors;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
@@ -276,7 +276,8 @@ final class InjectionMethods {
         case FIELD:
           Optional<AnnotationMirror> qualifier =
               injectionSite.dependencies().stream()
-                  .collect(onlyElement()) // methods for fields have a single dependency request
+                  // methods for fields have a single dependency request
+                  .collect(DaggerCollectors.onlyElement())
                   .key()
                   .qualifier();
           return fieldProxy(

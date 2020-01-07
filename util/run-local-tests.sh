@@ -15,6 +15,7 @@ util/install-local-snapshot.sh
 ./$_SIMPLE_EXAMPLE_DIR/gradlew -p $_SIMPLE_EXAMPLE_DIR build --stacktrace
 ./$_ANDROID_EXAMPLE_DIR/gradlew -p $_ANDROID_EXAMPLE_DIR build --stacktrace
 
+
 verify_version_file() {
   local m2_repo=$1
   local group_path=com/google/dagger

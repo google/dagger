@@ -28,7 +28,7 @@ import static dagger.internal.codegen.langmodel.DaggerElements.getFieldDescripto
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.MoreCollectors;
+import dagger.internal.codegen.extension.DaggerCollectors;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.ArrayList;
 import java.util.List;
@@ -118,7 +118,7 @@ final class KotlinMetadata {
       // Fallback to finding property by name, see: https://youtrack.jetbrains.com/issue/KT-35124
       return propertyDescriptors.values().stream()
           .filter(property -> field.getSimpleName().contentEquals(property.name))
-          .collect(MoreCollectors.onlyElement());
+          .collect(DaggerCollectors.onlyElement());
     }
   }
 

@@ -24,6 +24,7 @@ java_library(
     tags = ["maven:merged"],
     deps = [
         "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/guava:annotations",
         "//java/dagger/internal/guava:base",

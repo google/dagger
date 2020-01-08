@@ -26,6 +26,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.codegen.binding.ConfigurationAnnotations;
 import dagger.internal.codegen.binding.InjectionAnnotations;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.multibindings.ElementsIntoSet;
@@ -45,11 +46,13 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   ProducesMethodValidator(
       DaggerElements elements,
       DaggerTypes types,
+      KotlinMetadataUtil kotlinMetadataUtil,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
         elements,
         types,
+        kotlinMetadataUtil,
         dependencyRequestValidator,
         Produces.class,
         ProducerModule.class,

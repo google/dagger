@@ -214,11 +214,14 @@ public final class BindingFactory {
     if (!types.isSameType(methodType, method.asType())) {
       builder.unresolved(create.apply(method, MoreElements.asType(method.getEnclosingElement())));
     }
+    boolean isKotlinObject =
+        metadataUtil.isObjectClass(contributedBy)
+            || metadataUtil.isCompanionObjectClass(contributedBy);
     return builder
         .contributionType(ContributionType.fromBindingElement(method))
         .bindingElement(method)
         .contributingModule(contributedBy)
-        .isModuleKotlinObject(metadataUtil.isObjectClass(contributedBy))
+        .isContributingModuleKotlinObject(isKotlinObject)
         .key(key)
         .dependencies(
             dependencyRequestFactory.forRequiredResolvedVariables(
@@ -420,12 +423,14 @@ public final class BindingFactory {
       ContributionBinding.Builder<?, ?> builder,
       DelegateDeclaration delegateDeclaration,
       Class<?> frameworkType) {
+    boolean isKotlinObject =
+        metadataUtil.isObjectClass(delegateDeclaration.contributingModule().get())
+            || metadataUtil.isCompanionObjectClass(delegateDeclaration.contributingModule().get());
     return builder
         .contributionType(delegateDeclaration.contributionType())
         .bindingElement(delegateDeclaration.bindingElement().get())
         .contributingModule(delegateDeclaration.contributingModule().get())
-        .isModuleKotlinObject(
-            metadataUtil.isObjectClass(delegateDeclaration.contributingModule().get()))
+        .isContributingModuleKotlinObject(isKotlinObject)
         .key(keyFactory.forDelegateBinding(delegateDeclaration, frameworkType))
         .dependencies(delegateDeclaration.delegateRequest())
         .wrappedMapKeyAnnotation(delegateDeclaration.wrappedMapKey())

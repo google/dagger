@@ -16,10 +16,14 @@
 
 package dagger.functional.kotlin
 
+import javax.inject.Inject
 import javax.inject.Qualifier
 
 data class TestDataA(val data: String)
 data class TestDataB(val data: String)
+
+interface TestInterface
+class TestInjectable @Inject constructor() : TestInterface
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)

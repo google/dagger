@@ -67,7 +67,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
 
   @Override
   public boolean requiresModuleInstance() {
-    return !isModuleKotlinObject().orElse(false) && super.requiresModuleInstance();
+    return !isContributingModuleKotlinObject().orElse(false) && super.requiresModuleInstance();
   }
 
   @Override
@@ -75,7 +75,11 @@ public abstract class ContributionBinding extends Binding implements HasContribu
     return nullableType().isPresent();
   }
 
-  abstract Optional<Boolean> isModuleKotlinObject();
+  /**
+   * Returns {@code true} if the contributing module is a Kotlin object. Note that a companion
+   * object is also considered a Kotlin object.
+   */
+  abstract Optional<Boolean> isContributingModuleKotlinObject();
 
   /** The strategy for getting an instance of a factory for a {@link ContributionBinding}. */
   public enum FactoryCreationStrategy {
@@ -168,7 +172,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
 
     abstract B contributingModule(TypeElement contributingModule);
 
-    abstract B isModuleKotlinObject(boolean isModuleKotlinObject);
+    abstract B isContributingModuleKotlinObject(boolean isModuleKotlinObject);
 
     public abstract B key(Key key);
 
@@ -186,7 +190,8 @@ public abstract class ContributionBinding extends Binding implements HasContribu
     public C build() {
       C binding = autoBuild();
       Preconditions.checkState(
-          binding.contributingModule().isPresent() == binding.isModuleKotlinObject().isPresent(),
+          binding.contributingModule().isPresent()
+              == binding.isContributingModuleKotlinObject().isPresent(),
           "The contributionModule and isModuleKotlinObject must both be set together.");
       return binding;
     }

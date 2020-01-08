@@ -33,6 +33,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.ModuleKind;
 import dagger.internal.codegen.binding.SourceFiles;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.Accessibility;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
@@ -47,10 +48,12 @@ import javax.lang.model.element.TypeElement;
 public final class ModuleProxies {
 
   private final DaggerElements elements;
+  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
-  public ModuleProxies(DaggerElements elements) {
+  public ModuleProxies(DaggerElements elements, KotlinMetadataUtil metadataUtil) {
     this.elements = elements;
+    this.metadataUtil = metadataUtil;
   }
 
   /** Generates a {@code public static} proxy method for constructing module instances. */
@@ -60,15 +63,18 @@ public final class ModuleProxies {
       extends SourceFileGenerator<TypeElement> {
 
     private final ModuleProxies moduleProxies;
+    private final KotlinMetadataUtil metadataUtil;
 
     @Inject
     ModuleConstructorProxyGenerator(
         Filer filer,
         DaggerElements elements,
         SourceVersion sourceVersion,
-        ModuleProxies moduleProxies) {
+        ModuleProxies moduleProxies,
+        KotlinMetadataUtil metadataUtil) {
       super(filer, elements, sourceVersion);
       this.moduleProxies = moduleProxies;
+      this.metadataUtil = metadataUtil;
     }
 
     @Override
@@ -83,7 +89,7 @@ public final class ModuleProxies {
 
     @Override
     public Optional<TypeSpec.Builder> write(TypeElement moduleElement) {
-      ModuleKind.checkIsModule(moduleElement);
+      ModuleKind.checkIsModule(moduleElement, metadataUtil);
       return moduleProxies.nonPublicNullaryConstructor(moduleElement).isPresent()
           ? Optional.of(buildProxy(moduleElement))
           : Optional.empty();
@@ -104,7 +110,7 @@ public final class ModuleProxies {
 
   /** The name of the class that hosts the module constructor proxy method. */
   private ClassName constructorProxyTypeName(TypeElement moduleElement) {
-    ModuleKind.checkIsModule(moduleElement);
+    ModuleKind.checkIsModule(moduleElement, metadataUtil);
     ClassName moduleClassName = ClassName.get(moduleElement);
     return moduleClassName
         .topLevelClassName()
@@ -117,7 +123,7 @@ public final class ModuleProxies {
    * abstract, no proxy method can be generated.
    */
   private Optional<ExecutableElement> nonPublicNullaryConstructor(TypeElement moduleElement) {
-    ModuleKind.checkIsModule(moduleElement);
+    ModuleKind.checkIsModule(moduleElement, metadataUtil);
     if (moduleElement.getModifiers().contains(ABSTRACT)
         || (moduleElement.getNestingKind().isNested()
             && !moduleElement.getModifiers().contains(STATIC))) {
@@ -136,7 +142,7 @@ public final class ModuleProxies {
    * constructor's generated proxy method.
    */
   public CodeBlock newModuleInstance(TypeElement moduleElement, ClassName requestingClass) {
-    ModuleKind.checkIsModule(moduleElement);
+    ModuleKind.checkIsModule(moduleElement, metadataUtil);
     String packageName = requestingClass.packageName();
     return nonPublicNullaryConstructor(moduleElement)
         .filter(constructor -> !isElementAccessibleFrom(constructor, packageName))

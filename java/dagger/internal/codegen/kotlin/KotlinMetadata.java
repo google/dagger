@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
@@ -66,13 +67,20 @@ final class KotlinMetadata {
    */
   private final int flags;
 
+  private final Optional<String> companionObjectName;
+
   // Map that associates @Inject field elements with its Kotlin synthetic method for annotations.
   private final Supplier<Map<VariableElement, Optional<MethodForAnnotations>>>
       elementFieldAnnotationMethodMap;
 
-  private KotlinMetadata(TypeElement typeElement, int flags, List<Property> properties) {
+  private KotlinMetadata(
+      TypeElement typeElement,
+      int flags,
+      Optional<String> companionObjectName,
+      List<Property> properties) {
     this.typeElement = typeElement;
     this.flags = flags;
+    this.companionObjectName = companionObjectName;
     this.elementFieldAnnotationMethodMap =
         Suppliers.memoize(
             () -> {
@@ -162,11 +170,30 @@ final class KotlinMetadata {
     return Flag.Class.IS_OBJECT.invoke(flags);
   }
 
+  /** Returns true if the type element of this metadata is a Kotlin companion object. */
+  boolean isCompanionObjectClass() {
+    return Flag.Class.IS_COMPANION_OBJECT.invoke(flags);
+  }
+
+  /**
+   * Returns the name of the companion object enclosed by the type element of this metadata. If the
+   * type element this metadata belongs to does not have a companion object, then this method
+   * returns an empty optional.
+   */
+  Optional<String> getCompanionObjectName() {
+    return companionObjectName;
+  }
+
+  boolean isPrivate() {
+    return Flag.IS_PRIVATE.invoke(flags);
+  }
+
   /** Parse Kotlin class metadata from a given type element * */
   static KotlinMetadata from(TypeElement typeElement) {
     MetadataVisitor visitor = new MetadataVisitor();
     metadataOf(typeElement).accept(visitor);
-    return new KotlinMetadata(typeElement, visitor.classFlags, visitor.classProperties);
+    return new KotlinMetadata(
+        typeElement, visitor.classFlags, visitor.companionObjectName, visitor.classProperties);
   }
 
   private static KotlinClassMetadata.Class metadataOf(TypeElement typeElement) {
@@ -200,6 +227,7 @@ final class KotlinMetadata {
   private static final class MetadataVisitor extends KmClassVisitor {
 
     int classFlags;
+    Optional<String> companionObjectName = Optional.empty();
     List<Property> classProperties = new ArrayList<>();
 
     @Override
@@ -208,11 +236,16 @@ final class KotlinMetadata {
     }
 
     @Override
+    public void visitCompanionObject(@Nullable String companionObjectName) {
+      this.companionObjectName = Optional.ofNullable(companionObjectName);
+    }
+
+    @Override
     public KmPropertyVisitor visitProperty(
         int flags, String name, int getterFlags, int setterFlags) {
       return new KmPropertyVisitor() {
-        String fieldSignature;
-        String methodForAnnotationsSignature;
+        Optional<String> fieldSignature;
+        Optional<String> methodForAnnotationsSignature = Optional.empty();
 
         @Override
         public KmPropertyExtensionVisitor visitExtensions(KmExtensionType kmExtensionType) {
@@ -224,19 +257,18 @@ final class KotlinMetadata {
             @Override
             public void visit(
                 int jvmFlags,
-                JvmFieldSignature jvmFieldSignature,
-                JvmMethodSignature getterSignature,
-                JvmMethodSignature setterSignature) {
-              if (jvmFieldSignature != null) {
-                fieldSignature = jvmFieldSignature.asString();
-              }
+                @Nullable JvmFieldSignature jvmFieldSignature,
+                @Nullable JvmMethodSignature getterSignature,
+                @Nullable JvmMethodSignature setterSignature) {
+              fieldSignature =
+                  Optional.ofNullable(jvmFieldSignature).map(JvmFieldSignature::asString);
             }
 
             @Override
-            public void visitSyntheticMethodForAnnotations(JvmMethodSignature methodSignature) {
-              if (methodSignature != null) {
-                methodForAnnotationsSignature = methodSignature.asString();
-              }
+            public void visitSyntheticMethodForAnnotations(
+                @Nullable JvmMethodSignature methodSignature) {
+              methodForAnnotationsSignature =
+                  Optional.ofNullable(methodSignature).map(JvmMethodSignature::asString);
             }
           };
         }
@@ -244,11 +276,7 @@ final class KotlinMetadata {
         @Override
         public void visitEnd() {
           classProperties.add(
-              new Property(
-                  name,
-                  flags,
-                  Optional.ofNullable(fieldSignature),
-                  Optional.ofNullable(methodForAnnotationsSignature)));
+              new Property(name, flags, fieldSignature, methodForAnnotationsSignature));
         }
       };
     }

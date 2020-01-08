@@ -35,6 +35,7 @@ import dagger.internal.codegen.binding.DelegateDeclaration;
 import dagger.internal.codegen.binding.DelegateDeclaration.Factory;
 import dagger.internal.codegen.binding.ProductionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.validation.ModuleValidator;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
@@ -64,6 +65,7 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement>
   private final SourceFileGenerator<TypeElement> moduleConstructorProxyGenerator;
   private final InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator;
   private final DelegateDeclaration.Factory delegateDeclarationFactory;
+  private final KotlinMetadataUtil metadataUtil;
   private final Set<TypeElement> processedModuleElements = Sets.newLinkedHashSet();
 
   @Inject
@@ -75,7 +77,8 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement>
       SourceFileGenerator<ProductionBinding> producerFactoryGenerator,
       @ModuleGenerator SourceFileGenerator<TypeElement> moduleConstructorProxyGenerator,
       InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator,
-      Factory delegateDeclarationFactory) {
+      Factory delegateDeclarationFactory,
+      KotlinMetadataUtil metadataUtil) {
     super(MoreElements::asType);
     this.messager = messager;
     this.moduleValidator = moduleValidator;
@@ -85,6 +88,7 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement>
     this.moduleConstructorProxyGenerator = moduleConstructorProxyGenerator;
     this.inaccessibleMapKeyProxyGenerator = inaccessibleMapKeyProxyGenerator;
     this.delegateDeclarationFactory = delegateDeclarationFactory;
+    this.metadataUtil = metadataUtil;
   }
 
   @Override
@@ -106,21 +110,36 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement>
     if (processedModuleElements.contains(module)) {
       return;
     }
+    // For backwards compatibility, we allow a companion object to be annotated with @Module even
+    // though it's no longer required. However, we skip processing the companion object itself
+    // because it will now be processed when processing the companion object's enclosing class.
+    if (metadataUtil.isCompanionObjectClass(module)) {
+      // TODO(user): Be strict about annotating companion objects with @Module,
+      //  i.e. tell user to annotate parent instead.
+      return;
+    }
     ValidationReport<TypeElement> report = moduleValidator.validate(module);
     report.printMessagesTo(messager);
     if (report.isClean()) {
-      for (ExecutableElement method : methodsIn(module.getEnclosedElements())) {
-        if (isAnnotationPresent(method, Provides.class)) {
-          generate(factoryGenerator, bindingFactory.providesMethodBinding(method, module));
-        } else if (isAnnotationPresent(method, Produces.class)) {
-          generate(producerFactoryGenerator, bindingFactory.producesMethodBinding(method, module));
-        } else if (isAnnotationPresent(method, Binds.class)) {
-          inaccessibleMapKeyProxyGenerator.generate(bindsMethodBinding(module, method), messager);
-        }
+      generateForMethodsIn(module);
+      if (metadataUtil.hasEnclosedCompanionObject(module)) {
+        generateForMethodsIn(metadataUtil.getEnclosedCompanionObject(module));
       }
-      moduleConstructorProxyGenerator.generate(module, messager);
     }
     processedModuleElements.add(module);
+  }
+
+  private void generateForMethodsIn(TypeElement module) {
+    for (ExecutableElement method : methodsIn(module.getEnclosedElements())) {
+      if (isAnnotationPresent(method, Provides.class)) {
+        generate(factoryGenerator, bindingFactory.providesMethodBinding(method, module));
+      } else if (isAnnotationPresent(method, Produces.class)) {
+        generate(producerFactoryGenerator, bindingFactory.producesMethodBinding(method, module));
+      } else if (isAnnotationPresent(method, Binds.class)) {
+        inaccessibleMapKeyProxyGenerator.generate(bindsMethodBinding(module, method), messager);
+      }
+    }
+    moduleConstructorProxyGenerator.generate(module, messager);
   }
 
   private <B extends ContributionBinding> void generate(

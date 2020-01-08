@@ -29,6 +29,7 @@ import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.BindsTypeChecker;
 import dagger.internal.codegen.binding.InjectionAnnotations;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.producers.ProducerModule;
@@ -46,12 +47,14 @@ final class BindsMethodValidator extends BindingMethodValidator {
   BindsMethodValidator(
       DaggerElements elements,
       DaggerTypes types,
+      KotlinMetadataUtil kotlinMetadataUtil,
       BindsTypeChecker bindsTypeChecker,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
         elements,
         types,
+        kotlinMetadataUtil,
         Binds.class,
         ImmutableSet.of(Module.class, ProducerModule.class),
         dependencyRequestValidator,

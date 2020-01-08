@@ -17,13 +17,13 @@
 package dagger.internal.codegen.writing;
 
 import static com.google.auto.common.MoreElements.asExecutable;
+import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod.requiresInjectionMethod;
 
-import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -127,7 +127,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
         Optional<CodeBlock> requiredModuleInstance = moduleReference(requestingClass);
         if (requiredModuleInstance.isPresent()) {
           module = requiredModuleInstance.get();
-        } else if (metadataUtil.isObjectClass(MoreElements.asType(method.getEnclosingElement()))) {
+        } else if (metadataUtil.isObjectClass(asType(method.getEnclosingElement()))) {
           // Call through the singleton instance.
           // See: https://kotlinlang.org/docs/reference/java-to-kotlin-interop.html#static-methods
           module = CodeBlock.of("$T.INSTANCE", provisionBinding.bindingTypeElement().get());

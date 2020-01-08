@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
@@ -24,6 +25,7 @@ import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import dagger.Module;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.producers.ProducerModule;
 import java.lang.annotation.Annotation;
 import java.util.EnumSet;
@@ -67,8 +69,14 @@ public enum ModuleKind {
     return kinds.stream().findAny();
   }
 
-  public static void checkIsModule(TypeElement moduleElement) {
-    checkArgument(forAnnotatedElement(moduleElement).isPresent());
+  public static void checkIsModule(TypeElement moduleElement, KotlinMetadataUtil metadataUtil) {
+    // If the type element is a Kotlin companion object, then assert it is a module if its enclosing
+    // type is a module.
+    if (metadataUtil.isCompanionObjectClass(moduleElement)) {
+      checkArgument(forAnnotatedElement(asType(moduleElement.getEnclosingElement())).isPresent());
+    } else {
+      checkArgument(forAnnotatedElement(moduleElement).isPresent());
+    }
   }
 
   private final Class<? extends Annotation> moduleAnnotation;

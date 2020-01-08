@@ -16,16 +16,19 @@
 
 package dagger.internal.codegen.binding;
 
+import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreElements.getPackage;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.transform;
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.langmodel.DaggerElements.getMethodDescriptor;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.NONE;
@@ -44,6 +47,7 @@ import dagger.BindsOptionalOf;
 import dagger.Module;
 import dagger.Provides;
 import dagger.internal.codegen.base.ClearableCache;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.model.Key;
 import dagger.multibindings.Multibinds;
@@ -104,6 +108,7 @@ public abstract class ModuleDescriptor {
   @Singleton
   public static final class Factory implements ClearableCache {
     private final DaggerElements elements;
+    private final KotlinMetadataUtil metadataUtil;
     private final BindingFactory bindingFactory;
     private final MultibindingDeclaration.Factory multibindingDeclarationFactory;
     private final DelegateDeclaration.Factory bindingDelegateDeclarationFactory;
@@ -114,12 +119,14 @@ public abstract class ModuleDescriptor {
     @Inject
     Factory(
         DaggerElements elements,
+        KotlinMetadataUtil metadataUtil,
         BindingFactory bindingFactory,
         MultibindingDeclaration.Factory multibindingDeclarationFactory,
         DelegateDeclaration.Factory bindingDelegateDeclarationFactory,
         SubcomponentDeclaration.Factory subcomponentDeclarationFactory,
         OptionalBindingDeclaration.Factory optionalBindingDeclarationFactory) {
       this.elements = elements;
+      this.metadataUtil = metadataUtil;
       this.bindingFactory = bindingFactory;
       this.multibindingDeclarationFactory = multibindingDeclarationFactory;
       this.bindingDelegateDeclarationFactory = bindingDelegateDeclarationFactory;
@@ -159,6 +166,10 @@ public abstract class ModuleDescriptor {
         }
       }
 
+      if (metadataUtil.hasEnclosedCompanionObject(moduleElement)) {
+        collectCompanionModuleBindings(moduleElement, bindings);
+      }
+
       return new AutoValue_ModuleDescriptor(
           moduleElement,
           ImmutableSet.copyOf(collectIncludedModules(new LinkedHashSet<>(), moduleElement)),
@@ -168,6 +179,34 @@ public abstract class ModuleDescriptor {
           delegates.build(),
           optionalDeclarations.build(),
           ModuleKind.forAnnotatedElement(moduleElement).get());
+    }
+
+    private void collectCompanionModuleBindings(
+        TypeElement moduleElement, ImmutableSet.Builder<ContributionBinding> bindings) {
+      checkArgument(metadataUtil.hasEnclosedCompanionObject(moduleElement));
+      TypeElement companionModule = metadataUtil.getEnclosedCompanionObject(moduleElement);
+      ImmutableSet<String> bindingElementDescriptors =
+          bindings.build().stream()
+              .map(binding -> getMethodDescriptor(asExecutable(binding.bindingElement().get())))
+              .collect(toImmutableSet());
+      methodsIn(elements.getAllMembers(companionModule)).stream()
+          // Binding methods in companion objects with @JvmStatic are mirrored in the enclosing
+          // class, therefore we should ignore it or else it'll be a duplicate binding.
+          .filter(method -> !KotlinMetadataUtil.isJvmStaticPresent(method))
+          // Fallback strategy for de-duping contributing bindings in the companion module with
+          // @JvmStatic by comparing descriptors. Contributing bindings are the only valid bindings
+          // a companion module can declare. See: https://youtrack.jetbrains.com/issue/KT-35104
+          // TODO(user): Checks qualifiers too.
+          .filter(method -> !bindingElementDescriptors.contains(getMethodDescriptor(method)))
+          .forEach(
+              method -> {
+                if (isAnnotationPresent(method, Provides.class)) {
+                  bindings.add(bindingFactory.providesMethodBinding(method, companionModule));
+                }
+                if (isAnnotationPresent(method, Produces.class)) {
+                  bindings.add(bindingFactory.producesMethodBinding(method, companionModule));
+                }
+              });
     }
 
     /** Returns all the modules transitively included by given modules, including the arguments. */

@@ -166,13 +166,19 @@ public abstract class ComponentRequirement {
    */
   private boolean requiresModuleInstance(
       DaggerElements elements, DaggerTypes types, KotlinMetadataUtil metadataUtil) {
+    boolean isKotlinObject =
+        metadataUtil.isObjectClass(typeElement())
+            || metadataUtil.isCompanionObjectClass(typeElement());
+    if (isKotlinObject) {
+      return false;
+    }
+
     ImmutableSet<ExecutableElement> methods =
         getLocalAndInheritedMethods(typeElement(), types, elements);
-    return !metadataUtil.isObjectClass(typeElement())
-        && methods.stream()
-            .filter(this::isBindingMethod)
-            .map(ExecutableElement::getModifiers)
-            .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
+    return methods.stream()
+        .filter(this::isBindingMethod)
+        .map(ExecutableElement::getModifiers)
+        .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
   }
 
   private boolean isBindingMethod(ExecutableElement method) {
@@ -261,7 +267,8 @@ public abstract class ComponentRequirement {
       return false;
     }
 
-    if (metadataUtil.isObjectClass(typeElement)) {
+    if (metadataUtil.isObjectClass(typeElement)
+        || metadataUtil.isCompanionObjectClass(typeElement)) {
       return false;
     }
 

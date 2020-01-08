@@ -17,9 +17,12 @@
 package dagger.internal.codegen.validation;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
+import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.auto.common.Visibility.PRIVATE;
 import static com.google.auto.common.Visibility.PUBLIC;
 import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.ComponentAnnotation.componentAnnotation;
 import static dagger.internal.codegen.base.ComponentAnnotation.isComponentAnnotation;
@@ -182,7 +185,6 @@ public final class ModuleValidator {
       TypeElement module, Set<TypeElement> visitedModules) {
     ValidationReport.Builder<TypeElement> builder = ValidationReport.about(module);
     ModuleKind moduleKind = ModuleKind.forAnnotatedElement(module).get();
-
     TypeElement contributesAndroidInjectorElement =
         elements.getTypeElement(CONTRIBUTES_ANDROID_INJECTOR_NAME);
     TypeMirror contributesAndroidInjector =
@@ -242,6 +244,9 @@ public final class ModuleValidator {
     validateReferencedSubcomponents(module, moduleKind, builder);
     validateNoScopeAnnotationsOnModuleElement(module, moduleKind, builder);
     validateSelfCycles(module, builder);
+    if (metadataUtil.hasEnclosedCompanionObject(module)) {
+      validateCompanionModule(module, builder);
+    }
 
     if (builder.build().isClean()
         && bindingGraphValidator.shouldDoFullBindingGraphValidation(module)) {
@@ -274,7 +279,7 @@ public final class ModuleValidator {
 
                 @Override
                 public Void visitDeclared(DeclaredType declaredType, Void aVoid) {
-                  TypeElement attributeType = MoreTypes.asTypeElement(declaredType);
+                  TypeElement attributeType = asTypeElement(declaredType);
                   if (isAnyAnnotationPresent(attributeType, SUBCOMPONENT_TYPES)) {
                     validateSubcomponentHasBuilder(
                         attributeType, moduleAnnotation.annotation(), builder);
@@ -445,6 +450,12 @@ public final class ModuleValidator {
                       && !validate(module, visitedModules).isClean()) {
                     reportError("%s has errors", module.getQualifiedName());
                   }
+                  if (metadataUtil.isCompanionObjectClass(module)) {
+                    reportError(
+                        "%s is listed as a module, but it is a companion object class. "
+                            + "Add @Module to the enclosing class and reference that instead.",
+                        module.getQualifiedName());
+                  }
                   return null;
                 }
 
@@ -589,11 +600,15 @@ public final class ModuleValidator {
     // done in this class, which assume that supertype binding methods will be validated in a
     // separate call to the validator since the supertype itself must be a @Module, we need to look
     // at all the binding methods in the module's type hierarchy here.
-    return !metadataUtil.isObjectClass(module)
-        && methodsIn(elements.getAllMembers(module)).stream()
-            .filter(anyBindingMethodValidator::isBindingMethod)
-            .map(ExecutableElement::getModifiers)
-            .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
+    boolean isKotlinObject =
+        metadataUtil.isObjectClass(module) || metadataUtil.isCompanionObjectClass(module);
+    if (isKotlinObject) {
+      return false;
+    }
+    return methodsIn(elements.getAllMembers(module)).stream()
+        .filter(anyBindingMethodValidator::isBindingMethod)
+        .map(ExecutableElement::getModifiers)
+        .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
   }
 
   private void validateNoScopeAnnotationsOnModuleElement(
@@ -631,6 +646,42 @@ public final class ModuleValidator {
                       }
                     },
                     null));
+  }
+
+  private void validateCompanionModule(
+      TypeElement module, ValidationReport.Builder<TypeElement> builder) {
+    checkArgument(metadataUtil.hasEnclosedCompanionObject(module));
+    TypeElement companionModule = metadataUtil.getEnclosedCompanionObject(module);
+    List<ExecutableElement> companionModuleMethods =
+        methodsIn(companionModule.getEnclosedElements());
+    List<ExecutableElement> companionBindingMethods = new ArrayList<>();
+    for (ExecutableElement companionModuleMethod : companionModuleMethods) {
+      if (anyBindingMethodValidator.isBindingMethod(companionModuleMethod)) {
+        builder.addSubreport(anyBindingMethodValidator.validate(companionModuleMethod));
+        companionBindingMethods.add(companionModuleMethod);
+      }
+
+      // On normal modules only overriding other binding methods is disallowed, but for companion
+      // objects we are prohibiting any override. For this can rely on checking the @Override
+      // annotation since the Kotlin compiler will always produce them for overriding methods.
+      if (isAnnotationPresent(companionModuleMethod, Override.class)) {
+        builder.addError(
+            "Binding method in companion object may not override another method.",
+            companionModuleMethod);
+      }
+
+      // TODO(user): Be strict about the usage of @JvmStatic, i.e. tell user to remove it.
+    }
+
+    ImmutableListMultimap<Name, ExecutableElement> bindingMethodsByName =
+        Multimaps.index(companionBindingMethods, ExecutableElement::getSimpleName);
+    validateMethodsWithSameName(builder, bindingMethodsByName);
+
+    // Companion objects are composed by an inner class and a static field, it is not enough to
+    // check the visibility on the type element or the field, therefore we check the metadata.
+    if (metadataUtil.isVisibilityPrivate(companionModule)) {
+      builder.addError("Companion Module cannot be private.", companionModule);
+    }
   }
 
   private void validateModuleBindings(

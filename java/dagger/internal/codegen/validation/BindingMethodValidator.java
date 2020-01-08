@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.validation;
 
+import static com.google.auto.common.MoreElements.asType;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -24,11 +25,13 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
 import dagger.internal.codegen.binding.InjectionAnnotations;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.lang.annotation.Annotation;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
@@ -37,6 +40,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
 
   private final DaggerElements elements;
   private final DaggerTypes types;
+  private final KotlinMetadataUtil metadataUtil;
   private final DependencyRequestValidator dependencyRequestValidator;
   private final Class<? extends Annotation> methodAnnotation;
   private final ImmutableSet<? extends Class<? extends Annotation>> enclosingElementAnnotations;
@@ -53,6 +57,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
   protected BindingMethodValidator(
       DaggerElements elements,
       DaggerTypes types,
+      KotlinMetadataUtil metadataUtil,
       DependencyRequestValidator dependencyRequestValidator,
       Class<? extends Annotation> methodAnnotation,
       Class<? extends Annotation> enclosingElementAnnotation,
@@ -64,6 +69,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
     this(
         elements,
         types,
+        metadataUtil,
         methodAnnotation,
         ImmutableSet.of(enclosingElementAnnotation),
         dependencyRequestValidator,
@@ -84,6 +90,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
   protected BindingMethodValidator(
       DaggerElements elements,
       DaggerTypes types,
+      KotlinMetadataUtil metadataUtil,
       Class<? extends Annotation> methodAnnotation,
       Iterable<? extends Class<? extends Annotation>> enclosingElementAnnotations,
       DependencyRequestValidator dependencyRequestValidator,
@@ -95,6 +102,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
     super(methodAnnotation, allowsMultibindings, allowsScoping, injectionAnnotations);
     this.elements = elements;
     this.types = types;
+    this.metadataUtil = metadataUtil;
     this.methodAnnotation = methodAnnotation;
     this.enclosingElementAnnotations = ImmutableSet.copyOf(enclosingElementAnnotations);
     this.dependencyRequestValidator = dependencyRequestValidator;
@@ -157,8 +165,12 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
      * {@link #enclosingElementAnnotations}.
      */
     private void checkEnclosingElement() {
-      if (!isAnyAnnotationPresent(
-          element.getEnclosingElement(), enclosingElementAnnotations)) {
+      TypeElement enclosingElement = asType(element.getEnclosingElement());
+      if (metadataUtil.isCompanionObjectClass(enclosingElement)) {
+        // Binding method is in companion object, use companion object's enclosing class instead.
+        enclosingElement = asType(enclosingElement.getEnclosingElement());
+      }
+      if (!isAnyAnnotationPresent(enclosingElement, enclosingElementAnnotations)) {
         report.addError(
             bindingMethods(
                 "can only be present within a @%s",

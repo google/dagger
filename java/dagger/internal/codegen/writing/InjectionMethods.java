@@ -510,10 +510,13 @@ final class InjectionMethods {
       KotlinMetadataUtil metadataUtil) {
     TypeElement enclosingType = MoreElements.asType(method.getEnclosingElement());
     boolean isMethodInKotlinObject = metadataUtil.isObjectClass(enclosingType);
+    boolean isMethodInKotlinCompanionObject = metadataUtil.isCompanionObjectClass(enclosingType);
     InjectionMethod.Builder injectionMethod =
         InjectionMethod.builder(elements).name(methodName).enclosingClass(proxyEnclosingClass);
     ParameterSpec instance = null;
-    if (!isMethodInKotlinObject && !method.getModifiers().contains(STATIC)) {
+    if (!isMethodInKotlinObject
+        && !isMethodInKotlinCompanionObject
+        && !method.getModifiers().contains(STATIC)) {
       instance =
           injectionMethod.addParameter(
               "instance", receiverAccessibility.parameterType(enclosingType.asType(), elements));
@@ -527,12 +530,12 @@ final class InjectionMethods {
       injectionMethod.methodBodyBuilder().add("return ");
     }
     CodeBlock.Builder proxyInvocation = CodeBlock.builder();
-    if (isMethodInKotlinObject) {
+    if (isMethodInKotlinCompanionObject || method.getModifiers().contains(STATIC)) {
+      proxyInvocation.add("$T", rawTypeName(TypeName.get(enclosingType.asType())));
+    } else if (isMethodInKotlinObject) {
       // Call through the singleton instance.
       // See: https://kotlinlang.org/docs/reference/java-to-kotlin-interop.html#static-methods
       proxyInvocation.add("$T.INSTANCE", rawTypeName(TypeName.get(enclosingType.asType())));
-    } else if (method.getModifiers().contains(STATIC)) {
-      proxyInvocation.add("$T", rawTypeName(TypeName.get(enclosingType.asType())));
     } else {
       injectionMethod.copyTypeParameters(enclosingType);
       proxyInvocation.add(

@@ -104,7 +104,9 @@ public final class RequestKinds {
   /** Returns the {@link RequestKind} that matches the wrapping types (if any) of {@code type}. */
   public static RequestKind getRequestKind(TypeMirror type) {
     checkTypePresent(type);
-    if (!type.getKind().equals(DECLARED) || asDeclared(type).getTypeArguments().isEmpty()) {
+    if (!isType(type) // TODO(b/147320669): isType check can be removed once this bug is fixed.
+            || !type.getKind().equals(DECLARED)
+            || asDeclared(type).getTypeArguments().isEmpty()) {
       // If the type is not a declared type (i.e. class or interface) with type arguments, then we
       // know it can't be a parameterized type of one of the framework classes, so return INSTANCE.
       return RequestKind.INSTANCE;

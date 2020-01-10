@@ -11,7 +11,8 @@ import javax.inject.Named
     TestKotlinModuleWithCompanion::class,
     TestKotlinModuleWithNamedCompanion::class,
     TestKotlinAbstractModuleWithCompanion::class,
-    TestKotlinWorkaroundModuleWithCompanion::class
+    TestKotlinWorkaroundModuleWithCompanion::class,
+    TestKotlinModuleWithPrivateCompanion::class
   ]
 )
 interface TestKotlinComponentWithCompanionModule {
@@ -20,7 +21,9 @@ interface TestKotlinComponentWithCompanionModule {
   fun getBoolean(): Boolean
   fun getStringType(): String
   @Named("Cat")
-  fun getNamedStringType(): String
+  fun getCatNamedStringType(): String
+  @Named("Dog")
+  fun getDogNamedStringType(): String
 
   fun getInterface(): TestInterface
   fun getLong(): Long
@@ -78,5 +81,17 @@ class TestKotlinWorkaroundModuleWithCompanion {
     @Provides
     @JvmStatic
     fun provideInteger() = 2
+  }
+}
+
+@Module
+class TestKotlinModuleWithPrivateCompanion {
+
+  @Provides
+  @Named("Dog")
+  fun getNamedStringType() = "Dog"
+
+  private companion object {
+    fun randomFunction() = ""
   }
 }

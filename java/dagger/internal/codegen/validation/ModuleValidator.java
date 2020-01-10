@@ -677,10 +677,12 @@ public final class ModuleValidator {
         Multimaps.index(companionBindingMethods, ExecutableElement::getSimpleName);
     validateMethodsWithSameName(builder, bindingMethodsByName);
 
-    // Companion objects are composed by an inner class and a static field, it is not enough to
-    // check the visibility on the type element or the field, therefore we check the metadata.
-    if (metadataUtil.isVisibilityPrivate(companionModule)) {
-      builder.addError("Companion Module cannot be private.", companionModule);
+    // If there are provision methods, then check the visibility. Companion objects are composed by
+    // an inner class and a static field, it is not enough to check the visibility on the type
+    // element or the field, therefore we check the metadata.
+    if (!companionBindingMethods.isEmpty() && metadataUtil.isVisibilityPrivate(companionModule)) {
+      builder.addError(
+          "A Companion Module with binding methods cannot be private.", companionModule);
     }
   }
 

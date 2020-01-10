@@ -33,7 +33,8 @@ public class CompanionModuleTest {
     assertThat(component.getDataB()).isNotNull();
     assertThat(component.getBoolean()).isTrue();
     assertThat(component.getStringType()).isNotNull();
-    assertThat(component.getNamedStringType()).isEqualTo("Cat");
+    assertThat(component.getCatNamedStringType()).isEqualTo("Cat");
+    assertThat(component.getDogNamedStringType()).isEqualTo("Dog");
     assertThat(component.getInterface()).isNotNull();
     assertThat(component.getLong()).isEqualTo(4L);
     assertThat(component.getDouble()).isEqualTo(1.0);

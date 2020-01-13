@@ -29,10 +29,6 @@ import java.lang.annotation.Target;
  * {@link AndroidInjector#inject(Object)}.
  *
  * <p>All key strings will be obfuscated by ProGuard/R8/AppReduce if the named class is obfuscated.
- *
- * <p>
- * You should only use this annotation if you are using a version of ProGuard/R8/AppReduce that
- * supports the {@code -identifiernamestring} flag.
  */
 @Beta
 @MapKey

@@ -17,23 +17,18 @@
 package dagger.android.processor;
 
 import static javax.tools.Diagnostic.Kind.ERROR;
-import static javax.tools.StandardLocation.CLASS_OUTPUT;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import com.google.auto.common.BasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Ascii;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.googlejavaformat.java.filer.FormattingFiler;
-import java.io.IOException;
-import java.io.Writer;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.Processor;
-import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -78,7 +73,7 @@ public final class AndroidProcessor extends BasicAnnotationProcessor {
 
   private boolean useStringKeys() {
     if (!processingEnv.getOptions().containsKey(FLAG_EXPERIMENTAL_USE_STRING_KEYS)) {
-      return false;
+      return true;
     }
     String flagValue = processingEnv.getOptions().get(FLAG_EXPERIMENTAL_USE_STRING_KEYS);
     if (flagValue == null || Ascii.equalsIgnoreCase(flagValue, "true")) {
@@ -95,29 +90,6 @@ public final class AndroidProcessor extends BasicAnnotationProcessor {
                   flagValue, FLAG_EXPERIMENTAL_USE_STRING_KEYS));
       return false;
     }
-  }
-
-  @Override
-  protected void postRound(RoundEnvironment roundEnv) {
-    if (roundEnv.processingOver() && useStringKeys()) {
-      try (Writer writer = createProguardFile()){
-        writer.write(
-            Joiner.on("\n")
-                .join(
-                    "-identifiernamestring class dagger.android.internal.AndroidInjectionKeys {",
-                    "  java.lang.String of(java.lang.String);",
-                    "}"));
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-  }
-
-  private Writer createProguardFile() throws IOException {
-    return processingEnv
-        .getFiler()
-        .createResource(CLASS_OUTPUT, "", "META-INF/proguard/dagger.android.AndroidInjectionKeys")
-        .openWriter();
   }
 
   @Override

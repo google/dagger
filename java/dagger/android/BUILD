@@ -44,6 +44,9 @@ android_library(
     manifest = "AndroidManifest.xml",
     proguard_specs = ["proguard.cfg"],
     tags = ["maven_coordinates=com.google.dagger:dagger-android:" + POM_VERSION],
+    plugins = [
+        "//java/dagger/android/proguardprocessor:plugin",
+    ],
     deps = [
         "//:dagger_with_compiler",
         "@google_bazel_common//third_party/java/auto:value",

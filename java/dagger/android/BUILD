@@ -42,7 +42,6 @@ android_library(
     srcs = SRCS,
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     manifest = "AndroidManifest.xml",
-    proguard_specs = ["proguard.cfg"],
     tags = ["maven_coordinates=com.google.dagger:dagger-android:" + POM_VERSION],
     plugins = [
         "//java/dagger/android/proguardprocessor:plugin",

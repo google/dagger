@@ -80,26 +80,15 @@ public final class ProguardProcessor extends AbstractProcessor {
         .append("\n")
         .toString();
 
-    try {
-      // Write META-INF/com.android.tools/proguard/dagger-android.pro
-      try (Writer writer = filer.createResource(CLASS_OUTPUT,
-          "",
-          "META-INF/com.android.tools/proguard/dagger-android.pro")
-          .openWriter()) {
-        writer.write(proguardRules);
-      }
-      // Write META-INF/com.android.tools/r8/dagger-android.pro
-      try (Writer writer = filer.createResource(CLASS_OUTPUT,
-          "",
-          "META-INF/com.android.tools/r8/dagger-android.pro")
-          .openWriter()) {
-        writer.write(r8Rules);
-      }
-      // Write META-INF/proguard/dagger-android.pro
-      try (Writer writer = filer.createResource(CLASS_OUTPUT, "", "META-INF/dagger-android.pro")
-          .openWriter()) {
-        writer.write(proguardRules);
-      }
+    writeFile(filer, "com.android.tools/proguard", proguardRules);
+    writeFile(filer, "com.android.tools/r8", r8Rules);
+    writeFile(filer, "proguard", proguardRules);
+  }
+
+  private static void writeFile(Filer filer, String intermediatePath, String contents) {
+    try (Writer writer = filer.createResource(CLASS_OUTPUT,
+        "", "META-INF/" + intermediatePath + "/dagger-android.pro").openWriter()) {
+      writer.write(contents);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

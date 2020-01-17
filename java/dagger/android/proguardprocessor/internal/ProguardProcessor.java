@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.android.proguardprocessor;
+package dagger.android.proguardprocessor.internal;
 
 import com.google.auto.service.AutoService;
 import java.io.IOException;

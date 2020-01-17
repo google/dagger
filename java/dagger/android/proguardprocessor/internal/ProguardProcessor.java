@@ -26,7 +26,6 @@ import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
@@ -43,29 +42,24 @@ import static javax.tools.StandardLocation.CLASS_OUTPUT;
  *   resources/META-INF/proguard/dagger-android.pro
  * </code></pre>
  */
-@SupportedAnnotationTypes(ProguardProcessor.PLACEHOLDER_ANNOTATION)
+@SupportedAnnotationTypes("*")
 @AutoService(Processor.class)
 public final class ProguardProcessor extends AbstractProcessor {
 
-  static final String PLACEHOLDER_ANNOTATION = "dagger.android.internal.ProguardRulesReceiver";
+  private boolean hasGenerated = false;
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     if (roundEnv.errorRaised()) {
       return false;
-    } else if (annotations.isEmpty()) {
+    } else if (hasGenerated) {
       return false;
     }
 
-    Set<? extends Element> elements =
-        roundEnv.getElementsAnnotatedWith(processingEnv.getElementUtils()
-            .getTypeElement(PLACEHOLDER_ANNOTATION));
-    if (elements.isEmpty()) {
-      return false;
-    } else {
-      generate();
-      return false;
-    }
+    generate();
+    hasGenerated = true;
+
+    return false;
   }
 
   private void generate() {

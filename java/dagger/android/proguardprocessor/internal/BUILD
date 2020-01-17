@@ -40,6 +40,6 @@ java_library(
 java_plugin(
     name = "plugin",
     generates_api = 1,
-    processor_class = "dagger.android.proguardprocessor.ProguardProcessor",
+    processor_class = "dagger.android.proguardprocessor.internal.ProguardProcessor",
     deps = [":proguardprocessor"],
 )

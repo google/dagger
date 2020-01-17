@@ -101,7 +101,7 @@ public final class ProguardProcessor extends AbstractProcessor {
         writer.write(proguardRules);
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 

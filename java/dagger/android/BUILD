@@ -48,7 +48,7 @@ android_library(
         "//:dagger_with_compiler",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
-        "@maven//:com_android_support_support_annotations",
+        "@maven//:androidx_annotation_annotation",
     ],
 )
 

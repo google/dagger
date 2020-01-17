@@ -28,7 +28,7 @@ GenJavaTests(
     deps = [
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "@maven//:com_android_support_support_fragment",
+        "@maven//:androidx_fragment_fragment",
         # TODO(ronshapiro): create a common location to define the current Android version
         "@androidsdk//:platforms/android-29/android.jar",
         "@google_bazel_common//third_party/java/compile_testing",

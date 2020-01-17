@@ -49,9 +49,9 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 maven_install(
     artifacts = [
-        "com.android.support:support-annotations:25.0.0",
-        "com.android.support:support-fragment:25.0.0",
-        "com.android.support:appcompat-v7:25.0.0",
+        "androidx.annotation:annotation:1.1.0",
+        "androidx.fragment:fragment:1.1.0",
+        "androidx.appcompat:appcompat:1.1.0",
         "org.jetbrains.kotlin:kotlin-stdlib:1.3.50",
         "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0",
     ],

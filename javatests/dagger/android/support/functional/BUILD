@@ -27,9 +27,9 @@ android_library(
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
-        "@maven//:com_android_support_support_fragment",
-        "@maven//:com_android_support_appcompat_v7",
-        "@maven//:com_android_support_support_annotations",
+        "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_appcompat_appcompat",
+        "@maven//:androidx_annotation_annotation",
         "//java/dagger/internal/guava:collect",
         "//:dagger_with_compiler",
         "//:android",

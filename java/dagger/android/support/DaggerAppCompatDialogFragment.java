@@ -17,8 +17,8 @@
 package dagger.android.support;
 
 import android.content.Context;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatDialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AppCompatDialogFragment;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasAndroidInjector;

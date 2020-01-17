@@ -27,6 +27,6 @@ android_binary(
         "//:android",
         "//:android-support",
         "//:dagger_with_compiler",
-        "@maven//:com_android_support_appcompat_v7",
+        "@maven//:androidx_appcompat_appcompat",
     ],
 )

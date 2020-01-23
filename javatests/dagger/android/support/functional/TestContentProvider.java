@@ -19,7 +19,7 @@ package dagger.android.support.functional;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import dagger.android.DaggerContentProvider;
 import java.util.Set;
 import javax.inject.Inject;

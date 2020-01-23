@@ -15,15 +15,17 @@
 # Description:
 #   Public Dagger API for Android
 
-package(default_visibility = ["//:src"])
-
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
     "SOURCE_7_TARGET_7",
 )
+load("//tools:dejetify.bzl", "dejetified_library")
 load("//tools:maven.bzl", "POM_VERSION", "pom_file")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
+
+package(default_visibility = ["//:src"])
 
 # Work around b/70476182 which prevents Kythe from connecting :producers to the .java files it
 # contains.
@@ -48,7 +50,7 @@ android_library(
         "//:dagger_with_compiler",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
-        "@maven//:com_android_support_support_annotations",
+        "@maven//:androidx_annotation_annotation",
     ],
 )
 
@@ -68,7 +70,30 @@ pom_file(
     targets = [":android"],
 )
 
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
+dejetified_library(
+    name = "dejetified-android",
+    input = ":android.aar",
+    output = "android-legacy.aar",
+)
+
+android_library(
+    name = "legacy-deps",
+    tags = ["maven_coordinates=com.google.dagger:dagger-android-legacy:" + POM_VERSION],
+    exports = [
+        "//:dagger_with_compiler",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/error_prone:annotations",
+        "@maven//:com_android_support_support_annotations",
+    ],
+)
+
+pom_file(
+    name = "legacy-pom",
+    artifact_id = "dagger-android-legacy",
+    artifact_name = "Dagger Android Legacy",
+    packaging = "aar",
+    targets = [":legacy-deps"],
+)
 
 javadoc_library(
     name = "android-javadoc",

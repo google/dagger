@@ -17,7 +17,7 @@
 package dagger.android;
 
 import android.content.ContentProvider;
-import android.support.annotation.CallSuper;
+import androidx.annotation.CallSuper;
 import dagger.internal.Beta;
 
 /** A {@link ContentProvider} that injects its members in {@link #onCreate()}. */

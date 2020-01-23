@@ -15,10 +15,10 @@
 # Description:
 #   Tests for Dagger's Android integrations
 
-package(default_visibility = ["//:src"])
-
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenJavaTests")
+
+package(default_visibility = ["//:src"])
 
 GenJavaTests(
     name = "android_processor_tests",
@@ -28,7 +28,7 @@ GenJavaTests(
     deps = [
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "@maven//:com_android_support_support_fragment",
+        "@maven//:androidx_fragment_fragment",
         # TODO(ronshapiro): create a common location to define the current Android version
         "@androidsdk//:platforms/android-29/android.jar",
         "@google_bazel_common//third_party/java/compile_testing",

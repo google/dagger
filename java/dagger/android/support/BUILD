@@ -16,6 +16,7 @@
 #   Public Dagger API for Android that interacts with the Android support libraries
 
 load("//:build_defs.bzl", "SOURCE_7_TARGET_7")
+load("//tools:dejetify.bzl", "dejetified_library")
 load("//tools:maven.bzl", "POM_VERSION", "pom_file")
 load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
@@ -36,9 +37,9 @@ android_library(
         "//:dagger_with_compiler",
         "//java/dagger/android",
         "@google_bazel_common//third_party/java/error_prone:annotations",
-        "@maven//:com_android_support_appcompat_v7",
-        "@maven//:com_android_support_support_annotations",
-        "@maven//:com_android_support_support_fragment",
+        "@maven//:androidx_annotation_annotation",
+        "@maven//:androidx_appcompat_appcompat",
+        "@maven//:androidx_fragment_fragment",
     ],
 )
 
@@ -48,6 +49,33 @@ pom_file(
     artifact_name = "Dagger Android Support",
     packaging = "aar",
     targets = [":support"],
+)
+
+dejetified_library(
+    name = "dejetified-support",
+    input = ":support.aar",
+    output = "support-legacy.aar",
+)
+
+android_library(
+    name = "legacy-deps",
+    tags = ["maven_coordinates=com.google.dagger:dagger-android-support-legacy:" + POM_VERSION],
+    exports = [
+        "//:dagger_with_compiler",
+        "//java/dagger/android:legacy-deps",
+        "@google_bazel_common//third_party/java/error_prone:annotations",
+        "@maven//:com_android_support_appcompat_v7",
+        "@maven//:com_android_support_support_annotations",
+        "@maven//:com_android_support_support_fragment",
+    ],
+)
+
+pom_file(
+    name = "legacy-pom",
+    artifact_id = "dagger-android-support-legacy",
+    artifact_name = "Dagger Android Legacy Support",
+    packaging = "aar",
+    targets = [":legacy-deps"],
 )
 
 javadoc_library(

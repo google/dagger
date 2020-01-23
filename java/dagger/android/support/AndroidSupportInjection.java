@@ -20,7 +20,7 @@ import static android.util.Log.DEBUG;
 import static dagger.internal.Preconditions.checkNotNull;
 
 import android.app.Activity;
-import android.support.v4.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.util.Log;
 import dagger.android.AndroidInjector;
 import dagger.android.HasAndroidInjector;

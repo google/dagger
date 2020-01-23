@@ -35,7 +35,7 @@ GenRobolectricTests(
         "//java/dagger/internal/guava:concurrent",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",
-        "@maven//:com_android_support_appcompat_v7",
-        "@maven//:com_android_support_support_fragment",
+        "@maven//:androidx_appcompat_appcompat",
+        "@maven//:androidx_fragment_fragment",
     ],
 )

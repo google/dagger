@@ -19,7 +19,7 @@ package dagger.android;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import dagger.internal.Beta;
 import javax.inject.Inject;
 

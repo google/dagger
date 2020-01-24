@@ -60,10 +60,10 @@ interface CommandRouterFactory {
 > answer is that Dagger already knows to look at those types because they appear
 > somewhere in a component or module that Dagger is using. In the case of
 > `CommandRouter`, it's the return type of the `CommandRouterFactory`'s entry
-> point method. And in the case of `HelloWorldModule`, it's the parameter type
-> of the [`@Binds`] method we just wrote. And before that, it appeared as a
-> constructor parameter to `CommandRouter`, so Dagger learned about it
-> transitively when looking at `CommandRouter`.
+> point method. And in the case of `HelloWorldCommand`, it's the parameter type
+> of the [`@Binds`] method we just wrote in `HelloWorldModule`. And before that,
+> it appeared as a constructor parameter to `CommandRouter`, so Dagger learned
+> about it transitively when looking at `CommandRouter`.
 
 Now when Dagger looks to create a `CommandRouter` and sees that it needs a
 `Command`, it will use the instructions in `HelloWorldModule` to create one.

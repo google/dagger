@@ -55,6 +55,8 @@ maven_install(
         "androidx.annotation:annotation:1.1.0",
         "androidx.fragment:fragment:1.1.0",
         "androidx.appcompat:appcompat:1.1.0",
+        "androidx.test:runner:1.1.1",
+        "org.robolectric:robolectric:4.3.1",
         "org.jetbrains.kotlin:kotlin-stdlib:1.3.50",
         "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0",
     ],

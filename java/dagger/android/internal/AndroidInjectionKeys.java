@@ -20,7 +20,6 @@ package dagger.android.internal;
  * An internal implementation detail of Dagger's generated code. This is not guaranteed to remain
  * consistent from version to version.
  */
-@GenerateAndroidInjectionProguardRules
 public final class AndroidInjectionKeys {
   /**
    * Accepts the fully qualified name of a class that is injected with {@code dagger.android}.

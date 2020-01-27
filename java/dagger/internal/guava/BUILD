@@ -51,3 +51,18 @@ alias(
     name = "concurrent",
     actual = "@google_bazel_common//third_party/java/guava",
 )
+
+alias(
+    name = "base-android",
+    actual = "@maven//:com_google_guava_guava",
+)
+
+alias(
+    name = "collect-android",
+    actual = "@maven//:com_google_guava_guava",
+)
+
+alias(
+    name = "concurrent-android",
+    actual = "@maven//:com_google_guava_guava",
+)

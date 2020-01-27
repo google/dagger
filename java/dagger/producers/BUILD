@@ -15,8 +15,6 @@
 # Description:
 #   An asynchronous dependency injection system that extends JSR-330.
 
-package(default_visibility = ["//:src"])
-
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
@@ -24,6 +22,8 @@ load(
     "SOURCE_7_TARGET_7",
 )
 load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
+
+package(default_visibility = ["//:src"])
 
 # Work around b/70476182 which prevents Kythe from connecting :producers to the .java files it
 # contains.
@@ -40,8 +40,8 @@ java_library(
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     tags = ["maven_coordinates=com.google.dagger:dagger-producers:" + POM_VERSION],
     exports = [
-        # TODO(dpb): Don't export any of Guava.
-        "@google_bazel_common//third_party/java/guava",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:concurrent",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
     deps = [

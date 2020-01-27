@@ -49,6 +49,7 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 maven_install(
     artifacts = [
+        "com.google.guava:guava:27.1-android",
         "com.android.support:support-annotations:25.0.0",
         "com.android.support:support-fragment:25.0.0",
         "com.android.support:appcompat-v7:25.0.0",

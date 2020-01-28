@@ -28,11 +28,7 @@ import java.lang.annotation.Target;
  * #value() value} of the annotation is the canonical name of the class that will be passed to
  * {@link AndroidInjector#inject(Object)}.
  *
- * <p>All key strings will be obfuscated by ProGuard/R8/AppReduce if the named class is obfuscated.
- *
- * <p>
- * You should only use this annotation if you are using a version of ProGuard/R8/AppReduce that
- * supports the {@code -identifiernamestring} flag.
+ * <p>All key strings will be obfuscated by ProGuard/R8 if the named class is obfuscated.
  */
 @Beta
 @MapKey

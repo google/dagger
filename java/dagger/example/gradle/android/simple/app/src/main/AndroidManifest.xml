@@ -20,8 +20,11 @@
     android:minSdkVersion="14"
     android:targetSdkVersion="28"/>
 
-  <application android:name=".SimpleApplication" android:label="@string/appName">
-    <activity android:name=".SimpleActivity" android:exported="false">
+  <application
+    android:name=".SimpleApplication"
+    android:label="@string/appName"
+    android:theme="@style/Theme.AppCompat.Light">
+    <activity android:name=".SimpleActivity" android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />

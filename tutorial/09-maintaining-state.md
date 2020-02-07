@@ -22,7 +22,7 @@ final class DepositCommand implements Command {
     }
 
     Account account = database.getAccount(input.get(0));
-    account.deposit(new BigDecimal(input.get(1));
+    account.deposit(new BigDecimal(input.get(1)));
     outputter.output(account.username() + " now has: " + account.balance());
     return Status.HANDLED;
   }

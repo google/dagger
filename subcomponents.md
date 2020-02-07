@@ -60,13 +60,17 @@ interface ServerComponent {
 
 @Singleton
 class RequestRouter {
+  private final Provider<RequestComponent.Builder> requestComponentProvider;
+
   @Inject RequestRouter(
-      Provider<RequestComponent.Builder> requestComponentProvider) {}
+      Provider<RequestComponent.Builder> requestComponentProvider) {
+    this.requestComponentProvider = requestComponentProvider;
+  }
 
   void dataReceived(Data data) {
     RequestComponent requestComponent =
         requestComponentProvider.get()
-            .data(data)
+            .requestModule(new RequestModule(data))
             .build();
     requestComponent.requestHandler()
         .writeResponse(200, "hello, world");
@@ -314,6 +318,12 @@ assertThat(child.map().keySet()).containsExactly("one", "two", "three", "four");
 assertThat(parent.set()).containsExactly("a", "b");
 assertThat(child.set()).containsExactly("a", "b", "c", "d");
 ```
+
+note: In this example we didn't follow the recommended best practice for
+installing the subcomponent in the parent component for simplicity only. It is
+best is to use an installation module rather than declaring an abstract factory
+method in the parent component.
+[best practice](https://dagger.dev/subcomponents?cl=293543543#adding-a-subcomponent-to-a-parent-component)
 
 ### Repeated modules
 

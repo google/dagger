@@ -34,7 +34,7 @@ import java.lang.annotation.Target;
  * {@code @Provides} methods that return {@code null} will throw a {@link NullPointerException}
  * immediately thereafter. {@code @Provides} methods may opt into allowing {@code null} by
  * annotating the method with any {@code @Nullable} annotation like
- * {@code javax.annotation.Nullable} or {@code android.support.annotation.Nullable}.
+ * {@code javax.annotation.Nullable} or {@code androidx.annotation.Nullable}.
  *
  * <p>If a {@code @Provides} method is marked {@code @Nullable}, Dagger will <em>only</em>
  * allow injection into sites that are marked {@code @Nullable} as well. A component that

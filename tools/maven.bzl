@@ -99,6 +99,11 @@ def gen_maven_artifact(
     shaded_rules = shaded_rules or []
     artifact_targets = [artifact_target] + (deps or [])
 
+    # META-INF resources files that can be combined by appending lines.
+    merge_meta_inf_files = [
+        "gradle/incremental.annotation.processors",
+    ]
+
     pom_file(
         name = pom_name,
         testonly = testonly,
@@ -123,12 +128,14 @@ def gen_maven_artifact(
         testonly = testonly,
         jars = artifact_targets + shaded_deps,
         rules = shaded_rules,
+        merge_meta_inf_files = merge_meta_inf_files,
     )
 
     jarjar_library(
         name = name + "-src",
         testonly = testonly,
         jars = [_src_jar(dep) for dep in artifact_targets],
+        merge_meta_inf_files = merge_meta_inf_files,
     )
 
 def _src_jar(target):

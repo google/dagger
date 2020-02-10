@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Dagger Authors.
+# Copyright (C) 2020 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,31 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# Description:
-#   Tests for Dagger's Android integrations
 
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-load("//:test_defs.bzl", "GenJavaTests")
+# Description:
+#   Helpers class for java compiler tests.
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
-    name = "android_processor_tests",
-    srcs = glob(["*.java"]),
-    functional = False,
-    javacopts = DOCLINT_HTML_AND_SYNTAX,
+java_library(
+    name = "compile",
+    testonly = 1,
+    srcs = ["CompilerTests.java"],
     deps = [
-        "//:dagger_with_compiler",
-        "//java/dagger/android",
-        "//java/dagger/android/processor",
-        "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "@androidsdk//:platforms/android-29/android.jar",
+        "//java/dagger/internal/guava:io",
         "@google_bazel_common//third_party/java/compile_testing",
-        "@google_bazel_common//third_party/java/junit",
-        "@google_bazel_common//third_party/java/truth",
-        "@maven//:androidx_fragment_fragment",
     ],
 )

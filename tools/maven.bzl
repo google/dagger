@@ -45,6 +45,7 @@ def gen_maven_artifact(
         artifact_name,
         artifact_id,
         artifact_target,
+        testonly = 0,
         pom_name = "pom",
         packaging = None,
         javadoc_srcs = None,
@@ -74,6 +75,7 @@ def gen_maven_artifact(
       artifact_target: The target containing the maven_coordinates.
       artifact_name: The name of the maven artifact.
       artifact_id: The id of the maven artifact.
+      testonly: True if the jar should be testonly.
       packaging: The packaging of the maven artifact.
       pom_name: The name of the pome file (or "pom" if absent).
       javadoc_srcs: The srcs for the javadocs.
@@ -87,6 +89,7 @@ def gen_maven_artifact(
 
     _validate_maven_deps(
         name = name + "-validation",
+        testonly = 1,
         target = artifact_target,
         deps = deps,
     )
@@ -98,6 +101,7 @@ def gen_maven_artifact(
 
     pom_file(
         name = pom_name,
+        testonly = testonly,
         artifact_id = artifact_id,
         artifact_name = artifact_name,
         packaging = packaging,
@@ -107,6 +111,7 @@ def gen_maven_artifact(
     javadoc_library(
         name = name + "-javadoc",
         srcs = javadoc_srcs,
+        testonly = testonly,
         root_packages = javadoc_root_packages,
         exclude_packages = javadoc_exclude_packages,
         android_api_level = javadoc_android_api_level,
@@ -115,12 +120,14 @@ def gen_maven_artifact(
 
     jarjar_library(
         name = name,
+        testonly = testonly,
         jars = artifact_targets + shaded_deps,
         rules = shaded_rules,
     )
 
     jarjar_library(
         name = name + "-src",
+        testonly = testonly,
         jars = [_src_jar(dep) for dep in artifact_targets],
     )
 

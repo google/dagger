@@ -30,6 +30,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.Accessibility;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -60,6 +61,7 @@ public final class InjectValidator {
   private final DependencyRequestValidator dependencyRequestValidator;
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
   private final InjectionAnnotations injectionAnnotations;
+  private final KotlinMetadataUtil kotlinMetadataUtil;
 
   @Inject
   InjectValidator(
@@ -67,14 +69,16 @@ public final class InjectValidator {
       DaggerElements elements,
       DependencyRequestValidator dependencyRequestValidator,
       CompilerOptions compilerOptions,
-      InjectionAnnotations injectionAnnotations) {
+      InjectionAnnotations injectionAnnotations,
+      KotlinMetadataUtil kotlinMetadataUtil) {
     this(
         types,
         elements,
         compilerOptions,
         dependencyRequestValidator,
         Optional.empty(),
-        injectionAnnotations);
+        injectionAnnotations,
+        kotlinMetadataUtil);
   }
 
   private InjectValidator(
@@ -83,13 +87,15 @@ public final class InjectValidator {
       CompilerOptions compilerOptions,
       DependencyRequestValidator dependencyRequestValidator,
       Optional<Kind> privateAndStaticInjectionDiagnosticKind,
-      InjectionAnnotations injectionAnnotations) {
+      InjectionAnnotations injectionAnnotations,
+      KotlinMetadataUtil kotlinMetadataUtil) {
     this.types = types;
     this.elements = elements;
     this.compilerOptions = compilerOptions;
     this.dependencyRequestValidator = dependencyRequestValidator;
     this.privateAndStaticInjectionDiagnosticKind = privateAndStaticInjectionDiagnosticKind;
     this.injectionAnnotations = injectionAnnotations;
+    this.kotlinMetadataUtil = kotlinMetadataUtil;
   }
 
   /**
@@ -106,7 +112,8 @@ public final class InjectValidator {
             compilerOptions,
             dependencyRequestValidator,
             Optional.of(Diagnostic.Kind.ERROR),
-            injectionAnnotations);
+            injectionAnnotations,
+            kotlinMetadataUtil);
   }
 
   public ValidationReport<TypeElement> validateConstructor(ExecutableElement constructorElement) {
@@ -271,6 +278,7 @@ public final class InjectValidator {
 
     if (hasInjectedMembers) {
       checkInjectIntoPrivateClass(typeElement, builder);
+      checkInjectIntoKotlinObject(typeElement, builder);
     }
     TypeMirror superclass = typeElement.getSuperclass();
     if (!superclass.getKind().equals(TypeKind.NONE)) {
@@ -328,6 +336,15 @@ public final class InjectValidator {
       builder.addItem(
           "Dagger does not support injection into private classes",
           privateMemberDiagnosticKind(),
+          element);
+    }
+  }
+
+  private void checkInjectIntoKotlinObject(
+      TypeElement element, ValidationReport.Builder<TypeElement> builder) {
+    if (kotlinMetadataUtil.isObjectClass(element)) {
+      builder.addError(
+          "Dagger does not support injection into kotlin objects",
           element);
     }
   }

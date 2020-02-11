@@ -29,6 +29,14 @@ kt_jvm_library(
     ],
 )
 
+kt_jvm_library(
+    name = "kotlin_object_with_member_injection",
+    srcs = ["KotlinObjectWithMemberInjection.kt"],
+    deps = [
+        "//java/dagger:core",
+    ],
+)
+
 GenJavaTests(
     name = "compiler_tests",
     srcs = glob(["*.java"]),
@@ -37,6 +45,7 @@ GenJavaTests(
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     deps = [
         ":kotlin_injected_qualifier",
+        ":kotlin_object_with_member_injection",
         "//java/dagger:core",
         "//java/dagger/internal/codegen:package_info",
         "//java/dagger/internal/codegen:processor",

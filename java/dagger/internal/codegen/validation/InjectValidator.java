@@ -342,9 +342,10 @@ public final class InjectValidator {
 
   private void checkInjectIntoKotlinObject(
       TypeElement element, ValidationReport.Builder<TypeElement> builder) {
-    if (kotlinMetadataUtil.isObjectClass(element)) {
+    if (kotlinMetadataUtil.isObjectClass(element)
+        || kotlinMetadataUtil.isCompanionObjectClass(element)) {
       builder.addError(
-          "Dagger does not support injection into kotlin objects",
+          "Dagger does not support injection into Kotlin objects",
           element);
     }
   }

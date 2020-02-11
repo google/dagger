@@ -22,3 +22,17 @@ object KotlinObjectWithMemberInjection {
   @set:Inject
   lateinit var someProperty: String
 }
+
+class KotlinClassWithMemberInjectedCompanion {
+  companion object {
+    @set:Inject
+    lateinit var someProperty: String
+  }
+}
+
+class KotlinClassWithMemberInjectedNamedCompanion {
+  companion object TheCompanion {
+    @set:Inject
+    lateinit var someProperty: String
+  }
+}

@@ -124,7 +124,9 @@ when choosing how to use Dagger in your Android projects today.
     }
 
     @Component(modules = {..., YourActivityModule.class})
-    interface YourApplicationComponent {}
+    interface YourApplicationComponent {
+      void inject(YourApplication application);
+    }
     ```
 
     Pro-tip: If your subcomponent and its factory have no other methods or

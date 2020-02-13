@@ -31,7 +31,7 @@ mechanism by which Android-specific compatibility will be provided.
 
 ### tl;dr
 
-Dagger assumes that users on Android will use ProGuard.
+Dagger assumes that users on Android will use R8 or ProGuard.
 
 ## Why Dagger on Android is hard
 

@@ -22,8 +22,11 @@ load("//:test_defs.bzl", "GenJavaTests")
 package(default_visibility = ["//:src"])
 
 kt_jvm_library(
-    name = "kotlin_injected_qualifier",
-    srcs = ["KotlinInjectedQualifier.kt"],
+    name = "kotlin_sources",
+    srcs = [
+        "KotlinInjectedQualifier.kt",
+        "KotlinObjectWithMemberInjection.kt",
+    ],
     deps = [
         "//java/dagger:core",
     ],
@@ -36,7 +39,7 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     deps = [
-        ":kotlin_injected_qualifier",
+        ":kotlin_sources",
         "//java/dagger:core",
         "//java/dagger/internal/codegen:package_info",
         "//java/dagger/internal/codegen:processor",

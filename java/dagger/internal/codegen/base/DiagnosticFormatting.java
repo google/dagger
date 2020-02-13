@@ -38,6 +38,7 @@ public final class DiagnosticFormatting {
               + "|java[.]util"
               + "|javax[.]inject"
               + "|dagger"
+              + "|dagger[.]multibindings"
               + "|com[.]google[.]common[.]base"
               + "|com[.]google[.]common[.]collect"
               + ")[.])" // Always end with a literal .

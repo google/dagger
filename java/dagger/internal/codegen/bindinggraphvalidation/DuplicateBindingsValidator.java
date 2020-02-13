@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
@@ -45,6 +44,7 @@ import dagger.internal.codegen.binding.MultibindingDeclaration;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.model.Binding;
 import dagger.model.BindingGraph;
+import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingKind;
 import dagger.model.ComponentPath;
 import dagger.model.Key;
@@ -156,17 +156,28 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
           .ifPresent(
               diagnosticKind ->
                   reportExplicitBindingConflictsWithInject(
-                      duplicateBindings, diagnosticReporter, diagnosticKind));
+                      duplicateBindings,
+                      diagnosticReporter,
+                      diagnosticKind,
+                      bindingGraph.rootComponentNode()));
       return;
     }
     ImmutableSet<Binding> bindings = ImmutableSet.copyOf(duplicateBindings.values());
     Binding oneBinding = bindings.asList().get(0);
-    diagnosticReporter.reportBinding(
-        ERROR,
-        oneBinding,
-        Iterables.any(bindings, binding -> binding.kind().isMultibinding())
-            ? incompatibleBindingsMessage(oneBinding.key(), bindings, bindingGraph)
-            : duplicateBindingMessage(oneBinding.key(), bindings, bindingGraph));
+    String message = bindings.stream().anyMatch(binding -> binding.kind().isMultibinding())
+        ? incompatibleBindingsMessage(oneBinding, bindings, bindingGraph)
+        : duplicateBindingMessage(oneBinding, bindings, bindingGraph);
+    if (compilerOptions.experimentalDaggerErrorMessages()) {
+      diagnosticReporter.reportComponent(
+          ERROR,
+          bindingGraph.rootComponentNode(),
+          message);
+    } else {
+      diagnosticReporter.reportBinding(
+          ERROR,
+          oneBinding,
+          message);
+    }
   }
 
   /**
@@ -182,7 +193,8 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
   private void reportExplicitBindingConflictsWithInject(
       ImmutableSetMultimap<BindingElement, Binding> duplicateBindings,
       DiagnosticReporter diagnosticReporter,
-      Kind diagnosticKind) {
+      Kind diagnosticKind,
+      ComponentNode rootComponent) {
     Binding injectBinding =
         rootmostBindingWithKind(k -> k.equals(INJECTION), duplicateBindings.values());
     Binding explicitBinding =
@@ -197,7 +209,11 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
                 "\nThis condition was never validated before, and will soon be an error. "
                     + "See https://dagger.dev/conflicting-inject.");
 
-    diagnosticReporter.reportBinding(diagnosticKind, explicitBinding, message.toString());
+    if (compilerOptions.experimentalDaggerErrorMessages()) {
+      diagnosticReporter.reportComponent(diagnosticKind, rootComponent, message.toString());
+    } else {
+      diagnosticReporter.reportBinding(diagnosticKind, explicitBinding, message.toString());
+    }
   }
 
   private String formatWithComponentPath(Binding binding) {
@@ -209,14 +225,19 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
   }
 
   private String duplicateBindingMessage(
-      Key key, ImmutableSet<Binding> duplicateBindings, BindingGraph graph) {
-    StringBuilder message = new StringBuilder().append(key).append(" is bound multiple times:");
+      Binding oneBinding, ImmutableSet<Binding> duplicateBindings, BindingGraph graph) {
+    StringBuilder message =
+        new StringBuilder().append(oneBinding.key()).append(" is bound multiple times:");
     formatDeclarations(message, 1, declarations(graph, duplicateBindings));
+    if (compilerOptions.experimentalDaggerErrorMessages()) {
+      message.append(String.format("\n%sin component: [%s]", INDENT, oneBinding.componentPath()));
+    }
     return message.toString();
   }
 
   private String incompatibleBindingsMessage(
-      Key key, ImmutableSet<Binding> duplicateBindings, BindingGraph graph) {
+      Binding oneBinding, ImmutableSet<Binding> duplicateBindings, BindingGraph graph) {
+    Key key = oneBinding.key();
     ImmutableSet<dagger.model.Binding> multibindings =
         duplicateBindings.stream()
             .filter(binding -> binding.kind().isMultibinding())
@@ -240,6 +261,9 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
         Sets.filter(
             declarations(graph, uniqueBindings),
             declaration -> !(declaration instanceof MultibindingDeclaration)));
+    if (compilerOptions.experimentalDaggerErrorMessages()) {
+      message.append(String.format("\n%sin component: [%s]", INDENT, oneBinding.componentPath()));
+    }
     return message.toString();
   }
 

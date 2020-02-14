@@ -56,6 +56,7 @@ public enum ContributionType {
    * own.
    */
   public static ContributionType fromBindingElement(Element element) {
+    // TODO(user): Replace these class references with ClassName.
     if (isAnnotationPresent(element, IntoMap.class)) {
       return ContributionType.MAP;
     } else if (isAnnotationPresent(element, IntoSet.class)) {

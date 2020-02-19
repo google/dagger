@@ -147,7 +147,9 @@ public final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
     void report() {
       if (mergedDiagnosticKind.isPresent()) {
         delegate.reportComponent(
-            mergedDiagnosticKind.get(), graph.rootComponentNode(), messageBuilder.toString());
+            mergedDiagnosticKind.get(),
+            graph.rootComponentNode(),
+            PackageNameCompressor.compressPackagesInMessage(messageBuilder.toString()));
       }
     }
 
@@ -251,7 +253,8 @@ public final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
       }
 
       mergeDiagnosticKind(diagnosticKind);
-      messageBuilder.append(String.format("[%s] ", currentPluginName));
+      // Adds brackets as well as special color strings to make the string red and bold.
+      messageBuilder.append(String.format("\033[1;31m[%s]\033[0m ", currentPluginName));
       messageBuilder.append(message);
     }
 

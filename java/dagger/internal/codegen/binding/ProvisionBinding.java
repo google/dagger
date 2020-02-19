@@ -84,6 +84,7 @@ public abstract class ProvisionBinding extends ContributionBinding {
         .injectionSites(ImmutableSortedSet.of());
   }
 
+  @Override
   public abstract Builder toBuilder();
 
   private static final ImmutableSet<BindingKind> KINDS_TO_CHECK_FOR_NULL =

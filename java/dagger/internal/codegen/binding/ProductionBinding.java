@@ -113,6 +113,9 @@ public abstract class ProductionBinding extends ContributionBinding {
         .thrownTypes(ImmutableList.<TypeMirror>of());
   }
 
+  @Override
+  public abstract Builder toBuilder();
+
   @Memoized
   @Override
   public abstract int hashCode();

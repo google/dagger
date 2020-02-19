@@ -287,10 +287,10 @@ public class DuplicateBindingsValidationTest {
             message(
                 "java.util.Set<java.lang.String> has incompatible bindings or declarations:",
                 "    Set bindings and declarations:",
-                "        @Binds @dagger.multibindings.IntoSet String "
+                "        @Binds @IntoSet String "
                     + "test.Outer.TestModule1.bindStringSetElement(@test.Outer.SomeQualifier "
                     + "String)",
-                "        @Provides @dagger.multibindings.IntoSet String "
+                "        @Provides @IntoSet String "
                     + "test.Outer.TestModule1.stringSetElement()",
                 "    Unique bindings and declarations:",
                 "        @Provides Set<String> test.Outer.TestModule2.stringSet()"))
@@ -360,12 +360,10 @@ public class DuplicateBindingsValidationTest {
                 "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
                     + "or declarations:",
                 "    Map bindings and declarations:",
-                "        @Binds @dagger.multibindings.IntoMap "
-                    + "@dagger.multibindings.StringKey(\"bar\") String"
+                "        @Binds @IntoMap @StringKey(\"bar\") String"
                     + " test.Outer.TestModule1.bindStringMapEntry(@test.Outer.SomeQualifier "
                     + "String)",
-                "        @Provides @dagger.multibindings.IntoMap "
-                    + "@dagger.multibindings.StringKey(\"foo\") String"
+                "        @Provides @IntoMap @StringKey(\"foo\") String"
                     + " test.Outer.TestModule1.stringMapEntry()",
                 "    Unique bindings and declarations:",
                 "        @Provides Map<String,String> test.Outer.TestModule2.stringMap()"))
@@ -419,7 +417,7 @@ public class DuplicateBindingsValidationTest {
             message(
                 "java.util.Set<java.lang.String> has incompatible bindings or declarations:",
                 "    Set bindings and declarations:",
-                "        @dagger.multibindings.Multibinds Set<String> "
+                "        @Multibinds Set<String> "
                     + "test.Outer.TestModule1.stringSet()",
                 "    Unique bindings and declarations:",
                 "        @Provides Set<String> test.Outer.TestModule2.stringSet()"))
@@ -476,7 +474,7 @@ public class DuplicateBindingsValidationTest {
                 "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
                     + "or declarations:",
                 "    Map bindings and declarations:",
-                "        @dagger.multibindings.Multibinds Map<String,String> "
+                "        @Multibinds Map<String,String> "
                     + "test.Outer.TestModule1.stringMap()",
                 "    Unique bindings and declarations:",
                 "        @Provides Map<String,String> test.Outer.TestModule2.stringMap()"))

@@ -28,7 +28,8 @@ load("//:test_defs.bzl", "GenJavaTests")
 GenJavaTests(
     name = "producers-functional-tests",
     srcs = glob(["**/*.java"]),
-    javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    lib_javacopts = SOURCE_7_TARGET_7,
     deps = [
         "//:producers_with_compiler",
         "//java/dagger/internal/guava:base",

@@ -201,11 +201,9 @@ public class MapMultibindingValidationTest {
             message(
                 "[Dagger/MapKeys] The same map key is bound more than once for "
                     + "java.util.Map<test.MapModule.WrappedMapKey,java.lang.String>",
-                "    @Provides @dagger.multibindings.IntoMap "
-                    + "@test.MapModule.WrappedMapKey(\"foo\") String "
+                "    @Provides @IntoMap @test.MapModule.WrappedMapKey(\"foo\") String "
                     + "test.MapModule.stringMapEntry1()",
-                "    @Provides @dagger.multibindings.IntoMap "
-                    + "@test.MapModule.WrappedMapKey(\"foo\") String "
+                "    @Provides @IntoMap @test.MapModule.WrappedMapKey(\"foo\") String "
                     + "test.MapModule.stringMapEntry2()"))
         .inFile(component)
         .onLineContaining("interface TestComponent");

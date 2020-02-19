@@ -152,6 +152,8 @@ public abstract class ContributionBinding extends Binding implements HasContribu
     }
   }
 
+  public abstract Builder<?, ?> toBuilder();
+
   /**
    * Base builder for {@link com.google.auto.value.AutoValue @AutoValue} subclasses of {@link
    * ContributionBinding}.
@@ -169,6 +171,12 @@ public abstract class ContributionBinding extends Binding implements HasContribu
     public abstract B contributionType(ContributionType contributionType);
 
     public abstract B bindingElement(Element bindingElement);
+
+    abstract B bindingElement(Optional<Element> bindingElement);
+
+    public final B clearBindingElement() {
+      return bindingElement(Optional.empty());
+    };
 
     abstract B contributingModule(TypeElement contributingModule);
 

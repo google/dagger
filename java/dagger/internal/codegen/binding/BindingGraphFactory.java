@@ -35,6 +35,7 @@ import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreTypes;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -127,11 +128,24 @@ public final class BindingGraphFactory implements ClearableCache {
       explicitBindingsBuilder.add(bindingFactory.componentDependencyBinding(dependency));
       List<ExecutableElement> dependencyMethods =
           methodsIn(elements.getAllMembers(dependency.typeElement()));
+
+      // Within a component dependency, we want to allow the same method to appear multiple
+      // times assuming it is the exact same method. We do this by tracking a set of bindings
+      // we've already added with the binding element removed since that is the only thing
+      // allowed to differ.
+      HashMultimap<String, ContributionBinding> dedupeBindings = HashMultimap.create();
       for (ExecutableElement method : dependencyMethods) {
         // MembersInjection methods aren't "provided" explicitly, so ignore them.
         if (isComponentContributionMethod(elements, method)) {
-          explicitBindingsBuilder.add(
-              bindingFactory.componentDependencyMethodBinding(componentDescriptor, method));
+          ContributionBinding binding = bindingFactory.componentDependencyMethodBinding(
+              componentDescriptor, method);
+          if (dedupeBindings.put(
+              method.getSimpleName().toString(),
+              // Remove the binding element since we know that will be different, but everything
+              // else we want to be the same to consider it a duplicate.
+              binding.toBuilder().clearBindingElement().build())) {
+            explicitBindingsBuilder.add(binding);
+          }
         }
       }
     }

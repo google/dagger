@@ -22,7 +22,7 @@ import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingT
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.MoreCollectors;
+import dagger.internal.codegen.extension.DaggerCollectors;
 import java.lang.annotation.Annotation;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
@@ -102,7 +102,7 @@ public final class KotlinMetadataUtil {
                 ElementFilter.typesIn(typeElement.getEnclosedElements()).stream()
                     .filter(
                         innerType -> innerType.getSimpleName().contentEquals(companionObjectName))
-                    .collect(MoreCollectors.onlyElement()))
+                    .collect(DaggerCollectors.onlyElement()))
         .get();
   }
 

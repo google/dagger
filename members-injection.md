@@ -1,9 +1,11 @@
 # Members injection
 
-The default way for a class to request its dependencies is via its
-`@Inject`-annotated constructor. That ensures that the dependencies are present
-when the object is fully constructed, as is normal Java best practice. There
-are, however, a few other options.
+The default way for a class to request its dependencies is
+via its `@Inject`-annotated cosntructor.
+
+That ensures that the dependencies are present when the object is fully
+constructed, as is normal Java best practice. There are, however, a few other
+options.
 
 The `@Inject` annotation is also valid on fields and methods. Dagger will set
 `@Inject` fields after the constructor is invoked. Similarly, it will call
@@ -126,3 +128,4 @@ class MyClass {
 > *   **`MembersInjector<T>`** is a type that Dagger can provide automatically.
 >     It has a single method that injects the fields and methods of an object:
 >     `injectMembers(T)`.
+

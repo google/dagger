@@ -15,6 +15,8 @@
 # Description:
 #   Code related to validating the user-written Dagger code
 
+load("@rules_java//java:defs.bzl", "java_library")
+
 package(default_visibility = ["//:src"])
 
 java_library(

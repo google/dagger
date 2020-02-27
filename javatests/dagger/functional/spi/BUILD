@@ -15,9 +15,10 @@
 # Description:
 #   Functional tests for the experimental Dagger SPI
 
-package(default_visibility = ["//:src"])
-
+load("@rules_java//java:defs.bzl", "java_library", "java_plugin")
 load("//:test_defs.bzl", "GenJavaTests")
+
+package(default_visibility = ["//:src"])
 
 java_plugin(
     name = "test_plugin",

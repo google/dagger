@@ -15,14 +15,16 @@
 # Description:
 #   Public Dagger API for Android
 
-package(default_visibility = ["//:src"])
-
+load("@rules_java//java:defs.bzl", "java_import", "java_library", "java_plugin")
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
 load("//tools:maven.bzl", "POM_VERSION", "pom_file")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
+
+package(default_visibility = ["//:src"])
 
 filegroup(
     name = "srcs",
@@ -77,8 +79,6 @@ java_plugin(
     processor_class = "dagger.android.processor.AndroidProcessor",
     deps = [":processor"],
 )
-
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 javadoc_library(
     name = "processor-javadoc",

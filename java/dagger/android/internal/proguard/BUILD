@@ -15,6 +15,7 @@
 # Description:
 #   Internal Proguard Processor
 
+load("@rules_java//java:defs.bzl", "java_library", "java_plugin")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 
 package(default_visibility = ["//:src"])

@@ -15,14 +15,15 @@
 # Description:
 #   The Service Provider Interface for Dagger's binding graph model
 
-package(default_visibility = ["//:src"])
-
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
 load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
+
+package(default_visibility = ["//:src"])
 
 filegroup(
     name = "spi-srcs",

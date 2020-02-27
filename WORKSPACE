@@ -16,23 +16,14 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "google_bazel_common",
-    sha256 = "84e037b54bd7685447365295b47764340ca2f1db2f8cffcf6786667439631e7f",
-    strip_prefix = "bazel-common-bf87eb1a4ddbfc95e215b0897f3edc89b2254a1a",
-    urls = ["https://github.com/google/bazel-common/archive/bf87eb1a4ddbfc95e215b0897f3edc89b2254a1a.zip"],
+    sha256 = "18f266d921db1daa2ee9837343938e37fa21e0a8b6a0e43a67eda4c30f62b812",
+    strip_prefix = "bazel-common-eb5c7e5d6d2c724fe410792c8be9f59130437e4a",
+    urls = ["https://github.com/google/bazel-common/archive/eb5c7e5d6d2c724fe410792c8be9f59130437e4a.zip"],
 )
 
 load("@google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules")
 
 google_common_workspace_rules()
-
-# This fixes an issue with protobuf starting to use zlib by default in 3.7.0.
-# TODO(ronshapiro): Figure out if this is in fact necessary, or if proto can depend on the
-# @bazel_tools library directly. See discussion in
-# https://github.com/protocolbuffers/protobuf/pull/5389#issuecomment-481785716
-bind(
-    name = "zlib",
-    actual = "@bazel_tools//third_party/zlib",
-)
 
 RULES_JVM_EXTERNAL_TAG = "2.7"
 
@@ -43,6 +34,28 @@ http_archive(
     sha256 = RULES_JVM_EXTERNAL_SHA,
     strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
     url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+)
+
+# rules_python and zlib are required by protobuf.
+# TODO(ronshapiro): Figure out if zlib is in fact necessary, or if proto can depend on the
+# @bazel_tools library directly. See discussion in
+# https://github.com/protocolbuffers/protobuf/pull/5389#issuecomment-481785716
+# TODO(cpovirk): Should we eventually get rules_python from "Bazel Federation?"
+# https://github.com/bazelbuild/rules_python#getting-started
+
+http_archive(
+    name = "rules_python",
+    sha256 = "e5470e92a18aa51830db99a4d9c492cc613761d5bdb7131c04bd92b9834380f6",
+    strip_prefix = "rules_python-4b84ad270387a7c439ebdccfd530e2339601ef27",
+    urls = ["https://github.com/bazelbuild/rules_python/archive/4b84ad270387a7c439ebdccfd530e2339601ef27.tar.gz"],
+)
+
+http_archive(
+    name = "zlib",
+    build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
+    sha256 = "629380c90a77b964d896ed37163f5c3a34f6e6d897311f1df2a7016355c45eff",
+    strip_prefix = "zlib-1.2.11",
+    urls = ["https://github.com/madler/zlib/archive/v1.2.11.tar.gz"],
 )
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
@@ -70,11 +83,9 @@ maven_install(
 )
 
 # TODO(user): Remove once Google publishes internal Kotlin rules.
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+RULES_KOTLIN_VERSION = "186c1e1e27d699a8953b75461f2de7c295987cfb"
 
-RULES_KOTLIN_VERSION = "legacy-1.3.0-rc1"
-
-RULES_KOTLIN_SHA = "9de078258235ea48021830b1669bbbb678d7c3bdffd3435f4c0817c921a88e42"
+RULES_KOTLIN_SHA = "ef2f9cfb724b1f1eaf0ede2636515969eb4c6e10b75a71d1850f6e692a7d5f06"
 
 http_archive(
     name = "io_bazel_rules_kotlin",

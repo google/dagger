@@ -15,6 +15,8 @@
 # Description:
 #   A skeleton example that uses gradle to test the LOCAL-SNAPSHOTs.
 
+load("@rules_java//java:defs.bzl", "java_binary")
+
 package(default_visibility = ["//:src"])
 
 java_binary(

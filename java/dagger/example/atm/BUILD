@@ -16,6 +16,8 @@
 #   An example of using dagger in a computerized fake ATM. The User's Guide (https://dagger.dev/users-guide)
 #   is a walkthrough that ultimately builds this example.
 
+load("@rules_java//java:defs.bzl", "java_binary", "java_library")
+
 package(default_visibility = ["//:src"])
 
 java_library(

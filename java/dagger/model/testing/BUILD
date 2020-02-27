@@ -15,13 +15,14 @@
 # Description:
 #   Test utilities for the Dagger model
 
-package(default_visibility = ["//:src"])
-
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
+
+package(default_visibility = ["//:src"])
 
 java_library(
     name = "testing",

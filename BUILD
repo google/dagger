@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_java//java:defs.bzl", "java_library")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
+load("@google_bazel_common//tools/jarjar:jarjar.bzl", "jarjar_library")
+
 package(default_visibility = ["//visibility:public"])
 
 package_group(
     name = "src",
     packages = ["//..."],
 )
-
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 java_library(
     name = "dagger_with_compiler",
@@ -48,8 +50,6 @@ android_library(
         "//java/dagger/android/support",
     ],
 )
-
-load("@google_bazel_common//tools/jarjar:jarjar.bzl", "jarjar_library")
 
 SHADE_RULES = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"]
 

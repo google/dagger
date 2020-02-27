@@ -15,6 +15,8 @@
 # Description:
 #   An example of the dagger.spi.BindingGraphPlugin usage
 
+load("@rules_java//java:defs.bzl", "java_plugin")
+
 package(default_visibility = ["//:src"])
 
 java_plugin(

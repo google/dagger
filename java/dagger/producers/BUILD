@@ -15,6 +15,7 @@
 # Description:
 #   An asynchronous dependency injection system that extends JSR-330.
 
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",

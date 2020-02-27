@@ -15,6 +15,8 @@
 # Description:
 #   Bootstrap libraries for building Dagger with Dagger.
 
+load("@rules_java//java:defs.bzl", "java_import", "java_plugin")
+
 package(default_visibility = ["//:src"])
 
 java_plugin(

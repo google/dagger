@@ -15,9 +15,10 @@
 # Description:
 #   GWT-specific files for Dagger
 
-package(default_visibility = ["//:src"])
-
+load("@rules_java//java:defs.bzl", "java_library")
 load("//tools:maven.bzl", "POM_VERSION", "pom_file")
+
+package(default_visibility = ["//:src"])
 
 java_library(
     name = "gwt",

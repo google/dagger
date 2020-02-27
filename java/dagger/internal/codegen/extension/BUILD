@@ -16,6 +16,8 @@
 #   Extra features for the JDK and Guava. This code is merged into both
 #   the dagger-compiler and dagger-spi artifacts that are sent to Maven
 
+load("@rules_java//java:defs.bzl", "java_library")
+
 package(default_visibility = ["//:src"])
 
 java_library(

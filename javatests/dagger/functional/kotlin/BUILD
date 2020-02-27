@@ -15,6 +15,7 @@
 # Description:
 #   Functional test code for Dagger-Android
 
+load("@rules_java//java:defs.bzl", "java_library")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 load("//:test_defs.bzl", "GenJavaTests")
 

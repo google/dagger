@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
 
 # Defines a set of build variants and the list of extra javacopts to build with.
 # The key will be appended to the generated test names to ensure uniqueness.
@@ -32,8 +34,8 @@ def GenJavaTests(
         test_javacopts = None,
         functional = True):
     _GenTests(
-        native.java_library,
-        native.java_test,
+        java_library,
+        java_test,
         name,
         srcs,
         deps,

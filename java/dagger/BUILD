@@ -15,6 +15,7 @@
 # Description:
 #   A JSR-330 compliant dependency injection system for android and java
 
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",

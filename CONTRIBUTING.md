@@ -33,11 +33,19 @@ Dagger is built with [`bazel`](https://bazel.build).
 *   [Install Bazel](https://docs.bazel.build/versions/master/install.html)
 *   Build the Dagger project with `bazel build <target>`
     *   Learn more about Bazel targets [here][bazel targets].
-    *   If you see an error similar to `ERROR: missing input file
-        '@androidsdk//:build-tools/29.0.2/aapt'`, install the missing build
-        tools version with the android `sdkmanager` tool.
+    *   Building Dagger's Android targets requires additional setup:
+        *   Set the `ANDROID_HOME` environment variable to point to a directory
+            containing the Android SDK. If you do not have the Android SDK
+            installed, you'll have to
+            [download](https://developer.android.com/studio#command-tools)
+            and unzip it first.
+        *   Install the necessary components. For example, under Linux, run:
+            `$ANDROID_HOME/tools/bin/sdkmanager "platforms;android-29" "build-tools;29.0.2"`
+            *   If you skip this step, you will see an error similar to
+                `ERROR: missing input file '@androidsdk//:build-tools/29.0.2/aapt'`.
+            *   You may also need to run `bazel sync`.
 *   Run tests with `bazel test <target>`, or `bazel test //...` to run all
-    tests
+    tests.
 *   You can install the Dagger libraries in your **local maven repository** by
     running the `./util/install-local-snapshot.sh` script.
     *   It will build the libraries and install them with a `LOCAL-SNAPSHOT`

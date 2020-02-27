@@ -18,6 +18,7 @@ package dagger.android;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
+import static org.robolectric.annotation.LooperMode.Mode.LEGACY;
 
 import android.app.Activity;
 import android.app.Application;
@@ -27,8 +28,10 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+import org.robolectric.annotation.LooperMode;
 import org.robolectric.util.FragmentTestUtil;
 
+@LooperMode(LEGACY)
 @RunWith(RobolectricTestRunner.class)
 public final class AndroidInjectionTest {
 

@@ -15,6 +15,8 @@
 # Description:
 #   A library for the kythe plugin.
 
+load("@rules_java//java:defs.bzl", "java_library")
+
 package(default_visibility = ["//:src"])
 
 java_library(
@@ -37,6 +39,8 @@ java_library(
 )
 
 # buildifier: disable=no-effect
+load("@rules_java//java:defs.bzl", "java_import")
+
 # A _deploy.jar consisting of the java_librarys in https://github.com/kythe/kythe needed to build a
 # Kythe plugin
 # TODO(ronshapiro): replace this with a http_archive of the next release in

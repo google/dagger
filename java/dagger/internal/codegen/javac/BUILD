@@ -15,6 +15,8 @@
 # Description:
 #   A library for javac the javac plugin module.
 
+load("@rules_java//java:defs.bzl", "java_library")
+
 package(default_visibility = ["//:src"])
 
 java_library(
@@ -34,6 +36,8 @@ java_library(
 )
 
 # buildifier: disable=no-effect
+load("@rules_java//java:defs.bzl", "java_import")
+
 # Replacement for @bazel_tools//third_party/java/jdk/langtools:javac, which seems to have gone away?
 java_import(
     name = "javac-import",

@@ -1188,6 +1188,28 @@ public class MembersInjectionTest {
   }
 
   @Test
+  public void throwExceptionInjectedMethod() {
+    JavaFileObject file =
+        JavaFileObjects.forSourceLines(
+            "test.",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Inject;",
+            "class SomeClass {",
+            "@Inject void inject() throws Exception {}",
+            "}");
+
+    Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Methods with @Inject may not throw checked exceptions. "
+          + "Please wrap your exceptions in a RuntimeException instead.")
+        .inFile(file)
+        .onLineContaining("throws Exception");
+  }
+
+  @Test
   public void rawFrameworkTypeParameter() {
     JavaFileObject file =
         JavaFileObjects.forSourceLines(

@@ -239,6 +239,11 @@ public final class InjectValidator {
       builder.addError("Methods with @Inject may not declare type parameters", methodElement);
     }
 
+    if (!methodElement.getThrownTypes().isEmpty()) {
+      builder.addError("Methods with @Inject may not throw checked exceptions. "
+          + "Please wrap your exceptions in a RuntimeException instead.", methodElement);
+    }
+
     for (VariableElement parameter : methodElement.getParameters()) {
       validateDependencyRequest(builder, parameter);
     }

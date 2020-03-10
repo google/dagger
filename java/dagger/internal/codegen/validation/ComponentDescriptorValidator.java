@@ -20,7 +20,6 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.collect.Collections2.transform;
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotation;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.base.Formatter.INDENT;
@@ -197,8 +196,8 @@ public final class ComponentDescriptorValidator {
     }
 
     /**
-     * Validates that among the dependencies are at most one scoped dependency, that there are no
-     * cycles within the scoping chain, and that singleton components have no scoped dependencies.
+     * Validates that among the dependencies there are no cycles within the scoping chain, and that
+     * singleton components have no scoped dependencies.
      */
     private void validateDependencyScopes(ComponentDescriptor component) {
       ImmutableSet<Scope> scopes = component.scopes();
@@ -226,17 +225,6 @@ public final class ComponentDescriptorValidator {
                 component,
                 message.toString());
           }
-        } else if (scopedDependencies.size() > 1) {
-          // Scoped components may depend on at most one scoped component.
-          StringBuilder message = new StringBuilder();
-          for (Scope scope : scopes) {
-            message.append(getReadableSource(scope)).append(' ');
-          }
-          message
-              .append(component.typeElement().getQualifiedName())
-              .append(" depends on more than one scoped component:\n");
-          appendIndentedComponentsList(message, scopedDependencies);
-          reportComponentError(component, message.toString());
         } else {
           // Dagger 1.x scope compatibility requires this be suppress-able.
           if (!compilerOptions.scopeCycleValidationType().equals(ValidationType.NONE)) {
@@ -448,15 +436,17 @@ public final class ComponentDescriptorValidator {
                 componentAnnotation -> {
                   ImmutableSet<TypeElement> scopedDependencies =
                       scopedTypesIn(componentAnnotation.dependencies());
-                  if (scopedDependencies.size() == 1) {
-                    // empty can be ignored (base-case), and > 1 is a separately-reported error.
+                  if (!scopedDependencies.isEmpty()) {
+                    // empty can be ignored (base-case)
                     scopeStack.push(scopes);
                     scopedDependencyStack.push(dependency);
-                    validateDependencyScopeHierarchy(
-                        component,
-                        getOnlyElement(scopedDependencies),
-                        scopeStack,
-                        scopedDependencyStack);
+                    for (TypeElement scopedDependency : scopedDependencies) {
+                      validateDependencyScopeHierarchy(
+                          component,
+                          scopedDependency,
+                          scopeStack,
+                          scopedDependencyStack);
+                    }
                     scopedDependencyStack.pop();
                     scopeStack.pop();
                   }

@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -122,11 +121,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Override
   protected Iterable<? extends ProcessingStep> initSteps() {
-    ProcessorComponent.builder()
-        .processingEnvironment(processingEnv)
-        .testingPlugins(testingPlugins)
-        .build()
-        .inject(this);
+    ProcessorComponent.factory().create(processingEnv, testingPlugins).inject(this);
 
     statisticsCollector.processingStarted();
     bindingGraphPlugins.initializePlugins();
@@ -152,21 +147,16 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   interface ProcessorComponent {
     void inject(ComponentProcessor processor);
 
-    static Builder builder() {
-      return DaggerComponentProcessor_ProcessorComponent.builder();
+    static Factory factory() {
+      return DaggerComponentProcessor_ProcessorComponent.factory();
     }
 
-    @CanIgnoreReturnValue
-    @Component.Builder
-    interface Builder {
-      @BindsInstance
-      Builder processingEnvironment(ProcessingEnvironment processingEnv);
-
-      @BindsInstance
-      Builder testingPlugins(
-          @TestingPlugins Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins);
-
-      @CheckReturnValue ProcessorComponent build();
+    @Component.Factory
+    interface Factory {
+      @CheckReturnValue
+      ProcessorComponent create(
+          @BindsInstance ProcessingEnvironment processingEnv,
+          @BindsInstance @TestingPlugins Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins);
     }
   }
 

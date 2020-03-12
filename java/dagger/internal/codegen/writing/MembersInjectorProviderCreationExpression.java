@@ -26,6 +26,7 @@ import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /** A {@code Provider<MembersInjector<Foo>>} creation expression. */
@@ -46,17 +47,43 @@ final class MembersInjectorProviderCreationExpression
     TypeMirror membersInjectedType =
         getOnlyElement(MoreTypes.asDeclared(binding.key().type()).getTypeArguments());
 
-    CodeBlock membersInjector =
-        binding.injectionSites().isEmpty()
-            ? CodeBlock.of("$T.<$T>noOp()", MEMBERS_INJECTORS, membersInjectedType)
-            : CodeBlock.of(
-                "$T.create($L)",
-                membersInjectorNameForType(MoreTypes.asTypeElement(membersInjectedType)),
-                componentBindingExpressions.getCreateMethodArgumentsCodeBlock(binding));
+    boolean castThroughRawType = false;
+    CodeBlock membersInjector;
+    if (binding.injectionSites().isEmpty()) {
+      membersInjector = CodeBlock.of("$T.<$T>noOp()", MEMBERS_INJECTORS, membersInjectedType);
+    } else {
+      TypeElement injectedTypeElement = MoreTypes.asTypeElement(membersInjectedType);
+      while (!hasLocalInjectionSites(injectedTypeElement)) {
+        // Cast through a raw type since we're going to be using the MembersInjector for the
+        // parent type.
+        castThroughRawType = true;
+        injectedTypeElement = MoreTypes.asTypeElement(injectedTypeElement.getSuperclass());
+      }
+
+      membersInjector = CodeBlock.of(
+          "$T.create($L)",
+          membersInjectorNameForType(injectedTypeElement),
+          componentBindingExpressions.getCreateMethodArgumentsCodeBlock(binding));
+    }
 
     // TODO(ronshapiro): consider adding a MembersInjectorBindingExpression to return this directly
     // (as it's rarely requested as a Provider).
-    return CodeBlock.of("$T.create($L)", INSTANCE_FACTORY, membersInjector);
+    CodeBlock providerExpression = CodeBlock.of("$T.create($L)", INSTANCE_FACTORY, membersInjector);
+    // If needed we cast through raw type around the InstanceFactory type as opposed to the
+    // MembersInjector since we end up with an InstanceFactory<MembersInjector> as opposed to a
+    // InstanceFactory<MembersInjector<Foo>> and that becomes unassignable. To fix it would require
+    // a second cast. If we just cast to the raw type InstanceFactory though, that becomes
+    // assignable.
+    return castThroughRawType
+        ? CodeBlock.of("($T) $L", INSTANCE_FACTORY, providerExpression) : providerExpression;
+  }
+
+  private boolean hasLocalInjectionSites(TypeElement injectedTypeElement) {
+    return binding.injectionSites()
+        .stream()
+        .anyMatch(
+            injectionSite ->
+                injectionSite.element().getEnclosingElement().equals(injectedTypeElement));
   }
 
   @Override

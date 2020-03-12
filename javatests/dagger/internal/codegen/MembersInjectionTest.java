@@ -1704,4 +1704,227 @@ public class MembersInjectionTest {
         .generatedSourceFile("test.DaggerTestComponent")
         .containsElementsIn(generatedComponent);
   }
+
+  // Shows that we shouldn't create a members injector for a type that doesn't have
+  // @Inject fields or @Inject constructor even if it extends and is extended by types that do.
+  @Test
+  public void middleClassNoFieldInjection() {
+    JavaFileObject classA =
+        JavaFileObjects.forSourceLines(
+            "test.A",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class A extends B {",
+            "  @Inject String valueA;",
+            "}");
+    JavaFileObject classB =
+        JavaFileObjects.forSourceLines(
+            "test.B",
+            "package test;",
+            "",
+            "class B extends C {",
+            "}");
+    JavaFileObject classC =
+        JavaFileObjects.forSourceLines(
+            "test.C",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class C { ",
+            "  @Inject String valueC;",
+            "}");
+    JavaFileObject expectedAMembersInjector =
+        JavaFileObjects.forSourceLines(
+            "test.A_MembersInjector",
+            "package test;",
+            "",
+            "import dagger.MembersInjector;",
+            "import dagger.internal.InjectedFieldSignature;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_CODE_ANNOTATIONS,
+            "public final class A_MembersInjector implements MembersInjector<A> {",
+            "  private final Provider<String> valueCProvider;",
+            "  private final Provider<String> valueAProvider;",
+            "",
+            "  public A_MembersInjector(",
+            "        Provider<String> valueCProvider, Provider<String> valueAProvider) {",
+            "    this.valueCProvider = valueCProvider;",
+            "    this.valueAProvider = valueAProvider;",
+            "  }",
+            "",
+            "  public static MembersInjector<A> create(",
+            "      Provider<String> valueCProvider, Provider<String> valueAProvider) {",
+            "    return new A_MembersInjector(valueCProvider, valueAProvider);",
+            "  }",
+            "",
+            "  @Override",
+            "  public void injectMembers(A instance) {",
+            "    C_MembersInjector.injectValueC(instance, valueCProvider.get());",
+            "    injectValueA(instance, valueAProvider.get());",
+            "  }",
+            "",
+            "  @InjectedFieldSignature(\"test.A.valueA\")",
+            "  public static void injectValueA(Object instance, String valueA) {",
+            "    ((A) instance).valueA = valueA;",
+            "  }",
+            "}");
+
+    JavaFileObject expectedCMembersInjector =
+        JavaFileObjects.forSourceLines(
+            "test.C_MembersInjector",
+            "package test;",
+            "",
+            "import dagger.MembersInjector;",
+            "import dagger.internal.InjectedFieldSignature;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_CODE_ANNOTATIONS,
+            "public final class C_MembersInjector implements MembersInjector<C> {",
+            "  private final Provider<String> valueCProvider;",
+            "",
+            "  public C_MembersInjector(Provider<String> valueCProvider) {",
+            "    this.valueCProvider = valueCProvider;",
+            "  }",
+            "",
+            "  public static MembersInjector<C> create(",
+            "      Provider<String> valueCProvider) {",
+            "    return new C_MembersInjector(valueCProvider);",
+            "  }",
+            "",
+            "  @Override",
+            "  public void injectMembers(C instance) {",
+            "    injectValueC(instance, valueCProvider.get());",
+            "  }",
+            "",
+            "  @InjectedFieldSignature(\"test.C.valueC\")",
+            "  public static void injectValueC(Object instance, String valueC) {",
+            "    ((C) instance).valueC = valueC;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(classA, classB, classC);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.A_MembersInjector")
+        .hasSourceEquivalentTo(expectedAMembersInjector);
+    assertThat(compilation)
+        .generatedSourceFile("test.C_MembersInjector")
+        .hasSourceEquivalentTo(expectedCMembersInjector);
+
+    try {
+      assertThat(compilation).generatedSourceFile("test.B_MembersInjector");
+      // Can't throw an assertion error since it would be caught.
+      throw new IllegalStateException("Test generated a B_MembersInjector");
+    } catch (AssertionError expected) {
+    }
+  }
+
+  // Shows that we do generate a MembersInjector for a type that has an @Inject
+  // constructor and that extends a type with @Inject fields, even if it has no local field
+  // injection sites
+  // TODO(user): Are these even used anymore?
+  @Test
+  public void testConstructorInjectedFieldInjection() {
+    JavaFileObject classA =
+        JavaFileObjects.forSourceLines(
+            "test.A",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class A extends B {",
+            "  @Inject A() {}",
+            "}");
+    JavaFileObject classB =
+        JavaFileObjects.forSourceLines(
+            "test.B",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class B { ",
+            "  @Inject String valueB;",
+            "}");
+    JavaFileObject expectedAMembersInjector =
+        JavaFileObjects.forSourceLines(
+            "test.A_MembersInjector",
+            "package test;",
+            "",
+            "import dagger.MembersInjector;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_CODE_ANNOTATIONS,
+            "public final class A_MembersInjector implements MembersInjector<A> {",
+            "  private final Provider<String> valueBProvider;",
+            "",
+            "  public A_MembersInjector(Provider<String> valueBProvider) {",
+            "    this.valueBProvider = valueBProvider;",
+            "  }",
+            "",
+            "  public static MembersInjector<A> create(Provider<String> valueBProvider) {",
+            "    return new A_MembersInjector(valueBProvider);",
+            "  }",
+            "",
+            "  @Override",
+            "  public void injectMembers(A instance) {",
+            "    B_MembersInjector.injectValueB(instance, valueBProvider.get());",
+            "  }",
+            "}");
+
+    JavaFileObject expectedBMembersInjector =
+        JavaFileObjects.forSourceLines(
+            "test.B_MembersInjector",
+            "package test;",
+            "",
+            "import dagger.MembersInjector;",
+            "import dagger.internal.InjectedFieldSignature;",
+            IMPORT_GENERATED_ANNOTATION,
+            "import javax.inject.Provider;",
+            "",
+            GENERATED_CODE_ANNOTATIONS,
+            "public final class B_MembersInjector implements MembersInjector<B> {",
+            "  private final Provider<String> valueBProvider;",
+            "",
+            "  public B_MembersInjector(Provider<String> valueBProvider) {",
+            "    this.valueBProvider = valueBProvider;",
+            "  }",
+            "",
+            "  public static MembersInjector<B> create(",
+            "      Provider<String> valueBProvider) {",
+            "    return new B_MembersInjector(valueBProvider);",
+            "  }",
+            "",
+            "  @Override",
+            "  public void injectMembers(B instance) {",
+            "    injectValueB(instance, valueBProvider.get());",
+            "  }",
+            "",
+            "  @InjectedFieldSignature(\"test.B.valueB\")",
+            "  public static void injectValueB(Object instance, String valueB) {",
+            "    ((B) instance).valueB = valueB;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler()
+            .withOptions(compilerMode.javacopts())
+            .compile(classA, classB);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.A_MembersInjector")
+        .hasSourceEquivalentTo(expectedAMembersInjector);
+    assertThat(compilation)
+        .generatedSourceFile("test.B_MembersInjector")
+        .hasSourceEquivalentTo(expectedBMembersInjector);
+  }
 }

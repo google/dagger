@@ -18,12 +18,15 @@ package dagger.functional.membersinject;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import dagger.BindsInstance;
+import dagger.Component;
 import dagger.MembersInjector;
 import dagger.functional.multipackage.DaggerMembersInjectionVisibilityComponent;
 import dagger.functional.multipackage.MembersInjectionVisibilityComponent;
 import dagger.functional.multipackage.a.AGrandchild;
 import dagger.functional.multipackage.a.AParent;
 import dagger.functional.multipackage.b.BChild;
+import javax.inject.Inject;
 import javax.inject.Provider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -92,5 +95,36 @@ public class MembersInjectTest {
     MembersInjector<NonRequestedChild> injector = new NonRequestedChild_MembersInjector(provider);
     injector.injectMembers(child);
     assertThat(child.t).isEqualTo("field!");
+  }
+
+  public static final class A extends B {
+    // No injected members
+  }
+
+  public static class B extends C {
+    // No injected members
+  }
+
+  public static class C {
+    @Inject String value;
+  }
+
+  @Component
+  interface NonLocalMembersComponent {
+    MembersInjector<A> getAMembersInjector();
+
+    @Component.Factory
+    interface Factory {
+      NonLocalMembersComponent create(@BindsInstance String value);
+    }
+  }
+
+  @Test
+  public void testNonLocalMembersInjection() {
+    MembersInjector<A> membersInjector = DaggerMembersInjectTest_NonLocalMembersComponent.factory()
+        .create("test").getAMembersInjector();
+    A testA = new A();
+    membersInjector.injectMembers(testA);
+    assertThat(testA.value).isEqualTo("test");
   }
 }

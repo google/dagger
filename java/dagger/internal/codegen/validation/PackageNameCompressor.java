@@ -16,9 +16,13 @@
 
 package dagger.internal.codegen.validation;
 
+import static java.util.Comparator.comparing;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,6 +43,10 @@ final class PackageNameCompressor {
       "\n\n======================\nFull classname legend:\n======================\n";
   static final String LEGEND_FOOTER =
       "========================\nEnd of classname legend:\n========================\n";
+
+  private static final ImmutableSet<String> PACKAGES_SKIPPED_IN_LEGEND = ImmutableSet.of(
+      "java.lang.",
+      "java.util.");
 
   private static final Splitter PACKAGE_SPLITTER = Splitter.on('.');
 
@@ -78,15 +86,44 @@ final class PackageNameCompressor {
       return input;
     }
 
+    // Find the longest key for building the legend
+    int longestKey = replacementMap.keySet().stream().max(comparing(String::length)).get().length();
+
     String replacedString = input;
-    StringBuilder legendBuilder = new StringBuilder(LEGEND_HEADER);
+    StringBuilder legendBuilder = new StringBuilder();
     for (Map.Entry<String, String> entry : replacementMap.entrySet()) {
-      replacedString = replacedString.replace(entry.getValue(), entry.getKey());
-      legendBuilder.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+      String shortName = entry.getKey();
+      String fullName = entry.getValue();
+      // Do the replacements in the message
+      replacedString = replacedString.replace(fullName, shortName);
+
+      // Skip certain prefixes. We need to check the shortName for a . though in case
+      // there was some type of conflict like java.util.concurrent.Future and
+      // java.util.foo.Future that got shortened to concurrent.Future and foo.Future.
+      // In those cases we do not want to skip the legend. We only skip if the class
+      // is directly in that package.
+      String prefix = fullName.substring(0, fullName.length() - shortName.length());
+      if (PACKAGES_SKIPPED_IN_LEGEND.contains(prefix) && !shortName.contains(".")) {
+        continue;
+      }
+
+      // Add to the legend
+      legendBuilder
+          .append(shortName)
+          .append(": ")
+          // Add enough spaces to adjust the columns
+          .append(Strings.repeat(" ", longestKey - shortName.length()))
+          .append(fullName)
+          .append("\n");
     }
 
-    legendBuilder.append(LEGEND_FOOTER);
-    return replacedString + legendBuilder;
+    if (legendBuilder.length() != 0) {
+      legendBuilder.insert(0, LEGEND_HEADER);
+      legendBuilder.append(LEGEND_FOOTER);
+      return replacedString + legendBuilder;
+    } else {
+      return replacedString;
+    }
   }
 
   /**

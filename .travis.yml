@@ -53,7 +53,7 @@ env:
     # permission to push to the repo.
     - secure: "UpTUhCQzAGbr5JetRg2GZxp/dPDep/7Il3yGeyDECopciWdx41OPk/QNqAXBhNtKuEaMVsmASyoteuhgaTryQdV4qUIGVOMhES6kbOlYy3nwK44VdsNeeepwVospyDyZbxMtXq5LuHWuTADmAl1mdjNPNoziXc523zjnUzUx/EQ="
     - JDK_FOR_PUBLISHING: *jdk_for_publishing
-    - BAZEL_VERSION="1.1.0"
+    - BAZEL_VERSION="2.2.0"
 
 after_success:
   - util/generate-latest-docs.sh

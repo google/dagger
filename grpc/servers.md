@@ -3,6 +3,7 @@ layout: default
 title: gRPC servers with Dagger
 ---
 
+
 ## gRPC servers without Dagger
 
 To implement a gRPC service, you create a class that extends a base service

@@ -22,7 +22,7 @@ fi
 
 bash $(dirname $0)/run-local-tests.sh
 
-bash $(dirname $0)/execute-deploy.sh \
+bash $(dirname $0)/deploy-dagger.sh \
   "gpg:sign-and-deploy-file" \
   "$VERSION_NAME" \
   "-DrepositoryId=sonatype-nexus-staging" \

@@ -13,6 +13,6 @@ bash $(dirname $0)/deploy-hilt.sh \
   "LOCAL-SNAPSHOT"
 
 readonly _HILT_GRADLE_PLUGIN_DIR=java/dagger/hilt/android/plugin
-./$_HILT_GRADLE_PLUGIN_DIR/gradlew -p $_HILT_GRADLE_PLUGIN_DIR publishToMavenLocal
+./$_HILT_GRADLE_PLUGIN_DIR/gradlew -p $_HILT_GRADLE_PLUGIN_DIR publishToMavenLocal --no-daemon
 
 echo -e "Installed local snapshot"

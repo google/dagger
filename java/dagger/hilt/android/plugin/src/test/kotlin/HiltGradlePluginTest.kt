@@ -1,0 +1,256 @@
+/*
+ * Copyright (C) 2020 The Dagger Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import com.google.common.truth.Truth.assertThat
+import java.io.DataInputStream
+import java.io.FileInputStream
+import javassist.bytecode.ClassFile
+import org.gradle.testkit.runner.TaskOutcome
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+
+/**
+ * Functional test of the plugin
+ *
+ * To run these tests first deploy artifacts to local maven via util/install-local-snapshot.sh.
+ */
+class HiltGradlePluginTest {
+
+  @get:Rule
+  val testProjectDir = TemporaryFolder()
+
+  lateinit var gradleTransformRunner: GradleTransformTestRunner
+
+  @Before
+  fun setup() {
+    gradleTransformRunner = GradleTransformTestRunner(testProjectDir)
+    gradleTransformRunner.addSrc(
+      srcPath = "minimal/MainActivity.java",
+      srcContent =
+        """
+        package minimal;
+
+        import androidx.appcompat.app.AppCompatActivity;
+
+        @dagger.hilt.android.AndroidEntryPoint
+        public class MainActivity extends AppCompatActivity {
+
+        }
+        """.trimIndent()
+    )
+  }
+
+  // Simple functional test to verify transformation.
+  @Test
+  fun testAssemble() {
+    gradleTransformRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'"
+    )
+    gradleTransformRunner.addActivities(
+      "<activity android:name=\".MainActivity\"/>"
+    )
+
+    val result = gradleTransformRunner.build()
+    val assembleTask = result.getTask(":assembleDebug")
+    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
+
+    val transformedClass = result.getTransformedFile("minimal/MainActivity.class")
+    FileInputStream(transformedClass).use { fileInput ->
+      ClassFile(DataInputStream(fileInput)).let { classFile ->
+        assertEquals("minimal.Hilt_MainActivity", classFile.superclass)
+      }
+    }
+  }
+
+  // Verify correct transformation is done on nested classes.
+  @Test
+  fun testAssemble_nestedClass() {
+    gradleTransformRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'"
+    )
+
+    gradleTransformRunner.addSrc(
+      srcPath = "minimal/TopClass.java",
+      srcContent =
+        """
+        package minimal;
+
+        import androidx.appcompat.app.AppCompatActivity;
+
+        public class TopClass {
+            @dagger.hilt.android.AndroidEntryPoint
+            public static class NestedActivity extends AppCompatActivity { }
+        }
+        """.trimIndent()
+    )
+
+    val result = gradleTransformRunner.build()
+    val assembleTask = result.getTask(":assembleDebug")
+    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
+
+    val transformedClass = result.getTransformedFile("minimal/TopClass\$NestedActivity.class")
+    FileInputStream(transformedClass).use { fileInput ->
+      ClassFile(DataInputStream(fileInput)).let { classFile ->
+        assertEquals("minimal.Hilt_TopClass_NestedActivity", classFile.superclass)
+      }
+    }
+  }
+
+  // Verify plugin configuration fails when runtime dependency is missing but plugin is applied.
+  @Test
+  fun testAssemble_missingLibraryDep() {
+    gradleTransformRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'"
+    )
+
+    val result = gradleTransformRunner.buildAndFail()
+    assertThat(result.getOutput()).contains(
+      "The Hilt Android Gradle plugin is applied but no " +
+        "com.google.dagger:hilt-android dependency was found."
+    )
+  }
+
+  // Verify plugin configuration fails when compiler dependency is missing but plugin is applied.
+  @Test
+  fun testAssemble_missingCompilerDep() {
+    gradleTransformRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'"
+    )
+
+    val result = gradleTransformRunner.buildAndFail()
+    assertThat(result.getOutput()).contains(
+      "The Hilt Android Gradle plugin is applied but no " +
+        "com.google.dagger:hilt-android-compiler dependency was found."
+    )
+  }
+
+  // Verifies the transformation is applied incrementally when a class to be transformed is updated.
+  @Test
+  fun testTransform_incrementalClass() {
+    gradleTransformRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'"
+    )
+
+    val srcFile = gradleTransformRunner.addSrc(
+      srcPath = "minimal/OtherActivity.java",
+      srcContent =
+        """
+        package minimal;
+
+        import androidx.appcompat.app.AppCompatActivity;
+
+        @dagger.hilt.android.AndroidEntryPoint
+        public class OtherActivity extends AppCompatActivity {
+
+        }
+        """.trimIndent()
+    )
+
+    gradleTransformRunner.build().let {
+      val assembleTask = it.getTask(TRANSFORM_TASK_NAME)
+      assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
+    }
+
+    gradleTransformRunner.build().let {
+      val assembleTask = it.getTask(TRANSFORM_TASK_NAME)
+      assertEquals(TaskOutcome.UP_TO_DATE, assembleTask.outcome)
+    }
+
+    srcFile.delete()
+    gradleTransformRunner.addSrc(
+      srcPath = "minimal/OtherActivity.java",
+      srcContent =
+        """
+        package minimal;
+
+        import androidx.fragment.app.FragmentActivity;
+
+        @dagger.hilt.android.AndroidEntryPoint
+        public class OtherActivity extends FragmentActivity {
+
+        }
+        """.trimIndent()
+    )
+
+    val result = gradleTransformRunner.build()
+    val assembleTask = result.getTask(TRANSFORM_TASK_NAME)
+    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
+
+    val transformedClass = result.getTransformedFile("minimal/OtherActivity.class")
+    FileInputStream(transformedClass).use { fileInput ->
+      ClassFile(DataInputStream(fileInput)).let { classFile ->
+        assertEquals("minimal.Hilt_OtherActivity", classFile.superclass)
+      }
+    }
+  }
+
+  // Verifies the transformation is applied incrementally when a new class is added to an existing
+  // directory.
+  @Test
+  fun testTransform_incrementalDir() {
+    gradleTransformRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'"
+    )
+
+    gradleTransformRunner.addSrcPackage("ui/")
+
+    gradleTransformRunner.build().let {
+      val assembleTask = it.getTask(TRANSFORM_TASK_NAME)
+      assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
+    }
+
+    gradleTransformRunner.build().let {
+      val assembleTask = it.getTask(TRANSFORM_TASK_NAME)
+      assertEquals(TaskOutcome.UP_TO_DATE, assembleTask.outcome)
+    }
+
+    gradleTransformRunner.addSrc(
+      srcPath = "ui/OtherActivity.java",
+      srcContent =
+        """
+        package ui;
+
+        import androidx.appcompat.app.AppCompatActivity;
+
+        @dagger.hilt.android.AndroidEntryPoint
+        public class OtherActivity extends AppCompatActivity {
+
+        }
+        """.trimIndent()
+    )
+
+    val result = gradleTransformRunner.build()
+    val assembleTask = result.getTask(TRANSFORM_TASK_NAME)
+    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
+  }
+
+  companion object {
+    const val TRANSFORM_TASK_NAME =
+      ":transformClassesWithAndroidEntryPointTransformForDebug"
+  }
+}

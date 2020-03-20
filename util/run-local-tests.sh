@@ -15,6 +15,11 @@ util/install-local-snapshot.sh
 ./$_SIMPLE_EXAMPLE_DIR/gradlew -p $_SIMPLE_EXAMPLE_DIR build --stacktrace
 ./$_ANDROID_EXAMPLE_DIR/gradlew -p $_ANDROID_EXAMPLE_DIR build --stacktrace
 
+readonly _HILT_GRADLE_PLUGIN_DIR=java/dagger/hilt/android/plugin
+readonly _HILT_ANDROID_EXAMPLE_DIR=java/dagger/hilt/android/example/gradle/simple
+./$_HILT_GRADLE_PLUGIN_DIR/gradlew -p $_HILT_GRADLE_PLUGIN_DIR test --stacktrace
+./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR build --stacktrace
+./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR test --stacktrace
 
 verify_version_file() {
   local m2_repo=$1

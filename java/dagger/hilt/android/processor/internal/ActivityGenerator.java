@@ -65,7 +65,8 @@ public final class ActivityGenerator {
     Generators.addInjectionMethods(metadata, builder);
 
     JavaFile.builder(generatedClassName.packageName(), builder.build())
-        .build().writeTo(env.getFiler());
+        .build()
+        .writeTo(env.getFiler());
   }
 
   // @CallSuper
@@ -74,7 +75,7 @@ public final class ActivityGenerator {
   //   inject();
   //   super.onCreate(savedInstanceState);
   // }
-  private MethodSpec onCreate() throws IOException {
+  private MethodSpec onCreate() {
     return MethodSpec.methodBuilder("onCreate")
         .addAnnotation(AndroidClassNames.CALL_SUPER)
         .addAnnotation(Override.class)
@@ -87,4 +88,5 @@ public final class ActivityGenerator {
         .addStatement("super.onCreate(savedInstanceState)")
         .build();
   }
+
 }

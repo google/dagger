@@ -23,9 +23,7 @@ import dagger.hilt.processor.internal.Processors;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 
-/**
- * The valid root types for TikTok and Sting applications.
- */
+/** The valid root types for Hilt applications. */
 enum RootType {
     ROOT(ClassNames.GENERATE_COMPONENTS),
 

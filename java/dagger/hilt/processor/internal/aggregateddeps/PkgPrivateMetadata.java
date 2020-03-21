@@ -60,7 +60,7 @@ abstract class PkgPrivateMetadata {
   }
 
   /**
-   * Returns an Optional PkgPrivateMetadata requiring Sting processing, otherwise returns an empty
+   * Returns an Optional PkgPrivateMetadata requiring Hilt processing, otherwise returns an empty
    * Optional.
    */
   static Optional<PkgPrivateMetadata> of(

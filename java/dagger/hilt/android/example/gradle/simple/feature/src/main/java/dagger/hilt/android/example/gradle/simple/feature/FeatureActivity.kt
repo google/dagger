@@ -17,6 +17,7 @@
 package dagger.hilt.android.example.gradle.simple.feature
 
 import android.os.Bundle
+import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,13 +25,22 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class FeatureActivity : AppCompatActivity() {
-  @Inject lateinit var data: FeatureData
+  @Inject lateinit var counter: FeatureCounter
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
     setContentView(R.layout.activity_feature)
 
-    findViewById<TextView>(R.id.feature_data).text = data.text
+    findViewById<Button>(R.id.feature_button).setOnClickListener {
+      counter.count++
+      updateCountText()
+    }
+
+    updateCountText()
+  }
+
+  private fun updateCountText() {
+    findViewById<TextView>(R.id.feature_count).text = "The count: ${counter.count}"
   }
 }

@@ -137,7 +137,7 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
   }
 
   /**
-   * Do not use except in TikTok generated code!
+   * Do not use except in Hilt generated code!
    *
    * <p>A wrapper class to expose the {@link Fragment} to the views they're inflating.
    */

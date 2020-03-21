@@ -19,11 +19,13 @@ package dagger.hilt.android.example.gradle.simple.feature
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityComponent
+import dagger.hilt.android.components.ActivityRetainedComponent
+import dagger.hilt.android.scopes.ActivityRetainedScoped
 
 @Module
-@InstallIn(ActivityComponent::class)
+@InstallIn(ActivityRetainedComponent::class)
 object FeatureModule {
   @Provides
-  fun provideData() = FeatureData("This is a sample.")
+  @ActivityRetainedScoped
+  fun provideData() = FeatureCounter(0)
 }

@@ -26,6 +26,7 @@ android_library(
     name = "managers",
     srcs = [
         "ActivityComponentManager.java",
+        "ActivityRetainedComponentManager.java",
         "ApplicationComponentManager.java",
         "BroadcastReceiverComponentManager.java",
         "FragmentComponentManager.java",
@@ -40,6 +41,9 @@ android_library(
         "//java/dagger/hilt/android/internal/builders",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/internal/guava:base-android",
+        "@maven//:androidx_activity_activity",
+        "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
     ],
 )

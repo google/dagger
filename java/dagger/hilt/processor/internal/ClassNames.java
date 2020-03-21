@@ -124,6 +124,8 @@ public final class ClassNames {
 
   public static final ClassName PRECONDITIONS = get("com.google.common.base", "Preconditions");
 
+  public static final ClassName OBJECT = get("java.lang", "Object");
+
   // Kotlin-specific class names
   public static final ClassName KOTLIN_METADATA = get("kotlin", "Metadata");
 

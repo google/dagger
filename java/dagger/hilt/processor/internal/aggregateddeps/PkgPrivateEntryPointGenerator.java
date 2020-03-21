@@ -48,10 +48,9 @@ final class PkgPrivateEntryPointGenerator {
   // import javax.annotation.Generated;
   //
   // @Generated("dagger.hilt.processor.internal.aggregateddeps.PkgPrivateEntryPointGenerator")
-  // @StingGenerated
   // @InstallIn(InstallIn.Component.ACTIVITY)
   // @EntryPoint
-  // public final class StingWrapper_MyEntryPoint extends MyEntryPoint  {
+  // public final class HiltWrapper_MyEntryPoint extends MyEntryPoint  {
   // }
   void generate() throws IOException {
 

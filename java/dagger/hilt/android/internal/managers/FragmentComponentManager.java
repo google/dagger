@@ -38,10 +38,6 @@ import dagger.hilt.internal.GeneratedComponentManager;
  * is mainly due to the fact that we don't know the components at the time of generation, and
  * because even the injector interface type is not a valid type if we have a hilt base class.
  *
- * <p>TODO(b/117334249): Ban subclassing component managers for non-framework usages.
- *
- * <p>Note: This class is not final to allow TikTok to subclass these managers. TikTok adds
- * additional constrains, e.g. it allows null account ids for legacy reasons.
  */
 public class FragmentComponentManager implements GeneratedComponentManager<Object> {
   /** Entrypoint for {@link FragmentComponentBuilder}. */

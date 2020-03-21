@@ -21,5 +21,5 @@ import dagger.hilt.android.scopes.ActivityScoped;
 
 /** A Hilt component that has the lifetime of the activity. */
 @ActivityScoped
-@DefineComponent(parent = ApplicationComponent.class)
+@DefineComponent(parent = ActivityRetainedComponent.class)
 public interface ActivityComponent {}

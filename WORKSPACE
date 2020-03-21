@@ -62,19 +62,21 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 maven_install(
     artifacts = [
-        "com.google.guava:guava:27.1-android",
-        "com.android.support:support-annotations:25.0.0",
-        "com.android.support:support-fragment:25.0.0",
-        "com.android.support:appcompat-v7:25.0.0",
         "androidx.annotation:annotation:1.1.0",
-        "androidx.fragment:fragment:1.1.0",
-        "androidx.multidex:multidex:2.0.1",
         "androidx.appcompat:appcompat:1.1.0",
+        "androidx.activity:activity:1.1.0",
+        "androidx.fragment:fragment:1.2.0",
+        "androidx.lifecycle:lifecycle-viewmodel:2.2.0",
+        "androidx.multidex:multidex:2.0.1",
         "androidx.test:monitor:1.1.1",
         "androidx.test:core:1.1.0",
-        "org.robolectric:robolectric:4.3.1",
+        "com.android.support:appcompat-v7:25.0.0",
+        "com.android.support:support-annotations:25.0.0",
+        "com.android.support:support-fragment:25.0.0",
+        "com.google.guava:guava:27.1-android",
         "org.jetbrains.kotlin:kotlin-stdlib:1.3.50",
         "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0",
+        "org.robolectric:robolectric:4.3.1",
     ],
     repositories = [
         "https://repo1.maven.org/maven2",

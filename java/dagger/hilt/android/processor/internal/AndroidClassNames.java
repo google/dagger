@@ -26,6 +26,7 @@ public final class AndroidClassNames {
   public static final ClassName APPLICATION_PROVIDER =
       get("androidx.test.core.app", "ApplicationProvider");
   public static final ClassName ACTIVITY = get("android.app", "Activity");
+  public static final ClassName COMPONENT_ACTIVITY = get("androidx.activity", "ComponentActivity");
   public static final ClassName APPLICATION = get("android.app", "Application");
   public static final ClassName BROADCAST_RECEIVER = get("android.content", "BroadcastReceiver");
   public static final ClassName SERVICE = get("android.app", "Service");

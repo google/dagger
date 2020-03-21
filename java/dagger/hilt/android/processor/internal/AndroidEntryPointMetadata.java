@@ -399,6 +399,7 @@ public abstract class AndroidEntryPointMetadata {
                 + "@GenerateComponents");
         return Type.APPLICATION;
       } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.ACTIVITY)) {
+        // TODO(user): Verify base class extends androidx.activity.ComponentActivity
         return Type.ACTIVITY;
       } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.SERVICE)) {
         return Type.SERVICE;

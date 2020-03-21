@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Dagger Authors.
+ * Copyright (C) 2020 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package dagger.hilt.internal;
+package dagger.hilt.android.internal.builders;
 
-import dagger.hilt.GeneratesRootInput;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
+import dagger.hilt.DefineComponent;
+import dagger.hilt.android.components.ActivityRetainedComponent;
 
-/** Do not use. Only for use from Hilt generators. */
-@Target(ElementType.TYPE)
-@GeneratesRootInput
-public @interface GeneratedEntryPoint {}
+/** Interface for creating a {@link ActivityRetainedComponent}. */
+@DefineComponent.Builder
+public interface ActivityRetainedComponentBuilder {
+  ActivityRetainedComponent build();
+}

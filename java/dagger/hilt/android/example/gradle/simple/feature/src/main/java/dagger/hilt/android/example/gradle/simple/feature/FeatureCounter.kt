@@ -16,4 +16,4 @@
 
 package dagger.hilt.android.example.gradle.simple.feature
 
-data class FeatureData(val text: String)
+class FeatureCounter(var count: Int)

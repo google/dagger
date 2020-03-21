@@ -18,9 +18,10 @@ package dagger.hilt.android.internal.managers;
 
 import android.app.Activity;
 import android.app.Application;
+import androidx.activity.ComponentActivity;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.InstallIn;
-import dagger.hilt.android.components.ApplicationComponent;
+import dagger.hilt.android.components.ActivityRetainedComponent;
 import dagger.hilt.android.internal.builders.ActivityComponentBuilder;
 import dagger.hilt.internal.GeneratedComponentManager;
 
@@ -33,15 +34,11 @@ import dagger.hilt.internal.GeneratedComponentManager;
  * is mainly due to the fact that we don't know the components at the time of generation, and
  * because even the injector interface type is not a valid type if we have a hilt base class.
  *
- * <p>TODO(b/117334249): Ban subclassing component managers for non-framework usages.
- *
- * <p>Note: This class is not final to allow TikTok to subclass these managers. TikTok adds
- * additional constrains, e.g. ensuring that there is only 1 account at a time.
  */
 public class ActivityComponentManager implements GeneratedComponentManager<Object> {
   /** Entrypoint for {@link ActivityComponentBuilder}. */
   @EntryPoint
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(ActivityRetainedComponent.class)
   public interface ActivityComponentBuilderEntryPoint {
     ActivityComponentBuilder activityComponentBuilder();
   }
@@ -49,12 +46,15 @@ public class ActivityComponentManager implements GeneratedComponentManager<Objec
   private volatile Object component;
   private final Object componentLock = new Object();
 
-  // Protected because we want to check whether a TikTok Activity is attached to a TikTok
-  // application.
   protected final Activity activity;
+
+  private final GeneratedComponentManager<ActivityRetainedComponent>
+      activityRetainedComponentManager;
 
   public ActivityComponentManager(Activity activity) {
     this.activity = activity;
+    this.activityRetainedComponentManager =
+        new ActivityRetainedComponentManager((ComponentActivity) activity);
   }
 
   @Override
@@ -69,7 +69,6 @@ public class ActivityComponentManager implements GeneratedComponentManager<Objec
     return component;
   }
 
-  @SuppressWarnings("unchecked")
   protected Object createComponent() {
     if (!(activity.getApplication() instanceof GeneratedComponentManager)) {
       if (Application.class.equals(activity.getApplication().getClass())) {
@@ -83,9 +82,8 @@ public class ActivityComponentManager implements GeneratedComponentManager<Objec
               + activity.getApplication().getClass());
     }
 
-    return ((GeneratedComponentManager<ActivityComponentBuilderEntryPoint>)
-            activity.getApplication())
-        .generatedComponent()
+    return ((ActivityComponentBuilderEntryPoint)
+            activityRetainedComponentManager.generatedComponent())
         .activityComponentBuilder()
         .activity(activity)
         .build();

@@ -37,7 +37,6 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 
 /** Generates an Hilt View class for the @AndroidEntryPoint annotated class. */
-// TODO(user): MOE strip this to non-public when moving this to Hilt, this is public for TikTok
 public final class ViewGenerator {
   private final ProcessingEnvironment env;
   private final AndroidEntryPointMetadata metadata;

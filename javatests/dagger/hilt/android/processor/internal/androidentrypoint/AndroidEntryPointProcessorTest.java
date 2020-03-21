@@ -36,11 +36,11 @@ public class AndroidEntryPointProcessorTest {
             "test.MyActivity",
             "package test;",
             "",
-            "import android.app.Activity;",
+            "import androidx.activity.ComponentActivity;",
             "import dagger.hilt.android.AndroidEntryPoint;",
             "",
             "@AndroidEntryPoint",
-            "public class MyActivity extends Activity { }");
+            "public class MyActivity extends ComponentActivity { }");
     Compilation compilation = compiler().compile(testActivity);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -55,16 +55,17 @@ public class AndroidEntryPointProcessorTest {
             "test.MyActivity",
             "package test;",
             "",
-            "import android.app.Activity;",
+            "import androidx.activity.ComponentActivity;",
             "import dagger.hilt.android.AndroidEntryPoint;",
             "",
-            "@AndroidEntryPoint(Activity.class)",
-            "public class MyActivity extends Activity { }");
+            "@AndroidEntryPoint(ComponentActivity.class)",
+            "public class MyActivity extends ComponentActivity { }");
     Compilation compilation = compiler().compile(testActivity);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "@AndroidEntryPoint class expected to extend Hilt_MyActivity. Found: Activity")
+            "@AndroidEntryPoint class expected to extend Hilt_MyActivity. "
+                + "Found: ComponentActivity")
         ;
   }
 
@@ -75,11 +76,11 @@ public class AndroidEntryPointProcessorTest {
             "test.MyActivity",
             "package test;",
             "",
-            "import android.app.Activity;",
+            "import androidx.activity.ComponentActivity;",
             "import dagger.hilt.android.AndroidEntryPoint;",
             "",
             "@AndroidEntryPoint",
-            "public class MyActivity extends Activity { }");
+            "public class MyActivity extends ComponentActivity { }");
     Compilation compilation =
         compiler()
             .withOptions("-Adagger.hilt.android.internal.disableAndroidSuperclassValidation=true")

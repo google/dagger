@@ -16,15 +16,23 @@
   -->
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="match_parent"
-  android:layout_height="match_parent"
-  android:background="@android:color/background_light">
-
-  <TextView
-    android:id="@+id/feature_data"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_alignParentTop="true"
-    android:textColor="@android:color/primary_text_light"
-    />
+    android:background="@android:color/background_light">
+
+  <TextView
+      android:id="@+id/feature_count"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_alignParentTop="true"
+      android:textColor="@android:color/primary_text_light"
+      />
+
+  <Button
+      android:id="@+id/feature_button"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_below="@id/feature_count"
+      android:text="Count++"
+      />
 </RelativeLayout>

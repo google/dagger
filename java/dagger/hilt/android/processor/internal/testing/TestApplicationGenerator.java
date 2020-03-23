@@ -95,6 +95,7 @@ public final class TestApplicationGenerator {
             .addSuperinterface(ClassNames.ON_COMPONENT_READY_RUNNER_HOLDER)
             .addField(getComponentManagerField())
             .addField(getOnComponentReadyRunnerField())
+            .addMethod(getAttachBaseContextMethod())
             .addMethod(getOnCreateMethod())
             .addMethod(getComponentManagerMethod())
             .addMethod(getComponentMethod())
@@ -118,32 +119,18 @@ public final class TestApplicationGenerator {
         .writeTo(processingEnv.getFiler());
   }
 
-  /**
-   * private TestApplicationComponentManager componentManager =
-   *     new TestApplicationComponentManager(
-   *        ... see anonymousComponentSupplier(),
-   *        ... see requiredModuleList());
-   */
+  // Initialize this in attachBaseContext to not pull it into the main dex.
+  /** private TestApplicationComponentManager componentManager; */
   private FieldSpec getComponentManagerField() {
-    return FieldSpec
-        .builder(componentManager.type, componentManager.name, Modifier.PRIVATE, Modifier.FINAL)
-        .initializer(
-            "new $T(this, $L, $L, $L)",
-            componentManager.type,
-            anonymousComponentSupplier(),
-            requiredModuleList(),
-            waitForBindValue)
+    return FieldSpec.builder(componentManager.type, componentManager.name, Modifier.PRIVATE)
         .build();
   }
 
-  /** private final OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner(); */
+  // Initialize this in attachBaseContext to not pull it into the main dex.
+  /** private final OnComponentReadyRunner onComponentReadyRunner; */
   private FieldSpec getOnComponentReadyRunnerField() {
     return FieldSpec.builder(
-            onComponentReadyRunner.type,
-            onComponentReadyRunner.name,
-            Modifier.PRIVATE,
-            Modifier.FINAL)
-        .initializer("new $T()", onComponentReadyRunner.type)
+            onComponentReadyRunner.type, onComponentReadyRunner.name, Modifier.PRIVATE)
         .build();
   }
 
@@ -207,6 +194,37 @@ public final class TestApplicationGenerator {
         extraModules.stream()
             .map(t -> Joiner.on(".").join(ClassName.get(t).simpleNames()) + ".class")
             .collect(Collectors.joining(",\n\t")));
+  }
+
+  /**
+   * Initializes application fields. These fields are initialized in attachBaseContext to avoid
+   * potential multidexing issues.
+   *
+   * <pre>
+   * {@literal @Override} protected void attachBaseContext(Context base) {
+   *   super.attachBaseContext(base);
+   *   componentManager = new TestApplicationComponentManager(
+   *       ... see anonymousComponentSupplier(),
+   *       ... see requiredModuleList());
+   *   onComponentReadyRunner = new OnComponentReadyRunner();
+   * }
+   * </pre>
+   */
+  private MethodSpec getAttachBaseContextMethod() {
+    return MethodSpec.methodBuilder("attachBaseContext")
+        .addAnnotation(Override.class)
+        .addModifiers(Modifier.PROTECTED, Modifier.FINAL)
+        .addParameter(AndroidClassNames.CONTEXT, "base")
+        .addStatement("super.attachBaseContext(base)")
+        .addStatement(
+            "$N = new $T(this, $L, $L, $L)",
+            componentManager,
+            componentManager.type,
+            anonymousComponentSupplier(),
+            requiredModuleList(),
+            waitForBindValue)
+        .addStatement("$N = new $T()", onComponentReadyRunner, onComponentReadyRunner.type)
+        .build();
   }
 
   /**

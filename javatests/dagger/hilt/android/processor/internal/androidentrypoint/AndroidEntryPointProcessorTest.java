@@ -108,4 +108,44 @@ public class AndroidEntryPointProcessorTest {
             .compile(testApplication);
     assertThat(compilation).succeeded();
   }
+
+  @Test
+  public void appMissingGenerateComponenets() {
+    JavaFileObject testApplication =
+        JavaFileObjects.forSourceLines(
+            "test.MyApp",
+            "package test;",
+            "",
+            "import android.app.Application;",
+            "import dagger.hilt.GenerateComponents;",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "",
+            "@AndroidEntryPoint(Application.class)",
+            "public class MyApp extends Hilt_MyApp { }");
+    Compilation compilation = compiler().compile(testApplication);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Applications annotated with @AndroidEntryPoint must also be "
+            + "annotated with @GenerateComponents");
+  }
+
+  @Test
+  public void checkBaseActivityExtendsComponentActivity() {
+    JavaFileObject testActivity =
+        JavaFileObjects.forSourceLines(
+            "test.MyActivity",
+            "package test;",
+            "",
+            "import android.app.Activity;",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "",
+            "@AndroidEntryPoint(Activity.class)",
+            "public class MyActivity extends Hilt_MyActivity { }");
+    Compilation compilation = compiler().compile(testActivity);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Activities annotated with @AndroidEntryPoint must be a subclass of "
+            + "androidx.activity.ComponentActivity. (e.g. FragmentActivity, AppCompatActivity, "
+            + "etc.)");
+  }
 }

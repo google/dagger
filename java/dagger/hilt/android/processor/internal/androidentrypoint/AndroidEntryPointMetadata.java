@@ -400,7 +400,12 @@ public abstract class AndroidEntryPointMetadata {
                 + "@GenerateComponents");
         return Type.APPLICATION;
       } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.ACTIVITY)) {
-        // TODO(user): Verify base class extends androidx.activity.ComponentActivity
+        ProcessorErrors.checkState(
+            Processors.isAssignableFrom(baseElement, AndroidClassNames.COMPONENT_ACTIVITY),
+            element,
+            "Activities annotated with @AndroidEntryPoint must be a subclass of "
+                + "androidx.activity.ComponentActivity. (e.g. FragmentActivity, "
+                + "AppCompatActivity, etc.)");
         return Type.ACTIVITY;
       } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.SERVICE)) {
         return Type.SERVICE;

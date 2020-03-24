@@ -26,8 +26,28 @@ import com.squareup.javapoet.ClassName;
 public final class ComponentNames {
   private ComponentNames() {}
 
+  /** Returns the name of the generated component wrapper. */
+  public static ClassName generatedComponentsWrapper(ClassName root) {
+    return Processors.append(Processors.getEnclosedClassName(root), "_HiltComponents");
+  }
+
   /** Returns the name of the generated component. */
-  public static ClassName generatedComponent(String packageName, ClassName component) {
-    return ClassName.get(packageName, "Hilt_" + Processors.getEnclosedName(component));
+  public static ClassName generatedComponent(ClassName root, ClassName component) {
+    return generatedComponentsWrapper(root).nestedClass(componentName(component));
+  }
+
+  /**
+   * Returns the shortened component name by replacing the ending "Component" with "C" if it exists.
+   *
+   * <p>This is a hack because nested subcomponents in Dagger generate extremely long class names
+   * that hit the 256 character limit.
+   */
+  // TODO(user): See if this issue can be fixed in Dagger, e.g. by using static subcomponents.
+  private static String componentName(ClassName component) {
+    // TODO(user): How do we want to handle collisions across packages? Currently, we only handle
+    // collisions across enclosing elements since namespacing by package would likely lead to too
+    // long of class names.
+    // Note: This uses regex matching so we only match if the name ends in "Component"
+    return Processors.getEnclosedName(component).replaceAll("Component$", "C");
   }
 }

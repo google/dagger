@@ -86,6 +86,7 @@ java_library(
     ],
     deps = [
         ":processors",
+        "//java/dagger/internal/guava:annotations",
         "@google_bazel_common//third_party/java/javapoet",
     ],
 )

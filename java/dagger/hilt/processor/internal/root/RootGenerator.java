@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
@@ -89,10 +90,11 @@ final class RootGenerator {
 
   private void generateTestApplication() throws IOException {
     if (root.type().equals(RootType.TEST_ROOT)) {
+      ImmutableSet<TypeElement> modules = getModules(ClassNames.APPLICATION_COMPONENT);
       new TestApplicationGenerator(
               env,
               InternalTestRootMetadata.of(env, root.element()),
-              modulesThatDaggerCannotConstruct(deps.getModules(ClassNames.APPLICATION_COMPONENT)),
+              modulesThatDaggerCannotConstruct(modules),
               false)
           .generate();
     }
@@ -107,8 +109,7 @@ final class RootGenerator {
     // Only test modules in the application component can be missing default constructor
     for (ComponentDescriptor componentDescriptor : componentTree.getComponentDescriptors()) {
       ClassName componentName = componentDescriptor.component();
-      for (TypeElement extraModule :
-          modulesThatDaggerCannotConstruct(deps.getModules(componentName))) {
+      for (TypeElement extraModule : modulesThatDaggerCannotConstruct(getModules(componentName))) {
         if (root.type().isTestRoot() && !componentName.equals(ClassNames.APPLICATION_COMPONENT)) {
           env.getMessager()
               .printMessage(
@@ -133,48 +134,66 @@ final class RootGenerator {
   private void generateComponentForEachScope() throws IOException {
     // TODO(user): Should including modules for unsupported scopes be an error/warning?
     ImmutableMultimap<ComponentDescriptor, ClassName> scopes = getScopes();
+
+    // TODO(user): Consider moving all of this logic into ComponentGenerator?
+    TypeSpec.Builder componentsWrapper =
+        TypeSpec.classBuilder(getComponentsWrapperClassName())
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+            .addMethod(MethodSpec.constructorBuilder().addModifiers(Modifier.PRIVATE).build());
+
+    Processors.addGeneratedAnnotation(componentsWrapper, env, ClassNames.ROOT_PROCESSOR.toString());
+
     ImmutableMap<ComponentDescriptor, ClassName> subcomponentBuilderModules =
-        subcomponentBuilderModules();
+        subcomponentBuilderModules(componentsWrapper);
 
     for (ComponentDescriptor componentDescriptor : componentTree.getComponentDescriptors()) {
       ImmutableSet<ClassName> modules =
           ImmutableSet.<ClassName>builder()
-              .addAll(toClassNames(deps.getModules(componentDescriptor.component())))
+              .addAll(toClassNames(getModules(componentDescriptor.component())))
               .addAll(
                   componentTree.childrenOf(componentDescriptor).stream()
                       .map(subcomponentBuilderModules::get)
                       .collect(toImmutableSet()))
               .build();
 
-      new ComponentGenerator(
-              env,
-              getComponentClassName(componentDescriptor),
-              root.element(),
-              Optional.empty(),
-              modules,
-              ImmutableSet.<TypeName>builder()
-                  .addAll(getEntryPoints(componentDescriptor))
-                  .add(componentDescriptor.component())
-                  .build(),
-              scopes.get(componentDescriptor),
-              ImmutableList.of(),
-              componentAnnotation(componentDescriptor),
-              componentBuilder(componentDescriptor))
-          .generate();
+      componentsWrapper.addType(
+          new ComponentGenerator(
+                  env,
+                  getComponentClassName(componentDescriptor),
+                  root.element(),
+                  Optional.empty(),
+                  modules,
+                  ImmutableSet.<TypeName>builder()
+                      .addAll(getEntryPoints(componentDescriptor))
+                      .add(componentDescriptor.component())
+                      .build(),
+                  scopes.get(componentDescriptor),
+                  ImmutableList.of(),
+                  componentAnnotation(componentDescriptor),
+                  componentBuilder(componentDescriptor))
+              .generate().toBuilder().addModifiers(Modifier.STATIC).build());
 
     }
+
+    RootFileFormatter.write(
+        JavaFile.builder(root.classname().packageName(), componentsWrapper.build()).build(),
+        env.getFiler());
   }
 
-  private ImmutableMap<ComponentDescriptor, ClassName> subcomponentBuilderModules()
-      throws IOException {
-    ImmutableMap.Builder<ComponentDescriptor, ClassName> builder = ImmutableMap.builder();
+  private ImmutableMap<ComponentDescriptor, ClassName> subcomponentBuilderModules(
+      TypeSpec.Builder componentsWrapper) throws IOException {
+    ImmutableMap.Builder<ComponentDescriptor, ClassName> modules = ImmutableMap.builder();
     for (ComponentDescriptor descriptor : componentTree.getComponentDescriptors()) {
       // Root component builders don't have subcomponent builder modules
       if (!descriptor.isRoot() && descriptor.creator().isPresent()) {
-        builder.put(descriptor, subcomponentBuilderModule(descriptor));
+        ClassName component = getComponentClassName(descriptor);
+        ClassName builder = descriptor.creator().get();
+        ClassName module = component.peerClass(component.simpleName() + "BuilderModule");
+        componentsWrapper.addType(subcomponentBuilderModule(component, builder, module));
+        modules.put(descriptor, module);
       }
     }
-    return builder.build();
+    return modules.build();
   }
 
   // Generates:
@@ -182,36 +201,28 @@ final class RootGenerator {
   // interface FooSubcomponentBuilderModule {
   //   @Binds FooSubcomponentInterfaceBuilder bind(FooSubcomponent.Builder builder);
   // }
-  private ClassName subcomponentBuilderModule(ComponentDescriptor descriptor) throws IOException {
-    ClassName subcomponentName = getComponentClassName(descriptor);
-    ClassName subcomponentBuilderName = descriptor.creator().get();
-    ClassName subcomponentBuilderModuleName =
-        subcomponentName.peerClass(subcomponentName.simpleName() + "BuilderModule");
-
+  private TypeSpec subcomponentBuilderModule(
+      ClassName componentName, ClassName builderName, ClassName moduleName) throws IOException {
     TypeSpec.Builder subcomponentBuilderModule =
-        TypeSpec.interfaceBuilder(subcomponentBuilderModuleName)
+        TypeSpec.interfaceBuilder(moduleName)
             .addOriginatingElement(root.element())
             .addModifiers(ABSTRACT)
             .addAnnotation(
                 AnnotationSpec.builder(ClassNames.MODULE)
-                    .addMember("subcomponents", "$T.class", subcomponentName)
+                    .addMember("subcomponents", "$T.class", componentName)
                     .build())
             .addMethod(
                 MethodSpec.methodBuilder("bind")
                     .addModifiers(ABSTRACT, PUBLIC)
                     .addAnnotation(ClassNames.BINDS)
-                    .returns(subcomponentBuilderName)
-                    .addParameter(subcomponentName.nestedClass("Builder"), "builder")
+                    .returns(builderName)
+                    .addParameter(componentName.nestedClass("Builder"), "builder")
                     .build());
 
     Processors.addGeneratedAnnotation(
         subcomponentBuilderModule, env, ClassNames.ROOT_PROCESSOR.toString());
 
-    JavaFile.builder(subcomponentBuilderModuleName.packageName(), subcomponentBuilderModule.build())
-        .build()
-        .writeTo(env.getFiler());
-
-    return subcomponentBuilderModuleName;
+    return subcomponentBuilderModule.build();
   }
 
   private Optional<TypeSpec> componentBuilder(ComponentDescriptor descriptor) {
@@ -241,6 +252,10 @@ final class RootGenerator {
     } else {
       return ClassNames.SUBCOMPONENT_BUILDER;
     }
+  }
+
+  private ImmutableSet<TypeElement> getModules(ClassName componentName) {
+    return deps.getModules(componentName, root.classname());
   }
 
   private ImmutableSet<TypeName> getEntryPoints(ComponentDescriptor componentDescriptor) {
@@ -279,12 +294,16 @@ final class RootGenerator {
     return builder.build();
   }
 
-  private ClassName getComponentClassName(ComponentDescriptor componentDescriptor) {
-    ClassName rootName = root.classname();
-    ClassName componentName =
-        ComponentNames.generatedComponent(rootName.packageName(), componentDescriptor.component());
+  private ClassName getPartialRootModuleClassName() {
+    return getComponentsWrapperClassName().nestedClass("PartialRootModule");
+  }
 
-    return componentName;
+  private ClassName getComponentsWrapperClassName() {
+    return ComponentNames.generatedComponentsWrapper(root.classname());
+  }
+
+  private ClassName getComponentClassName(ComponentDescriptor componentDescriptor) {
+    return ComponentNames.generatedComponent(root.classname(), componentDescriptor.component());
   }
 
   /**

@@ -148,8 +148,9 @@ public final class TestApplicationGenerator {
    * }
    */
   private TypeSpec anonymousComponentSupplier() {
+    String rootPkg = testName.packageName();
     ClassName component =
-        ComponentNames.generatedComponent(testName, AndroidClassNames.APPLICATION_COMPONENT);
+        ComponentNames.generatedComponent(rootPkg, AndroidClassNames.APPLICATION_COMPONENT);
     return TypeSpec.anonymousClassBuilder("")
         .addSuperinterface(ClassNames.COMPONENT_SUPPLIER)
         .addMethod(

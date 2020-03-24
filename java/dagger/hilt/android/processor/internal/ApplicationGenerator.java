@@ -105,9 +105,9 @@ public final class ApplicationGenerator {
   //   }
   // }
   private TypeSpec creatorType() {
+    String pkgName = metadata.elementClassName().packageName();
     ClassName component =
-        ComponentNames.generatedComponent(
-            metadata.elementClassName(), AndroidClassNames.APPLICATION_COMPONENT);
+        ComponentNames.generatedComponent(pkgName, AndroidClassNames.APPLICATION_COMPONENT);
     return TypeSpec.anonymousClassBuilder("")
         .addSuperinterface(AndroidClassNames.COMPONENT_SUPPLIER)
         .addMethod(

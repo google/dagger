@@ -19,21 +19,16 @@ package dagger.hilt.processor.internal.aggregateddeps;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.hilt.processor.internal.Processors.toTypeElements;
 
-import com.google.auto.common.MoreElements;
-import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.squareup.javapoet.ClassName;
-import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.definecomponent.DefineComponents;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.PackageElement;
@@ -46,96 +41,22 @@ import javax.lang.model.util.Elements;
 public final class ComponentDependencies {
   static final String AGGREGATING_PACKAGE = "hilt_aggregated_deps";
 
-  /** A key used for grouping a test dependency by both its component and test name. */
-  @AutoValue
-  abstract static class TestDepKey {
-    static TestDepKey of(ClassName component, ClassName test) {
-      return new AutoValue_ComponentDependencies_TestDepKey(component, test);
-    }
-
-    /** Returns the name of the component this dependency should be installed in. */
-    abstract ClassName component();
-
-    /** Returns the name of the test that this dependency should be installed in. */
-    abstract ClassName test();
-  }
-
-  /**
-   * Holds a set of component dependencies, e.g. modules or entry points.
-   *
-   * <p>This class handles separating dependencies into global and test dependencies. Global
-   * dependencies are installed with every test, where test dependencies are only installed with the
-   * specified test. The total set of dependencies includes all global + test dependencies.
-   */
-  private static final class Dependencies {
-    private static Dependencies of(ImmutableSetMultimap<ClassName, TypeElement> deps) {
-      ImmutableSetMultimap.Builder<ClassName, TypeElement> globalDeps =
-          ImmutableSetMultimap.builder();
-      ImmutableSetMultimap.Builder<TestDepKey, TypeElement> testDeps =
-          ImmutableSetMultimap.builder();
-      for (ClassName component : deps.keySet()) {
-        for (TypeElement dep : deps.get(component)) {
-          Optional<TypeElement> testElement = getEnclosingTestElement(dep);
-          if (testElement.isPresent()) {
-            testDeps.put(TestDepKey.of(component, ClassName.get(testElement.get())), dep);
-          } else {
-            globalDeps.put(component, dep);
-          }
-        }
-      }
-      return new Dependencies(globalDeps.build(), testDeps.build());
-    }
-
-    // TODO(user): Consider checking for the enclosing class when processing the dependency
-    // in AggregatedDepsProcessor and storing it on the @AggregatedDeps annotation instead.
-    private static Optional<TypeElement> getEnclosingTestElement(Element element) {
-      while (element.getKind() != ElementKind.PACKAGE) {
-        if (Processors.hasAnnotation(element, ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT)
-            || Processors.hasAnnotation(element, ClassNames.ANDROID_EMULATOR_ENTRY_POINT)) {
-          return Optional.of(MoreElements.asType(element));
-        }
-        element = element.getEnclosingElement();
-      }
-      return Optional.empty();
-    }
-
-    // Dependencies keyed by the component they're installed in.
-    private final ImmutableSetMultimap<ClassName, TypeElement> globalDeps;
-    private final ImmutableSetMultimap<TestDepKey, TypeElement> testDeps;
-
-    Dependencies(
-        ImmutableSetMultimap<ClassName, TypeElement> globalDeps,
-        ImmutableSetMultimap<TestDepKey, TypeElement> testDeps) {
-      this.globalDeps = globalDeps;
-      this.testDeps = testDeps;
-    }
-
-    /** Returns the dependencies to be installed in the given component for the given test. */
-    ImmutableSet<TypeElement> get(ClassName component, ClassName test) {
-      return ImmutableSet.<TypeElement>builder()
-          .addAll(globalDeps.get(component))
-          .addAll(testDeps.get(TestDepKey.of(component, test)))
-          .build();
-    }
-  }
-
-  private final Dependencies modules;
-  // TODO(user): Migrate entry points to use Dependencies class.
+  private final ImmutableSetMultimap<ClassName, TypeElement> modules;
   private final ImmutableSetMultimap<ClassName, TypeElement> entryPoints;
   private final ImmutableSetMultimap<ClassName, TypeElement> componentEntryPoints;
 
-  private ComponentDependencies(
+  public ComponentDependencies(
       ImmutableSetMultimap<ClassName, TypeElement> modules,
       ImmutableSetMultimap<ClassName, TypeElement> entryPoints,
       ImmutableSetMultimap<ClassName, TypeElement> componentEntryPoints) {
-    this.modules = Dependencies.of(modules);
+    this.modules = modules;
     this.entryPoints = entryPoints;
     this.componentEntryPoints = componentEntryPoints;
   }
 
   /** Returns the modules for a component, without any filtering. */
-  public ImmutableSet<TypeElement> getModules(ClassName componentName, ClassName rootName) {
-    return modules.get(componentName, rootName);
+  public ImmutableSet<TypeElement> getModules(ClassName componentName) {
+    return modules.get(componentName);
   }
 
   /** Returns the entry points associated with the given a component. */

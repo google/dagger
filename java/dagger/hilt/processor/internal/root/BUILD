@@ -30,12 +30,10 @@ java_library(
     name = "processor_lib",
     srcs = [
         "Root.java",
-        "RootFileFormatter.java",
         "RootGenerator.java",
         "RootProcessor.java",
     ],
     deps = [
-        ":root_type",
         "//:dagger_with_compiler",
         "//java/dagger/hilt/android/processor/internal/testing:internal_test_root_metadata",
         "//java/dagger/hilt/android/processor/internal/testing:test_application_generator",
@@ -49,6 +47,7 @@ java_library(
         "//java/dagger/hilt/processor/internal/aliasof:alias_ofs",
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
         "//java/dagger/hilt/processor/internal/generatesrootinput:generates_root_inputs",
+        "//java/dagger/hilt/processor/internal/root:root_type",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:common",

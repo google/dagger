@@ -56,7 +56,9 @@ class IncrementalProcessorTest {
   private lateinit var genActivityInjectorDeps2: File
   private lateinit var genModuleDeps1: File
   private lateinit var genModuleDeps2: File
-  private lateinit var genHiltComponents: File
+  private lateinit var genHiltApplicationComponent: File
+  private lateinit var genHiltActivityComponent: File
+  private lateinit var genHiltActivityComponentBuilder: File
   private lateinit var genDaggerHiltApplicationComponent: File
 
   // Compiled classes
@@ -76,7 +78,9 @@ class IncrementalProcessorTest {
   private lateinit var classGenActivityInjectorDeps2: File
   private lateinit var classGenModuleDeps1: File
   private lateinit var classGenModuleDeps2: File
-  private lateinit var classGenHiltComponents: File
+  private lateinit var classGenHiltApplicationComponent: File
+  private lateinit var classGenHiltActivityComponent: File
+  private lateinit var classGenHiltActivityComponentBuilder: File
   private lateinit var classGenDaggerHiltApplicationComponent: File
 
   // Timestamps of files
@@ -175,13 +179,21 @@ class IncrementalProcessorTest {
       projectRoot,
       "$GEN_SRC_DIR/hilt_aggregated_deps/simple_Module2ModuleDeps.java"
     )
-    genHiltComponents = File(
+    genHiltApplicationComponent = File(
       projectRoot,
-      "$GEN_SRC_DIR/simple/SimpleApp_HiltComponents.java"
+      "$GEN_SRC_DIR/simple/Hilt_ApplicationComponent.java"
+    )
+    genHiltActivityComponent = File(
+      projectRoot,
+      "$GEN_SRC_DIR/simple/Hilt_ActivityComponent.java"
+    )
+    genHiltActivityComponentBuilder = File(
+      projectRoot,
+      "$GEN_SRC_DIR/simple/Hilt_ActivityComponentBuilderModule.java"
     )
     genDaggerHiltApplicationComponent = File(
       projectRoot,
-      "$GEN_SRC_DIR/simple/DaggerSimpleApp_HiltComponents_ApplicationC.java"
+      "$GEN_SRC_DIR/simple/DaggerHilt_ApplicationComponent.java"
     )
 
     classSrcApp = File(projectRoot, "$CLASS_DIR/simple/SimpleApp.class")
@@ -221,13 +233,21 @@ class IncrementalProcessorTest {
       projectRoot,
       "$CLASS_DIR/hilt_aggregated_deps/simple_Module2ModuleDeps.class"
     )
-    classGenHiltComponents = File(
+    classGenHiltApplicationComponent = File(
       projectRoot,
-      "$CLASS_DIR/simple/SimpleApp_HiltComponents.class"
+      "$CLASS_DIR/simple/Hilt_ApplicationComponent.class"
+    )
+    classGenHiltActivityComponent = File(
+      projectRoot,
+      "$CLASS_DIR/simple/Hilt_ActivityComponent.class"
+    )
+    classGenHiltActivityComponentBuilder = File(
+      projectRoot,
+      "$CLASS_DIR/simple/Hilt_ActivityComponentBuilderModule.class"
     )
     classGenDaggerHiltApplicationComponent = File(
       projectRoot,
-      "$CLASS_DIR/simple/DaggerSimpleApp_HiltComponents_ApplicationC.class"
+      "$CLASS_DIR/simple/DaggerHilt_ApplicationComponent.class"
     )
   }
 
@@ -251,7 +271,9 @@ class IncrementalProcessorTest {
       genActivityInjectorDeps2,
       genModuleDeps1,
       genModuleDeps2,
-      genHiltComponents,
+      genHiltApplicationComponent,
+      genHiltActivityComponent,
+      genHiltActivityComponentBuilder,
       genDaggerHiltApplicationComponent
     )
 
@@ -273,7 +295,9 @@ class IncrementalProcessorTest {
       classGenActivityInjectorDeps2,
       classGenModuleDeps1,
       classGenModuleDeps2,
-      classGenHiltComponents,
+      classGenHiltApplicationComponent,
+      classGenHiltActivityComponent,
+      classGenHiltActivityComponentBuilder,
       classGenDaggerHiltApplicationComponent
     )
   }
@@ -307,7 +331,9 @@ class IncrementalProcessorTest {
       genActivityInjector1,
       genAppInjectorDeps,
       genActivityInjectorDeps1,
-      genHiltComponents,
+      genHiltApplicationComponent,
+      genHiltActivityComponent,
+      genHiltActivityComponentBuilder,
       genDaggerHiltApplicationComponent
     )
 
@@ -324,7 +350,9 @@ class IncrementalProcessorTest {
       classGenActivityInjector1,
       classGenAppInjectorDeps,
       classGenActivityInjectorDeps1,
-      classGenHiltComponents,
+      classGenHiltApplicationComponent,
+      classGenHiltActivityComponent,
+      classGenHiltActivityComponentBuilder,
       classGenDaggerHiltApplicationComponent
     )
   }
@@ -356,7 +384,9 @@ class IncrementalProcessorTest {
       genAppInjector,
       genAppInjectorDeps,
       genModuleDeps1,
-      genHiltComponents,
+      genHiltApplicationComponent,
+      genHiltActivityComponent,
+      genHiltActivityComponentBuilder,
       genDaggerHiltApplicationComponent
     )
 
@@ -371,7 +401,9 @@ class IncrementalProcessorTest {
       classGenAppInjector,
       classGenAppInjectorDeps,
       classGenModuleDeps1,
-      classGenHiltComponents,
+      classGenHiltApplicationComponent,
+      classGenHiltActivityComponent,
+      classGenHiltActivityComponentBuilder,
       classGenDaggerHiltApplicationComponent
     )
   }
@@ -402,7 +434,9 @@ class IncrementalProcessorTest {
       genHiltApp,
       genAppInjector,
       genAppInjectorDeps,
-      genHiltComponents,
+      genHiltApplicationComponent,
+      genHiltActivityComponent,
+      genHiltActivityComponentBuilder,
       genDaggerHiltApplicationComponent
     )
 
@@ -414,7 +448,9 @@ class IncrementalProcessorTest {
       classGenHiltApp,
       classGenAppInjector,
       classGenAppInjectorDeps,
-      classGenHiltComponents,
+      classGenHiltApplicationComponent,
+      classGenHiltActivityComponent,
+      classGenHiltActivityComponentBuilder,
       classGenDaggerHiltApplicationComponent
     )
   }
@@ -442,7 +478,9 @@ class IncrementalProcessorTest {
       genHiltApp,
       genAppInjector,
       genAppInjectorDeps,
-      genHiltComponents,
+      genHiltApplicationComponent,
+      genHiltActivityComponent,
+      genHiltActivityComponentBuilder,
       genDaggerHiltApplicationComponent
     )
 
@@ -461,7 +499,9 @@ class IncrementalProcessorTest {
       classGenHiltApp,
       classGenAppInjector,
       classGenAppInjectorDeps,
-      classGenHiltComponents,
+      classGenHiltApplicationComponent,
+      classGenHiltActivityComponent,
+      classGenHiltActivityComponentBuilder,
       classGenDaggerHiltApplicationComponent
     )
   }
@@ -487,7 +527,9 @@ class IncrementalProcessorTest {
       genHiltApp,
       genAppInjector,
       genAppInjectorDeps,
-      genHiltComponents,
+      genHiltApplicationComponent,
+      genHiltActivityComponent,
+      genHiltActivityComponentBuilder,
       genDaggerHiltApplicationComponent
     )
 
@@ -504,7 +546,9 @@ class IncrementalProcessorTest {
       classGenHiltApp,
       classGenAppInjector,
       classGenAppInjectorDeps,
-      classGenHiltComponents,
+      classGenHiltApplicationComponent,
+      classGenHiltActivityComponent,
+      classGenHiltActivityComponentBuilder,
       classGenDaggerHiltApplicationComponent
     )
   }
@@ -542,7 +586,9 @@ class IncrementalProcessorTest {
       genActivityInjectorDeps2,
       genModuleDeps1,
       genModuleDeps2,
-      genHiltComponents,
+      genHiltApplicationComponent,
+      genHiltActivityComponent,
+      genHiltActivityComponentBuilder,
       genDaggerHiltApplicationComponent,
       classSrcApp,
       classSrcActivity1,
@@ -560,7 +606,9 @@ class IncrementalProcessorTest {
       classGenActivityInjectorDeps2,
       classGenModuleDeps1,
       classGenModuleDeps2,
-      classGenHiltComponents,
+      classGenHiltApplicationComponent,
+      classGenHiltActivityComponent,
+      classGenHiltActivityComponentBuilder,
       classGenDaggerHiltApplicationComponent
     )
 

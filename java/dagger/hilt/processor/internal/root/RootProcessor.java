@@ -17,24 +17,17 @@
 package dagger.hilt.processor.internal.root;
 
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static java.util.stream.Collectors.toSet;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.AGGREGATING;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputs;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
@@ -46,10 +39,10 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(AGGREGATING)
 @AutoService(Processor.class)
 public final class RootProcessor extends BaseProcessor {
-  private final List<ClassName> rootNames = new ArrayList<>();
-  private final List<ClassName> testRootNames = new ArrayList<>();
-  private final Set<ClassName> processed = new HashSet<>();
   private GeneratesRootInputs generatesRootInputs;
+  private ClassName rootName;
+  private boolean processed;
+  private boolean preprocessed;
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
@@ -59,63 +52,37 @@ public final class RootProcessor extends BaseProcessor {
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {
-    return Arrays.stream(RootType.values())
+    return ImmutableSet.copyOf(RootType.values()).stream()
         .map(rootType -> rootType.className().toString())
-        .collect(toSet());
+        .collect(Collectors.toSet());
   }
 
   @Override
   public void processEach(TypeElement annotation, Element element) throws Exception {
-    TypeElement rootElement = MoreElements.asType(element);
-    if (RootType.of(getProcessingEnv(), rootElement).isTestRoot()) {
-      testRootNames.add(ClassName.get(rootElement));
-    } else {
-      rootNames.add(ClassName.get(rootElement));
-    }
-
     ProcessorErrors.checkState(
-        rootNames.size() <= 1, element, "More than one root found: %s", rootNames);
+        rootName == null, element, "More than one root found: [%s, %s]", rootName, element);
 
-    ProcessorErrors.checkState(
-        testRootNames.isEmpty() || rootNames.isEmpty(),
-        element,
-        "Cannot have both test roots and non-test roots in the same build compilation:"
-            + "\n\tRoots: %s"
-            + "\n\tTestRoots: %s",
-        rootNames,
-        testRootNames);
+    rootName = ClassName.get(MoreElements.asType(element));
   }
 
   @Override
   public void postRoundProcess(RoundEnvironment roundEnv) throws Exception {
-    Set<Element> newElements = generatesRootInputs.getElementsToWaitFor(roundEnv);
-    if (!processed.isEmpty()) {
+    if (processed) {
+      Set<Element> newElements = generatesRootInputs.getElementsToWaitFor(roundEnv);
       checkState(
           newElements.isEmpty(),
           "Found extra modules after compilation: %s\n"
               + "(If you are adding an annotation processor that generates root input for hilt, "
               + "the annotation must be annotated with @dagger.hilt.GeneratesRootInput.\n)",
           newElements);
+    } else if (rootName != null && generatesRootInputs.getElementsToWaitFor(roundEnv).isEmpty()) {
+      // We create a new root element each round to avoid the jdk8 bug where TypeElement.equals does
+      // not work for elements across processing rounds.
+      TypeElement rootElement = getElementUtils().getTypeElement(rootName.toString());
+      Root root = Root.create(rootElement, getProcessingEnv());
+
+      processed = true;
+      RootGenerator.generate(root, getProcessingEnv());
     }
-
-    if (newElements.isEmpty()) {
-      ImmutableList<Root> rootsToProcess =
-          Stream.concat(rootNames.stream(), testRootNames.stream())
-              .filter(rootName -> !processed.contains(rootName))
-              // We create a new root element each round to avoid the jdk8 bug where
-              // TypeElement.equals does not work for elements across processing rounds.
-              .map(rootName -> getElementUtils().getTypeElement(rootName.toString()))
-              .map(rootElement -> Root.create(rootElement, getProcessingEnv()))
-              .collect(toImmutableList());
-
-      for (Root root : rootsToProcess) {
-        processRoot(root);
-      }
-    }
-  }
-
-  private void processRoot(Root root) throws IOException {
-    processed.add(root.classname());
-    RootGenerator.generate(root, getProcessingEnv());
   }
 }

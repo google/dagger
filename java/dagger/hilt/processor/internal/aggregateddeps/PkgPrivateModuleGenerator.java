@@ -57,6 +57,7 @@ final class PkgPrivateModuleGenerator {
     JavaFile.builder(
             metadata.generatedClassName().packageName(),
             TypeSpec.classBuilder(metadata.generatedClassName().simpleName())
+                .addOriginatingElement(metadata.getTypeElement())
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addAnnotation(
                     AnnotationSpec.builder(Generated.class)

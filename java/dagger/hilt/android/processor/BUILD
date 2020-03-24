@@ -49,10 +49,10 @@ gen_maven_artifact(
     shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
     deps = [
         "//java/dagger/hilt/android/processor/internal:android_classnames",
-        "//java/dagger/hilt/android/processor/internal:android_generators",
-        "//java/dagger/hilt/android/processor/internal:compiler_options",
-        "//java/dagger/hilt/android/processor/internal:metadata",
         "//java/dagger/hilt/android/processor/internal:utils",
+        "//java/dagger/hilt/android/processor/internal/androidentrypoint:android_generators",
+        "//java/dagger/hilt/android/processor/internal/androidentrypoint:compiler_options",
+        "//java/dagger/hilt/android/processor/internal/androidentrypoint:metadata",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/testing:internal_test_root_metadata",
         "//java/dagger/hilt/android/processor/internal/testing:internal_test_root_processor_lib",

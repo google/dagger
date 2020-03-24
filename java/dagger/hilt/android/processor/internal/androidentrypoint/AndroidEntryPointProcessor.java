@@ -20,16 +20,7 @@ import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING
 
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
-import dagger.hilt.android.processor.internal.ActivityGenerator;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
-import dagger.hilt.android.processor.internal.AndroidEntryPointMetadata;
-import dagger.hilt.android.processor.internal.ApplicationGenerator;
-import dagger.hilt.android.processor.internal.BroadcastReceiverGenerator;
-import dagger.hilt.android.processor.internal.FragmentGenerator;
-import dagger.hilt.android.processor.internal.HiltCompilerOptions;
-import dagger.hilt.android.processor.internal.InjectorEntryPointGenerator;
-import dagger.hilt.android.processor.internal.ServiceGenerator;
-import dagger.hilt.android.processor.internal.ViewGenerator;
 import dagger.hilt.processor.internal.BaseProcessor;
 import java.util.Set;
 import javax.annotation.processing.Processor;

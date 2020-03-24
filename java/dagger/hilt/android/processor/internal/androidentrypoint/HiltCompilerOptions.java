@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal;
+package dagger.hilt.android.processor.internal.androidentrypoint;
 
 import java.util.Arrays;
 import java.util.Set;

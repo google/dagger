@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal;
+package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import static dagger.hilt.android.processor.internal.HiltCompilerOptions.BooleanOption.DISABLE_ANDROID_SUPERCLASS_VALIDATION;
+import static dagger.hilt.android.processor.internal.androidentrypoint.HiltCompilerOptions.BooleanOption.DISABLE_ANDROID_SUPERCLASS_VALIDATION;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -29,6 +29,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
+import dagger.hilt.android.processor.internal.AndroidClassNames;
 import dagger.hilt.processor.internal.BadInputException;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Components;

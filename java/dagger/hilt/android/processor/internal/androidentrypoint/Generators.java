@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal;
+package dagger.hilt.android.processor.internal.androidentrypoint;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -29,6 +29,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.hilt.android.processor.internal.AndroidClassNames;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.util.List;

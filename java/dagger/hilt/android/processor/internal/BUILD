@@ -18,55 +18,6 @@
 package(default_visibility = ["//:src"])
 
 java_library(
-    name = "android_generators",
-    srcs = [
-        "ActivityGenerator.java",
-        "ApplicationGenerator.java",
-        "BroadcastReceiverGenerator.java",
-        "FragmentGenerator.java",
-        "Generators.java",
-        "InjectorEntryPointGenerator.java",
-        "ServiceGenerator.java",
-        "ViewGenerator.java",
-    ],
-    deps = [
-        ":android_classnames",
-        ":metadata",
-        ":utils",
-        "//:dagger_with_compiler",
-        "//java/dagger/hilt/processor/internal:classnames",
-        "//java/dagger/hilt/processor/internal:component_descriptor",
-        "//java/dagger/hilt/processor/internal:component_names",
-        "//java/dagger/hilt/processor/internal:processor_errors",
-        "//java/dagger/hilt/processor/internal:processors",
-        "//java/dagger/internal/guava:base",
-        "//java/dagger/internal/guava:collect",
-        "@google_bazel_common//third_party/java/auto:common",
-        "@google_bazel_common//third_party/java/javapoet",
-    ],
-)
-
-java_library(
-    name = "metadata",
-    srcs = [
-        "AndroidEntryPointMetadata.java",
-    ],
-    deps = [
-        ":android_classnames",
-        ":compiler_options",
-        "//java/dagger/hilt/processor/internal:classnames",
-        "//java/dagger/hilt/processor/internal:components",
-        "//java/dagger/hilt/processor/internal:processor_errors",
-        "//java/dagger/hilt/processor/internal:processors",
-        "//java/dagger/internal/guava:base",
-        "//java/dagger/internal/guava:collect",
-        "@google_bazel_common//third_party/java/auto:common",
-        "@google_bazel_common//third_party/java/auto:value",
-        "@google_bazel_common//third_party/java/javapoet",
-    ],
-)
-
-java_library(
     name = "android_classnames",
     srcs = [
         "AndroidClassNames.java",
@@ -86,9 +37,4 @@ java_library(
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
     ],
-)
-
-java_library(
-    name = "compiler_options",
-    srcs = ["HiltCompilerOptions.java"],
 )

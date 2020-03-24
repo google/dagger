@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal;
+package dagger.hilt.android.processor.internal.androidentrypoint;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;

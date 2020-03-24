@@ -34,14 +34,68 @@ java_library(
     name = "processor_lib",
     srcs = ["AndroidEntryPointProcessor.java"],
     deps = [
+        ":android_generators",
+        ":compiler_options",
+        ":metadata",
         "//java/dagger/hilt/android/processor/internal:android_classnames",
-        "//java/dagger/hilt/android/processor/internal:android_generators",
-        "//java/dagger/hilt/android/processor/internal:compiler_options",
-        "//java/dagger/hilt/android/processor/internal:metadata",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/incap",
     ],
+)
+
+java_library(
+    name = "android_generators",
+    srcs = [
+        "ActivityGenerator.java",
+        "ApplicationGenerator.java",
+        "BroadcastReceiverGenerator.java",
+        "FragmentGenerator.java",
+        "Generators.java",
+        "InjectorEntryPointGenerator.java",
+        "ServiceGenerator.java",
+        "ViewGenerator.java",
+    ],
+    deps = [
+        ":metadata",
+        "//:dagger_with_compiler",
+        "//java/dagger/hilt/android/processor/internal:android_classnames",
+        "//java/dagger/hilt/android/processor/internal:utils",
+        "//java/dagger/hilt/processor/internal:classnames",
+        "//java/dagger/hilt/processor/internal:component_descriptor",
+        "//java/dagger/hilt/processor/internal:component_names",
+        "//java/dagger/hilt/processor/internal:processor_errors",
+        "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/auto:common",
+        "@google_bazel_common//third_party/java/javapoet",
+    ],
+)
+
+java_library(
+    name = "metadata",
+    srcs = [
+        "AndroidEntryPointMetadata.java",
+    ],
+    deps = [
+        ":compiler_options",
+        "//java/dagger/hilt/android/processor/internal:android_classnames",
+        "//java/dagger/hilt/processor/internal:classnames",
+        "//java/dagger/hilt/processor/internal:components",
+        "//java/dagger/hilt/processor/internal:processor_errors",
+        "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/auto:common",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/javapoet",
+    ],
+)
+
+java_library(
+    name = "compiler_options",
+    srcs = ["HiltCompilerOptions.java"],
 )

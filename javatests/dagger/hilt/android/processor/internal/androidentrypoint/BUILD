@@ -19,6 +19,22 @@ load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 package(default_visibility = ["//:src"])
 
 compiler_test(
+    name = "ActivityGeneratorTest",
+    srcs = ["ActivityGeneratorTest.java"],
+    compiler_deps = [
+        "//java/dagger/hilt:generate_components",
+        "//java/dagger/hilt/android:android_entry_point",
+        "@androidsdk//:platforms/android-29/android.jar",
+    ],
+    deps = [
+        "//javatests/dagger/hilt/android/processor:android_compilers",
+        "@google_bazel_common//third_party/java/compile_testing",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/truth",
+    ],
+)
+
+compiler_test(
     name = "AndroidEntryPointProcessorTest",
     srcs = ["AndroidEntryPointProcessorTest.java"],
     compiler_deps = [

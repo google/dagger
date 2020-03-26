@@ -19,6 +19,17 @@ package(default_visibility = ["//:src"])
 
 android_library(
     name = "scopes",
-    srcs = glob(["*.java"]),
+    srcs = [
+        "ActivityScoped.java",
+        "FragmentScoped.java",
+        "ServiceScoped.java",
+        "ViewScoped.java",
+    ],
+    deps = ["@google_bazel_common//third_party/java/jsr330_inject"],
+)
+
+android_library(
+    name = "activity_retained_scoped",
+    srcs = ["ActivityRetainedScoped.java"],
     deps = ["@google_bazel_common//third_party/java/jsr330_inject"],
 )

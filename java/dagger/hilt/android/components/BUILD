@@ -23,6 +23,7 @@ android_library(
     deps = [
         "//java/dagger/hilt:define_component",
         "//java/dagger/hilt/android/scopes",
+        "//java/dagger/hilt/android/scopes:activity_retained_scoped",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )

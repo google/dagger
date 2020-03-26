@@ -16,14 +16,19 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
+import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
+import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
+import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 
 /**
@@ -71,7 +76,20 @@ final class AggregatedDepsGenerator {
   private AnnotationSpec aggregatedDepsAnnotation() {
     AnnotationSpec.Builder annotationBuilder = AnnotationSpec.builder(AGGREGATED_DEPS);
     components.forEach(component -> annotationBuilder.addMember("components", "$S", component));
+    getEnclosingTestName(dependency)
+        .ifPresent(test -> annotationBuilder.addMember("test", "$S", test));
     annotationBuilder.addMember(dependencyType, "$S", dependency.getQualifiedName());
     return annotationBuilder.build();
+  }
+
+  private Optional<ClassName> getEnclosingTestName(Element element) {
+    while (element.getKind() != ElementKind.PACKAGE) {
+      if (Processors.hasAnnotation(element, ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT)
+          || Processors.hasAnnotation(element, ClassNames.ANDROID_EMULATOR_ENTRY_POINT)) {
+        return Optional.of(ClassName.get(MoreElements.asType(element)));
+      }
+      element = element.getEnclosingElement();
+    }
+    return Optional.empty();
   }
 }

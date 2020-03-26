@@ -20,10 +20,16 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 import java.lang.annotation.Retention;
 
+// TODO(user): Change this API to clearly represent that each AggeregatedDeps should only contain
+// a single module, entry point, or component entry point.
 /** Annotation for propagating dependency information through javac runs. */
 @Retention(CLASS)
 public @interface AggregatedDeps {
+  /** Returns the components that this dependency will be installed in. */
   String[] components();
+
+  /** Returns the test this dependency is associated with, otherwise an empty string. */
+  String test() default "";
 
   String[] modules() default {};
 

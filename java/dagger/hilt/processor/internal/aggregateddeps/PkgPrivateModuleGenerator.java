@@ -20,8 +20,8 @@ import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
-import javax.annotation.Generated;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 
@@ -52,24 +52,21 @@ final class PkgPrivateModuleGenerator {
   // @Module(includes = MyModule.class)
   // public final class HiltModuleWrapper_MyModule {}
   void generate() throws IOException {
+    TypeSpec.Builder builder =
+        TypeSpec.classBuilder(metadata.generatedClassName().simpleName())
+            .addOriginatingElement(metadata.getTypeElement())
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+            // generated @InstallIn is exactly the same as the module being processed
+            .addAnnotation(
+                AnnotationSpec.get(metadata.getOptionalInstallInAnnotationMirror().get()))
+            .addAnnotation(
+                AnnotationSpec.builder(ClassNames.MODULE)
+                    .addMember("includes", "$T.class", metadata.getTypeElement())
+                    .build());
 
-    // generated install_in is exactly the same as the module being processed
-    JavaFile.builder(
-            metadata.generatedClassName().packageName(),
-            TypeSpec.classBuilder(metadata.generatedClassName().simpleName())
-                .addOriginatingElement(metadata.getTypeElement())
-                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                .addAnnotation(
-                    AnnotationSpec.builder(Generated.class)
-                        .addMember("value", "$S", getClass().getName())
-                        .build())
-                .addAnnotation(
-                    AnnotationSpec.get(metadata.getOptionalInstallInAnnotationMirror().get()))
-                .addAnnotation(
-                    AnnotationSpec.builder(ClassNames.MODULE)
-                        .addMember("includes", "$T.class", metadata.getTypeElement())
-                        .build())
-                .build())
+    Processors.addGeneratedAnnotation(builder, env, getClass());
+
+    JavaFile.builder(metadata.generatedClassName().packageName(), builder.build())
         .build()
         .writeTo(env.getFiler());
   }

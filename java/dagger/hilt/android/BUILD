@@ -102,6 +102,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/internal/modules",
         "//java/dagger/hilt/android/qualifiers",
         "//java/dagger/hilt/android/scopes",
+        "//java/dagger/hilt/android/scopes:activity_retained_scoped",
         "//java/dagger/hilt/internal:component_entry_point",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",

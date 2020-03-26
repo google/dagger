@@ -17,22 +17,18 @@
 package dagger.hilt.processor.internal.aggregateddeps;
 
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.hilt.processor.internal.Processors.toTypeElements;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
-import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.squareup.javapoet.ClassName;
-import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.definecomponent.DefineComponents;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -68,35 +64,24 @@ public final class ComponentDependencies {
    * specified test. The total set of dependencies includes all global + test dependencies.
    */
   private static final class Dependencies {
-    private static Dependencies of(ImmutableSetMultimap<ClassName, TypeElement> deps) {
-      ImmutableSetMultimap.Builder<ClassName, TypeElement> globalDeps =
+    private static final class Builder {
+      private final ImmutableSetMultimap.Builder<ClassName, TypeElement> globalDeps =
           ImmutableSetMultimap.builder();
-      ImmutableSetMultimap.Builder<TestDepKey, TypeElement> testDeps =
+      private final ImmutableSetMultimap.Builder<TestDepKey, TypeElement> testDeps =
           ImmutableSetMultimap.builder();
-      for (ClassName component : deps.keySet()) {
-        for (TypeElement dep : deps.get(component)) {
-          Optional<TypeElement> testElement = getEnclosingTestElement(dep);
-          if (testElement.isPresent()) {
-            testDeps.put(TestDepKey.of(component, ClassName.get(testElement.get())), dep);
-          } else {
-            globalDeps.put(component, dep);
-          }
-        }
-      }
-      return new Dependencies(globalDeps.build(), testDeps.build());
-    }
 
-    // TODO(user): Consider checking for the enclosing class when processing the dependency
-    // in AggregatedDepsProcessor and storing it on the @AggregatedDeps annotation instead.
-    private static Optional<TypeElement> getEnclosingTestElement(Element element) {
-      while (element.getKind() != ElementKind.PACKAGE) {
-        if (Processors.hasAnnotation(element, ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT)
-            || Processors.hasAnnotation(element, ClassNames.ANDROID_EMULATOR_ENTRY_POINT)) {
-          return Optional.of(MoreElements.asType(element));
+      Builder addDep(ClassName component, Optional<ClassName> test, TypeElement dep) {
+        if (test.isPresent()) {
+          testDeps.put(TestDepKey.of(component, test.get()), dep);
+        } else {
+          globalDeps.put(component, dep);
         }
-        element = element.getEnclosingElement();
+        return this;
       }
-      return Optional.empty();
+
+      Dependencies build() {
+        return new Dependencies(globalDeps.build(), testDeps.build());
+      }
     }
 
     // Dependencies keyed by the component they're installed in.
@@ -124,12 +109,10 @@ public final class ComponentDependencies {
   private final Dependencies componentEntryPoints;
 
   private ComponentDependencies(
-      ImmutableSetMultimap<ClassName, TypeElement> modules,
-      ImmutableSetMultimap<ClassName, TypeElement> entryPoints,
-      ImmutableSetMultimap<ClassName, TypeElement> componentEntryPoints) {
-    this.modules = Dependencies.of(modules);
-    this.entryPoints = Dependencies.of(entryPoints);
-    this.componentEntryPoints = Dependencies.of(componentEntryPoints);
+      Dependencies modules, Dependencies entryPoints, Dependencies componentEntryPoints) {
+    this.modules = modules;
+    this.entryPoints = entryPoints;
+    this.componentEntryPoints = componentEntryPoints;
   }
 
   /** Returns the modules for a component, without any filtering. */
@@ -165,16 +148,20 @@ public final class ComponentDependencies {
    * }</pre>
    */
   public static ComponentDependencies from(Elements elements) {
-    ImmutableSetMultimap.Builder<ClassName, TypeElement> modules = ImmutableSetMultimap.builder();
-    ImmutableSetMultimap.Builder<ClassName, TypeElement> entryPoints =
-        ImmutableSetMultimap.builder();
-    ImmutableSetMultimap.Builder<ClassName, TypeElement> componentEntryPoints =
-        ImmutableSetMultimap.builder();
-    Map<String, ComponentDescriptor> descriptorLookup = new HashMap<>();
-    DefineComponents.componentDescriptors(elements)
-        .forEach(descriptor -> descriptorLookup.put(descriptor.component().toString(), descriptor));
+    Dependencies.Builder moduleDeps = new Dependencies.Builder();
+    Dependencies.Builder entryPointDeps = new Dependencies.Builder();
+    Dependencies.Builder componentEntryPointDeps = new Dependencies.Builder();
+    ImmutableMap<String, ComponentDescriptor> descriptorLookup =
+        DefineComponents.componentDescriptors(elements).stream()
+            .collect(
+                toImmutableMap(
+                    descriptor -> descriptor.component().toString(),
+                    descriptor -> descriptor));
 
     for (AggregatedDeps deps : getAggregatedDeps(elements)) {
+      Optional<ClassName> test =
+          deps.test().isEmpty()
+              ? Optional.empty() : Optional.of(ClassName.get(elements.getTypeElement(deps.test())));
       for (String component : deps.components()) {
         checkState(
             descriptorLookup.containsKey(component),
@@ -184,15 +171,20 @@ public final class ComponentDependencies {
             component);
 
         ComponentDescriptor desc = descriptorLookup.get(component);
-        modules.putAll(desc.component(), toTypeElements(elements, deps.modules()));
-        entryPoints.putAll(desc.component(), toTypeElements(elements, deps.entryPoints()));
-        componentEntryPoints.putAll(
-            desc.component(), toTypeElements(elements, deps.componentEntryPoints()));
+        for (String dep : deps.modules()) {
+          moduleDeps.addDep(desc.component(), test, elements.getTypeElement(dep));
+        }
+        for (String dep : deps.entryPoints()) {
+          entryPointDeps.addDep(desc.component(), test, elements.getTypeElement(dep));
+        }
+        for (String dep : deps.componentEntryPoints()) {
+          componentEntryPointDeps.addDep(desc.component(), test, elements.getTypeElement(dep));
+        }
       }
     }
 
     return new ComponentDependencies(
-        modules.build(), entryPoints.build(), componentEntryPoints.build());
+        moduleDeps.build(), entryPointDeps.build(), componentEntryPointDeps.build());
   }
 
   /** Returns the top-level elements of the aggregated deps package. */

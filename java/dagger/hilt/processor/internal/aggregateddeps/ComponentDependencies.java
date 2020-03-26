@@ -120,17 +120,16 @@ public final class ComponentDependencies {
   }
 
   private final Dependencies modules;
-  // TODO(user): Migrate entry points to use Dependencies class.
-  private final ImmutableSetMultimap<ClassName, TypeElement> entryPoints;
-  private final ImmutableSetMultimap<ClassName, TypeElement> componentEntryPoints;
+  private final Dependencies entryPoints;
+  private final Dependencies componentEntryPoints;
 
   private ComponentDependencies(
       ImmutableSetMultimap<ClassName, TypeElement> modules,
       ImmutableSetMultimap<ClassName, TypeElement> entryPoints,
       ImmutableSetMultimap<ClassName, TypeElement> componentEntryPoints) {
     this.modules = Dependencies.of(modules);
-    this.entryPoints = entryPoints;
-    this.componentEntryPoints = componentEntryPoints;
+    this.entryPoints = Dependencies.of(entryPoints);
+    this.componentEntryPoints = Dependencies.of(componentEntryPoints);
   }
 
   /** Returns the modules for a component, without any filtering. */
@@ -139,13 +138,14 @@ public final class ComponentDependencies {
   }
 
   /** Returns the entry points associated with the given a component. */
-  public ImmutableSet<TypeElement> getEntryPoints(ClassName componentName) {
-    return entryPoints.get(componentName);
+  public ImmutableSet<TypeElement> getEntryPoints(ClassName componentName, ClassName rootName) {
+    return entryPoints.get(componentName, rootName);
   }
 
   /** Returns the component entry point associated with the given a component. */
-  public ImmutableSet<TypeElement> getComponentEntryPoints(ClassName componentName) {
-    return componentEntryPoints.get(componentName);
+  public ImmutableSet<TypeElement> getComponentEntryPoints(
+      ClassName componentName, ClassName rootName) {
+    return componentEntryPoints.get(componentName, rootName);
   }
 
   /**

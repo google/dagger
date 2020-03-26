@@ -259,15 +259,16 @@ final class RootGenerator {
   }
 
   private ImmutableSet<TypeName> getEntryPoints(ComponentDescriptor componentDescriptor) {
+    ClassName componentName = componentDescriptor.component();
     ImmutableSet.Builder<TypeName> entryPointSet = ImmutableSet.builder();
     entryPointSet.add(ClassNames.GENERATED_COMPONENT);
-    for (TypeElement element : deps.getEntryPoints(componentDescriptor.component())) {
+    for (TypeElement element : deps.getEntryPoints(componentName, root.classname())) {
       entryPointSet.add(ClassName.get(element));
     }
 
     // TODO(user): move the creation of these EntryPoints to a separate processor?
     if (root.type().isTestRoot()) {
-      if (componentDescriptor.component().equals(ClassNames.APPLICATION_COMPONENT)) {
+      if (componentName.equals(ClassNames.APPLICATION_COMPONENT)) {
         entryPointSet.add(ParameterizedTypeName.get(ClassNames.TEST_INJECTOR, root.classname()));
       }
     }

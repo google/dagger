@@ -24,6 +24,7 @@ import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPoin
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessor;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentProcessor;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputProcessor;
+import dagger.hilt.processor.internal.originatingelement.OriginatingElementProcessor;
 import dagger.hilt.processor.internal.root.RootProcessor;
 import dagger.internal.codegen.ComponentProcessor;
 import dagger.testing.compile.CompilerTests;
@@ -53,6 +54,7 @@ public final class AndroidCompilers {
         new ComponentProcessor(),
         new DefineComponentProcessor(),
         new GeneratesRootInputProcessor(),
+        new OriginatingElementProcessor(),
         new RootProcessor());
   }
 

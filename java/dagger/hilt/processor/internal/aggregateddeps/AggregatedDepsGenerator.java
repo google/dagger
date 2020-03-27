@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 
 /**
@@ -83,13 +82,22 @@ final class AggregatedDepsGenerator {
   }
 
   private Optional<ClassName> getEnclosingTestName(Element element) {
-    while (element.getKind() != ElementKind.PACKAGE) {
-      if (Processors.hasAnnotation(element, ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT)
-          || Processors.hasAnnotation(element, ClassNames.ANDROID_EMULATOR_ENTRY_POINT)) {
-        return Optional.of(ClassName.get(MoreElements.asType(element)));
-      }
-      element = element.getEnclosingElement();
+    TypeElement topLevelType = getOriginatingTopLevelType(element);
+    return Processors.hasAnnotation(topLevelType, ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT)
+            || Processors.hasAnnotation(topLevelType, ClassNames.ANDROID_EMULATOR_ENTRY_POINT)
+        ? Optional.of(ClassName.get(MoreElements.asType(topLevelType)))
+        : Optional.empty();
+  }
+
+  private TypeElement getOriginatingTopLevelType(Element element) {
+    TypeElement topLevelType = Processors.getTopLevelType(element);
+    if (Processors.hasAnnotation(topLevelType, ClassNames.ORIGINATING_ELEMENT)) {
+      return getOriginatingTopLevelType(
+          Processors.getAnnotationClassValue(
+              processingEnv.getElementUtils(),
+              Processors.getAnnotationMirror(topLevelType, ClassNames.ORIGINATING_ELEMENT),
+              "topLevelClass"));
     }
-    return Optional.empty();
+    return topLevelType;
   }
 }

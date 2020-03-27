@@ -55,6 +55,7 @@ final class PkgPrivateModuleGenerator {
     TypeSpec.Builder builder =
         TypeSpec.classBuilder(metadata.generatedClassName().simpleName())
             .addOriginatingElement(metadata.getTypeElement())
+            .addAnnotation(Processors.getOriginatingElementAnnotation(metadata.getTypeElement()))
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             // generated @InstallIn is exactly the same as the module being processed
             .addAnnotation(

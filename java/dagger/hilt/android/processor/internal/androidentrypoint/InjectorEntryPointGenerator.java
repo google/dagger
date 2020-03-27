@@ -47,6 +47,7 @@ public final class InjectorEntryPointGenerator {
     TypeSpec.Builder builder =
         TypeSpec.interfaceBuilder(name.simpleName())
             .addOriginatingElement(metadata.element())
+            .addAnnotation(Processors.getOriginatingElementAnnotation(metadata.element()))
             .addAnnotation(ClassNames.GENERATED_ENTRY_POINT)
             .addAnnotation(metadata.injectorInstallInAnnotation())
             .addModifiers(Modifier.PUBLIC)

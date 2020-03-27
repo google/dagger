@@ -25,6 +25,7 @@ java_library(
         "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",
         "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
         "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",
+        "//java/dagger/hilt/processor/internal/originatingelement:processor_lib",
         "//java/dagger/hilt/processor/internal/root:processor_lib",
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/guava:collect",

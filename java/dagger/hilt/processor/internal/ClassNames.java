@@ -22,6 +22,8 @@ import com.squareup.javapoet.ClassName;
 
 /** Holder for commonly used class names. */
 public final class ClassNames {
+  public static final ClassName ORIGINATING_ELEMENT =
+      get("dagger.hilt.codegen", "OriginatingElement");
   public static final ClassName GENERATED_COMPONENT =
       get("dagger.hilt.internal", "GeneratedComponent");
 

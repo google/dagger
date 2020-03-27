@@ -56,6 +56,8 @@ final class PkgPrivateEntryPointGenerator {
 
     TypeSpec.Builder entryPointInterfaceBuilder =
         TypeSpec.interfaceBuilder(metadata.generatedClassName().simpleName())
+            .addOriginatingElement(metadata.getTypeElement())
+            .addAnnotation(Processors.getOriginatingElementAnnotation(metadata.getTypeElement()))
             .addModifiers(Modifier.PUBLIC)
             .addSuperinterface(metadata.baseClassName())
             .addAnnotation(metadata.getAnnotation());

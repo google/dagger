@@ -17,9 +17,13 @@
 
 package(default_visibility = ["//:src"])
 
+# TODO(user): Remove all AggregatedDeps usage from the processor class path.
 java_library(
     name = "annotation",
     srcs = ["AggregatedDeps.java"],
+    exports = [
+        "//java/dagger/hilt/codegen:originating_element",
+    ],
 )
 
 java_plugin(

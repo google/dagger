@@ -22,6 +22,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.GeneratedAnnotations;
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
@@ -417,9 +418,19 @@ public final class Processors {
     throw new IllegalStateException("Cannot find a package for " + originalElement);
   }
 
+  public static TypeElement getTopLevelType(Element originalElement) {
+    checkNotNull(originalElement);
+    for (Element e = originalElement; e != null; e = e.getEnclosingElement()) {
+      if (isTopLevel(e)) {
+        return MoreElements.asType(e);
+      }
+    }
+    throw new IllegalStateException("Cannot find a top-level type for " + originalElement);
+  }
+
   /** Returns true if the given element is a top-level element. */
   public static boolean isTopLevel(Element element) {
-    return element.getEnclosingElement() instanceof PackageElement;
+    return element.getEnclosingElement().getKind() == ElementKind.PACKAGE;
   }
 
   /** Returns true if the given element is annotated with the given annotation. */
@@ -873,6 +884,12 @@ public final class Processors {
                     AnnotationSpec.builder(ClassName.get(annotation))
                         .addMember("value", "$S", generatorClass)
                         .build()));
+  }
+
+  public static AnnotationSpec getOriginatingElementAnnotation(Element element) {
+    return AnnotationSpec.builder(ClassNames.ORIGINATING_ELEMENT)
+        .addMember("topLevelClass", "$T.class", getTopLevelType(element))
+        .build();
   }
 
   private Processors() {}

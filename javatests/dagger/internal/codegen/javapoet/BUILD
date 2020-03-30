@@ -15,10 +15,10 @@
 # Description:
 #   Tests for dagger.internal.codegen.javapoet
 
-package(default_visibility = ["//:src"])
-
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenJavaTests")
+
+package(default_visibility = ["//:src"])
 
 GenJavaTests(
     name = "javapoet_tests",

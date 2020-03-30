@@ -29,7 +29,7 @@ import com.google.testing.compile.Compiler;
 import javax.annotation.processing.Processor;
 
 /** {@link Compiler} instances for testing Dagger. */
-final class Compilers {
+public final class Compilers {
   private static final String GUAVA = "guava";
 
   static final ImmutableList<String> CLASS_PATH_WITHOUT_GUAVA_OPTION =
@@ -43,18 +43,20 @@ final class Compilers {
    * Returns a compiler that runs the Dagger and {@code @AutoAnnotation} processors, along with
    * extras.
    */
-  static Compiler daggerCompiler(Processor... extraProcessors) {
+  public static Compiler daggerCompiler(Processor... extraProcessors) {
     ImmutableList.Builder<Processor> processors = ImmutableList.builder();
     processors.add(new ComponentProcessor(), new AutoAnnotationProcessor());
     processors.add(extraProcessors);
     return javac().withProcessors(processors.build());
   }
 
-  static Compiler compilerWithOptions(CompilerMode... compilerModes) {
+  public static Compiler compilerWithOptions(CompilerMode... compilerModes) {
     FluentIterable<String> options = FluentIterable.of();
     for (CompilerMode compilerMode : compilerModes) {
       options = options.append(compilerMode.javacopts());
     }
     return daggerCompiler().withOptions(options);
   }
+
+  private Compilers() {}
 }

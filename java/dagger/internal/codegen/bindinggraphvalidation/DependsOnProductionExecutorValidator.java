@@ -32,7 +32,7 @@ import javax.inject.Inject;
  * Reports an error on all bindings that depend explicitly on the {@code @Production Executor} key.
  */
 // TODO(dpb,beder): Validate this during @Inject/@Provides/@Produces validation.
-public final class DependsOnProductionExecutorValidator implements BindingGraphPlugin {
+final class DependsOnProductionExecutorValidator implements BindingGraphPlugin {
   private final CompilerOptions compilerOptions;
   private final KeyFactory keyFactory;
 

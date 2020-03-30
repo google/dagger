@@ -34,7 +34,7 @@ import javax.inject.Inject;
  * Reports errors or warnings (depending on the {@code -Adagger.nullableValidation} value) for each
  * non-nullable dependency request that is satisfied by a nullable binding.
  */
-public final class NullableBindingValidator implements BindingGraphPlugin {
+final class NullableBindingValidator implements BindingGraphPlugin {
 
   private final CompilerOptions compilerOptions;
 
@@ -77,7 +77,7 @@ public final class NullableBindingValidator implements BindingGraphPlugin {
   }
 
   @VisibleForTesting
-  public static String nullableToNonNullable(String key, String binding) {
+  static String nullableToNonNullable(String key, String binding) {
     return String.format("%s is not nullable, but is being provided by %s", key, binding);
   }
 }

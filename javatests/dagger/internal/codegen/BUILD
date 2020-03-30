@@ -32,13 +32,40 @@ kt_jvm_library(
     ],
 )
 
+# TODO(user): Move this into a subpackage.
+java_library(
+    name = "compilers",
+    testonly = 1,
+    srcs = [
+        "CompilerMode.java",
+        "Compilers.java",
+        "JavaFileBuilder.java",
+    ],
+    deps = [
+        "//java/dagger/internal/codegen:package_info",
+        "//java/dagger/internal/codegen:processor",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
+        "@com_google_auto_value_auto_value//jar",
+        "@google_bazel_common//third_party/java/compile_testing",
+    ],
+)
+
 GenJavaTests(
     name = "compiler_tests",
-    srcs = glob(["*.java"]),
+    srcs = glob(
+        ["*.java"],
+        exclude = [
+            "CompilerMode.java",
+            "Compilers.java",
+            "JavaFileBuilder.java",
+        ],
+    ),
     functional = False,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     deps = [
+        ":compilers",
         ":kotlin_sources",
         "//java/dagger:core",
         "//java/dagger/internal/codegen:package_info",

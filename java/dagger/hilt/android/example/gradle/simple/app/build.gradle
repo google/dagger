@@ -46,8 +46,6 @@ dependencies {
   testImplementation 'org.robolectric:robolectric:4.3'
   // TODO(bcorso): This multidex dep shouldn't be required -- it's a dep for the generated code.
   testImplementation 'androidx.multidex:multidex:2.0.0'
-  testImplementation 'com.google.dagger:dagger:LOCAL-SNAPSHOT'
-  testImplementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'
   testImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
   testAnnotationProcessor 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'
   testAnnotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'

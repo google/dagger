@@ -27,10 +27,9 @@ import java.lang.annotation.Target;
  *
  * <p>Usage of this annotation will also cause a method {@code injectedByHilt} to be generated
  * in the Hilt base class as well, that returns a boolean for whether or not injection actually
- * happened. Note that whether or not injection happens is based on if the application uses Hilt.
- * This means that a Hilt fragment still needs to be used in a Hilt activity if used in a Hilt
- * application. A combination of Hilt fragment, non-Hilt activity, and Hilt application will
- * not work even if the fragment uses {@code OptionalInject}.
+ * happened. Injection will happen if the parent type (e.g. the activity to a fragment) is an
+ * {@link dagger.hilt.android.AndroidEntryPoint} annotated class and if that parent was also
+ * injected via Hilt.
  */
 @Target(ElementType.TYPE)
 public @interface OptionalInject {}

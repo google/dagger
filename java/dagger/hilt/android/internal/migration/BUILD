@@ -13,14 +13,11 @@
 # limitations under the License.
 
 # Description:
-#   Helpers for migrating to Hilt.
+#   Internal classes for migration
 
 package(default_visibility = ["//:src"])
 
 android_library(
-    name = "optional_inject",
-    srcs = ["OptionalInject.java"],
-    exports = [
-        "//java/dagger/hilt/android/internal/migration:injected_by_hilt",
-    ],
+    name = "injected_by_hilt",
+    srcs = ["InjectedByHilt.java"],
 )

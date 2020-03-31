@@ -87,6 +87,9 @@ public final class AndroidClassNames {
   public static final ClassName VIEW_COMPONENT_MANAGER =
       get("dagger.hilt.android.internal.managers", "ViewComponentManager");
 
+  public static final ClassName INJECTED_BY_HILT =
+      get("dagger.hilt.android.internal.migration", "InjectedByHilt");
+
   public static final ClassName APPLICATION_CONTEXT_MODULE =
       get("dagger.hilt.android.internal.modules", "ApplicationContextModule");
 

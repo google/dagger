@@ -278,12 +278,23 @@ final class Generators {
     MethodSpec.Builder methodSpecBuilder = MethodSpec.methodBuilder("inject")
         .addModifiers(Modifier.PROTECTED);
 
+    // Check if the parent is a Hilt type. If it isn't or if it is but it
+    // wasn't injectedByHilt, then return.
+    // Object parent = ...depends on type...
+    // if (!(parent instanceof GeneratedComponentManager)
+    //     || ((parent instanceof InjectedByHilt) &&
+    //         !((InjectedByHilt) parent).injectedByHilt())) {
+    //   return;
+    //
     if (metadata.allowsOptionalInjection()) {
       methodSpecBuilder
+          .addStatement("$T parent = $L", ClassNames.OBJECT, getParentCodeBlock(metadata))
           .beginControlFlow(
-              "if (!($L instanceof $T))",
-              applicationContextCodeBlock(metadata),
-              ClassNames.COMPONENT_MANAGER)
+              "if (!(parent instanceof $T) "
+              + "|| ((parent instanceof $T) && !(($T) parent).injectedByHilt()))",
+              ClassNames.COMPONENT_MANAGER,
+              AndroidClassNames.INJECTED_BY_HILT,
+              AndroidClassNames.INJECTED_BY_HILT)
           .addStatement("return")
           .endControlFlow();
     }
@@ -343,30 +354,36 @@ final class Generators {
     // Even if we aren't optionally injected, if we override an optionally injected Hilt class
     // we also need to override the injectedByHilt method.
     if (metadata.allowsOptionalInjection() || metadata.baseAllowsOptionalInjection()) {
-      MethodSpec.Builder injectedByHilt =
+      typeSpecBuilder.addMethod(
           MethodSpec.methodBuilder("injectedByHilt")
-              .addModifiers(Modifier.PROTECTED)
+              .addAnnotation(Override.class)
+              .addModifiers(Modifier.PUBLIC)
               .returns(boolean.class)
-              .addStatement("return injected");
-      if (metadata.overridesAndroidEntryPointClass()) {
-        injectedByHilt.addAnnotation(Override.class);
+              .addStatement("return injected")
+              .build());
+      // Only add the interface though if this class allows optional injection (not that it
+      // really matters since if the base allows optional injection the class implements the
+      // interface anyway). But it is probably better to be consistent about only optionally
+      // injected classes extend the interface.
+      if (metadata.allowsOptionalInjection()) {
+        typeSpecBuilder.addSuperinterface(AndroidClassNames.INJECTED_BY_HILT);
       }
-
-      typeSpecBuilder.addMethod(injectedByHilt.build());
     }
 
     typeSpecBuilder.addMethod(methodSpecBuilder.build());
   }
 
-  private static CodeBlock applicationContextCodeBlock(AndroidEntryPointMetadata metadata) {
+  private static CodeBlock getParentCodeBlock(AndroidEntryPointMetadata metadata) {
     switch (metadata.androidType()) {
       case ACTIVITY:
       case SERVICE:
         return CodeBlock.of("getApplicationContext()");
       case FRAGMENT:
-        return CodeBlock.of("getActivity().getApplicationContext()");
+        return CodeBlock.of("getHost()");
       case VIEW:
-        return CodeBlock.of("getContext().getApplicationContext()");
+        return CodeBlock.of(
+            "componentManager().maybeGetParentComponentManager()",
+            metadata.componentManagerParam());
       case BROADCAST_RECEIVER:
         // Broadcast receivers receive a "context" parameter
         return CodeBlock.of("context.getApplicationContext()");

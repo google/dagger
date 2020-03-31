@@ -78,22 +78,42 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
 
   @SuppressWarnings("unchecked")
   private Object createComponent() {
+    GeneratedComponentManager<?> componentManager =
+        getParentComponentManager(/*allowMissing=*/ false);
     if (hasFragmentBindings) {
-      Context context = getParentContext(FragmentContextWrapper.class);
+      return ((ViewComponentBuilderEntryPoint) componentManager.generatedComponent())
+          .viewComponentBuilder()
+          .view(view)
+          .build();
+    } else {
+      return ((ViewNoFragmentComponentBuilderEntryPoint) componentManager.generatedComponent())
+          .viewNoFragmentComponentBuilder()
+          .view(view)
+          .build();
+    }
+  }
 
+  /* Returns the component manager of the parent or null if not found. */
+  public GeneratedComponentManager<?> maybeGetParentComponentManager() {
+    return getParentComponentManager(/*allowMissing=*/ true);
+  }
+
+  private GeneratedComponentManager<?> getParentComponentManager(boolean allowMissing) {
+    if (hasFragmentBindings) {
+      Context context = getParentContext(FragmentContextWrapper.class, allowMissing);
       if (context instanceof FragmentContextWrapper) {
 
         FragmentContextWrapper fragmentContextWrapper = (FragmentContextWrapper) context;
-        return ((GeneratedComponentManager<ViewComponentBuilderEntryPoint>)
-                fragmentContextWrapper.fragment)
-            .generatedComponent()
-            .viewComponentBuilder()
-            .view(view)
-            .build();
+        return (GeneratedComponentManager<?>) fragmentContextWrapper.fragment;
+      } else if (allowMissing) {
+        // We didn't find anything, so return null if we're not supposed to fail.
+        // The rest of the logic is just about getting a good error message.
+        return null;
       }
 
-      // Check if there was a valid parent component, just not a Fragment.
-      Context parent = getParentContext(GeneratedComponentManager.class);
+      // Check if there was a valid parent component, just not a Fragment, to give a more
+      // specific error.
+      Context parent = getParentContext(GeneratedComponentManager.class, allowMissing);
       Preconditions.checkState(
           !(parent instanceof GeneratedComponentManager),
           "%s, @WithFragmentBindings Hilt view must be attached to an "
@@ -102,13 +122,11 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
           view.getClass(),
           parent.getClass().getName());
     } else {
-      Context context = getParentContext(GeneratedComponentManager.class);
+      Context context = getParentContext(GeneratedComponentManager.class, allowMissing);
       if (context instanceof GeneratedComponentManager) {
-        return ((GeneratedComponentManager<ViewNoFragmentComponentBuilderEntryPoint>) context)
-            .generatedComponent()
-            .viewNoFragmentComponentBuilder()
-            .view(view)
-            .build();
+        return (GeneratedComponentManager<?>) context;
+      } else if (allowMissing) {
+        return null;
       }
     }
 
@@ -117,15 +135,21 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
         String.format(
             "%s, Hilt view must be attached to an @AndroidEntryPoint Fragment or Activity.",
             view.getClass()));
+
   }
 
-  private Context getParentContext(Class<?> parentType) {
+  private Context getParentContext(Class<?> parentType, boolean allowMissing) {
     Context context = unwrap(view.getContext(), parentType);
-    Preconditions.checkState(
-        context != unwrap(context.getApplicationContext(), GeneratedComponentManager.class),
-        "%s, Hilt view cannot be created using the application context. "
-            + "Use a Hilt Fragment or Activity context.",
-        view.getClass());
+    if (context == unwrap(context.getApplicationContext(), GeneratedComponentManager.class)) {
+      // If we searched for a type but ended up on the application context, just return null
+      // as this is never what we are looking for
+      Preconditions.checkState(
+          allowMissing,
+          "%s, Hilt view cannot be created using the application context. "
+             + "Use a Hilt Fragment or Activity context.",
+          view.getClass());
+      return null;
+    }
     return context;
   }
 

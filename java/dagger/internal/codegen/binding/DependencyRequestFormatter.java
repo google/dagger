@@ -134,13 +134,11 @@ public final class DependencyRequestFormatter extends Formatter<DependencyReques
     switch (request.kind()) {
       case FUTURE:
       case PRODUCER:
-        return "produced";
-
       case INSTANCE:
       case LAZY:
       case PROVIDER:
       case PROVIDER_OF_LAZY:
-        return "provided";
+        return "requested";
 
       case MEMBERS_INJECTION:
         return "injected";

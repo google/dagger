@@ -685,7 +685,7 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
                 "java.lang.String is bound multiple times:",
                 "    " + firstBinding,
                 "    " + secondBinding,
-                "    java.lang.String is provided at",
+                "    java.lang.String is requested at",
                 "        test.ChildComponent.s() [test.ParentComponent → test.ChildComponent]"))
         .inFile(componentFile)
         .onLineContaining("interface ParentComponent {");

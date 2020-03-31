@@ -81,7 +81,7 @@ public class DependencyCycleValidationTest {
                 "        test.Outer.B(aParam)",
                 "    test.Outer.B is injected at",
                 "        test.Outer.C(bParam)",
-                "    test.Outer.C is provided at",
+                "    test.Outer.C is requested at",
                 "        test.Outer.CComponent.getC()"))
         .inFile(SIMPLE_CYCLIC_DEPENDENCY)
         .onLineContaining("interface CComponent");
@@ -92,7 +92,7 @@ public class DependencyCycleValidationTest {
   @Test
   public void cyclicDependencyWithModuleBindingValidation() {
     // Cycle errors should not show a dependency trace to an entry point when doing full binding
-    // graph validation. So ensure that the message doesn't end with "test.Outer.C is provided at
+    // graph validation. So ensure that the message doesn't end with "test.Outer.C is requested at
     // test.Outer.CComponent.getC()", as the previous test's message does.
     Pattern moduleBindingValidationError =
         endsWithMessage(
@@ -171,7 +171,7 @@ public class DependencyCycleValidationTest {
                 "        test.Outer.C(bParam)",
                 "    test.Outer.C is injected at",
                 "        test.Outer.D(cParam)",
-                "    test.Outer.D is provided at",
+                "    test.Outer.D is requested at",
                 "        test.Outer.DComponent.getD()"))
         .inFile(component)
         .onLineContaining("interface DComponent");
@@ -234,7 +234,7 @@ public class DependencyCycleValidationTest {
                 "        test.Outer.B(aParam)",
                 "    test.Outer.B is injected at",
                 "        test.Outer.C(bParam)",
-                "    test.Outer.C is provided at",
+                "    test.Outer.C is requested at",
                 "        test.Outer.CComponent.getC()"))
         .inFile(component)
         .onLineContaining("interface CComponent");
@@ -295,7 +295,7 @@ public class DependencyCycleValidationTest {
                 "        test.Outer.B(aParam)",
                 "    test.Outer.B is injected at",
                 "        test.Outer.C(bParam)",
-                "    test.Outer.C is provided at",
+                "    test.Outer.C is requested at",
                 "        test.Outer.CComponent.getC()"))
         .inFile(component)
         .onLineContaining("interface CComponent");
@@ -351,7 +351,7 @@ public class DependencyCycleValidationTest {
                 "        test.Outer.C(bParam)",
                 "    javax.inject.Provider<test.Outer.C> is injected at",
                 "        test.Outer.D(cParam)",
-                "    test.Outer.D is provided at",
+                "    test.Outer.D is requested at",
                 "        test.Outer.DComponent.getD()"))
         .inFile(component)
         .onLineContaining("interface DComponent");
@@ -431,7 +431,7 @@ public class DependencyCycleValidationTest {
                 "        test.CycleModule.object(string)",
                 "    java.lang.Object is injected at",
                 "        test.CycleModule.string(object)",
-                "    java.lang.String is provided at",
+                "    java.lang.String is requested at",
                 "        test.Grandchild.entry()"))
         .inFile(parent)
         .onLineContaining("interface Parent");
@@ -513,7 +513,7 @@ public class DependencyCycleValidationTest {
                 "        test.CycleModule.object(string)",
                 "    java.lang.Object is injected at",
                 "        test.CycleModule.string(object)",
-                "    java.lang.String is provided at",
+                "    java.lang.String is requested at",
                 "        test.Child.entry() [test.Parent → test.Child]"))
         .inFile(parent)
         .onLineContaining("interface Parent");
@@ -564,7 +564,7 @@ public class DependencyCycleValidationTest {
                 "        test.TestModule.bindQualified(unqualified)",
                 "    @test.SomeQualifier java.lang.Object is injected at",
                 "        test.TestModule.bindUnqualified(qualified)",
-                "    java.lang.Object is provided at",
+                "    java.lang.Object is requested at",
                 "        test.TestComponent.unqualified()"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
@@ -604,7 +604,7 @@ public class DependencyCycleValidationTest {
                 "Found a dependency cycle:",
                 "    java.lang.Object is injected at",
                 "        test.TestModule.bindToSelf(sameKey)",
-                "    java.lang.Object is provided at",
+                "    java.lang.Object is requested at",
                 "        test.TestComponent.selfReferential()"))
         .inFile(component)
         .onLineContaining("interface TestComponent");

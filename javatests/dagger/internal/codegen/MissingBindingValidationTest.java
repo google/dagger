@@ -372,7 +372,7 @@ public class MissingBindingValidationTest {
                 "        TestImplementation(missingBinding)",
                 "    TestImplementation is injected at",
                 "        TestModule.bindTestInterface(implementation)",
-                "    TestInterface is provided at",
+                "    TestInterface is requested at",
                 "        TestComponent.testInterface()"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
@@ -428,7 +428,7 @@ public class MissingBindingValidationTest {
                 "        test.Generic(t)",
                 "    test.Generic<test.TestClass> is injected at",
                 "        test.UsesTest(genericTestClass)",
-                "    test.UsesTest is provided at",
+                "    test.UsesTest is requested at",
                 "        test.TestComponent.usesTest()"));
   }
 
@@ -483,7 +483,7 @@ public class MissingBindingValidationTest {
                 "        test.Generic.t",
                 "    test.Generic<test.TestClass> is injected at",
                 "        test.UsesTest(genericTestClass)",
-                "    test.UsesTest is provided at",
+                "    test.UsesTest is requested at",
                 "        test.TestComponent.usesTest()"));
   }
 
@@ -667,7 +667,7 @@ public class MissingBindingValidationTest {
                     + "test.NotBound cannot be provided without an @Provides-annotated method.",
                 "    test.NotBound is injected at",
                 "        test.TestModule.object(notBound)",
-                "    java.lang.Object is provided at",
+                "    java.lang.Object is requested at",
                 "        test.TestComponent.object()",
                 "It is also requested at:",
                 "    test.TestModule.string(notBound, …)",
@@ -725,7 +725,7 @@ public class MissingBindingValidationTest {
             message(
                 "[Dagger/MissingBinding] java.lang.String cannot be provided without an @Inject "
                     + "constructor or an @Provides-annotated method.",
-                "    java.lang.String is provided at",
+                "    java.lang.String is requested at",
                 "        test.TestComponent.string()",
                 "It is also requested at:",
                 "    test.Foo(one, …)",
@@ -776,7 +776,7 @@ public class MissingBindingValidationTest {
             message(
                 "[Dagger/MissingBinding] java.lang.String cannot be provided without an @Inject "
                     + "constructor or an @Provides-annotated method.",
-                "    java.lang.String is provided at",
+                "    java.lang.String is requested at",
                 "        test.TestComponent.string1()",
                 "The following other entry points also depend on it:",
                 "    test.TestComponent.string2()",
@@ -845,7 +845,7 @@ public class MissingBindingValidationTest {
                     + "an @Provides-annotated method.",
                 "    Baz is injected at",
                 "        Bar(baz)",
-                "    Bar is provided at",
+                "    Bar is requested at",
                 "        Parent.bar()",
                 "The following other entry points also depend on it:",
                 "    Parent.foo()",

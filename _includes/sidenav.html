@@ -1,0 +1,60 @@
+{% comment %}
+Copyright (C) 2020 Google LLC.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.foobar2
+{% endcomment %}
+
+{% comment %}
+This logic is trying to find the last portion of the path after the base url to match for
+the side nav. The page url should be in the form /foo/bar/. Sometimes pages also have a trailing
+.html like /foo/bar.html or a trailing /. We strip those off and split on the / separator
+(the split function handles the trailing / and ignores it) to find the base "/foo" and the "/bar"
+for the side nav to figure out the top and side nav location we are currently in.
+{% endcomment %}
+{% assign page_url = page.url | remove_first: "/" | remove: ".html" %}
+{% assign page_url_top = page_url | split: "/" | first | prepend: "/" %}
+{% assign page_url_rest = page_url | prepend: "/" | remove_first: page_url_top %}
+
+{% for i in site.nav %}
+  {% if page_url_top == i.item.url %}
+    {% assign topitem = i.item %}
+  {% endif %}
+{% endfor %}
+
+{% if topitem.sidenav %}
+<nav class="c-sidenav">
+  <div class="c-sidenav__container u-container">
+
+    <li><a class="c-sidenav__item {% if page_url_rest == '/' or page_url_rest == '' %}is-active{% endif %}"
+           href="{{ topitem.url | prepend: site.baseurl }}">{{topitem.name}}</a></li>
+
+    {% for i in topitem.sidenav %}
+      {% if i.item.url %}
+        {% assign url = i.item.url %}
+        {% assign url_for_matching = url | remove: ".html" %}
+        <li><a class="c-sidenav__item {% if page_url_rest == url_for_matching %}is-active{% endif %}"
+               href="{{ url | prepend: topitem.url | prepend: site.baseurl }}">{{i.item.name}}</a></li>
+      {% else %}
+        <li class="c-sidenav__dir">{{i.item.name}}</li>
+        {% for j in i.item.subgroup %}
+          {% assign url = i.item.dir_url | append: j.item.url %}
+          {% assign url_for_matching = url | remove: ".html" %}
+        <li><a class="c-sidenav__item {% if page_url_rest == url_for_matching %}is-active{% endif %}"
+               href="{{ url | prepend: topitem.url | prepend: site.baseurl }}">&#x2192 {{j.item.name}}</a></li>
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+
+  </div>
+</nav>
+{% endif %}

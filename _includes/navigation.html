@@ -14,12 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.foobar2
 {% endcomment %}
 
+{% comment %}
+This logic is trying to find the first portion of the path after the base url to match for
+the top nav. The page url should be in the form /foo/bar/. Sometimes pages also have a trailing
+.html like /foo/bar.html or a trailing /. We strip those off and split on the / separator
+(the split function handles the trailing / and ignores it) to find the base "/foo" to figure out
+what top nav subtree we are in.
+{% endcomment %}
+{% assign page_parts = page.url | remove_first: "/" | split: "/" %}
+{% assign page_url = page_parts[0] | prepend: "/" | remove: ".html" %}
+
 <nav class="c-navigation {% if site.fixedNav == 'true' %}is-fixed{% endif %}">
   <div class="c-navigation__container u-container">
 
     {% for i in site.nav %}
-    {% assign url = i.item.url %}
-    <a class="c-navigation__item {% if page.url == url %}is-active{% endif %}" href="{{ url | prepend: site.baseurl }}">{{i.item.name}}</a>
+      {% assign url = i.item.url %}
+      {% assign url_for_matching = url | remove: ".html" %}
+      <a class="c-navigation__item {% if page_url == url_for_matching %}is-active{% endif %}"
+         href="{{ url | prepend: site.baseurl }}">{{i.item.name}}</a>
     {% endfor %}
 
   </div>

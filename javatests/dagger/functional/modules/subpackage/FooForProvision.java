@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Dagger Authors.
+ * Copyright (C) 2020 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,5 @@
 
 package dagger.functional.modules.subpackage;
 
-import dagger.Module;
-import dagger.Provides;
-
-@Module(includes = {PackagePrivateModule.class, NonAbstractPackagePrivateModule.class})
-public abstract class PublicModule {
-  @Provides
-  static int provideInt() {
-    return 42;
-  }
-}
+/** This object is provisioned by NonAbstractPackagePrivate module */
+public class FooForProvision {}

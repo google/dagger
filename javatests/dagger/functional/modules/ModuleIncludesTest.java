@@ -19,6 +19,7 @@ package dagger.functional.modules;
 import static com.google.common.truth.Truth.assertThat;
 
 import dagger.Component;
+import dagger.functional.modules.subpackage.FooForProvision;
 import dagger.functional.modules.subpackage.PublicModule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,6 +31,8 @@ public final class ModuleIncludesTest {
   @Component(modules = PublicModule.class)
   interface TestComponent {
     Object object();
+
+    FooForProvision fooForProvision();
   }
 
   @Test

@@ -28,6 +28,7 @@ import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnno
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
 import static dagger.internal.codegen.binding.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.javapoet.TypeSpecs.addSupertype;
+import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibleFrom;
 import static java.util.Collections.disjoint;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -152,8 +153,8 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
       return;
     }
     // Skip component validation if its creator validation already failed.
-    if (creatorReportsByComponent.get(element) != null
-            && !creatorReportsByComponent.get(element).isClean()) {
+    if (creatorReportsByComponent.containsKey(element)
+        && !creatorReportsByComponent.get(element).isClean()) {
       return;
     }
     ComponentValidationReport validationReport =
@@ -293,11 +294,20 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
    * ComponentDescriptor#creatorDescriptor()}.
    */
   private Stream<ComponentRequirement> componentRequirements(ComponentDescriptor component) {
+
+    // TODO(b/152802759): See if you can merge logics that normal component processing and hjar
+    // component processing use. So that there would't be a duplicated logic (like the lines below)
+    // everytime we modify the generated code for the component.
     checkArgument(!component.isSubcomponent());
     return Stream.concat(
         component.dependencies().stream(),
         component.modules().stream()
-            .filter(module -> !module.moduleElement().getModifiers().contains(ABSTRACT))
+            .filter(
+                module ->
+                    !module.moduleElement().getModifiers().contains(ABSTRACT)
+                        && isElementAccessibleFrom(
+                            module.moduleElement(),
+                            ClassName.get(component.typeElement()).packageName()))
             .map(module -> ComponentRequirement.forModule(module.moduleElement().asType())));
   }
 

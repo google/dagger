@@ -26,6 +26,7 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeSpecs.addSupertype;
+import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibleFrom;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -214,7 +215,16 @@ public final class ComponentCreatorImplementationFactory {
         case NEEDED:
           return Optional.of(normalSetterMethod(requirement));
         case UNNEEDED:
-          return Optional.of(noopSetterMethod(requirement));
+          // TODO(user): Don't generate noop setters for any unneeded requirements.
+          // However, since this is a breaking change we can at least avoid trying
+          // to generate noop setters for impossible cases like when the requirement type
+          // is in another package. This avoids unnecessary breakages in Dagger's generated
+          // due to the noop setters.
+          if (isElementAccessibleFrom(requirement.typeElement(), className.packageName())) {
+            return Optional.of(noopSetterMethod(requirement));
+          } else {
+            return Optional.empty();
+          }
         case UNSETTABLE_REPEATED_MODULE:
           return Optional.of(repeatedModuleSetterMethod(requirement));
       }

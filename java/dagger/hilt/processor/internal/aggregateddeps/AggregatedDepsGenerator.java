@@ -35,6 +35,7 @@ import javax.lang.model.element.TypeElement;
  * about modules and entry points through multiple javac runs.
  */
 final class AggregatedDepsGenerator {
+  static final String AGGREGATING_PACKAGE = "hilt_aggregated_deps";
   private static final ClassName AGGREGATED_DEPS =
       ClassName.get("dagger.hilt.processor.internal.aggregateddeps", "AggregatedDeps");
 
@@ -57,8 +58,7 @@ final class AggregatedDepsGenerator {
   void generate() throws IOException {
     ClassName name =
         ClassName.get(
-            ComponentDependencies.AGGREGATING_PACKAGE,
-            Processors.getFullEnclosedName(dependency) + "ModuleDeps");
+            AGGREGATING_PACKAGE, Processors.getFullEnclosedName(dependency) + "ModuleDeps");
     TypeSpec.Builder generator =
         TypeSpec.classBuilder(name.simpleName())
             .addOriginatingElement(dependency)

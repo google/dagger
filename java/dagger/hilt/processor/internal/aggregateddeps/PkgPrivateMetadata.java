@@ -26,10 +26,10 @@ import com.squareup.javapoet.TypeName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.util.Optional;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
 
 /** PkgPrivateModuleMetadata contains a set of utilities for processing package private modules. */
 @AutoValue
@@ -63,8 +63,7 @@ abstract class PkgPrivateMetadata {
    * Returns an Optional PkgPrivateMetadata requiring Hilt processing, otherwise returns an empty
    * Optional.
    */
-  static Optional<PkgPrivateMetadata> of(
-      ProcessingEnvironment env, Element element, ClassName annotation) {
+  static Optional<PkgPrivateMetadata> of(Elements elements, Element element, ClassName annotation) {
     // If this is a public element no wrapping is needed
     if (effectiveVisibilityOfElement(element) == Visibility.PUBLIC) {
       return Optional.empty();
@@ -81,7 +80,7 @@ abstract class PkgPrivateMetadata {
     if (annotation.equals(ClassNames.MODULE)) {
       // Skip modules that require a module instance. Required by
       // dagger (b/31489617)
-      if (Processors.requiresModuleInstance(env, MoreElements.asType(element))) {
+      if (Processors.requiresModuleInstance(elements, MoreElements.asType(element))) {
         return Optional.empty();
       }
     }

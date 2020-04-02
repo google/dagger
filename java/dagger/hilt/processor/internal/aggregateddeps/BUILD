@@ -43,7 +43,6 @@ java_library(
         "PkgPrivateModuleGenerator.java",
     ],
     deps = [
-        ":component_dependencies",
         "//:dagger_with_compiler",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
@@ -52,7 +51,6 @@ java_library(
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/internal/guava:annotations",
-        "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:service",
@@ -70,6 +68,7 @@ java_library(
     ],
     deps = [
         ":annotation",
+        ":processor_lib",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:component_descriptor",
         "//java/dagger/hilt/processor/internal:processor_errors",
@@ -77,9 +76,7 @@ java_library(
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/javapoet",
-        "@google_bazel_common//third_party/java/jsr305_annotations",
     ],
 )

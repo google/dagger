@@ -134,7 +134,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
       ImmutableSet<ClassName> components = installInComponents(module);
       if (isValidKind(module)) {
         Optional<PkgPrivateMetadata> pkgPrivateMetadata =
-            PkgPrivateMetadata.of(getProcessingEnv(), module, ClassNames.MODULE);
+            PkgPrivateMetadata.of(getElementUtils(), module, ClassNames.MODULE);
         if (pkgPrivateMetadata.isPresent()) {
           // Generate a public wrapper module which will be processed in the next round.
           new PkgPrivateModuleGenerator(getProcessingEnv(), pkgPrivateMetadata.get()).generate();
@@ -171,7 +171,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
               .generate();
         } else {
           Optional<PkgPrivateMetadata> pkgPrivateMetadata =
-              PkgPrivateMetadata.of(getProcessingEnv(), entryPoint, entryPointAnnotation);
+              PkgPrivateMetadata.of(getElementUtils(), entryPoint, entryPointAnnotation);
           if (pkgPrivateMetadata.isPresent()) {
             new PkgPrivateEntryPointGenerator(getProcessingEnv(), pkgPrivateMetadata.get())
                 .generate();

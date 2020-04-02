@@ -145,10 +145,12 @@ public final class Processors {
 
     ProcessorErrors.checkState(
         values.size() >= 1,
+        // TODO(b/152801981): Point to the annotation value rather than the annotated element.
         annotation.getAnnotationType().asElement(),
-        "@%s, '%s' class is invalid or missing",
+        "@%s, '%s' class is invalid or missing: %s",
         annotation.getAnnotationType().asElement().getSimpleName(),
-        key);
+        key,
+        annotation);
 
     return values;
   }
@@ -854,10 +856,10 @@ public final class Processors {
     return FluentIterable.from(elements).transform(ClassName::get).toSet();
   }
 
-  public static boolean requiresModuleInstance(ProcessingEnvironment env, TypeElement module) {
+  public static boolean requiresModuleInstance(Elements elements, TypeElement module) {
     // Binding methods that lack ABSTRACT or STATIC require module instantiation.
     // Required by Dagger.  See b/31489617.
-    return ElementFilter.methodsIn(env.getElementUtils().getAllMembers(module)).stream()
+    return ElementFilter.methodsIn(elements.getAllMembers(module)).stream()
         .filter(Processors::isBindingMethod)
         .map(ExecutableElement::getModifiers)
         .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));

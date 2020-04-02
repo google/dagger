@@ -17,18 +17,28 @@
 package dagger.hilt.processor.internal.aggregateddeps;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator.AGGREGATING_PACKAGE;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.SetMultimap;
 import com.squareup.javapoet.ClassName;
+import dagger.hilt.processor.internal.BadInputException;
+import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ProcessorErrors;
+import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.definecomponent.DefineComponents;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -40,7 +50,6 @@ import javax.lang.model.util.Elements;
  * Represents information needed to create a component (i.e. modules, entry points, etc)
  */
 public final class ComponentDependencies {
-  static final String AGGREGATING_PACKAGE = "hilt_aggregated_deps";
 
   /** A key used for grouping a test dependency by both its component and test name. */
   @AutoValue
@@ -69,6 +78,8 @@ public final class ComponentDependencies {
           ImmutableSetMultimap.builder();
       private final ImmutableSetMultimap.Builder<TestDepKey, TypeElement> testDeps =
           ImmutableSetMultimap.builder();
+      private final ImmutableSetMultimap.Builder<ClassName, TypeElement> ignoreDeps =
+          ImmutableSetMultimap.builder();
 
       Builder addDep(ClassName component, Optional<ClassName> test, TypeElement dep) {
         if (test.isPresent()) {
@@ -79,26 +90,42 @@ public final class ComponentDependencies {
         return this;
       }
 
+      Builder ignoreDeps(ClassName test, ImmutableSet<TypeElement> deps) {
+        ignoreDeps.putAll(test, deps);
+        return this;
+      }
+
       Dependencies build() {
-        return new Dependencies(globalDeps.build(), testDeps.build());
+        return new Dependencies(globalDeps.build(), testDeps.build(), ignoreDeps.build());
       }
     }
 
-    // Dependencies keyed by the component they're installed in.
+    // Stores global deps keyed by component.
     private final ImmutableSetMultimap<ClassName, TypeElement> globalDeps;
+
+    // Stores test deps keyed by component and test.
     private final ImmutableSetMultimap<TestDepKey, TypeElement> testDeps;
+
+    // Stores ignored deps keyed by test.
+    private final ImmutableSetMultimap<ClassName, TypeElement> ignoreDeps;
 
     Dependencies(
         ImmutableSetMultimap<ClassName, TypeElement> globalDeps,
-        ImmutableSetMultimap<TestDepKey, TypeElement> testDeps) {
+        ImmutableSetMultimap<TestDepKey, TypeElement> testDeps,
+        ImmutableSetMultimap<ClassName, TypeElement> ignoreDeps) {
       this.globalDeps = globalDeps;
       this.testDeps = testDeps;
+      this.ignoreDeps = ignoreDeps;
     }
 
     /** Returns the dependencies to be installed in the given component for the given test. */
     ImmutableSet<TypeElement> get(ClassName component, ClassName test) {
+      ImmutableSet<TypeElement> ignoreTestDeps = ignoreDeps.get(test);
       return ImmutableSet.<TypeElement>builder()
-          .addAll(globalDeps.get(component))
+          .addAll(
+              globalDeps.get(component).stream()
+                  .filter(dep -> !ignoreTestDeps.contains(dep))
+                  .collect(toImmutableSet()))
           .addAll(testDeps.get(TestDepKey.of(component, test)))
           .build();
     }
@@ -151,6 +178,7 @@ public final class ComponentDependencies {
     Dependencies.Builder moduleDeps = new Dependencies.Builder();
     Dependencies.Builder entryPointDeps = new Dependencies.Builder();
     Dependencies.Builder componentEntryPointDeps = new Dependencies.Builder();
+    Map<String, TypeElement> testElements = new HashMap<>();
     ImmutableMap<String, ComponentDescriptor> descriptorLookup =
         DefineComponents.componentDescriptors(elements).stream()
             .collect(
@@ -159,9 +187,12 @@ public final class ComponentDependencies {
                     descriptor -> descriptor));
 
     for (AggregatedDeps deps : getAggregatedDeps(elements)) {
-      Optional<ClassName> test =
-          deps.test().isEmpty()
-              ? Optional.empty() : Optional.of(ClassName.get(elements.getTypeElement(deps.test())));
+      Optional<ClassName> test = Optional.empty();
+      if (!deps.test().isEmpty()) {
+        testElements.computeIfAbsent(deps.test(), testName -> elements.getTypeElement(testName));
+        test = Optional.of(ClassName.get(testElements.get(deps.test())));
+      }
+
       for (String component : deps.components()) {
         checkState(
             descriptorLookup.containsKey(component),
@@ -183,8 +214,64 @@ public final class ComponentDependencies {
       }
     }
 
+    for (TypeElement testElement : testElements.values()) {
+      if (Processors.hasAnnotation(testElement, ClassNames.IGNORE_MODULES)) {
+        moduleDeps.ignoreDeps(ClassName.get(testElement), getIgnoredModules(testElement, elements));
+      }
+    }
+
     return new ComponentDependencies(
-        moduleDeps.build(), entryPointDeps.build(), componentEntryPointDeps.build());
+        validateModules(moduleDeps.build(), elements),
+        entryPointDeps.build(),
+        componentEntryPointDeps.build());
+  }
+
+  // Validate that the @IgnoreModules doesn't contain any test modules.
+  private static Dependencies validateModules(Dependencies moduleDeps, Elements elements) {
+    SetMultimap<ClassName, TypeElement> invalidTestModules = HashMultimap.create();
+    moduleDeps.testDeps.entries().stream()
+        .filter(e -> moduleDeps.ignoreDeps.containsEntry(e.getKey().test(), e.getValue()))
+        .forEach(e -> invalidTestModules.put(e.getKey().test(), e.getValue()));
+
+    // Currently we don't have a good way to throw an error for all tests, so we sort (to keep the
+    // error reporting order stable) and then choose the first test.
+    // TODO(user): Consider using ProcessorErrorHandler directly to report all errors at once?
+    Optional<ClassName> invalidTest =
+        invalidTestModules.keySet().stream()
+            .min((test1, test2) -> test1.toString().compareTo(test2.toString()));
+    if (invalidTest.isPresent()) {
+      throw new BadInputException(
+          String.format(
+              "@IgnoreModules on test, %s, should not containing test modules, " + "but found: %s",
+              invalidTest.get(),
+              invalidTestModules.get(invalidTest.get()).stream()
+                  // Sort modules to keep stable error messages.
+                  .sorted((test1, test2) -> test1.toString().compareTo(test2.toString()))
+                  .collect(toImmutableList())),
+          elements.getTypeElement(invalidTest.get().toString()));
+    }
+    return moduleDeps;
+  }
+
+  private static ImmutableSet<TypeElement> getIgnoredModules(
+      TypeElement testElement, Elements elements) {
+    ImmutableList<TypeElement> userIgnoreModules =
+        Processors.getAnnotationClassValues(
+            elements,
+            Processors.getAnnotationMirror(testElement, ClassNames.IGNORE_MODULES),
+            "value");
+
+    // For pkg-private modules we need to find the generated wrapper class and ignore that instead.
+    ImmutableSet.Builder<TypeElement> builder = ImmutableSet.builder();
+    for (TypeElement ignoreModule : userIgnoreModules) {
+      Optional<PkgPrivateMetadata> pkgPrivateMetadata =
+          PkgPrivateMetadata.of(elements, ignoreModule, ClassNames.MODULE);
+      builder.add(
+          pkgPrivateMetadata.isPresent()
+              ? elements.getTypeElement(pkgPrivateMetadata.get().generatedClassName().toString())
+              : ignoreModule);
+    }
+    return builder.build();
   }
 
   /** Returns the top-level elements of the aggregated deps package. */

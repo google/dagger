@@ -20,16 +20,17 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 /**
- * An annotation used to ignore modules in tests.
+ * An annotation used to uninstall modules that have previously been installed with {@link
+ * dagger.hilt.InstallIn}.
  *
- * <p>This feature is useful for replacing production bindings with fake bindings in tests. The
- * basic idea is to ignore the module that provided the production binding and include your own
- * module in your test.
+ * <p>This feature should only be used in tests. It is useful for replacing production bindings with
+ * fake bindings. The basic idea is to allow users to uninstall the module that provided the
+ * production binding so that a fake binding can be provided by the test.
  *
  * <p>Example:
  *
  * <pre><code>
- *   {@literal @}IgnoreModules({
+ *   {@literal @}UninstallModules({
  *       ProdFooModule.class,
  *   })
  *   {@literal @}GenerateComponents
@@ -44,10 +45,10 @@ import java.lang.annotation.Target;
  * </code></pre>
  */
 @Target({ElementType.TYPE})
-public @interface IgnoreModules {
+public @interface UninstallModules {
 
   /**
-   * Returns the list of classes to ignore.
+   * Returns the list of classes to uninstall.
    *
    * <p>These classes must be annotated with both {@link dagger.Module} and {@link
    * dagger.hilt.InstallIn}.

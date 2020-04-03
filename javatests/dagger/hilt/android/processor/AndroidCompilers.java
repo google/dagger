@@ -21,7 +21,7 @@ import static java.util.stream.Collectors.toMap;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compiler;
 import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPointProcessor;
-import dagger.hilt.android.processor.internal.ignoremodules.IgnoreModulesProcessor;
+import dagger.hilt.android.processor.internal.uninstallmodules.UninstallModulesProcessor;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessor;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentProcessor;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputProcessor;
@@ -56,7 +56,7 @@ public final class AndroidCompilers {
         new DefineComponentProcessor(),
         new GeneratesRootInputProcessor(),
         new OriginatingElementProcessor(),
-        new IgnoreModulesProcessor(),
+        new UninstallModulesProcessor(),
         new RootProcessor());
   }
 

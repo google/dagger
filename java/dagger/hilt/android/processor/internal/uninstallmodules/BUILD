@@ -13,21 +13,21 @@
 # limitations under the License.
 
 # Description:
-#   A processor for @dagger.hilt.android.testing.IgnoreModules.
+#   A processor for @dagger.hilt.android.testing.UninstallModules.
 
 package(default_visibility = ["//:src"])
 
 java_plugin(
     name = "processor",
     generates_api = 1,
-    processor_class = "dagger.hilt.android.processor.internal.ignoremodules.IgnoreModulesProcessor",
+    processor_class = "dagger.hilt.android.processor.internal.uninstallmodules.UninstallModulesProcessor",
     deps = [":processor_lib"],
 )
 
 java_library(
     name = "processor_lib",
     srcs = [
-        "IgnoreModulesProcessor.java",
+        "UninstallModulesProcessor.java",
     ],
     deps = [
         "//java/dagger/hilt/processor/internal:base_processor",

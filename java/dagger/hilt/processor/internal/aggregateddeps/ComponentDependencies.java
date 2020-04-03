@@ -226,7 +226,7 @@ public final class ComponentDependencies {
         componentEntryPointDeps.build());
   }
 
-  // Validate that the @IgnoreModules doesn't contain any test modules.
+  // Validate that the @UninstallModules doesn't contain any test modules.
   private static Dependencies validateModules(Dependencies moduleDeps, Elements elements) {
     SetMultimap<ClassName, TypeElement> invalidTestModules = HashMultimap.create();
     moduleDeps.testDeps.entries().stream()
@@ -242,7 +242,8 @@ public final class ComponentDependencies {
     if (invalidTest.isPresent()) {
       throw new BadInputException(
           String.format(
-              "@IgnoreModules on test, %s, should not containing test modules, " + "but found: %s",
+              "@UninstallModules on test, %s, should not containing test modules, "
+                  + "but found: %s",
               invalidTest.get(),
               invalidTestModules.get(invalidTest.get()).stream()
                   // Sort modules to keep stable error messages.
@@ -255,15 +256,15 @@ public final class ComponentDependencies {
 
   private static ImmutableSet<TypeElement> getIgnoredModules(
       TypeElement testElement, Elements elements) {
-    ImmutableList<TypeElement> userIgnoreModules =
+    ImmutableList<TypeElement> userUninstallModules =
         Processors.getAnnotationClassValues(
             elements,
             Processors.getAnnotationMirror(testElement, ClassNames.IGNORE_MODULES),
             "value");
 
-    // For pkg-private modules we need to find the generated wrapper class and ignore that instead.
+    // For pkg-private modules, find the generated wrapper class and uninstall that instead.
     ImmutableSet.Builder<TypeElement> builder = ImmutableSet.builder();
-    for (TypeElement ignoreModule : userIgnoreModules) {
+    for (TypeElement ignoreModule : userUninstallModules) {
       Optional<PkgPrivateMetadata> pkgPrivateMetadata =
           PkgPrivateMetadata.of(elements, ignoreModule, ClassNames.MODULE);
       builder.add(

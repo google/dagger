@@ -125,11 +125,11 @@ android_library(
 )
 
 android_library(
-    name = "ignore_modules",
+    name = "uninstall_modules",
     testonly = 1,
-    srcs = ["IgnoreModules.java"],
+    srcs = ["UninstallModules.java"],
     exported_plugins = [
-        "//java/dagger/hilt/android/processor/internal/ignoremodules:processor",
+        "//java/dagger/hilt/android/processor/internal/uninstallmodules:processor",
     ],
 )
 
@@ -140,7 +140,7 @@ android_library(
     visibility = ["//visibility:private"],
     exports = [
         ":android_robolectric_entry_point",
-        ":ignore_modules",
+        ":uninstall_modules",
         "//java/dagger/hilt/android:artifact-lib",
     ],
 )
@@ -163,9 +163,9 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
         "//java/dagger/hilt/android/internal/testing:test_injector",
         "//java/dagger/hilt/android/testing:android_robolectric_entry_point",
-        "//java/dagger/hilt/android/testing:ignore_modules",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/android/testing:robolectric_test_rule",
         "//java/dagger/hilt/android/testing:test_rules_common",
+        "//java/dagger/hilt/android/testing:uninstall_modules",
     ],
 )

@@ -27,7 +27,7 @@ public final class ClassNames {
   public static final ClassName GENERATED_COMPONENT =
       get("dagger.hilt.internal", "GeneratedComponent");
   public static final ClassName IGNORE_MODULES =
-      get("dagger.hilt.android.testing", "IgnoreModules");
+      get("dagger.hilt.android.testing", "UninstallModules");
 
   public static final ClassName DEFINE_COMPONENT = get("dagger.hilt", "DefineComponent");
   public static final ClassName DEFINE_COMPONENT_BUILDER =

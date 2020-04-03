@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal.ignoremodules;
+package dagger.hilt.android.processor.internal.uninstallmodules;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
@@ -33,10 +33,10 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
-/** Validates {@link dagger.hilt.android.testing.IgnoreModules} usages. */
+/** Validates {@link dagger.hilt.android.testing.UninstallModules} usages. */
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
-public final class IgnoreModulesProcessor extends BaseProcessor {
+public final class UninstallModulesProcessor extends BaseProcessor {
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {

@@ -22,7 +22,7 @@ java_library(
     srcs = ["AndroidCompilers.java"],
     deps = [
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
-        "//java/dagger/hilt/android/processor/internal/ignoremodules:processor_lib",
+        "//java/dagger/hilt/android/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",
         "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
         "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",

@@ -119,8 +119,6 @@ public final class ClassNames {
       get("dagger.hilt.android.testing", "AndroidEmulatorEntryPoint");
   public static final ClassName ON_COMPONENT_READY_RUNNER =
       get("dagger.hilt.android.testing", "OnComponentReadyRunner");
-  public static final ClassName ON_COMPONENT_READY_RUNNER_HOLDER =
-      get("dagger.hilt.android.testing", "OnComponentReadyRunner", "OnComponentReadyRunnerHolder");
   public static final ClassName MULTI_DEX_APPLICATION =
       get("androidx.multidex", "MultiDexApplication");
   public static final ClassName TEST_INJECTOR =

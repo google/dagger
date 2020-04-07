@@ -16,14 +16,15 @@
 
 package dagger.hilt.android.testing;
 
+import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.base.Throwables.throwIfUnchecked;
 
 import android.app.Application;
-import android.content.Context;
+import androidx.test.core.app.ApplicationProvider;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import dagger.hilt.EntryPoints;
-import dagger.hilt.internal.GeneratedComponentManager;
+import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,79 +34,71 @@ import java.util.List;
  */
 public final class OnComponentReadyRunner {
   private final List<EntryPointListener<?>> listeners = new ArrayList<>();
-  private GeneratedComponentManager<?> componentManager;
-  private boolean componentHostSet = false;
+  private boolean haveRunListeners = false;
 
-  /** Used by generated code, to notify listeners that the component has been created. */
-  public void setComponentManager(GeneratedComponentManager<?> componentManager) {
-    Preconditions.checkState(!componentHostSet, "Component host was already set.");
-    componentHostSet = true;
-    this.componentManager = componentManager;
+  /** This should only be called by the framework. */
+  public void runListeners() {
+    Preconditions.checkState(!haveRunListeners, "Listeners have already been run!");
+    haveRunListeners = true;
     for (EntryPointListener<?> listener : listeners) {
-      listener.deliverComponent(componentManager);
+      listener.runListener();
     }
   }
 
   /** Must be called on the test thread, before the Statement is evaluated. */
-  public static <T> void addListener(
-      Context context, Class<T> entryPoint, OnComponentReadyListener<T> listener) {
-    Application application = (Application) context.getApplicationContext();
-    if (application instanceof OnComponentReadyRunnerHolder) {
-      OnComponentReadyRunnerHolder holder = (OnComponentReadyRunnerHolder) application;
-      holder.getOnComponentReadyRunner().addListenerInternal(holder, entryPoint, listener);
+  public static <T> void addListener(Class<T> entryPoint, Listener<T> listener) {
+    Application application = ApplicationProvider.getApplicationContext();
+    // TODO(user): Should we throw instead?
+    if (application instanceof TestApplicationComponentManagerHolder) {
+      Object componentManager =
+          ((TestApplicationComponentManagerHolder) application).componentManager();
+      Preconditions.checkState(componentManager instanceof Holder);
+      ((Holder) componentManager)
+          .getOnComponentReadyRunner()
+          .addListenerInternal(entryPoint, listener);
     }
   }
 
-  private <T> void addListenerInternal(
-      OnComponentReadyRunnerHolder context,
-      Class<T> entryPoint,
-      OnComponentReadyListener<T> listener) {
-    if (componentHostSet) {
-      // If the componentHost was already set, just call through immediately
-      runListener(componentManager, entryPoint, listener);
+  private <T> void addListenerInternal(Class<T> entryPoint, Listener<T> listener) {
+    if (haveRunListeners) {
+      // If the initial listeners already ran, just call through immediately
+      runListener(entryPoint, listener);
     } else {
-      context
-          .getOnComponentReadyRunner()
-          .listeners
-          .add(EntryPointListener.create(entryPoint, listener));
+      listeners.add(EntryPointListener.create(entryPoint, listener));
     }
   }
 
   @AutoValue
   abstract static class EntryPointListener<T> {
-    static <T> EntryPointListener<T> create(
-        Class<T> entryPoint, OnComponentReadyListener<T> listener) {
+    static <T> EntryPointListener<T> create(Class<T> entryPoint, Listener<T> listener) {
       return new AutoValue_OnComponentReadyRunner_EntryPointListener<T>(entryPoint, listener);
     }
 
     abstract Class<T> entryPoint();
 
-    abstract OnComponentReadyListener<T> listener();
+    abstract Listener<T> listener();
 
-    private void deliverComponent(GeneratedComponentManager<?> object) {
-      runListener(object, entryPoint(), listener());
+    private void runListener() {
+      OnComponentReadyRunner.runListener(entryPoint(), listener());
     }
   }
 
-  private static <T> void runListener(
-      GeneratedComponentManager<?> componentManager,
-      Class<T> entryPoint,
-      OnComponentReadyListener<T> listener) {
+  private static <T> void runListener(Class<T> entryPoint, Listener<T> listener) {
     try {
-      listener.onComponentReady(EntryPoints.get(componentManager, entryPoint));
+      listener.onComponentReady(EntryPoints.get(getApplicationContext(), entryPoint));
     } catch (Throwable t) {
       throwIfUnchecked(t);
       throw new RuntimeException(t);
     }
   }
 
-  /** Public for use by generated code and {@link TestApplicationComponentManager} */
-  public interface OnComponentReadyRunnerHolder {
+  /** This should only be called by the framework. */
+  public interface Holder {
     OnComponentReadyRunner getOnComponentReadyRunner();
   }
 
   /** Rules should register an implementation of this to get access to the singleton component */
-  public interface OnComponentReadyListener<T> {
+  public interface Listener<T> {
     void onComponentReady(T entryPoint) throws Throwable;
   }
 }

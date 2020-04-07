@@ -16,12 +16,11 @@
 
 package dagger.hilt.android.internal.testing;
 
-import android.app.Application;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import dagger.hilt.android.internal.managers.ComponentSupplier;
-import dagger.hilt.android.testing.OnComponentReadyRunner.OnComponentReadyRunnerHolder;
+import dagger.hilt.android.testing.OnComponentReadyRunner;
 import dagger.hilt.internal.GeneratedComponentManager;
 import java.util.Map;
 import java.util.Set;
@@ -34,8 +33,9 @@ import org.junit.runner.Description;
  *
  * <p>A manager for the creation of components that live in the test Application.
  */
-public final class TestApplicationComponentManager implements GeneratedComponentManager<Object> {
-  private final Application application;
+public final class TestApplicationComponentManager
+    implements GeneratedComponentManager<Object>, OnComponentReadyRunner.Holder {
+  private final OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
   private final AtomicReference<Object> component = new AtomicReference<>();
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
   private final ComponentSupplier componentSupplier;
@@ -45,11 +45,9 @@ public final class TestApplicationComponentManager implements GeneratedComponent
   private final boolean waitForBindValue;
 
   public TestApplicationComponentManager(
-      Application application,
       ComponentSupplier componentSupplier,
       Set<Class<?>> requiredModules,
       boolean waitForBindValue) {
-    this.application = application;
     this.componentSupplier = componentSupplier;
     this.requiredModules = ImmutableSet.copyOf(requiredModules);
     this.waitForBindValue = waitForBindValue;
@@ -81,6 +79,11 @@ public final class TestApplicationComponentManager implements GeneratedComponent
         hasHiltTestRule.compareAndSet(null, description),
         "The hasHiltTestRule flag has already been set!");
     tryToCreateComponent();
+  }
+
+  @Override
+  public OnComponentReadyRunner getOnComponentReadyRunner() {
+    return onComponentReadyRunner;
   }
 
   public Description getDescription() {
@@ -131,9 +134,7 @@ public final class TestApplicationComponentManager implements GeneratedComponent
           "Tried to create the component more than once! "
               + "There is a race between registering the HiltTestRule and registering all test "
               + "modules. Make sure there is a happens-before edge between the two.");
-      ((OnComponentReadyRunnerHolder) application)
-          .getOnComponentReadyRunner()
-          .setComponentManager((GeneratedComponentManager) application);
+      onComponentReadyRunner.runListeners();
     }
   }
 

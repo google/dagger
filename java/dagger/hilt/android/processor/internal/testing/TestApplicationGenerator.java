@@ -39,9 +39,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
-/**
- * Generates an Android Application that holds the Singleton component.
- */
+/** Generates an Android Application that holds the Singleton component. */
 public final class TestApplicationGenerator {
   private static final ClassName TEST_APPLICATION_COMPONENT_MANAGER =
       ClassName.get("dagger.hilt.android.internal.testing", "TestApplicationComponentManager");
@@ -58,7 +56,6 @@ public final class TestApplicationGenerator {
   private final ClassName baseName;
   private final ClassName appName;
   private final ParameterSpec componentManager;
-  private final ParameterSpec onComponentReadyRunner;
   private final InternalTestRootMetadata metadata;
 
   public TestApplicationGenerator(
@@ -77,10 +74,6 @@ public final class TestApplicationGenerator {
 
     componentManager =
         ParameterSpec.builder(TEST_APPLICATION_COMPONENT_MANAGER, "componentManager").build();
-
-    onComponentReadyRunner =
-        ParameterSpec.builder(ClassNames.ON_COMPONENT_READY_RUNNER, "onComponentReadyRunner")
-            .build();
   }
 
   public void generate() throws IOException {
@@ -92,14 +85,11 @@ public final class TestApplicationGenerator {
             .addSuperinterface(
                 ParameterizedTypeName.get(ClassNames.COMPONENT_MANAGER, TypeName.OBJECT))
             .addSuperinterface(TEST_APPLICATION_COMPONENT_MANAGER_HOLDER)
-            .addSuperinterface(ClassNames.ON_COMPONENT_READY_RUNNER_HOLDER)
             .addField(getComponentManagerField())
-            .addField(getOnComponentReadyRunnerField())
             .addMethod(getAttachBaseContextMethod())
             .addMethod(getOnCreateMethod())
             .addMethod(getComponentManagerMethod())
             .addMethod(getComponentMethod())
-            .addMethod(getOnComponentReadyRunnerMethod())
             .addMethod(injectableMethod(testName))
             .addMethod(getInstanceMethod(appName))
             .addField(testName, "testInstance", Modifier.PRIVATE)
@@ -126,17 +116,12 @@ public final class TestApplicationGenerator {
         .build();
   }
 
-  // Initialize this in attachBaseContext to not pull it into the main dex.
-  /** private final OnComponentReadyRunner onComponentReadyRunner; */
-  private FieldSpec getOnComponentReadyRunnerField() {
-    return FieldSpec.builder(
-            onComponentReadyRunner.type, onComponentReadyRunner.name, Modifier.PRIVATE)
-        .build();
-  }
-
   /**
+   *
+   *
+   * <pre>
    * new ComponentSupplier<ApplicationComponent>() {
-   *   @Override
+   *   {@literal @}Override
    *   public ApplicationComponent get() {
    *     return DaggerApplicationComponent.builder()
    *         .applicationContextModule(new ApplicationContextModule(this))
@@ -146,6 +131,7 @@ public final class TestApplicationGenerator {
    *         .build();
    *   }
    * }
+   * </pre>
    */
   private TypeSpec anonymousComponentSupplier() {
     ClassName component =
@@ -182,10 +168,14 @@ public final class TestApplicationGenerator {
   }
 
   /**
+   *
+   *
+   * <pre>
    * ImmutableSet.of(
    *     FooTest.NonStaticModule1.class,
    *     FooTest.NonStaticModule2.class,
-   *     ...)
+   *     ...);
+   * </pre>
    */
   private CodeBlock requiredModuleList() {
     return CodeBlock.of("$T.of($L)",
@@ -205,7 +195,6 @@ public final class TestApplicationGenerator {
    *   componentManager = new TestApplicationComponentManager(
    *       ... see anonymousComponentSupplier(),
    *       ... see requiredModuleList());
-   *   onComponentReadyRunner = new OnComponentReadyRunner();
    * }
    * </pre>
    */
@@ -216,25 +205,27 @@ public final class TestApplicationGenerator {
         .addParameter(AndroidClassNames.CONTEXT, "base")
         .addStatement("super.attachBaseContext(base)")
         .addStatement(
-            "$N = new $T(this, $L, $L, $L)",
+            "$N = new $T($L, $L, $L)",
             componentManager,
             componentManager.type,
             anonymousComponentSupplier(),
             requiredModuleList(),
             waitForBindValue)
-        .addStatement("$N = new $T()", onComponentReadyRunner, onComponentReadyRunner.type)
         .build();
   }
 
   /**
+   *
+   *
+   * <pre>
    * {@literal @Override}
    * public void onCreate() {
    *   super.onCreate();
    *   OnComponentReadyRunner.addListener(
-   *       this,
    *       Hilt_XXX_Application_Injector.class,
    *       (Hilt_XXX_Application_Injector injector) -> injector.inject(this));
    * }
+   * </pre>
    */
   private MethodSpec getOnCreateMethod() {
     return MethodSpec.methodBuilder("onCreate")
@@ -242,9 +233,8 @@ public final class TestApplicationGenerator {
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .addStatement("super.onCreate()")
         .addStatement(
-            "$T.addListener(this, $T.class, ($T injector) -> injector.inject(this))",
+            "$T.addListener($T.class, injector -> injector.inject(this))",
             ClassNames.ON_COMPONENT_READY_RUNNER,
-            metadata.injectorClassName(),
             metadata.injectorClassName())
         .build();
   }
@@ -264,21 +254,6 @@ public final class TestApplicationGenerator {
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .returns(TypeName.OBJECT)
         .addStatement("return $N", componentManager)
-        .build();
-  }
-
-  /**
-   * {@literal @Override}
-   * public OnComponentReadyRunner getOnComponentReadyRunner() {
-   *   return onComponentReadyRunner;
-   * }
-   */
-  private MethodSpec getOnComponentReadyRunnerMethod() {
-    return MethodSpec.methodBuilder("getOnComponentReadyRunner")
-        .addAnnotation(Override.class)
-        .addModifiers(Modifier.PUBLIC)
-        .returns(ClassNames.ON_COMPONENT_READY_RUNNER)
-        .addStatement("return $N", onComponentReadyRunner)
         .build();
   }
 

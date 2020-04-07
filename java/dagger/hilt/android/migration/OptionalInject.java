@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
  * application is using Hilt. This may be useful for libraries that have to support Hilt users as
  * well as non-Hilt users.
  *
- * <p>Usage of this annotation will also cause a method {@code injectedByHilt} to be generated
+ * <p>Usage of this annotation will also cause a method {@code wasInjectedByHilt} to be generated
  * in the Hilt base class as well, that returns a boolean for whether or not injection actually
  * happened. Injection will happen if the parent type (e.g. the activity to a fragment) is an
  * {@link dagger.hilt.android.AndroidEntryPoint} annotated class and if that parent was also

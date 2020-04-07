@@ -21,6 +21,5 @@ package dagger.hilt.android.internal.migration;
  */
 public interface InjectedByHilt {
   /** Returns true if this class was injected by Hilt. */
-  // TODO(user): rename to wasInjectedByHilt?
-  boolean injectedByHilt();
+  boolean wasInjectedByHilt();
 }

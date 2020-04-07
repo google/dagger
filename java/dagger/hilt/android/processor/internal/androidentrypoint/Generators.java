@@ -279,11 +279,11 @@ final class Generators {
         .addModifiers(Modifier.PROTECTED);
 
     // Check if the parent is a Hilt type. If it isn't or if it is but it
-    // wasn't injectedByHilt, then return.
+    // wasn't injected by hilt, then return.
     // Object parent = ...depends on type...
     // if (!(parent instanceof GeneratedComponentManager)
     //     || ((parent instanceof InjectedByHilt) &&
-    //         !((InjectedByHilt) parent).injectedByHilt())) {
+    //         !((InjectedByHilt) parent).wasInjectedByHilt())) {
     //   return;
     //
     if (metadata.allowsOptionalInjection()) {
@@ -291,7 +291,7 @@ final class Generators {
           .addStatement("$T parent = $L", ClassNames.OBJECT, getParentCodeBlock(metadata))
           .beginControlFlow(
               "if (!(parent instanceof $T) "
-              + "|| ((parent instanceof $T) && !(($T) parent).injectedByHilt()))",
+              + "|| ((parent instanceof $T) && !(($T) parent).wasInjectedByHilt()))",
               ClassNames.COMPONENT_MANAGER,
               AndroidClassNames.INJECTED_BY_HILT,
               AndroidClassNames.INJECTED_BY_HILT)
@@ -350,12 +350,12 @@ final class Generators {
         throw new AssertionError();
     }
 
-    // Also add an injectedByHilt method if needed.
+    // Also add a wasInjectedByHilt method if needed.
     // Even if we aren't optionally injected, if we override an optionally injected Hilt class
-    // we also need to override the injectedByHilt method.
+    // we also need to override the wasInjectedByHilt method.
     if (metadata.allowsOptionalInjection() || metadata.baseAllowsOptionalInjection()) {
       typeSpecBuilder.addMethod(
-          MethodSpec.methodBuilder("injectedByHilt")
+          MethodSpec.methodBuilder("wasInjectedByHilt")
               .addAnnotation(Override.class)
               .addModifiers(Modifier.PUBLIC)
               .returns(boolean.class)

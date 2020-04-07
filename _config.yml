@@ -31,38 +31,90 @@ nav:
       name: Home
       url: /
   - item:
-      name: Tutorial
+      name: Dev Guide
+      url: /dev-guide
+      sidenav:
+        - item:
+            name: Android
+            url: /android
+        - item:
+            name: Multibindings
+            url: /multibindings
+        - item:
+            name: Subcomponents
+            url: /subcomponents
+        - item:
+            name: Producers
+            url: /producers
+        - item:
+            name: Testing
+            url: /testing
+        - item:
+            name: SPI
+            url: /spi
+        - item:
+            name: Compiler Options
+            url: /compiler-options
+        - item:
+            name: Resources
+            url: /resources
+        - item:
+            name: Dagger 1 Migration
+            url: /dagger-1-migration
+        - item:
+            name: gRPC
+            url: /grpc
+        - item:
+            name: FAQ
+            url: /faq
+  - item:
+      name: "Tutorial Codelab"
       url: /tutorial
-  - item:
-      name: "User's Guide"
-      url: /users-guide
-  - item:
-      name: Android
-      url: /android
-  - item:
-      name: Multibindings
-      url: /multibindings
-  - item:
-      name: Subcomponents
-      url: /subcomponents
-  - item:
-      name: Producers
-      url: /producers
-  - item:
-      name: Testing
-      url: /testing
-  - item:
-      name: gRPC
-      url: /grpc
-  - item:
-      name: Compiler Options
-      url: /compiler-options
-  - item:
-      name: Dagger 1 Migration
-      url: /dagger-1-migration
-  - item:
-      name: Resources
-      url: /resources
-  - item:
-      name: FAQ
-      url: /faq
+      sidenav:
+        - item:
+            name: Setup
+            url: /01-setup
+        - item:
+            name: "Initial Dagger"
+            url: /02-initial-dagger
+        - item:
+            name: "First command"
+            url: /03-first-command
+        - item:
+            name: "Depending on interfaces"
+            url: /04-depending-on-interface
+        - item:
+            name: "Abstraction for output"
+            url: /05-abstraction-for-output
+        - item:
+            name: "New command"
+            url: /06-new-command
+        - item:
+            name: "Two for the price of one"
+            url: /07-two-for-the-price-of-one
+        - item:
+            name: "User-specific types"
+            url: /08-user-specific-types
+        - item:
+            name: "Maintaining state"
+            url: /09-maintaining-state
+        - item:
+            name: "Deposit after login"
+            url: /10-deposit-after-login
+        - item:
+            name: "Withdraw command"
+            url: /11-withdraw-command
+        - item:
+            name: "Logging out"
+            url: /12-logging-out
+        - item:
+            name: "Max withdrawal across commands"
+            url: /13-max-withdrawal-across-commands
+        - item:
+            name: "Avoiding recursive logins"
+            url: /14-avoiding-recursive-logins
+        - item:
+            name: Conclusion
+            url: /15-conclusion
+
+

@@ -11,7 +11,7 @@ implementations.
 Dagger-gRPC is an extension to [Dagger] that lets you use Dagger to create
 applications that use gRPC.
 
-You can use Dagger-gRPC to create [servers](servers.md) or clients [note: client
+You can use Dagger-gRPC to create [servers](grpc-servers.md) or clients [note: client
 support is coming soon].
 
 ## Call scope
@@ -19,7 +19,7 @@ support is coming soon].
 **Call scope** is a scope that lasts for one gRPC call. A gRPC call comprises
 one or more request messages and one or more response messages. You can use
 [`@CallScope`] to bind objects once for the lifetime of one call. [On the
-server](servers#call-scope), bindings in call scope can inject the
+server](grpc-servers.md#call-scope), bindings in call scope can inject the
 [headers][`Metadata`] object for the call.
 
 <!-- References -->

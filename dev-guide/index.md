@@ -1,6 +1,6 @@
 ---
 layout: default
-title: User's Guide
+title: Dev Guide
 ---
 
 The best classes in any application are the ones that do stuff: the

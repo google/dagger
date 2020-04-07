@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Dagger Tutorial
+title: Tutorial Codelab
 ---
 
 ## How to read this tutorial

@@ -19,7 +19,6 @@ package dagger.errorprone;
 import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
 
 import com.google.errorprone.BugPattern;
-import com.google.errorprone.BugPattern.ProvidesFix;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.bugpatterns.BugChecker;
 import com.google.errorprone.bugpatterns.BugChecker.MemberSelectTreeMatcher;
@@ -35,7 +34,6 @@ import com.sun.tools.javac.code.Symbol;
 /** A refactoring to update AndroidInjector bindings to their new form. */
 @BugPattern(
     name = "AndroidSupportInjectionModuleMigrator",
-    providesFix = ProvidesFix.REQUIRES_HUMAN_ATTENTION,
     summary = "Inlines usages of AndroidSupportInjectionModule to AndroidInjectionModule",
     explanation =
         "AndroidSupportInjectionModule is now an empty module and acts as an alias for "

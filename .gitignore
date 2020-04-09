@@ -33,3 +33,5 @@ gen-external-apklibs
 /bazel-*
 
 *.pyc
+
+.gradle

@@ -168,7 +168,7 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
       projectRoot,
       "build/intermediates/transforms/AndroidEntryPointTransform/debug"
     ).listFiles()?.first { it.isDirectory }?.let { transformedDir ->
-      File(transformedDir, "minimal/$srcFilePath").also {
+      File(transformedDir, srcFilePath).also {
         if (!it.exists()) {
           error("Unable to find transformed class ${it.path}")
         }

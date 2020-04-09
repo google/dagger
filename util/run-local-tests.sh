@@ -18,8 +18,16 @@ util/install-local-snapshot.sh
 readonly _HILT_GRADLE_PLUGIN_DIR=java/dagger/hilt/android/plugin
 readonly _HILT_ANDROID_EXAMPLE_DIR=java/dagger/hilt/android/example/gradle/simple
 ./$_HILT_GRADLE_PLUGIN_DIR/gradlew -p $_HILT_GRADLE_PLUGIN_DIR test --no-daemon --stacktrace
-./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR build --no-daemon --stacktrace
-./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR test --no-daemon --stacktrace
+
+# run gradle tests with different versions of Android Gradle Plugin
+agp_verions=("4.1.0-alpha07" "4.0.0-beta05" "3.6.3")
+
+for version in "${agp_verions[@]}"
+do
+    echo "running tests with $version"
+    AGP_VERSION=$version ./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR build --no-daemon --stacktrace
+    AGP_VERSION=$version ./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR test --no-daemon --stacktrace
+done
 
 verify_version_file() {
   local m2_repo=$1

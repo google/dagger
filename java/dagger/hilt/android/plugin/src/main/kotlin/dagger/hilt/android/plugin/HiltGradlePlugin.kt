@@ -17,6 +17,8 @@
 package dagger.hilt.android.plugin
 
 import com.android.build.gradle.BaseExtension
+import com.android.build.gradle.TestedExtension
+import com.android.build.gradle.api.AndroidBasePlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -30,9 +32,35 @@ import org.gradle.api.Project
  */
 class HiltGradlePlugin : Plugin<Project> {
   override fun apply(project: Project) {
+    var configured = false
+    project.plugins.withType(AndroidBasePlugin::class.java) {
+      configured = true
+      configureHilt(project)
+    }
+    project.afterEvaluate {
+      check(configured) {
+        // make sure we've applied hilt to inform the developer if they apply hilt plugin to a
+        // non-android project.
+        "The Hilt Android Gradle plugin can only be applied to an Android project."
+      }
+    }
+  }
+
+  private fun configureHilt(project: Project) {
     val androidExtension = project.extensions.findByType(BaseExtension::class.java)
       ?: throw error("The Hilt Android Gradle plugin can only be applied to an Android project.")
     androidExtension.registerTransform(AndroidEntryPointTransform())
+    val extension = project.extensions.create(
+      HiltExtension::class.java, "hilt", HiltExtensionImpl::class.java
+    )
+    val testedExtensions = project.extensions.findByType(TestedExtension::class.java)
+    testedExtensions?.unitTestVariants?.all { unitTestVariant ->
+      HiltTransformTestClassesTask.create(
+        project = project,
+        unitTestVariant = unitTestVariant,
+        extension = extension
+      )
+    }
 
     // Pass annotation processor flag to disable @AndroidEntryPoint superclass validation.
     androidExtension.defaultConfig.apply {

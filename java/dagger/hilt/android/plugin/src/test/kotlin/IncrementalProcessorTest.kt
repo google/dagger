@@ -316,7 +316,6 @@ class IncrementalProcessorTest {
     // * All aggregating processor gen sources are re-compiled
     assertChangedFiles(
       FileType.CLASS,
-      classSrcApp, // re-compiles because superclass re-compiled
       classSrcActivity1,
       classGenHiltApp,
       classGenHiltActivity1,
@@ -365,7 +364,6 @@ class IncrementalProcessorTest {
     // * All aggregating processor gen sources are re-compiled
     assertChangedFiles(
       FileType.CLASS,
-      classSrcApp, // re-compiles because superclass re-compiled
       classSrcModule1,
       classGenHiltApp,
       classGenAppInjector,
@@ -457,7 +455,6 @@ class IncrementalProcessorTest {
     )
     assertChangedFiles(
       FileType.CLASS,
-      classSrcApp, // re-compiles because superclass re-compiled
       classGenHiltApp,
       classGenAppInjector,
       classGenAppInjectorDeps,
@@ -500,7 +497,6 @@ class IncrementalProcessorTest {
     )
     assertChangedFiles(
       FileType.CLASS,
-      classSrcApp, // re-compiles because superclass re-compiled
       classGenHiltApp,
       classGenAppInjector,
       classGenAppInjectorDeps,

@@ -17,8 +17,10 @@
 package dagger.hilt.android.plugin
 
 import com.android.build.gradle.BaseExtension
+import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.plugins.AppliedPlugin
 import org.jetbrains.kotlin.gradle.plugin.KaptExtension
 
 /**
@@ -44,11 +46,15 @@ class HiltGradlePlugin : Plugin<Project> {
       }
     }
     // If project has KAPT also pass the processor flag to disable superclass validation.
-    project.extensions.findByType(KaptExtension::class.java)?.let { kaptExtension ->
-      kaptExtension.arguments {
-        PROCESSOR_OPTIONS.forEach { (key, value) -> arg(key, value) }
+    val configureKapt = Action<AppliedPlugin> {
+      project.extensions.findByType(KaptExtension::class.java)?.let { kaptExtension ->
+        kaptExtension.arguments {
+          PROCESSOR_OPTIONS.forEach { (key, value) -> arg(key, value) }
+        }
       }
     }
+    project.pluginManager.withPlugin("kotlin-kapt", configureKapt)
+    project.pluginManager.withPlugin("org.jetbrains.kotlin.kapt", configureKapt)
 
     project.afterEvaluate {
       verifyDependencies(it)

@@ -25,6 +25,7 @@ java_library(
     neverlink = True,
     exports = [
         "@google_bazel_common//third_party/java/auto:service",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
         "@maven//:com_android_tools_lint_lint",
         "@maven//:com_android_tools_lint_lint_api",
         "@maven//:com_android_tools_external_org_jetbrains_uast",
@@ -44,6 +45,5 @@ kt_jvm_library(
     ],
     deps = [
         ":lint_api",
-        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
-    ]
+    ],
 )

@@ -35,5 +35,5 @@ kt_jvm_test(
         "@maven//:com_android_tools_lint_lint_tests",
         "@maven//:com_android_tools_testutils",
         "@google_bazel_common//third_party/java/junit",
-    ]
+    ],
 )

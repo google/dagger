@@ -15,6 +15,8 @@
 # Description:
 #   Internal Hilt android testing libraries
 
+load("//tools:dagger_android_library.bzl", "dagger_android_library")
+
 package(default_visibility = ["//:src"])
 
 java_library(
@@ -23,7 +25,7 @@ java_library(
     srcs = ["TestInjector.java"],
 )
 
-android_library(
+dagger_android_library(
     name = "internal_test_root",
     srcs = [
         "InternalTestRoot.java",
@@ -33,7 +35,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "test_application_component_manager",
     testonly = 1,
     srcs = ["TestApplicationComponentManager.java"],
@@ -47,7 +49,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "test_application_component_manager_holder",
     testonly = 1,
     srcs = ["TestApplicationComponentManagerHolder.java"],

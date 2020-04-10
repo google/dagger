@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//tools:dagger_android_library.bzl", "dagger_android_library")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 load("@google_bazel_common//tools/jarjar:jarjar.bzl", "jarjar_library")
@@ -37,13 +38,13 @@ java_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "android",
     exported_plugins = ["//java/dagger/android/processor:plugin"],
     exports = ["//java/dagger/android"],
 )
 
-android_library(
+dagger_android_library(
     name = "android-support",
     exports = [
         ":android",

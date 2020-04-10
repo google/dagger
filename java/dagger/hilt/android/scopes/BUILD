@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//tools:dagger_android_library.bzl", "dagger_android_library")
+
 package(default_visibility = ["//:src"])
 
 # Description:
 # Hilt scopes.
 
-android_library(
+dagger_android_library(
     name = "scopes",
     srcs = [
         "ActivityScoped.java",
@@ -28,7 +30,7 @@ android_library(
     deps = ["@google_bazel_common//third_party/java/jsr330_inject"],
 )
 
-android_library(
+dagger_android_library(
     name = "activity_retained_scoped",
     srcs = ["ActivityRetainedScoped.java"],
     deps = ["@google_bazel_common//third_party/java/jsr330_inject"],

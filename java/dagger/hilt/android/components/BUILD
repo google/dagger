@@ -15,9 +15,11 @@
 # Description:
 #   Hilt Android components
 
+load("//tools:dagger_android_library.bzl", "dagger_android_library")
+
 package(default_visibility = ["//:src"])
 
-android_library(
+dagger_android_library(
     name = "components",
     srcs = glob(["*.java"]),
     deps = [

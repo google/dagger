@@ -21,6 +21,7 @@ load(
     "DOCLINT_REFERENCES",
     "SOURCE_7_TARGET_7",
 )
+load("//tools:dagger_android_library.bzl", "dagger_android_library")
 load("//tools:dejetify.bzl", "dejetified_library")
 load("//tools:maven.bzl", "POM_VERSION", "pom_file")
 load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
@@ -39,8 +40,9 @@ filegroup(
     srcs = SRCS,
 )
 
-android_library(
+dagger_dagger_android_library(
     name = "android",
+    lintJar = "//java/dagger/lint:dagger_lint:libdagger_lint.jar",
     srcs = SRCS,
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     manifest = "AndroidManifest.xml",
@@ -78,8 +80,9 @@ dejetified_library(
     output = "android-legacy.aar",
 )
 
-android_library(
+dagger_dagger_android_library(
     name = "legacy-deps",
+    lintJar = "//java/dagger/lint:dagger_lint:libdagger_lint.jar",
     tags = ["maven_coordinates=com.google.dagger:dagger-android-legacy:" + POM_VERSION],
     exports = [
         "//:dagger_with_compiler",

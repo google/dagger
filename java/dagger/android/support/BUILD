@@ -16,6 +16,7 @@
 #   Public Dagger API for Android that interacts with the Android support libraries
 
 load("//:build_defs.bzl", "SOURCE_7_TARGET_7")
+load("//tools:dagger_android_library.bzl", "dagger_android_library")
 load("//tools:dejetify.bzl", "dejetified_library")
 load("//tools:maven.bzl", "POM_VERSION", "pom_file")
 load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
@@ -27,8 +28,9 @@ filegroup(
     srcs = glob(["*.java"]),
 )
 
-android_library(
+dagger_android_library(
     name = "support",
+    lintJar = "//java/dagger/lint:dagger_lint:libdagger_lint.jar",
     srcs = glob(["*.java"]),
     javacopts = SOURCE_7_TARGET_7,
     manifest = "AndroidManifest.xml",
@@ -57,8 +59,9 @@ dejetified_library(
     output = "support-legacy.aar",
 )
 
-android_library(
+dagger_android_library(
     name = "legacy-deps",
+    lintJar = "//java/dagger/lint:dagger_lint:libdagger_lint.jar",
     tags = ["maven_coordinates=com.google.dagger:dagger-android-support-legacy:" + POM_VERSION],
     exports = [
         "//:dagger_with_compiler",

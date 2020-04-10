@@ -15,11 +15,12 @@
 # Description:
 #   A library based on Hilt that provides standard components and automated injection for Android.
 
+load("//tools:dagger_android_library.bzl", "dagger_android_library")
 load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
 
-android_library(
+dagger_android_library(
     name = "android_entry_point",
     srcs = [
         "AndroidEntryPoint.java",
@@ -47,7 +48,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "entry_point_accessors",
     srcs = ["EntryPointAccessors.java"],
     deps = [
@@ -56,7 +57,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "artifact-lib",
     tags = ["maven_coordinates=com.google.dagger:hilt-android:" + POM_VERSION],
     visibility = [

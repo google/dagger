@@ -13,11 +13,10 @@
 # limitations under the License.
 
 # Description:
-#   Tests for the Dagger compiler/codegen
+#   Source for Dagger lints
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-#load("//:test_defs.bzl", "GenJavaTests")
 
 package(default_visibility = ["//:src"])
 

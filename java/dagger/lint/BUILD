@@ -47,3 +47,21 @@ kt_jvm_library(
         ":lint_api",
     ],
 )
+
+pom_file(
+    name = "pom",
+    artifact_id = "dagger-lint",
+    artifact_name = "Dagger Lint",
+    targets = [":dagger_lint"],
+)
+
+filegroup(
+    name = "javadoc-srcs",
+    srcs = glob(["**/*"]),
+)
+
+javadoc_library(
+    name = "dagger_lint-javadoc",
+    srcs = [":javadoc-srcs"],
+    root_packages = ["dagger.lint"],
+)

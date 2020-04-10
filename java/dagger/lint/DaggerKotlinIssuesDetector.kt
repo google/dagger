@@ -186,13 +186,12 @@ class DaggerKotlinIssuesDetector : Detector(), SourceCodeScanner {
       }
 
       override fun visitMethod(node: UMethod) {
+        println("Checking ${node.name}: ${node.annotations.map { it.qualifiedName }}")
         if (!node.isConstructor &&
             node.hasAnnotation(PROVIDES_ANNOTATION) &&
             node.hasAnnotation(JVM_STATIC_ANNOTATION)) {
           val containingClass = node.containingClass?.toUElementOfType<UClass>() ?: return
-          check(containingClass is KotlinUClass)
-          // Smartcast doesn't seem to work in Bazel IntelliJ projects but the below does work
-          if (containingClass.ktClass is KtObjectDeclaration) {
+          if (containingClass.isObject()) {
             val annotation = node.findAnnotation(JVM_STATIC_ANNOTATION)!!
             context.report(
                 ISSUE_JVM_STATIC_PROVIDES_IN_OBJECT,
@@ -239,10 +238,13 @@ class DaggerKotlinIssuesDetector : Detector(), SourceCodeScanner {
     }
   }
 
-
-
   /** @return whether or not the [this] is a Kotlin `companion object` type. */
   private fun UClass.isCompanionObject(evaluator: JavaEvaluator): Boolean {
-    return evaluator.hasModifier(this, KtTokens.COMPANION_KEYWORD)
+    return isObject() && evaluator.hasModifier(this, KtTokens.COMPANION_KEYWORD)
+  }
+
+  /** @return whether or not the [this] is a Kotlin `object` type. */
+  private fun UClass.isObject(): Boolean {
+    return this is KotlinUClass && ktClass is KtObjectDeclaration
   }
 }

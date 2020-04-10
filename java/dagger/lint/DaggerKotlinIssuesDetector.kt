@@ -227,12 +227,7 @@ class DaggerKotlinIssuesDetector : Detector(), SourceCodeScanner {
 
 
   /** @return whether or not the [this] is a Kotlin `companion object` type. */
-  private fun UClass.isCompanionObject(@Suppress("UNUSED_PARAMETER") evaluator: JavaEvaluator): Boolean {
-    if (this is KotlinUClass && ktClass is KtObjectDeclaration && name == "Companion") {
-      // best effort until we can update to lint tools 26.6.x. See below
-      return true
-    }
-
+  private fun UClass.isCompanionObject(evaluator: JavaEvaluator): Boolean {
     return evaluator.hasModifier(this, KtTokens.COMPANION_KEYWORD)
   }
 }

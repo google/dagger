@@ -44,7 +44,7 @@ kt_jvm_library(
         "@google_bazel_common//third_party/java/auto:service",
     ],
     deps = [
-        "//java/dagger/lint:lint_api",
+        ":lint_api",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
     ]
 )

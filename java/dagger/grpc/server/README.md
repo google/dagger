@@ -7,4 +7,4 @@ It is maintained by the Dagger team.
 
 It is in development, and is planned for open-source release as part of Dagger.
 
-See user documentation at https://dagger.dev/grpc.
+See user documentation at https://dagger.dev/dev-guide/grpc.

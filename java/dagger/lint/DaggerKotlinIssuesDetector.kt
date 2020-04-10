@@ -54,7 +54,7 @@ class DaggerKotlinIssuesDetector : Detector(), SourceCodeScanner {
     // params, we're indicating that this check can run on either JAVA or TEST_SOURCES and
     // doesn't require both of them together.
     // From discussion on lint-dev https://groups.google.com/d/msg/lint-dev/ULQMzW1ZlP0/1dG4Vj3-AQAJ
-    // This was supposed to be fixed in AS 3.4 but still required as recently as 3.6-alpha10.
+    // This was supposed to be fixed in AS 3.4 but still required as recently as 3.6.
     private val SCOPES = Implementation(DaggerKotlinIssuesDetector::class.java,
         EnumSet.of(Scope.JAVA_FILE, Scope.TEST_SOURCES),
         EnumSet.of(Scope.JAVA_FILE),
@@ -65,7 +65,7 @@ class DaggerKotlinIssuesDetector : Detector(), SourceCodeScanner {
         "JvmStaticProvidesInObjectDetector",
         "@JvmStatic used for @Provides function in an object class",
         """
-          As of Dagger 2.25, it's redundant to annotate @Provides functions in object classes with @JvmStatic.
+          It's redundant to annotate @Provides functions in object classes with @JvmStatic.
         """.trimIndent(),
         Category.CORRECTNESS,
         6,
@@ -77,7 +77,7 @@ class DaggerKotlinIssuesDetector : Detector(), SourceCodeScanner {
         "FieldSiteTargetOnQualifierAnnotation",
         "Redundant 'field:' used for Dagger qualifier annotation.",
         """
-          As of Dagger 2.25, it's redundant to use 'field:' site-targets for qualifier annotations.
+          It's redundant to use 'field:' site-targets for qualifier annotations.
         """.trimIndent(),
         Category.CORRECTNESS,
         6,
@@ -89,7 +89,7 @@ class DaggerKotlinIssuesDetector : Detector(), SourceCodeScanner {
         "ModuleCompanionObjects",
         "Module companion objects should not be annotated with @Module.",
         """
-          As of Dagger 2.26, companion objects in @Module-annotated classes are considered part of the API.
+          Companion objects in @Module-annotated classes are considered part of the API.
         """.trimIndent(),
         Category.CORRECTNESS,
         6,
@@ -101,7 +101,7 @@ class DaggerKotlinIssuesDetector : Detector(), SourceCodeScanner {
         "ModuleCompanionObjectsNotInModuleParent",
         "Companion objects should not be annotated with @Module.",
         """
-          As of Dagger 2.26, companion objects in @Module-annotated classes are considered part of the API. This \
+          Companion objects in @Module-annotated classes are considered part of the API. This \
           companion object is not a companion to an @Module-annotated class though, and should be moved to a top-level \
           object declaration instead because Dagger will ignore companion objects now.
         """,

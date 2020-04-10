@@ -25,8 +25,8 @@ import org.jetbrains.kotlin.gradle.plugin.KaptExtension
  * A Gradle plugin that checks if the project is an Android project and if so, registers a
  * bytecode transformation.
  *
- * <p>The plugin also passes an annotation processor option to disable superclass validation for
- * classes annotated with @AndroidEntryPoint since the registered transform by this plugin will
+ * The plugin also passes an annotation processor option to disable superclass validation for
+ * classes annotated with `@AndroidEntryPoint` since the registered transform by this plugin will
  * update the superclass.
  */
 class HiltGradlePlugin : Plugin<Project> {

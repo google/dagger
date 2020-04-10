@@ -44,6 +44,16 @@ class DaggerKotlinIssuesDetectorTest : LintDetectorTest() {
         annotation class Module
       """
     ).indented()
+
+    // For some reason in Bazel the stdlib dependency on the classpath isn't visible to the
+    // LintTestTask, so we just include it ourselves here for now.
+    private val jvmStaticStubs = kotlin(
+        """
+        package kotlin.jvm
+    
+        annotation class JvmStatic
+      """
+    ).indented()
   }
 
   override fun getDetector(): Detector = DaggerKotlinIssuesDetector()
@@ -57,6 +67,7 @@ class DaggerKotlinIssuesDetectorTest : LintDetectorTest() {
         .files(
             javaxInjectStubs,
             daggerStubs,
+            jvmStaticStubs,
             kotlin(
                 """
                   package foo

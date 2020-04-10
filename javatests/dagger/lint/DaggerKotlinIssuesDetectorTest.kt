@@ -38,6 +38,7 @@ class DaggerKotlinIssuesDetectorTest : LintDetectorTest() {
   @Test
   fun simpleSmokeTestForQualifiersAndProviders() {
     lint()
+        .allowMissingSdk()
         .files(
             javaxInjectStubs,
             daggerStubs,

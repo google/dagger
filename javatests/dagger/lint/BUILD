@@ -24,6 +24,10 @@ kt_jvm_test(
     srcs = [
         "DaggerKotlinIssuesDetectorTest.kt",
     ],
+    # Bazel can't seem to figure out kotlin test classes unless we specify it directly. Appears to
+    # be fixed in the kotlin_rules repo but maybe not released yet.
+    # https://github.com/bazelbuild/rules_kotlin/pull/209
+    test_class = "dagger.lint.DaggerKotlinIssuesDetectorTest",
     deps = [
         "//java/dagger/lint:dagger_lint",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",

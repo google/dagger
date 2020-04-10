@@ -77,10 +77,20 @@ maven_install(
         "org.jetbrains.kotlin:kotlin-stdlib:1.3.50",
         "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0",
         "org.robolectric:robolectric:4.3.1",
+        "com.android.tools.lint:lint:26.6.2",
+        "com.android.tools.lint:lint-api:26.6.2",
+        "com.android.tools.lint:lint-checks:26.6.2",
+        "com.android.tools.lint:lint-tests:26.6.2",
+        "com.android.tools:testutils:26.6.2",
+        "com.android.tools.external.org-jetbrains:uast:26.6.2",
+        "com.android.tools.external.com-intellij:intellij-core:26.6.2",
+        "com.android.tools.external.com-intellij:kotlin-compiler:26.6.2",
     ],
     repositories = [
         "https://repo1.maven.org/maven2",
         "https://maven.google.com",
+        # Lint has one trove4j dependency in jCenter
+        "https://jcenter.bintray.com/",
     ],
 )
 

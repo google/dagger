@@ -1,6 +1,8 @@
 ---
 layout: default
-title: User's Guide
+title: Dev Guide
+redirect_from:
+  - /users-guide
 ---
 
 The best classes in any application are the ones that do stuff: the

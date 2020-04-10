@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Compiler Options
+redirect_from:
+  - /compiler-options
 ---
 
 ## fastInit mode

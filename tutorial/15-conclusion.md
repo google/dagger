@@ -15,7 +15,6 @@ These documents have more information about using Dagger …
 
 -   … on [Android](https://dagger.dev/android)
 -   … in an [asynchronous environment](https://dagger.dev/producers)
--   … with [gRPC](https://dagger.dev/grpc)
 
 [javadoc]: http://dagger.dev/api/latest
 [sample code]: https://github.com/google/dagger/tree/master/java/dagger/example/atm

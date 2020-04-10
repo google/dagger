@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Frequently Asked Questions
+redirect_from:
+  - /faq
 ---
 
 * auto-gen TOC:

@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Testing with Dagger
+redirect_from:
+  - /testing
 ---
 
 One of the benefits of using dependency injection frameworks like Dagger is that

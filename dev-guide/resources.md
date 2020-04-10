@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Resources
+redirect_from:
+  - /resources
 ---
 
 This is a collection of resources from contributors that may provide
@@ -21,7 +23,7 @@ useful in getting started with Dagger 2.
     Jake Wharton
 
     Jan 4, 2016
-    
+
 *   [Dagger 2 Now Even Pointier](https://www.youtube.com/watch?v=iwjXqRlEevg)
 
     Gregory Kick

@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Dagger & Android
+redirect_from:
+  - /android
 ---
 
 One of the primary advantages of Dagger 2 over most other dependency injection

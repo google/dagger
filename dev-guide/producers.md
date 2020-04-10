@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Producers
+redirect_from:
+  - /producers
 ---
 
 Dagger Producers is an extension to Dagger that implements

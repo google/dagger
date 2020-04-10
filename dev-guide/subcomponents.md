@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Subcomponents
+redirect_from:
+  - /subcomponents
 ---
 
 Subcomponents are components that inherit and extend the object graph of a

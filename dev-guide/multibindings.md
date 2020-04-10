@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Multibindings
+redirect_from:
+  - /multibindings
 ---
 
 Dagger allows you to bind several objects into a collection even when the

@@ -1,6 +1,8 @@
 ---
 layout: default
 title: Migrating from Dagger 1
+redirect_from:
+  - /dagger-1-migration
 ---
 
 While Dagger 1 and Dagger 2 are similar in many ways, one is not a drop-in

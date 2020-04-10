@@ -40,9 +40,8 @@ filegroup(
     srcs = SRCS,
 )
 
-dagger_dagger_android_library(
+dagger_android_library(
     name = "android",
-    lintJar = "//java/dagger/lint:dagger_lint:libdagger_lint.jar",
     srcs = SRCS,
     javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     manifest = "AndroidManifest.xml",
@@ -80,9 +79,8 @@ dejetified_library(
     output = "android-legacy.aar",
 )
 
-dagger_dagger_android_library(
+dagger_android_library(
     name = "legacy-deps",
-    lintJar = "//java/dagger/lint:dagger_lint:libdagger_lint.jar",
     tags = ["maven_coordinates=com.google.dagger:dagger-android-legacy:" + POM_VERSION],
     exports = [
         "//:dagger_with_compiler",

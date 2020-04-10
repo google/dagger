@@ -30,7 +30,6 @@ filegroup(
 
 dagger_android_library(
     name = "support",
-    lintJar = "//java/dagger/lint:dagger_lint:libdagger_lint.jar",
     srcs = glob(["*.java"]),
     javacopts = SOURCE_7_TARGET_7,
     manifest = "AndroidManifest.xml",
@@ -61,7 +60,6 @@ dejetified_library(
 
 dagger_android_library(
     name = "legacy-deps",
-    lintJar = "//java/dagger/lint:dagger_lint:libdagger_lint.jar",
     tags = ["maven_coordinates=com.google.dagger:dagger-android-support-legacy:" + POM_VERSION],
     exports = [
         "//:dagger_with_compiler",

@@ -36,10 +36,7 @@ java_library(
 
 kt_jvm_library(
     name = "dagger_lint",
-    srcs = [
-        "DaggerKotlinIssuesDetector.kt",
-        "DaggerIssueRegistry.kt",
-    ],
+    srcs = glob(["**/*.kt"]),
     plugins = [
         "@google_bazel_common//third_party/java/auto:service",
     ],

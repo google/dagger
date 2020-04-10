@@ -17,6 +17,8 @@
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
+load("//tools:maven.bzl", "POM_VERSION", "pom_file")
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 package(default_visibility = ["//:src"])
 

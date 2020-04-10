@@ -186,7 +186,6 @@ class DaggerKotlinIssuesDetector : Detector(), SourceCodeScanner {
       }
 
       override fun visitMethod(node: UMethod) {
-        println("Checking ${node.name}: ${node.annotations.map { it.qualifiedName }}")
         if (!node.isConstructor &&
             node.hasAnnotation(PROVIDES_ANNOTATION) &&
             node.hasAnnotation(JVM_STATIC_ANNOTATION)) {

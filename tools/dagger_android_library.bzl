@@ -33,18 +33,11 @@ def dagger_android_library(name, **kwargs):
         srcs = [":" + name + ".aar"],
         outs = [name + "-lintpatch.txt"],
         cmd = """
-            # Copy the android_library output aar
-            # Rewrite permissions of new file to allow modifying it
-            chmod +w $(location {created_aar})
-
             # Symlink the lint jar so the next zip command uses the desired name
             ln -s $(location //java/dagger/lint:dagger_lint) lint.jar
 
             # Push the lint jar into the aar
             zip -r -qq $(location {created_aar}) lint.jar
-
-            # Restore previous permissions
-            chmod 100555 $(location {created_aar})
 
             # Write md5 of the final aar into a the output
             md5sum $(location {created_aar}) | cut -c 1-32 >> $@

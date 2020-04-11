@@ -6,3 +6,6 @@ build --host_javacopt=-g
 # TODO(ronshapiro): explore how much work it would be to reenable this
 build --javacopt="-Xep:BetaApi:OFF"
 build --host_javacopt="-Xep:BetaApi:OFF"
+
+# Disable genrule sandboxing for `dagger_android_library` to work correctly
+build --strategy=Genrule=standalone

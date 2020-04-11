@@ -94,14 +94,17 @@ maven_install(
     ],
 )
 
-RULES_KOTLIN_VERSION = "legacy-1.3.0"
-RULES_KOTLIN_SHA = "4fd769fb0db5d3c6240df8a9500515775101964eebdf85a3f9f0511130885fde"
+# TODO(user): Remove once Google publishes internal Kotlin rules.
+RULES_KOTLIN_VERSION = "186c1e1e27d699a8953b75461f2de7c295987cfb"
+
+RULES_KOTLIN_SHA = "ef2f9cfb724b1f1eaf0ede2636515969eb4c6e10b75a71d1850f6e692a7d5f06"
+
 http_archive(
     name = "io_bazel_rules_kotlin",
-    urls = ["https://github.com/bazelbuild/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_VERSION],
-    type = "zip",
-    strip_prefix = "rules_kotlin-%s" % RULES_KOTLIN_VERSION,
     sha256 = RULES_KOTLIN_SHA,
+    strip_prefix = "rules_kotlin-%s" % RULES_KOTLIN_VERSION,
+    type = "zip",
+    urls = ["https://github.com/bazelbuild/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_VERSION],
 )
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories", "kt_register_toolchains")

@@ -15,11 +15,9 @@
 # Description:
 #   Functional test code for Dagger-Android
 
-load("//tools:dagger_android_library.bzl", "dagger_android_library")
-
 package(default_visibility = ["//:src"])
 
-dagger_android_library(
+android_library(
     name = "functional",
     srcs = glob(
         ["*.java"],

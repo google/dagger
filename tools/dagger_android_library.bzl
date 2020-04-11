@@ -37,7 +37,7 @@ def dagger_android_library(name, **kwargs):
             chmod +w $(location {created_aar})
 
             # Symlink the lint jar so the next zip command uses the desired name
-            ln -s $(location //java/dagger/lint:dagger_lint) lint.jar
+            ln -s -f $(location //java/dagger/lint:dagger_lint) lint.jar
 
             # Push the lint jar into the aar
             zip -r -qq $(location {created_aar}) lint.jar

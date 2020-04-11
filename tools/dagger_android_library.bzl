@@ -43,7 +43,7 @@ def dagger_android_library(name, **kwargs):
             zip -r -qq $(location {created_aar}) lint.jar
 
             # Restore previous permissions
-            chmod 100555 $(location {created_aar})
+            chmod -w $(location {created_aar})
 
             # Write md5 of the final aar into a the output
             md5sum $(location {created_aar}) | cut -c 1-32 >> $@

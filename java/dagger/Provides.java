@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
  *
  * <h3>Nullability</h3>
  *
- * <p>Dagger forbids injecting {@code null} by default. Component implemenations that invoke
+ * <p>Dagger forbids injecting {@code null} by default. Component implementations that invoke
  * {@code @Provides} methods that return {@code null} will throw a {@link NullPointerException}
  * immediately thereafter. {@code @Provides} methods may opt into allowing {@code null} by
  * annotating the method with any {@code @Nullable} annotation like

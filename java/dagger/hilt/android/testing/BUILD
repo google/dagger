@@ -14,11 +14,12 @@
 # Description:
 #   Testing libraries for Hilt Android.
 
+load("//tools:dagger_android_library.bzl", "dagger_android_library")
 load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
 
-android_library(
+dagger_android_library(
     name = "android_robolectric_entry_point",
     testonly = 1,
     srcs = ["AndroidRobolectricEntryPoint.java"],
@@ -31,7 +32,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "android_emulator_entry_point",
     testonly = 1,
     srcs = ["AndroidEmulatorEntryPoint.java"],
@@ -44,7 +45,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "common_test_entry_point_exports",
     testonly = 1,
     exported_plugins = [
@@ -76,7 +77,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "robolectric_test_rule",
     testonly = 1,
     srcs = ["HiltRobolectricTestRule.java"],
@@ -87,7 +88,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "emulator_test_rule",
     testonly = 1,
     srcs = ["HiltEmulatorTestRule.java"],
@@ -99,7 +100,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "test_rules_common",
     testonly = 1,
     srcs = ["MarkThatRulesRanRule.java"],
@@ -111,7 +112,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "on_component_ready_runner",
     testonly = 1,
     srcs = ["OnComponentReadyRunner.java"],
@@ -124,7 +125,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "uninstall_modules",
     testonly = 1,
     srcs = ["UninstallModules.java"],
@@ -133,7 +134,7 @@ android_library(
     ],
 )
 
-android_library(
+dagger_android_library(
     name = "artifact-lib",
     testonly = 1,
     tags = ["maven_coordinates=com.google.dagger:hilt-android-testing:" + POM_VERSION],

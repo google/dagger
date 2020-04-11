@@ -13,6 +13,10 @@
 # limitations under the License.
 
 """Macro for producing aars with Dagger's lint.jar in them.
+
+This works by basically invoking the native android_library rule under the hood, but then modifying
+its aar to embed the compiled lint.jar into it. To preserve build outputs integrity, the sole output
+of the genrule is just a lintpatch text file with an md5 hash of the final aar file.
 """
 
 def dagger_android_library(name, **kwargs):
@@ -21,27 +25,31 @@ def dagger_android_library(name, **kwargs):
     Args:
       name: The name of the target.
     """
-    native.android_library(name = name + "-intermediate", **kwargs)
+    native_result = native.android_library(name = name, **kwargs)
 
-    existing_aar = ":" + name + "-intermediate.aar"
+    created_aar = ":" + name + ".aar"
     native.genrule(
-        name = name,
-        srcs = [":" + name + "-intermediate.aar", "//java/dagger/lint:dagger_lint"],
-        outs = [name + ".aar"],
+        name = name + "-lintpatch",
+        srcs = [":" + name + ".aar"],
+        outs = [name + "-lintpatch.txt"],
         cmd = """
             # Copy the android_library output aar
-            cp $(location {existing_aar}) {aar_name}
             # Rewrite permissions of new file to allow modifying it
-            chmod +w {aar_name}
+            chmod +w $(location {created_aar})
+
             # Symlink the lint jar so the next zip command uses the desired name
             ln -s $(location //java/dagger/lint:dagger_lint) lint.jar
+
             # Push the lint jar into the aar
-            zip -r -qq {aar_name} lint.jar
+            zip -r -qq $(location {created_aar}) lint.jar
+
             # Restore previous permissions
-            chmod 100555 {aar_name}
-            # Copy the aar to the outs param now
-            cp {aar_name} $@
-        """.format(existing_aar = existing_aar, aar_name = name + ".aar"),
+            chmod 100555 $(location {created_aar})
+
+            # Write md5 of the final aar into a the output
+            md5sum $(location {created_aar}) | cut -c 1-32 >> $@
+        """.format(created_aar = created_aar),
+        tools = ["//java/dagger/lint:dagger_lint"],
         visibility = kwargs.get("visibility", None),
         tags = kwargs.get("tags", None),
     )

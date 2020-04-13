@@ -121,9 +121,35 @@ class DaggerKotlinIssuesDetectorTest : LintDetectorTest() {
                   }
                   
                   @Module
+                  class ClassModuleQualified {
+                    companion object {
+                      // This should fail because the companion object is part of ClassModule, so this is unnecessary.
+                      // This specifically tests a fully qualified annotation
+                      @kotlin.jvm.JvmStatic
+                      @Provides
+                      fun provideBaz(): String {
+                      
+                      }
+                    }
+                  }
+                  
+                  @Module
                   class ClassModule2 {
                     // This should fail because the companion object is part of ClassModule
                     @Module
+                    companion object {
+                      @Provides
+                      fun provideBaz(): String {
+                      
+                      }
+                    }
+                  }
+                  
+                  @Module
+                  class ClassModule2Qualified {
+                    // This should fail because the companion object is part of ClassModule
+                    // This specifically tests a fully qualified annotation
+                    @dagger.Module
                     companion object {
                       @Provides
                       fun provideBaz(): String {
@@ -169,13 +195,19 @@ class DaggerKotlinIssuesDetectorTest : LintDetectorTest() {
               src/foo/MyQualifier.kt:43: Error: @JvmStatic used for @Provides function in an object class [JvmStaticProvidesInObjectDetector]
                   @JvmStatic
                   ~~~~~~~~~~
-              src/foo/MyQualifier.kt:53: Error: Module companion objects should not be annotated with @Module. [ModuleCompanionObjects]
+              src/foo/MyQualifier.kt:56: Error: @JvmStatic used for @Provides function in an object class [JvmStaticProvidesInObjectDetector]
+                  @kotlin.jvm.JvmStatic
+                  ~~~~~~~~~~~~~~~~~~~~~
+              src/foo/MyQualifier.kt:66: Error: Module companion objects should not be annotated with @Module. [ModuleCompanionObjects]
                 // This should fail because the companion object is part of ClassModule
                 ^
-              src/foo/MyQualifier.kt:75: Error: Module companion objects should not be annotated with @Module. [ModuleCompanionObjects]
+              src/foo/MyQualifier.kt:78: Error: Module companion objects should not be annotated with @Module. [ModuleCompanionObjects]
+                // This should fail because the companion object is part of ClassModule
+                ^
+              src/foo/MyQualifier.kt:101: Error: Module companion objects should not be annotated with @Module. [ModuleCompanionObjects]
                 // This is should fail because this should be extracted to a standalone object.
                 ^
-              5 errors, 0 warnings
+              7 errors, 0 warnings
             """.trimIndent()
         )
         .expectFixDiffs(
@@ -192,12 +224,20 @@ class DaggerKotlinIssuesDetectorTest : LintDetectorTest() {
               @@ -43 +43
               -     @JvmStatic
               +    
-              Fix for src/foo/MyQualifier.kt line 53: Remove @Module:
-              @@ -54 +54
+              Fix for src/foo/MyQualifier.kt line 56: Remove @JvmStatic:
+              @@ -56 +56
+              -     @kotlin.jvm.JvmStatic
+              +    
+              Fix for src/foo/MyQualifier.kt line 66: Remove @Module:
+              @@ -67 +67
               -   @Module
               +  
-              Fix for src/foo/MyQualifier.kt line 75: Remove @Module:
-              @@ -76 +76
+              Fix for src/foo/MyQualifier.kt line 78: Remove @Module:
+              @@ -80 +80
+              -   @dagger.Module
+              +  
+              Fix for src/foo/MyQualifier.kt line 101: Remove @Module:
+              @@ -102 +102
               -   @Module
               +  
             """.trimIndent()

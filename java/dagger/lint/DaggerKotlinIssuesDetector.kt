@@ -77,53 +77,47 @@ class DaggerKotlinIssuesDetector : Detector(), SourceCodeScanner {
     )
 
     private val ISSUE_JVM_STATIC_PROVIDES_IN_OBJECT: Issue = Issue.create(
-        "JvmStaticProvidesInObjectDetector",
-        "@JvmStatic used for @Provides function in an object class",
-        """
-          It's redundant to annotate @Provides functions in object classes with @JvmStatic.
-        """.trimIndent(),
-        Category.CORRECTNESS,
-        6,
-        Severity.ERROR,
-        SCOPES
+        id = "JvmStaticProvidesInObjectDetector",
+        briefDescription = "@JvmStatic used for @Provides function in an object class",
+        explanation = "It's redundant to annotate @Provides functions in object classes with @JvmStatic.",
+        category = Category.CORRECTNESS,
+        priority = 6,
+        severity = Severity.ERROR,
+        implementation = SCOPES
     )
 
     private val ISSUE_FIELD_SITE_TARGET_ON_QUALIFIER_ANNOTATION: Issue = Issue.create(
-        "FieldSiteTargetOnQualifierAnnotation",
-        "Redundant 'field:' used for Dagger qualifier annotation.",
-        """
-          It's redundant to use 'field:' site-targets for qualifier annotations.
-        """.trimIndent(),
-        Category.CORRECTNESS,
-        6,
-        Severity.ERROR,
-        SCOPES
+        id = "FieldSiteTargetOnQualifierAnnotation",
+        briefDescription = "Redundant 'field:' used for Dagger qualifier annotation.",
+        explanation = "It's redundant to use 'field:' site-targets for qualifier annotations.",
+        category = Category.CORRECTNESS,
+        priority = 6,
+        severity = Severity.ERROR,
+        implementation = SCOPES
     )
 
     private val ISSUE_MODULE_COMPANION_OBJECTS: Issue = Issue.create(
-        "ModuleCompanionObjects",
-        "Module companion objects should not be annotated with @Module.",
-        """
-          Companion objects in @Module-annotated classes are considered part of the API.
-        """.trimIndent(),
-        Category.CORRECTNESS,
-        6,
-        Severity.ERROR,
-        SCOPES
+        id = "ModuleCompanionObjects",
+        briefDescription = "Module companion objects should not be annotated with @Module.",
+        explanation = "Companion objects in @Module-annotated classes are considered part of the API.",
+        category = Category.CORRECTNESS,
+        priority = 6,
+        severity = Severity.ERROR,
+        implementation = SCOPES
     )
 
     private val ISSUE_MODULE_COMPANION_OBJECTS_NOT_IN_MODULE_PARENT: Issue = Issue.create(
-        "ModuleCompanionObjectsNotInModuleParent",
-        "Companion objects should not be annotated with @Module.",
-        """
+        id = "ModuleCompanionObjectsNotInModuleParent",
+        briefDescription = "Companion objects should not be annotated with @Module.",
+        explanation = """
           Companion objects in @Module-annotated classes are considered part of the API. This \
           companion object is not a companion to an @Module-annotated class though, and should be moved to a top-level \
           object declaration instead because Dagger will ignore companion objects now.
-        """,
-        Category.CORRECTNESS,
-        6,
-        Severity.ERROR,
-        SCOPES
+          """,
+        category = Category.CORRECTNESS,
+        priority = 6,
+        severity = Severity.ERROR,
+        implementation = SCOPES
     )
 
     private const val PROVIDES_ANNOTATION = "dagger.Provides"

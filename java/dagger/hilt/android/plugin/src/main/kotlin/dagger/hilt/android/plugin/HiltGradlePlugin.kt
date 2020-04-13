@@ -56,6 +56,10 @@ class HiltGradlePlugin : Plugin<Project> {
   }
 
   private fun verifyDependencies(project: Project) {
+    // If project is already failing, skip verification since dependencies might not be resolved.
+    if (project.state.failure != null) {
+      return
+    }
     val dependencies = project.configurations.flatMap { configuration ->
       configuration.dependencies.map { dependency -> dependency.group to dependency.name }
     }

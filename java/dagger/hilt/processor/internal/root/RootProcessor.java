@@ -17,16 +17,23 @@
 package dagger.hilt.processor.internal.root;
 
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static java.util.stream.Collectors.toSet;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.AGGREGATING;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
+import dagger.hilt.android.processor.internal.testing.InternalTestRootMetadata;
+import dagger.hilt.android.processor.internal.testing.TestApplicationGenerator;
 import dagger.hilt.processor.internal.BaseProcessor;
+import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.ComponentDescriptor;
+import dagger.hilt.processor.internal.ComponentTree;
 import dagger.hilt.processor.internal.ProcessorErrors;
+import dagger.hilt.processor.internal.aggregateddeps.ComponentDependencies;
+import dagger.hilt.processor.internal.definecomponent.DefineComponents;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputs;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -61,7 +68,7 @@ public final class RootProcessor extends BaseProcessor {
   public Set<String> getSupportedAnnotationTypes() {
     return Arrays.stream(RootType.values())
         .map(rootType -> rootType.className().toString())
-        .collect(toSet());
+        .collect(toImmutableSet());
   }
 
   @Override
@@ -98,24 +105,65 @@ public final class RootProcessor extends BaseProcessor {
           newElements);
     }
 
-    if (newElements.isEmpty()) {
-      ImmutableList<Root> rootsToProcess =
-          Stream.concat(rootNames.stream(), testRootNames.stream())
-              .filter(rootName -> !processed.contains(rootName))
-              // We create a new root element each round to avoid the jdk8 bug where
-              // TypeElement.equals does not work for elements across processing rounds.
-              .map(rootName -> getElementUtils().getTypeElement(rootName.toString()))
-              .map(rootElement -> Root.create(rootElement, getProcessingEnv()))
-              .collect(toImmutableList());
+    if (!newElements.isEmpty()) {
+      // Skip further processing since there's new elements that generate root inputs in this round.
+      return;
+    }
 
+    ImmutableList<Root> rootsToProcess =
+        Stream.concat(rootNames.stream(), testRootNames.stream())
+            .filter(rootName -> !processed.contains(rootName))
+            // We create a new root element each round to avoid the jdk8 bug where
+            // TypeElement.equals does not work for elements across processing rounds.
+            .map(rootName -> getElementUtils().getTypeElement(rootName.toString()))
+            .map(rootElement -> Root.create(rootElement, getProcessingEnv()))
+            .collect(toImmutableList());
+
+    if (rootsToProcess.isEmpty()) {
+      // Skip further processing since there's no roots that need processing.
+      return;
+    }
+
+    // TODO(user): Currently, if there's an exception in any of the roots we stop processing
+    // all roots. We should consider if it's worth trying to continue processing for other
+    // roots. At the moment, I think it's rare that if one root failed the others would not.
+    try {
+      ImmutableList<ComponentDescriptor> descriptors =
+          DefineComponents.componentDescriptors(getElementUtils());
+      ComponentTree tree = ComponentTree.from(descriptors);
+      ComponentDependencies deps = ComponentDependencies.from(descriptors, getElementUtils());
       for (Root root : rootsToProcess) {
-        processRoot(root);
+        setProcessingState(root);
+        RootMetadata rootMetadata = RootMetadata.create(root, tree, deps, getProcessingEnv());
+        generateComponents(rootMetadata);
+        maybeGenerateTestApplication(rootMetadata);
       }
+      // TODO(user): Generate the emulator test application based on all test roots.
+    } catch (Exception e) {
+      for (Root root : rootsToProcess) {
+        processed.add(root.classname());
+      }
+      throw e;
     }
   }
 
-  private void processRoot(Root root) throws IOException {
+  private void setProcessingState(Root root) {
     processed.add(root.classname());
-    RootGenerator.generate(root, getProcessingEnv());
+  }
+
+  private void generateComponents(RootMetadata rootMetadata) throws IOException {
+    RootGenerator.generate(rootMetadata, getProcessingEnv());
+  }
+
+  private void maybeGenerateTestApplication(RootMetadata rootMetadata) throws IOException {
+    Root root = rootMetadata.root();
+    if (root.type().equals(RootType.TEST_ROOT)) {
+      new TestApplicationGenerator(
+              getProcessingEnv(),
+              InternalTestRootMetadata.of(getProcessingEnv(), root.element()),
+              rootMetadata.modulesThatDaggerCannotConstruct(ClassNames.APPLICATION_COMPONENT),
+              false)
+          .generate();
+    }
   }
 }

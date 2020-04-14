@@ -17,10 +17,10 @@
 package dagger.hilt.processor.internal.aggregateddeps;
 
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator.AGGREGATING_PACKAGE;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.HashMultimap;
@@ -35,7 +35,6 @@ import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
-import dagger.hilt.processor.internal.definecomponent.DefineComponents;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,13 +173,14 @@ public final class ComponentDependencies {
    *
    * }</pre>
    */
-  public static ComponentDependencies from(Elements elements) {
+  public static ComponentDependencies from(
+      ImmutableList<ComponentDescriptor> descriptors, Elements elements) {
     Dependencies.Builder moduleDeps = new Dependencies.Builder();
     Dependencies.Builder entryPointDeps = new Dependencies.Builder();
     Dependencies.Builder componentEntryPointDeps = new Dependencies.Builder();
     Map<String, TypeElement> testElements = new HashMap<>();
     ImmutableMap<String, ComponentDescriptor> descriptorLookup =
-        DefineComponents.componentDescriptors(elements).stream()
+        descriptors.stream()
             .collect(
                 toImmutableMap(
                     descriptor -> descriptor.component().toString(),

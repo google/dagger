@@ -32,6 +32,7 @@ java_library(
         "Root.java",
         "RootFileFormatter.java",
         "RootGenerator.java",
+        "RootMetadata.java",
         "RootProcessor.java",
     ],
     deps = [
@@ -49,6 +50,7 @@ java_library(
         "//java/dagger/hilt/processor/internal/aliasof:alias_ofs",
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
         "//java/dagger/hilt/processor/internal/generatesrootinput:generates_root_inputs",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:common",

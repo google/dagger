@@ -125,7 +125,7 @@ hr {
   width: 100%;
   height: 1px;
   border: 0;
-  background: #EFF1F3;
+  background: #eff1f3;
 }
 
 /* Code Blocks */
@@ -134,4 +134,17 @@ pre { overflow: auto; }
 
 code, pre {
 
+}
+
+/* Tables */
+th {
+  background-color: #d2d2d2;
+}
+
+th, td {
+  padding: 0px 15px;
+}
+
+tr:nth-child(even) {
+  background-color: #f2f2f2;
 }

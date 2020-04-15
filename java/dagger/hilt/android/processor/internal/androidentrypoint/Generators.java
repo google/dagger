@@ -17,10 +17,10 @@
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.MoreCollectors;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -117,7 +117,7 @@ final class Generators {
 
     constructor.getAnnotationMirrors().stream()
         .filter(a -> Processors.hasAnnotation(a, AndroidClassNames.TARGET_API))
-        .collect(MoreCollectors.toOptional())
+        .collect(toOptional())
         .map(AnnotationSpec::get)
         .ifPresent(builder::addAnnotation);
 

@@ -16,7 +16,7 @@
 
 package dagger.hilt.processor.internal;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;

@@ -19,7 +19,7 @@ package dagger.hilt.processor.internal.definecomponent;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationElementAndValue;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asTypeElement;
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreTypes;

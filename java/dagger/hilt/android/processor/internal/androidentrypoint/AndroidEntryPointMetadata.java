@@ -17,6 +17,7 @@
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
 import static dagger.hilt.android.processor.internal.androidentrypoint.HiltCompilerOptions.BooleanOption.DISABLE_ANDROID_SUPERCLASS_VALIDATION;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -147,7 +148,7 @@ public abstract class AndroidEntryPointMetadata {
     return element.getAnnotationMirrors().stream()
         .filter(
             mirror -> HILT_ANNOTATION_NAMES.contains(ClassName.get(mirror.getAnnotationType())))
-        .collect(ImmutableSet.toImmutableSet());
+        .collect(toImmutableSet());
   }
 
   /** Returns true if the given element has Android Entry Point metadata. */

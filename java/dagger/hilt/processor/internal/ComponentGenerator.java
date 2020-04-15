@@ -16,7 +16,7 @@
 
 package dagger.hilt.processor.internal;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static java.util.Comparator.comparing;
 
 import com.google.common.base.Joiner;

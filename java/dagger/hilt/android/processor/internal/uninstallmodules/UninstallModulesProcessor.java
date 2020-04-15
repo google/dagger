@@ -16,7 +16,7 @@
 
 package dagger.hilt.android.processor.internal.uninstallmodules;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import com.google.auto.common.MoreElements;

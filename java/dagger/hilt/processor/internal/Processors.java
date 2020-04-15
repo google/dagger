@@ -18,6 +18,7 @@ package dagger.hilt.processor.internal;
 
 import static com.google.auto.common.MoreElements.asPackage;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -33,7 +34,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.MoreCollectors;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
 import com.squareup.javapoet.AnnotationSpec;
@@ -178,7 +178,7 @@ public final class Processors {
       Elements elements, AnnotationMirror annotation, String key) {
     return getAnnotationClassValues(elements, annotation).get(key).stream()
         .map(MoreTypes::asTypeElement)
-        .collect(MoreCollectors.toOptional());
+        .collect(toOptional());
   }
 
   /** Returns a list of {@link TypeElement}s for a class attribute on an annotation. */
@@ -594,7 +594,7 @@ public final class Processors {
       Element element, ClassName className) {
     return element.getAnnotationMirrors().stream()
         .filter(mirror -> ClassName.get(mirror.getAnnotationType()).equals(className))
-        .collect(MoreCollectors.toOptional());
+        .collect(toOptional());
   }
 
   /** @return true if element inherits directly or indirectly from the className */

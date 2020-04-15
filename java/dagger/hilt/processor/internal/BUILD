@@ -60,6 +60,7 @@ java_library(
     deps = [
         ":classnames",
         ":processor_errors",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:common",
@@ -101,6 +102,7 @@ java_library(
     deps = [
         ":classnames",
         ":processors",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/internal/guava:graph",
@@ -120,6 +122,7 @@ java_library(
         ":processor_errors",
         ":processors",
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/javapoet",

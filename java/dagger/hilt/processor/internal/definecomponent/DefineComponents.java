@@ -17,8 +17,8 @@
 package dagger.hilt.processor.internal.definecomponent;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationElementAndValue;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;

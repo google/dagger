@@ -5,7 +5,7 @@ set -eu
 readonly MVN_GOAL="$1"
 readonly VERSION_NAME="$2"
 shift 2
-readonly EXTRA_MAVEN_ARGS=$([ $# -gt 0 ] && echo "$@" || echo "")
+readonly EXTRA_MAVEN_ARGS=("$@")
 
 # Builds and deploys the given artifacts to a configured maven goal.
 # @param {string} library the library to deploy.
@@ -26,7 +26,7 @@ _deploy() {
       "$javadoc" \
       "$MVN_GOAL" \
       "$VERSION_NAME" \
-      "$EXTRA_MAVEN_ARGS"
+      "${EXTRA_MAVEN_ARGS[@]:+${EXTRA_MAVEN_ARGS[@]}}"
 }
 
 _deploy \

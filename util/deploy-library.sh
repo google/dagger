@@ -16,7 +16,8 @@ deploy_library() {
   local javadoc=$4
   local mvn_goal=$5
   local version_name=$6
-  local extra_maven_args=${@:7}
+  shift 6
+  local extra_maven_args=("$@")
 
   bazel build --define=pom_version="$version_name" \
     $library $pomfile

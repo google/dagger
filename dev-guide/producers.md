@@ -12,12 +12,12 @@ asynchronous dependency injection in Java.
 ## Overview
 
 This document assumes familiarity with the [Dagger 2 API][Dagger 2] and with
-Guava’s [ListenableFuture][ListenableFuture].
+Guava’s [`ListenableFuture`][ListenableFuture].
 
-Dagger Producers introduces new annotations [@ProducerModule][ProducerModule],
-[@Produces][Produces], and [@ProductionComponent][ProductionComponent] as
-analogues of [@Module][Module], [@Provides][Provides], and
-[@Component][Component]. We refer to classes annotated `@ProducerModule` as
+Dagger Producers introduces new annotations [`@ProducerModule`][ProducerModule],
+[`@Produces`][Produces], and [`@ProductionComponent`][ProductionComponent] as
+analogues of [`@Module`][Module], [`@Provides`][Provides], and
+[`@Component`][Component]. We refer to classes annotated `@ProducerModule` as
 **producer modules**, methods annotated `@Produces` as **producer methods**, and
 interfaces annotated `@ProductionComponent` as **producer graphs** (analogous to
 **modules**, **provider methods**, and **object graphs**).
@@ -102,7 +102,7 @@ returns failed, then any dependent producer methods will be skipped - this
 models “propagating” an exception up a call stack.
 
 If a producer method would like to “catch” that exception, the method can
-request a [Produced&lt;T>][Produced] instead of a T. For example:
+request a [`Produced<T>`][Produced] instead of a `T`. For example:
 
 ```java
 @Produces
@@ -266,9 +266,9 @@ ListenableFuture<UserData> userData = DaggerUserDataComponent.builder()
 ## Subcomponents
 
 Dagger Producers introduces a new annotation
-[@ProductionSubcomponent][ProductionSubcomponent] as an analogue to
-[@Subcomponent][Subcomponent]. Production subcomponents may be subcomponents of
-either components or production components.
+[`@ProductionSubcomponent`][ProductionSubcomponent] as an analogue to
+[`@Subcomponent`][Subcomponent]. Production subcomponents may be subcomponents
+of either components or production components.
 
 A subcomponent inherits all bindings from its parent component, and so it is
 often a simpler way of building nested scopes; see
@@ -276,7 +276,7 @@ often a simpler way of building nested scopes; see
 
 ## Monitoring
 
-[ProducerMonitor][ProducerMonitor] can be used to monitor the execution of
+[`ProducerMonitor`][ProducerMonitor] can be used to monitor the execution of
 producer methods; its methods correspond to various places in a producer's
 lifecycle.
 

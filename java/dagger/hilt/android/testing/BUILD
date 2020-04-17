@@ -139,6 +139,7 @@ android_library(
     tags = ["maven_coordinates=com.google.dagger:hilt-android-testing:" + POM_VERSION],
     visibility = ["//visibility:private"],
     exports = [
+        ":android_emulator_entry_point",
         ":android_robolectric_entry_point",
         ":uninstall_modules",
         "//java/dagger/hilt/android:artifact-lib",
@@ -162,7 +163,9 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
         "//java/dagger/hilt/android/internal/testing:test_injector",
+        "//java/dagger/hilt/android/testing:android_emulator_entry_point",
         "//java/dagger/hilt/android/testing:android_robolectric_entry_point",
+        "//java/dagger/hilt/android/testing:emulator_test_rule",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/android/testing:robolectric_test_rule",
         "//java/dagger/hilt/android/testing:test_rules_common",

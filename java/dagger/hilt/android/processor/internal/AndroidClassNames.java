@@ -93,5 +93,10 @@ public final class AndroidClassNames {
   public static final ClassName APPLICATION_CONTEXT_MODULE =
       get("dagger.hilt.android.internal.modules", "ApplicationContextModule");
 
+  public static final ClassName VIEW_MODEL_PROVIDER_FACTORY =
+      get("androidx.lifecycle", "ViewModelProvider", "Factory");
+  public static final ClassName DEFAULT_VIEW_MODEL_FACTORIES =
+      get("dagger.hilt.android.internal.lifecycle", "DefaultViewModelFactories");
+
   private AndroidClassNames() {}
 }

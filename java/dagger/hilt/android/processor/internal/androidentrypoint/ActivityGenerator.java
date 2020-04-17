@@ -65,6 +65,11 @@ public final class ActivityGenerator {
 
     Generators.addInjectionMethods(metadata, builder);
 
+    if (Processors.isAssignableFrom(metadata.baseElement(), AndroidClassNames.COMPONENT_ACTIVITY)
+        && !metadata.overridesAndroidEntryPointClass()) {
+      builder.addMethod(getDefaultViewModelProviderFactory());
+    }
+
     JavaFile.builder(generatedClassName.packageName(), builder.build())
         .build()
         .writeTo(env.getFiler());
@@ -90,4 +95,27 @@ public final class ActivityGenerator {
         .build();
   }
 
+  // @Override
+  // public ViewModelProvider.Factory getDefaultViewModelProviderFactory() {
+  //   ViewModelProvider.Factory factory = DefaultViewModelFactories.getActivityFactory(this);
+  //   if (factory != null) {
+  //     return factory;
+  //   }
+  //   return super.getDefaultViewModelProviderFactory();
+  // }
+  private MethodSpec getDefaultViewModelProviderFactory() {
+    return MethodSpec.methodBuilder("getDefaultViewModelProviderFactory")
+        .addAnnotation(Override.class)
+        .addModifiers(Modifier.PUBLIC)
+        .returns(AndroidClassNames.VIEW_MODEL_PROVIDER_FACTORY)
+        .addStatement(
+            "$T factory = $T.getActivityFactory(this)",
+            AndroidClassNames.VIEW_MODEL_PROVIDER_FACTORY,
+            AndroidClassNames.DEFAULT_VIEW_MODEL_FACTORIES)
+        .beginControlFlow("if (factory != null)")
+        .addStatement("return factory")
+        .endControlFlow()
+        .addStatement("return super.getDefaultViewModelProviderFactory()")
+        .build();
+  }
 }

@@ -81,6 +81,7 @@ public final class ClassNames {
       get("dagger.hilt", "InstallIn");
   public static final ClassName ENTRY_POINT =
       get("dagger.hilt", "EntryPoint");
+  public static final ClassName ENTRY_POINTS = get("dagger.hilt", "EntryPoints");
   public static final ClassName COMPONENT_MANAGER =
       get("dagger.hilt.internal", "GeneratedComponentManager");
   public static final ClassName COMPONENT_ENTRY_POINT =

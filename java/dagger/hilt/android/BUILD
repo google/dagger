@@ -32,6 +32,7 @@ android_library(
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/internal/builders",
+        "//java/dagger/hilt/android/internal/lifecycle",
         "//java/dagger/hilt/android/internal/managers",
         "//java/dagger/hilt/android/internal/managers:component_supplier",
         "//java/dagger/hilt/android/internal/modules",
@@ -41,6 +42,7 @@ android_library(
         "//java/dagger/hilt/internal:generated_entry_point",
         "//java/dagger/internal/guava:base-android",
         "@maven//:androidx_annotation_annotation",
+        "@maven//:androidx_fragment_fragment",
     ],
     deps = [
         "//java/dagger/hilt:generates_root_input",
@@ -98,6 +100,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/internal/builders",
+        "//java/dagger/hilt/android/internal/lifecycle",
         "//java/dagger/hilt/android/internal/managers",
         "//java/dagger/hilt/android/internal/managers:component_supplier",
         "//java/dagger/hilt/android/internal/modules",

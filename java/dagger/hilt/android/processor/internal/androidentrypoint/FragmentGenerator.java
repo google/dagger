@@ -82,6 +82,10 @@ public final class FragmentGenerator {
 
     Generators.addInjectionMethods(metadata, builder);
 
+    if (!metadata.overridesAndroidEntryPointClass()) {
+      builder.addMethod(getDefaultViewModelProviderFactory());
+    }
+
     return builder.build();
   }
 
@@ -190,6 +194,30 @@ public final class FragmentGenerator {
             "return $T.from($T.createContextWrapper(inflater, this))",
             AndroidClassNames.LAYOUT_INFLATER,
             metadata.componentManager())
+        .build();
+  }
+
+  // @Override
+  // public ViewModelProvider.Factory getDefaultViewModelProviderFactory() {
+  //   ViewModelProvider.Factory factory = DefaultViewModelFactories.getFragmentFactory(this);
+  //   if (factory != null) {
+  //     return factory;
+  //   }
+  //   return super.getDefaultViewModelProviderFactory();
+  // }
+  private MethodSpec getDefaultViewModelProviderFactory() {
+    return MethodSpec.methodBuilder("getDefaultViewModelProviderFactory")
+        .addAnnotation(Override.class)
+        .addModifiers(Modifier.PUBLIC)
+        .returns(AndroidClassNames.VIEW_MODEL_PROVIDER_FACTORY)
+        .addStatement(
+            "$T factory = $T.getFragmentFactory(this)",
+            AndroidClassNames.VIEW_MODEL_PROVIDER_FACTORY,
+            AndroidClassNames.DEFAULT_VIEW_MODEL_FACTORIES)
+        .beginControlFlow("if (factory != null)")
+        .addStatement("return factory")
+        .endControlFlow()
+        .addStatement("return super.getDefaultViewModelProviderFactory()")
         .build();
   }
 }

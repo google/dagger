@@ -43,8 +43,6 @@ import javax.lang.model.element.Modifier;
 
 /** Generates components and any other classes needed for a root. */
 final class RootGenerator {
-  private static final ClassName DAGGER_PROCESSING_OPTIONS =
-      ClassName.get("dagger", "DaggerProcessingOptions");
 
   static void generate(RootMetadata metadata, ProcessingEnvironment env) throws IOException {
     new RootGenerator(metadata, env).generateComponents();

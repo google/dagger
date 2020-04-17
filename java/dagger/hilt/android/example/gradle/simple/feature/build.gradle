@@ -17,7 +17,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
-apply plugin: 'dagger.hilt.android.plugin'
+// TODO(bcorso): Reenable this plugin once it works with Robolectric tests.
+// apply plugin: 'dagger.hilt.android.plugin'
 
 android {
     compileSdkVersion 29
@@ -32,6 +33,10 @@ android {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
+}
+
+kapt {
+ correctErrorTypes true
 }
 
 dependencies {

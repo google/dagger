@@ -29,10 +29,18 @@
     />
 
   <Button
-    android:id="@+id/goto_feature"
+    android:id="@+id/goto_settings"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_below="@id/greeting"
+    android:text="@string/navigateToSettings"
+    />
+
+  <Button
+    android:id="@+id/goto_feature"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/goto_settings"
     android:text="@string/navigateToFeature"
     />
 </RelativeLayout>

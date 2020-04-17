@@ -16,19 +16,21 @@
 
 package dagger.hilt.android.example.gradle.simple;
 
-import android.app.Application;
-import dagger.hilt.GenerateComponents;
-import dagger.hilt.android.AndroidEntryPoint;
-import javax.inject.Inject;
+import static android.os.Build.MODEL;
 
-/**
- * A simple, skeletal application that demonstrates a dependency-injected application using the
- * utilities in {@code Hilt} in Android.
- */
-@GenerateComponents
-@AndroidEntryPoint(Application.class)
-public class SimpleApplication extends Hilt_SimpleApplication {
+import dagger.Module;
+import dagger.Provides;
+import dagger.hilt.InstallIn;
+import dagger.hilt.android.components.ApplicationComponent;
 
-  // Shows that we can inject ApplicationComponent bindings into an application.
-  @Inject @Model String model;
+@Module
+@InstallIn(ApplicationComponent.class)
+final class ModelModule {
+  @Provides
+  @Model
+  static String provideModel() {
+    return MODEL;
+  }
+
+  private ModelModule() {}
 }

@@ -16,36 +16,25 @@
 
 package dagger.hilt.android.example.gradle.simple;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import dagger.hilt.android.AndroidEntryPoint;
-import dagger.hilt.android.example.gradle.simple.feature.FeatureActivity;
 import javax.inject.Inject;
 
-/** The main activity of the application. */
+/** The settings activity of the application. */
 @AndroidEntryPoint(AppCompatActivity.class)
-public class SimpleActivity extends Hilt_SimpleActivity {
-  private static final String TAG = SimpleActivity.class.getSimpleName();
+public class SettingsActivity extends Hilt_SettingsActivity {
+  private static final String TAG = SettingsActivity.class.getSimpleName();
 
-  @Inject SimpleGreeter greeter;
+  @Inject SettingsGreeter greeter;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    setContentView(R.layout.activity_main);
+    setContentView(R.layout.activity_settings);
 
-    ((TextView) findViewById(R.id.greeting)).setText(greeter.greet());
-
-    Button featureButton = (Button) findViewById(R.id.goto_feature);
-    featureButton.setOnClickListener(
-        view -> startActivity(new Intent(this, FeatureActivity.class)));
-
-    Button settingsButton = (Button) findViewById(R.id.goto_settings);
-    settingsButton.setOnClickListener(
-        view -> startActivity(new Intent(this, SettingsActivity.class)));
+    ((TextView) findViewById(R.id.settings_greeting)).setText(greeter.greet());
   }
 }

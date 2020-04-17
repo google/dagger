@@ -16,21 +16,23 @@
 
 package dagger.hilt.android.example.gradle.simple;
 
-import static android.os.Build.MODEL;
+import android.app.Activity;
+import javax.inject.Inject;
 
-import dagger.Module;
-import dagger.Provides;
-import dagger.hilt.InstallIn;
-import dagger.hilt.android.components.ApplicationComponent;
+/** A class that returns a greeting for {@link SettingsActivity}. */
+final class SettingsGreeter {
+  private final Activity activity;
+  private final String userName;
+  private final String model;
 
-@Module
-@InstallIn(ApplicationComponent.class)
-final class ApplicationModule {
-  @Provides
-  @Model
-  static String provideModel() {
-    return MODEL;
+  @Inject
+  SettingsGreeter(Activity activity, @UserName String userName, @Model String model) {
+    this.activity = activity;
+    this.userName = userName;
+    this.model = model;
   }
 
-  private ApplicationModule() {}
+  public String greet() {
+    return activity.getResources().getString(R.string.settings_welcome, userName, model);
+  }
 }

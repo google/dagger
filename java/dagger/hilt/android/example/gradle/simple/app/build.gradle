@@ -15,7 +15,8 @@
  */
 
 apply plugin: 'com.android.application'
-apply plugin: 'dagger.hilt.android.plugin'
+// TODO(bcorso): Reenable this plugin once it works with Robolectric tests.
+// apply plugin: 'dagger.hilt.android.plugin'
 
 android {
     compileSdkVersion 29
@@ -32,6 +33,7 @@ android {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
+    testOptions.unitTests.includeAndroidResources = true
 }
 
 dependencies {

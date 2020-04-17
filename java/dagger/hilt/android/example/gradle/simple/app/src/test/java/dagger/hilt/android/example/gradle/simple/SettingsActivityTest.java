@@ -18,6 +18,7 @@ package dagger.hilt.android.example.gradle.simple;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.os.Build;
 import dagger.Module;
 import dagger.Provides;
 import dagger.hilt.GenerateComponents;
@@ -25,63 +26,61 @@ import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.testing.AndroidRobolectricEntryPoint;
 import dagger.hilt.android.testing.HiltRobolectricTestRule;
+import dagger.hilt.android.testing.UninstallModules;
 import javax.inject.Inject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 /** A simple test using Hilt. */
+@UninstallModules(ModelModule.class)
 @GenerateComponents
 @AndroidRobolectricEntryPoint
 @RunWith(RobolectricTestRunner.class)
-@Config(application = SimpleTest_Application.class)
-public final class SimpleTest {
-  private static final int TEST_VALUE = 9;
+// Robolectric requires Java9 to run API 29 and above, so use API 28 instead
+@Config(sdk = Build.VERSION_CODES.P, application = SettingsActivityTest_Application.class)
+public final class SettingsActivityTest {
+  private static final String FAKE_MODEL = "FakeModel";
+  private static final int TEST_VALUE = 11;
 
   @Module
   @InstallIn(ApplicationComponent.class)
   interface TestModule {
+    @Provides
+    @Model
+    static String provideFakeModel() {
+      return FAKE_MODEL;
+    }
+
     @Provides
     static int provideInt() {
       return TEST_VALUE;
     }
   }
 
-  static class Foo {
-    final int value;
-
-    @Inject
-    Foo(int value) {
-      this.value = value;
-    }
-  }
-
   @Rule public HiltRobolectricTestRule rule = new HiltRobolectricTestRule();
 
-  @Inject @Model String model;
-  @Inject Foo foo;
+  @Inject Integer intValue;
 
   // TODO(user): Add @BindValue
 
   @Test
   public void testInject() throws Exception {
-    assertThat(model).isNull();
+    assertThat(intValue).isNull();
 
-    SimpleTest_Application.get().inject(this);
+    SettingsActivityTest_Application.get().inject(this);
 
-    assertThat(model).isNotNull();
-    assertThat(model).isEqualTo(android.os.Build.MODEL);
+    assertThat(intValue).isNotNull();
+    assertThat(intValue).isEqualTo(TEST_VALUE);
   }
 
   @Test
-  public void testInjectFromTestModule() throws Exception {
-    assertThat(foo).isNull();
-
-    SimpleTest_Application.get().inject(this);
-
-    assertThat(foo).isNotNull();
-    assertThat(foo.value).isEqualTo(TEST_VALUE);
+  public void testActivityInject() throws Exception {
+    SettingsActivity activity = Robolectric.setupActivity(SettingsActivity.class);
+    assertThat(activity.greeter.greet())
+        .isEqualTo("ProdUser, you are on build FakeModel.");
   }
 }

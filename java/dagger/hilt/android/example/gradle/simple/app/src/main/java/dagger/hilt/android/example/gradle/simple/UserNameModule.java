@@ -23,12 +23,12 @@ import dagger.hilt.android.components.ActivityComponent;
 
 @Module
 @InstallIn(ActivityComponent.class)
-final class ActivityModule {
+final class UserNameModule {
   @UserName
   @Provides
   static String provideUserName() {
-    return "Android User";
+    return "ProdUser";
   }
 
-  private ActivityModule() {}
+  private UserNameModule() {}
 }

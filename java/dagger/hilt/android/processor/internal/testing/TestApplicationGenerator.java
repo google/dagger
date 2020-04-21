@@ -43,12 +43,6 @@ import javax.lang.model.element.TypeElement;
  * Generates an Android Application that holds the Singleton component.
  */
 public final class TestApplicationGenerator {
-  private static final ClassName TEST_APPLICATION_COMPONENT_MANAGER =
-      ClassName.get("dagger.hilt.android.internal.testing", "TestApplicationComponentManager");
-
-  private static final ClassName TEST_APPLICATION_COMPONENT_MANAGER_HOLDER =
-      ClassName.get(
-          "dagger.hilt.android.internal.testing", "TestApplicationComponentManagerHolder");
 
   private final ProcessingEnvironment processingEnv;
   private final TypeElement testElement;
@@ -76,7 +70,8 @@ public final class TestApplicationGenerator {
     this.waitForBindValue = waitForBindValue;
 
     componentManager =
-        ParameterSpec.builder(TEST_APPLICATION_COMPONENT_MANAGER, "componentManager").build();
+        ParameterSpec.builder(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER, "componentManager")
+            .build();
 
     onComponentReadyRunner =
         ParameterSpec.builder(ClassNames.ON_COMPONENT_READY_RUNNER, "onComponentReadyRunner")
@@ -91,8 +86,9 @@ public final class TestApplicationGenerator {
             .superclass(baseName)
             .addSuperinterface(
                 ParameterizedTypeName.get(ClassNames.COMPONENT_MANAGER, TypeName.OBJECT))
-            .addSuperinterface(TEST_APPLICATION_COMPONENT_MANAGER_HOLDER)
+            .addSuperinterface(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER_HOLDER)
             .addSuperinterface(ClassNames.ON_COMPONENT_READY_RUNNER_HOLDER)
+            .addSuperinterface(ClassNames.TEST_INSTANCE_HOLDER)
             .addField(getComponentManagerField())
             .addField(getOnComponentReadyRunnerField())
             .addMethod(getAttachBaseContextMethod())
@@ -102,9 +98,9 @@ public final class TestApplicationGenerator {
             .addMethod(getOnComponentReadyRunnerMethod())
             .addMethod(injectableMethod(testName))
             .addMethod(getInstanceMethod(appName))
-            .addField(testName, "testInstance", Modifier.PRIVATE)
-            .addMethod(getTestInstanceMethod(testName, "testInstance"))
-            .addMethod(bindMethod(testName, appName));
+            .addField(Object.class, "testInstance", Modifier.PRIVATE)
+            .addMethod(getTestInstanceMethod("testInstance"))
+            .addMethod(setTestInstanceMethod(testName));
 
     Processors.addGeneratedAnnotation(
         generator, processingEnv, ClassNames.ROOT_PROCESSOR.toString());
@@ -323,13 +319,27 @@ public final class TestApplicationGenerator {
         .build();
   }
 
-  private static MethodSpec getTestInstanceMethod(ClassName testClassName, String testParamName) {
+  private static MethodSpec getTestInstanceMethod(String testParamName) {
     return MethodSpec.methodBuilder("getTestInstance")
-        .returns(testClassName)
-        .addStatement("$T.checkState($N != null, $S)",
-            ClassNames.PRECONDITIONS, testParamName,
+        .returns(Object.class)
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .addStatement(
+            "$T.checkState($N != null, $S)",
+            ClassNames.PRECONDITIONS,
+            testParamName,
             "The test instance has not been set. Did you forget to call #bind()?")
         .addStatement("return $N", testParamName)
+        .build();
+  }
+
+  private static MethodSpec setTestInstanceMethod(ClassName testClassName) {
+    String varName = Processors.upperToLowerCamel(testClassName.simpleName());
+    return MethodSpec.methodBuilder("setTestInstance")
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .addParameter(Object.class, varName)
+        .addStatement("testInstance = ($L)$L", testClassName, varName)
         .build();
   }
 

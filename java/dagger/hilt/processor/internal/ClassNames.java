@@ -95,6 +95,9 @@ public final class ClassNames {
   public static final ClassName SINGLETON = get("javax.inject", "Singleton");
 
   // TODO(user): Move these class names out when we factor out the android portion
+  public static final ClassName APPLICATION = get("android.app", "Application");
+  public static final ClassName MULTI_DEX_APPLICATION =
+      get("androidx.multidex", "MultiDexApplication");
   public static final ClassName ANDROID_ENTRY_POINT =
       get("dagger.hilt.android", "AndroidEntryPoint");
   public static final ClassName APPLICATION_COMPONENT =
@@ -114,6 +117,14 @@ public final class ClassNames {
       get("dagger.hilt.android.internal.testing", "InternalTestRoot", "Type", "ROBOLECTRIC");
   public static final ClassName INTERNAL_TEST_ROOT_TYPE_EMULATOR =
       get("dagger.hilt.android.internal.testing", "InternalTestRoot", "Type", "EMULATOR");
+  public static final ClassName TEST_INJECTOR =
+      get("dagger.hilt.android.internal.testing", "TestInjector");
+  public static final ClassName TEST_APPLICATION_COMPONENT_MANAGER =
+      get("dagger.hilt.android.internal.testing", "TestApplicationComponentManager");
+  public static final ClassName TEST_APPLICATION_COMPONENT_MANAGER_HOLDER =
+      get("dagger.hilt.android.internal.testing", "TestApplicationComponentManagerHolder");
+  public static final ClassName TEST_INSTANCE_HOLDER =
+      get("dagger.hilt.android.internal.testing", "TestInstanceHolder");
   public static final ClassName ANDROID_ROBOLECTRIC_ENTRY_POINT =
       get("dagger.hilt.android.testing", "AndroidRobolectricEntryPoint");
   public static final ClassName ANDROID_EMULATOR_ENTRY_POINT =
@@ -122,10 +133,16 @@ public final class ClassNames {
       get("dagger.hilt.android.testing", "OnComponentReadyRunner");
   public static final ClassName ON_COMPONENT_READY_RUNNER_HOLDER =
       get("dagger.hilt.android.testing", "OnComponentReadyRunner", "OnComponentReadyRunnerHolder");
-  public static final ClassName MULTI_DEX_APPLICATION =
-      get("androidx.multidex", "MultiDexApplication");
-  public static final ClassName TEST_INJECTOR =
-      get("dagger.hilt.android.internal.testing", "TestInjector");
+
+  public static final ClassName BIND_VALUE = get("dagger.hilt.android.testing", "BindValue");
+  public static final ClassName BIND_ELEMENTS_INTO_SET =
+      get("dagger.hilt.android.testing", "BindElementsIntoSet");
+  public static final ClassName BIND_VALUE_INTO_MAP =
+      get("dagger.hilt.android.testing", "BindValueIntoMap");
+  public static final ClassName BIND_VALUE_INTO_SET =
+      get("dagger.hilt.android.testing", "BindValueIntoSet");
+  public static final ClassName APPLICATION_CONTEXT =
+      get("dagger.hilt.android.qualifiers", "ApplicationContext");
 
   public static final ClassName PRECONDITIONS = get("com.google.common.base", "Preconditions");
 

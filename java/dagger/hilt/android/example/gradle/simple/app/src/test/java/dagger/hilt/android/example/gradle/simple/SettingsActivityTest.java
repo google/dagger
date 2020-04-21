@@ -21,13 +21,17 @@ import static com.google.common.truth.Truth.assertThat;
 import android.os.Build;
 import dagger.Module;
 import dagger.Provides;
+import dagger.hilt.EntryPoint;
+import dagger.hilt.EntryPoints;
 import dagger.hilt.GenerateComponents;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.testing.AndroidRobolectricEntryPoint;
+import dagger.hilt.android.testing.BindValue;
 import dagger.hilt.android.testing.HiltRobolectricTestRule;
 import dagger.hilt.android.testing.UninstallModules;
 import javax.inject.Inject;
+import javax.inject.Named;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,6 +50,9 @@ public final class SettingsActivityTest {
   private static final String FAKE_MODEL = "FakeModel";
   private static final int TEST_VALUE = 11;
 
+  private static final String BIND_VALUE_STRING = "BIND_VALUE_STRING";
+  private static final String TEST_QUALIFIER = "TEST_QUALIFIER";
+
   @Module
   @InstallIn(ApplicationComponent.class)
   interface TestModule {
@@ -61,11 +68,20 @@ public final class SettingsActivityTest {
     }
   }
 
-  @Rule public HiltRobolectricTestRule rule = new HiltRobolectricTestRule();
+  @EntryPoint
+  @InstallIn(ApplicationComponent.class)
+  interface BindValueEntryPoint {
+    @Named(TEST_QUALIFIER)
+    String bindValueString();
+  }
+
+  @Rule public HiltRobolectricTestRule rule = new HiltRobolectricTestRule(this);
 
   @Inject Integer intValue;
 
-  // TODO(user): Add @BindValue
+  @BindValue
+  @Named(TEST_QUALIFIER)
+  String bindValueString = BIND_VALUE_STRING;
 
   @Test
   public void testInject() throws Exception {
@@ -82,5 +98,22 @@ public final class SettingsActivityTest {
     SettingsActivity activity = Robolectric.setupActivity(SettingsActivity.class);
     assertThat(activity.greeter.greet())
         .isEqualTo("ProdUser, you are on build FakeModel.");
+  }
+
+  @Test
+  public void testBindValueIsMutable() throws Exception {
+    bindValueString = "newValue";
+    assertThat(getBinding()).isEqualTo("newValue");
+  }
+
+  @Test
+  public void testBindValueFieldIsProvided() throws Exception {
+    assertThat(bindValueString).isEqualTo(BIND_VALUE_STRING);
+    assertThat(getBinding()).isEqualTo(BIND_VALUE_STRING);
+  }
+
+  private static String getBinding() {
+    return EntryPoints.get(SettingsActivityTest_Application.get(), BindValueEntryPoint.class)
+        .bindValueString();
   }
 }

@@ -16,7 +16,14 @@
 
 package dagger.hilt.android.testing;
 
+import static com.google.common.base.Preconditions.checkState;
+
+import android.content.Context;
 import androidx.test.core.app.ApplicationProvider;
+import com.google.common.base.Optional;
+import dagger.hilt.android.internal.testing.TestApplicationComponentManager;
+import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
+import dagger.hilt.android.internal.testing.TestInstanceHolder;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -30,9 +37,36 @@ import org.junit.runners.model.Statement;
 public final class HiltRobolectricTestRule implements TestRule {
   private final RuleChain rules = RuleChain.outerRule(
       new MarkThatRulesRanRule(ApplicationProvider.getApplicationContext()));
+  Optional<Object> testClassInstance;
+
+  public HiltRobolectricTestRule() {
+    this.testClassInstance = Optional.absent();
+  }
+
+  public HiltRobolectricTestRule(Object testClassInstance) {
+    this.testClassInstance = Optional.of(testClassInstance);
+
+    Context applicationContext = ApplicationProvider.getApplicationContext();
+    if (applicationContext instanceof TestInstanceHolder) {
+      ((TestInstanceHolder) applicationContext).setTestInstance(testClassInstance);
+    }
+
+    if (applicationContext instanceof TestApplicationComponentManagerHolder) {
+      Object componentManager =
+          ((TestApplicationComponentManagerHolder) applicationContext).componentManager();
+      checkState(componentManager instanceof TestApplicationComponentManager);
+      ((TestApplicationComponentManager) componentManager).setBindValueCalled();
+    }
+  }
 
   @Override
   public Statement apply(Statement baseStatement, Description description) {
+    if (testClassInstance.isPresent()) {
+      checkState(
+          description.getTestClass().isInstance(testClassInstance.get()),
+          "HiltRobolectricTestRule was constructed with an "
+              + "argument that was not an instance of the test class");
+    }
     return rules.apply(baseStatement, description);
   }
 }

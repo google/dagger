@@ -52,3 +52,9 @@ android_library(
     testonly = 1,
     srcs = ["TestApplicationComponentManagerHolder.java"],
 )
+
+android_library(
+    name = "test_instance_holder",
+    testonly = 1,
+    srcs = ["TestInstanceHolder.java"],
+)

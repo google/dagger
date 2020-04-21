@@ -20,6 +20,9 @@ import static com.google.common.base.Preconditions.checkState;
 
 import android.content.Context;
 import androidx.test.InstrumentationRegistry;
+import dagger.hilt.android.internal.testing.TestApplicationComponentManager;
+import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
+import dagger.hilt.android.internal.testing.TestInstanceHolder;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -38,8 +41,19 @@ public final class HiltEmulatorTestRule implements TestRule {
   public HiltEmulatorTestRule(Object testClassInstance) {
     this.testClassInstance = testClassInstance;
 
-    Context targetContext = InstrumentationRegistry.getTargetContext();
-    rules = RuleChain.outerRule(new MarkThatRulesRanRule(targetContext));
+    Context applicationContext = InstrumentationRegistry.getTargetContext();
+    rules = RuleChain.outerRule(new MarkThatRulesRanRule(applicationContext));
+
+    if (applicationContext instanceof TestInstanceHolder) {
+      ((TestInstanceHolder) applicationContext).setTestInstance(testClassInstance);
+    }
+
+    if (applicationContext instanceof TestApplicationComponentManagerHolder) {
+      Object componentManager =
+          ((TestApplicationComponentManagerHolder) applicationContext).componentManager();
+      checkState(componentManager instanceof TestApplicationComponentManager);
+      ((TestApplicationComponentManager) componentManager).setBindValueCalled();
+    }
   }
 
   @Override public Statement apply(Statement baseStatement, Description description) {

@@ -25,6 +25,7 @@ java_library(
     visibility = ["//visibility:private"],
     exports = [
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
+        "//java/dagger/hilt/android/processor/internal/bindvalue:bind_value_processor_lib",
         "//java/dagger/hilt/android/processor/internal/testing:internal_test_root_processor_lib",
         "//java/dagger/hilt/android/processor/internal/testroot:test_root_processor",
         "//java/dagger/hilt/android/processor/internal/uninstallmodules:processor_lib",
@@ -56,6 +57,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:compiler_options",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:metadata",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
+        "//java/dagger/hilt/android/processor/internal/bindvalue:bind_value_processor_lib",
         "//java/dagger/hilt/android/processor/internal/testing:internal_test_root_metadata",
         "//java/dagger/hilt/android/processor/internal/testing:internal_test_root_processor_lib",
         "//java/dagger/hilt/android/processor/internal/testing:test_application_entry_point_generator",

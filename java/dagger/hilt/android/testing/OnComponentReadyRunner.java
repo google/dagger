@@ -16,14 +16,12 @@
 
 package dagger.hilt.android.testing;
 
-import static com.google.common.base.Throwables.throwIfUnchecked;
-
 import android.app.Application;
 import android.content.Context;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Preconditions;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.internal.GeneratedComponentManager;
+import dagger.hilt.internal.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,8 +91,9 @@ public final class OnComponentReadyRunner {
       OnComponentReadyListener<T> listener) {
     try {
       listener.onComponentReady(EntryPoints.get(componentManager, entryPoint));
+    } catch (RuntimeException | Error t) {
+      throw t;
     } catch (Throwable t) {
-      throwIfUnchecked(t);
       throw new RuntimeException(t);
     }
   }

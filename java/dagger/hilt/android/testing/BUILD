@@ -70,7 +70,7 @@ android_library(
         "//java/dagger/hilt/internal:component_entry_point",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_entry_point",
-        "//java/dagger/internal/guava:base-android",
+        "//java/dagger/hilt/internal:preconditions",
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_multidex_multidex",
         "@maven//:androidx_test_core",
@@ -101,7 +101,7 @@ android_library(
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
         "//java/dagger/hilt/android/internal/testing:test_instance_holder",
-        "//java/dagger/internal/guava:base-android",
+        "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/junit",
         "@maven//:androidx_test_monitor",
     ],
@@ -114,7 +114,7 @@ android_library(
     deps = [
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
-        "//java/dagger/internal/guava:base-android",
+        "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/junit",
     ],
 )
@@ -127,7 +127,7 @@ android_library(
         "//:dagger_with_compiler",
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt/internal:component_manager",
-        "//java/dagger/internal/guava:base-android",
+        "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/auto:value",
     ],
 )

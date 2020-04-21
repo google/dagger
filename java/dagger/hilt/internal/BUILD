@@ -30,7 +30,15 @@ java_library(
         "GeneratedComponentManager.java",
     ],
     exports = [
+        "//java/dagger/hilt/internal:preconditions",
         "//java/dagger/hilt/internal:unsafe_casts",
+    ],
+)
+
+java_library(
+    name = "preconditions",
+    srcs = [
+        "Preconditions.java",
     ],
 )
 

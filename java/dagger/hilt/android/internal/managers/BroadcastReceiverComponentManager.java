@@ -18,8 +18,8 @@ package dagger.hilt.android.internal.managers;
 
 import android.app.Application;
 import android.content.Context;
-import com.google.common.base.Preconditions;
 import dagger.hilt.internal.GeneratedComponentManager;
+import dagger.hilt.internal.Preconditions;
 
 /**
  * Do not use except in Hilt generated code!

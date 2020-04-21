@@ -21,7 +21,6 @@ import android.content.ContextWrapper;
 import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
-import com.google.common.base.Preconditions;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ActivityComponent;
@@ -29,6 +28,7 @@ import dagger.hilt.android.components.FragmentComponent;
 import dagger.hilt.android.internal.builders.ViewComponentBuilder;
 import dagger.hilt.android.internal.builders.ViewNoFragmentComponentBuilder;
 import dagger.hilt.internal.GeneratedComponentManager;
+import dagger.hilt.internal.Preconditions;
 
 /**
  * Do not use except in Hilt generated code!

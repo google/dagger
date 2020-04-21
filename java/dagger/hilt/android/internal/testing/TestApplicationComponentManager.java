@@ -17,12 +17,12 @@
 package dagger.hilt.android.internal.testing;
 
 import android.app.Application;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import dagger.hilt.android.internal.managers.ComponentSupplier;
 import dagger.hilt.android.testing.OnComponentReadyRunner.OnComponentReadyRunnerHolder;
 import dagger.hilt.internal.GeneratedComponentManager;
+import dagger.hilt.internal.Preconditions;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,7 +39,7 @@ public final class TestApplicationComponentManager implements GeneratedComponent
   private final AtomicReference<Object> component = new AtomicReference<>();
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
   private final ComponentSupplier componentSupplier;
-  private final ImmutableSet<Class<?>> requiredModules;
+  private final Set<Class<?>> requiredModules;
   private final Map<Class<?>, Object> registeredModules = new ConcurrentHashMap<>();
   private volatile boolean bindValueCalled = false;
   private final boolean waitForBindValue;
@@ -51,7 +51,7 @@ public final class TestApplicationComponentManager implements GeneratedComponent
       boolean waitForBindValue) {
     this.application = application;
     this.componentSupplier = componentSupplier;
-    this.requiredModules = ImmutableSet.copyOf(requiredModules);
+    this.requiredModules = Collections.unmodifiableSet(new HashSet<>(requiredModules));
     this.waitForBindValue = waitForBindValue;
   }
 
@@ -60,9 +60,14 @@ public final class TestApplicationComponentManager implements GeneratedComponent
     if (component.get() == null) {
       Preconditions.checkState(hasHiltTestRule(),
           "The component was not created. Check that you have added the HiltTestRule.");
-      Preconditions.checkState(registeredModules.keySet().containsAll(requiredModules),
-          "The component was not created. Check that you have registered all test modules:\n"
-              + "\tUnregistered: ", Sets.difference(requiredModules, registeredModules.keySet()));
+      if (!registeredModules.keySet().containsAll(requiredModules)) {
+        Set<Class<?>> difference = new HashSet<>(requiredModules);
+        difference.removeAll(registeredModules.keySet());
+        throw new IllegalStateException(
+            "The component was not created. Check that you have "
+                + "registered all test modules:\n\tUnregistered: "
+                + difference);
+      }
       Preconditions.checkState(bindValueReady(),
           "The test instance has not been set. Did you forget to call #bind()?");
       throw new IllegalStateException("The component has not been created. "

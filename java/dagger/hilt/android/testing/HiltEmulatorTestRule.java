@@ -16,13 +16,12 @@
 
 package dagger.hilt.android.testing;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import android.content.Context;
 import androidx.test.InstrumentationRegistry;
 import dagger.hilt.android.internal.testing.TestApplicationComponentManager;
 import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
 import dagger.hilt.android.internal.testing.TestInstanceHolder;
+import dagger.hilt.internal.Preconditions;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -51,13 +50,13 @@ public final class HiltEmulatorTestRule implements TestRule {
     if (applicationContext instanceof TestApplicationComponentManagerHolder) {
       Object componentManager =
           ((TestApplicationComponentManagerHolder) applicationContext).componentManager();
-      checkState(componentManager instanceof TestApplicationComponentManager);
+      Preconditions.checkState(componentManager instanceof TestApplicationComponentManager, "");
       ((TestApplicationComponentManager) componentManager).setBindValueCalled();
     }
   }
 
   @Override public Statement apply(Statement baseStatement, Description description) {
-    checkState(
+    Preconditions.checkState(
         description.getTestClass().isInstance(testClassInstance),
         "HiltEmulatorTestRule was constructed with an "
             + "argument that was not an instance of the test class");

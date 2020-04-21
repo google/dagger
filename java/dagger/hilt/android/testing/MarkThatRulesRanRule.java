@@ -17,9 +17,9 @@
 package dagger.hilt.android.testing;
 
 import android.content.Context;
-import com.google.common.base.Preconditions;
 import dagger.hilt.android.internal.testing.TestApplicationComponentManager;
 import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
+import dagger.hilt.internal.Preconditions;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -53,7 +53,7 @@ final class MarkThatRulesRanRule implements TestRule {
     if (applicationContext instanceof TestApplicationComponentManagerHolder) {
       Object componentManager =
           ((TestApplicationComponentManagerHolder) applicationContext).componentManager();
-      Preconditions.checkState(componentManager instanceof TestApplicationComponentManager);
+      Preconditions.checkState(componentManager instanceof TestApplicationComponentManager, "");
       ((TestApplicationComponentManager) componentManager).setHasHiltTestRule(description);
     }
   }

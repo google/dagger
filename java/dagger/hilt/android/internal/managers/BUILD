@@ -40,7 +40,7 @@ android_library(
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/internal/builders",
         "//java/dagger/hilt/internal:component_manager",
-        "//java/dagger/internal/guava:base-android",
+        "//java/dagger/hilt/internal:preconditions",
         "@maven//:androidx_activity_activity",
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_fragment_fragment",

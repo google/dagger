@@ -41,8 +41,7 @@ android_library(
         "//java/dagger/hilt/android/internal/managers:component_supplier",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/internal:component_manager",
-        "//java/dagger/internal/guava:base-android",
-        "//java/dagger/internal/guava:collect-android",
+        "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/junit",
     ],
 )

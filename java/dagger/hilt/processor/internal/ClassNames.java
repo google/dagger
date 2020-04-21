@@ -144,7 +144,7 @@ public final class ClassNames {
   public static final ClassName APPLICATION_CONTEXT =
       get("dagger.hilt.android.qualifiers", "ApplicationContext");
 
-  public static final ClassName PRECONDITIONS = get("com.google.common.base", "Preconditions");
+  public static final ClassName PRECONDITIONS = get("dagger.hilt.internal", "Preconditions");
 
   public static final ClassName OBJECT = get("java.lang", "Object");
 

@@ -38,11 +38,6 @@ android {
 
 dependencies {
   implementation project(':feature')
-  // TODO(bcorso): guava and errorprone deps are needed to fix conflicts between
-  // Hilt and truth 1.0.1. We should either update guava in Hilt to 28.1 or
-  // remove guava from Hilt's runtime.
-  implementation 'com.google.errorprone:error_prone_annotations:2.3.3'
-  implementation 'com.google.guava:guava:28.1-android'
   implementation 'androidx.appcompat:appcompat:1.1.0'
   implementation 'com.google.dagger:dagger:LOCAL-SNAPSHOT'
   annotationProcessor 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'

@@ -20,6 +20,7 @@ import android.app.Application;
 import android.content.Context;
 import com.google.auto.value.AutoValue;
 import dagger.hilt.EntryPoints;
+import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
 import java.util.ArrayList;
@@ -48,24 +49,21 @@ public final class OnComponentReadyRunner {
   public static <T> void addListener(
       Context context, Class<T> entryPoint, OnComponentReadyListener<T> listener) {
     Application application = (Application) context.getApplicationContext();
-    if (application instanceof OnComponentReadyRunnerHolder) {
-      OnComponentReadyRunnerHolder holder = (OnComponentReadyRunnerHolder) application;
-      holder.getOnComponentReadyRunner().addListenerInternal(holder, entryPoint, listener);
+    if (application instanceof TestApplicationComponentManagerHolder) {
+      TestApplicationComponentManagerHolder managerHolder =
+          (TestApplicationComponentManagerHolder) application;
+      OnComponentReadyRunnerHolder runnerHolder =
+          (OnComponentReadyRunnerHolder) managerHolder.componentManager();
+      runnerHolder.getOnComponentReadyRunner().addListenerInternal(entryPoint, listener);
     }
   }
 
-  private <T> void addListenerInternal(
-      OnComponentReadyRunnerHolder context,
-      Class<T> entryPoint,
-      OnComponentReadyListener<T> listener) {
+  private <T> void addListenerInternal(Class<T> entryPoint, OnComponentReadyListener<T> listener) {
     if (componentHostSet) {
       // If the componentHost was already set, just call through immediately
       runListener(componentManager, entryPoint, listener);
     } else {
-      context
-          .getOnComponentReadyRunner()
-          .listeners
-          .add(EntryPointListener.create(entryPoint, listener));
+      listeners.add(EntryPointListener.create(entryPoint, listener));
     }
   }
 

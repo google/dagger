@@ -16,6 +16,8 @@
 
 package dagger.hilt.android.processor.internal.testing;
 
+import static java.util.stream.Collectors.joining;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
@@ -34,7 +36,6 @@ import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -52,7 +53,6 @@ public final class TestApplicationGenerator {
   private final ClassName baseName;
   private final ClassName appName;
   private final ParameterSpec componentManager;
-  private final ParameterSpec onComponentReadyRunner;
   private final InternalTestRootMetadata metadata;
 
   public TestApplicationGenerator(
@@ -72,10 +72,6 @@ public final class TestApplicationGenerator {
     componentManager =
         ParameterSpec.builder(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER, "componentManager")
             .build();
-
-    onComponentReadyRunner =
-        ParameterSpec.builder(ClassNames.ON_COMPONENT_READY_RUNNER, "onComponentReadyRunner")
-            .build();
   }
 
   public void generate() throws IOException {
@@ -87,15 +83,12 @@ public final class TestApplicationGenerator {
             .addSuperinterface(
                 ParameterizedTypeName.get(ClassNames.COMPONENT_MANAGER, TypeName.OBJECT))
             .addSuperinterface(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER_HOLDER)
-            .addSuperinterface(ClassNames.ON_COMPONENT_READY_RUNNER_HOLDER)
             .addSuperinterface(ClassNames.TEST_INSTANCE_HOLDER)
             .addField(getComponentManagerField())
-            .addField(getOnComponentReadyRunnerField())
             .addMethod(getAttachBaseContextMethod())
             .addMethod(getOnCreateMethod())
             .addMethod(getComponentManagerMethod())
             .addMethod(getComponentMethod())
-            .addMethod(getOnComponentReadyRunnerMethod())
             .addMethod(injectableMethod(testName))
             .addMethod(getInstanceMethod(appName))
             .addField(Object.class, "testInstance", Modifier.PRIVATE)
@@ -122,17 +115,10 @@ public final class TestApplicationGenerator {
         .build();
   }
 
-  // Initialize this in attachBaseContext to not pull it into the main dex.
-  /** private final OnComponentReadyRunner onComponentReadyRunner; */
-  private FieldSpec getOnComponentReadyRunnerField() {
-    return FieldSpec.builder(
-            onComponentReadyRunner.type, onComponentReadyRunner.name, Modifier.PRIVATE)
-        .build();
-  }
-
   /**
+   * <pre><code>
    * new ComponentSupplier<ApplicationComponent>() {
-   *   @Override
+   *   {literal @}Override
    *   public ApplicationComponent get() {
    *     return DaggerApplicationComponent.builder()
    *         .applicationContextModule(new ApplicationContextModule(this))
@@ -142,6 +128,7 @@ public final class TestApplicationGenerator {
    *         .build();
    *   }
    * }
+   * </code></pre>
    */
   private TypeSpec anonymousComponentSupplier() {
     ClassName component =
@@ -161,8 +148,7 @@ public final class TestApplicationGenerator {
                     Processors.prepend(Processors.getEnclosedClassName(component), "Dagger"),
                     ClassNames.APPLICATION_CONTEXT_MODULE,
                     appName,
-                    extraModules
-                        .stream()
+                    extraModules.stream()
                         .map(ClassName::get)
                         .map(
                             className ->
@@ -172,23 +158,26 @@ public final class TestApplicationGenerator {
                                         componentManager,
                                         className)
                                     .toString())
-                        .collect(Collectors.joining("\n")))
+                        .collect(joining("\n")))
                 .build())
         .build();
   }
 
   /**
+   * <pre><code>
    * ImmutableSet.of(
    *     FooTest.NonStaticModule1.class,
    *     FooTest.NonStaticModule2.class,
    *     ...)
+   * </code></pre>
    */
   private CodeBlock requiredModuleList() {
-    return CodeBlock.of("$T.of($L)",
+    return CodeBlock.of(
+        "$T.of($L)",
         ClassName.get(ImmutableSet.class),
         extraModules.stream()
             .map(t -> Joiner.on(".").join(ClassName.get(t).simpleNames()) + ".class")
-            .collect(Collectors.joining(",\n\t")));
+            .collect(joining(",\n\t")));
   }
 
   /**
@@ -201,7 +190,6 @@ public final class TestApplicationGenerator {
    *   componentManager = new TestApplicationComponentManager(
    *       ... see anonymousComponentSupplier(),
    *       ... see requiredModuleList());
-   *   onComponentReadyRunner = new OnComponentReadyRunner();
    * }
    * </pre>
    */
@@ -218,11 +206,11 @@ public final class TestApplicationGenerator {
             anonymousComponentSupplier(),
             requiredModuleList(),
             waitForBindValue)
-        .addStatement("$N = new $T()", onComponentReadyRunner, onComponentReadyRunner.type)
         .build();
   }
 
   /**
+   * <pre><code>
    * {@literal @Override}
    * public void onCreate() {
    *   super.onCreate();
@@ -231,6 +219,7 @@ public final class TestApplicationGenerator {
    *       Hilt_XXX_Application_Injector.class,
    *       (Hilt_XXX_Application_Injector injector) -> injector.inject(this));
    * }
+   * </pre></code>
    */
   private MethodSpec getOnCreateMethod() {
     return MethodSpec.methodBuilder("onCreate")
@@ -260,21 +249,6 @@ public final class TestApplicationGenerator {
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .returns(TypeName.OBJECT)
         .addStatement("return $N", componentManager)
-        .build();
-  }
-
-  /**
-   * {@literal @Override}
-   * public OnComponentReadyRunner getOnComponentReadyRunner() {
-   *   return onComponentReadyRunner;
-   * }
-   */
-  private MethodSpec getOnComponentReadyRunnerMethod() {
-    return MethodSpec.methodBuilder("getOnComponentReadyRunner")
-        .addAnnotation(Override.class)
-        .addModifiers(Modifier.PUBLIC)
-        .returns(ClassNames.ON_COMPONENT_READY_RUNNER)
-        .addStatement("return $N", onComponentReadyRunner)
         .build();
   }
 

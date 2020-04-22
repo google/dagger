@@ -126,6 +126,7 @@ android_library(
     deps = [
         "//:dagger_with_compiler",
         "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/auto:value",

@@ -18,6 +18,7 @@ package dagger.hilt.android.internal.testing;
 
 import android.app.Application;
 import dagger.hilt.android.internal.managers.ComponentSupplier;
+import dagger.hilt.android.testing.OnComponentReadyRunner;
 import dagger.hilt.android.testing.OnComponentReadyRunner.OnComponentReadyRunnerHolder;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
@@ -34,7 +35,8 @@ import org.junit.runner.Description;
  *
  * <p>A manager for the creation of components that live in the test Application.
  */
-public final class TestApplicationComponentManager implements GeneratedComponentManager<Object> {
+public final class TestApplicationComponentManager
+    implements GeneratedComponentManager<Object>, OnComponentReadyRunnerHolder {
   private final Application application;
   private final AtomicReference<Object> component = new AtomicReference<>();
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
@@ -43,6 +45,7 @@ public final class TestApplicationComponentManager implements GeneratedComponent
   private final Map<Class<?>, Object> registeredModules = new ConcurrentHashMap<>();
   private volatile boolean bindValueCalled = false;
   private final boolean waitForBindValue;
+  private final OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
 
   public TestApplicationComponentManager(
       Application application,
@@ -77,6 +80,11 @@ public final class TestApplicationComponentManager implements GeneratedComponent
           + "first injection.");
     }
     return component.get();
+  }
+
+  @Override
+  public OnComponentReadyRunner getOnComponentReadyRunner() {
+    return onComponentReadyRunner;
   }
 
   /** For framework use only! This flag must be set before component creation. */
@@ -136,9 +144,7 @@ public final class TestApplicationComponentManager implements GeneratedComponent
           "Tried to create the component more than once! "
               + "There is a race between registering the HiltTestRule and registering all test "
               + "modules. Make sure there is a happens-before edge between the two.");
-      ((OnComponentReadyRunnerHolder) application)
-          .getOnComponentReadyRunner()
-          .setComponentManager((GeneratedComponentManager) application);
+      onComponentReadyRunner.setComponentManager((GeneratedComponentManager) application);
     }
   }
 

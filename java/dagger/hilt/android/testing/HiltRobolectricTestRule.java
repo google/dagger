@@ -16,11 +16,10 @@
 
 package dagger.hilt.android.testing;
 
-import static com.google.common.base.Preconditions.checkState;
+import static dagger.hilt.internal.Preconditions.checkState;
 
 import android.content.Context;
 import androidx.test.core.app.ApplicationProvider;
-import com.google.common.base.Optional;
 import dagger.hilt.android.internal.testing.TestApplicationComponentManager;
 import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
 import dagger.hilt.android.internal.testing.TestInstanceHolder;
@@ -37,14 +36,14 @@ import org.junit.runners.model.Statement;
 public final class HiltRobolectricTestRule implements TestRule {
   private final RuleChain rules = RuleChain.outerRule(
       new MarkThatRulesRanRule(ApplicationProvider.getApplicationContext()));
-  Optional<Object> testClassInstance;
+  private final Object testClassInstance;
 
   public HiltRobolectricTestRule() {
-    this.testClassInstance = Optional.absent();
+    this.testClassInstance = null;
   }
 
   public HiltRobolectricTestRule(Object testClassInstance) {
-    this.testClassInstance = Optional.of(testClassInstance);
+    this.testClassInstance = testClassInstance;
 
     Context applicationContext = ApplicationProvider.getApplicationContext();
     if (applicationContext instanceof TestInstanceHolder) {
@@ -54,16 +53,19 @@ public final class HiltRobolectricTestRule implements TestRule {
     if (applicationContext instanceof TestApplicationComponentManagerHolder) {
       Object componentManager =
           ((TestApplicationComponentManagerHolder) applicationContext).componentManager();
-      checkState(componentManager instanceof TestApplicationComponentManager);
+      checkState(
+          componentManager instanceof TestApplicationComponentManager,
+          "Expected TestApplicationComponentManagerHolder to return an instance of"
+              + "TestApplicationComponentManager");
       ((TestApplicationComponentManager) componentManager).setBindValueCalled();
     }
   }
 
   @Override
   public Statement apply(Statement baseStatement, Description description) {
-    if (testClassInstance.isPresent()) {
+    if (testClassInstance != null) {
       checkState(
-          description.getTestClass().isInstance(testClassInstance.get()),
+          description.getTestClass().isInstance(testClassInstance),
           "HiltRobolectricTestRule was constructed with an "
               + "argument that was not an instance of the test class");
     }

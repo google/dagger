@@ -313,7 +313,7 @@ public final class TestApplicationGenerator {
         .addModifiers(Modifier.PUBLIC)
         .addAnnotation(Override.class)
         .addParameter(Object.class, varName)
-        .addStatement("testInstance = ($L)$L", testClassName, varName)
+        .addStatement("testInstance = $L", varName)
         .build();
   }
 

@@ -24,7 +24,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class FeatureActivity : Hilt_FeatureActivity() {
+class FeatureActivity : AppCompatActivity() {
   @Inject lateinit var counter: FeatureCounter
 
   override fun onCreate(savedInstanceState: Bundle?) {

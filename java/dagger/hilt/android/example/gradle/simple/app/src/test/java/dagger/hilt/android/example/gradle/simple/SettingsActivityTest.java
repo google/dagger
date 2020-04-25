@@ -112,6 +112,13 @@ public final class SettingsActivityTest {
     assertThat(getBinding()).isEqualTo(BIND_VALUE_STRING);
   }
 
+  @Test
+  public void testSuperClassTransformation() {
+    SimpleActivity simpleActivity = Robolectric.setupActivity(SimpleActivity.class);
+    assertThat(simpleActivity.getClass().getSuperclass().getSimpleName())
+        .isEqualTo("Hilt_SimpleActivity");
+  }
+
   private static String getBinding() {
     return EntryPoints.get(SettingsActivityTest_Application.get(), BindValueEntryPoint.class)
         .bindValueString();

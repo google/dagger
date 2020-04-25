@@ -23,7 +23,7 @@ import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-@AndroidEntryPoint(AppCompatActivity::class)
+@AndroidEntryPoint
 class FeatureActivity : Hilt_FeatureActivity() {
   @Inject lateinit var counter: FeatureCounter
 

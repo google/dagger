@@ -26,8 +26,8 @@ import dagger.hilt.android.example.gradle.simple.feature.FeatureActivity;
 import javax.inject.Inject;
 
 /** The main activity of the application. */
-@AndroidEntryPoint(AppCompatActivity.class)
-public class SimpleActivity extends Hilt_SimpleActivity {
+@AndroidEntryPoint
+public class SimpleActivity extends AppCompatActivity {
   private static final String TAG = SimpleActivity.class.getSimpleName();
 
   @Inject SimpleGreeter greeter;

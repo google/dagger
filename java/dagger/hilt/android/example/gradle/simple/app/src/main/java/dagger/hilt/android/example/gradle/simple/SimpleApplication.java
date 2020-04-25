@@ -26,8 +26,8 @@ import javax.inject.Inject;
  * utilities in {@code Hilt} in Android.
  */
 @GenerateComponents
-@AndroidEntryPoint(Application.class)
-public class SimpleApplication extends Hilt_SimpleApplication {
+@AndroidEntryPoint
+public class SimpleApplication extends Application {
 
   // Shows that we can inject ApplicationComponent bindings into an application.
   @Inject @Model String model;

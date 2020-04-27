@@ -51,14 +51,12 @@ final class BindValueGenerator {
   private final BindValueMetadata metadata;
   private final ClassName testClassName;
   private final ClassName className;
-  private final ClassName appClassName;
 
   BindValueGenerator(ProcessingEnvironment env, BindValueMetadata metadata) {
     this.env = env;
     this.metadata = metadata;
     testClassName = ClassName.get(metadata.testElement());
     className = Processors.append(testClassName, SUFFIX);
-    appClassName = Processors.append(testClassName, "_Application");
   }
 
   //  @Module
@@ -94,7 +92,7 @@ final class BindValueGenerator {
 
   // @Provides
   // static FooTest providesFooTest(@ApplicationContext Context context) {
-  //   return (FooTest)((FooTest_Application) context).getTestInstance();
+  //   return (FooTest)((TestInstanceHolder) context).getTestInstance();
   // }
   private MethodSpec providesTestMethod() {
     String methodName = "provides" + testClassName.simpleName();
@@ -108,7 +106,9 @@ final class BindValueGenerator {
                     .build())
             .returns(testClassName)
             .addStatement(
-                "return ($T)(($T) context).getTestInstance()", testClassName, appClassName);
+                "return ($T)(($T) context).getTestInstance()",
+                testClassName,
+                ClassNames.TEST_INSTANCE_HOLDER);
     return builder.build();
   }
 

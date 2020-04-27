@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.testing;
 
+import static dagger.hilt.internal.Preconditions.checkNotNull;
 import static dagger.hilt.internal.Preconditions.checkState;
 
 import android.content.Context;
@@ -43,6 +44,7 @@ public final class HiltRobolectricTestRule implements TestRule {
   }
 
   public HiltRobolectricTestRule(Object testClassInstance) {
+    checkNotNull(testClassInstance);
     this.testClassInstance = testClassInstance;
 
     Context applicationContext = ApplicationProvider.getApplicationContext();
@@ -57,7 +59,7 @@ public final class HiltRobolectricTestRule implements TestRule {
           componentManager instanceof TestApplicationComponentManager,
           "Expected TestApplicationComponentManagerHolder to return an instance of"
               + "TestApplicationComponentManager");
-      ((TestApplicationComponentManager) componentManager).setBindValueCalled();
+      ((TestApplicationComponentManager) componentManager).setBindValueCalled(testClassInstance);
     }
   }
 

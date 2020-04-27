@@ -103,7 +103,7 @@ android_library(
         "//java/dagger/hilt/android/internal/testing:test_instance_holder",
         "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/junit",
-        "@maven//:androidx_test_monitor",
+        "@maven//:androidx_test_core",
     ],
 )
 

@@ -43,7 +43,7 @@ public final class TestApplicationComponentManager
   private final ComponentSupplier componentSupplier;
   private final Set<Class<?>> requiredModules;
   private final Map<Class<?>, Object> registeredModules = new ConcurrentHashMap<>();
-  private volatile boolean bindValueCalled = false;
+  private volatile Object bindValueTestInstance;
   private final boolean waitForBindValue;
   private final OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
 
@@ -61,7 +61,8 @@ public final class TestApplicationComponentManager
   @Override
   public Object generatedComponent() {
     if (component.get() == null) {
-      Preconditions.checkState(hasHiltTestRule(),
+      Preconditions.checkState(
+          hasHiltTestRule(),
           "The component was not created. Check that you have added the HiltTestRule.");
       if (!registeredModules.keySet().containsAll(requiredModules)) {
         Set<Class<?>> difference = new HashSet<>(requiredModules);
@@ -71,7 +72,8 @@ public final class TestApplicationComponentManager
                 + "registered all test modules:\n\tUnregistered: "
                 + difference);
       }
-      Preconditions.checkState(bindValueReady(),
+      Preconditions.checkState(
+          bindValueReady(),
           "The test instance has not been set. Did you forget to call #bind()?");
       throw new IllegalStateException("The component has not been created. "
           + "Check that you have called #inject()? Otherwise, "
@@ -100,10 +102,15 @@ public final class TestApplicationComponentManager
     return hasHiltTestRule.get();
   }
 
-  public void setBindValueCalled() {
+  public void setBindValueCalled(Object testInstance) {
+    Preconditions.checkNotNull(testInstance);
+    Preconditions.checkState(
+        bindValueTestInstance == null || bindValueTestInstance == testInstance,
+        "Cannot call setBindValueCalled from two different test instances.");
+
     // Some tests call bind without using @BindValue. b/128706854
-    if (waitForBindValue) {
-      bindValueCalled = true;
+    if (waitForBindValue && bindValueTestInstance == null) {
+      bindValueTestInstance = testInstance;
       tryToCreateComponent();
     }
   }
@@ -149,7 +156,7 @@ public final class TestApplicationComponentManager
   }
 
   private boolean bindValueReady() {
-    return !waitForBindValue || bindValueCalled;
+    return !waitForBindValue || bindValueTestInstance != null;
   }
 
   private boolean hasHiltTestRule() {

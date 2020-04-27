@@ -324,7 +324,7 @@ public final class TestApplicationGenerator {
         .returns(appName)
         .addParameter(testName, varName)
         .addStatement("testInstance = $L", varName)
-        .addStatement("componentManager.setBindValueCalled()")
+        .addStatement("componentManager.setBindValueCalled(testInstance)")
         .addStatement("return this")
         .build();
   }

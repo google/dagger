@@ -19,101 +19,48 @@ package dagger.hilt.android.example.gradle.simple;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Build;
-import dagger.Module;
-import dagger.Provides;
-import dagger.hilt.EntryPoint;
-import dagger.hilt.EntryPoints;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.hilt.GenerateComponents;
-import dagger.hilt.InstallIn;
-import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.testing.AndroidRobolectricEntryPoint;
 import dagger.hilt.android.testing.BindValue;
 import dagger.hilt.android.testing.HiltRobolectricTestRule;
 import dagger.hilt.android.testing.UninstallModules;
 import javax.inject.Inject;
-import javax.inject.Named;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 /** A simple test using Hilt. */
 @UninstallModules(ModelModule.class)
 @GenerateComponents
 @AndroidRobolectricEntryPoint
-@RunWith(RobolectricTestRunner.class)
+@RunWith(AndroidJUnit4.class)
 // Robolectric requires Java9 to run API 29 and above, so use API 28 instead
 @Config(sdk = Build.VERSION_CODES.P, application = SettingsActivityTest_Application.class)
 public final class SettingsActivityTest {
-  private static final String FAKE_MODEL = "FakeModel";
-  private static final int TEST_VALUE = 11;
-
-  private static final String BIND_VALUE_STRING = "BIND_VALUE_STRING";
-  private static final String TEST_QUALIFIER = "TEST_QUALIFIER";
-
-  @Module
-  @InstallIn(ApplicationComponent.class)
-  interface TestModule {
-    @Provides
-    @Model
-    static String provideFakeModel() {
-      return FAKE_MODEL;
-    }
-
-    @Provides
-    static int provideInt() {
-      return TEST_VALUE;
-    }
-  }
-
-  @EntryPoint
-  @InstallIn(ApplicationComponent.class)
-  interface BindValueEntryPoint {
-    @Named(TEST_QUALIFIER)
-    String bindValueString();
-  }
-
   @Rule public HiltRobolectricTestRule rule = new HiltRobolectricTestRule(this);
 
-  @Inject Integer intValue;
+  @BindValue @Model String fakeModel = "FakeModel";
 
-  @BindValue
-  @Named(TEST_QUALIFIER)
-  String bindValueString = BIND_VALUE_STRING;
+  @Inject @Model String injectedModel;
 
   @Test
-  public void testInject() throws Exception {
-    assertThat(intValue).isNull();
-
+  public void testInjectedModel() throws Exception {
+    assertThat(injectedModel).isNull();
     SettingsActivityTest_Application.get().inject(this);
-
-    assertThat(intValue).isNotNull();
-    assertThat(intValue).isEqualTo(TEST_VALUE);
+    assertThat(injectedModel).isEqualTo("FakeModel");
   }
 
   @Test
   public void testActivityInject() throws Exception {
-    SettingsActivity activity = Robolectric.setupActivity(SettingsActivity.class);
-    assertThat(activity.greeter.greet())
-        .isEqualTo("ProdUser, you are on build FakeModel.");
-  }
-
-  @Test
-  public void testBindValueIsMutable() throws Exception {
-    bindValueString = "newValue";
-    assertThat(getBinding()).isEqualTo("newValue");
-  }
-
-  @Test
-  public void testBindValueFieldIsProvided() throws Exception {
-    assertThat(bindValueString).isEqualTo(BIND_VALUE_STRING);
-    assertThat(getBinding()).isEqualTo(BIND_VALUE_STRING);
-  }
-
-  private static String getBinding() {
-    return EntryPoints.get(SettingsActivityTest_Application.get(), BindValueEntryPoint.class)
-        .bindValueString();
+    try (ActivityScenario<SettingsActivity> scenario =
+        ActivityScenario.launch(SettingsActivity.class)) {
+      scenario.onActivity(
+          activity ->
+              assertThat(activity.greeter.greet())
+                  .isEqualTo("ProdUser, you are on build FakeModel."));
+    }
   }
 }

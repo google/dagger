@@ -17,7 +17,7 @@
 package dagger.hilt.android.testing;
 
 import android.content.Context;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 import dagger.hilt.android.internal.testing.TestApplicationComponentManager;
 import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
 import dagger.hilt.android.internal.testing.TestInstanceHolder;
@@ -40,7 +40,7 @@ public final class HiltEmulatorTestRule implements TestRule {
   public HiltEmulatorTestRule(Object testClassInstance) {
     this.testClassInstance = testClassInstance;
 
-    Context applicationContext = InstrumentationRegistry.getTargetContext();
+    Context applicationContext = ApplicationProvider.getApplicationContext();
     rules = RuleChain.outerRule(new MarkThatRulesRanRule(applicationContext));
 
     if (applicationContext instanceof TestInstanceHolder) {
@@ -51,7 +51,7 @@ public final class HiltEmulatorTestRule implements TestRule {
       Object componentManager =
           ((TestApplicationComponentManagerHolder) applicationContext).componentManager();
       Preconditions.checkState(componentManager instanceof TestApplicationComponentManager, "");
-      ((TestApplicationComponentManager) componentManager).setBindValueCalled();
+      ((TestApplicationComponentManager) componentManager).setBindValueCalled(testClassInstance);
     }
   }
 

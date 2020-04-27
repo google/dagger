@@ -47,6 +47,8 @@ dependencies {
   testImplementation 'com.google.truth:truth:1.0.1'
   testImplementation 'junit:junit:4.13'
   testImplementation 'org.robolectric:robolectric:4.3'
+  testImplementation 'androidx.test.ext:junit:1.1.1'
+  testImplementation 'androidx.test:runner:1.2.0'
   // TODO(bcorso): This multidex dep shouldn't be required -- it's a dep for the generated code.
   testImplementation 'androidx.multidex:multidex:2.0.0'
   testImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
@@ -54,6 +56,7 @@ dependencies {
   testAnnotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'
 
   androidTestImplementation 'com.google.truth:truth:1.0.1'
+  androidTestImplementation 'androidx.test.ext:junit:1.1.1'
   androidTestImplementation 'androidx.test:runner:1.2.0'
   androidTestImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
   androidTestAnnotationProcessor 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'

@@ -18,59 +18,35 @@ package dagger.hilt.android.example.gradle.simple;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import androidx.test.runner.AndroidJUnit4;
-import dagger.Module;
-import dagger.Provides;
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.hilt.GenerateComponents;
-import dagger.hilt.InstallIn;
-import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.testing.AndroidEmulatorEntryPoint;
+import dagger.hilt.android.testing.BindValue;
 import dagger.hilt.android.testing.HiltEmulatorTestRule;
-import javax.inject.Inject;
+import dagger.hilt.android.testing.UninstallModules;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /** A simple test using Hilt. */
+@UninstallModules(UserNameModule.class)
 @GenerateComponents
 @AndroidEmulatorEntryPoint
 @RunWith(AndroidJUnit4.class)
-public final class SimpleEmulatorTest {
-  private static final int TEST_VALUE = 9;
-
-  @Module
-  @InstallIn(ApplicationComponent.class)
-  interface TestModule {
-    @Provides
-    static int provideInt() {
-      return TEST_VALUE;
-    }
-  }
-
-  static class Foo {
-    final int value;
-
-    @Inject
-    Foo(int value) {
-      this.value = value;
-    }
-  }
+public final class SimpleActivityEmulatorTest {
 
   @Rule public HiltEmulatorTestRule rule = new HiltEmulatorTestRule(this);
 
-  @Inject @Model String model;
-  @Inject Foo foo;
-
-  // TODO(user): Add @BindValue
+  @BindValue @UserName String fakeUserName = "FakeUser";
 
   @Test
-  public void testInject() throws Exception {
-    assertThat(model).isNull();
-
-    SimpleEmulatorTest_Application.get().inject(this);
-
-    assertThat(model).isNotNull();
-    assertThat(model).isEqualTo(android.os.Build.MODEL);
+  public void testActivityInject() throws Exception {
+    try (ActivityScenario<SimpleActivity> scenario =
+        ActivityScenario.launch(SimpleActivity.class)) {
+      scenario.onActivity(
+          activity -> assertThat(activity.greeter.greet()).isEqualTo("Hello, FakeUser!"));
+    }
   }
 
   // TODO(user): Add multiple test cases. Currently, we can't because the test rule will be set

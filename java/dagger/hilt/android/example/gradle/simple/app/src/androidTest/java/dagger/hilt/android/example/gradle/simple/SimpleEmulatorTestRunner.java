@@ -27,6 +27,7 @@ public final class SimpleEmulatorTestRunner extends AndroidJUnitRunner {
   public Application newApplication(ClassLoader cl, String className, Context context)
       throws ClassNotFoundException, IllegalAccessException, InstantiationException {
     // TODO(user): Update this to support multiple emulator tests.
-    return super.newApplication(cl, SimpleEmulatorTest_Application.class.getName(), context);
+    return super.newApplication(
+        cl, SimpleActivityEmulatorTest_Application.class.getName(), context);
   }
 }

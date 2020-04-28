@@ -67,6 +67,10 @@ public final class OnComponentReadyRunner {
     }
   }
 
+  public boolean isEmpty() {
+    return listeners.isEmpty();
+  }
+
   @AutoValue
   abstract static class EntryPointListener<T> {
     static <T> EntryPointListener<T> create(

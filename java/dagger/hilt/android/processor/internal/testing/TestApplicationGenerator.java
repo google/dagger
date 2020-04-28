@@ -86,7 +86,6 @@ public final class TestApplicationGenerator {
             .addSuperinterface(ClassNames.TEST_INSTANCE_HOLDER)
             .addField(getComponentManagerField())
             .addMethod(getAttachBaseContextMethod())
-            .addMethod(getOnCreateMethod())
             .addMethod(getComponentManagerMethod())
             .addMethod(getComponentMethod())
             .addMethod(injectableMethod(testName))
@@ -206,31 +205,6 @@ public final class TestApplicationGenerator {
             anonymousComponentSupplier(),
             requiredModuleList(),
             waitForBindValue)
-        .build();
-  }
-
-  /**
-   * <pre><code>
-   * {@literal @Override}
-   * public void onCreate() {
-   *   super.onCreate();
-   *   OnComponentReadyRunner.addListener(
-   *       this,
-   *       Hilt_XXX_Application_Injector.class,
-   *       (Hilt_XXX_Application_Injector injector) -> injector.inject(this));
-   * }
-   * </pre></code>
-   */
-  private MethodSpec getOnCreateMethod() {
-    return MethodSpec.methodBuilder("onCreate")
-        .addAnnotation(Override.class)
-        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .addStatement("super.onCreate()")
-        .addStatement(
-            "$T.addListener(this, $T.class, ($T injector) -> injector.inject(this))",
-            ClassNames.ON_COMPONENT_READY_RUNNER,
-            metadata.injectorClassName(),
-            metadata.injectorClassName())
         .build();
   }
 

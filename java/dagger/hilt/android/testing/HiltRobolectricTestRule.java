@@ -19,11 +19,7 @@ package dagger.hilt.android.testing;
 import static dagger.hilt.internal.Preconditions.checkNotNull;
 import static dagger.hilt.internal.Preconditions.checkState;
 
-import android.content.Context;
-import androidx.test.core.app.ApplicationProvider;
-import dagger.hilt.android.internal.testing.TestApplicationComponentManager;
-import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
-import dagger.hilt.android.internal.testing.TestInstanceHolder;
+import dagger.hilt.android.internal.testing.MarkThatRulesRanRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -35,39 +31,19 @@ import org.junit.runners.model.Statement;
  * <p>This rule is required. The Dagger component will not be created without this test rule.
  */
 public final class HiltRobolectricTestRule implements TestRule {
-  private final RuleChain rules = RuleChain.outerRule(
-      new MarkThatRulesRanRule(ApplicationProvider.getApplicationContext()));
-  private final Object testClassInstance;
+  private final Object testInstance;
+  private final RuleChain rules;
 
-  public HiltRobolectricTestRule() {
-    this.testClassInstance = null;
-  }
-
-  public HiltRobolectricTestRule(Object testClassInstance) {
-    checkNotNull(testClassInstance);
-    this.testClassInstance = testClassInstance;
-
-    Context applicationContext = ApplicationProvider.getApplicationContext();
-    if (applicationContext instanceof TestInstanceHolder) {
-      ((TestInstanceHolder) applicationContext).setTestInstance(testClassInstance);
-    }
-
-    if (applicationContext instanceof TestApplicationComponentManagerHolder) {
-      Object componentManager =
-          ((TestApplicationComponentManagerHolder) applicationContext).componentManager();
-      checkState(
-          componentManager instanceof TestApplicationComponentManager,
-          "Expected TestApplicationComponentManagerHolder to return an instance of"
-              + "TestApplicationComponentManager");
-      ((TestApplicationComponentManager) componentManager).setBindValueCalled(testClassInstance);
-    }
+  public HiltRobolectricTestRule(Object testInstance) {
+    this.testInstance = checkNotNull(testInstance);
+    this.rules = RuleChain.outerRule(new MarkThatRulesRanRule(this.testInstance));
   }
 
   @Override
   public Statement apply(Statement baseStatement, Description description) {
-    if (testClassInstance != null) {
+    if (testInstance != null) {
       checkState(
-          description.getTestClass().isInstance(testClassInstance),
+          description.getTestClass().isInstance(testInstance),
           "HiltRobolectricTestRule was constructed with an "
               + "argument that was not an instance of the test class");
     }

@@ -38,14 +38,15 @@ import org.junit.runner.Description;
 public final class TestApplicationComponentManager
     implements GeneratedComponentManager<Object>, OnComponentReadyRunnerHolder {
   private final Application application;
-  private final AtomicReference<Object> component = new AtomicReference<>();
-  private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
   private final ComponentSupplier componentSupplier;
   private final Set<Class<?>> requiredModules;
+  private final boolean waitForBindValue;
+
+  private final AtomicReference<Object> component = new AtomicReference<>();
+  private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
   private final Map<Class<?>, Object> registeredModules = new ConcurrentHashMap<>();
   private volatile Object bindValueTestInstance;
-  private final boolean waitForBindValue;
-  private final OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
+  private volatile OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
 
   public TestApplicationComponentManager(
       Application application,
@@ -73,8 +74,7 @@ public final class TestApplicationComponentManager
                 + difference);
       }
       Preconditions.checkState(
-          bindValueReady(),
-          "The test instance has not been set. Did you forget to call #bind()?");
+          bindValueReady(), "The test instance has not been set. Did you forget to call #bind()?");
       throw new IllegalStateException("The component has not been created. "
           + "Check that you have called #inject()? Otherwise, "
           + "there is a race between injection and component creation. Make sure there is a "
@@ -90,12 +90,41 @@ public final class TestApplicationComponentManager
   }
 
   /** For framework use only! This flag must be set before component creation. */
-  public void setHasHiltTestRule(Description description) {
+  void setHasHiltTestRule(Description description) {
     Preconditions.checkState(
         // Some exempted tests set the test rule multiple times. Use CAS to avoid setting twice.
         hasHiltTestRule.compareAndSet(null, description),
         "The hasHiltTestRule flag has already been set!");
     tryToCreateComponent();
+  }
+
+  void checkStateIsCleared() {
+    Preconditions.checkState(
+        component.get() == null,
+        "The Hilt component cannot be set before Hilt's test rule has run.");
+    Preconditions.checkState(
+        hasHiltTestRule.get() == null,
+        "The Hilt test rule cannot be set before Hilt's test rule has run.");
+    Preconditions.checkState(
+        bindValueTestInstance == null,
+        "The Hilt BindValue instance cannot be set before Hilt's test rule has run.");
+    Preconditions.checkState(
+        registeredModules.isEmpty(),
+        "The Hilt registered modules cannot be set before Hilt's test rule has run.");
+    Preconditions.checkState(
+        onComponentReadyRunner.isEmpty(),
+        "The Hilt onComponentReadyRunner cannot add listeners before Hilt's test rule has run.");
+  }
+
+  void clearState() {
+    Preconditions.checkState(
+        hasHiltTestRule(), "Cannot reset state if the test rule has not been set.");
+
+    component.set(null);
+    hasHiltTestRule.set(null);
+    bindValueTestInstance = null;
+    registeredModules.clear();
+    onComponentReadyRunner = new OnComponentReadyRunner();
   }
 
   public Description getDescription() {

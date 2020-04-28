@@ -16,12 +16,10 @@
 
 package dagger.hilt.android.testing;
 
-import android.content.Context;
-import androidx.test.core.app.ApplicationProvider;
-import dagger.hilt.android.internal.testing.TestApplicationComponentManager;
-import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
-import dagger.hilt.android.internal.testing.TestInstanceHolder;
-import dagger.hilt.internal.Preconditions;
+import static dagger.hilt.internal.Preconditions.checkNotNull;
+import static dagger.hilt.internal.Preconditions.checkState;
+
+import dagger.hilt.android.internal.testing.MarkThatRulesRanRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -34,30 +32,17 @@ import org.junit.runners.model.Statement;
  */
 public final class HiltEmulatorTestRule implements TestRule {
   private final RuleChain rules;
-  private final Object testClassInstance;
+  private final Object testInstance;
 
   /** Creates a new instance of the rules. Tests should pass {@code this}. */
-  public HiltEmulatorTestRule(Object testClassInstance) {
-    this.testClassInstance = testClassInstance;
-
-    Context applicationContext = ApplicationProvider.getApplicationContext();
-    rules = RuleChain.outerRule(new MarkThatRulesRanRule(applicationContext));
-
-    if (applicationContext instanceof TestInstanceHolder) {
-      ((TestInstanceHolder) applicationContext).setTestInstance(testClassInstance);
-    }
-
-    if (applicationContext instanceof TestApplicationComponentManagerHolder) {
-      Object componentManager =
-          ((TestApplicationComponentManagerHolder) applicationContext).componentManager();
-      Preconditions.checkState(componentManager instanceof TestApplicationComponentManager, "");
-      ((TestApplicationComponentManager) componentManager).setBindValueCalled(testClassInstance);
-    }
+  public HiltEmulatorTestRule(Object testInstance) {
+    this.testInstance = checkNotNull(testInstance);
+    this.rules = RuleChain.outerRule(new MarkThatRulesRanRule(testInstance));
   }
 
   @Override public Statement apply(Statement baseStatement, Description description) {
-    Preconditions.checkState(
-        description.getTestClass().isInstance(testClassInstance),
+    checkState(
+        description.getTestClass().isInstance(testInstance),
         "HiltEmulatorTestRule was constructed with an "
             + "argument that was not an instance of the test class");
     return rules.apply(baseStatement, description);

@@ -82,13 +82,9 @@ android_library(
     testonly = 1,
     srcs = ["HiltRobolectricTestRule.java"],
     deps = [
-        ":test_rules_common",
-        "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
-        "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
-        "//java/dagger/hilt/android/internal/testing:test_instance_holder",
+        "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
         "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/junit",
-        "@maven//:androidx_test_core",
     ],
 )
 
@@ -97,23 +93,7 @@ android_library(
     testonly = 1,
     srcs = ["HiltEmulatorTestRule.java"],
     deps = [
-        ":test_rules_common",
-        "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
-        "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
-        "//java/dagger/hilt/android/internal/testing:test_instance_holder",
-        "//java/dagger/hilt/internal:preconditions",
-        "@google_bazel_common//third_party/java/junit",
-        "@maven//:androidx_test_core",
-    ],
-)
-
-android_library(
-    name = "test_rules_common",
-    testonly = 1,
-    srcs = ["MarkThatRulesRanRule.java"],
-    deps = [
-        "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
-        "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
+        "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
         "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/junit",
     ],
@@ -189,6 +169,7 @@ gen_maven_artifact(
     shaded_deps = ["@com_google_auto_auto_common//jar"],
     shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
     deps = [
+        "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
         "//java/dagger/hilt/android/internal/testing:test_injector",
@@ -199,7 +180,6 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/testing:emulator_test_rule",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/android/testing:robolectric_test_rule",
-        "//java/dagger/hilt/android/testing:test_rules_common",
         "//java/dagger/hilt/android/testing:uninstall_modules",
     ],
 )

@@ -87,12 +87,11 @@ java_library(
         ":internal_test_root_metadata",
         "//java/dagger/hilt/android/processor/internal:android_classnames",
         "//java/dagger/hilt/processor/internal:classnames",
-        "//java/dagger/hilt/processor/internal:component_descriptor",
         "//java/dagger/hilt/processor/internal:component_names",
         "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/internal/guava:annotations",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/javapoet",
-        "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
 )

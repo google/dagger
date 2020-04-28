@@ -57,3 +57,17 @@ android_library(
     testonly = 1,
     srcs = ["TestInstanceHolder.java"],
 )
+
+android_library(
+    name = "mark_that_rules_ran_rule",
+    testonly = 1,
+    srcs = ["MarkThatRulesRanRule.java"],
+    deps = [
+        ":test_application_component_manager",
+        ":test_application_component_manager_holder",
+        ":test_instance_holder",
+        "//java/dagger/hilt/internal:preconditions",
+        "@google_bazel_common//third_party/java/junit",
+        "@maven//:androidx_test_core",
+    ],
+)

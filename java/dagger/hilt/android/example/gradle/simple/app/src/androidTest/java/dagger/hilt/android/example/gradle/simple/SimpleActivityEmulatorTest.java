@@ -25,6 +25,7 @@ import dagger.hilt.android.testing.AndroidEmulatorEntryPoint;
 import dagger.hilt.android.testing.BindValue;
 import dagger.hilt.android.testing.HiltEmulatorTestRule;
 import dagger.hilt.android.testing.UninstallModules;
+import javax.inject.Inject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +41,15 @@ public final class SimpleActivityEmulatorTest {
 
   @BindValue @UserName String fakeUserName = "FakeUser";
 
+  @Inject @UserName String injectedUserName;
+
+  @Test
+  public void testInjectedUserName() throws Exception {
+    assertThat(injectedUserName).isNull();
+    SimpleActivityEmulatorTest_Application.get().inject(this);
+    assertThat(injectedUserName).isEqualTo("FakeUser");
+  }
+
   @Test
   public void testActivityInject() throws Exception {
     try (ActivityScenario<SimpleActivity> scenario =
@@ -48,7 +58,4 @@ public final class SimpleActivityEmulatorTest {
           activity -> assertThat(activity.greeter.greet()).isEqualTo("Hello, FakeUser!"));
     }
   }
-
-  // TODO(user): Add multiple test cases. Currently, we can't because the test rule will be set
-  // multiple times since the same application instance is used for every test case.
 }

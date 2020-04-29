@@ -24,7 +24,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.hilt.GenerateComponents;
 import dagger.hilt.android.testing.AndroidRobolectricEntryPoint;
 import dagger.hilt.android.testing.BindValue;
-import dagger.hilt.android.testing.HiltRobolectricTestRule;
+import dagger.hilt.android.testing.HiltTestRule;
 import dagger.hilt.android.testing.UninstallModules;
 import javax.inject.Inject;
 import org.junit.Rule;
@@ -40,7 +40,7 @@ import org.robolectric.annotation.Config;
 // Robolectric requires Java9 to run API 29 and above, so use API 28 instead
 @Config(sdk = Build.VERSION_CODES.P, application = SettingsActivityTest_Application.class)
 public final class SettingsActivityTest {
-  @Rule public HiltRobolectricTestRule rule = new HiltRobolectricTestRule(this);
+  @Rule public HiltTestRule rule = new HiltTestRule(this);
 
   @BindValue @Model String fakeModel = "FakeModel";
 

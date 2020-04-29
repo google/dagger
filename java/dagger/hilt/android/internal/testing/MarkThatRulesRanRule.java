@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.internal.testing;
 
+import static dagger.hilt.internal.Preconditions.checkNotNull;
 import static dagger.hilt.internal.Preconditions.checkState;
 
 import android.content.Context;
@@ -35,11 +36,14 @@ public final class MarkThatRulesRanRule implements TestRule {
   private final Object testInstance;
 
   public MarkThatRulesRanRule(Object testInstance) {
-    this.testInstance = dagger.hilt.internal.Preconditions.checkNotNull(testInstance);
+    this.testInstance = checkNotNull(testInstance);
   }
 
   @Override
   public Statement apply(final Statement base, Description description) {
+    checkState(
+        description.getTestClass().isInstance(testInstance),
+        "HiltTestRule was constructed with an argument that was not an instance of the test class");
     return new Statement() {
       @Override
       public void evaluate() throws Throwable {

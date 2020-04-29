@@ -32,7 +32,7 @@ import dagger.hilt.android.testing.BindElementsIntoSet;
 import dagger.hilt.android.testing.BindValue;
 import dagger.hilt.android.testing.BindValueIntoMap;
 import dagger.hilt.android.testing.BindValueIntoSet;
-import dagger.hilt.android.testing.HiltRobolectricTestRule;
+import dagger.hilt.android.testing.HiltTestRule;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
@@ -76,7 +76,7 @@ public final class BindValueTest {
     Set<String> getStringSet();
   }
 
-  @Rule public HiltRobolectricTestRule rule = new HiltRobolectricTestRule(this);
+  @Rule public HiltTestRule rule = new HiltTestRule(this);
 
   @BindValue
   @Named(TEST_QUALIFIER)

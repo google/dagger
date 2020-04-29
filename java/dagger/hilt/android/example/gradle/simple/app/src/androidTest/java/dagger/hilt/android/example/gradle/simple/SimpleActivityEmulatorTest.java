@@ -23,7 +23,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.hilt.GenerateComponents;
 import dagger.hilt.android.testing.AndroidEmulatorEntryPoint;
 import dagger.hilt.android.testing.BindValue;
-import dagger.hilt.android.testing.HiltEmulatorTestRule;
+import dagger.hilt.android.testing.HiltTestRule;
 import dagger.hilt.android.testing.UninstallModules;
 import javax.inject.Inject;
 import org.junit.Rule;
@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public final class SimpleActivityEmulatorTest {
 
-  @Rule public HiltEmulatorTestRule rule = new HiltEmulatorTestRule(this);
+  @Rule public HiltTestRule rule = new HiltTestRule(this);
 
   @BindValue @UserName String fakeUserName = "FakeUser";
 

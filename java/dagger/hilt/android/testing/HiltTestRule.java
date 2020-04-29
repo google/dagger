@@ -17,36 +17,26 @@
 package dagger.hilt.android.testing;
 
 import static dagger.hilt.internal.Preconditions.checkNotNull;
-import static dagger.hilt.internal.Preconditions.checkState;
 
 import dagger.hilt.android.internal.testing.MarkThatRulesRanRule;
-import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 /**
- * A Junit {@code TestRule} that's installed in all Hilt tests.
+ * A {@link TestRule} for Hilt that can be used with JVM or Instrumentation tests.
  *
  * <p>This rule is required. The Dagger component will not be created without this test rule.
  */
-public final class HiltRobolectricTestRule implements TestRule {
-  private final Object testInstance;
-  private final RuleChain rules;
+public final class HiltTestRule implements TestRule {
+  private final MarkThatRulesRanRule rule;
 
-  public HiltRobolectricTestRule(Object testInstance) {
-    this.testInstance = checkNotNull(testInstance);
-    this.rules = RuleChain.outerRule(new MarkThatRulesRanRule(this.testInstance));
+  /** Creates a new instance of the rules. Tests should pass {@code this}. */
+  public HiltTestRule(Object testInstance) {
+    this.rule = new MarkThatRulesRanRule(checkNotNull(testInstance));
   }
 
-  @Override
-  public Statement apply(Statement baseStatement, Description description) {
-    if (testInstance != null) {
-      checkState(
-          description.getTestClass().isInstance(testInstance),
-          "HiltRobolectricTestRule was constructed with an "
-              + "argument that was not an instance of the test class");
-    }
-    return rules.apply(baseStatement, description);
+  @Override public Statement apply(Statement baseStatement, Description description) {
+    return rule.apply(baseStatement, description);
   }
 }

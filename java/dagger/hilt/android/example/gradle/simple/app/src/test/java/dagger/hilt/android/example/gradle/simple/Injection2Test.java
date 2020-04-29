@@ -30,7 +30,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.testing.AndroidRobolectricEntryPoint;
-import dagger.hilt.android.testing.HiltRobolectricTestRule;
+import dagger.hilt.android.testing.HiltTestRule;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.junit.Rule;
@@ -76,7 +76,7 @@ public final class Injection2Test {
     @Inject @Named(ACTIVITY_QUALIFIER) String activityValue;
   }
 
-  @Rule public HiltRobolectricTestRule rule = new HiltRobolectricTestRule(this);
+  @Rule public HiltTestRule rule = new HiltTestRule(this);
 
   @Inject @Named(APPLICATION_QUALIFIER) String applicationValue;
 

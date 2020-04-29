@@ -24,7 +24,6 @@ android_library(
     srcs = ["AndroidRobolectricEntryPoint.java"],
     exports = [
         ":common_test_entry_point_exports",
-        ":robolectric_test_rule",
     ],
     deps = [
         "//java/dagger/hilt:generates_root_input",
@@ -37,7 +36,6 @@ android_library(
     srcs = ["AndroidEmulatorEntryPoint.java"],
     exports = [
         ":common_test_entry_point_exports",
-        ":emulator_test_rule",
     ],
     deps = [
         "//java/dagger/hilt:generates_root_input",
@@ -54,6 +52,7 @@ android_library(
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:plugin",
     ],
     exports = [
+        ":hilt_test_rule",
         ":on_component_ready_runner",
         "//java/dagger/hilt:generate_components",
         "//java/dagger/hilt:install_in",
@@ -78,20 +77,9 @@ android_library(
 )
 
 android_library(
-    name = "robolectric_test_rule",
+    name = "hilt_test_rule",
     testonly = 1,
-    srcs = ["HiltRobolectricTestRule.java"],
-    deps = [
-        "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
-        "//java/dagger/hilt/internal:preconditions",
-        "@google_bazel_common//third_party/java/junit",
-    ],
-)
-
-android_library(
-    name = "emulator_test_rule",
-    testonly = 1,
-    srcs = ["HiltEmulatorTestRule.java"],
+    srcs = ["HiltTestRule.java"],
     deps = [
         "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
         "//java/dagger/hilt/internal:preconditions",
@@ -177,9 +165,8 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/testing:android_emulator_entry_point",
         "//java/dagger/hilt/android/testing:android_robolectric_entry_point",
         "//java/dagger/hilt/android/testing:bind_value",
-        "//java/dagger/hilt/android/testing:emulator_test_rule",
+        "//java/dagger/hilt/android/testing:hilt_test_rule",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
-        "//java/dagger/hilt/android/testing:robolectric_test_rule",
         "//java/dagger/hilt/android/testing:uninstall_modules",
     ],
 )

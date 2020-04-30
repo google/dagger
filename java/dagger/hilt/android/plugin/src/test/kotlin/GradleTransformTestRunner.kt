@@ -27,6 +27,7 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
   private val activities = mutableListOf<String>()
 
   private var buildFile: File? = null
+  private var gradlePropertiesFile: File? = null
   private var manifestFile: File? = null
 
   init {
@@ -75,6 +76,7 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
 
   private fun setupFiles() {
     writeBuildFile()
+    writeGradleProperties()
     writeAndroidManifest()
   }
 
@@ -128,6 +130,17 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
     }
   }
 
+  private fun writeGradleProperties() {
+    gradlePropertiesFile?.delete()
+    gradlePropertiesFile = tempFolder.newFile("gradle.properties").apply {
+      writeText(
+        """
+        android.useAndroidX=true
+        """.trimIndent()
+      )
+    }
+  }
+
   private fun writeAndroidManifest() {
     manifestFile?.delete()
     manifestFile = tempFolder.newFile("/src/main/AndroidManifest.xml").apply {
@@ -168,7 +181,7 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
       projectRoot,
       "build/intermediates/transforms/AndroidEntryPointTransform/debug"
     ).listFiles()?.first { it.isDirectory }?.let { transformedDir ->
-      File(transformedDir, "minimal/$srcFilePath").also {
+      File(transformedDir, srcFilePath).also {
         if (!it.exists()) {
           error("Unable to find transformed class ${it.path}")
         }

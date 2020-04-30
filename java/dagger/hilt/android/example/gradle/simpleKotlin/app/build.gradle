@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-apply plugin: 'com.android.library'
+apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-kapt'
 apply plugin: 'dagger.hilt.android.plugin'
+apply plugin: 'kotlin-kapt'
 
 android {
     compileSdkVersion 29
+    buildToolsVersion "29.0.3"
 
     defaultConfig {
-        minSdkVersion 15
+        applicationId "dagger.hilt.android.example.gradle.simpleKotlin"
+        minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -32,10 +34,9 @@ android {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
-}
-
-kapt {
- correctErrorTypes true
+    testOptions {
+        unitTests.includeAndroidResources = true
+    }
 }
 
 hilt {
@@ -43,13 +44,22 @@ hilt {
 }
 
 dependencies {
-    // This is api instead of implementation since Kotlin modules here consumed
-    // by the app need to expose @kotlin.Metadata
-    api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
+
     implementation 'com.google.dagger:dagger:LOCAL-SNAPSHOT'
     kapt 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'
     implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'
     kapt 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'
+
+    testImplementation 'com.google.truth:truth:1.0.1'
+    testImplementation 'junit:junit:4.13'
+    testImplementation 'org.robolectric:robolectric:4.3.1'
+    testImplementation 'androidx.core:core:1.1.0'
+    // TODO(bcorso): This multidex dep shouldn't be required -- it's a dep for the generated code.
+    testImplementation 'androidx.multidex:multidex:2.0.0'
+    testImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
+    kaptTest 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'
+    kaptTest 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'
 }

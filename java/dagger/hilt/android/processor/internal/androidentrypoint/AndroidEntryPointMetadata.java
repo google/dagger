@@ -208,17 +208,19 @@ public abstract class AndroidEntryPointMetadata {
         annotationClassName.simpleName());
     TypeElement androidEntryPointElement = (TypeElement) element;
 
+    final TypeElement androidEntryPointClassValue =
+        Processors.getAnnotationClassValue(
+            env.getElementUtils(),
+            Processors.getAnnotationMirror(androidEntryPointElement, annotationClassName),
+            "value");
     final TypeElement baseElement;
     final ClassName generatedClassName;
-    if (DISABLE_ANDROID_SUPERCLASS_VALIDATION.get(env)) {
+    if (DISABLE_ANDROID_SUPERCLASS_VALIDATION.get(env)
+        && MoreTypes.isTypeOf(Void.class, androidEntryPointClassValue.asType())) {
       baseElement = MoreElements.asType(env.getTypeUtils().asElement(androidEntryPointElement.getSuperclass()));
       generatedClassName = generatedClassName(androidEntryPointElement);
     } else {
-      baseElement =
-          Processors.getAnnotationClassValue(
-              env.getElementUtils(),
-              Processors.getAnnotationMirror(androidEntryPointElement, annotationClassName),
-              "value");
+      baseElement = androidEntryPointClassValue;
       ProcessorErrors.checkState(
           !MoreTypes.isTypeOf(Void.class, baseElement.asType()),
           androidEntryPointElement,

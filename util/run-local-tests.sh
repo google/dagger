@@ -7,19 +7,29 @@ readonly TEST_PARAMS="$@"
 # Run tests with bazel
 bazel test $TEST_PARAMS //...
 
+# Install into local maven.
+util/install-local-snapshot.sh
+
 # Also run the gradle examples on the local maven snapshots.
 readonly _SIMPLE_EXAMPLE_DIR=java/dagger/example/gradle/simple
 readonly _ANDROID_EXAMPLE_DIR=java/dagger/example/gradle/android/simple
-
-util/install-local-snapshot.sh
 ./$_SIMPLE_EXAMPLE_DIR/gradlew -p $_SIMPLE_EXAMPLE_DIR build --no-daemon --stacktrace
 ./$_ANDROID_EXAMPLE_DIR/gradlew -p $_ANDROID_EXAMPLE_DIR build --no-daemon --stacktrace
 
 readonly _HILT_GRADLE_PLUGIN_DIR=java/dagger/hilt/android/plugin
 readonly _HILT_ANDROID_EXAMPLE_DIR=java/dagger/hilt/android/example/gradle/simple
+readonly _HILT_KOTLIN_ANDROID_EXAMPLE_DIR=java/dagger/hilt/android/example/gradle/simpleKotlin
 ./$_HILT_GRADLE_PLUGIN_DIR/gradlew -p $_HILT_GRADLE_PLUGIN_DIR test --no-daemon --stacktrace
-./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR buildDebug --no-daemon --stacktrace
-./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR testDebug --no-daemon --stacktrace
+# Run gradle tests with different versions of Android Gradle Plugin
+agp_verions=("4.1.0-alpha07" "4.0.0-beta05" "3.6.3")
+for version in "${agp_verions[@]}"
+do
+    echo "Running tests with AGP $version"
+    AGP_VERSION=$version ./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR buildDebug --no-daemon --stacktrace
+    AGP_VERSION=$version ./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR testDebug --no-daemon --stacktrace
+    AGP_VERSION=$version ./$_HILT_KOTLIN_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_KOTLIN_ANDROID_EXAMPLE_DIR buildDebug --no-daemon --stacktrace
+    AGP_VERSION=$version ./$_HILT_KOTLIN_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_KOTLIN_ANDROID_EXAMPLE_DIR testDebug --no-daemon --stacktrace
+done
 
 verify_version_file() {
   local m2_repo=$1

@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package dagger.hilt.android.example.gradle.simple;
-
-import android.app.Application;
-import dagger.hilt.GenerateComponents;
-import dagger.hilt.android.AndroidEntryPoint;
-import javax.inject.Inject;
+package dagger.hilt.android.plugin
 
 /**
- * A simple, skeletal application that demonstrates a dependency-injected application using the
- * utilities in {@code Hilt} in Android.
+ * Configuration options for the Hilt Gradle Plugin
  */
-@GenerateComponents
-@AndroidEntryPoint
-public class SimpleApplication extends Application {
+interface HiltExtension {
+  /**
+   * If set to `true`, Hilt will register a transform task that will rewrite `@AndroidEntryPoint`
+   * annotated classes before the host-side JVM tests run. You should enable this option if you are
+   * running Robolectric UI tests as part of your JUnit tests.
+   */
+  var enableTransformForLocalTests: Boolean
+}
 
-  // Shows that we can inject ApplicationComponent bindings into an application.
-  @Inject @Model String model;
+internal open class HiltExtensionImpl : HiltExtension {
+  override var enableTransformForLocalTests: Boolean = false
 }

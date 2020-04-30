@@ -17,6 +17,8 @@
 package dagger.hilt.android.plugin
 
 import com.android.build.gradle.BaseExtension
+import com.android.build.gradle.TestedExtension
+import com.android.build.gradle.api.AndroidBasePlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -30,10 +32,50 @@ import org.gradle.api.Project
  */
 class HiltGradlePlugin : Plugin<Project> {
   override fun apply(project: Project) {
+    var configured = false
+    project.plugins.withType(AndroidBasePlugin::class.java) {
+      configured = true
+      configureHilt(project)
+    }
+    project.afterEvaluate {
+      check(configured) {
+        // Check if configuration was applied, if not inform the developer they have applied the
+        // plugin to a non-android project.
+        "The Hilt Android Gradle plugin can only be applied to an Android project."
+      }
+    }
+  }
+
+  private fun configureHilt(project: Project) {
+    val extension = project.extensions.create(
+      HiltExtension::class.java, "hilt", HiltExtensionImpl::class.java
+    )
+    configureTransform(project, extension)
+    configureProcessorFlags(project)
+    project.afterEvaluate {
+      verifyDependencies(it)
+    }
+  }
+
+  private fun configureTransform(project: Project, extension: HiltExtension) {
     val androidExtension = project.extensions.findByType(BaseExtension::class.java)
-      ?: throw error("The Hilt Android Gradle plugin can only be applied to an Android project.")
+      ?: throw error("Android BaseExtension not found.")
     androidExtension.registerTransform(AndroidEntryPointTransform())
 
+    // Create and configure a task for applying the transform for host-side unit tests. b/37076369
+    val testedExtensions = project.extensions.findByType(TestedExtension::class.java)
+    testedExtensions?.unitTestVariants?.all { unitTestVariant ->
+      HiltTransformTestClassesTask.create(
+        project = project,
+        unitTestVariant = unitTestVariant,
+        extension = extension
+      )
+    }
+  }
+
+  private fun configureProcessorFlags(project: Project) {
+    val androidExtension = project.extensions.findByType(BaseExtension::class.java)
+      ?: throw error("Android BaseExtension not found.")
     // Pass annotation processor flag to disable @AndroidEntryPoint superclass validation.
     androidExtension.defaultConfig.apply {
       javaCompileOptions.apply {
@@ -41,10 +83,6 @@ class HiltGradlePlugin : Plugin<Project> {
           PROCESSOR_OPTIONS.forEach { (key, value) -> argument(key, value) }
         }
       }
-    }
-
-    project.afterEvaluate {
-      verifyDependencies(it)
     }
   }
 

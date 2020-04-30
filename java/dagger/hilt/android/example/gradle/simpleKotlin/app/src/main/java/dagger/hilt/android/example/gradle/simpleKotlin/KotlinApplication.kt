@@ -14,33 +14,19 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.example.gradle.simple.feature
+package dagger.hilt.android.example.gradle.simpleKotlin
 
-import android.os.Bundle
-import android.widget.Button
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import android.app.Application
+import dagger.hilt.GenerateComponents
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@GenerateComponents
 @AndroidEntryPoint
-class FeatureActivity : AppCompatActivity() {
-  @Inject lateinit var counter: FeatureCounter
-
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-
-    setContentView(R.layout.activity_feature)
-
-    findViewById<Button>(R.id.feature_button).setOnClickListener {
-      counter.count++
-      updateCountText()
-    }
-
-    updateCountText()
-  }
-
-  private fun updateCountText() {
-    findViewById<TextView>(R.id.feature_count).text = "The count: ${counter.count}"
-  }
+class KotlinApplication : Application() {
+  // Shows that we can inject ApplicationComponent bindings into an application.
+  @Inject
+  @Model
+  @JvmField
+  var model: String? = null
 }

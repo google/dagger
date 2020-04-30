@@ -16,18 +16,16 @@
 
 package dagger.hilt.android.plugin
 
-import com.android.SdkConstants
+import com.android.build.api.transform.DirectoryInput
 import com.android.build.api.transform.Format
+import com.android.build.api.transform.JarInput
 import com.android.build.api.transform.QualifiedContent
 import com.android.build.api.transform.Status
 import com.android.build.api.transform.Transform
 import com.android.build.api.transform.TransformInput
 import com.android.build.api.transform.TransformInvocation
+import dagger.hilt.android.plugin.util.isClassFile
 import java.io.File
-import java.util.zip.ZipEntry
-import javassist.ClassPool
-import javassist.CtClass
-import org.slf4j.LoggerFactory
 
 /**
  * Bytecode transformation to make @AndroidEntryPoint annotated classes extend the Hilt
@@ -43,9 +41,6 @@ import org.slf4j.LoggerFactory
  * See: [TransformPublic Docs](https://google.github.io/android-gradle-dsl/javadoc/current/com/android/build/api/transform/Transform.html)
  */
 class AndroidEntryPointTransform : Transform() {
-
-  private val logger = LoggerFactory.getLogger(javaClass)
-
   // The name of the transform. This name appears as a gradle task.
   override fun getName() = "AndroidEntryPointTransform"
 
@@ -75,11 +70,6 @@ class AndroidEntryPointTransform : Transform() {
       invocation.outputProvider.deleteAll()
     }
 
-    // Create a ClassPool with the given input and references, this allows us to use the higher
-    // level Javaassit APIs, but requires class parsing/loading, note that since this is a PROJECT
-    // scoped transform we can only load classes in the project and not its dependencies.
-    val pool = createClassPool(invocation.inputs, invocation.referencedInputs)
-
     invocation.inputs.forEach { transformInput ->
       transformInput.jarInputs.forEach { jarInput ->
         val outputJar =
@@ -91,7 +81,7 @@ class AndroidEntryPointTransform : Transform() {
           )
         if (invocation.isIncremental) {
           when (jarInput.status) {
-            Status.ADDED, Status.CHANGED -> copyJar(jarInput.file, outputJar, pool)
+            Status.ADDED, Status.CHANGED -> copyJar(jarInput.file, outputJar)
             Status.REMOVED -> outputJar.delete()
             Status.NOTCHANGED -> {
               // No need to transform.
@@ -101,7 +91,7 @@ class AndroidEntryPointTransform : Transform() {
             }
           }
         } else {
-          copyJar(jarInput.file, outputJar, pool)
+          copyJar(jarInput.file, outputJar)
         }
       }
       transformInput.directoryInputs.forEach { directoryInput ->
@@ -111,11 +101,14 @@ class AndroidEntryPointTransform : Transform() {
           directoryInput.scopes,
           Format.DIRECTORY
         )
+        val classTransformer =
+          createHiltClassTransformer(invocation.inputs, invocation.referencedInputs, outputDir)
         if (invocation.isIncremental) {
           directoryInput.changedFiles.forEach { (file, status) ->
             val outputFile = toOutputFile(outputDir, directoryInput.file, file)
             when (status) {
-              Status.ADDED, Status.CHANGED -> transformFile(file, outputFile.parentFile, pool)
+              Status.ADDED, Status.CHANGED ->
+                transformFile(file, outputFile.parentFile, classTransformer)
               Status.REMOVED -> outputFile.delete()
               Status.NOTCHANGED -> {
                 // No need to transform.
@@ -128,69 +121,54 @@ class AndroidEntryPointTransform : Transform() {
         } else {
           directoryInput.file.walkTopDown().forEach { file ->
             val outputFile = toOutputFile(outputDir, directoryInput.file, file)
-            transformFile(file, outputFile.parentFile, pool)
+            transformFile(file, outputFile.parentFile, classTransformer)
           }
         }
       }
     }
   }
 
-  // Create class pool using invocation inputs as classpath.
-  private fun createClassPool(
+  // Create a transformer given an invocation inputs. Note that since this is a PROJECT scoped
+  // transform the actual transformation is only done on project files and not its dependencies.
+  private fun createHiltClassTransformer(
     inputs: Collection<TransformInput>,
-    referencedInputs: Collection<TransformInput>
-  ) = ClassPool.getDefault().apply {
-    (inputs + referencedInputs).flatMap { input ->
-      (input.directoryInputs + input.jarInputs).map { it.file.path }
-    }.forEach {
-      appendClassPath(it)
+    referencedInputs: Collection<TransformInput>,
+    outputDir: File
+  ): AndroidEntryPointClassTransformer {
+    val classFiles = (inputs + referencedInputs).flatMap { input ->
+      (input.directoryInputs + input.jarInputs).map { it.file }
     }
+    return AndroidEntryPointClassTransformer(
+      taskName = name,
+      allInputs = classFiles,
+      sourceRootOutputDir = outputDir,
+      copyNonTransformed = true
+    )
   }
 
-  // We are only interested in project compiled classes but we have to copy received jars to the
-  // output.
-  private fun copyJar(inputJar: File, outputJar: File, pool: ClassPool) {
-    outputJar.parentFile?.mkdirs()
-    inputJar.copyTo(target = outputJar, overwrite = true)
-  }
-
-  // Transform a single class file.
-  private fun transformFile(inputFile: File, outputDir: File, pool: ClassPool) {
-    outputDir.mkdirs()
+  // Transform a single file. If the file is not a class file it is just copied to the output dir.
+  private fun transformFile(
+    inputFile: File,
+    outputDir: File,
+    transformer: AndroidEntryPointClassTransformer
+  ) {
     if (inputFile.isClassFile()) {
-      val clazz = inputFile.inputStream().use { pool.makeClass(it, false) }
-      transformClass(clazz, pool)
-      clazz.writeFile(outputDir.path)
+      transformer.transformFile(inputFile)
     } else if (inputFile.isFile) {
       // Copy all non .class files to the output.
+      outputDir.mkdirs()
       val outputFile = File(outputDir, inputFile.name)
       inputFile.copyTo(target = outputFile, overwrite = true)
     }
   }
 
-  // Transform a parsed class file.
-  private fun transformClass(clazz: CtClass, pool: ClassPool) {
-    if (!clazz.hasAnnotation("dagger.hilt.android.AndroidEntryPoint")) {
-      // Not a AndroidEntryPoint annotated class, don't do anything.
-      return
-    }
-
-    // TODO(danysantiago): Handle classes with '$' in their name if they do become an issue.
-    val superclassName = clazz.classFile.superclass
-    val entryPointSuperclassName =
-      clazz.packageName + ".Hilt_" + clazz.simpleName.replace("$", "_")
-    logger.info(
-      "[$name] Transforming ${clazz.name} to extend $entryPointSuperclassName instead of " +
-        "$superclassName."
-    )
-    clazz.superclass = pool.get(entryPointSuperclassName)
+  // We are only interested in project compiled classes but we have to copy received jars to the
+  // output.
+  private fun copyJar(inputJar: File, outputJar: File) {
+    outputJar.parentFile?.mkdirs()
+    inputJar.copyTo(target = outputJar, overwrite = true)
   }
 
   private fun toOutputFile(outputDir: File, inputDir: File, inputFile: File) =
     File(outputDir, inputFile.relativeTo(inputDir).path)
-
-  private fun ZipEntry.isClassFile() =
-    !this.isDirectory && this.name.endsWith(SdkConstants.DOT_CLASS)
-
-  private fun File.isClassFile() = this.isFile && this.name.endsWith(SdkConstants.DOT_CLASS)
 }

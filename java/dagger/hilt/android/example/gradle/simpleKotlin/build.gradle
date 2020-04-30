@@ -14,21 +14,28 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.example.gradle.simple;
+buildscript {
+    ext {
+        kotlin_version = '1.3.61'
+        agp_version = System.getenv('AGP_VERSION') ?: "3.6.3"
+    }
+    repositories {
+        google()
+        jcenter()
+        mavenLocal()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:$agp_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.google.dagger:hilt-android-gradle-plugin:LOCAL-SNAPSHOT'
+    }
+}
 
-import android.app.Application;
-import dagger.hilt.GenerateComponents;
-import dagger.hilt.android.AndroidEntryPoint;
-import javax.inject.Inject;
-
-/**
- * A simple, skeletal application that demonstrates a dependency-injected application using the
- * utilities in {@code Hilt} in Android.
- */
-@GenerateComponents
-@AndroidEntryPoint
-public class SimpleApplication extends Application {
-
-  // Shows that we can inject ApplicationComponent bindings into an application.
-  @Inject @Model String model;
+allprojects {
+    repositories {
+      google()
+      jcenter()
+      mavenCentral()
+      mavenLocal()
+    }
 }

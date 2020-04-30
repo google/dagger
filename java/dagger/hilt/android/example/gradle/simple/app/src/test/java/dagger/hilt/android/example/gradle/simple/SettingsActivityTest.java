@@ -63,4 +63,15 @@ public final class SettingsActivityTest {
                   .isEqualTo("ProdUser, you are on build FakeModel."));
     }
   }
+
+  @Test
+  public void testSuperClassTransformation() {
+    try (ActivityScenario<SettingsActivity> scenario =
+        ActivityScenario.launch(SettingsActivity.class)) {
+      scenario.onActivity(
+          activity ->
+              assertThat(activity.getClass().getSuperclass().getSimpleName())
+                  .isEqualTo("Hilt_SettingsActivity"));
+    }
+  }
 }

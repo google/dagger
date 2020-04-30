@@ -15,8 +15,7 @@
  */
 
 apply plugin: 'com.android.application'
-// TODO(bcorso): Reenable this plugin once it works with Robolectric tests.
-// apply plugin: 'dagger.hilt.android.plugin'
+apply plugin: 'dagger.hilt.android.plugin'
 
 android {
     compileSdkVersion 29
@@ -33,7 +32,13 @@ android {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
-    testOptions.unitTests.includeAndroidResources = true
+    testOptions {
+        unitTests.includeAndroidResources = true
+    }
+}
+
+hilt {
+    enableTransformForLocalTests = true
 }
 
 dependencies {
@@ -46,11 +51,12 @@ dependencies {
 
   testImplementation 'com.google.truth:truth:1.0.1'
   testImplementation 'junit:junit:4.13'
-  testImplementation 'org.robolectric:robolectric:4.3'
+  testImplementation 'org.robolectric:robolectric:4.3.1'
+  testImplementation 'androidx.core:core:1.2.0'
   testImplementation 'androidx.test.ext:junit:1.1.1'
   testImplementation 'androidx.test:runner:1.2.0'
   // TODO(bcorso): This multidex dep shouldn't be required -- it's a dep for the generated code.
-  testImplementation 'androidx.multidex:multidex:2.0.0'
+  testImplementation 'androidx.multidex:multidex:2.0.1'
   testImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
   testAnnotationProcessor 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'
   testAnnotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'

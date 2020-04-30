@@ -23,8 +23,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 import javax.inject.Inject;
 
 /** The settings activity of the application. */
-@AndroidEntryPoint(AppCompatActivity.class)
-public class SettingsActivity extends Hilt_SettingsActivity {
+@AndroidEntryPoint
+public class SettingsActivity extends AppCompatActivity {
   private static final String TAG = SettingsActivity.class.getSimpleName();
 
   @Inject SettingsGreeter greeter;

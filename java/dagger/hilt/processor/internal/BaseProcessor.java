@@ -124,6 +124,15 @@ public abstract class BaseProcessor extends AbstractProcessor {
     return false;
   }
 
+  /**
+   * @return true if you want to delay errors to the last round. Useful if the processor
+   * generates code for symbols used a lot in the user code. Delaying allows as much code to
+   * compile as possible for correctly configured types and reduces error spam.
+   */
+  protected boolean delayErrors() {
+    return false;
+  }
+
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
     super.init(processingEnvironment);
@@ -184,7 +193,9 @@ public abstract class BaseProcessor extends AbstractProcessor {
       }
     }
 
-    errorHandler.checkErrors(roundEnv);
+    if (!delayErrors() || roundEnv.processingOver()) {
+      errorHandler.checkErrors();
+    }
 
     return claimAnnotations();
   }

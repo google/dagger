@@ -22,22 +22,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.processing.Messager;
-import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic.Kind;
 
 /** Utility class to handle keeping track of errors during processing. */
-public final class ProcessorErrorHandler {
+final class ProcessorErrorHandler {
 
-  private static final String FAILURE_PREFIX = "[Hilt] ";
-
-  private static final String FAILURE_SUFFIX =
-      "\n\n" + "^^^^^^^^^^^ CODE GENERATION FAILED, SEE THE HILT ERROR ABOVE ^^^^^^^^^^^";
+  // Special characters to make the tag red and bold to draw attention since
+  // this error can get drowned out by other errors resulting from missing
+  // symbols when we can't generate code.
+  private static final String FAILURE_PREFIX =
+      "\n\033[1;31m[Hilt] Processing did not complete:\033[0m\n";
 
   private final Messager messager;
   private final List<HiltError> hiltErrors;
 
-  public ProcessorErrorHandler(Messager messager) {
+  ProcessorErrorHandler(Messager messager) {
     this.messager = messager;
     this.hiltErrors = new ArrayList<>();
   }
@@ -49,7 +49,7 @@ public final class ProcessorErrorHandler {
    * failed with a {@link Kind#ERROR} in {@link #checkErrors} if an error was recorded with this
    * method.
    */
-  public void recordError(Throwable t) {
+  void recordError(Throwable t) {
     // Store messages to allow the build to continue as far as it can. The build will
     // be failed in checkErrors when processing is over.
 
@@ -69,9 +69,8 @@ public final class ProcessorErrorHandler {
   }
 
   /** Checks for any recorded errors. This should be called at the end of process every round. */
-  public void checkErrors(RoundEnvironment roundEnv) {
-
-    if (!hiltErrors.isEmpty() && roundEnv.processingOver()) {
+  void checkErrors() {
+    if (!hiltErrors.isEmpty()) {
       hiltErrors.forEach(
           hiltError -> {
             if (hiltError.element().isPresent()) {
@@ -96,7 +95,7 @@ public final class ProcessorErrorHandler {
 
     private static HiltError of(String message, Optional<Element> element) {
       return new AutoValue_ProcessorErrorHandler_HiltError(
-          FAILURE_PREFIX + message + FAILURE_SUFFIX, element);
+          FAILURE_PREFIX + message, element);
     }
 
     abstract String message();

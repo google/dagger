@@ -49,6 +49,11 @@ public final class AndroidEntryPointProcessor extends BaseProcessor {
   }
 
   @Override
+  public boolean delayErrors() {
+    return true;
+  }
+
+  @Override
   public void processEach(TypeElement annotation, Element element) throws Exception {
     AndroidEntryPointMetadata metadata = AndroidEntryPointMetadata.of(getProcessingEnv(), element);
     new InjectorEntryPointGenerator(getProcessingEnv(), metadata).generate();

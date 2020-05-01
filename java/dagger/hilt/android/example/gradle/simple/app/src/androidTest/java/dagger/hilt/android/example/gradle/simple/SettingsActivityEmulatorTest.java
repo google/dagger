@@ -31,31 +31,32 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /** A simple test using Hilt. */
-@UninstallModules(UserNameModule.class)
+@UninstallModules(ModelModule.class)
 @GenerateComponents
 @AndroidEmulatorEntryPoint
 @RunWith(AndroidJUnit4.class)
-public final class SimpleActivityEmulatorTest {
-
+public final class SettingsActivityEmulatorTest {
   @Rule public HiltTestRule rule = new HiltTestRule(this);
 
-  @BindValue @UserName String fakeUserName = "FakeUser";
+  @BindValue @Model String fakeModel = "FakeModel";
 
-  @Inject @UserName String injectedUserName;
+  @Inject @Model String injectedModel;
 
   @Test
-  public void testInjectedUserName() throws Exception {
-    assertThat(injectedUserName).isNull();
+  public void testInjectedModel() throws Exception {
+    assertThat(injectedModel).isNull();
     SimpleEmulatorTestRunner_Application.get().inject(this);
-    assertThat(injectedUserName).isEqualTo("FakeUser");
+    assertThat(injectedModel).isEqualTo("FakeModel");
   }
 
   @Test
   public void testActivityInject() throws Exception {
-    try (ActivityScenario<SimpleActivity> scenario =
-        ActivityScenario.launch(SimpleActivity.class)) {
+    try (ActivityScenario<SettingsActivity> scenario =
+        ActivityScenario.launch(SettingsActivity.class)) {
       scenario.onActivity(
-          activity -> assertThat(activity.greeter.greet()).isEqualTo("Hello, FakeUser!"));
+          activity ->
+              assertThat(activity.greeter.greet())
+                  .isEqualTo("ProdUser, you are on build FakeModel."));
     }
   }
 }

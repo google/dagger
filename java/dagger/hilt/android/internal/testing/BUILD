@@ -38,12 +38,18 @@ android_library(
     testonly = 1,
     srcs = ["TestApplicationComponentManager.java"],
     deps = [
-        "//java/dagger/hilt/android/internal/managers:component_supplier",
+        ":test_component_supplier",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/junit",
     ],
+)
+
+android_library(
+    name = "test_component_supplier",
+    testonly = 1,
+    srcs = ["TestComponentSupplier.java"],
 )
 
 android_library(

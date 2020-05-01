@@ -19,15 +19,15 @@ package dagger.hilt.android.example.gradle.simple;
 import android.app.Application;
 import android.content.Context;
 import androidx.test.runner.AndroidJUnitRunner;
+import dagger.hilt.android.testing.CustomBaseTestApplication;
 
 /** A custom runner to setup the emulator application class for tests. */
+@CustomBaseTestApplication(Application.class)
 public final class SimpleEmulatorTestRunner extends AndroidJUnitRunner {
 
   @Override
   public Application newApplication(ClassLoader cl, String className, Context context)
       throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-    // TODO(user): Update this to support multiple emulator tests.
-    return super.newApplication(
-        cl, SimpleActivityEmulatorTest_Application.class.getName(), context);
+    return super.newApplication(cl, SimpleEmulatorTestRunner_Application.class.getName(), context);
   }
 }

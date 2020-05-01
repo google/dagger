@@ -18,17 +18,16 @@
 package(default_visibility = ["//:src"])
 
 java_library(
-    name = "test_application_entry_point_generator",
+    name = "injector_entry_point_generator",
     srcs = [
-        "TestApplicationEntryPointGenerator.java",
+        "InjectorEntryPointGenerator.java",
     ],
     deps = [
-        ":internal_test_root_metadata",
-        "//java/dagger/hilt/android/processor/internal:android_classnames",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/javapoet",
-        "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
 )
 
@@ -51,10 +50,12 @@ java_library(
         "InternalTestRootProcessor.java",
     ],
     deps = [
+        ":injector_entry_point_generator",
         ":internal_test_root_metadata",
-        "//java/dagger/hilt/android/processor/internal/testing:test_application_entry_point_generator",
+        "//java/dagger/hilt/android/processor/internal:android_classnames",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
+        "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/incap",
@@ -84,13 +85,12 @@ java_library(
         "TestApplicationGenerator.java",
     ],
     deps = [
-        ":internal_test_root_metadata",
         "//java/dagger/hilt/android/processor/internal:android_classnames",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:component_names",
         "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/hilt/processor/internal/root:root_metadata",
         "//java/dagger/internal/guava:annotations",
-        "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/javapoet",
     ],

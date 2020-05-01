@@ -25,6 +25,9 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
+import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications;
+import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications.CustomBaseTestApplicationMetadata;
+import dagger.hilt.android.processor.internal.testing.InjectorEntryPointGenerator;
 import dagger.hilt.android.processor.internal.testing.InternalTestRootMetadata;
 import dagger.hilt.android.processor.internal.testing.TestApplicationGenerator;
 import dagger.hilt.processor.internal.BaseProcessor;
@@ -40,8 +43,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
@@ -53,9 +56,20 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(AGGREGATING)
 @AutoService(Processor.class)
 public final class RootProcessor extends BaseProcessor {
+  private enum EnvType {
+    PRODUCTION,
+    ROBOLECTRIC,
+    EMULATOR;
+
+    /** returns true if this environment type is a test type. */
+    boolean isTest() {
+      return this != PRODUCTION;
+    }
+  }
+
   private final List<ClassName> rootNames = new ArrayList<>();
-  private final List<ClassName> testRootNames = new ArrayList<>();
   private final Set<ClassName> processed = new HashSet<>();
+  private EnvType envType;
   private GeneratesRootInputs generatesRootInputs;
 
   @Override
@@ -74,23 +88,37 @@ public final class RootProcessor extends BaseProcessor {
   @Override
   public void processEach(TypeElement annotation, Element element) throws Exception {
     TypeElement rootElement = MoreElements.asType(element);
-    if (RootType.of(getProcessingEnv(), rootElement).isTestRoot()) {
-      testRootNames.add(ClassName.get(rootElement));
-    } else {
-      rootNames.add(ClassName.get(rootElement));
-    }
-
-    ProcessorErrors.checkState(
-        rootNames.size() <= 1, element, "More than one root found: %s", rootNames);
-
-    ProcessorErrors.checkState(
-        testRootNames.isEmpty() || rootNames.isEmpty(),
-        element,
-        "Cannot have both test roots and non-test roots in the same build compilation:"
-            + "\n\tRoots: %s"
-            + "\n\tTestRoots: %s",
+    EnvType rootEnvType = getEnvType(rootElement);
+    checkState(
+        envType == null || envType.equals(rootEnvType),
+        "All roots in a given build compilation must be of the same type (production, robolectric, "
+            + "or emulator). Found:"
+            + "\n\t%s: %s"
+            + "\n\t%s: %s",
+        envType,
         rootNames,
-        testRootNames);
+        rootEnvType,
+        rootElement);
+    envType = rootEnvType;
+
+    rootNames.add(ClassName.get(rootElement));
+    if (!envType.isTest()) {
+      ProcessorErrors.checkState(
+          rootNames.size() <= 1, element, "More than one root found: %s", rootNames);
+    }
+  }
+
+  private EnvType getEnvType(TypeElement rootElement) {
+    if (RootType.of(getProcessingEnv(), rootElement).isTestRoot()) {
+      ClassName type = InternalTestRootMetadata.of(getProcessingEnv(), rootElement).testType();
+      if (type.equals(ClassNames.INTERNAL_TEST_ROOT_TYPE_ROBOLECTRIC)) {
+        return EnvType.ROBOLECTRIC;
+      } else if (type.equals(ClassNames.INTERNAL_TEST_ROOT_TYPE_EMULATOR)) {
+        return EnvType.EMULATOR;
+      }
+      throw new AssertionError("Unknown testing type: " + type);
+    }
+    return EnvType.PRODUCTION;
   }
 
   @Override
@@ -111,7 +139,7 @@ public final class RootProcessor extends BaseProcessor {
     }
 
     ImmutableList<Root> rootsToProcess =
-        Stream.concat(rootNames.stream(), testRootNames.stream())
+        rootNames.stream()
             .filter(rootName -> !processed.contains(rootName))
             // We create a new root element each round to avoid the jdk8 bug where
             // TypeElement.equals does not work for elements across processing rounds.
@@ -132,13 +160,23 @@ public final class RootProcessor extends BaseProcessor {
           DefineComponents.componentDescriptors(getElementUtils());
       ComponentTree tree = ComponentTree.from(descriptors);
       ComponentDependencies deps = ComponentDependencies.from(descriptors, getElementUtils());
-      for (Root root : rootsToProcess) {
-        setProcessingState(root);
-        RootMetadata rootMetadata = RootMetadata.create(root, tree, deps, getProcessingEnv());
+      ImmutableList<RootMetadata> rootMetadatas =
+          rootsToProcess.stream()
+              .map(root -> RootMetadata.create(root, tree, deps, getProcessingEnv()))
+              .collect(toImmutableList());
+
+      for (RootMetadata rootMetadata : rootMetadatas) {
+        setProcessingState(rootMetadata.root());
         generateComponents(rootMetadata);
-        maybeGenerateTestApplication(rootMetadata);
       }
-      // TODO(user): Generate the emulator test application based on all test roots.
+
+      switch (envType) {
+        case PRODUCTION:
+          return;
+        case ROBOLECTRIC:
+        case EMULATOR:
+          generateTestApplications(rootMetadatas);
+      }
     } catch (Exception e) {
       for (Root root : rootsToProcess) {
         processed.add(root.classname());
@@ -155,14 +193,48 @@ public final class RootProcessor extends BaseProcessor {
     RootGenerator.generate(rootMetadata, getProcessingEnv());
   }
 
-  private void maybeGenerateTestApplication(RootMetadata rootMetadata) throws IOException {
-    Root root = rootMetadata.root();
-    if (root.type().equals(RootType.TEST_ROOT)) {
+  private void generateTestApplications(ImmutableList<RootMetadata> rootMetadatas)
+      throws IOException {
+    Optional<CustomBaseTestApplicationMetadata> customBaseTestApplication =
+        CustomBaseTestApplications.get(getElementUtils());
+
+    // TODO(user): Support custom base test applications for robolectric.
+    checkState(
+        envType == EnvType.EMULATOR || !customBaseTestApplication.isPresent(),
+        "@CustomBaseApplication is not supported in Robolectric tests yet!");
+
+    if (!customBaseTestApplication.isPresent()) {
+      for (RootMetadata rootMetadata : rootMetadatas) {
+        InternalTestRootMetadata internalTestRootMetadata = rootMetadata.internalTestRootMetadata();
+        new TestApplicationGenerator(
+                getProcessingEnv(),
+                rootMetadata.testElement(),
+                internalTestRootMetadata.baseAppName(),
+                internalTestRootMetadata.appName(),
+                internalTestRootMetadata.appInjectorName(),
+                ImmutableList.of(rootMetadata))
+            .generate();
+        InjectorEntryPointGenerator.createWithoutInstallIn(
+                getProcessingEnv(),
+                internalTestRootMetadata.testElement(),
+                internalTestRootMetadata.appName(),
+                internalTestRootMetadata.appInjectorName())
+            .generate();
+      }
+    } else {
       new TestApplicationGenerator(
               getProcessingEnv(),
-              InternalTestRootMetadata.of(getProcessingEnv(), root.element()),
-              rootMetadata.modulesThatDaggerCannotConstruct(ClassNames.APPLICATION_COMPONENT),
-              false)
+              customBaseTestApplication.get().element(),
+              customBaseTestApplication.get().baseAppName(),
+              customBaseTestApplication.get().appName(),
+              customBaseTestApplication.get().appInjectorName(),
+              rootMetadatas)
+          .generate();
+      InjectorEntryPointGenerator.createWithoutInstallIn(
+              getProcessingEnv(),
+              customBaseTestApplication.get().element(),
+              customBaseTestApplication.get().appName(),
+              customBaseTestApplication.get().appInjectorName())
           .generate();
     }
   }

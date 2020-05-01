@@ -19,6 +19,21 @@ load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
 package(default_visibility = ["//:src"])
 
 android_library(
+    name = "custom_base_test_application",
+    testonly = 1,
+    srcs = ["CustomBaseTestApplication.java"],
+    exported_plugins = [
+        "//java/dagger/hilt/android/processor/internal/custombasetestapplication:plugin",
+    ],
+    exports = [
+        "//java/dagger/hilt/android/internal/custombasetestapplication:data",
+    ],
+    deps = [
+        "//java/dagger/hilt:generates_root_input",
+    ],
+)
+
+android_library(
     name = "android_robolectric_entry_point",
     testonly = 1,
     srcs = ["AndroidRobolectricEntryPoint.java"],
@@ -59,7 +74,6 @@ android_library(
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/internal/builders",
         "//java/dagger/hilt/android/internal/managers",
-        "//java/dagger/hilt/android/internal/managers:component_supplier",
         "//java/dagger/hilt/android/internal/modules",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
@@ -138,6 +152,7 @@ android_library(
         ":android_emulator_entry_point",
         ":android_robolectric_entry_point",
         ":bind_value",
+        ":custom_base_test_application",
         ":uninstall_modules",
         "//java/dagger/hilt/android:artifact-lib",
     ],
@@ -157,14 +172,17 @@ gen_maven_artifact(
     shaded_deps = ["@com_google_auto_auto_common//jar"],
     shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
     deps = [
+        "//java/dagger/hilt/android/internal/custombasetestapplication:data",
         "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
+        "//java/dagger/hilt/android/internal/testing:test_component_supplier",
         "//java/dagger/hilt/android/internal/testing:test_injector",
         "//java/dagger/hilt/android/internal/testing:test_instance_holder",
         "//java/dagger/hilt/android/testing:android_emulator_entry_point",
         "//java/dagger/hilt/android/testing:android_robolectric_entry_point",
         "//java/dagger/hilt/android/testing:bind_value",
+        "//java/dagger/hilt/android/testing:custom_base_test_application",
         "//java/dagger/hilt/android/testing:hilt_test_rule",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/android/testing:uninstall_modules",

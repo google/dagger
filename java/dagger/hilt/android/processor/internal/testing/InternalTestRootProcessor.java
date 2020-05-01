@@ -20,6 +20,7 @@ import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING
 
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
+import dagger.hilt.android.processor.internal.AndroidClassNames;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import java.util.Set;
@@ -42,9 +43,13 @@ public final class InternalTestRootProcessor extends BaseProcessor {
 
   @Override
   public void processEach(TypeElement annotation, Element element) throws Exception {
-    new TestApplicationEntryPointGenerator(
+    InternalTestRootMetadata metadata = InternalTestRootMetadata.of(getProcessingEnv(), element);
+    InjectorEntryPointGenerator.create(
             getProcessingEnv(),
-            InternalTestRootMetadata.of(getProcessingEnv(), element))
+            metadata.testElement(),
+            metadata.testName(),
+            metadata.testInjectorName(),
+            AndroidClassNames.APPLICATION_COMPONENT)
         .generate();
   }
 }

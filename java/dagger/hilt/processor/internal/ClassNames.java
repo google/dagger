@@ -133,7 +133,6 @@ public final class ClassNames {
       get("dagger.hilt.android.testing", "OnComponentReadyRunner");
   public static final ClassName ON_COMPONENT_READY_RUNNER_HOLDER =
       get("dagger.hilt.android.testing", "OnComponentReadyRunner", "OnComponentReadyRunnerHolder");
-
   public static final ClassName BIND_VALUE = get("dagger.hilt.android.testing", "BindValue");
   public static final ClassName BIND_ELEMENTS_INTO_SET =
       get("dagger.hilt.android.testing", "BindElementsIntoSet");
@@ -143,6 +142,17 @@ public final class ClassNames {
       get("dagger.hilt.android.testing", "BindValueIntoSet");
   public static final ClassName APPLICATION_CONTEXT =
       get("dagger.hilt.android.qualifiers", "ApplicationContext");
+  public static final ClassName TEST_COMPONENT_SUPPLIER =
+      get("dagger.hilt.android.internal.testing", "TestComponentSupplier");
+
+  public static final ClassName CLASS = get("java.lang", "Class");
+  public static final ClassName LIST = get("java.util", "List");
+  public static final ClassName SET = get("java.util", "Set");
+  public static final ClassName MAP = get("java.util", "Map");
+  public static final ClassName HASH_MAP = get("java.util", "HashMap");
+  public static final ClassName HASH_SET = get("java.util", "HashSet");
+  public static final ClassName COLLECTIONS = get("java.util", "Collections");
+  public static final ClassName ARRAYS = get("java.util", "Arrays");
 
   public static final ClassName PRECONDITIONS = get("dagger.hilt.internal", "Preconditions");
 

@@ -29,15 +29,15 @@ java_plugin(
 java_library(
     name = "processor_lib",
     srcs = [
-        "Root.java",
         "RootFileFormatter.java",
         "RootGenerator.java",
-        "RootMetadata.java",
         "RootProcessor.java",
     ],
     deps = [
+        ":root_metadata",
         ":root_type",
-        "//:dagger_with_compiler",
+        "//java/dagger/hilt/android/processor/internal/custombasetestapplication:custom_base_test_applications",
+        "//java/dagger/hilt/android/processor/internal/testing:injector_entry_point_generator",
         "//java/dagger/hilt/android/processor/internal/testing:internal_test_root_metadata",
         "//java/dagger/hilt/android/processor/internal/testing:test_application_generator",
         "//java/dagger/hilt/processor/internal:base_processor",
@@ -47,7 +47,6 @@ java_library(
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/hilt/processor/internal/aggregateddeps:component_dependencies",
-        "//java/dagger/hilt/processor/internal/aliasof:alias_ofs",
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
         "//java/dagger/hilt/processor/internal/generatesrootinput:generates_root_inputs",
         "//java/dagger/internal/codegen/extension",
@@ -55,11 +54,33 @@ java_library(
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:service",
-        "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/incap",
         "@google_bazel_common//third_party/java/javapoet",
-        "@google_bazel_common//third_party/java/jsr250_annotations",
-        "@google_bazel_common//third_party/java/jsr305_annotations",
+    ],
+)
+
+java_library(
+    name = "root_metadata",
+    srcs = [
+        "Root.java",
+        "RootMetadata.java",
+    ],
+    deps = [
+        ":root_type",
+        "//java/dagger/hilt/android/processor/internal/custombasetestapplication:custom_base_test_applications",
+        "//java/dagger/hilt/android/processor/internal/testing:internal_test_root_metadata",
+        "//java/dagger/hilt/processor/internal:classnames",
+        "//java/dagger/hilt/processor/internal:component_descriptor",
+        "//java/dagger/hilt/processor/internal:processor_errors",
+        "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/hilt/processor/internal/aggregateddeps:component_dependencies",
+        "//java/dagger/hilt/processor/internal/aliasof:alias_ofs",
+        "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/auto:common",
+        "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/javapoet",
     ],
 )
 

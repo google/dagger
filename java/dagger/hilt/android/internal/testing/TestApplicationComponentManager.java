@@ -17,12 +17,10 @@
 package dagger.hilt.android.internal.testing;
 
 import android.app.Application;
-import dagger.hilt.android.internal.managers.ComponentSupplier;
 import dagger.hilt.android.testing.OnComponentReadyRunner;
 import dagger.hilt.android.testing.OnComponentReadyRunner.OnComponentReadyRunnerHolder;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -37,10 +35,9 @@ import org.junit.runner.Description;
  */
 public final class TestApplicationComponentManager
     implements GeneratedComponentManager<Object>, OnComponentReadyRunnerHolder {
+
   private final Application application;
-  private final ComponentSupplier componentSupplier;
-  private final Set<Class<?>> requiredModules;
-  private final boolean waitForBindValue;
+  private final TestComponentSupplier componentSupplier;
 
   private final AtomicReference<Object> component = new AtomicReference<>();
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
@@ -49,14 +46,9 @@ public final class TestApplicationComponentManager
   private volatile OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
 
   public TestApplicationComponentManager(
-      Application application,
-      ComponentSupplier componentSupplier,
-      Set<Class<?>> requiredModules,
-      boolean waitForBindValue) {
+      Application application, TestComponentSupplier componentSupplier) {
     this.application = application;
     this.componentSupplier = componentSupplier;
-    this.requiredModules = Collections.unmodifiableSet(new HashSet<>(requiredModules));
-    this.waitForBindValue = waitForBindValue;
   }
 
   @Override
@@ -65,8 +57,8 @@ public final class TestApplicationComponentManager
       Preconditions.checkState(
           hasHiltTestRule(),
           "The component was not created. Check that you have added the HiltTestRule.");
-      if (!registeredModules.keySet().containsAll(requiredModules)) {
-        Set<Class<?>> difference = new HashSet<>(requiredModules);
+      if (!registeredModules.keySet().containsAll(requiredModules())) {
+        Set<Class<?>> difference = new HashSet<>(requiredModules());
         difference.removeAll(registeredModules.keySet());
         throw new IllegalStateException(
             "The component was not created. Check that you have "
@@ -138,7 +130,7 @@ public final class TestApplicationComponentManager
         "Cannot call setBindValueCalled from two different test instances.");
 
     // Some tests call bind without using @BindValue. b/128706854
-    if (waitForBindValue && bindValueTestInstance == null) {
+    if (waitForBindValue() && bindValueTestInstance == null) {
       bindValueTestInstance = testInstance;
       tryToCreateComponent();
     }
@@ -148,7 +140,7 @@ public final class TestApplicationComponentManager
   public <T> void registerModule(Class<T> moduleClass, T module) {
     Preconditions.checkNotNull(moduleClass);
     Preconditions.checkState(
-        requiredModules.contains(moduleClass),
+        requiredModules().contains(moduleClass),
         "Found unknown module class: %s",
         moduleClass.getName());
     Preconditions.checkState(
@@ -161,22 +153,12 @@ public final class TestApplicationComponentManager
     tryToCreateComponent();
   }
 
-  /** For framework use only! This method should be called when creating the dagger component. */
-  @SuppressWarnings("unchecked") // Matching types are enforced in #registerModule(Class<T>, T).
-  public <T> T getRegisteredModule(Class<T> moduleClass) {
-    Preconditions.checkState(
-        registeredModules.containsKey(moduleClass),
-        "Module is not registered: %s",
-        moduleClass.getName());
-
-    return (T) registeredModules.get(moduleClass);
-  }
-
   private void tryToCreateComponent() {
     if (hasHiltTestRule()
-        && registeredModules.keySet().containsAll(requiredModules)
+        && registeredModules.keySet().containsAll(requiredModules())
         && bindValueReady()) {
-      Preconditions.checkState(component.compareAndSet(null, componentSupplier.get()),
+      Preconditions.checkState(
+          component.compareAndSet(null, componentSupplier().get(registeredModules)),
           "Tried to create the component more than once! "
               + "There is a race between registering the HiltTestRule and registering all test "
               + "modules. Make sure there is a happens-before edge between the two.");
@@ -184,8 +166,27 @@ public final class TestApplicationComponentManager
     }
   }
 
+  private Set<Class<?>> requiredModules() {
+    return componentSupplier.requiredModules().get(testClass());
+  }
+
+  private boolean waitForBindValue() {
+    return componentSupplier.waitForBindValue().get(testClass());
+  }
+
+  private TestComponentSupplier.ComponentSupplier componentSupplier() {
+    return componentSupplier.get().get(testClass());
+  }
+
+  private Class<?> testClass() {
+    Preconditions.checkState(
+        hasHiltTestRule(),
+        "Test must have an HiltTestRule.");
+    return hasHiltTestRule.get().getTestClass();
+  }
+
   private boolean bindValueReady() {
-    return !waitForBindValue || bindValueTestInstance != null;
+    return !waitForBindValue() || bindValueTestInstance != null;
   }
 
   private boolean hasHiltTestRule() {

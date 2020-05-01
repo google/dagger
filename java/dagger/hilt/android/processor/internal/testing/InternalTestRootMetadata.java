@@ -45,7 +45,7 @@ public abstract class InternalTestRootMetadata {
   }
 
   /** Returns the {@link ClassName} for the base application. */
-  public ClassName baseName() {
+  public ClassName baseAppName() {
     return ClassName.get(baseElement());
   }
 
@@ -54,9 +54,14 @@ public abstract class InternalTestRootMetadata {
     return Processors.append(Processors.getEnclosedClassName(testName()), "_Application");
   }
 
-  /** The name of the generated entry point for injecting the test. */
-  public ClassName injectorClassName() {
+  /** The name of the generated entry point for injecting the test app. */
+  public ClassName appInjectorName() {
     return Processors.append(Processors.getEnclosedClassName(appName()), "_Injector");
+  }
+
+  /** The name of the generated entry point for injecting the test. */
+  public ClassName testInjectorName() {
+    return Processors.append(Processors.getEnclosedClassName(testName()), "_Injector");
   }
 
   public static InternalTestRootMetadata of(ProcessingEnvironment env, Element element) {

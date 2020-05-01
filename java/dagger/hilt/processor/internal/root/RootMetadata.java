@@ -26,8 +26,10 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications;
+import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications.CustomBaseTestApplicationMetadata;
+import dagger.hilt.android.processor.internal.testing.InternalTestRootMetadata;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ComponentTree;
@@ -45,7 +47,7 @@ import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
 /** Contains metadata about the given hilt root. */
-final class RootMetadata {
+public final class RootMetadata {
   private static final ClassName APPLICATION_CONTEXT_MODULE =
       ClassName.get("dagger.hilt.android.internal.modules", "ApplicationContextModule");
 
@@ -66,6 +68,8 @@ final class RootMetadata {
   private final ComponentDependencies deps;
   private final Supplier<ImmutableSetMultimap<ClassName, ClassName>> scopesByComponent =
       memoize(this::getScopesByComponentUncached);
+  private final Supplier<InternalTestRootMetadata> internalTestRootMetadata =
+      memoize(this::internalTestRootMetadataUncached);
 
   private RootMetadata(
       Root root,
@@ -120,6 +124,30 @@ final class RootMetadata {
         .collect(toImmutableSet());
   }
 
+  public TypeElement testElement() {
+    return internalTestRootMetadata().testElement();
+  }
+
+  public ClassName testName() {
+    return internalTestRootMetadata().testName();
+  }
+
+  public ClassName testInjectorName() {
+    return internalTestRootMetadata().testInjectorName();
+  }
+
+  public InternalTestRootMetadata internalTestRootMetadata() {
+    return internalTestRootMetadata.get();
+  }
+
+  public boolean waitForBindValue() {
+    return false;
+  }
+
+  private InternalTestRootMetadata internalTestRootMetadataUncached() {
+    return InternalTestRootMetadata.of(env, root().element());
+  }
+
   /**
    * Validates that the {@link RootType} annotation is compatible with its {@link TypeElement} and
    * {@link ComponentDependencies}. If not, throws exception.
@@ -158,12 +186,19 @@ final class RootMetadata {
       entryPointSet.add(ClassName.get(element));
     }
 
-    // TODO(user): move the creation of these EntryPoints to a separate processor?
-    if (root.type().isTestRoot()) {
-      if (componentName.equals(ClassNames.APPLICATION_COMPONENT)) {
-        entryPointSet.add(ParameterizedTypeName.get(ClassNames.TEST_INJECTOR, root.classname()));
+    if (root.type().isTestRoot() && componentName.equals(ClassNames.APPLICATION_COMPONENT)) {
+      // @CustomBaseTestApplication can be used on an element other than the test, which can change
+      // the name of the generated application. This happens in Gradle instrumentation tests where
+      // a single application is generated for all instrumentation tests.
+      Optional<CustomBaseTestApplicationMetadata> customBaseTestApplication =
+          CustomBaseTestApplications.get(elements);
+      if (customBaseTestApplication.isPresent()) {
+        entryPointSet.add(customBaseTestApplication.get().appInjectorName());
+      } else {
+        entryPointSet.add(internalTestRootMetadata().appInjectorName());
       }
     }
+
     return entryPointSet.build();
   }
 

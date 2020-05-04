@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.example.gradle.simple;
 
+import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Build;
@@ -116,7 +117,7 @@ public final class BindValueTest {
 
   @Test
   public void testElementsIntoSet() throws Exception {
-    BindValueTest_Application.get().inject(this);
+    rule.inject();
     // basic check that initial/default values are properly injected
     assertThat(providedStringSet.get()).containsExactly(SET_STRING_1, SET_STRING_2);
     // Test empty sets (something that cannot be done with @BindValueIntoSet)
@@ -130,7 +131,7 @@ public final class BindValueTest {
 
   @Test
   public void testBindValueIntoMap() throws Exception {
-    BindValueTest_Application.get().inject(this);
+    rule.inject();
     Map<String, String> oldMap = mapProvider.get();
     assertThat(oldMap).containsExactly(KEY_1, VALUE_1, KEY_2, VALUE_2);
     boundValue1 = VALUE_3;
@@ -141,7 +142,7 @@ public final class BindValueTest {
 
   @Test
   public void testBindValueIntoSet() throws Exception {
-    BindValueTest_Application.get().inject(this);
+    rule.inject();
     // basic check that initial/default values are properly injected
     assertThat(providedIntSet.get()).containsExactly(SET_INT_1, SET_INT_2);
     bindValueSetInt1 = SET_INT_3;
@@ -155,7 +156,6 @@ public final class BindValueTest {
   }
 
   private static String getBinding() {
-    return EntryPoints.get(BindValueTest_Application.get(), BindValueEntryPoint.class)
-        .bindValueString();
+    return EntryPoints.get(getApplicationContext(), BindValueEntryPoint.class).bindValueString();
   }
 }

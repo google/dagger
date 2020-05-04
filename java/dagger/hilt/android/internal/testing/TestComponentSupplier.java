@@ -24,6 +24,9 @@ public abstract class TestComponentSupplier {
   /** Returns the component for the given test class */
   protected abstract Map<Class<?>, ComponentSupplier> get();
 
+  /** Returns the test injector for the given test class */
+  protected abstract Map<Class<?>, TestInjector<Object>> testInjectors();
+
   /** Returns the list of required modules for a given test class */
   protected abstract Map<Class<?>, Set<Class<?>>> requiredModules();
 

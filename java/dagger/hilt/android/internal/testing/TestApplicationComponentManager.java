@@ -42,7 +42,7 @@ public final class TestApplicationComponentManager
   private final AtomicReference<Object> component = new AtomicReference<>();
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
   private final Map<Class<?>, Object> registeredModules = new ConcurrentHashMap<>();
-  private volatile Object bindValueTestInstance;
+  private volatile Object testInstance;
   private volatile OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
 
   public TestApplicationComponentManager(
@@ -98,7 +98,7 @@ public final class TestApplicationComponentManager
         hasHiltTestRule.get() == null,
         "The Hilt test rule cannot be set before Hilt's test rule has run.");
     Preconditions.checkState(
-        bindValueTestInstance == null,
+        testInstance == null,
         "The Hilt BindValue instance cannot be set before Hilt's test rule has run.");
     Preconditions.checkState(
         registeredModules.isEmpty(),
@@ -114,7 +114,7 @@ public final class TestApplicationComponentManager
 
     component.set(null);
     hasHiltTestRule.set(null);
-    bindValueTestInstance = null;
+    testInstance = null;
     registeredModules.clear();
     onComponentReadyRunner = new OnComponentReadyRunner();
   }
@@ -123,17 +123,26 @@ public final class TestApplicationComponentManager
     return hasHiltTestRule.get();
   }
 
-  public void setBindValueCalled(Object testInstance) {
+  void setTestInstance(Object testInstance) {
     Preconditions.checkNotNull(testInstance);
     Preconditions.checkState(
-        bindValueTestInstance == null || bindValueTestInstance == testInstance,
-        "Cannot call setBindValueCalled from two different test instances.");
+        this.testInstance == null || this.testInstance == testInstance,
+        "Cannot call setTestInstance from two different test instances.");
 
-    // Some tests call bind without using @BindValue. b/128706854
-    if (waitForBindValue() && bindValueTestInstance == null) {
-      bindValueTestInstance = testInstance;
-      tryToCreateComponent();
+    if (this.testInstance == null) {
+      this.testInstance = testInstance;
+      // Some tests call bind without using @BindValue. b/128706854
+      if (waitForBindValue()) {
+        tryToCreateComponent();
+      }
     }
+  }
+
+  public Object getTestInstance() {
+    Preconditions.checkState(
+        testInstance != null,
+        "The test instance has not been set.");
+    return testInstance;
   }
 
   /** For framework use only! This method should be called when a required module is installed. */
@@ -151,6 +160,11 @@ public final class TestApplicationComponentManager
 
     registeredModules.put(moduleClass, module);
     tryToCreateComponent();
+  }
+
+  void inject() {
+    Preconditions.checkNotNull(testInstance);
+    testInjector().injectTest(testInstance);
   }
 
   private void tryToCreateComponent() {
@@ -174,6 +188,10 @@ public final class TestApplicationComponentManager
     return componentSupplier.waitForBindValue().get(testClass());
   }
 
+  private TestInjector<Object> testInjector() {
+    return componentSupplier.testInjectors().get(testClass());
+  }
+
   private TestComponentSupplier.ComponentSupplier componentSupplier() {
     return componentSupplier.get().get(testClass());
   }
@@ -186,7 +204,7 @@ public final class TestApplicationComponentManager
   }
 
   private boolean bindValueReady() {
-    return !waitForBindValue() || bindValueTestInstance != null;
+    return !waitForBindValue() || testInstance != null;
   }
 
   private boolean hasHiltTestRule() {

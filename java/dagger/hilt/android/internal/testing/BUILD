@@ -39,6 +39,7 @@ android_library(
     srcs = ["TestApplicationComponentManager.java"],
     deps = [
         ":test_component_supplier",
+        ":test_injector",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",
@@ -50,6 +51,9 @@ android_library(
     name = "test_component_supplier",
     testonly = 1,
     srcs = ["TestComponentSupplier.java"],
+    deps = [
+        ":test_injector",
+    ],
 )
 
 android_library(
@@ -59,19 +63,12 @@ android_library(
 )
 
 android_library(
-    name = "test_instance_holder",
-    testonly = 1,
-    srcs = ["TestInstanceHolder.java"],
-)
-
-android_library(
     name = "mark_that_rules_ran_rule",
     testonly = 1,
     srcs = ["MarkThatRulesRanRule.java"],
     deps = [
         ":test_application_component_manager",
         ":test_application_component_manager_holder",
-        ":test_instance_holder",
         "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/junit",
         "@maven//:androidx_test_core",

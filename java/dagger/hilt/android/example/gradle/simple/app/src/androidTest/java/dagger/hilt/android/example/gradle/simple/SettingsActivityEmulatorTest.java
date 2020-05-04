@@ -45,7 +45,7 @@ public final class SettingsActivityEmulatorTest {
   @Test
   public void testInjectedModel() throws Exception {
     assertThat(injectedModel).isNull();
-    SimpleEmulatorTestRunner_Application.get().inject(this);
+    rule.inject();
     assertThat(injectedModel).isEqualTo("FakeModel");
   }
 

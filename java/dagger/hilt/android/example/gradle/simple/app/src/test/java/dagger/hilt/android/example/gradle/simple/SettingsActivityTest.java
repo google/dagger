@@ -49,7 +49,7 @@ public final class SettingsActivityTest {
   @Test
   public void testInjectedModel() throws Exception {
     assertThat(injectedModel).isNull();
-    SettingsActivityTest_Application.get().inject(this);
+    rule.inject();
     assertThat(injectedModel).isEqualTo("FakeModel");
   }
 

@@ -39,6 +39,10 @@ public final class MarkThatRulesRanRule implements TestRule {
     this.testInstance = checkNotNull(testInstance);
   }
 
+  public void inject() {
+    getTestApplicationComponentManager().inject();
+  }
+
   @Override
   public Statement apply(final Statement base, Description description) {
     checkState(
@@ -55,8 +59,7 @@ public final class MarkThatRulesRanRule implements TestRule {
         componentManager.checkStateIsCleared();
         componentManager.setHasHiltTestRule(description);
         if (testInstance != null) {
-          ((TestInstanceHolder) context).setTestInstance(testInstance);
-          componentManager.setBindValueCalled(testInstance);
+          componentManager.setTestInstance(testInstance);
         }
         base.evaluate();
         componentManager.clearState();

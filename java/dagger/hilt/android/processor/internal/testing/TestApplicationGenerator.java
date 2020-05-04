@@ -84,15 +84,11 @@ public final class TestApplicationGenerator {
             .addSuperinterface(
                 ParameterizedTypeName.get(ClassNames.COMPONENT_MANAGER, TypeName.OBJECT))
             .addSuperinterface(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER_HOLDER)
-            .addSuperinterface(ClassNames.TEST_INSTANCE_HOLDER)
             .addField(getComponentManagerField())
             .addMethod(getAttachBaseContextMethod())
             .addMethod(getComponentManagerMethod())
             .addMethod(getComponentMethod())
             .addMethod(getAppInstanceMethod(appName))
-            .addField(Object.class, "testInstance", Modifier.PRIVATE)
-            .addMethod(getTestInstanceMethod("testInstance"))
-            .addMethod(setTestInstanceMethod("testInstance"))
             .addType(testComponentSupplier());
 
     Processors.addGeneratedAnnotation(
@@ -115,10 +111,9 @@ public final class TestApplicationGenerator {
   }
 
   /**
-   *
-   *
    * <pre><code>
    * private final class TestComponentSupplierImpl extends TestComponentSuppler {
+   *   private final Map<Class<?>, TestInjector<Object>> testInjectors = new HashMap<>();
    *   private final Map<Class<?>, List<Class<?>>> requiredModules = new HashMap<>();
    *   private final Map<Class<?>, ComponentSupplier> componentSuppliers = new HashMap<>();
    *   private final Map<Class<?>, Boolean> waitForBindValue = new HashMap<>();
@@ -157,15 +152,15 @@ public final class TestApplicationGenerator {
    * </code></pre>
    */
   private TypeSpec testComponentSupplier() {
-    ParameterizedTypeName classType =
-        ParameterizedTypeName.get(ClassNames.CLASS, WildcardTypeName.subtypeOf(TypeName.OBJECT));
-    ParameterizedTypeName classSetType = ParameterizedTypeName.get(ClassNames.SET, classType);
-
     MethodSpec.Builder constructor = MethodSpec.constructorBuilder();
     for (RootMetadata rootMetadata : rootMetadatas) {
       TypeElement testElement = rootMetadata.testElement();
       ImmutableSet<TypeElement> extraModules =
           rootMetadata.modulesThatDaggerCannotConstruct(ClassNames.APPLICATION_COMPONENT);
+      constructor.addStatement(
+          "testInjectors.put($1T.class, testInstance -> injectInternal(($1T) testInstance))",
+          testElement);
+
       constructor.addStatement(
           "requiredModules.put($T.class, $L)",
           testElement,
@@ -208,9 +203,21 @@ public final class TestApplicationGenerator {
           "waitForBindValue.put($T.class, $L)", testElement, rootMetadata.waitForBindValue());
     }
 
+    ParameterizedTypeName classType =
+        ParameterizedTypeName.get(ClassNames.CLASS, WildcardTypeName.subtypeOf(TypeName.OBJECT));
+    ParameterizedTypeName classSetType = ParameterizedTypeName.get(ClassNames.SET, classType);
+    ParameterizedTypeName testInjectorType =
+        ParameterizedTypeName.get(ClassNames.TEST_INJECTOR, TypeName.OBJECT);
     return TypeSpec.classBuilder(TEST_COMPONENT_SUPPLIER_IMPL)
         .superclass(ClassNames.TEST_COMPONENT_SUPPLIER)
         .addModifiers(PRIVATE, FINAL)
+        .addField(
+            FieldSpec.builder(
+                    ParameterizedTypeName.get(ClassNames.MAP, classType, testInjectorType),
+                    "testInjectors")
+                .addModifiers(PRIVATE, FINAL)
+                .initializer("new $T<>($L)", ClassNames.HASH_MAP, rootMetadatas.size())
+                .build())
         .addField(
             FieldSpec.builder(
                     ParameterizedTypeName.get(ClassNames.MAP, classType, classSetType),
@@ -234,6 +241,13 @@ public final class TestApplicationGenerator {
                 .initializer("new $T<>($L)", ClassNames.HASH_MAP, rootMetadatas.size())
                 .build())
         .addMethod(constructor.build())
+        .addMethod(
+            MethodSpec.methodBuilder("testInjectors")
+                .addModifiers(PROTECTED)
+                .addAnnotation(Override.class)
+                .returns(ParameterizedTypeName.get(ClassNames.MAP, classType, testInjectorType))
+                .addStatement("return testInjectors")
+                .build())
         .addMethod(
             MethodSpec.methodBuilder("get")
                 .addModifiers(PROTECTED)
@@ -307,18 +321,17 @@ public final class TestApplicationGenerator {
 
   private void addTestInjectMethods(TypeSpec.Builder builder) {
     for (RootMetadata rootMetadata : rootMetadatas) {
-      builder.addMethod(getTestInjectMethod(rootMetadata));
+      builder.addMethod(getTestInjectInternalMethod(rootMetadata));
     }
   }
 
-  private MethodSpec getTestInjectMethod(RootMetadata rootMetadata) {
+  private MethodSpec getTestInjectInternalMethod(RootMetadata rootMetadata) {
     TypeElement testElement = rootMetadata.testElement();
     ClassName testName = ClassName.get(testElement);
-    String varName = Processors.upperToLowerCamel(testName.simpleName());
     MethodSpec.Builder builder =
-        MethodSpec.methodBuilder("inject")
-            .addJavadoc("Performs member injection of ApplicationComponent bindings.")
-            .addParameter(testName, varName)
+        MethodSpec.methodBuilder("injectInternal")
+            .addModifiers(PRIVATE)
+            .addParameter(testName, "testInstance")
             .addAnnotation(
                 AnnotationSpec.builder(SuppressWarnings.class)
                     .addMember("value", "$S", "unchecked")
@@ -326,7 +339,8 @@ public final class TestApplicationGenerator {
 
     return builder
         .addStatement(
-            "(($T) this.generatedComponent()).inject($L)", rootMetadata.testInjectorName(), varName)
+            "(($T) this.generatedComponent()).inject(testInstance)",
+            rootMetadata.testInjectorName())
         .build();
   }
 
@@ -371,40 +385,6 @@ public final class TestApplicationGenerator {
         .addStatement("$N.registerModule($T.class, $L)", COMPONENT_MANAGER, module, fieldName)
         .addStatement("return this")
         .returns(app)
-        .build();
-  }
-
-  private static MethodSpec getTestInstanceMethod(String testParamName) {
-    return MethodSpec.methodBuilder("getTestInstance")
-        .returns(Object.class)
-        .addModifiers(Modifier.PUBLIC)
-        .addAnnotation(Override.class)
-        .addStatement(
-            "$T.checkState($N != null, $S)",
-            ClassNames.PRECONDITIONS,
-            testParamName,
-            "The test instance has not been set. Did you forget to call #bind()?")
-        .addStatement("return $N", testParamName)
-        .build();
-  }
-
-  private static MethodSpec setTestInstanceMethod(String testParamName) {
-    return MethodSpec.methodBuilder("setTestInstance")
-        .addModifiers(Modifier.PUBLIC)
-        .addAnnotation(Override.class)
-        .addParameter(Object.class, testParamName)
-        .addStatement("this.$1N = $1N", testParamName)
-        .build();
-  }
-
-  private static MethodSpec bindMethod(ClassName appName) {
-    return MethodSpec.methodBuilder("bind")
-        .addJavadoc("Stores an instance of the test to bind its members to providers.")
-        .returns(appName)
-        .addParameter(Object.class, "testInstance")
-        .addStatement("this.testInstance = testInstance")
-        .addStatement("$N.setBindValueCalled(testInstance)", COMPONENT_MANAGER)
-        .addStatement("return this")
         .build();
   }
 }

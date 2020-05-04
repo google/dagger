@@ -49,7 +49,7 @@ public final class SimpleActivityTest {
   @Test
   public void testInjectedUserName() throws Exception {
     assertThat(injectedUserName).isNull();
-    SimpleActivityTest_Application.get().inject(this);
+    rule.inject();
     assertThat(injectedUserName).isEqualTo("FakeUser");
   }
 
@@ -58,8 +58,7 @@ public final class SimpleActivityTest {
     try (ActivityScenario<SimpleActivity> scenario =
         ActivityScenario.launch(SimpleActivity.class)) {
       scenario.onActivity(
-          activity -> assertThat(activity.greeter.greet())
-              .isEqualTo("Hello, FakeUser!"));
+          activity -> assertThat(activity.greeter.greet()).isEqualTo("Hello, FakeUser!"));
     }
   }
 }

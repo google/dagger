@@ -46,7 +46,7 @@ public final class SimpleActivityEmulatorTest {
   @Test
   public void testInjectedUserName() throws Exception {
     assertThat(injectedUserName).isNull();
-    SimpleEmulatorTestRunner_Application.get().inject(this);
+    rule.inject();
     assertThat(injectedUserName).isEqualTo("FakeUser");
   }
 

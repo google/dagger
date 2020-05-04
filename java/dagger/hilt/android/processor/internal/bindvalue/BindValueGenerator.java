@@ -92,7 +92,10 @@ final class BindValueGenerator {
 
   // @Provides
   // static FooTest providesFooTest(@ApplicationContext Context context) {
-  //   return (FooTest)((TestInstanceHolder) context).getTestInstance();
+  //   return (FooTest)
+  //       ((TestApplicationComponentManager)
+  //           ((TestApplicationComponentManagerHolder) context).componentManager())
+  //               .getTestInstance();
   // }
   private MethodSpec providesTestMethod() {
     String methodName = "provides" + testClassName.simpleName();
@@ -106,9 +109,10 @@ final class BindValueGenerator {
                     .build())
             .returns(testClassName)
             .addStatement(
-                "return ($T)(($T) context).getTestInstance()",
+                "return ($T) (($T) (($T) context).componentManager()).getTestInstance()",
                 testClassName,
-                ClassNames.TEST_INSTANCE_HOLDER);
+                ClassNames.TEST_APPLICATION_COMPONENT_MANAGER,
+                ClassNames.TEST_APPLICATION_COMPONENT_MANAGER_HOLDER);
     return builder.build();
   }
 

@@ -84,14 +84,13 @@ public final class Injection2Test {
   @Test
   public void testApplicationInjection() throws Exception {
     assertThat(applicationValue).isNull();
-    Injection2Test_Application.get().inject(this);
+    rule.inject();
     assertThat(applicationValue).isEqualTo(APPLICATION_VALUE);
   }
 
   @Test
   public void testActivityInjection() throws Exception {
-    try (ActivityScenario<TestActivity> scenario =
-        ActivityScenario.launch(TestActivity.class)) {
+    try (ActivityScenario<TestActivity> scenario = ActivityScenario.launch(TestActivity.class)) {
       scenario.onActivity(activity -> assertThat(activity.activityValue).isEqualTo(ACTIVITY_VALUE));
     }
   }

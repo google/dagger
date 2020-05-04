@@ -39,4 +39,8 @@ public final class HiltTestRule implements TestRule {
   @Override public Statement apply(Statement baseStatement, Description description) {
     return rule.apply(baseStatement, description);
   }
+
+  public void inject() {
+    rule.inject();
+  }
 }

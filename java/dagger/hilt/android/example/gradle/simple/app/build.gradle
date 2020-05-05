@@ -55,8 +55,6 @@ dependencies {
   testImplementation 'androidx.core:core:1.2.0'
   testImplementation 'androidx.test.ext:junit:1.1.1'
   testImplementation 'androidx.test:runner:1.2.0'
-  // TODO(bcorso): This multidex dep shouldn't be required -- it's a dep for the generated code.
-  testImplementation 'androidx.multidex:multidex:2.0.1'
   testImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
   testAnnotationProcessor 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'
   testAnnotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'

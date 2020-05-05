@@ -31,7 +31,6 @@ import dagger.hilt.android.processor.internal.testing.InjectorEntryPointGenerato
 import dagger.hilt.android.processor.internal.testing.InternalTestRootMetadata;
 import dagger.hilt.android.processor.internal.testing.TestApplicationGenerator;
 import dagger.hilt.processor.internal.BaseProcessor;
-import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ComponentTree;
 import dagger.hilt.processor.internal.ProcessorErrors;
@@ -56,20 +55,9 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(AGGREGATING)
 @AutoService(Processor.class)
 public final class RootProcessor extends BaseProcessor {
-  private enum EnvType {
-    PRODUCTION,
-    ROBOLECTRIC,
-    EMULATOR;
-
-    /** returns true if this environment type is a test type. */
-    boolean isTest() {
-      return this != PRODUCTION;
-    }
-  }
-
   private final List<ClassName> rootNames = new ArrayList<>();
   private final Set<ClassName> processed = new HashSet<>();
-  private EnvType envType;
+  private boolean isTestEnv;
   private GeneratesRootInputs generatesRootInputs;
 
   @Override
@@ -88,37 +76,21 @@ public final class RootProcessor extends BaseProcessor {
   @Override
   public void processEach(TypeElement annotation, Element element) throws Exception {
     TypeElement rootElement = MoreElements.asType(element);
-    EnvType rootEnvType = getEnvType(rootElement);
+    boolean isTestRoot = RootType.of(getProcessingEnv(), rootElement).isTestRoot();
     checkState(
-        envType == null || envType.equals(rootEnvType),
-        "All roots in a given build compilation must be of the same type (production, robolectric, "
-            + "or emulator). Found:"
-            + "\n\t%s: %s"
-            + "\n\t%s: %s",
-        envType,
-        rootNames,
-        rootEnvType,
-        rootElement);
-    envType = rootEnvType;
+        rootNames.isEmpty() || isTestEnv == isTestRoot,
+        "Cannot mix test roots with non-test roots:"
+            + "\n\tNon-Test Roots: %s"
+            + "\n\tTest Roots: %s",
+        isTestRoot ? rootNames : rootElement,
+        isTestRoot ? rootElement : rootNames);
+    isTestEnv = isTestRoot;
 
     rootNames.add(ClassName.get(rootElement));
-    if (!envType.isTest()) {
+    if (!isTestEnv) {
       ProcessorErrors.checkState(
           rootNames.size() <= 1, element, "More than one root found: %s", rootNames);
     }
-  }
-
-  private EnvType getEnvType(TypeElement rootElement) {
-    if (RootType.of(getProcessingEnv(), rootElement).isTestRoot()) {
-      ClassName type = InternalTestRootMetadata.of(getProcessingEnv(), rootElement).testType();
-      if (type.equals(ClassNames.INTERNAL_TEST_ROOT_TYPE_ROBOLECTRIC)) {
-        return EnvType.ROBOLECTRIC;
-      } else if (type.equals(ClassNames.INTERNAL_TEST_ROOT_TYPE_EMULATOR)) {
-        return EnvType.EMULATOR;
-      }
-      throw new AssertionError("Unknown testing type: " + type);
-    }
-    return EnvType.PRODUCTION;
   }
 
   @Override
@@ -170,12 +142,8 @@ public final class RootProcessor extends BaseProcessor {
         generateComponents(rootMetadata);
       }
 
-      switch (envType) {
-        case PRODUCTION:
-          return;
-        case ROBOLECTRIC:
-        case EMULATOR:
-          generateTestApplications(rootMetadatas);
+      if (isTestEnv) {
+        generateTestApplications(rootMetadatas);
       }
     } catch (Exception e) {
       for (Root root : rootsToProcess) {
@@ -197,11 +165,6 @@ public final class RootProcessor extends BaseProcessor {
       throws IOException {
     Optional<CustomBaseTestApplicationMetadata> customBaseTestApplication =
         CustomBaseTestApplications.get(getElementUtils());
-
-    // TODO(user): Support custom base test applications for robolectric.
-    checkState(
-        envType == EnvType.EMULATOR || !customBaseTestApplication.isPresent(),
-        "@CustomBaseApplication is not supported in Robolectric tests yet!");
 
     if (!customBaseTestApplication.isPresent()) {
       for (RootMetadata rootMetadata : rootMetadatas) {

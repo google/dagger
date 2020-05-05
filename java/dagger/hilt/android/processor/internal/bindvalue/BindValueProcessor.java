@@ -74,14 +74,11 @@ public final class BindValueProcessor extends BaseProcessor {
     Element enclosingElement = element.getEnclosingElement();
     ProcessorErrors.checkState(
         enclosingElement.getKind() == ElementKind.CLASS
-            && (Processors.hasAnnotation(
-                    enclosingElement, ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT)
-                || Processors.hasAnnotation(
-                    enclosingElement, ClassNames.ANDROID_EMULATOR_ENTRY_POINT)
+            && (Processors.hasAnnotation(enclosingElement, ClassNames.HILT_ANDROID_TEST)
             ),
         enclosingElement,
-        "@%s can only be used within a class annotated with"
-            + "@AndroidRobolectricEntryPoint or @AndroidEmulatorEntryPoint. Found: %s",
+        "@%s can only be used within a class annotated with "
+            + "@HiltAndroidTest. Found: %s",
         annotationClassName.simpleName(),
         enclosingElement);
 

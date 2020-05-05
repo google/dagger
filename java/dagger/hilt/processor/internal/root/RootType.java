@@ -48,12 +48,10 @@ enum RootType {
     if (Processors.hasAnnotation(element, ClassNames.GENERATE_COMPONENTS)) {
       ProcessorErrors.checkState(
           Processors.hasAnnotation(element, ClassNames.ANDROID_ENTRY_POINT)
-              || Processors.hasAnnotation(element, ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT)
-              || Processors.hasAnnotation(element, ClassNames.ANDROID_EMULATOR_ENTRY_POINT),
+              || Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST),
           element,
           "Classes annotated with @GenerateComponents must also be annotated with "
-              + "@AndroidEntryPoint, @AndroidRobolectricEntryPoint, or "
-              + "@AndroidEmulatorEntryPoint.");
+              + "@AndroidEntryPoint, or @HiltAndroidTest.");
       return Processors.hasAnnotation(element, ClassNames.ANDROID_ENTRY_POINT) ? ROOT : TEST_ROOT;
     } else if (Processors.hasAnnotation(element, ClassNames.INTERNAL_TEST_ROOT)) {
       return TEST_ROOT;

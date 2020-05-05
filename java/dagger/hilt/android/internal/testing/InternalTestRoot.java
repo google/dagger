@@ -29,14 +29,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 @GeneratesRootInput
 public @interface InternalTestRoot {
-  /** The type of Hilt test. */
-  enum Type {
-    ROBOLECTRIC,
-    EMULATOR
-  }
-
-  /** Returns the type of test. */
-  Type testType();
 
   /** Returns the test class. */
   Class<?> testClass();

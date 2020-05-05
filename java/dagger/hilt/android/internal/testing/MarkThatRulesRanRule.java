@@ -47,7 +47,8 @@ public final class MarkThatRulesRanRule implements TestRule {
   public Statement apply(final Statement base, Description description) {
     checkState(
         description.getTestClass().isInstance(testInstance),
-        "HiltTestRule was constructed with an argument that was not an instance of the test class");
+        "HiltAndroidRule was constructed with an argument that was not an instance of the test"
+            + " class");
     return new Statement() {
       @Override
       public void evaluate() throws Throwable {

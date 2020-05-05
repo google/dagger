@@ -20,8 +20,8 @@ import android.os.Build
 import androidx.test.core.app.ActivityScenario
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.GenerateComponents
-import dagger.hilt.android.testing.AndroidRobolectricEntryPoint
-import dagger.hilt.android.testing.HiltTestRule
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,14 +34,14 @@ import org.robolectric.annotation.Config
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 @GenerateComponents
-@AndroidRobolectricEntryPoint
+@HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 // Robolectric requires Java9 to run API 29 and above, so use API 28 instead
 @Config(sdk = [Build.VERSION_CODES.P], application = SimpleTest_Application::class)
 class SimpleTest {
   @Rule
   @JvmField
-  var rule = HiltTestRule(this)
+  var rule = HiltAndroidRule(this)
 
   @Test
   fun verifyMainActivity() {

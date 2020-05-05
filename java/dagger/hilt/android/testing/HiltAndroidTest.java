@@ -23,4 +23,4 @@ import java.lang.annotation.Target;
 /** Annotation used for marking an Android emulator tests that require injection. */
 @Target({ElementType.TYPE})
 @GeneratesRootInput
-public @interface AndroidEmulatorEntryPoint {}
+public @interface HiltAndroidTest {}

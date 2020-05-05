@@ -51,16 +51,6 @@ public final class TestRootProcessor extends BaseProcessor {
 
     ClassName baseApplication = AndroidClassNames.MULTI_DEX_APPLICATION;
 
-    new InternalTestRootGenerator(
-            getProcessingEnv(),
-            testType(annotation),
-            testElement,
-            baseApplication)
-        .generate();
-  }
-
-  private static ClassName testType(TypeElement annotation) {
-    ClassName annotationName = ClassName.get(annotation);
-    throw new AssertionError("Unknown annotation: " + annotationName);
+    new InternalTestRootGenerator(getProcessingEnv(), testElement, baseApplication).generate();
   }
 }

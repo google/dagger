@@ -30,9 +30,6 @@ import javax.lang.model.element.TypeElement;
 @AutoValue
 public abstract class InternalTestRootMetadata {
 
-  /** Returns the type of test root (emulator or robolectric). */
-  public abstract ClassName testType();
-
   /** Returns the {@link TypeElement} for the test class. */
   public abstract TypeElement testElement();
 
@@ -79,21 +76,13 @@ public abstract class InternalTestRootMetadata {
     ProcessorErrors.checkState(
         !Processors.hasAnnotation(element, ClassNames.ANDROID_ENTRY_POINT),
         element,
-        "Tests cannot be annotated with @AndroidEntryPoint. Please use either "
-            + "@AndroidRobolectricEntryPoint or @AndroidEmulatorEntryPoint");
+        "Tests cannot be annotated with @AndroidEntryPoint. Please use @HiltAndroidTest");
 
     ProcessorErrors.checkState(
-        Processors.hasAnnotation(element, ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT)
-            || Processors.hasAnnotation(element, ClassNames.ANDROID_EMULATOR_ENTRY_POINT),
+        Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST),
         element,
-        "Test must be annotated with either @AndroidRobolectricEntryPoint or "
-            + "@AndroidEmulatorEntryPoint");
+        "Tests must be annotated with either @HiltAndroidTest");
 
-    ClassName testType =
-        Processors.hasAnnotation(element, ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT)
-            ? ClassNames.INTERNAL_TEST_ROOT_TYPE_ROBOLECTRIC
-            : ClassNames.INTERNAL_TEST_ROOT_TYPE_EMULATOR;
-
-    return new AutoValue_InternalTestRootMetadata(testType, testElement, baseElement);
+    return new AutoValue_InternalTestRootMetadata(testElement, baseElement);
   }
 }

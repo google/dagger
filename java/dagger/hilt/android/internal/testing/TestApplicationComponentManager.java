@@ -56,7 +56,7 @@ public final class TestApplicationComponentManager
     if (component.get() == null) {
       Preconditions.checkState(
           hasHiltTestRule(),
-          "The component was not created. Check that you have added the HiltTestRule.");
+          "The component was not created. Check that you have added the HiltAndroidRule.");
       if (!registeredModules.keySet().containsAll(requiredModules())) {
         Set<Class<?>> difference = new HashSet<>(requiredModules());
         difference.removeAll(registeredModules.keySet());
@@ -67,11 +67,12 @@ public final class TestApplicationComponentManager
       }
       Preconditions.checkState(
           bindValueReady(), "The test instance has not been set. Did you forget to call #bind()?");
-      throw new IllegalStateException("The component has not been created. "
-          + "Check that you have called #inject()? Otherwise, "
-          + "there is a race between injection and component creation. Make sure there is a "
-          + "happens-before edge between the HiltTestRule/registering all test modules and the "
-          + "first injection.");
+      throw new IllegalStateException(
+          "The component has not been created. "
+              + "Check that you have called #inject()? Otherwise, "
+              + "there is a race between injection and component creation. Make sure there is a "
+              + "happens-before edge between the HiltAndroidRule/registering"
+              + " all test modules and the first injection.");
     }
     return component.get();
   }
@@ -174,8 +175,8 @@ public final class TestApplicationComponentManager
       Preconditions.checkState(
           component.compareAndSet(null, componentSupplier().get(registeredModules)),
           "Tried to create the component more than once! "
-              + "There is a race between registering the HiltTestRule and registering all test "
-              + "modules. Make sure there is a happens-before edge between the two.");
+              + "There is a race between registering the HiltAndroidRule and registering"
+              + " all test modules. Make sure there is a happens-before edge between the two.");
       onComponentReadyRunner.setComponentManager((GeneratedComponentManager) application);
     }
   }
@@ -199,7 +200,7 @@ public final class TestApplicationComponentManager
   private Class<?> testClass() {
     Preconditions.checkState(
         hasHiltTestRule(),
-        "Test must have an HiltTestRule.");
+        "Test must have an HiltAndroidRule.");
     return hasHiltTestRule.get().getTestClass();
   }
 

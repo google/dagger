@@ -28,12 +28,12 @@ import dagger.hilt.EntryPoints;
 import dagger.hilt.GenerateComponents;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ApplicationComponent;
-import dagger.hilt.android.testing.AndroidRobolectricEntryPoint;
 import dagger.hilt.android.testing.BindElementsIntoSet;
 import dagger.hilt.android.testing.BindValue;
 import dagger.hilt.android.testing.BindValueIntoMap;
 import dagger.hilt.android.testing.BindValueIntoSet;
-import dagger.hilt.android.testing.HiltTestRule;
+import dagger.hilt.android.testing.HiltAndroidRule;
+import dagger.hilt.android.testing.HiltAndroidTest;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
@@ -46,7 +46,7 @@ import org.robolectric.annotation.Config;
 
 /** A simple test using Hilt. */
 @GenerateComponents
-@AndroidRobolectricEntryPoint
+@HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
 // Robolectric requires Java9 to run API 29 and above, so use API 28 instead
 @Config(sdk = Build.VERSION_CODES.P, application = BindValueTest_Application.class)
@@ -77,7 +77,7 @@ public final class BindValueTest {
     Set<String> getStringSet();
   }
 
-  @Rule public HiltTestRule rule = new HiltTestRule(this);
+  @Rule public HiltAndroidRule rule = new HiltAndroidRule(this);
 
   @BindValue
   @Named(TEST_QUALIFIER)

@@ -62,15 +62,23 @@ public final class CustomBaseTestApplicationProcessor extends BaseProcessor {
         annotation.getSimpleName(),
         element);
 
-    TypeElement emulatorAnnotation =
-        getElementUtils().getTypeElement(ClassNames.ANDROID_EMULATOR_ENTRY_POINT.toString());
+    TypeElement hiltTestAnnotation =
+        getElementUtils().getTypeElement(ClassNames.HILT_ANDROID_TEST.toString());
     ProcessorErrors.checkState(
-        emulatorAnnotation != null
-            && !currRoundEnv.getElementsAnnotatedWith(emulatorAnnotation).isEmpty(),
+        hiltTestAnnotation != null
+            && !currRoundEnv.getElementsAnnotatedWith(hiltTestAnnotation).isEmpty(),
         element,
         "@%s can only be used if there is an @%s within the same processing round.",
         AndroidClassNames.CUSTOM_BASE_TEST_APPLICATION,
-        ClassNames.ANDROID_EMULATOR_ENTRY_POINT);
+        ClassNames.HILT_ANDROID_TEST);
+
+    // TODO(user): enable custom base applications on individual tests.
+    ProcessorErrors.checkState(
+        !Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST),
+        element,
+        "@%s cannot be used with @%s.",
+        AndroidClassNames.CUSTOM_BASE_TEST_APPLICATION,
+        ClassNames.HILT_ANDROID_TEST);
 
     generate(MoreElements.asType(element));
   }

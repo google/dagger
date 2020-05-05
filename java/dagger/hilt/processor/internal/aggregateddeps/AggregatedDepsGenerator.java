@@ -83,8 +83,7 @@ final class AggregatedDepsGenerator {
 
   private Optional<ClassName> getEnclosingTestName(Element element) {
     TypeElement topLevelType = getOriginatingTopLevelType(element);
-    return Processors.hasAnnotation(topLevelType, ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT)
-            || Processors.hasAnnotation(topLevelType, ClassNames.ANDROID_EMULATOR_ENTRY_POINT)
+    return Processors.hasAnnotation(topLevelType, ClassNames.HILT_ANDROID_TEST)
         ? Optional.of(ClassName.get(MoreElements.asType(topLevelType)))
         : Optional.empty();
   }

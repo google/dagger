@@ -37,8 +37,7 @@ public final class InternalTestRootProcessor extends BaseProcessor {
   @Override
   public Set<String> getSupportedAnnotationTypes() {
     return ImmutableSet.of(
-        ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT.toString(),
-        ClassNames.ANDROID_EMULATOR_ENTRY_POINT.toString());
+        ClassNames.HILT_ANDROID_TEST.toString());
   }
 
   @Override

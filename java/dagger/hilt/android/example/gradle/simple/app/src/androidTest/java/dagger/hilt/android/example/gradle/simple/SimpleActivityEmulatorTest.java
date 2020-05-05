@@ -21,9 +21,9 @@ import static com.google.common.truth.Truth.assertThat;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.hilt.GenerateComponents;
-import dagger.hilt.android.testing.AndroidEmulatorEntryPoint;
 import dagger.hilt.android.testing.BindValue;
-import dagger.hilt.android.testing.HiltTestRule;
+import dagger.hilt.android.testing.HiltAndroidRule;
+import dagger.hilt.android.testing.HiltAndroidTest;
 import dagger.hilt.android.testing.UninstallModules;
 import javax.inject.Inject;
 import org.junit.Rule;
@@ -33,11 +33,11 @@ import org.junit.runner.RunWith;
 /** A simple test using Hilt. */
 @UninstallModules(UserNameModule.class)
 @GenerateComponents
-@AndroidEmulatorEntryPoint
+@HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
 public final class SimpleActivityEmulatorTest {
 
-  @Rule public HiltTestRule rule = new HiltTestRule(this);
+  @Rule public HiltAndroidRule rule = new HiltAndroidRule(this);
 
   @BindValue @UserName String fakeUserName = "FakeUser";
 

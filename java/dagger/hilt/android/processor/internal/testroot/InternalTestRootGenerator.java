@@ -31,7 +31,6 @@ import javax.lang.model.element.TypeElement;
 public final class InternalTestRootGenerator {
 
   private final ProcessingEnvironment processingEnv;
-  private final ClassName testType;
   private final TypeElement testElement;
   private final ClassName testName;
   private final ClassName baseApplicationName;
@@ -39,11 +38,9 @@ public final class InternalTestRootGenerator {
 
   public InternalTestRootGenerator(
       ProcessingEnvironment processingEnv,
-      ClassName testType,
       TypeElement testElement,
       ClassName baseApplicationName) {
     this.processingEnv = processingEnv;
-    this.testType = testType;
     this.testElement = testElement;
     this.testName = ClassName.get(testElement);
     this.baseApplicationName = baseApplicationName;
@@ -52,7 +49,6 @@ public final class InternalTestRootGenerator {
 
   // @Generated
   // @InternalTestRoot(
-  //   testType = InternalTestRoot.Type.ROBOLECTRIC
   //   testClass = FooTest.class,
   //   applicationBaseClass = BaseApplication.class,
   // )
@@ -64,7 +60,6 @@ public final class InternalTestRootGenerator {
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addAnnotation(
                 AnnotationSpec.builder(ClassNames.INTERNAL_TEST_ROOT)
-                    .addMember("testType", "$T", testType)
                     .addMember("testClass", "$T.class", testName)
                     .addMember("applicationBaseClass", "$T.class", baseApplicationName)
                     .build());

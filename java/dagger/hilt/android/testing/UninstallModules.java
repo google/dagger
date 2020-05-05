@@ -34,7 +34,7 @@ import java.lang.annotation.Target;
  *       ProdFooModule.class,
  *   })
  *   {@literal @}GenerateComponents
- *   {@literal @}AndroidRobolectricEntryPoint
+ *   {@literal @}HiltAndroidTest
  *   public class MyTest {
  *     {@literal @}Module
  *     {@literal @}InstallIn(ApplicationComponent.class)

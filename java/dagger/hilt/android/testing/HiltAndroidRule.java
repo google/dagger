@@ -28,11 +28,11 @@ import org.junit.runners.model.Statement;
  *
  * <p>This rule is required. The Dagger component will not be created without this test rule.
  */
-public final class HiltTestRule implements TestRule {
+public final class HiltAndroidRule implements TestRule {
   private final MarkThatRulesRanRule rule;
 
   /** Creates a new instance of the rules. Tests should pass {@code this}. */
-  public HiltTestRule(Object testInstance) {
+  public HiltAndroidRule(Object testInstance) {
     this.rule = new MarkThatRulesRanRule(checkNotNull(testInstance));
   }
 

@@ -49,13 +49,11 @@ public final class UninstallModulesProcessor extends BaseProcessor {
     // TODO(user): Loosen this restriction to allow defining sets of ignored modules in libraries.
     ProcessorErrors.checkState(
         MoreElements.isType(element)
-            && (Processors.hasAnnotation(element, ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT)
-                || Processors.hasAnnotation(element, ClassNames.ANDROID_EMULATOR_ENTRY_POINT)),
+            && Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST),
         element,
-        "@%s should only be used on test classes annotated with either @%s or @%s, but found: %s",
+        "@%s should only be used on test classes annotated with @%s, but found: %s",
         annotation.getSimpleName(),
-        ClassNames.ANDROID_ROBOLECTRIC_ENTRY_POINT.simpleName(),
-        ClassNames.ANDROID_EMULATOR_ENTRY_POINT.simpleName(),
+        ClassNames.HILT_ANDROID_TEST.simpleName(),
         element);
 
     ImmutableList<TypeElement> invalidModules =

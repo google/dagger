@@ -29,8 +29,8 @@ import dagger.hilt.InstallIn;
 import dagger.hilt.android.AndroidEntryPoint;
 import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.components.ApplicationComponent;
-import dagger.hilt.android.testing.AndroidRobolectricEntryPoint;
-import dagger.hilt.android.testing.HiltTestRule;
+import dagger.hilt.android.testing.HiltAndroidRule;
+import dagger.hilt.android.testing.HiltAndroidTest;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.junit.Rule;
@@ -40,7 +40,7 @@ import org.robolectric.annotation.Config;
 
 /** Tests basic injection APIs, and that bindings don't conflict with {@link Injection1Test}. */
 @GenerateComponents
-@AndroidRobolectricEntryPoint
+@HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
 // Robolectric requires Java9 to run API 29 and above, so use API 28 instead
 @Config(sdk = Build.VERSION_CODES.P, application = Injection2Test_Application.class)
@@ -77,7 +77,7 @@ public final class Injection2Test {
     @Inject @Named(ACTIVITY_QUALIFIER) String activityValue;
   }
 
-  @Rule public HiltTestRule rule = new HiltTestRule(this);
+  @Rule public HiltAndroidRule rule = new HiltAndroidRule(this);
 
   @Inject @Named(APPLICATION_QUALIFIER) String applicationValue;
 

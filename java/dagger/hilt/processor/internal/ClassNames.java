@@ -111,12 +111,6 @@ public final class ClassNames {
       get("dagger.hilt.android.internal.modules", "ApplicationContextModule");
   public static final ClassName INTERNAL_TEST_ROOT =
       get("dagger.hilt.android.internal.testing", "InternalTestRoot");
-  public static final ClassName INTERNAL_TEST_ROOT_TYPE =
-      get("dagger.hilt.android.internal.testing", "InternalTestRoot", "Type");
-  public static final ClassName INTERNAL_TEST_ROOT_TYPE_ROBOLECTRIC =
-      get("dagger.hilt.android.internal.testing", "InternalTestRoot", "Type", "ROBOLECTRIC");
-  public static final ClassName INTERNAL_TEST_ROOT_TYPE_EMULATOR =
-      get("dagger.hilt.android.internal.testing", "InternalTestRoot", "Type", "EMULATOR");
   public static final ClassName TEST_INJECTOR =
       get("dagger.hilt.android.internal.testing", "TestInjector");
   public static final ClassName TEST_APPLICATION_COMPONENT_MANAGER =
@@ -125,10 +119,8 @@ public final class ClassNames {
       get("dagger.hilt.android.internal.testing", "TestApplicationComponentManagerHolder");
   public static final ClassName TEST_INSTANCE_HOLDER =
       get("dagger.hilt.android.internal.testing", "TestInstanceHolder");
-  public static final ClassName ANDROID_ROBOLECTRIC_ENTRY_POINT =
-      get("dagger.hilt.android.testing", "AndroidRobolectricEntryPoint");
-  public static final ClassName ANDROID_EMULATOR_ENTRY_POINT =
-      get("dagger.hilt.android.testing", "AndroidEmulatorEntryPoint");
+  public static final ClassName HILT_ANDROID_TEST =
+      get("dagger.hilt.android.testing", "HiltAndroidTest");
   public static final ClassName ON_COMPONENT_READY_RUNNER =
       get("dagger.hilt.android.testing", "OnComponentReadyRunner");
   public static final ClassName ON_COMPONENT_READY_RUNNER_HOLDER =

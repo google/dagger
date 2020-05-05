@@ -43,14 +43,39 @@ dependencies {
   testImplementation 'com.google.truth:truth:1.0.1'
 }
 
-// TODO(danysantiago): Move artifact building and publishing to Bazel otherwise
-// match POM information with /tools/pom-template.xml
+// TODO(danysantiago): Use POM template in tools/ to avoid duplicating lines.
 publishing {
   publications {
     plugin(MavenPublication) {
       artifactId = 'hilt-android-gradle-plugin'
-      version = 'LOCAL-SNAPSHOT'
+      def publishVersion = findProperty("PublishVersion")
+      version = (publishVersion != null) ? publishVersion : "LOCAL-SNAPSHOT"
       from components.kotlin
+      pom {
+        name = 'Hilt Android Gradle Plugin'
+        description = 'A fast dependency injector for Android and Java.'
+        url = 'https://github.com/google/dagger'
+        scm {
+          url = 'https://github.com/google/dagger/'
+          connection = 'scm:git:git://github.com/google/dagger.git'
+          developerConnection = 'scm:git:ssh://git@github.com/google/dagger.git'
+          tag = 'HEAD'
+        }
+        issueManagement {
+          system = 'GitHub Issues'
+          url = 'https://github.com/google/dagger/issues'
+        }
+        licenses {
+          license {
+            name = 'Apache 2.0'
+            url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+          }
+        }
+        organization {
+          name = 'Google, Inc.'
+          url = 'https://www.google.com'
+        }
+      }
     }
   }
 }

@@ -46,3 +46,12 @@ _deploy \
   java/dagger/hilt/android/processor/pom.xml \
   java/dagger/hilt/android/processor/artifact-src.jar \
   java/dagger/hilt/android/processor/artifact-javadoc.jar
+
+# Gradle Plugin is built with Gradle, but still deployed via Maven (mvn)
+readonly _HILT_GRADLE_PLUGIN_DIR=java/dagger/hilt/android/plugin
+./$_HILT_GRADLE_PLUGIN_DIR/gradlew -p $_HILT_GRADLE_PLUGIN_DIR --no-daemon \
+  jar generatePomFileForPluginPublication -PPublishVersion="$VERSION_NAME"
+mvn "$MVN_GOAL" \
+  -Dfile=$_HILT_GRADLE_PLUGIN_DIR/build/libs/plugin.jar \
+  -DpomFile=$_HILT_GRADLE_PLUGIN_DIR/build/publications/plugin/pom-default.xml \
+  "${extra_maven_args[@]:+${extra_maven_args[@]}}"

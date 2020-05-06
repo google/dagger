@@ -24,12 +24,10 @@ import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.AGGREGATI
 import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications;
 import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications.CustomBaseTestApplicationMetadata;
-import dagger.hilt.android.processor.internal.testing.InjectorEntryPointGenerator;
-import dagger.hilt.android.processor.internal.testing.InternalTestRootMetadata;
-import dagger.hilt.android.processor.internal.testing.TestApplicationGenerator;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ComponentTree;
@@ -67,7 +65,7 @@ public final class RootProcessor extends BaseProcessor {
   }
 
   @Override
-  public Set<String> getSupportedAnnotationTypes() {
+  public ImmutableSet<String> getSupportedAnnotationTypes() {
     return Arrays.stream(RootType.values())
         .map(rootType -> rootType.className().toString())
         .collect(toImmutableSet());
@@ -168,20 +166,13 @@ public final class RootProcessor extends BaseProcessor {
 
     if (!customBaseTestApplication.isPresent()) {
       for (RootMetadata rootMetadata : rootMetadatas) {
-        InternalTestRootMetadata internalTestRootMetadata = rootMetadata.internalTestRootMetadata();
+        TestRootMetadata testRootMetadata = rootMetadata.testRootMetadata();
         new TestApplicationGenerator(
                 getProcessingEnv(),
-                rootMetadata.testElement(),
-                internalTestRootMetadata.baseAppName(),
-                internalTestRootMetadata.appName(),
-                internalTestRootMetadata.appInjectorName(),
+                testRootMetadata.testElement(),
+                testRootMetadata.baseAppName(),
+                testRootMetadata.appName(),
                 ImmutableList.of(rootMetadata))
-            .generate();
-        InjectorEntryPointGenerator.createWithoutInstallIn(
-                getProcessingEnv(),
-                internalTestRootMetadata.testElement(),
-                internalTestRootMetadata.appName(),
-                internalTestRootMetadata.appInjectorName())
             .generate();
       }
     } else {
@@ -190,14 +181,7 @@ public final class RootProcessor extends BaseProcessor {
               customBaseTestApplication.get().element(),
               customBaseTestApplication.get().baseAppName(),
               customBaseTestApplication.get().appName(),
-              customBaseTestApplication.get().appInjectorName(),
               rootMetadatas)
-          .generate();
-      InjectorEntryPointGenerator.createWithoutInstallIn(
-              getProcessingEnv(),
-              customBaseTestApplication.get().element(),
-              customBaseTestApplication.get().appName(),
-              customBaseTestApplication.get().appInjectorName())
           .generate();
     }
   }

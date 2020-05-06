@@ -26,10 +26,10 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications;
 import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications.CustomBaseTestApplicationMetadata;
-import dagger.hilt.android.processor.internal.testing.InternalTestRootMetadata;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ComponentTree;
@@ -68,8 +68,8 @@ public final class RootMetadata {
   private final ComponentDependencies deps;
   private final Supplier<ImmutableSetMultimap<ClassName, ClassName>> scopesByComponent =
       memoize(this::getScopesByComponentUncached);
-  private final Supplier<InternalTestRootMetadata> internalTestRootMetadata =
-      memoize(this::internalTestRootMetadataUncached);
+  private final Supplier<TestRootMetadata> testRootMetadata =
+      memoize(this::testRootMetadataUncached);
 
   private RootMetadata(
       Root root,
@@ -124,28 +124,16 @@ public final class RootMetadata {
         .collect(toImmutableSet());
   }
 
-  public TypeElement testElement() {
-    return internalTestRootMetadata().testElement();
-  }
-
-  public ClassName testName() {
-    return internalTestRootMetadata().testName();
-  }
-
-  public ClassName testInjectorName() {
-    return internalTestRootMetadata().testInjectorName();
-  }
-
-  public InternalTestRootMetadata internalTestRootMetadata() {
-    return internalTestRootMetadata.get();
+  public TestRootMetadata testRootMetadata() {
+    return testRootMetadata.get();
   }
 
   public boolean waitForBindValue() {
     return false;
   }
 
-  private InternalTestRootMetadata internalTestRootMetadataUncached() {
-    return InternalTestRootMetadata.of(env, root().element());
+  private TestRootMetadata testRootMetadataUncached() {
+    return TestRootMetadata.of(env, root().element());
   }
 
   /**
@@ -185,20 +173,24 @@ public final class RootMetadata {
     for (TypeElement element : deps.getEntryPoints(componentName, root.classname())) {
       entryPointSet.add(ClassName.get(element));
     }
-
-    if (root.type().isTestRoot() && componentName.equals(ClassNames.APPLICATION_COMPONENT)) {
-      // @CustomBaseTestApplication can be used on an element other than the test, which can change
-      // the name of the generated application. This happens in Gradle instrumentation tests where
-      // a single application is generated for all instrumentation tests.
-      Optional<CustomBaseTestApplicationMetadata> customBaseTestApplication =
-          CustomBaseTestApplications.get(elements);
-      if (customBaseTestApplication.isPresent()) {
-        entryPointSet.add(customBaseTestApplication.get().appInjectorName());
-      } else {
-        entryPointSet.add(internalTestRootMetadata().appInjectorName());
+    if (root.type().isTestRoot()) {
+      if (componentName.equals(ClassNames.APPLICATION_COMPONENT)) {
+        // @CustomBaseTestApplication can be used on an element other than the test, which can
+        // change the name of the generated application. This happens in Gradle instrumentation
+        // tests where a single application is generated for all instrumentation tests.
+        Optional<CustomBaseTestApplicationMetadata> customBaseTestApplication =
+            CustomBaseTestApplications.get(elements);
+        entryPointSet.add(
+            ParameterizedTypeName.get(
+                ClassNames.TEST_APPLICATION_INJECTOR,
+                customBaseTestApplication.isPresent()
+                    ? customBaseTestApplication.get().appName()
+                    : testRootMetadata().appName()));
+        entryPointSet.add(
+            ParameterizedTypeName.get(
+                ClassNames.TEST_INJECTOR, testRootMetadata().testName()));
       }
     }
-
     return entryPointSet.build();
   }
 

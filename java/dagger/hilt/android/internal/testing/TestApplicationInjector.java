@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.testing;
+package dagger.hilt.android.internal.testing;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
-
-/** Annotation used for marking an Android emulator tests that require injection. */
-@Target({ElementType.TYPE})
-public @interface HiltAndroidTest {}
+/**
+ * Interface to expose a method for members injection for use in tests.
+ */
+public interface TestApplicationInjector<T> {
+  void injectApp(T t);
+}

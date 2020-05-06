@@ -360,7 +360,7 @@ public abstract class AndroidEntryPointMetadata {
             CodeBlock.of("this"));
     private static final Type VIEW =
         new Type(
-            AndroidClassNames.VIEW_COMPONENT,
+            AndroidClassNames.VIEW_WITH_FRAGMENT_COMPONENT,
             AndroidType.VIEW,
             AndroidClassNames.VIEW_COMPONENT_MANAGER,
             CodeBlock.of("this, true /* hasFragmentBindings */"));

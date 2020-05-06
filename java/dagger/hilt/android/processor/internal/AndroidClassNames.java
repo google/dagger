@@ -71,8 +71,8 @@ public final class AndroidClassNames {
       get("dagger.hilt.android.components", "ActivityComponent");
   public static final ClassName FRAGMENT_COMPONENT =
       get("dagger.hilt.android.components", "FragmentComponent");
-  public static final ClassName VIEW_COMPONENT =
-      get("dagger.hilt.android.components", "ViewComponent");
+  public static final ClassName VIEW_WITH_FRAGMENT_COMPONENT =
+      get("dagger.hilt.android.components", "ViewWithFragmentComponent");
   public static final ClassName VIEW_NO_FRAGMENT_COMPONENT =
       get("dagger.hilt.android.components", "ViewNoFragmentComponent");
   public static final ClassName SERVICE_COMPONENT =

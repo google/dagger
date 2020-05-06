@@ -25,8 +25,8 @@ import dagger.hilt.EntryPoint;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.components.FragmentComponent;
-import dagger.hilt.android.internal.builders.ViewComponentBuilder;
 import dagger.hilt.android.internal.builders.ViewNoFragmentComponentBuilder;
+import dagger.hilt.android.internal.builders.ViewWithFragmentComponentBuilder;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
 
@@ -40,11 +40,11 @@ import dagger.hilt.internal.Preconditions;
  * because even the injector interface type is not a valid type if we have a hilt base class.
  */
 public final class ViewComponentManager implements GeneratedComponentManager<Object> {
-  /** Entrypoint for {@link ViewComponentBuilder}. */
+  /** Entrypoint for {@link ViewWithFragmentComponentBuilder}. */
   @EntryPoint
   @InstallIn(FragmentComponent.class)
-  public interface ViewComponentBuilderEntryPoint {
-    ViewComponentBuilder viewComponentBuilder();
+  public interface ViewWithFragmentComponentBuilderEntryPoint {
+    ViewWithFragmentComponentBuilder viewWithFragmentComponentBuilder();
   }
 
   /** Entrypoint for {@link ViewNoFragmentComponentBuilder}. */
@@ -81,8 +81,8 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
     GeneratedComponentManager<?> componentManager =
         getParentComponentManager(/*allowMissing=*/ false);
     if (hasFragmentBindings) {
-      return ((ViewComponentBuilderEntryPoint) componentManager.generatedComponent())
-          .viewComponentBuilder()
+      return ((ViewWithFragmentComponentBuilderEntryPoint) componentManager.generatedComponent())
+          .viewWithFragmentComponentBuilder()
           .view(view)
           .build();
     } else {

@@ -102,7 +102,8 @@ public abstract class AndroidEntryPointMetadata {
 
   /** The name of the generated injector for the Hilt class. */
   public ClassName injectorClassName() {
-    return Processors.append(Processors.getEnclosedClassName(elementClassName()), "_Injector");
+    return Processors.append(
+        Processors.getEnclosedClassName(elementClassName()), "_GeneratedInjector");
   }
 
   /**

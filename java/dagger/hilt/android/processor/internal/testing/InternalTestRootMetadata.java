@@ -53,12 +53,12 @@ public abstract class InternalTestRootMetadata {
 
   /** The name of the generated entry point for injecting the test app. */
   public ClassName appInjectorName() {
-    return Processors.append(Processors.getEnclosedClassName(appName()), "_Injector");
+    return Processors.append(Processors.getEnclosedClassName(appName()), "_GeneratedInjector");
   }
 
   /** The name of the generated entry point for injecting the test. */
   public ClassName testInjectorName() {
-    return Processors.append(Processors.getEnclosedClassName(testName()), "_Injector");
+    return Processors.append(Processors.getEnclosedClassName(testName()), "_GeneratedInjector");
   }
 
   public static InternalTestRootMetadata of(ProcessingEnvironment env, Element element) {

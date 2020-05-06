@@ -39,8 +39,8 @@ public final class InjectorEntryPointGenerator {
 
   // @Generated("InjectorEntryPointGenerator")
   // @InstallIn({$SCOPES})
-  // public interface Foo_Injector {
-  //   void injectFoo(Foo foo);
+  // public interface FooActivity_GeneratedInjector {
+  //   void injectFoo(FooActivity foo);
   // }
   public void generate() throws IOException {
     ClassName name = metadata.injectorClassName();

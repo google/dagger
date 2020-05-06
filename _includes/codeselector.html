@@ -1,0 +1,98 @@
+{% comment %}
+Copyright (C) 2020 Google LLC.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.foobar2
+{% endcomment %}
+
+{% comment %}
+This adds logic for creating code snippets with selector buttons for different languages.
+Usage should be as follows in the markdown files if you want the buttons embedded
+into the page.
+
+To add buttons for Java and Kotlin:
+
+{::options parse_block_html="true" /}
+
+<div class="c-codeselector__button c-codeselector__button_java">Java
+</div>
+<div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin
+</div>
+
+{::options parse_block_html="false" /}
+
+Then the code snippets need to be written with the correct class selectors:
+
+```java
+Java code example
+```
+{: .c-codeselector__code .c-codeselector__code_java }
+
+```kotlin
+Kotlin code example
+```
+{: .c-codeselector__code .c-codeselector__code_kotlin }
+
+Also, in the _config.yml, two variables must be defined:
+enableCodeSelector: true
+defaultCodeLanguage: "java"
+
+This enables the code selector logic and chooses the site-wide default language.
+
+{% endcomment %}
+
+{% if site.enableCodeSelector %}
+<script>
+  function chooseCodeLanguage(language) {
+    var code_off = document.getElementsByClassName("c-codeselector__code");
+    for (var i = 0; i < code_off.length; i++) {
+      code_off[i].classList.add("c-codeselector__hidden_code");
+    }
+    var code_on = document.getElementsByClassName("c-codeselector__code_" + language);
+    for (var i = 0; i < code_on.length; i++) {
+      code_on[i].classList.remove("c-codeselector__hidden_code");
+    }
+    var buttons_off = document.getElementsByClassName("c-codeselector__button");
+    for (var i = 0; i < buttons_off.length; i++) {
+      buttons_off[i].classList.add("c-codeselector__unselected_button");
+    }
+    var buttons_on = document.getElementsByClassName("c-codeselector__button_" + language);
+    for (var i = 0; i < buttons_on.length; i++) {
+      buttons_on[i].classList.remove("c-codeselector__unselected_button");
+    }
+  }
+
+  function getCodeSelectorButtonLanguage(button) {
+    var classList = button.classList;
+    for (var i = 0; i < classList.length; i++) {
+      if (classList[i].startsWith("c-codeselector__button_")) {
+        return classList[i].substring("c-codeselector__button_".length);
+      }
+    }
+    throw new Error("Could not find code language on button");
+  }
+
+  function setCodeSelectorButtonOnClick(button, language) {
+    button.onclick = function() { chooseCodeLanguage(language) };
+  }
+
+  function initCodeSelectors() {
+    var buttons = document.getElementsByClassName("c-codeselector__button");
+    for (var i = 0; i < buttons.length; i++) {
+      setCodeSelectorButtonOnClick(buttons[i], getCodeSelectorButtonLanguage(buttons[i]));
+    }
+    chooseCodeLanguage("{{site.defaultCodeLanguage}}");
+  }
+
+  initCodeSelectors();
+</script>
+{% endif %}

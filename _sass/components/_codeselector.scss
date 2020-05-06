@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Google LLC.
+ * Copyright (C) 2020 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,35 @@
  */
 
 /* ==========================================================================
-   Grey Theme
+   Code selector
    ========================================================================== */
 
-.t-grey {
+.c-codeselector__button {
+  position: relative;
+  @include fs--body;
+  outline: none;
+  border: none;
+  padding-left: 10px;
+  padding-right: 10px;
+  display: inline-block;
 
-  .c-navigation,
-  .c-sidenav,
-  .c-codeselector__button:after,
-  .c-header {
-    background: $c__blue-grey;
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: $t-theme;
   }
+}
 
-  .c-article__main a:not(.c-btn) {
-    color: $c__blue-grey;
+.c-codeselector__unselected_button {
+  &:after {
+    display: none;
   }
+}
 
-  .c-footer a {
-    color: $c__blue-grey;
-  }
+.c-codeselector__hidden_code {
+  display: none;
 }

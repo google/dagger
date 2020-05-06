@@ -9,8 +9,8 @@
 set -ex
 
 readonly EMULATOR="$1"
-# Empirically, the emulator startup takes ~40s so we set the timeout for 100s.
-readonly TIMEOUT_SEC=100
+# Empirically, the emulator startup takes ~60s so we set the timeout for 200s.
+readonly TIMEOUT_SEC=200
 readonly WAIT_CMD="${ANDROID_HOME}/platform-tools/adb wait-for-device shell getprop init.svc.bootanim"
 readonly _HILT_ANDROID_EXAMPLE_DIR=java/dagger/hilt/android/example/gradle/simple
 

@@ -22,7 +22,12 @@ import java.io.FileInputStream
 import java.util.zip.ZipInputStream
 import javassist.ClassPool
 import javassist.CtClass
+import javassist.Modifier
+import javassist.bytecode.CodeIterator
+import javassist.bytecode.Opcode
 import org.slf4j.LoggerFactory
+
+typealias CodeArray = javassist.bytecode.ByteArray // Avoids conflict with Kotlin's stdlib ByteArray
 
 /**
  * A helper class for performing the transform.
@@ -119,6 +124,72 @@ internal class AndroidEntryPointClassTransformer(
         "$superclassName."
     )
     clazz.superclass = classPool.get(entryPointSuperclassName)
+    transformSuperMethodCalls(clazz, superclassName, entryPointSuperclassName)
     return true
+  }
+
+  /**
+   * Iterates over each declared method, finding in its bodies super calls. (e.g. super.onCreate())
+   * and rewrites the method reference of the invokespecial instruction to one that uses the new
+   * superclass.
+   *
+   * The invokespecial instruction is emitted for code that between other things also invokes a
+   * method of a superclass of the current class. The opcode invokespecial takes two operands, each
+   * of 8 bit, that together represent an address in the constant pool to a method reference. The
+   * method reference is computed at compile-time by looking the direct superclass declaration, but
+   * at runtime the code behaves like invokevirtual, where as the actual method invoked is looked up
+   * based on the class hierarchy.
+   *
+   * However, it has been observed that on APIs 19 to 22 the Android Runtime (ART) jumps over the
+   * direct superclass and into the method reference class, causing unexpected behaviours.
+   * Therefore, this method performs the additional transformation to rewrite direct super call
+   * invocations to use a method reference whose class in the pool is the new superclass. Note that
+   * this is not necessary for constructor calls since the Javassist library takes care of those.
+   *
+   * @see: https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-6.html#jvms-6.5.invokespecial
+   * @see: https://source.android.com/devices/tech/dalvik/dalvik-bytecode
+   */
+  private fun transformSuperMethodCalls(
+    clazz: CtClass,
+    oldSuperclassName: String,
+    newSuperclassName: String
+  ) {
+    val constantPool = clazz.classFile.constPool
+    clazz.declaredMethods
+      .filter { it.methodInfo.isMethod && !Modifier.isStatic(it.modifiers) }
+      .forEach { method ->
+        val codeAttr = method.methodInfo.codeAttribute
+        val code = codeAttr.code
+        codeAttr.iterator().forEachInstruction { index, opcode ->
+          // We are only interested in 'invokespecial' instructions.
+          if (opcode != Opcode.INVOKESPECIAL) {
+            return@forEachInstruction
+          }
+          // If the method reference of the instruction is not using the old superclass then we
+          // should not rewrite it.
+          val methodRef = CodeArray.readU16bit(code, index + 1)
+          val currentClassRef = constantPool.getMethodrefClassName(methodRef)
+          if (currentClassRef != oldSuperclassName) {
+            return@forEachInstruction
+          }
+          val nameAndTypeRef = constantPool.getMethodrefNameAndType(methodRef)
+          val newSuperclassRef = constantPool.addClassInfo(newSuperclassName)
+          val newMethodRef = constantPool.addMethodrefInfo(newSuperclassRef, nameAndTypeRef)
+          logger.info(
+            "[$taskName] Redirecting an invokespecial in " +
+              "${clazz.name}.${method.name}:${method.signature} at code index $index from " +
+              "method ref #$methodRef to #$newMethodRef."
+          )
+          CodeArray.write16bit(newMethodRef, code, index + 1)
+        }
+      }
+  }
+
+  // Iterate over each instruction in a CodeIterator.
+  private fun CodeIterator.forEachInstruction(body: CodeIterator.(Int, Int) -> Unit) {
+    while (hasNext()) {
+      val index = next()
+      this.body(index, byteAt(index))
+    }
   }
 }

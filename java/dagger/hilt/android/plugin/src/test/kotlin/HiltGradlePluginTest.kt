@@ -17,6 +17,7 @@
 import com.google.common.truth.Truth.assertThat
 import java.io.DataInputStream
 import java.io.FileInputStream
+import javassist.bytecode.ByteArray
 import javassist.bytecode.ClassFile
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert.assertEquals
@@ -46,11 +47,15 @@ class HiltGradlePluginTest {
         """
         package minimal;
 
+        import android.os.Bundle;
         import androidx.appcompat.app.AppCompatActivity;
 
         @dagger.hilt.android.AndroidEntryPoint
         public class MainActivity extends AppCompatActivity {
-
+          @Override
+          public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+          }
         }
         """.trimIndent()
     )
@@ -75,7 +80,21 @@ class HiltGradlePluginTest {
     val transformedClass = result.getTransformedFile("minimal/MainActivity.class")
     FileInputStream(transformedClass).use { fileInput ->
       ClassFile(DataInputStream(fileInput)).let { classFile ->
+        // Verify superclass is updated
         assertEquals("minimal.Hilt_MainActivity", classFile.superclass)
+        // Verify super call is also updated
+        val constPool = classFile.constPool
+        classFile.methods.first { it.name == "onCreate" }.let { methodInfo ->
+          // bytecode of MainActivity.onCreate() is:
+          // 0 - aload_0
+          // 1 - aload_1
+          // 2 - invokespecial
+          // 5 - return
+          val invokeIndex = 2
+          val methodRef = ByteArray.readU16bit(methodInfo.codeAttribute.code, invokeIndex + 1)
+          val classRef = constPool.getMethodrefClassName(methodRef)
+          assertEquals("minimal.Hilt_MainActivity", classRef)
+        }
       }
     }
   }

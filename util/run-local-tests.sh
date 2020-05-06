@@ -21,9 +21,8 @@ readonly _HILT_ANDROID_EXAMPLE_DIR=java/dagger/hilt/android/example/gradle/simpl
 readonly _HILT_KOTLIN_ANDROID_EXAMPLE_DIR=java/dagger/hilt/android/example/gradle/simpleKotlin
 ./$_HILT_GRADLE_PLUGIN_DIR/gradlew -p $_HILT_GRADLE_PLUGIN_DIR test --no-daemon --stacktrace
 # Run gradle tests with different versions of Android Gradle Plugin
-agp_verions=("4.1.0-alpha07" "4.0.0-beta05" "3.6.3")
-for version in "${agp_verions[@]}"
-do
+readonly AGP_VERSIONS=("4.1.0-alpha07" "4.0.0-beta05" "3.6.3")
+for version in "${AGP_VERSIONS[@]}"; do
     echo "Running tests with AGP $version"
     AGP_VERSION=$version ./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR buildDebug --no-daemon --stacktrace
     AGP_VERSION=$version ./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR testDebug --no-daemon --stacktrace

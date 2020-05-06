@@ -56,8 +56,9 @@ internal class AndroidEntryPointClassTransformer(
    * transformed.
    *
    * @param inputFile The jar file to transform, must be a jar.
+   * @return true if at least one class within the jar was transformed.
    */
-  fun transformJarContents(inputFile: File) {
+  fun transformJarContents(inputFile: File): Boolean {
     require(inputFile.isJarFile()) {
       "Invalid file, '$inputFile' is not a jar."
     }
@@ -67,36 +68,40 @@ internal class AndroidEntryPointClassTransformer(
     check(!copyNonTransformed) {
       "Transforming a jar is not supported with 'copyNonTransformed'."
     }
+    var transformed = false
     ZipInputStream(FileInputStream(inputFile)).use { input ->
       var entry = input.nextEntry
       while (entry != null) {
         if (entry.isClassFile()) {
           val clazz = classPool.makeClass(input, false)
-          transformClassToOutput(clazz)
+          transformed = transformClassToOutput(clazz) || transformed
         }
         entry = input.nextEntry
       }
     }
+    return transformed
   }
 
   /**
    * Transform a single class file.
    *
    * @param inputFile The file to transform, must be a class file.
+   * @return true if the class file was transformed.
    */
-  fun transformFile(inputFile: File) {
+  fun transformFile(inputFile: File): Boolean {
     check(inputFile.isClassFile()) {
       "Invalid file, '$inputFile' is not a class."
     }
     val clazz = inputFile.inputStream().use { classPool.makeClass(it, false) }
-    transformClassToOutput(clazz)
+    return transformClassToOutput(clazz)
   }
 
-  private fun transformClassToOutput(clazz: CtClass) {
+  private fun transformClassToOutput(clazz: CtClass): Boolean {
     val transformed = transformClass(clazz)
     if (transformed || copyNonTransformed) {
       clazz.writeFile(sourceRootOutputDir.path)
     }
+    return transformed
   }
 
   private fun transformClass(clazz: CtClass): Boolean {

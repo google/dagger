@@ -17,9 +17,11 @@
 package dagger.hilt.android.example.gradle.simpleKotlin
 
 import android.os.Build
+import androidx.appcompat.app.AppCompatActivity
 import androidx.test.core.app.ActivityScenario
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.GenerateComponents
+import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
@@ -43,6 +45,9 @@ class SimpleTest {
   @JvmField
   var rule = HiltAndroidRule(this)
 
+  @AndroidEntryPoint
+  class TestActivity : AppCompatActivity()
+
   @Test
   fun verifyMainActivity() {
     ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -51,6 +56,16 @@ class SimpleTest {
           .isEqualTo("Hilt_MainActivity")
         assertThat(activity.model).isNotNull()
         assertThat(activity.name).isNotNull()
+      }
+    }
+  }
+
+  @Test
+  fun verifyTestActivity() {
+    ActivityScenario.launch(TestActivity::class.java).use { scenario ->
+      scenario.onActivity { activity ->
+        assertThat(activity::class.java.getSuperclass()?.getSimpleName())
+          .isEqualTo("Hilt_SimpleTest_TestActivity")
       }
     }
   }

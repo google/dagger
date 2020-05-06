@@ -71,9 +71,8 @@ public final class Injection1Test {
   }
 
   /** Test activity used to test activity injection */
-  // TODO(user): Update to extend non-gen code when test sources are also transformed.
-  @AndroidEntryPoint(AppCompatActivity.class)
-  public static final class TestActivity extends Hilt_Injection1Test_TestActivity {
+  @AndroidEntryPoint
+  public static final class TestActivity extends AppCompatActivity {
     @Inject @Named(ACTIVITY_QUALIFIER) String activityValue;
   }
 

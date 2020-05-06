@@ -43,6 +43,7 @@ class HiltGradlePlugin : Plugin<Project> {
         // plugin to a non-android project.
         "The Hilt Android Gradle plugin can only be applied to an Android project."
       }
+      verifyDependencies(it)
     }
   }
 
@@ -52,9 +53,6 @@ class HiltGradlePlugin : Plugin<Project> {
     )
     configureTransform(project, extension)
     configureProcessorFlags(project)
-    project.afterEvaluate {
-      verifyDependencies(it)
-    }
   }
 
   private fun configureTransform(project: Project, extension: HiltExtension) {

@@ -35,6 +35,7 @@ java_library(
         "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",
         "//java/dagger/hilt/processor/internal/originatingelement:processor_lib",
         "//java/dagger/hilt/processor/internal/root:processor_lib",
+        "//java/dagger/internal/codegen:processor",
     ],
 )
 
@@ -87,6 +88,5 @@ gen_maven_artifact(
         "//java/dagger/hilt/processor/internal/root:processor_lib",
         "//java/dagger/hilt/processor/internal/root:root_metadata",
         "//java/dagger/hilt/processor/internal/root:root_type",
-        "//java/dagger/internal/codegen/extension",
     ],
 )

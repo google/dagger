@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.processor.internal.root;
+package dagger.hilt.android.processor.internal.testing;
 
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -34,9 +34,11 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.WildcardTypeName;
+import dagger.hilt.android.processor.internal.AndroidClassNames;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.root.RootMetadata;
 import java.io.IOException;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
@@ -55,6 +57,7 @@ public final class TestApplicationGenerator {
   private final TypeElement originatingElement;
   private final ClassName baseName;
   private final ClassName appName;
+  private final ClassName appInjectorName;
   private final ImmutableList<RootMetadata> rootMetadatas;
 
   public TestApplicationGenerator(
@@ -62,12 +65,14 @@ public final class TestApplicationGenerator {
       TypeElement originatingElement,
       ClassName baseName,
       ClassName appName,
+      ClassName appInjectorName,
       ImmutableList<RootMetadata> rootMetadatas) {
     this.processingEnv = processingEnv;
     this.originatingElement = originatingElement;
     this.rootMetadatas = rootMetadatas;
     this.baseName = baseName;
     this.appName = appName;
+    this.appInjectorName = appInjectorName;
   }
 
   public void generate() throws IOException {
@@ -149,7 +154,7 @@ public final class TestApplicationGenerator {
   private TypeSpec testComponentSupplier() {
     MethodSpec.Builder constructor = MethodSpec.constructorBuilder();
     for (RootMetadata rootMetadata : rootMetadatas) {
-      TypeElement testElement = rootMetadata.testRootMetadata().testElement();
+      TypeElement testElement = rootMetadata.testElement();
       ImmutableSet<TypeElement> extraModules =
           rootMetadata.modulesThatDaggerCannotConstruct(ClassNames.APPLICATION_COMPONENT);
       constructor.addStatement(
@@ -171,7 +176,7 @@ public final class TestApplicationGenerator {
 
       ClassName component =
           ComponentNames.generatedComponent(
-              ClassName.get(testElement), ClassNames.APPLICATION_COMPONENT);
+              ClassName.get(testElement), AndroidClassNames.APPLICATION_COMPONENT);
       constructor.addStatement(
           "componentSuppliers.put($T.class, $L)",
           testElement,
@@ -286,7 +291,7 @@ public final class TestApplicationGenerator {
     return MethodSpec.methodBuilder("attachBaseContext")
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PROTECTED, Modifier.FINAL)
-        .addParameter(ClassNames.CONTEXT, "base")
+        .addParameter(AndroidClassNames.CONTEXT, "base")
         .addStatement("super.attachBaseContext(base)")
         .addStatement(
             "$N = new $T(this, new $L())",
@@ -321,7 +326,7 @@ public final class TestApplicationGenerator {
   }
 
   private MethodSpec getTestInjectInternalMethod(RootMetadata rootMetadata) {
-    TypeElement testElement = rootMetadata.testRootMetadata().testElement();
+    TypeElement testElement = rootMetadata.testElement();
     ClassName testName = ClassName.get(testElement);
     MethodSpec.Builder builder =
         MethodSpec.methodBuilder("injectInternal")
@@ -334,9 +339,8 @@ public final class TestApplicationGenerator {
 
     return builder
         .addStatement(
-            "(($T) this.generatedComponent()).injectTest(testInstance)",
-            ParameterizedTypeName.get(
-                ClassNames.TEST_INJECTOR, rootMetadata.testRootMetadata().testName()))
+            "(($T) this.generatedComponent()).inject(testInstance)",
+            rootMetadata.testInjectorName())
         .build();
   }
 
@@ -347,7 +351,7 @@ public final class TestApplicationGenerator {
         .addStatement(
             "return ($T) $T.getApplicationContext()",
             appName,
-            ClassNames.APPLICATION_PROVIDER)
+            AndroidClassNames.APPLICATION_PROVIDER)
         .returns(appName)
         .build();
   }

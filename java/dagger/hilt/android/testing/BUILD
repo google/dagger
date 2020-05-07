@@ -40,6 +40,7 @@ android_library(
     exported_plugins = [
         "//java/dagger/hilt/android/processor/internal/testroot:test_root_processor",
         "//java/dagger/hilt/processor/internal/root:plugin",
+        "//java/dagger/hilt/android/processor/internal/testing:internal_test_root_processor",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:plugin",
     ],
     exports = [
@@ -62,6 +63,9 @@ android_library(
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_multidex_multidex",
         "@maven//:androidx_test_core",
+    ],
+    deps = [
+        "//java/dagger/hilt:generates_root_input",
     ],
 )
 

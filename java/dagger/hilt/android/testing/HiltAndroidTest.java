@@ -16,9 +16,11 @@
 
 package dagger.hilt.android.testing;
 
+import dagger.hilt.GeneratesRootInput;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 /** Annotation used for marking an Android emulator tests that require injection. */
 @Target({ElementType.TYPE})
+@GeneratesRootInput
 public @interface HiltAndroidTest {}

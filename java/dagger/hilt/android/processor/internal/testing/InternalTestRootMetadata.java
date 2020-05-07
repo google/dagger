@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.processor.internal.root;
+package dagger.hilt.android.processor.internal.testing;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
@@ -28,30 +28,40 @@ import javax.lang.model.element.TypeElement;
 
 /** Metadata class for {@code InternalTestRoot} annotated classes. */
 @AutoValue
-abstract class TestRootMetadata {
+public abstract class InternalTestRootMetadata {
 
   /** Returns the {@link TypeElement} for the test class. */
-  abstract TypeElement testElement();
+  public abstract TypeElement testElement();
 
   /** Returns the {@link TypeElement} for the base application. */
-  abstract TypeElement baseElement();
+  public abstract TypeElement baseElement();
 
   /** Returns the {@link ClassName} for the test class. */
-  ClassName testName() {
+  public ClassName testName() {
     return ClassName.get(testElement());
   }
 
   /** Returns the {@link ClassName} for the base application. */
-  ClassName baseAppName() {
+  public ClassName baseAppName() {
     return ClassName.get(baseElement());
   }
 
   /** The name of the generated Hilt test application class for the given test name. */
-  ClassName appName() {
+  public ClassName appName() {
     return Processors.append(Processors.getEnclosedClassName(testName()), "_Application");
   }
 
-  static TestRootMetadata of(ProcessingEnvironment env, Element element) {
+  /** The name of the generated entry point for injecting the test app. */
+  public ClassName appInjectorName() {
+    return Processors.append(Processors.getEnclosedClassName(appName()), "_GeneratedInjector");
+  }
+
+  /** The name of the generated entry point for injecting the test. */
+  public ClassName testInjectorName() {
+    return Processors.append(Processors.getEnclosedClassName(testName()), "_GeneratedInjector");
+  }
+
+  public static InternalTestRootMetadata of(ProcessingEnvironment env, Element element) {
 
     ProcessorErrors.checkState(
         Processors.hasAnnotation(element, ClassNames.GENERATE_COMPONENTS),
@@ -73,6 +83,6 @@ abstract class TestRootMetadata {
         element,
         "Tests must be annotated with either @HiltAndroidTest");
 
-    return new AutoValue_TestRootMetadata(testElement, baseElement);
+    return new AutoValue_InternalTestRootMetadata(testElement, baseElement);
   }
 }

@@ -105,8 +105,6 @@ public final class ClassNames {
   public static final ClassName ACTIVITY_COMPONENT =
       get("dagger.hilt.android.components", "ActivityComponent");
   public static final ClassName CONTEXT = get("android.content", "Context");
-  public static final ClassName APPLICATION_PROVIDER =
-      get("androidx.test.core.app", "ApplicationProvider");
   public static final ClassName COMPONENT_SUPPLIER =
       get("dagger.hilt.android.internal.managers", "ComponentSupplier");
   public static final ClassName APPLICATION_CONTEXT_MODULE =
@@ -115,8 +113,6 @@ public final class ClassNames {
       get("dagger.hilt.android.internal.testing", "InternalTestRoot");
   public static final ClassName TEST_INJECTOR =
       get("dagger.hilt.android.internal.testing", "TestInjector");
-  public static final ClassName TEST_APPLICATION_INJECTOR =
-      get("dagger.hilt.android.internal.testing", "TestApplicationInjector");
   public static final ClassName TEST_APPLICATION_COMPONENT_MANAGER =
       get("dagger.hilt.android.internal.testing", "TestApplicationComponentManager");
   public static final ClassName TEST_APPLICATION_COMPONENT_MANAGER_HOLDER =

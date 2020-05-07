@@ -62,6 +62,11 @@ public final class CustomBaseTestApplications {
     public ClassName appName() {
       return Processors.append(Processors.getEnclosedClassName(elementName()), "_Application");
     }
+
+    /** Returns the name of the generated application injector */
+    public ClassName appInjectorName() {
+      return Processors.append(Processors.getEnclosedClassName(appName()), "_Injector");
+    }
   }
 
   public static Optional<CustomBaseTestApplicationMetadata> get(Elements elements) {

@@ -60,6 +60,8 @@ http_archive(
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
+ANDROID_LINT_VERSION = "26.6.2"
+
 maven_install(
     artifacts = [
         "androidx.annotation:annotation:1.1.0",
@@ -73,6 +75,14 @@ maven_install(
         "com.android.support:appcompat-v7:25.0.0",
         "com.android.support:support-annotations:25.0.0",
         "com.android.support:support-fragment:25.0.0",
+        "com.android.tools.external.org-jetbrains:uast:%s" % ANDROID_LINT_VERSION,
+        "com.android.tools.external.com-intellij:intellij-core:%s" % ANDROID_LINT_VERSION,
+        "com.android.tools.external.com-intellij:kotlin-compiler:%s" % ANDROID_LINT_VERSION,
+        "com.android.tools.lint:lint:%s" % ANDROID_LINT_VERSION,
+        "com.android.tools.lint:lint-api:%s" % ANDROID_LINT_VERSION,
+        "com.android.tools.lint:lint-checks:%s" % ANDROID_LINT_VERSION,
+        "com.android.tools.lint:lint-tests:%s" % ANDROID_LINT_VERSION,
+        "com.android.tools:testutils:%s" % ANDROID_LINT_VERSION,
         "com.google.guava:guava:27.1-android",
         "org.jetbrains.kotlin:kotlin-stdlib:1.3.50",
         "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0",
@@ -81,6 +91,7 @@ maven_install(
     repositories = [
         "https://repo1.maven.org/maven2",
         "https://maven.google.com",
+        "https://jcenter.bintray.com/",  # Lint has one trove4j dependency in jCenter
     ],
 )
 

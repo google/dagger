@@ -147,6 +147,8 @@ gen_maven_artifact(
         "dagger.hilt.android.testing",
     ],
     javadoc_srcs = glob(["*.java"]),
+    manifest = "AndroidManifest.xml",
+    packaging = "aar",
     shaded_deps = ["@com_google_auto_auto_common//jar"],
     shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
     deps = [

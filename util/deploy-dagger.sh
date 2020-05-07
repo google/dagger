@@ -113,3 +113,15 @@ _deploy \
   java/dagger/grpc/server/processor/pom.xml \
   java/dagger/grpc/server/processor/libprocessor-src.jar \
   java/dagger/grpc/server/processor/javadoc.jar
+
+_deploy \
+  java/dagger/lint/lint-artifact.jar \
+  java/dagger/lint/lint-pom.xml \
+  "" \
+  ""
+
+_deploy \
+  java/dagger/lint/lint-android-artifact.aar \
+  java/dagger/lint/lint-android-pom.xml \
+  "" \
+  ""

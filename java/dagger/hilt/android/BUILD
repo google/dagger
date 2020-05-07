@@ -71,6 +71,7 @@ android_library(
         "//java/dagger/hilt:generates_root_input",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",
+        "//java/dagger/lint:lint-android-artifact-lib",
     ],
 )
 
@@ -88,6 +89,8 @@ gen_maven_artifact(
         "dagger.hilt",
     ],
     javadoc_srcs = glob(["*.java"]),  # TODO(user): Fix these srcs.
+    manifest = "AndroidManifest.xml",
+    packaging = "aar",
     shaded_deps = ["@com_google_auto_auto_common//jar"],
     shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
     deps = [

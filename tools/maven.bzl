@@ -54,17 +54,55 @@ def gen_maven_artifact(
         javadoc_android_api_level = None,
         deps = None,
         shaded_deps = None,
-        shaded_rules = None):
+        shaded_rules = None,
+        manifest = None,
+        lint_deps = None):
+    _gen_maven_artifact(
+        name,
+        artifact_name,
+        artifact_id,
+        artifact_target,
+        testonly,
+        pom_name,
+        packaging,
+        javadoc_srcs,
+        javadoc_root_packages,
+        javadoc_exclude_packages,
+        javadoc_android_api_level,
+        deps,
+        shaded_deps,
+        shaded_rules,
+        manifest,
+        lint_deps
+    )
+
+
+def _gen_maven_artifact(
+        name,
+        artifact_name,
+        artifact_id,
+        artifact_target,
+        testonly,
+        pom_name,
+        packaging,
+        javadoc_srcs,
+        javadoc_root_packages,
+        javadoc_exclude_packages,
+        javadoc_android_api_level,
+        deps,
+        shaded_deps,
+        shaded_rules,
+        manifest,
+        lint_deps):
     """Generates the files required for a maven artifact.
 
     This macro generates the following targets:
         * ":pom": The pom file for the given target and deps
-        * ":<NAME>": The class jar file for the given target and deps
+        * ":<NAME>": The artifact file for the given target and deps
         * ":<NAME>-src": The sources jar file for the given target and deps
         * ":<NAME>-javadoc": The javadocs jar file for the given target and deps
-        * ":<NAME>-validation": Validates the target and deps.
 
-    "<NAME>-validation" validates a few things. First, it validates that the
+    This macro also validates a few things. First, it validates that the
     given "target" is a maven artifact (i.e. the "tags" attribute contains
     "maven_coordinates=..."). Second, it calculates the list of transitive
     dependencies of the target that are not owned by another maven artifact,
@@ -76,15 +114,17 @@ def gen_maven_artifact(
       artifact_name: The name of the maven artifact.
       artifact_id: The id of the maven artifact.
       testonly: True if the jar should be testonly.
-      packaging: The packaging of the maven artifact.
-      pom_name: The name of the pome file (or "pom" if absent).
+      packaging: The packaging of the maven artifact. E.g. "aar"
+      pom_name: The name of the pom file (or "pom" if absent).
       javadoc_srcs: The srcs for the javadocs.
       javadoc_root_packages: The root packages for the javadocs.
       javadoc_exclude_packages: The packages to exclude from the javadocs.
       javadoc_android_api_level: The android api level for the javadocs.
       deps: The required deps to include with the target.
       shaded_deps: The shaded deps for the jarjar.
-      shaded_rules: The shaded rules for the jarjar
+      shaded_rules: The shaded rules for the jarjar.
+      manifest: The AndroidManifest.xml to bundle in when packaing an 'aar'.
+      lint_deps: The lint targets to be bundled in when packaging an 'aar'.
     """
 
     _validate_maven_deps(
@@ -94,10 +134,10 @@ def gen_maven_artifact(
         deps = deps,
     )
 
-
     shaded_deps = shaded_deps or []
     shaded_rules = shaded_rules or []
     artifact_targets = [artifact_target] + (deps or [])
+    lint_deps = lint_deps or []
 
     # META-INF resources files that can be combined by appending lines.
     merge_meta_inf_files = [
@@ -113,23 +153,46 @@ def gen_maven_artifact(
         targets = artifact_targets,
     )
 
-    javadoc_library(
-        name = name + "-javadoc",
-        srcs = javadoc_srcs,
-        testonly = testonly,
-        root_packages = javadoc_root_packages,
-        exclude_packages = javadoc_exclude_packages,
-        android_api_level = javadoc_android_api_level,
-        deps = artifact_targets,
-    )
+    if (packaging == "aar"):
+        jarjar_library(
+            name = name + "-classes",
+            testonly = testonly,
+            jars = artifact_targets + shaded_deps,
+            rules = shaded_rules,
+            merge_meta_inf_files = merge_meta_inf_files,
+        )
+        if lint_deps:
+            # jarjar all lint artifacts since an aar only contains a single lint.jar.
+            jarjar_library(
+                name = name + "-lint",
+                jars = lint_deps,
+            )
+            lint_jar_name = name + "-lint.jar"
+        else:
+            lint_jar_name = None
 
-    jarjar_library(
-        name = name,
-        testonly = testonly,
-        jars = artifact_targets + shaded_deps,
-        rules = shaded_rules,
-        merge_meta_inf_files = merge_meta_inf_files,
-    )
+        _package_android_library(
+            name = name + "-android-lib",
+            manifest = manifest,
+            classesJar = name + "-classes.jar",
+            lintJar = lint_jar_name,
+        )
+
+        # Copy intermediate outputs to final one.
+        native.genrule(
+            name = name,
+            srcs = [name + "-android-lib"],
+            outs = [name + ".aar"],
+            cmd = "cp $< $@",
+        )
+    else:
+        jarjar_library(
+            name = name,
+            testonly = testonly,
+            jars = artifact_targets + shaded_deps,
+            rules = shaded_rules,
+            merge_meta_inf_files = merge_meta_inf_files,
+        )
 
     jarjar_library(
         name = name + "-src",
@@ -137,6 +200,17 @@ def gen_maven_artifact(
         jars = [_src_jar(dep) for dep in artifact_targets],
         merge_meta_inf_files = merge_meta_inf_files,
     )
+
+    if javadoc_srcs != None:
+        javadoc_library(
+            name = name + "-javadoc",
+            srcs = javadoc_srcs,
+            testonly = testonly,
+            root_packages = javadoc_root_packages,
+            exclude_packages = javadoc_exclude_packages,
+            android_api_level = javadoc_android_api_level,
+            deps = artifact_targets,
+        )
 
 def _src_jar(target):
     if target.startswith(":"):
@@ -183,5 +257,63 @@ _validate_maven_deps = rule(
         "deps": attr.label_list(
             doc = "The required dependencies of the target, if any.",
         ),
+    },
+)
+
+def _package_android_library_impl(ctx):
+    """A very, very simple Android Library (aar) packaging rule.
+
+    This rule only support packaging simple android libraries. No resources
+    support, assets, extra libs, jni, nor proguard. This rule is needed because
+    there is no 'JarJar equivalent' for AARs and some of our artifacts are
+    composed of sources spread across multiple android_library targets.
+
+    See: https://developer.android.com/studio/projects/android-library.html#aar-contents
+    """
+    inputs = [ctx.file.manifest, ctx.file.classesJar]
+    if ctx.file.lintJar:
+        inputs.append(ctx.file.lintJar)
+
+    ctx.actions.run_shell(
+        inputs = inputs,
+        outputs = [ctx.outputs.aar],
+        command = """
+            TMPDIR="$(mktemp -d)"
+            cp {manifest} $TMPDIR/AndroidManifest.xml
+            cp {classesJar} $TMPDIR/classes.jar
+            if [[ -a {lintJar} ]]; then
+                cp {lintJar} $TMPDIR/lint.jar
+            fi
+            touch $TMPDIR/R.txt
+            zip -j {outputFile} $TMPDIR/*
+            """.format(
+            manifest = ctx.file.manifest.path,
+            classesJar = ctx.file.classesJar.path,
+            lintJar = ctx.file.lintJar.path if ctx.file.lintJar else "none",
+            outputFile = ctx.outputs.aar.path,
+        ),
+    )
+
+_package_android_library = rule(
+    implementation = _package_android_library_impl,
+    attrs = {
+        "manifest": attr.label(
+            doc = "The AndroidManifest.xml file.",
+            allow_single_file = True,
+            mandatory = True,
+        ),
+        "classesJar": attr.label(
+            doc = "The classes.jar file.",
+            allow_single_file = True,
+            mandatory = True,
+        ),
+        "lintJar": attr.label(
+            doc = "The lint.jar file.",
+            allow_single_file = True,
+            mandatory = False,
+        ),
+    },
+    outputs = {
+        "aar": "%{name}.aar",
     },
 )

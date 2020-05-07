@@ -30,13 +30,13 @@ _deploy() {
 }
 
 _deploy \
-  java/dagger/hilt/android/artifact.jar \
+  java/dagger/hilt/android/artifact.aar \
   java/dagger/hilt/android/pom.xml \
   java/dagger/hilt/android/artifact-src.jar \
   java/dagger/hilt/android/artifact-javadoc.jar
 
 _deploy \
-  java/dagger/hilt/android/testing/artifact.jar \
+  java/dagger/hilt/android/testing/artifact.aar \
   java/dagger/hilt/android/testing/pom.xml \
   java/dagger/hilt/android/testing/artifact-src.jar \
   java/dagger/hilt/android/testing/artifact-javadoc.jar

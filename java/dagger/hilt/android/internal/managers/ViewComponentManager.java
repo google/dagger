@@ -25,7 +25,7 @@ import dagger.hilt.EntryPoint;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.components.FragmentComponent;
-import dagger.hilt.android.internal.builders.ViewNoFragmentComponentBuilder;
+import dagger.hilt.android.internal.builders.ViewComponentBuilder;
 import dagger.hilt.android.internal.builders.ViewWithFragmentComponentBuilder;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
@@ -47,11 +47,11 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
     ViewWithFragmentComponentBuilder viewWithFragmentComponentBuilder();
   }
 
-  /** Entrypoint for {@link ViewNoFragmentComponentBuilder}. */
+  /** Entrypoint for {@link ViewComponentBuilder}. */
   @EntryPoint
   @InstallIn(ActivityComponent.class)
-  public interface ViewNoFragmentComponentBuilderEntryPoint {
-    ViewNoFragmentComponentBuilder viewNoFragmentComponentBuilder();
+  public interface ViewComponentBuilderEntryPoint {
+    ViewComponentBuilder viewComponentBuilder();
   }
 
   private volatile Object component;
@@ -76,7 +76,6 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
     return component;
   }
 
-  @SuppressWarnings("unchecked")
   private Object createComponent() {
     GeneratedComponentManager<?> componentManager =
         getParentComponentManager(/*allowMissing=*/ false);
@@ -86,8 +85,8 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
           .view(view)
           .build();
     } else {
-      return ((ViewNoFragmentComponentBuilderEntryPoint) componentManager.generatedComponent())
-          .viewNoFragmentComponentBuilder()
+      return ((ViewComponentBuilderEntryPoint) componentManager.generatedComponent())
+          .viewComponentBuilder()
           .view(view)
           .build();
     }

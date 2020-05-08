@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.components;
+package dagger.hilt.android.internal.builders;
 
+import android.view.View;
+import dagger.BindsInstance;
 import dagger.hilt.DefineComponent;
-import dagger.hilt.android.scopes.ViewScoped;
+import dagger.hilt.android.components.ViewComponent;
 
-/** A Hilt component that has the lifetime of the view. */
-@ViewScoped
-@DefineComponent(parent = ActivityComponent.class)
-public interface ViewNoFragmentComponent {}
+/** Interface for creating a {@link ViewComponent}. */
+@DefineComponent.Builder
+public interface ViewComponentBuilder {
+  ViewComponentBuilder view(@BindsInstance View view);
+
+  ViewComponent build();
+}

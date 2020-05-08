@@ -366,7 +366,7 @@ public abstract class AndroidEntryPointMetadata {
             CodeBlock.of("this, true /* hasFragmentBindings */"));
     private static final Type VIEW_NO_FRAGMENT =
         new Type(
-            AndroidClassNames.VIEW_NO_FRAGMENT_COMPONENT,
+            AndroidClassNames.VIEW_COMPONENT,
             AndroidType.VIEW,
             AndroidClassNames.VIEW_COMPONENT_MANAGER,
             CodeBlock.of("this, false /* hasFragmentBindings */"));

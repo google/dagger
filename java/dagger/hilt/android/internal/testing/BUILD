@@ -20,7 +20,10 @@ package(default_visibility = ["//:src"])
 java_library(
     name = "test_injector",
     testonly = 1,
-    srcs = ["TestInjector.java"],
+    srcs = [
+        "TestApplicationInjector.java",
+        "TestInjector.java",
+    ],
 )
 
 android_library(

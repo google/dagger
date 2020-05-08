@@ -38,7 +38,6 @@ java_library(
     deps = [
         ":root_metadata",
         ":root_type",
-        "//java/dagger/hilt/android/processor/internal/custombasetestapplication:custom_base_test_applications",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:component_descriptor",
@@ -62,13 +61,13 @@ java_library(
 java_library(
     name = "root_metadata",
     srcs = [
+        "MergedTestApplicationMetadata.java",
         "Root.java",
         "RootMetadata.java",
         "TestRootMetadata.java",
     ],
     deps = [
         ":root_type",
-        "//java/dagger/hilt/android/processor/internal/custombasetestapplication:custom_base_test_applications",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:component_descriptor",
         "//java/dagger/hilt/processor/internal:processor_errors",

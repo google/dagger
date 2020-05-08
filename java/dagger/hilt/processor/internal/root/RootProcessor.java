@@ -26,9 +26,8 @@ import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
-import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications;
-import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications.CustomBaseTestApplicationMetadata;
 import dagger.hilt.processor.internal.BaseProcessor;
+import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ComponentTree;
 import dagger.hilt.processor.internal.ProcessorErrors;
@@ -57,6 +56,7 @@ public final class RootProcessor extends BaseProcessor {
   private final Set<ClassName> processed = new HashSet<>();
   private boolean isTestEnv;
   private GeneratesRootInputs generatesRootInputs;
+  private MergedTestApplicationMetadata mergedTestApplicationMetadata;
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
@@ -66,13 +66,30 @@ public final class RootProcessor extends BaseProcessor {
 
   @Override
   public ImmutableSet<String> getSupportedAnnotationTypes() {
-    return Arrays.stream(RootType.values())
-        .map(rootType -> rootType.className().toString())
-        .collect(toImmutableSet());
+    return ImmutableSet.<String>builder()
+        .add(ClassNames.MERGED_TEST_APPLICATION.toString())
+        .addAll(
+            Arrays.stream(RootType.values())
+                .map(rootType -> rootType.className().toString())
+                .collect(toImmutableSet()))
+        .build();
   }
 
   @Override
   public void processEach(TypeElement annotation, Element element) throws Exception {
+    if (ClassName.get(annotation).equals(ClassNames.MERGED_TEST_APPLICATION)) {
+      ProcessorErrors.checkState(
+          mergedTestApplicationMetadata == null,
+          element,
+          "Cannot have more than one usage of @%s. Found: [%s, %s].",
+          ClassNames.MERGED_TEST_APPLICATION,
+          mergedTestApplicationMetadata == null ? null : mergedTestApplicationMetadata.element(),
+          element);
+
+      mergedTestApplicationMetadata = MergedTestApplicationMetadata.of(element, getElementUtils());
+      return;
+    }
+
     TypeElement rootElement = MoreElements.asType(element);
     boolean isTestRoot = RootType.of(getProcessingEnv(), rootElement).isTestRoot();
     checkState(
@@ -136,7 +153,13 @@ public final class RootProcessor extends BaseProcessor {
       ComponentDependencies deps = ComponentDependencies.from(descriptors, getElementUtils());
       ImmutableList<RootMetadata> rootMetadatas =
           rootsToProcess.stream()
-              .map(root -> RootMetadata.create(root, tree, deps, getProcessingEnv()))
+              .map(
+                  root -> {
+                    Optional<ClassName> mergedAppName =
+                        Optional.ofNullable(mergedTestApplicationMetadata)
+                            .map(MergedTestApplicationMetadata::appName);
+                    return RootMetadata.create(root, tree, deps, mergedAppName, getProcessingEnv());
+                  })
               .collect(toImmutableList());
 
       for (RootMetadata rootMetadata : rootMetadatas) {
@@ -165,10 +188,7 @@ public final class RootProcessor extends BaseProcessor {
 
   private void generateTestApplications(ImmutableList<RootMetadata> rootMetadatas)
       throws IOException {
-    Optional<CustomBaseTestApplicationMetadata> customBaseTestApplication =
-        CustomBaseTestApplications.get(getElementUtils());
-
-    if (!customBaseTestApplication.isPresent()) {
+    if (mergedTestApplicationMetadata == null) {
       for (RootMetadata rootMetadata : rootMetadatas) {
         TestRootMetadata testRootMetadata = rootMetadata.testRootMetadata();
         new TestApplicationGenerator(
@@ -182,9 +202,9 @@ public final class RootProcessor extends BaseProcessor {
     } else {
       new TestApplicationGenerator(
               getProcessingEnv(),
-              customBaseTestApplication.get().element(),
-              customBaseTestApplication.get().baseAppName(),
-              customBaseTestApplication.get().appName(),
+              mergedTestApplicationMetadata.element(),
+              mergedTestApplicationMetadata.baseAppName(),
+              mergedTestApplicationMetadata.appName(),
               rootMetadatas)
           .generate();
     }

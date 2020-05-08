@@ -28,8 +28,6 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
-import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications;
-import dagger.hilt.android.processor.internal.custombasetestapplication.CustomBaseTestApplications.CustomBaseTestApplicationMetadata;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ComponentTree;
@@ -55,8 +53,9 @@ public final class RootMetadata {
       Root root,
       ComponentTree componentTree,
       ComponentDependencies deps,
+      Optional<ClassName> mergedTestApplication,
       ProcessingEnvironment env) {
-    RootMetadata metadata = new RootMetadata(root, componentTree, deps, env);
+    RootMetadata metadata = new RootMetadata(root, componentTree, deps, mergedTestApplication, env);
     metadata.validate();
     return metadata;
   }
@@ -66,6 +65,7 @@ public final class RootMetadata {
   private final Elements elements;
   private final ComponentTree componentTree;
   private final ComponentDependencies deps;
+  private final Optional<ClassName> mergedTestApplication;
   private final Supplier<ImmutableSetMultimap<ClassName, ClassName>> scopesByComponent =
       memoize(this::getScopesByComponentUncached);
   private final Supplier<TestRootMetadata> testRootMetadata =
@@ -75,11 +75,13 @@ public final class RootMetadata {
       Root root,
       ComponentTree componentTree,
       ComponentDependencies deps,
+      Optional<ClassName> mergedTestApplication,
       ProcessingEnvironment env) {
     this.root = root;
     this.env = env;
     this.elements = env.getElementUtils();
     this.componentTree = componentTree;
+    this.mergedTestApplication = mergedTestApplication;
     this.deps = deps;
   }
 
@@ -175,17 +177,13 @@ public final class RootMetadata {
     }
     if (root.type().isTestRoot()) {
       if (componentName.equals(ClassNames.APPLICATION_COMPONENT)) {
-        // @CustomBaseTestApplication can be used on an element other than the test, which can
+        // @MergedTestApplication can be used on an element other than the test, which can
         // change the name of the generated application. This happens in Gradle instrumentation
         // tests where a single application is generated for all instrumentation tests.
-        Optional<CustomBaseTestApplicationMetadata> customBaseTestApplication =
-            CustomBaseTestApplications.get(elements);
         entryPointSet.add(
             ParameterizedTypeName.get(
                 ClassNames.TEST_APPLICATION_INJECTOR,
-                customBaseTestApplication.isPresent()
-                    ? customBaseTestApplication.get().appName()
-                    : testRootMetadata().appName()));
+                mergedTestApplication.orElse(testRootMetadata().appName())));
       }
     }
     return entryPointSet.build();

@@ -58,12 +58,6 @@ public final class AndroidClassNames {
       get("dagger.hilt.android", "WithFragmentBindings");
   public static final ClassName OPTIONAL_INJECT =
       get("dagger.hilt.android.migration", "OptionalInject");
-  public static final ClassName CUSTOM_BASE_TEST_APPLICATION =
-      get("dagger.hilt.android.testing", "CustomBaseTestApplication");
-  public static final ClassName CUSTOM_BASE_TEST_APPLICATION_DATA =
-      get(
-          "dagger.hilt.android.internal.custombasetestapplication",
-          "CustomBaseTestApplicationPropagatedData");
 
   public static final ClassName APPLICATION_COMPONENT =
       get("dagger.hilt.android.components", "ApplicationComponent");

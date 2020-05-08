@@ -19,10 +19,10 @@ package dagger.hilt.android.example.gradle.simple;
 import android.app.Application;
 import android.content.Context;
 import androidx.test.runner.AndroidJUnitRunner;
-import dagger.hilt.android.testing.CustomBaseTestApplication;
+import dagger.hilt.android.testing.MergedTestApplication;
 
 /** A custom runner to setup the emulator application class for tests. */
-@CustomBaseTestApplication(Application.class)
+@MergedTestApplication(Application.class)
 public final class SimpleEmulatorTestRunner extends AndroidJUnitRunner {
 
   @Override

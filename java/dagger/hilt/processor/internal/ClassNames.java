@@ -125,6 +125,8 @@ public final class ClassNames {
       get("dagger.hilt.android.internal.testing", "TestInstanceHolder");
   public static final ClassName HILT_ANDROID_TEST =
       get("dagger.hilt.android.testing", "HiltAndroidTest");
+  public static final ClassName MERGED_TEST_APPLICATION =
+      get("dagger.hilt.android.testing", "MergedTestApplication");
   public static final ClassName ON_COMPONENT_READY_RUNNER =
       get("dagger.hilt.android.testing", "OnComponentReadyRunner");
   public static final ClassName ON_COMPONENT_READY_RUNNER_HOLDER =

@@ -21,10 +21,19 @@ import dagger.hilt.GeneratesRootInput;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
-/** Annotation that sets the custom application for tests. */
+/**
+ * An annotation that creates an application with the given base type that can be used for any
+ * test in the given build.
+ *
+ * <p>This annotation is useful for creating an application that can be used with instrumentation
+ * tests in gradle, since every instrumentation test must share the same application type.
+ *
+ * <p>This annotation cannot be used within the same build as {@link CustomBaseTestApplication},
+ * which is used to set the base application type for a single test.
+ */
 @Target({ElementType.TYPE})
 @GeneratesRootInput
-public @interface CustomBaseTestApplication {
+public @interface MergedTestApplication {
 
   /** Returns the base {@link Application} class. */
   Class<? extends Application> value();

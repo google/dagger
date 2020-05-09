@@ -108,6 +108,11 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         "@InstallIn can only be used on @Module or @EntryPoint classes: %s",
         element);
 
+    ProcessorErrors.checkState(
+        isModule != isEntryPoint,
+        element,
+        "@Module and @EntryPoint cannot be used on the same interface");
+
     if (isModule && hasInstallIn) {
       ProcessorErrors.checkState(
           element.getKind() == CLASS || element.getKind() == INTERFACE,

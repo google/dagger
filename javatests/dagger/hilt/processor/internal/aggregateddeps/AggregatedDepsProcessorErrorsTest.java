@@ -63,6 +63,10 @@ public class AggregatedDepsProcessorErrorsTest {
                 "",
                 "@EntryPoint",
                 "interface QuxEntryPoint {}",
+                "",
+                "@EntryPoint",
+                "@Module",
+                "interface DontMix{}",
                 ""));
 
     Compilation compilation =
@@ -86,6 +90,10 @@ public class AggregatedDepsProcessorErrorsTest {
             "@EntryPoint foo.bar.QuxEntryPoint must also be annotated with @InstallIn")
         .inFile(source)
         .onLine(23);
+    assertThat(compilation)
+        .hadErrorContaining("@Module and @EntryPoint cannot be used on the same interface")
+        .inFile(source)
+        .onLine(27);
   }
 
 }

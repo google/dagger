@@ -37,8 +37,12 @@ public abstract class DaggerDialogFragment extends DialogFragment implements Has
 
   @Override
   public void onAttach(Context context) {
-    AndroidSupportInjection.inject(this);
+    injectMembers();
     super.onAttach(context);
+  }
+
+  protected void injectMembers() {
+    AndroidSupportInjection.inject(this);
   }
 
   @Override

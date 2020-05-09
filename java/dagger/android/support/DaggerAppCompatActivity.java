@@ -49,8 +49,12 @@ public abstract class DaggerAppCompatActivity extends AppCompatActivity
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
-    AndroidInjection.inject(this);
+    injectMembers();
     super.onCreate(savedInstanceState);
+  }
+
+  protected void injectMembers() {
+    AndroidInjection.inject(this);
   }
 
   @Override

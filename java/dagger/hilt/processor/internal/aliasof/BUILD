@@ -21,9 +21,6 @@ java_plugin(
     name = "processor",
     generates_api = 1,
     processor_class = "dagger.hilt.processor.internal.aliasof.AliasOfProcessor",
-    visibility = [
-        "//java/dagger/hilt/migration:__pkg__",
-    ],
     deps = [":processor_lib"],
 )
 
@@ -50,10 +47,6 @@ java_library(
     name = "alias_ofs",
     srcs = [
         "AliasOfs.java",
-    ],
-    visibility = [
-        "//java/dagger/hilt/android/processor:__pkg__",
-        "//java/dagger/hilt/processor/internal/root:__pkg__",
     ],
     deps = [
         "//java/dagger/hilt/processor/internal:classnames",

@@ -20,7 +20,6 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import androidx.test.core.app.ActivityScenario
 import com.google.common.truth.Truth.assertThat
-import dagger.hilt.GenerateComponents
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -35,7 +34,6 @@ import org.robolectric.annotation.Config
  *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
-@GenerateComponents
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 // Robolectric requires Java9 to run API 29 and above, so use API 28 instead

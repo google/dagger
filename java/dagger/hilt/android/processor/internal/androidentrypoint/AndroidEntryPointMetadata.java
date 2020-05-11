@@ -143,6 +143,7 @@ public abstract class AndroidEntryPointMetadata {
 
   private static final ImmutableSet<ClassName> HILT_ANNOTATION_NAMES =
       ImmutableSet.of(
+          AndroidClassNames.HILT_ANDROID_APP,
           AndroidClassNames.ANDROID_ENTRY_POINT);
 
   private static ImmutableSet<? extends AnnotationMirror> hiltAnnotations(Element element) {
@@ -225,7 +226,8 @@ public abstract class AndroidEntryPointMetadata {
       ProcessorErrors.checkState(
           !MoreTypes.isTypeOf(Void.class, baseElement.asType()),
           androidEntryPointElement,
-          "Expected @AndroidEntryPoint to have a value.");
+          "Expected @%s to have a value.",
+          annotationClassName.simpleName());
 
       // Check that the root $CLASS extends Hilt_$CLASS
       String extendsName =
@@ -392,10 +394,23 @@ public abstract class AndroidEntryPointMetadata {
     }
 
     private static Type of(TypeElement element, TypeElement baseElement) {
+      if (Processors.hasAnnotation(element, AndroidClassNames.HILT_ANDROID_APP)) {
+        return forHiltAndroidApp(element, baseElement);
+      }
       return forAndroidEntryPoint(element, baseElement);
     }
 
+    private static Type forHiltAndroidApp(TypeElement element, TypeElement baseElement) {
+      ProcessorErrors.checkState(
+          Processors.isAssignableFrom(baseElement, AndroidClassNames.APPLICATION),
+          element,
+          "@HiltAndroidApp base class must extend Application. Found: %s",
+          baseElement);
+      return Type.APPLICATION;
+    }
+
     private static Type forAndroidEntryPoint(TypeElement element, TypeElement baseElement) {
+      // TODO(user): Remove support for @AndroidEntryPoint on Application classes
       if (Processors.isAssignableFrom(baseElement, AndroidClassNames.APPLICATION)) {
         ProcessorErrors.checkState(
             Processors.hasAnnotation(element, ClassNames.GENERATE_COMPONENTS),

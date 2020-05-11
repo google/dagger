@@ -32,7 +32,6 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
  * Processor that creates a module for classes marked with {@link
  * dagger.hilt.android.AndroidEntryPoint}.
  */
-// TODO(user): Rename to AndroidEntryPointProcessor
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
 public final class AndroidEntryPointProcessor extends BaseProcessor {
@@ -40,7 +39,8 @@ public final class AndroidEntryPointProcessor extends BaseProcessor {
   @Override
   public Set<String> getSupportedAnnotationTypes() {
     return ImmutableSet.of(
-        AndroidClassNames.ANDROID_ENTRY_POINT.toString());
+        AndroidClassNames.ANDROID_ENTRY_POINT.toString(),
+        AndroidClassNames.HILT_ANDROID_APP.toString());
   }
 
   @Override

@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import dagger.hilt.GenerateComponents;
 import dagger.hilt.android.testing.BindValue;
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
@@ -32,7 +31,6 @@ import org.junit.runner.RunWith;
 
 /** A simple test using Hilt. */
 @UninstallModules(ModelModule.class)
-@GenerateComponents
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
 public final class SettingsActivityEmulatorTest {

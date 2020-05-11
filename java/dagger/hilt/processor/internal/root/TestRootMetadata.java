@@ -58,11 +58,6 @@ abstract class TestRootMetadata {
 
   static TestRootMetadata of(ProcessingEnvironment env, Element element) {
 
-    ProcessorErrors.checkState(
-        Processors.hasAnnotation(element, ClassNames.GENERATE_COMPONENTS),
-        element,
-        "Expected element to be annotated with @GenerateComponents.");
-
     TypeElement testElement = MoreElements.asType(element);
 
     TypeElement baseElement =
@@ -76,7 +71,7 @@ abstract class TestRootMetadata {
     ProcessorErrors.checkState(
         Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST),
         element,
-        "Tests must be annotated with either @HiltAndroidTest");
+        "Tests must be annotated with @HiltAndroidTest");
 
     return new AutoValue_TestRootMetadata(testElement, baseElement);
   }

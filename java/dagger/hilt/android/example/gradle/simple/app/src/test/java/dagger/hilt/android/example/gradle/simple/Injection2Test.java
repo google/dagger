@@ -24,7 +24,6 @@ import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.Module;
 import dagger.Provides;
-import dagger.hilt.GenerateComponents;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.AndroidEntryPoint;
 import dagger.hilt.android.components.ActivityComponent;
@@ -39,7 +38,6 @@ import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
 /** Tests basic injection APIs, and that bindings don't conflict with {@link Injection1Test}. */
-@GenerateComponents
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
 // Robolectric requires Java9 to run API 29 and above, so use API 28 instead

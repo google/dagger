@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableSet;
 import dagger.MapKey;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
-import dagger.hilt.GenerateComponents;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.testing.BindElementsIntoSet;
@@ -45,7 +44,6 @@ import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
 /** A simple test using Hilt. */
-@GenerateComponents
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
 // Robolectric requires Java9 to run API 29 and above, so use API 28 instead

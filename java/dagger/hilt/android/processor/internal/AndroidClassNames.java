@@ -56,6 +56,8 @@ public final class AndroidClassNames {
       get("dagger.hilt.android", "AndroidEntryPoint");
   public static final ClassName WITH_FRAGMENT_BINDINGS =
       get("dagger.hilt.android", "WithFragmentBindings");
+  public static final ClassName HILT_ANDROID_APP =
+      get("dagger.hilt.android", "HiltAndroidApp");
   public static final ClassName OPTIONAL_INJECT =
       get("dagger.hilt.android.migration", "OptionalInject");
 

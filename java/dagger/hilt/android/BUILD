@@ -50,6 +50,31 @@ android_library(
 )
 
 android_library(
+    name = "hilt_android_app",
+    srcs = ["HiltAndroidApp.java"],
+    exported_plugins = [
+        "//java/dagger/hilt/android/processor/internal/androidentrypoint:plugin",
+        "//java/dagger/hilt/processor/internal/root:plugin",
+    ],
+    exports = [
+        "//:dagger_with_compiler",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/android/components",
+        "//java/dagger/hilt/android/internal/managers",
+        "//java/dagger/hilt/android/internal/managers:component_supplier",
+        "//java/dagger/hilt/android/internal/modules",
+        "//java/dagger/hilt/codegen:originating_element",
+        "//java/dagger/hilt/internal:component_manager",
+        "//java/dagger/hilt/internal:generated_component",
+        "//java/dagger/hilt/internal:generated_entry_point",
+        "@maven//:androidx_annotation_annotation",
+    ],
+    deps = [
+        "//java/dagger/hilt:generates_root_input",
+    ],
+)
+
+android_library(
     name = "entry_point_accessors",
     srcs = ["EntryPointAccessors.java"],
     deps = [

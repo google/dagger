@@ -24,8 +24,16 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 
 /** The valid root types for Hilt applications. */
+// TODO(user): Fix this class so we don't have to have placeholders
 enum RootType {
-    ROOT(ClassNames.GENERATE_COMPONENTS),
+    ROOT(ClassNames.HILT_ANDROID_APP),
+
+    // Placeholder to make sure @GenerateComponents usages get processed
+    // TODO(user): delete this when @GenerateComponents is removed
+    GENERATE_COMPONEONTS_ROOT(ClassNames.GENERATE_COMPONENTS),
+
+    // Placeholder to make sure @HiltAndroidTest usages get processed
+    HILT_ANDROID_TEST_ROOT(ClassNames.HILT_ANDROID_TEST),
 
     TEST_ROOT(ClassNames.INTERNAL_TEST_ROOT);
 
@@ -47,12 +55,15 @@ enum RootType {
   public static RootType of(ProcessingEnvironment env, TypeElement element) {
     if (Processors.hasAnnotation(element, ClassNames.GENERATE_COMPONENTS)) {
       ProcessorErrors.checkState(
-          Processors.hasAnnotation(element, ClassNames.ANDROID_ENTRY_POINT)
-              || Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST),
+          Processors.hasAnnotation(element, ClassNames.ANDROID_ENTRY_POINT),
           element,
           "Classes annotated with @GenerateComponents must also be annotated with "
-              + "@AndroidEntryPoint, or @HiltAndroidTest.");
-      return Processors.hasAnnotation(element, ClassNames.ANDROID_ENTRY_POINT) ? ROOT : TEST_ROOT;
+              + "@AndroidEntryPoint.");
+      return ROOT;
+    } else if (Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_APP)) {
+      return ROOT;
+    } else if (Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST)) {
+      return TEST_ROOT;
     } else if (Processors.hasAnnotation(element, ClassNames.INTERNAL_TEST_ROOT)) {
       return TEST_ROOT;
     }

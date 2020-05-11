@@ -39,7 +39,7 @@ android_library(
     exports = [
         ":hilt_android_rule",
         ":on_component_ready_runner",
-        "//java/dagger/hilt:generate_components",
+        "//:dagger_with_compiler",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/internal/builders",

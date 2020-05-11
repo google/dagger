@@ -100,6 +100,8 @@ public final class ClassNames {
       get("androidx.multidex", "MultiDexApplication");
   public static final ClassName ANDROID_ENTRY_POINT =
       get("dagger.hilt.android", "AndroidEntryPoint");
+  public static final ClassName HILT_ANDROID_APP =
+      get("dagger.hilt.android", "HiltAndroidApp");
   public static final ClassName APPLICATION_COMPONENT =
       get("dagger.hilt.android.components", "ApplicationComponent");
   public static final ClassName ACTIVITY_COMPONENT =

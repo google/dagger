@@ -17,11 +17,13 @@
 package dagger.hilt.processor.internal;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
+import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
@@ -117,9 +119,25 @@ public final class AnnotationValues {
     return (int) getAnnotationValue(annotation, valueName).getValue();
   }
 
+  /** Returns an optional int value of an annotation if the value name is present */
+  public static Optional<Integer> getOptionalIntValue(
+      AnnotationMirror annotation, String valueName) {
+    return isValuePresent(annotation, valueName)
+        ? Optional.of(getIntValue(annotation, valueName))
+        : Optional.empty();
+  }
+
   /** Returns the String value of an annotation */
   public static String getStringValue(AnnotationMirror annotation, String valueName) {
     return (String) getAnnotationValue(annotation, valueName).getValue();
+  }
+
+  /** Returns an optional String value of an annotation if the value name is present */
+  public static Optional<String> getOptionalStringValue(
+      AnnotationMirror annotation, String valueName) {
+    return isValuePresent(annotation, valueName)
+        ? Optional.of(getStringValue(annotation, valueName))
+        : Optional.empty();
   }
 
   /** Returns the int array value of an annotation */
@@ -134,6 +152,11 @@ public final class AnnotationValues {
     return asAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
         .map(it -> (String) it.getValue())
         .toArray(String[]::new);
+  }
+
+  private static boolean isValuePresent(AnnotationMirror annotation, String valueName) {
+    return getAnnotationValuesWithDefaults(annotation).keySet().stream()
+        .anyMatch(member -> member.getSimpleName().contentEquals(valueName));
   }
 
   /**

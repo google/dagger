@@ -20,6 +20,8 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.base.MoreAnnotationValues.getIntArrayValue;
 import static dagger.internal.codegen.base.MoreAnnotationValues.getIntValue;
+import static dagger.internal.codegen.base.MoreAnnotationValues.getOptionalIntValue;
+import static dagger.internal.codegen.base.MoreAnnotationValues.getOptionalStringValue;
 import static dagger.internal.codegen.base.MoreAnnotationValues.getStringArrayValue;
 import static dagger.internal.codegen.base.MoreAnnotationValues.getStringValue;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
@@ -208,8 +210,8 @@ final class KotlinMetadata {
             getStringArrayValue(metadataAnnotation.get(), "d1"),
             getStringArrayValue(metadataAnnotation.get(), "d2"),
             getStringValue(metadataAnnotation.get(), "xs"),
-            getStringValue(metadataAnnotation.get(), "pn"),
-            getIntValue(metadataAnnotation.get(), "xi"));
+            getOptionalStringValue(metadataAnnotation.get(), "pn").orElse(null),
+            getOptionalIntValue(metadataAnnotation.get(), "xi").orElse(null));
     KotlinClassMetadata metadata = KotlinClassMetadata.read(header);
     if (metadata == null) {
       // Should only happen on Kotlin < 1.0 (i.e. metadata version < 1.1)

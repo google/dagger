@@ -19,6 +19,8 @@ package dagger.hilt.processor.internal;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static dagger.hilt.processor.internal.AnnotationValues.getIntArrayValue;
 import static dagger.hilt.processor.internal.AnnotationValues.getIntValue;
+import static dagger.hilt.processor.internal.AnnotationValues.getOptionalIntValue;
+import static dagger.hilt.processor.internal.AnnotationValues.getOptionalStringValue;
 import static dagger.hilt.processor.internal.AnnotationValues.getStringArrayValue;
 import static dagger.hilt.processor.internal.AnnotationValues.getStringValue;
 
@@ -81,8 +83,8 @@ public final class KotlinMetadata {
             getStringArrayValue(metadataAnnotation, "d1"),
             getStringArrayValue(metadataAnnotation, "d2"),
             getStringValue(metadataAnnotation, "xs"),
-            getStringValue(metadataAnnotation, "pn"),
-            getIntValue(metadataAnnotation, "xi"));
+            getOptionalStringValue(metadataAnnotation, "pn").orElse(null),
+            getOptionalIntValue(metadataAnnotation, "xi").orElse(null));
     KotlinClassMetadata metadata = KotlinClassMetadata.read(header);
     if (metadata == null) {
       // Should only happen on Kotlin < 1.0 (i.e. metadata version < 1.1)

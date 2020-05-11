@@ -31,3 +31,16 @@ kt_jvm_test(
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
     ],
 )
+
+kt_jvm_test(
+    name = "DoNotCallProvidersDetectorTest",
+    srcs = ["DoNotCallProvidersDetectorTest.kt"],
+    deps = [
+        "//java/dagger/lint:lint-artifact-lib",
+        "@google_bazel_common//third_party/java/junit",
+        "@maven//:com_android_tools_lint_lint_checks",
+        "@maven//:com_android_tools_lint_lint_tests",
+        "@maven//:com_android_tools_testutils",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+    ],
+)

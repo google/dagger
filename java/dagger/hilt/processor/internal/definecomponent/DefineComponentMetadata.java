@@ -143,10 +143,20 @@ abstract class DefineComponentMetadata {
         mirror);
 
     TypeElement parent = asTypeElement(AnnotationValues.getTypeMirror(parentValue));
+
     Optional<DefineComponentMetadata> parentComponent =
         ClassName.get(parent).equals(ClassNames.DEFINE_COMPONENT_NO_PARENT)
             ? Optional.empty()
             : Optional.of(DefineComponentMetadata.from(parent, childPath));
+
+    ProcessorErrors.checkState(
+        parentComponent.isPresent()
+            || ClassName.get(component).equals(ClassNames.APPLICATION_COMPONENT),
+        component,
+        "@DefineComponent %s is missing a parent declaration.\n"
+            + "Please declare the parent, for example: @DefineComponent(parent ="
+            + " ApplicationComponent.class)",
+        component);
 
     return new AutoValue_DefineComponentMetadata(component, scopes, parentComponent);
   }

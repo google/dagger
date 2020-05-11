@@ -35,55 +35,56 @@ public final class DefineComponentProcessorTest {
   public void testDefineComponentOutput() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponent",
+            "test.FooComponent",
             "package test;",
             "",
+            "import dagger.hilt.android.components.ApplicationComponent;",
             "import dagger.hilt.DefineComponent;",
             "",
-            "@DefineComponent",
-            "interface ParentComponent {",
+            "@DefineComponent(parent = ApplicationComponent.class)",
+            "interface FooComponent {",
             "  static int staticField = 1;",
             "  static int staticMethod() { return staticField; }",
             "}");
 
     JavaFileObject builder =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponentBuilder",
+            "test.FooComponentBuilder",
             "package test;",
             "",
             "import dagger.hilt.DefineComponent;",
             "",
             "@DefineComponent.Builder",
-            "interface ParentComponentBuilder {",
+            "interface FooComponentBuilder {",
             "  static int staticField = 1;",
             "  static int staticMethod() { return staticField; }",
             "",
-            "  ParentComponent create();",
+            "  FooComponent create();",
             "}");
 
     JavaFileObject componentOutput =
         JavaFileObjects.forSourceLines(
-            "dagger.hilt.processor.internal.definecomponent.codegen.test_ParentComponent",
+            "dagger.hilt.processor.internal.definecomponent.codegen.test_FooComponent",
             "package dagger.hilt.processor.internal.definecomponent.codegen;",
             "",
             "import dagger.hilt.internal.definecomponent.DefineComponentClasses;",
             GeneratedImport.IMPORT_GENERATED_ANNOTATION,
             "",
-            "@DefineComponentClasses(component = \"test.ParentComponent\")",
+            "@DefineComponentClasses(component = \"test.FooComponent\")",
             "@Generated(\"" + DefineComponentProcessor.class.getName() + "\")",
-            "interface test_ParentComponent {}");
+            "interface test_FooComponent {}");
 
     JavaFileObject builderOutput =
         JavaFileObjects.forSourceLines(
-            "dagger.hilt.processor.internal.definecomponent.codegen.test_ParentComponentBuilder",
+            "dagger.hilt.processor.internal.definecomponent.codegen.test_FooComponentBuilder",
             "package dagger.hilt.processor.internal.definecomponent.codegen;",
             "",
             "import dagger.hilt.internal.definecomponent.DefineComponentClasses;",
             GeneratedImport.IMPORT_GENERATED_ANNOTATION,
             "",
-            "@DefineComponentClasses(builder = \"test.ParentComponentBuilder\")",
+            "@DefineComponentClasses(builder = \"test.FooComponentBuilder\")",
             "@Generated(\"" + DefineComponentProcessor.class.getName() + "\")",
-            "interface test_ParentComponentBuilder {}");
+            "interface test_FooComponentBuilder {}");
 
     Compilation compilation = compiler().compile(component, builder);
     assertThat(compilation).succeeded();
@@ -103,62 +104,64 @@ public final class DefineComponentProcessorTest {
   public void testDefineComponentClass_fails() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponent",
+            "test.FooComponent",
             "package test;",
             "",
+            "import dagger.hilt.android.components.ApplicationComponent;",
             "import dagger.hilt.DefineComponent;",
             "",
-            "@DefineComponent",
-            "abstract class ParentComponent {}");
+            "@DefineComponent( parent = ApplicationComponent.class )",
+            "abstract class FooComponent {}");
 
     Compilation compilation = compiler().compile(component);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining(
-            "@DefineComponent is only allowed on interfaces. Found: test.ParentComponent");
+            "@DefineComponent is only allowed on interfaces. Found: test.FooComponent");
   }
 
   @Test
   public void testDefineComponentWithTypeParameters_fails() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponent",
+            "test.FooComponent",
             "package test;",
             "",
+            "import dagger.hilt.android.components.ApplicationComponent;",
             "import dagger.hilt.DefineComponent;",
             "",
-            "@DefineComponent",
-            "interface ParentComponent<T> {}");
+            "@DefineComponent( parent = ApplicationComponent.class )",
+            "interface FooComponent<T> {}");
 
     Compilation compilation = compiler().compile(component);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent test.ParentComponent<T>, cannot have type parameters.");
+        .hadErrorContaining("@DefineComponent test.FooComponent<T>, cannot have type parameters.");
   }
 
   @Test
   public void testDefineComponentExtendsInterface_fails() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponent",
+            "test.FooComponent",
             "package test;",
             "",
+            "import dagger.hilt.android.components.ApplicationComponent;",
             "import dagger.hilt.DefineComponent;",
             "",
             "interface Foo {}",
             "",
-            "@DefineComponent",
-            "interface ParentComponent extends Foo {}");
+            "@DefineComponent( parent = ApplicationComponent.class )",
+            "interface FooComponent extends Foo {}");
 
     Compilation compilation = compiler().compile(component);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining(
-            "@DefineComponent test.ParentComponent, cannot extend a super class or interface."
+            "@DefineComponent test.FooComponent, cannot extend a super class or interface."
                 + " Found: test.Foo");
   }
 
@@ -166,13 +169,14 @@ public final class DefineComponentProcessorTest {
   public void testDefineComponentNonStaticMethod_fails() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponent",
+            "test.FooComponent",
             "package test;",
             "",
+            "import dagger.hilt.android.components.ApplicationComponent;",
             "import dagger.hilt.DefineComponent;",
             "",
-            "@DefineComponent",
-            "interface ParentComponent {",
+            "@DefineComponent( parent = ApplicationComponent.class )",
+            "interface FooComponent {",
             "  int nonStaticMethod();",
             "}");
 
@@ -181,7 +185,7 @@ public final class DefineComponentProcessorTest {
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining(
-            "@DefineComponent test.ParentComponent, cannot have non-static methods. "
+            "@DefineComponent test.FooComponent, cannot have non-static methods. "
                 + "Found: [nonStaticMethod()]");
   }
 
@@ -219,16 +223,32 @@ public final class DefineComponentProcessorTest {
   }
 
   @Test
+  public void testDefineComponentNoParent_fails() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.FooComponent",
+            "package test;",
+            "",
+            "import dagger.hilt.DefineComponent;",
+            "",
+            "@DefineComponent",
+            "interface FooComponent {}");
+    Compilation compilation = compiler().compile(component);
+    assertThat(compilation)
+        .hadErrorContaining("@DefineComponent test.FooComponent is missing a parent declaration.");
+  }
+
+  @Test
   public void testDefineComponentBuilderClass_fails() {
     JavaFileObject builder =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponentBuilder",
+            "test.FooComponentBuilder",
             "package test;",
             "",
             "import dagger.hilt.DefineComponent;",
             "",
             "@DefineComponent.Builder",
-            "abstract class ParentComponentBuilder {}");
+            "abstract class FooComponentBuilder {}");
 
     Compilation compilation = compiler().compile(builder);
     assertThat(compilation).failed();
@@ -236,27 +256,27 @@ public final class DefineComponentProcessorTest {
     assertThat(compilation)
         .hadErrorContaining(
             "@DefineComponent.Builder is only allowed on interfaces. "
-                + "Found: test.ParentComponentBuilder");
+                + "Found: test.FooComponentBuilder");
   }
 
   @Test
   public void testDefineComponentBuilderWithTypeParameters_fails() {
     JavaFileObject builder =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponentBuilder",
+            "test.FooComponentBuilder",
             "package test;",
             "",
             "import dagger.hilt.DefineComponent;",
             "",
             "@DefineComponent.Builder",
-            "interface ParentComponentBuilder<T> {}");
+            "interface FooComponentBuilder<T> {}");
 
     Compilation compilation = compiler().compile(builder);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining(
-            "@DefineComponent.Builder test.ParentComponentBuilder<T>, cannot have type "
+            "@DefineComponent.Builder test.FooComponentBuilder<T>, cannot have type "
                 + "parameters.");
   }
 
@@ -264,7 +284,7 @@ public final class DefineComponentProcessorTest {
   public void testDefineComponentBuilderExtendsInterface_fails() {
     JavaFileObject builder =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponentBuilder",
+            "test.FooComponentBuilder",
             "package test;",
             "",
             "import dagger.hilt.DefineComponent;",
@@ -272,14 +292,14 @@ public final class DefineComponentProcessorTest {
             "interface Foo {}",
             "",
             "@DefineComponent.Builder",
-            "interface ParentComponentBuilder extends Foo {}");
+            "interface FooComponentBuilder extends Foo {}");
 
     Compilation compilation = compiler().compile(builder);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining(
-            "@DefineComponent.Builder test.ParentComponentBuilder, cannot extend a super class "
+            "@DefineComponent.Builder test.FooComponentBuilder, cannot extend a super class "
                 + "or interface. Found: test.Foo");
   }
 
@@ -287,20 +307,20 @@ public final class DefineComponentProcessorTest {
   public void testDefineComponentBuilderNoBuilderMethod_fails() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponent",
+            "test.FooComponent",
             "package test;",
             "",
             "import dagger.hilt.DefineComponent;",
             "",
             "@DefineComponent.Builder",
-            "interface ParentComponentBuilder {}");
+            "interface FooComponentBuilder {}");
 
     Compilation compilation = compiler().compile(component);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining(
-            "@DefineComponent.Builder test.ParentComponentBuilder, must have exactly 1 build "
+            "@DefineComponent.Builder test.FooComponentBuilder, must have exactly 1 build "
                 + "method that takes no parameters. Found: []");
   }
 
@@ -308,13 +328,13 @@ public final class DefineComponentProcessorTest {
   public void testDefineComponentBuilderPrimitiveReturnType_fails() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponent",
+            "test.FooComponent",
             "package test;",
             "",
             "import dagger.hilt.DefineComponent;",
             "",
             "@DefineComponent.Builder",
-            "interface ParentComponentBuilder {",
+            "interface FooComponentBuilder {",
             "  int nonStaticMethod();",
             "}");
 
@@ -323,7 +343,7 @@ public final class DefineComponentProcessorTest {
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining(
-            "@DefineComponent.Builder method, test.ParentComponentBuilder#nonStaticMethod(), "
+            "@DefineComponent.Builder method, test.FooComponentBuilder#nonStaticMethod(), "
                 + "must return a @DefineComponent type. Found: int");
   }
 
@@ -331,7 +351,7 @@ public final class DefineComponentProcessorTest {
   public void testDefineComponentBuilderWrongReturnType_fails() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(
-            "test.ParentComponent",
+            "test.FooComponent",
             "package test;",
             "",
             "import dagger.hilt.DefineComponent;",
@@ -339,7 +359,7 @@ public final class DefineComponentProcessorTest {
             "interface Foo {}",
             "",
             "@DefineComponent.Builder",
-            "interface ParentComponentBuilder {",
+            "interface FooComponentBuilder {",
             "  Foo build();",
             "}");
 
@@ -348,7 +368,7 @@ public final class DefineComponentProcessorTest {
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining(
-            "@DefineComponent.Builder method, test.ParentComponentBuilder#build(), must return "
+            "@DefineComponent.Builder method, test.FooComponentBuilder#build(), must return "
                 + "a @DefineComponent type. Found: test.Foo");
   }
 

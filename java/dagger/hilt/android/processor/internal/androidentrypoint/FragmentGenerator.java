@@ -70,6 +70,7 @@ public final class FragmentGenerator {
             .addMethod(getContextMethod())
             .addMethod(inflatorMethod());
 
+    Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
     Generators.copyLintAnnotations(metadata.element(), builder);
     Generators.copyConstructors(metadata.baseElement(), builder);

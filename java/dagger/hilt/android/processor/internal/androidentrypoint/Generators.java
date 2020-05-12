@@ -22,6 +22,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.base.Preconditions;
 import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -45,6 +46,12 @@ import javax.lang.model.util.ElementFilter;
 
 /** Helper class for writing Hilt generators. */
 final class Generators {
+
+  static void addGeneratedBaseClassJavadoc(TypeSpec.Builder builder, ClassName annotation) {
+    builder.addJavadoc("A generated base class to be extended by the @$T annotated class. If using"
+        + " the Gradle plugin, this is swapped as the base class via bytecode transformation.",
+        annotation);
+  }
 
   /**
    * Copies all constructors with arguments to the builder, if the base class is abstract.

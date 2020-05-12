@@ -60,6 +60,7 @@ public final class ApplicationGenerator {
             .addField(componentManagerField())
             .addMethod(componentManagerMethod());
 
+    Generators.addGeneratedBaseClassJavadoc(typeSpecBuilder, AndroidClassNames.HILT_ANDROID_APP);
     Processors.addGeneratedAnnotation(typeSpecBuilder, env, getClass());
 
     metadata.baseElement().getTypeParameters().stream()

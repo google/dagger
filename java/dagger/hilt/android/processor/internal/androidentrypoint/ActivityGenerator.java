@@ -53,6 +53,7 @@ public final class ActivityGenerator {
             .addModifiers(metadata.generatedClassModifiers())
             .addMethod(onCreate());
 
+    Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
     Generators.copyConstructors(metadata.baseElement(), builder);
 

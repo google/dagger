@@ -67,6 +67,7 @@ public final class ViewGenerator {
             .superclass(metadata.baseClassName())
             .addModifiers(metadata.generatedClassModifiers());
 
+    Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
     Generators.copyLintAnnotations(metadata.element(), builder);
 

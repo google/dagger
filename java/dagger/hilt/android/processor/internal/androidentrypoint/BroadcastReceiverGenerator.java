@@ -57,6 +57,7 @@ public final class BroadcastReceiverGenerator {
             .addModifiers(metadata.generatedClassModifiers())
             .addMethod(onReceiveMethod());
 
+    Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
     Generators.copyConstructors(metadata.baseElement(), builder);
 

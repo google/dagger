@@ -58,6 +58,7 @@ public final class ServiceGenerator {
             .addMethods(baseClassConstructors())
             .addMethod(onCreateMethod());
 
+    Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
     Generators.copyLintAnnotations(metadata.element(), builder);
 

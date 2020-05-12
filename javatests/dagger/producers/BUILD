@@ -15,8 +15,6 @@
 # Description:
 #   Tests for dagger.producers
 
-package(default_visibility = ["//:src"])
-
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
@@ -24,6 +22,8 @@ load(
     "SOURCE_7_TARGET_7",
 )
 load("//:test_defs.bzl", "GenJavaTests")
+
+package(default_visibility = ["//:src"])
 
 GenJavaTests(
     name = "producers_tests",

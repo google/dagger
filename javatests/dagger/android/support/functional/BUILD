@@ -15,6 +15,8 @@
 # Description:
 #   Functional test code for Dagger-Android
 
+load("//:test_defs.bzl", "GenRobolectricTests")
+
 package(default_visibility = ["//:src"])
 
 android_library(
@@ -38,8 +40,6 @@ android_library(
         "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
 )
-
-load("//:test_defs.bzl", "GenRobolectricTests")
 
 GenRobolectricTests(
     name = "functional_tests",

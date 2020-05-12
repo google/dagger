@@ -15,10 +15,10 @@
 # Description:
 #   Tests for Dagger's Android and Support library integrations
 
-package(default_visibility = ["//:src"])
-
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenRobolectricTests")
+
+package(default_visibility = ["//:src"])
 
 GenRobolectricTests(
     name = "android-support-tests",

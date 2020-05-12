@@ -56,14 +56,6 @@ abstract class MergedTestApplicationMetadata {
         ClassNames.MERGED_TEST_APPLICATION.simpleName(),
         element);
 
-    // TODO(user): enable custom base applications on individual tests.
-    ProcessorErrors.checkState(
-        !Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST),
-        element,
-        "@%s cannot be used with @%s.",
-        ClassNames.MERGED_TEST_APPLICATION,
-        ClassNames.HILT_ANDROID_TEST);
-
     TypeElement baseAppElement =
         Processors.getAnnotationClassValue(
             elements,

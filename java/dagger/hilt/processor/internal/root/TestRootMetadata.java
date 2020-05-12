@@ -62,7 +62,6 @@ abstract class TestRootMetadata {
 
     TypeElement baseElement =
         env.getElementUtils().getTypeElement(ClassNames.MULTI_DEX_APPLICATION.toString());
-
     ProcessorErrors.checkState(
         !Processors.hasAnnotation(element, ClassNames.ANDROID_ENTRY_POINT),
         element,

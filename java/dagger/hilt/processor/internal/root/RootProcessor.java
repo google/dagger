@@ -78,13 +78,7 @@ public final class RootProcessor extends BaseProcessor {
   @Override
   public void processEach(TypeElement annotation, Element element) throws Exception {
     if (ClassName.get(annotation).equals(ClassNames.MERGED_TEST_APPLICATION)) {
-      ProcessorErrors.checkState(
-          mergedTestApplicationMetadata == null,
-          element,
-          "Cannot have more than one usage of @%s. Found: [%s, %s].",
-          ClassNames.MERGED_TEST_APPLICATION,
-          mergedTestApplicationMetadata == null ? null : mergedTestApplicationMetadata.element(),
-          element);
+      // We validate that there's only 1 of these in TestApplicationValidationProcessor.
 
       mergedTestApplicationMetadata = MergedTestApplicationMetadata.of(element, getElementUtils());
       return;

@@ -22,6 +22,9 @@ android_library(
     name = "merged_test_application",
     testonly = 1,
     srcs = ["MergedTestApplication.java"],
+    exported_plugins = [
+        "//java/dagger/hilt/android/processor/internal/testapplicationvalidation:processor",
+    ],
     deps = [
         "//java/dagger/hilt:generates_root_input",
     ],

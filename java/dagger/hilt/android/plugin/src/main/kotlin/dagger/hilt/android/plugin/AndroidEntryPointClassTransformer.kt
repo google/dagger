@@ -110,8 +110,8 @@ internal class AndroidEntryPointClassTransformer(
   }
 
   private fun transformClass(clazz: CtClass): Boolean {
-    if (!clazz.hasAnnotation("dagger.hilt.android.AndroidEntryPoint")) {
-      // Not a AndroidEntryPoint annotated class, don't do anything.
+    if (ANDROID_ENTRY_POINT_ANNOTATIONS.none { clazz.hasAnnotation(it) }) {
+      // Not a Android entry point annotated class, don't do anything.
       return false
     }
 
@@ -191,5 +191,12 @@ internal class AndroidEntryPointClassTransformer(
       val index = next()
       this.body(index, byteAt(index))
     }
+  }
+
+  companion object {
+    val ANDROID_ENTRY_POINT_ANNOTATIONS = setOf(
+      "dagger.hilt.android.AndroidEntryPoint",
+      "dagger.hilt.android.HiltAndroidApp"
+    )
   }
 }

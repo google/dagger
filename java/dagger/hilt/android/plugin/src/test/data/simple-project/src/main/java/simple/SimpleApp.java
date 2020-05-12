@@ -17,12 +17,10 @@
 package simple;
 
 import android.app.Application;
-import dagger.hilt.GenerateComponents;
-import dagger.hilt.android.AndroidEntryPoint;
+import dagger.hilt.android.HiltAndroidApp;
 
 /** Just an application. */
-@GenerateComponents
-@AndroidEntryPoint(Application.class)
+@HiltAndroidApp(Application.class)
 public class SimpleApp extends Hilt_SimpleApp {
   // Insert-change
 }

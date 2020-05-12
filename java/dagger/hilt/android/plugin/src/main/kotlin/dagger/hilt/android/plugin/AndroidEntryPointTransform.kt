@@ -29,7 +29,7 @@ import java.io.File
 
 /**
  * Bytecode transformation to make @AndroidEntryPoint annotated classes extend the Hilt
- * generated android classes.
+ * generated android classes, including the @HiltAndroidApp application class.
  *
  * A transform receives input as a collection [TransformInput], which is composed of [JarInput]s and
  * [DirectoryInput]s. The resulting files must be placed in the

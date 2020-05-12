@@ -17,12 +17,10 @@
 package dagger.hilt.android.example.gradle.simpleKotlin
 
 import android.app.Application
-import dagger.hilt.GenerateComponents
-import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
-@GenerateComponents
-@AndroidEntryPoint
+@HiltAndroidApp
 class KotlinApplication : Application() {
   // Shows that we can inject ApplicationComponent bindings into an application.
   @Inject

@@ -16,9 +16,9 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "google_bazel_common",
-    sha256 = "18f266d921db1daa2ee9837343938e37fa21e0a8b6a0e43a67eda4c30f62b812",
-    strip_prefix = "bazel-common-eb5c7e5d6d2c724fe410792c8be9f59130437e4a",
-    urls = ["https://github.com/google/bazel-common/archive/eb5c7e5d6d2c724fe410792c8be9f59130437e4a.zip"],
+    sha256 = "d788ba4b870b6c3bf2f6f3c0afc6cd6264694b1d5642f1cc6d891346ab7db33d",
+    strip_prefix = "bazel-common-9b6fa67f5645f6eb95399ff5eace1f63d889715a",
+    urls = ["https://github.com/google/bazel-common/archive/9b6fa67f5645f6eb95399ff5eace1f63d889715a.zip"],
 )
 
 load("@google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules")

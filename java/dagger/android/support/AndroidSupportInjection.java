@@ -67,6 +67,14 @@ public final class AndroidSupportInjection {
     inject(fragment, hasAndroidInjector);
   }
 
+  private static void inject(Object target, HasAndroidInjector hasAndroidInjector) {
+    AndroidInjector<Object> androidInjector = hasAndroidInjector.androidInjector();
+    checkNotNull(
+        androidInjector, "%s.androidInjector() returned null", hasAndroidInjector.getClass());
+
+    androidInjector.inject(target);
+  }
+
   private static HasAndroidInjector findHasAndroidInjectorForFragment(Fragment fragment) {
     Fragment parentFragment = fragment;
     while ((parentFragment = parentFragment.getParentFragment()) != null) {
@@ -83,14 +91,6 @@ public final class AndroidSupportInjection {
     }
     throw new IllegalArgumentException(
         String.format("No injector was found for %s", fragment.getClass().getCanonicalName()));
-  }
-
-  private static void inject(Object target, HasAndroidInjector hasAndroidInjector) {
-    AndroidInjector<Object> androidInjector = hasAndroidInjector.androidInjector();
-    checkNotNull(
-        androidInjector, "%s.androidInjector() returned null", hasAndroidInjector.getClass());
-
-    androidInjector.inject(target);
   }
 
   private AndroidSupportInjection() {}

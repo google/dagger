@@ -22,7 +22,6 @@ compiler_test(
     name = "ActivityGeneratorTest",
     srcs = ["ActivityGeneratorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt:generate_components",
         "//java/dagger/hilt/android:android_entry_point",
         "@androidsdk//:platforms/android-29/android.jar",
     ],
@@ -38,7 +37,7 @@ compiler_test(
     name = "AndroidEntryPointProcessorTest",
     srcs = ["AndroidEntryPointProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt:generate_components",
+        "//java/dagger/hilt/android:hilt_android_app",
         "//java/dagger/hilt/android:android_entry_point",
         "@androidsdk//:platforms/android-29/android.jar",
     ],

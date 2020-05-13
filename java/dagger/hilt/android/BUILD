@@ -93,7 +93,6 @@ android_library(
     exports = [
         ":entry_point_accessors",
         "//java/dagger/hilt:entry_point",
-        "//java/dagger/hilt:generate_components",
         "//java/dagger/hilt:generates_root_input",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",
@@ -127,7 +126,6 @@ gen_maven_artifact(
         ":entry_point_accessors",
         "//java/dagger/hilt:define_component",
         "//java/dagger/hilt:entry_point",
-        "//java/dagger/hilt:generate_components",
         "//java/dagger/hilt:generates_root_input",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",

@@ -96,37 +96,15 @@ public class AndroidEntryPointProcessorTest {
             "package test;",
             "",
             "import android.app.Application;",
-            "import dagger.hilt.GenerateComponents;",
-            "import dagger.hilt.android.AndroidEntryPoint;",
+            "import dagger.hilt.android.HiltAndroidApp;",
             "",
-            "@GenerateComponents",
-            "@AndroidEntryPoint",
+            "@HiltAndroidApp",
             "public class MyApp extends Application { }");
     Compilation compilation =
         compiler()
             .withOptions("-Adagger.hilt.android.internal.disableAndroidSuperclassValidation=true")
             .compile(testApplication);
     assertThat(compilation).succeeded();
-  }
-
-  @Test
-  public void appMissingGenerateComponenets() {
-    JavaFileObject testApplication =
-        JavaFileObjects.forSourceLines(
-            "test.MyApp",
-            "package test;",
-            "",
-            "import android.app.Application;",
-            "import dagger.hilt.GenerateComponents;",
-            "import dagger.hilt.android.AndroidEntryPoint;",
-            "",
-            "@AndroidEntryPoint(Application.class)",
-            "public class MyApp extends Hilt_MyApp { }");
-    Compilation compilation = compiler().compile(testApplication);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Applications annotated with @AndroidEntryPoint must also be "
-            + "annotated with @GenerateComponents");
   }
 
   @Test

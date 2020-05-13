@@ -28,9 +28,9 @@ before_install:
   - wget https://github.com/bazelbuild/bazel/releases/download/"${BAZEL_VERSION}"/bazel_"${BAZEL_VERSION}"-linux-x86_64.deb
   - sudo dpkg -i bazel_"${BAZEL_VERSION}"-linux-x86_64.deb
   - sudo rm -f /etc/mavenrc
-  - wget http://www.us.apache.org/dist/maven/maven-3/3.1.1/binaries/apache-maven-3.1.1-bin.tar.gz
-  - tar -zxf apache-maven-3.1.1-bin.tar.gz
-  - export PATH="$PWD/apache-maven-3.1.1/bin:$PATH"
+  - wget http://www.us.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+  - tar -zxf apache-maven-3.6.3-bin.tar.gz
+  - export PATH="$PWD/apache-maven-3.6.3/bin:$PATH"
   - mkdir travis_bin
   - ln -s $(which gcc-4.8) travis_bin/gcc
   - ln -s $(which g++-4.8) travis_bin/g++

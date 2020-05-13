@@ -61,6 +61,8 @@ public final class ClassNames {
       get("javax.inject", "Qualifier");
   public static final ClassName SCOPE =
       get("javax.inject", "Scope");
+  public static final ClassName DISABLE_INSTALL_IN_CHECK =
+      get("dagger.hilt.migration", "DisableInstallInCheck");
   public static final ClassName ALIAS_OF = get("dagger.hilt.migration", "AliasOf");
   public static final ClassName ALIAS_OF_PROPAGATED_DATA =
       get("dagger.hilt.internal.aliasof", "AliasOfPropagatedData");

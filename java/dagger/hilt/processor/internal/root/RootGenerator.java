@@ -134,6 +134,7 @@ final class RootGenerator {
                 AnnotationSpec.builder(ClassNames.MODULE)
                     .addMember("subcomponents", "$T.class", componentName)
                     .build())
+            .addAnnotation(ClassNames.DISABLE_INSTALL_IN_CHECK)
             .addMethod(
                 MethodSpec.methodBuilder("bind")
                     .addModifiers(ABSTRACT, PUBLIC)

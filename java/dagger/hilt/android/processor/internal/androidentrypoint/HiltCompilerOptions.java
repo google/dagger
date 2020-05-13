@@ -23,16 +23,21 @@ import javax.annotation.processing.ProcessingEnvironment;
 
 /** Hilt annotation processor options. */
 // TODO(user): Consider consolidating with Dagger compiler options logic.
+// TODO(user): Move this class to dagger/hilt/processor/internal
 public final class HiltCompilerOptions {
 
-  enum BooleanOption {
+  /** Processor options which can have true or false values. */
+  public enum BooleanOption {
     /**
      * Flag that disables validating the superclass of @AndroidEntryPoint are Hilt_ generated,
      * classes. This flag is to be used internally by the Gradle plugin, enabling the bytecode
      * transformation to change the superclass.
      */
     DISABLE_ANDROID_SUPERCLASS_VALIDATION(
-        "android.internal.disableAndroidSuperclassValidation", false);
+        "android.internal.disableAndroidSuperclassValidation", false),
+
+    /** Flag that disables check on modules to be annotated with @InstallIn. */
+    DISABLE_MODULES_HAVE_INSTALL_IN_CHECK("disableModulesHaveInstallInCheck", false);
 
     private final String name;
     private final boolean defaultValue;
@@ -42,7 +47,7 @@ public final class HiltCompilerOptions {
       this.defaultValue = defaultValue;
     }
 
-    boolean get(ProcessingEnvironment env) {
+    public boolean get(ProcessingEnvironment env) {
       String value = env.getOptions().get(getQualifiedName());
       if (value == null) {
         return defaultValue;
@@ -51,7 +56,7 @@ public final class HiltCompilerOptions {
       return Boolean.parseBoolean(value);
     }
 
-    String getQualifiedName() {
+    public String getQualifiedName() {
       return "dagger.hilt." + name;
     }
   }

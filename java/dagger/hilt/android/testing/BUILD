@@ -56,6 +56,7 @@ android_library(
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_entry_point",
         "//java/dagger/hilt/internal:preconditions",
+        "//java/dagger/hilt/migration:disable_install_in_check",
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_multidex_multidex",
         "@maven//:androidx_test_core",

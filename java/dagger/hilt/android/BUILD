@@ -67,6 +67,7 @@ android_library(
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",
         "//java/dagger/hilt/internal:generated_entry_point",
+        "//java/dagger/hilt/migration:disable_install_in_check",
         "@maven//:androidx_annotation_annotation",
     ],
     deps = [
@@ -99,6 +100,7 @@ android_library(
         "//java/dagger/hilt/android:hilt_android_app",
         "//java/dagger/hilt/android/migration:optional_inject",
         "//java/dagger/hilt/migration:alias_of",
+        "//java/dagger/hilt/migration:disable_install_in_check",
         "//java/dagger/lint:lint-android-artifact-lib",
     ],
 )
@@ -152,6 +154,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/internal/definecomponent",
         "//java/dagger/hilt/internal/generatesrootinput",
         "//java/dagger/hilt/migration:alias_of",
+        "//java/dagger/hilt/migration:disable_install_in_check",
         "//java/dagger/hilt/processor/internal/aggregateddeps:annotation",
     ],
 )

@@ -32,3 +32,14 @@ android_library(
         "//java/dagger/hilt:generates_root_input",
     ],
 )
+
+java_library(
+    name = "disable_install_in_check",
+    srcs = ["DisableInstallInCheck.java"],
+    exported_plugins = [
+        "//java/dagger/hilt/processor/internal/disableinstallincheck:processor",
+    ],
+    exports = [
+        "@google_bazel_common//third_party/java/jsr250_annotations",
+    ],
+)

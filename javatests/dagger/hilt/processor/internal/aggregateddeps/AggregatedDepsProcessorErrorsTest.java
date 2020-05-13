@@ -21,6 +21,7 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import com.google.common.base.Joiner;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.hilt.processor.internal.GeneratedImport;
 import dagger.testing.compile.CompilerTests;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
@@ -96,4 +97,55 @@ public class AggregatedDepsProcessorErrorsTest {
         .onLine(27);
   }
 
+  @Test
+  public void testMissingInstallInAnnotation() {
+    JavaFileObject source = JavaFileObjects.forSourceString(
+        "foo.bar.AnnotationsOnWrongTypeKind",
+        LINES.join(
+            "package foo.bar;",
+            "",
+            "import dagger.Module;",
+            "",
+            "@Module",     // Error: Doesn't have InstallIn annotation
+            "final class FooModule {}"));
+
+    Compilation compilation =
+        CompilerTests.compiler().withProcessors(new AggregatedDepsProcessor()).compile(source);
+
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("foo.bar.FooModule must also be annotated with @InstallIn")
+        .inFile(source)
+        .onLine(6);
+  }
+  @Test
+  public void testNoErrorOnDaggerGeneratedModules() {
+    JavaFileObject source =
+        JavaFileObjects.forSourceString(
+            "foo.bar",
+            LINES.join(
+                "package foo.bar;",
+                "",
+                GeneratedImport.IMPORT_GENERATED_ANNOTATION,
+                "import dagger.Module;",
+                "",
+                "@Module",
+                "@Generated(value = \"something\")", // Error: Isn't Dagger-generated but missing
+                                                     // InstallIn
+                "final class FooModule {}",
+                "",
+                "@Module",
+                "@Generated(value = \"dagger\")", // No error because the module is dagger generated
+                "final class BarModule {}"));
+
+    Compilation compilation =
+        CompilerTests.compiler().withProcessors(new AggregatedDepsProcessor()).compile(source);
+
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining("foo.bar.FooModule must also be annotated with @InstallIn")
+        .inFile(source)
+        .onLine(8);
+  }
 }

@@ -27,6 +27,7 @@ java_library(
         "//:dagger_with_compiler",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",
+        "//java/dagger/hilt/migration:disable_install_in_check",
     ],
 )
 

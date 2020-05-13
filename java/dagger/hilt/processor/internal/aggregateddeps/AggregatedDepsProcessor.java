@@ -16,8 +16,10 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
+import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.hilt.android.processor.internal.androidentrypoint.HiltCompilerOptions.BooleanOption.DISABLE_MODULES_HAVE_INSTALL_IN_CHECK;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.ElementKind.CLASS;
@@ -40,11 +42,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.Processor;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Processor that outputs dummy files to propagate information through multiple javac runs. */
@@ -112,6 +118,15 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         isModule != isEntryPoint,
         element,
         "@Module and @EntryPoint cannot be used on the same interface");
+
+    ProcessorErrors.checkState(
+        !isModule
+            || hasInstallIn
+            || isDaggerGeneratedModule(element)
+            || installInCheckDisabled(element),
+        element,
+        "%s must also be annotated with @InstallIn.",
+        element);
 
     if (isModule && hasInstallIn) {
       ProcessorErrors.checkState(
@@ -199,5 +214,53 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     // don't go down the rabbit hole of analyzing undefined types. N.B. we don't issue
     // an error here because javac already has and we don't want to spam the user.
     return element.asType().getKind() != TypeKind.ERROR;
+  }
+
+  private boolean installInCheckDisabled(Element element) {
+    return DISABLE_MODULES_HAVE_INSTALL_IN_CHECK.get(getProcessingEnv())
+        || Processors.hasAnnotation(element, ClassNames.DISABLE_INSTALL_IN_CHECK);
+  }
+
+  /**
+   * When using Dagger Producers, don't process generated modules. They will not have the expected
+   * annotations.
+   */
+  private static boolean isDaggerGeneratedModule(Element element) {
+    if (!Processors.hasAnnotation(element, ClassNames.MODULE)) {
+      return false;
+    }
+    return element.getAnnotationMirrors().stream()
+        .filter(mirror -> isGenerated(mirror))
+        .map(mirror -> asString(getOnlyElement(asList(getAnnotationValue(mirror, "value")))))
+        .anyMatch(value -> value.startsWith("dagger"));
+  }
+
+  private static List<? extends AnnotationValue> asList(AnnotationValue value) {
+    return value.accept(
+        new SimpleAnnotationValueVisitor8<List<? extends AnnotationValue>, Void>() {
+          @Override
+          public List<? extends AnnotationValue> visitArray(
+              List<? extends AnnotationValue> value, Void unused) {
+            return value;
+          }
+        },
+        null);
+  }
+
+  private static String asString(AnnotationValue value) {
+    return value.accept(
+        new SimpleAnnotationValueVisitor8<String, Void>() {
+          @Override
+          public String visitString(String value, Void unused) {
+            return value;
+          }
+        },
+        null);
+  }
+
+  private static boolean isGenerated(AnnotationMirror annotationMirror) {
+    Name name = asType(annotationMirror.getAnnotationType().asElement()).getQualifiedName();
+    return name.contentEquals("javax.annotation.Generated")
+        || name.contentEquals("javax.annotation.processing.Generated");
   }
 }

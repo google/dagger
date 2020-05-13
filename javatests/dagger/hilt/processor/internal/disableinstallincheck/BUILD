@@ -13,31 +13,24 @@
 # limitations under the License.
 #
 # Description:
-#  Builds and run tests related to AggregatedDepsProcessor.
+#  Builds and run tests related to DisableInstallInCheckProcessor.
 
 load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
 package(default_visibility = ["//:src"])
 
 compiler_test(
-    name = "AggregatedDepsProcessorErrorsTest",
+    name = "DisableInstallInCheckProcessorErrorsTest",
     size = "small",
-    srcs = ["AggregatedDepsProcessorErrorsTest.java"],
+    srcs = ["DisableInstallInCheckProcessorErrorsTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/internal:component_entry_point",
-        "//java/dagger/hilt/internal:generated_entry_point",
-        "//java/dagger/hilt:generate_components",
+        "//java/dagger/hilt/migration:disable_install_in_check",
         "//:dagger_with_compiler",
         "@google_bazel_common//third_party/java/jsr250_annotations",
         "//java/dagger/hilt:entry_point",
-        "//java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android/components",
     ],
     deps = [
-        "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",
-        "//java/dagger/internal/guava:annotations",
-        "//java/dagger/internal/guava:base",
-        "//javatests/dagger/hilt/processor/internal:generated_import",
+        "//java/dagger/hilt/processor/internal/disableinstallincheck:processor_lib",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",

@@ -31,6 +31,7 @@ import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
+import dagger.internal.codegen.extension.DaggerStreams;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +61,7 @@ public final class BindValueProcessor extends BaseProcessor {
   public Set<String> getSupportedAnnotationTypes() {
     return SUPPORTED_ANNOTATIONS.stream()
         .map(TypeName::toString)
-        .collect(ImmutableSet.toImmutableSet());
+        .collect(DaggerStreams.toImmutableSet());
   }
 
   @Override

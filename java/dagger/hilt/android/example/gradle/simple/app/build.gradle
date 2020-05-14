@@ -61,4 +61,9 @@ dependencies {
   androidTestImplementation 'androidx.test:runner:1.2.0'
   androidTestImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
   androidTestAnnotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'
+
+  // To help us catch usages of Guava APIs for Java 8 in the '-jre' variant.
+  annotationProcessor'com.google.guava:guava:28.1-android'
+  testAnnotationProcessor'com.google.guava:guava:28.1-android'
+  androidTestAnnotationProcessor'com.google.guava:guava:28.1-android'
 }

@@ -16,7 +16,7 @@
 
 package dagger.hilt.android.processor.internal.bindvalue;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;

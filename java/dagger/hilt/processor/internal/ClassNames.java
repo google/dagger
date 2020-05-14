@@ -78,7 +78,6 @@ public final class ClassNames {
   public static final ClassName SERVICE_SCOPED = get("dagger.hilt.android.scopes", "ServiceScoped");
   public static final ClassName VIEW_SCOPED = get("dagger.hilt.android.scopes", "ViewScoped");
 
-  public static final ClassName GENERATE_COMPONENTS = get("dagger.hilt", "GenerateComponents");
   public static final ClassName INSTALL_IN =
       get("dagger.hilt", "InstallIn");
   public static final ClassName ENTRY_POINT =

@@ -18,7 +18,6 @@ package dagger.hilt.processor.internal.root;
 
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
@@ -27,10 +26,6 @@ import javax.lang.model.element.TypeElement;
 // TODO(user): Fix this class so we don't have to have placeholders
 enum RootType {
     ROOT(ClassNames.HILT_ANDROID_APP),
-
-    // Placeholder to make sure @GenerateComponents usages get processed
-    // TODO(user): delete this when @GenerateComponents is removed
-    GENERATE_COMPONEONTS_ROOT(ClassNames.GENERATE_COMPONENTS),
 
     // Placeholder to make sure @HiltAndroidTest usages get processed
     HILT_ANDROID_TEST_ROOT(ClassNames.HILT_ANDROID_TEST),
@@ -53,14 +48,7 @@ enum RootType {
   }
 
   public static RootType of(ProcessingEnvironment env, TypeElement element) {
-    if (Processors.hasAnnotation(element, ClassNames.GENERATE_COMPONENTS)) {
-      ProcessorErrors.checkState(
-          Processors.hasAnnotation(element, ClassNames.ANDROID_ENTRY_POINT),
-          element,
-          "Classes annotated with @GenerateComponents must also be annotated with "
-              + "@AndroidEntryPoint.");
-      return ROOT;
-    } else if (Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_APP)) {
+    if (Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_APP)) {
       return ROOT;
     } else if (Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST)) {
       return TEST_ROOT;

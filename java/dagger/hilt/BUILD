@@ -18,20 +18,6 @@
 package(default_visibility = ["//:src"])
 
 java_library(
-    name = "generate_components",
-    srcs = ["GenerateComponents.java"],
-    exported_plugins = [
-        "//java/dagger/hilt/processor/internal/root:plugin",
-    ],
-    exports = [
-        "//:dagger_with_compiler",
-        "//java/dagger/hilt/internal:component_manager",
-        "//java/dagger/hilt/internal:generated_component",
-        "//java/dagger/hilt/migration:disable_install_in_check",
-    ],
-)
-
-java_library(
     name = "install_in",
     srcs = ["InstallIn.java"],
     exported_plugins = [

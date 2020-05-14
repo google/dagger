@@ -26,7 +26,6 @@ compiler_test(
     compiler_deps = [
         "//java/dagger/hilt/internal:component_entry_point",
         "//java/dagger/hilt/internal:generated_entry_point",
-        "//java/dagger/hilt:generate_components",
         "//:dagger_with_compiler",
         "@google_bazel_common//third_party/java/jsr250_annotations",
         "//java/dagger/hilt:entry_point",

@@ -410,15 +410,7 @@ public abstract class AndroidEntryPointMetadata {
     }
 
     private static Type forAndroidEntryPoint(TypeElement element, TypeElement baseElement) {
-      // TODO(user): Remove support for @AndroidEntryPoint on Application classes
-      if (Processors.isAssignableFrom(baseElement, AndroidClassNames.APPLICATION)) {
-        ProcessorErrors.checkState(
-            Processors.hasAnnotation(element, ClassNames.GENERATE_COMPONENTS),
-            element,
-            "Applications annotated with @AndroidEntryPoint must also be annotated with "
-                + "@GenerateComponents");
-        return Type.APPLICATION;
-      } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.ACTIVITY)) {
+      if (Processors.isAssignableFrom(baseElement, AndroidClassNames.ACTIVITY)) {
         ProcessorErrors.checkState(
             Processors.isAssignableFrom(baseElement, AndroidClassNames.COMPONENT_ACTIVITY),
             element,

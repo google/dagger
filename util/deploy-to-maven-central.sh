@@ -29,6 +29,13 @@ bash $(dirname $0)/deploy-dagger.sh \
   "-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
   "-Dgpg.keyname=${KEY}"
 
+bash $(dirname $0)/deploy-hilt.sh \
+  "gpg:sign-and-deploy-file" \
+  "${VERSION_NAME}-alpha" \
+  "-DrepositoryId=sonatype-nexus-staging" \
+  "-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
+  "-Dgpg.keyname=${KEY}"
+
 # Publish javadocs to gh-pages
 bazel build //:user-docs.jar
 git clone --quiet --branch gh-pages \

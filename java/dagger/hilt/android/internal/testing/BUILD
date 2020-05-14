@@ -46,6 +46,7 @@ android_library(
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",
+        "//java/dagger/internal/guava:annotations",
         "@google_bazel_common//third_party/java/junit",
     ],
 )
@@ -53,7 +54,10 @@ android_library(
 android_library(
     name = "test_component_data",
     testonly = 1,
-    srcs = ["TestComponentData.java"],
+    srcs = [
+        "TestComponentData.java",
+        "TestComponentDataSupplier.java",
+    ],
     deps = [
         ":test_injector",
     ],

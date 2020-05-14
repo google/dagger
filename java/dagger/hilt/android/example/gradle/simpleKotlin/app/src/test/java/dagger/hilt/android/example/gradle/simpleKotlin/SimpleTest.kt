@@ -23,6 +23,7 @@ import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,7 +38,7 @@ import org.robolectric.annotation.Config
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
 // Robolectric requires Java9 to run API 29 and above, so use API 28 instead
-@Config(sdk = [Build.VERSION_CODES.P], application = SimpleTest_Application::class)
+@Config(sdk = [Build.VERSION_CODES.P], application = HiltTestApplication::class)
 class SimpleTest {
   @Rule
   @JvmField

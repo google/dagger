@@ -26,6 +26,8 @@ public final class ClassNames {
       get("dagger.hilt.codegen", "OriginatingElement");
   public static final ClassName GENERATED_COMPONENT =
       get("dagger.hilt.internal", "GeneratedComponent");
+  public static final ClassName GENERATED_COMPONENT_MANAGER =
+      get("dagger.hilt.internal", "GeneratedComponentManager");
   public static final ClassName IGNORE_MODULES =
       get("dagger.hilt.android.testing", "UninstallModules");
 
@@ -145,6 +147,8 @@ public final class ClassNames {
       get("dagger.hilt.android.qualifiers", "ApplicationContext");
   public static final ClassName TEST_COMPONENT_DATA =
       get("dagger.hilt.android.internal.testing", "TestComponentData");
+  public static final ClassName TEST_COMPONENT_DATA_SUPPLIER =
+      get("dagger.hilt.android.internal.testing", "TestComponentDataSupplier");
 
   public static final ClassName CLASS = get("java.lang", "Class");
   public static final ClassName LIST = get("java.util", "List");

@@ -162,6 +162,7 @@ public final class RootProcessor extends BaseProcessor {
       }
 
       if (isTestEnv) {
+        generateTestComponentData(rootMetadatas);
         generateTestApplications(rootMetadatas);
       }
     } catch (Exception e) {
@@ -180,20 +181,17 @@ public final class RootProcessor extends BaseProcessor {
     RootGenerator.generate(rootMetadata, getProcessingEnv());
   }
 
+  private void generateTestComponentData(ImmutableList<RootMetadata> rootMetadatas)
+      throws IOException {
+    for (RootMetadata rootMetadata : rootMetadatas) {
+      new TestComponentDataGenerator(getProcessingEnv(), rootMetadata).generate();
+    }
+    new TestComponentDataSupplierGenerator(getProcessingEnv(), rootMetadatas).generate();
+  }
+
   private void generateTestApplications(ImmutableList<RootMetadata> rootMetadatas)
       throws IOException {
-    if (mergedTestApplicationMetadata == null) {
-      for (RootMetadata rootMetadata : rootMetadatas) {
-        TestRootMetadata testRootMetadata = rootMetadata.testRootMetadata();
-        new TestApplicationGenerator(
-                getProcessingEnv(),
-                testRootMetadata.testElement(),
-                testRootMetadata.baseAppName(),
-                testRootMetadata.appName(),
-                ImmutableList.of(rootMetadata))
-            .generate();
-      }
-    } else {
+    if (mergedTestApplicationMetadata != null) {
       new TestApplicationGenerator(
               getProcessingEnv(),
               mergedTestApplicationMetadata.element(),

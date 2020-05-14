@@ -26,7 +26,6 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
@@ -174,17 +173,6 @@ public final class RootMetadata {
     entryPointSet.add(ClassNames.GENERATED_COMPONENT);
     for (TypeElement element : deps.getEntryPoints(componentName, root.classname())) {
       entryPointSet.add(ClassName.get(element));
-    }
-    if (root.type().isTestRoot()) {
-      if (componentName.equals(ClassNames.APPLICATION_COMPONENT)) {
-        // @MergedTestApplication can be used on an element other than the test, which can
-        // change the name of the generated application. This happens in Gradle instrumentation
-        // tests where a single application is generated for all instrumentation tests.
-        entryPointSet.add(
-            ParameterizedTypeName.get(
-                ClassNames.TEST_APPLICATION_INJECTOR,
-                mergedTestApplication.orElse(testRootMetadata().appName())));
-      }
     }
     return entryPointSet.build();
   }

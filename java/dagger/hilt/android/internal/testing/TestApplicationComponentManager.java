@@ -36,8 +36,12 @@ import org.junit.runner.Description;
 public final class TestApplicationComponentManager
     implements GeneratedComponentManager<Object>, OnComponentReadyRunnerHolder {
 
+  // This is a generated class that we always generate in a known location.
+  private static final String TEST_COMPONENT_DATA_SUPPLIER_IMPL =
+      "dagger.hilt.android.internal.testing.TestComponentDataSupplierImpl";
+
   private final Application application;
-  private final Map<Class<?>, TestComponentData> testComponentDatas;
+  private final Map<Class<?>, TestComponentData> testComponentDataSupplier;
 
   private final AtomicReference<Object> component = new AtomicReference<>();
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
@@ -45,10 +49,18 @@ public final class TestApplicationComponentManager
   private volatile Object testInstance;
   private volatile OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
 
-  public TestApplicationComponentManager(
-      Application application, Map<Class<?>, TestComponentData> testComponentDatas) {
+  public TestApplicationComponentManager(Application application) {
     this.application = application;
-    this.testComponentDatas = testComponentDatas;
+    try {
+      this.testComponentDataSupplier =
+          Class.forName(TEST_COMPONENT_DATA_SUPPLIER_IMPL)
+              .asSubclass(TestComponentDataSupplier.class)
+              .getDeclaredConstructor()
+              .newInstance()
+              .get();
+    } catch (ReflectiveOperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -198,7 +210,7 @@ public final class TestApplicationComponentManager
   }
 
   private TestComponentData testComponentData() {
-    return testComponentDatas.get(testClass());
+    return testComponentDataSupplier.get(testClass());
   }
 
   private Class<?> testClass() {

@@ -33,6 +33,8 @@ java_library(
         "RootGenerator.java",
         "RootProcessor.java",
         "TestApplicationGenerator.java",
+        "TestComponentDataGenerator.java",
+        "TestComponentDataSupplierGenerator.java",
         "TestInjectorGenerator.java",
     ],
     deps = [

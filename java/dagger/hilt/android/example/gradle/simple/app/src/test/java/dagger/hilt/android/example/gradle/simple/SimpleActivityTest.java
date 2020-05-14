@@ -24,6 +24,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.hilt.android.testing.BindValue;
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
+import dagger.hilt.android.testing.HiltTestApplication;
 import dagger.hilt.android.testing.UninstallModules;
 import javax.inject.Inject;
 import org.junit.Rule;
@@ -36,7 +37,7 @@ import org.robolectric.annotation.Config;
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
 // Robolectric requires Java9 to run API 29 and above, so use API 28 instead
-@Config(sdk = Build.VERSION_CODES.P, application = SimpleActivityTest_Application.class)
+@Config(sdk = Build.VERSION_CODES.P, application = HiltTestApplication.class)
 public final class SimpleActivityTest {
   @Rule public HiltAndroidRule rule = new HiltAndroidRule(this);
 

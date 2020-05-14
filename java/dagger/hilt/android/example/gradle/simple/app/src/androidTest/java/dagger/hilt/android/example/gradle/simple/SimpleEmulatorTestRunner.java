@@ -22,6 +22,7 @@ import androidx.test.runner.AndroidJUnitRunner;
 import dagger.hilt.android.testing.MergedTestApplication;
 
 /** A custom runner to setup the emulator application class for tests. */
+// Note: Technically we can use HiltTestApplication here but we're testing @MergedTestApplication
 @MergedTestApplication(Application.class)
 public final class SimpleEmulatorTestRunner extends AndroidJUnitRunner {
 

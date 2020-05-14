@@ -41,6 +41,7 @@ android_library(
     ],
     exports = [
         ":hilt_android_rule",
+        ":hilt_test_application",
         ":on_component_ready_runner",
         "//:dagger_with_compiler",
         "//java/dagger/hilt:install_in",
@@ -74,6 +75,21 @@ android_library(
         "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
         "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/junit",
+    ],
+)
+
+android_library(
+    name = "hilt_test_application",
+    testonly = 1,
+    srcs = [
+        "HiltTestApplication.java",
+    ],
+    deps = [
+        ":on_component_ready_runner",
+        "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
+        "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
+        "//java/dagger/hilt/internal:component_manager",
+        "@maven//:androidx_multidex_multidex",
     ],
 )
 
@@ -162,6 +178,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/testing:bind_value",
         "//java/dagger/hilt/android/testing:hilt_android_rule",
         "//java/dagger/hilt/android/testing:hilt_android_test",
+        "//java/dagger/hilt/android/testing:hilt_test_application",
         "//java/dagger/hilt/android/testing:merged_test_application",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/android/testing:uninstall_modules",

@@ -126,4 +126,23 @@ public class AndroidEntryPointProcessorTest {
             + "androidx.activity.ComponentActivity. (e.g. FragmentActivity, AppCompatActivity, "
             + "etc.)");
   }
+
+  @Test
+  public void checkAndroidEntryPointOnApplicationRecommendsHiltAndroidApp() {
+    JavaFileObject testActivity =
+        JavaFileObjects.forSourceLines(
+            "test.MyApplication",
+            "package test;",
+            "",
+            "import android.app.Application;",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "",
+            "@AndroidEntryPoint(Application.class)",
+            "public class MyApplication extends Hilt_MyApplication { }");
+    Compilation compilation = compiler().compile(testActivity);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("@AndroidEntryPoint cannot be used on an Application. "
+            + "Use @HiltAndroidApp instead.");
+  }
 }

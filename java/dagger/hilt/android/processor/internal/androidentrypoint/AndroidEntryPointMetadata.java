@@ -428,10 +428,14 @@ public abstract class AndroidEntryPointMetadata {
         boolean withFragmentBindings =
             Processors.hasAnnotation(element, AndroidClassNames.WITH_FRAGMENT_BINDINGS);
         return withFragmentBindings ? Type.VIEW : Type.VIEW_NO_FRAGMENT;
+      } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.APPLICATION)) {
+        throw new BadInputException(
+            "@AndroidEntryPoint cannot be used on an Application. Use @HiltAndroidApp instead.",
+            baseElement);
       }
       throw new BadInputException(
-          "@AndroidEntryPoint base class must extend View, FragmentActivity, (support) Fragment, "
-              + "or Application.",
+          "@AndroidEntryPoint base class must extend ComponentActivity, (support) Fragment, "
+          + "View, Service, or BroadcastReceiver.",
           baseElement);
     }
   }

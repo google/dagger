@@ -143,8 +143,8 @@ public final class ClassNames {
       get("dagger.hilt.android.testing", "BindValueIntoSet");
   public static final ClassName APPLICATION_CONTEXT =
       get("dagger.hilt.android.qualifiers", "ApplicationContext");
-  public static final ClassName TEST_COMPONENT_SUPPLIER =
-      get("dagger.hilt.android.internal.testing", "TestComponentSupplier");
+  public static final ClassName TEST_COMPONENT_DATA =
+      get("dagger.hilt.android.internal.testing", "TestComponentData");
 
   public static final ClassName CLASS = get("java.lang", "Class");
   public static final ClassName LIST = get("java.util", "List");

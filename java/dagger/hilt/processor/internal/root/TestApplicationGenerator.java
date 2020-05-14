@@ -17,9 +17,7 @@
 package dagger.hilt.processor.internal.root;
 
 import static java.util.stream.Collectors.joining;
-import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PROTECTED;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -46,7 +44,6 @@ import javax.lang.model.element.TypeElement;
  * Generates an Android Application that holds the Singleton component.
  */
 public final class TestApplicationGenerator {
-  private static final String TEST_COMPONENT_SUPPLIER_IMPL = "TestComponentSupplierImpl";
   private static final ParameterSpec COMPONENT_MANAGER =
       ParameterSpec.builder(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER, "componentManager")
           .build();
@@ -84,7 +81,7 @@ public final class TestApplicationGenerator {
             .addMethod(getComponentManagerMethod())
             .addMethod(getComponentMethod())
             .addMethod(getAppInstanceMethod(appName))
-            .addType(testComponentSupplier());
+            .addMethod(testComponentDatas());
 
     Processors.addGeneratedAnnotation(
         generator, processingEnv, ClassNames.ROOT_PROCESSOR.toString());
@@ -106,59 +103,54 @@ public final class TestApplicationGenerator {
   }
 
   /**
-   * <pre><code>
-   * private final class TestComponentSupplierImpl extends TestComponentSuppler {
-   *   private final Map<Class<?>, TestInjector<Object>> testInjectors = new HashMap<>();
-   *   private final Map<Class<?>, List<Class<?>>> requiredModules = new HashMap<>();
-   *   private final Map<Class<?>, ComponentSupplier> componentSuppliers = new HashMap<>();
-   *   private final Map<Class<?>, Boolean> waitForBindValue = new HashMap<>();
    *
-   *   TestComponentSupplierImpl() {
-   *     requiredModules.put(
-   *         FooTest.class,
-   *         Arrays.asList(FooTest.TestModule.class, ...);
    *
-   *     componentSuppliers.put(
-   *         FooTest.class,
-   *         modules ->
-   *             DaggerFooTest_ApplicationComponent.builder()
-   *                 .applicationContextModule(new ApplicationContextModule(this))
-   *                 .testModule((FooTest.TestModule) modules.get(FooTest.TestModule.class))
-   *                 .build());
-   *
-   *     waitForBindValue.put(FooTest.class, false);
-   *   }
-   *
-   *   {@literal @}Override
-   *   Map<Class<?>, List<Class<?>>> requiredModules() {
-   *     return requiredModules;
-   *   }
-   *
-   *   {@literal @}Override
-   *   Map<Class<?>, ComponentSupplier> get() {
-   *     return componentSuppliers;
-   *   }
-   *
-   *   {@literal @}Override
-   *   Map<Class<?>, Boolean> waitForBindValue() {
-   *     return waitForBindValue;
-   *   }
+   * <pre><code>{@code
+   * private Map<Class<?>, TestComponentData> testComponentDatas() {
+   *   Map<Class<?>, TestComponentData> testComponentData = new HashMap<>();
+   *   testComponentData.put(
+   *       FooTest.class,
+   *       new TestComponentData(
+   *           false, // waitForBindValue
+   *           testInstance -> injectInternal(($1T) testInstance),
+   *           Arrays.asList(FooTest.TestModule.class, ...),
+   *           modules ->
+   *               DaggerFooTest_ApplicationComponent.builder()
+   *                   .applicationContextModule(new ApplicationContextModule(this))
+   *                   .testModule((FooTest.TestModule) modules.get(FooTest.TestModule.class))
+   *                   .build());
+   *   ...
+   *   return testComponentData;
    * }
-   * </code></pre>
+   * }</code></pre>
    */
-  private TypeSpec testComponentSupplier() {
-    MethodSpec.Builder constructor = MethodSpec.constructorBuilder();
+  private MethodSpec testComponentDatas() {
+    ParameterizedTypeName classType =
+        ParameterizedTypeName.get(ClassNames.CLASS, WildcardTypeName.subtypeOf(TypeName.OBJECT));
+    ParameterizedTypeName mapTestComponentDataType =
+        ParameterizedTypeName.get(ClassNames.MAP, classType, ClassNames.TEST_COMPONENT_DATA);
+    MethodSpec.Builder methodBuilder =
+        MethodSpec.methodBuilder("testComponentDatas")
+            .returns(mapTestComponentDataType)
+            .addStatement(
+                "$T testComponentDataMap = new $T<>($L)",
+                mapTestComponentDataType,
+                ClassNames.HASH_MAP,
+                rootMetadatas.size());
+
     for (RootMetadata rootMetadata : rootMetadatas) {
       TypeElement testElement = rootMetadata.testRootMetadata().testElement();
+      ClassName component =
+          ComponentNames.generatedComponent(
+              ClassName.get(testElement), ClassNames.APPLICATION_COMPONENT);
       ImmutableSet<TypeElement> extraModules =
           rootMetadata.modulesThatDaggerCannotConstruct(ClassNames.APPLICATION_COMPONENT);
-      constructor.addStatement(
-          "testInjectors.put($1T.class, testInstance -> injectInternal(($1T) testInstance))",
-          testElement);
-
-      constructor.addStatement(
-          "requiredModules.put($T.class, $L)",
+      methodBuilder.addStatement(
+          "testComponentDataMap.put($T.class, new $T($L, $L, $L, $L))",
           testElement,
+          ClassNames.TEST_COMPONENT_DATA,
+          rootMetadata.waitForBindValue(),
+          CodeBlock.of("testInstance -> injectInternal(($1T) testInstance)", testElement),
           extraModules.isEmpty()
               ? CodeBlock.of("$T.emptySet()", ClassNames.COLLECTIONS)
               : CodeBlock.of(
@@ -167,14 +159,7 @@ public final class TestApplicationGenerator {
                   ClassNames.ARRAYS,
                   extraModules.stream()
                       .map(module -> CodeBlock.of("$T.class", module).toString())
-                      .collect(joining(","))));
-
-      ClassName component =
-          ComponentNames.generatedComponent(
-              ClassName.get(testElement), ClassNames.APPLICATION_COMPONENT);
-      constructor.addStatement(
-          "componentSuppliers.put($T.class, $L)",
-          testElement,
+                      .collect(joining(","))),
           CodeBlock.of(
               "modules -> $T.builder()\n"
                   + ".applicationContextModule(new $T($T.this))\n"
@@ -193,81 +178,8 @@ public final class TestApplicationGenerator {
                                   className)
                               .toString())
                   .collect(joining("\n"))));
-
-      constructor.addStatement(
-          "waitForBindValue.put($T.class, $L)", testElement, rootMetadata.waitForBindValue());
     }
-
-    ParameterizedTypeName classType =
-        ParameterizedTypeName.get(ClassNames.CLASS, WildcardTypeName.subtypeOf(TypeName.OBJECT));
-    ParameterizedTypeName classSetType = ParameterizedTypeName.get(ClassNames.SET, classType);
-    ParameterizedTypeName testInjectorType =
-        ParameterizedTypeName.get(ClassNames.TEST_INJECTOR, TypeName.OBJECT);
-    return TypeSpec.classBuilder(TEST_COMPONENT_SUPPLIER_IMPL)
-        .superclass(ClassNames.TEST_COMPONENT_SUPPLIER)
-        .addModifiers(PRIVATE, FINAL)
-        .addField(
-            FieldSpec.builder(
-                    ParameterizedTypeName.get(ClassNames.MAP, classType, testInjectorType),
-                    "testInjectors")
-                .addModifiers(PRIVATE, FINAL)
-                .initializer("new $T<>($L)", ClassNames.HASH_MAP, rootMetadatas.size())
-                .build())
-        .addField(
-            FieldSpec.builder(
-                    ParameterizedTypeName.get(ClassNames.MAP, classType, classSetType),
-                    "requiredModules")
-                .addModifiers(PRIVATE, FINAL)
-                .initializer("new $T<>($L)", ClassNames.HASH_MAP, rootMetadatas.size())
-                .build())
-        .addField(
-            FieldSpec.builder(
-                    ParameterizedTypeName.get(
-                        ClassNames.MAP, classType, ClassNames.COMPONENT_SUPPLIER),
-                    "componentSuppliers")
-                .addModifiers(PRIVATE, FINAL)
-                .initializer("new $T<>($L)", ClassNames.HASH_MAP, rootMetadatas.size())
-                .build())
-        .addField(
-            FieldSpec.builder(
-                    ParameterizedTypeName.get(ClassNames.MAP, classType, TypeName.BOOLEAN.box()),
-                    "waitForBindValue")
-                .addModifiers(PRIVATE, FINAL)
-                .initializer("new $T<>($L)", ClassNames.HASH_MAP, rootMetadatas.size())
-                .build())
-        .addMethod(constructor.build())
-        .addMethod(
-            MethodSpec.methodBuilder("testInjectors")
-                .addModifiers(PROTECTED)
-                .addAnnotation(Override.class)
-                .returns(ParameterizedTypeName.get(ClassNames.MAP, classType, testInjectorType))
-                .addStatement("return testInjectors")
-                .build())
-        .addMethod(
-            MethodSpec.methodBuilder("get")
-                .addModifiers(PROTECTED)
-                .addAnnotation(Override.class)
-                .returns(
-                    ParameterizedTypeName.get(
-                        ClassNames.MAP, classType, ClassNames.COMPONENT_SUPPLIER))
-                .addStatement("return componentSuppliers")
-                .build())
-        .addMethod(
-            MethodSpec.methodBuilder("requiredModules")
-                .addModifiers(PROTECTED)
-                .addAnnotation(Override.class)
-                .returns(ParameterizedTypeName.get(ClassNames.MAP, classType, classSetType))
-                .addStatement("return requiredModules")
-                .build())
-        .addMethod(
-            MethodSpec.methodBuilder("waitForBindValue")
-                .addModifiers(PROTECTED)
-                .addAnnotation(Override.class)
-                .returns(
-                    ParameterizedTypeName.get(ClassNames.MAP, classType, TypeName.BOOLEAN.box()))
-                .addStatement("return waitForBindValue")
-                .build())
-        .build();
+    return methodBuilder.addStatement("return testComponentDataMap").build();
   }
 
   /**
@@ -278,7 +190,7 @@ public final class TestApplicationGenerator {
    * {@literal @Override} protected void attachBaseContext(Context base) {
    *   super.attachBaseContext(base);
    *   componentManager =
-   *       new TestApplicationComponentManager(this, new TestComponentSupplierImpl());
+   *       new TestApplicationComponentManager(this, new TestComponentDataImpl());
    * }
    * </code></pre>
    */
@@ -289,10 +201,7 @@ public final class TestApplicationGenerator {
         .addParameter(ClassNames.CONTEXT, "base")
         .addStatement("super.attachBaseContext(base)")
         .addStatement(
-            "$N = new $T(this, new $L())",
-            COMPONENT_MANAGER,
-            COMPONENT_MANAGER.type,
-            TEST_COMPONENT_SUPPLIER_IMPL)
+            "$N = new $T(this, testComponentDatas())", COMPONENT_MANAGER, COMPONENT_MANAGER.type)
         .build();
   }
 

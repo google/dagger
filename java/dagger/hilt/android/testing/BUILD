@@ -157,7 +157,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
-        "//java/dagger/hilt/android/internal/testing:test_component_supplier",
+        "//java/dagger/hilt/android/internal/testing:test_component_data",
         "//java/dagger/hilt/android/internal/testing:test_injector",
         "//java/dagger/hilt/android/testing:bind_value",
         "//java/dagger/hilt/android/testing:hilt_android_rule",

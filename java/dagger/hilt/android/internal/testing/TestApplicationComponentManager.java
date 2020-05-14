@@ -37,7 +37,7 @@ public final class TestApplicationComponentManager
     implements GeneratedComponentManager<Object>, OnComponentReadyRunnerHolder {
 
   private final Application application;
-  private final TestComponentSupplier componentSupplier;
+  private final Map<Class<?>, TestComponentData> testComponentDatas;
 
   private final AtomicReference<Object> component = new AtomicReference<>();
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
@@ -46,9 +46,9 @@ public final class TestApplicationComponentManager
   private volatile OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
 
   public TestApplicationComponentManager(
-      Application application, TestComponentSupplier componentSupplier) {
+      Application application, Map<Class<?>, TestComponentData> testComponentDatas) {
     this.application = application;
-    this.componentSupplier = componentSupplier;
+    this.testComponentDatas = testComponentDatas;
   }
 
   @Override
@@ -182,19 +182,23 @@ public final class TestApplicationComponentManager
   }
 
   private Set<Class<?>> requiredModules() {
-    return componentSupplier.requiredModules().get(testClass());
+    return testComponentData().requiredModules();
   }
 
   private boolean waitForBindValue() {
-    return componentSupplier.waitForBindValue().get(testClass());
+    return testComponentData().waitForBindValue();
   }
 
   private TestInjector<Object> testInjector() {
-    return componentSupplier.testInjectors().get(testClass());
+    return testComponentData().testInjector();
   }
 
-  private TestComponentSupplier.ComponentSupplier componentSupplier() {
-    return componentSupplier.get().get(testClass());
+  private TestComponentData.ComponentSupplier componentSupplier() {
+    return testComponentData().componentSupplier();
+  }
+
+  private TestComponentData testComponentData() {
+    return testComponentDatas.get(testClass());
   }
 
   private Class<?> testClass() {

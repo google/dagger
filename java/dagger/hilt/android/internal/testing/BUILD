@@ -41,7 +41,7 @@ android_library(
     testonly = 1,
     srcs = ["TestApplicationComponentManager.java"],
     deps = [
-        ":test_component_supplier",
+        ":test_component_data",
         ":test_injector",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/internal:component_manager",
@@ -51,9 +51,9 @@ android_library(
 )
 
 android_library(
-    name = "test_component_supplier",
+    name = "test_component_data",
     testonly = 1,
-    srcs = ["TestComponentSupplier.java"],
+    srcs = ["TestComponentData.java"],
     deps = [
         ":test_injector",
     ],

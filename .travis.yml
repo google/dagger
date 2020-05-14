@@ -43,8 +43,9 @@ script:
 env:
   global:
     # Encrypted credentials for deploying snapshots.
-    - secure: eGc3LHBRIPmTnXLM1YoIqG1do9BkpFI2pJm3fz5Cd8UaXtf7Oefa+Ts3rcn4ipee5A+lf8kEouPshSoaQs81KZ2/qf8rSTCIqeFjHR8hzmOVYo/0zRfS/VSUT0yqN+jeRhuNk3+A49RTPlcfJqPv3tyddtrM1vF7axhCJPQIRJM=
-    - secure: LTzrlqcSNeZTOV52D3ibY9RBdxY4Yu8dUOYhAonrWLE+eDTzuoyCzcPw8pEcYVNUi1rG6Q7v3QBDTnBztsPoCbcN5tEGjw5cQEbfEzSTkWaNCFjncWn36cLwx9lgbF+5Db/L0mYJ36unDKUpKVC8AgOtxQibfv/ffugfxxj8ohY=
+    - secure: SV7y/nx47vwCCFJgyhZjlyC9tUneUpwe5XhEMLlj9oOpQRr4eqDumybZtKpKaxdtv13NMQ5rI9coWdO9L4TVjrJXAfG2rWoi7nXh8z0gDESVZLmCtiLPlC5zkAAur9X/6gIau5IizyliDVp7jrAI0f6Ywdd4FHcXl7t8laUzVWg=
+    - secure: P53TirBuYomoOqVTVnDb5Z7xc5qa5KICbkDCAdlo+Nwyb6be6Mr3rxJ0ozR201UpmCdOhGvvVpILTkakC0iF6nJc4gYjOoR95u9gNKWAsRE1tlvR4FX7o7n7aDyizaAyQXUFo5wWtLANHDvLUuf5du3xryMKJw1r9/oOpLxs+T0=
+
 
     # Encrypted GitHub access token to allow util/generate-latest-docs.sh to
     # push Javadoc to gh-pages.

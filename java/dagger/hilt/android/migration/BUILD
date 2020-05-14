@@ -24,3 +24,8 @@ android_library(
         "//java/dagger/hilt/android/internal/migration:injected_by_hilt",
     ],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["**/*"]),
+)

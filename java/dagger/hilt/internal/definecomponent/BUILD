@@ -25,3 +25,8 @@ java_library(
         "//java/dagger/hilt/android:__pkg__",
     ],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

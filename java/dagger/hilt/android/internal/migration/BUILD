@@ -21,3 +21,8 @@ android_library(
     name = "injected_by_hilt",
     srcs = ["InjectedByHilt.java"],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

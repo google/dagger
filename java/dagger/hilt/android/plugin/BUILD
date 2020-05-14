@@ -16,3 +16,8 @@
 #   A Gradle plugin that performs a transform.
 
 package(default_visibility = ["//:src"])
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["**/*"]),
+)

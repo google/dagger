@@ -123,7 +123,6 @@ android_library(
     name = "artifact-lib",
     testonly = 1,
     tags = ["maven_coordinates=com.google.dagger:hilt-android-testing:" + POM_VERSION],
-    visibility = ["//visibility:private"],
     exports = [
         ":bind_value",
         ":hilt_android_test",
@@ -140,10 +139,16 @@ gen_maven_artifact(
     artifact_name = "Hilt Android Testing",
     artifact_target = ":artifact-lib",
     javadoc_android_api_level = 29,
+    javadoc_exclude_packages = [
+        "dagger.hilt.internal",
+        "dagger.hilt.android.internal",
+    ],
     javadoc_root_packages = [
         "dagger.hilt.android.testing",
     ],
-    javadoc_srcs = glob(["*.java"]),
+    javadoc_srcs = [
+        "//java/dagger/hilt:hilt_testing_filegroup",
+    ],
     manifest = "AndroidManifest.xml",
     packaging = "aar",
     shaded_deps = ["@com_google_auto_auto_common//jar"],
@@ -161,4 +166,9 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/android/testing:uninstall_modules",
     ],
+)
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
 )

@@ -16,3 +16,8 @@
 #   A skeletal application that demonstrates wiring for an injected Application and Activity.
 
 package(default_visibility = ["//:src"])
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["**/*"]),
+)

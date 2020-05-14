@@ -95,3 +95,63 @@ java_library(
         "//java/dagger/hilt/internal/definecomponent",
     ],
 )
+
+filegroup(
+    name = "javadoc-srcs",
+    srcs = [
+        ":hilt_filegroup",
+        ":hilt_testing_filegroup",
+    ],
+)
+
+filegroup(
+    name = "hilt_filegroup",
+    srcs = glob(["*"]) + [
+        "//java/dagger/hilt/codegen:srcs_filegroup",
+        "//java/dagger/hilt/migration:srcs_filegroup",
+        "//java/dagger/hilt/internal:srcs_filegroup",
+        "//java/dagger/hilt/internal/aliasof:srcs_filegroup",
+        "//java/dagger/hilt/internal/definecomponent:srcs_filegroup",
+        "//java/dagger/hilt/internal/generatesrootinput:srcs_filegroup",
+        "//java/dagger/hilt/android:srcs_filegroup",
+        "//java/dagger/hilt/android/components:srcs_filegroup",
+        "//java/dagger/hilt/android/qualifiers:srcs_filegroup",
+        "//java/dagger/hilt/android/internal/builders:srcs_filegroup",
+        "//java/dagger/hilt/android/internal/lifecycle:srcs_filegroup",
+        "//java/dagger/hilt/android/internal/managers:srcs_filegroup",
+        "//java/dagger/hilt/android/internal/migration:srcs_filegroup",
+        "//java/dagger/hilt/android/internal/modules:srcs_filegroup",
+        "//java/dagger/hilt/android/migration:srcs_filegroup",
+        "//java/dagger/hilt/android/scopes:srcs_filegroup",
+        "//java/dagger/hilt/android/plugin:srcs_filegroup",
+    ],
+)
+
+filegroup(
+    name = "hilt_testing_filegroup",
+    srcs = [
+        "//java/dagger/hilt/android/internal/testing:srcs_filegroup",
+        "//java/dagger/hilt/android/testing:srcs_filegroup",
+    ],
+)
+
+filegroup(
+    name = "hilt_processing_filegroup",
+    srcs = [
+        "//java/dagger/hilt/android/processor:srcs_filegroup",
+        "//java/dagger/hilt/android/processor/internal:srcs_filegroup",
+        "//java/dagger/hilt/android/processor/internal/androidentrypoint:srcs_filegroup",
+        "//java/dagger/hilt/android/processor/internal/bindvalue:srcs_filegroup",
+        "//java/dagger/hilt/android/processor/internal/testapplicationvalidation:srcs_filegroup",
+        "//java/dagger/hilt/android/processor/internal/testroot:srcs_filegroup",
+        "//java/dagger/hilt/android/processor/internal/uninstallmodules:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal/aggregateddeps:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal/aliasof:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal/definecomponent:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal/disableinstallincheck:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal/generatesrootinput:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal/originatingelement:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal/root:srcs_filegroup",
+    ],
+)

@@ -74,12 +74,14 @@ jarjar_library(
 # coalesced javadocs used for the gh-pages site
 javadoc_library(
     name = "user-docs",
+    testonly = 1,
     srcs = [
         "//java/dagger:javadoc-srcs",
         "//java/dagger/android:android-srcs",
         "//java/dagger/android/support:support-srcs",
         "//java/dagger/grpc/server:javadoc-srcs",
         "//java/dagger/grpc/server/processor:javadoc-srcs",
+        "//java/dagger/hilt:javadoc-srcs",
         "//java/dagger/producers:producers-srcs",
         "//java/dagger/spi:spi-srcs",
     ],
@@ -87,6 +89,8 @@ javadoc_library(
     # TODO(ronshapiro): figure out how to specify the version number for release builds
     doctitle = "Dagger Dependency Injection API",
     exclude_packages = [
+        "dagger.hilt.android.internal",
+        "dagger.hilt.internal",
         "dagger.internal",
         "dagger.producers.internal",
         "dagger.producers.monitoring.internal",
@@ -98,6 +102,8 @@ javadoc_library(
         "//java/dagger/android/support",
         "//java/dagger/grpc/server",
         "//java/dagger/grpc/server/processor",
+        "//java/dagger/hilt/android:artifact-lib",
+        "//java/dagger/hilt/android/testing:artifact-lib",
         "//java/dagger/producers",
         "//java/dagger/spi",
     ],

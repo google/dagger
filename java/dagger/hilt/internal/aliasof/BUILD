@@ -21,3 +21,8 @@ android_library(
     name = "aliasof",
     srcs = ["AliasOfPropagatedData.java"],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

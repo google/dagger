@@ -38,3 +38,8 @@ java_library(
         "//java/dagger/internal/guava:collect",
     ],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["**/*"]),
+)

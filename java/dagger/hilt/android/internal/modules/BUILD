@@ -28,3 +28,8 @@ android_library(
         "@maven//:androidx_fragment_fragment",
     ],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

@@ -87,9 +87,6 @@ android_library(
 android_library(
     name = "artifact-lib",
     tags = ["maven_coordinates=com.google.dagger:hilt-android:" + POM_VERSION],
-    visibility = [
-        "//java/dagger/hilt/android/testing:__pkg__",
-    ],
     exports = [
         ":entry_point_accessors",
         "//java/dagger/hilt:entry_point",
@@ -117,7 +114,9 @@ gen_maven_artifact(
     javadoc_root_packages = [
         "dagger.hilt",
     ],
-    javadoc_srcs = glob(["*.java"]),  # TODO(user): Fix these srcs.
+    javadoc_srcs = [
+        "//java/dagger/hilt:hilt_filegroup",
+    ],
     manifest = "AndroidManifest.xml",
     packaging = "aar",
     shaded_deps = ["@com_google_auto_auto_common//jar"],
@@ -155,4 +154,9 @@ gen_maven_artifact(
         "//java/dagger/hilt/migration:disable_install_in_check",
         "//java/dagger/hilt/processor/internal/aggregateddeps:annotation",
     ],
+)
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
 )

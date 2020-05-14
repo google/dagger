@@ -77,3 +77,8 @@ android_library(
         "@maven//:androidx_test_core",
     ],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["**/*"]),
+)

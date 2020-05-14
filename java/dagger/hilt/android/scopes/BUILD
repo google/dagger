@@ -33,3 +33,8 @@ android_library(
     srcs = ["ActivityRetainedScoped.java"],
     deps = ["@google_bazel_common//third_party/java/jsr330_inject"],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

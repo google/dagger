@@ -60,3 +60,8 @@ java_library(
     srcs = ["GeneratedEntryPoint.java"],
     deps = ["//java/dagger/hilt:generates_root_input"],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

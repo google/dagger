@@ -21,3 +21,8 @@ java_library(
     name = "generatesrootinput",
     srcs = ["GeneratesRootInputPropagatedData.java"],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

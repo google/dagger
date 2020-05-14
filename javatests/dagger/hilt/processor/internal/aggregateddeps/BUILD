@@ -43,3 +43,8 @@ compiler_test(
         "@google_bazel_common//third_party/java/truth",
     ],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

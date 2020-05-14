@@ -99,3 +99,8 @@ java_library(
     name = "compiler_options",
     srcs = ["HiltCompilerOptions.java"],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

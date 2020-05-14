@@ -24,3 +24,8 @@ java_library(
         "//java/dagger/hilt/processor/internal/originatingelement:processor",
     ],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

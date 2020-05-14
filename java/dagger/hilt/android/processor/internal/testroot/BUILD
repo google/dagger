@@ -45,3 +45,8 @@ java_library(
         "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

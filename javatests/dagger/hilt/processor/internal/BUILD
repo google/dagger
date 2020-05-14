@@ -33,3 +33,8 @@ java_library(
     name = "generated_import",
     srcs = ["GeneratedImport.java"],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["**/*"]),
+)

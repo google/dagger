@@ -47,3 +47,8 @@ android_library(
         "@maven//:androidx_lifecycle_lifecycle_viewmodel",
     ],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

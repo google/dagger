@@ -39,3 +39,8 @@ GenJavaTests(
         "@google_bazel_common//third_party/java/truth",
     ],
 )
+
+filegroup(
+    name = "srcs_filegroup",
+    srcs = glob(["*"]),
+)

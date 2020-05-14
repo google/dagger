@@ -44,8 +44,8 @@ _deploy \
 _deploy \
   java/dagger/hilt/android/processor/artifact.jar \
   java/dagger/hilt/android/processor/pom.xml \
-  java/dagger/hilt/android/processor/artifact-src.jar \
-  java/dagger/hilt/android/processor/artifact-javadoc.jar
+  "" \
+  ""
 
 # Gradle Plugin is built with Gradle, but still deployed via Maven (mvn)
 readonly _HILT_GRADLE_PLUGIN_DIR=java/dagger/hilt/android/plugin

@@ -65,15 +65,15 @@ public final class UninstallModulesProcessor extends BaseProcessor {
             .filter(
                 module ->
                     !(Processors.hasAnnotation(module, ClassNames.MODULE)
-                        || Processors.hasAnnotation(module, ClassNames.INSTALL_IN)))
+                        && Processors.hasAnnotation(module, ClassNames.INSTALL_IN)))
             .collect(toImmutableList());
 
     ProcessorErrors.checkState(
         invalidModules.isEmpty(),
         // TODO(b/152801981): Point to the annotation value rather than the annotated element.
         element,
-        "@%s should only include modules annotated with both @Module and @InstallIn, but found "
-            + "invalid modules: %s",
+        "@%s should only include modules annotated with both @Module and @InstallIn, but found: "
+          + "%s.",
         annotation.getSimpleName(),
         invalidModules);
   }

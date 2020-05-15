@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package dagger.hilt.processor.internal.root;
+package dagger.hilt.android.processor.internal.customtestapplication;
 
-import com.google.common.collect.ImmutableList;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -30,41 +28,30 @@ import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
 
 /**
  * Generates an Android Application that holds the Singleton component.
  */
-public final class TestApplicationGenerator {
+final class CustomTestApplicationGenerator {
   private static final ParameterSpec COMPONENT_MANAGER =
       ParameterSpec.builder(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER, "componentManager")
           .build();
 
   private final ProcessingEnvironment processingEnv;
-  private final TypeElement originatingElement;
-  private final ClassName baseName;
-  private final ClassName appName;
-  private final ImmutableList<RootMetadata> rootMetadatas;
+  private final CustomTestApplicationMetadata metadata;
 
-  public TestApplicationGenerator(
-      ProcessingEnvironment processingEnv,
-      TypeElement originatingElement,
-      ClassName baseName,
-      ClassName appName,
-      ImmutableList<RootMetadata> rootMetadatas) {
+  public CustomTestApplicationGenerator(
+      ProcessingEnvironment processingEnv, CustomTestApplicationMetadata metadata) {
     this.processingEnv = processingEnv;
-    this.originatingElement = originatingElement;
-    this.rootMetadatas = rootMetadatas;
-    this.baseName = baseName;
-    this.appName = appName;
+    this.metadata = metadata;
   }
 
   public void generate() throws IOException {
     TypeSpec.Builder generator =
-        TypeSpec.classBuilder(appName)
-            .addOriginatingElement(originatingElement)
+        TypeSpec.classBuilder(metadata.appName())
+            .addOriginatingElement(metadata.element())
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .superclass(baseName)
+            .superclass(metadata.baseAppName())
             .addSuperinterface(
                 ParameterizedTypeName.get(ClassNames.COMPONENT_MANAGER, TypeName.OBJECT))
             .addSuperinterface(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER_HOLDER)
@@ -74,16 +61,16 @@ public final class TestApplicationGenerator {
             .addMethod(getComponentMethod());
 
     Processors.addGeneratedAnnotation(
-        generator, processingEnv, ClassNames.ROOT_PROCESSOR.toString());
+        generator, processingEnv, CustomTestApplicationProcessor.class);
 
-    JavaFile.builder(appName.packageName(), generator.build())
+    JavaFile.builder(metadata.appName().packageName(), generator.build())
         .build()
         .writeTo(processingEnv.getFiler());
   }
 
   // Initialize this in attachBaseContext to not pull it into the main dex.
   /** private TestApplicationComponentManager componentManager; */
-  private FieldSpec getComponentManagerField() {
+  private static FieldSpec getComponentManagerField() {
     return FieldSpec.builder(COMPONENT_MANAGER.type, COMPONENT_MANAGER.name, Modifier.PRIVATE)
         .build();
   }
@@ -99,7 +86,7 @@ public final class TestApplicationGenerator {
    * }
    * </code></pre>
    */
-  private MethodSpec getAttachBaseContextMethod() {
+  private static MethodSpec getAttachBaseContextMethod() {
     return MethodSpec.methodBuilder("attachBaseContext")
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PROTECTED, Modifier.FINAL)
@@ -109,7 +96,7 @@ public final class TestApplicationGenerator {
         .build();
   }
 
-  private MethodSpec getComponentMethod() {
+  private static MethodSpec getComponentMethod() {
     return MethodSpec.methodBuilder("generatedComponent")
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
@@ -118,7 +105,7 @@ public final class TestApplicationGenerator {
         .build();
   }
 
-  private MethodSpec getComponentManagerMethod() {
+  private static MethodSpec getComponentManagerMethod() {
     return MethodSpec.methodBuilder("componentManager")
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)

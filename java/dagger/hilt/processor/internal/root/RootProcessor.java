@@ -27,7 +27,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
-import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ComponentTree;
 import dagger.hilt.processor.internal.ProcessorErrors;
@@ -39,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
@@ -56,7 +54,6 @@ public final class RootProcessor extends BaseProcessor {
   private final Set<ClassName> processed = new HashSet<>();
   private boolean isTestEnv;
   private GeneratesRootInputs generatesRootInputs;
-  private MergedTestApplicationMetadata mergedTestApplicationMetadata;
 
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
@@ -67,7 +64,6 @@ public final class RootProcessor extends BaseProcessor {
   @Override
   public ImmutableSet<String> getSupportedAnnotationTypes() {
     return ImmutableSet.<String>builder()
-        .add(ClassNames.MERGED_TEST_APPLICATION.toString())
         .addAll(
             Arrays.stream(RootType.values())
                 .map(rootType -> rootType.className().toString())
@@ -77,13 +73,6 @@ public final class RootProcessor extends BaseProcessor {
 
   @Override
   public void processEach(TypeElement annotation, Element element) throws Exception {
-    if (ClassName.get(annotation).equals(ClassNames.MERGED_TEST_APPLICATION)) {
-      // We validate that there's only 1 of these in TestApplicationValidationProcessor.
-
-      mergedTestApplicationMetadata = MergedTestApplicationMetadata.of(element, getElementUtils());
-      return;
-    }
-
     TypeElement rootElement = MoreElements.asType(element);
     boolean isTestRoot = RootType.of(getProcessingEnv(), rootElement).isTestRoot();
     checkState(
@@ -147,13 +136,7 @@ public final class RootProcessor extends BaseProcessor {
       ComponentDependencies deps = ComponentDependencies.from(descriptors, getElementUtils());
       ImmutableList<RootMetadata> rootMetadatas =
           rootsToProcess.stream()
-              .map(
-                  root -> {
-                    Optional<ClassName> mergedAppName =
-                        Optional.ofNullable(mergedTestApplicationMetadata)
-                            .map(MergedTestApplicationMetadata::appName);
-                    return RootMetadata.create(root, tree, deps, mergedAppName, getProcessingEnv());
-                  })
+              .map(root -> RootMetadata.create(root, tree, deps, getProcessingEnv()))
               .collect(toImmutableList());
 
       for (RootMetadata rootMetadata : rootMetadatas) {
@@ -163,7 +146,6 @@ public final class RootProcessor extends BaseProcessor {
 
       if (isTestEnv) {
         generateTestComponentData(rootMetadatas);
-        generateTestApplications(rootMetadatas);
       }
     } catch (Exception e) {
       for (Root root : rootsToProcess) {
@@ -187,18 +169,5 @@ public final class RootProcessor extends BaseProcessor {
       new TestComponentDataGenerator(getProcessingEnv(), rootMetadata).generate();
     }
     new TestComponentDataSupplierGenerator(getProcessingEnv(), rootMetadatas).generate();
-  }
-
-  private void generateTestApplications(ImmutableList<RootMetadata> rootMetadatas)
-      throws IOException {
-    if (mergedTestApplicationMetadata != null) {
-      new TestApplicationGenerator(
-              getProcessingEnv(),
-              mergedTestApplicationMetadata.element(),
-              mergedTestApplicationMetadata.baseAppName(),
-              mergedTestApplicationMetadata.appName(),
-              rootMetadatas)
-          .generate();
-    }
   }
 }

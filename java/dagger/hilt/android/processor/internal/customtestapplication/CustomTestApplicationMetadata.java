@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.processor.internal.root;
+package dagger.hilt.android.processor.internal.customtestapplication;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
@@ -29,7 +29,7 @@ import javax.lang.model.util.Elements;
 
 /** Stores the metadata for a custom base test application. */
 @AutoValue
-abstract class MergedTestApplicationMetadata {
+abstract class CustomTestApplicationMetadata {
   /** Returns the annotated element. */
   abstract TypeElement element();
 
@@ -42,27 +42,27 @@ abstract class MergedTestApplicationMetadata {
         Processors.getEnclosedClassName(ClassName.get(element())), "_Application");
   }
 
-  static MergedTestApplicationMetadata of(Element element, Elements elements) {
+  static CustomTestApplicationMetadata of(Element element, Elements elements) {
     Preconditions.checkState(
-        Processors.hasAnnotation(element, ClassNames.MERGED_TEST_APPLICATION),
-        "@%s should only be used on classes or interfaces but found: %s",
-        ClassNames.MERGED_TEST_APPLICATION.simpleName(),
-        element);
+        Processors.hasAnnotation(element, ClassNames.CUSTOM_TEST_APPLICATION),
+        "The given element, %s, is not annotated with @%s.",
+        element,
+        ClassNames.CUSTOM_TEST_APPLICATION.simpleName());
 
     ProcessorErrors.checkState(
         MoreElements.isType(element),
         element,
         "@%s should only be used on classes or interfaces but found: %s",
-        ClassNames.MERGED_TEST_APPLICATION.simpleName(),
+        ClassNames.CUSTOM_TEST_APPLICATION.simpleName(),
         element);
 
     TypeElement baseAppElement =
         Processors.getAnnotationClassValue(
             elements,
-            Processors.getAnnotationMirror(element, ClassNames.MERGED_TEST_APPLICATION),
+            Processors.getAnnotationMirror(element, ClassNames.CUSTOM_TEST_APPLICATION),
             "value");
 
-    return new AutoValue_MergedTestApplicationMetadata(
+    return new AutoValue_CustomTestApplicationMetadata(
         MoreElements.asType(element), ClassName.get(baseAppElement));
   }
 }

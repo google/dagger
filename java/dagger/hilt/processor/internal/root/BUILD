@@ -32,7 +32,6 @@ java_library(
         "RootFileFormatter.java",
         "RootGenerator.java",
         "RootProcessor.java",
-        "TestApplicationGenerator.java",
         "TestComponentDataGenerator.java",
         "TestComponentDataSupplierGenerator.java",
         "TestInjectorGenerator.java",
@@ -63,7 +62,6 @@ java_library(
 java_library(
     name = "root_metadata",
     srcs = [
-        "MergedTestApplicationMetadata.java",
         "Root.java",
         "RootMetadata.java",
         "TestRootMetadata.java",

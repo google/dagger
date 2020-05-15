@@ -19,16 +19,14 @@ package dagger.hilt.android.example.gradle.simple;
 import android.app.Application;
 import android.content.Context;
 import androidx.test.runner.AndroidJUnitRunner;
-import dagger.hilt.android.testing.MergedTestApplication;
+import dagger.hilt.android.testing.HiltTestApplication;
 
 /** A custom runner to setup the emulator application class for tests. */
-// Note: Technically we can use HiltTestApplication here but we're testing @MergedTestApplication
-@MergedTestApplication(Application.class)
 public final class SimpleEmulatorTestRunner extends AndroidJUnitRunner {
 
   @Override
   public Application newApplication(ClassLoader cl, String className, Context context)
       throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-    return super.newApplication(cl, SimpleEmulatorTestRunner_Application.class.getName(), context);
+    return super.newApplication(cl, HiltTestApplication.class.getName(), context);
   }
 }

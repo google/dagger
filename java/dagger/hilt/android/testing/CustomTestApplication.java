@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.TYPE})
 @GeneratesRootInput
-public @interface MergedTestApplication {
+public @interface CustomTestApplication {
 
   /** Returns the base {@link Application} class. */
   Class<? extends Application> value();

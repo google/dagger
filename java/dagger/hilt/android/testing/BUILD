@@ -19,11 +19,11 @@ load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
 package(default_visibility = ["//:src"])
 
 android_library(
-    name = "merged_test_application",
+    name = "custom_test_application",
     testonly = 1,
-    srcs = ["MergedTestApplication.java"],
+    srcs = ["CustomTestApplication.java"],
     exported_plugins = [
-        "//java/dagger/hilt/android/processor/internal/testapplicationvalidation:processor",
+        "//java/dagger/hilt/android/processor/internal/customtestapplication:processor",
     ],
     deps = [
         "//java/dagger/hilt:generates_root_input",
@@ -141,8 +141,8 @@ android_library(
     tags = ["maven_coordinates=com.google.dagger:hilt-android-testing:" + POM_VERSION],
     exports = [
         ":bind_value",
+        ":custom_test_application",
         ":hilt_android_test",
-        ":merged_test_application",
         ":uninstall_modules",
         "//java/dagger/hilt/android:artifact-lib",
     ],
@@ -176,10 +176,10 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/internal/testing:test_component_data",
         "//java/dagger/hilt/android/internal/testing:test_injector",
         "//java/dagger/hilt/android/testing:bind_value",
+        "//java/dagger/hilt/android/testing:custom_test_application",
         "//java/dagger/hilt/android/testing:hilt_android_rule",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "//java/dagger/hilt/android/testing:hilt_test_application",
-        "//java/dagger/hilt/android/testing:merged_test_application",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/android/testing:uninstall_modules",
     ],

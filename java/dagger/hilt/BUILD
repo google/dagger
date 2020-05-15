@@ -128,7 +128,7 @@ filegroup(
         "//java/dagger/hilt/android/processor/internal:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/bindvalue:srcs_filegroup",
-        "//java/dagger/hilt/android/processor/internal/testapplicationvalidation:srcs_filegroup",
+        "//java/dagger/hilt/android/processor/internal/customtestapplication:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/testroot:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/uninstallmodules:srcs_filegroup",
         "//java/dagger/hilt/processor/internal:srcs_filegroup",

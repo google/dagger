@@ -13,31 +13,34 @@
 # limitations under the License.
 
 # Description:
-#   A processor for validating the custom test applications.
+#   A processor for @dagger.hilt.android.testing.CustomTestApplication.
 
 package(default_visibility = ["//:src"])
 
 java_plugin(
     name = "processor",
     generates_api = 1,
-    processor_class = "dagger.hilt.android.processor.internal.testapplicationvalidation.TestApplicationValidationProcessor",
+    processor_class = "dagger.hilt.android.processor.internal.customtestapplication.CustomTestApplicationProcessor",
     deps = [":processor_lib"],
 )
 
 java_library(
     name = "processor_lib",
     srcs = [
-        "TestApplicationValidationProcessor.java",
+        "CustomTestApplicationGenerator.java",
+        "CustomTestApplicationMetadata.java",
+        "CustomTestApplicationProcessor.java",
     ],
     deps = [
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
-        "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:service",
+        "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/incap",
         "@google_bazel_common//third_party/java/javapoet",
     ],

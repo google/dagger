@@ -52,9 +52,8 @@ public final class RootMetadata {
       Root root,
       ComponentTree componentTree,
       ComponentDependencies deps,
-      Optional<ClassName> mergedTestApplication,
       ProcessingEnvironment env) {
-    RootMetadata metadata = new RootMetadata(root, componentTree, deps, mergedTestApplication, env);
+    RootMetadata metadata = new RootMetadata(root, componentTree, deps, env);
     metadata.validate();
     return metadata;
   }
@@ -64,7 +63,6 @@ public final class RootMetadata {
   private final Elements elements;
   private final ComponentTree componentTree;
   private final ComponentDependencies deps;
-  private final Optional<ClassName> mergedTestApplication;
   private final Supplier<ImmutableSetMultimap<ClassName, ClassName>> scopesByComponent =
       memoize(this::getScopesByComponentUncached);
   private final Supplier<TestRootMetadata> testRootMetadata =
@@ -74,13 +72,11 @@ public final class RootMetadata {
       Root root,
       ComponentTree componentTree,
       ComponentDependencies deps,
-      Optional<ClassName> mergedTestApplication,
       ProcessingEnvironment env) {
     this.root = root;
     this.env = env;
     this.elements = env.getElementUtils();
     this.componentTree = componentTree;
-    this.mergedTestApplication = mergedTestApplication;
     this.deps = deps;
   }
 

@@ -57,7 +57,7 @@ import java.lang.annotation.Target;
  * Hilt.
  *
  * @see OptionalInjectCheck
- * @see <a href="https://dagger.dev/hilt/optionalinject">Optional injection</a>
+ * @see <a href="https://dagger.dev/hilt/optional-inject">Optional injection</a>
  */
 @Target(ElementType.TYPE)
 public @interface OptionalInject {}

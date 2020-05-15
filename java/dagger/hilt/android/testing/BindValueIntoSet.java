@@ -37,9 +37,9 @@ import java.lang.annotation.Target;
  * }
  * </code></pre>
  *
- * Here the set that contains all the binded elements (in this case "bar" and "baz") will be
- * accessible to the entire application for your test. Also @see BindValueIntoSet, where you can
- * gather individual elements into one set and bind it to the application.
+ * Here the set that contains all the bound elements (in this case "bar" and "baz") will be
+ * accessible to the entire application for your test. Also see {@link BindElementsIntoSet}, where
+ * you can gather individual elements into one set and bind it to the application.
  */
 @Retention(CLASS)
 @Target({ElementType.FIELD})

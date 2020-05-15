@@ -20,16 +20,16 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 /**
- * When placed on an {@literal @}{@link dagger.hilt.android.AndroidEntryPoint}
- * activity/fragment/view/etc, allows injection to occur optionally based on whether or not the
- * application is using Hilt. This may be useful for libraries that have to support Hilt users as
- * well as non-Hilt users.
+ * When placed on an {@link dagger.hilt.android.AndroidEntryPoint}-annotated activity / fragment /
+ * view / etc, allows injection to occur optionally based on whether or not the application is using
+ * Hilt. This may be useful for libraries that have to support Hilt users as well as non-Hilt users.
  *
- * <p>Usage of this annotation will also cause a method {@code wasInjectedByHilt} to be generated
- * in the Hilt base class as well, that returns a boolean for whether or not injection actually
- * happened. Injection will happen if the parent type (e.g. the activity to a fragment) is an
- * {@link dagger.hilt.android.AndroidEntryPoint} annotated class and if that parent was also
- * injected via Hilt.
+ * <p>Usage of this annotation will also cause a method {@code wasInjectedByHilt} to be generated in
+ * the Hilt base class as well, that returns a boolean for whether or not injection actually
+ * happened. Injection will happen if the parent type (e.g. the activity to a fragment) is an {@link
+ * dagger.hilt.android.AndroidEntryPoint} annotated class and if that parent was also injected via
+ * Hilt.
  */
+// TODO(user): Update documentation to mention static utility method whenever we make that.
 @Target(ElementType.TYPE)
 public @interface OptionalInject {}

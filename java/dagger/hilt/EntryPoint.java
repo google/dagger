@@ -41,6 +41,8 @@ import java.lang.annotation.Target;
  *
  *   Foo foo = EntryPoints.get(component, FooEntryPoint.class).getFoo();
  * </code></pre>
+ *
+ * @see <a href="https://dagger.dev/hilt/entrypoints">Entry points</a>
  */
 @Retention(CLASS)
 @Target(ElementType.TYPE)

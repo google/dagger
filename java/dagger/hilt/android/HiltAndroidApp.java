@@ -24,19 +24,20 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation for marking the {@link android.app.Application} class where the Dagger components
- * should be generated. Since all components will be built in the same compilation as the
- * annotated application, all modules and entry points that should be installed in the component
- * need to be transitive compilation dependencies of the annotated application.
+ * should be generated. Since all components will be built in the same compilation as the annotated
+ * application, all modules and entry points that should be installed in the component need to be
+ * transitive compilation dependencies of the annotated application.
  *
- * <p>Usage of this annotation is similar to {@link dagger.hilt.android.AndroidEntryPoint} with
- * the only difference being that it only works on application classes and additionally triggers
- * Dagger component generation.
+ * <p>Usage of this annotation is similar to {@link dagger.hilt.android.AndroidEntryPoint} with the
+ * only difference being that it only works on application classes and additionally triggers Dagger
+ * component generation.
+ *
  * <p>This annotation will generate a base class that the annotated class should extend, either
- * directly or via the Hilt Gradle Plugin. This base class will take care of injecting members
- * into the Android class as well as handling instantiating the proper Hilt components at the
- * right point in the lifecycle. The name of the base class will be "Hilt_<annotated class name>".
+ * directly or via the Hilt Gradle Plugin. This base class will take care of injecting members into
+ * the Android class as well as handling instantiating the proper Hilt components at the right point
+ * in the lifecycle. The name of the base class will be "Hilt_<annotated class name>".
  *
- * <p>Exampe usage (with the Hilt Gradle Plugin):
+ * <p>Example usage (with the Hilt Gradle Plugin):
  *
  * <pre><code>
  *   {@literal @}HiltAndroidApp
@@ -50,7 +51,7 @@ import java.lang.annotation.Target;
  *   }
  * </code></pre>
  *
- * <p>Exampe usage (without the Hilt Gradle Plugin):
+ * <p>Example usage (without the Hilt Gradle Plugin):
  *
  * <pre><code>
  *   {@literal @}HiltAndroidApp(Application.class)
@@ -63,6 +64,8 @@ import java.lang.annotation.Target;
  *     }
  *   }
  * </code></pre>
+ *
+ * @see AndroidEntryPoint
  */
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.TYPE})

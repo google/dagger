@@ -51,8 +51,8 @@ import java.lang.annotation.Target;
  * }
  * </code></pre>
  *
- * Also @see BindValueIntoSet, where you can gather individual elements into one set and bind it to
- * the application.
+ * Also see {@link BindValueIntoSet}, where you can gather individual elements into one set and bind
+ * it to the application.
  */
 @Retention(CLASS)
 @Target({ElementType.FIELD})

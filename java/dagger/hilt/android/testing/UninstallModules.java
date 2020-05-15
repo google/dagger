@@ -30,11 +30,10 @@ import java.lang.annotation.Target;
  * <p>Example:
  *
  * <pre><code>
+ *   {@literal @}HiltAndroidTest
  *   {@literal @}UninstallModules({
  *       ProdFooModule.class,
  *   })
- *   {@literal @}GenerateComponents
- *   {@literal @}HiltAndroidTest
  *   public class MyTest {
  *     {@literal @}Module
  *     {@literal @}InstallIn(ApplicationComponent.class)

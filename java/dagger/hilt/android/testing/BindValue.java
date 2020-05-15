@@ -29,13 +29,13 @@ import java.lang.annotation.Target;
  *
  * <pre><code>
  * public class FooTest{
- * ...
- * {@literal @}BindValue Bar boundBar = new Bar();
- * ...
+ *   ...
+ *   {@literal @}BindValue Bar boundBar = new Bar();
+ *   ...
  * }
  * </code></pre>
  *
- * Here boundBar will be accessible to the entire application for your test.
+ * Here {@code boundBar} will be accessible to the entire application for your test.
  */
 @Retention(CLASS)
 @Target({ElementType.FIELD})

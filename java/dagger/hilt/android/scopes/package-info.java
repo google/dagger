@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
-
 /**
- * Makes a View annotated with {@link AndroidEntryPoint} have access to fragment bindings.
+ * This package contains Hilt's built-in Android {@link javax.inject.Scope} annotations.
  *
- * <p>By default, views annotated with {@literal @}AndroidEntryPoint do not have access to fragment
- * bindings and must use this annotation if fragment bindings are required. When this annotation is
- * used, this view must always be attached through a fragment.
+ * @see <a href="https://dagger.dev/hilt/components.md#component-lifetimes">Component Lifetimes</a>
  */
-@Target({ElementType.TYPE})
-public @interface WithFragmentBindings {}
+package dagger.hilt.android.scopes;

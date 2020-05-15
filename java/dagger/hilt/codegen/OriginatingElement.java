@@ -18,13 +18,12 @@ package dagger.hilt.codegen;
 
 /**
  * An annotation used to specify the originating element that triggered the code generation of a
- * type. This annotation should only be used on generated code!
+ * type. This annotation should only be used on generated code and is meant to be used by code
+ * generators that generate Hilt modules, entry points, etc. Failure to use this annotation may mean
+ * improper test isolation for generated classes.
  *
  * <p>This annotation should be used on any generated top-level class that either contains generated
  * modules (or entry points) or contains annotations that will generate modules (or entry points).
- *
- * <p>// TODO(user): Consider just advising/enforcing that all top-level classes use this
- * annotation.
  *
  * <p>Example: Suppose we have the following use of an annotation, {@code MyAnnotation}.
  *
@@ -46,6 +45,7 @@ package dagger.hilt.codegen;
  *   }
  * </code></pre>
  */
+// TODO(user): Consider just advising/enforcing that all top-level classes use this annotation.
 public @interface OriginatingElement {
   /** Returns the top-level class enclosing the originating element. */
   Class<?> topLevelClass();

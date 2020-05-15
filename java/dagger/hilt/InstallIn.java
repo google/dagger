@@ -39,6 +39,8 @@ import java.lang.annotation.Target;
  *     }
  *   }
  * </code></pre>
+ *
+ * @see <a href="https://dagger.dev/hilt/modules">Hilt Modules</a>
  */
 @Retention(CLASS)
 @Target({ElementType.TYPE})

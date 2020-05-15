@@ -31,18 +31,18 @@ import java.lang.annotation.Target;
  * <pre><code>
  * public class FooTest{
  *   ...
- * {@literal @}BindValueIntoMap
- * {@literal @}MyMapKey(KEY1)
- * String boundBar = "bar";
+ *   {@literal @}BindValueIntoMap
+ *   {@literal @}MyMapKey(KEY1)
+ *   String boundBar = "bar";
  *
- * {@literal @}BindValueIntoMap
- * {@literal @}MyMapKey(KEY2)
- * String boundBaz = "baz";
+ *   {@literal @}BindValueIntoMap
+ *   {@literal @}MyMapKey(KEY2)
+ *   String boundBaz = "baz";
  *   ...
  * }
  * </code></pre>
  *
- * Here the map that contains all the binded elements (in this case "bar" and "baz") will be
+ * Here the map that contains all the bound elements (in this case "bar" and "baz") will be
  * accessible to the entire application for your test.
  */
 @Retention(CLASS)

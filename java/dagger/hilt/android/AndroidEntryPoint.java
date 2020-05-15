@@ -22,15 +22,15 @@ import java.lang.annotation.Target;
 
 /**
  * Marks an Android component class to be setup for injection with the standard Hilt Dagger Android
- * components. Currently, this supports applications, activities, fragments, views, services, and
- * broadcast receivers.
+ * components. Currently, this supports activities, fragments, views, services, and broadcast
+ * receivers.
  *
  * <p>This annotation will generate a base class that the annotated class should extend, either
- * directly or via the Hilt Gradle Plugin. This base class will take care of injecting members
- * into the Android class as well as handling instantiating the proper Hilt components at the
- * right point in the lifecycle. The name of the base class will be "Hilt_<annotated class name>".
+ * directly or via the Hilt Gradle Plugin. This base class will take care of injecting members into
+ * the Android class as well as handling instantiating the proper Hilt components at the right point
+ * in the lifecycle. The name of the base class will be "Hilt_<annotated class name>".
  *
- * <p>Exampe usage (with the Hilt Gradle Plugin):
+ * <p>Example usage (with the Hilt Gradle Plugin):
  *
  * <pre><code>
  *   {@literal @}AndroidEntryPoint
@@ -44,7 +44,7 @@ import java.lang.annotation.Target;
  *   }
  * </code></pre>
  *
- * <p>Exampe usage (without the Hilt Gradle Plugin):
+ * <p>Example usage (without the Hilt Gradle Plugin):
  *
  * <pre><code>
  *   {@literal @}AndroidEntryPoint(FragmentActivity.class)
@@ -57,6 +57,8 @@ import java.lang.annotation.Target;
  *     }
  *   }
  * </code></pre>
+ *
+ * @see HiltAndroidApp
  */
 @Target({ElementType.TYPE})
 @GeneratesRootInput

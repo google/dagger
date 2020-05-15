@@ -14,17 +14,8 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
-
 /**
- * Makes a View annotated with {@link AndroidEntryPoint} have access to fragment bindings.
- *
- * <p>By default, views annotated with {@literal @}AndroidEntryPoint do not have access to fragment
- * bindings and must use this annotation if fragment bindings are required. When this annotation is
- * used, this view must always be attached through a fragment.
+ * This package contains APIs for code generators that produce code that will be processed by Hilt.
  */
-@Target({ElementType.TYPE})
-public @interface WithFragmentBindings {}
+// TODO(user): Add documentation about other code generators that produce input for Hilt
+package dagger.hilt.codegen;

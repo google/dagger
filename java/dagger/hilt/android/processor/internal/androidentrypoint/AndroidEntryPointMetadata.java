@@ -226,7 +226,8 @@ public abstract class AndroidEntryPointMetadata {
       ProcessorErrors.checkState(
           !MoreTypes.isTypeOf(Void.class, baseElement.asType()),
           androidEntryPointElement,
-          "Expected @%s to have a value.",
+          "Expected @%s to have a value."
+          + " Did you forget to apply the Gradle Plugin?",
           annotationClassName.simpleName());
 
       // Check that the root $CLASS extends Hilt_$CLASS

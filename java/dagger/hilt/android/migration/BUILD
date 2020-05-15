@@ -19,9 +19,19 @@ package(default_visibility = ["//:src"])
 
 android_library(
     name = "optional_inject",
-    srcs = ["OptionalInject.java"],
+    srcs = [
+        "OptionalInject.java",
+        "OptionalInjectCheck.java",
+    ],
     exports = [
         "//java/dagger/hilt/android/internal/migration:injected_by_hilt",
+    ],
+    deps = [
+        "//java/dagger/hilt/android/internal/migration:injected_by_hilt",
+        "//java/dagger/hilt/internal:preconditions",
+        "@maven//:androidx_activity_activity",
+        "@maven//:androidx_annotation_annotation",
+        "@maven//:androidx_fragment_fragment",
     ],
 )
 

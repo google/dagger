@@ -1,0 +1,31 @@
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+RULES_JVM_EXTERNAL_TAG = "2.7"
+
+RULES_JVM_EXTERNAL_SHA = "f04b1466a00a2845106801e0c5cec96841f49ea4e7d1df88dc8e4bf31523df74"
+
+http_archive(
+    name = "rules_jvm_external",
+    sha256 = RULES_JVM_EXTERNAL_SHA,
+    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+)
+
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+
+maven_install(
+    name = "dagger_simple_maven",
+    artifacts = [
+        "com.google.guava:guava:27.1-jre",
+        "com.google.auto.value:auto-value:1.7.2",
+        "com.google.auto.value:auto-value-annotations:1.7.2",
+        "com.google.dagger:dagger:2.27",
+        "com.google.dagger:dagger-compiler:2.27",
+        "com.google.dagger:dagger-producers:2.27",
+        "javax.inject:javax.inject:1",
+    ],
+    fetch_sources = True,
+    repositories = [
+        "https://repo1.maven.org/maven2",
+    ],
+)

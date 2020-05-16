@@ -57,6 +57,7 @@ dependencies {
   testAnnotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'
 
   androidTestImplementation 'com.google.truth:truth:1.0.1'
+  androidTestImplementation 'junit:junit:4.13'
   androidTestImplementation 'androidx.test.ext:junit:1.1.1'
   androidTestImplementation 'androidx.test:runner:1.2.0'
   androidTestImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'

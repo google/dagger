@@ -25,5 +25,9 @@
         android:name=".Injection2Test$TestActivity"
         android:theme="@style/Theme.AppCompat.Light"
         android:exported="false"/>
+    <activity
+        android:name=".ActivityScenarioRuleTest$TestActivity"
+        android:theme="@style/Theme.AppCompat.Light"
+        android:exported="false"/>
   </application>
 </manifest>

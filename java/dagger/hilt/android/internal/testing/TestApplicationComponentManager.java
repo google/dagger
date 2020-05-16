@@ -21,6 +21,7 @@ import dagger.hilt.android.testing.OnComponentReadyRunner;
 import dagger.hilt.android.testing.OnComponentReadyRunner.OnComponentReadyRunnerHolder;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +59,11 @@ public final class TestApplicationComponentManager
               .getDeclaredConstructor()
               .newInstance()
               .get();
-    } catch (ReflectiveOperationException e) {
+    } catch (ClassNotFoundException
+        | NoSuchMethodException
+        | IllegalAccessException
+        | InstantiationException
+        | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
   }

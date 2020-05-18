@@ -16,13 +16,16 @@
 
 package dagger.hilt.processor.internal;
 
+import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Throwables;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.processing.Messager;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
+import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic.Kind;
 
 /** Utility class to handle keeping track of errors during processing. */
@@ -35,10 +38,12 @@ final class ProcessorErrorHandler {
       "\n\033[1;31m[Hilt] Processing did not complete:\033[0m\n";
 
   private final Messager messager;
+  private final Elements elements;
   private final List<HiltError> hiltErrors;
 
-  ProcessorErrorHandler(Messager messager) {
-    this.messager = messager;
+  ProcessorErrorHandler(ProcessingEnvironment env) {
+    this.messager = env.getMessager();
+    this.elements = env.getElementUtils();
     this.hiltErrors = new ArrayList<>();
   }
 
@@ -74,6 +79,17 @@ final class ProcessorErrorHandler {
       hiltErrors.forEach(
           hiltError -> {
             if (hiltError.element().isPresent()) {
+              Element element = hiltError.element().get();
+              if (MoreElements.isType(element)) {
+                // If the error type is a TypeElement, get a new one just in case it was thrown in a
+                // previous round we can report the correct instance. Otherwise, this leads to
+                // issues in AndroidStudio when linking an error to the proper element.
+                // TODO(user): Consider only allowing TypeElement errors when delaying errors,
+                // or maybe even removing delayed errors altogether.
+                element =
+                    elements.getTypeElement(
+                        MoreElements.asType(element).getQualifiedName().toString());
+              }
               messager.printMessage(Kind.ERROR, hiltError.message(), hiltError.element().get());
             } else {
               messager.printMessage(Kind.ERROR, hiltError.message());

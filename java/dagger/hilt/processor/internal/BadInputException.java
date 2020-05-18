@@ -31,11 +31,6 @@ public final class BadInputException extends RuntimeException {
     this.badElements = ImmutableList.of(badElement);
   }
 
-  public BadInputException(String message, Throwable t, Element badElement) {
-    super(message, t);
-    this.badElements = ImmutableList.of(badElement);
-  }
-
   public BadInputException(String message, Iterable<? extends Element> badElements) {
     super(message);
     this.badElements = ImmutableList.copyOf(badElements);

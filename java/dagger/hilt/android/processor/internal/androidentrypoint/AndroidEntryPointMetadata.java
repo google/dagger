@@ -277,7 +277,7 @@ public abstract class AndroidEntryPointMetadata {
       LinkedHashSet<Element> inheritanceTrace) {
     ProcessorErrors.checkState(
         inheritanceTrace.add(baseElement),
-        baseElement,
+        element,
         cyclicInheritanceErrorMessage(inheritanceTrace, baseElement));
     if (hasAndroidEntryPointMetadata(baseElement)) {
       AndroidEntryPointMetadata baseMetadata =
@@ -432,12 +432,12 @@ public abstract class AndroidEntryPointMetadata {
       } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.APPLICATION)) {
         throw new BadInputException(
             "@AndroidEntryPoint cannot be used on an Application. Use @HiltAndroidApp instead.",
-            baseElement);
+            element);
       }
       throw new BadInputException(
           "@AndroidEntryPoint base class must extend ComponentActivity, (support) Fragment, "
           + "View, Service, or BroadcastReceiver.",
-          baseElement);
+          element);
     }
   }
 

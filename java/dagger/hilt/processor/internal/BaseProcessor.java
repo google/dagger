@@ -139,7 +139,7 @@ public abstract class BaseProcessor extends AbstractProcessor {
     this.messager = processingEnv.getMessager();
     this.elements = processingEnv.getElementUtils();
     this.types = processingEnv.getTypeUtils();
-    this.errorHandler = new ProcessorErrorHandler(messager);
+    this.errorHandler = new ProcessorErrorHandler(processingEnvironment);
   }
 
   @Override

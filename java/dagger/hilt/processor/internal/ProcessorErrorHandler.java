@@ -31,11 +31,13 @@ import javax.tools.Diagnostic.Kind;
 /** Utility class to handle keeping track of errors during processing. */
 final class ProcessorErrorHandler {
 
+  private static final String FAILURE_PREFIX = "[Hilt]\n";
+
   // Special characters to make the tag red and bold to draw attention since
   // this error can get drowned out by other errors resulting from missing
   // symbols when we can't generate code.
-  private static final String FAILURE_PREFIX =
-      "\n\033[1;31m[Hilt] Processing did not complete:\033[0m\n";
+  private static final String FAILURE_SUFFIX =
+      "\n\033[1;31m[Hilt] Processing did not complete. See error above for details.\033[0m";
 
   private final Messager messager;
   private final Elements elements;
@@ -111,7 +113,7 @@ final class ProcessorErrorHandler {
 
     private static HiltError of(String message, Optional<Element> element) {
       return new AutoValue_ProcessorErrorHandler_HiltError(
-          FAILURE_PREFIX + message, element);
+          FAILURE_PREFIX + message + FAILURE_SUFFIX, element);
     }
 
     abstract String message();

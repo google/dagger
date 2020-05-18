@@ -34,7 +34,7 @@ java_library(
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/jsr305_annotations",
         "@google_bazel_common//third_party/java/jsr330_inject",
-        "@google_bazel_common//third_party/kotlin/kotlinx/kotlinx_metadata_jvm",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_metadata_jvm",
     ],
 )

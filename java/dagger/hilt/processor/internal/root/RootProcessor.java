@@ -19,6 +19,7 @@ package dagger.hilt.processor.internal.root;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static javax.lang.model.element.Modifier.PUBLIC;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.AGGREGATING;
 
 import com.google.auto.common.MoreElements;
@@ -166,6 +167,13 @@ public final class RootProcessor extends BaseProcessor {
   private void generateTestComponentData(ImmutableList<RootMetadata> rootMetadatas)
       throws IOException {
     for (RootMetadata rootMetadata : rootMetadatas) {
+      // TODO(user): Consider moving this check earlier into processEach.
+      TypeElement testElement = rootMetadata.testRootMetadata().testElement();
+      ProcessorErrors.checkState(
+          testElement.getModifiers().contains(PUBLIC),
+          testElement,
+          "Hilt tests must be public, but found: %s",
+          testElement);
       new TestComponentDataGenerator(getProcessingEnv(), rootMetadata).generate();
     }
     new TestComponentDataSupplierGenerator(getProcessingEnv(), rootMetadatas).generate();

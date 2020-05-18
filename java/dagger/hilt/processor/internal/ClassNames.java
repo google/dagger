@@ -59,6 +59,8 @@ public final class ClassNames {
   public static final ClassName CONTRIBUTES_ANDROID_INJECTOR =
       get("dagger.android", "ContributesAndroidInjector");
 
+  public static final ClassName INJECT =
+      get("javax.inject", "Inject");
   public static final ClassName QUALIFIER =
       get("javax.inject", "Qualifier");
   public static final ClassName SCOPE =

@@ -16,7 +16,6 @@
 
 package dagger.hilt.android.testing;
 
-import android.app.Application;
 import dagger.hilt.GeneratesRootInput;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
@@ -35,6 +34,6 @@ import java.lang.annotation.Target;
 @GeneratesRootInput
 public @interface CustomTestApplication {
 
-  /** Returns the base {@link Application} class. */
-  Class<? extends Application> value();
+  /** Returns the base {@link android.app.Application} class. */
+  Class<?> value();
 }

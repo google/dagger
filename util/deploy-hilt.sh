@@ -54,4 +54,4 @@ readonly _HILT_GRADLE_PLUGIN_DIR=java/dagger/hilt/android/plugin
 mvn "$MVN_GOAL" \
   -Dfile=$_HILT_GRADLE_PLUGIN_DIR/build/libs/plugin.jar \
   -DpomFile=$_HILT_GRADLE_PLUGIN_DIR/build/publications/plugin/pom-default.xml \
-  "${extra_maven_args[@]:+${extra_maven_args[@]}}"
+  "${EXTRA_MAVEN_ARGS[@]:+${EXTRA_MAVEN_ARGS[@]}}"

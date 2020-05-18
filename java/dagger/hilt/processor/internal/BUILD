@@ -65,8 +65,8 @@ java_library(
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/javapoet",
+        "@google_bazel_common//third_party/kotlin/kotlinx/kotlinx_metadata_jvm",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
-        "@maven//:org_jetbrains_kotlinx_kotlinx_metadata_jvm",
     ],
 )
 

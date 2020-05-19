@@ -16,11 +16,13 @@
 
 package dagger.hilt.processor.internal.root;
 
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
+import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
@@ -34,7 +36,9 @@ import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
+import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
 /** Generates an implementation of {@link dagger.hilt.android.internal.TestComponentData}. */
@@ -67,6 +71,9 @@ public final class TestComponentDataGenerator {
    *                 .applicationContextModule(
    *                     new ApplicationContextModule(ApplicationProvider.getApplicationContext()))
    *                 .testModule((FooTest.TestModule) modules.get(FooTest.TestModule.class))
+   *                 .testModule(modules.containsKey(FooTest.TestModule.class)
+   *                   ? (FooTest.TestModule) modules.get(FooTest.TestModule.class)
+   *                   : ((TestInstace) testInstance).new TestModule())
    *                 .build());
    *   }
    * }
@@ -93,44 +100,95 @@ public final class TestComponentDataGenerator {
     ClassName component =
         ComponentNames.generatedComponent(
             ClassName.get(testElement), ClassNames.APPLICATION_COMPONENT);
-    ImmutableSet<TypeElement> extraModules =
+    ImmutableSet<TypeElement> daggerRequiredModules =
         rootMetadata.modulesThatDaggerCannotConstruct(ClassNames.APPLICATION_COMPONENT);
+    ImmutableSet<TypeElement> hiltRequiredModules =
+        daggerRequiredModules.stream()
+            .filter(module -> !canBeConstructedByHilt(module, testElement))
+            .collect(toImmutableSet());
+
     return MethodSpec.methodBuilder("get")
         .addModifiers(PUBLIC, STATIC)
         .returns(ClassNames.TEST_COMPONENT_DATA)
         .addStatement(
-            "return new $T($L, $L, $L, $L)",
+            "return new $T($L, $L, $L, $L, $L)",
             ClassNames.TEST_COMPONENT_DATA,
             rootMetadata.waitForBindValue(),
             CodeBlock.of("testInstance -> injectInternal(($1T) testInstance)", testElement),
-            extraModules.isEmpty()
-                ? CodeBlock.of("$T.emptySet()", ClassNames.COLLECTIONS)
-                : CodeBlock.of(
-                    "new $T<>($T.asList($L))",
-                    ClassNames.HASH_SET,
-                    ClassNames.ARRAYS,
-                    extraModules.stream()
-                        .map(module -> CodeBlock.of("$T.class", module).toString())
-                        .collect(joining(","))),
+            getElementsListed(daggerRequiredModules),
+            getElementsListed(hiltRequiredModules),
             CodeBlock.of(
-                "modules -> $T.builder()\n"
+                "(modules, testInstance, autoAddModuleEnabled) -> $T.builder()\n"
                     + ".applicationContextModule(new $T($T.getApplicationContext()))\n"
                     + "$L"
                     + ".build()",
                 Processors.prepend(Processors.getEnclosedClassName(component), "Dagger"),
                 ClassNames.APPLICATION_CONTEXT_MODULE,
                 ClassNames.APPLICATION_PROVIDER,
-                extraModules.stream()
-                    .map(ClassName::get)
-                    .map(
-                        className ->
-                            CodeBlock.of(
-                                    ".$1L(($2T) modules.get($2T.class))",
-                                    Processors.upperToLowerCamel(className.simpleName()),
-                                    className)
-                                .toString())
+                daggerRequiredModules.stream()
+                    .map(module -> getAddModuleStatement(module, testElement))
                     .collect(joining("\n"))))
         .build();
+  }
+
+  /**
+   *
+   *
+   * <pre><code>
+   * .testModule(modules.get(FooTest.TestModule.class))
+   * </code></pre>
+   *
+   * <pre><code>
+   * .testModule(autoAddModuleEnabled
+   *     ? ((FooTest) testInstance).new TestModule()
+   *     : (FooTest.TestModule) modules.get(FooTest.TestModule.class))
+   * </code></pre>
+   */
+  private static String getAddModuleStatement(TypeElement module, TypeElement testElement) {
+    ClassName className = ClassName.get(module);
+    return canBeConstructedByHilt(module, testElement)
+        ? CodeBlock.of(
+                ".$1L(autoAddModuleEnabled\n"
+                    // testInstance can never be null if we reach here, because this flag can be
+                    // turned on only when testInstance is not null
+                    + "    ? (($3T) testInstance).new $4L()\n"
+                    + "    : ($2T) modules.get($2T.class))",
+                Processors.upperToLowerCamel(className.simpleName()),
+                className,
+                className.enclosingClassName(),
+                className.simpleName())
+            .toString()
+        : CodeBlock.of(
+                ".$1L(($2T) modules.get($2T.class))",
+                Processors.upperToLowerCamel(className.simpleName()),
+                className)
+            .toString();
+  }
+
+  private static boolean canBeConstructedByHilt(TypeElement module, TypeElement testElement) {
+    return hasOnlyAccessibleNoArgConstructor(module)
+        && module.getEnclosingElement().equals(testElement);
+  }
+
+  private static boolean hasOnlyAccessibleNoArgConstructor(TypeElement module) {
+    List<ExecutableElement> declaredConstructors = constructorsIn(module.getEnclosedElements());
+    return declaredConstructors.isEmpty()
+        || (declaredConstructors.size() == 1
+            && !declaredConstructors.get(0).getModifiers().contains(PRIVATE)
+            && declaredConstructors.get(0).getParameters().isEmpty());
+  }
+
+  /* Arrays.asList(FooTest.TestModule.class, ...) */
+  private static CodeBlock getElementsListed(ImmutableSet<TypeElement> modules) {
+    return modules.isEmpty()
+        ? CodeBlock.of("$T.emptySet()", ClassNames.COLLECTIONS)
+        : CodeBlock.of(
+            "new $T<>($T.asList($L))",
+            ClassNames.HASH_SET,
+            ClassNames.ARRAYS,
+            modules.stream()
+                .map(module -> CodeBlock.of("$T.class", module).toString())
+                .collect(joining(",")));
   }
 
   private MethodSpec getTestInjectInternalMethod() {

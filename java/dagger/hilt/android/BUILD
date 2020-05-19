@@ -45,6 +45,7 @@ android_library(
         "@maven//:androidx_fragment_fragment",
     ],
     deps = [
+        ":package_info",
         "//java/dagger/hilt:generates_root_input",
     ],
 )
@@ -71,6 +72,7 @@ android_library(
         "@maven//:androidx_annotation_annotation",
     ],
     deps = [
+        ":package_info",
         "//java/dagger/hilt:generates_root_input",
     ],
 )
@@ -79,6 +81,7 @@ android_library(
     name = "entry_point_accessors",
     srcs = ["EntryPointAccessors.java"],
     deps = [
+        ":package_info",
         "//java/dagger/hilt:entry_point",
         "@maven//:androidx_fragment_fragment",
     ],
@@ -89,6 +92,7 @@ android_library(
     tags = ["maven_coordinates=com.google.dagger:hilt-android:" + POM_VERSION],
     exports = [
         ":entry_point_accessors",
+        ":package_info",
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:generates_root_input",
         "//java/dagger/hilt:install_in",
@@ -99,6 +103,11 @@ android_library(
         "//java/dagger/hilt/migration:disable_install_in_check",
         "//java/dagger/lint:lint-android-artifact-lib",
     ],
+)
+
+java_library(
+    name = "package_info",
+    srcs = ["package-info.java"],
 )
 
 gen_maven_artifact(
@@ -127,9 +136,12 @@ gen_maven_artifact(
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:generates_root_input",
         "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt:package_info",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:hilt_android_app",
+        "//java/dagger/hilt/android:package_info",
         "//java/dagger/hilt/android/components",
+        "//java/dagger/hilt/android/components:package_info",
         "//java/dagger/hilt/android/internal/builders",
         "//java/dagger/hilt/android/internal/lifecycle",
         "//java/dagger/hilt/android/internal/managers",
@@ -137,10 +149,14 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/internal/migration:injected_by_hilt",
         "//java/dagger/hilt/android/internal/modules",
         "//java/dagger/hilt/android/migration:optional_inject",
+        "//java/dagger/hilt/android/migration:package_info",
         "//java/dagger/hilt/android/qualifiers",
+        "//java/dagger/hilt/android/qualifiers:package_info",
         "//java/dagger/hilt/android/scopes",
         "//java/dagger/hilt/android/scopes:activity_retained_scoped",
+        "//java/dagger/hilt/android/scopes:package_info",
         "//java/dagger/hilt/codegen:originating_element",
+        "//java/dagger/hilt/codegen:package_info",
         "//java/dagger/hilt/internal:component_entry_point",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",
@@ -152,6 +168,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/internal/generatesrootinput",
         "//java/dagger/hilt/migration:alias_of",
         "//java/dagger/hilt/migration:disable_install_in_check",
+        "//java/dagger/hilt/migration:package_info",
         "//java/dagger/hilt/processor/internal/aggregateddeps:annotation",
     ],
 )

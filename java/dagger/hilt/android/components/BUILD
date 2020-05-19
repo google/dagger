@@ -19,13 +19,27 @@ package(default_visibility = ["//:src"])
 
 android_library(
     name = "components",
-    srcs = glob(["*.java"]),
+    srcs = [
+        "ActivityComponent.java",
+        "ActivityRetainedComponent.java",
+        "ApplicationComponent.java",
+        "FragmentComponent.java",
+        "ServiceComponent.java",
+        "ViewComponent.java",
+        "ViewWithFragmentComponent.java",
+    ],
     deps = [
+        ":package_info",
         "//java/dagger/hilt:define_component",
         "//java/dagger/hilt/android/scopes",
         "//java/dagger/hilt/android/scopes:activity_retained_scoped",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
+)
+
+java_library(
+    name = "package_info",
+    srcs = ["package-info.java"],
 )
 
 filegroup(

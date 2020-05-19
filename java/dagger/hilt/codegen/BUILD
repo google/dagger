@@ -23,6 +23,14 @@ java_library(
     exported_plugins = [
         "//java/dagger/hilt/processor/internal/originatingelement:processor",
     ],
+    deps = [
+        ":package_info",
+    ],
+)
+
+java_library(
+    name = "package_info",
+    srcs = ["package-info.java"],
 )
 
 filegroup(

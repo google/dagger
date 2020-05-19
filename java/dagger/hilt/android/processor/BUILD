@@ -59,6 +59,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/processor/internal/testroot:test_root_processor_lib",
         "//java/dagger/hilt/android/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/hilt/codegen:originating_element",
+        "//java/dagger/hilt/codegen:package_info",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:component_descriptor",

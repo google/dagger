@@ -28,6 +28,7 @@ java_library(
         "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
     deps = [
+        ":package_info",
         "//java/dagger/hilt:generates_root_input",
     ],
 )
@@ -44,6 +45,7 @@ java_library(
         "//java/dagger/hilt/processor/internal/aggregateddeps:plugin",
     ],
     deps = [
+        ":package_info",
         "//java/dagger/hilt:generates_root_input",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",
@@ -62,6 +64,9 @@ java_library(
         "//java/dagger/hilt/internal/generatesrootinput",
         "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
+    deps = [
+        ":package_info",
+    ],
 )
 
 java_library(
@@ -77,9 +82,15 @@ java_library(
         "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
     deps = [
+        ":package_info",
         "//java/dagger/hilt:generates_root_input",
         "//java/dagger/hilt/internal/definecomponent",
     ],
+)
+
+java_library(
+    name = "package_info",
+    srcs = ["package-info.java"],
 )
 
 filegroup(

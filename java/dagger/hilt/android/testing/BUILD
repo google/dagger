@@ -26,6 +26,7 @@ android_library(
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor",
     ],
     deps = [
+        ":package_info",
         "//java/dagger/hilt:generates_root_input",
     ],
 )
@@ -43,6 +44,7 @@ android_library(
         ":hilt_android_rule",
         ":hilt_test_application",
         ":on_component_ready_runner",
+        ":package_info",
         "//:dagger_with_compiler",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/components",
@@ -72,6 +74,7 @@ android_library(
     testonly = 1,
     srcs = ["HiltAndroidRule.java"],
     deps = [
+        ":package_info",
         "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
         "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/junit",
@@ -86,6 +89,7 @@ android_library(
     ],
     deps = [
         ":on_component_ready_runner",
+        ":package_info",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
         "//java/dagger/hilt/internal:component_manager",
@@ -98,6 +102,7 @@ android_library(
     testonly = 1,
     srcs = ["OnComponentReadyRunner.java"],
     deps = [
+        ":package_info",
         "//:dagger_with_compiler",
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
@@ -113,6 +118,9 @@ android_library(
     srcs = ["UninstallModules.java"],
     exported_plugins = [
         "//java/dagger/hilt/android/processor/internal/uninstallmodules:processor",
+    ],
+    deps = [
+        ":package_info",
     ],
 )
 
@@ -132,7 +140,15 @@ java_library(
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/qualifiers",
     ],
-    deps = ["//java/dagger/hilt:generates_root_input"],
+    deps = [
+        ":package_info",
+        "//java/dagger/hilt:generates_root_input",
+    ],
+)
+
+java_library(
+    name = "package_info",
+    srcs = ["package-info.java"],
 )
 
 android_library(
@@ -143,6 +159,7 @@ android_library(
         ":bind_value",
         ":custom_test_application",
         ":hilt_android_test",
+        ":package_info",
         ":uninstall_modules",
         "//java/dagger/hilt/android:artifact-lib",
     ],
@@ -181,6 +198,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "//java/dagger/hilt/android/testing:hilt_test_application",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
+        "//java/dagger/hilt/android/testing:package_info",
         "//java/dagger/hilt/android/testing:uninstall_modules",
     ],
 )

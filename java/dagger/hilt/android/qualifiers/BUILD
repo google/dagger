@@ -19,10 +19,19 @@ package(default_visibility = ["//:src"])
 
 android_library(
     name = "qualifiers",
-    srcs = glob(["*.java"]),
+    srcs = [
+        "ActivityContext.java",
+        "ApplicationContext.java",
+    ],
     deps = [
+        ":package_info",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
+)
+
+java_library(
+    name = "package_info",
+    srcs = ["package-info.java"],
 )
 
 filegroup(

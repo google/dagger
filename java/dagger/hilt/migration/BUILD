@@ -29,6 +29,7 @@ android_library(
         "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
     deps = [
+        ":package_info",
         "//java/dagger/hilt:generates_root_input",
     ],
 )
@@ -42,6 +43,14 @@ java_library(
     exports = [
         "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
+    deps = [
+        ":package_info",
+    ],
+)
+
+java_library(
+    name = "package_info",
+    srcs = ["package-info.java"],
 )
 
 filegroup(

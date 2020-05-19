@@ -25,13 +25,24 @@ android_library(
         "ServiceScoped.java",
         "ViewScoped.java",
     ],
-    deps = ["@google_bazel_common//third_party/java/jsr330_inject"],
+    deps = [
+        ":package_info",
+        "@google_bazel_common//third_party/java/jsr330_inject",
+    ],
 )
 
 android_library(
     name = "activity_retained_scoped",
     srcs = ["ActivityRetainedScoped.java"],
-    deps = ["@google_bazel_common//third_party/java/jsr330_inject"],
+    deps = [
+        ":package_info",
+        "@google_bazel_common//third_party/java/jsr330_inject",
+    ],
+)
+
+java_library(
+    name = "package_info",
+    srcs = ["package-info.java"],
 )
 
 filegroup(

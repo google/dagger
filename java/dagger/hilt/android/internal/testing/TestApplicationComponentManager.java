@@ -47,7 +47,6 @@ public final class TestApplicationComponentManager
   private final AtomicReference<Object> component = new AtomicReference<>();
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
   private final Map<Class<?>, Object> registeredModules = new ConcurrentHashMap<>();
-  private final AtomicReference<Boolean> autoAddModuleEnabled = new AtomicReference<>(false);
   private volatile Object testInstance;
   private volatile OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
 
@@ -135,12 +134,26 @@ public final class TestApplicationComponentManager
     hasHiltTestRule.set(null);
     testInstance = null;
     registeredModules.clear();
-    autoAddModuleEnabled.set(false);
     onComponentReadyRunner = new OnComponentReadyRunner();
   }
 
   public Description getDescription() {
     return hasHiltTestRule.get();
+  }
+
+  void setTestInstance(Object testInstance) {
+    Preconditions.checkNotNull(testInstance);
+    Preconditions.checkState(
+        this.testInstance == null || this.testInstance == testInstance,
+        "Cannot call setTestInstance from two different test instances.");
+
+    if (this.testInstance == null) {
+      this.testInstance = testInstance;
+      // Some tests call bind without using @BindValue. b/128706854
+      if (waitForBindValue()) {
+        tryToCreateComponent();
+      }
+    }
   }
 
   public Object getTestInstance() {
@@ -177,9 +190,7 @@ public final class TestApplicationComponentManager
         && registeredModules.keySet().containsAll(requiredModules())
         && bindValueReady()) {
       Preconditions.checkState(
-          component.compareAndSet(
-              null,
-              componentSupplier().get(registeredModules, testInstance, autoAddModuleEnabled.get())),
+          component.compareAndSet(null, componentSupplier().get(registeredModules)),
           "Tried to create the component more than once! "
               + "There is a race between registering the HiltAndroidRule and registering"
               + " all test modules. Make sure there is a happens-before edge between the two.");
@@ -187,17 +198,8 @@ public final class TestApplicationComponentManager
     }
   }
 
-  void setTestInstance(Object testInstance) {
-    Preconditions.checkNotNull(testInstance);
-    Preconditions.checkState(this.testInstance == null, "The test instance was already set!");
-    this.testInstance = testInstance;
-    autoAddModuleEnabled.set(true);
-  }
-
   private Set<Class<?>> requiredModules() {
-    return autoAddModuleEnabled.get()
-        ? testComponentData().hiltRequiredModules()
-        : testComponentData().daggerRequiredModules();
+    return testComponentData().requiredModules();
   }
 
   private boolean waitForBindValue() {

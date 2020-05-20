@@ -3,11 +3,6 @@ layout: default
 title: Glossary: _Entry Point_
 ---
 
-<!--*
-# Document freshness: For more information, see go/fresh-source.
-freshness: { owner: 'dpb' reviewed: '2018-10-26' }
-*-->
-
 ## Status: DRAFT
 
 ## Definition:

@@ -18,7 +18,6 @@ package dagger.hilt.android.example.gradle.simple;
 
 import static org.junit.Assert.assertEquals;
 
-import android.os.Build;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.Binds;
 import dagger.Module;
@@ -27,7 +26,6 @@ import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
-import dagger.hilt.android.testing.HiltTestApplication;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import javax.inject.Inject;
@@ -36,13 +34,10 @@ import javax.inject.Singleton;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.annotation.Config;
 
 /** Tests basic functionality of using modules in test. */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
-// Robolectric requires Java9 to run API 29 and above, so use API 28 instead
-@Config(sdk = Build.VERSION_CODES.P, application = HiltTestApplication.class)
 public final class ModuleTest {
   @Rule public final HiltAndroidRule rules = new HiltAndroidRule(this);
 

@@ -18,7 +18,6 @@ package dagger.hilt.android.example.gradle.simple;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.os.Build;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -30,19 +29,15 @@ import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
-import dagger.hilt.android.testing.HiltTestApplication;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.annotation.Config;
 
 /** Tests basic injection APIs, and that bindings don't conflict with {@link Injection1Test}. */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
-// Robolectric requires Java9 to run API 29 and above, so use API 28 instead
-@Config(sdk = Build.VERSION_CODES.P, application = HiltTestApplication.class)
 public final class Injection2Test {
   private static final String APPLICATION_QUALIFIER = "APPLICATION_QUALIFIER";
   private static final String ACTIVITY_QUALIFIER = "ACTIVITY_QUALIFIER";

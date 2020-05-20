@@ -35,6 +35,15 @@ android {
     testOptions {
         unitTests.includeAndroidResources = true
     }
+    sourceSets {
+        String sharedTestDir = 'src/sharedTest/java'
+        test {
+            java.srcDirs += sharedTestDir
+        }
+        androidTest {
+            java.srcDirs += sharedTestDir
+        }
+    }
 }
 
 hilt {

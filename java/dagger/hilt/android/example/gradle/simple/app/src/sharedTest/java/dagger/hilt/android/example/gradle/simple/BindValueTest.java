@@ -19,7 +19,6 @@ package dagger.hilt.android.example.gradle.simple;
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.truth.Truth.assertThat;
 
-import android.os.Build;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.common.collect.ImmutableSet;
 import dagger.MapKey;
@@ -33,7 +32,6 @@ import dagger.hilt.android.testing.BindValueIntoMap;
 import dagger.hilt.android.testing.BindValueIntoSet;
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
-import dagger.hilt.android.testing.HiltTestApplication;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
@@ -42,13 +40,10 @@ import javax.inject.Provider;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.annotation.Config;
 
 /** A simple test using Hilt. */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
-// Robolectric requires Java9 to run API 29 and above, so use API 28 instead
-@Config(sdk = Build.VERSION_CODES.P, application = HiltTestApplication.class)
 public final class BindValueTest {
   private static final String BIND_VALUE_STRING = "BIND_VALUE_STRING";
   private static final String TEST_QUALIFIER = "TEST_QUALIFIER";

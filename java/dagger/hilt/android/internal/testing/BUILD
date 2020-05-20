@@ -76,6 +76,7 @@ android_library(
     deps = [
         ":test_application_component_manager",
         ":test_application_component_manager_holder",
+        "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",
         "@google_bazel_common//third_party/java/junit",
         "@maven//:androidx_test_core",

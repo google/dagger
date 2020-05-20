@@ -21,6 +21,8 @@ import static dagger.hilt.internal.Preconditions.checkState;
 
 import android.content.Context;
 import androidx.test.core.app.ApplicationProvider;
+import dagger.hilt.internal.GeneratedComponentManager;
+import java.lang.annotation.Annotation;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -32,11 +34,32 @@ import org.junit.runners.model.Statement;
  * without this test rule.
  */
 public final class MarkThatRulesRanRule implements TestRule {
+  private static final String HILT_ANDROID_APP = "dagger.hilt.android.HiltAndroidApp";
+  private static final String HILT_ANDROID_TEST = "dagger.hilt.android.testing.HiltAndroidTest";
+
   private final Context context = ApplicationProvider.getApplicationContext();
   private final Object testInstance;
 
   public MarkThatRulesRanRule(Object testInstance) {
     this.testInstance = checkNotNull(testInstance);
+    checkState(
+        hasAnnotation(testInstance, HILT_ANDROID_TEST),
+        "Expected %s to be annotated with @HiltAndroidTest.",
+        testInstance.getClass().getName());
+    checkState(
+        context instanceof GeneratedComponentManager,
+        "Hilt test, %s, must use a Hilt test application but found %s. To fix, configure the test "
+            + "to use HiltTestApplication or a custom Hilt test application generated with "
+            + "@CustomTestApplication.",
+        testInstance.getClass().getName(),
+        context.getClass().getName());
+    checkState(
+        !hasAnnotation(context, HILT_ANDROID_APP),
+        "Hilt test, %s, cannot use a @HiltAndroidApp application but found %s. To fix, configure "
+            + "the test to use HiltTestApplication or a custom Hilt test application generated "
+            +  "with @CustomTestApplication.",
+        testInstance.getClass().getName(),
+        context.getClass().getName());
   }
 
   public void inject() {
@@ -79,5 +102,14 @@ public final class MarkThatRulesRanRule implements TestRule {
         "Expected TestApplicationComponentManagerHolder to return an instance of"
             + "TestApplicationComponentManager");
     return (TestApplicationComponentManager) componentManager;
+  }
+
+  private static boolean hasAnnotation(Object obj, String annotationName) {
+    for (Annotation annotation : obj.getClass().getAnnotations()) {
+      if (annotation.annotationType().getName().contentEquals(annotationName)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

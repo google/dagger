@@ -67,7 +67,8 @@ import java.lang.annotation.Target;
  *
  * @see AndroidEntryPoint
  */
-@Retention(RetentionPolicy.CLASS)
+// Set the retention to RUNTIME because we check it via reflection in the HiltAndroidRule.
+@Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 @GeneratesRootInput
 public @interface HiltAndroidApp {

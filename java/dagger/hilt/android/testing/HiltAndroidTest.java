@@ -16,11 +16,16 @@
 
 package dagger.hilt.android.testing;
 
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 import dagger.hilt.GeneratesRootInput;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /** Annotation used for marking an Android emulator tests that require injection. */
+// Set the retention to RUNTIME because we check it via reflection in the HiltAndroidRule.
+@Retention(RUNTIME)
 @Target({ElementType.TYPE})
 @GeneratesRootInput
 public @interface HiltAndroidTest {}

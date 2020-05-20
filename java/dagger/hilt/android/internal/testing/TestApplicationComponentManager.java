@@ -47,6 +47,7 @@ public final class TestApplicationComponentManager
   private final AtomicReference<Object> component = new AtomicReference<>();
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
   private final Map<Class<?>, Object> registeredModules = new ConcurrentHashMap<>();
+  private final AtomicReference<Boolean> autoAddModuleEnabled = new AtomicReference<>();
   private volatile Object testInstance;
   private volatile OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
 
@@ -116,6 +117,9 @@ public final class TestApplicationComponentManager
         hasHiltTestRule.get() == null,
         "The Hilt test rule cannot be set before Hilt's test rule has run.");
     Preconditions.checkState(
+        autoAddModuleEnabled.get() == null,
+        "The Hilt autoAddModuleEnabled cannot be set before Hilt's test rule has run.");
+    Preconditions.checkState(
         testInstance == null,
         "The Hilt BindValue instance cannot be set before Hilt's test rule has run.");
     Preconditions.checkState(
@@ -134,26 +138,12 @@ public final class TestApplicationComponentManager
     hasHiltTestRule.set(null);
     testInstance = null;
     registeredModules.clear();
+    autoAddModuleEnabled.set(null);
     onComponentReadyRunner = new OnComponentReadyRunner();
   }
 
   public Description getDescription() {
     return hasHiltTestRule.get();
-  }
-
-  void setTestInstance(Object testInstance) {
-    Preconditions.checkNotNull(testInstance);
-    Preconditions.checkState(
-        this.testInstance == null || this.testInstance == testInstance,
-        "Cannot call setTestInstance from two different test instances.");
-
-    if (this.testInstance == null) {
-      this.testInstance = testInstance;
-      // Some tests call bind without using @BindValue. b/128706854
-      if (waitForBindValue()) {
-        tryToCreateComponent();
-      }
-    }
   }
 
   public Object getTestInstance() {
@@ -190,7 +180,12 @@ public final class TestApplicationComponentManager
         && registeredModules.keySet().containsAll(requiredModules())
         && bindValueReady()) {
       Preconditions.checkState(
-          component.compareAndSet(null, componentSupplier().get(registeredModules)),
+          autoAddModuleEnabled.get() !=  null,
+          "Component cannot be created before autoAddModuleEnabled is set.");
+      Preconditions.checkState(
+          component.compareAndSet(
+              null,
+              componentSupplier().get(registeredModules, testInstance, autoAddModuleEnabled.get())),
           "Tried to create the component more than once! "
               + "There is a race between registering the HiltAndroidRule and registering"
               + " all test modules. Make sure there is a happens-before edge between the two.");
@@ -198,8 +193,22 @@ public final class TestApplicationComponentManager
     }
   }
 
+  void setTestInstance(Object testInstance) {
+    Preconditions.checkNotNull(testInstance);
+    Preconditions.checkState(this.testInstance == null, "The test instance was already set!");
+    this.testInstance = testInstance;
+  }
+
+  void setAutoAddModule(boolean autoAddModule) {
+    Preconditions.checkState(
+        autoAddModuleEnabled.get() == null, "autoAddModuleEnabled is already set!");
+    autoAddModuleEnabled.set(autoAddModule);
+  }
+
   private Set<Class<?>> requiredModules() {
-    return testComponentData().requiredModules();
+    return autoAddModuleEnabled.get()
+        ? testComponentData().hiltRequiredModules()
+        : testComponentData().daggerRequiredModules();
   }
 
   private boolean waitForBindValue() {

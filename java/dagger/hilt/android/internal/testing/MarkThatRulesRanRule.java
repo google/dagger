@@ -39,8 +39,10 @@ public final class MarkThatRulesRanRule implements TestRule {
 
   private final Context context = ApplicationProvider.getApplicationContext();
   private final Object testInstance;
+  private final boolean autoAddModule;
 
   public MarkThatRulesRanRule(Object testInstance) {
+    this.autoAddModule = true;
     this.testInstance = checkNotNull(testInstance);
     checkState(
         hasAnnotation(testInstance, HILT_ANDROID_TEST),
@@ -81,10 +83,11 @@ public final class MarkThatRulesRanRule implements TestRule {
         // prevents cases like setting state in Application.onCreate for Gradle emulator tests that
         // will get cleared after running the first test case.
         componentManager.checkStateIsCleared();
-        componentManager.setHasHiltTestRule(description);
+        componentManager.setAutoAddModule(autoAddModule);
         if (testInstance != null) {
           componentManager.setTestInstance(testInstance);
         }
+        componentManager.setHasHiltTestRule(description);
         base.evaluate();
         componentManager.clearState();
       }

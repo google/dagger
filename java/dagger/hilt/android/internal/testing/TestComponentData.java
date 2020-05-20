@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.internal.testing;
 
+import dagger.hilt.internal.Preconditions;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,18 +24,24 @@ import java.util.Set;
 public final class TestComponentData {
   private final ComponentSupplier componentSupplier;
   private final TestInjector<Object> testInjector;
-  private final Set<Class<?>> requiredModules;
+  private final Set<Class<?>> daggerRequiredModules;
+  private final Set<Class<?>> hiltRequiredModules;
   private final boolean waitForBindValue;
 
   public TestComponentData(
       boolean waitForBindValue,
       TestInjector<Object> testInjector,
-      Set<Class<?>> requiredModules,
+      Set<Class<?>> daggerRequiredModules,
+      Set<Class<?>> hiltRequiredModules,
       ComponentSupplier componentSupplier) {
+    Preconditions.checkState(
+        daggerRequiredModules.containsAll(hiltRequiredModules),
+        "Hilt required modules should be subset of Dagger required modules.");
     this.componentSupplier = componentSupplier;
     this.testInjector = testInjector;
-    this.requiredModules = requiredModules;
+    this.daggerRequiredModules = daggerRequiredModules;
     this.waitForBindValue = waitForBindValue;
+    this.hiltRequiredModules = hiltRequiredModules;
   }
 
   /** Returns the {@link ComponentSupplier}. */
@@ -47,9 +54,17 @@ public final class TestComponentData {
     return testInjector;
   }
 
-  /** Returns thes set of required modules. */
-  public Set<Class<?>> requiredModules() {
-    return requiredModules;
+  /** Returns the set of modules that Dagger cannot create instances of itself */
+  public Set<Class<?>> daggerRequiredModules() {
+    return daggerRequiredModules;
+  }
+
+  /**
+   * Returns a subset of {@link #daggerRequiredModules} that filters out the modules Hilt can
+   * instantiate itself.
+   */
+  public Set<Class<?>> hiltRequiredModules() {
+    return hiltRequiredModules;
   }
 
   /** Returns true if creation of the component needs to wait for bind() to be called. */
@@ -59,6 +74,6 @@ public final class TestComponentData {
 
   /** Returns the component using the given registered modules. */
   public interface ComponentSupplier {
-    Object get(Map<Class<?>, ?> registeredModules);
+    Object get(Map<Class<?>, ?> registeredModules, Object testInstance, Boolean autoAddModule);
   }
 }

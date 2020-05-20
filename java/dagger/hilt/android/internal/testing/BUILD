@@ -60,6 +60,7 @@ android_library(
     ],
     deps = [
         ":test_injector",
+        "//java/dagger/hilt/internal:component_manager",
     ],
 )
 

@@ -19,4 +19,7 @@
  *
  * @see <a href="https://dagger.dev/hilt/migration">Migration to Hilt</a>
  */
+@ParametersAreNonnullByDefault
 package dagger.hilt.android.migration;
+
+import javax.annotation.ParametersAreNonnullByDefault;

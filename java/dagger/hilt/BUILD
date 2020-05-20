@@ -49,6 +49,7 @@ java_library(
         "//java/dagger/hilt:generates_root_input",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",
+        "@google_bazel_common//third_party/java/jsr305_annotations",
     ],
 )
 
@@ -91,6 +92,9 @@ java_library(
 java_library(
     name = "package_info",
     srcs = ["package-info.java"],
+    deps = [
+        "@google_bazel_common//third_party/java/jsr305_annotations",
+    ],
 )
 
 filegroup(

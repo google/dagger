@@ -22,4 +22,7 @@
  *
  * @see <a href="https://dagger.dev/hilt">Hilt Developer Docs</a>
  */
+@ParametersAreNonnullByDefault
 package dagger.hilt;
+
+import javax.annotation.ParametersAreNonnullByDefault;

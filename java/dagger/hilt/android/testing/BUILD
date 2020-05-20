@@ -149,6 +149,9 @@ java_library(
 java_library(
     name = "package_info",
     srcs = ["package-info.java"],
+    deps = [
+        "@google_bazel_common//third_party/java/jsr305_annotations",
+    ],
 )
 
 android_library(

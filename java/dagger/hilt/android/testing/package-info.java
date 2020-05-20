@@ -19,4 +19,7 @@
  *
  * @see <a href="https://dagger.dev/hilt/testing">Hilt Testing</a>
  */
+@ParametersAreNonnullByDefault
 package dagger.hilt.android.testing;
+
+import javax.annotation.ParametersAreNonnullByDefault;

@@ -18,23 +18,25 @@ package dagger.hilt;
 
 import dagger.hilt.internal.GeneratedComponent;
 import dagger.hilt.internal.GeneratedComponentManager;
+import javax.annotation.Nonnull;
 
 /** Static utility methods for accessing objects through entry points. */
 public final class EntryPoints {
 
   /**
    * Returns the entry point interface given a component or component manager. Note that this
-   * performs an unsafe cast and so callers should be sure that the given
-   * component/component manager matches the entry point interface that is given.
+   * performs an unsafe cast and so callers should be sure that the given component/component
+   * manager matches the entry point interface that is given.
+   *
    * @param component The Hilt-generated component instance. For convenience, also takes component
    *     manager instances as well.
-   * @param entryPoint The interface marked with {@link dagger.hilt.EntryPoint}. The
-   *     {@link dagger.hilt.InstallIn} annotation on this entry point should match the component
-   *     argument above.
+   * @param entryPoint The interface marked with {@link dagger.hilt.EntryPoint}. The {@link
+   *     dagger.hilt.InstallIn} annotation on this entry point should match the component argument
+   *     above.
    */
   // Note that the input is not statically declared to be a Component or ComponentManager to make
   // this method easier to use, since most code will use this with an Application or Activity type.
-  @SuppressWarnings("unchecked")
+  @Nonnull
   public static <T> T get(Object component, Class<T> entryPoint) {
     if (component instanceof GeneratedComponent) {
       // Unsafe cast. There is no way for this method to know that the correct component was used.

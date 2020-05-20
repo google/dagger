@@ -21,6 +21,7 @@ import android.content.Context;
 import androidx.fragment.app.Fragment;
 import android.view.View;
 import dagger.hilt.EntryPoints;
+import javax.annotation.Nonnull;
 
 /** Static utility methods for dealing with entry points for standard Android components. */
 public final class EntryPointAccessors {
@@ -30,6 +31,7 @@ public final class EntryPointAccessors {
    * from the application context. May only be used with entry point interfaces installed in the
    * ApplicationComponent.
    */
+  @Nonnull
   public static <T> T fromApplication(Context context, Class<T> entryPoint) {
     return EntryPoints.get(context.getApplicationContext(), entryPoint);
   }
@@ -38,22 +40,25 @@ public final class EntryPointAccessors {
    * Returns the entry point interface from an activity. May only be used with entry point
    * interfaces installed in the ActivityComponent.
    */
+  @Nonnull
   public static <T> T fromActivity(Activity activity, Class<T> entryPoint) {
     return EntryPoints.get(activity, entryPoint);
   }
 
   /**
-   * Returns the entry point interface from a fragment. May only be used with entry point
-   * interfaces installed in the FragmentComponent.
+   * Returns the entry point interface from a fragment. May only be used with entry point interfaces
+   * installed in the FragmentComponent.
    */
+  @Nonnull
   public static <T> T fromFragment(Fragment fragment, Class<T> entryPoint) {
     return EntryPoints.get(fragment, entryPoint);
   }
 
   /**
-   * Returns the entry point interface from a view. May only be used with entry point
-   * interfaces installed in the ViewComponent or ViewNoFragmentComponent.
+   * Returns the entry point interface from a view. May only be used with entry point interfaces
+   * installed in the ViewComponent or ViewNoFragmentComponent.
    */
+  @Nonnull
   public static <T> T fromView(View view, Class<T> entryPoint) {
     return EntryPoints.get(view, entryPoint);
   }

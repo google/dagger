@@ -79,17 +79,20 @@ public final class MarkThatRulesRanRule implements TestRule {
       public void evaluate() throws Throwable {
 
         TestApplicationComponentManager componentManager = getTestApplicationComponentManager();
-        // This check is required to check that state hasn't been set before this rule runs. This
-        // prevents cases like setting state in Application.onCreate for Gradle emulator tests that
-        // will get cleared after running the first test case.
-        componentManager.checkStateIsCleared();
-        componentManager.setAutoAddModule(autoAddModule);
-        if (testInstance != null) {
-          componentManager.setTestInstance(testInstance);
+        try {
+          // This check is required to check that state hasn't been set before this rule runs. This
+          // prevents cases like setting state in Application.onCreate for Gradle emulator tests
+          // that will get cleared after running the first test case.
+          componentManager.checkStateIsCleared();
+          componentManager.setAutoAddModule(autoAddModule);
+          if (testInstance != null) {
+            componentManager.setTestInstance(testInstance);
+          }
+          componentManager.setHasHiltTestRule(description);
+          base.evaluate();
+        } finally {
+          componentManager.clearState();
         }
-        componentManager.setHasHiltTestRule(description);
-        base.evaluate();
-        componentManager.clearState();
       }
     };
   }

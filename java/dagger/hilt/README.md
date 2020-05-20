@@ -1,4 +1,4 @@
 # Hilt
 
-This package contains code that is still in development and not yet ready for
-release.
+Hilt provides a standard way to incorporate Dagger dependency injection into an
+Android application. For more information, see https://dagger.dev/hilt.

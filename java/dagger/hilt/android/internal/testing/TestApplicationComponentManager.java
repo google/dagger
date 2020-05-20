@@ -65,7 +65,11 @@ public final class TestApplicationComponentManager
         | IllegalAccessException
         | InstantiationException
         | InvocationTargetException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException(
+          "Hilt classes generated from @HiltAndroidTest are missing. Check that you have annotated "
+              + "your test class with @HiltAndroidTest and that the processor is running over your "
+              + "test",
+          e);
     }
   }
 

@@ -187,8 +187,6 @@ gen_maven_artifact(
     ],
     manifest = "AndroidManifest.xml",
     packaging = "aar",
-    shaded_deps = ["@com_google_auto_auto_common//jar"],
-    shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
     deps = [
         "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager",

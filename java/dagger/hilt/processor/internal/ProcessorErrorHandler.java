@@ -92,7 +92,7 @@ final class ProcessorErrorHandler {
                     elements.getTypeElement(
                         MoreElements.asType(element).getQualifiedName().toString());
               }
-              messager.printMessage(Kind.ERROR, hiltError.message(), hiltError.element().get());
+              messager.printMessage(Kind.ERROR, hiltError.message(), element);
             } else {
               messager.printMessage(Kind.ERROR, hiltError.message());
             }

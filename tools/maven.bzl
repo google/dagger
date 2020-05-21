@@ -40,6 +40,8 @@ def pom_file(name, targets, artifact_name, artifact_id, packaging = None, **kwar
 
 POM_VERSION = "${project.version}"
 
+POM_VERSION_ALPHA = POM_VERSION + "-alpha"
+
 def gen_maven_artifact(
         name,
         artifact_name,

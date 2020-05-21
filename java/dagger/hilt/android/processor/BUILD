@@ -15,13 +15,13 @@
 # Description:
 #   Hilt android processors.
 
-load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
+load("//tools:maven.bzl", "POM_VERSION_ALPHA", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
 
 java_library(
     name = "artifact-lib",
-    tags = ["maven_coordinates=com.google.dagger:hilt-android-compiler:" + POM_VERSION],
+    tags = ["maven_coordinates=com.google.dagger:hilt-android-compiler:" + POM_VERSION_ALPHA],
     visibility = ["//visibility:private"],
     exports = [
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",

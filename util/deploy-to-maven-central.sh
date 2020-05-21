@@ -22,6 +22,21 @@ fi
 
 bash $(dirname $0)/run-local-tests.sh
 
+# Note: we detach from head before making any sed changes to avoid commiting
+# a particular version to master. This sed change used to be done at the very
+# end of the script, but with the introduction of "-alpha" to the Hilt
+# artifacts, we need to do the sed replacement before deploying the artifacts to
+# maven. Note, that this sed replacement is only done for versioned releases.
+# HEAD-SNAPSHOT and LOCAL_SNAPSHOT versions of Hilt artifacts do not contain
+# "-alpha".
+git checkout --detach
+
+# Set the version string that is used as a tag in all of our libraries. If
+# another repo depends on a versioned tag of Dagger, their java_library.tags
+# should match the versioned release.
+sed -i s/'#ALPHA_POSTFIX'/'+ "-alpha"'/g tools/maven.bzl
+sed -i s/'${project.version}'/"${VERSION_NAME}"/g tools/maven.bzl
+
 bash $(dirname $0)/deploy-dagger.sh \
   "gpg:sign-and-deploy-file" \
   "$VERSION_NAME" \
@@ -36,6 +51,15 @@ bash $(dirname $0)/deploy-hilt.sh \
   "-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
   "-Dgpg.keyname=${KEY}"
 
+# Note: We avoid commiting until after deploying in case deploying fails and
+# we need to run the script again.
+git commit -m "${VERSION_NAME} release" tools/maven.bzl
+git tag -a -m "Dagger ${VERSION_NAME}" dagger-"${VERSION_NAME}"
+git push origin tag dagger-"${VERSION_NAME}"
+
+# Switch back to the original HEAD
+git checkout -
+
 # Publish javadocs to gh-pages
 bazel build //:user-docs.jar
 git clone --quiet --branch gh-pages \
@@ -48,15 +72,3 @@ git commit -m "$VERSION_NAME docs"
 git push origin gh-pages
 cd ..
 rm -rf gh-pages
-
-git checkout --detach
-# Set the version string that is used as a tag in all of our libraries. If another repo depends on
-# a versioned tag of Dagger, their java_library.tags should match the versioned release.
-sed -i s/'${project.version}'/"${VERSION_NAME}"/g tools/maven.bzl
-git commit -m "${VERSION_NAME} release" tools/maven.bzl
-
-git tag -a -m "Dagger ${VERSION_NAME}" dagger-"${VERSION_NAME}"
-git push origin tag dagger-"${VERSION_NAME}"
-
-# Switch back to the original HEAD
-git checkout -

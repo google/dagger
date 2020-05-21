@@ -73,7 +73,7 @@ public class ActivityComponentManager implements GeneratedComponentManager<Objec
     if (!(activity.getApplication() instanceof GeneratedComponentManager)) {
       if (Application.class.equals(activity.getApplication().getClass())) {
         throw new IllegalStateException(
-            "Hilt Activity must be attached to an @AndroidEntryPoint Application. "
+            "Hilt Activity must be attached to an @HiltAndroidApp Application. "
                 + "Did you forget to specify your Application's class name in your manifest's "
                 + "<application />'s android:name attribute?");
       }

@@ -413,6 +413,7 @@ public abstract class BindingGraph {
     public abstract ComponentPath componentPath();
 
     /** The key for which there is no binding. */
+    @Override
     public abstract Key key();
 
     /** @deprecated This always returns {@code Optional.empty()}. */

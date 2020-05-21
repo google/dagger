@@ -16,15 +16,9 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 maven_install(
     name = "dagger_simple_maven",
     artifacts = [
-        "com.google.guava:guava:27.1-jre",
-        "com.google.auto.value:auto-value:1.7.2",
-        "com.google.auto.value:auto-value-annotations:1.7.2",
         "com.google.dagger:dagger:2.27",
         "com.google.dagger:dagger-compiler:2.27",
-        "com.google.dagger:dagger-producers:2.27",
-        "javax.inject:javax.inject:1",
     ],
-    fetch_sources = True,
     repositories = [
         "https://repo1.maven.org/maven2",
     ],

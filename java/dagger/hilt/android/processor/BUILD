@@ -44,9 +44,16 @@ gen_maven_artifact(
     artifact_id = "hilt-android-compiler",
     artifact_name = "Hilt Android Processor",
     artifact_target = ":artifact-lib",
+    javadoc_android_api_level = 29,
+    javadoc_root_packages = [
+        "dagger.hilt.processor",
+        "dagger.hilt.android.processor",
+    ],
+    javadoc_srcs = [
+        "//java/dagger/hilt:hilt_processing_filegroup",
+    ],
     shaded_deps = ["@com_google_auto_auto_common//jar"],
     shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
-    # Do not publish javadocs for processor classes as they are internal.
     deps = [
         "//java/dagger/hilt/android/processor/internal:android_classnames",
         "//java/dagger/hilt/android/processor/internal:utils",

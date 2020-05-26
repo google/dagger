@@ -214,6 +214,13 @@ def _gen_maven_artifact(
             android_api_level = javadoc_android_api_level,
             deps = artifact_targets,
         )
+    else:
+        # Build an empty javadoc because Sonatype requires javadocs
+        # even if the jar is empty.
+        # https://central.sonatype.org/pages/requirements.html#supply-javadoc-and-sources
+        native.java_binary(
+            name = name + "-javadoc",
+        )
 
 def _src_jar(target):
     if target.startswith(":"):

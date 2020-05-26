@@ -75,6 +75,24 @@ publishing {
           name = 'Google, Inc.'
           url = 'https://www.google.com'
         }
+        withXml {
+          def projectNode = asNode()
+          // Adds:
+          // <parent>
+          //   <groupId>org.sonatype.oss</groupId>
+          //   <artifactId>oss-parent</artifactId>
+          //   <version>7</version>
+          // </parent>
+          def parentNode = projectNode.appendNode('parent')
+          parentNode.appendNode('groupId', 'org.sonatype.oss')
+          parentNode.appendNode('artifactId', 'oss-parent')
+          parentNode.appendNode('version', '7')
+          // Adds scm->tag because for some reason the DSL API does not.
+          // <scm>
+          //   <tag>HEAD</tag>
+          // </scm>
+          projectNode.get('scm').first().appendNode('tag', 'HEAD')
+        }
       }
     }
   }

@@ -16,7 +16,7 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
+  <!-- LINT.IfChange MOE:strip_line -->
   <parent>
     <groupId>org.sonatype.oss</groupId>
     <artifactId>oss-parent</artifactId>
@@ -54,8 +54,12 @@
     <name>Google, Inc.</name>
     <url>https://www.google.com</url>
   </organization>
-
+  <!-- MOE:begin_strip
+  LINT.ThenChange(
+    //depot/google3/third_party/java_src/dagger/project/java/dagger/hilt/android/plugin/build.gradle
+  )
+  MOE:end_strip -->
   <dependencies>
-{generated_bzl_deps}
+    {generated_bzl_deps}
   </dependencies>
 </project>

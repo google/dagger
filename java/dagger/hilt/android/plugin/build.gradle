@@ -43,6 +43,28 @@ dependencies {
   testImplementation 'com.google.truth:truth:1.0.1'
 }
 
+// Create sources Jar from main kotlin sources
+tasks.register("sourcesJar", Jar).configure {
+  group = JavaBasePlugin.DOCUMENTATION_GROUP
+  description = "Assembles sources JAR"
+  classifier = "sources"
+  from(sourceSets["main"].allSource)
+}
+
+// Create javadoc Jar. The jar is empty since we don't really have docs
+// for this plugin but this is required to upload to Sonatype.
+// https://central.sonatype.org/pages/requirements.html#supply-javadoc-and-sources
+tasks.register("javadocJar", Jar).configure {
+  group = JavaBasePlugin.DOCUMENTATION_GROUP
+  description = "Assembles javadoc JAR"
+  classifier = "javadoc"
+}
+
+// Disable Gradle metadata publication.
+tasks.withType(GenerateModuleMetadata) {
+  enabled = false
+}
+
 // TODO(danysantiago): Use POM template in tools/ to avoid duplicating lines.
 publishing {
   publications {
@@ -51,6 +73,8 @@ publishing {
       def publishVersion = findProperty("PublishVersion")
       version = (publishVersion != null) ? publishVersion : "LOCAL-SNAPSHOT"
       from components.kotlin
+      artifact(sourcesJar)
+      artifact(javadocJar)
       pom {
         name = 'Hilt Android Gradle Plugin'
         description = 'A fast dependency injector for Android and Java.'
@@ -94,6 +118,12 @@ publishing {
           projectNode.get('scm').first().appendNode('tag', 'HEAD')
         }
       }
+    }
+  }
+  // Publish to build output repository.
+  repositories {
+    maven {
+      url = uri("$buildDir/repo")
     }
   }
 }

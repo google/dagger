@@ -117,7 +117,7 @@ _deploy \
 _deploy \
   java/dagger/lint/lint-artifact.jar \
   java/dagger/lint/lint-pom.xml \
-  java/dagger/lint/liblint-artifact-lib-src.jar \
+  java/dagger/lint/lint-artifact-src.jar \
   java/dagger/lint/lint-artifact-javadoc.jar
 
 _deploy \

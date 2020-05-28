@@ -382,9 +382,9 @@ While a graph is running, its current state will be able to be dumped.
 
 ## Optional bindings
 
-[`@BindsOptionalOf`] works for producers in much the same way as [for providers]
-(users-guide#optional-bindings). If `Foo` is produced, or if there is no binding
-for `Foo`, then a `@Produces` method can depend on any of:
+[`@BindsOptionalOf`] works for producers in much the same way as
+[for providers](index#optional-bindings). If `Foo` is produced, or if there is
+no binding for `Foo`, then a `@Produces` method can depend on any of:
 
 *   `Optional<Foo>`
 *   `Optional<Producer<Foo>>`

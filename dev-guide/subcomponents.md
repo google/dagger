@@ -321,11 +321,12 @@ assertThat(parent.set()).containsExactly("a", "b");
 assertThat(child.set()).containsExactly("a", "b", "c", "d");
 ```
 
-note: In this example we didn't follow the recommended best practice for
+**Note:** In this example we didn't follow the recommended best practice for
 installing the subcomponent in the parent component for simplicity only. It is
 best is to use an installation module rather than declaring an abstract factory
 method in the parent component.
 [best practice](https://dagger.dev/subcomponents?cl=293543543#adding-a-subcomponent-to-a-parent-component)
+{: .c-callouts__note }
 
 ### Repeated modules
 

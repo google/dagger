@@ -57,8 +57,9 @@ function has the following behavior:
 -   For each injectible method, call the method with the arguments from the
     corresponding input keys.
 
-Warning: this members-injection binding is not allowed to be injected by user
+**Warning:** this members-injection binding is not allowed to be injected by user
 code; it is only a figment of Dagger's imagination.
+{: .c-callouts__warning }
 
 ### Members-injection from entry points
 
@@ -72,10 +73,11 @@ void injectT(T t);
 
 This is a **members-injection entry point** with key `MembersInjector<T>`.
 
-Note: an entry point may, as per usual rules, just return a
+**Note:** an entry point may, as per usual rules, just return a
 `MembersInjector<T>`, in which case it also is an entry point with key
 `MembersInjector<T>`, but just a normal entry point, not a members-injection
 entry point.
+{: .c-callouts__note }
 
 ### Resolution and Runtime
 
@@ -185,12 +187,13 @@ final class DaggerC implements C {
 }
 ```
 
-Warning: using members-injection with an `@Inject` constructor is discouraged.
+**Warning:** using members-injection with an `@Inject` constructor is discouraged.
 In general, members-injection makes it more difficult to test an object, since
 just calling the constructor does not "fully" initialize the object. As long as
 you're allowed to define the constructor of an object, it's usually better to
 add the appropriate arguments to the constructor rather than relying on
 members-injection.
+{: .c-callouts__warning }
 
 ## Subcomponents
 
@@ -203,9 +206,10 @@ want to make a distinction, we'll refer to components (as defined previously) as
 The **modules**, **entry points**, and **bindings** of a subcomponent analogous
 to modules, entry points, and bindings of a component.
 
-Note: subcomponents may not have component dependencies, because they do not
+**Note:** subcomponents may not have component dependencies, because they do not
 have the appropriate field in their annotations. There's no technical reason why
 they couldn't; they just don't.
+{: .c-callouts__note }
 
 The **builder** of a subcomponent is an interface or abstract class annotated
 `@Subcomponent.Builder`, that's nested inside a subcomponent. Subcomponent
@@ -246,9 +250,10 @@ interface S3 { ... }
 In the above example, the subcomponents of the top-level component `C` are `S1,
 S2`, and `S3`.
 
-Note: Subcomponents do not specify the component they are children of; the
+**Note:** Subcomponents do not specify the component they are children of; the
 dependency goes in the reverse direction. Because of this, subcomponents can be
 children of multiple components.
+{: .c-callouts__note }
 
 A top-level component forms a **component tree**, and it's possible for
 subcomponents to appear multiple times in this tree; these instances of
@@ -284,9 +289,10 @@ The *nodes* of the graph are:
 -   binding keys and dependency keys of those bindings, and all entry point
     keys, *tagged by the component path* of the binding or entry point.
 
-Note: Because the same subcomponent class can appear multiple times in a
+**Note:** Because the same subcomponent class can appear multiple times in a
 component tree, bindings and entry points can as well, but they will be tagged
 differently, based on the component path.
+{: .c-callouts__note }
 
 The *edges* of the graph are directed edges consisting of:
 
@@ -298,9 +304,10 @@ The *edges* of the graph are directed edges consisting of:
     path, an edge from any tagged binding `(B, Q)`, where `K` is the binding key
     for `B` and `Q` is a prefix of `P`; this models **resolution of keys**.
 
-Note: This last condition describes the lexical scoping of Dagger subcomponents.
+**Note:** This last condition describes the lexical scoping of Dagger subcomponents.
 To resolve a key in a subcomponent, we not only look for bindings in that
 subcomponent, but also in any of its ancestor components.
+{: .c-callouts__note }
 
 This graph can be thought of as a series of graphs layered on top of each other.
 First, the top-level component's graph; then, the graph of its subcomponents;

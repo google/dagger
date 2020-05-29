@@ -17,10 +17,11 @@ write a plugin that
 
 The opportunities are endless, which is why the SPI is open for anyone to use!
 
-> Note: The APIs for implementing an SPI plugin are experimental and are free to
-> change.All changes will be documented in our [GitHub releases].
-> We encourage you to [reach out] when you find rough edges so we can make the
-> APIs easier to use.
+**Note:** The APIs for implementing an SPI plugin are experimental and are free to
+change.All changes will be documented in our [GitHub releases].
+We encourage you to [reach out] when you find rough edges so we can make the
+APIs easier to use.
+{: .c-callouts__note }
 
 ## Declaring your SPI plugin
 

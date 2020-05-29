@@ -274,10 +274,11 @@ The following types are also included:
   - [`DaggerBroadcastReceiver`]
   - [`DaggerContentProvider`]
 
-*Note:* [`DaggerBroadcastReceiver`] should only be used when the
+**Note:** [`DaggerBroadcastReceiver`] should only be used when the
 `BroadcastReceiver` is registered in the `AndroidManifest.xml`. When the
 `BroadcastReceiver` is created in your own code, prefer constructor injection
 instead.
+{: .c-callouts__note }
 
 ### Support libraries
 

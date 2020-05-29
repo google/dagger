@@ -70,8 +70,9 @@ We disambiguate these types as follows:
 | Modules    | producer modules      | provider modules     |
 | Components | production components | provision components |
 
-Note: There's no reason behind the provider/provision or producer/production
+**Note:** There's no reason behind the provider/provision or producer/production
 nomenclature distinctions.
+{: .c-callouts__note }
 
 Provision bindings may not depend on production bindings because that would
 violate the semantics of provision bindings: they must be able to be executed
@@ -204,11 +205,12 @@ thrown during the production of `@Q T` and save it. The method then can call
 `ExecutionException` with the original exception as its cause (just like a
 failed future would).
 
-Note: Implementations of `Produced#get()` are expected not to block, and it
+**Note:** Implementations of `Produced#get()` are expected not to block, and it
 leads to unspecified behavior if they do. This distinguishes it from
 `Future#get()`, which has the same return/throw semantics, but may block. Dagger
 ensures that the value or exception is available before constructing the
 `Produced` object, and hence `Produced#get()` can return or throw immediately.
+{: .c-callouts__note }
 
 ### Producer
 

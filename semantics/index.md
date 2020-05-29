@@ -134,9 +134,10 @@ The output key is called the **binding key** and the input keys are called
 **declared dependency keys**, which are the output and inputs keys of the
 declared key signature.
 
-Note: For `@Inject` constructors, we treat the return type of the Java signature
-as the type of the constructor's class. Unlike the other binding methods,
-`@Inject` constructors' binding keys cannot have qualifiers.
+**Note:** For `@Inject` constructors, we treat the return type of the Java
+signature as the type of the constructor's class. Unlike the other binding
+methods, `@Inject` constructors' binding keys cannot have qualifiers.
+{: .c-callouts__note }
 
 Here are some more examples of key signatures:
 
@@ -446,9 +447,10 @@ public final class DaggerC implements C {
 where [DoubleCheck][double check] is a Dagger utility class that caches the
 result of a provider call.
 
-Note: Dagger will construct a new `Lazy` instance every time it is requested; so
-although `Lazy` itself caches its contents, if multiple bindings request a
-`Lazy` of the same type, they'll get different instances.
+**Note:** Dagger will construct a new `Lazy` instance every time it is
+requested; so although `Lazy` itself caches its contents, if multiple bindings
+request a `Lazy` of the same type, they'll get different instances.
+{: .c-callouts__note }
 
 [double check]: https://github.com/google/dagger/blob/bbb4bfd2bd0c27b884d0c01795b588f2bf1cb685/java/dagger/internal/DoubleCheck.java
 
@@ -752,9 +754,9 @@ When modules were presented earlier, they were not allowed instance methods or
 fields. We now describe a way that Dagger does allow modules to have instance
 methods or fields.
 
-Warning: it's discouraged for modules to have state; this can lead to
+**Warning:** it's discouraged for modules to have state; this can lead to
 unpredictable behavior. Moreover, module instances in general are rarely useful.
-We have considered removing them.
+We have considered removing them. {: .c-callouts__warning }
 
 If a builder setter method specifies a module, then Dagger generates a new
 binding:
@@ -768,8 +770,9 @@ Then, given a binding in that module that is an instance method, Dagger treats
 its signature's first argument as the module itself (i.e., the `this` parameter
 of the module).
 
-Warning: module bindings are not allowed to be injected by user code; it is only
-a figment of Dagger's imagination.
+**Warning:** module bindings are not allowed to be injected by user code; it is
+only a figment of Dagger's imagination.
+{: .c-callouts__warning }
 
 Module instances are also redundant with bound instances. Any instance fields of
 a module can be bound directly as instances, so that instance methods that refer

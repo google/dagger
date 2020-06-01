@@ -23,8 +23,9 @@
   @include fs--body;
   outline: none;
   border: none;
-  padding-left: 10px;
-  padding-right: 10px;
+  padding-left: 1rem;
+  padding-bottom: .5rem;
+  padding-right: 1rem;
   display: inline-block;
 
   &:after {

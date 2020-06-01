@@ -27,7 +27,7 @@
     background: $c__deep-purple;
   }
 
-  .c-article__main a:not(.c-btn) {
+  .c-article__main :not(.c-callouts__note):not(.c-callouts__warning) > a:not(.c-btn) {
     color: $c__deep-purple;
   }
 

@@ -66,11 +66,13 @@ public final class MapFactory<K, V> extends AbstractMapFactory<K, V, V> {
       super(size);
     }
 
+    @Override
     public Builder<K, V> put(K key, Provider<V> providerOfValue) {
       super.put(key, providerOfValue);
       return this;
     }
 
+    @Override
     public Builder<K, V> putAll(Provider<Map<K, V>> mapFactory) {
       super.putAll(mapFactory);
       return this;

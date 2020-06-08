@@ -47,7 +47,7 @@ android_library(
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",
         "//java/dagger/internal/guava:annotations",
-        "@google_bazel_common//third_party/java/junit",
+        "@maven//:junit_junit",
     ],
 )
 
@@ -79,8 +79,8 @@ android_library(
         ":test_application_component_manager_holder",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",
-        "@google_bazel_common//third_party/java/junit",
         "@maven//:androidx_test_core",
+        "@maven//:junit_junit",
     ],
 )
 

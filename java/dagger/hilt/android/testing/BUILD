@@ -77,7 +77,7 @@ android_library(
         ":package_info",
         "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
         "//java/dagger/hilt/internal:preconditions",
-        "@google_bazel_common//third_party/java/junit",
+        "@maven//:junit_junit",
     ],
 )
 

@@ -49,9 +49,9 @@ GenRobolectricTests(
         "//:android",
         "//:android-support",
         "//:dagger_with_compiler",
-        "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",
         "@maven//:androidx_fragment_fragment",
+        "@maven//:junit_junit",
         "@maven//:org_robolectric_robolectric",
     ],
 )

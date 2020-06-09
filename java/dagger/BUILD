@@ -19,9 +19,10 @@ load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
+    "POM_VERSION",
     "SOURCE_7_TARGET_7",
 )
-load("//tools:maven.bzl", "POM_VERSION", "pom_file")
+load("//tools:maven.bzl", "pom_file")
 load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 package(default_visibility = ["//:src"])

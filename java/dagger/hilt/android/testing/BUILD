@@ -14,7 +14,8 @@
 # Description:
 #   Testing libraries for Hilt Android.
 
-load("//tools:maven.bzl", "POM_VERSION_ALPHA", "gen_maven_artifact")
+load("//:build_defs.bzl", "POM_VERSION_ALPHA")
+load("//tools:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
 

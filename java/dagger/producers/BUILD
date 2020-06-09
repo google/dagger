@@ -20,9 +20,10 @@ load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
+    "POM_VERSION",
     "SOURCE_7_TARGET_7",
 )
-load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
+load("//tools:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
 

@@ -38,11 +38,6 @@ def pom_file(name, targets, artifact_name, artifact_id, packaging = None, **kwar
         **kwargs
     )
 
-POM_VERSION = "${project.version}"
-
-# DO NOT remove the comment on the next line. it's used in deploy-to-maven-central.sh
-POM_VERSION_ALPHA = POM_VERSION  #ALPHA_POSTFIX
-
 def gen_maven_artifact(
         name,
         artifact_name,

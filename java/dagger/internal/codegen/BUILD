@@ -16,7 +16,11 @@
 #   A JSR-330 compliant dependency injection system for android and java
 
 load("@rules_java//java:defs.bzl", "java_library", "java_plugin")
-load("//tools:maven.bzl", "POM_VERSION", "gen_maven_artifact")
+load(
+    "//:build_defs.bzl",
+    "POM_VERSION",
+)
+load("//tools:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
 

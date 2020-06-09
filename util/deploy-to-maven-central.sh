@@ -34,8 +34,8 @@ git checkout --detach
 # Set the version string that is used as a tag in all of our libraries. If
 # another repo depends on a versioned tag of Dagger, their java_library.tags
 # should match the versioned release.
-sed -i s/'#ALPHA_POSTFIX'/'+ "-alpha"'/g tools/maven.bzl
-sed -i s/'${project.version}'/"${VERSION_NAME}"/g tools/maven.bzl
+sed -i s/'#ALPHA_POSTFIX'/'+ "-alpha"'/g build_defs.bzl
+sed -i s/'${project.version}'/"${VERSION_NAME}"/g build_defs.bzl
 
 bash $(dirname $0)/deploy-dagger.sh \
   "gpg:sign-and-deploy-file" \

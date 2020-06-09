@@ -24,3 +24,8 @@ SOURCE_7_TARGET_7 = [
     "-target",
     "1.7",
 ]
+
+POM_VERSION = "${project.version}"
+
+# DO NOT remove the comment on the next line. It's used in deploy-to-maven-central.sh
+POM_VERSION_ALPHA = POM_VERSION  #ALPHA_POSTFIX

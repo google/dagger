@@ -27,17 +27,57 @@ mailing list.
 
 ### Bazel
 
-If you build with `bazel`, follow the [`bazel` documentation for referencing
-external projects][bazel-external-deps] to include Dagger in your build.
+If you build with `bazel`, you will need to configure your top-level workspace
+to access Dagger/Hilt targets that export the proper dependencies and plugins.
 
-Given the following `WORKSPACE` definition, you can reference dagger via
-`@com_google_dagger//:dagger_with_compiler` in your deps.
+First, import the Dagger repository into your `WORKSPACE` file using
+[`http_archive`][bazel-external-deps], load the `DAGGER_ARTIFACTS` and
+`DAGGER_REPOSITORIES`, and add them to your list of [`maven_install`] artifacts.
+
+Note: The `http_archive` must point to a tagged release of Dagger, not just any
+commit. The version of the Dagger artifacts will match the version of the tagged
+release.
 
 ```python
+# Top-level WORKSPACE file
+
 http_archive(
-    name = "com_google_dagger",
+    name = "dagger",
     urls = ["https://github.com/google/dagger/archive/dagger-<version>.zip"],
 )
+
+load("@dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
+
+maven_install(
+    artifacts = DAGGER_ARTIFACTS + [...],
+    repositories = DAGGER_REPOSITORIES + [...],
+)
+```
+
+Next, load and call `dagger_rules` in your top-level `BUILD` file:
+
+```python
+# Top-level BUILD file
+
+load("@dagger//:workspace_defs.bzl", "dagger_rules")
+
+dagger_rules()
+```
+
+This will setup Dagger and Hilt build targets of the form `:<artifact_id>`.
+(Note that these targets already export all of the dependencies and processors
+they need).
+
+```python
+deps = [
+    ":dagger",                  # For Dagger
+    ":dagger-spi",              # For Dagger SPI
+    ":dagger-producers",        # For Dagger Producers
+    ":dagger-android",          # For Dagger Android
+    ":dagger-android-support",  # For Dagger Android (Support)
+    ":hilt-android",            # For Hilt Android
+    ":hilt-android-testing",    # For Hilt Android Testing
+]
 ```
 
 ### Other build systems
@@ -191,6 +231,7 @@ See [the CONTRIBUTING.md docs][Building Dagger].
 
 [`bazel`]: https://bazel.build
 [bazel-external-deps]: https://docs.bazel.build/versions/master/external.html#depending-on-other-bazel-projects
+[`maven_install`](https://github.com/bazelbuild/rules_jvm_external#exporting-and-consuming-artifacts-from-external-repositories)
 [Building Dagger]: CONTRIBUTING.md#building-dagger
 [dagger-snap]: https://oss.sonatype.org/content/repositories/snapshots/com/google/dagger/
 [databinding]: https://developer.android.com/topic/libraries/data-binding/

@@ -29,12 +29,15 @@ googleAnalyticsId: UA-43772875-7
 plugins:
   - jekyll-redirect-from
 
+enableCodeSelector: true
+defaultCodeLanguage: "java"
+
 nav:
   - item:
       name: Home
       url: /
   - item:
-      name: Dev Guide
+      name: Dagger
       url: /dev-guide
       sidenav:
         - item:
@@ -71,7 +74,86 @@ nav:
             name: FAQ
             url: /faq
   - item:
-      name: "Tutorial Codelab"
+      name: Hilt
+      url: /hilt
+      sidenav:
+        - item:
+            name: "Benefits"
+            url: /benefits
+        - item:
+            name: "Gradle Setup"
+            url: /gradle-setup
+        - item:
+            name: "Quick Start"
+            url: /quick-start
+        - item:
+            name: "Core APIs"
+            subgroup:
+              - item:
+                  name: "Components"
+                  url: /components
+              - item:
+                  name: "Hilt Application"
+                  url: /application
+              - item:
+                  name: "Android Entry Points"
+                  url: /android-entry-point
+              - item:
+                  name: "Modules"
+                  url: /modules
+              - item:
+                  name: "Entry Points"
+                  url: /entry-points
+              - item:
+                  name: "Custom Components"
+                  url: /custom-components
+        - item:
+            name: "Testing"
+            subgroup:
+              - item:
+                  name: "Testing overview"
+                  url: /testing
+              - item:
+                  name: "Robolectric testing"
+                  url: /robolectric-testing
+              - item:
+                  name: "Instrumentation testing"
+                  url: /instrumentation-testing
+        - item:
+            name: "Migration"
+            subgroup:
+              - item:
+                  name: "Guide"
+                  url: /migration-guide
+              - item:
+                  name: "Optional injection"
+                  url: /optional-inject
+              - item:
+                  name: "Scope aliases"
+                  url: /scope-aliases
+        - item:
+            name: "Compiler Options"
+            url: /compiler-options
+        - item:
+            name: "Creating Extensions"
+            url: /creating-extensions
+        - item:
+            name: "Design Decisions"
+            subgroup:
+              - item:
+                  name: "Design overview"
+                  url: /design-overview
+              - item:
+                  name: "Testing philosophy"
+                  url: /testing-philosophy
+              - item:
+                  name: "Monolithic components"
+                  url: /monolithic
+              - item:
+                  name: "Subcomponents"
+                  url: /subcomponents-vs-deps
+  - item:
+      name: "Dagger Tutorial"
       url: /tutorial
       sidenav:
         - item:

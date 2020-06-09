@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Dev Guide
+title: Dagger
 redirect_from:
   - /users-guide
 ---

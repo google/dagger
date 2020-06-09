@@ -611,7 +611,7 @@ limitations under the License.
 [Documented]: http://docs.oracle.com/javase/7/docs/api/java/lang/annotation/Documented.html
 [Factory Pattern]: https://en.wikipedia.org/wiki/Factory_(object-oriented_programming)
 [installation]: https://github.com/google/dagger/blob/master/README.md#installation
-[guava-optional]: https://google.github.io/guava/releases/27.0-jre/api/docs/com/google/common/base/Optional.html
+[guava-optional]: https://guava.dev/releases/27.0-jre/api/docs/com/google/common/base/Optional.html
 [`javax.inject.Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
 [`javax.inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/package-summary.html
 [jdk-optional]: https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html

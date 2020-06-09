@@ -395,7 +395,7 @@ no binding for `Foo`, then a `@Produces` method can depend on any of:
 [`@BindsOptionalOf`]: https://dagger.dev/api/latest/dagger/BindsOptionalOf.html
 [CancellationPolicy]: https://dagger.dev/api/latest/dagger/producers/CancellationPolicy.html
 [Component]: https://dagger.dev/api/latest/dagger/Component.html
-[Dagger 2]: http://dagger.dev/
+[Dagger 2]: https://dagger.dev/
 [ListenableFuture]: https://github.com/google/guava/wiki/ListenableFutureExplained
 [Module]: https://dagger.dev/api/latest/dagger/Module.html
 [Produced]: https://dagger.dev/api/latest/dagger/producers/Produced.html

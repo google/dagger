@@ -30,4 +30,4 @@ ideas introduced in the section.
 
 </section>
 
-[Javadoc]: http://dagger.dev/api/latest
+[Javadoc]: https://dagger.dev/api/latest

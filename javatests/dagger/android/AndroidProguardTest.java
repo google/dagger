@@ -36,7 +36,7 @@ public class AndroidProguardTest {
     assertThat(resUrl).isNotNull();
   }
 
-  The com.android.tools files are only used outside Google, in Gradle projects.
+  // The com.android.tools files are only used outside Google, in Gradle projects.
   @Test
   public void checkProguardRules() {
     URL resUrl =

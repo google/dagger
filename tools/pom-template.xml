@@ -54,11 +54,13 @@
     <name>Google, Inc.</name>
     <url>https://www.google.com</url>
   </organization>
-  <!-- MOE:begin_strip
+  <!-- MOE:begin_strip -->
+  <!--
   LINT.ThenChange(
     //depot/google3/third_party/java_src/dagger/project/java/dagger/hilt/android/plugin/build.gradle
   )
-  MOE:end_strip -->
+  -->
+  <!-- MOE:end_strip -->
   <dependencies>
     {generated_bzl_deps}
   </dependencies>

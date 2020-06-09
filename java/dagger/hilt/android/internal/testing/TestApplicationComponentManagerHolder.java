@@ -16,9 +16,7 @@
 
 package dagger.hilt.android.internal.testing;
 
-/**
- * Hilt internal only! Returns the component manager.
- */
+/** For use by Hilt internally only! Returns the component manager. */
 public interface TestApplicationComponentManagerHolder {
   // Returns {@link Object} so that we do not expose {@code TestApplicationComponentManager} to
   // clients. Framework code should explicitly cast to {@code TestApplicationComponentManager}.

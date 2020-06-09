@@ -74,7 +74,6 @@ def gen_maven_artifact(
         lint_deps
     )
 
-
 def _gen_maven_artifact(
         name,
         artifact_name,

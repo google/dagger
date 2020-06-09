@@ -87,6 +87,24 @@ android {
 }
 ```
 
+### Using the plugin with others
+
+The Hilt Dagger plugin sets some data inside `annotationProcessorOptions.arguments`. 
+If you use other libraries that do the same, like the Room library, you need to add their arguments instead of setting them:
+
+```groovy
+javaCompileOptions {
+  annotationProcessorOptions {
+    arguments += ["room.schemaLocation" : "$projectDir/schemas".toString()]
+  }
+}
+```
+
+If the `+` is missing, `arguments` will be replaced, and the build with fail with an error similar to this one:
+```
+Expected @HiltAndroidApp to have a value. Did you forget to apply the Gradle Plugin?
+```
+
 ### Why use the plugin?
 
 One of the main benefits of the Gradle plugin is that it makes using

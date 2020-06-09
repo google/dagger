@@ -4,7 +4,7 @@
 #
 #  To run this script, just pass in a valid avd name:
 #
-#    $ ./experimental/users/bcorso/dagger/run-local-emulator-tests.sh Android29
+#    $ path/to/run-local-emulator-tests.sh Android29
 
 set -ex
 

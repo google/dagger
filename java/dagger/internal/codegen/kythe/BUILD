@@ -38,7 +38,6 @@ java_library(
     ],
 )
 
-# buildifier: disable=no-effect
 load("@rules_java//java:defs.bzl", "java_import")
 
 # A _deploy.jar consisting of the java_librarys in https://github.com/kythe/kythe needed to build a

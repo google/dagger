@@ -48,7 +48,7 @@ public final class Components {
     } else {
       throw new BadInputException(
           String.format(
-              "An @InstallIn annotation is required for: %s."  ,
+              "An @InstallIn annotation is required for: %s." ,
               element),
           element);
     }

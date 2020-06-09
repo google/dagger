@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  package="example.hilt">
+
+  <uses-sdk android:minSdkVersion="15" android:targetSdkVersion="28"/>
+
+  <application android:name=".CoffeeApp">
+  </application>
+</manifest>

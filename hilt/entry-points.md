@@ -56,7 +56,7 @@ interface FooBarInterface {
 ```
 {: .c-codeselector__code .c-codeselector__code_kotlin }
 
-### Access an EntryPoint
+### Access an EntryPoint {#access-an-entrypoint}
 
 To access an entry point, use the `EntryPoints` class passing as a parameter the
 component instance or the `@AndroidEntryPoint` object which acts as a component

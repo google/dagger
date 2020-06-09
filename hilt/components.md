@@ -208,4 +208,4 @@ Component                       | Default Bindings
 **`ServiceComponent`**          | `Application`, `Service`
 
 [^2]: The `Application` binding is available using either `@ApplicationContext
-    Context` or `@ApplicationContext Application`.
+    Context` or `Application`.

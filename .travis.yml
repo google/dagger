@@ -38,7 +38,6 @@ before_install:
 
 script:
   - bazel test --test_output errors //...
-  - pushd examples && mvn compile && popd
 
 env:
   global:

@@ -986,7 +986,7 @@ interface MyCustomComponent {
   @Component.Builder
   interface Builder {
     Builder appComponent(MyApplicationComponent appComponent);
-    LoginComponent build();
+    MyCustomComponent build();
   }
 }
 
@@ -1006,7 +1006,7 @@ interface MyCustomComponent {
   @Component.Builder
   interface Builder {
     Builder appComponentDeps(CustomComponentDependencies deps);
-    LoginComponent build();
+    MyCustomComponent build();
   }
 }
 ```
@@ -1027,7 +1027,7 @@ interface MyCustomComponent {
   @Component.Builder
   interface Builder {
     fun appComponent(appComponent: MyApplicationComponent): Builder
-    fun build(): LoginComponent
+    fun build(): MyCustomComponent
   }
 }
 
@@ -1047,7 +1047,7 @@ interface MyCustomComponent {
   @Component.Builder
   interface Builder {
     fun appComponentDeps(deps: CustomComponentDependencies): Builder
-    fun build(): LoginComponent
+    fun build(): MyCustomComponent
   }
 }
 ```

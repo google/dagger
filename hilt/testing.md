@@ -47,7 +47,7 @@ public class FooTest {
 ```kotlin
 @HiltAndroidTest
 class FooTest {
-  @get:Rule HiltAndroidRule rule = HiltAndroidRule(this)
+  @get:Rule val rule = HiltAndroidRule(this)
   ...
 }
 ```

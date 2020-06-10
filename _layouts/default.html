@@ -22,10 +22,12 @@ layout: base
     </div>
   </header>
 
-  {% include sidenav.html %}
+  <div class="c-article__container">
+    {% include sidenav.html %}
 
-  <div class="c-article__main">
-    {{ content }}
+    <div class="c-article__main">
+      {{ content }}
+    </div>
   </div>
 
   {% include codeselector.html %}

@@ -22,6 +22,16 @@
 
 }
 
+.c-article__container {
+  display: block;
+}
+
+@media (min-width: 42rem) {
+  .c-article__container {
+    display: flex;
+  }
+}
+
 .c-article__main {
   max-width: 76rem; // 760px;
   margin-right: auto;

@@ -10,6 +10,8 @@ bazel test $TEST_PARAMS //...
 # Install into local maven.
 util/install-local-snapshot.sh
 
+pushd examples/maven && mvn compile && popd
+
 # Also run the gradle examples on the local maven snapshots.
 readonly _SIMPLE_EXAMPLE_DIR=java/dagger/example/gradle/simple
 readonly _ANDROID_EXAMPLE_DIR=java/dagger/example/gradle/android/simple

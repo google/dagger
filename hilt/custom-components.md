@@ -43,7 +43,7 @@ custom component is needed:
     everywhere. Being globally understood also combats some of the issues with
     cognitive overhead.
 *   Consider if a non-Hilt (regular Dagger) component is sufficient. For
-    component's with a limited purpose sometimes it is better to use a non-Hilt
+    components with a limited purpose sometimes it is better to use a non-Hilt
     component. For example, consider a production component that represents a
     single background task. Hilt components excel in situations where code needs
     to be contributed from possibly disjoint/modular code. If your component

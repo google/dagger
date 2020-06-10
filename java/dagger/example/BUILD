@@ -1,4 +1,4 @@
-# Copyright (C) 2019 The Dagger Authors.
+# Copyright (C) 2017 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,16 +13,6 @@
 # limitations under the License.
 #
 # Description:
-#   A skeleton example that uses gradle to test the LOCAL-SNAPSHOTs.
-
-load("@rules_java//java:defs.bzl", "java_binary")
+#   Dagger examples.
 
 package(default_visibility = ["//:src"])
-
-java_binary(
-    name = "simple",
-    srcs = glob(["*.java"]),
-    deps = [
-        "//:dagger_with_compiler",
-    ],
-)

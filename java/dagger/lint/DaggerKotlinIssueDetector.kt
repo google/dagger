@@ -85,7 +85,7 @@ class DaggerKotlinIssueDetector : Detector(), SourceCodeScanner {
       explanation =
         """
         It's redundant to annotate @Provides functions in object classes with @JvmStatic.
-        """.trimIndent(),
+        """,
       category = Category.CORRECTNESS,
       priority = 5,
       severity = Severity.WARNING,
@@ -98,7 +98,7 @@ class DaggerKotlinIssueDetector : Detector(), SourceCodeScanner {
       explanation =
         """
         It's redundant to use 'field:' site-targets for qualifier annotations.
-        """.trimIndent(),
+        """,
       category = Category.CORRECTNESS,
       priority = 5,
       severity = Severity.WARNING,
@@ -111,7 +111,7 @@ class DaggerKotlinIssueDetector : Detector(), SourceCodeScanner {
       explanation =
         """
         Companion objects in @Module-annotated classes are considered part of the API.
-        """.trimIndent(),
+        """,
       category = Category.CORRECTNESS,
       priority = 5,
       severity = Severity.WARNING,
@@ -127,7 +127,7 @@ class DaggerKotlinIssueDetector : Detector(), SourceCodeScanner {
         companion object is not a companion to an @Module-annotated class though, and should be
         moved to a top-level object declaration instead otherwise Dagger will ignore companion
         object.
-        """.trimIndent(),
+        """,
       category = Category.CORRECTNESS,
       priority = 5,
       severity = Severity.WARNING,

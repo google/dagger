@@ -37,7 +37,7 @@ before_install:
   - export PATH="${PWD}/travis_bin:${PATH}"
 
 script:
-  - bazel test --test_output errors //...
+  - util/run-local-tests.sh --test_output=errors
 
 env:
   global:

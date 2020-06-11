@@ -102,7 +102,7 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
 
         android {
           compileSdkVersion 29
-          buildToolsVersion "29.0.3"
+          buildToolsVersion "29.0.2"
 
           defaultConfig {
             applicationId "plugin.test"

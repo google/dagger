@@ -40,9 +40,9 @@ Dagger is built with [`bazel`](https://bazel.build).
             [download](https://developer.android.com/studio#command-tools)
             and unzip it first.
         *   Install the necessary components. For example, under Linux, run:
-            `$ANDROID_HOME/tools/bin/sdkmanager "platforms;android-29" "build-tools;29.0.3"`
+            `$ANDROID_HOME/tools/bin/sdkmanager "platforms;android-29" "build-tools;29.0.2"`
             *   If you skip this step, you will see an error similar to
-                `ERROR: missing input file '@androidsdk//:build-tools/29.0.3/aapt'`.
+                `ERROR: missing input file '@androidsdk//:build-tools/29.0.2/aapt'`.
             *   You may also need to run `bazel sync`.
 *   Run tests with `bazel test <target>`, or `bazel test //...` to run all
     tests.

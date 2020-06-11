@@ -19,7 +19,7 @@ android:
   components:
     - tools
     - tools # Duplicated as per https://github.com/travis-ci/travis-ci/issues/6040#issuecomment-219367943
-    - build-tools-29.0.2
+    - build-tools-29.0.3
     - android-29
     - platform-tools
     - extra-android-m2repository

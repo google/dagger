@@ -34,7 +34,7 @@ load("@dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
 android_sdk_repository(
     name = "androidsdk",
     api_level = 29,
-    build_tools_version = "29.0.2",
+    build_tools_version = "29.0.3",
 )
 
 #############################

@@ -14,7 +14,7 @@ pushd examples/maven && mvn compile && popd
 
 # Also run the gradle examples on the local maven snapshots.
 readonly _SIMPLE_EXAMPLE_DIR=java/dagger/example/gradle/simple
-readonly _ANDROID_EXAMPLE_DIR=java/dagger/example/gradle/android/simple/app
+readonly _ANDROID_EXAMPLE_DIR=java/dagger/example/gradle/android/simple
 ./$_SIMPLE_EXAMPLE_DIR/gradlew -p $_SIMPLE_EXAMPLE_DIR build --no-daemon --stacktrace
 ./$_ANDROID_EXAMPLE_DIR/gradlew -p $_ANDROID_EXAMPLE_DIR build --no-daemon --stacktrace
 

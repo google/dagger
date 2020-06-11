@@ -87,6 +87,12 @@ android {
 }
 ```
 
+**Warning:** The Hilt Gradle plugin sets annotation processor arguments. If you
+are using other libraries that require annotation processor arguments, make sure
+you are adding arguments instead of overriding them. See
+[below](#applying-other-processor-arguments) for an example.
+{: .c-callouts__warning }
+
 ### Why use the plugin?
 
 One of the main benefits of the Gradle plugin is that it makes using
@@ -135,3 +141,24 @@ hilt {
     enableTransformForLocalTests = true
 }
 ```
+
+### Applying other processor arguments {#applying-other-processor-arguments}
+
+The Hilt Gradle plugin sets annotation processor arguments. If you are using
+other libraries that require annotation processor arguments, make sure you are
+adding arguments instead of overriding them.
+
+For example, the following notably uses `+=` to avoid overriding the Hilt
+arguments.
+
+```groovy
+javaCompileOptions {
+  annotationProcessorOptions {
+    arguments += ["foo" : "bar"]
+  }
+}
+```
+
+If the `+` is missing and `arguments` are overridden, it is likely Hilt will
+fail to compile with errors like the following: `Expected @HiltAndroidApp to
+have a value. Did you forget to apply the Gradle Plugin?`

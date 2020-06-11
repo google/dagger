@@ -19,8 +19,12 @@ android:
   components:
     - tools
     - tools # Duplicated as per https://github.com/travis-ci/travis-ci/issues/6040#issuecomment-219367943
+    # Bazel:
     - build-tools-29.0.2
     - android-29
+    # Gradle (at least 5.4.1):
+    - build-tools-28.0.3
+    - android-28
     - platform-tools
     - extra-android-m2repository
 

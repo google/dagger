@@ -94,7 +94,10 @@ First, we should install all of the modules into the `ApplicationComponent`.
 This can be done by annotating each module currently installed in your component
 with `@InstallIn(ApplicationComponent.class)`. If there are a lot of modules,
 instead of changing all of those now, you can create and install a single
-aggregator `@Module` class that includes all of the current modules.
+aggregator `@Module` class that includes all of the current modules. This is
+just a temporary solution, however, since in order to take full advantage of
+Hilt features like [uninstalling modules](testing.md#uninstall-modules), you
+will need to break up the aggregator module in the future.
 
 <div class="c-codeselector__button c-codeselector__button_java">Java</div>
 <div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>

@@ -114,7 +114,7 @@ public class AggregatedDepsProcessorErrorsTest {
 
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("foo.bar.FooModule must also be annotated with @InstallIn")
+        .hadErrorContaining("foo.bar.FooModule is missing an @InstallIn annotation")
         .inFile(source)
         .onLine(6);
   }
@@ -144,7 +144,7 @@ public class AggregatedDepsProcessorErrorsTest {
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
-        .hadErrorContaining("foo.bar.FooModule must also be annotated with @InstallIn")
+        .hadErrorContaining("foo.bar.FooModule is missing an @InstallIn annotation")
         .inFile(source)
         .onLine(8);
   }

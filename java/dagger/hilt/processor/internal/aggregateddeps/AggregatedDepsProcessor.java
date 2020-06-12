@@ -125,7 +125,8 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
             || isDaggerGeneratedModule(element)
             || installInCheckDisabled(element),
         element,
-        "%s must also be annotated with @InstallIn.",
+        "%s is missing an @InstallIn annotation. If this was intentional, see "
+        + "https://dagger.dev/hilt/compiler-options#disable-install-in-check for how to disable this check.",
         element);
 
     if (isModule && hasInstallIn) {

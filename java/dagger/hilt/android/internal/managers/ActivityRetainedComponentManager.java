@@ -22,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.activity.ComponentActivity;
 import dagger.hilt.EntryPoint;
+import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ActivityRetainedComponent;
 import dagger.hilt.android.components.ApplicationComponent;
@@ -65,9 +66,8 @@ final class ActivityRetainedComponentManager
               @SuppressWarnings("unchecked")
               public <T extends ViewModel> T create(@NonNull Class<T> aClass) {
                 ActivityRetainedComponent component =
-                    ((GeneratedComponentManager<LifecycleComponentBuilderEntryPoint>)
-                            activity.getApplication())
-                        .generatedComponent()
+                    EntryPoints.get(
+                            activity.getApplication(), LifecycleComponentBuilderEntryPoint.class)
                         .retainedComponentBuilder()
                         .build();
                 return (T) new ActivityRetainedComponentViewModel(component);

@@ -23,6 +23,7 @@ import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import dagger.hilt.EntryPoint;
+import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.internal.builders.FragmentComponentBuilder;
@@ -67,7 +68,6 @@ public class FragmentComponentManager implements GeneratedComponentManager<Objec
     return component;
   }
 
-  @SuppressWarnings("unchecked")
   private Object createComponent() {
     Preconditions.checkNotNull(
         fragment.getHost(),
@@ -79,8 +79,7 @@ public class FragmentComponentManager implements GeneratedComponentManager<Objec
 
     validate(fragment);
 
-    return ((GeneratedComponentManager<FragmentComponentBuilderEntryPoint>) fragment.getHost())
-        .generatedComponent()
+    return EntryPoints.get(fragment.getHost(), FragmentComponentBuilderEntryPoint.class)
         .fragmentComponentBuilder()
         .fragment(fragment)
         .build();

@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.app.Application;
 import androidx.activity.ComponentActivity;
 import dagger.hilt.EntryPoint;
+import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ActivityRetainedComponent;
 import dagger.hilt.android.internal.builders.ActivityComponentBuilder;
@@ -82,8 +83,8 @@ public class ActivityComponentManager implements GeneratedComponentManager<Objec
               + activity.getApplication().getClass());
     }
 
-    return ((ActivityComponentBuilderEntryPoint)
-            activityRetainedComponentManager.generatedComponent())
+    return EntryPoints.get(
+            activityRetainedComponentManager, ActivityComponentBuilderEntryPoint.class)
         .activityComponentBuilder()
         .activity(activity)
         .build();

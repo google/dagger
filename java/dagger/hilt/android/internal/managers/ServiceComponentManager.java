@@ -19,6 +19,7 @@ package dagger.hilt.android.internal.managers;
 import android.app.Application;
 import android.app.Service;
 import dagger.hilt.EntryPoint;
+import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.internal.builders.ServiceComponentBuilder;
@@ -59,7 +60,6 @@ public final class ServiceComponentManager implements GeneratedComponentManager<
     return component;
   }
 
-  @SuppressWarnings("unchecked") // Hilt ensures the component extends the interfaces
   private Object createComponent() {
     Application application = service.getApplication();
     Preconditions.checkState(
@@ -67,8 +67,7 @@ public final class ServiceComponentManager implements GeneratedComponentManager<
         "Hilt service must be attached to an @AndroidEntryPoint Application. Found: %s",
         application.getClass());
 
-    return ((GeneratedComponentManager<ServiceComponentBuilderEntryPoint>) application)
-        .generatedComponent()
+    return EntryPoints.get(application, ServiceComponentBuilderEntryPoint.class)
         .serviceComponentBuilder()
         .service(service)
         .build();

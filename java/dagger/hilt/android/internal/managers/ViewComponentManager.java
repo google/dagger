@@ -22,6 +22,7 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import dagger.hilt.EntryPoint;
+import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.components.FragmentComponent;
@@ -80,12 +81,12 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
     GeneratedComponentManager<?> componentManager =
         getParentComponentManager(/*allowMissing=*/ false);
     if (hasFragmentBindings) {
-      return ((ViewWithFragmentComponentBuilderEntryPoint) componentManager.generatedComponent())
+      return EntryPoints.get(componentManager, ViewWithFragmentComponentBuilderEntryPoint.class)
           .viewWithFragmentComponentBuilder()
           .view(view)
           .build();
     } else {
-      return ((ViewComponentBuilderEntryPoint) componentManager.generatedComponent())
+      return EntryPoints.get(componentManager, ViewComponentBuilderEntryPoint.class)
           .viewComponentBuilder()
           .view(view)
           .build();

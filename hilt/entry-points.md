@@ -138,7 +138,7 @@ class MyClass : NonHiltLibraryClass() {
   }
 
   fun doSomething(context: Context) {
-    MyClassInterface myClassInterface =
+    val myClassInterface =
         EntryPoints.get(applicationContext, MyClassInterface::class.java)
     val foo = myClassInterface.getFoo()
     val bar = myClassInterface.getBar()

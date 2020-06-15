@@ -126,7 +126,7 @@ public final MyClass extends NonHiltLibraryClass {
 ```
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
-// No @Inject because this isn't instantiated in a Dagger context public 
+// No @Inject because this isn't instantiated in a Dagger context public
 class MyClass : NonHiltLibraryClass() {
 
   @EntryPoint
@@ -138,7 +138,7 @@ class MyClass : NonHiltLibraryClass() {
   }
 
   fun doSomething(context: Context) {
-    MyClassInterface myClassInterface =
+    val myClassInterface =
         EntryPoints.get(applicationContext, MyClassInterface::class.java)
     val foo = myClassInterface.getFoo()
     val bar = myClassInterface.getBar()

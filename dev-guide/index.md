@@ -46,7 +46,7 @@ Gregory Kick.
 
 We'll demonstrate dependency injection and Dagger by building a coffee maker.
 For complete sample code that you can compile and run, see Dagger's
-[coffee example][CoffeeMaker example].
+[coffee example](https://github.com/google/dagger/tree/master/examples/maven/coffee/src/main/java/example/dagger).
 
 ### Declaring Dependencies
 
@@ -117,33 +117,45 @@ For example, `provideHeater()` is invoked whenever a `Heater` is required:
 }
 ```
 
-It's possible for `@Provides` methods to have dependencies of their own. This
-one returns a `Thermosiphon` whenever a `Pump` is required:
+It's also possible for `@Provides` methods to have dependencies of their own.
+For example, since `ElectricHeater` has an `@Inject` constructor, the above
+method could be written instead as:
 
 ```java
-@Provides static Pump providePump(Thermosiphon pump) {
-  return pump;
+@Provides static Heater provideHeater(ElectricHeater heater) {
+  return heater;
 }
 ```
 
-All `@Provides` methods must belong to a module. These are just classes that
-have an [`@Module`][Module] annotation.
+This way Dagger takes care of instantiating `ElectricHeater`, and the
+`@Provides` method is only used to alias it to the type `Heater`.
+
+In this particular case, we can simplify things further using an `@Binds`
+method to define the alias. Unlike `@Provides`, an `@Binds` method is abstract,
+and has no implementation:
+
+```java
+@Binds abstract Heater bindHeater(ElectricHeater impl);
+```
+
+**Note**: Using `@Binds` is the preferred way to define an alias because Dagger only
+needs the module at compile time, and can avoid class loading the module at
+runtime.
+{: .c-callouts__note }
+
+Finally, all `@Provides` methods must belong to a module. These are just classes
+that have an [`@Module`][Module] annotation.
 
 ```java
 @Module
-class DripCoffeeModule {
-  @Provides static Heater provideHeater() {
-    return new ElectricHeater();
-  }
-
-  @Provides static Pump providePump(Thermosiphon pump) {
-    return pump;
-  }
+interface HeaterModule {
+  @Binds abstract Heater bindHeater(ElectricHeater impl);
 }
 ```
 
-By convention, `@Provides` methods are named with a `provide` prefix and module
-classes are named with a `Module` suffix.
+By convention, `@Provides` methods are named with a `provide` prefix, `@Binds`
+methods are named with `bind` prefix and module classes are named with a
+`Module` suffix.
 
 ### Building the Graph
 
@@ -602,7 +614,6 @@ limitations under the License.
 [`@BindsOptionalOf`]: https://dagger.dev/api/latest/dagger/BindsOptionalOf.html
 [BindsInstance]: https://dagger.dev/api/latest/dagger/BindsInstance.html
 [Builder Pattern]: http://en.wikipedia.org/wiki/Builder_pattern
-[CoffeeMaker Example]: https://github.com/google/dagger/tree/master/examples/simple/src/main/java/coffee
 [Component#dependencies]: https://dagger.dev/api/latest/dagger/Component.html#dependencies--
 [Component#provision-methods]: https://dagger.dev/api/latest/dagger/Component.html#provision-methods
 [Component]: https://dagger.dev/api/latest/dagger/Component.html

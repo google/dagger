@@ -463,6 +463,25 @@ When you have migrated all of the other dagger.android usages and are ready to
 remove this code, simply extend from `Application` and remove the overridden
 methods and the `DispatchingAndroidInjector` classes.
 
+You will also need to install `AndroidInjectionModule` and `AndroidSupportInjectionModule` to make dagger.android work.
+
+<div class="c-codeselector__button c-codeselector__button_java">Java</div>
+<div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
+```java
+@InstallIn(ApplicationComponent.class)
+@Module(includes = {AndroidInjectionModule.class, AndroidSupportInjectionModule.class})
+public interface DaggerAndroidModule {
+}
+```
+{: .c-codeselector__code .c-codeselector__code_java }
+```kotlin
+@InstallIn(ApplicationComponent::class)
+@Module(includes = [AndroidInjectionModule::class, AndroidSupportInjectionModule::class])
+interface DaggerAndroidModule
+```
+{: .c-codeselector__code .c-codeselector__code_kotlin }
+
+
 ### Check your build
 
 You should be able to stop and build/run your app successfully at this point.

@@ -28,7 +28,6 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
-import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
@@ -154,11 +153,10 @@ public final class ApplicationGenerator {
         .add("// This is a known unsafe cast, but is safe in the only correct use case:\n")
         .add("// $T extends $T\n", metadata.elementClassName(), metadata.generatedClassName())
         .addStatement(
-            "(($T) generatedComponent()).$L($T.<$T>unsafeCast(this))",
+            "(($T) generatedComponent()).$L($L)",
             metadata.injectorClassName(),
             metadata.injectMethodName(),
-            ClassNames.UNSAFE_CASTS,
-            metadata.elementClassName())
+            Generators.unsafeCastThisTo(metadata.elementClassName()))
         .build();
   }
 }

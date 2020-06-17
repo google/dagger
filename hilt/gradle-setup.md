@@ -93,7 +93,7 @@ you are adding arguments instead of overriding them. See
 [below](#applying-other-processor-arguments) for an example.
 {: .c-callouts__warning }
 
-### Why use the plugin?
+### Why use the plugin? {#why-use-the-plugin}
 
 One of the main benefits of the Gradle plugin is that it makes using
 `@AndroidEntryPoint` and `@HiltAndroidApp` easier. Without the Gradle plugin,

@@ -160,7 +160,7 @@ final class Generators {
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .returns(TypeName.OBJECT)
-                .addStatement("return componentManager().generatedComponent()")
+                .addStatement("return $L.generatedComponent()", componentManagerCallBlock(metadata))
                 .build());
   }
 
@@ -314,8 +314,13 @@ final class Generators {
         if (metadata.overridesAndroidEntryPointClass()) {
           typeSpecBuilder.addField(injectedField(metadata));
 
+          // Only add @Override if an ancestor extends a generated Hilt class.
+          // When using bytecode injection, this isn't always guaranteed.
+          if (ancestorExtendsGeneratedHiltClass(metadata)) {
+            methodSpecBuilder.addAnnotation(Override.class);
+          }
+
           methodSpecBuilder
-              .addAnnotation(Override.class)
               .beginControlFlow("if (!injected)")
               .addStatement("injected = true");
         } else if (metadata.allowsOptionalInjection()) {
@@ -323,11 +328,11 @@ final class Generators {
           methodSpecBuilder.addStatement("injected = true");
         }
         methodSpecBuilder.addStatement(
-            "(($T) generatedComponent()).$L($T.<$T>unsafeCast(this))",
+            "(($T) $L).$L($L)",
             metadata.injectorClassName(),
+            generatedComponentCallBlock(metadata),
             metadata.injectMethodName(),
-            ClassNames.UNSAFE_CASTS,
-            metadata.elementClassName());
+            unsafeCastThisTo(metadata.elementClassName()));
         if (metadata.overridesAndroidEntryPointClass()) {
           methodSpecBuilder.endControlFlow();
         }
@@ -342,12 +347,11 @@ final class Generators {
             .beginControlFlow("synchronized (injectedLock)")
             .beginControlFlow("if (!injected)")
             .addStatement(
-                "(($T) $T.generatedComponent(context)).$L($T.<$T>unsafeCast(this))",
+                "(($T) $T.generatedComponent(context)).$L($L)",
                 metadata.injectorClassName(),
                 metadata.componentManager(),
                 metadata.injectMethodName(),
-                ClassNames.UNSAFE_CASTS,
-                metadata.elementClassName())
+                unsafeCastThisTo(metadata.elementClassName()))
             .addStatement("injected = true")
             .endControlFlow()
             .endControlFlow()
@@ -389,14 +393,56 @@ final class Generators {
         return CodeBlock.of("getHost()");
       case VIEW:
         return CodeBlock.of(
-            "componentManager().maybeGetParentComponentManager()",
-            metadata.componentManagerParam());
+            "$L.maybeGetParentComponentManager()", componentManagerCallBlock(metadata));
       case BROADCAST_RECEIVER:
         // Broadcast receivers receive a "context" parameter
         return CodeBlock.of("context.getApplicationContext()");
       default:
         throw new AssertionError();
     }
+  }
+
+  /**
+   * Returns the call to {@code generatedComponent()} with casts if needed.
+   *
+   * <p>A cast is required when the root generated Hilt class uses bytecode injection because
+   * subclasses won't have access to the {@code generatedComponent()} method in that case.
+   */
+  private static CodeBlock generatedComponentCallBlock(AndroidEntryPointMetadata metadata) {
+    return CodeBlock.of(
+        "$L.generatedComponent()",
+        metadata.rootMetadata().requiresBytecodeInjection()
+            ? unsafeCastThisTo(metadata.rootMetadata().generatedClassName())
+            : "this");
+  }
+
+  /**
+   * Returns the call to {@code componentManager()} with casts if needed.
+   *
+   * <p>A cast is required when the root generated Hilt class uses bytecode injection because
+   * subclasses won't have access to the {@code componentManager()} method in that case.
+   */
+  private static CodeBlock componentManagerCallBlock(AndroidEntryPointMetadata metadata) {
+    return CodeBlock.of(
+        "$L.componentManager()",
+        metadata.rootMetadata().requiresBytecodeInjection()
+            ? unsafeCastThisTo(metadata.rootMetadata().generatedClassName())
+            : "this");
+  }
+
+  static CodeBlock unsafeCastThisTo(ClassName castType) {
+    return CodeBlock.of("$T.<$T>unsafeCast(this)", ClassNames.UNSAFE_CASTS, castType);
+  }
+
+  /** Returns {@code true} if the an ancestor annotated class extends the generated class */
+  private static boolean ancestorExtendsGeneratedHiltClass(AndroidEntryPointMetadata metadata) {
+    while (metadata.baseMetadata().isPresent()) {
+      metadata = metadata.baseMetadata().get();
+      if (!metadata.requiresBytecodeInjection()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // private boolean injected = false;

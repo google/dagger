@@ -22,6 +22,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -61,6 +62,9 @@ public abstract class AndroidEntryPointMetadata {
   /** The name of the generated base class, beginning with 'Hilt_'. */
   public abstract ClassName generatedClassName();
 
+  /** Returns {@code true} if the class requires bytecode injection to replace the base class. */
+  public abstract boolean requiresBytecodeInjection();
+
   /** Returns the {@link AndroidType} for the annotated element. */
   public abstract AndroidType androidType();
 
@@ -75,6 +79,16 @@ public abstract class AndroidEntryPointMetadata {
 
   /** Returns the initialization arguments for the component manager. */
   public abstract Optional<CodeBlock> componentManagerInitArgs();
+
+  /**
+   * Returns the metadata for the root most class in the hierarchy.
+   *
+   * <p>If this is the only metadata in the class hierarchy, it returns this.
+   */
+  @Memoized
+  public AndroidEntryPointMetadata rootMetadata() {
+    return baseMetadata().map(AndroidEntryPointMetadata::rootMetadata).orElse(this);
+  }
 
   /** Returns true if this class allows optional injection. */
   public boolean allowsOptionalInjection() {
@@ -149,8 +163,7 @@ public abstract class AndroidEntryPointMetadata {
 
   private static ImmutableSet<? extends AnnotationMirror> hiltAnnotations(Element element) {
     return element.getAnnotationMirrors().stream()
-        .filter(
-            mirror -> HILT_ANNOTATION_NAMES.contains(ClassName.get(mirror.getAnnotationType())))
+        .filter(mirror -> HILT_ANNOTATION_NAMES.contains(ClassName.get(mirror.getAnnotationType())))
         .collect(toImmutableSet());
   }
 
@@ -170,6 +183,7 @@ public abstract class AndroidEntryPointMetadata {
       TypeElement element,
       TypeElement baseElement,
       ClassName generatedClassName,
+      boolean requiresBytecodeInjection,
       AndroidType androidType,
       Optional<AndroidEntryPointMetadata> baseMetadata,
       ImmutableSet<ClassName> installInComponents,
@@ -179,6 +193,7 @@ public abstract class AndroidEntryPointMetadata {
         element,
         baseElement,
         generatedClassName,
+        requiresBytecodeInjection,
         androidType,
         baseMetadata,
         installInComponents,
@@ -201,8 +216,7 @@ public abstract class AndroidEntryPointMetadata {
         hiltAnnotations);
     ClassName annotationClassName =
         ClassName.get(
-            MoreTypes.asTypeElement(
-                Iterables.getOnlyElement(hiltAnnotations).getAnnotationType()));
+            MoreTypes.asTypeElement(Iterables.getOnlyElement(hiltAnnotations).getAnnotationType()));
 
     ProcessorErrors.checkState(
         element.getKind() == ElementKind.CLASS,
@@ -218,8 +232,10 @@ public abstract class AndroidEntryPointMetadata {
             "value");
     final TypeElement baseElement;
     final ClassName generatedClassName;
-    if (DISABLE_ANDROID_SUPERCLASS_VALIDATION.get(env)
-        && MoreTypes.isTypeOf(Void.class, androidEntryPointClassValue.asType())) {
+    boolean requiresBytecodeInjection =
+        DISABLE_ANDROID_SUPERCLASS_VALIDATION.get(env)
+            && MoreTypes.isTypeOf(Void.class, androidEntryPointClassValue.asType());
+    if (requiresBytecodeInjection) {
       baseElement = MoreElements.asType(env.getTypeUtils().asElement(androidEntryPointElement.getSuperclass()));
       // If this AndroidEntryPoint is a Kotlin class and its base type is also Kotlin and has
       // default values declared in its constructor then error out because for the short-form
@@ -249,7 +265,10 @@ public abstract class AndroidEntryPointMetadata {
 
       // Check that the root $CLASS extends Hilt_$CLASS
       String extendsName =
-          env.getTypeUtils().asElement(androidEntryPointElement.getSuperclass()).getSimpleName().toString();
+          env.getTypeUtils()
+              .asElement(androidEntryPointElement.getSuperclass())
+              .getSimpleName()
+              .toString();
       generatedClassName = generatedClassName(androidEntryPointElement);
       ProcessorErrors.checkState(
           extendsName.contentEquals(generatedClassName.simpleName()),
@@ -268,6 +287,7 @@ public abstract class AndroidEntryPointMetadata {
           androidEntryPointElement,
           baseElement,
           generatedClassName,
+          requiresBytecodeInjection,
           baseMetadata.get().androidType(),
           baseMetadata,
           baseMetadata.get().installInComponents(),
@@ -279,6 +299,7 @@ public abstract class AndroidEntryPointMetadata {
           androidEntryPointElement,
           baseElement,
           generatedClassName,
+          requiresBytecodeInjection,
           type.androidType,
           Optional.empty(),
           ImmutableSet.of(type.component),
@@ -307,8 +328,7 @@ public abstract class AndroidEntryPointMetadata {
     // None type is returned if this is an interface or Object
     if (superClass.getKind() != TypeKind.NONE && superClass.getKind() != TypeKind.ERROR) {
       Preconditions.checkState(superClass.getKind() == TypeKind.DECLARED);
-      return baseMetadata(
-          env, element, MoreTypes.asTypeElement(superClass), inheritanceTrace);
+      return baseMetadata(env, element, MoreTypes.asTypeElement(superClass), inheritanceTrace);
     }
 
     return Optional.empty();
@@ -453,7 +473,7 @@ public abstract class AndroidEntryPointMetadata {
       }
       throw new BadInputException(
           "@AndroidEntryPoint base class must extend ComponentActivity, (support) Fragment, "
-          + "View, Service, or BroadcastReceiver.",
+              + "View, Service, or BroadcastReceiver.",
           element);
     }
   }
@@ -482,7 +502,7 @@ public abstract class AndroidEntryPointMetadata {
         isBaseAnnotated
             ? "Classes that extend an @%1$s base class must also be annotated @%1$s"
             : "Classes that extend a @AndroidEntryPoint base class must not use @%1$s when the "
-                + "base class "
+                    + "base class "
                 + "does not use @%1$s",
         annotationName.simpleName());
   }

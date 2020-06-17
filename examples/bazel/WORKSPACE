@@ -25,7 +25,13 @@ local_repository(
     path = "../../",
 )
 
-load("@dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
+load(
+    "@dagger//:workspace_defs.bzl",
+    "DAGGER_ARTIFACTS",
+    "DAGGER_REPOSITORIES",
+    "HILT_ANDROID_ARTIFACTS",
+    "HILT_ANDROID_REPOSITORIES",
+)
 
 #########################
 # Load Android repository
@@ -71,7 +77,7 @@ http_archive(
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 maven_install(
-    artifacts = DAGGER_ARTIFACTS + [
+    artifacts = DAGGER_ARTIFACTS + HILT_ANDROID_ARTIFACTS + [
         "androidx.test.ext:junit:1.1.1",
         "androidx.test:runner:1.1.1",
         "com.google.truth:truth:1.0.1",
@@ -79,5 +85,5 @@ maven_install(
         "org.robolectric:robolectric:4.1",
         "org.robolectric:annotations:4.1",
     ],
-    repositories = DAGGER_REPOSITORIES,
+    repositories = DAGGER_REPOSITORIES + HILT_ANDROID_REPOSITORIES,
 )

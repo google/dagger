@@ -15,6 +15,8 @@
 # Description:
 #   Dagger Bazel examples
 
-load("@dagger//:workspace_defs.bzl", "dagger_rules")
+load("@dagger//:workspace_defs.bzl", "dagger_rules", "hilt_android_rules")
 
 dagger_rules()
+
+hilt_android_rules()

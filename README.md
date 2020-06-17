@@ -27,12 +27,8 @@ mailing list.
 
 ### Bazel
 
-If you build with `bazel`, you will need to configure your top-level workspace
-to access Dagger/Hilt targets that export the proper dependencies and plugins.
-
 First, import the Dagger repository into your `WORKSPACE` file using
-[`http_archive`][bazel-external-deps], load the `DAGGER_ARTIFACTS` and
-`DAGGER_REPOSITORIES`, and add them to your list of [`maven_install`] artifacts.
+[`http_archive`][bazel-external-deps].
 
 Note: The `http_archive` must point to a tagged release of Dagger, not just any
 commit. The version of the Dagger artifacts will match the version of the tagged
@@ -45,6 +41,18 @@ http_archive(
     name = "dagger",
     urls = ["https://github.com/google/dagger/archive/dagger-<version>.zip"],
 )
+```
+
+Next you will need to setup targets that export the proper dependencies
+and plugins. Follow the sections below to setup the dependencies you need.
+
+#### Dagger Setup
+
+First, load the Dagger artifacts and repositories, and add them to your list of
+[`maven_install`] artifacts.
+
+```python
+# Top-level WORKSPACE file
 
 load("@dagger//:workspace_defs.bzl", "DAGGER_ARTIFACTS", "DAGGER_REPOSITORIES")
 
@@ -54,7 +62,8 @@ maven_install(
 )
 ```
 
-Next, load and call `dagger_rules` in your top-level `BUILD` file:
+Next, load and call [`dagger_rules`](https://github.com/google/dagger/blob/master/workspace_defs.bzl)
+in your top-level `BUILD` file:
 
 ```python
 # Top-level BUILD file
@@ -64,7 +73,7 @@ load("@dagger//:workspace_defs.bzl", "dagger_rules")
 dagger_rules()
 ```
 
-This will setup Dagger and Hilt build targets of the form `:<artifact_id>`.
+This will add the following Dagger build targets:
 (Note that these targets already export all of the dependencies and processors
 they need).
 
@@ -73,8 +82,88 @@ deps = [
     ":dagger",                  # For Dagger
     ":dagger-spi",              # For Dagger SPI
     ":dagger-producers",        # For Dagger Producers
+]
+```
+
+#### Dagger Android Setup
+
+First, load the Dagger Android artifacts and repositories, and add them to your
+list of [`maven_install`] artifacts.
+
+```python
+# Top-level WORKSPACE file
+
+load(
+    "@dagger//:workspace_defs.bzl",
+    "DAGGER_ANDROID_ARTIFACTS",
+    "DAGGER_ANDROID_REPOSITORIES"
+)
+
+maven_install(
+    artifacts = DAGGER_ANDROID_ARTIFACTS + [...],
+    repositories = DAGGER_ANDROID_REPOSITORIES + [...],
+)
+```
+
+Next, load and call [`dagger_android_rules`](https://github.com/google/dagger/blob/master/workspace_defs.bzl)
+in your top-level `BUILD` file:
+
+```python
+# Top-level BUILD file
+
+load("@dagger//:workspace_defs.bzl", "dagger_android_rules")
+
+dagger_android_rules()
+```
+
+This will add the following Dagger Android build targets:
+(Note that these targets already export all of the dependencies and processors
+they need).
+
+```python
+deps = [
     ":dagger-android",          # For Dagger Android
     ":dagger-android-support",  # For Dagger Android (Support)
+]
+```
+
+#### Hilt Android Setup
+
+First, load the Hilt Android artifacts and repositories, and add them to your
+list of [`maven_install`] artifacts.
+
+```python
+# Top-level WORKSPACE file
+
+load(
+    "@dagger//:workspace_defs.bzl",
+    "HILT_ANDROID_ARTIFACTS",
+    "HILT_ANDROID_REPOSITORIES"
+)
+
+maven_install(
+    artifacts = HILT_ANDROID_ARTIFACTS + [...],
+    repositories = HILT_ANDROID_REPOSITORIES + [...],
+)
+```
+
+Next, load and call [`hilt_android_rules`](https://github.com/google/dagger/blob/master/workspace_defs.bzl)
+in your top-level `BUILD` file:
+
+```python
+# Top-level BUILD file
+
+load("@dagger//:workspace_defs.bzl", "hilt_android_rules")
+
+hilt_android_rules()
+```
+
+This will add the following Hilt Android build targets:
+(Note that these targets already export all of the dependencies and processors
+they need).
+
+```python
+deps = [
     ":hilt-android",            # For Hilt Android
     ":hilt-android-testing",    # For Hilt Android Testing
 ]

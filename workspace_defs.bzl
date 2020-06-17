@@ -20,16 +20,24 @@ _DAGGER_VERSION = POM_VERSION
 _HILT_VERSION = POM_VERSION_ALPHA
 
 DAGGER_ARTIFACTS = [
+    "com.google.dagger:dagger:" + _DAGGER_VERSION,
+    "com.google.dagger:dagger-compiler:" + _DAGGER_VERSION,
+    "com.google.dagger:dagger-producers:" + _DAGGER_VERSION,
+    "com.google.dagger:dagger-spi:" + _DAGGER_VERSION,
+]
+
+DAGGER_ANDROID_ARTIFACTS = [
+    "com.google.dagger:dagger-android-processor:" + _DAGGER_VERSION,
+    "com.google.dagger:dagger-android-support:" + _DAGGER_VERSION,
+    "com.google.dagger:dagger-android:" + _DAGGER_VERSION,
+]
+
+HILT_ANDROID_ARTIFACTS = [
     "androidx.test:core:1.1.0",  # Export for ApplicationProvider
     "javax.annotation:jsr250-api:1.0",  # Export for @Generated
     "androidx.annotation:annotation:1.1.0",  # Export for @CallSuper/@Nullable
     "com.google.dagger:dagger:" + _DAGGER_VERSION,
     "com.google.dagger:dagger-compiler:" + _DAGGER_VERSION,
-    "com.google.dagger:dagger-android-processor:" + _DAGGER_VERSION,
-    "com.google.dagger:dagger-android-support:" + _DAGGER_VERSION,
-    "com.google.dagger:dagger-android:" + _DAGGER_VERSION,
-    "com.google.dagger:dagger-producers:" + _DAGGER_VERSION,
-    "com.google.dagger:dagger-spi:" + _DAGGER_VERSION,
     "com.google.dagger:hilt-android:" + _HILT_VERSION,
     "com.google.dagger:hilt-android-testing:" + _HILT_VERSION,
     "com.google.dagger:hilt-android-compiler:" + _HILT_VERSION,
@@ -40,6 +48,10 @@ DAGGER_REPOSITORIES = [
     "https://repo1.maven.org/maven2",
 ]
 
+DAGGER_ANDROID_REPOSITORIES = DAGGER_REPOSITORIES
+
+HILT_ANDROID_REPOSITORIES = DAGGER_REPOSITORIES
+
 # https://github.com/bazelbuild/buildtools/blob/master/WARNINGS.md#unnamed-macro
 # buildifier: disable=unnamed-macro
 def dagger_rules(repo_name = "@maven"):
@@ -48,7 +60,7 @@ def dagger_rules(repo_name = "@maven"):
     The targets will be of the form ":<artifact-id>".
 
     Args:
-          repo_name: The name of the dependency repository (default is "@maven").
+      repo_name: The name of the dependency repository (default is "@maven").
     """
     native.java_library(
         name = "dagger",
@@ -68,6 +80,34 @@ def dagger_rules(repo_name = "@maven"):
             "%s//:com_google_dagger_dagger_compiler" % repo_name,
         ],
     )
+
+    native.java_library(
+        name = "dagger-producers",
+        visibility = ["//visibility:public"],
+        exports = [
+            ":dagger",
+            "%s//:com_google_dagger_dagger_producers" % repo_name,
+        ],
+    )
+
+    native.java_library(
+        name = "dagger-spi",
+        visibility = ["//visibility:public"],
+        exports = [
+            "%s//:com_google_dagger_dagger_spi" % repo_name,
+        ],
+    )
+
+# https://github.com/bazelbuild/buildtools/blob/master/WARNINGS.md#unnamed-macro
+# buildifier: disable=unnamed-macro
+def dagger_android_rules(repo_name = "@maven"):
+    """Defines the Dagger Android targets with proper exported dependencies and plugins.
+
+    The targets will be of the form ":<artifact-id>".
+
+    Args:
+      repo_name: The name of the dependency repository (default is "@maven").
+    """
 
     # https://github.com/bazelbuild/buildtools/blob/master/WARNINGS.md#native-android
     # buildifier: disable=native-android
@@ -101,28 +141,23 @@ def dagger_rules(repo_name = "@maven"):
         ],
     )
 
-    native.java_library(
-        name = "dagger-producers",
-        visibility = ["//visibility:public"],
-        exports = [
-            ":dagger",
-            "%s//:com_google_dagger_dagger_producers" % repo_name,
-        ],
-    )
+# https://github.com/bazelbuild/buildtools/blob/master/WARNINGS.md#unnamed-macro
+# buildifier: disable=unnamed-macro
+def hilt_android_rules(repo_name = "@maven"):
+    """Defines the Hilt Android targets with proper exported dependencies and plugins.
 
-    native.java_library(
-        name = "dagger-spi",
-        visibility = ["//visibility:public"],
-        exports = [
-            "%s//:com_google_dagger_dagger_spi" % repo_name,
-        ],
-    )
+    The targets will be of the form ":<artifact-id>".
+
+    Args:
+      repo_name: The name of the dependency repository (default is "@maven").
+    """
 
     # https://github.com/bazelbuild/buildtools/blob/master/WARNINGS.md#native-android
     # buildifier: disable=native-android
     native.android_library(
         name = "hilt-android",
         exported_plugins = [
+            ":hilt_dagger_compiler",
             ":hilt_android_entry_point_processor",
             ":hilt_aggregated_deps_processor",
             ":hilt_alias_of_processor",
@@ -133,10 +168,22 @@ def dagger_rules(repo_name = "@maven"):
         ],
         visibility = ["//visibility:public"],
         exports = [
-            ":dagger",
+            "%s//:com_google_dagger_dagger" % repo_name,  # For Dagger APIs
+            "%s//:javax_inject_javax_inject" % repo_name,  # For @Inject
             "%s//:androidx_annotation_annotation" % repo_name,  # For @CallSuper
             "%s//:com_google_dagger_hilt_android" % repo_name,
             "%s//:javax_annotation_jsr250_api" % repo_name,  # For @Generated
+        ],
+    )
+
+    # This target is same as dagger-compiler, but we're redefining it here
+    # so that users don't have to call dagger_rules() first.
+    native.java_plugin(
+        name = "hilt_dagger_compiler",
+        generates_api = 1,
+        processor_class = "dagger.internal.codegen.ComponentProcessor",
+        deps = [
+            "%s//:com_google_dagger_dagger_compiler" % repo_name,
         ],
     )
 

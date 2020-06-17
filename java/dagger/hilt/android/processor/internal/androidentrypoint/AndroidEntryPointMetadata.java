@@ -34,6 +34,7 @@ import dagger.hilt.android.processor.internal.AndroidClassNames;
 import dagger.hilt.processor.internal.BadInputException;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Components;
+import dagger.hilt.processor.internal.KotlinMetadata;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import java.util.LinkedHashSet;
@@ -220,6 +221,22 @@ public abstract class AndroidEntryPointMetadata {
     if (DISABLE_ANDROID_SUPERCLASS_VALIDATION.get(env)
         && MoreTypes.isTypeOf(Void.class, androidEntryPointClassValue.asType())) {
       baseElement = MoreElements.asType(env.getTypeUtils().asElement(androidEntryPointElement.getSuperclass()));
+      // If this AndroidEntryPoint is a Kotlin class and its base type is also Kotlin and has
+      // default values declared in its constructor then error out because for the short-form
+      // usage of @AndroidEntryPoint the bytecode transformation will be done incorrectly.
+      ProcessorErrors.checkState(
+          !KotlinMetadata.of(androidEntryPointElement).isPresent()
+              || !KotlinMetadata.of(baseElement)
+                  .map(KotlinMetadata::containsConstructorWithDefaultParam)
+                  .orElse(false),
+          baseElement,
+          "The base class, '%s', of the @AndroidEntryPoint, '%s', contains a constructor with "
+              + "default parameters. This is currently not supported by the Gradle plugin. Either "
+              + "specify the base class as described at "
+              + "https://dagger.dev/hilt/gradle-setup#why-use-the-plugin or remove the default value "
+              + "declaration.",
+          baseElement.getQualifiedName(),
+          androidEntryPointElement.getQualifiedName());
       generatedClassName = generatedClassName(androidEntryPointElement);
     } else {
       baseElement = androidEntryPointClassValue;

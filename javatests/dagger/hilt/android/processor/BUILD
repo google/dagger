@@ -33,6 +33,7 @@ java_library(
         "//java/dagger/internal/guava:collect",
         "//java/dagger/testing/compile",
         "@google_bazel_common//third_party/java/compile_testing",
+        "@maven//:com_github_tschuchortdev_kotlin_compile_testing",
     ],
 )
 

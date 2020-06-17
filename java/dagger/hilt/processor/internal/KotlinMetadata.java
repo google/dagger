@@ -30,13 +30,17 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
 import kotlin.Metadata;
 import kotlinx.metadata.Flag;
+import kotlinx.metadata.Flag.ValueParameter;
 import kotlinx.metadata.KmClassVisitor;
+import kotlinx.metadata.KmConstructorVisitor;
+import kotlinx.metadata.KmValueParameterVisitor;
 import kotlinx.metadata.jvm.KotlinClassHeader;
 import kotlinx.metadata.jvm.KotlinClassMetadata;
 
 /** Data class of a TypeElement and its Kotlin metadata. */
 public final class KotlinMetadata {
 
+  private final KotlinClassMetadata.Class metadata;
   private final TypeElement typeElement;
 
   /**
@@ -46,7 +50,8 @@ public final class KotlinMetadata {
    */
   private final int flags;
 
-  private KotlinMetadata(TypeElement typeElement, int flags) {
+  private KotlinMetadata(KotlinClassMetadata.Class metadata, TypeElement typeElement, int flags) {
+    this.metadata = metadata;
     this.typeElement = typeElement;
     this.flags = flags;
   }
@@ -61,15 +66,41 @@ public final class KotlinMetadata {
     return Flag.Class.IS_COMPANION_OBJECT.invoke(flags);
   }
 
+  /**
+   * Returns true if the type element of this metadata contains a constructor with declared default
+   * values.
+   */
+  public boolean containsConstructorWithDefaultParam() {
+    final boolean[] containsDefaultParam = { false };
+    metadata.accept(
+        new KmClassVisitor() {
+          private final KmConstructorVisitor constructorVisitor =
+              new KmConstructorVisitor() {
+                @Override
+                public KmValueParameterVisitor visitValueParameter(int flags, String name) {
+                  containsDefaultParam[0] |= ValueParameter.DECLARES_DEFAULT_VALUE.invoke(flags);
+                  return super.visitValueParameter(flags, name);
+                }
+              };
+
+          @Override
+          public KmConstructorVisitor visitConstructor(int flags) {
+            return constructorVisitor;
+          }
+        });
+    return containsDefaultParam[0];
+  }
+
   /** Returns the Kotlin Metadata of a given type element. */
   public static Optional<KotlinMetadata> of(TypeElement typeElement) {
     if (!isAnnotationPresent(typeElement, Metadata.class)) {
       return Optional.empty();
     }
 
+    KotlinClassMetadata.Class metadata = metadataOf(typeElement);
     MetadataVisitor visitor = new MetadataVisitor();
-    metadataOf(typeElement).accept(visitor);
-    return Optional.of(new KotlinMetadata(typeElement, visitor.classFlags));
+    metadata.accept(visitor);
+    return Optional.of(new KotlinMetadata(metadata, typeElement, visitor.classFlags));
   }
 
   private static KotlinClassMetadata.Class metadataOf(TypeElement typeElement) {

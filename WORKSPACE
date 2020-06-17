@@ -90,6 +90,7 @@ maven_install(
         "com.android.tools.lint:lint-checks:%s" % ANDROID_LINT_VERSION,
         "com.android.tools.lint:lint-tests:%s" % ANDROID_LINT_VERSION,
         "com.android.tools:testutils:%s" % ANDROID_LINT_VERSION,
+        "com.github.tschuchortdev:kotlin-compile-testing:1.2.8",
         "com.google.guava:guava:27.1-android",
         "org.jetbrains.kotlin:kotlin-stdlib:1.3.50",
         "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0",

@@ -49,6 +49,23 @@ compiler_test(
     ],
 )
 
+compiler_test(
+    name = "KotlinAndroidEntryPointProcessorTest",
+    srcs = ["KotlinAndroidEntryPointProcessorTest.java"],
+    compiler_deps = [
+        "//java/dagger/hilt/android:hilt_android_app",
+        "//java/dagger/hilt/android:android_entry_point",
+        "@androidsdk//:platforms/android-29/android.jar",
+    ],
+    deps = [
+        "//java/dagger/internal/guava:collect",
+        "//javatests/dagger/hilt/android/processor:android_compilers",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/truth",
+        "@maven//:com_github_tschuchortdev_kotlin_compile_testing",
+    ],
+)
+
 filegroup(
     name = "srcs_filegroup",
     srcs = glob(["*"]),

@@ -33,6 +33,7 @@ import dagger.testing.compile.CompilerTests;
 import java.util.Arrays;
 import java.util.Map;
 import javax.annotation.processing.Processor;
+import com.tschuchort.compiletesting.KotlinCompilation;
 
 /** {@link Compiler} instances for testing Android Hilt. */
 public final class AndroidCompilers {
@@ -47,6 +48,18 @@ public final class AndroidCompilers {
         .forEach(processor -> processors.put(processor.getClass(), processor));
 
     return CompilerTests.compiler().withProcessors(processors.values());
+  }
+
+  public static KotlinCompilation kotlinCompiler() {
+    KotlinCompilation compilation = new KotlinCompilation();
+    compilation.setAnnotationProcessors(defaultProcessors());
+    compilation.setClasspaths(
+        ImmutableList.<java.io.File>builder()
+            .addAll(compilation.getClasspaths())
+            .add(CompilerTests.compilerDepsJar())
+            .build()
+    );
+    return compilation;
   }
 
   private static ImmutableList<Processor> defaultProcessors() {

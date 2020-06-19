@@ -53,7 +53,7 @@ bash $(dirname $0)/deploy-hilt.sh \
 
 # Note: We avoid commiting until after deploying in case deploying fails and
 # we need to run the script again.
-git commit -m "${VERSION_NAME} release" tools/maven.bzl
+git commit -m "${VERSION_NAME} release" build_defs.bzl
 git tag -a -m "Dagger ${VERSION_NAME}" dagger-"${VERSION_NAME}"
 git push origin tag dagger-"${VERSION_NAME}"
 

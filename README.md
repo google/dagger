@@ -37,9 +37,15 @@ release.
 ```python
 # Top-level WORKSPACE file
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+DAGGER_TAG = "2.28.1"
+DAGGER_SHA = "f04b1466a00a2845106801e0c5cec96841f49ea4e7d1df88dc8e4bf31523df74"
 http_archive(
     name = "dagger",
-    urls = ["https://github.com/google/dagger/archive/dagger-<version>.zip"],
+    strip_prefix = "dagger-dagger-%s" % DAGGER_TAG,
+    sha256 = DAGGER_SHA,
+    urls = ["https://github.com/google/dagger/archive/dagger-%s.zip" % DAGGER_TAG],
 )
 ```
 

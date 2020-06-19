@@ -27,7 +27,8 @@ harder to trace.
 
 For keeping bindings private to only code that should use them, we recommend
 using qualifier annotations that are protected through restricted visibility or
-using an SPI plugin to enforce separation of code.
+using an [SPI](https://dagger.dev/dev-guide/spi "Service Provider Interface")
+plugin to enforce separation of code.
 
 ## Simplicity for configuration
 

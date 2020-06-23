@@ -27,8 +27,6 @@ GenJavaTests(
     ),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     lib_javacopts = SOURCE_7_TARGET_7,
-    # NOTE: This should not depend on Guava or jsr305 to ensure that Dagger can be
-    # used without Guava and jsr305 deps.
     test_only_deps = [
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
@@ -37,6 +35,8 @@ GenJavaTests(
         "@google_bazel_common//third_party/java/truth",
         "@google_bazel_common//third_party/java/junit",
     ],
+    # NOTE: This should not depend on Guava or jsr305 to ensure that Dagger can be
+    # used without Guava and jsr305 deps.
     deps = [
         "//:dagger_with_compiler",
         "@google_bazel_common//third_party/java/auto:factory",

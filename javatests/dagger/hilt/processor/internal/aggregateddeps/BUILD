@@ -30,6 +30,7 @@ compiler_test(
         "@google_bazel_common//third_party/java/jsr250_annotations",
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/android/testing:hilt_android_test",
         "//java/dagger/hilt/android/components",
     ],
     deps = [

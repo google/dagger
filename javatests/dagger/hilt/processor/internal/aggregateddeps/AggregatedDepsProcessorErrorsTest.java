@@ -118,6 +118,7 @@ public class AggregatedDepsProcessorErrorsTest {
         .inFile(source)
         .onLine(6);
   }
+
   @Test
   public void testNoErrorOnDaggerGeneratedModules() {
     JavaFileObject source =
@@ -147,5 +148,110 @@ public class AggregatedDepsProcessorErrorsTest {
         .hadErrorContaining("foo.bar.FooModule is missing an @InstallIn annotation")
         .inFile(source)
         .onLine(8);
+  }
+
+  @Test
+  public void testModuleWithParams() {
+    JavaFileObject source = JavaFileObjects.forSourceString("foo.bar", LINES.join(
+        "package foo.bar;",
+        "",
+        "import dagger.Module;",
+        "import dagger.hilt.InstallIn;",
+        "import dagger.hilt.android.components.ApplicationComponent;",
+        "",
+        "@Module",
+        "@InstallIn(ApplicationComponent.class)",
+        "final class FooModule {",
+        "  FooModule(String arg) {}",
+        "}"));
+
+    Compilation compilation =
+        CompilerTests.compiler().withProcessors(new AggregatedDepsProcessor()).compile(source);
+
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@InstallIn modules cannot have constructors with parameters. Found: "
+                + "[FooModule(java.lang.String)]");
+  }
+
+  @Test
+  public void testInnerModule() {
+    JavaFileObject source = JavaFileObjects.forSourceString("foo.bar", LINES.join(
+        "package foo.bar;",
+        "",
+        "import dagger.Module;",
+        "import dagger.hilt.InstallIn;",
+        "import dagger.hilt.android.components.ApplicationComponent;",
+        "",
+        "final class Outer {",
+        "  @Module",
+        "  @InstallIn(ApplicationComponent.class)",
+        "  final class InnerModule {}",
+        "}"));
+
+    Compilation compilation =
+        CompilerTests.compiler().withProcessors(new AggregatedDepsProcessor()).compile(source);
+
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "Nested @InstallIn modules must be static unless they are directly nested within a "
+                + "test. Found: foo.bar.Outer.InnerModule");
+  }
+
+  @Test
+  public void testInnerModuleInTest() {
+    JavaFileObject source = JavaFileObjects.forSourceString("foo.bar", LINES.join(
+        "package foo.bar;",
+        "",
+        "import dagger.Module;",
+        "import dagger.hilt.InstallIn;",
+        "import dagger.hilt.android.components.ApplicationComponent;",
+        "import dagger.hilt.android.testing.HiltAndroidTest;",
+        "",
+        "@HiltAndroidTest",
+        "final class Outer {",
+        "  static class Nested {",
+        "    @Module",
+        "    @InstallIn(ApplicationComponent.class)",
+        "    final class InnerModule {}",
+        "  }",
+        "}"));
+
+    Compilation compilation =
+        CompilerTests.compiler().withProcessors(new AggregatedDepsProcessor()).compile(source);
+
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "Nested @InstallIn modules must be static unless they are directly nested within a "
+                + "test. Found: foo.bar.Outer.Nested.InnerModule");
+  }
+
+  @Test
+  public void testInnerModuleInTest_succeeds() {
+    JavaFileObject source = JavaFileObjects.forSourceString("foo.bar", LINES.join(
+        "package foo.bar;",
+        "",
+        "import dagger.Module;",
+        "import dagger.hilt.InstallIn;",
+        "import dagger.hilt.android.components.ApplicationComponent;",
+        "import dagger.hilt.android.testing.HiltAndroidTest;",
+        "",
+        "@HiltAndroidTest",
+        "final class Outer {",
+        "  @Module",
+        "  @InstallIn(ApplicationComponent.class)",
+        "  final class InnerModule {}",
+        "}"));
+
+    Compilation compilation =
+        CompilerTests.compiler().withProcessors(new AggregatedDepsProcessor()).compile(source);
+
+    assertThat(compilation).succeeded();
   }
 }

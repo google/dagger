@@ -20,14 +20,16 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.hilt.android.processor.internal.androidentrypoint.HiltCompilerOptions.BooleanOption.DISABLE_MODULES_HAVE_INSTALL_IN_CHECK;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.INTERFACE;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.STATIC;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import com.google.auto.service.AutoService;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.squareup.javapoet.ClassName;
@@ -57,6 +59,10 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
 public final class AggregatedDepsProcessor extends BaseProcessor {
+  private static final ImmutableSet<ClassName> ALLOWED_MODULES_WITH_PARAMS =
+      ImmutableSet.of(
+          ClassName.get("dagger.hilt.android.internal.modules", "ApplicationContextModule"));
+
   private static final ImmutableSet<ClassName> INSTALL_IN_ANNOTATIONS =
       ImmutableSet.<ClassName>builder()
           .add(ClassNames.INSTALL_IN)
@@ -137,12 +143,35 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
           element);
       TypeElement module = asType(element);
 
+      if (!ALLOWED_MODULES_WITH_PARAMS.contains(ClassName.get(module))) {
+        ImmutableList<ExecutableElement> constructorsWithParams =
+            ElementFilter.constructorsIn(module.getEnclosedElements()).stream()
+                .filter(constructor -> !constructor.getParameters().isEmpty())
+                .collect(toImmutableList());
+        ProcessorErrors.checkState(
+            constructorsWithParams.isEmpty(),
+            module,
+            "@InstallIn modules cannot have constructors with parameters. Found: %s",
+            constructorsWithParams);
+      }
+
+      ProcessorErrors.checkState(
+          Processors.isTopLevel(module)
+              || module.getModifiers().contains(STATIC)
+              || module.getModifiers().contains(ABSTRACT)
+              || Processors.hasAnnotation(
+                  module.getEnclosingElement(), ClassNames.HILT_ANDROID_TEST),
+          module,
+          "Nested @InstallIn modules must be static unless they are directly nested within a test. "
+              + "Found: %s",
+          module);
+
       // TODO(b/28989613): This should really be fixed in Dagger. Remove once Dagger bug is fixed.
-      List<ExecutableElement> abstractMethodsWithMissingBinds =
+      ImmutableList<ExecutableElement> abstractMethodsWithMissingBinds =
           ElementFilter.methodsIn(module.getEnclosedElements()).stream()
               .filter(method -> method.getModifiers().contains(ABSTRACT))
               .filter(method -> !Processors.hasDaggerAbstractMethodAnnotation(method))
-              .collect(toList());
+              .collect(toImmutableList());
       ProcessorErrors.checkState(
           abstractMethodsWithMissingBinds.isEmpty(),
           module,

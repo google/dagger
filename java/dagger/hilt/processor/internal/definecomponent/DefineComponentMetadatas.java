@@ -20,6 +20,7 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotationElementAndVa
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreTypes;
@@ -45,29 +46,34 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
 
 /** Metadata for types annotated with {@link dagger.hilt.DefineComponent}. */
-@AutoValue
-abstract class DefineComponentMetadata {
-  private static final Map<Element, DefineComponentMetadata> processed = new HashMap<>();
+final class DefineComponentMetadatas {
+  static DefineComponentMetadatas create() {
+    return new DefineComponentMetadatas();
+  }
+
+  private final Map<Element, DefineComponentMetadata> metadatas = new HashMap<>();
+
+  private DefineComponentMetadatas() {}
 
   /** Returns the metadata for an element annotated with {@link dagger.hilt.DefineComponent}. */
-  static DefineComponentMetadata from(Element element) {
-    return from(element, new LinkedHashSet<>());
+  DefineComponentMetadata get(Element element) {
+    return get(element, new LinkedHashSet<>());
   }
 
-  private static DefineComponentMetadata from(Element element, LinkedHashSet<Element> childPath) {
-    if (!processed.containsKey(element)) {
-      processed.put(element, fromUncached(element, childPath));
+  private DefineComponentMetadata get(Element element, LinkedHashSet<Element> childPath) {
+    if (!metadatas.containsKey(element)) {
+      metadatas.put(element, getUncached(element, childPath));
     }
-    return processed.get(element);
+    return metadatas.get(element);
   }
 
-  private static DefineComponentMetadata fromUncached(
+  private DefineComponentMetadata getUncached(
       Element element, LinkedHashSet<Element> childPath) {
     ProcessorErrors.checkState(
         childPath.add(element),
         element,
         "@DefineComponent cycle: %s -> %s",
-        childPath.stream().map(Object::toString).collect(Collectors.joining(" -> ")),
+        childPath.stream().map(Object::toString).collect(joining(" -> ")),
         element);
 
     ProcessorErrors.checkState(
@@ -147,7 +153,7 @@ abstract class DefineComponentMetadata {
     Optional<DefineComponentMetadata> parentComponent =
         ClassName.get(parent).equals(ClassNames.DEFINE_COMPONENT_NO_PARENT)
             ? Optional.empty()
-            : Optional.of(DefineComponentMetadata.from(parent, childPath));
+            : Optional.of(get(parent, childPath));
 
     ProcessorErrors.checkState(
         parentComponent.isPresent()
@@ -158,20 +164,25 @@ abstract class DefineComponentMetadata {
             + " ApplicationComponent.class)",
         component);
 
-    return new AutoValue_DefineComponentMetadata(component, scopes, parentComponent);
+    return new AutoValue_DefineComponentMetadatas_DefineComponentMetadata(
+        component, scopes, parentComponent);
   }
 
-  /** Returns the component annotated with {@link dagger.hilt.DefineComponent}. */
-  abstract TypeElement component();
+  @AutoValue
+  abstract static class DefineComponentMetadata {
 
-  /** Returns the scopes of the component. */
-  abstract ImmutableList<TypeElement> scopes();
+    /** Returns the component annotated with {@link dagger.hilt.DefineComponent}. */
+    abstract TypeElement component();
 
-  /** Returns the parent component, if one exists. */
-  abstract Optional<DefineComponentMetadata> parentMetadata();
+    /** Returns the scopes of the component. */
+    abstract ImmutableList<TypeElement> scopes();
 
-  boolean isRoot() {
-    return !parentMetadata().isPresent();
+    /** Returns the parent component, if one exists. */
+    abstract Optional<DefineComponentMetadata> parentMetadata();
+
+    boolean isRoot() {
+      return !parentMetadata().isPresent();
+    }
+
   }
-
 }

@@ -44,8 +44,8 @@ java_library(
 java_library(
     name = "define_components",
     srcs = [
-        "DefineComponentBuilderMetadata.java",
-        "DefineComponentMetadata.java",
+        "DefineComponentBuilderMetadatas.java",
+        "DefineComponentMetadatas.java",
         "DefineComponents.java",
     ],
     deps = [

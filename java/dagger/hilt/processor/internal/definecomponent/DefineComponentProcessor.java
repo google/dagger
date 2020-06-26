@@ -27,6 +27,8 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.definecomponent.DefineComponentBuilderMetadatas.DefineComponentBuilderMetadata;
+import dagger.hilt.processor.internal.definecomponent.DefineComponentMetadatas.DefineComponentMetadata;
 import java.io.IOException;
 import java.util.Set;
 import javax.annotation.processing.Processor;
@@ -41,6 +43,9 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
 public final class DefineComponentProcessor extends BaseProcessor {
+  private final DefineComponentMetadatas componentMetadatas = DefineComponentMetadatas.create();
+  private final DefineComponentBuilderMetadatas componentBuilderMetadatas =
+      DefineComponentBuilderMetadatas.create(componentMetadatas);
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {
@@ -54,10 +59,10 @@ public final class DefineComponentProcessor extends BaseProcessor {
       // TODO(user): For cycles we currently process each element in the cycle. We should skip
       // processing of subsequent elements in a cycle, but this requires ensuring that the first
       // element processed is always the same so that our failure tests are stable.
-      DefineComponentMetadata metadata = DefineComponentMetadata.from(element);
+      DefineComponentMetadata metadata = componentMetadatas.get(element);
       generateFile("component", metadata.component());
     } else if (ClassName.get(annotation).equals(ClassNames.DEFINE_COMPONENT_BUILDER)) {
-      DefineComponentBuilderMetadata metadata = DefineComponentBuilderMetadata.from(element);
+      DefineComponentBuilderMetadata metadata = componentBuilderMetadatas.get(element);
       generateFile("builder", metadata.builder());
     } else {
       throw new AssertionError("Unhandled annotation type: " + annotation);

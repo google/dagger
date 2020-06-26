@@ -54,6 +54,8 @@ public final class RootProcessor extends BaseProcessor {
   private final List<ClassName> rootNames = new ArrayList<>();
   private final Set<ClassName> processed = new HashSet<>();
   private boolean isTestEnv;
+  // TODO(user): Consider using a Dagger component to create/scope these objects
+  private final DefineComponents defineComponents = DefineComponents.create();
   private GeneratesRootInputs generatesRootInputs;
 
   @Override
@@ -132,7 +134,7 @@ public final class RootProcessor extends BaseProcessor {
     // roots. At the moment, I think it's rare that if one root failed the others would not.
     try {
       ImmutableList<ComponentDescriptor> descriptors =
-          DefineComponents.componentDescriptors(getElementUtils());
+          defineComponents.componentDescriptors(getElementUtils());
       ComponentTree tree = ComponentTree.from(descriptors);
       ComponentDependencies deps = ComponentDependencies.from(descriptors, getElementUtils());
       ImmutableList<RootMetadata> rootMetadatas =

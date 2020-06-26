@@ -26,7 +26,10 @@ import com.squareup.javapoet.TypeName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.definecomponent.DefineComponentMetadatas.DefineComponentMetadata;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -38,10 +41,26 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 
 /** Metadata for types annotated with {@link dagger.hilt.DefineComponent.Builder}. */
-@AutoValue
-abstract class DefineComponentBuilderMetadata {
+final class DefineComponentBuilderMetadatas {
+  static DefineComponentBuilderMetadatas create(DefineComponentMetadatas componentMetadatas) {
+    return new DefineComponentBuilderMetadatas(componentMetadatas);
+  }
 
-  static DefineComponentBuilderMetadata from(Element element) {
+  private final Map<Element, DefineComponentBuilderMetadata> builderMetadatas = new HashMap<>();
+  private final DefineComponentMetadatas componentMetadatas;
+
+  private DefineComponentBuilderMetadatas(DefineComponentMetadatas componentMetadatas) {
+    this.componentMetadatas = componentMetadatas;
+  }
+
+  DefineComponentBuilderMetadata get(Element element) {
+    if (!builderMetadatas.containsKey(element)) {
+      builderMetadatas.put(element, getUncached(element));
+    }
+    return builderMetadatas.get(element);
+  }
+
+  private DefineComponentBuilderMetadata getUncached(Element element) {
     ProcessorErrors.checkState(
         Processors.hasAnnotation(element, ClassNames.DEFINE_COMPONENT_BUILDER),
         element,
@@ -125,15 +144,18 @@ abstract class DefineComponentBuilderMetadata {
         component,
         nonStaticNonBuilderMethods);
 
-    return new AutoValue_DefineComponentBuilderMetadata(
+    return new AutoValue_DefineComponentBuilderMetadatas_DefineComponentBuilderMetadata(
         builder,
         buildMethod,
-        DefineComponentMetadata.from(MoreTypes.asTypeElement(component)));
+        componentMetadatas.get(MoreTypes.asTypeElement(component)));
   }
 
-  abstract TypeElement builder();
+  @AutoValue
+  abstract static class DefineComponentBuilderMetadata {
+    abstract TypeElement builder();
 
-  abstract ExecutableElement buildMethod();
+    abstract ExecutableElement buildMethod();
 
-  abstract DefineComponentMetadata componentMetadata();
+    abstract DefineComponentMetadata componentMetadata();
+  }
 }

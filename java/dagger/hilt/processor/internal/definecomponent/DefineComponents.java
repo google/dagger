@@ -31,6 +31,9 @@ import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.definecomponent.DefineComponentBuilderMetadatas.DefineComponentBuilderMetadata;
+import dagger.hilt.processor.internal.definecomponent.DefineComponentMetadatas.DefineComponentMetadata;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -49,11 +52,28 @@ public final class DefineComponents {
   static final String AGGREGATING_PACKAGE =
       DefineComponents.class.getPackage().getName() + ".codegen";
 
+  public static DefineComponents create() {
+    return new DefineComponents();
+  }
+
+  private final Map<Element, ComponentDescriptor> componentDescriptors = new HashMap<>();
+  private final DefineComponentMetadatas componentMetadatas = DefineComponentMetadatas.create();
+  private final DefineComponentBuilderMetadatas componentBuilderMetadatas =
+      DefineComponentBuilderMetadatas.create(componentMetadatas);
+
+  private DefineComponents() {}
+
   /** Returns the {@link ComponentDescriptor} for the given component element. */
-  // TODO(b/144939893): Memoize ComponentDescriptors so we're not recalculating.
   // TODO(b/144940889): This descriptor doesn't contain the "creator" or the "installInName".
-  public static ComponentDescriptor componentDescriptor(Element element) {
-    DefineComponentMetadata metadata = DefineComponentMetadata.from(element);
+  public ComponentDescriptor componentDescriptor(Element element) {
+    if (!componentDescriptors.containsKey(element)) {
+      componentDescriptors.put(element, uncachedComponentDescriptor(element));
+    }
+    return componentDescriptors.get(element);
+  }
+
+  private ComponentDescriptor uncachedComponentDescriptor(Element element) {
+    DefineComponentMetadata metadata = componentMetadatas.get(element);
     ComponentDescriptor.Builder builder =
         ComponentDescriptor.builder()
             .component(ClassName.get(metadata.component()))
@@ -61,16 +81,16 @@ public final class DefineComponents {
 
     metadata.parentMetadata()
         .map(DefineComponentMetadata::component)
-        .map(DefineComponents::componentDescriptor)
+        .map(this::componentDescriptor)
         .ifPresent(builder::parent);
 
     return builder.build();
   }
 
   /** Returns the list of aggregated {@link ComponentDescriptor}s. */
-  // TODO(b/144939893): Memoize ComponentDescriptors so we're not recalculating.
-  public static ImmutableList<ComponentDescriptor> componentDescriptors(Elements elements) {
-    AggregatedMetadata aggregatedMetadata = AggregatedMetadata.from(elements);
+  public ImmutableList<ComponentDescriptor> componentDescriptors(Elements elements) {
+    AggregatedMetadata aggregatedMetadata =
+        AggregatedMetadata.from(elements, componentMetadatas, componentBuilderMetadatas);
     ListMultimap<DefineComponentMetadata, DefineComponentBuilderMetadata> builderMultimap =
         ArrayListMultimap.create();
     aggregatedMetadata.builders()
@@ -143,7 +163,10 @@ public final class DefineComponents {
     /** Returns the aggregated metadata for {@link DefineComponentClasses#builder()}. */
     abstract ImmutableList<DefineComponentBuilderMetadata> builders();
 
-    static AggregatedMetadata from(Elements elements) {
+    static AggregatedMetadata from(
+        Elements elements,
+        DefineComponentMetadatas componentMetadatas,
+        DefineComponentBuilderMetadatas componentBuilderMetadatas) {
       PackageElement packageElement = elements.getPackageElement(AGGREGATING_PACKAGE);
 
       if (packageElement == null) {
@@ -176,8 +199,8 @@ public final class DefineComponents {
             typeElement,
             "@DefineComponentClasses missing both `component` and `builder` members.");
 
-        component.map(DefineComponentMetadata::from).ifPresent(components::add);
-        builder.map(DefineComponentBuilderMetadata::from).ifPresent(builders::add);
+        component.map(componentMetadatas::get).ifPresent(components::add);
+        builder.map(componentBuilderMetadatas::get).ifPresent(builders::add);
       }
 
       return new AutoValue_DefineComponents_AggregatedMetadata(
@@ -207,6 +230,4 @@ public final class DefineComponents {
       return Optional.of(type);
     }
   }
-
-  private DefineComponents() {}
 }

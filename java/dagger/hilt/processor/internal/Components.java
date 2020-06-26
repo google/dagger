@@ -69,9 +69,9 @@ public final class Components {
         Processors.getAnnotationMirror(element, ClassNames.INSTALL_IN);
     ImmutableList<TypeElement> generatedComponents =
         Processors.getAnnotationClassValues(elements, hiltInstallIn, "value");
+    DefineComponents defineComponents = DefineComponents.create();
     return generatedComponents.stream()
-        // TODO(b/144939893): Memoize ComponentDescriptors so we're not recalculating.
-        .map(DefineComponents::componentDescriptor)
+        .map(defineComponents::componentDescriptor)
         .collect(toImmutableSet());
   }
 

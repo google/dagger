@@ -27,7 +27,6 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
@@ -154,7 +153,7 @@ final class Generators {
       return;
     }
     builder
-        .addSuperinterface(ParameterizedTypeName.get(ClassNames.COMPONENT_MANAGER, TypeName.OBJECT))
+        .addSuperinterface(ClassNames.GENERATED_COMPONENT_MANAGER_HOLDER)
         .addMethod(
             MethodSpec.methodBuilder("generatedComponent")
                 .addAnnotation(Override.class)
@@ -206,7 +205,8 @@ final class Generators {
 
     MethodSpec.Builder methodSpecBuilder =
         MethodSpec.methodBuilder("componentManager")
-            .addModifiers(Modifier.PROTECTED, Modifier.FINAL)
+            .addAnnotation(Override.class)
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .returns(managerParam.type)
             .beginControlFlow("if ($N == null)", managerParam);
 
@@ -299,7 +299,7 @@ final class Generators {
           .beginControlFlow(
               "if (!(parent instanceof $T) "
               + "|| ((parent instanceof $T) && !(($T) parent).wasInjectedByHilt()))",
-              ClassNames.COMPONENT_MANAGER,
+              ClassNames.GENERATED_COMPONENT_MANAGER,
               AndroidClassNames.INJECTED_BY_HILT,
               AndroidClassNames.INJECTED_BY_HILT)
           .addStatement("return")
@@ -411,8 +411,8 @@ final class Generators {
   private static CodeBlock generatedComponentCallBlock(AndroidEntryPointMetadata metadata) {
     return CodeBlock.of(
         "$L.generatedComponent()",
-        metadata.rootMetadata().requiresBytecodeInjection()
-            ? unsafeCastThisTo(metadata.rootMetadata().generatedClassName())
+        !metadata.isRootMetadata() && metadata.rootMetadata().requiresBytecodeInjection()
+            ? unsafeCastThisTo(ClassNames.GENERATED_COMPONENT_MANAGER_HOLDER)
             : "this");
   }
 
@@ -425,8 +425,8 @@ final class Generators {
   private static CodeBlock componentManagerCallBlock(AndroidEntryPointMetadata metadata) {
     return CodeBlock.of(
         "$L.componentManager()",
-        metadata.rootMetadata().requiresBytecodeInjection()
-            ? unsafeCastThisTo(metadata.rootMetadata().generatedClassName())
+        !metadata.isRootMetadata() && metadata.rootMetadata().requiresBytecodeInjection()
+            ? unsafeCastThisTo(ClassNames.GENERATED_COMPONENT_MANAGER_HOLDER)
             : "this");
   }
 

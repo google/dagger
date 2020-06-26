@@ -90,6 +90,10 @@ public abstract class AndroidEntryPointMetadata {
     return baseMetadata().map(AndroidEntryPointMetadata::rootMetadata).orElse(this);
   }
 
+  boolean isRootMetadata() {
+    return this.equals(rootMetadata());
+  }
+
   /** Returns true if this class allows optional injection. */
   public boolean allowsOptionalInjection() {
     return Processors.hasAnnotation(element(), AndroidClassNames.OPTIONAL_INJECT);

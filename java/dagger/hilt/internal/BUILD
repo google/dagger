@@ -28,6 +28,7 @@ java_library(
     name = "component_manager",
     srcs = [
         "GeneratedComponentManager.java",
+        "GeneratedComponentManagerHolder.java",
     ],
     exports = [
         "//java/dagger/hilt/internal:preconditions",

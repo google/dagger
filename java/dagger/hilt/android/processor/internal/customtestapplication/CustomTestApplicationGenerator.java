@@ -53,7 +53,7 @@ final class CustomTestApplicationGenerator {
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .superclass(metadata.baseAppName())
             .addSuperinterface(
-                ParameterizedTypeName.get(ClassNames.COMPONENT_MANAGER, TypeName.OBJECT))
+                ParameterizedTypeName.get(ClassNames.GENERATED_COMPONENT_MANAGER, TypeName.OBJECT))
             .addSuperinterface(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER_HOLDER)
             .addField(getComponentManagerField())
             .addMethod(getAttachBaseContextMethod())

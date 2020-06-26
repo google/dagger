@@ -16,8 +16,6 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import static javax.lang.model.element.Modifier.PROTECTED;
-
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -91,7 +89,8 @@ public final class ApplicationGenerator {
   // }
   private MethodSpec componentManagerMethod() {
     return MethodSpec.methodBuilder("componentManager")
-        .addModifiers(Modifier.PROTECTED, Modifier.FINAL)
+        .addAnnotation(Override.class)
+        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .returns(metadata.componentManagerParam().type)
         .addStatement("return $N", metadata.componentManagerParam())
         .build();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Dagger Authors.
+ * Copyright (C) 2020 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package dagger.hilt.internal;
 
-/** An interface that provides a managed generated component. */
-// TODO(user): Consider either removing type parameter or using actual component type in usages.
-public interface GeneratedComponentManager<T> {
-  T generatedComponent();
+/** An interface that provides a managed generated component holder. */
+public interface GeneratedComponentManagerHolder extends GeneratedComponentManager<Object> {
+
+  public GeneratedComponentManager<?> componentManager();
 }

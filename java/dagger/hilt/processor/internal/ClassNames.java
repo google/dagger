@@ -28,6 +28,8 @@ public final class ClassNames {
       get("dagger.hilt.internal", "GeneratedComponent");
   public static final ClassName GENERATED_COMPONENT_MANAGER =
       get("dagger.hilt.internal", "GeneratedComponentManager");
+  public static final ClassName GENERATED_COMPONENT_MANAGER_HOLDER =
+      get("dagger.hilt.internal", "GeneratedComponentManagerHolder");
   public static final ClassName IGNORE_MODULES =
       get("dagger.hilt.android.testing", "UninstallModules");
 
@@ -87,8 +89,6 @@ public final class ClassNames {
   public static final ClassName ENTRY_POINT =
       get("dagger.hilt", "EntryPoint");
   public static final ClassName ENTRY_POINTS = get("dagger.hilt", "EntryPoints");
-  public static final ClassName COMPONENT_MANAGER =
-      get("dagger.hilt.internal", "GeneratedComponentManager");
   public static final ClassName COMPONENT_ENTRY_POINT =
       get("dagger.hilt.internal", "ComponentEntryPoint");
   public static final ClassName GENERATED_ENTRY_POINT =

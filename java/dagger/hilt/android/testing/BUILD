@@ -26,6 +26,12 @@ android_library(
     exported_plugins = [
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor",
     ],
+    exports = [
+        "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
+        "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
+        "//java/dagger/hilt/internal:component_manager",
+        "@google_bazel_common//third_party/java/jsr250_annotations",
+    ],
     deps = [
         ":package_info",
         "//java/dagger/hilt:generates_root_input",

@@ -130,10 +130,12 @@ class MyApplication : MultiDexApplication()
 
 ### Local test configuration {#gradle-plugin-local-tests}
 
-The plugin by default also transforms instrumented tests classes (usually
-located in the `androidTest` source folder). But an additional configuration is
-required for local unit tests (usually located in the `test` source folder). To
-enable transforming `@AndroidEntryPoint` classes in local unit tests then apply
+By default, the plugin will transform *instrumented* test classes (usually
+located in the `androidTest` source folder), but an additional configuration is
+required for the plugin to transform *local jvm* tests (usually located in
+the `test` source folder).
+
+To enable transforming `@AndroidEntryPoint` classes in local jvm tests, apply
 the following configuration in your module's `build.gradle`:
 
 ```
@@ -141,6 +143,43 @@ hilt {
     enableTransformForLocalTests = true
 }
 ```
+
+**Warning:** The `enableTransformForLocalTests` configuration only works when
+running from the command line, e.g. `./gradlew test`. It does not work when
+running tests with Android Studio (via the play button in the test method or
+class). See [Running tests with Android Studio](#running-with-android-studio)
+for more information and possible work arounds.
+{: .c-callouts__warning }
+
+### Running tests with Android Studio {#running-with-android-studio}
+
+The [`enableTransformForLocalTests`](#gradle-plugin-local-tests) configuration
+does not work when running tests with Android Studio (via the play button in the
+test method or class) because the tasks used by Android Studio to run the tests
+ignore the transformed test class. This is something we are working with the
+Android Gradle Plugin team to fix
+([b/37076369](https://issuetracker.google.com/37076369)).
+
+In the meantime, there are a few options to work around the issue.
+
+The first option is to avoid running Robolectric tests via Android Studio.
+Instead, run the tests through Gradle, typically via `./gradlew test` or
+`./gradlew testDebug`.
+
+The second option, is to create your own Android Studio configuration that
+executes tests via the Gradle task. To do this, create a new 'Run Configuration'
+of type 'Gradle' from within Android Studio with the following parameters:
+
+  1. `Gradle project`: the Gradle module where the tests are located
+  2. `Task`: the test task (usually either `test` or `testDebug`)
+  3. `Arguments`: the list of tests (e.g. `--tests MyTestClassSee`)
+
+As an example, see the setup below:
+
+![Example of setting up Gradle task to run tests](robolectric-test-configuration.jpg)
+
+The third option is to avoid using the [Hilt Gradle plugin](#hilt-gradle-plugin)
+until [b/37076369](https://issuetracker.google.com/37076369) is fixed.
 
 ### Applying other processor arguments {#applying-other-processor-arguments}
 

@@ -3,6 +3,11 @@ layout: default
 title: Robolectric testing
 ---
 
+**Warning:** See [here](gradle-setup.md#running-with-android-studio) for
+limitations when running Robolectric tests via Android Studio when using the
+[Hilt Gradle plugin](gradle-setup.md#hilt-gradle-plugin).
+{: .c-callouts__warning }
+
 ## Setting the test application
 
 Hilt's [testing APIs](testing.md) are built to be agnostic of the particular

@@ -6,8 +6,10 @@ title: Testing
 ## Introduction
 
 **Note:** Currently, Hilt only supports Android instrumentation and Robolectric
-tests. Hilt cannot be used in vanilla JVM tests, but it does not prevent you
-from writing these tests as you would normally.
+tests (although, see [here](gradle-setup.md#running-with-android-studio) for
+limitations when running Robolectric tests via Android Studio). In addition,
+Hilt cannot be used in vanilla JVM tests, but it does not prevent you from
+writing these tests as you would normally.
 {: .c-callouts__note }
 
 Hilt makes testing easier by bringing the power of dependency injection to your

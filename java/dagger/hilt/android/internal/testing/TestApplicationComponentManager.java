@@ -161,17 +161,19 @@ public final class TestApplicationComponentManager
   public <T> void registerModule(Class<T> moduleClass, T module) {
     Preconditions.checkNotNull(moduleClass);
     Preconditions.checkState(
-        requiredModules().contains(moduleClass),
+        testComponentData().daggerRequiredModules().contains(moduleClass),
         "Found unknown module class: %s",
         moduleClass.getName());
-    Preconditions.checkState(
-        // Some exempted tests register modules multiple times.
-        !registeredModules.containsKey(moduleClass),
-        "Module is already registered: %s",
-        moduleClass.getName());
+    if (requiredModules().contains(moduleClass)) {
+      Preconditions.checkState(
+          // Some exempted tests register modules multiple times.
+          !registeredModules.containsKey(moduleClass),
+          "Module is already registered: %s",
+          moduleClass.getName());
 
-    registeredModules.put(moduleClass, module);
-    tryToCreateComponent();
+      registeredModules.put(moduleClass, module);
+      tryToCreateComponent();
+    }
   }
 
   void inject() {

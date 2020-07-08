@@ -82,7 +82,7 @@ the Android platform.
 {: .c-callouts__note }
 
 
-### Retained Fragments
+### Retained Fragments {#retained-fragments}
 
 Calling `setRetainInstance(true)` in a Fragment's `onCreate` method will keep a
 fragment instance across configuration changes (instead of destroying and

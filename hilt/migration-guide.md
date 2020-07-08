@@ -579,6 +579,13 @@ class Foo @Inject constructor(private val activity: FragmentActivity) {
 ```
 {: .c-codeselector__code .c-codeselector__code_kotlin }
 
+### Retained fragments
+
+Hilt does not support retained fragments. You can find more info about why
+[here](android-entry-point.md#retained-fragments). If you have any retained
+fragments, a common way to address this is to move any retained state into a
+[`ViewModel`](https://developer.android.com/topic/libraries/architecture/viewmodel).
+
 ### Adding Hilt to the Activity/Fragment
 
 Now you can just annotate your `Activity` or `Fragment` with

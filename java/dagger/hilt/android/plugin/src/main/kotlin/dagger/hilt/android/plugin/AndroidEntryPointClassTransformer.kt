@@ -156,7 +156,11 @@ internal class AndroidEntryPointClassTransformer(
   ) {
     val constantPool = clazz.classFile.constPool
     clazz.declaredMethods
-      .filter { it.methodInfo.isMethod && !Modifier.isStatic(it.modifiers) }
+      .filter {
+        it.methodInfo.isMethod &&
+          !Modifier.isStatic(it.modifiers) &&
+          !Modifier.isAbstract(it.modifiers)
+      }
       .forEach { method ->
         val codeAttr = method.methodInfo.codeAttribute
         val code = codeAttr.code

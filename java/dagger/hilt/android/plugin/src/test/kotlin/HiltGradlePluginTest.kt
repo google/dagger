@@ -135,6 +135,42 @@ class HiltGradlePluginTest {
     }
   }
 
+  // Verify transformation ignores abstract methods.
+  @Test
+  fun testAssemble_abstractMethod() {
+    gradleTransformRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'"
+    )
+
+    gradleTransformRunner.addSrc(
+      srcPath = "minimal/AbstractActivity.java",
+      srcContent =
+        """
+        package minimal;
+
+        import androidx.appcompat.app.AppCompatActivity;
+
+        @dagger.hilt.android.AndroidEntryPoint
+        public abstract class AbstractActivity extends AppCompatActivity {
+            public abstract void method();
+        }
+        """.trimIndent()
+    )
+
+    val result = gradleTransformRunner.build()
+    val assembleTask = result.getTask(":assembleDebug")
+    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
+
+    val transformedClass = result.getTransformedFile("minimal/AbstractActivity.class")
+    FileInputStream(transformedClass).use { fileInput ->
+      ClassFile(DataInputStream(fileInput)).let { classFile ->
+        assertEquals("minimal.Hilt_AbstractActivity", classFile.superclass)
+      }
+    }
+  }
+
   // Verify plugin configuration fails when runtime dependency is missing but plugin is applied.
   @Test
   fun testAssemble_missingLibraryDep() {

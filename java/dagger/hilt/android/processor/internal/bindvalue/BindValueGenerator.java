@@ -134,18 +134,15 @@ final class BindValueGenerator {
             .addStatement("return test.$L", bindValue.variableElement().getSimpleName());
 
     ClassName annotationClassName = bindValue.annotationName();
-    if (annotationClassName.equals(ClassNames.BIND_VALUE_INTO_MAP)
-    ) {
+    if (BindValueMetadata.BIND_VALUE_INTO_MAP_ANNOTATIONS.contains(annotationClassName)) {
       builder.addAnnotation(IntoMap.class);
       // It is safe to call get() on the Optional<AnnotationMirror> returned by mapKey()
       // because a @BindValueIntoMap is required to have one and is checked in
       // BindValueMetadata.BindValueElement.create().
       builder.addAnnotation(AnnotationSpec.get(bindValue.mapKey().get()));
-    } else if (annotationClassName.equals(ClassNames.BIND_VALUE_INTO_SET)
-    ) {
+    } else if (BindValueMetadata.BIND_VALUE_INTO_SET_ANNOTATIONS.contains(annotationClassName)) {
       builder.addAnnotation(IntoSet.class);
-    } else if (annotationClassName.equals(ClassNames.BIND_ELEMENTS_INTO_SET)
-    ) {
+    } else if (BindValueMetadata.BIND_ELEMENTS_INTO_SET_ANNOTATIONS.contains(annotationClassName)) {
       builder.addAnnotation(ElementsIntoSet.class);
     }
     bindValue.qualifier().ifPresent(q -> builder.addAnnotation(AnnotationSpec.get(q)));

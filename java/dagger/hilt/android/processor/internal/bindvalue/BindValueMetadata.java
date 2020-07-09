@@ -40,6 +40,19 @@ import javax.lang.model.element.VariableElement;
  */
 @AutoValue
 abstract class BindValueMetadata {
+  static final ImmutableSet<ClassName> BIND_VALUE_ANNOTATIONS =
+      ImmutableSet.of(
+          ClassNames.ANDROID_BIND_VALUE);
+  static final ImmutableSet<ClassName> BIND_VALUE_INTO_SET_ANNOTATIONS =
+      ImmutableSet.of(
+          ClassNames.ANDROID_BIND_VALUE_INTO_SET);
+  static final ImmutableSet<ClassName> BIND_ELEMENTS_INTO_SET_ANNOTATIONS =
+      ImmutableSet.of(
+          ClassNames.ANDROID_BIND_ELEMENTS_INTO_SET);
+  static final ImmutableSet<ClassName> BIND_VALUE_INTO_MAP_ANNOTATIONS =
+      ImmutableSet.of(
+          ClassNames.ANDROID_BIND_VALUE_INTO_MAP);
+
   /** @return the {@code TestRoot} annotated class's name. */
   abstract TypeElement testElement();
 
@@ -108,8 +121,7 @@ abstract class BindValueMetadata {
 
       ImmutableList<AnnotationMirror> mapKeys = Processors.getMapKeyAnnotations(element);
       Optional<AnnotationMirror> optionalMapKeys;
-      if (annotationClassName.equals(ClassNames.BIND_VALUE_INTO_MAP)
-      ) {
+      if (BIND_VALUE_INTO_MAP_ANNOTATIONS.contains(annotationClassName)) {
         ProcessorErrors.checkState(
             mapKeys.size() == 1,
             element,

@@ -34,7 +34,6 @@ import dagger.hilt.processor.internal.Processors;
 import dagger.internal.codegen.extension.DaggerStreams;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.AnnotationMirror;
@@ -47,18 +46,18 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
 public final class BindValueProcessor extends BaseProcessor {
-
   private static final ImmutableSet<ClassName> SUPPORTED_ANNOTATIONS =
-      ImmutableSet.of(
-          ClassNames.BIND_VALUE,
-          ClassNames.BIND_VALUE_INTO_MAP,
-          ClassNames.BIND_VALUE_INTO_SET,
-          ClassNames.BIND_ELEMENTS_INTO_SET);
+      ImmutableSet.<ClassName>builder()
+          .addAll(BindValueMetadata.BIND_VALUE_ANNOTATIONS)
+          .addAll(BindValueMetadata.BIND_VALUE_INTO_SET_ANNOTATIONS)
+          .addAll(BindValueMetadata.BIND_ELEMENTS_INTO_SET_ANNOTATIONS)
+          .addAll(BindValueMetadata.BIND_VALUE_INTO_MAP_ANNOTATIONS)
+          .build();
 
   private final Multimap<TypeElement, Element> testRootMap = ArrayListMultimap.create();
 
   @Override
-  public Set<String> getSupportedAnnotationTypes() {
+  public ImmutableSet<String> getSupportedAnnotationTypes() {
     return SUPPORTED_ANNOTATIONS.stream()
         .map(TypeName::toString)
         .collect(DaggerStreams.toImmutableSet());

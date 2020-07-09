@@ -138,12 +138,13 @@ public final class ClassNames {
       get("dagger.hilt.android.testing", "OnComponentReadyRunner");
   public static final ClassName ON_COMPONENT_READY_RUNNER_HOLDER =
       get("dagger.hilt.android.testing", "OnComponentReadyRunner", "OnComponentReadyRunnerHolder");
-  public static final ClassName BIND_VALUE = get("dagger.hilt.android.testing", "BindValue");
-  public static final ClassName BIND_ELEMENTS_INTO_SET =
+  public static final ClassName ANDROID_BIND_VALUE =
+      get("dagger.hilt.android.testing", "BindValue");
+  public static final ClassName ANDROID_BIND_ELEMENTS_INTO_SET =
       get("dagger.hilt.android.testing", "BindElementsIntoSet");
-  public static final ClassName BIND_VALUE_INTO_MAP =
+  public static final ClassName ANDROID_BIND_VALUE_INTO_MAP =
       get("dagger.hilt.android.testing", "BindValueIntoMap");
-  public static final ClassName BIND_VALUE_INTO_SET =
+  public static final ClassName ANDROID_BIND_VALUE_INTO_SET =
       get("dagger.hilt.android.testing", "BindValueIntoSet");
   public static final ClassName APPLICATION_CONTEXT =
       get("dagger.hilt.android.qualifiers", "ApplicationContext");

@@ -135,7 +135,7 @@ public final class RootMetadata {
 
   /**
    * Validates that the {@link RootType} annotation is compatible with its {@link TypeElement} and
-   * {@link ComponentDependencies}. If not, throws exception.
+   * {@link ComponentDependencies}.
    */
   private void validate() {
 

@@ -101,9 +101,9 @@ class FooTest {
 ```kotlin
 @HiltAndroidTest
 class FooTest {
-  @get:Rule HiltAndroidRule hiltRule = HiltAndroidRule(this)
+  @get:Rule val hiltRule = HiltAndroidRule(this)
 
-  @Inject foo: Foo
+  @Inject lateinit var foo: Foo
 
   @Test
   fun testFoo() {
@@ -142,7 +142,7 @@ class FooTest {
 class FooTest {
   @AndroidEntryPoint
   class TestActivity : AppCompatActivity() {
-    @Inject foo: Foo
+    @Inject lateinit var foo: Foo
   }
 
   ...
@@ -213,7 +213,7 @@ class FooTest {
 class FooTest {
   @AndroidEntryPoint
   class TestFragment : Fragment() {
-    @Inject foo: Foo
+    @Inject lateinit var foo: Foo
   }
 
   ...
@@ -344,7 +344,9 @@ public class FooTest {
 @HiltAndroidTest
 class FooTest {
   ...
-  @BindValue fakeBar: Bar = new FakeBar()
+  @BindValue
+  @JvmField
+  val fakeBar: Bar = new FakeBar()
 }
 ```
 {: .c-codeselector__code .c-codeselector__code_kotlin }
@@ -398,7 +400,9 @@ public class FooTest {
 class FooTest {
 
   ...
-  @BindValue fakeFoo: Foo = new FakeFoo()
+  @BindValue
+  @JvmField
+  val fakeFoo: Foo = new FakeFoo()
 }
 ```
 {: .c-codeselector__code .c-codeselector__code_kotlin }
@@ -503,7 +507,7 @@ public class FooTest {
 class FooTest {
   // Ensures that the Hilt component is initialized before running the ActivityScenarioRule
   @get:Rule(order = 0)
-  val hiltRule = HiltAndroidRule(this);
+  val hiltRule = HiltAndroidRule(this)
 
   @get:Rule(order = 1)
   val scenarioRule = ActivityScenarioRule(MyActivity::class.java)
@@ -524,4 +528,3 @@ class FooTest {
 [`@IntoSet`]: https://dagger.dev/api/latest/dagger/multibindings/IntoSet.html
 [`@IntoMap`]: https://dagger.dev/api/latest/dagger/multibindings/IntoMap.html
 [`@ElementsIntoSet`]: https://dagger.dev/api/latest/dagger/multibindings/ElementsIntoSet.html
-

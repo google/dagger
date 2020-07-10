@@ -181,7 +181,7 @@ class IncrementalProcessorTest {
     )
     genDaggerHiltApplicationComponent = File(
       projectRoot,
-      "$GEN_SRC_DIR/simple/DaggerSimpleApp_HiltComponents_ApplicationC.java"
+      "$GEN_SRC_DIR/simple/DaggerSimpleApp_HiltComponents_SingletonC.java"
     )
 
     classSrcApp = File(projectRoot, "$CLASS_DIR/simple/SimpleApp.class")
@@ -227,7 +227,7 @@ class IncrementalProcessorTest {
     )
     classGenDaggerHiltApplicationComponent = File(
       projectRoot,
-      "$CLASS_DIR/simple/DaggerSimpleApp_HiltComponents_ApplicationC.class"
+      "$CLASS_DIR/simple/DaggerSimpleApp_HiltComponents_SingletonC.class"
     )
   }
 

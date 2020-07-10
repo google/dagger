@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Dagger Authors.
+ * Copyright (C) 2020 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.components;
+package dagger.hilt.components;
 
-import dagger.hilt.components.SingletonComponent;
+import dagger.hilt.DefineComponent;
+import javax.inject.Singleton;
 
-/**
- * A Hilt component that has the lifetime of the application.
- */
-public interface ApplicationComponent extends SingletonComponent {}
+/** A Hilt component for singleton bindings. */
+@Singleton
+@DefineComponent
+public interface SingletonComponent {}

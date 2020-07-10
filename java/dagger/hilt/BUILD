@@ -109,6 +109,7 @@ filegroup(
     name = "hilt_filegroup",
     srcs = glob(["*"]) + [
         "//java/dagger/hilt/codegen:srcs_filegroup",
+        "//java/dagger/hilt/components:srcs_filegroup",
         "//java/dagger/hilt/migration:srcs_filegroup",
         "//java/dagger/hilt/internal:srcs_filegroup",
         "//java/dagger/hilt/internal/aliasof:srcs_filegroup",

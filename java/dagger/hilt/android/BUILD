@@ -159,6 +159,8 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/scopes:package_info",
         "//java/dagger/hilt/codegen:originating_element",
         "//java/dagger/hilt/codegen:package_info",
+        "//java/dagger/hilt/components",
+        "//java/dagger/hilt/components:package_info",
         "//java/dagger/hilt/internal:component_entry_point",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",

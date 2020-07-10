@@ -1,4 +1,4 @@
-# Copyright (C) 2019 The Dagger Authors.
+# Copyright (C) 2020 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,27 +13,18 @@
 # limitations under the License.
 
 # Description:
-#   Hilt Android components
+#   Hilt components
 
 package(default_visibility = ["//:src"])
 
-android_library(
+java_library(
     name = "components",
     srcs = [
-        "ActivityComponent.java",
-        "ActivityRetainedComponent.java",
-        "ApplicationComponent.java",
-        "FragmentComponent.java",
-        "ServiceComponent.java",
-        "ViewComponent.java",
-        "ViewWithFragmentComponent.java",
+        "SingletonComponent.java",
     ],
     deps = [
         ":package_info",
         "//java/dagger/hilt:define_component",
-        "//java/dagger/hilt/android/scopes",
-        "//java/dagger/hilt/android/scopes:activity_retained_scoped",
-        "//java/dagger/hilt/components",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )

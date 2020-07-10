@@ -71,8 +71,21 @@ public final class Components {
         Processors.getAnnotationClassValues(elements, hiltInstallIn, "value");
     DefineComponents defineComponents = DefineComponents.create();
     return generatedComponents.stream()
+        .map(e -> mapComponents(elements, e))
+        // TODO(b/144939893): Memoize ComponentDescriptors so we're not recalculating.
         .map(defineComponents::componentDescriptor)
         .collect(toImmutableSet());
+  }
+
+  // Temporary hack while ApplicationComponent is renamed to SingletonComponent
+  private static TypeElement mapComponents(Elements elements, TypeElement element) {
+    if (element.getQualifiedName().contentEquals("dagger.hilt.android.components.ApplicationComponent")) {
+      TypeElement singletonComponent = elements.getTypeElement(
+          "dagger.hilt.components.SingletonComponent");
+      Preconditions.checkState(singletonComponent != null);
+      return singletonComponent;
+    }
+    return element;
   }
 
   private Components() {}

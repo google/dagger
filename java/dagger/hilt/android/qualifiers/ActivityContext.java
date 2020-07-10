@@ -22,10 +22,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import javax.inject.Qualifier;
 
-/**
- * Annotation for a {@code Context} that corresponds to the activity.
- */
+/** Annotation for a {@code Context} that corresponds to the activity. */
 @Qualifier
 @Retention(RetentionPolicy.CLASS)
-@Target({ElementType.TYPE, ElementType.METHOD, ElementType.PARAMETER})
+@Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD})
 public @interface ActivityContext {}

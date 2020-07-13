@@ -12,24 +12,32 @@ util/install-local-snapshot.sh
 
 pushd examples/maven && mvn compile && popd
 
-# Also run the gradle examples on the local maven snapshots.
-readonly _SIMPLE_EXAMPLE_DIR=java/dagger/example/gradle/simple
-readonly _ANDROID_EXAMPLE_DIR=java/dagger/example/gradle/android/simple
-./$_SIMPLE_EXAMPLE_DIR/gradlew -p $_SIMPLE_EXAMPLE_DIR build --no-daemon --stacktrace
-./$_ANDROID_EXAMPLE_DIR/gradlew -p $_ANDROID_EXAMPLE_DIR build --no-daemon --stacktrace
+readonly GRADLE_PROJECTS=(
+    "java/dagger/example/gradle/simple"
+    "java/dagger/hilt/android/plugin"
+    "javatests/artifacts/dagger/simple"
+)
+for project in "${GRADLE_PROJECTS[@]}"; do
+    echo "Running gradle tests for $project"
+    ./$project/gradlew -p $project build --no-daemon --stacktrace
+    ./$project/gradlew -p $project test --no-daemon --stacktrace
+done
 
-readonly _HILT_GRADLE_PLUGIN_DIR=java/dagger/hilt/android/plugin
-readonly _HILT_ANDROID_EXAMPLE_DIR=java/dagger/hilt/android/example/gradle/simple
-readonly _HILT_KOTLIN_ANDROID_EXAMPLE_DIR=java/dagger/hilt/android/example/gradle/simpleKotlin
-./$_HILT_GRADLE_PLUGIN_DIR/gradlew -p $_HILT_GRADLE_PLUGIN_DIR test --no-daemon --stacktrace
+
 # Run gradle tests with different versions of Android Gradle Plugin
 readonly AGP_VERSIONS=("4.1.0-alpha07" "4.0.0-beta05" "3.6.3")
+readonly ANDROID_GRADLE_PROJECTS=(
+    "java/dagger/example/gradle/android/simple"
+    "javatests/artifacts/dagger-android/simple"
+    "javatests/artifacts/hilt-android/simple"
+    "javatests/artifacts/hilt-android/simpleKotlin"
+)
 for version in "${AGP_VERSIONS[@]}"; do
-    echo "Running tests with AGP $version"
-    AGP_VERSION=$version ./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR buildDebug --no-daemon --stacktrace
-    AGP_VERSION=$version ./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR testDebug --no-daemon --stacktrace
-    AGP_VERSION=$version ./$_HILT_KOTLIN_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_KOTLIN_ANDROID_EXAMPLE_DIR buildDebug --no-daemon --stacktrace
-    AGP_VERSION=$version ./$_HILT_KOTLIN_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_KOTLIN_ANDROID_EXAMPLE_DIR testDebug --no-daemon --stacktrace
+    for project in "${ANDROID_GRADLE_PROJECTS[@]}"; do
+        echo "Running gradle tests for $project with AGP $version"
+        AGP_VERSION=$version ./$project/gradlew -p $project buildDebug --no-daemon --stacktrace
+        AGP_VERSION=$version ./$project/gradlew -p $project testDebug --no-daemon --stacktrace
+    done
 done
 
 verify_version_file() {

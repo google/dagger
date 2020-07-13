@@ -12,7 +12,6 @@ readonly EMULATOR="$1"
 # Empirically, the emulator startup takes ~60s so we set the timeout for 200s.
 readonly TIMEOUT_SEC=200
 readonly WAIT_CMD="${ANDROID_HOME}/platform-tools/adb wait-for-device shell getprop init.svc.bootanim"
-readonly _HILT_ANDROID_EXAMPLE_DIR=java/dagger/hilt/android/example/gradle/simple
 
 # Start the emulator in the background and grab its PID so we can kill it later.
 ${ANDROID_HOME}/emulator/emulator -avd $EMULATOR -no-window -wipe-data &
@@ -49,6 +48,10 @@ until $WAIT_CMD | grep -m 1 stopped; do
   sleep 1
 done
 
-echo "Running gradle tests"
-# Run the emulator tests in the given directory
-./$_HILT_ANDROID_EXAMPLE_DIR/gradlew -p $_HILT_ANDROID_EXAMPLE_DIR connectedAndroidTest --no-daemon --stacktrace
+readonly GRADLE_PROJECTS=(
+    "javatests/artifacts/hilt-android/simple"
+)
+for project in "${GRADLE_PROJECTS[@]}"; do
+    echo "Running gradle tests for $project"
+    ./$project/gradlew -p $project connectedAndroidTest --no-daemon --stacktrace
+done

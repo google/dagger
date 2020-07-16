@@ -101,6 +101,8 @@ public final class ClassNames {
 
   public static final ClassName APPLICATION_COMPONENT =
       get("dagger.hilt.components", "SingletonComponent");
+  public static final ClassName LEGACY_APPLICATION_COMPONENT =
+      get("dagger.hilt.android.components", "ApplicationComponent");
   // TODO(user): Move these class names out when we factor out the android portion
   public static final ClassName APPLICATION = get("android.app", "Application");
   public static final ClassName MULTI_DEX_APPLICATION =

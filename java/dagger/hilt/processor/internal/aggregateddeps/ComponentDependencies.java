@@ -19,7 +19,6 @@ package dagger.hilt.processor.internal.aggregateddeps;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator.AGGREGATING_PACKAGE;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
@@ -179,12 +178,7 @@ public final class ComponentDependencies {
     Dependencies.Builder entryPointDeps = new Dependencies.Builder();
     Dependencies.Builder componentEntryPointDeps = new Dependencies.Builder();
     Map<String, TypeElement> testElements = new HashMap<>();
-    ImmutableMap<String, ComponentDescriptor> descriptorLookup =
-        descriptors.stream()
-            .collect(
-                toImmutableMap(
-                    descriptor -> descriptor.component().toString(),
-                    descriptor -> descriptor));
+    Map<String, ComponentDescriptor> descriptorLookup = descriptorLookupMap(descriptors);
 
     for (AggregatedDeps deps : getAggregatedDeps(elements)) {
       Optional<ClassName> test = Optional.empty();
@@ -224,6 +218,22 @@ public final class ComponentDependencies {
         validateModules(moduleDeps.build(), elements),
         entryPointDeps.build(),
         componentEntryPointDeps.build());
+  }
+
+  private static ImmutableMap<String, ComponentDescriptor> descriptorLookupMap(
+      ImmutableList<ComponentDescriptor> descriptors) {
+    ImmutableMap.Builder<String, ComponentDescriptor> builder = ImmutableMap.builder();
+    for (ComponentDescriptor descriptor : descriptors) {
+      // This is a temporary hack to map the old ApplicationComponent to the new SingletonComponent.
+      // Technically, this is only needed for backwards compatibility with libraries using the old
+      // processor since new processors should convert to the new SingletonComponent when generating
+      // the metadata class.
+      if (descriptor.component().equals(ClassNames.APPLICATION_COMPONENT)) {
+        builder.put(ClassNames.LEGACY_APPLICATION_COMPONENT.toString(), descriptor);
+      }
+      builder.put(descriptor.component().toString(), descriptor);
+    }
+    return builder.build();
   }
 
   // Validate that the @UninstallModules doesn't contain any test modules.

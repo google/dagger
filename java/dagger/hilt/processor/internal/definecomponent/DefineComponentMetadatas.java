@@ -63,8 +63,8 @@ final class DefineComponentMetadatas {
   private DefineComponentMetadata get(Element element, LinkedHashSet<Element> childPath) {
     // This is a temporary hack to map the old ApplicationComponent to the new SingletonComponent
     if (element.getKind().equals(ElementKind.INTERFACE)
-        && asType(element).getQualifiedName().contentEquals(
-            "dagger.hilt.android.components.ApplicationComponent")) {
+        && asType(element).getQualifiedName()
+            .contentEquals(ClassNames.LEGACY_APPLICATION_COMPONENT.toString())) {
       element = asTypeElement(asType(element).getInterfaces().get(0));
     }
 

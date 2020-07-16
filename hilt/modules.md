@@ -157,13 +157,14 @@ different deps into your binary definition.
 
 <!-- TODO(user): Discuss source sets for Gradle -->
 
-## Bazel: Organizing your BUILD files
+## Bazel: Organizing your BUILD files {#organizing-build-files}
 
 Because Bazel tends to enourage separation into finer-grained build targets, it
 is often better for tests to just avoid depending on modules you intend to
 replace in tests instead of [uninstalling](testing.md#uninstall-modules) them.
 This is because it reduces the build dependencies of your test which can lead to
 overall faster build times.
+
 
 When organizing your BUILD target for a module, you should consider if this
 module should be replaceable in tests or other configurations of your app. If it

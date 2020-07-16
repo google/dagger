@@ -394,6 +394,7 @@ public class FooTest {
 }
 ```
 {: .c-codeselector__code .c-codeselector__code_java }
+
 ```kotlin
 @UninstallModules(ProdFooModule::class)
 @HiltAndroidTest
@@ -411,6 +412,7 @@ Note that `@UninstallModules` is equivalent to removing the `@InstallIn`
 annotation from that module with respect to the given test. Hilt does not
 directly support uninstalling individual bindings, but it's effectively possible
 by only including a single binding in a given module.
+
 
 ## Custom test application
 

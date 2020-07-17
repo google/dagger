@@ -159,7 +159,8 @@ internal class AndroidEntryPointClassTransformer(
       .filter {
         it.methodInfo.isMethod &&
           !Modifier.isStatic(it.modifiers) &&
-          !Modifier.isAbstract(it.modifiers)
+          !Modifier.isAbstract(it.modifiers) &&
+          !Modifier.isNative(it.modifiers)
       }
       .forEach { method ->
         val codeAttr = method.methodInfo.codeAttribute

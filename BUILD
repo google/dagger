@@ -51,15 +51,15 @@ android_library(
     ],
 )
 
-SHADE_RULES = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"]
-
 jarjar_library(
     name = "shaded_android_processor",
     jars = [
         "//java/dagger/android/processor",
         "@com_google_auto_auto_common//jar",
     ],
-    rules = SHADE_RULES,
+    rules = [
+        "rule com.google.auto.common.** dagger.android.shaded.auto.common.@1",
+    ],
 )
 
 jarjar_library(
@@ -68,7 +68,9 @@ jarjar_library(
         "//java/dagger/grpc/server/processor",
         "@com_google_auto_auto_common//jar",
     ],
-    rules = SHADE_RULES,
+    rules = [
+        "rule com.google.auto.common.** dagger.grpc.shaded.auto.common.@1",
+    ],
 )
 
 # coalesced javadocs used for the gh-pages site

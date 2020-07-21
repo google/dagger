@@ -54,7 +54,7 @@ gen_maven_artifact(
         "//java/dagger/hilt:hilt_processing_filegroup",
     ],
     shaded_deps = ["@com_google_auto_auto_common//jar"],
-    shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
+    shaded_rules = ["rule com.google.auto.common.** dagger.hilt.android.shaded.auto.common.@1"],
     deps = [
         "//java/dagger/hilt/android/processor/internal:android_classnames",
         "//java/dagger/hilt/android/processor/internal:utils",

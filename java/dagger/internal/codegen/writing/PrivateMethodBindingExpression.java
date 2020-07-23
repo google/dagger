@@ -25,6 +25,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ContributionBinding;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 
 /**
@@ -35,6 +36,7 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 final class PrivateMethodBindingExpression extends MethodBindingExpression {
   private final BindingRequest request;
   private final ComponentImplementation componentImplementation;
+  private final CompilerOptions compilerOptions;
   private String methodName;
 
   PrivateMethodBindingExpression(
@@ -43,7 +45,8 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
       MethodImplementationStrategy methodImplementationStrategy,
       BindingExpression wrappedBindingExpression,
       ComponentImplementation componentImplementation,
-      DaggerTypes types) {
+      DaggerTypes types,
+      CompilerOptions compilerOptions) {
     super(
         request,
         binding,
@@ -53,6 +56,7 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
         types);
     this.request = checkNotNull(request);
     this.componentImplementation = checkNotNull(componentImplementation);
+    this.compilerOptions = checkNotNull(compilerOptions);
   }
 
   @Override
@@ -60,6 +64,7 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
     if (methodName == null) {
       // Have to set methodName field before implementing the method in order to handle recursion.
       methodName = componentImplementation.getUniqueMethodName(request);
+
       // TODO(user): Fix the order that these generated methods are written to the component.
       componentImplementation.addMethod(
           PRIVATE_METHOD,

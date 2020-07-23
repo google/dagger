@@ -274,6 +274,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     FLOATING_BINDS_METHODS,
 
     EXPERIMENTAL_DAGGER_ERROR_MESSAGES,
+
     ;
 
     final FeatureStatus defaultValue;

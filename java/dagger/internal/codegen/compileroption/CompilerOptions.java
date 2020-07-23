@@ -76,4 +76,5 @@ public abstract class CompilerOptions {
   public abstract ValidationType explicitBindingConflictsWithInjectValidationType();
 
   public abstract boolean experimentalDaggerErrorMessages();
+
 }

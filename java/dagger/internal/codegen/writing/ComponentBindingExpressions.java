@@ -642,7 +642,8 @@ public final class ComponentBindingExpressions {
           methodImplementationStrategy,
           bindingExpression,
           componentImplementation,
-          types);
+          types,
+          compilerOptions);
     }
   }
 

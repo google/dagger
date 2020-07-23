@@ -108,4 +108,5 @@ public final class JavacPluginCompilerOptions extends CompilerOptions {
   public boolean experimentalDaggerErrorMessages() {
     return false;
   }
+
 }

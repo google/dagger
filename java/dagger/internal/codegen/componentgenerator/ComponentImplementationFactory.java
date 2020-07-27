@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.componentgenerator;
 
-import static dagger.internal.codegen.ComponentGenerator.componentName;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.componentgenerator.ComponentGenerator.componentName;
 
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.binding.BindingGraph;
@@ -69,19 +69,18 @@ final class ComponentImplementationFactory implements ClearableCache {
             compilerOptions);
 
     // TODO(dpb): explore using optional bindings for the "parent" bindings
-    CurrentImplementationSubcomponent currentImplementationSubcomponent =
-        topLevelImplementationComponentBuilder
-            .topLevelComponent(componentImplementation)
-            .build()
-            .currentImplementationSubcomponentBuilder()
-            .componentImplementation(componentImplementation)
-            .bindingGraph(bindingGraph)
-            .parentBuilder(Optional.empty())
-            .parentBindingExpressions(Optional.empty())
-            .parentRequirementExpressions(Optional.empty())
-            .build();
-
-    return currentImplementationSubcomponent.rootComponentBuilder().build();
+    return topLevelImplementationComponentBuilder
+        .topLevelComponent(componentImplementation)
+        .build()
+        .currentImplementationSubcomponentBuilder()
+        .componentImplementation(componentImplementation)
+        .bindingGraph(bindingGraph)
+        .parentBuilder(Optional.empty())
+        .parentBindingExpressions(Optional.empty())
+        .parentRequirementExpressions(Optional.empty())
+        .build()
+        .rootComponentBuilder()
+        .build();
   }
 
   @Override

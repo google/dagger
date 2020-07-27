@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.componentgenerator;
 
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
@@ -33,9 +33,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
-/**
- * Generates the implementation of the abstract types annotated with {@link Component}.
- */
+/** Generates the implementation of the abstract types annotated with {@link Component}. */
 final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   private final ComponentImplementationFactory componentImplementationFactory;
 

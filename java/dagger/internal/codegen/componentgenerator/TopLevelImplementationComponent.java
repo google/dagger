@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.componentgenerator;
 
 import dagger.BindsInstance;
-import dagger.Module;
 import dagger.Subcomponent;
 import dagger.internal.codegen.writing.ComponentImplementation;
 import dagger.internal.codegen.writing.PerGeneratedFile;
@@ -29,16 +28,15 @@ import dagger.internal.codegen.writing.TopLevel;
  */
 @PerGeneratedFile
 @Subcomponent
-interface TopLevelImplementationComponent {
+// This only needs to be public because the type is referenced by generated component.
+public interface TopLevelImplementationComponent {
   CurrentImplementationSubcomponent.Builder currentImplementationSubcomponentBuilder();
 
+  /** Returns the builder for {@link TopLevelImplementationComponent}. */
   @Subcomponent.Builder
   interface Builder {
     @BindsInstance
     Builder topLevelComponent(@TopLevel ComponentImplementation topLevelImplementation);
     TopLevelImplementationComponent build();
   }
-
-  @Module(subcomponents = TopLevelImplementationComponent.class)
-  interface InstallationModule {}
 }

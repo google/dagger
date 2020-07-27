@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.componentgenerator;
 
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -66,7 +66,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 
 /** Factory for creating {@link ComponentCreatorImplementation} instances. */
-public final class ComponentCreatorImplementationFactory {
+final class ComponentCreatorImplementationFactory {
 
   private final DaggerElements elements;
   private final DaggerTypes types;

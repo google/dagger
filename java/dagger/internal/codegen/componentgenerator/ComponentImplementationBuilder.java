@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.componentgenerator;
 
 import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreTypes.asDeclared;
@@ -84,7 +84,11 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 
 /** A builder of {@link ComponentImplementation}s. */
-abstract class ComponentImplementationBuilder {
+// This only needs to be public because it's nested classes are referenced by generated component.
+// Consider moving the nested classes to top-level classes.
+public abstract class ComponentImplementationBuilder {
+  private ComponentImplementationBuilder() {}
+
   private static final String MAY_INTERRUPT_IF_RUNNING = "mayInterruptIfRunning";
 
   /**
@@ -403,7 +407,8 @@ abstract class ComponentImplementationBuilder {
   }
 
   /** Builds a root component implementation. */
-  static final class RootComponentImplementationBuilder extends ComponentImplementationBuilder {
+  public static final class RootComponentImplementationBuilder
+      extends ComponentImplementationBuilder {
     @Inject
     RootComponentImplementationBuilder() {}
 
@@ -476,7 +481,8 @@ abstract class ComponentImplementationBuilder {
    * Builds a subcomponent implementation. Represents a private, inner, concrete, final
    * implementation of a subcomponent which extends a user defined type.
    */
-  static final class SubcomponentImplementationBuilder extends ComponentImplementationBuilder {
+  public static final class SubcomponentImplementationBuilder
+      extends ComponentImplementationBuilder {
     final Optional<ComponentImplementationBuilder> parent;
 
     @Inject

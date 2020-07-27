@@ -40,6 +40,7 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.bindinggraphvalidation.BindingGraphValidationModule;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions;
+import dagger.internal.codegen.componentgenerator.ComponentGeneratorModule;
 import dagger.internal.codegen.statistics.DaggerStatisticsCollectingProcessingStep;
 import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
 import dagger.internal.codegen.validation.BindingGraphPlugins;
@@ -135,6 +136,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
       modules = {
         BindingGraphValidationModule.class,
         BindingMethodValidatorsModule.class,
+        ComponentGeneratorModule.class,
         InjectBindingRegistryModule.class,
         ProcessingEnvironmentModule.class,
         ProcessingRoundCacheModule.class,
@@ -142,7 +144,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         SourceFileGeneratorsModule.class,
         SpiModule.class,
         SystemComponentsModule.class,
-        TopLevelImplementationComponent.InstallationModule.class,
       })
   interface ProcessorComponent {
     void inject(ComponentProcessor processor);

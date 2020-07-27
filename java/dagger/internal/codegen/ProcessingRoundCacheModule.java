@@ -40,9 +40,5 @@ interface ProcessingRoundCacheModule {
 
   @Binds
   @IntoSet
-  ClearableCache componentImplementationFactory(ComponentImplementationFactory cache);
-
-  @Binds
-  @IntoSet
   ClearableCache kotlinMetadata(KotlinMetadataFactory cache);
 }

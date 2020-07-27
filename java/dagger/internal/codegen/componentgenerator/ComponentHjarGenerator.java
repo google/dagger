@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.componentgenerator;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
-import static dagger.internal.codegen.ComponentGenerator.componentName;
 import static dagger.internal.codegen.binding.ComponentCreatorKind.BUILDER;
+import static dagger.internal.codegen.componentgenerator.ComponentGenerator.componentName;
 import static dagger.internal.codegen.javapoet.TypeSpecs.addSupertype;
 import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibleFrom;
 import static javax.lang.model.element.Modifier.ABSTRACT;

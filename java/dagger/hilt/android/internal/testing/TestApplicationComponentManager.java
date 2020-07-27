@@ -135,9 +135,6 @@ public final class TestApplicationComponentManager
   }
 
   void clearState() {
-    Preconditions.checkState(
-        hasHiltTestRule(), "Cannot reset state if the test rule has not been set.");
-
     component.set(null);
     hasHiltTestRule.set(null);
     testInstance = null;

@@ -101,7 +101,7 @@ public class MapBindingExpressionTest {
                 "  private volatile Provider<Long> provideLong1Provider;",
                 "  private volatile Provider<Long> provideLong2Provider;",
                 "",
-                "  private Provider<Integer> getProvideIntProvider() {",
+                "  private Provider<Integer> provideIntProvider() {",
                 "    Object local = provideIntProvider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(0);",
@@ -110,7 +110,7 @@ public class MapBindingExpressionTest {
                 "    return (Provider<Integer>) local;",
                 "  }",
                 "",
-                "  private Provider<Long> getProvideLong0Provider() {",
+                "  private Provider<Long> provideLong0Provider() {",
                 "    Object local = provideLong0Provider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(1);",
@@ -119,7 +119,7 @@ public class MapBindingExpressionTest {
                 "    return (Provider<Long>) local;",
                 "  }",
                 "",
-                "  private Provider<Long> getProvideLong1Provider() {",
+                "  private Provider<Long> provideLong1Provider() {",
                 "    Object local = provideLong1Provider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(2);",
@@ -128,7 +128,7 @@ public class MapBindingExpressionTest {
                 "    return (Provider<Long>) local;",
                 "  }",
                 "",
-                "  private Provider<Long> getProvideLong2Provider() {",
+                "  private Provider<Long> provideLong2Provider() {",
                 "    Object local = provideLong2Provider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(3);",
@@ -160,7 +160,7 @@ public class MapBindingExpressionTest {
                 "        0, MapModule_ProvideIntFactory.create());")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "        0, getProvideIntProvider());")
+                "        0, provideIntProvider());")
             .addLines(
                 "  }",
                 "",
@@ -183,9 +183,9 @@ public class MapBindingExpressionTest {
                 "        .put(2L, MapModule_ProvideLong2Factory.create())")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "        .put(0L, getProvideLong0Provider())",
-                "        .put(1L, getProvideLong1Provider())",
-                "        .put(2L, getProvideLong2Provider())")
+                "        .put(0L, provideLong0Provider())",
+                "        .put(1L, provideLong1Provider())",
+                "        .put(2L, provideLong2Provider())")
             .addLines( //
                 "        .build();", "  }")
             .addLinesIn(

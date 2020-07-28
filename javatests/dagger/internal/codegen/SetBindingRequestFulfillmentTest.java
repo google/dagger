@@ -193,7 +193,7 @@ public class SetBindingRequestFulfillmentTest {
             "",
             GENERATED_CODE_ANNOTATIONS,
             "final class DaggerTestComponent implements TestComponent {",
-            "  private Set getSetOfInaccessible2() {",
+            "  private Set setOfInaccessible2() {",
             "    return SetBuilder.newSetBuilder(1)",
             "        .addAll(TestModule_EmptySetFactory.emptySet())",
             "        .build();",
@@ -203,7 +203,7 @@ public class SetBindingRequestFulfillmentTest {
             "  public UsesInaccessible usesInaccessible() {",
             "    return UsesInaccessible_Factory.newInstance(",
             "        (Set) Collections.emptySet(),",
-            "        (Set) getSetOfInaccessible2());",
+            "        (Set) setOfInaccessible2());",
             "  }",
             "}");
     Compilation compilation =

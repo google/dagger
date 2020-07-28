@@ -1454,14 +1454,14 @@ public class MembersInjectionTest {
             "",
             GENERATED_CODE_ANNOTATIONS,
             "final class DaggerTestComponent implements TestComponent {",
-            "  private Object getInaccessible() {",
+            "  private Object inaccessible() {",
             "    return injectInaccessible(Inaccessible_Factory.newInstance());",
             "  }",
             "",
             "  @Override",
             "  public UsesInaccessible usesInaccessible() {",
             "    return UsesInaccessible_Factory.newInstance(",
-            "        getInaccessible());",
+            "        inaccessible());",
             "  }",
             "",
             // TODO(ronshapiro): if possible, it would be great to rename "instance", but we
@@ -1557,7 +1557,7 @@ public class MembersInjectionTest {
                 FAST_INIT_MODE,
                 "  private volatile Object listOfInaccessible = new MemoizedSentinel();",
                 "",
-                "  private List getListOfInaccessible() {",
+                "  private List listOfInaccessible() {",
                 "    Object local = listOfInaccessible;",
                 "    if (local instanceof MemoizedSentinel) {",
                 "      synchronized (local) {",
@@ -1595,7 +1595,7 @@ public class MembersInjectionTest {
                 "    UsesInaccessibles_MembersInjector.injectInaccessibles(")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "        instance, (List) getListOfInaccessible());")
+                "        instance, (List) listOfInaccessible());")
             .addLinesIn(
                 DEFAULT_MODE,
                 "        instance, (List) inaccessiblesProvider.get());")
@@ -1683,13 +1683,13 @@ public class MembersInjectionTest {
             "",
             GENERATED_CODE_ANNOTATIONS,
             "final class DaggerTestComponent implements TestComponent {",
-            "  private Object getSubtype() {",
+            "  private Object subtype() {",
             "    return injectSubtype(Subtype_Factory.newInstance());",
             "  }",
             "",
             "  @Override",
             "  public InjectsSubtype injectsSubtype() {",
-            "    return InjectsSubtype_Factory.newInstance(getSubtype());",
+            "    return InjectsSubtype_Factory.newInstance(subtype());",
             "  }",
             "",
             "  @CanIgnoreReturnValue",

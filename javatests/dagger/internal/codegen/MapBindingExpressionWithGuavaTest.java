@@ -137,7 +137,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "  private volatile Provider<Long> provideLong1Provider;",
                 "  private volatile Provider<Long> provideLong2Provider;",
                 "",
-                "  private Provider<Integer> getProvideIntProvider() {",
+                "  private Provider<Integer> provideIntProvider() {",
                 "    Object local = provideIntProvider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(0);",
@@ -146,7 +146,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "    return (Provider<Integer>) local;",
                 "  }",
                 "",
-                "  private Provider<Long> getProvideLong0Provider() {",
+                "  private Provider<Long> provideLong0Provider() {",
                 "    Object local = provideLong0Provider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(1);",
@@ -155,7 +155,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "    return (Provider<Long>) local;",
                 "  }",
                 "",
-                "  private Provider<Long> getProvideLong1Provider() {",
+                "  private Provider<Long> provideLong1Provider() {",
                 "    Object local = provideLong1Provider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(2);",
@@ -164,7 +164,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "    return (Provider<Long>) local;",
                 "  }",
                 "",
-                "  private Provider<Long> getProvideLong2Provider() {",
+                "  private Provider<Long> provideLong2Provider() {",
                 "    Object local = provideLong2Provider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(3);",
@@ -196,7 +196,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "        0, MapModule_ProvideIntFactory.create());")
             .addLinesIn(
                 FAST_INIT_MODE, //
-                "        0, getProvideIntProvider());")
+                "        0, provideIntProvider());")
             .addLines(
                 "  }",
                 "",
@@ -218,9 +218,9 @@ public class MapBindingExpressionWithGuavaTest {
                 "      2L, MapModule_ProvideLong2Factory.create());")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "      0L, getProvideLong0Provider(),",
-                "      1L, getProvideLong1Provider(),",
-                "      2L, getProvideLong2Provider());")
+                "      0L, provideLong0Provider(),",
+                "      1L, provideLong1Provider(),",
+                "      2L, provideLong2Provider());")
             .addLines(
                 "  }",
                 "",
@@ -237,7 +237,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "    private volatile Provider<Long> provideLong5Provider;",
                 "    private SubImpl() {}",
                 "",
-                "    private Provider<Long> getProvideLong3Provider() {",
+                "    private Provider<Long> provideLong3Provider() {",
                 "      Object local = provideLong3Provider;",
                 "      if (local == null) {",
                 "        local = new SwitchingProvider<>(0);",
@@ -246,7 +246,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "      return (Provider<Long>) local;",
                 "    }",
                 "",
-                "    private Provider<Long> getProvideLong4Provider() {",
+                "    private Provider<Long> provideLong4Provider() {",
                 "      Object local = provideLong4Provider;",
                 "      if (local == null) {",
                 "        local = new SwitchingProvider<>(1);",
@@ -255,7 +255,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "      return (Provider<Long>) local;",
                 "    }",
                 "",
-                "    private Provider<Long> getProvideLong5Provider() {",
+                "    private Provider<Long> provideLong5Provider() {",
                 "      Object local = provideLong5Provider;",
                 "      if (local == null) {",
                 "        local = new SwitchingProvider<>(2);",
@@ -289,12 +289,12 @@ public class MapBindingExpressionWithGuavaTest {
                 "          .put(5L, SubcomponentMapModule_ProvideLong5Factory.create())")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "          .put(0L, DaggerTestComponent.this.getProvideLong0Provider())",
-                "          .put(1L, DaggerTestComponent.this.getProvideLong1Provider())",
-                "          .put(2L, DaggerTestComponent.this.getProvideLong2Provider())",
-                "          .put(3L, getProvideLong3Provider())",
-                "          .put(4L, getProvideLong4Provider())",
-                "          .put(5L, getProvideLong5Provider())")
+                "          .put(0L, DaggerTestComponent.this.provideLong0Provider())",
+                "          .put(1L, DaggerTestComponent.this.provideLong1Provider())",
+                "          .put(2L, DaggerTestComponent.this.provideLong2Provider())",
+                "          .put(3L, provideLong3Provider())",
+                "          .put(4L, provideLong4Provider())",
+                "          .put(5L, provideLong5Provider())")
             .addLines( //
                 "          .build();", "    }")
             .addLinesIn(

@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -390,12 +389,12 @@ public final class ComponentImplementation {
   }
 
   private String uniqueMethodName(BindingRequest request, String bindingName) {
-    String baseMethodName =
-        "get"
-            + LOWER_CAMEL.to(UPPER_CAMEL, bindingName)
-            + (request.isRequestKind(RequestKind.INSTANCE)
-                ? ""
-                : UPPER_UNDERSCORE.to(UPPER_CAMEL, request.kindName()));
+    // This name is intentionally made to match the name for fields in fastInit
+    // in order to reduce the constant pool size. b/162004246
+    String baseMethodName = bindingName
+        + (request.isRequestKind(RequestKind.INSTANCE)
+            ? ""
+            : UPPER_UNDERSCORE.to(UPPER_CAMEL, request.kindName()));
     return getUniqueMethodName(baseMethodName);
   }
 

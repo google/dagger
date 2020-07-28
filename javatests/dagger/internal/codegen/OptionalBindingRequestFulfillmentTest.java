@@ -116,7 +116,7 @@ public class OptionalBindingRequestFulfillmentTest {
                 FAST_INIT_MODE,
                 "  private volatile Provider<Maybe> provideMaybeProvider;",
                 "",
-                "  private Provider<Maybe> getMaybeProvider() {",
+                "  private Provider<Maybe> maybeProvider() {",
                 "    Object local = provideMaybeProvider;",
                 "    if (local == null) {",
                 "      local = new SwitchingProvider<>(0);",
@@ -139,7 +139,7 @@ public class OptionalBindingRequestFulfillmentTest {
                 "        Maybe_MaybeModule_ProvideMaybeFactory.create()));")
             .addLinesIn(
                 FAST_INIT_MODE, //
-                "        getMaybeProvider()));")
+                "        maybeProvider()));")
             .addLines(
                 "  }",
                 "",

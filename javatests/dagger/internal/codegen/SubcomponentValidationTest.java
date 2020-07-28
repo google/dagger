@@ -300,7 +300,7 @@ public class SubcomponentValidationTest {
         "",
         "@Subcomponent(modules = TestModule.class)",
         "interface ChildComponent {",
-        "  String getString();",
+        "  String string();",
         "}");
     Compilation compilation =
         daggerCompiler()
@@ -348,7 +348,7 @@ public class SubcomponentValidationTest {
         "",
         "@Subcomponent(modules = ChildModule.class)",
         "interface ChildComponent {",
-        "  Object getObject();",
+        "  Object object();",
         "}");
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.ChildModule",
         "package test;",
@@ -383,8 +383,8 @@ public class SubcomponentValidationTest {
             "@Component",
             "interface ParentComponent {",
             "  ChildComponent childComponent();",
-            "  Dep1 getDep1();",
-            "  Dep2 getDep2();",
+            "  Dep1 dep1();",
+            "  Dep2 dep2();",
             "}");
     JavaFileObject childComponentFile =
         JavaFileObjects.forSourceLines(
@@ -395,7 +395,7 @@ public class SubcomponentValidationTest {
             "",
             "@Subcomponent(modules = ChildModule.class)",
             "interface ChildComponent {",
-            "  Object getObject();",
+            "  Object object();",
             "}");
     JavaFileObject childModuleFile =
         JavaFileObjects.forSourceLines(
@@ -475,7 +475,7 @@ public class SubcomponentValidationTest {
                 "")
             .addLines(
                 "  @Override", //
-                "  public Dep1 getDep1() {")
+                "  public Dep1 dep1() {")
             .addLinesIn(
                 FAST_INIT_MODE,
                 "   Object local = dep1;",
@@ -496,7 +496,7 @@ public class SubcomponentValidationTest {
                 "  }", //
                 "",
                 "  @Override",
-                "  public Dep2 getDep2() {")
+                "  public Dep2 dep2() {")
             .addLinesIn(
                 FAST_INIT_MODE,
                 "   Object local = dep2;",
@@ -545,34 +545,34 @@ public class SubcomponentValidationTest {
                 "")
             .addLinesIn(
                 DEFAULT_MODE,
-                "    private NeedsDep1 getNeedsDep1() {",
+                "    private NeedsDep1 needsDep1() {",
                 "      return new NeedsDep1(DaggerParentComponent.this.dep1Provider.get());",
                 "    }")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "    private NeedsDep1 getNeedsDep1() {",
-                "      return new NeedsDep1(DaggerParentComponent.this.getDep1());",
+                "    private NeedsDep1 needsDep1() {",
+                "      return new NeedsDep1(DaggerParentComponent.this.dep1());",
                 "    }")
             .addLines(
-                "    private A getA() {",
+                "    private A a() {",
                 "      return injectA(",
                 "          A_Factory.newInstance(",
-                "              getNeedsDep1(),")
+                "              needsDep1(),")
             .addLinesIn(
                 DEFAULT_MODE,
                 "              DaggerParentComponent.this.dep1Provider.get(),",
                 "              DaggerParentComponent.this.dep2Provider.get()));")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "              DaggerParentComponent.this.getDep1(),",
-                "              DaggerParentComponent.this.getDep2()));")
+                "              DaggerParentComponent.this.dep1(),",
+                "              DaggerParentComponent.this.dep2()));")
             .addLines(
                 "    }",
                 "",
                 "    @Override",
-                "    public Object getObject() {",
+                "    public Object object() {",
                 "      return ChildModule_ProvideObjectFactory.provideObject(",
-                "          childModule, getA());",
+                "          childModule, a());",
                 "    }",
                 "",
                 "    @CanIgnoreReturnValue",

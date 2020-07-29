@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Dagger Authors.
+# Copyright (C) 2020 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,24 +13,19 @@
 # limitations under the License.
 
 # Description:
-#   Dagger-specific extensions for statistics.
+#   Forks of auto-common tools until there's another artifact drop.
 
 load("@rules_java//java:defs.bzl", "java_library")
 
 package(default_visibility = ["//:src"])
 
 java_library(
-    name = "statistics",
+    name = "autocommon",
     srcs = glob(["*.java"]),
-    plugins = ["//java/dagger/internal/codegen/bootstrap"],
     tags = ["maven:merged"],
     deps = [
-        "//java/dagger:core",
-        "//java/dagger/internal/codegen/autocommon",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "@google_bazel_common//third_party/java/auto:value",
-        "@google_bazel_common//third_party/java/error_prone:annotations",
-        "@google_bazel_common//third_party/java/jsr330_inject",
+        "@google_bazel_common//third_party/java/auto:common",
     ],
 )

@@ -20,6 +20,7 @@ import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Reusable;
+import dagger.functional.NeedsFactory;
 import dagger.functional.SomeQualifier;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntKey;
@@ -35,6 +36,12 @@ import javax.inject.Singleton;
 
 @Module(includes = InterfaceModule.class)
 abstract class SimpleBindingModule {
+
+  // Regression test for b/161853413 that binds an implementation that extends a generated class
+  // that is processed in the same build unit as the @Binds method.
+  @Binds
+  abstract NeedsFactory.SomethingFactory bindFooFactory(NeedsFactory.SomethingFactoryImpl impl);
+
   @Binds
   abstract Object bindObject(FooOfStrings impl);
 
@@ -147,7 +154,7 @@ abstract class SimpleBindingModule {
   @IntKey(123)
   @SomeQualifier
   abstract Object bindFooOfStringsIntoQualifiedMap(FooOfStrings fooOfStrings);
-  
+
   @Provides
   @Named("For-123")
   static String provide123String() {

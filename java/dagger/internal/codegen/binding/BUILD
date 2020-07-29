@@ -26,6 +26,7 @@ java_library(
     tags = ["maven:merged"],
     deps = [
         "//java/dagger:core",
+        "//java/dagger/internal/codegen/autocommon",
         "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/extension",

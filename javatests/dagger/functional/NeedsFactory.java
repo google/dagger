@@ -19,11 +19,19 @@ package dagger.functional;
 import com.google.auto.factory.AutoFactory;
 import javax.inject.Inject;
 
-class NeedsFactory {
+public class NeedsFactory {
   @Inject
-  NeedsFactory(@SuppressWarnings("unused") NeedsFactory_SomethingFactory somethingFactory) {}
+  NeedsFactory(
+      @SuppressWarnings("unused") NeedsFactory_SomethingFactory somethingFactory,
+      @SuppressWarnings("unused") SomethingFactoryImpl somethingFactoryImpl) {}
 
-  @AutoFactory
+  public interface SomethingFactory {}
+
+  @AutoFactory(implementing = SomethingFactory.class, allowSubclasses = true)
   static class Something {}
+
+  public static final class SomethingFactoryImpl extends NeedsFactory_SomethingFactory {
+    @Inject SomethingFactoryImpl() {}
+  }
 }
 

@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
-import com.google.auto.common.BasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -31,6 +30,7 @@ import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import dagger.internal.codegen.SpiModule.TestingPlugins;
+import dagger.internal.codegen.autocommon.BasicAnnotationProcessor;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.SourceFileGenerationException;
 import dagger.internal.codegen.base.SourceFileGenerator;

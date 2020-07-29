@@ -40,6 +40,7 @@ java_library(
     deps = [
         ":package_info",
         "//java/dagger:core",
+        "//java/dagger/internal/codegen/autocommon",
         "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/bindinggraphvalidation",
@@ -78,6 +79,7 @@ gen_maven_artifact(
     artifact_target = ":processor",
     artifact_target_libs = [
         ":package_info",
+        "//java/dagger/internal/codegen/autocommon",
         "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/bindinggraphvalidation",

@@ -27,13 +27,13 @@ import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirr
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import com.google.auto.common.AnnotationMirrors;
-import com.google.auto.common.SuperficialValidation;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.InjectedFieldSignature;
+import dagger.internal.codegen.autocommon.SuperficialValidation;
 import dagger.internal.codegen.extension.DaggerCollectors;
 import dagger.internal.codegen.extension.DaggerStreams;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;

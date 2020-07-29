@@ -19,9 +19,9 @@ package dagger.internal.codegen.statistics;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
-import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;
+import dagger.internal.codegen.autocommon.BasicAnnotationProcessor.ProcessingStep;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;

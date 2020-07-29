@@ -18,10 +18,10 @@ package dagger.internal.codegen.validation;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.SetMultimap;
+import dagger.internal.codegen.autocommon.BasicAnnotationProcessor.ProcessingStep;
 import java.lang.annotation.Annotation;
 import java.util.function.Function;
 import javax.lang.model.element.Element;

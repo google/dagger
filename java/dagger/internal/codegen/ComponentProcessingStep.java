@@ -24,10 +24,10 @@ import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnot
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.allCreatorAnnotations;
 import static java.util.Collections.disjoint;
 
-import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.codegen.autocommon.BasicAnnotationProcessor.ProcessingStep;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingGraphConverter;

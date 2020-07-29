@@ -20,6 +20,7 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsM
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.ALLOWS_SCOPING;
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
+import static dagger.internal.codegen.validation.TypeHierarchyValidator.validateTypeHierarchy;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
@@ -100,6 +101,13 @@ final class BindsMethodValidator extends BindingMethodValidator {
       }
 
       if (!bindsTypeChecker.isAssignable(rightHandSide, leftHandSide, contributionType)) {
+        // Validate the type hierarchy of both sides to make sure they're both valid.
+        // If one of the types isn't valid it means we need to delay validation to the next round.
+        // Note: BasicAnnotationProcessor only performs superficial validation on the referenced
+        // types within the module. Thus, we're guaranteed that the types in the @Binds method are
+        // valid, but it says nothing about their supertypes, which are needed for isAssignable.
+        validateTypeHierarchy(leftHandSide, types);
+        validateTypeHierarchy(rightHandSide, types);
         // TODO(ronshapiro): clarify this error message for @ElementsIntoSet cases, where the
         // right-hand-side might not be assignable to the left-hand-side, but still compatible with
         // Set.addAll(Collection<? extends E>)

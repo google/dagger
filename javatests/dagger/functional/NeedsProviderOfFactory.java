@@ -26,7 +26,8 @@ class NeedsProviderOfFactory {
   static class InjectsProviderOfFactory {
     @Inject
     InjectsProviderOfFactory(
-        Provider<NeedsProviderOfFactory_SomethingFactory> provider) {}
+        Provider<NeedsProviderOfFactory_SomethingFactory> somethingFactoryProvider,
+        Provider<SomethingFactoryImpl> somethingFactoryImplProvider) {}
   }
 
   @Component
@@ -34,6 +35,12 @@ class NeedsProviderOfFactory {
     InjectsProviderOfFactory injectsProviderOfFactory();
   }
 
-  @AutoFactory
+  interface SomethingFactory {}
+
+  @AutoFactory(implementing = SomethingFactory.class, allowSubclasses = true)
   static class Something {}
+
+  static final class SomethingFactoryImpl extends NeedsProviderOfFactory_SomethingFactory {
+    @Inject SomethingFactoryImpl() {}
+  }
 }

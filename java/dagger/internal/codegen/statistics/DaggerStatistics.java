@@ -16,12 +16,12 @@
 
 package dagger.internal.codegen.statistics;
 
-import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
+import dagger.internal.codegen.autocommon.BasicAnnotationProcessor.ProcessingStep;
 import java.time.Duration;
 
 /** Statistics collected over the course of Dagger annotation processing. */

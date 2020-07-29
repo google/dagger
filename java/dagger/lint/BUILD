@@ -53,9 +53,16 @@ genrule(
 
 gen_maven_artifact(
     name = "lint-artifact",
-    artifact_id = "dagger-lint",
+    artifact_coordinates = "com.google.dagger:dagger-lint:" + POM_VERSION,
     artifact_name = "Dagger Lint Rules",
     artifact_target = ":lint-artifact-lib",
+    artifact_target_maven_deps = [
+        "com.android.tools.external.com-intellij:intellij-core",
+        "com.android.tools.external.com-intellij:kotlin-compiler",
+        "com.android.tools.external.org-jetbrains:uast",
+        "com.android.tools.lint:lint",
+        "com.android.tools.lint:lint-api",
+    ],
     pom_name = "lint-pom",
 )
 
@@ -68,7 +75,7 @@ android_library(
 
 gen_maven_artifact(
     name = "lint-android-artifact",
-    artifact_id = "dagger-lint-aar",
+    artifact_coordinates = "com.google.dagger:dagger-lint-aar:" + POM_VERSION,
     artifact_name = "Dagger Lint Rules AAR Distribution",
     artifact_target = ":lint-android-artifact-lib",
     lint_deps = [":lint-artifact-lib"],

@@ -27,6 +27,9 @@ MavenInfo = provider(
         "all_transitive_deps": """
         All transitive deps of the target with srcs.
         """,
+        "maven_nearest_artifacts": """
+        The nearest maven deps of the target.
+        """,
         "maven_transitive_deps": """
         All transitive deps that are included in some maven dependency.
         """,
@@ -36,6 +39,7 @@ MavenInfo = provider(
 _EMPTY_MAVEN_INFO = MavenInfo(
     artifact = None,
     has_srcs = False,
+    maven_nearest_artifacts = depset(),
     maven_transitive_deps = depset(),
     all_transitive_deps = depset(),
 )
@@ -58,20 +62,26 @@ def _collect_maven_info_impl(target, ctx):
     all_deps = [dep.label for dep in (deps + exports) if dep[MavenInfo].has_srcs]
     all_transitive_deps = [dep[MavenInfo].all_transitive_deps for dep in (deps + exports)]
 
+    maven_artifacts = []
+    maven_nearest_artifacts = []
     maven_deps = []
     maven_transitive_deps = []
     for dep in (deps + exports):
         # If the dep is itself a maven artifact, add it and all of its transitive deps.
         # Otherwise, just propagate its transitive maven deps.
         if dep[MavenInfo].artifact or dep[MavenInfo] == _EMPTY_MAVEN_INFO:
+            if (dep[MavenInfo].artifact):
+                maven_artifacts.append(dep[MavenInfo].artifact)
             maven_deps.append(dep.label)
             maven_transitive_deps.append(dep[MavenInfo].all_transitive_deps)
         else:
+            maven_nearest_artifacts.append(dep[MavenInfo].maven_nearest_artifacts)
             maven_transitive_deps.append(dep[MavenInfo].maven_transitive_deps)
 
     return [MavenInfo(
         artifact = artifact,
         has_srcs = len(srcs) > 0,
+        maven_nearest_artifacts = depset(maven_artifacts, transitive = maven_nearest_artifacts),
         maven_transitive_deps = depset(maven_deps, transitive = maven_transitive_deps),
         all_transitive_deps = depset(all_deps, transitive = all_transitive_deps),
     )]

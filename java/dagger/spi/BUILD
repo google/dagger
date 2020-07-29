@@ -53,9 +53,23 @@ java_library(
 
 gen_maven_artifact(
     name = "artifact",
-    artifact_id = "dagger-spi",
+    artifact_coordinates = "com.google.dagger:dagger-spi:" + POM_VERSION,
     artifact_name = "Dagger SPI",
     artifact_target = ":spi",
+    artifact_target_libs = [
+        "//java/dagger/internal/codegen/extension",
+        "//java/dagger/model",
+    ],
+    artifact_target_maven_deps = [
+        "com.google.auto:auto-common",
+        "com.google.code.findbugs:jsr305",
+        "com.google.dagger:dagger-producers",
+        "com.google.dagger:dagger",
+        "com.google.guava:failureaccess",
+        "com.google.guava:guava",
+        "com.squareup:javapoet",
+        "javax.inject:javax.inject",
+    ],
     javadoc_root_packages = [
         "dagger.model",
         "dagger.spi",
@@ -66,8 +80,4 @@ gen_maven_artifact(
     ],
     shaded_deps = ["@com_google_auto_auto_common//jar"],
     shaded_rules = ["rule com.google.auto.common.** dagger.spi.shaded.auto.common.@1"],
-    deps = [
-        "//java/dagger/internal/codegen/extension",
-        "//java/dagger/model",
-    ],
 )

@@ -41,8 +41,11 @@ def pom_file(name, targets, artifact_name, artifact_id, packaging = None, **kwar
 def gen_maven_artifact(
         name,
         artifact_name,
-        artifact_id,
+        artifact_coordinates,
         artifact_target,
+        artifact_target_libs = None,
+        artifact_target_maven_deps = None,
+        artifact_target_maven_deps_banned = None,
         testonly = 0,
         pom_name = "pom",
         packaging = None,
@@ -50,7 +53,6 @@ def gen_maven_artifact(
         javadoc_root_packages = None,
         javadoc_exclude_packages = None,
         javadoc_android_api_level = None,
-        deps = None,
         shaded_deps = None,
         shaded_rules = None,
         manifest = None,
@@ -58,8 +60,11 @@ def gen_maven_artifact(
     _gen_maven_artifact(
         name,
         artifact_name,
-        artifact_id,
+        artifact_coordinates,
         artifact_target,
+        artifact_target_libs,
+        artifact_target_maven_deps,
+        artifact_target_maven_deps_banned,
         testonly,
         pom_name,
         packaging,
@@ -67,7 +72,6 @@ def gen_maven_artifact(
         javadoc_root_packages,
         javadoc_exclude_packages,
         javadoc_android_api_level,
-        deps,
         shaded_deps,
         shaded_rules,
         manifest,
@@ -77,8 +81,11 @@ def gen_maven_artifact(
 def _gen_maven_artifact(
         name,
         artifact_name,
-        artifact_id,
+        artifact_coordinates,
         artifact_target,
+        artifact_target_libs,
+        artifact_target_maven_deps,
+        artifact_target_maven_deps_banned,
         testonly,
         pom_name,
         packaging,
@@ -86,7 +93,6 @@ def _gen_maven_artifact(
         javadoc_root_packages,
         javadoc_exclude_packages,
         javadoc_android_api_level,
-        deps,
         shaded_deps,
         shaded_rules,
         manifest,
@@ -109,7 +115,11 @@ def _gen_maven_artifact(
       name: The name associated with the various output targets.
       artifact_target: The target containing the maven_coordinates.
       artifact_name: The name of the maven artifact.
-      artifact_id: The id of the maven artifact.
+      artifact_coordinates: The coordinates of the maven artifact in the
+                            form: "<group_id>:<artifact_id>:<version>"
+      artifact_target_libs: The set of transitive libraries of the target.
+      artifact_target_maven_deps: The required maven deps of the target.
+      artifact_target_maven_deps_banned: The banned maven deps of the target.
       testonly: True if the jar should be testonly.
       packaging: The packaging of the maven artifact. E.g. "aar"
       pom_name: The name of the pom file (or "pom" if absent).
@@ -117,7 +127,6 @@ def _gen_maven_artifact(
       javadoc_root_packages: The root packages for the javadocs.
       javadoc_exclude_packages: The packages to exclude from the javadocs.
       javadoc_android_api_level: The android api level for the javadocs.
-      deps: The required deps to include with the target.
       shaded_deps: The shaded deps for the jarjar.
       shaded_rules: The shaded rules for the jarjar.
       manifest: The AndroidManifest.xml to bundle in when packaing an 'aar'.
@@ -128,12 +137,15 @@ def _gen_maven_artifact(
         name = name + "-validation",
         testonly = 1,
         target = artifact_target,
-        deps = deps,
+        expected_artifact = artifact_coordinates,
+        expected_libs = artifact_target_libs,
+        expected_maven_deps = artifact_target_maven_deps,
+        banned_maven_deps = artifact_target_maven_deps_banned,
     )
 
     shaded_deps = shaded_deps or []
     shaded_rules = shaded_rules or []
-    artifact_targets = [artifact_target] + (deps or [])
+    artifact_targets = [artifact_target] + (artifact_target_libs or [])
     lint_deps = lint_deps or []
 
     # META-INF resources files that can be combined by appending lines.
@@ -141,6 +153,7 @@ def _gen_maven_artifact(
         "gradle/incremental.annotation.processors",
     ]
 
+    artifact_id = artifact_coordinates.split(":")[1]
     pom_file(
         name = pom_name,
         testonly = testonly,
@@ -233,22 +246,51 @@ def _validate_maven_deps_impl(ctx):
     exactly.
     """
     target = ctx.attr.target
-    if not target[MavenInfo].artifact:
+    artifact = target[MavenInfo].artifact
+    if not artifact:
         fail("\t[Error]: %s is not a maven artifact" % target.label)
 
-    deps = [dep.label for dep in getattr(ctx.attr, "deps", [])]
+    if artifact != ctx.attr.expected_artifact:
+        fail(
+            "\t[Error]: %s expected artifact, %s, but was: %s" % (
+                target.label,
+                ctx.attr.expected_artifact,
+                artifact,
+            ),
+        )
 
     all_transitive_deps = target[MavenInfo].all_transitive_deps.to_list()
+    maven_nearest_artifacts = target[MavenInfo].maven_nearest_artifacts.to_list()
     maven_transitive_deps = target[MavenInfo].maven_transitive_deps.to_list()
-    required_deps = [dep for dep in all_transitive_deps if dep not in maven_transitive_deps]
 
-    missing_deps = [str(dep) for dep in required_deps if dep not in deps]
-    if missing_deps:
-        fail("\t[Error]: Found missing deps: \n\t\t" + "\n\t\t".join(missing_deps))
+    expected_libs = [dep.label for dep in getattr(ctx.attr, "expected_libs", [])]
+    actual_libs = [dep for dep in all_transitive_deps if dep not in maven_transitive_deps]
+    _validate_list("artifact_target_libs", actual_libs, expected_libs)
 
-    extra_deps = [str(dep) for dep in deps if dep not in required_deps]
-    if extra_deps:
-        fail("\t[Error]: Found extra deps: \n\t\t" + "\n\t\t".join(extra_deps))
+    expected_maven_deps = [dep for dep in getattr(ctx.attr, "expected_maven_deps", [])]
+    actual_maven_deps = [_strip_artifact_version(artifact) for artifact in maven_nearest_artifacts]
+    _validate_list(
+        "artifact_target_maven_deps",
+        actual_maven_deps,
+        expected_maven_deps,
+        ctx.attr.banned_maven_deps,
+    )
+
+def _validate_list(name, actual_list, expected_list, banned_list = []):
+    missing = sorted(['"{}",'.format(x) for x in actual_list if x not in expected_list])
+    if missing:
+        fail("\t[Error]: Found missing {}: \n\t\t".format(name) + "\n\t\t".join(missing))
+
+    extra = sorted(['"{}",'.format(x) for x in expected_list if x not in actual_list])
+    if extra:
+        fail("\t[Error]: Found extra {}: \n\t\t".format(name) + "\n\t\t".join(extra))
+
+    banned = sorted(['"{}",'.format(x) for x in actual_list if x in banned_list])
+    if banned:
+        fail("\t[Error]: Found banned {}: \n\t\t".format(name) + "\n\t\t".join(banned))
+
+def _strip_artifact_version(artifact):
+    return artifact.rsplit(":", 1)[0]
 
 _validate_maven_deps = rule(
     implementation = _validate_maven_deps_impl,
@@ -258,8 +300,18 @@ _validate_maven_deps = rule(
             aspects = [collect_maven_info],
             mandatory = True,
         ),
-        "deps": attr.label_list(
-            doc = "The required dependencies of the target, if any.",
+        "expected_artifact": attr.string(
+            doc = "The artifact name of the target.",
+            mandatory = True,
+        ),
+        "expected_libs": attr.label_list(
+            doc = "The set of transitive libraries of the target, if any.",
+        ),
+        "expected_maven_deps": attr.string_list(
+            doc = "The required maven dependencies of the target, if any.",
+        ),
+        "banned_maven_deps": attr.string_list(
+            doc = "The required maven dependencies of the target, if any.",
         ),
     },
 )

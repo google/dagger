@@ -59,9 +59,16 @@ java_library(
 
 gen_maven_artifact(
     name = "artifact",
-    artifact_id = "dagger-producers",
+    artifact_coordinates = "com.google.dagger:dagger-producers:" + POM_VERSION,
     artifact_name = "Dagger Producers",
     artifact_target = ":producers",
+    artifact_target_maven_deps = [
+        "com.google.dagger:dagger",
+        "com.google.guava:failureaccess",
+        "com.google.guava:guava",  # TODO(user): Remove guava dependency and ban it?
+        "javax.inject:javax.inject",
+        "org.checkerframework:checker-compat-qual",
+    ],
     javadoc_exclude_packages = [
         "dagger.producers.internal",
         "dagger.producers.monitoring.internal",

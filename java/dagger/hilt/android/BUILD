@@ -116,23 +116,10 @@ java_library(
 
 gen_maven_artifact(
     name = "artifact",
-    artifact_id = "hilt-android",
+    artifact_coordinates = "com.google.dagger:hilt-android:" + POM_VERSION_ALPHA,
     artifact_name = "Hilt Android",
     artifact_target = ":artifact-lib",
-    javadoc_android_api_level = 29,
-    javadoc_exclude_packages = [
-        "dagger.hilt.internal",
-        "dagger.hilt.android.internal",
-    ],
-    javadoc_root_packages = [
-        "dagger.hilt",
-    ],
-    javadoc_srcs = [
-        "//java/dagger/hilt:hilt_filegroup",
-    ],
-    manifest = "AndroidManifest.xml",
-    packaging = "aar",
-    deps = [
+    artifact_target_libs = [
         ":entry_point_accessors",
         "//java/dagger/hilt:define_component",
         "//java/dagger/hilt:entry_point",
@@ -175,6 +162,33 @@ gen_maven_artifact(
         "//java/dagger/hilt/migration:package_info",
         "//java/dagger/hilt/processor/internal/aggregateddeps:annotation",
     ],
+    artifact_target_maven_deps = [
+        "androidx.activity:activity",
+        "androidx.annotation:annotation",
+        "androidx.fragment:fragment",
+        "androidx.lifecycle:lifecycle-viewmodel",
+        "com.google.code.findbugs:jsr305",
+        "com.google.dagger:dagger-lint-aar",
+        "com.google.dagger:dagger",
+        "javax.annotation:jsr250-api",
+        "javax.inject:javax.inject",
+    ],
+    artifact_target_maven_deps_banned = [
+        "com.google.guava:guava",
+    ],
+    javadoc_android_api_level = 29,
+    javadoc_exclude_packages = [
+        "dagger.hilt.internal",
+        "dagger.hilt.android.internal",
+    ],
+    javadoc_root_packages = [
+        "dagger.hilt",
+    ],
+    javadoc_srcs = [
+        "//java/dagger/hilt:hilt_filegroup",
+    ],
+    manifest = "AndroidManifest.xml",
+    packaging = "aar",
 )
 
 filegroup(

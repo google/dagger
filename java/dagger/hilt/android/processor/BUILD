@@ -42,20 +42,10 @@ java_library(
 
 gen_maven_artifact(
     name = "artifact",
-    artifact_id = "hilt-android-compiler",
+    artifact_coordinates = "com.google.dagger:hilt-android-compiler:" + POM_VERSION_ALPHA,
     artifact_name = "Hilt Android Processor",
     artifact_target = ":artifact-lib",
-    javadoc_android_api_level = 29,
-    javadoc_root_packages = [
-        "dagger.hilt.processor",
-        "dagger.hilt.android.processor",
-    ],
-    javadoc_srcs = [
-        "//java/dagger/hilt:hilt_processing_filegroup",
-    ],
-    shaded_deps = ["@com_google_auto_auto_common//jar"],
-    shaded_rules = ["rule com.google.auto.common.** dagger.hilt.android.shaded.auto.common.@1"],
-    deps = [
+    artifact_target_libs = [
         "//java/dagger/hilt/android/processor/internal:android_classnames",
         "//java/dagger/hilt/android/processor/internal:utils",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:android_generators",
@@ -89,6 +79,30 @@ gen_maven_artifact(
         "//java/dagger/hilt/processor/internal/root:root_metadata",
         "//java/dagger/hilt/processor/internal/root:root_type",
     ],
+    artifact_target_maven_deps = [
+        "com.google.auto:auto-common",
+        "com.google.code.findbugs:jsr305",
+        "com.google.dagger:dagger-compiler",
+        "com.google.dagger:dagger",
+        "com.google.guava:failureaccess",
+        "com.google.guava:guava",
+        "com.squareup:javapoet",
+        "javax.annotation:jsr250-api",
+        "javax.inject:javax.inject",
+        "net.ltgt.gradle.incap:incap",
+        "org.jetbrains.kotlin:kotlin-stdlib",
+        "org.jetbrains.kotlinx:kotlinx-metadata-jvm",
+    ],
+    javadoc_android_api_level = 29,
+    javadoc_root_packages = [
+        "dagger.hilt.processor",
+        "dagger.hilt.android.processor",
+    ],
+    javadoc_srcs = [
+        "//java/dagger/hilt:hilt_processing_filegroup",
+    ],
+    shaded_deps = ["@com_google_auto_auto_common//jar"],
+    shaded_rules = ["rule com.google.auto.common.** dagger.hilt.android.shaded.auto.common.@1"],
 )
 
 filegroup(

@@ -73,16 +73,10 @@ java_library(
 
 gen_maven_artifact(
     name = "artifact",
-    artifact_id = "dagger-compiler",
+    artifact_coordinates = "com.google.dagger:dagger-compiler:" + POM_VERSION,
     artifact_name = "Dagger Compiler",
     artifact_target = ":processor",
-    javadoc_root_packages = ["dagger.internal.codegen"],
-    # The javadocs should only include ComponentProcessor.java, since that is the only class used
-    # externally. Specifically, ComponentProcessor.forTesting() is required for testing SPI plugins.
-    javadoc_srcs = ["ComponentProcessor.java"],
-    shaded_deps = ["@com_google_auto_auto_common//jar"],
-    shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
-    deps = [
+    artifact_target_libs = [
         ":package_info",
         "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/binding",
@@ -97,6 +91,29 @@ gen_maven_artifact(
         "//java/dagger/internal/codegen/writing",
         "//java/dagger/model:internal-proxies",
     ],
+    artifact_target_maven_deps = [
+        "com.google.auto:auto-common",
+        "com.google.code.findbugs:jsr305",
+        "com.google.dagger:dagger-producers",
+        "com.google.dagger:dagger-spi",
+        "com.google.dagger:dagger",
+        "com.google.googlejavaformat:google-java-format",
+        "com.google.guava:failureaccess",
+        "com.google.guava:guava",
+        "com.squareup:javapoet",
+        "javax.annotation:jsr250-api",
+        "javax.inject:javax.inject",
+        "net.ltgt.gradle.incap:incap",
+        "org.checkerframework:checker-compat-qual",
+        "org.jetbrains.kotlin:kotlin-stdlib",
+        "org.jetbrains.kotlinx:kotlinx-metadata-jvm",
+    ],
+    javadoc_root_packages = ["dagger.internal.codegen"],
+    # The javadocs should only include ComponentProcessor.java, since that is the only class used
+    # externally. Specifically, ComponentProcessor.forTesting() is required for testing SPI plugins.
+    javadoc_srcs = ["ComponentProcessor.java"],
+    shaded_deps = ["@com_google_auto_auto_common//jar"],
+    shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
 )
 
 java_plugin(

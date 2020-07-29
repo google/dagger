@@ -178,23 +178,10 @@ android_library(
 gen_maven_artifact(
     name = "artifact",
     testonly = 1,
-    artifact_id = "hilt-android-testing",
+    artifact_coordinates = "com.google.dagger:hilt-android-testing:" + POM_VERSION_ALPHA,
     artifact_name = "Hilt Android Testing",
     artifact_target = ":artifact-lib",
-    javadoc_android_api_level = 29,
-    javadoc_exclude_packages = [
-        "dagger.hilt.internal",
-        "dagger.hilt.android.internal",
-    ],
-    javadoc_root_packages = [
-        "dagger.hilt.android.testing",
-    ],
-    javadoc_srcs = [
-        "//java/dagger/hilt:hilt_testing_filegroup",
-    ],
-    manifest = "AndroidManifest.xml",
-    packaging = "aar",
-    deps = [
+    artifact_target_libs = [
         "//java/dagger/hilt/android/internal/testing:mark_that_rules_ran_rule",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
@@ -209,6 +196,35 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/testing:package_info",
         "//java/dagger/hilt/android/testing:uninstall_modules",
     ],
+    artifact_target_maven_deps = [
+        "androidx.activity:activity",
+        "androidx.annotation:annotation",
+        "androidx.fragment:fragment",
+        "androidx.lifecycle:lifecycle-viewmodel",
+        "androidx.multidex:multidex",
+        "androidx.test:core",
+        "com.google.code.findbugs:jsr305",
+        "com.google.dagger:dagger",
+        "com.google.dagger:hilt-android",
+        "com.google.guava:failureaccess",
+        "com.google.guava:guava",  # TODO(user): Remove guava dependency and ban it.
+        "javax.annotation:jsr250-api",
+        "javax.inject:javax.inject",
+        "junit:junit",
+    ],
+    javadoc_android_api_level = 29,
+    javadoc_exclude_packages = [
+        "dagger.hilt.internal",
+        "dagger.hilt.android.internal",
+    ],
+    javadoc_root_packages = [
+        "dagger.hilt.android.testing",
+    ],
+    javadoc_srcs = [
+        "//java/dagger/hilt:hilt_testing_filegroup",
+    ],
+    manifest = "AndroidManifest.xml",
+    packaging = "aar",
 )
 
 filegroup(

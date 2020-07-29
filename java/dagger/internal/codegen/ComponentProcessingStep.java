@@ -16,22 +16,17 @@
 
 package dagger.internal.codegen;
 
+import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.collect.Sets.union;
 import static dagger.internal.codegen.base.ComponentAnnotation.allComponentAnnotations;
 import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotations;
 import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotations;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.allCreatorAnnotations;
-import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
-import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static java.util.Collections.disjoint;
 
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.SetMultimap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.BindingGraph;
@@ -43,12 +38,9 @@ import dagger.internal.codegen.validation.BindingGraphValidator;
 import dagger.internal.codegen.validation.ComponentCreatorValidator;
 import dagger.internal.codegen.validation.ComponentDescriptorValidator;
 import dagger.internal.codegen.validation.ComponentValidator;
-import dagger.internal.codegen.validation.ComponentValidator.ComponentValidationReport;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
 import java.lang.annotation.Annotation;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
@@ -69,11 +61,6 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   private final SourceFileGenerator<BindingGraph> componentGenerator;
   private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphValidator bindingGraphValidator;
-  private ImmutableSet<Element> subcomponentElements;
-  private ImmutableSet<Element> subcomponentCreatorElements;
-  private ImmutableMap<Element, ValidationReport<TypeElement>> creatorReportsByComponent;
-  private ImmutableMap<Element, ValidationReport<TypeElement>> creatorReportsBySubcomponent;
-  private ImmutableMap<Element, ValidationReport<TypeElement>> reportsBySubcomponent;
 
   @Inject
   ComponentProcessingStep(
@@ -104,27 +91,6 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   }
 
   @Override
-  public ImmutableSet<Element> process(
-      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
-    subcomponentElements =
-        getElementsFromAnnotations(elementsByAnnotation, subcomponentAnnotations());
-    subcomponentCreatorElements =
-        getElementsFromAnnotations(elementsByAnnotation, subcomponentCreatorAnnotations());
-
-    ImmutableSet.Builder<Element> rejectedElements = ImmutableSet.builder();
-
-    creatorReportsByComponent =
-        processCreators(
-            getElementsFromAnnotations(elementsByAnnotation, rootComponentCreatorAnnotations()),
-            rejectedElements);
-    creatorReportsBySubcomponent = processCreators(subcomponentCreatorElements, rejectedElements);
-    reportsBySubcomponent =
-        processSubcomponents(subcomponentElements, subcomponentCreatorElements, rejectedElements);
-
-    return rejectedElements.addAll(super.process(elementsByAnnotation)).build();
-  }
-
-  @Override
   protected void process(
       TypeElement element, ImmutableSet<Class<? extends Annotation>> annotations) {
     if (!disjoint(annotations, rootComponentAnnotations())) {
@@ -133,10 +99,13 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     if (!disjoint(annotations, subcomponentAnnotations())) {
       processSubcomponent(element);
     }
+    if (!disjoint(annotations, allCreatorAnnotations())) {
+      processCreator(element);
+    }
   }
 
   private void processRootComponent(TypeElement component) {
-    if (!isRootComponentValid(component)) {
+    if (!isComponentValid(component)) {
       return;
     }
     ComponentDescriptor componentDescriptor =
@@ -154,10 +123,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   }
 
   private void processSubcomponent(TypeElement subcomponent) {
-    if (!bindingGraphValidator.shouldDoFullBindingGraphValidation(subcomponent)) {
-      return;
-    }
-    if (!isSubcomponentValid(subcomponent)) {
+    if (!isComponentValid(subcomponent)) {
       return;
     }
     ComponentDescriptor subcomponentDescriptor =
@@ -170,67 +136,14 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     componentGenerator.generate(bindingGraph, messager);
   }
 
-  private static ImmutableSet<Element> getElementsFromAnnotations(
-      final SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation,
-      Set<Class<? extends Annotation>> annotations) {
-    return ImmutableSet.copyOf(
-        Multimaps.filterKeys(elementsByAnnotation, Predicates.in(annotations)).values());
+  private void processCreator(Element creator) {
+    creatorValidator.validate(MoreElements.asType(creator)).printMessagesTo(messager);
   }
 
-  private ImmutableMap<Element, ValidationReport<TypeElement>> processCreators(
-      Set<? extends Element> builderElements, ImmutableSet.Builder<Element> rejectedElements) {
-    // Can't use an ImmutableMap.Builder here because a component may have (invalidly) more than one
-    // builder type, and that would make ImmutableMap.Builder throw.
-    Map<Element, ValidationReport<TypeElement>> reports = new HashMap<>();
-    for (Element element : builderElements) {
-      try {
-        ValidationReport<TypeElement> report =
-            creatorValidator.validate(MoreElements.asType(element));
-        report.printMessagesTo(messager);
-        reports.put(element.getEnclosingElement(), report);
-      } catch (TypeNotPresentException e) {
-        rejectedElements.add(element);
-      }
-    }
-    return ImmutableMap.copyOf(reports);
-  }
-
-  private ImmutableMap<Element, ValidationReport<TypeElement>> processSubcomponents(
-      Set<? extends Element> subcomponentElements,
-      Set<? extends Element> subcomponentBuilderElements,
-      ImmutableSet.Builder<Element> rejectedElements) {
-    ImmutableMap.Builder<Element, ValidationReport<TypeElement>> reports = ImmutableMap.builder();
-    for (Element element : subcomponentElements) {
-      try {
-        ComponentValidationReport report =
-            componentValidator.validate(
-                MoreElements.asType(element), subcomponentElements, subcomponentBuilderElements);
-        report.report().printMessagesTo(messager);
-        reports.put(element, report.report());
-      } catch (TypeNotPresentException e) {
-        rejectedElements.add(element);
-      }
-    }
-    return reports.build();
-  }
-
-  private boolean isRootComponentValid(TypeElement rootComponent) {
-    ComponentValidationReport validationReport =
-        componentValidator.validate(
-            rootComponent, subcomponentElements, subcomponentCreatorElements);
-    validationReport.report().printMessagesTo(messager);
-    return isClean(validationReport);
-  }
-
-  // TODO(dpb): Clean up generics so this can take TypeElement.
-  private boolean isSubcomponentValid(Element subcomponentElement) {
-    ValidationReport<?> subcomponentCreatorReport =
-        creatorReportsBySubcomponent.get(subcomponentElement);
-    if (subcomponentCreatorReport != null && !subcomponentCreatorReport.isClean()) {
-      return false;
-    }
-    ValidationReport<?> subcomponentReport = reportsBySubcomponent.get(subcomponentElement);
-    return subcomponentReport == null || subcomponentReport.isClean();
+  private boolean isComponentValid(Element component) {
+    ValidationReport<?> report = componentValidator.validate(asType(component));
+    report.printMessagesTo(messager);
+    return report.isClean();
   }
 
   @CanIgnoreReturnValue
@@ -252,27 +165,5 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
 
   private boolean isValid(BindingGraph bindingGraph) {
     return bindingGraphValidator.isValid(bindingGraphConverter.convert(bindingGraph));
-  }
-
-  /**
-   * Returns true if the component's report is clean, its builder report is clean, and all
-   * referenced subcomponent reports and subcomponent builder reports are clean.
-   */
-  private boolean isClean(ComponentValidationReport report) {
-    Element component = report.report().subject();
-    ValidationReport<?> componentReport = report.report();
-    if (!componentReport.isClean()) {
-      return false;
-    }
-    ValidationReport<?> builderReport = creatorReportsByComponent.get(component);
-    if (builderReport != null && !builderReport.isClean()) {
-      return false;
-    }
-    for (Element element : report.referencedSubcomponents()) {
-      if (!isSubcomponentValid(element)) {
-        return false;
-      }
-    }
-    return true;
   }
 }

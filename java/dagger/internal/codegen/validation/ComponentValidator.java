@@ -21,12 +21,14 @@ import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Multimaps.asMap;
 import static com.google.common.collect.Sets.intersection;
 import static dagger.internal.codegen.base.ComponentAnnotation.anyComponentAnnotation;
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
+import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.creatorAnnotationsFor;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.productionCreatorAnnotations;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
@@ -47,7 +49,6 @@ import static javax.lang.model.type.TypeKind.VOID;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import com.google.auto.common.MoreTypes;
-import com.google.auto.value.AutoValue;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -57,6 +58,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.Component;
 import dagger.Reusable;
+import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.ComponentAnnotation;
 import dagger.internal.codegen.binding.ComponentKind;
 import dagger.internal.codegen.binding.DependencyRequestFactory;
@@ -71,11 +73,14 @@ import dagger.producers.CancellationPolicy;
 import dagger.producers.ProductionComponent;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -91,7 +96,8 @@ import javax.lang.model.util.SimpleTypeVisitor8;
  * Performs superficial validation of the contract of the {@link Component} and {@link
  * ProductionComponent} annotations.
  */
-public final class ComponentValidator {
+@Singleton
+public final class ComponentValidator implements ClearableCache {
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final ModuleValidator moduleValidator;
@@ -100,6 +106,7 @@ public final class ComponentValidator {
   private final MembersInjectionValidator membersInjectionValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFactory dependencyRequestFactory;
+  private final Map<TypeElement, ValidationReport<TypeElement>> reports = new HashMap<>();
 
   @Inject
   ComponentValidator(
@@ -121,31 +128,22 @@ public final class ComponentValidator {
     this.dependencyRequestFactory = dependencyRequestFactory;
   }
 
-  /** A {@plainlink ValidationReport validation report} for a component and its subcomponents. */
-  @AutoValue
-  public abstract static class ComponentValidationReport {
-    public abstract ImmutableSet<Element> referencedSubcomponents();
-
-    public abstract ValidationReport<TypeElement> report();
+  @Override
+  public void clearCache() {
+    reports.clear();
   }
 
-  /**
-   * Validates the given component. Also validates any referenced subcomponents that aren't already
-   * included in the {@code validatedSubcomponents} set.
-   */
-  public ComponentValidationReport validate(
-      TypeElement component,
-      Set<? extends Element> validatedSubcomponents,
-      Set<? extends Element> validatedSubcomponentCreators) {
-    ElementValidator validator =
-        new ElementValidator(component, validatedSubcomponents, validatedSubcomponentCreators);
-    return validator.validateElement();
+  /** Validates the given component. */
+  public ValidationReport<TypeElement> validate(TypeElement component) {
+    return reentrantComputeIfAbsent(reports, component, this::validateUncached);
+  }
+
+  private ValidationReport<TypeElement> validateUncached(TypeElement component) {
+    return new ElementValidator(component).validateElement();
   }
 
   private class ElementValidator {
     private final TypeElement component;
-    private final Set<? extends Element> validatedSubcomponents;
-    private final Set<? extends Element> validatedSubcomponentCreators;
     private final ValidationReport.Builder<TypeElement> report;
     private final ImmutableSet<ComponentKind> componentKinds;
 
@@ -153,13 +151,8 @@ public final class ComponentValidator {
     private final SetMultimap<Element, ExecutableElement> referencedSubcomponents =
         LinkedHashMultimap.create();
 
-    ElementValidator(
-        TypeElement component,
-        Set<? extends Element> validatedSubcomponents,
-        Set<? extends Element> validatedSubcomponentCreators) {
+    ElementValidator(TypeElement component) {
       this.component = component;
-      this.validatedSubcomponents = validatedSubcomponents;
-      this.validatedSubcomponentCreators = validatedSubcomponentCreators;
       this.report = ValidationReport.about(component);
       this.componentKinds = ComponentKind.getComponentKinds(component);
     }
@@ -176,36 +169,31 @@ public final class ComponentValidator {
       return asDeclared(component.asType());
     }
 
-    private ComponentValidationReport createValidationReport(ImmutableSet<Element> subcomponents) {
-      return new AutoValue_ComponentValidator_ComponentValidationReport(
-          subcomponents, report.build());
-    }
-
-    ComponentValidationReport validateElement() {
+    ValidationReport<TypeElement> validateElement() {
       if (componentKinds.size() > 1) {
         return moreThanOneComponentAnnotation();
       }
 
       validateUseOfCancellationPolicy();
       validateIsAbstractType();
-      validateNumberOfCreators();
+      validateCreators();
       validateNoReusableAnnotation();
       validateComponentMethods();
       validateNoConflictingEntryPoints();
       validateSubcomponentReferences();
       validateComponentDependencies();
       validateReferencedModules();
+      validateSubcomponents();
 
-      ImmutableSet<Element> allSubcomponents = validateSubcomponents();
-      return createValidationReport(allSubcomponents);
+      return report.build();
     }
 
-    private ComponentValidationReport moreThanOneComponentAnnotation() {
+    private ValidationReport<TypeElement> moreThanOneComponentAnnotation() {
       String error =
           "Components may not be annotated with more than one component annotation: found "
               + annotationsFor(componentKinds);
       report.addError(error, component);
-      return createValidationReport(ImmutableSet.of());
+      return report.build();
     }
 
     private void validateUseOfCancellationPolicy() {
@@ -228,11 +216,13 @@ public final class ComponentValidator {
       }
     }
 
-    private void validateNumberOfCreators() {
+    private void validateCreators() {
       ImmutableList<DeclaredType> creators =
           creatorAnnotationsFor(componentAnnotation()).stream()
               .flatMap(annotation -> enclosedAnnotatedTypes(component, annotation).stream())
               .collect(toImmutableList());
+      creators.forEach(
+          creator -> report.addSubreport(creatorValidator.validate(asTypeElement(creator))));
       if (creators.size() > 1) {
         report.addError(
             String.format(
@@ -398,14 +388,11 @@ public final class ComponentValidator {
           report.addError(builderMethodRequiresNoArgs(), method);
         }
 
-        // If we haven't already validated the subcomponent creator itself, validate it now.
         TypeElement creatorElement = MoreTypes.asTypeElement(returnType);
-        if (!validatedSubcomponentCreators.contains(creatorElement)) {
-          // TODO(sameb): The creator validator right now assumes the element is being compiled
-          // in this pass, which isn't true here.  We should change error messages to spit out
-          // this method as the subject and add the original subject to the message output.
-          report.addItems(creatorValidator.validate(creatorElement).items());
-        }
+        // TODO(sameb): The creator validator right now assumes the element is being compiled
+        // in this pass, which isn't true here.  We should change error messages to spit out
+        // this method as the subject and add the original subject to the message output.
+        report.addSubreport(creatorValidator.validate(creatorElement));
       }
 
       private void validateProvisionMethod() {
@@ -494,22 +481,12 @@ public final class ComponentValidator {
               new HashSet<>()));
     }
 
-    private ImmutableSet<Element> validateSubcomponents() {
-      // Make sure we validate any subcomponents we're referencing, unless we know we validated
-      // them already in this pass.
-      // TODO(sameb): If subcomponents refer to each other and both aren't in
-      //              'validatedSubcomponents' (e.g, both aren't compiled in this pass),
-      //              then this can loop forever.
-      ImmutableSet.Builder<Element> allSubcomponents =
-          ImmutableSet.<Element>builder().addAll(referencedSubcomponents.keySet());
-      for (Element subcomponent :
-          Sets.difference(referencedSubcomponents.keySet(), validatedSubcomponents)) {
-        ComponentValidationReport subreport =
-            validate(asType(subcomponent), validatedSubcomponents, validatedSubcomponentCreators);
-        report.addItems(subreport.report().items());
-        allSubcomponents.addAll(subreport.referencedSubcomponents());
+    private void validateSubcomponents() {
+      // Make sure we validate any subcomponents we're referencing.
+      for (Element subcomponent : referencedSubcomponents.keySet()) {
+        ValidationReport<TypeElement> subreport = validate(asType(subcomponent));
+        report.addSubreport(subreport);
       }
-      return allSubcomponents.build();
     }
 
     private ImmutableSet<Key> distinctKeys(Set<ExecutableElement> methods) {

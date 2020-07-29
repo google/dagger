@@ -36,52 +36,44 @@ import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 
 /** A collection of issues to report for source code. */
-@AutoValue
-public abstract class ValidationReport<T extends Element> {
+public final class ValidationReport<T extends Element> {
+  private static final Traverser<ValidationReport<?>> SUBREPORTS =
+      Traverser.forTree(report -> report.subreports);
 
-  /**
-   * The subject of the report. Should be an element within a compilation unit being processed by
-   * this compilation task.
-   */
-  public abstract T subject();
+  private final T subject;
+  private final ImmutableSet<Item> items;
+  private final ImmutableSet<ValidationReport<?>> subreports;
+  private final boolean markedDirty;
+  private boolean hasPrintedErrors;
 
-  /** The items to report for the {@linkplain #subject() subject}. */
-  abstract ImmutableSet<Item> items();
+  private ValidationReport(
+      T subject,
+      ImmutableSet<Item> items,
+      ImmutableSet<ValidationReport<?>> subreports,
+      boolean markedDirty) {
+    this.subject = subject;
+    this.items = items;
+    this.subreports = subreports;
+    this.markedDirty = markedDirty;
+  }
 
-  /** Returns the {@link #items()} from this report and all transitive subreports. */
+  /** Returns the items from this report and all transitive subreports. */
   public ImmutableSet<Item> allItems() {
-    return allReports()
+    return ImmutableSet.copyOf(SUBREPORTS.depthFirstPreOrder(this))
         .stream()
-        .flatMap(report -> report.items().stream())
+        .flatMap(report -> report.items.stream())
         .collect(toImmutableSet());
   }
 
-  /** Other reports associated with this one. */
-  abstract ImmutableSet<ValidationReport<?>> subreports();
-
-  private static final Traverser<ValidationReport<?>> SUBREPORTS =
-      Traverser.forTree(ValidationReport::subreports);
-
-  /** Returns this report and all transitive subreports. */
-  ImmutableSet<ValidationReport<?>> allReports() {
-    return ImmutableSet.copyOf(SUBREPORTS.depthFirstPreOrder(this));
-  }
-
   /**
-   * {@code true} if {@link #isClean()} should return {@code false} even if there are no error items
-   * in this report.
-   */
-  abstract boolean markedDirty();
-
-  /**
-   * Returns {@code true} if there are no errors in this report or any subreports and {@link
-   * #markedDirty()} is {@code false}.
+   * Returns {@code true} if there are no errors in this report or any subreports and markedDirty is
+   * {@code false}.
    */
   public boolean isClean() {
-    if (markedDirty()) {
+    if (markedDirty) {
       return false;
     }
-    for (Item item : items()) {
+    for (Item item : items) {
       switch (item.kind()) {
         case ERROR:
           return false;
@@ -89,7 +81,7 @@ public abstract class ValidationReport<T extends Element> {
           break;
       }
     }
-    for (ValidationReport<?> subreport : subreports()) {
+    for (ValidationReport<?> subreport : subreports) {
       if (!subreport.isClean()) {
         return false;
       }
@@ -98,16 +90,20 @@ public abstract class ValidationReport<T extends Element> {
   }
 
   /**
-   * Prints all {@linkplain #items() messages} to {@code messager} (and recurs for subreports). If a
-   * message's {@linkplain Item#element() element} is contained within the report's {@linkplain
-   * #subject() subject}, associates the message with the message's element. Otherwise, since
-   * {@link Diagnostic} reporting is expected to be associated with elements that are currently
-   * being compiled, associates the message with the subject itself and prepends a reference to the
-   * item's element.
+   * Prints all messages to {@code messager} (and recurs for subreports). If a
+   * message's {@linkplain Item#element() element} is contained within the report's subject,
+   * associates the message with the message's element. Otherwise, since {@link Diagnostic}
+   * reporting is expected to be associated with elements that are currently being compiled,
+   * associates the message with the subject itself and prepends a reference to the item's element.
    */
   public void printMessagesTo(Messager messager) {
-    for (Item item : items()) {
-      if (isEnclosedIn(subject(), item.element())) {
+    if (hasPrintedErrors) {
+      // Avoid printing the errors from this validation report more than once.
+      return;
+    }
+    hasPrintedErrors = true;
+    for (Item item : items) {
+      if (isEnclosedIn(subject, item.element())) {
         if (item.annotation().isPresent()) {
           if (item.annotationValue().isPresent()) {
             messager.printMessage(
@@ -125,10 +121,10 @@ public abstract class ValidationReport<T extends Element> {
         }
       } else {
         String message = String.format("[%s] %s", elementToString(item.element()), item.message());
-        messager.printMessage(item.kind(), message, subject());
+        messager.printMessage(item.kind(), message, subject);
       }
     }
-    for (ValidationReport<?> subreport : subreports()) {
+    for (ValidationReport<?> subreport : subreports) {
       subreport.printMessagesTo(messager);
     }
   }
@@ -283,8 +279,7 @@ public abstract class ValidationReport<T extends Element> {
 
     @CheckReturnValue
     public ValidationReport<T> build() {
-      return new AutoValue_ValidationReport<>(
-          subject, items.build(), subreports.build(), markedDirty);
+      return new ValidationReport<>(subject, items.build(), subreports.build(), markedDirty);
     }
   }
 }

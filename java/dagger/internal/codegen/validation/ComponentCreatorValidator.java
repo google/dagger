@@ -18,6 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.getCreatorAnnotations;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -29,14 +30,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ObjectArrays;
 import dagger.BindsInstance;
+import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.binding.ComponentCreatorAnnotation;
 import dagger.internal.codegen.binding.ErrorMessages;
 import dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -47,10 +52,12 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 
 /** Validates types annotated with component creator annotations. */
-public final class ComponentCreatorValidator {
+@Singleton
+public final class ComponentCreatorValidator implements ClearableCache {
 
   private final DaggerElements elements;
   private final DaggerTypes types;
+  private final Map<TypeElement, ValidationReport<TypeElement>> reports = new HashMap<>();
 
   @Inject
   ComponentCreatorValidator(DaggerElements elements, DaggerTypes types) {
@@ -58,8 +65,17 @@ public final class ComponentCreatorValidator {
     this.types = types;
   }
 
+  @Override
+  public void clearCache() {
+    reports.clear();
+  }
+
   /** Validates that the given {@code type} is potentially a valid component creator type. */
   public ValidationReport<TypeElement> validate(TypeElement type) {
+    return reentrantComputeIfAbsent(reports, type, this::validateUncached);
+  }
+
+  private ValidationReport<TypeElement> validateUncached(TypeElement type) {
     ValidationReport.Builder<TypeElement> report = ValidationReport.about(type);
 
     ImmutableSet<ComponentCreatorAnnotation> creatorAnnotations = getCreatorAnnotations(type);

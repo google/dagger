@@ -16,33 +16,26 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.base.Predicates.in;
+import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.collect.Sets.union;
 import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotations;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
 import static java.util.Collections.disjoint;
 
 import com.google.auto.common.MoreElements;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.SetMultimap;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.validation.ComponentCreatorValidator;
 import dagger.internal.codegen.validation.ComponentValidator;
-import dagger.internal.codegen.validation.ComponentValidator.ComponentValidationReport;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
 import java.lang.annotation.Annotation;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 /**
@@ -64,7 +57,6 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
   private final ComponentCreatorValidator creatorValidator;
   private final ComponentDescriptorFactory componentDescriptorFactory;
   private final SourceFileGenerator<ComponentDescriptor> componentGenerator;
-  private ImmutableMap<Element, ValidationReport<TypeElement>> creatorReportsByComponent;
 
   @Inject
   ComponentHjarProcessingStep(
@@ -91,48 +83,26 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<TypeE
   // clause for any exception that's not TypeNotPresentException and ignore the component entirely
   // in that case.
   @Override
-  public ImmutableSet<Element> process(
-      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
-    creatorReportsByComponent = creatorReportsByComponent(elementsByAnnotation);
-    return super.process(elementsByAnnotation);
-  }
-
-  @Override
   protected void process(
       TypeElement element, ImmutableSet<Class<? extends Annotation>> annotations) {
-    // Skip creator validation because those have already been validated.
+    if (!disjoint(annotations, rootComponentAnnotations())) {
+      processRootComponent(element);
+    }
     if (!disjoint(annotations, rootComponentCreatorAnnotations())) {
-      return;
+      processRootCreator(element);
     }
-    // Skip component validation if its creator validation already failed.
-    if (creatorReportsByComponent.containsKey(element)
-        && !creatorReportsByComponent.get(element).isClean()) {
-      return;
-    }
-    ComponentValidationReport validationReport =
-        componentValidator.validate(element, ImmutableSet.of(), ImmutableSet.of());
-    validationReport.report().printMessagesTo(messager);
-    if (validationReport.report().isClean()) {
+  }
+
+  private void processRootComponent(TypeElement element) {
+    ValidationReport<TypeElement> validationReport = componentValidator.validate(element);
+    validationReport.printMessagesTo(messager);
+    if (validationReport.isClean()) {
       componentGenerator.generate(
           componentDescriptorFactory.rootComponentDescriptor(element), messager);
     }
   }
 
-  private ImmutableMap<Element, ValidationReport<TypeElement>> creatorReportsByComponent(
-      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
-    ImmutableSet<Element> creatorElements =
-        ImmutableSet.copyOf(
-            Multimaps.filterKeys(elementsByAnnotation, in(rootComponentCreatorAnnotations()))
-                .values());
-    // Can't use an ImmutableMap.Builder here because a component may have (invalidly) more than one
-    // builder type, and that would make ImmutableMap.Builder throw.
-    Map<Element, ValidationReport<TypeElement>> reports = new HashMap<>();
-    for (Element element : creatorElements) {
-      ValidationReport<TypeElement> report =
-          creatorValidator.validate(MoreElements.asType(element));
-      report.printMessagesTo(messager);
-      reports.put(element.getEnclosingElement(), report);
-    }
-    return ImmutableMap.copyOf(reports);
+  private void processRootCreator(TypeElement creator) {
+    creatorValidator.validate(asType(creator)).printMessagesTo(messager);
   }
 }

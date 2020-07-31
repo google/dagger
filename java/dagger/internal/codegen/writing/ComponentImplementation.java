@@ -19,13 +19,12 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.binding.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.common.base.Supplier;
@@ -59,7 +58,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
@@ -133,10 +131,8 @@ public final class ComponentImplementation {
   }
 
   private final CompilerOptions compilerOptions;
-  private final ComponentDescriptor componentDescriptor;
   private final BindingGraph graph;
   private final ClassName name;
-  private final NestingKind nestingKind;
   private Optional<ComponentCreatorImplementation> creatorImplementation;
   private final Map<TypeElement, ComponentImplementation> childImplementations = new HashMap<>();
   private final TypeSpec.Builder component;
@@ -157,21 +153,14 @@ public final class ComponentImplementation {
   private final List<Supplier<TypeSpec>> switchingProviderSupplier = new ArrayList<>();
 
   private ComponentImplementation(
-      ComponentDescriptor componentDescriptor,
       BindingGraph graph,
       ClassName name,
-      NestingKind nestingKind,
       SubcomponentNames subcomponentNames,
-      CompilerOptions compilerOptions,
-      ImmutableSet<Modifier> modifiers) {
-    checkName(name, nestingKind);
+      CompilerOptions compilerOptions) {
     this.compilerOptions = compilerOptions;
-    this.componentDescriptor = componentDescriptor;
     this.graph = graph;
     this.name = name;
-    this.nestingKind = nestingKind;
     this.component = classBuilder(name);
-    modifiers.forEach(component::addModifiers);
     this.subcomponentNames = subcomponentNames;
   }
 
@@ -181,56 +170,16 @@ public final class ComponentImplementation {
       ClassName name,
       SubcomponentNames subcomponentNames,
       CompilerOptions compilerOptions) {
-    return new ComponentImplementation(
-        graph.componentDescriptor(),
-        graph,
-        name,
-        NestingKind.TOP_LEVEL,
-        subcomponentNames,
-        compilerOptions,
-        topLevelComponentImplementationModifiers(graph));
-  }
-
-  private static ImmutableSet<Modifier> topLevelComponentImplementationModifiers(
-      BindingGraph graph) {
-    ImmutableSet.Builder<Modifier> modifiers = ImmutableSet.builder();
-    if (graph.componentTypeElement().getModifiers().contains(PUBLIC)
-        || graph.componentDescriptor().isSubcomponent()) {
-      // TODO(ronshapiro): perhaps all generated components should be non-public?
-      modifiers.add(PUBLIC);
-    }
-    return modifiers.add(graph.componentDescriptor().isSubcomponent() ? ABSTRACT : FINAL).build();
+    return new ComponentImplementation(graph, name, subcomponentNames, compilerOptions);
   }
 
   /** Returns a component implementation that is a child of the current implementation. */
-  public ComponentImplementation childComponentImplementation(
-      BindingGraph graph, Modifier... modifiers) {
+  public ComponentImplementation childComponentImplementation(BindingGraph graph) {
     return new ComponentImplementation(
-        graph.componentDescriptor(),
         graph,
         getSubcomponentName(graph.componentDescriptor()),
-        NestingKind.MEMBER,
         subcomponentNames,
-        compilerOptions,
-        ImmutableSet.copyOf(modifiers));
-  }
-
-  // TODO(dpb): Just determine the nesting kind from the name.
-  private static void checkName(ClassName name, NestingKind nestingKind) {
-    switch (nestingKind) {
-      case TOP_LEVEL:
-        checkArgument(
-            name.enclosingClassName() == null, "must be a top-level class name: %s", name);
-        break;
-
-      case MEMBER:
-        checkNotNull(name.enclosingClassName(), "must not be a top-level class name: %s", name);
-        break;
-
-      default:
-        throw new IllegalArgumentException(
-            "nestingKind must be TOP_LEVEL or MEMBER: " + nestingKind);
-    }
+        compilerOptions);
   }
 
   // TODO(ronshapiro): see if we can remove this method and instead inject it in the objects that
@@ -242,7 +191,7 @@ public final class ComponentImplementation {
 
   /** Returns the descriptor for the component being generated. */
   public ComponentDescriptor componentDescriptor() {
-    return componentDescriptor;
+    return graph.componentDescriptor();
   }
 
   /** Returns the name of the component. */
@@ -252,7 +201,7 @@ public final class ComponentImplementation {
 
   /** Returns whether or not the implementation is nested within another class. */
   public boolean isNested() {
-    return nestingKind.isNested();
+    return name.enclosingClassName() != null;
   }
 
   public void setCreatorImplementation(
@@ -443,10 +392,21 @@ public final class ComponentImplementation {
 
   /** Generates the component and returns the resulting {@link TypeSpec.Builder}. */
   public TypeSpec.Builder generate() {
+    modifiers().forEach(component::addModifiers);
     fieldSpecsMap.asMap().values().forEach(component::addFields);
     methodSpecsMap.asMap().values().forEach(component::addMethods);
     typeSpecsMap.asMap().values().forEach(component::addTypes);
     switchingProviderSupplier.stream().map(Supplier::get).forEach(component::addType);
     return component;
+  }
+
+  private ImmutableSet<Modifier> modifiers() {
+    if (isNested()) {
+      return ImmutableSet.of(PRIVATE, FINAL);
+    }
+    return graph.componentTypeElement().getModifiers().contains(PUBLIC)
+        // TODO(ronshapiro): perhaps all generated components should be non-public?
+        ? ImmutableSet.of(PUBLIC, FINAL)
+        : ImmutableSet.of(FINAL);
   }
 }

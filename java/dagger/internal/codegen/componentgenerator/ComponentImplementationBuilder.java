@@ -277,7 +277,7 @@ public abstract class ComponentImplementationBuilder {
 
   /** Creates an inner subcomponent implementation. */
   private ComponentImplementation subcomponent(BindingGraph childGraph) {
-    return componentImplementation.childComponentImplementation(childGraph, PRIVATE, FINAL);
+    return componentImplementation.childComponentImplementation(childGraph);
   }
 
   /** Creates and adds the constructor and methods needed for initializing the component. */

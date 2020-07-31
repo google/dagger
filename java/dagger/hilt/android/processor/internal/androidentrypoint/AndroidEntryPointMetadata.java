@@ -53,6 +53,7 @@ import javax.lang.model.type.TypeMirror;
 /** Metadata class for @AndroidEntryPoint annotated classes. */
 @AutoValue
 public abstract class AndroidEntryPointMetadata {
+
   /** The class {@link Element} annotated with @AndroidEntryPoint. */
   public abstract TypeElement element();
 

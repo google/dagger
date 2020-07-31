@@ -32,7 +32,6 @@ GenJavaTests(
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
         "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
-        "//java/dagger/internal/guava:annotations",
         "//javatests/dagger/hilt/processor/internal:generated_import",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/junit",

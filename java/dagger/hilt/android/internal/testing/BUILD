@@ -46,7 +46,6 @@ android_library(
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",
-        "//java/dagger/internal/guava:annotations",
         "@maven//:junit_junit",
     ],
 )

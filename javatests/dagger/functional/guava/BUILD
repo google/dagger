@@ -26,7 +26,6 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//:dagger_with_compiler",
-        "//java/dagger/internal/guava:annotations",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:value",

@@ -35,7 +35,6 @@ compiler_test(
     ],
     deps = [
         "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",
-        "//java/dagger/internal/guava:annotations",
         "//java/dagger/internal/guava:base",
         "//javatests/dagger/hilt/processor/internal:generated_import",
         "@google_bazel_common//third_party/java/compile_testing",

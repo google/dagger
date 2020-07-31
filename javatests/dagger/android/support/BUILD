@@ -29,7 +29,6 @@ GenRobolectricTests(
         "//:dagger_with_compiler",
         "//java/dagger/android",
         "//java/dagger/android/support",
-        "//java/dagger/internal/guava:annotations",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/internal/guava:concurrent",

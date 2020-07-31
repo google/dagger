@@ -32,7 +32,6 @@ GenJavaTests(
     deps = [
         "//java/dagger:core",
         "//java/dagger/internal/codegen:processor",
-        "//java/dagger/internal/guava:annotations",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/spi",

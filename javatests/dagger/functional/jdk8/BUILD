@@ -25,7 +25,6 @@ GenJavaTests(
     srcs = glob(["**/*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     test_only_deps = [
-        "//java/dagger/internal/guava:annotations",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/junit",

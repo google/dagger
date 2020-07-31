@@ -79,7 +79,6 @@ GenJavaTests(
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/writing",
-        "//java/dagger/internal/guava:annotations",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/internal/guava:concurrent",

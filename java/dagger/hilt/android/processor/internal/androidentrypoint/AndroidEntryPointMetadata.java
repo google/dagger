@@ -459,7 +459,8 @@ public abstract class AndroidEntryPointMetadata {
             element,
             "Activities annotated with @AndroidEntryPoint must be a subclass of "
                 + "androidx.activity.ComponentActivity. (e.g. FragmentActivity, "
-                + "AppCompatActivity, etc.)");
+                + "AppCompatActivity, etc.)"
+            );
         return Type.ACTIVITY;
       } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.SERVICE)) {
         return Type.SERVICE;

@@ -125,11 +125,8 @@ public abstract class ComponentImplementationBuilder {
         "ComponentImplementationBuilder has already built the ComponentImplementation for [%s].",
         componentImplementation.name());
     setSupertype();
-    componentImplementation.setCreatorImplementation(
-        componentCreatorImplementationFactory.create(
-            componentImplementation, Optional.of(componentImplementation.graph())));
-    componentImplementation
-        .creatorImplementation()
+
+    componentCreatorImplementationFactory.create()
         .map(ComponentCreatorImplementation::spec)
         .ifPresent(this::addCreatorClass);
 
@@ -438,7 +435,7 @@ public abstract class ComponentImplementationBuilder {
         noArgFactoryMethod = descriptor.factoryParameters().isEmpty();
       } else {
         creatorKind = BUILDER;
-        creatorType = componentCreatorName();
+        creatorType = componentImplementation.getCreatorName();
         factoryMethodName = "build";
         noArgFactoryMethod = true;
       }
@@ -447,7 +444,7 @@ public abstract class ComponentImplementationBuilder {
           methodBuilder(creatorKind.methodName())
               .addModifiers(PUBLIC, STATIC)
               .returns(creatorType)
-              .addStatement("return new $T()", componentCreatorName())
+              .addStatement("return new $T()", componentImplementation.getCreatorName())
               .build();
       componentImplementation.addMethod(BUILDER_METHOD, creatorFactoryMethod);
       if (noArgFactoryMethod && canInstantiateAllRequirements()) {
@@ -470,10 +467,6 @@ public abstract class ComponentImplementationBuilder {
       return !Iterables.any(
           graph.componentRequirements(),
           dependency -> dependency.requiresAPassedInstance(elements, types, metadataUtil));
-    }
-
-    private ClassName componentCreatorName() {
-      return componentImplementation.creatorImplementation().get().name();
     }
   }
 

@@ -45,7 +45,6 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.base.UniqueNameSet;
-import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
@@ -68,6 +67,7 @@ import javax.lang.model.type.TypeKind;
 /** Factory for creating {@link ComponentCreatorImplementation} instances. */
 final class ComponentCreatorImplementationFactory {
 
+  private final ComponentImplementation componentImplementation;
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final KotlinMetadataUtil metadataUtil;
@@ -75,10 +75,12 @@ final class ComponentCreatorImplementationFactory {
 
   @Inject
   ComponentCreatorImplementationFactory(
+      ComponentImplementation componentImplementation,
       DaggerElements elements,
       DaggerTypes types,
       KotlinMetadataUtil metadataUtil,
       ModuleProxies moduleProxies) {
+    this.componentImplementation = componentImplementation;
     this.elements = elements;
     this.types = types;
     this.metadataUtil = metadataUtil;
@@ -86,8 +88,7 @@ final class ComponentCreatorImplementationFactory {
   }
 
   /** Returns a new creator implementation for the given component, if necessary. */
-  Optional<ComponentCreatorImplementation> create(
-      ComponentImplementation componentImplementation, Optional<BindingGraph> graph) {
+  Optional<ComponentCreatorImplementation> create() {
     if (!componentImplementation.componentDescriptor().hasCreator()) {
       return Optional.empty();
     }
@@ -97,8 +98,7 @@ final class ComponentCreatorImplementationFactory {
 
     Builder builder =
         creatorDescriptor.isPresent()
-            ? new BuilderForCreatorDescriptor(
-                componentImplementation, creatorDescriptor.get(), graph)
+            ? new BuilderForCreatorDescriptor(componentImplementation, creatorDescriptor.get())
             : new BuilderForGeneratedRootComponentBuilder(componentImplementation);
     return Optional.of(builder.build());
   }
@@ -369,15 +369,12 @@ final class ComponentCreatorImplementationFactory {
   /** Builder for a creator type defined by a {@code ComponentCreatorDescriptor}. */
   private final class BuilderForCreatorDescriptor extends Builder {
     final ComponentCreatorDescriptor creatorDescriptor;
-    private final Optional<BindingGraph> graph;
 
     BuilderForCreatorDescriptor(
         ComponentImplementation componentImplementation,
-        ComponentCreatorDescriptor creatorDescriptor,
-        Optional<BindingGraph> graph) {
+        ComponentCreatorDescriptor creatorDescriptor) {
       super(componentImplementation);
       this.creatorDescriptor = creatorDescriptor;
-      this.graph = graph;
     }
 
     @Override
@@ -445,7 +442,7 @@ final class ComponentCreatorImplementationFactory {
      * Returns whether the given {@code requirement} is for a module type owned by the component.
      */
     private boolean isOwnedModule(ComponentRequirement requirement) {
-      return graph.map(g -> g.ownedModuleTypes().contains(requirement.typeElement())).orElse(true);
+      return componentImplementation.graph().ownedModuleTypes().contains(requirement.typeElement());
     }
 
     @Override

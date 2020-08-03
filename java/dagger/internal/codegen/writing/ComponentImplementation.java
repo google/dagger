@@ -46,7 +46,6 @@ import dagger.internal.codegen.binding.ComponentCreatorKind;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.KeyVariableNamer;
-import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeSpecs;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -55,7 +54,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -130,10 +128,8 @@ public final class ComponentImplementation {
     SUBCOMPONENT
   }
 
-  private final CompilerOptions compilerOptions;
   private final BindingGraph graph;
   private final ClassName name;
-  private Optional<ComponentCreatorImplementation> creatorImplementation;
   private final Map<TypeElement, ComponentImplementation> childImplementations = new HashMap<>();
   private final TypeSpec.Builder component;
   private final SubcomponentNames subcomponentNames;
@@ -155,9 +151,7 @@ public final class ComponentImplementation {
   private ComponentImplementation(
       BindingGraph graph,
       ClassName name,
-      SubcomponentNames subcomponentNames,
-      CompilerOptions compilerOptions) {
-    this.compilerOptions = compilerOptions;
+      SubcomponentNames subcomponentNames) {
     this.graph = graph;
     this.name = name;
     this.component = classBuilder(name);
@@ -168,9 +162,8 @@ public final class ComponentImplementation {
   public static ComponentImplementation topLevelComponentImplementation(
       BindingGraph graph,
       ClassName name,
-      SubcomponentNames subcomponentNames,
-      CompilerOptions compilerOptions) {
-    return new ComponentImplementation(graph, name, subcomponentNames, compilerOptions);
+      SubcomponentNames subcomponentNames) {
+    return new ComponentImplementation(graph, name, subcomponentNames);
   }
 
   /** Returns a component implementation that is a child of the current implementation. */
@@ -178,8 +171,7 @@ public final class ComponentImplementation {
     return new ComponentImplementation(
         graph,
         getSubcomponentName(graph.componentDescriptor()),
-        subcomponentNames,
-        compilerOptions);
+        subcomponentNames);
   }
 
   // TODO(ronshapiro): see if we can remove this method and instead inject it in the objects that
@@ -202,18 +194,6 @@ public final class ComponentImplementation {
   /** Returns whether or not the implementation is nested within another class. */
   public boolean isNested() {
     return name.enclosingClassName() != null;
-  }
-
-  public void setCreatorImplementation(
-      Optional<ComponentCreatorImplementation> creatorImplementation) {
-    checkState(
-        this.creatorImplementation == null, "setCreatorImplementation has already been called");
-    this.creatorImplementation = creatorImplementation;
-  }
-
-  public Optional<ComponentCreatorImplementation> creatorImplementation() {
-    checkState(creatorImplementation != null, "setCreatorImplementation has not been called yet");
-    return creatorImplementation;
   }
 
   /**

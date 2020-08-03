@@ -113,7 +113,6 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     boolean hasInstallIn = !installInAnnotations.isEmpty();
     boolean isEntryPoint = !entryPointAnnotations.isEmpty();
     boolean isModule = Processors.hasAnnotation(element, ClassNames.MODULE);
-
     ProcessorErrors.checkState(
         !hasInstallIn || isEntryPoint || isModule,
         element,
@@ -183,8 +182,8 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
       // Get @InstallIn components here to catch errors before skipping user's pkg-private element.
       ImmutableSet<ClassName> components = installInComponents(module);
       if (isValidKind(module)) {
-        Optional<PkgPrivateMetadata> pkgPrivateMetadata =
-            PkgPrivateMetadata.of(getElementUtils(), module, ClassNames.MODULE);
+        Optional<PkgPrivateMetadata> pkgPrivateMetadata;
+          pkgPrivateMetadata = PkgPrivateMetadata.of(getElementUtils(), module, ClassNames.MODULE);
         if (pkgPrivateMetadata.isPresent()) {
           // Generate a public wrapper module which will be processed in the next round.
           new PkgPrivateModuleGenerator(getProcessingEnv(), pkgPrivateMetadata.get()).generate();

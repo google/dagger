@@ -77,7 +77,7 @@ abstract class PkgPrivateMetadata {
           "Expected element to be annotated with @InstallIn: " + element);
     }
 
-    if (annotation.equals(ClassNames.MODULE)) {
+    if (annotation.equals(ClassNames.MODULE) ) {
       // Skip modules that require a module instance. Required by
       // dagger (b/31489617)
       if (Processors.requiresModuleInstance(elements, MoreElements.asType(element))) {

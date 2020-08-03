@@ -206,11 +206,12 @@ gen_maven_artifact(
         "com.google.code.findbugs:jsr305",
         "com.google.dagger:dagger",
         "com.google.dagger:hilt-android",
-        "com.google.guava:failureaccess",
-        "com.google.guava:guava",  # TODO(user): Remove guava dependency and ban it.
         "javax.annotation:jsr250-api",
         "javax.inject:javax.inject",
         "junit:junit",
+    ],
+    artifact_target_maven_deps_banned = [
+        "com.google.guava:guava",
     ],
     javadoc_android_api_level = 29,
     javadoc_exclude_packages = [

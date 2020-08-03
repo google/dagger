@@ -15,8 +15,30 @@
 # Description:
 #   Tools for Dagger
 
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load(":maven_info.bzl", "maven_info_tests")
+
 package(default_visibility = ["//:src"])
+
+maven_info_tests()
 
 exports_files([
     "pom-template.xml",
 ])
+
+bzl_library(
+    name = "maven_bzl",
+    srcs = ["maven.bzl"],
+    deps = [":maven_info_bzl"],
+)
+
+bzl_library(
+    name = "maven_info_bzl",
+    srcs = ["maven_info.bzl"],
+    deps = ["@bazel_skylib//lib:unittest"],
+)
+
+bzl_library(
+    name = "dejetify_bzl",
+    srcs = ["dejetify.bzl"],
+)

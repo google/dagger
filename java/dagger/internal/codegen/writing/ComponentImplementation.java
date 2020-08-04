@@ -130,7 +130,6 @@ public final class ComponentImplementation {
 
   private final BindingGraph graph;
   private final ClassName name;
-  private final Map<TypeElement, ComponentImplementation> childImplementations = new HashMap<>();
   private final TypeSpec.Builder component;
   private final SubcomponentNames subcomponentNames;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
@@ -215,18 +214,18 @@ public final class ComponentImplementation {
    */
   public ClassName getCreatorName() {
     return isNested()
-        ? name.peerClass(subcomponentNames().getCreatorName(componentDescriptor()))
+        ? name.peerClass(subcomponentNames.getCreatorName(componentDescriptor()))
         : name.nestedClass(creatorKind().typeName());
   }
 
   /** Returns the name of the nested implementation class for a child component. */
-  ClassName getSubcomponentName(ComponentDescriptor childDescriptor) {
+  private ClassName getSubcomponentName(ComponentDescriptor childDescriptor) {
     checkArgument(
         componentDescriptor().childComponents().contains(childDescriptor),
         "%s is not a child component of %s",
         childDescriptor.typeElement(),
         componentDescriptor().typeElement());
-    return name.nestedClass(subcomponentNames().get(childDescriptor) + "Impl");
+    return name.nestedClass(subcomponentNames.get(childDescriptor) + "Impl");
   }
 
   /**
@@ -234,11 +233,7 @@ public final class ComponentImplementation {
    * {@link Key}.
    */
   String getSubcomponentCreatorSimpleName(Key key) {
-    return subcomponentNames().getCreatorName(key);
-  }
-
-  private SubcomponentNames subcomponentNames() {
-    return subcomponentNames;
+    return subcomponentNames.getCreatorName(key);
   }
 
   /** Returns {@code true} if {@code type} is accessible from the generated component. */
@@ -271,12 +266,6 @@ public final class ComponentImplementation {
   /** Adds the given type to the component. */
   public void addType(TypeSpecKind typeKind, TypeSpec typeSpec) {
     typeSpecsMap.put(typeKind, typeSpec);
-  }
-
-  /** Adds the type generated from the given child implementation. */
-  public void addChild(ComponentDescriptor child, ComponentImplementation childImplementation) {
-    childImplementations.put(child.typeElement(), childImplementation);
-    addType(TypeSpecKind.SUBCOMPONENT, childImplementation.generate().build());
   }
 
   /** Adds a {@link Supplier} for the SwitchingProvider for the component. */

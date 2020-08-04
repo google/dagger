@@ -205,8 +205,7 @@ public abstract class ComponentImplementationBuilder {
       }
     }
 
-    Optional<CodeBlock> cancelParentStatement = cancelParentStatement();
-    cancelParentStatement.ifPresent(methodBuilder::addCode);
+    cancelParentStatement().ifPresent(methodBuilder::addCode);
 
     componentImplementation.addMethod(CANCELLATION_LISTENER_METHOD, methodBuilder.build());
   }
@@ -254,12 +253,11 @@ public abstract class ComponentImplementationBuilder {
 
   private void addChildComponents() {
     for (BindingGraph subgraph : graph.subgraphs()) {
-      componentImplementation.addChild(
-          subgraph.componentDescriptor(), buildChildImplementation(subgraph));
+      componentImplementation.addType(SUBCOMPONENT, childComponent(subgraph));
     }
   }
 
-  private ComponentImplementation buildChildImplementation(BindingGraph childGraph) {
+  private TypeSpec childComponent(BindingGraph childGraph) {
     return topLevelImplementationComponent
         .currentImplementationSubcomponentBuilder()
         .componentImplementation(subcomponent(childGraph))
@@ -269,6 +267,8 @@ public abstract class ComponentImplementationBuilder {
         .parentRequirementExpressions(Optional.of(componentRequirementExpressions))
         .build()
         .subcomponentBuilder()
+        .build()
+        .generate()
         .build();
   }
 

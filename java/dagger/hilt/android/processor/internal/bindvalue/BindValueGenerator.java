@@ -129,9 +129,16 @@ final class BindValueGenerator {
         MethodSpec.methodBuilder(methodName)
             .addAnnotation(Provides.class)
             .addModifiers(Modifier.STATIC)
-            .addParameter(testClassName, "test")
-            .returns(ClassName.get(bindValue.variableElement().asType()))
-            .addStatement("return test.$L", bindValue.variableElement().getSimpleName());
+            .returns(ClassName.get(bindValue.variableElement().asType()));
+
+    if (bindValue.variableElement().getModifiers().contains(Modifier.STATIC)) {
+      builder.addStatement(
+          "return $T.$L", testClassName, bindValue.variableElement().getSimpleName());
+    } else {
+      builder
+          .addParameter(testClassName, "test")
+          .addStatement("return test.$L", bindValue.variableElement().getSimpleName());
+    }
 
     ClassName annotationClassName = bindValue.annotationName();
     if (BindValueMetadata.BIND_VALUE_INTO_MAP_ANNOTATIONS.contains(annotationClassName)) {

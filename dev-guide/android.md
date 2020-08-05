@@ -296,6 +296,7 @@ dependencies {
   compile 'com.google.dagger:dagger-android:2.x'
   compile 'com.google.dagger:dagger-android-support:2.x' // if you use the support libraries
   annotationProcessor 'com.google.dagger:dagger-android-processor:2.x'
+  annotationProcessor 'com.google.dagger:dagger-compiler:2.x'
 }
 ```
 

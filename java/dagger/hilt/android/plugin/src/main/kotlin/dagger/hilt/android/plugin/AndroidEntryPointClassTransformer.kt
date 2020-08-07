@@ -23,6 +23,7 @@ import java.util.zip.ZipInputStream
 import javassist.ClassPool
 import javassist.CtClass
 import javassist.Modifier
+import javassist.bytecode.Bytecode
 import javassist.bytecode.CodeIterator
 import javassist.bytecode.Opcode
 import org.slf4j.LoggerFactory
@@ -123,8 +124,16 @@ internal class AndroidEntryPointClassTransformer(
       "[$taskName] Transforming ${clazz.name} to extend $entryPointSuperclassName instead of " +
         "$superclassName."
     )
-    clazz.superclass = classPool.get(entryPointSuperclassName)
+    val entryPointSuperclass = classPool.get(entryPointSuperclassName)
+    clazz.superclass = entryPointSuperclass
     transformSuperMethodCalls(clazz, superclassName, entryPointSuperclassName)
+
+    // Check if Hilt generated class is a BroadcastReceiver with the marker field which means
+    // a super.onReceive invocation has to be inserted in the implementation.
+    if (entryPointSuperclass.declaredFields.any { it.name == "onReceiveBytecodeInjectionMarker" }) {
+      transformOnReceive(clazz, entryPointSuperclassName)
+    }
+
     return true
   }
 
@@ -198,10 +207,43 @@ internal class AndroidEntryPointClassTransformer(
     }
   }
 
+  /**
+   * For a BroadcastReceiver insert a super call in the onReceive method implementation since
+   * after the class is transformed onReceive will no longer be abstract (it is implemented by
+   * Hilt generated receiver).
+   */
+  private fun transformOnReceive(clazz: CtClass, entryPointSuperclassName: String) {
+    val method = clazz.declaredMethods.first {
+      it.name + it.signature == ON_RECEIVE_METHOD_NAME + ON_RECEIVE_METHOD_SIGNATURE
+    }
+    val constantPool = clazz.classFile.constPool
+    val newCode = Bytecode(constantPool).apply {
+      addAload(0) // Loads 'this'
+      addAload(1) // Loads method param 1 (Context)
+      addAload(2) // Loads method param 2 (Intent)
+      addInvokespecial(
+        entryPointSuperclassName, ON_RECEIVE_METHOD_NAME, ON_RECEIVE_METHOD_SIGNATURE
+      )
+    }
+    val newCodeAttribute = newCode.toCodeAttribute()
+    val currentCodeAttribute = method.methodInfo.codeAttribute
+    currentCodeAttribute.maxStack =
+      maxOf(newCodeAttribute.maxStack, currentCodeAttribute.maxStack)
+    currentCodeAttribute.maxLocals =
+      maxOf(newCodeAttribute.maxLocals, currentCodeAttribute.maxLocals)
+    val codeIterator = currentCodeAttribute.iterator()
+    val pos = codeIterator.insertEx(newCode.get()) // insert new code
+    codeIterator.insert(newCodeAttribute.exceptionTable, pos) // offset exception table
+    method.methodInfo.rebuildStackMap(clazz.classPool) // update stack table
+  }
+
   companion object {
     val ANDROID_ENTRY_POINT_ANNOTATIONS = setOf(
       "dagger.hilt.android.AndroidEntryPoint",
       "dagger.hilt.android.HiltAndroidApp"
     )
+    val ON_RECEIVE_METHOD_NAME = "onReceive"
+    val ON_RECEIVE_METHOD_SIGNATURE =
+      "(Landroid/content/Context;Landroid/content/Intent;)V"
   }
 }

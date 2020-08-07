@@ -16,11 +16,15 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import static dagger.internal.codegen.langmodel.DaggerElements.getMethodDescriptor;
+
 import com.google.common.collect.Iterables;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
@@ -30,9 +34,16 @@ import java.io.IOException;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.util.ElementFilter;
 
 /** Generates an Hilt BroadcastReceiver class for the @AndroidEntryPoint annotated class. */
 public final class BroadcastReceiverGenerator {
+
+  private static final String ON_RECEIVE_DESCRIPTOR =
+      "onReceive(Landroid/content/Context;Landroid/content/Intent;)V";
+
   private final ProcessingEnvironment env;
   private final AndroidEntryPointMetadata metadata;
   private final ClassName generatedClassName;
@@ -68,8 +79,38 @@ public final class BroadcastReceiverGenerator {
     Generators.addInjectionMethods(metadata, builder);
     Generators.copyLintAnnotations(metadata.element(), builder);
 
+    // Add an unused field used as a marker to let the bytecode injector know this receiver will
+    // need to be injected with a super.onReceive call. This is only necessary if no concrete
+    // onReceive call is implemented in any of the super classes.
+    if (metadata.requiresBytecodeInjection() && !isOnReceiveImplemented(metadata.baseElement())) {
+      builder.addField(
+          FieldSpec.builder(
+                  TypeName.BOOLEAN,
+                  "onReceiveBytecodeInjectionMarker",
+                  Modifier.PRIVATE,
+                  Modifier.FINAL)
+              .initializer("false")
+              .build());
+    }
+
     JavaFile.builder(generatedClassName.packageName(),
         builder.build()).build().writeTo(env.getFiler());
+  }
+
+  private static boolean isOnReceiveImplemented(TypeElement typeElement) {
+    boolean isImplemented =
+        ElementFilter.methodsIn(typeElement.getEnclosedElements()).stream()
+            .anyMatch(
+                methodElement ->
+                    getMethodDescriptor(methodElement).equals(ON_RECEIVE_DESCRIPTOR)
+                        && !methodElement.getModifiers().contains(Modifier.ABSTRACT));
+    if (isImplemented) {
+      return true;
+    } else if (typeElement.getSuperclass().getKind() != TypeKind.NONE) {
+      return isOnReceiveImplemented(MoreTypes.asTypeElement(typeElement.getSuperclass()));
+    } else {
+      return false;
+    }
   }
 
   // @Override

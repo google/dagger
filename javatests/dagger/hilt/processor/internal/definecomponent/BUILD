@@ -30,6 +30,7 @@ GenJavaTests(
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/components",
+        "//java/dagger/hilt/android/qualifiers",
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
         "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
         "//javatests/dagger/hilt/processor/internal:generated_import",

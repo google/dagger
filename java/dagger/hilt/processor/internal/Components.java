@@ -19,7 +19,6 @@ package dagger.hilt.processor.internal;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -31,16 +30,26 @@ import javax.lang.model.util.Elements;
 
 /** Helper methods for defining components and the component hierarchy. */
 public final class Components {
-
+  // TODO(user): Remove this once all usages are replaced with #getComponents().
   /**
    * Returns the {@link ComponentDescriptor}s for a given element annotated with {@link
    * dagger.hilt.InstallIn}.
    */
   public static ImmutableSet<ComponentDescriptor> getComponentDescriptors(
       Elements elements, Element element) {
-    ImmutableSet<ComponentDescriptor> componentDescriptors;
+    DefineComponents defineComponents = DefineComponents.create();
+    return getComponents(elements, element).stream()
+        .map(component -> elements.getTypeElement(component.canonicalName()))
+        // TODO(b/144939893): Memoize ComponentDescriptors so we're not recalculating.
+        .map(defineComponents::componentDescriptor)
+        .collect(toImmutableSet());
+  }
+
+  /** Returns the {@link dagger.hilt.InstallIn} components for a given element. */
+  public static ImmutableSet<ClassName> getComponents(Elements elements, Element element) {
+    ImmutableSet<ClassName> components;
     if (Processors.hasAnnotation(element, ClassNames.INSTALL_IN)) {
-      componentDescriptors = getInstallInComponentDescriptors(elements, element);
+      components = getHiltInstallInComponents(elements, element);
     } else if (Processors.hasErrorTypeAnnotation(element)) {
       throw new BadInputException(
           "Error annotation found on element " + element + ". Look above for compilation errors",
@@ -53,7 +62,7 @@ public final class Components {
           element);
     }
 
-    return componentDescriptors;
+    return components;
   }
 
   public static AnnotationSpec getInstallInAnnotationSpec(ImmutableSet<ClassName> components) {
@@ -63,25 +72,31 @@ public final class Components {
     return builder.build();
   }
 
-  private static ImmutableSet<ComponentDescriptor> getInstallInComponentDescriptors(
+  private static ImmutableSet<ClassName> getHiltInstallInComponents(
       Elements elements, Element element) {
     AnnotationMirror hiltInstallIn =
         Processors.getAnnotationMirror(element, ClassNames.INSTALL_IN);
-    ImmutableList<TypeElement> generatedComponents =
-        Processors.getAnnotationClassValues(elements, hiltInstallIn, "value");
-    DefineComponents defineComponents = DefineComponents.create();
-    return generatedComponents.stream()
-        .map(e -> mapComponents(elements, e))
-        // TODO(b/144939893): Memoize ComponentDescriptors so we're not recalculating.
-        .map(defineComponents::componentDescriptor)
-        .collect(toImmutableSet());
+    ImmutableSet<TypeElement> components =
+        Processors.getAnnotationClassValues(elements, hiltInstallIn, "value").stream()
+            .map(component -> mapComponents(elements, component))
+            .collect(toImmutableSet());
+    ImmutableSet<TypeElement> undefinedComponents =
+        components.stream()
+            .filter(component -> !Processors.hasAnnotation(component, ClassNames.DEFINE_COMPONENT))
+            .collect(toImmutableSet());
+    ProcessorErrors.checkState(
+        undefinedComponents.isEmpty(),
+        element,
+        "@InstallIn, can only be used with @DefineComponent-annotated classes, but found: %s",
+        undefinedComponents);
+    return components.stream().map(ClassName::get).collect(toImmutableSet());
   }
 
   // Temporary hack while ApplicationComponent is renamed to SingletonComponent
   private static TypeElement mapComponents(Elements elements, TypeElement element) {
-    if (element.getQualifiedName().contentEquals("dagger.hilt.android.components.ApplicationComponent")) {
-      TypeElement singletonComponent = elements.getTypeElement(
-          "dagger.hilt.components.SingletonComponent");
+    if (ClassNames.LEGACY_APPLICATION_COMPONENT.equals(ClassName.get(element))) {
+      TypeElement singletonComponent =
+          elements.getTypeElement(ClassNames.APPLICATION_COMPONENT.canonicalName());
       Preconditions.checkState(singletonComponent != null);
       return singletonComponent;
     }

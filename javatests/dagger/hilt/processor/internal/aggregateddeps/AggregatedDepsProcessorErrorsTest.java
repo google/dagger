@@ -98,6 +98,32 @@ public class AggregatedDepsProcessorErrorsTest {
   }
 
   @Test
+  public void testInvalidComponentInInstallInAnnotation() {
+    JavaFileObject module = JavaFileObjects.forSourceLines(
+        "test.FooModule",
+        "package test;",
+        "",
+        "import dagger.Module;",
+        "import dagger.hilt.InstallIn;",
+        "import dagger.hilt.android.qualifiers.ApplicationContext;",
+        "",
+        "@InstallIn(ApplicationContext.class)", // Error: Not a Hilt component
+        "@Module",
+        "final class FooModule {}");
+
+    Compilation compilation =
+        CompilerTests.compiler().withProcessors(new AggregatedDepsProcessor()).compile(module);
+
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@InstallIn, can only be used with @DefineComponent-annotated classes, but found: "
+                + "[dagger.hilt.android.qualifiers.ApplicationContext]")
+        .inFile(module)
+        .onLine(9);
+  }
+
+  @Test
   public void testMissingInstallInAnnotation() {
     JavaFileObject source = JavaFileObjects.forSourceString(
         "foo.bar.AnnotationsOnWrongTypeKind",

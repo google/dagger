@@ -47,7 +47,6 @@ java_library(
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:compiler_options",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
-        "//java/dagger/hilt/processor/internal:component_descriptor",
         "//java/dagger/hilt/processor/internal:components",
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",

@@ -151,11 +151,20 @@ final class DefineComponentMetadatas {
         // TODO(user): Contribute a check to auto/common AnnotationValues.
         !"<error>".contentEquals(parentValue.getValue().toString()),
         component,
-        "@DefineComponent %s, references an invalid type: %s",
+        "@DefineComponent %s, references an invalid parent type: %s",
         component,
         mirror);
 
     TypeElement parent = asTypeElement(AnnotationValues.getTypeMirror(parentValue));
+
+    ProcessorErrors.checkState(
+        ClassName.get(parent).equals(ClassNames.DEFINE_COMPONENT_NO_PARENT)
+            || ClassName.get(parent).equals(ClassNames.LEGACY_APPLICATION_COMPONENT)
+            || Processors.hasAnnotation(parent, ClassNames.DEFINE_COMPONENT),
+        component,
+        "@DefineComponent %s, references a type not annotated with @DefineComponent: %s",
+        component,
+        parent);
 
     Optional<DefineComponentMetadata> parentComponent =
         ClassName.get(parent).equals(ClassNames.DEFINE_COMPONENT_NO_PARENT)

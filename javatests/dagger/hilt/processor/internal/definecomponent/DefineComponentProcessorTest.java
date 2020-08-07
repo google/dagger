@@ -142,6 +142,29 @@ public final class DefineComponentProcessorTest {
   }
 
   @Test
+  public void testDefineComponentWithInvalidComponent_fails() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.FooComponent",
+            "package test;",
+            "",
+            "import dagger.hilt.DefineComponent;",
+            "import dagger.hilt.android.qualifiers.ApplicationContext;",
+            "",
+            "@DefineComponent( parent = ApplicationContext.class )",
+            "interface FooComponent {}");
+
+    Compilation compilation = compiler().compile(component);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@DefineComponent test.FooComponent, references a type not annotated with "
+                + "@DefineComponent: dagger.hilt.android.qualifiers.ApplicationContext")
+        .inFile(component);
+  }
+
+  @Test
   public void testDefineComponentExtendsInterface_fails() {
     JavaFileObject component =
         JavaFileObjects.forSourceLines(

@@ -35,7 +35,6 @@ import com.google.common.collect.Iterables;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.Components;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
@@ -180,7 +179,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
           module);
 
       // Get @InstallIn components here to catch errors before skipping user's pkg-private element.
-      ImmutableSet<ClassName> components = installInComponents(module);
+      ImmutableSet<ClassName> components = Components.getComponents(getElementUtils(), module);
       if (isValidKind(module)) {
         Optional<PkgPrivateMetadata> pkgPrivateMetadata;
           pkgPrivateMetadata = PkgPrivateMetadata.of(getElementUtils(), module, ClassNames.MODULE);
@@ -212,7 +211,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
       TypeElement entryPoint = asType(element);
 
       // Get @InstallIn components here to catch errors before skipping user's pkg-private element.
-      ImmutableSet<ClassName> components = installInComponents(entryPoint);
+      ImmutableSet<ClassName> components = Components.getComponents(getElementUtils(), entryPoint);
       if (isValidKind(element)) {
         if (entryPointAnnotation.equals(ClassNames.COMPONENT_ENTRY_POINT)) {
           new AggregatedDepsGenerator(
@@ -231,12 +230,6 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         }
       }
     }
-  }
-
-  private ImmutableSet<ClassName> installInComponents(Element element) {
-    return Components.getComponentDescriptors(getElementUtils(), element).stream()
-        .map(ComponentDescriptor::component)
-        .collect(toImmutableSet());
   }
 
   private static boolean isValidKind(Element element) {

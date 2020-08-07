@@ -99,10 +99,6 @@ public final class ClassNames {
 
   public static final ClassName SINGLETON = get("javax.inject", "Singleton");
 
-  public static final ClassName APPLICATION_COMPONENT =
-      get("dagger.hilt.components", "SingletonComponent");
-  public static final ClassName LEGACY_APPLICATION_COMPONENT =
-      get("dagger.hilt.android.components", "ApplicationComponent");
   // TODO(user): Move these class names out when we factor out the android portion
   public static final ClassName APPLICATION = get("android.app", "Application");
   public static final ClassName MULTI_DEX_APPLICATION =
@@ -111,8 +107,6 @@ public final class ClassNames {
       get("dagger.hilt.android", "AndroidEntryPoint");
   public static final ClassName HILT_ANDROID_APP =
       get("dagger.hilt.android", "HiltAndroidApp");
-  public static final ClassName ACTIVITY_COMPONENT =
-      get("dagger.hilt.android.components", "ActivityComponent");
   public static final ClassName CONTEXT = get("android.content", "Context");
   public static final ClassName APPLICATION_PROVIDER =
       get("androidx.test.core.app", "ApplicationProvider");
@@ -163,6 +157,14 @@ public final class ClassNames {
   public static final ClassName HASH_SET = get("java.util", "HashSet");
   public static final ClassName COLLECTIONS = get("java.util", "Collections");
   public static final ClassName ARRAYS = get("java.util", "Arrays");
+
+  // Standard components
+  public static final ClassName LEGACY_APPLICATION_COMPONENT =
+      get("dagger.hilt.android.components", "ApplicationComponent");
+  public static final ClassName APPLICATION_COMPONENT =
+      get("dagger.hilt.components", "SingletonComponent");
+  public static final ClassName ACTIVITY_COMPONENT =
+      get("dagger.hilt.android.components", "ActivityComponent");
 
   public static final ClassName PRECONDITIONS = get("dagger.hilt.internal", "Preconditions");
 

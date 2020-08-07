@@ -43,7 +43,6 @@ android_library(
     testonly = 1,
     srcs = ["HiltAndroidTest.java"],
     exported_plugins = [
-        "//java/dagger/hilt/android/processor/internal/testroot:test_root_processor",
         "//java/dagger/hilt/processor/internal/root:plugin",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:plugin",
     ],

@@ -113,7 +113,7 @@ interface MyCustomComponentBuilder {
 ```kotlin
 @DefineComponent.Builder
 interface MyCustomComponentBuilder {
-  fun fooSeedData(@BindsInstance Foo foo): MyCustomComponentBuilder
+  fun fooSeedData(@BindsInstance foo: Foo): MyCustomComponentBuilder
   fun build(): MyCustomComponent
 }
 ```

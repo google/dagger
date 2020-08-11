@@ -26,6 +26,6 @@ java_library(
     deps = [
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "@google_bazel_common//third_party/java/auto:common",
+        "@maven//:com_google_auto_auto_common",
     ],
 )

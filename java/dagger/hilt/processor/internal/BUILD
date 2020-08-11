@@ -28,9 +28,9 @@ java_library(
         ":processors",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
     ],
 )
 
@@ -44,9 +44,9 @@ java_library(
     deps = [
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/error_prone:annotations",
         "@google_bazel_common//third_party/java/jsr305_annotations",
+        "@maven//:com_google_auto_auto_common",
     ],
 )
 
@@ -63,8 +63,8 @@ java_library(
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
         "@maven//:org_jetbrains_kotlinx_kotlinx_metadata_jvm",
     ],

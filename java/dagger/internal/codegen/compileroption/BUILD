@@ -31,8 +31,8 @@ java_library(
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/producers",
-        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/google_java_format",
         "@google_bazel_common//third_party/java/jsr330_inject",
+        "@maven//:com_google_auto_auto_common",
     ],
 )

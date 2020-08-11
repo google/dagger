@@ -40,9 +40,9 @@ java_library(
         "//java/dagger/model:internal-proxies",
         "//java/dagger/producers",
         "//java/dagger/spi",
-        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
         "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
     ],
 )

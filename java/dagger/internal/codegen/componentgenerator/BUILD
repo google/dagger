@@ -35,8 +35,8 @@ java_library(
         "//java/dagger/internal/guava:collect",
         "//java/dagger/producers",
         "//java/dagger/spi",
-        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/jsr330_inject",
+        "@maven//:com_google_auto_auto_common",
     ],
 )

@@ -86,7 +86,6 @@ GenJavaTests(
         "//java/dagger/producers",
         "//java/dagger/spi",
         "@com_google_auto_value_auto_value//jar",
-        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/javapoet",
@@ -95,5 +94,6 @@ GenJavaTests(
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/mockito",
         "@google_bazel_common//third_party/java/truth",
+        "@maven//:com_google_auto_auto_common",
     ],
 )

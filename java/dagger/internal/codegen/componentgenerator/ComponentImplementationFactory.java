@@ -76,7 +76,7 @@ final class ComponentImplementationFactory implements ClearableCache {
         .parentBindingExpressions(Optional.empty())
         .parentRequirementExpressions(Optional.empty())
         .build()
-        .rootComponentBuilder()
+        .componentImplementationBuilder()
         .build();
   }
 

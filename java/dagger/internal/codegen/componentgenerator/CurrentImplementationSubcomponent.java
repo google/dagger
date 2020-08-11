@@ -19,8 +19,6 @@ package dagger.internal.codegen.componentgenerator;
 import dagger.BindsInstance;
 import dagger.Subcomponent;
 import dagger.internal.codegen.binding.BindingGraph;
-import dagger.internal.codegen.componentgenerator.ComponentImplementationBuilder.RootComponentImplementationBuilder;
-import dagger.internal.codegen.componentgenerator.ComponentImplementationBuilder.SubcomponentImplementationBuilder;
 import dagger.internal.codegen.writing.ComponentBindingExpressions;
 import dagger.internal.codegen.writing.ComponentImplementation;
 import dagger.internal.codegen.writing.ComponentRequirementExpressions;
@@ -37,9 +35,7 @@ import java.util.Optional;
 @PerComponentImplementation
 // This only needs to be public because the type is referenced by generated component.
 public interface CurrentImplementationSubcomponent {
-  RootComponentImplementationBuilder rootComponentBuilder();
-
-  SubcomponentImplementationBuilder subcomponentBuilder();
+  ComponentImplementationBuilder componentImplementationBuilder();
 
   /** Returns the builder for {@link CurrentImplementationSubcomponent}. */
   @Subcomponent.Builder

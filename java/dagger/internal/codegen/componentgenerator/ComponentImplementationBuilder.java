@@ -60,7 +60,6 @@ import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescri
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.MethodSignature;
-import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
@@ -84,11 +83,8 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 
 /** A builder of {@link ComponentImplementation}s. */
-// This only needs to be public because it's nested classes are referenced by generated component.
-// Consider moving the nested classes to top-level classes.
-public abstract class ComponentImplementationBuilder {
-  private ComponentImplementationBuilder() {}
-
+// This only needs to be public because it's referenced in an entry point.
+public final class ComponentImplementationBuilder {
   private static final String MAY_INTERRUPT_IF_RUNNING = "mayInterruptIfRunning";
 
   /**
@@ -99,27 +95,48 @@ public abstract class ComponentImplementationBuilder {
 
   private static final String CANCELLATION_LISTENER_METHOD_NAME = "onProducerFutureCancelled";
 
-  // TODO(ronshapiro): replace this with composition instead of inheritance so we don't have
-  // non-final fields
-  @Inject BindingGraph graph;
-  @Inject ComponentBindingExpressions bindingExpressions;
-  @Inject ComponentRequirementExpressions componentRequirementExpressions;
-  @Inject ComponentImplementation componentImplementation;
-  @Inject ComponentCreatorImplementationFactory componentCreatorImplementationFactory;
-  @Inject DaggerTypes types;
-  @Inject DaggerElements elements;
-  @Inject CompilerOptions compilerOptions;
-  @Inject ComponentImplementationFactory componentImplementationFactory;
-  @Inject TopLevelImplementationComponent topLevelImplementationComponent;
-  @Inject KotlinMetadataUtil metadataUtil;
+  private final Optional<ComponentImplementationBuilder> parent;
+  private final BindingGraph graph;
+  private final ComponentBindingExpressions bindingExpressions;
+  private final ComponentRequirementExpressions componentRequirementExpressions;
+  private final ComponentImplementation componentImplementation;
+  private final ComponentCreatorImplementationFactory componentCreatorImplementationFactory;
+  private final TopLevelImplementationComponent topLevelImplementationComponent;
+  private final DaggerTypes types;
+  private final DaggerElements elements;
+  private final KotlinMetadataUtil metadataUtil;
   private boolean done;
+
+  @Inject
+  ComponentImplementationBuilder(
+      @ParentComponent Optional<ComponentImplementationBuilder> parent,
+      BindingGraph graph,
+      ComponentBindingExpressions bindingExpressions,
+      ComponentRequirementExpressions componentRequirementExpressions,
+      ComponentImplementation componentImplementation,
+      ComponentCreatorImplementationFactory componentCreatorImplementationFactory,
+      TopLevelImplementationComponent topLevelImplementationComponent,
+      DaggerTypes types,
+      DaggerElements elements,
+      KotlinMetadataUtil metadataUtil) {
+    this.parent = parent;
+    this.graph = graph;
+    this.bindingExpressions = bindingExpressions;
+    this.componentRequirementExpressions = componentRequirementExpressions;
+    this.componentImplementation = componentImplementation;
+    this.componentCreatorImplementationFactory = componentCreatorImplementationFactory;
+    this.types = types;
+    this.elements = elements;
+    this.topLevelImplementationComponent = topLevelImplementationComponent;
+    this.metadataUtil = metadataUtil;
+  }
 
   /**
    * Returns a {@link ComponentImplementation} for this component. This is only intended to be
    * called once (and will throw on successive invocations). If the component must be regenerated,
    * use a new instance.
    */
-  final ComponentImplementation build() {
+  ComponentImplementation build() {
     checkState(
         !done,
         "ComponentImplementationBuilder has already built the ComponentImplementation for [%s].",
@@ -152,16 +169,24 @@ public abstract class ComponentImplementationBuilder {
     componentImplementation.addSupertype(graph.componentTypeElement());
   }
 
-  /**
-   * Adds {@code creator} as a nested creator class. Root components and subcomponents will nest
-   * this in different classes.
-   */
-  protected abstract void addCreatorClass(TypeSpec creator);
+  private void addCreatorClass(TypeSpec creator) {
+    if (parent.isPresent()) {
+      // In an inner implementation of a subcomponent the creator is a peer class.
+      parent.get().componentImplementation.addType(SUBCOMPONENT, creator);
+    } else {
+      componentImplementation.addType(COMPONENT_CREATOR, creator);
+    }
+  }
 
-  /** Adds component factory methods. */
-  protected abstract void addFactoryMethods();
+  private void addFactoryMethods() {
+    if (parent.isPresent()) {
+      graph.factoryMethod().ifPresent(this::createSubcomponentFactoryMethod);
+    } else {
+      createRootComponentFactoryMethod();
+    }
+  }
 
-  protected void addInterfaceMethods() {
+  private void addInterfaceMethods() {
     // Each component method may have been declared by several supertypes. We want to implement
     // only one method for each distinct signature.
     ImmutableListMultimap<MethodSignature, ComponentMethodDescriptor> componentMethodsBySignature =
@@ -239,11 +264,29 @@ public abstract class ComponentImplementationBuilder {
     return cancellationStatements.build();
   }
 
-  protected Optional<CodeBlock> cancelParentStatement() {
-    // Returns empty by default. Overridden in subclass(es) to add a statement if and only if the
-    // component being generated has a parent that allows cancellation to propagate to it from
-    // subcomponents.
-    return Optional.empty();
+  private Optional<CodeBlock> cancelParentStatement() {
+    if (!shouldPropagateCancellationToParent()) {
+      return Optional.empty();
+    }
+    return Optional.of(
+        CodeBlock.builder()
+            .addStatement(
+                "$T.this.$N($N)",
+                parent.get().componentImplementation.name(),
+                CANCELLATION_LISTENER_METHOD_NAME,
+                MAY_INTERRUPT_IF_RUNNING)
+            .build());
+  }
+
+  private boolean shouldPropagateCancellationToParent() {
+    return parent.isPresent()
+        && parent
+            .get()
+            .componentImplementation
+            .componentDescriptor()
+            .cancellationPolicy()
+            .map(policy -> policy.fromSubcomponents().equals(PROPAGATE))
+            .orElse(false);
   }
 
   private MethodSignature getMethodSignature(ComponentMethodDescriptor method) {
@@ -266,7 +309,7 @@ public abstract class ComponentImplementationBuilder {
         .parentBindingExpressions(Optional.of(bindingExpressions))
         .parentRequirementExpressions(Optional.of(componentRequirementExpressions))
         .build()
-        .subcomponentBuilder()
+        .componentImplementationBuilder()
         .build()
         .generate()
         .build();
@@ -403,146 +446,74 @@ public abstract class ComponentImplementationBuilder {
         .build();
   }
 
-  /** Builds a root component implementation. */
-  public static final class RootComponentImplementationBuilder
-      extends ComponentImplementationBuilder {
-    @Inject
-    RootComponentImplementationBuilder() {}
-
-    @Override
-    protected void addCreatorClass(TypeSpec creator) {
-      componentImplementation.addType(COMPONENT_CREATOR, creator);
+  private void createRootComponentFactoryMethod() {
+    checkState(!parent.isPresent());
+    // Top-level components have a static method that returns a builder or factory for the
+    // component. If the user defined a @Component.Builder or @Component.Factory, an
+    // implementation of their type is returned. Otherwise, an autogenerated Builder type is
+    // returned.
+    // TODO(cgdecker): Replace this abomination with a small class?
+    // Better yet, change things so that an autogenerated builder type has a descriptor of sorts
+    // just like a user-defined creator type.
+    ComponentCreatorKind creatorKind;
+    ClassName creatorType;
+    String factoryMethodName;
+    boolean noArgFactoryMethod;
+    Optional<ComponentCreatorDescriptor> creatorDescriptor =
+        graph.componentDescriptor().creatorDescriptor();
+    if (creatorDescriptor.isPresent()) {
+      ComponentCreatorDescriptor descriptor = creatorDescriptor.get();
+      creatorKind = descriptor.kind();
+      creatorType = ClassName.get(descriptor.typeElement());
+      factoryMethodName = descriptor.factoryMethod().getSimpleName().toString();
+      noArgFactoryMethod = descriptor.factoryParameters().isEmpty();
+    } else {
+      creatorKind = BUILDER;
+      creatorType = componentImplementation.getCreatorName();
+      factoryMethodName = "build";
+      noArgFactoryMethod = true;
     }
 
-    @Override
-    protected void addFactoryMethods() {
-      // Top-level components have a static method that returns a builder or factory for the
-      // component. If the user defined a @Component.Builder or @Component.Factory, an
-      // implementation of their type is returned. Otherwise, an autogenerated Builder type is
-      // returned.
-      // TODO(cgdecker): Replace this abomination with a small class?
-      // Better yet, change things so that an autogenerated builder type has a descriptor of sorts
-      // just like a user-defined creator type.
-      ComponentCreatorKind creatorKind;
-      ClassName creatorType;
-      String factoryMethodName;
-      boolean noArgFactoryMethod;
-      if (creatorDescriptor().isPresent()) {
-        ComponentCreatorDescriptor descriptor = creatorDescriptor().get();
-        creatorKind = descriptor.kind();
-        creatorType = ClassName.get(descriptor.typeElement());
-        factoryMethodName = descriptor.factoryMethod().getSimpleName().toString();
-        noArgFactoryMethod = descriptor.factoryParameters().isEmpty();
-      } else {
-        creatorKind = BUILDER;
-        creatorType = componentImplementation.getCreatorName();
-        factoryMethodName = "build";
-        noArgFactoryMethod = true;
-      }
-
-      MethodSpec creatorFactoryMethod =
-          methodBuilder(creatorKind.methodName())
+    MethodSpec creatorFactoryMethod =
+        methodBuilder(creatorKind.methodName())
+            .addModifiers(PUBLIC, STATIC)
+            .returns(creatorType)
+            .addStatement("return new $T()", componentImplementation.getCreatorName())
+            .build();
+    componentImplementation.addMethod(BUILDER_METHOD, creatorFactoryMethod);
+    if (noArgFactoryMethod && canInstantiateAllRequirements()) {
+      componentImplementation.addMethod(
+          BUILDER_METHOD,
+          methodBuilder("create")
+              .returns(ClassName.get(graph.componentTypeElement()))
               .addModifiers(PUBLIC, STATIC)
-              .returns(creatorType)
-              .addStatement("return new $T()", componentImplementation.getCreatorName())
-              .build();
-      componentImplementation.addMethod(BUILDER_METHOD, creatorFactoryMethod);
-      if (noArgFactoryMethod && canInstantiateAllRequirements()) {
-        componentImplementation.addMethod(
-            BUILDER_METHOD,
-            methodBuilder("create")
-                .returns(ClassName.get(super.graph.componentTypeElement()))
-                .addModifiers(PUBLIC, STATIC)
-                .addStatement("return new $L().$L()", creatorKind.typeName(), factoryMethodName)
-                .build());
-      }
-    }
-
-    private Optional<ComponentCreatorDescriptor> creatorDescriptor() {
-      return graph.componentDescriptor().creatorDescriptor();
-    }
-
-    /** {@code true} if all of the graph's required dependencies can be automatically constructed */
-    private boolean canInstantiateAllRequirements() {
-      return !Iterables.any(
-          graph.componentRequirements(),
-          dependency -> dependency.requiresAPassedInstance(elements, types, metadataUtil));
-    }
-  }
-
-  /**
-   * Builds a subcomponent implementation. Represents a private, inner, concrete, final
-   * implementation of a subcomponent which extends a user defined type.
-   */
-  public static final class SubcomponentImplementationBuilder
-      extends ComponentImplementationBuilder {
-    final Optional<ComponentImplementationBuilder> parent;
-
-    @Inject
-    SubcomponentImplementationBuilder(
-        @ParentComponent Optional<ComponentImplementationBuilder> parent) {
-      this.parent = parent;
-    }
-
-    @Override
-    protected void addCreatorClass(TypeSpec creator) {
-      if (parent.isPresent()) {
-        // In an inner implementation of a subcomponent the creator is a peer class.
-        parent.get().componentImplementation.addType(SUBCOMPONENT, creator);
-      } else {
-        componentImplementation.addType(SUBCOMPONENT, creator);
-      }
-    }
-
-    @Override
-    protected void addFactoryMethods() {
-      graph.factoryMethod().ifPresent(this::createSubcomponentFactoryMethod);
-    }
-
-    private void createSubcomponentFactoryMethod(ExecutableElement factoryMethod) {
-      checkState(parent.isPresent());
-
-      Collection<ParameterSpec> params = getFactoryMethodParameters(graph).values();
-      MethodSpec.Builder method = MethodSpec.overriding(factoryMethod, parentType(), types);
-      params.forEach(
-          param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
-      method.addStatement(
-          "return new $T($L)", componentImplementation.name(), parameterNames(params));
-
-      parent.get().componentImplementation.addMethod(COMPONENT_METHOD, method.build());
-    }
-
-    private DeclaredType parentType() {
-      return asDeclared(parent.get().graph.componentTypeElement().asType());
-    }
-
-    @Override
-    protected Optional<CodeBlock> cancelParentStatement() {
-      if (!shouldPropagateCancellationToParent()) {
-        return Optional.empty();
-      }
-      return Optional.of(
-          CodeBlock.builder()
-              .addStatement(
-                  "$T.this.$N($N)",
-                  parent.get().componentImplementation.name(),
-                  CANCELLATION_LISTENER_METHOD_NAME,
-                  MAY_INTERRUPT_IF_RUNNING)
+              .addStatement("return new $L().$L()", creatorKind.typeName(), factoryMethodName)
               .build());
     }
-
-    private boolean shouldPropagateCancellationToParent() {
-      return parent.isPresent()
-          && parent
-              .get()
-              .componentImplementation
-              .componentDescriptor()
-              .cancellationPolicy()
-              .map(policy -> policy.fromSubcomponents().equals(PROPAGATE))
-              .orElse(false);
-    }
   }
 
+  /** {@code true} if all of the graph's required dependencies can be automatically constructed */
+  private boolean canInstantiateAllRequirements() {
+    return !Iterables.any(
+        graph.componentRequirements(),
+        dependency -> dependency.requiresAPassedInstance(elements, types, metadataUtil));
+  }
+
+  private void createSubcomponentFactoryMethod(ExecutableElement factoryMethod) {
+    checkState(parent.isPresent());
+    Collection<ParameterSpec> params = getFactoryMethodParameters(graph).values();
+    MethodSpec.Builder method = MethodSpec.overriding(factoryMethod, parentType(), types);
+    params.forEach(
+        param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
+    method.addStatement(
+        "return new $T($L)", componentImplementation.name(), parameterNames(params));
+
+    parent.get().componentImplementation.addMethod(COMPONENT_METHOD, method.build());
+  }
+
+  private DeclaredType parentType() {
+    return asDeclared(parent.get().graph.componentTypeElement().asType());
+  }
   /**
    * Returns the map of {@link ComponentRequirement}s to {@link ParameterSpec}s for the given
    * graph's factory method.

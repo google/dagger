@@ -89,6 +89,15 @@ android_library(
 )
 
 android_library(
+    name = "activity_retained_lifecycle",
+    srcs = ["ActivityRetainedLifecycle.java"],
+    deps = [
+        ":package_info",
+        "@maven//:androidx_annotation_annotation",
+    ],
+)
+
+android_library(
     name = "artifact-lib",
     tags = ["maven_coordinates=com.google.dagger:hilt-android:" + POM_VERSION_ALPHA],
     exports = [
@@ -126,11 +135,13 @@ gen_maven_artifact(
         "//java/dagger/hilt:generates_root_input",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt:package_info",
+        "//java/dagger/hilt/android:activity_retained_lifecycle",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:hilt_android_app",
         "//java/dagger/hilt/android:package_info",
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/components:package_info",
+        "//java/dagger/hilt/android/internal",
         "//java/dagger/hilt/android/internal/builders",
         "//java/dagger/hilt/android/internal/lifecycle",
         "//java/dagger/hilt/android/internal/managers",

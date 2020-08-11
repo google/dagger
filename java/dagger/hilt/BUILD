@@ -118,6 +118,7 @@ filegroup(
         "//java/dagger/hilt/android:srcs_filegroup",
         "//java/dagger/hilt/android/components:srcs_filegroup",
         "//java/dagger/hilt/android/qualifiers:srcs_filegroup",
+        "//java/dagger/hilt/android/internal:srcs_filegroup",
         "//java/dagger/hilt/android/internal/builders:srcs_filegroup",
         "//java/dagger/hilt/android/internal/lifecycle:srcs_filegroup",
         "//java/dagger/hilt/android/internal/managers:srcs_filegroup",

@@ -17,8 +17,8 @@
 package dagger.internal.codegen.validation;
 
 import com.google.auto.common.MoreTypes;
+import com.google.auto.common.SuperficialValidation;
 import com.google.common.base.Equivalence;
-import dagger.internal.codegen.autocommon.SuperficialValidation;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.ArrayDeque;
 import java.util.HashSet;

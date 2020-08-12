@@ -26,11 +26,11 @@ java_library(
     tags = ["maven:merged"],
     deps = [
         "//java/dagger:core",
-        "//java/dagger/internal/codegen/autocommon",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
         "@google_bazel_common//third_party/java/jsr330_inject",
+        "@maven//:com_google_auto_auto_common",
     ],
 )

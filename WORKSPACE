@@ -79,6 +79,7 @@ maven_install(
         "androidx.multidex:multidex:2.0.1",
         "androidx.test:monitor:1.1.1",
         "androidx.test:core:1.1.0",
+        "com.google.auto:auto-common:0.11",
         "com.android.support:appcompat-v7:25.0.0",
         "com.android.support:support-annotations:25.0.0",
         "com.android.support:support-fragment:25.0.0",

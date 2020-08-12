@@ -20,6 +20,7 @@ import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 import static javax.lang.model.util.ElementFilter.typesIn;
 
+import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
@@ -27,7 +28,6 @@ import com.google.common.collect.Sets;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-import dagger.internal.codegen.autocommon.BasicAnnotationProcessor.ProcessingStep;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.BindingFactory;
 import dagger.internal.codegen.binding.ContributionBinding;

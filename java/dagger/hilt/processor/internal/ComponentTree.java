@@ -21,12 +21,9 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.Graphs;
 import com.google.common.graph.ImmutableGraph;
-import com.google.common.graph.MutableGraph;
 import com.squareup.javapoet.ClassName;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,7 +31,7 @@ import java.util.Map;
 public final class ComponentTree {
   private final ImmutableGraph<ComponentDescriptor> graph;
 
-  private ComponentTree(ImmutableGraph<ComponentDescriptor> graph) {
+  public ComponentTree(ImmutableGraph<ComponentDescriptor> graph) {
     this.graph = Preconditions.checkNotNull(graph);
     Preconditions.checkState(
         !Graphs.hasCycle(graph),
@@ -75,18 +72,5 @@ public final class ComponentTree {
 
   public ImmutableSet<ComponentDescriptor> childrenOf(ComponentDescriptor componentDescriptor) {
     return ImmutableSet.copyOf(graph.successors(componentDescriptor));
-  }
-
-  public static ComponentTree from(Collection<ComponentDescriptor> componentDescriptors) {
-    MutableGraph<ComponentDescriptor> graph =
-        GraphBuilder.directed().allowsSelfLoops(false).build();
-
-    componentDescriptors.forEach(
-        descriptor -> {
-          graph.addNode(descriptor);
-          descriptor.parent().ifPresent(parent -> graph.putEdge(parent, descriptor));
-        });
-
-    return new ComponentTree(ImmutableGraph.copyOf(graph));
   }
 }

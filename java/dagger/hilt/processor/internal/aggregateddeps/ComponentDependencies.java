@@ -173,7 +173,7 @@ public final class ComponentDependencies {
    * }</pre>
    */
   public static ComponentDependencies from(
-      ImmutableList<ComponentDescriptor> descriptors, Elements elements) {
+      ImmutableSet<ComponentDescriptor> descriptors, Elements elements) {
     Dependencies.Builder moduleDeps = new Dependencies.Builder();
     Dependencies.Builder entryPointDeps = new Dependencies.Builder();
     Dependencies.Builder componentEntryPointDeps = new Dependencies.Builder();
@@ -221,7 +221,7 @@ public final class ComponentDependencies {
   }
 
   private static ImmutableMap<String, ComponentDescriptor> descriptorLookupMap(
-      ImmutableList<ComponentDescriptor> descriptors) {
+      ImmutableSet<ComponentDescriptor> descriptors) {
     ImmutableMap.Builder<String, ComponentDescriptor> builder = ImmutableMap.builder();
     for (ComponentDescriptor descriptor : descriptors) {
       // This is a temporary hack to map the old ApplicationComponent to the new SingletonComponent.

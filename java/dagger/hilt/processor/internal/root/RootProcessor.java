@@ -28,7 +28,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
-import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ComponentTree;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.aggregateddeps.ComponentDependencies;
@@ -133,10 +132,9 @@ public final class RootProcessor extends BaseProcessor {
     // all roots. We should consider if it's worth trying to continue processing for other
     // roots. At the moment, I think it's rare that if one root failed the others would not.
     try {
-      ImmutableList<ComponentDescriptor> descriptors =
-          defineComponents.componentDescriptors(getElementUtils());
-      ComponentTree tree = ComponentTree.from(descriptors);
-      ComponentDependencies deps = ComponentDependencies.from(descriptors, getElementUtils());
+      ComponentTree tree = defineComponents.getComponentTree(getElementUtils());
+      ComponentDependencies deps = ComponentDependencies.from(
+          tree.getComponentDescriptors(), getElementUtils());
       ImmutableList<RootMetadata> rootMetadatas =
           rootsToProcess.stream()
               .map(root -> RootMetadata.create(root, tree, deps, getProcessingEnv()))

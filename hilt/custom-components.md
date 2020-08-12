@@ -85,11 +85,12 @@ interface MyCustomComponent
 ```
 {: .c-codeselector__code .c-codeselector__code_kotlin }
 
-A builder interface must also be defined. This interface will be injectable from
-the parent component and will be the interface for creating new instances of
-your component. As these are custom components, once instances are built, it
-will be your job to hold on to or release component instances at the appropriate
-time.
+A builder interface must also be defined. If this builder is missing, the
+component will not be generated since there will be no way to construct the
+component. This interface will be injectable from the parent component and will
+be the interface for creating new instances of your component. As these are
+custom components, once instances are built, it will be your job to hold on to
+or release component instances at the appropriate time.
 
 Builder interfaces are defined by marking an interface with
 `@DefineComponent.Builder`. Builders must have a method that returns the

@@ -25,6 +25,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.INTERFACE;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
@@ -36,6 +37,7 @@ import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Components;
+import dagger.hilt.processor.internal.KotlinMetadata;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import java.util.HashSet;
@@ -58,10 +60,6 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
 public final class AggregatedDepsProcessor extends BaseProcessor {
-  private static final ImmutableSet<ClassName> ALLOWED_MODULES_WITH_PARAMS =
-      ImmutableSet.of(
-          ClassName.get("dagger.hilt.android.internal.modules", "ApplicationContextModule"));
-
   private static final ImmutableSet<ClassName> INSTALL_IN_ANNOTATIONS =
       ImmutableSet.<ClassName>builder()
           .add(ClassNames.INSTALL_IN)
@@ -141,18 +139,6 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
           element);
       TypeElement module = asType(element);
 
-      if (!ALLOWED_MODULES_WITH_PARAMS.contains(ClassName.get(module))) {
-        ImmutableList<ExecutableElement> constructorsWithParams =
-            ElementFilter.constructorsIn(module.getEnclosedElements()).stream()
-                .filter(constructor -> !constructor.getParameters().isEmpty())
-                .collect(toImmutableList());
-        ProcessorErrors.checkState(
-            constructorsWithParams.isEmpty(),
-            module,
-            "@InstallIn modules cannot have constructors with parameters. Found: %s",
-            constructorsWithParams);
-      }
-
       ProcessorErrors.checkState(
           Processors.isTopLevel(module)
               || module.getModifiers().contains(STATIC)
@@ -163,6 +149,13 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
           "Nested @InstallIn modules must be static unless they are directly nested within a test. "
               + "Found: %s",
           module);
+
+      // Check that if Dagger needs an instance of the module, Hilt can provide it automatically by
+      // calling a visible empty constructor.
+      ProcessorErrors.checkState(
+          !daggerRequiresModuleInstance(module) || hasVisibleEmptyConstructor(module),
+          module,
+          "Modules that need to be instantiated by Hilt must have a visible, empty constructor.");
 
       // TODO(b/28989613): This should really be fixed in Dagger. Remove once Dagger bug is fixed.
       ImmutableList<ExecutableElement> abstractMethodsWithMissingBinds =
@@ -284,5 +277,36 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     Name name = asType(annotationMirror.getAnnotationType().asElement()).getQualifiedName();
     return name.contentEquals("javax.annotation.Generated")
         || name.contentEquals("javax.annotation.processing.Generated");
+  }
+
+  private static boolean daggerRequiresModuleInstance(TypeElement module) {
+    return !module.getModifiers().contains(ABSTRACT)
+        && !hasOnlyStaticProvides(module)
+        // Skip ApplicationContextModule, since Hilt manages this module internally.
+        && !ClassNames.APPLICATION_CONTEXT_MODULE.equals(ClassName.get(module))
+        // Skip Kotlin object modules since all their provision methods are static
+        && !isKotlinObject(module);
+  }
+
+  private static boolean isKotlinObject(TypeElement type) {
+    Optional<KotlinMetadata> kotlinMetadata = KotlinMetadata.of(type);
+    return kotlinMetadata
+        .map(metadata -> metadata.isObjectClass() || metadata.isCompanionObjectClass())
+        .orElse(false);
+  }
+
+  private static boolean hasOnlyStaticProvides(TypeElement module) {
+    // TODO(user): Check for @Produces too when we have a producers story
+    return ElementFilter.methodsIn(module.getEnclosedElements()).stream()
+        .filter(method -> Processors.hasAnnotation(method, ClassNames.PROVIDES))
+        .allMatch(method -> method.getModifiers().contains(STATIC));
+  }
+
+  private static boolean hasVisibleEmptyConstructor(TypeElement type) {
+    List<ExecutableElement> constructors = ElementFilter.constructorsIn(type.getEnclosedElements());
+    return constructors.isEmpty()
+        || constructors.stream()
+            .filter(constructor -> constructor.getParameters().isEmpty())
+            .anyMatch(constructor -> !constructor.getModifiers().contains(PRIVATE));
   }
 }

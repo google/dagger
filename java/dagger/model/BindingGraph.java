@@ -95,13 +95,11 @@ public abstract class BindingGraph {
     return new AutoValue_BindingGraph(ImmutableNetwork.copyOf(network), isFullBindingGraph);
   }
 
-  BindingGraph() {}
-
   /** Returns the graph in its {@link Network} representation. */
   public abstract ImmutableNetwork<Node, Edge> network();
 
   @Override
-  public final String toString() {
+  public String toString() {
     return network().toString();
   }
 
@@ -115,7 +113,7 @@ public abstract class BindingGraph {
    *     full binding graphs for components and subcomponents as well as modules.
    */
   @Deprecated
-  public final boolean isModuleBindingGraph() {
+  public boolean isModuleBindingGraph() {
     return !rootComponentNode().isRealComponent();
   }
 
@@ -137,48 +135,48 @@ public abstract class BindingGraph {
    *     instead
    */
   @Deprecated
-  public final boolean isPartialBindingGraph() {
+  public boolean isPartialBindingGraph() {
     return rootComponentNode().isSubcomponent();
   }
 
   /** Returns the bindings. */
-  public final ImmutableSet<Binding> bindings() {
+  public ImmutableSet<Binding> bindings() {
     return nodes(Binding.class);
   }
 
   /** Returns the bindings for a key. */
-  public final ImmutableSet<Binding> bindings(Key key) {
+  public ImmutableSet<Binding> bindings(Key key) {
     return nodes(Binding.class).stream()
         .filter(binding -> binding.key().equals(key))
         .collect(toImmutableSet());
   }
 
   /** Returns the nodes that represent missing bindings. */
-  public final ImmutableSet<MissingBinding> missingBindings() {
+  public ImmutableSet<MissingBinding> missingBindings() {
     return nodes(MissingBinding.class);
   }
 
   /** Returns the component nodes. */
-  public final ImmutableSet<ComponentNode> componentNodes() {
+  public ImmutableSet<ComponentNode> componentNodes() {
     return nodes(ComponentNode.class);
   }
 
   /** Returns the component node for a component. */
-  public final Optional<ComponentNode> componentNode(ComponentPath component) {
+  public Optional<ComponentNode> componentNode(ComponentPath component) {
     return componentNodes().stream()
         .filter(node -> node.componentPath().equals(component))
         .findFirst();
   }
 
   /** Returns the component nodes for a component. */
-  public final ImmutableSet<ComponentNode> componentNodes(TypeElement component) {
+  public ImmutableSet<ComponentNode> componentNodes(TypeElement component) {
     return componentNodes().stream()
         .filter(node -> node.componentPath().currentComponent().equals(component))
         .collect(toImmutableSet());
   }
 
   /** Returns the component node for the root component. */
-  public final ComponentNode rootComponentNode() {
+  public ComponentNode rootComponentNode() {
     return componentNodes().stream()
         .filter(node -> node.componentPath().atRoot())
         .findFirst()
@@ -186,7 +184,7 @@ public abstract class BindingGraph {
   }
 
   /** Returns the dependency edges. */
-  public final ImmutableSet<DependencyEdge> dependencyEdges() {
+  public ImmutableSet<DependencyEdge> dependencyEdges() {
     return dependencyEdgeStream().collect(toImmutableSet());
   }
 
@@ -197,14 +195,14 @@ public abstract class BindingGraph {
    * have no binding for a key will have an edge whose {@linkplain EndpointPair#target() target
    * node} is a {@link MissingBinding}.
    */
-  public final ImmutableSetMultimap<DependencyRequest, DependencyEdge> dependencyEdges(
+  public ImmutableSetMultimap<DependencyRequest, DependencyEdge> dependencyEdges(
       Binding binding) {
     return dependencyEdgeStream(binding)
         .collect(toImmutableSetMultimap(DependencyEdge::dependencyRequest, edge -> edge));
   }
 
   /** Returns the dependency edges for a dependency request. */
-  public final ImmutableSet<DependencyEdge> dependencyEdges(DependencyRequest dependencyRequest) {
+  public ImmutableSet<DependencyEdge> dependencyEdges(DependencyRequest dependencyRequest) {
     return dependencyEdgeStream()
         .filter(edge -> edge.dependencyRequest().equals(dependencyRequest))
         .collect(toImmutableSet());
@@ -214,7 +212,7 @@ public abstract class BindingGraph {
    * Returns the dependency edges for the entry points of a given {@code component}. Each edge's
    * source node is that component's component node.
    */
-  public final ImmutableSet<DependencyEdge> entryPointEdges(ComponentPath component) {
+  public ImmutableSet<DependencyEdge> entryPointEdges(ComponentPath component) {
     return dependencyEdgeStream(componentNode(component).get()).collect(toImmutableSet());
   }
 
@@ -226,12 +224,12 @@ public abstract class BindingGraph {
    * Returns the dependency edges for all entry points for all components and subcomponents. Each
    * edge's source node is a component node.
    */
-  public final ImmutableSet<DependencyEdge> entryPointEdges() {
+  public ImmutableSet<DependencyEdge> entryPointEdges() {
     return entryPointEdgeStream().collect(toImmutableSet());
   }
 
   /** Returns the binding or missing binding nodes that directly satisfy entry points. */
-  public final ImmutableSet<MaybeBinding> entryPointBindings() {
+  public ImmutableSet<MaybeBinding> entryPointBindings() {
     return entryPointEdgeStream()
         .map(edge -> (MaybeBinding) network().incidentNodes(edge).target())
         .collect(toImmutableSet());
@@ -241,7 +239,7 @@ public abstract class BindingGraph {
    * Returns the edges for entry points that transitively depend on a binding or missing binding for
    * a key.
    */
-  public final ImmutableSet<DependencyEdge> entryPointEdgesDependingOnBinding(
+  public ImmutableSet<DependencyEdge> entryPointEdgesDependingOnBinding(
       MaybeBinding binding) {
     ImmutableNetwork<Node, DependencyEdge> dependencyGraph = dependencyGraph();
     Network<Node, DependencyEdge> subgraphDependingOnBinding =
@@ -251,7 +249,7 @@ public abstract class BindingGraph {
   }
 
   /** Returns the bindings that directly request a given binding as a dependency. */
-  public final ImmutableSet<Binding> requestingBindings(MaybeBinding binding) {
+  public ImmutableSet<Binding> requestingBindings(MaybeBinding binding) {
     return network().predecessors(binding).stream()
         .flatMap(instancesOf(Binding.class))
         .collect(toImmutableSet());
@@ -263,7 +261,7 @@ public abstract class BindingGraph {
    *
    * @see #requestedMaybeMissingBindings(Binding)
    */
-  public final ImmutableSet<Binding> requestedBindings(Binding binding) {
+  public ImmutableSet<Binding> requestedBindings(Binding binding) {
     return network().successors(binding).stream()
         .flatMap(instancesOf(Binding.class))
         .collect(toImmutableSet());
@@ -275,7 +273,7 @@ public abstract class BindingGraph {
    *
    * @see #requestedBindings(Binding)
    */
-  public final ImmutableSet<MaybeBinding> requestedMaybeMissingBindings(Binding binding) {
+  public ImmutableSet<MaybeBinding> requestedMaybeMissingBindings(Binding binding) {
     return network().successors(binding).stream()
         .flatMap(instancesOf(MaybeBinding.class))
         .collect(toImmutableSet());
@@ -419,12 +417,12 @@ public abstract class BindingGraph {
     /** @deprecated This always returns {@code Optional.empty()}. */
     @Override
     @Deprecated
-    public final Optional<Binding> binding() {
+    public Optional<Binding> binding() {
       return Optional.empty();
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
       return String.format("missing binding for %s in %s", key(), componentPath());
     }
 

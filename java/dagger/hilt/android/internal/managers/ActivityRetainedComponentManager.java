@@ -122,6 +122,7 @@ final class ActivityRetainedComponentManager
   static final class Lifecycle implements ActivityRetainedLifecycle {
 
     private final Set<OnClearedListener> listeners = new HashSet<>();
+    private boolean onClearedDispatched = false;
 
     @Inject
     Lifecycle() {}
@@ -129,18 +130,31 @@ final class ActivityRetainedComponentManager
     @Override
     public void addOnClearedListener(@NonNull OnClearedListener listener) {
       ThreadUtil.ensureMainThread();
+      throwIfOnClearedDispatched();
       listeners.add(listener);
     }
 
     @Override
     public void removeOnClearedListener(@NonNull OnClearedListener listener) {
       ThreadUtil.ensureMainThread();
+      throwIfOnClearedDispatched();
       listeners.remove(listener);
     }
 
     void dispatchOnCleared() {
+      ThreadUtil.ensureMainThread();
+      onClearedDispatched = true;
       for (OnClearedListener listener : listeners) {
         listener.onCleared();
+      }
+    }
+
+    private void throwIfOnClearedDispatched() {
+      if (onClearedDispatched) {
+        throw new IllegalStateException(
+            "There was a race between the call to add/remove an OnClearedListener and onCleared(). "
+                + "This can happen when posting to the Main thread from a background thread, "
+                + "which is not supported.");
       }
     }
   }

@@ -74,9 +74,9 @@ Hilt rule.
 A test often needs to request bindings from its Hilt components. This section
 describes how to request bindings from each of the different components.
 
-### Accessing ApplicationComponent bindings
+### Accessing SingletonComponent bindings
 
-An `ApplicationComponent` binding can be injected directly into a test using an
+An `SingletonComponent` binding can be injected directly into a test using an
 `@Inject` annotated field. Injection doesn't occur until calling
 `HiltAndroidRule#inject()`.
 
@@ -284,7 +284,7 @@ class.
 public class FooTest {
   // Nested modules are only installed in the Hilt components of the outer test.
   @Module
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   static class FakeBarModule {
     @Provides
     static Bar provideBar(...) {
@@ -300,7 +300,7 @@ public class FooTest {
 class FooTest {
   // Nested modules are only installed in the Hilt components of the outer test.
   @Module
-  @InstallIn(ApplicationComponent::class)
+  @InstallIn(SingletonComponent::class)
   object FakeBarModule {
     @Provides fun provideBar() = Bar()
   }

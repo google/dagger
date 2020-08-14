@@ -33,7 +33,7 @@ process is the same for other types.
 
 [^1]: Unlike the other supported Android classes, `BroadcastReceivers` do not
     have their own Dagger component and are instead simply injected from the
-    `ApplicationComponent`.
+    `SingletonComponent`.
 
 
 To enable members injection in your activity, annotate your class with
@@ -44,7 +44,7 @@ To enable members injection in your activity, annotate your class with
 ```java
 @AndroidEntryPoint
 public final class MyActivity extends MyBaseActivity {
-  // Bindings in ApplicationComponent or ActivityComponent
+  // Bindings in SingletonComponent or ActivityComponent
   @Inject Bar bar;
 
   @Override
@@ -60,7 +60,7 @@ public final class MyActivity extends MyBaseActivity {
 ```kotlin
 @AndroidEntryPoint
 class MyActivity : MyBaseActivity() {
-  // Bindings in ApplicationComponent or ActivityComponent
+  // Bindings in SingletonComponent or ActivityComponent
   @Inject lateinit var bar: Bar
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -109,7 +109,7 @@ often less confusing to just create a new fragment instance for each usage.
 
 ### Views with Fragment bindings
 
-By default, only `ApplicationComponent` and `ActivityComponent` bindings can be
+By default, only `SingletonComponent` and `ActivityComponent` bindings can be
 injected into the view. To enable fragment bindings in your view, add the
 `@WithFragmentBindings` annotation to your class.
 
@@ -119,7 +119,7 @@ injected into the view. To enable fragment bindings in your view, add the
 @WithFragmentBindings
 @AndroidEntryPoint
 public final class MyView extends MyBaseView {
-  // Bindings in ApplicationComponent, ActivityComponent,
+  // Bindings in SingletonComponent, ActivityComponent,
   // FragmentComponent, and ViewComponent
   @Inject Bar bar;
 
@@ -142,7 +142,7 @@ public final class MyView extends MyBaseView {
 @AndroidEntryPoint
 @WithFragmentBindings
 class MyView : MyBaseView {
-  // Bindings in ApplicationComponent, ActivityComponent,
+  // Bindings in SingletonComponent, ActivityComponent,
   // FragmentComponent, and ViewComponent
   @Inject lateinit var bar: Bar
 

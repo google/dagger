@@ -14,7 +14,7 @@ other helper classes like `@DefineComponent` and `@AliasOf`.
 
 Since the Android `Application` is generated at the same time, the generated
 `Application` has a direct reference to the root generated component which is
-the `ApplicationComponent`.
+the `SingletonComponent`.
 
 Since the `HiltTestApplication` must support multiple tests, unlike in the
 production application, reflection is used to find the generated components.

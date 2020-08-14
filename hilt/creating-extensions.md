@@ -84,7 +84,7 @@ Then the generated `FooTest_FooModule` would need to be annotated like so:
 ```java
 @OriginatingElement(FooTest.class)
 @Module
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 interface FooTest_FooModule {
   ...
 }
@@ -93,7 +93,7 @@ interface FooTest_FooModule {
 ```kotlin
 @OriginatingElement(FooTest::class)
 @Module
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 interface FooTest_FooModule {
   ...
 }

@@ -41,7 +41,7 @@ is shown in the table below:
 
 Component                       | Injector for
 ------------------------------- | ----------------------------------------
-**`ApplicationComponent`**      | `Application`
+**`SingletonComponent`**        | `Application`
 **`ActivityRetainedComponent`** | `ViewModel` (see [View model extension])
 **`ActivityComponent`**         | `Activity`
 **`FragmentComponent`**         | `Fragment`
@@ -67,7 +67,7 @@ annotation and bounded lifetime for each component.
 
 Component                       | Scope                    | Created at                | Destroyed at
 ------------------------------- | ------------------------ | ------------------------- | ------------
-**`ApplicationComponent`**      | `@Singleton`             | `Application#onCreate()`  | `Application#onDestroy()`
+**`SingletonComponent`**        | `@Singleton`             | `Application#onCreate()`  | `Application#onDestroy()`
 **`ActivityRetainedComponent`** | `@ActivityRetainedScope` | `Activity#onCreate()`[^1] | `Activity#onDestroy()`[^1]
 **`ActivityComponent`**         | `@ActivityScoped`        | `Activity#onCreate()`     | `Activity#onDestroy()`
 **`FragmentComponent`**         | `@FragmentScoped`        | `Fragment#onAttach()`     | `Fragment#onDestroy()`
@@ -199,7 +199,7 @@ as dependencies into your own custom bindings.
 
 Component                       | Default Bindings
 ------------------------------- | ---------------------------------------------
-**`ApplicationComponent`**      | `Application`[^2]
+**`SingletonComponent`**        | `Application`[^2]
 **`ActivityRetainedComponent`** | `Application`
 **`ActivityComponent`**         | `Application`, `Activity`
 **`FragmentComponent`**         | `Application`, `Activity`, `Fragment`

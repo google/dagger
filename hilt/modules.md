@@ -37,13 +37,13 @@ not be part of the component and may result in compilation errors.
 Specify which Hilt Component to install the module in by passing in the
 appropriate [Component](components.md) type(s) to the `@InstallIn` annotation.
 For example, to install a module so that anything in the application can use it,
-use `ApplicationComponent`:
+use `SingletonComponent`:
 
 <div class="c-codeselector__button c-codeselector__button_java">Java</div>
 <div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
 ```java
 @Module
-@InstallIn(ApplicationComponent.class) // Installs FooModule in the generate ApplicationComponent.
+@InstallIn(SingletonComponent.class) // Installs FooModule in the generate SingletonComponent.
 public final class FooModule {
   @Provides
   static Bar provideBar() {...}
@@ -52,7 +52,7 @@ public final class FooModule {
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
 @Module
-@InstallIn(ApplicationComponent::class) // Installs FooModule in the generate ApplicationComponent.
+@InstallIn(SingletonComponent::class) // Installs FooModule in the generate SingletonComponent.
 object FooModule {
   @Provides
   fun provideBar(): Bar {...}
@@ -62,15 +62,15 @@ object FooModule {
 
 Each component comes with a scoping annotation that can be used to memoize a
 binding to the lifetime of the component. For example, to scope a binding to the
-`ApplicationComponent` component, use the `@Singleton` annotation:
+`SingletonComponent` component, use the `@Singleton` annotation:
 
 <div class="c-codeselector__button c-codeselector__button_java">Java</div>
 <div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
 ```java
 @Module
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 public final class FooModule {
-  // @Singleton providers are only called once per ApplicationComponent instance.
+  // @Singleton providers are only called once per SingletonComponent instance.
   @Provides
   @Singleton
   static Bar provideBar() {...}
@@ -79,9 +79,9 @@ public final class FooModule {
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
 @Module
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 object class FooModule {
-  // @Singleton providers are only called once per ApplicationComponent instance.
+  // @Singleton providers are only called once per SingletonComponent instance.
   @Provides
   @Singleton
   fun provideBar(): Bar {...}
@@ -91,7 +91,7 @@ object class FooModule {
 
 In addition, each component has bindings that are available to it by default.
 (See [Hilt Components](components.md#component-bindings) for a complete list.)
-For example, the `ApplicationComponent` component provides the `Application`
+For example, the `SingletonComponent` component provides the `Application`
 binding:
 
 <!-- TODO(user): Change this to @ApplicationContext Application when that
@@ -101,9 +101,9 @@ binding:
 <div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
 ```java
 @Module
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 public final class FooModule {
-  // @InstallIn(ApplicationComponent.class) module providers have access to
+  // @InstallIn(SingletonComponent.class) module providers have access to
   // the Application binding.
   @Provides
   static Bar provideBar(Application app) {...}
@@ -112,9 +112,9 @@ public final class FooModule {
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
 @Module
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 object class FooModule {
-  // @InstallIn(ApplicationComponent.class) module providers have access to
+  // @InstallIn(SingletonComponent.class) module providers have access to
   // the Application binding.
   @Provides
   fun provideBar(app: Application): Bar {...}

@@ -41,7 +41,7 @@ the entry point.
 <div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
 ```java
 @EntryPoint
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 public interface FooBarInterface {
   @Foo Bar getBar();
 }
@@ -49,7 +49,7 @@ public interface FooBarInterface {
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
 @EntryPoint
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 interface FooBarInterface {
   @Foo fun getBar(): Bar
 }
@@ -109,7 +109,7 @@ public final MyClass extends NonHiltLibraryClass {
   public MyClass() {}
 
   @EntryPoint
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   public interface MyClassInterface {
     Foo getFoo();
 
@@ -130,7 +130,7 @@ public final MyClass extends NonHiltLibraryClass {
 class MyClass : NonHiltLibraryClass() {
 
   @EntryPoint
-  @InstallIn(ApplicationComponent::class)
+  @InstallIn(SingletonComponent::class)
   interface MyClassInterface {
     fun getFoo(): Foo
 
@@ -153,7 +153,7 @@ class MyClass : NonHiltLibraryClass() {
 <div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
 ```java
 @Module
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 public final class FooModule {
   @Provides
   Foo provideFoo() {
@@ -161,7 +161,7 @@ public final class FooModule {
   }
 
   @EntryPoint
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   public interface FooInterface {
     Foo getFoo();
   }
@@ -170,7 +170,7 @@ public final class FooModule {
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
 @Module
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 object FooModule {
   @Provides
   fun provideFoo(): Foo {
@@ -178,7 +178,7 @@ object FooModule {
   }
 
   @EntryPoint
-  @InstallIn(ApplicationComponent::class)
+  @InstallIn(SingletonComponent::class)
   interface FooInterface {
     fun getFoo(): Foo
   }

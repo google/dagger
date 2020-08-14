@@ -55,7 +55,7 @@ custom component is needed:
 
 Custom component definitions currently have some limitations:
 
-*   Components must be a direct or indirect child of the `ApplicationComponent`.
+*   Components must be a direct or indirect child of the `SingletonComponent`.
 *   Components may not be inserted between any of the standard components. For
     example, a component cannot be added between the `ActivityComponent` and the
     `FragmentComponent`.
@@ -75,12 +75,12 @@ For example:
 <div class="c-codeselector__button c-codeselector__button_java">Java</div>
 <div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
 ```java
-@DefineComponent(parent = ApplicationComponent.class)
+@DefineComponent(parent = SingletonComponent.class)
 interface MyCustomComponent {}
 ```
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
-@DefineComponent(parent = ApplicationComponent::class)
+@DefineComponent(parent = SingletonComponent::class)
 interface MyCustomComponent
 ```
 {: .c-codeselector__code .c-codeselector__code_kotlin }

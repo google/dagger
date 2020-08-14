@@ -170,7 +170,7 @@ To enable members injection in your activity, annotate your class with
 ```java
 @AndroidEntryPoint
 public final class MyActivity extends MyBaseActivity {
-  @Inject Bar bar; // Bindings in ApplicationComponent or ActivityComponent
+  @Inject Bar bar; // Bindings in SingletonComponent or ActivityComponent
 
   @Override
   public void onCreate() {
@@ -185,7 +185,7 @@ public final class MyActivity extends MyBaseActivity {
 ```kotlin
 @AndroidEntryPoint
 class MyActivity : MyBaseActivity() {
-  @Inject lateinit var bar: Bar // Bindings in ApplicationComponent or ActivityComponent
+  @Inject lateinit var bar: Bar // Bindings in SingletonComponent or ActivityComponent
 
   override fun onCreate() {
     // Injection happens in super.onCreate().
@@ -241,13 +241,13 @@ not be part of the component and may result in compilation errors.
 Specify which Hilt Component to install the module in by passing in the
 appropriate [Component](components.md) type(s) to the `@InstallIn` annotation.
 For example, to install a module so that anything in the application can use it,
-use `ApplicationComponent`:
+use `SingletonComponent`:
 
 <div class="c-codeselector__button c-codeselector__button_java">Java</div>
 <div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
 ```java
 @Module
-@InstallIn(ApplicationComponent.class) // Installs FooModule in the generate ApplicationComponent.
+@InstallIn(SingletonComponent.class) // Installs FooModule in the generate SingletonComponent.
 public final class FooModule {
   @Provides
   static Bar provideBar() {...}
@@ -256,7 +256,7 @@ public final class FooModule {
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
 @Module
-@InstallIn(ApplicationComponent::class) // Installs FooModule in the generate ApplicationComponent.
+@InstallIn(SingletonComponent::class) // Installs FooModule in the generate SingletonComponent.
 object FooModule {
   @Provides
   fun provideBar(): Bar {...}

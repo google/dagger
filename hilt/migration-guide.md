@@ -79,20 +79,20 @@ At the end of the migration, the code should be changed as follows:
 ## 1. Migrate the `Application`
 
 The first thing to change will be to migrate your `Application` and `@Singleton`
-component to the generated Hilt `ApplicationComponent`. To do this, we’ll first
+component to the generated Hilt `SingletonComponent`. To do this, we’ll first
 want to make sure that everything that is installed in your current component is
-installed in the Hilt `ApplicationComponent`.
+installed in the Hilt `SingletonComponent`.
 
 ### Migrating a `Component`
 
 To migrate the Application, we need to migrate everything in the pre-existing
-`@Singleton` component to the `ApplicationComponent`.
+`@Singleton` component to the `SingletonComponent`.
 
 #### a. Handle the modules
 
-First, we should install all of the modules into the `ApplicationComponent`.
+First, we should install all of the modules into the `SingletonComponent`.
 This can be done by annotating each module currently installed in your component
-with `@InstallIn(ApplicationComponent.class)`. If there are a lot of modules,
+with `@InstallIn(SingletonComponent.class)`. If there are a lot of modules,
 instead of changing all of those now, you can create and install a single
 aggregator `@Module` class that includes all of the current modules. This is
 just a temporary solution, however, since in order to take full advantage of
@@ -112,7 +112,7 @@ interface MySingletonComponent {
 }
 
 // Becomes the following classes
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 @Module(includes = {
     FooModule.class,
     BarModule.class,
@@ -132,7 +132,7 @@ interface MySingletonComponent {
 }
 
 // Becomes the following classes
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 @Module(includes = [
     FooModule::class,
     BarModule::class,
@@ -163,7 +163,7 @@ still needed as the migration continues.
 ##### Moving everything with [`@EntryPoint`]
 
 Annotate any interface your component extends with [`@EntryPoint`] and
-`@InstallIn(ApplicationComponent.class)`. If there are many interfaces, create a
+`@InstallIn(SingletonComponent.class)`. If there are many interfaces, create a
 single aggregator interface to collect them all just like the modules. Any
 method defined directly on the component interface can be moved to either the
 aggregator interface or one the aggregator extends.
@@ -183,7 +183,7 @@ interface MySingletonComponent extends FooInjector, BarInjector {
 }
 
 // Becomes the following class
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 @EntryPoint
 interface AggregatorEntryPoint extends FooInjector, BarInjector {
   // This is moved as an example, but further below we will see that inject
@@ -205,7 +205,7 @@ interface MySingletonComponent : FooInjector, BarInjector {
 }
 
 // Becomes the following class
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 @EntryPoint
 interface AggregatorEntryPoint : FooInjector, BarInjector {
   // This is moved as an example, but further below we will see that inject
@@ -273,7 +273,7 @@ public final class MyApplication extends Application {
 
 // After adding the aggregator entry point, it will look like the following:
 
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 @EntryPoint
 interface AggregatorEntryPoint extends LegacyInterface, ... {
 }
@@ -299,7 +299,7 @@ class MyApplication : Application() {
 
 // After adding the aggregator entry point, it will look like the following:
 
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 @EntryPoint
 interface AggregatorEntryPoint : LegacyInterface, ... {
 }
@@ -319,7 +319,7 @@ class MyApplication : Application() {
 #### c. Scopes
 
 When migrating a component to Hilt, you’ll also need to migrate your bindings to
-use the Hilt scope annotations. In the case of the `ApplicationComponent`, this
+use the Hilt scope annotations. In the case of the `SingletonComponent`, this
 is `@Singleton`. You can find which annotations correspond to which component
 [here](components.md#component-lifetimes). If you aren’t using `@Singleton` and
 have your own scoping annotation, you can tell Hilt that your annotation is
@@ -350,28 +350,28 @@ with the same `@InstallIn` annotation used on the aggregator.
 <div class="c-codeselector__button c-codeselector__button_java">Java</div>
 <div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
 ```java
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 @Module(includes = {FooModule.class, ...})
 interface AggregatorModule {
 }
 
 // Remove FooModule from the list above and annotate it directly
 
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 @Module
 interface FooModule {
 }
 ```
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 @Module(includes = [FooModule::class, ...])
 interface AggregatorModule {
 }
 
 // Remove FooModule from the list above and annotate it directly
 
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 @Module
 interface FooModule {
 }
@@ -394,7 +394,7 @@ activities/fragments have been also migrated. This will likely be one of the
 final steps of your migration. These parts of dagger.android are there for
 making sure getting dependencies works (e.g. when an `Activity` tries to inject
 itself). The difference is now they are being satisfied by the Hilt
-`ApplicationComponent` instead of the component removed in the above steps.
+`SingletonComponent` instead of the component removed in the above steps.
 
 For example, a migrated dagger.android `Application` that supports both Hilt
 activities and dagger.android activities may look like this:
@@ -434,7 +434,7 @@ component was doing before.
 @HiltAndroidApp
 public final class MyApplication extends DaggerApplication {
   @EntryPoint
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   interface ApplicationInjector extends AndroidInjector<MyApplication> {
   }
 
@@ -449,7 +449,7 @@ public final class MyApplication extends DaggerApplication {
 @HiltAndroidApp
 class MyApplication : DaggerApplication() {
   @EntryPoint
-  @InstallIn(ApplicationComponent::class)
+  @InstallIn(SingletonComponent::class)
   interface ApplicationInjector : AndroidInjector<MyApplication>
 
   override fun applicationInjector(): AndroidInjector<MyApplication> {
@@ -466,7 +466,7 @@ methods and the `DispatchingAndroidInjector` classes.
 ### Check your build
 
 You should be able to stop and build/run your app successfully at this point.
-Your app is successfully using Hilt for the `ApplicationComponent`.
+Your app is successfully using Hilt for the `SingletonComponent`.
 
 ## 2. Migrate Activities and Fragments (and other classes)
 
@@ -784,7 +784,7 @@ qualifiers at your leisure.
 <div class="c-codeselector__button c-codeselector__button_java">Java</div>
 <div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
 ```java
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 @Module
 interface ApplicationContextModule {
   @Binds
@@ -795,7 +795,7 @@ interface ApplicationContextModule {
 ```
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 @Module
 interface ApplicationContextModule {
   @Binds
@@ -975,7 +975,7 @@ subcomponents.
 Component dependencies can be hooked up with an [`@EntryPoint`].
 
 For example, if you had a component dependency off of the
-`ApplicationComponent`, you can keep it working by factoring out the needed
+`SingletonComponent`, you can keep it working by factoring out the needed
 methods into an interface that is annotated with [`@EntryPoint`].
 
 <div class="c-codeselector__button c-codeselector__button_java">Java</div>
@@ -983,7 +983,7 @@ methods into an interface that is annotated with [`@EntryPoint`].
 ```java
 // Starting with this component dependency
 @Component
-interface MyApplicationComponent {
+interface MySingletonComponent {
   // These bindings are exposed for MyCustomComponent
   Foo getFoo();
   Bar getBar();
@@ -991,18 +991,18 @@ interface MyApplicationComponent {
   ...
 }
 
-@Component(dependencies = {MyApplicationComponent.class})
+@Component(dependencies = {MySingletonComponent.class})
 interface MyCustomComponent {
   @Component.Builder
   interface Builder {
-    Builder appComponent(MyApplicationComponent appComponent);
+    Builder appComponent(MySingletonComponent appComponent);
     MyCustomComponent build();
   }
 }
 
 // It can be migrated to Hilt with the following classes
 
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 @EntryPoint
 interface CustomComponentDependencies {
   Foo getFoo();
@@ -1024,7 +1024,7 @@ interface MyCustomComponent {
 ```kotlin
 // Starting with this component dependency
 @Component
-interface MyApplicationComponent {
+interface MySingletonComponent {
   // These bindings are exposed for MyCustomComponent
   fun getFoo(): Foo
   fun getBar(): Bar
@@ -1032,18 +1032,18 @@ interface MyApplicationComponent {
   ...
 }
 
-@Component(dependencies = [MyApplicationComponent::class])
+@Component(dependencies = [MySingletonComponent::class])
 interface MyCustomComponent {
   @Component.Builder
   interface Builder {
-    fun appComponent(appComponent: MyApplicationComponent): Builder
+    fun appComponent(appComponent: MySingletonComponent): Builder
     fun build(): MyCustomComponent
   }
 }
 
 // It can be migrated to Hilt with the following classes
 
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 @EntryPoint
 interface CustomComponentDependencies {
   fun getFoo(): Foo
@@ -1095,18 +1095,18 @@ Dagger. Just install the subcomponent in a module with the appropriate
 `@InstallIn` of the parent.
 
 For example, if you have a `FooSubcomponent` that is a child of the
-`ApplicationComponent`, you can install it like the following example:
+`SingletonComponent`, you can install it like the following example:
 
 <div class="c-codeselector__button c-codeselector__button_java">Java</div>
 <div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
 ```java
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 @Module(subcomponents = FooSubcomponent.class)
 interface FooModule {}
 ```
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 @Module(subcomponents = FooSubcomponent::class)
 interface FooModule {}
 ```

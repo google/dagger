@@ -128,6 +128,27 @@ public class AndroidEntryPointProcessorTest {
   }
 
   @Test
+  public void checkBaseActivityWithTypeParameters() {
+    JavaFileObject testActivity =
+        JavaFileObjects.forSourceLines(
+            "test.BaseActivity",
+            "package test;",
+            "",
+            "import androidx.activity.ComponentActivity;",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "",
+            "@AndroidEntryPoint(ComponentActivity.class)",
+            "public class BaseActivity<T> extends Hilt_BaseActivity {}");
+    Compilation compilation = compiler().compile(testActivity);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(2);
+    assertThat(compilation).hadErrorContaining(
+        "cannot find symbol\n  symbol: class Hilt_BaseActivity");
+    assertThat(compilation).hadErrorContaining(
+        "@AndroidEntryPoint-annotated classes cannot have type parameters.");
+  }
+
+  @Test
   public void checkAndroidEntryPointOnApplicationRecommendsHiltAndroidApp() {
     JavaFileObject testActivity =
         JavaFileObjects.forSourceLines(

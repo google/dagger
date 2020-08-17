@@ -25,7 +25,6 @@ import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
-import java.util.Set;
 import javax.annotation.processing.Processor;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -40,7 +39,7 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 public final class OriginatingElementProcessor extends BaseProcessor {
 
   @Override
-  public Set<String> getSupportedAnnotationTypes() {
+  public ImmutableSet<String> getSupportedAnnotationTypes() {
     return ImmutableSet.of(ClassNames.ORIGINATING_ELEMENT.toString());
   }
 

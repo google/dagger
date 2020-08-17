@@ -228,7 +228,13 @@ public abstract class AndroidEntryPointMetadata {
         element,
         "Only classes can be annotated with @%s",
         annotationClassName.simpleName());
-    TypeElement androidEntryPointElement = (TypeElement) element;
+    TypeElement androidEntryPointElement = MoreElements.asType(element);
+
+    ProcessorErrors.checkState(
+        androidEntryPointElement.getTypeParameters().isEmpty(),
+        element,
+        "@%s-annotated classes cannot have type parameters.",
+        annotationClassName.simpleName());
 
     final TypeElement androidEntryPointClassValue =
         Processors.getAnnotationClassValue(

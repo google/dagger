@@ -40,6 +40,7 @@ import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import java.lang.annotation.Annotation;
@@ -888,10 +889,21 @@ public final class Processors {
                         .build()));
   }
 
-  public static AnnotationSpec getOriginatingElementAnnotation(Element element) {
+  public static AnnotationSpec getOriginatingElementAnnotation(TypeElement element) {
+    TypeName rawType = rawTypeName(ClassName.get(getTopLevelType(element)));
     return AnnotationSpec.builder(ClassNames.ORIGINATING_ELEMENT)
-        .addMember("topLevelClass", "$T.class", getTopLevelType(element))
+        .addMember("topLevelClass", "$T.class", rawType)
         .build();
+  }
+
+  /**
+   * Returns the {@link TypeName} for the raw type of the given type name. If the argument isn't a
+   * parameterized type, it returns the argument unchanged.
+   */
+  public static TypeName rawTypeName(TypeName typeName) {
+    return (typeName instanceof ParameterizedTypeName)
+        ? ((ParameterizedTypeName) typeName).rawType
+        : typeName;
   }
 
   private Processors() {}

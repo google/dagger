@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -46,6 +47,7 @@ import dagger.internal.codegen.binding.ComponentCreatorKind;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.KeyVariableNamer;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeSpecs;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -54,6 +56,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -63,6 +66,8 @@ import javax.lang.model.type.TypeMirror;
 public final class ComponentImplementation {
   /** A type of field that this component can contain. */
   public enum FieldSpecKind {
+    /** A field for a component shard. */
+    COMPONENT_SHARD,
 
     /** A field required by the component, e.g. module instances. */
     COMPONENT_REQUIREMENT_FIELD,
@@ -128,10 +133,15 @@ public final class ComponentImplementation {
     SUBCOMPONENT
   }
 
+  private ComponentImplementation currentShard = this;
+  private final Map<Key, ComponentImplementation> shardsByKey = new HashMap<>();
+  private final Optional<ComponentImplementation> shardOwner;
   private final BindingGraph graph;
   private final ClassName name;
   private final TypeSpec.Builder component;
   private final SubcomponentNames subcomponentNames;
+  private final CompilerOptions compilerOptions;
+  private final CodeBlock externalReferenceBlock;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final List<CodeBlock> initializations = new ArrayList<>();
@@ -145,32 +155,73 @@ public final class ComponentImplementation {
       MultimapBuilder.enumKeys(MethodSpecKind.class).arrayListValues().build();
   private final ListMultimap<TypeSpecKind, TypeSpec> typeSpecsMap =
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
-  private final List<Supplier<TypeSpec>> switchingProviderSupplier = new ArrayList<>();
+  private final List<Supplier<TypeSpec>> typeSuppliers = new ArrayList<>();
 
   private ComponentImplementation(
       BindingGraph graph,
       ClassName name,
-      SubcomponentNames subcomponentNames) {
+      SubcomponentNames subcomponentNames,
+      CompilerOptions compilerOptions) {
     this.graph = graph;
     this.name = name;
     this.component = classBuilder(name);
     this.subcomponentNames = subcomponentNames;
+    this.shardOwner = Optional.empty();
+    this.externalReferenceBlock = CodeBlock.of("$T.this", name);
+    this.compilerOptions = compilerOptions;
+  }
+
+  private ComponentImplementation(ComponentImplementation shardOwner, ClassName shardName) {
+    this.graph = shardOwner.graph;
+    this.name = shardName;
+    this.component = classBuilder(shardName);
+    this.subcomponentNames = shardOwner.subcomponentNames;
+    this.compilerOptions = shardOwner.compilerOptions;
+    this.shardOwner = Optional.of(shardOwner);
+    String fieldName = UPPER_CAMEL.to(LOWER_CAMEL, name.simpleName());
+    String uniqueFieldName = shardOwner.getUniqueFieldName(fieldName);
+    this.externalReferenceBlock = CodeBlock.of("$T.this.$N", shardOwner.name, uniqueFieldName);
+    shardOwner.addTypeSupplier(() -> generate().build());
+    shardOwner.addField(
+        FieldSpecKind.COMPONENT_SHARD,
+        FieldSpec.builder(name, uniqueFieldName, PRIVATE, FINAL)
+            .initializer("new $T()", name)
+            .build());
   }
 
   /** Returns a component implementation for a top-level component. */
   public static ComponentImplementation topLevelComponentImplementation(
       BindingGraph graph,
       ClassName name,
-      SubcomponentNames subcomponentNames) {
-    return new ComponentImplementation(graph, name, subcomponentNames);
+      SubcomponentNames subcomponentNames,
+      CompilerOptions compilerOptions) {
+    return new ComponentImplementation(graph, name, subcomponentNames, compilerOptions);
   }
 
   /** Returns a component implementation that is a child of the current implementation. */
   public ComponentImplementation childComponentImplementation(BindingGraph graph) {
-    return new ComponentImplementation(
-        graph,
-        getSubcomponentName(graph.componentDescriptor()),
-        subcomponentNames);
+    checkState(!shardOwner.isPresent(), "Shards cannot create child components.");
+    ClassName childName = getSubcomponentName(graph.componentDescriptor());
+    return new ComponentImplementation(graph, childName, subcomponentNames, compilerOptions);
+  }
+
+  /** Returns a component implementation that is a shard of the current implementation. */
+  public ComponentImplementation shardImplementation(Key key) {
+    checkState(!shardOwner.isPresent(), "Shards cannot create other shards.");
+    if (!shardsByKey.containsKey(key)) {
+      int keysPerShard = compilerOptions.keysPerComponentShard(graph.componentTypeElement());
+      if (!shardsByKey.isEmpty() && shardsByKey.size() % keysPerShard == 0) {
+        ClassName shardName = name.nestedClass("Shard" + shardsByKey.size() / keysPerShard);
+        currentShard = new ComponentImplementation(this, shardName);
+      }
+      shardsByKey.put(key, currentShard);
+    }
+    return shardsByKey.get(key);
+  }
+
+  /** Returns a reference to this compenent when called from a class nested in this component. */
+  public CodeBlock externalReferenceBlock() {
+    return externalReferenceBlock;
   }
 
   // TODO(ronshapiro): see if we can remove this method and instead inject it in the objects that
@@ -269,8 +320,8 @@ public final class ComponentImplementation {
   }
 
   /** Adds a {@link Supplier} for the SwitchingProvider for the component. */
-  void addSwitchingProvider(Supplier<TypeSpec> typeSpecSupplier) {
-    switchingProviderSupplier.add(typeSpecSupplier);
+  void addTypeSupplier(Supplier<TypeSpec> typeSpecSupplier) {
+    typeSuppliers.add(typeSpecSupplier);
   }
 
   /** Adds the given code block to the initialize methods of the component. */
@@ -365,7 +416,7 @@ public final class ComponentImplementation {
     fieldSpecsMap.asMap().values().forEach(component::addFields);
     methodSpecsMap.asMap().values().forEach(component::addMethods);
     typeSpecsMap.asMap().values().forEach(component::addTypes);
-    switchingProviderSupplier.stream().map(Supplier::get).forEach(component::addType);
+    typeSuppliers.stream().map(Supplier::get).forEach(component::addType);
     return component;
   }
 

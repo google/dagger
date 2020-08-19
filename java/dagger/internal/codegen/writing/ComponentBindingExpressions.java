@@ -625,7 +625,24 @@ public final class ComponentBindingExpressions {
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
         graph.componentDescriptor().firstMatchingComponentMethod(request);
 
-    if (matchingComponentMethod.isPresent()) {
+    ComponentImplementation shard = componentImplementation.shardImplementation(binding.key());
+
+    // Consider the case of a request from a component method like:
+    //
+    //   DaggerMyComponent extends MyComponent {
+    //     @Overrides
+    //     Foo getFoo() {
+    //       <FOO_BINDING_REQUEST>
+    //     }
+    //   }
+    //
+    // Normally, in this case we would return a ComponentMethodBindingExpression rather than a
+    // PrivateMethodBindingExpression so that #getFoo() can inline the implementation rather than
+    // create an unnecessary private method and return that. However, with sharding we don't want to
+    // inline the implementation because that would defeat some of the class pool savings if those
+    // fields had to communicate across shards. Thus, when a key belongs to a separate shard use a
+    // PrivateMethodBindingExpression and put the private method in the shard.
+    if (matchingComponentMethod.isPresent() && componentImplementation == shard) {
       ComponentMethodDescriptor componentMethod = matchingComponentMethod.get();
       return new ComponentMethodBindingExpression(
           request,
@@ -641,7 +658,7 @@ public final class ComponentBindingExpressions {
           binding,
           methodImplementationStrategy,
           bindingExpression,
-          componentImplementation,
+          shard,
           types,
           compilerOptions);
     }

@@ -48,7 +48,9 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Stream.concat;
 
+import com.google.auto.common.MoreElements;
 import com.google.common.base.Ascii;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -68,6 +70,9 @@ import javax.tools.Diagnostic;
 
 /** {@link CompilerOptions} for the given {@link ProcessingEnvironment}. */
 public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
+  // EnumOption<T> doesn't support integer inputs so just doing this as a 1-off for now.
+  private static final String KEYS_PER_COMPONENT_SHARD = "dagger.keysPerComponentShard";
+
   private final ProcessingEnvironment processingEnvironment;
   private final DaggerElements daggerElements;
   private final Map<EnumOption<?>, Object> enumOptions = new HashMap<>();
@@ -161,6 +166,19 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   @Override
   public boolean experimentalDaggerErrorMessages() {
     return isEnabled(EXPERIMENTAL_DAGGER_ERROR_MESSAGES);
+  }
+
+  @Override
+  public int keysPerComponentShard(TypeElement component) {
+    if (processingEnvironment.getOptions().containsKey(KEYS_PER_COMPONENT_SHARD)) {
+      Preconditions.checkArgument(
+          "dagger.internal.codegen".contentEquals(
+              MoreElements.getPackage(component).getQualifiedName()),
+          "Cannot set %s. It is only meant for internal testing.", KEYS_PER_COMPONENT_SHARD);
+      return Integer.parseInt(
+          processingEnvironment.getOptions().get(KEYS_PER_COMPONENT_SHARD));
+    }
+    return super.keysPerComponentShard(component);
   }
 
   private boolean isEnabled(KeyOnlyOption keyOnlyOption) {
@@ -369,11 +387,15 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   /** The supported command-line options. */
   public static ImmutableSet<String> supportedOptions() {
     // need explicit type parameter to avoid a runtime stream error
-    return Stream.<CommandLineOption[]>of(
-            KeyOnlyOption.values(), Feature.values(), Validation.values())
-        .flatMap(Arrays::stream)
-        .flatMap(CommandLineOption::allNames)
-        .collect(toImmutableSet());
+    return ImmutableSet.<String>builder()
+        .addAll(
+            Stream.<CommandLineOption[]>of(
+                KeyOnlyOption.values(), Feature.values(), Validation.values())
+            .flatMap(Arrays::stream)
+            .flatMap(CommandLineOption::allNames)
+            .collect(toImmutableSet()))
+        .add(KEYS_PER_COMPONENT_SHARD)
+        .build();
   }
 
   /**

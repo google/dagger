@@ -37,6 +37,7 @@ import javax.lang.model.element.TypeElement;
 final class ComponentImplementationFactory implements ClearableCache {
   private final Map<TypeElement, ComponentImplementation> topLevelComponentCache = new HashMap<>();
   private final KeyFactory keyFactory;
+  private final CompilerOptions compilerOptions;
   private final TopLevelImplementationComponent.Builder topLevelImplementationComponentBuilder;
 
   @Inject
@@ -45,6 +46,7 @@ final class ComponentImplementationFactory implements ClearableCache {
       CompilerOptions compilerOptions,
       TopLevelImplementationComponent.Builder topLevelImplementationComponentBuilder) {
     this.keyFactory = keyFactory;
+    this.compilerOptions = compilerOptions;
     this.topLevelImplementationComponentBuilder = topLevelImplementationComponentBuilder;
   }
 
@@ -63,7 +65,8 @@ final class ComponentImplementationFactory implements ClearableCache {
         ComponentImplementation.topLevelComponentImplementation(
             bindingGraph,
             componentName(bindingGraph.componentTypeElement()),
-            new SubcomponentNames(bindingGraph, keyFactory));
+            new SubcomponentNames(bindingGraph, keyFactory),
+            compilerOptions);
 
     // TODO(dpb): explore using optional bindings for the "parent" bindings
     return topLevelImplementationComponentBuilder

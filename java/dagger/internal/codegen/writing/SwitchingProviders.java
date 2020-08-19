@@ -124,7 +124,7 @@ abstract class SwitchingProviders {
       String name = switchingProviderNames.getUniqueName("SwitchingProvider");
       SwitchingProviderBuilder switchingProviderBuilder =
           new SwitchingProviderBuilder(owningComponent.nestedClass(name));
-      componentImplementation.addSwitchingProvider(switchingProviderBuilder::build);
+      componentImplementation.addTypeSupplier(switchingProviderBuilder::build);
       return switchingProviderBuilder;
     }
     return getLast(switchingProviderBuilders.values());

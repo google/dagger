@@ -77,4 +77,8 @@ public abstract class CompilerOptions {
 
   public abstract boolean experimentalDaggerErrorMessages();
 
+  /** Returns the number of bindings allowed per shard. */
+  public int keysPerComponentShard(TypeElement component) {
+    return 3500;
+  }
 }

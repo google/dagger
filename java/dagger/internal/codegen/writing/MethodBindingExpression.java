@@ -84,7 +84,8 @@ abstract class MethodBindingExpression extends BindingExpression {
         returnType(),
         requestingClass.equals(componentImplementation.name())
             ? CodeBlock.of("$N()", methodName())
-            : CodeBlock.of("$T.this.$N()", componentImplementation.name(), methodName()));
+            : CodeBlock.of(
+                "$L.$N()", componentImplementation.externalReferenceBlock(), methodName()));
   }
 
   @Override

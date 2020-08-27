@@ -23,6 +23,7 @@ import static dagger.internal.codegen.extension.DaggerGraphs.unreachableNodes;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -87,6 +88,23 @@ public final class BindingGraphConverter {
             node -> node instanceof ComponentNode && node.componentPath().atRoot());
   }
 
+  /**
+   * Used as a cache key to make sure resolved bindings are cached per component path.
+   * This is required so that binding nodes are not reused across different branches of the
+   * graph since the ResolvedBindings class only contains the component and not the path.
+   */
+  @AutoValue
+  abstract static class ResolvedBindingsWithPath {
+    abstract ResolvedBindings resolvedBindings();
+    abstract ComponentPath componentPath();
+
+    static ResolvedBindingsWithPath create(
+        ResolvedBindings resolvedBindings, ComponentPath componentPath) {
+      return new AutoValue_BindingGraphConverter_ResolvedBindingsWithPath(
+          resolvedBindings, componentPath);
+    }
+  }
+
   private static final class Converter {
     /**
      * Calls {@link #visitComponent(BindingGraph)} for the root component.
@@ -110,7 +128,8 @@ public final class BindingGraphConverter {
     private final MutableNetwork<Node, Edge> network =
         NetworkBuilder.directed().allowsParallelEdges(true).allowsSelfLoops(true).build();
     private final Set<BindingNode> bindings = new HashSet<>();
-    private final Map<ResolvedBindings, ImmutableSet<BindingNode>> resolvedBindingsMap =
+
+    private final Map<ResolvedBindingsWithPath, ImmutableSet<BindingNode>> resolvedBindingsMap =
         new HashMap<>();
 
     /** Constructs a converter for a root (component, not subcomponent) binding graph. */
@@ -311,18 +330,23 @@ public final class BindingGraphConverter {
     }
 
     private ImmutableSet<BindingNode> bindingNodes(ResolvedBindings resolvedBindings) {
-      return resolvedBindingsMap.computeIfAbsent(resolvedBindings, this::uncachedBindingNodes);
+      ResolvedBindingsWithPath resolvedBindingsWithPath =
+          ResolvedBindingsWithPath.create(resolvedBindings, componentPath());
+      return resolvedBindingsMap.computeIfAbsent(
+          resolvedBindingsWithPath, this::uncachedBindingNodes);
     }
 
-    private ImmutableSet<BindingNode> uncachedBindingNodes(ResolvedBindings resolvedBindings) {
+    private ImmutableSet<BindingNode> uncachedBindingNodes(
+        ResolvedBindingsWithPath resolvedBindingsWithPath) {
       ImmutableSet.Builder<BindingNode> bindingNodes = ImmutableSet.builder();
-      resolvedBindings
+      resolvedBindingsWithPath.resolvedBindings()
           .allBindings()
           .asMap()
           .forEach(
               (component, bindings) -> {
                 for (Binding binding : bindings) {
-                  bindingNodes.add(bindingNode(resolvedBindings, binding, component));
+                  bindingNodes.add(
+                      bindingNode(resolvedBindingsWithPath.resolvedBindings(), binding, component));
                 }
               });
       return bindingNodes.build();

@@ -854,4 +854,78 @@ public class MissingBindingValidationTest {
         .inFile(parent)
         .onLineContaining("interface Parent");
   }
+
+  // Regression test for b/147423208 where if the same subcomponent was used
+  // in two different parts of the hierarchy and only one side had a missing binding
+  // incorrect caching during binding graph conversion might cause validation to pass
+  // incorrectly.
+  @Test
+  public void sameSubcomponentUsedInDifferentHierarchies() {
+    JavaFileObject parent = JavaFileObjects.forSourceLines("test.Parent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component",
+        "interface Parent {",
+        "  Child1 getChild1();",
+        "  Child2 getChild2();",
+        "}");
+    JavaFileObject child1 = JavaFileObjects.forSourceLines("test.Child1",
+        "package test;",
+        "",
+        "import dagger.Subcomponent;",
+        "",
+        "@Subcomponent(modules = LongModule.class)",
+        "interface Child1 {",
+        "  RepeatedSub getSub();",
+        "}");
+    JavaFileObject child2 = JavaFileObjects.forSourceLines("test.Child2",
+        "package test;",
+        "",
+        "import dagger.Subcomponent;",
+        "",
+        "@Subcomponent",
+        "interface Child2 {",
+        "  RepeatedSub getSub();",
+        "}");
+    JavaFileObject repeatedSub = JavaFileObjects.forSourceLines("test.RepeatedSub",
+        "package test;",
+        "",
+        "import dagger.Subcomponent;",
+        "",
+        "@Subcomponent",
+        "interface RepeatedSub {",
+        "  Foo getFoo();",
+        "}");
+    JavaFileObject injectable = JavaFileObjects.forSourceLines("test.Foo",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "class Foo {",
+        "  @Inject Foo(Long value) {}",
+        "}");
+    JavaFileObject module = JavaFileObjects.forSourceLines("test.LongModule",
+        "package test;",
+        "",
+        "import dagger.Module;",
+        "import dagger.Provides;",
+        "",
+        "@Module",
+        "interface LongModule {",
+        "  @Provides static Long provideLong() {",
+        "    return 0L;",
+        "  }",
+        "}");
+    Compilation compilation = daggerCompiler().compile(
+        parent, child1, child2, repeatedSub, injectable, module);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining("java.lang.Long cannot be provided without an @Inject constructor")
+        .inFile(parent)
+        .onLineContaining("interface Parent");
+  }
+
 }

@@ -99,7 +99,7 @@ gen_maven_artifact(
     javadoc_srcs = [
         "//java/dagger/hilt:hilt_processing_filegroup",
     ],
-    shaded_deps = ["@com_google_auto_auto_common//jar"],
+    shaded_deps = ["@maven//:com_google_auto_auto_common"],
     shaded_rules = ["rule com.google.auto.common.** dagger.hilt.android.shaded.auto.common.@1"],
 )
 

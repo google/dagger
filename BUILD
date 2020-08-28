@@ -55,7 +55,7 @@ jarjar_library(
     name = "shaded_android_processor",
     jars = [
         "//java/dagger/android/processor",
-        "@com_google_auto_auto_common//jar",
+        "@maven//:com_google_auto_auto_common",
     ],
     rules = [
         "rule com.google.auto.common.** dagger.android.shaded.auto.common.@1",
@@ -66,7 +66,7 @@ jarjar_library(
     name = "shaded_grpc_server_processor",
     jars = [
         "//java/dagger/grpc/server/processor",
-        "@com_google_auto_auto_common//jar",
+        "@maven//:com_google_auto_auto_common",
     ],
     rules = [
         "rule com.google.auto.common.** dagger.grpc.shaded.auto.common.@1",

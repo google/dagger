@@ -58,6 +58,20 @@ public abstract class CompilerOptions {
 
   public abstract ValidationType scopeCycleValidationType();
 
+  /**
+   * If {@code true}, Dagger will validate all transitive component dependencies of a component.
+   * Otherwise, Dagger will only validate the direct component dependencies.
+   *
+   * <p>Note: this is different from scopeCycleValidationType, which lets you silence errors of
+   * transitive component dependencies, but still requires the full transitive dependencies in the
+   * classpath.
+   *
+   * <p>The main motivation for this flag is to prevent requiring the transitive component
+   * dependencies in the classpath to speed up builds. See
+   * https://github.com/google/dagger/issues/970.
+   */
+  public abstract boolean validateTransitiveComponentDependencies();
+
   public abstract boolean warnIfInjectionFactoryNotGeneratedUpstream();
 
   public abstract boolean headerCompilation();

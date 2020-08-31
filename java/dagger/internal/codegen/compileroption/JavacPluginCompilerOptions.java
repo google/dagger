@@ -75,6 +75,11 @@ public final class JavacPluginCompilerOptions extends CompilerOptions {
   }
 
   @Override
+  public boolean validateTransitiveComponentDependencies() {
+    return true;
+  }
+
+  @Override
   public boolean warnIfInjectionFactoryNotGeneratedUpstream() {
     return false;
   }

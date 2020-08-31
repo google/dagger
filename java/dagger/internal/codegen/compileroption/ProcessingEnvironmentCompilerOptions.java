@@ -31,6 +31,7 @@ import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompil
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.PLUGINS_VISIT_FULL_BINDING_GRAPHS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.STRICT_MULTIBINDING_VALIDATION;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.WRITE_PRODUCER_NAME_IN_TOKEN;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.KeyOnlyOption.HEADER_COMPILATION;
@@ -137,6 +138,11 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   @Override
   public ValidationType scopeCycleValidationType() {
     return parseOption(DISABLE_INTER_COMPONENT_SCOPE_VALIDATION);
+  }
+
+  @Override
+  public boolean validateTransitiveComponentDependencies() {
+    return isEnabled(VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES);
   }
 
   @Override
@@ -300,6 +306,8 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     EXPERIMENTAL_DAGGER_ERROR_MESSAGES,
 
     STRICT_MULTIBINDING_VALIDATION,
+
+    VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES(ENABLED)
     ;
 
     final FeatureStatus defaultValue;

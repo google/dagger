@@ -179,7 +179,10 @@ public final class ComponentDescriptorValidator {
             compilerOptions.scopeCycleValidationType().diagnosticKind().get(),
             component,
             message.toString());
-      } else {
+      } else if (compilerOptions.validateTransitiveComponentDependencies()
+          // Always validate direct component dependencies referenced by this component regardless
+          // of the flag value
+          || dependencyStack.isEmpty()) {
         rootComponentAnnotation(dependency)
             .ifPresent(
                 componentAnnotation -> {
@@ -428,7 +431,10 @@ public final class ComponentDescriptorValidator {
               message.toString());
         }
         scopedDependencyStack.pop();
-      } else {
+      } else if (compilerOptions.validateTransitiveComponentDependencies()
+          // Always validate direct component dependencies referenced by this component regardless
+          // of the flag value
+          || scopedDependencyStack.isEmpty()) {
         // TODO(beder): transitively check scopes of production components too.
         rootComponentAnnotation(dependency)
             .filter(componentAnnotation -> !componentAnnotation.isProduction())

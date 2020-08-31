@@ -845,6 +845,14 @@ public class ScopingValidationTest {
                 "    @test.ScopeA test.ComponentLong",
                 "    @test.ScopeB test.ComponentMedium",
                 "    @test.ScopeA test.ComponentShort"));
+
+    // Test that compilation succeeds when transitive validation is disabled because the scope cycle
+    // cannot be detected.
+    compilation =
+        daggerCompiler()
+            .withOptions("-Adagger.validateTransitiveComponentDependencies=DISABLED")
+            .compile(type, scopeA, scopeB, longLifetime, mediumLifetime, shortLifetime);
+    assertThat(compilation).succeeded();
   }
 
   @Test

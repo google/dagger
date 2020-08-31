@@ -46,8 +46,10 @@ import com.google.common.collect.Sets;
 import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.internal.codegen.base.ClearableCache;
+import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
@@ -83,6 +85,7 @@ public final class BindingGraphFactory implements ClearableCache {
   private final BindingFactory bindingFactory;
   private final ModuleDescriptor.Factory moduleDescriptorFactory;
   private final Map<Key, ImmutableSet<Key>> keysMatchingRequestCache = new HashMap<>();
+  private final CompilerOptions compilerOptions;
 
   @Inject
   BindingGraphFactory(
@@ -90,12 +93,14 @@ public final class BindingGraphFactory implements ClearableCache {
       InjectBindingRegistry injectBindingRegistry,
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
-      ModuleDescriptor.Factory moduleDescriptorFactory) {
+      ModuleDescriptor.Factory moduleDescriptorFactory,
+      CompilerOptions compilerOptions) {
     this.elements = elements;
     this.injectBindingRegistry = injectBindingRegistry;
     this.keyFactory = keyFactory;
     this.bindingFactory = bindingFactory;
     this.moduleDescriptorFactory = moduleDescriptorFactory;
+    this.compilerOptions = compilerOptions;
   }
 
   /**
@@ -696,12 +701,42 @@ public final class BindingGraphFactory implements ClearableCache {
 
     /** Returns true if {@code binding} was installed in a module in this resolver's component. */
     private boolean resolverContainsDelegateDeclarationForBinding(ContributionBinding binding) {
-      return binding.kind().equals(DELEGATE)
-          && delegateDeclarations.get(binding.key()).stream()
+      if (!binding.kind().equals(DELEGATE)) {
+        return false;
+      }
+
+      if (!binding.contributionType().isMultibinding()) {
+        return delegateDeclarations.get(binding.key()).stream()
+            .anyMatch(
+                declaration ->
+                    declaration.contributingModule().equals(binding.contributingModule())
+                        && declaration.bindingElement().equals(binding.bindingElement()));
+      } else {
+        // We have to check a different set of bindings depending on if this is a multibinding.
+        // Check the flag first though to see if we should evaluate map bindings to not break
+        // existing usages.
+        if (compilerOptions.strictMultibindingValidation()) {
+          // Delegate declaration keys differ from contribution binding keys in two ways. They lack
+          // the contribution identifier and if it is a map type then the value is wrapped with a
+          // framework type. Both of these need to be undone before we can look it up in the map.
+
+          Key multibindingKey = removeMultibindingContributionIdentifier(binding.key());
+          if (binding.contributionType().equals(ContributionType.MAP)) {
+            multibindingKey = keyFactory.unwrapMapValueType(multibindingKey);
+          }
+
+          return delegateMultibindingDeclarations.get(multibindingKey).stream()
               .anyMatch(
                   declaration ->
                       declaration.contributingModule().equals(binding.contributingModule())
                           && declaration.bindingElement().equals(binding.bindingElement()));
+        } else {
+          // Note: The legacy behavior only looked through delegateDeclarations, so we
+          // can skip that logic for multibindings because we know that
+          // delegateDeclarations don't contain multibinding declarations.
+          return false;
+        }
+      }
     }
 
     /** Returns the resolver lineage from parent to child. */
@@ -1060,15 +1095,13 @@ public final class BindingGraphFactory implements ClearableCache {
     ImmutableSetMultimap.Builder<Key, T> builder = ImmutableSetMultimap.builder();
     for (T declaration : declarations) {
       if (declaration.key().multibindingContributionIdentifier().isPresent()) {
-        builder.put(
-            declaration
-                .key()
-                .toBuilder()
-                .multibindingContributionIdentifier(Optional.empty())
-                .build(),
-            declaration);
+        builder.put(removeMultibindingContributionIdentifier(declaration.key()), declaration);
       }
     }
     return builder.build();
+  }
+
+  private static Key removeMultibindingContributionIdentifier(Key key) {
+    return key.toBuilder().multibindingContributionIdentifier(Optional.empty()).build();
   }
 }

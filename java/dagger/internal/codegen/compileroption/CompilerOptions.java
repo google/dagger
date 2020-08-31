@@ -81,4 +81,11 @@ public abstract class CompilerOptions {
   public int keysPerComponentShard(TypeElement component) {
     return 3500;
   }
+
+  /**
+   * This option enables a fix to an issue where Dagger previously would erroneously allow
+   * multibinding contributions in a component to have dependencies on child components. This will
+   * eventually become the default and enforced.
+   */
+  public abstract boolean strictMultibindingValidation();
 }

@@ -109,4 +109,8 @@ public final class JavacPluginCompilerOptions extends CompilerOptions {
     return false;
   }
 
+  @Override
+  public boolean strictMultibindingValidation() {
+    return false;
+  }
 }

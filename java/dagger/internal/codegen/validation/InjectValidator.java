@@ -16,8 +16,11 @@
 
 package dagger.internal.codegen.validation;
 
+import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
+import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -28,6 +31,8 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
+import dagger.assisted.AssistedInject;
+import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
@@ -35,9 +40,12 @@ import dagger.internal.codegen.langmodel.Accessibility;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Scope;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -54,7 +62,8 @@ import javax.tools.Diagnostic.Kind;
  * A {@linkplain ValidationReport validator} for {@link Inject}-annotated elements and the types
  * that contain them.
  */
-public final class InjectValidator {
+@Singleton
+public final class InjectValidator implements ClearableCache {
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
@@ -62,6 +71,7 @@ public final class InjectValidator {
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
   private final InjectionAnnotations injectionAnnotations;
   private final KotlinMetadataUtil metadataUtil;
+  private final Map<ExecutableElement, ValidationReport<TypeElement>> reports = new HashMap<>();
 
   @Inject
   InjectValidator(
@@ -98,6 +108,11 @@ public final class InjectValidator {
     this.metadataUtil = metadataUtil;
   }
 
+  @Override
+  public void clearCache() {
+    reports.clear();
+  }
+
   /**
    * Returns a new validator that performs the same validation as this one, but is strict about
    * rejecting optionally-specified JSR 330 behavior that Dagger doesn't support (unless {@code
@@ -117,8 +132,22 @@ public final class InjectValidator {
   }
 
   public ValidationReport<TypeElement> validateConstructor(ExecutableElement constructorElement) {
+    return reentrantComputeIfAbsent(reports, constructorElement, this::validateConstructorUncached);
+  }
+
+  private ValidationReport<TypeElement> validateConstructorUncached(
+      ExecutableElement constructorElement) {
     ValidationReport.Builder<TypeElement> builder =
-        ValidationReport.about(MoreElements.asType(constructorElement.getEnclosingElement()));
+        ValidationReport.about(asType(constructorElement.getEnclosingElement()));
+
+    if (isAnnotationPresent(constructorElement, Inject.class)
+        && isAnnotationPresent(constructorElement, AssistedInject.class)) {
+      builder.addError("Constructors cannot be annotated with both @Inject and @AssistedInject");
+    }
+
+    Class<?> injectAnnotation =
+        isAnnotationPresent(constructorElement, Inject.class) ? Inject.class : AssistedInject.class;
+
     if (constructorElement.getModifiers().contains(PRIVATE)) {
       builder.addError(
           "Dagger does not support injection into private constructors", constructorElement);
@@ -126,16 +155,24 @@ public final class InjectValidator {
 
     for (AnnotationMirror qualifier : injectionAnnotations.getQualifiers(constructorElement)) {
       builder.addError(
-          "@Qualifier annotations are not allowed on @Inject constructors",
+          String.format(
+              "@Qualifier annotations are not allowed on @%s constructors",
+              injectAnnotation.getSimpleName()),
           constructorElement,
           qualifier);
     }
 
+    String scopeErrorMsg =
+        String.format(
+            "@Scope annotations are not allowed on @%s constructors",
+            injectAnnotation.getSimpleName());
+
+    if (injectAnnotation == Inject.class) {
+      scopeErrorMsg += "; annotate the class instead";
+    }
+
     for (Scope scope : scopesOf(constructorElement)) {
-      builder.addError(
-          "@Scope annotations are not allowed on @Inject constructors; annotate the class instead",
-          constructorElement,
-          scope.scopeAnnotation());
+      builder.addError(scopeErrorMsg, constructorElement, scope.scopeAnnotation());
     }
 
     for (VariableElement parameter : constructorElement.getParameters()) {
@@ -144,7 +181,9 @@ public final class InjectValidator {
 
     if (throwsCheckedExceptions(constructorElement)) {
       builder.addItem(
-          "Dagger does not support checked exceptions on @Inject constructors",
+          String.format(
+              "Dagger does not support checked exceptions on @%s constructors",
+              injectAnnotation.getSimpleName()),
           privateMemberDiagnosticKind(),
           constructorElement);
     }
@@ -157,26 +196,42 @@ public final class InjectValidator {
     Set<Modifier> typeModifiers = enclosingElement.getModifiers();
     if (typeModifiers.contains(ABSTRACT)) {
       builder.addError(
-          "@Inject is nonsense on the constructor of an abstract class", constructorElement);
+          String.format(
+              "@%s is nonsense on the constructor of an abstract class",
+              injectAnnotation.getSimpleName()),
+          constructorElement);
     }
 
     if (enclosingElement.getNestingKind().isNested()
         && !typeModifiers.contains(STATIC)) {
       builder.addError(
-          "@Inject constructors are invalid on inner classes. "
-              + "Did you mean to make the class static?",
+          String.format(
+              "@%s constructors are invalid on inner classes. "
+                  + "Did you mean to make the class static?",
+              injectAnnotation.getSimpleName()),
           constructorElement);
     }
 
     // This is computationally expensive, but probably preferable to a giant index
-    ImmutableSet<ExecutableElement> injectConstructors = injectedConstructors(enclosingElement);
+    ImmutableSet<ExecutableElement> injectConstructors =
+        ImmutableSet.<ExecutableElement>builder()
+            .addAll(injectedConstructors(enclosingElement))
+            .addAll(assistedInjectedConstructors(enclosingElement))
+            .build();
 
     if (injectConstructors.size() > 1) {
-      builder.addError("Types may only contain one @Inject constructor", constructorElement);
+      builder.addError("Types may only contain one injected constructor", constructorElement);
     }
 
     ImmutableSet<Scope> scopes = scopesOf(enclosingElement);
-    if (scopes.size() > 1) {
+    if (injectAnnotation == AssistedInject.class) {
+      for (Scope scope : scopes) {
+        builder.addError(
+            "A type with an @AssistedInject-annotated constructor cannot be scoped",
+            enclosingElement,
+            scope.scopeAnnotation());
+      }
+    } else if (scopes.size() > 1) {
       for (Scope scope : scopes) {
         builder.addError(
             "A single binding may not declare more than one @Scope",
@@ -304,7 +359,8 @@ public final class InjectValidator {
     }
     for (ExecutableElement element :
         ElementFilter.constructorsIn(typeElement.getEnclosedElements())) {
-      if (isAnnotationPresent(element, Inject.class)) {
+      if (isAnnotationPresent(element, Inject.class)
+          || isAnnotationPresent(element, AssistedInject.class)) {
         ValidationReport<TypeElement> report = validateConstructor(element);
         if (!report.isClean()) {
           builder.addSubreport(report);

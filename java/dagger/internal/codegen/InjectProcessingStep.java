@@ -18,6 +18,8 @@ package dagger.internal.codegen;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.InjectBindingRegistry;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import java.lang.annotation.Annotation;
@@ -36,6 +38,7 @@ import javax.lang.model.util.ElementKindVisitor8;
 // TODO(gak): add some error handling for bad source files
 final class InjectProcessingStep extends TypeCheckingProcessingStep<Element> {
   private final ElementVisitor<Void, Void> visitor;
+  private final Set<Element> processedElements = Sets.newLinkedHashSet();
 
   @Inject
   InjectProcessingStep(InjectBindingRegistry injectBindingRegistry) {
@@ -67,12 +70,20 @@ final class InjectProcessingStep extends TypeCheckingProcessingStep<Element> {
 
   @Override
   public Set<Class<? extends Annotation>> annotations() {
-    return ImmutableSet.of(Inject.class);
+    return ImmutableSet.of(Inject.class, AssistedInject.class);
   }
 
   @Override
   protected void process(
       Element injectElement, ImmutableSet<Class<? extends Annotation>> annotations) {
+    // Only process an element once to avoid getting duplicate errors when an element is annotated
+    // with multiple inject annotations.
+    if (processedElements.contains(injectElement)) {
+      return;
+    }
+
     injectElement.accept(visitor, null);
+
+    processedElements.add(injectElement);
   }
 }

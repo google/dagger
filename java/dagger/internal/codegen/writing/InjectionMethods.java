@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static dagger.internal.codegen.base.RequestKinds.requestTypeName;
@@ -23,7 +24,7 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullab
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.binding.SourceFiles.memberInjectedFieldSignatureForVariable;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toConcatenatedCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibleFrom;
@@ -36,6 +37,7 @@ import static javax.lang.model.type.TypeKind.VOID;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -43,6 +45,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.Preconditions;
+import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
@@ -150,12 +153,37 @@ final class InjectionMethods {
         KotlinMetadataUtil metadataUtil) {
       ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
       moduleReference.ifPresent(arguments::add);
-      arguments.addAll(
-          injectionMethodArguments(
-              binding.provisionDependencies(), dependencyUsage, requestingClass));
-      // TODO(ronshapiro): make InjectionMethods @Injectable
+      invokeArguments(binding, dependencyUsage, requestingClass).forEach(arguments::add);
       return create(binding, compilerOptions, elements, metadataUtil)
           .invoke(arguments.build(), requestingClass);
+    }
+
+    static ImmutableList<CodeBlock> invokeArguments(
+        ProvisionBinding binding,
+        Function<DependencyRequest, CodeBlock> dependencyUsage,
+        ClassName requestingClass) {
+      ImmutableMap<VariableElement, DependencyRequest> dependencyRequestMap =
+          binding.provisionDependencies().stream()
+              .collect(
+                  toImmutableMap(
+                      request -> MoreElements.asVariable(request.requestElement().get()),
+                      request -> request));
+
+      ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
+      for (VariableElement parameter :
+          asExecutable(binding.bindingElement().get()).getParameters()) {
+        if (AssistedInjectionAnnotations.isAssistedParameter(parameter)) {
+          arguments.add(CodeBlock.of("$L", parameter.getSimpleName()));
+        } else if (dependencyRequestMap.containsKey(parameter)) {
+          DependencyRequest request = dependencyRequestMap.get(parameter);
+          arguments.add(
+              injectionMethodArgument(request, dependencyUsage.apply(request), requestingClass));
+        } else {
+          throw new AssertionError("Unexpected parameter: " + parameter);
+        }
+      }
+
+      return arguments.build();
     }
 
     private static InjectionMethod constructorProxy(
@@ -356,23 +384,6 @@ final class InjectionMethods {
           + LOWER_CAMEL.to(UPPER_CAMEL, injectionSite.element().getSimpleName().toString())
           + indexString;
     }
-  }
-
-  /**
-   * Returns an argument list suitable for calling an injection method. Down-casts any arguments
-   * that are {@code Object} (or {@code Provider<Object>}) at the caller but not the method.
-   *
-   * @param dependencies the dependencies used by the method
-   * @param dependencyUsage function to apply on each of {@code dependencies} before casting
-   * @param requestingClass the class calling the injection method
-   */
-  private static ImmutableList<CodeBlock> injectionMethodArguments(
-      ImmutableSet<DependencyRequest> dependencies,
-      Function<DependencyRequest, CodeBlock> dependencyUsage,
-      ClassName requestingClass) {
-    return dependencies.stream()
-        .map(dep -> injectionMethodArgument(dep, dependencyUsage.apply(dep), requestingClass))
-        .collect(toImmutableList());
   }
 
   private static CodeBlock injectionMethodArgument(

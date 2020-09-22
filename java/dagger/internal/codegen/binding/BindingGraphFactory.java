@@ -16,14 +16,17 @@
 
 package dagger.internal.codegen.binding;
 
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.binding.SourceFiles.generatedMonitoringModuleName;
+import static dagger.model.BindingKind.ASSISTED_INJECTION;
 import static dagger.model.BindingKind.DELEGATE;
 import static dagger.model.BindingKind.INJECTION;
 import static dagger.model.BindingKind.OPTIONAL;
@@ -70,6 +73,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeKind;
 
 /** A factory for {@link BindingGraph} objects. */
 @Singleton
@@ -412,10 +416,19 @@ public final class BindingGraphFactory implements ClearableCache {
             .ifPresent(bindings::add);
       }
 
+      if (isType(requestKey.type())
+          && requestKey.type().getKind() == TypeKind.DECLARED
+          && isAssistedFactoryType(asTypeElement(requestKey.type()))) {
+        bindings.add(
+            bindingFactory.assistedFactoryBinding(
+                asTypeElement(requestKey.type()), Optional.of(requestKey.type())));
+      }
+
       // If there are no bindings, add the implicit @Inject-constructed binding if there is one.
       if (bindings.isEmpty()) {
-        injectBindingRegistry.getOrFindProvisionBinding(requestKey)
-            .filter(binding -> !isIncorrectlyScopedInPartialGraph(binding))
+        injectBindingRegistry
+            .getOrFindProvisionBinding(requestKey)
+            .filter(this::isCorrectlyScopedInSubcomponent)
             .ifPresent(bindings::add);
       }
 
@@ -428,20 +441,23 @@ public final class BindingGraphFactory implements ClearableCache {
     }
 
     /**
-     * Returns true if this binding graph resolution is for a partial graph and the {@code @Inject}
-     * binding's scope doesn't match any of the components in the current component ancestry. If so,
-     * the binding is not owned by any of the currently known components, and will be owned by a
-     * future ancestor (or, if never owned, will result in an incompatibly scoped binding error at
-     * the root component).
+     * Returns true if this binding graph resolution is for a subcomponent and the {@code @Inject}
+     * binding's scope correctly matches one of the components in the current component ancestry.
+     * If not, it means the binding is not owned by any of the currently known components, and will
+     * be owned by a future ancestor (or, if never owned, will result in an incompatibly scoped
+     * binding error at the root component).
      */
-    private boolean isIncorrectlyScopedInPartialGraph(ProvisionBinding binding) {
-      checkArgument(binding.kind().equals(INJECTION));
+    private boolean isCorrectlyScopedInSubcomponent(ProvisionBinding binding) {
+      checkArgument(binding.kind() == INJECTION || binding.kind() == ASSISTED_INJECTION);
+      if (!rootComponent().isSubcomponent()
+          || !binding.scope().isPresent()
+          || binding.scope().get().isReusable()) {
+        return true;
+      }
+
       Resolver owningResolver = getOwningResolver(binding).orElse(this);
       ComponentDescriptor owningComponent = owningResolver.componentDescriptor;
-      return rootComponent().isSubcomponent()
-          && binding.scope().isPresent()
-          && !binding.scope().get().isReusable()
-          && !owningComponent.scopes().contains(binding.scope().get());
+      return owningComponent.scopes().contains(binding.scope().get());
     }
 
     private ComponentDescriptor rootComponent() {

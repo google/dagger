@@ -25,6 +25,15 @@ public enum BindingKind {
   PROVISION,
 
   /**
+   * A binding for an {@link javax.inject.Inject}-annotated constructor that contains at least one
+   * {@link dagger.assisted.Assisted}-annotated parameter.
+   */
+  ASSISTED_INJECTION,
+
+  /** A binding for an {@link dagger.assisted.AssistedFactory}-annotated type. */
+  ASSISTED_FACTORY,
+
+  /**
    * An implicit binding for a {@link dagger.Component}- or {@link
    * dagger.producers.ProductionComponent}-annotated type.
    */

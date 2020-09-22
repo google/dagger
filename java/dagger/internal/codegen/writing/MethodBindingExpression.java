@@ -17,6 +17,8 @@
 package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedParameterSpecs;
+import static dagger.internal.codegen.javapoet.CodeBlocks.parameterNames;
 import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
@@ -36,6 +38,7 @@ import dagger.internal.codegen.binding.FrameworkField;
 import dagger.internal.codegen.binding.KeyVariableNamer;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.model.BindingKind;
 import dagger.model.RequestKind;
 import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
@@ -80,12 +83,19 @@ abstract class MethodBindingExpression extends BindingExpression {
     }
 
     addMethod();
+
+    CodeBlock methodCall =
+         binding.kind() == BindingKind.ASSISTED_INJECTION
+              // Private methods for assisted injection take assisted parameters as input.
+              ? CodeBlock.of(
+                  "$N($L)", methodName(), parameterNames(assistedParameterSpecs(binding, types)))
+              : CodeBlock.of("$N()", methodName());
+
     return Expression.create(
         returnType(),
         requestingClass.equals(componentImplementation.name())
-            ? CodeBlock.of("$N()", methodName())
-            : CodeBlock.of(
-                "$L.$N()", componentImplementation.externalReferenceBlock(), methodName()));
+            ? methodCall
+            : CodeBlock.of("$L.$L", componentImplementation.externalReferenceBlock(), methodCall));
   }
 
   @Override

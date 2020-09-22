@@ -34,31 +34,21 @@ import javax.inject.Singleton;
 import javax.lang.model.element.ExecutableElement;
 
 /** Validates any binding method. */
-public final class AnyBindingMethodValidator {
-  /** Stores the cached reports for {@link AnyBindingMethodValidator}. */
-  @Singleton
-  public static final class CachedReports implements ClearableCache {
-    private final Map<ExecutableElement, ValidationReport<ExecutableElement>> reports =
-        new HashMap<>();
-
-    @Inject
-    CachedReports() {}
-
-    @Override
-    public void clearCache() {
-      reports.clear();
-    }
-  }
-
+@Singleton
+public final class AnyBindingMethodValidator implements ClearableCache {
   private final ImmutableMap<Class<? extends Annotation>, BindingMethodValidator> validators;
-  private final CachedReports cachedReports;
+  private final Map<ExecutableElement, ValidationReport<ExecutableElement>> reports =
+      new HashMap<>();
 
   @Inject
   AnyBindingMethodValidator(
-      ImmutableMap<Class<? extends Annotation>, BindingMethodValidator> validators,
-      CachedReports cachedReports) {
+      ImmutableMap<Class<? extends Annotation>, BindingMethodValidator> validators) {
     this.validators = validators;
-    this.cachedReports = cachedReports;
+  }
+
+  @Override
+  public void clearCache() {
+    reports.clear();
   }
 
   /** Returns the binding method annotations considered by this validator. */
@@ -88,7 +78,7 @@ public final class AnyBindingMethodValidator {
    *     #methodAnnotations() binding method annotation}
    */
   ValidationReport<ExecutableElement> validate(ExecutableElement method) {
-    return reentrantComputeIfAbsent(cachedReports.reports, method, this::validateUncached);
+    return reentrantComputeIfAbsent(reports, method, this::validateUncached);
   }
 
   /**
@@ -96,7 +86,7 @@ public final class AnyBindingMethodValidator {
    * validated}.
    */
   boolean wasAlreadyValidated(ExecutableElement method) {
-    return cachedReports.reports.containsKey(method);
+    return reports.containsKey(method);
   }
 
   private ValidationReport<ExecutableElement> validateUncached(ExecutableElement method) {

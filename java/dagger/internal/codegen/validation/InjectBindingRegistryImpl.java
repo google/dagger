@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.base.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.base.Keys.isValidMembersInjectionKey;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 
@@ -217,11 +218,16 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
      *
      * Warn only when registering bindings post-hoc for those types.
      */
-    warnIfNotAlreadyGenerated =
-        warnIfNotAlreadyGenerated
-            && (!injectedConstructors(binding.membersInjectedType()).isEmpty()
-                ? !binding.injectionSites().isEmpty()
-                : binding.hasLocalInjectionSites());
+    if (warnIfNotAlreadyGenerated) {
+      boolean hasInjectConstructor =
+          !(injectedConstructors(binding.membersInjectedType()).isEmpty()
+              && assistedInjectedConstructors(binding.membersInjectedType()).isEmpty());
+      warnIfNotAlreadyGenerated =
+          hasInjectConstructor
+              ? !binding.injectionSites().isEmpty()
+              : binding.hasLocalInjectionSites();
+    }
+
     membersInjectionBindings.tryRegisterBinding(binding, warnIfNotAlreadyGenerated);
     if (binding.unresolved().isPresent()) {
       membersInjectionBindings.tryToGenerateBinding(
@@ -307,7 +313,11 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
 
     // ok, let's see if we can find an @Inject constructor
     TypeElement element = MoreElements.asType(types.asElement(key.type()));
-    ImmutableSet<ExecutableElement> injectConstructors = injectedConstructors(element);
+    ImmutableSet<ExecutableElement> injectConstructors =
+        ImmutableSet.<ExecutableElement>builder()
+            .addAll(injectedConstructors(element))
+            .addAll(assistedInjectedConstructors(element))
+            .build();
     switch (injectConstructors.size()) {
       case 0:
         // No constructor found.

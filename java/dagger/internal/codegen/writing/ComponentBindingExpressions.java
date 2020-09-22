@@ -56,6 +56,7 @@ import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.internal.codegen.writing.MethodBindingExpression.MethodImplementationStrategy;
+import dagger.model.BindingKind;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
 import dagger.model.RequestKind;
@@ -348,6 +349,8 @@ public final class ComponentBindingExpressions {
         return new AnonymousProviderCreationExpression(
             binding, this, componentImplementation.name());
 
+      case ASSISTED_FACTORY:
+      case ASSISTED_INJECTION:
       case INJECTION:
       case PROVISION:
         return new InjectionOrProvisionProviderCreationExpression(binding, this);
@@ -567,6 +570,12 @@ public final class ComponentBindingExpressions {
                 ComponentRequirement.forBoundInstance(binding),
                 componentRequirementExpressions));
 
+      case ASSISTED_FACTORY:
+        return Optional.of(
+            new AssistedFactoryBindingExpression(
+                (ProvisionBinding) binding, this, types, elements));
+
+      case ASSISTED_INJECTION:
       case INJECTION:
       case PROVISION:
         return Optional.of(
@@ -610,13 +619,13 @@ public final class ComponentBindingExpressions {
   /**
    * Returns {@code true} if we can use a direct (not {@code Provider.get()}) expression for this
    * binding. If the binding doesn't {@linkplain #needsCaching(ContributionBinding) need to be
-   * cached}, we can.
+   * cached} and the binding is not an {@link BindingKind.ASSISTED_FACTORY}, we can.
    *
    * <p>In fastInit mode, we can use a direct expression even if the binding {@linkplain
    * #needsCaching(ContributionBinding) needs to be cached}.
    */
   private boolean canUseDirectInstanceExpression(ContributionBinding binding) {
-    return !needsCaching(binding)
+    return (!needsCaching(binding) && binding.kind() != BindingKind.ASSISTED_FACTORY)
         || compilerOptions.fastInit(
             topLevelComponentImplementation.componentDescriptor().typeElement());
   }

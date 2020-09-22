@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.binding.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.binding.SourceFiles.frameworkFieldUsages;
@@ -107,7 +108,8 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
     // Members injectors for classes with no local injection sites and no @Inject
     // constructor are unused.
     if (!binding.hasLocalInjectionSites()
-        && injectedConstructors(binding.membersInjectedType()).isEmpty()) {
+        && injectedConstructors(binding.membersInjectedType()).isEmpty()
+        && assistedInjectedConstructors(binding.membersInjectedType()).isEmpty()) {
       return Optional.empty();
     }
 

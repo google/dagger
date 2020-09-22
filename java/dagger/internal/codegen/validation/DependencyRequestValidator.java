@@ -18,7 +18,10 @@ package dagger.internal.codegen.validation;
 
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.asVariable;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedInjectionType;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.WILDCARD;
@@ -27,9 +30,11 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableCollection;
 import dagger.MembersInjector;
 import dagger.internal.codegen.base.FrameworkTypes;
+import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.model.RequestKind;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
@@ -38,6 +43,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /** Validation for dependency requests. */
@@ -103,6 +109,24 @@ final class DependencyRequestValidator {
   private void checkType(
       ValidationReport.Builder<?> report, Element requestElement, TypeMirror requestType) {
     TypeMirror keyType = extractKeyType(requestType);
+    RequestKind requestKind = RequestKinds.getRequestKind(requestType);
+    if (keyType.getKind() == TypeKind.DECLARED) {
+      TypeElement typeElement = asTypeElement(keyType);
+      if (isAssistedInjectionType(typeElement)) {
+        report.addError(
+            "Dagger does not support injecting @AssistedInject type, "
+                + requestType
+                + ". Did you mean to inject its assisted factory type instead?",
+            requestElement);
+      }
+      if (requestKind != RequestKind.INSTANCE && isAssistedFactoryType(typeElement)) {
+        report.addError(
+            "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, "
+                + "or Produced<T> when T is an @AssistedFactory-annotated type such as "
+                + keyType,
+            requestElement);
+      }
+    }
     if (keyType.getKind().equals(WILDCARD)) {
       // TODO(ronshapiro): Explore creating this message using RequestKinds.
       report.addError(

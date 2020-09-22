@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.validation;
 
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.base.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsMultibindings.NO_MULTIBINDINGS;
@@ -23,8 +24,6 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsS
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 
-import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.BindsOptionalOf;
 import dagger.Module;
@@ -82,8 +81,7 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
       super.checkKeyType(keyType);
       if (isValidImplicitProvisionKey(
               injectionAnnotations.getQualifiers(element).stream().findFirst(), keyType, types)
-          && !injectedConstructors(MoreElements.asType(MoreTypes.asDeclared(keyType).asElement()))
-              .isEmpty()) {
+          && !injectedConstructors(asTypeElement(keyType)).isEmpty()) {
         report.addError(
             "@BindsOptionalOf methods cannot return unqualified types that have an @Inject-"
                 + "annotated constructor because those are always present");

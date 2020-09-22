@@ -160,6 +160,8 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
     static ImmutableList<ProcessingStep> processingSteps(
         MapKeyProcessingStep mapKeyProcessingStep,
         InjectProcessingStep injectProcessingStep,
+        AssistedProcessingStep assistedProcessingStep,
+        AssistedFactoryProcessingStep assistedFactoryProcessingStep,
         MonitoringModuleProcessingStep monitoringModuleProcessingStep,
         MultibindingAnnotationsProcessingStep multibindingAnnotationsProcessingStep,
         BindsInstanceProcessingStep bindsInstanceProcessingStep,
@@ -171,6 +173,8 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
       return ImmutableList.of(
           mapKeyProcessingStep,
           injectProcessingStep,
+          assistedProcessingStep,
+          assistedFactoryProcessingStep,
           monitoringModuleProcessingStep,
           multibindingAnnotationsProcessingStep,
           bindsInstanceProcessingStep,

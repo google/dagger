@@ -133,6 +133,8 @@ public final class DependencyRequestFactory {
       VariableElement variableElement, TypeMirror resolvedType) {
     checkNotNull(variableElement);
     checkNotNull(resolvedType);
+    // Ban @Assisted parameters, they are not considered dependency requests.
+    checkArgument(!AssistedInjectionAnnotations.isAssistedParameter(variableElement));
     Optional<AnnotationMirror> qualifier = injectionAnnotations.getQualifier(variableElement);
     return newDependencyRequest(variableElement, resolvedType, qualifier);
   }

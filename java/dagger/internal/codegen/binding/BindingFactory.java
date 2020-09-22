@@ -30,6 +30,8 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullab
 import static dagger.internal.codegen.binding.ContributionBinding.bindingKindForMultibindingKey;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.model.BindingKind.ASSISTED_FACTORY;
+import static dagger.model.BindingKind.ASSISTED_INJECTION;
 import static dagger.model.BindingKind.BOUND_INSTANCE;
 import static dagger.model.BindingKind.COMPONENT;
 import static dagger.model.BindingKind.COMPONENT_DEPENDENCY;
@@ -52,6 +54,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import dagger.Module;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
@@ -116,7 +119,9 @@ public final class BindingFactory {
   public ProvisionBinding injectionBinding(
       ExecutableElement constructorElement, Optional<TypeMirror> resolvedType) {
     checkArgument(constructorElement.getKind().equals(CONSTRUCTOR));
-    checkArgument(isAnnotationPresent(constructorElement, Inject.class));
+    checkArgument(
+        isAnnotationPresent(constructorElement, Inject.class)
+            || isAnnotationPresent(constructorElement, AssistedInject.class));
     checkArgument(!injectionAnnotations.getQualifier(constructorElement).isPresent());
 
     ExecutableType constructorType = MoreTypes.asExecutable(constructorElement.asType());
@@ -135,19 +140,30 @@ public final class BindingFactory {
       constructedType = resolved;
     }
 
-    Key key = keyFactory.forInjectConstructorWithResolvedType(constructedType);
-    ImmutableSet<DependencyRequest> provisionDependencies =
-        dependencyRequestFactory.forRequiredResolvedVariables(
-            constructorElement.getParameters(), constructorType.getParameterTypes());
+    // Collect all dependency requests within the provision method.
+    // Note: we filter out @Assisted parameters since these aren't considered dependency requests.
+    ImmutableSet.Builder<DependencyRequest> provisionDependencies = ImmutableSet.builder();
+    for (int i = 0; i < constructorElement.getParameters().size(); i++) {
+      VariableElement parameter = constructorElement.getParameters().get(i);
+      TypeMirror parameterType = constructorType.getParameterTypes().get(i);
+      if (!AssistedInjectionAnnotations.isAssistedParameter(parameter)) {
+        provisionDependencies.add(
+            dependencyRequestFactory.forRequiredResolvedVariable(parameter, parameterType));
+      }
+    }
 
+    Key key = keyFactory.forInjectConstructorWithResolvedType(constructedType);
     ProvisionBinding.Builder builder =
         ProvisionBinding.builder()
             .contributionType(ContributionType.UNIQUE)
             .bindingElement(constructorElement)
             .key(key)
-            .provisionDependencies(provisionDependencies)
+            .provisionDependencies(provisionDependencies.build())
             .injectionSites(injectionSiteFactory.getInjectionSites(constructedType))
-            .kind(INJECTION)
+            .kind(
+                isAnnotationPresent(constructorElement, AssistedInject.class)
+                    ? ASSISTED_INJECTION
+                    : INJECTION)
             .scope(uniqueScopeOf(constructorElement.getEnclosingElement()));
 
     TypeElement bindingTypeElement = MoreElements.asType(constructorElement.getEnclosingElement());
@@ -155,6 +171,41 @@ public final class BindingFactory {
       builder.unresolved(injectionBinding(constructorElement, Optional.empty()));
     }
     return builder.build();
+  }
+
+  public ProvisionBinding assistedFactoryBinding(
+      TypeElement factory, Optional<TypeMirror> resolvedType) {
+
+    // If the class this is constructing has some type arguments, resolve everything.
+    DeclaredType factoryType = MoreTypes.asDeclared(factory.asType());
+    if (!factoryType.getTypeArguments().isEmpty() && resolvedType.isPresent()) {
+      DeclaredType resolved = MoreTypes.asDeclared(resolvedType.get());
+      // Validate that we're resolving from the correct type by checking that the erasure of the
+      // resolvedType is the same as the erasure of the factoryType.
+      checkState(
+          types.isSameType(types.erasure(resolved), types.erasure(factoryType)),
+          "erased expected type: %s, erased actual type: %s",
+          types.erasure(resolved),
+          types.erasure(factoryType));
+      factoryType = resolved;
+    }
+
+    ExecutableElement factoryMethod =
+        AssistedInjectionAnnotations.assistedFactoryMethod(factory, elements, types);
+    ExecutableType factoryMethodType =
+        MoreTypes.asExecutable(types.asMemberOf(factoryType, factoryMethod));
+    return ProvisionBinding.builder()
+        .contributionType(ContributionType.UNIQUE)
+        .key(Key.builder(factoryType).build())
+        .bindingElement(factory)
+        .provisionDependencies(
+            ImmutableSet.of(
+                DependencyRequest.builder()
+                    .key(Key.builder(factoryMethodType.getReturnType()).build())
+                    .kind(RequestKind.PROVIDER)
+                    .build()))
+        .kind(ASSISTED_FACTORY)
+        .build();
   }
 
   /**

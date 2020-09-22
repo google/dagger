@@ -32,6 +32,7 @@ import static dagger.internal.codegen.javapoet.TypeNames.PROVIDER_OF_LAZY;
 import static dagger.internal.codegen.javapoet.TypeNames.SET_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.SET_OF_PRODUCED_PRODUCER;
 import static dagger.internal.codegen.javapoet.TypeNames.SET_PRODUCER;
+import static dagger.model.BindingKind.ASSISTED_INJECTION;
 import static dagger.model.BindingKind.INJECTION;
 import static dagger.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.model.BindingKind.MULTIBOUND_SET;
@@ -139,11 +140,15 @@ public class SourceFiles {
       case PRODUCTION:
         ContributionBinding contribution = (ContributionBinding) binding;
         switch (contribution.kind()) {
+          case ASSISTED_INJECTION:
           case INJECTION:
           case PROVISION:
           case PRODUCTION:
             return elementBasedClassName(
                 MoreElements.asExecutable(binding.bindingElement().get()), "Factory");
+
+          case ASSISTED_FACTORY:
+            return siblingClassName(MoreElements.asType(binding.bindingElement().get()), "_Impl");
 
           default:
             throw new AssertionError();
@@ -249,7 +254,8 @@ public class SourceFiles {
       Binding binding) {
     if (binding instanceof ContributionBinding) {
       ContributionBinding contributionBinding = (ContributionBinding) binding;
-      if (!contributionBinding.kind().equals(INJECTION)
+      if (!(contributionBinding.kind() == INJECTION
+              || contributionBinding.kind() == ASSISTED_INJECTION)
           && !contributionBinding.requiresModuleInstance()) {
         return ImmutableList.of();
       }

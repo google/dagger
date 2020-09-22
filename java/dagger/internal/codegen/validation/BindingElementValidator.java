@@ -16,9 +16,13 @@
 
 package dagger.internal.codegen.validation;
 
+import static com.google.auto.common.MoreTypes.asTypeElement;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verifyNotNull;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedInjectionType;
 import static dagger.internal.codegen.binding.MapKeys.getMapKeys;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static javax.lang.model.type.TypeKind.ARRAY;
@@ -50,6 +54,7 @@ import javax.inject.Qualifier;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
@@ -203,11 +208,22 @@ public abstract class BindingElementValidator<E extends Element> {
       TypeKind kind = keyType.getKind();
       if (kind.equals(VOID)) {
         report.addError(bindingElements("must %s a value (not void)", bindingElementTypeVerb()));
-      } else if (!(kind.isPrimitive()
-          || kind.equals(DECLARED)
-          || kind.equals(ARRAY)
-          || kind.equals(TYPEVAR))) {
+      } else if (kind == DECLARED) {
+        checkNotAssistedInject(keyType);
+      } else if (!(kind.isPrimitive() || kind.equals(ARRAY) || kind.equals(TYPEVAR))) {
         report.addError(badTypeMessage());
+      }
+    }
+
+    /** Adds errors for a method return type. */
+    private void checkNotAssistedInject(TypeMirror keyType) {
+      checkState(keyType.getKind() == TypeKind.DECLARED);
+      TypeElement keyElement = asTypeElement(keyType);
+      if (isAssistedInjectionType(keyElement)) {
+        report.addError("Dagger does not support providing @AssistedInject types.", keyElement);
+      }
+      if (isAssistedFactoryType(keyElement)) {
+        report.addError("Dagger does not support providing @AssistedFactory types.", keyElement);
       }
     }
 

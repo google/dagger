@@ -17,13 +17,16 @@
 package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.FRAMEWORK_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
+import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.DelegateFactory;
 import dagger.internal.codegen.binding.BindingType;
@@ -31,6 +34,7 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkField;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.model.BindingKind;
 import dagger.producers.internal.DelegateProducer;
 import java.util.Optional;
 
@@ -143,6 +147,19 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
 
     TypeName fieldType =
         useRawType ? contributionBindingField.type().rawType : contributionBindingField.type();
+
+    if (binding.kind() == BindingKind.ASSISTED_INJECTION) {
+      // An assisted injection factory doesn't extend Provider, so we reference the generated
+      // factory type directly (i.e. Foo_Factory<T> instead of Provider<Foo<T>>).
+      TypeName[] typeParameters =
+          MoreTypes.asDeclared(binding.key().type()).getTypeArguments().stream()
+              .map(TypeName::get)
+              .toArray(TypeName[]::new);
+      fieldType =
+          typeParameters.length == 0
+              ? generatedClassNameForBinding(binding)
+              : ParameterizedTypeName.get(generatedClassNameForBinding(binding), typeParameters);
+    }
 
     FieldSpec.Builder contributionField =
         FieldSpec.builder(

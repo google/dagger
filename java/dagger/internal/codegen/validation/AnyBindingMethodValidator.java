@@ -25,23 +25,40 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import dagger.internal.codegen.base.ClearableCache;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.lang.model.element.ExecutableElement;
 
 /** Validates any binding method. */
-final class AnyBindingMethodValidator {
+public final class AnyBindingMethodValidator {
+  /** Stores the cached reports for {@link AnyBindingMethodValidator}. */
+  @Singleton
+  public static final class CachedReports implements ClearableCache {
+    private final Map<ExecutableElement, ValidationReport<ExecutableElement>> reports =
+        new HashMap<>();
+
+    @Inject
+    CachedReports() {}
+
+    @Override
+    public void clearCache() {
+      reports.clear();
+    }
+  }
 
   private final ImmutableMap<Class<? extends Annotation>, BindingMethodValidator> validators;
-  private final Map<ExecutableElement, ValidationReport<ExecutableElement>> reports =
-      new HashMap<>();
+  private final CachedReports cachedReports;
 
   @Inject
   AnyBindingMethodValidator(
-      ImmutableMap<Class<? extends Annotation>, BindingMethodValidator> validators) {
+      ImmutableMap<Class<? extends Annotation>, BindingMethodValidator> validators,
+      CachedReports cachedReports) {
     this.validators = validators;
+    this.cachedReports = cachedReports;
   }
 
   /** Returns the binding method annotations considered by this validator. */
@@ -71,7 +88,7 @@ final class AnyBindingMethodValidator {
    *     #methodAnnotations() binding method annotation}
    */
   ValidationReport<ExecutableElement> validate(ExecutableElement method) {
-    return reentrantComputeIfAbsent(reports, method, this::validateUncached);
+    return reentrantComputeIfAbsent(cachedReports.reports, method, this::validateUncached);
   }
 
   /**
@@ -79,7 +96,7 @@ final class AnyBindingMethodValidator {
    * validated}.
    */
   boolean wasAlreadyValidated(ExecutableElement method) {
-    return reports.containsKey(method);
+    return cachedReports.reports.containsKey(method);
   }
 
   private ValidationReport<ExecutableElement> validateUncached(ExecutableElement method) {

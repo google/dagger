@@ -52,7 +52,6 @@ import static java.util.stream.Stream.concat;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Ascii;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -183,7 +182,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   @Override
   public int keysPerComponentShard(TypeElement component) {
     if (processingEnvironment.getOptions().containsKey(KEYS_PER_COMPONENT_SHARD)) {
-      Preconditions.checkArgument(
+      checkArgument(
           "dagger.internal.codegen".contentEquals(
               MoreElements.getPackage(component).getQualifiedName()),
           "Cannot set %s. It is only meant for internal testing.", KEYS_PER_COMPONENT_SHARD);

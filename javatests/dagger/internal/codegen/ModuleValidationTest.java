@@ -342,10 +342,18 @@ public final class ModuleValidationTest {
             "",
             "@Module(includes = BadModule.class)",
             "abstract class IncludesBadModule {}");
-    assertThat(daggerCompiler().compile(badModule, module))
+    Compilation compilation = daggerCompiler().compile(badModule, module);
+    assertThat(compilation).hadErrorCount(2);
+    assertThat(compilation)
         .hadErrorContaining("test.BadModule has errors")
         .inFile(module)
         .onLine(5);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@Binds methods must have exactly one parameter, whose type is assignable to the "
+                + "return type")
+        .inFile(badModule)
+        .onLine(8);
   }
 
   @Test

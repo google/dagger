@@ -271,7 +271,7 @@ public abstract class AndroidEntryPointMetadata {
           !MoreTypes.isTypeOf(Void.class, baseElement.asType()),
           androidEntryPointElement,
           "Expected @%s to have a value."
-          + " Did you forget to apply the Gradle Plugin?",
+          + " Did you forget to apply the Gradle Plugin? (dagger.hilt.android.plugin)",
           annotationClassName.simpleName());
 
       // Check that the root $CLASS extends Hilt_$CLASS

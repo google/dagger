@@ -20,5 +20,8 @@ import dagger.hilt.components.SingletonComponent;
 
 /**
  * A Hilt component that has the lifetime of the application.
+ *
+ * @deprecated use {@link SingletonComponent} instead
  */
+@Deprecated
 public interface ApplicationComponent extends SingletonComponent {}

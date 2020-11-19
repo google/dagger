@@ -24,8 +24,17 @@ android_library(
         "//:dagger_with_compiler",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/components",
+        "//java/dagger/hilt/android/components:view_model_component",
+        "//java/dagger/hilt/android/internal/builders",
+        "//java/dagger/hilt/android/internal/lifecycle",
+        "//java/dagger/hilt/android/lifecycle",
         "//java/dagger/hilt/android/qualifiers",
+        "@maven//:androidx_activity_activity",
+        "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
+        "@maven//:androidx_savedstate_savedstate",
     ],
 )
 

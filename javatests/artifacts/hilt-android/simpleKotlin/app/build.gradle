@@ -29,10 +29,14 @@ android {
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
+        testInstrumentationRunner "dagger.hilt.android.example.gradle.simpleKotlin.TestRunner"
     }
     compileOptions {
         sourceCompatibility 1.8
         targetCompatibility 1.8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
     }
     testOptions {
         unitTests.includeAndroidResources = true
@@ -44,7 +48,6 @@ hilt {
 }
 
 dependencies {
-    implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
 
@@ -59,4 +62,11 @@ dependencies {
     testImplementation 'androidx.multidex:multidex:2.0.0'
     testImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
     kaptTest 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
+
+    androidTestImplementation 'androidx.fragment:fragment-ktx:1.2.5'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test:runner:1.3.0'
+    androidTestImplementation 'com.google.truth:truth:1.0.1'
+    androidTestImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
+    kaptAndroidTest 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
 }

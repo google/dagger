@@ -48,6 +48,9 @@ public final class ClassNames {
   public static final ClassName MODULE = get("dagger", "Module");
   public static final ClassName MULTIBINDS =
       get("dagger.multibindings", "Multibinds");
+  public static final ClassName INTO_MAP = get("dagger.multibindings", "IntoMap");
+  public static final ClassName INTO_SET = get("dagger.multibindings", "IntoSet");
+  public static final ClassName STRING_KEY = get("dagger.multibindings", "StringKey");
   public static final ClassName PROVIDES =
       get("dagger", "Provides");
   public static final ClassName COMPONENT = get("dagger", "Component");
@@ -67,6 +70,7 @@ public final class ClassNames {
       get("javax.inject", "Qualifier");
   public static final ClassName SCOPE =
       get("javax.inject", "Scope");
+  public static final ClassName PROVIDER = get("javax.inject", "Provider");
   public static final ClassName DISABLE_INSTALL_IN_CHECK =
       get("dagger.hilt.migration", "DisableInstallInCheck");
   public static final ClassName ALIAS_OF = get("dagger.hilt.migration", "AliasOf");

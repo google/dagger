@@ -65,6 +65,8 @@ public final class AndroidClassNames {
       get("dagger.hilt.components", "SingletonComponent");
   public static final ClassName ACTIVITY_COMPONENT =
       get("dagger.hilt.android.components", "ActivityComponent");
+  public static final ClassName ACTIVITY_RETAINED_COMPONENT =
+      get("dagger.hilt.android.components", "ActivityRetainedComponent");
   public static final ClassName FRAGMENT_COMPONENT =
       get("dagger.hilt.android.components", "FragmentComponent");
   public static final ClassName VIEW_WITH_FRAGMENT_COMPONENT =
@@ -73,6 +75,8 @@ public final class AndroidClassNames {
       get("dagger.hilt.android.components", "ViewComponent");
   public static final ClassName SERVICE_COMPONENT =
       get("dagger.hilt.android.components", "ServiceComponent");
+  public static final ClassName VIEW_MODEL_COMPONENT =
+      get("dagger.hilt.android.components", "ViewModelComponent");
 
   public static final ClassName ACTIVITY_COMPONENT_MANAGER =
       get("dagger.hilt.android.internal.managers", "ActivityComponentManager");
@@ -95,10 +99,19 @@ public final class AndroidClassNames {
   public static final ClassName APPLICATION_CONTEXT_MODULE =
       get("dagger.hilt.android.internal.modules", "ApplicationContextModule");
 
+  public static final ClassName VIEW_MODEL = get("androidx.lifecycle", "ViewModel");
+  public static final ClassName VIEW_MODEL_INJECT =
+      get("dagger.hilt.android.lifecycle", "ViewModelInject");
+  public static final ClassName VIEW_MODEL_INJECT_MAP_QUALIFIER =
+      get("dagger.hilt.android.internal.lifecycle", "ViewModelInjectMap");
+  public static final ClassName VIEW_MODEL_INJECT_MAP_KEYS_QUALIFIER =
+      get("dagger.hilt.android.internal.lifecycle", "ViewModelInjectMap", "KeySet");
   public static final ClassName VIEW_MODEL_PROVIDER_FACTORY =
       get("androidx.lifecycle", "ViewModelProvider", "Factory");
   public static final ClassName DEFAULT_VIEW_MODEL_FACTORIES =
       get("dagger.hilt.android.internal.lifecycle", "DefaultViewModelFactories");
+  public static final ClassName SAVED_STATE_HANDLE =
+      get("androidx.lifecycle", "SavedStateHandle");
 
   private AndroidClassNames() {}
 }

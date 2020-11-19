@@ -41,6 +41,17 @@ android_library(
     ],
 )
 
+android_library(
+    name = "view_model_component",
+    srcs = ["ViewModelComponent.java"],
+    deps = [
+        ":components",
+        ":package_info",
+        "//java/dagger/hilt:define_component",
+        "//java/dagger/hilt/android/scopes:view_model_scoped",
+    ],
+)
+
 java_library(
     name = "package_info",
     srcs = ["package-info.java"],

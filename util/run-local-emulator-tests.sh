@@ -50,6 +50,7 @@ done
 
 readonly GRADLE_PROJECTS=(
     "javatests/artifacts/hilt-android/simple"
+    "javatests/artifacts/hilt-android/simpleKotlin"
 )
 for project in "${GRADLE_PROJECTS[@]}"; do
     echo "Running gradle tests for $project"

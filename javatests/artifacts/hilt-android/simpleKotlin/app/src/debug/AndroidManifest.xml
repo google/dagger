@@ -20,5 +20,10 @@
 
   <application>
     <activity android:name=".SimpleTest$TestActivity" android:exported="false"/>
+    <activity android:name=".viewmodel.ActivityInjectionTest$TestActivity" android:exported="false"/>
+    <activity android:name=".viewmodel.BaseActivityInjectionTest$TestActivity" android:exported="false"/>
+    <activity android:name=".viewmodel.FragmentInjectionTest$TestActivity" android:exported="false"/>
+    <activity android:name=".viewmodel.BaseFragmentInjectionTest$TestActivity" android:exported="false"/>
+    <activity android:name=".viewmodel.ViewModelScopedTest$TestActivity" android:exported="false"/>
   </application>
 </manifest>

@@ -2,7 +2,6 @@
 layout: default
 title: Dagger
 ---
-
 Dagger is a fully static, compile-time [dependency injection][DI] framework for
 Java, Kotlin, and Android. It is an adaptation of an
 [earlier version](https://github.com/square/dagger) created by
@@ -12,7 +11,6 @@ Dagger aims to address many of the development and performance issues that have
 plagued reflection-based solutions. More details can be found in
 [this talk][dagger-talk-video] ([slides][dagger-talk-slides]) by
 [Gregory Kick][gak].
-
 ## Where are the docs?
 
 * [User documentation](users-guide)

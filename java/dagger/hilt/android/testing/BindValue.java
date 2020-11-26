@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 
 /**
  * An annotation that can be used on a test field to contribute the value into the {@link
- * dagger.hilt.android.components.ApplicationComponent}. Example usage:
+ * dagger.hilt.components.SingletonComponent}. Example usage:
  *
  * <pre><code>
  * public class FooTest{

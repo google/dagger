@@ -28,10 +28,10 @@ import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.ActivityRetainedLifecycle;
 import dagger.hilt.android.components.ActivityRetainedComponent;
-import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.internal.ThreadUtil;
 import dagger.hilt.android.internal.builders.ActivityRetainedComponentBuilder;
 import dagger.hilt.android.scopes.ActivityRetainedScoped;
+import dagger.hilt.components.SingletonComponent;
 import dagger.hilt.internal.GeneratedComponentManager;
 import java.util.HashSet;
 import java.util.Set;
@@ -43,7 +43,7 @@ final class ActivityRetainedComponentManager
 
   /** Entry point for {@link ActivityRetainedComponentBuilder}. */
   @EntryPoint
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   public interface ActivityRetainedComponentBuilderEntryPoint {
     ActivityRetainedComponentBuilder retainedComponentBuilder();
   }

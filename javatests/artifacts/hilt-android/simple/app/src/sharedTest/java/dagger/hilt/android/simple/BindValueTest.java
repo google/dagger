@@ -25,13 +25,13 @@ import dagger.MapKey;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
-import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.testing.BindElementsIntoSet;
 import dagger.hilt.android.testing.BindValue;
 import dagger.hilt.android.testing.BindValueIntoMap;
 import dagger.hilt.android.testing.BindValueIntoSet;
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
+import dagger.hilt.components.SingletonComponent;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
@@ -63,7 +63,7 @@ public final class BindValueTest {
   private static final Integer SET_INT_3 = 3;
 
   @EntryPoint
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   interface BindValueEntryPoint {
     @Named(TEST_QUALIFIER)
     String bindValueString();

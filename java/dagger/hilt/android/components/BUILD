@@ -28,6 +28,9 @@ android_library(
         "ViewComponent.java",
         "ViewWithFragmentComponent.java",
     ],
+    exports = [
+        "//java/dagger/hilt/components",
+    ],
     deps = [
         ":package_info",
         "//java/dagger/hilt:define_component",

@@ -38,10 +38,10 @@ public final class DefineComponentProcessorTest {
             "test.FooComponent",
             "package test;",
             "",
-            "import dagger.hilt.android.components.ApplicationComponent;",
+            "import dagger.hilt.components.SingletonComponent;",
             "import dagger.hilt.DefineComponent;",
             "",
-            "@DefineComponent(parent = ApplicationComponent.class)",
+            "@DefineComponent(parent = SingletonComponent.class)",
             "interface FooComponent {",
             "  static int staticField = 1;",
             "  static int staticMethod() { return staticField; }",
@@ -107,10 +107,10 @@ public final class DefineComponentProcessorTest {
             "test.FooComponent",
             "package test;",
             "",
-            "import dagger.hilt.android.components.ApplicationComponent;",
+            "import dagger.hilt.components.SingletonComponent;",
             "import dagger.hilt.DefineComponent;",
             "",
-            "@DefineComponent( parent = ApplicationComponent.class )",
+            "@DefineComponent( parent = SingletonComponent.class )",
             "abstract class FooComponent {}");
 
     Compilation compilation = compiler().compile(component);
@@ -128,10 +128,10 @@ public final class DefineComponentProcessorTest {
             "test.FooComponent",
             "package test;",
             "",
-            "import dagger.hilt.android.components.ApplicationComponent;",
+            "import dagger.hilt.components.SingletonComponent;",
             "import dagger.hilt.DefineComponent;",
             "",
-            "@DefineComponent( parent = ApplicationComponent.class )",
+            "@DefineComponent( parent = SingletonComponent.class )",
             "interface FooComponent<T> {}");
 
     Compilation compilation = compiler().compile(component);
@@ -171,12 +171,12 @@ public final class DefineComponentProcessorTest {
             "test.FooComponent",
             "package test;",
             "",
-            "import dagger.hilt.android.components.ApplicationComponent;",
+            "import dagger.hilt.components.SingletonComponent;",
             "import dagger.hilt.DefineComponent;",
             "",
             "interface Foo {}",
             "",
-            "@DefineComponent( parent = ApplicationComponent.class )",
+            "@DefineComponent( parent = SingletonComponent.class )",
             "interface FooComponent extends Foo {}");
 
     Compilation compilation = compiler().compile(component);
@@ -195,10 +195,10 @@ public final class DefineComponentProcessorTest {
             "test.FooComponent",
             "package test;",
             "",
-            "import dagger.hilt.android.components.ApplicationComponent;",
+            "import dagger.hilt.components.SingletonComponent;",
             "import dagger.hilt.DefineComponent;",
             "",
-            "@DefineComponent( parent = ApplicationComponent.class )",
+            "@DefineComponent( parent = SingletonComponent.class )",
             "interface FooComponent {",
             "  int nonStaticMethod();",
             "}");

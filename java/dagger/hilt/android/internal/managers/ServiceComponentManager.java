@@ -21,8 +21,8 @@ import android.app.Service;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
-import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.internal.builders.ServiceComponentBuilder;
+import dagger.hilt.components.SingletonComponent;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
 
@@ -38,7 +38,7 @@ import dagger.hilt.internal.Preconditions;
 public final class ServiceComponentManager implements GeneratedComponentManager<Object> {
   /** Entrypoint for {@link ServiceComponentBuilder}. */
   @EntryPoint
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   public interface ServiceComponentBuilderEntryPoint {
     ServiceComponentBuilder serviceComponentBuilder();
   }

@@ -23,9 +23,9 @@ import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.hilt.InstallIn;
-import dagger.hilt.android.components.ApplicationComponent;
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
+import dagger.hilt.components.SingletonComponent;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import javax.inject.Inject;
@@ -72,7 +72,7 @@ public final class ModuleTest {
    * correctly.
    */
   @Module
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   public final class NonStaticModuleNonStaticProvides {
     @Provides
     @TestQualifier(1)
@@ -85,7 +85,7 @@ public final class ModuleTest {
    * Module which is used to test if static test modules get registered in the component correctly.
    */
   @Module
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   public static final class StaticModuleStaticProvides {
     @Provides
     @TestQualifier(2)
@@ -101,7 +101,7 @@ public final class ModuleTest {
    * the component correctly.
    */
   @Module
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   public static final class StaticModuleNonStaticProvidesDefaultConstructor {
     @Provides
     @TestQualifier(3)
@@ -115,7 +115,7 @@ public final class ModuleTest {
    * correctly.
    */
   @Module
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   public abstract static class AbstractModuleStaticProvides {
     @Provides
     @TestQualifier(4)
@@ -131,7 +131,7 @@ public final class ModuleTest {
    * component correctly.
    */
   @Module
-  @InstallIn(ApplicationComponent.class)
+  @InstallIn(SingletonComponent.class)
   public abstract static class AbstractModuleBindsMethod {
     @Binds
     abstract Foo foo(FooImpl fooImpl);

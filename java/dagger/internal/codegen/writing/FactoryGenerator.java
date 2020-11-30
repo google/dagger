@@ -79,7 +79,6 @@ import javax.lang.model.element.Element;
  */
 public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   private final DaggerTypes types;
-  private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
   private final KotlinMetadataUtil metadataUtil;
 
@@ -93,7 +92,6 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
       KotlinMetadataUtil metadataUtil) {
     super(filer, elements, sourceVersion);
     this.types = types;
-    this.elements = elements;
     this.compilerOptions = compilerOptions;
     this.metadataUtil = metadataUtil;
   }
@@ -133,8 +131,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
     factoryBuilder.addMethod(getMethod(binding));
     addCreateMethod(binding, factoryBuilder);
 
-    factoryBuilder.addMethod(
-        ProvisionMethod.create(binding, compilerOptions, elements, metadataUtil).toMethodSpec());
+    factoryBuilder.addMethod(ProvisionMethod.create(binding, compilerOptions, metadataUtil));
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
 
     return factoryBuilder;
@@ -253,7 +250,6 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
             nameGeneratedType(binding),
             moduleParameter(binding).map(module -> CodeBlock.of("$N", module)),
             compilerOptions,
-            elements,
             metadataUtil);
 
     if (binding.kind().equals(PROVISION)) {
@@ -271,9 +267,8 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
                   nameGeneratedType(binding),
                   instance,
                   binding.key().type(),
-                  types,
                   frameworkFieldUsages(binding.dependencies(), frameworkFields)::get,
-                  elements,
+                  types,
                   metadataUtil))
           .addStatement("return $L", instance);
     } else {

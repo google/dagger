@@ -72,7 +72,6 @@ import javax.lang.model.element.Element;
  */
 public final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectionBinding> {
   private final DaggerTypes types;
-  private final DaggerElements elements;
   private final KotlinMetadataUtil metadataUtil;
 
   @Inject
@@ -84,7 +83,6 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
       KotlinMetadataUtil metadataUtil) {
     super(filer, elements, sourceVersion);
     this.types = types;
-    this.elements = elements;
     this.metadataUtil = metadataUtil;
   }
 
@@ -207,9 +205,8 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
             generatedTypeName,
             CodeBlock.of("instance"),
             binding.key().type(),
-            types,
             frameworkFieldUsages(binding.dependencies(), dependencyFields)::get,
-            elements,
+            types,
             metadataUtil));
 
     if (usesRawFrameworkTypes) {
@@ -219,8 +216,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
 
     for (InjectionSite injectionSite : binding.injectionSites()) {
       if (injectionSite.element().getEnclosingElement().equals(binding.membersInjectedType())) {
-        injectorTypeBuilder.addMethod(
-            InjectionSiteMethod.create(injectionSite, elements, metadataUtil).toMethodSpec());
+        injectorTypeBuilder.addMethod(InjectionSiteMethod.create(injectionSite, metadataUtil));
       }
     }
 

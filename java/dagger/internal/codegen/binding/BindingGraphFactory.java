@@ -416,6 +416,7 @@ public final class BindingGraphFactory implements ClearableCache {
             .ifPresent(bindings::add);
       }
 
+      // Add Assisted Factory binding
       if (isType(requestKey.type())
           && requestKey.type().getKind() == TypeKind.DECLARED
           && isAssistedFactoryType(asTypeElement(requestKey.type()))) {

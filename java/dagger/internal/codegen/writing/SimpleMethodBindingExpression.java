@@ -142,7 +142,6 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
             requestingClass,
             moduleReference(requestingClass),
             compilerOptions,
-            elements,
             metadataUtil));
   }
 

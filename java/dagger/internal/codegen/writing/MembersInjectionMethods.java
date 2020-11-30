@@ -111,12 +111,11 @@ final class MembersInjectionMethods {
             componentImplementation.name(),
             instance,
             membersInjectedType,
-            types,
             request ->
                 bindingExpressions
                     .getDependencyArgumentExpression(request, componentImplementation.name())
                     .codeBlock(),
-            elements,
+            types,
             metadataUtil));
     methodBuilder.addStatement("return $L", instance);
 

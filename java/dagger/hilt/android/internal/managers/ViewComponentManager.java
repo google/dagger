@@ -166,7 +166,7 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
    * <p>A wrapper class to expose the {@link Fragment} to the views they're inflating.
    */
   // This is only non-final for the account override
-  public static final class FragmentContextWrapper extends ContextWrapper {
+  public static final class FragmentContextWrapper extends ContextWrapper implements androidx.lifecycle.LifecycleOwner {
     private LayoutInflater baseInflater;
     private LayoutInflater inflater;
     public final Fragment fragment;
@@ -196,6 +196,11 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
         inflater = baseInflater.cloneInContext(this);
       }
       return inflater;
+    }
+
+    @Override
+    public androidx.lifecycle.Lifecycle getLifecycle() {
+      return fragment.getLifecycle();
     }
   }
 }

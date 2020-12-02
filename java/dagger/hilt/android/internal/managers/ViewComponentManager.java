@@ -19,6 +19,8 @@ package dagger.hilt.android.internal.managers;
 import android.content.Context;
 import android.content.ContextWrapper;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import android.view.LayoutInflater;
 import android.view.View;
 import dagger.hilt.EntryPoint;
@@ -166,7 +168,9 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
    * <p>A wrapper class to expose the {@link Fragment} to the views they're inflating.
    */
   // This is only non-final for the account override
-  public static final class FragmentContextWrapper extends ContextWrapper {
+  public static final class FragmentContextWrapper extends ContextWrapper
+    implements LifecycleOwner {
+
     private LayoutInflater baseInflater;
     private LayoutInflater inflater;
     public final Fragment fragment;
@@ -196,6 +200,11 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
         inflater = baseInflater.cloneInContext(this);
       }
       return inflater;
+    }
+
+    @Override
+    public Lifecycle getLifecycle() {
+      return fragment.getLifecycle();
     }
   }
 }

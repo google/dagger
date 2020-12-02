@@ -49,6 +49,7 @@ android_library(
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_fragment_fragment",
         "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_common",
     ],
 )
 

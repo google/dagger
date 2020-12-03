@@ -20,7 +20,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import dagger.hilt.android.lifecycle.ViewModelInject
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import javax.inject.Named
 
 class MyAndroidViewModel(app: Application) : AndroidViewModel(app)
@@ -28,18 +29,21 @@ class MyAndroidViewModel(app: Application) : AndroidViewModel(app)
 class MyViewModel() : ViewModel()
 
 @Suppress("UNUSED_PARAMETER")
-class MyInjectedViewModel @ViewModelInject constructor(
+@HiltViewModel
+class MyInjectedViewModel @Inject constructor(
   foo: Foo,
   @Named("SayMyName") theName: String
 ) : ViewModel()
 
 object TopClass {
   @Suppress("UNUSED_PARAMETER")
-  class MyNestedInjectedViewModel @ViewModelInject constructor(foo: Foo) : ViewModel()
+  @HiltViewModel
+  class MyNestedInjectedViewModel @Inject constructor(foo: Foo) : ViewModel()
 }
 
 @Suppress("UNUSED_PARAMETER")
-class MyInjectedViewModelWithSavedState @ViewModelInject constructor(
+@HiltViewModel
+class MyInjectedViewModelWithSavedState @Inject constructor(
   foo: Foo,
   handle: SavedStateHandle
 ) : ViewModel()

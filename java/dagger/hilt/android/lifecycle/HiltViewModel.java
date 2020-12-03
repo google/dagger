@@ -23,19 +23,21 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Identifies a {@link androidx.lifecycle.ViewModel}'s constructor for injection.
+ * Identifies a {@link androidx.lifecycle.ViewModel} for construction injection.
  *
- * <p>Similar to {@link javax.inject.Inject}, a {@code ViewModel} containing a constructor annotated
- * with {@code ViewModelInject} will have its dependencies defined in the constructor parameters
- * injected by Dagger's Hilt. The {@code ViewModel} will be available for creation by the {@link
- * dagger.hilt.android.lifecycle.HiltViewModelFactory} and can be retrieved by default in an {@code
- * Activity} or {@code Fragment} annotated with {@link dagger.hilt.android.AndroidEntryPoint}.
+ * <p>The {@code ViewModel} annotated with {@link HiltViewModel} will be available for creation by
+ * the {@link dagger.hilt.android.lifecycle.HiltViewModelFactory} and can be retrieved by default in
+ * an {@code Activity} or {@code Fragment} annotated with {@link
+ * dagger.hilt.android.AndroidEntryPoint}. The {@code HiltViewModel} containing a constructor
+ * annotated with {@link javax.inject.Inject} will have its dependencies defined in the constructor
+ * parameters injected by Dagger's Hilt.
  *
  * <p>Example:
  *
  * <pre>
+ * &#64;HiltViewModel
  * public class DonutViewModel extends ViewModel {
- *     &#64;ViewModelInject
+ *     &#64;Inject
  *     public DonutViewModel(SavedStateHandle handle, RecipeRepository repository) {
  *         // ...
  *     }
@@ -51,7 +53,7 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * <p>Only one constructor in the {@code ViewModel} must be annotated with {@code ViewModelInject}.
+ * <p>Exactly one constructor in the {@code ViewModel} must be annotated with {@code Inject}.
  *
  * <p>Only dependencies available in the {@link dagger.hilt.android.components.ViewModelComponent}
  * can be injected into the {@code ViewModel}.
@@ -60,7 +62,7 @@ import java.lang.annotation.Target;
  *
  * @see dagger.hilt.android.components.ViewModelComponent
  */
-@Target(ElementType.CONSTRUCTOR)
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
 @GeneratesRootInput
-public @interface ViewModelInject {}
+public @interface HiltViewModel {}

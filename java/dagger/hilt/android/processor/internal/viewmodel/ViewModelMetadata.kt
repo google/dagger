@@ -14,30 +14,25 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal.viewmodelinject
+package dagger.hilt.android.processor.internal.viewmodel
 
 import com.google.auto.common.MoreElements
-import com.squareup.javapoet.AnnotationSpec
 import com.squareup.javapoet.ClassName
-import com.squareup.javapoet.TypeName
 import dagger.hilt.android.processor.internal.AndroidClassNames
 import dagger.hilt.processor.internal.ClassNames
 import dagger.hilt.processor.internal.ProcessorErrors
 import dagger.hilt.processor.internal.Processors
 import javax.annotation.processing.ProcessingEnvironment
-import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.Modifier
 import javax.lang.model.element.NestingKind
 import javax.lang.model.element.TypeElement
-import javax.lang.model.element.VariableElement
 import javax.lang.model.util.ElementFilter
 
 /**
  * Data class that represents a Hilt injected ViewModel
  */
-internal class ViewModelInjectMetadata private constructor(
-  val typeElement: TypeElement,
-  val constructorElement: ExecutableElement
+internal class ViewModelMetadata private constructor(
+  val typeElement: TypeElement
 ) {
   val className = ClassName.get(typeElement)
 
@@ -46,16 +41,11 @@ internal class ViewModelInjectMetadata private constructor(
     "${className.simpleNames().joinToString("_")}_HiltModules"
   )
 
-  val dependencyRequests = constructorElement.parameters.map { constructorArg ->
-    constructorArg.toDependencyRequest()
-  }
-
   companion object {
     internal fun create(
       processingEnv: ProcessingEnvironment,
       typeElement: TypeElement,
-      constructorElement: ExecutableElement
-    ): ViewModelInjectMetadata? {
+    ): ViewModelMetadata? {
       val types = processingEnv.typeUtils
       val elements = processingEnv.elementUtils
 
@@ -65,24 +55,30 @@ internal class ViewModelInjectMetadata private constructor(
           elements.getTypeElement(AndroidClassNames.VIEW_MODEL.toString()).asType()
         ),
         typeElement,
-        "@ViewModelInject is only supported on types that subclass %s.",
+        "@HiltViewModel is only supported on types that subclass %s.",
         AndroidClassNames.VIEW_MODEL
       )
 
-      ElementFilter.constructorsIn(typeElement.enclosedElements).filter {
-        Processors.hasAnnotation(it, AndroidClassNames.VIEW_MODEL_INJECT)
-      }.let { constructors ->
+      ElementFilter.constructorsIn(typeElement.enclosedElements).filter { constructor ->
         ProcessorErrors.checkState(
-          constructors.size == 1,
+          !Processors.hasAnnotation(constructor, ClassNames.ASSISTED_INJECT),
+          constructor,
+          "ViewModel constructor should be annotated with @Inject instead of @AssistedInject."
+        )
+        Processors.hasAnnotation(constructor, ClassNames.INJECT)
+      }.let { injectConstructors ->
+        ProcessorErrors.checkState(
+          injectConstructors.size == 1,
           typeElement,
-          "Multiple @ViewModelInject annotated constructors found."
+          "@HiltViewModel annotated class should contain exactly one @Inject " +
+            "annotated constructor."
         )
 
-        constructors.forEach { constructor ->
+        injectConstructors.forEach { constructor ->
           ProcessorErrors.checkState(
             !constructor.modifiers.contains(Modifier.PRIVATE),
             constructor,
-            "@ViewModelInject annotated constructors must not be private."
+            "@Inject annotated constructors must not be private."
           )
         }
       }
@@ -91,46 +87,21 @@ internal class ViewModelInjectMetadata private constructor(
         typeElement.nestingKind != NestingKind.MEMBER ||
           typeElement.modifiers.contains(Modifier.STATIC),
         typeElement,
-        "@ViewModelInject may only be used on inner classes if they are static."
+        "@HiltViewModel may only be used on inner classes if they are static."
       )
 
-      // Validate there is at most one SavedStateHandle constructor arg.
-      constructorElement.parameters.filter {
-        TypeName.get(it.asType()) == AndroidClassNames.SAVED_STATE_HANDLE
-      }.let { savedStateHandleParams ->
+      Processors.getScopeAnnotations(typeElement).let { scopeAnnotations ->
         ProcessorErrors.checkState(
-          savedStateHandleParams.size <= 1,
-          constructorElement,
-          "Expected zero or one constructor argument of type %s, found %s",
-          AndroidClassNames.SAVED_STATE_HANDLE, savedStateHandleParams.size
+          scopeAnnotations.isEmpty(),
+          typeElement,
+          "@HiltViewModel classes should not be scoped. Found: %s",
+          scopeAnnotations.joinToString()
         )
       }
 
-      return ViewModelInjectMetadata(
-        typeElement,
-        constructorElement
+      return ViewModelMetadata(
+        typeElement
       )
     }
   }
-}
-
-/**
- * Data class that represents a binding request for an injected type.
- */
-internal data class DependencyRequest(
-  val name: String,
-  val type: TypeName,
-  val qualifier: AnnotationSpec? = null
-)
-
-internal fun VariableElement.toDependencyRequest(): DependencyRequest {
-  val qualifier = annotationMirrors.find {
-    Processors.hasAnnotation(it.annotationType.asElement(), ClassNames.QUALIFIER)
-  }?.let { AnnotationSpec.get(it) }
-  val type = TypeName.get(asType())
-  return DependencyRequest(
-    name = simpleName.toString(),
-    type = type,
-    qualifier = qualifier
-  )
 }

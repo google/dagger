@@ -65,8 +65,8 @@ class SimpleTest {
       scenario.onActivity { activity ->
         assertThat(activity::class.java.getSuperclass()?.getSimpleName())
           .isEqualTo("Hilt_MainActivity")
-        assertThat(activity.model).isNotNull()
-        assertThat(activity.name).isNotNull()
+        assertThat(activity.viewModel.model).isNotNull()
+        assertThat(activity.viewModel.name).isNotNull()
       }
     }
   }

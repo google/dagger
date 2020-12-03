@@ -29,7 +29,7 @@ import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ViewModelComponent;
 import dagger.hilt.android.internal.builders.ViewModelComponentBuilder;
-import dagger.hilt.android.internal.lifecycle.ViewModelInjectMap;
+import dagger.hilt.android.internal.lifecycle.HiltViewModelMap;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Provider;
@@ -48,7 +48,7 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
   @EntryPoint
   @InstallIn(ViewModelComponent.class)
   interface ViewModelFactoriesEntryPoint {
-    @ViewModelInjectMap
+    @HiltViewModelMap
     Map<String, Provider<ViewModel>> getHiltViewModelInjectMap();
   }
 

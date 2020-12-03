@@ -21,16 +21,16 @@ package(default_visibility = ["//:src"])
 java_plugin(
     name = "processor",
     generates_api = 1,
-    processor_class = "dagger.hilt.android.processor.internal.viewmodelinject.ViewModelInjectProcessor",
+    processor_class = "dagger.hilt.android.processor.internal.viewmodel.ViewModelProcessor",
     deps = [":processor_lib"],
 )
 
 kt_jvm_library(
     name = "processor_lib",
     srcs = [
-        "ViewModelInjectMetadata.kt",
-        "ViewModelInjectProcessor.kt",
+        "ViewModelMetadata.kt",
         "ViewModelModuleGenerator.kt",
+        "ViewModelProcessor.kt",
     ],
     deps = [
         "//java/dagger/hilt/android/processor/internal:android_classnames",
@@ -38,6 +38,7 @@ kt_jvm_library(
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/incap",
         "@google_bazel_common//third_party/java/javapoet",

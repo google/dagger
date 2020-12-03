@@ -23,11 +23,10 @@ import dagger.hilt.android.scopes.ViewModelScoped;
  * A Hilt component that has the lifetime of a single {@link androidx.lifecycle.ViewModel}.
  *
  * <p>This Hilt component is the source of {@link
- * dagger.hilt.android.lifecycle.ViewModelInject}-annotated {@link
- * androidx.lifecycle.ViewModel}s used by the {@link
- * dagger.hilt.android.lifecycle.HiltViewModelFactory}. It contains a default binding of the {@link
- * androidx.lifecycle.SavedStateHandle} associated with the {@code ViewModel} that can be used
- * by other dependencies provided by the component.
+ * dagger.hilt.android.lifecycle.HiltViewModel}-annotated {@link androidx.lifecycle.ViewModel}s
+ * used by the {@link dagger.hilt.android.lifecycle.HiltViewModelFactory}. It contains a default
+ * binding for the {@link androidx.lifecycle.SavedStateHandle} associated with the {@code
+ * ViewModel} that can be used by other dependencies provided by the component.
  *
  * <p>Dependencies available in the {@link dagger.hilt.components.SingletonComponent} and {@link
  * ActivityRetainedComponent} are also available in this component since it is a child of {@code
@@ -48,10 +47,10 @@ import dagger.hilt.android.scopes.ViewModelScoped;
  *
  * <p>Dependencies in the {@code ViewModelComponent} can be scoped using the {@link ViewModelScoped}
  * annotation. This allows for a single instance of a dependency to be provided across the
- * dependencies of a single {@link dagger.hilt.android.lifecycle.ViewModelInject}-annotated {@code
+ * dependencies of a single {@link dagger.hilt.android.lifecycle.HiltViewModel}-annotated {@code
  * ViewModel}.
  *
- * @see dagger.hilt.android.lifecycle.ViewModelInject
+ * @see dagger.hilt.android.lifecycle.HiltViewModel
  * @see dagger.hilt.android.scopes.ViewModelScoped
  */
 @ViewModelScoped

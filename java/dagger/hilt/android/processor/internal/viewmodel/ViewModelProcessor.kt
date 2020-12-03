@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal.viewmodelinject
+package dagger.hilt.android.processor.internal.viewmodel
 
 import com.google.auto.common.MoreElements
 import com.google.auto.service.AutoService
 import dagger.hilt.android.processor.internal.AndroidClassNames
 import dagger.hilt.processor.internal.BaseProcessor
 import javax.annotation.processing.Processor
+import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
@@ -32,24 +33,22 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessorType
  */
 @AutoService(Processor::class)
 @IncrementalAnnotationProcessor(IncrementalAnnotationProcessorType.ISOLATING)
-class ViewModelInjectProcessor : BaseProcessor() {
+class ViewModelProcessor : BaseProcessor() {
 
   private val parsedElements = mutableSetOf<TypeElement>()
 
   override fun getSupportedAnnotationTypes() = setOf(
-    AndroidClassNames.VIEW_MODEL_INJECT.toString()
+    AndroidClassNames.HILT_VIEW_MODEL.toString()
   )
 
   override fun getSupportedSourceVersion() = SourceVersion.latest()
 
   override fun processEach(annotation: TypeElement, element: Element) {
-    val constructorElement = MoreElements.asExecutable(element)
-    val typeElement = MoreElements.asType(constructorElement.enclosingElement)
+    val typeElement = MoreElements.asType(element)
     if (parsedElements.add(typeElement)) {
-      ViewModelInjectMetadata.create(
+      ViewModelMetadata.create(
         processingEnv,
         typeElement,
-        constructorElement
       )?.let { viewModelMetadata ->
         ViewModelModuleGenerator(
           processingEnv,
@@ -57,5 +56,9 @@ class ViewModelInjectProcessor : BaseProcessor() {
         ).generate()
       }
     }
+  }
+
+  override fun postRoundProcess(roundEnv: RoundEnvironment?) {
+    parsedElements.clear()
   }
 }

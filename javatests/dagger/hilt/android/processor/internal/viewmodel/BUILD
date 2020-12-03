@@ -20,9 +20,9 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 package(default_visibility = ["//:src"])
 
 java_test(
-    name = "ViewModelInjectProcessorTest",
+    name = "ViewModelProcessorTest",
     runtime_deps = [
-        ":ViewModelInjectProcessorTestLib",
+        ":ViewModelProcessorTestLib",
         "//java/dagger/hilt/android/lifecycle",
         "@androidsdk//:platforms/android-29/android.jar",
         "@google_bazel_common//third_party/java/compile_testing",
@@ -33,13 +33,13 @@ java_test(
 )
 
 kt_jvm_library(
-    name = "ViewModelInjectProcessorTestLib",
+    name = "ViewModelProcessorTestLib",
     srcs = [
         "TestUtils.kt",
-        "ViewModelInjectProcessorTest.kt",
+        "ViewModelProcessorTest.kt",
     ],
     deps = [
-        "//java/dagger/hilt/android/processor/internal/viewmodelinject:processor_lib",
+        "//java/dagger/hilt/android/processor/internal/viewmodel:processor_lib",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",
@@ -66,7 +66,7 @@ kt_jvm_library(
         "ViewModelGeneratorTest.kt",
     ],
     deps = [
-        "//java/dagger/hilt/android/processor/internal/viewmodelinject:processor_lib",
+        "//java/dagger/hilt/android/processor/internal/viewmodel:processor_lib",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",

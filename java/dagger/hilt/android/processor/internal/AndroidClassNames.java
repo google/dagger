@@ -99,17 +99,17 @@ public final class AndroidClassNames {
   public static final ClassName APPLICATION_CONTEXT_MODULE =
       get("dagger.hilt.android.internal.modules", "ApplicationContextModule");
 
-  public static final ClassName VIEW_MODEL = get("androidx.lifecycle", "ViewModel");
-  public static final ClassName VIEW_MODEL_INJECT =
-      get("dagger.hilt.android.lifecycle", "ViewModelInject");
-  public static final ClassName VIEW_MODEL_INJECT_MAP_QUALIFIER =
-      get("dagger.hilt.android.internal.lifecycle", "ViewModelInjectMap");
-  public static final ClassName VIEW_MODEL_INJECT_MAP_KEYS_QUALIFIER =
-      get("dagger.hilt.android.internal.lifecycle", "ViewModelInjectMap", "KeySet");
-  public static final ClassName VIEW_MODEL_PROVIDER_FACTORY =
-      get("androidx.lifecycle", "ViewModelProvider", "Factory");
   public static final ClassName DEFAULT_VIEW_MODEL_FACTORIES =
       get("dagger.hilt.android.internal.lifecycle", "DefaultViewModelFactories");
+  public static final ClassName HILT_VIEW_MODEL =
+      get("dagger.hilt.android.lifecycle", "HiltViewModel");
+  public static final ClassName HILT_VIEW_MODEL_MAP_QUALIFIER =
+      get("dagger.hilt.android.internal.lifecycle", "HiltViewModelMap");
+  public static final ClassName HILT_VIEW_MODEL_KEYS_QUALIFIER =
+      get("dagger.hilt.android.internal.lifecycle", "HiltViewModelMap", "KeySet");
+  public static final ClassName VIEW_MODEL = get("androidx.lifecycle", "ViewModel");
+  public static final ClassName VIEW_MODEL_PROVIDER_FACTORY =
+      get("androidx.lifecycle", "ViewModelProvider", "Factory");
   public static final ClassName SAVED_STATE_HANDLE =
       get("androidx.lifecycle", "SavedStateHandle");
 

@@ -31,6 +31,12 @@ android {
         versionName "1.0"
         testInstrumentationRunner "dagger.hilt.android.example.gradle.simpleKotlin.TestRunner"
     }
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+        }
+    }
     compileOptions {
         sourceCompatibility 1.8
         targetCompatibility 1.8
@@ -50,6 +56,7 @@ hilt {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.activity:activity-ktx:1.1.0'
 
     implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'
     kapt 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'

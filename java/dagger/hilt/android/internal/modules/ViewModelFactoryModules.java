@@ -35,7 +35,7 @@ import dagger.hilt.android.components.ViewModelComponent;
 import dagger.hilt.android.internal.builders.ViewModelComponentBuilder;
 import dagger.hilt.android.internal.lifecycle.DefaultActivityViewModelFactory;
 import dagger.hilt.android.internal.lifecycle.DefaultFragmentViewModelFactory;
-import dagger.hilt.android.internal.lifecycle.ViewModelInjectMap;
+import dagger.hilt.android.internal.lifecycle.HiltViewModelMap;
 import dagger.hilt.android.lifecycle.HiltViewModelFactory;
 import dagger.multibindings.IntoSet;
 import dagger.multibindings.Multibinds;
@@ -51,7 +51,7 @@ public final class ViewModelFactoryModules {
   public abstract static class ViewModelModule {
     @NonNull
     @Multibinds
-    @ViewModelInjectMap
+    @HiltViewModelMap
     abstract Map<String, ViewModel> viewModelFactoriesMap();
   }
 
@@ -64,7 +64,7 @@ public final class ViewModelFactoryModules {
   public abstract static class ActivityRetainedModule {
     @NonNull
     @Multibinds
-    @ViewModelInjectMap.KeySet
+    @HiltViewModelMap.KeySet
     abstract Set<String> viewModelKeys();
   }
 
@@ -81,7 +81,7 @@ public final class ViewModelFactoryModules {
         @NonNull Activity activity,
             @NonNull
             Application application,
-        @NonNull @ViewModelInjectMap.KeySet Set<String> keySet,
+        @NonNull @HiltViewModelMap.KeySet Set<String> keySet,
         @NonNull ViewModelComponentBuilder componentBuilder) {
       // Hilt guarantees concrete activity is a subclass of ComponentActivity.
       ComponentActivity componentActivity = (ComponentActivity) activity;
@@ -108,7 +108,7 @@ public final class ViewModelFactoryModules {
         @NonNull Fragment fragment,
             @NonNull
             Application application,
-        @NonNull @ViewModelInjectMap.KeySet Set<String> keySet,
+        @NonNull @HiltViewModelMap.KeySet Set<String> keySet,
         @NonNull ViewModelComponentBuilder componentBuilder) {
       Bundle defaultArgs = fragment.getArguments();
       SavedStateViewModelFactory delegate =

@@ -1,4 +1,4 @@
-package dagger.hilt.android.processor.internal.viewmodelinject
+package dagger.hilt.android.processor.internal.viewmodel
 
 import com.google.testing.compile.Compiler
 import com.google.testing.compile.JavaFileObjects
@@ -11,8 +11,8 @@ internal val GENERATED_TYPE = try {
 }
 
 internal val GENERATED_ANNOTATION =
-  "@Generated(\"dagger.hilt.android.processor.internal.viewmodelinject.ViewModelInjectProcessor\")"
+  "@Generated(\"dagger.hilt.android.processor.internal.viewmodel.ViewModelProcessor\")"
 
 internal fun String.toJFO(qName: String) = JavaFileObjects.forSourceString(qName, this.trimIndent())
 
-internal fun compiler(): Compiler = Compiler.javac().withProcessors(ViewModelInjectProcessor())
+internal fun compiler(): Compiler = Compiler.javac().withProcessors(ViewModelProcessor())

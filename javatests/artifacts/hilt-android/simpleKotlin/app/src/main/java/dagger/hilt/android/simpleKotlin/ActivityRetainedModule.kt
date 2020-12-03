@@ -18,11 +18,11 @@ package dagger.hilt.android.simpleKotlin
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityComponent
+import dagger.hilt.android.components.ActivityRetainedComponent
 
 @Module
-@InstallIn(ActivityComponent::class)
-object ActivityModule {
+@InstallIn(ActivityRetainedComponent::class)
+object ActivityRetainedModule {
   @UserName
   @Provides
   fun provideUserName(): String {

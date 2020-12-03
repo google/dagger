@@ -19,28 +19,30 @@ package dagger.hilt.android.simpleKotlin
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-  // Shows that we can inject Application/Activity bindings into an activity.
-  @JvmField
-  @Model
-  @Inject
-  var model: String? = null
 
-  @JvmField
-  @UserName
-  @Inject
-  var name: String? = null
+  val viewModel by viewModels<MainViewModel>()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
     val greeting = findViewById<View>(R.id.greeting) as TextView
-    val text = resources.getString(R.string.welcome, name, model)
+    val text = resources.getString(R.string.welcome, viewModel.name, viewModel.model)
     greeting.text = text
   }
+
+  // Shows that we can inject bindings into a ViewModel
+  @HiltViewModel
+  class MainViewModel @Inject constructor(
+    @Model val model: String,
+    @UserName val name: String
+  ) : ViewModel()
 }

@@ -21,10 +21,11 @@ android_library(
     name = "lifecycle",
     srcs = glob(["*.java"]),
     exported_plugins = [
-        "//java/dagger/hilt/android/processor/internal/viewmodelinject:processor",
+        "//java/dagger/hilt/android/processor/internal/viewmodel:processor",
     ],
     proguard_specs = ["proguard-rules.pro"],
     exports = [
+        "//java/dagger/hilt/android/components:view_model_component",
         "//java/dagger/hilt/android/internal/lifecycle",
     ],
     deps = [

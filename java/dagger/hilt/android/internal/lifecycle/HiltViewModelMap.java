@@ -29,7 +29,7 @@ import javax.inject.Qualifier;
 @Qualifier
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.PARAMETER})
-public @interface ViewModelInjectMap {
+public @interface HiltViewModelMap {
 
   /** Internal qualifier for the multibinding set of class names annotated with @ViewModelInject. */
   @Qualifier

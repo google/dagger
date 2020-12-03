@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal.viewmodelinject
+package dagger.hilt.android.processor.internal.viewmodel
 
 import com.google.testing.compile.CompilationSubject.assertThat
 import org.junit.Test
@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class ViewModelInjectProcessorTest {
+class ViewModelProcessorTest {
 
   @Test
   fun validViewModel() {
@@ -30,11 +30,12 @@ class ViewModelInjectProcessorTest {
         package dagger.hilt.android.test;
 
         import androidx.lifecycle.ViewModel;
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
+        import javax.inject.Inject;
 
+        @HiltViewModel
         class MyViewModel extends ViewModel {
-            @ViewModelInject
-            MyViewModel() { }
+            @Inject MyViewModel() { }
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel")
 
@@ -47,10 +48,12 @@ class ViewModelInjectProcessorTest {
     val myViewModel = """
         package dagger.hilt.android.test;
 
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
+        import javax.inject.Inject;
 
+        @HiltViewModel
         class MyViewModel {
-            @ViewModelInject
+            @Inject
             MyViewModel() { }
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel")
@@ -60,8 +63,7 @@ class ViewModelInjectProcessorTest {
       failed()
       hadErrorCount(1)
       hadErrorContainingMatch(
-        "@ViewModelInject is only supported on types that subclass " +
-          "androidx.lifecycle.ViewModel."
+        "@HiltViewModel is only supported on types that subclass androidx.lifecycle.ViewModel."
       )
     }
   }
@@ -72,13 +74,15 @@ class ViewModelInjectProcessorTest {
         package dagger.hilt.android.test;
 
         import androidx.lifecycle.ViewModel;
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
+        import javax.inject.Inject;
 
+        @HiltViewModel
         class MyViewModel extends ViewModel {
-            @ViewModelInject
+            @Inject
             MyViewModel() { }
 
-            @ViewModelInject
+            @Inject
             MyViewModel(String s) { }
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel")
@@ -87,7 +91,9 @@ class ViewModelInjectProcessorTest {
     assertThat(compilation).apply {
       failed()
       hadErrorCount(1)
-      hadErrorContainingMatch("Multiple @ViewModelInject annotated constructors found.")
+      hadErrorContainingMatch(
+        "@HiltViewModel annotated class should contain exactly one @Inject annotated constructor."
+      )
     }
   }
 
@@ -97,10 +103,12 @@ class ViewModelInjectProcessorTest {
         package dagger.hilt.android.test;
 
         import androidx.lifecycle.ViewModel;
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
+        import javax.inject.Inject;
 
+        @HiltViewModel
         class MyViewModel extends ViewModel {
-            @ViewModelInject
+            @Inject
             private MyViewModel() { }
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel")
@@ -110,7 +118,7 @@ class ViewModelInjectProcessorTest {
       failed()
       hadErrorCount(1)
       hadErrorContainingMatch(
-        "@ViewModelInject annotated constructors must not be " +
+        "@Inject annotated constructors must not be " +
           "private."
       )
     }
@@ -122,11 +130,13 @@ class ViewModelInjectProcessorTest {
         package dagger.hilt.android.test;
 
         import androidx.lifecycle.ViewModel;
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
+        import javax.inject.Inject;
 
         class Outer {
+            @HiltViewModel
             class MyViewModel extends ViewModel {
-                @ViewModelInject
+                @Inject
                 MyViewModel() { }
             }
         }
@@ -137,24 +147,25 @@ class ViewModelInjectProcessorTest {
       failed()
       hadErrorCount(1)
       hadErrorContainingMatch(
-        "@ViewModelInject may only be used on inner classes " +
-          "if they are static."
+        "@HiltViewModel may only be used on inner classes if they are static."
       )
     }
   }
 
   @Test
-  fun verifyAtMostOneSavedStateHandleArg() {
+  fun verifyNoScopeAnnotation() {
     val myViewModel = """
         package dagger.hilt.android.test;
 
         import androidx.lifecycle.ViewModel;
-        import androidx.lifecycle.SavedStateHandle;
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
+        import javax.inject.Inject;
+        import javax.inject.Singleton;
 
+        @Singleton
+        @HiltViewModel
         class MyViewModel extends ViewModel {
-            @ViewModelInject
-            MyViewModel(SavedStateHandle savedState1, SavedStateHandle savedState2) { }
+            @Inject MyViewModel() { }
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel")
 
@@ -163,8 +174,7 @@ class ViewModelInjectProcessorTest {
       failed()
       hadErrorCount(1)
       hadErrorContainingMatch(
-        "Expected zero or one constructor argument of type " +
-          "androidx.lifecycle.SavedStateHandle, found 2"
+        "@HiltViewModel classes should not be scoped. Found: @javax.inject.Singleton"
       )
     }
   }

@@ -30,7 +30,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.components.ViewModelComponent
-import dagger.hilt.android.lifecycle.ViewModelInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.scopes.ViewModelScoped
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -88,7 +88,8 @@ class ViewModelScopedTest {
     val vm by viewModels<TestViewModel>()
   }
 
-  class TestViewModel @ViewModelInject constructor(
+  @HiltViewModel
+  class TestViewModel @Inject constructor(
     val one: DependsOnBarOne,
     val two: DependsOnBarTwo
   ) : ViewModel()

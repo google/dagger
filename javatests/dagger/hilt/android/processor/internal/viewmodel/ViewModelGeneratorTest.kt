@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal.viewmodelinject
+package dagger.hilt.android.processor.internal.viewmodel
 
 import com.google.testing.compile.CompilationSubject.assertThat
 import org.junit.Test
@@ -29,11 +29,13 @@ class ViewModelGeneratorTest {
     val myViewModel = """
         package dagger.hilt.android.test;
 
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
         import androidx.lifecycle.ViewModel;
+        import javax.inject.Inject;
 
+        @HiltViewModel
         class MyViewModel extends ViewModel {
-            @ViewModelInject
+            @Inject
             MyViewModel() { }
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel")
@@ -42,12 +44,13 @@ class ViewModelGeneratorTest {
         package dagger.hilt.android.test;
         
         import androidx.lifecycle.ViewModel;
+        import dagger.Binds;
         import dagger.Module;
         import dagger.Provides;
         import dagger.hilt.InstallIn;
         import dagger.hilt.android.components.ActivityRetainedComponent;
         import dagger.hilt.android.components.ViewModelComponent;
-        import dagger.hilt.android.internal.lifecycle.ViewModelInjectMap;
+        import dagger.hilt.android.internal.lifecycle.HiltViewModelMap;
         import dagger.hilt.codegen.OriginatingElement;
         import dagger.multibindings.IntoMap;
         import dagger.multibindings.IntoSet;
@@ -65,17 +68,12 @@ class ViewModelGeneratorTest {
         
           @Module
           @InstallIn(ViewModelComponent.class)
-          public static final class ProvidesModule {
-            private ProvidesModule() {
-            }
-        
-            @Provides
+          public static abstract class BindsModule {
+            @Binds
             @IntoMap
             @StringKey("dagger.hilt.android.test.MyViewModel")
-            @ViewModelInjectMap
-            public static ViewModel provide() {
-              return new MyViewModel();
-            }
+            @HiltViewModelMap
+            public abstract ViewModel binds(MyViewModel vm);
           }
         
           @Module
@@ -86,7 +84,7 @@ class ViewModelGeneratorTest {
         
             @Provides
             @IntoSet
-            @ViewModelInjectMap.KeySet
+            @HiltViewModelMap.KeySet
             public static String provide() {
               return "dagger.hilt.android.test.MyViewModel";
             }
@@ -94,7 +92,8 @@ class ViewModelGeneratorTest {
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel_HiltModule")
 
-    val compilation = compiler().compile(myViewModel)
+    val compilation = compiler()
+      .compile(myViewModel)
     assertThat(compilation).apply {
       succeeded()
       generatedSourceFile("dagger.hilt.android.test.MyViewModel_HiltModules")
@@ -107,12 +106,14 @@ class ViewModelGeneratorTest {
     val myViewModel = """
         package dagger.hilt.android.test;
 
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
         import androidx.lifecycle.ViewModel;
         import androidx.lifecycle.SavedStateHandle;
+        import javax.inject.Inject;
 
+        @HiltViewModel
         class MyViewModel extends ViewModel {
-            @ViewModelInject
+            @Inject
             MyViewModel(SavedStateHandle savedState) { }
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel")
@@ -120,14 +121,14 @@ class ViewModelGeneratorTest {
     val expected = """
         package dagger.hilt.android.test;
         
-        import androidx.lifecycle.SavedStateHandle;
         import androidx.lifecycle.ViewModel;
+        import dagger.Binds;
         import dagger.Module;
         import dagger.Provides;
         import dagger.hilt.InstallIn;
         import dagger.hilt.android.components.ActivityRetainedComponent;
         import dagger.hilt.android.components.ViewModelComponent;
-        import dagger.hilt.android.internal.lifecycle.ViewModelInjectMap;
+        import dagger.hilt.android.internal.lifecycle.HiltViewModelMap;
         import dagger.hilt.codegen.OriginatingElement;
         import dagger.multibindings.IntoMap;
         import dagger.multibindings.IntoSet;
@@ -145,17 +146,12 @@ class ViewModelGeneratorTest {
         
           @Module
           @InstallIn(ViewModelComponent.class)
-          public static final class ProvidesModule {
-            private ProvidesModule() {
-            }
-        
-            @Provides
+          public static abstract class BindsModule {
+            @Binds
             @IntoMap
             @StringKey("dagger.hilt.android.test.MyViewModel")
-            @ViewModelInjectMap
-            public static ViewModel provide(SavedStateHandle savedState) {
-              return new MyViewModel(savedState);
-            }
+            @HiltViewModelMap
+            public abstract ViewModel binds(MyViewModel vm);
           }
         
           @Module
@@ -166,7 +162,7 @@ class ViewModelGeneratorTest {
         
             @Provides
             @IntoSet
-            @ViewModelInjectMap.KeySet
+            @HiltViewModelMap.KeySet
             public static String provide() {
               return "dagger.hilt.android.test.MyViewModel";
             }
@@ -174,7 +170,8 @@ class ViewModelGeneratorTest {
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel_HiltModule")
 
-    val compilation = compiler().compile(myViewModel)
+    val compilation = compiler()
+      .compile(myViewModel)
     assertThat(compilation).apply {
       succeeded()
       generatedSourceFile("dagger.hilt.android.test.MyViewModel_HiltModules")
@@ -193,13 +190,15 @@ class ViewModelGeneratorTest {
     val myViewModel = """
         package dagger.hilt.android.test;
 
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
         import androidx.lifecycle.ViewModel;
         import androidx.lifecycle.SavedStateHandle;
         import java.lang.String;
+        import javax.inject.Inject;
 
+        @HiltViewModel
         class MyViewModel extends ViewModel {
-            @ViewModelInject
+            @Inject
             MyViewModel(String s, Foo f, SavedStateHandle savedState, long l) { }
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel")
@@ -207,14 +206,14 @@ class ViewModelGeneratorTest {
     val expected = """
         package dagger.hilt.android.test;
         
-        import androidx.lifecycle.SavedStateHandle;
         import androidx.lifecycle.ViewModel;
+        import dagger.Binds;
         import dagger.Module;
         import dagger.Provides;
         import dagger.hilt.InstallIn;
         import dagger.hilt.android.components.ActivityRetainedComponent;
         import dagger.hilt.android.components.ViewModelComponent;
-        import dagger.hilt.android.internal.lifecycle.ViewModelInjectMap;
+        import dagger.hilt.android.internal.lifecycle.HiltViewModelMap;
         import dagger.hilt.codegen.OriginatingElement;
         import dagger.multibindings.IntoMap;
         import dagger.multibindings.IntoSet;
@@ -232,17 +231,12 @@ class ViewModelGeneratorTest {
         
           @Module
           @InstallIn(ViewModelComponent.class)
-          public static final class ProvidesModule {
-            private ProvidesModule() {
-            }
-        
-            @Provides
+          public static abstract class BindsModule {
+            @Binds
             @IntoMap
             @StringKey("dagger.hilt.android.test.MyViewModel")
-            @ViewModelInjectMap
-            public static ViewModel provide(String s, Foo f, SavedStateHandle savedState, long l) {
-              return new MyViewModel(s, f, savedState, l);
-            }
+            @HiltViewModelMap
+            public abstract ViewModel binds(MyViewModel vm);
           }
         
           @Module
@@ -253,7 +247,7 @@ class ViewModelGeneratorTest {
         
             @Provides
             @IntoSet
-            @ViewModelInjectMap.KeySet
+            @HiltViewModelMap.KeySet
             public static String provide() {
               return "dagger.hilt.android.test.MyViewModel";
             }
@@ -261,7 +255,8 @@ class ViewModelGeneratorTest {
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel_HiltModule")
 
-    val compilation = compiler().compile(foo, myViewModel)
+    val compilation = compiler()
+      .compile(foo, myViewModel)
     assertThat(compilation).apply {
       succeeded()
       generatedSourceFile("dagger.hilt.android.test.MyViewModel_HiltModules")
@@ -280,14 +275,16 @@ class ViewModelGeneratorTest {
     val myViewModel = """
         package dagger.hilt.android.test;
 
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
         import androidx.lifecycle.ViewModel;
         import androidx.lifecycle.SavedStateHandle;
         import java.lang.String;
+        import javax.inject.Inject;
         import javax.inject.Provider;
 
+        @HiltViewModel
         class MyViewModel extends ViewModel {
-            @ViewModelInject
+            @Inject
             MyViewModel(String s, Provider<Foo> f, SavedStateHandle savedState) { }
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel")
@@ -295,21 +292,20 @@ class ViewModelGeneratorTest {
     val expected = """
         package dagger.hilt.android.test;
     
-        import androidx.lifecycle.SavedStateHandle;
         import androidx.lifecycle.ViewModel;
+        import dagger.Binds;
         import dagger.Module;
         import dagger.Provides;
         import dagger.hilt.InstallIn;
         import dagger.hilt.android.components.ActivityRetainedComponent;
         import dagger.hilt.android.components.ViewModelComponent;
-        import dagger.hilt.android.internal.lifecycle.ViewModelInjectMap;
+        import dagger.hilt.android.internal.lifecycle.HiltViewModelMap;
         import dagger.hilt.codegen.OriginatingElement;
         import dagger.multibindings.IntoMap;
         import dagger.multibindings.IntoSet;
         import dagger.multibindings.StringKey;
         import java.lang.String;
         import $GENERATED_TYPE;
-        import javax.inject.Provider;
         
         $GENERATED_ANNOTATION
         @OriginatingElement(
@@ -321,17 +317,12 @@ class ViewModelGeneratorTest {
         
           @Module
           @InstallIn(ViewModelComponent.class)
-          public static final class ProvidesModule {
-            private ProvidesModule() {
-            }
-        
-            @Provides
+          public static abstract class BindsModule {
+            @Binds
             @IntoMap
             @StringKey("dagger.hilt.android.test.MyViewModel")
-            @ViewModelInjectMap
-            public static ViewModel provide(String s, Provider<Foo> f, SavedStateHandle savedState) {
-              return new MyViewModel(s, f, savedState);
-            }
+            @HiltViewModelMap
+            public abstract ViewModel binds(MyViewModel vm);
           }
         
           @Module
@@ -342,7 +333,7 @@ class ViewModelGeneratorTest {
         
             @Provides
             @IntoSet
-            @ViewModelInjectMap.KeySet
+            @HiltViewModelMap.KeySet
             public static String provide() {
               return "dagger.hilt.android.test.MyViewModel";
             }
@@ -350,7 +341,8 @@ class ViewModelGeneratorTest {
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel_HiltModules")
 
-    val compilation = compiler().compile(foo, myViewModel)
+    val compilation = compiler()
+      .compile(foo, myViewModel)
     assertThat(compilation).apply {
       succeeded()
       generatedSourceFile("dagger.hilt.android.test.MyViewModel_HiltModules")
@@ -372,16 +364,18 @@ class ViewModelGeneratorTest {
     val myViewModel = """
         package dagger.hilt.android.test;
 
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
         import androidx.lifecycle.ViewModel;
         import androidx.lifecycle.SavedStateHandle;
         import java.lang.Long;
         import java.lang.String;
+        import javax.inject.Inject;
         import javax.inject.Named;
         import javax.inject.Provider;
 
+        @HiltViewModel
         class MyViewModel extends ViewModel {
-            @ViewModelInject
+            @Inject
             MyViewModel(@Named("TheString") String s, @MyQualifier Provider<Long> l,
                     SavedStateHandle savedState) {
             }
@@ -391,23 +385,20 @@ class ViewModelGeneratorTest {
     val expected = """
         package dagger.hilt.android.test;
         
-        import androidx.lifecycle.SavedStateHandle;
         import androidx.lifecycle.ViewModel;
+        import dagger.Binds;
         import dagger.Module;
         import dagger.Provides;
         import dagger.hilt.InstallIn;
         import dagger.hilt.android.components.ActivityRetainedComponent;
         import dagger.hilt.android.components.ViewModelComponent;
-        import dagger.hilt.android.internal.lifecycle.ViewModelInjectMap;
+        import dagger.hilt.android.internal.lifecycle.HiltViewModelMap;
         import dagger.hilt.codegen.OriginatingElement;
         import dagger.multibindings.IntoMap;
         import dagger.multibindings.IntoSet;
         import dagger.multibindings.StringKey;
-        import java.lang.Long;
         import java.lang.String;
         import $GENERATED_TYPE;
-        import javax.inject.Named;
-        import javax.inject.Provider;
         
         $GENERATED_ANNOTATION
         @OriginatingElement(
@@ -419,18 +410,12 @@ class ViewModelGeneratorTest {
         
           @Module
           @InstallIn(ViewModelComponent.class)
-          public static final class ProvidesModule {
-            private ProvidesModule() {
-            }
-        
-            @Provides
+          public static abstract class BindsModule {
+            @Binds
             @IntoMap
             @StringKey("dagger.hilt.android.test.MyViewModel")
-            @ViewModelInjectMap
-            public static ViewModel provide(@Named("TheString") String s, @MyQualifier Provider<Long> l,
-                SavedStateHandle savedState) {
-              return new MyViewModel(s, l, savedState);
-            }
+            @HiltViewModelMap
+            public abstract ViewModel binds(MyViewModel vm);
           }
         
           @Module
@@ -441,7 +426,7 @@ class ViewModelGeneratorTest {
         
             @Provides
             @IntoSet
-            @ViewModelInjectMap.KeySet
+            @HiltViewModelMap.KeySet
             public static String provide() {
               return "dagger.hilt.android.test.MyViewModel";
             }
@@ -449,7 +434,8 @@ class ViewModelGeneratorTest {
         }
         """.toJFO("dagger.hilt.android.test.MyViewModel_HiltModules")
 
-    val compilation = compiler().compile(myQualifier, myViewModel)
+    val compilation = compiler()
+      .compile(myQualifier, myViewModel)
     assertThat(compilation).apply {
       succeeded()
       generatedSourceFile("dagger.hilt.android.test.MyViewModel_HiltModules")
@@ -462,12 +448,14 @@ class ViewModelGeneratorTest {
     val viewModel = """
         package dagger.hilt.android.test;
 
-        import dagger.hilt.android.lifecycle.ViewModelInject;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
         import androidx.lifecycle.ViewModel;
+        import javax.inject.Inject;
 
         class Outer {
+            @HiltViewModel
             static class InnerViewModel extends ViewModel {
-                @ViewModelInject
+                @Inject
                 InnerViewModel() { }
             }
         }
@@ -477,12 +465,13 @@ class ViewModelGeneratorTest {
         package dagger.hilt.android.test;
         
         import androidx.lifecycle.ViewModel;
+        import dagger.Binds;
         import dagger.Module;
         import dagger.Provides;
         import dagger.hilt.InstallIn;
         import dagger.hilt.android.components.ActivityRetainedComponent;
         import dagger.hilt.android.components.ViewModelComponent;
-        import dagger.hilt.android.internal.lifecycle.ViewModelInjectMap;
+        import dagger.hilt.android.internal.lifecycle.HiltViewModelMap;
         import dagger.hilt.codegen.OriginatingElement;
         import dagger.multibindings.IntoMap;
         import dagger.multibindings.IntoSet;
@@ -500,17 +489,12 @@ class ViewModelGeneratorTest {
         
           @Module
           @InstallIn(ViewModelComponent.class)
-          public static final class ProvidesModule {
-            private ProvidesModule() {
-            }
-        
-            @Provides
+          public static abstract class BindsModule {
+            @Binds
             @IntoMap
             @StringKey("dagger.hilt.android.test.Outer${'$'}InnerViewModel")
-            @ViewModelInjectMap
-            public static ViewModel provide() {
-              return new Outer.InnerViewModel();
-            }
+            @HiltViewModelMap
+            public abstract ViewModel binds(Outer.InnerViewModel vm);
           }
         
           @Module
@@ -521,7 +505,7 @@ class ViewModelGeneratorTest {
         
             @Provides
             @IntoSet
-            @ViewModelInjectMap.KeySet
+            @HiltViewModelMap.KeySet
             public static String provide() {
               return "dagger.hilt.android.test.Outer${'$'}InnerViewModel";
             }
@@ -529,7 +513,8 @@ class ViewModelGeneratorTest {
         }
         """.toJFO("dagger.hilt.android.test.Outer_InnerViewModel_HiltModules")
 
-    val compilation = compiler().compile(viewModel)
+    val compilation = compiler()
+      .compile(viewModel)
     assertThat(compilation).apply {
       succeeded()
       generatedSourceFile("dagger.hilt.android.test.Outer_InnerViewModel_HiltModules")

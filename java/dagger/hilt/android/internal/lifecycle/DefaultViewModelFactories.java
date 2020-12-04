@@ -16,18 +16,24 @@
 
 package dagger.hilt.android.internal.lifecycle;
 
+import android.app.Application;
+import androidx.lifecycle.SavedStateViewModelFactory;
 import androidx.lifecycle.ViewModelProvider;
+import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.activity.ComponentActivity;
+import androidx.savedstate.SavedStateRegistryOwner;
 import dagger.Module;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.components.FragmentComponent;
+import dagger.hilt.android.internal.builders.ViewModelComponentBuilder;
 import dagger.multibindings.Multibinds;
 import java.util.Set;
+import javax.inject.Inject;
 
 /**
  * Modules and entry points for the default view model factory used by activities and fragments
@@ -44,10 +50,10 @@ public final class DefaultViewModelFactories {
    *
    * <p>Do not use except in Hilt generated code!
    */
-  @Nullable
   public static ViewModelProvider.Factory getActivityFactory(ComponentActivity activity) {
-    return getFactoryFromSet(
-        EntryPoints.get(activity, ActivityEntryPoint.class).getActivityViewModelFactory());
+    return EntryPoints.get(activity, ActivityEntryPoint.class)
+        .getHiltInternalFactoryFactory()
+        .fromActivity(activity);
   }
 
   /**
@@ -55,62 +61,106 @@ public final class DefaultViewModelFactories {
    *
    * <p>Do not use except in Hilt generated code!
    */
-  @Nullable
   public static ViewModelProvider.Factory getFragmentFactory(Fragment fragment) {
-    return getFactoryFromSet(
-        EntryPoints.get(fragment, FragmentEntryPoint.class).getFragmentViewModelFactory());
+    return EntryPoints.get(fragment, FragmentEntryPoint.class)
+        .getHiltInternalFactoryFactory()
+        .fromFragment(fragment);
   }
 
-  @Nullable
-  private static ViewModelProvider.Factory getFactoryFromSet(Set<ViewModelProvider.Factory> set) {
-    // A multibinding set is used instead of BindsOptionalOf because Optional is not available in
-    // Android until API 24 and we don't want to have Guava as a transitive dependency.
-    if (set.isEmpty()) {
-      return null;
+  /** Internal factory for the Hilt ViewModel Factory. */
+  public static final class InternalFactoryFactory {
+
+    private final Application application;
+    private final Set<String> keySet;
+    private final ViewModelComponentBuilder viewModelComponentBuilder;
+    @Nullable private final ViewModelProvider.Factory defaultActivityFactory;
+    @Nullable private final ViewModelProvider.Factory defaultFragmentFactory;
+
+    @Inject
+    InternalFactoryFactory(
+            Application application,
+        @HiltViewModelMap.KeySet Set<String> keySet,
+        ViewModelComponentBuilder viewModelComponentBuilder,
+        // These default factory bindings are temporary for the transition of deprecating
+        // the Hilt ViewModel extension for the built-in support
+        @DefaultActivityViewModelFactory Set<ViewModelProvider.Factory> defaultActivityFactorySet,
+        @DefaultFragmentViewModelFactory Set<ViewModelProvider.Factory> defaultFragmentFactorySet) {
+      this.application = application;
+      this.keySet = keySet;
+      this.viewModelComponentBuilder = viewModelComponentBuilder;
+      this.defaultActivityFactory = getFactoryFromSet(defaultActivityFactorySet);
+      this.defaultFragmentFactory = getFactoryFromSet(defaultFragmentFactorySet);
     }
-    if (set.size() > 1) {
-      throw new IllegalStateException(
-          "At most one default view model factory is expected. Found " + set);
+
+    ViewModelProvider.Factory fromActivity(ComponentActivity activity) {
+      return getHiltViewModelFactory(activity,
+          activity.getIntent() != null ? activity.getIntent().getExtras() : null,
+          defaultActivityFactory);
     }
-    ViewModelProvider.Factory factory = set.iterator().next();
-    if (factory == null) {
-      throw new IllegalStateException("Default view model factory must not be null.");
+
+    ViewModelProvider.Factory fromFragment(Fragment fragment) {
+      return getHiltViewModelFactory(fragment, fragment.getArguments(), defaultFragmentFactory);
     }
-    return factory;
+
+    private ViewModelProvider.Factory getHiltViewModelFactory(
+        SavedStateRegistryOwner owner,
+        @Nullable Bundle defaultArgs,
+        @Nullable ViewModelProvider.Factory extensionDelegate) {
+      ViewModelProvider.Factory delegate = extensionDelegate == null
+          ? new SavedStateViewModelFactory(application, owner, defaultArgs)
+          : extensionDelegate;
+      return new HiltViewModelFactory(
+          owner, defaultArgs, keySet, delegate, viewModelComponentBuilder);
+    }
+
+    @Nullable
+    private static ViewModelProvider.Factory getFactoryFromSet(Set<ViewModelProvider.Factory> set) {
+      // A multibinding set is used instead of BindsOptionalOf because Optional is not available in
+      // Android until API 24 and we don't want to have Guava as a transitive dependency.
+      if (set.isEmpty()) {
+        return null;
+      }
+      if (set.size() > 1) {
+        throw new IllegalStateException(
+            "At most one default view model factory is expected. Found " + set);
+      }
+      ViewModelProvider.Factory factory = set.iterator().next();
+      if (factory == null) {
+        throw new IllegalStateException("Default view model factory must not be null.");
+      }
+      return factory;
+    }
   }
 
-  /** The activity module to declare the optional factory. */
+  /** The activity module to declare the optional factories. */
   @Module
   @InstallIn(ActivityComponent.class)
   public interface ActivityModule {
     @Multibinds
+    @HiltViewModelMap.KeySet
+    abstract Set<String> viewModelKeys();
+
+    @Multibinds
     @DefaultActivityViewModelFactory
-    Set<ViewModelProvider.Factory> defaultViewModelFactory();
+    Set<ViewModelProvider.Factory> defaultActivityViewModelFactory();
+
+    @Multibinds
+    @DefaultFragmentViewModelFactory
+    Set<ViewModelProvider.Factory> defaultFragmentViewModelFactory();
   }
 
   /** The activity entry point to retrieve the factory. */
   @EntryPoint
   @InstallIn(ActivityComponent.class)
   public interface ActivityEntryPoint {
-    @DefaultActivityViewModelFactory
-    Set<ViewModelProvider.Factory> getActivityViewModelFactory();
-  }
-
-  /** The fragment module to declare the optional factory. */
-  @Module
-  @InstallIn(FragmentComponent.class)
-  public interface FragmentModule {
-    @Multibinds
-    @DefaultFragmentViewModelFactory
-    Set<ViewModelProvider.Factory> defaultViewModelFactory();
+    InternalFactoryFactory getHiltInternalFactoryFactory();
   }
 
   /** The fragment entry point to retrieve the factory. */
   @EntryPoint
   @InstallIn(FragmentComponent.class)
   public interface FragmentEntryPoint {
-    @DefaultFragmentViewModelFactory
-    Set<ViewModelProvider.Factory> getFragmentViewModelFactory();
+    InternalFactoryFactory getHiltInternalFactoryFactory();
   }
 
   private DefaultViewModelFactories() {}

@@ -200,7 +200,6 @@ gen_maven_artifact(
         "androidx.fragment:fragment",
         "androidx.lifecycle:lifecycle-viewmodel",
         "androidx.lifecycle:lifecycle-viewmodel-savedstate",
-        "androidx.savedstate:savedstate",
         "androidx.multidex:multidex",
         "androidx.test:core",
         "com.google.code.findbugs:jsr305",

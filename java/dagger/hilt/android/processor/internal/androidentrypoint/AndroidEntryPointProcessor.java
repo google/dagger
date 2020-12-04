@@ -68,7 +68,9 @@ public final class AndroidEntryPointProcessor extends BaseProcessor {
         new BroadcastReceiverGenerator(getProcessingEnv(), metadata).generate();
         break;
       case FRAGMENT:
-        new FragmentGenerator(getProcessingEnv(), metadata).generate();
+        new FragmentGenerator(
+            getProcessingEnv(), metadata )
+            .generate();
         break;
       case SERVICE:
         new ServiceGenerator(getProcessingEnv(), metadata).generate();

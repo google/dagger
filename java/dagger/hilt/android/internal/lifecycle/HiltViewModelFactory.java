@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.lifecycle;
+package dagger.hilt.android.internal.lifecycle;
 
 import androidx.lifecycle.AbstractSavedStateViewModelFactory;
 import androidx.lifecycle.SavedStateHandle;
@@ -24,12 +24,13 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.savedstate.SavedStateRegistryOwner;
+import dagger.Module;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ViewModelComponent;
 import dagger.hilt.android.internal.builders.ViewModelComponentBuilder;
-import dagger.hilt.android.internal.lifecycle.HiltViewModelMap;
+import dagger.multibindings.Multibinds;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Provider;
@@ -49,7 +50,16 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
   @InstallIn(ViewModelComponent.class)
   interface ViewModelFactoriesEntryPoint {
     @HiltViewModelMap
-    Map<String, Provider<ViewModel>> getHiltViewModelInjectMap();
+    Map<String, Provider<ViewModel>> getHiltViewModelMap();
+  }
+
+  /** Hilt module for providing the empty multi-binding map of ViewModels. */
+  @Module
+  @InstallIn(ViewModelComponent.class)
+  public abstract static class ViewModelModule {
+    @Multibinds
+    @HiltViewModelMap
+    abstract Map<String, ViewModel> hiltViewModelMap();
   }
 
   private final Set<String> viewModelInjectKeys;
@@ -75,7 +85,7 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
                 viewModelComponentBuilder.savedStateHandle(handle).build();
             Provider<? extends ViewModel> provider =
                 EntryPoints.get(component, ViewModelFactoriesEntryPoint.class)
-                    .getHiltViewModelInjectMap()
+                    .getHiltViewModelMap()
                     .get(modelClass.getName());
             if (provider == null) {
               throw new IllegalStateException(

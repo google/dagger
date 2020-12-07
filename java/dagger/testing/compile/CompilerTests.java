@@ -28,6 +28,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * A helper class for working with java compiler tests.
@@ -37,9 +38,14 @@ public final class CompilerTests {
 
   /** Returns the {@plainlink File jar file} containing the compiler deps. */
   public static File compilerDepsJar() {
-    return stream(Files.fileTraverser().breadthFirst(getRunfilesDir()))
-        .filter(file -> file.getName().endsWith("_compiler_deps_deploy.jar"))
-        .collect(onlyElement());
+    try {
+      return stream(Files.fileTraverser().breadthFirst(getRunfilesDir()))
+          .filter(file -> file.getName().endsWith("_compiler_deps_deploy.jar"))
+          .collect(onlyElement());
+    } catch (NoSuchElementException e) {
+      throw new IllegalStateException(
+          "No compiler deps jar found. Are you using the Dagger compiler_test macro?", e);
+    }
   }
 
   /** Returns a {@link Compiler} with the compiler deps jar added to the class path. */

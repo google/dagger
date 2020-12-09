@@ -188,7 +188,7 @@ def _gen_maven_artifact(
         if proguard_specs:
             # Concatenate all proguard rules since an aar only contains a single proguard.txt
             native.genrule(
-                name = name + "-proguard.txt",
+                name = name + "-proguard",
                 srcs = proguard_specs,
                 outs = [name + "-proguard.txt"],
                 cmd = "cat $(SRCS) > $@",
@@ -337,7 +337,7 @@ def _package_android_library_impl(ctx):
     """A very, very simple Android Library (aar) packaging rule.
 
     This rule only support packaging simple android libraries. No resources
-    support, assets, extra libs, jni, nor proguard. This rule is needed because
+    support, assets, extra libs, nor jni. This rule is needed because
     there is no 'JarJar equivalent' for AARs and some of our artifacts are
     composed of sources spread across multiple android_library targets.
 

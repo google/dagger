@@ -137,14 +137,24 @@ public final class AssistedFactoryTest {
     // Use different parameter names than Foo to make sure we're not assuming they're the same.
     SimpleFoo createSimpleFoo(AssistedDep1 factoryAssistedDep1);
 
-    // A no-op method to test static methods in assisted factories
+    // A no-op method to test static methods are allowed
     static void staticMethod() {
       return;
     }
 
-    // A no-op method to test default methods in assisted factories
+    // A no-op method to test static methods that return assisted type are allowed
+    static SimpleFoo staticSimpleFooMethod() {
+      return null;
+    }
+
+    // A no-op method to test default methods are allowed
     default void defaultMethod() {
       return;
+    }
+
+    // A no-op method to test default methods that return assisted type are allowed
+    default SimpleFoo defaultSimpleFooMethod() {
+      return null;
     }
   }
 
@@ -194,6 +204,26 @@ public final class AssistedFactoryTest {
     // Use different parameter names than Foo to make sure we're not assuming they're the same.
     abstract Foo createFoo(
         AssistedDep1 factoryAssistedDep1, AssistedDep2 factoryAssistedDep2, int factoryAssistedInt);
+
+    // A no-op method to test static methods are allowed
+    static void staticMethod() {
+      return;
+    }
+
+    // A no-op method to test static methods that return assisted type are allowed
+    static Foo staticFooMethod() {
+      return null;
+    }
+
+    // A no-op method to test concrete methods are allowed
+    void concreteMethod() {
+      return;
+    }
+
+    // A no-op method to test concrete methods that return assisted type are allowed
+    Foo concreteFooMethod() {
+      return null;
+    }
   }
 
   static final class NoAssistedParametersFoo extends BaseFoo {

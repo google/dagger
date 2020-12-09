@@ -245,7 +245,8 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
     CodeBlock invokeNewInstance =
         ProvisionMethod.invoke(
             binding,
-            request -> frameworkTypeUsageStatement(
+            request ->
+                frameworkTypeUsageStatement(
                     CodeBlock.of("$N", frameworkFields.get(request)), request.kind()),
             nameGeneratedType(binding),
             moduleParameter(binding).map(module -> CodeBlock.of("$N", module)),

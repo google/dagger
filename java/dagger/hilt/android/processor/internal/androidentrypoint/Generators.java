@@ -306,40 +306,32 @@ final class Generators {
           .endControlFlow();
     }
 
+    typeSpecBuilder.addField(injectedField(metadata));
+
     switch (metadata.androidType()) {
       case ACTIVITY:
       case FRAGMENT:
       case VIEW:
       case SERVICE:
-        if (metadata.overridesAndroidEntryPointClass()) {
-          typeSpecBuilder.addField(injectedField(metadata));
-
-          // Only add @Override if an ancestor extends a generated Hilt class.
-          // When using bytecode injection, this isn't always guaranteed.
-          if (ancestorExtendsGeneratedHiltClass(metadata)) {
-            methodSpecBuilder.addAnnotation(Override.class);
-          }
-
-          methodSpecBuilder
-              .beginControlFlow("if (!injected)")
-              .addStatement("injected = true");
-        } else if (metadata.allowsOptionalInjection()) {
-          typeSpecBuilder.addField(injectedField(metadata));
-          methodSpecBuilder.addStatement("injected = true");
+        // Only add @Override if an ancestor extends a generated Hilt class.
+        // When using bytecode injection, this isn't always guaranteed.
+        if (metadata.overridesAndroidEntryPointClass()
+            && ancestorExtendsGeneratedHiltClass(metadata)) {
+          methodSpecBuilder.addAnnotation(Override.class);
         }
-        methodSpecBuilder.addStatement(
-            "(($T) $L).$L($L)",
-            metadata.injectorClassName(),
-            generatedComponentCallBlock(metadata),
-            metadata.injectMethodName(),
-            unsafeCastThisTo(metadata.elementClassName()));
-        if (metadata.overridesAndroidEntryPointClass()) {
-          methodSpecBuilder.endControlFlow();
-        }
+        methodSpecBuilder
+            .beginControlFlow("if (!injected)")
+            .addStatement("injected = true")
+            .addStatement(
+                "(($T) $L).$L($L)",
+                metadata.injectorClassName(),
+                generatedComponentCallBlock(metadata),
+                metadata.injectMethodName(),
+                unsafeCastThisTo(metadata.elementClassName()))
+            .endControlFlow();
         break;
       case BROADCAST_RECEIVER:
         typeSpecBuilder.addField(injectedLockField());
-        typeSpecBuilder.addField(injectedField(metadata));
 
         methodSpecBuilder
             .addParameter(ParameterSpec.builder(AndroidClassNames.CONTEXT, "context").build())

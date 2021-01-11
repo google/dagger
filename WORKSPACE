@@ -106,6 +106,7 @@ maven_install(
         "androidx.appcompat:appcompat:1.2.0",
         "androidx.activity:activity:1.2.0-rc01",
         "androidx.fragment:fragment:1.3.0-rc01",
+        "androidx.lifecycle:lifecycle-common:2.3.0-rc01",
         "androidx.lifecycle:lifecycle-viewmodel:2.3.0-rc01",
         "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.0-rc01",
         "androidx.multidex:multidex:2.0.1",

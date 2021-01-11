@@ -202,6 +202,7 @@ gen_maven_artifact(
         "androidx.activity:activity",
         "androidx.annotation:annotation",
         "androidx.fragment:fragment",
+        "androidx.lifecycle:lifecycle-common",
         "androidx.lifecycle:lifecycle-viewmodel",
         "androidx.lifecycle:lifecycle-viewmodel-savedstate",
         "androidx.multidex:multidex",

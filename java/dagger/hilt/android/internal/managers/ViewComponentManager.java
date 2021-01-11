@@ -16,6 +16,9 @@
 
 package dagger.hilt.android.internal.managers;
 
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleOwner;
 import android.content.Context;
 import android.content.ContextWrapper;
 import androidx.fragment.app.Fragment;
@@ -104,7 +107,7 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
       if (context instanceof FragmentContextWrapper) {
 
         FragmentContextWrapper fragmentContextWrapper = (FragmentContextWrapper) context;
-        return (GeneratedComponentManager<?>) fragmentContextWrapper.fragment;
+        return (GeneratedComponentManager<?>) fragmentContextWrapper.getFragment();
       } else if (allowMissing) {
         // We didn't find anything, so return null if we're not supposed to fail.
         // The rest of the logic is just about getting a good error message.
@@ -167,20 +170,38 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
    */
   // This is only non-final for the account override
   public static final class FragmentContextWrapper extends ContextWrapper {
+    private Fragment fragment;
     private LayoutInflater baseInflater;
     private LayoutInflater inflater;
-    public final Fragment fragment;
+    private final LifecycleEventObserver fragmentLifecycleObserver =
+        new LifecycleEventObserver() {
+          @Override
+          public void onStateChanged(LifecycleOwner source, Lifecycle.Event event) {
+            if (event == Lifecycle.Event.ON_DESTROY) {
+              // Prevent the fragment from leaking if the view outlives the fragment.
+              // See https://github.com/google/dagger/issues/2070
+              FragmentContextWrapper.this.fragment = null;
+            }
+          }
+        };
 
-    public FragmentContextWrapper(Context base, Fragment fragment) {
+    FragmentContextWrapper(Context base, Fragment fragment) {
       super(Preconditions.checkNotNull(base));
       this.baseInflater = null;
       this.fragment = Preconditions.checkNotNull(fragment);
+      this.fragment.getLifecycle().addObserver(fragmentLifecycleObserver);
     }
 
-    public FragmentContextWrapper(LayoutInflater baseInflater, Fragment fragment) {
+    FragmentContextWrapper(LayoutInflater baseInflater, Fragment fragment) {
       super(Preconditions.checkNotNull(Preconditions.checkNotNull(baseInflater).getContext()));
       this.baseInflater = baseInflater;
       this.fragment = Preconditions.checkNotNull(fragment);
+      this.fragment.getLifecycle().addObserver(fragmentLifecycleObserver);
+    }
+
+    Fragment getFragment() {
+      Preconditions.checkNotNull(fragment, "The fragment has already been destroyed.");
+      return fragment;
     }
 
     @Override

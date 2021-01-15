@@ -148,7 +148,7 @@ that have an [`@Module`][Module] annotation.
 ```java
 @Module
 interface HeaterModule {
-  @Binds abstract Heater bindHeater(ElectricHeater impl);
+  @Binds Heater bindHeater(ElectricHeater impl);
 }
 ```
 

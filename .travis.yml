@@ -18,8 +18,8 @@ jdk:
 android:
   components:
     - tools
-    - platform-tools
     - tools # Duplicated as per https://github.com/travis-ci/travis-ci/issues/6040#issuecomment-219367943
+    - platform-tools
     - extra-android-m2repository
 
 before_install:
@@ -36,15 +36,48 @@ before_install:
   - ln -s $(which g++-4.8) travis_bin/g++
   - export PATH="${PWD}/travis_bin:${PATH}"
 
-script:
-  - util/run-local-tests.sh --test_output=errors
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+# Setup caching for Bazel and Android.
+# See https://docs.travis-ci.com/user/languages/android/#caching
+cache:
+  directories:
+    - $HOME/.cache/bazel
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.m2
+
+# This runs essentially the same scripts as util/run-local-tests.sh but we've
+# split them into separate stages/jobs to avoid time limit for single script.
+jobs:
+  include:
+    - stage: "Bazel tests"
+      name: "Bazel tests"
+      script:
+      - travis_fold start "script.1" &&
+        bazel test --test_output=errors //... &&
+        travis_fold end "script.1"
+
+      - travis_fold start "script.2" &&
+        util/install-local-snapshot.sh &&
+        travis_fold end "script.2"
+    - stage: "Artifact tests"
+      name: "Maven tests"
+      script: pushd examples/maven && mvn compile && popd
+    - name: "Gradle tests"
+      script: util/run-local-gradle-tests.sh
+    - name: "Gradle Android tests (AGP 4.1.0)"
+      script: util/run-local-gradle-android-tests.sh "4.1.0"
+    - name: "Gradle Android tests (AGP 4.2.0-beta01)"
+      script: util/run-local-gradle-android-tests.sh "4.2.0-beta01"
 
 env:
   global:
     # Encrypted credentials for deploying snapshots.
     - secure: SV7y/nx47vwCCFJgyhZjlyC9tUneUpwe5XhEMLlj9oOpQRr4eqDumybZtKpKaxdtv13NMQ5rI9coWdO9L4TVjrJXAfG2rWoi7nXh8z0gDESVZLmCtiLPlC5zkAAur9X/6gIau5IizyliDVp7jrAI0f6Ywdd4FHcXl7t8laUzVWg=
     - secure: P53TirBuYomoOqVTVnDb5Z7xc5qa5KICbkDCAdlo+Nwyb6be6Mr3rxJ0ozR201UpmCdOhGvvVpILTkakC0iF6nJc4gYjOoR95u9gNKWAsRE1tlvR4FX7o7n7aDyizaAyQXUFo5wWtLANHDvLUuf5du3xryMKJw1r9/oOpLxs+T0=
-
 
     # Encrypted GitHub access token to allow util/generate-latest-docs.sh to
     # push Javadoc to gh-pages.

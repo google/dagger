@@ -50,7 +50,6 @@ android_library(
         "@maven//:androidx_activity_activity",
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_fragment_fragment",
-        "@maven//:androidx_lifecycle_lifecycle_common",
         "@maven//:androidx_lifecycle_lifecycle_viewmodel",
     ],
 )

@@ -30,6 +30,8 @@ import static dagger.internal.codegen.javapoet.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -68,7 +70,6 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -307,7 +308,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
           ParameterSpec.builder(delegateFactoryTypeName(returnElement), "delegateFactory").build();
       TypeSpec.Builder builder =
           TypeSpec.classBuilder(nameGeneratedType(binding))
-              .addModifiers(PUBLIC)
+              .addModifiers(PUBLIC, FINAL)
               .addTypeVariables(
                   factory.getTypeParameters().stream()
                       .map(TypeVariableName::get)
@@ -322,7 +323,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
       builder
           .addField(
               FieldSpec.builder(delegateFactoryParam.type, delegateFactoryParam.name)
-                  .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                  .addModifiers(PRIVATE, FINAL)
                   .build())
           .addMethod(
               MethodSpec.constructorBuilder()
@@ -340,7 +341,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
                   .build())
           .addMethod(
               MethodSpec.methodBuilder("create")
-                  .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                  .addModifiers(PUBLIC, STATIC)
                   .addParameter(delegateFactoryParam)
                   .addTypeVariables(
                       returnElement.getTypeParameters().stream()

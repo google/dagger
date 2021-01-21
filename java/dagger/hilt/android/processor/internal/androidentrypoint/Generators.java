@@ -53,30 +53,22 @@ final class Generators {
   }
 
   /**
-   * Copies all constructors with arguments to the builder.
+   * Copies all constructors with arguments to the builder, if the base class is abstract.
+   * Otherwise throws an exception.
    */
   static void copyConstructors(TypeElement baseClass, TypeSpec.Builder builder) {
-    copyConstructors(baseClass, CodeBlock.builder().build(), builder);
-  }
-
-  /**
-   * Copies all constructors with arguments along with an appended body to the builder.
-   */
-  static void copyConstructors(TypeElement baseClass, CodeBlock body, TypeSpec.Builder builder) {
     List<ExecutableElement> constructors =
         ElementFilter.constructorsIn(baseClass.getEnclosedElements())
             .stream()
             .filter(constructor -> !constructor.getModifiers().contains(PRIVATE))
             .collect(Collectors.toList());
 
-    if (constructors.size() == 1
-        && getOnlyElement(constructors).getParameters().isEmpty()
-        && body.isEmpty()) {
+    if (constructors.size() == 1 && getOnlyElement(constructors).getParameters().isEmpty()) {
       // No need to copy the constructor if the default constructor will handle it.
       return;
     }
 
-    constructors.forEach(constructor -> builder.addMethod(copyConstructor(constructor, body)));
+    constructors.forEach(constructor -> builder.addMethod(copyConstructor(constructor)));
   }
 
   /** Returns Optional with AnnotationSpec for Nullable if found on element, empty otherwise. */
@@ -117,10 +109,6 @@ final class Generators {
   //     super(param1, param2);
   //   }
   static MethodSpec copyConstructor(ExecutableElement constructor) {
-    return copyConstructor(constructor, CodeBlock.builder().build());
-  }
-
-  private static MethodSpec copyConstructor(ExecutableElement constructor, CodeBlock body) {
     List<ParameterSpec> params =
         constructor.getParameters().stream()
             .map(parameter -> getParameterSpecWithNullable(parameter))
@@ -131,8 +119,7 @@ final class Generators {
             .addParameters(params)
             .addStatement(
                 "super($L)",
-                params.stream().map(param -> param.name).collect(Collectors.joining(", ")))
-            .addCode(body);
+                params.stream().map(param -> param.name).collect(Collectors.joining(", ")));
 
     constructor.getAnnotationMirrors().stream()
         .filter(a -> Processors.hasAnnotation(a, AndroidClassNames.TARGET_API))

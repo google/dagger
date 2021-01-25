@@ -45,6 +45,9 @@ public final class AssistedFactoryParameterizedTest {
     // Tests a parameterized Factory with same type as binding
     ParameterizedFooFactory<Dep1, Dep1> bindingParameterizedFooFactory();
 
+    // Tests a parameterized Factory with fixed type parameters
+    FixedParameterizedFooFactory fixedParameterizedFooFactory();
+
     // Tests a parameterized Factory that extends an interface with a parameterized return type
     ExtendedFooFactory<Dep2, AssistedDep2> extendedParameterizedFooFactory();
 
@@ -171,6 +174,32 @@ public final class AssistedFactoryParameterizedTest {
     assertThat(parameterizedFoo.dep4).isNotNull();
     assertThat(parameterizedFoo.assistedDep1).isEqualTo(assistedDep1);
     assertThat(parameterizedFoo.assistedDepT).isEqualTo(dep1);
+    assertThat(parameterizedFoo.assistedInt).isEqualTo(assistedInt);
+    assertThat(parameterizedFoo.factory).isNotNull();
+  }
+
+  @AssistedFactory
+  interface FixedParameterizedFooFactory {
+    ParameterizedFoo<Dep2, AssistedDep2> create(
+        AssistedDep1 assistedDep1, AssistedDep2 assistedDep2, int assistedInt);
+  }
+
+  @Test
+  public void testFixedParameterizedFooFactory() {
+    AssistedDep1 assistedDep1 = new AssistedDep1();
+    AssistedDep2 assistedDep2 = new AssistedDep2();
+    int assistedInt = 7;
+    ParameterizedFoo<Dep2, AssistedDep2> parameterizedFoo =
+        DaggerAssistedFactoryParameterizedTest_ParentComponent.create()
+            .fixedParameterizedFooFactory()
+            .create(assistedDep1, assistedDep2, assistedInt);
+    assertThat(parameterizedFoo.dep1).isNotNull();
+    assertThat(parameterizedFoo.depTProvider).isNotNull();
+    assertThat(parameterizedFoo.depTProvider.get()).isNotNull();
+    assertThat(parameterizedFoo.dep3).isNotNull();
+    assertThat(parameterizedFoo.dep4).isNotNull();
+    assertThat(parameterizedFoo.assistedDep1).isEqualTo(assistedDep1);
+    assertThat(parameterizedFoo.assistedDepT).isEqualTo(assistedDep2);
     assertThat(parameterizedFoo.assistedInt).isEqualTo(assistedInt);
     assertThat(parameterizedFoo.factory).isNotNull();
   }

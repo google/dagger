@@ -53,7 +53,6 @@ import dagger.assisted.AssistedFactory;
 import dagger.internal.codegen.base.SourceFileGenerationException;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
-import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingFactory;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.langmodel.DaggerElements;
@@ -305,13 +304,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
     @Override
     public Optional<TypeSpec.Builder> write(ProvisionBinding binding) {
       TypeElement factory = asType(binding.bindingElement().get());
-      ExecutableElement factoryMethod =
-          AssistedInjectionAnnotations.assistedFactoryMethod(factory, elements, types);
-      ExecutableType factoryMethodType =
-          asExecutable(types.asMemberOf(asDeclared(binding.key().type()), factoryMethod));
-      TypeElement returnElement = asTypeElement(factoryMethodType.getReturnType());
-      ParameterSpec delegateFactoryParam =
-          ParameterSpec.builder(delegateFactoryTypeName(returnElement), "delegateFactory").build();
+
       TypeSpec.Builder builder =
           TypeSpec.classBuilder(nameGeneratedType(binding))
               .addModifiers(PUBLIC, FINAL)
@@ -326,6 +319,15 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
         builder.superclass(factory.asType());
       }
 
+      // Define all types associated with the @AssistedFactory before generating the implementation.
+      DeclaredType factoryType = asDeclared(binding.key().type());
+      ExecutableElement factoryMethod =
+          AssistedInjectionAnnotations.assistedFactoryMethod(factory, elements, types);
+      ExecutableType factoryMethodType = asExecutable(types.asMemberOf(factoryType, factoryMethod));
+      DeclaredType returnType = asDeclared(factoryMethodType.getReturnType());
+      TypeElement returnElement = asTypeElement(returnType);
+      ParameterSpec delegateFactoryParam =
+          ParameterSpec.builder(delegateFactoryTypeName(returnType), "delegateFactory").build();
       builder
           .addField(
               FieldSpec.builder(delegateFactoryParam.type, delegateFactoryParam.name)
@@ -363,19 +365,25 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
       return Optional.of(builder);
     }
 
-    private TypeName delegateFactoryTypeName(TypeElement returnElement) {
-      Binding delegateBinding =
-          bindingFactory.injectionBinding(
-              getOnlyElement(assistedInjectedConstructors(returnElement)), Optional.empty());
-      ImmutableList<TypeVariableName> typeParameters =
-          returnElement.getTypeParameters().stream()
-              .map(TypeVariableName::get)
-              .collect(toImmutableList());
-      return typeParameters.isEmpty()
-          ? generatedClassNameForBinding(delegateBinding)
+    /** Returns the generated factory {@link TypeName type} for an @AssistedInject constructor. */
+    private TypeName delegateFactoryTypeName(DeclaredType assistedInjectType) {
+      // The name of the generated factory for the assisted inject type,
+      // e.g. an @AssistedInject Foo(...) {...} constructor will generate a Foo_Factory class.
+      ClassName generatedFactoryClassName =
+          generatedClassNameForBinding(
+              bindingFactory.injectionBinding(
+                  getOnlyElement(assistedInjectedConstructors(asTypeElement(assistedInjectType))),
+                  Optional.empty()));
+
+      // Return the factory type resolved with the same type parameters as the assisted inject type.
+      return assistedInjectType.getTypeArguments().isEmpty()
+          ? generatedFactoryClassName
           : ParameterizedTypeName.get(
-              generatedClassNameForBinding(delegateBinding),
-              typeParameters.toArray(new TypeName[0]));
+              generatedFactoryClassName,
+              assistedInjectType.getTypeArguments().stream()
+                  .map(TypeName::get)
+                  .collect(toImmutableList())
+                  .toArray(new TypeName[0]));
     }
   }
 }

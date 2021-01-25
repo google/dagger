@@ -119,8 +119,8 @@ class HiltGradlePlugin : Plugin<Project> {
         // Java/Kotlin library projects offer an artifact of type 'jar'.
         spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "jar")
         // Android library projects (with or without Kotlin) offer an artifact of type
-        // 'android-classes', which AGP can offer as a jar.
-        spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "android-classes-jar")
+        // 'processed-jar', which AGP can offer as a jar.
+        spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "processed-jar")
         spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, DAGGER_ARTIFACT_TYPE_VALUE)
       }
     }

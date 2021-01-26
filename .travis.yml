@@ -65,19 +65,23 @@ jobs:
 
     - stage: "Artifact tests"
       name: "Maven tests"
-      script: pushd examples/maven && mvn compile && popd
+      script:
+      - pushd examples/maven && mvn compile && popd
       workspaces:
         use: dagger_artifacts
     - name: "Gradle tests"
-      script: util/run-local-gradle-tests.sh
+      script:
+      - util/run-local-gradle-tests.sh
       workspaces:
         use: dagger_artifacts
     - name: "Gradle Android tests (AGP 4.1.0)"
-      script: util/run-local-gradle-android-tests.sh "4.1.0"
+      script:
+      - util/run-local-gradle-android-tests.sh "4.1.0"
       workspaces:
         use: dagger_artifacts
     - name: "Gradle Android tests (AGP 4.2.0-beta01)"
-      script: util/run-local-gradle-android-tests.sh "4.2.0-beta01"
+      script:
+      - util/run-local-gradle-android-tests.sh "4.2.0-beta01"
       workspaces:
         use: dagger_artifacts
 

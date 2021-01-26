@@ -23,6 +23,7 @@ import android.content.Context;
 import androidx.test.core.app.ApplicationProvider;
 import dagger.hilt.internal.GeneratedComponentManager;
 import java.lang.annotation.Annotation;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -40,6 +41,8 @@ public final class MarkThatRulesRanRule implements TestRule {
   private final Context context = ApplicationProvider.getApplicationContext();
   private final Object testInstance;
   private final boolean autoAddModule;
+
+  private final AtomicBoolean started = new AtomicBoolean(false);
 
   public MarkThatRulesRanRule(Object testInstance) {
     this.autoAddModule = true;
@@ -64,12 +67,23 @@ public final class MarkThatRulesRanRule implements TestRule {
         context.getClass().getName());
   }
 
+  public void delayComponentReady() {
+    checkState(!started.get(), "Called delayComponentReady after test execution started");
+    getTestApplicationComponentManager().delayComponentReady();
+  }
+
+  public void componentReady() {
+    checkState(started.get(), "Called componentReady before test execution started");
+    getTestApplicationComponentManager().componentReady();
+  }
+
   public void inject() {
     getTestApplicationComponentManager().inject();
   }
 
   @Override
   public Statement apply(final Statement base, Description description) {
+    started.set(true);
     checkState(
         description.getTestClass().isInstance(testInstance),
         "HiltAndroidRule was constructed with an argument that was not an instance of the test"
@@ -90,6 +104,7 @@ public final class MarkThatRulesRanRule implements TestRule {
           }
           componentManager.setHasHiltTestRule(description);
           base.evaluate();
+          componentManager.verifyDelayedComponentWasMadeReady();
         } finally {
           componentManager.clearState();
         }

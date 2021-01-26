@@ -207,7 +207,7 @@ abstract class KotlinMetadata {
           "Unsupported metadata version. Check that your Kotlin version is >= 1.0");
     }
     if (metadata instanceof KotlinClassMetadata.Class) {
-      // TODO(user): If when we need other types of metadata then move to right method.
+      // TODO(danysantiago): If when we need other types of metadata then move to right method.
       return (KotlinClassMetadata.Class) metadata;
     } else {
       throw new IllegalStateException("Unsupported metadata type: " + metadata);

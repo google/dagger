@@ -666,7 +666,7 @@ public final class ModuleValidator {
             companionModuleMethod);
       }
 
-      // TODO(user): Be strict about the usage of @JvmStatic, i.e. tell user to remove it.
+      // TODO(danysantiago): Be strict about the usage of @JvmStatic, i.e. tell user to remove it.
     }
 
     ImmutableListMultimap<Name, ExecutableElement> bindingMethodsByName =

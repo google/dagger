@@ -116,7 +116,7 @@ internal class AndroidEntryPointClassTransformer(
       return false
     }
 
-    // TODO(user): Handle classes with '$' in their name if they do become an issue.
+    // TODO(danysantiago): Handle classes with '$' in their name if they do become an issue.
     val superclassName = clazz.classFile.superclass
     val entryPointSuperclassName =
       clazz.packageName + ".Hilt_" + clazz.simpleName.replace("$", "_")

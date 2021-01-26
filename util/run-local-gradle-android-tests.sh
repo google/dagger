@@ -16,7 +16,7 @@ for project in "${ANDROID_GRADLE_PROJECTS[@]}"; do
 done
 
 # Run gradle tests in a project with configuration cache enabled
-# TODO(user): Once AGP 4.2.0 is stable, remove these project and enable
+# TODO(danysantiago): Once AGP 4.2.0 is stable, remove these project and enable
 # config cache in the other test projects.
 readonly CONFIG_CACHE_PROJECT="javatests/artifacts/hilt-android/gradleConfigCache"
 ./$CONFIG_CACHE_PROJECT/gradlew -p $CONFIG_CACHE_PROJECT assembleDebug --no-daemon --stacktrace --configuration-cache

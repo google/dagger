@@ -17,5 +17,5 @@
 /**
  * This package contains APIs for code generators that produce code that will be processed by Hilt.
  */
-// TODO(user): Add documentation about other code generators that produce input for Hilt
+// TODO(danysantiago): Add documentation about other code generators that produce input for Hilt
 package dagger.hilt.codegen;

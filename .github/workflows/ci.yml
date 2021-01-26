@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  bazel-test:
+    name: 'Bazel tests'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Cache local Maven repository'
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: 'Run Bazel tests'
+        run: bazel test --test_output=errors //...
+        shell: bash
+      - name: 'Install local snapshot'
+        run: ./util/install-local-snapshot.sh
+        shell: bash
+  artifact-local-tests:
+    name: 'Artifact local tests'
+    needs: bazel-test
+    runs-on: ubuntu-latest
+    steps:
+    - name: 'Check out repository'
+      uses: actions/checkout@v2
+    - name: 'Cache local Maven repository'
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - name: 'Gradle tests'
+      run: ./util/run-local-gradle-tests.sh
+      shell: bash
+  artifact-emulator-tests:
+    name: 'Artifact emulator tests'
+    needs: bazel-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        agp: ['4.1.0', '4.2.0-beta01']
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Cache local Maven repository'
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: 'Gradle Android tests (AGP ${{ matrix.agp }})'
+        run: ./util/run-local-gradle-android-tests.sh "${{ matrix.agp }}"
+        shell: bash
+        env:
+          ADB_INSTALL_TIMEOUT: 10 # In Minutes

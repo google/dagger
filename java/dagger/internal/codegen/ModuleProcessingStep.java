@@ -114,7 +114,7 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement>
     // though it's no longer required. However, we skip processing the companion object itself
     // because it will now be processed when processing the companion object's enclosing class.
     if (metadataUtil.isCompanionObjectClass(module)) {
-      // TODO(user): Be strict about annotating companion objects with @Module,
+      // TODO(danysantiago): Be strict about annotating companion objects with @Module,
       //  i.e. tell user to annotate parent instead.
       return;
     }

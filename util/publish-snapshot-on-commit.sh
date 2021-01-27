@@ -2,10 +2,9 @@
 
 set -eux
 
-if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
-   [ "$TRAVIS_JDK_VERSION" == "$JDK_FOR_PUBLISHING" ] && \
-   [ "$TRAVIS_PULL_REQUEST" == "false" ] && \
-   [ "$TRAVIS_BRANCH" == "master" ]; then
+if [ "$GITHUB_REPOSITORY" == "google/dagger" ] && \
+   [ "$GITHUB_EVENT_NAME" == "push" ] && \
+   [ "$GITHUB_REF" == "refs/heads/master" ]; then
   echo -e "Publishing maven snapshot...\n"
 
   bash $(dirname $0)/deploy-dagger.sh \
@@ -24,5 +23,5 @@ if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
 
   echo -e "Published maven snapshot"
 else
-  echo -e "Not publishing snapshot for jdk=${TRAVIS_JDK_VERSION} and branch=${TRAVIS_BRANCH}"
+  echo -e "Not publishing snapshot for branch=${$GITHUB_REF}"
 fi

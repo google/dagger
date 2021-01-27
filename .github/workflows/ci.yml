@@ -68,3 +68,17 @@ jobs:
         shell: bash
         env:
           ADB_INSTALL_TIMEOUT: 10 # In Minutes
+  publish-snapshot:
+    name: 'Publish snapshot'
+    needs: [bazel-test, artifact-local-tests, artifact-emulator-tests]
+    if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Publish latest snapshot'
+        run: ./util/publish-snapshot-on-commit.sh
+        shell: bash
+        env:
+          CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}
+          CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}

@@ -15,9 +15,10 @@ work done at [Square][square].
 
 ## Documentation
 
-You can [find the dagger documentation here][website] which has extended usage
-instructions and other useful information. More detailed information can be
-found in the [API documentation][latestapi].
+You can find the dagger documentation [here][website] which has extended usage
+instructions and other useful information.
+
+More detailed information can be found in the [API documentation][latestapi].
 
 You can also learn more from [the original proposal][proposal],
 [this talk by Greg Kick][gaktalk], and on the dagger-discuss@googlegroups.com

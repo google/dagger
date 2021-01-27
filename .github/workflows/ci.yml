@@ -16,7 +16,9 @@ jobs:
       - name: 'Cache local Maven repository'
         uses: actions/cache@v2
         with:
-          path: ~/.m2/repository
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/com/google/dagger
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
@@ -26,6 +28,11 @@ jobs:
       - name: 'Install local snapshot'
         run: ./util/install-local-snapshot.sh
         shell: bash
+      - name: 'Upload local snapshot for tests'
+        uses: actions/upload-artifact@v2
+        with:
+          name: local-snapshot
+          path: ~/.m2/repository/com/google/dagger
   artifact-local-tests:
     name: 'Artifact local tests'
     needs: bazel-test
@@ -33,13 +40,11 @@ jobs:
     steps:
     - name: 'Check out repository'
       uses: actions/checkout@v2
-    - name: 'Cache local Maven repository'
-      uses: actions/cache@v2
+    - name: 'Download local snapshot for tests'
+      uses: actions/download-artifact@v2
       with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          ${{ runner.os }}-maven-
+        name: local-snapshot
+        path: ~/.m2/repository/com/google/dagger
     - name: 'Gradle tests'
       run: ./util/run-local-gradle-tests.sh
       shell: bash
@@ -53,13 +58,11 @@ jobs:
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2
-      - name: 'Cache local Maven repository'
-        uses: actions/cache@v2
+      - name: 'Download local snapshot for tests'
+        uses: actions/download-artifact@v2
         with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+          name: local-snapshot
+          path: ~/.m2/repository/com/google/dagger
       - name: 'Gradle Android tests (AGP ${{ matrix.agp }})'
         run: ./util/run-local-gradle-android-tests.sh "${{ matrix.agp }}"
         shell: bash

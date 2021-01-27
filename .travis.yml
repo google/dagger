@@ -14,6 +14,7 @@ addons:
 
 jdk:
   - &jdk_for_publishing oraclejdk8
+  - oraclejdk11
 
 android:
   components:

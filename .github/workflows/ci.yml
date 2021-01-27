@@ -22,6 +22,22 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+      - name: 'Cache Bazel files'
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
+      - name: 'Cache Gradle files'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
       - name: 'Run Bazel tests'
         run: bazel test --test_output=errors //...
         shell: bash
@@ -40,6 +56,15 @@ jobs:
     steps:
     - name: 'Check out repository'
       uses: actions/checkout@v2
+    - name: 'Cache Gradle files'
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
     - name: 'Download local snapshot for tests'
       uses: actions/download-artifact@v2
       with:
@@ -58,6 +83,15 @@ jobs:
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2
+      - name: 'Cache Gradle files'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
       - name: 'Download local snapshot for tests'
         uses: actions/download-artifact@v2
         with:
@@ -76,6 +110,31 @@ jobs:
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2
+      - name: 'Cache local Maven repository'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/com/google/dagger
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: 'Cache Bazel files'
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
+      - name: 'Cache Gradle files'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
       - name: 'Publish latest snapshot'
         run: ./util/publish-snapshot-on-commit.sh
         shell: bash

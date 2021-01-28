@@ -46,7 +46,7 @@ jobs:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
     - name: 'Gradle tests'
-      run: ./util/run-local-gradle-tests.sh
+      run: ./util/run-local-gradle-tests.sh "VERSION_1_7"
       shell: bash
   artifact-emulator-tests:
     name: 'Artifact emulator tests (AGP ${{ matrix.agp }})'

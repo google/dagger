@@ -15,7 +15,8 @@ util/install-local-snapshot.sh
 pushd examples/maven && mvn compile && popd
 
 # Run local gradle tests
-util/run-local-gradle-tests.sh
+util/run-local-gradle-tests.sh "VERSION_1_7"
+util/run-local-gradle-tests.sh "VERSION_1_8"
 util/run-local-gradle-android-tests.sh "4.1.0"
 util/run-local-gradle-android-tests.sh "4.2.0-beta01"
 

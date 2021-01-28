@@ -305,8 +305,9 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
     public Optional<TypeSpec.Builder> write(ProvisionBinding binding) {
       TypeElement factory = asType(binding.bindingElement().get());
 
+      ClassName name = nameGeneratedType(binding);
       TypeSpec.Builder builder =
-          TypeSpec.classBuilder(nameGeneratedType(binding))
+          TypeSpec.classBuilder(name)
               .addModifiers(PUBLIC, FINAL)
               .addTypeVariables(
                   factory.getTypeParameters().stream()
@@ -357,9 +358,13 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
                           .collect(toImmutableList()))
                   .returns(providerOf(TypeName.get(factory.asType())))
                   .addStatement(
-                      "return $T.create(new $T($N))",
+                      "return $T.$Lcreate(new $T($N))",
                       INSTANCE_FACTORY,
-                      nameGeneratedType(binding),
+                      // Java 7 type inference requires the method call provide the exact type here.
+                      sourceVersion.compareTo(SourceVersion.RELEASE_7) <= 0
+                          ? CodeBlock.of("<$T>", types.accessibleType(factoryType, name))
+                          : CodeBlock.of(""),
+                      name,
                       delegateFactoryParam)
                   .build());
       return Optional.of(builder);

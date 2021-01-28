@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.example.gradle.simple;
+package dagger.simple;
 
 import dagger.Component;
 import dagger.Module;

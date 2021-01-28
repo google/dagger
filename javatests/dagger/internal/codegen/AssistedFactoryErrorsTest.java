@@ -772,4 +772,34 @@ public class AssistedFactoryErrorsTest {
       assertThat(compilation).succeeded();
     }
   }
+
+  @Test
+  public void testAssistedFactoryMethodWithTypeParametersFails() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedInject;",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "class Foo<T> {",
+            "  @AssistedInject",
+            "  Foo() {}",
+            "",
+            "  @AssistedFactory",
+            "  interface FooFactory {",
+            "    <T> Foo<T> create();",
+            "  }",
+            "}");
+
+    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@AssistedFactory does not currently support type parameters in the creator method.")
+        .inFile(foo)
+        .onLine(12);
+  }
 }

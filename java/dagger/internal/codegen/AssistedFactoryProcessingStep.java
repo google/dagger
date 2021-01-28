@@ -160,6 +160,12 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
                   methodType.getReturnType()),
               method);
         }
+        if (!method.getTypeParameters().isEmpty()) {
+          report.addError(
+              "@AssistedFactory does not currently support type parameters in the creator "
+                  + "method. See https://github.com/google/dagger/issues/2279",
+              method);
+        }
       }
 
       if (abstractFactoryMethods.size() > 1) {

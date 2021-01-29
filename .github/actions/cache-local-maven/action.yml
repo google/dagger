@@ -1,0 +1,11 @@
+name: 'Cache local Maven repository'
+runs:
+  steps:
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.m2/repository
+          !~/.m2/repository/com/google/dagger
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-

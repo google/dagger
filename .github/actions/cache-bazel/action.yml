@@ -1,0 +1,9 @@
+name: 'Cache Bazel files'
+runs:
+  steps:
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/bazel
+        key: ${{ runner.os }}-bazel-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-bazel-

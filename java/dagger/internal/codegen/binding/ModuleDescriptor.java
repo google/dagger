@@ -196,7 +196,7 @@ public abstract class ModuleDescriptor {
           // Fallback strategy for de-duping contributing bindings in the companion module with
           // @JvmStatic by comparing descriptors. Contributing bindings are the only valid bindings
           // a companion module can declare. See: https://youtrack.jetbrains.com/issue/KT-35104
-          // TODO(user): Checks qualifiers too.
+          // TODO(danysantiago): Checks qualifiers too.
           .filter(method -> !bindingElementDescriptors.contains(getMethodDescriptor(method)))
           .forEach(
               method -> {

@@ -47,4 +47,8 @@ abstract class Root {
   public final String toString() {
     return element().toString();
   }
+
+  boolean isTestRoot() {
+    return type().isTestRoot();
+  }
 }

@@ -73,7 +73,7 @@ final class BindValueGenerator {
             .addAnnotation(Module.class)
             .addAnnotation(
                 Components.getInstallInAnnotationSpec(
-                    ImmutableSet.of(ClassNames.APPLICATION_COMPONENT)))
+                    ImmutableSet.of(ClassNames.SINGLETON_COMPONENT)))
             .addMethod(providesTestMethod());
 
     Processors.addGeneratedAnnotation(builder, env, getClass());

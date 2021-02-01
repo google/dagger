@@ -93,7 +93,7 @@ public final class RootMetadata {
   }
 
   public ImmutableSet<TypeElement> modules(ClassName componentName) {
-    return deps.getModules(componentName, root.classname());
+    return deps.modules().get(componentName, root.classname(), root.isTestRoot());
   }
 
   public ImmutableSet<TypeName> entryPoints(ClassName componentName) {
@@ -143,7 +143,7 @@ public final class RootMetadata {
     for (ComponentDescriptor componentDescriptor : componentTree.getComponentDescriptors()) {
       ClassName componentName = componentDescriptor.component();
       for (TypeElement extraModule : modulesThatDaggerCannotConstruct(componentName)) {
-        if (root.type().isTestRoot() && !componentName.equals(ClassNames.APPLICATION_COMPONENT)) {
+        if (root.type().isTestRoot() && !componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
           env.getMessager()
               .printMessage(
                   Diagnostic.Kind.ERROR,
@@ -167,7 +167,8 @@ public final class RootMetadata {
   private ImmutableSet<TypeName> getUserDefinedEntryPoints(ClassName componentName) {
     ImmutableSet.Builder<TypeName> entryPointSet = ImmutableSet.builder();
     entryPointSet.add(ClassNames.GENERATED_COMPONENT);
-    for (TypeElement element : deps.getEntryPoints(componentName, root.classname())) {
+    for (TypeElement element :
+        deps.entryPoints().get(componentName, root.classname(), root.isTestRoot())) {
       entryPointSet.add(ClassName.get(element));
     }
     return entryPointSet.build();

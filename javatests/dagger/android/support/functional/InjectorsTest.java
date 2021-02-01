@@ -20,12 +20,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
 import android.content.res.Configuration;
+import androidx.test.core.app.ApplicationProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
@@ -59,7 +59,7 @@ public class InjectorsTest {
     intentService = Robolectric.buildIntentService(TestIntentService.class).create().get();
 
     broadcastReceiver = new TestBroadcastReceiver();
-    broadcastReceiver.onReceive(RuntimeEnvironment.application, new Intent());
+    broadcastReceiver.onReceive(ApplicationProvider.getApplicationContext(), new Intent());
 
     contentProvider = Robolectric.setupContentProvider(TestContentProvider.class);
   }

@@ -45,6 +45,22 @@ java_library(
     ],
 )
 
+java_library(
+    name = "spi",
+    exports = ["//java/dagger/spi"],
+)
+
+java_library(
+    name = "compiler_internals",
+    exports = [
+        "//java/dagger/internal/codegen:processor",
+        "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
+        "//java/dagger/internal/codegen/validation",
+        "//java/dagger/internal/codegen/writing",
+    ],
+)
+
 android_library(
     name = "android",
     exported_plugins = ["//java/dagger/android/processor:plugin"],

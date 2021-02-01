@@ -165,6 +165,7 @@ def hilt_android_rules(repo_name = "@maven"):
             ":hilt_generates_root_input_processor",
             ":hilt_originating_element_processor",
             ":hilt_root_processor",
+            ":hilt_view_model_processor",
         ],
         visibility = ["//visibility:public"],
         exports = [
@@ -233,6 +234,13 @@ def hilt_android_rules(repo_name = "@maven"):
         name = "hilt_root_processor",
         generates_api = 1,
         processor_class = "dagger.hilt.processor.internal.root.RootProcessor",
+        deps = ["%s//:com_google_dagger_hilt_android_compiler" % repo_name],
+    )
+
+    native.java_plugin(
+        name = "hilt_view_model_processor",
+        generates_api = 1,
+        processor_class = "dagger.hilt.android.processor.internal.viewmodel.ViewModelProcessor",
         deps = ["%s//:com_google_dagger_hilt_android_compiler" % repo_name],
     )
 

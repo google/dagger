@@ -103,6 +103,7 @@ filegroup(
         ":hilt_android_filegroup",
         ":hilt_android_testing_filegroup",
         ":hilt_filegroup",
+        ":hilt_testing_filegroup",
     ],
 )
 
@@ -116,6 +117,13 @@ filegroup(
         "//java/dagger/hilt/internal/aliasof:srcs_filegroup",
         "//java/dagger/hilt/internal/definecomponent:srcs_filegroup",
         "//java/dagger/hilt/internal/generatesrootinput:srcs_filegroup",
+    ],
+)
+
+filegroup(
+    name = "hilt_testing_filegroup",
+    srcs = [
+        "//java/dagger/hilt/testing:srcs_filegroup",
     ],
 )
 

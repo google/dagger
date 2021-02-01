@@ -15,12 +15,15 @@
  */
 
 buildscript {
+    ext {
+        agp_version = System.getenv('AGP_VERSION') ?: "4.2.0-beta04"
+    }
     repositories {
         google()
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.1'
+        classpath "com.android.tools.build:gradle:$agp_version"
     }
 }
 

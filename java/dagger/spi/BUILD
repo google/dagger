@@ -28,12 +28,14 @@ package(default_visibility = ["//:src"])
 
 filegroup(
     name = "spi-srcs",
-    srcs = glob(["*.java"]),
+    srcs = glob(["*.java"]) + [
+        "//java/dagger/model:model-srcs",
+    ],
 )
 
 java_library(
     name = "spi",
-    srcs = [":spi-srcs"],
+    srcs = glob(["*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     tags = ["maven_coordinates=com.google.dagger:dagger-spi:" + POM_VERSION],
     exports = [
@@ -73,10 +75,7 @@ gen_maven_artifact(
         "dagger.model",
         "dagger.spi",
     ],
-    javadoc_srcs = [
-        ":spi-srcs",
-        "//java/dagger/model:model-srcs",
-    ],
+    javadoc_srcs = [":spi-srcs"],
     shaded_deps = ["@maven//:com_google_auto_auto_common"],
     shaded_rules = ["rule com.google.auto.common.** dagger.spi.shaded.auto.common.@1"],
 )

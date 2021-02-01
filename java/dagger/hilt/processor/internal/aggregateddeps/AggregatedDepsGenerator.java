@@ -16,18 +16,15 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
-import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
-import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
 import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 /**
@@ -41,17 +38,23 @@ final class AggregatedDepsGenerator {
 
   private final String dependencyType;
   private final TypeElement dependency;
+  private final Optional<ClassName> testName;
   private final ImmutableSet<ClassName> components;
+  private final ImmutableSet<ClassName> replacedDependencies;
   private final ProcessingEnvironment processingEnv;
 
   AggregatedDepsGenerator(
       String dependencyType,
       TypeElement dependency,
+      Optional<ClassName> testName,
       ImmutableSet<ClassName> components,
+      ImmutableSet<ClassName> replacedDependencies,
       ProcessingEnvironment processingEnv) {
     this.dependencyType = dependencyType;
     this.dependency = dependency;
+    this.testName = testName;
     this.components = components;
+    this.replacedDependencies = replacedDependencies;
     this.processingEnv = processingEnv;
   }
 
@@ -75,28 +78,9 @@ final class AggregatedDepsGenerator {
   private AnnotationSpec aggregatedDepsAnnotation() {
     AnnotationSpec.Builder annotationBuilder = AnnotationSpec.builder(AGGREGATED_DEPS);
     components.forEach(component -> annotationBuilder.addMember("components", "$S", component));
-    getEnclosingTestName(dependency)
-        .ifPresent(test -> annotationBuilder.addMember("test", "$S", test));
+    replacedDependencies.forEach(dep -> annotationBuilder.addMember("replaces", "$S", dep));
+    testName.ifPresent(test -> annotationBuilder.addMember("test", "$S", test));
     annotationBuilder.addMember(dependencyType, "$S", dependency.getQualifiedName());
     return annotationBuilder.build();
-  }
-
-  private Optional<ClassName> getEnclosingTestName(Element element) {
-    TypeElement topLevelType = getOriginatingTopLevelType(element);
-    return Processors.hasAnnotation(topLevelType, ClassNames.HILT_ANDROID_TEST)
-        ? Optional.of(ClassName.get(MoreElements.asType(topLevelType)))
-        : Optional.empty();
-  }
-
-  private TypeElement getOriginatingTopLevelType(Element element) {
-    TypeElement topLevelType = Processors.getTopLevelType(element);
-    if (Processors.hasAnnotation(topLevelType, ClassNames.ORIGINATING_ELEMENT)) {
-      return getOriginatingTopLevelType(
-          Processors.getAnnotationClassValue(
-              processingEnv.getElementUtils(),
-              Processors.getAnnotationMirror(topLevelType, ClassNames.ORIGINATING_ELEMENT),
-              "topLevelClass"));
-    }
-    return topLevelType;
   }
 }

@@ -44,6 +44,7 @@ android_library(
     exported_plugins = [
         "//java/dagger/hilt/processor/internal/root:plugin",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:plugin",
+        "//java/dagger/hilt/android/processor/internal/viewmodel:validation_plugin",
     ],
     exports = [
         ":hilt_android_rule",
@@ -170,6 +171,7 @@ android_library(
         ":package_info",
         ":uninstall_modules",
         "//java/dagger/hilt/android:artifact-lib",
+        "//java/dagger/hilt/testing:test_install_in",
     ],
 )
 
@@ -192,6 +194,8 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/testing:hilt_test_application",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/android/testing:package_info",
+        "//java/dagger/hilt/testing:test_install_in",
+        "//java/dagger/hilt/testing:package_info",
         "//java/dagger/hilt/android/testing:uninstall_modules",
     ],
     artifact_target_maven_deps = [
@@ -222,6 +226,7 @@ gen_maven_artifact(
     ],
     javadoc_srcs = [
         "//java/dagger/hilt:hilt_android_testing_filegroup",
+        "//java/dagger/hilt:hilt_testing_filegroup",
     ],
     manifest = "AndroidManifest.xml",
     packaging = "aar",

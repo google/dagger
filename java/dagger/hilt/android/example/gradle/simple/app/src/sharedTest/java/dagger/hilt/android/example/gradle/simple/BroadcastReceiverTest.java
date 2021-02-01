@@ -93,6 +93,22 @@ public class BroadcastReceiverTest {
     assertThat(receiver.onReceiveCalled).isEqualTo(1);
   }
 
+  @Test
+  public void verifyComplexReceiverInjectedValue() throws InterruptedException {
+    Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+    TestReceiverFour receiver = new TestReceiverFour();
+    IntentFilter intentFilter = new IntentFilter("test-action");
+    context.registerReceiver(receiver, intentFilter);
+
+    Intent intent = new Intent();
+    intent.setAction("test-action");
+    context.sendBroadcast(intent);
+
+    receiver.latch.await(2, TimeUnit.SECONDS);
+    assertThat(receiver.injectedValue).isNotEmpty();
+  }
+
   /** Test receiver */
   @AndroidEntryPoint
   static class TestReceiverOne extends BroadcastReceiver {
@@ -135,6 +151,35 @@ public class BroadcastReceiverTest {
     @Override
     public void onReceive(Context context, Intent intent) {
       super.onReceive(context, intent);
+      latch.countDown();
+    }
+  }
+
+  /** Complex-ish test receiver */
+  @AndroidEntryPoint
+  static class TestReceiverFour extends BroadcastReceiver {
+
+    final CountDownLatch latch = new CountDownLatch(1);
+
+    @Inject String injectedValue;
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      // Weird code, but it tests that the exception table and stack table frames are correctly
+      // updated in a transformation.
+      boolean var0;
+      if (context != null) {
+        var0 = false;
+        Object var1 = context.getClass();
+        try {
+          throw new IllegalStateException();
+        } catch (IllegalStateException ex) {
+          var0 = true;
+        }
+      } else {
+        BroadcastReceiver myself = this;
+        var0 = false;
+      }
       latch.countDown();
     }
   }

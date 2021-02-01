@@ -1,0 +1,15 @@
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    implementation 'com.google.dagger:hilt-core:LOCAL-SNAPSHOT'
+    annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
+
+    implementation project(':libraryB')
+}

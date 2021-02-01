@@ -17,12 +17,14 @@
 package dagger.internal.codegen;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.InjectionAnnotations;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
 import java.lang.annotation.Annotation;
@@ -34,12 +36,17 @@ import javax.lang.model.element.VariableElement;
 
 /** An annotation processor for {@link dagger.assisted.Assisted}-annotated types. */
 final class AssistedProcessingStep extends TypeCheckingProcessingStep<VariableElement> {
+  private final KotlinMetadataUtil kotlinMetadataUtil;
   private final InjectionAnnotations injectionAnnotations;
   private final Messager messager;
 
   @Inject
-  AssistedProcessingStep(InjectionAnnotations injectionAnnotations, Messager messager) {
+  AssistedProcessingStep(
+      KotlinMetadataUtil kotlinMetadataUtil,
+      InjectionAnnotations injectionAnnotations,
+      Messager messager) {
     super(MoreElements::asVariable);
+    this.kotlinMetadataUtil = kotlinMetadataUtil;
     this.injectionAnnotations = injectionAnnotations;
     this.messager = messager;
   }
@@ -59,9 +66,11 @@ final class AssistedProcessingStep extends TypeCheckingProcessingStep<VariableEl
     ValidationReport<VariableElement> validate(VariableElement assisted) {
       ValidationReport.Builder<VariableElement> report = ValidationReport.about(assisted);
 
-      Element assistedConstructor = assisted.getEnclosingElement();
-      if (!isAnnotationPresent(assistedConstructor, AssistedInject.class)
-          || assistedConstructor.getKind() != ElementKind.CONSTRUCTOR) {
+      Element enclosingElement = assisted.getEnclosingElement();
+      if (!isAssistedInjectConstructor(enclosingElement)
+              // The generated java stubs for kotlin data classes contain a "copy" method that has
+              // the same parameters (and annotations) as the constructor, so just ignore it.
+              && !isKotlinDataClassCopyMethod(enclosingElement)) {
         report.addError(
             "@Assisted parameters can only be used within an @AssistedInject-annotated "
                 + "constructor.",
@@ -77,5 +86,21 @@ final class AssistedProcessingStep extends TypeCheckingProcessingStep<VariableEl
 
       return report.build();
     }
+  }
+
+  private boolean isAssistedInjectConstructor(Element element) {
+    return element.getKind() == ElementKind.CONSTRUCTOR
+        && isAnnotationPresent(element, AssistedInject.class);
+  }
+
+  private boolean isKotlinDataClassCopyMethod(Element element) {
+    // Note: This is a best effort. Technically, we could check the return type and parameters of
+    // the copy method to verify it's the one associated with the constructor, but I'd rather keep
+    // this simple to avoid encoding too many details of kapt's stubs. At worst, we'll be allowing
+    // an @Assisted annotation that has no affect, which is already true for many of Dagger's other
+    // annotations.
+    return element.getKind() == ElementKind.METHOD
+        && element.getSimpleName().contentEquals("copy")
+        && kotlinMetadataUtil.isDataClass(closestEnclosingTypeElement(element));
   }
 }

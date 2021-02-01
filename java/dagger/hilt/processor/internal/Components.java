@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.definecomponent.DefineComponents;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
@@ -49,7 +48,8 @@ public final class Components {
   /** Returns the {@link dagger.hilt.InstallIn} components for a given element. */
   public static ImmutableSet<ClassName> getComponents(Elements elements, Element element) {
     ImmutableSet<ClassName> components;
-    if (Processors.hasAnnotation(element, ClassNames.INSTALL_IN)) {
+    if (Processors.hasAnnotation(element, ClassNames.INSTALL_IN)
+        || Processors.hasAnnotation(element, ClassNames.TEST_INSTALL_IN)) {
       components = getHiltInstallInComponents(elements, element);
     } else {
       // Check the enclosing element in case it passed in module is a companion object. This helps
@@ -88,21 +88,48 @@ public final class Components {
 
   private static ImmutableSet<ClassName> getHiltInstallInComponents(
       Elements elements, Element element) {
-    AnnotationMirror hiltInstallIn =
-        Processors.getAnnotationMirror(element, ClassNames.INSTALL_IN);
+    Preconditions.checkArgument(
+        Processors.hasAnnotation(element, ClassNames.INSTALL_IN)
+            || Processors.hasAnnotation(element, ClassNames.TEST_INSTALL_IN));
+
     ImmutableSet<TypeElement> components =
-        Processors.getAnnotationClassValues(elements, hiltInstallIn, "value").stream()
-            .collect(toImmutableSet());
+            Processors.hasAnnotation(element, ClassNames.INSTALL_IN)
+                ? Processors.getAnnotationClassValues(
+                    elements,
+                    Processors.getAnnotationMirror(element, ClassNames.INSTALL_IN),
+                    "value").stream()
+                        .map(component -> mapComponents(elements, component))
+                        .collect(toImmutableSet())
+                : Processors.getAnnotationClassValues(
+                    elements,
+                    Processors.getAnnotationMirror(element, ClassNames.TEST_INSTALL_IN),
+                    "components").stream()
+                        .map(component -> mapComponents(elements, component))
+                        .collect(toImmutableSet());
+
     ImmutableSet<TypeElement> undefinedComponents =
         components.stream()
             .filter(component -> !Processors.hasAnnotation(component, ClassNames.DEFINE_COMPONENT))
             .collect(toImmutableSet());
+
     ProcessorErrors.checkState(
         undefinedComponents.isEmpty(),
         element,
         "@InstallIn, can only be used with @DefineComponent-annotated classes, but found: %s",
         undefinedComponents);
+
     return components.stream().map(ClassName::get).collect(toImmutableSet());
+  }
+
+  // Temporary hack while ApplicationComponent is renamed to SingletonComponent
+  private static TypeElement mapComponents(Elements elements, TypeElement element) {
+    if (ClassNames.LEGACY_APPLICATION_COMPONENT.equals(ClassName.get(element))) {
+      TypeElement singletonComponent =
+          elements.getTypeElement(ClassNames.SINGLETON_COMPONENT.canonicalName());
+      Preconditions.checkState(singletonComponent != null);
+      return singletonComponent;
+    }
+    return element;
   }
 
   private Components() {}

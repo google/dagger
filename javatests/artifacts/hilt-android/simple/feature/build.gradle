@@ -48,6 +48,9 @@ dependencies {
     // by the app need to expose @kotlin.Metadata
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
+    implementation project(":deep-android-lib")
+    implementation project(":deep-lib")
+
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation "com.google.dagger:hilt-android:$dagger_version"
     kapt "com.google.dagger:hilt-compiler:$dagger_version"

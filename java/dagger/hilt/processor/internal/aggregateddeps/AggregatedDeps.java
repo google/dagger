@@ -31,6 +31,9 @@ public @interface AggregatedDeps {
   /** Returns the test this dependency is associated with, otherwise an empty string. */
   String test() default "";
 
+  /** Returns the deps that this dep replaces. */
+  String[] replaces() default {};
+
   String[] modules() default {};
 
   String[] entryPoints() default {};

@@ -22,7 +22,7 @@ buildscript {
 }
 
 plugins {
-  id 'org.jetbrains.kotlin.jvm' version '1.3.61'
+  id 'org.jetbrains.kotlin.jvm' version '1.4.20'
   id 'java-gradle-plugin'
   id 'maven-publish'
 }
@@ -32,15 +32,40 @@ repositories {
   jcenter()
 }
 
+configurations {
+  additionalTestPlugin {
+    canBeConsumed = false
+    canBeResolved = true
+    extendsFrom implementation
+  }
+}
+
 dependencies {
   implementation gradleApi()
-  implementation 'com.android.tools.build:gradle:3.6.3'
-  implementation 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.61'
+  compileOnly 'com.android.tools.build:gradle:4.2.0-beta04'
+  // TODO(danysantiago): Make compileOnly to avoid dep for non-Kotlin projects.
+  implementation 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20'
   implementation 'org.javassist:javassist:3.26.0-GA'
+  implementation 'org.ow2.asm:asm:9.0'
 
   testImplementation gradleTestKit()
   testImplementation 'junit:junit:4.12'
   testImplementation 'com.google.truth:truth:1.0.1'
+  additionalTestPlugin 'com.android.tools.build:gradle:4.2.0-beta04'
+}
+
+// Configure the generating task of plugin-under-test-metadata.properties to
+// include additional dependencies for the injected plugin classpath that
+// are not present in the main runtime dependencies. This allows us to test
+// the desired AGP version while keeping a compileOnly dep on the main source.
+tasks.withType(PluginUnderTestMetadata.class).named("pluginUnderTestMetadata").configure {
+  it.pluginClasspath.from(configurations.additionalTestPlugin)
+}
+
+compileKotlin {
+  kotlinOptions {
+    jvmTarget = "1.8"
+  }
 }
 
 // Create sources Jar from main kotlin sources
@@ -65,7 +90,7 @@ tasks.withType(GenerateModuleMetadata) {
   enabled = false
 }
 
-// TODO(user): Use POM template in tools/ to avoid duplicating lines.
+// TODO(danysantiago): Use POM template in tools/ to avoid duplicating lines.
 publishing {
   publications {
     plugin(MavenPublication) {

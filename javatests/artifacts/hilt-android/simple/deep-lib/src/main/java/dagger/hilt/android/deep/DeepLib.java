@@ -14,35 +14,26 @@
  * limitations under the License.
  */
 
-package dagger.example.gradle.simple;
+package dagger.hilt.android.deep;
 
-import dagger.Component;
-import dagger.Module;
-import dagger.Provides;
+import dagger.hilt.EntryPoint;
+import dagger.hilt.EntryPoints;
+import dagger.hilt.InstallIn;
+import dagger.hilt.components.SingletonComponent;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
-/** A simple, skeletal application that defines a simple component. */
-public class SimpleApplication {
-  static final class Foo {
-    @Inject Foo() {}
+public class DeepLib {
+
+  @EntryPoint
+  @InstallIn(SingletonComponent.class)
+  interface LibEntryPoint {
+    DeepLib getDeepInstance();
   }
 
-  @Module
-  static final class SimpleModule {
-    @Provides
-    static Foo provideFoo() {
-      return new Foo();
-    }
-  }
+  @Inject
+  public DeepLib() {}
 
-  @Singleton
-  @Component(modules = { SimpleModule.class })
-  interface SimpleComponent {
-    Foo foo();
-  }
-
-  public static void main(String[] args) {
-    Foo foo = DaggerSimpleApplication_SimpleComponent.create().foo();
+  public static DeepLib getInstance(Object componentManager) {
+    return EntryPoints.get(componentManager, LibEntryPoint.class).getDeepInstance();
   }
 }

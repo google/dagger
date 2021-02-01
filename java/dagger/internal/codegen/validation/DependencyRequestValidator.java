@@ -26,9 +26,11 @@ import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameFor
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.WILDCARD;
 
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableCollection;
 import dagger.MembersInjector;
+import dagger.assisted.Assisted;
 import dagger.internal.codegen.base.FrameworkTypes;
 import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.binding.InjectionAnnotations;
@@ -71,6 +73,10 @@ final class DependencyRequestValidator {
    */
   void validateDependencyRequest(
       ValidationReport.Builder<?> report, Element requestElement, TypeMirror requestType) {
+    if (MoreElements.isAnnotationPresent(requestElement, Assisted.class)) {
+      // Don't validate assisted parameters. These are not dependency requests.
+      return;
+    }
     checkQualifiers(report, requestElement);
     checkType(report, requestElement, requestType);
   }

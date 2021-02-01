@@ -53,22 +53,30 @@ final class Generators {
   }
 
   /**
-   * Copies all constructors with arguments to the builder, if the base class is abstract.
-   * Otherwise throws an exception.
+   * Copies all constructors with arguments to the builder.
    */
   static void copyConstructors(TypeElement baseClass, TypeSpec.Builder builder) {
+    copyConstructors(baseClass, CodeBlock.builder().build(), builder);
+  }
+
+  /**
+   * Copies all constructors with arguments along with an appended body to the builder.
+   */
+  static void copyConstructors(TypeElement baseClass, CodeBlock body, TypeSpec.Builder builder) {
     List<ExecutableElement> constructors =
         ElementFilter.constructorsIn(baseClass.getEnclosedElements())
             .stream()
             .filter(constructor -> !constructor.getModifiers().contains(PRIVATE))
             .collect(Collectors.toList());
 
-    if (constructors.size() == 1 && getOnlyElement(constructors).getParameters().isEmpty()) {
+    if (constructors.size() == 1
+        && getOnlyElement(constructors).getParameters().isEmpty()
+        && body.isEmpty()) {
       // No need to copy the constructor if the default constructor will handle it.
       return;
     }
 
-    constructors.forEach(constructor -> builder.addMethod(copyConstructor(constructor)));
+    constructors.forEach(constructor -> builder.addMethod(copyConstructor(constructor, body)));
   }
 
   /** Returns Optional with AnnotationSpec for Nullable if found on element, empty otherwise. */
@@ -109,6 +117,10 @@ final class Generators {
   //     super(param1, param2);
   //   }
   static MethodSpec copyConstructor(ExecutableElement constructor) {
+    return copyConstructor(constructor, CodeBlock.builder().build());
+  }
+
+  private static MethodSpec copyConstructor(ExecutableElement constructor, CodeBlock body) {
     List<ParameterSpec> params =
         constructor.getParameters().stream()
             .map(parameter -> getParameterSpecWithNullable(parameter))
@@ -119,7 +131,8 @@ final class Generators {
             .addParameters(params)
             .addStatement(
                 "super($L)",
-                params.stream().map(param -> param.name).collect(Collectors.joining(", ")));
+                params.stream().map(param -> param.name).collect(Collectors.joining(", ")))
+            .addCode(body);
 
     constructor.getAnnotationMirrors().stream()
         .filter(a -> Processors.hasAnnotation(a, AndroidClassNames.TARGET_API))
@@ -306,40 +319,32 @@ final class Generators {
           .endControlFlow();
     }
 
+    typeSpecBuilder.addField(injectedField(metadata));
+
     switch (metadata.androidType()) {
       case ACTIVITY:
       case FRAGMENT:
       case VIEW:
       case SERVICE:
-        if (metadata.overridesAndroidEntryPointClass()) {
-          typeSpecBuilder.addField(injectedField(metadata));
-
-          // Only add @Override if an ancestor extends a generated Hilt class.
-          // When using bytecode injection, this isn't always guaranteed.
-          if (ancestorExtendsGeneratedHiltClass(metadata)) {
-            methodSpecBuilder.addAnnotation(Override.class);
-          }
-
-          methodSpecBuilder
-              .beginControlFlow("if (!injected)")
-              .addStatement("injected = true");
-        } else if (metadata.allowsOptionalInjection()) {
-          typeSpecBuilder.addField(injectedField(metadata));
-          methodSpecBuilder.addStatement("injected = true");
+        // Only add @Override if an ancestor extends a generated Hilt class.
+        // When using bytecode injection, this isn't always guaranteed.
+        if (metadata.overridesAndroidEntryPointClass()
+            && ancestorExtendsGeneratedHiltClass(metadata)) {
+          methodSpecBuilder.addAnnotation(Override.class);
         }
-        methodSpecBuilder.addStatement(
-            "(($T) $L).$L($L)",
-            metadata.injectorClassName(),
-            generatedComponentCallBlock(metadata),
-            metadata.injectMethodName(),
-            unsafeCastThisTo(metadata.elementClassName()));
-        if (metadata.overridesAndroidEntryPointClass()) {
-          methodSpecBuilder.endControlFlow();
-        }
+        methodSpecBuilder
+            .beginControlFlow("if (!injected)")
+            .addStatement("injected = true")
+            .addStatement(
+                "(($T) $L).$L($L)",
+                metadata.injectorClassName(),
+                generatedComponentCallBlock(metadata),
+                metadata.injectMethodName(),
+                unsafeCastThisTo(metadata.elementClassName()))
+            .endControlFlow();
         break;
       case BROADCAST_RECEIVER:
         typeSpecBuilder.addField(injectedLockField());
-        typeSpecBuilder.addField(injectedField(metadata));
 
         methodSpecBuilder
             .addParameter(ParameterSpec.builder(AndroidClassNames.CONTEXT, "context").build())

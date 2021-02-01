@@ -252,7 +252,7 @@ parallelizable execution graphs), then add this to your maven configuration:
 ```groovy
 // Add Dagger dependencies
 dependencies {
-  api 'com.google.dagger:dagger:2.x'
+  implementation 'com.google.dagger:dagger:2.x'
   annotationProcessor 'com.google.dagger:dagger-compiler:2.x'
 }
 ```
@@ -260,15 +260,14 @@ dependencies {
 If you're using classes in `dagger.android` you'll also want to include:
 
 ```groovy
-api 'com.google.dagger:dagger-android:2.x'
-api 'com.google.dagger:dagger-android-support:2.x' // if you use the support libraries
+implementation 'com.google.dagger:dagger-android:2.x'
+implementation 'com.google.dagger:dagger-android-support:2.x' // if you use the support libraries
 annotationProcessor 'com.google.dagger:dagger-android-processor:2.x'
 ```
 
 Notes:
 
--   Some projects will want to use `implementation` instead of `api` for better
-    compilation performance.
+-   We use `implementation` instead of `api` for better compilation performance.
     -   See the [Gradle documentation][gradle-api-implementation] for more
         information on how to select appropriately, and the [Android Gradle
         plugin documentation][gradle-api-implementation-android] for Android

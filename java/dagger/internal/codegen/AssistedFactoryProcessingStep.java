@@ -30,6 +30,8 @@ import static dagger.internal.codegen.javapoet.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -51,7 +53,6 @@ import dagger.assisted.AssistedFactory;
 import dagger.internal.codegen.base.SourceFileGenerationException;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
-import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingFactory;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.langmodel.DaggerElements;
@@ -68,7 +69,6 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
@@ -150,12 +150,19 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
       }
 
       for (ExecutableElement method : abstractFactoryMethods) {
-        if (!isAssistedInjectionType(method.getReturnType())) {
+        ExecutableType methodType = types.resolveExecutableType(method, factory.asType());
+        if (!isAssistedInjectionType(methodType.getReturnType())) {
           report.addError(
               String.format(
                   "Invalid return type: %s. An assisted factory's abstract method must return a "
                       + "type with an @AssistedInject-annotated constructor.",
-                  method.getReturnType()),
+                  methodType.getReturnType()),
+              method);
+        }
+        if (!method.getTypeParameters().isEmpty()) {
+          report.addError(
+              "@AssistedFactory does not currently support type parameters in the creator "
+                  + "method. See https://github.com/google/dagger/issues/2279",
               method);
         }
       }
@@ -175,7 +182,9 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
       // Given the previous checks, we can be sure we have a
       // single factory method with a valid return type.
       ExecutableElement factoryMethod = getOnlyElement(abstractFactoryMethods);
-      DeclaredType returnType = asDeclared(factoryMethod.getReturnType());
+      ExecutableType factoryMethodType =
+          types.resolveExecutableType(factoryMethod, factory.asType());
+      DeclaredType returnType = asDeclared(factoryMethodType.getReturnType());
 
       ImmutableList<TypeMirror> assistedParameterTypes =
           assistedInjectConstructorParameterMap(returnType).entrySet().stream()
@@ -184,7 +193,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
               .collect(toImmutableList());
 
       ImmutableList<TypeMirror> factoryMethodParameterTypes =
-          ImmutableList.copyOf(asExecutable(factoryMethod.asType()).getParameterTypes());
+          ImmutableList.copyOf(factoryMethodType.getParameterTypes());
 
       if (!typesAssignableTo(factoryMethodParameterTypes, assistedParameterTypes)) {
         report.addError(
@@ -295,14 +304,11 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
     @Override
     public Optional<TypeSpec.Builder> write(ProvisionBinding binding) {
       TypeElement factory = asType(binding.bindingElement().get());
-      ExecutableElement factoryMethod =
-          AssistedInjectionAnnotations.assistedFactoryMethod(factory, elements, types);
-      TypeElement returnElement = asTypeElement(factoryMethod.getReturnType());
-      ParameterSpec delegateFactoryParam =
-          ParameterSpec.builder(delegateFactoryTypeName(returnElement), "delegateFactory").build();
+
+      ClassName name = nameGeneratedType(binding);
       TypeSpec.Builder builder =
-          TypeSpec.classBuilder(nameGeneratedType(binding))
-              .addModifiers(PUBLIC)
+          TypeSpec.classBuilder(name)
+              .addModifiers(PUBLIC, FINAL)
               .addTypeVariables(
                   factory.getTypeParameters().stream()
                       .map(TypeVariableName::get)
@@ -314,10 +320,19 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
         builder.superclass(factory.asType());
       }
 
+      // Define all types associated with the @AssistedFactory before generating the implementation.
+      DeclaredType factoryType = asDeclared(binding.key().type());
+      ExecutableElement factoryMethod =
+          AssistedInjectionAnnotations.assistedFactoryMethod(factory, elements, types);
+      ExecutableType factoryMethodType = asExecutable(types.asMemberOf(factoryType, factoryMethod));
+      DeclaredType returnType = asDeclared(factoryMethodType.getReturnType());
+      TypeElement returnElement = asTypeElement(returnType);
+      ParameterSpec delegateFactoryParam =
+          ParameterSpec.builder(delegateFactoryTypeName(returnType), "delegateFactory").build();
       builder
           .addField(
               FieldSpec.builder(delegateFactoryParam.type, delegateFactoryParam.name)
-                  .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+                  .addModifiers(PRIVATE, FINAL)
                   .build())
           .addMethod(
               MethodSpec.constructorBuilder()
@@ -325,7 +340,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
                   .addStatement("this.$1N = $1N", delegateFactoryParam)
                   .build())
           .addMethod(
-              MethodSpec.overriding(factoryMethod)
+              MethodSpec.overriding(factoryMethod, asDeclared(factory.asType()), types)
                   .addStatement(
                       "return $N.get($L)",
                       delegateFactoryParam,
@@ -335,7 +350,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
                   .build())
           .addMethod(
               MethodSpec.methodBuilder("create")
-                  .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                  .addModifiers(PUBLIC, STATIC)
                   .addParameter(delegateFactoryParam)
                   .addTypeVariables(
                       returnElement.getTypeParameters().stream()
@@ -343,27 +358,37 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
                           .collect(toImmutableList()))
                   .returns(providerOf(TypeName.get(factory.asType())))
                   .addStatement(
-                      "return $T.create(new $T($N))",
+                      "return $T.$Lcreate(new $T($N))",
                       INSTANCE_FACTORY,
-                      nameGeneratedType(binding),
+                      // Java 7 type inference requires the method call provide the exact type here.
+                      sourceVersion.compareTo(SourceVersion.RELEASE_7) <= 0
+                          ? CodeBlock.of("<$T>", types.accessibleType(factoryType, name))
+                          : CodeBlock.of(""),
+                      name,
                       delegateFactoryParam)
                   .build());
       return Optional.of(builder);
     }
 
-    private TypeName delegateFactoryTypeName(TypeElement returnElement) {
-      Binding delegateBinding =
-          bindingFactory.injectionBinding(
-              getOnlyElement(assistedInjectedConstructors(returnElement)), Optional.empty());
-      ImmutableList<TypeVariableName> typeParameters =
-          returnElement.getTypeParameters().stream()
-              .map(TypeVariableName::get)
-              .collect(toImmutableList());
-      return typeParameters.isEmpty()
-          ? generatedClassNameForBinding(delegateBinding)
+    /** Returns the generated factory {@link TypeName type} for an @AssistedInject constructor. */
+    private TypeName delegateFactoryTypeName(DeclaredType assistedInjectType) {
+      // The name of the generated factory for the assisted inject type,
+      // e.g. an @AssistedInject Foo(...) {...} constructor will generate a Foo_Factory class.
+      ClassName generatedFactoryClassName =
+          generatedClassNameForBinding(
+              bindingFactory.injectionBinding(
+                  getOnlyElement(assistedInjectedConstructors(asTypeElement(assistedInjectType))),
+                  Optional.empty()));
+
+      // Return the factory type resolved with the same type parameters as the assisted inject type.
+      return assistedInjectType.getTypeArguments().isEmpty()
+          ? generatedFactoryClassName
           : ParameterizedTypeName.get(
-              generatedClassNameForBinding(delegateBinding),
-              typeParameters.toArray(new TypeName[0]));
+              generatedFactoryClassName,
+              assistedInjectType.getTypeArguments().stream()
+                  .map(TypeName::get)
+                  .collect(toImmutableList())
+                  .toArray(new TypeName[0]));
     }
   }
 }

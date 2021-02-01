@@ -637,6 +637,32 @@ public class AssistedFactoryErrorsTest {
   }
 
   @Test
+  public void testAssistedInjectNotOnConstructor() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class Foo {",
+            "  @AssistedInject",
+            "  void someMethod() {}",
+            "}");
+
+    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+
+    // Note: this isn't actually a Dagger error, it's a javac error since @AssistedInject only
+    // targets constructors. However, it's good to have this test in case that ever changes.
+    assertThat(compilation)
+        .hadErrorContaining("annotation type not applicable to this kind of declaration")
+        .inFile(foo)
+        .onLine(6);
+  }
+
+  @Test
   public void testAssistedInjectWithNoAssistedParametersIsNotInjectable() {
     JavaFileObject foo =
         JavaFileObjects.forSourceLines(
@@ -745,5 +771,35 @@ public class AssistedFactoryErrorsTest {
     } else {
       assertThat(compilation).succeeded();
     }
+  }
+
+  @Test
+  public void testAssistedFactoryMethodWithTypeParametersFails() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedInject;",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "class Foo<T> {",
+            "  @AssistedInject",
+            "  Foo() {}",
+            "",
+            "  @AssistedFactory",
+            "  interface FooFactory {",
+            "    <T> Foo<T> create();",
+            "  }",
+            "}");
+
+    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@AssistedFactory does not currently support type parameters in the creator method.")
+        .inFile(foo)
+        .onLine(12);
   }
 }

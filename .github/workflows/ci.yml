@@ -1,0 +1,214 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  bazel-test:
+    name: 'Bazel tests'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Cache local Maven repository'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/com/google/dagger
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: 'Cache Bazel files'
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
+      - name: 'Cache Gradle files'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: 'Run Bazel tests'
+        run: bazel test --test_output=errors //...
+        shell: bash
+      - name: 'Install local snapshot'
+        run: ./util/install-local-snapshot.sh
+        shell: bash
+      - name: 'Upload local snapshot for tests'
+        uses: actions/upload-artifact@v2
+        with:
+          name: local-snapshot
+          path: ~/.m2/repository/com/google/dagger
+  artifact-java-local-tests:
+    name: 'Artifact Java local tests'
+    needs: bazel-test
+    runs-on: ubuntu-latest
+    steps:
+    - name: 'Check out repository'
+      uses: actions/checkout@v2
+    - name: 'Cache Gradle files'
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    - name: 'Download local snapshot for tests'
+      uses: actions/download-artifact@v2
+      with:
+        name: local-snapshot
+        path: ~/.m2/repository/com/google/dagger
+    - name: 'Gradle Java local tests'
+      run: ./util/run-local-gradle-tests.sh
+      shell: bash
+  artifact-android-local-tests:
+    name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
+    needs: bazel-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        agp: ['4.1.0', '4.2.0-beta04']
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Cache Gradle files'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: 'Download local snapshot for tests'
+        uses: actions/download-artifact@v2
+        with:
+          name: local-snapshot
+          path: ~/.m2/repository/com/google/dagger
+      - name: 'Gradle Android local tests (AGP ${{ matrix.agp }})'
+        run: ./util/run-local-gradle-android-tests.sh "${{ matrix.agp }}"
+        shell: bash
+  artifact-android-emulator-tests:
+    name: 'Artifact Android emulator tests (API 30)'
+    needs: bazel-test
+    # It's recommended to run emulator tests on macOS
+    # See https://github.com/marketplace/actions/android-emulator-runner
+    runs-on: macos-latest
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Cache Gradle files'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: 'Download local snapshot for tests'
+        uses: actions/download-artifact@v2
+        with:
+          name: local-snapshot
+          path: ~/.m2/repository/com/google/dagger
+      - name: 'Gradle Android emulator tests (API 30)'
+        uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 25
+        with:
+          api-level: 30
+          target: google_apis
+          script: ./util/run-local-emulator-tests.sh
+  publish-snapshot:
+    name: 'Publish snapshot'
+    # TODO(bcorso): Consider also waiting on artifact-android-emulator-tests
+    # and artifact-android-emulator-legacy-api-tests after checking flakiness.
+    needs: [bazel-test, artifact-java-local-tests, artifact-android-local-tests]
+    if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Cache local Maven repository'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/com/google/dagger
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: 'Cache Bazel files'
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
+      - name: 'Cache Gradle files'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: 'Publish latest docs'
+        run: ./util/generate-latest-docs.sh
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: 'Publish latest snapshot'
+        run: ./util/publish-snapshot-on-commit.sh
+        shell: bash
+        env:
+          CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}
+          CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
+  artifact-android-emulator-legacy-api-tests:
+    name: 'Artifact Android emulator tests (API ${{ matrix.api-level }})'
+    # We only run this on master push (essentially a postsubmit) since these
+    # can take a while to run
+    if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
+    needs: bazel-test
+    # It's recommended to run emulator tests on macOS
+    # See https://github.com/marketplace/actions/android-emulator-runner
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        api-level: [16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29]
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Cache Gradle files'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: 'Download local snapshot for tests'
+        uses: actions/download-artifact@v2
+        with:
+          name: local-snapshot
+          path: ~/.m2/repository/com/google/dagger
+      - name: 'Gradle Android emulator tests (API ${{ matrix.api-level }})'
+        uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 25
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: google_apis
+          script: ./util/run-local-emulator-tests.sh

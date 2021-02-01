@@ -72,6 +72,8 @@ abstract class PkgPrivateMetadata {
     Optional<AnnotationMirror> installIn;
     if (Processors.hasAnnotation(element, ClassNames.INSTALL_IN)) {
       installIn = Optional.of(Processors.getAnnotationMirror(element, ClassNames.INSTALL_IN));
+    } else if (Processors.hasAnnotation(element, ClassNames.TEST_INSTALL_IN)) {
+      installIn = Optional.of(Processors.getAnnotationMirror(element, ClassNames.TEST_INSTALL_IN));
     } else {
       throw new IllegalStateException(
           "Expected element to be annotated with @InstallIn: " + element);

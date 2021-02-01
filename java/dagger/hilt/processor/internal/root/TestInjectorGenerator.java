@@ -51,7 +51,7 @@ public final class TestInjectorGenerator {
                     .addMember(
                         "value",
                         "$T.class",
-                    ClassNames.APPLICATION_COMPONENT)
+                    ClassNames.SINGLETON_COMPONENT)
                     .build())
             .addModifiers(Modifier.PUBLIC)
             .addSuperinterface(

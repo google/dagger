@@ -48,8 +48,30 @@ public final class TestApplicationComponentManager
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
   private final Map<Class<?>, Object> registeredModules = new ConcurrentHashMap<>();
   private final AtomicReference<Boolean> autoAddModuleEnabled = new AtomicReference<>();
+  private final AtomicReference<DelayedComponentState> delayedComponentState =
+      new AtomicReference<>(DelayedComponentState.NOT_DELAYED);
   private volatile Object testInstance;
   private volatile OnComponentReadyRunner onComponentReadyRunner = new OnComponentReadyRunner();
+
+  /**
+   * Represents the state of Component readiness. There are two valid transition sequences.
+   *
+   * <ul>
+   *   <li>Typical test (no HiltAndroidRule#delayComponentReady): {@code NOT_DELAYED -> INJECTED}
+   *   <li>Using HiltAndroidRule#delayComponentReady: {@code NOT_DELAYED -> COMPONENT_DELAYED ->
+   *       COMPONENT_READY -> INJECTED}
+   * </ul>
+   */
+  private enum DelayedComponentState {
+    // Valid transitions: COMPONENT_DELAYED, INJECTED
+    NOT_DELAYED,
+    // Valid transitions: COMPONENT_READY
+    COMPONENT_DELAYED,
+    // Valid transitions: INJECTED
+    COMPONENT_READY,
+    // Terminal state
+    INJECTED
+  }
 
   public TestApplicationComponentManager(Application application) {
     this.application = application;
@@ -173,15 +195,64 @@ public final class TestApplicationComponentManager
     }
   }
 
+  void delayComponentReady() {
+    switch (delayedComponentState.getAndSet(DelayedComponentState.COMPONENT_DELAYED)) {
+      case NOT_DELAYED:
+        // Expected
+        break;
+      case COMPONENT_DELAYED:
+        throw new IllegalStateException("Called delayComponentReady() twice");
+      case COMPONENT_READY:
+        throw new IllegalStateException("Called delayComponentReady() after componentReady()");
+      case INJECTED:
+        throw new IllegalStateException("Called delayComponentReady() after inject()");
+    }
+  }
+
+  void componentReady() {
+    switch (delayedComponentState.getAndSet(DelayedComponentState.COMPONENT_READY)) {
+      case NOT_DELAYED:
+        throw new IllegalStateException(
+            "Called componentReady(), even though delayComponentReady() was not used.");
+      case COMPONENT_DELAYED:
+        // Expected
+        break;
+      case COMPONENT_READY:
+        throw new IllegalStateException("Called componentReady() multiple times");
+      case INJECTED:
+        throw new IllegalStateException("Called componentReady() after inject()");
+    }
+    tryToCreateComponent();
+  }
+
   void inject() {
+    switch (delayedComponentState.getAndSet(DelayedComponentState.INJECTED)) {
+      case NOT_DELAYED:
+      case COMPONENT_READY:
+        // Expected
+        break;
+      case COMPONENT_DELAYED:
+        throw new IllegalStateException("Called inject() before calling componentReady()");
+      case INJECTED:
+        // TODO(b/178810695): Enforce tests don't do this
+        // throw new IllegalStateException("Called inject() multiple times");
+        break;
+    }
     Preconditions.checkNotNull(testInstance);
     testInjector().injectTest(testInstance);
+  }
+
+  void verifyDelayedComponentWasMadeReady() {
+    Preconditions.checkState(
+        delayedComponentState.get() != DelayedComponentState.COMPONENT_DELAYED,
+        "Used delayComponentReady(), but never called componentReady()");
   }
 
   private void tryToCreateComponent() {
     if (hasHiltTestRule()
         && registeredModules.keySet().containsAll(requiredModules())
-        && bindValueReady()) {
+        && bindValueReady()
+        && delayedComponentReady()) {
       Preconditions.checkState(
           autoAddModuleEnabled.get() !=  null,
           "Component cannot be created before autoAddModuleEnabled is set.");
@@ -239,6 +310,10 @@ public final class TestApplicationComponentManager
 
   private boolean bindValueReady() {
     return !waitForBindValue() || testInstance != null;
+  }
+
+  private boolean delayedComponentReady() {
+    return delayedComponentState.get() != DelayedComponentState.COMPONENT_DELAYED;
   }
 
   private boolean hasHiltTestRule() {

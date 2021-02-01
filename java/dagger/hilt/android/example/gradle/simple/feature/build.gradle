@@ -39,10 +39,6 @@ kapt {
  correctErrorTypes true
 }
 
-hilt {
-    enableTransformForLocalTests = true
-}
-
 dependencies {
     // This is api instead of implementation since Kotlin modules here consumed
     // by the app need to expose @kotlin.Metadata

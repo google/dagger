@@ -47,10 +47,6 @@ android {
     }
 }
 
-hilt {
-    enableTransformForLocalTests = true
-}
-
 dependencies {
   implementation project(':feature')
   implementation 'androidx.appcompat:appcompat:1.2.0'

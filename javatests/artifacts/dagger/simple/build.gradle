@@ -24,12 +24,9 @@ repositories {
   mavenLocal()
 }
 
-sourceSets {
-  main {
-    java {
-      srcDir '.'
-    }
-  }
+java {
+    // Make sure the generated source is compatible with Java 7.
+    sourceCompatibility = JavaVersion.VERSION_1_7
 }
 
 dependencies {
@@ -37,4 +34,4 @@ dependencies {
   annotationProcessor 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'
 }
 
-mainClassName = 'dagger.example.gradle.simple.SimpleApplication'
+mainClassName = 'dagger.simple.SimpleApplication'

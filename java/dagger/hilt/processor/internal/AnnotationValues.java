@@ -142,14 +142,14 @@ public final class AnnotationValues {
 
   /** Returns the int array value of an annotation */
   public static int[] getIntArrayValue(AnnotationMirror annotation, String valueName) {
-    return asAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
+    return getAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
         .mapToInt(it -> (int) it.getValue())
         .toArray();
   }
 
   /** Returns the String array value of an annotation */
   public static String[] getStringArrayValue(AnnotationMirror annotation, String valueName) {
-    return asAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
+    return getAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
         .map(it -> (String) it.getValue())
         .toArray(String[]::new);
   }
@@ -164,7 +164,7 @@ public final class AnnotationValues {
    *
    * @throws IllegalArgumentException unless {@code annotationValue} represents an array
    */
-  private static ImmutableList<AnnotationValue> asAnnotationValues(
+  public static ImmutableList<AnnotationValue> getAnnotationValues(
       AnnotationValue annotationValue) {
     return annotationValue.accept(AS_ANNOTATION_VALUES, null);
   }

@@ -27,6 +27,6 @@ import javax.inject.Inject;
 @HiltAndroidApp
 public class SimpleApplication extends Application {
 
-  // Shows that we can inject ApplicationComponent bindings into an application.
+  // Shows that we can inject SingletonComponent bindings into an application.
   @Inject @Model String model;
 }

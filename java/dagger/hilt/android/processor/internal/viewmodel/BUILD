@@ -46,10 +46,36 @@ kt_jvm_library(
     ],
 )
 
+java_plugin(
+    name = "validation_plugin",
+    deps = [":validation_plugin_lib"],
+)
+
+kt_jvm_library(
+    name = "validation_plugin_lib",
+    srcs = [
+        "ViewModelValidationPlugin.kt",
+    ],
+    deps = [
+        "//:spi",
+        "//java/dagger/hilt/android/processor/internal:android_classnames",
+        "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/internal/guava:graph",
+        "@google_bazel_common//third_party/java/auto:service",
+        "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
+    ],
+)
+
 # See: https://github.com/bazelbuild/rules_kotlin/issues/324
 alias(
     name = "libprocessor_lib-src.jar",
     actual = ":processor_lib-sources.jar",
+)
+
+alias(
+    name = "libvalidation_plugin_lib-src.jar",
+    actual = ":validation_plugin_lib-sources.jar",
 )
 
 filegroup(

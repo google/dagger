@@ -61,7 +61,7 @@ public final class AndroidClassNames {
   public static final ClassName OPTIONAL_INJECT =
       get("dagger.hilt.android.migration", "OptionalInject");
 
-  public static final ClassName APPLICATION_COMPONENT =
+  public static final ClassName SINGLETON_COMPONENT =
       get("dagger.hilt.components", "SingletonComponent");
   public static final ClassName ACTIVITY_COMPONENT =
       get("dagger.hilt.android.components", "ActivityComponent");

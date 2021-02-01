@@ -15,12 +15,6 @@
  */
 
 import com.google.common.truth.Truth.assertThat
-import java.io.DataInputStream
-import java.io.FileInputStream
-import javassist.bytecode.ByteArray
-import javassist.bytecode.ClassFile
-import org.gradle.testkit.runner.TaskOutcome
-import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -36,185 +30,21 @@ class HiltGradlePluginTest {
   @get:Rule
   val testProjectDir = TemporaryFolder()
 
-  lateinit var gradleTransformRunner: GradleTransformTestRunner
+  lateinit var gradleRunner: GradleTestRunner
 
   @Before
   fun setup() {
-    gradleTransformRunner = GradleTransformTestRunner(testProjectDir)
-    gradleTransformRunner.addSrc(
-      srcPath = "minimal/MainActivity.java",
-      srcContent =
-        """
-        package minimal;
-
-        import android.os.Bundle;
-        import androidx.appcompat.app.AppCompatActivity;
-
-        @dagger.hilt.android.AndroidEntryPoint
-        public class MainActivity extends AppCompatActivity {
-          @Override
-          public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-          }
-        }
-        """.trimIndent()
-    )
-  }
-
-  // Simple functional test to verify transformation.
-  @Test
-  fun testAssemble() {
-    gradleTransformRunner.addDependencies(
-      "implementation 'androidx.appcompat:appcompat:1.1.0'",
-      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
-    )
-    gradleTransformRunner.addActivities(
-      "<activity android:name=\".MainActivity\"/>"
-    )
-
-    val result = gradleTransformRunner.build()
-    val assembleTask = result.getTask(":assembleDebug")
-    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
-
-    val transformedClass = result.getTransformedFile("minimal/MainActivity.class")
-    FileInputStream(transformedClass).use { fileInput ->
-      ClassFile(DataInputStream(fileInput)).let { classFile ->
-        // Verify superclass is updated
-        assertEquals("minimal.Hilt_MainActivity", classFile.superclass)
-        // Verify super call is also updated
-        val constPool = classFile.constPool
-        classFile.methods.first { it.name == "onCreate" }.let { methodInfo ->
-          // bytecode of MainActivity.onCreate() is:
-          // 0 - aload_0
-          // 1 - aload_1
-          // 2 - invokespecial
-          // 5 - return
-          val invokeIndex = 2
-          val methodRef = ByteArray.readU16bit(methodInfo.codeAttribute.code, invokeIndex + 1)
-          val classRef = constPool.getMethodrefClassName(methodRef)
-          assertEquals("minimal.Hilt_MainActivity", classRef)
-        }
-      }
-    }
-  }
-
-  // Verify correct transformation is done on nested classes.
-  @Test
-  fun testAssemble_nestedClass() {
-    gradleTransformRunner.addDependencies(
-      "implementation 'androidx.appcompat:appcompat:1.1.0'",
-      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
-    )
-
-    gradleTransformRunner.addSrc(
-      srcPath = "minimal/TopClass.java",
-      srcContent =
-        """
-        package minimal;
-
-        import androidx.appcompat.app.AppCompatActivity;
-
-        public class TopClass {
-            @dagger.hilt.android.AndroidEntryPoint
-            public static class NestedActivity extends AppCompatActivity { }
-        }
-        """.trimIndent()
-    )
-
-    val result = gradleTransformRunner.build()
-    val assembleTask = result.getTask(":assembleDebug")
-    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
-
-    val transformedClass = result.getTransformedFile("minimal/TopClass\$NestedActivity.class")
-    FileInputStream(transformedClass).use { fileInput ->
-      ClassFile(DataInputStream(fileInput)).let { classFile ->
-        assertEquals("minimal.Hilt_TopClass_NestedActivity", classFile.superclass)
-      }
-    }
-  }
-
-  // Verify transformation ignores abstract methods.
-  @Test
-  fun testAssemble_abstractMethod() {
-    gradleTransformRunner.addDependencies(
-      "implementation 'androidx.appcompat:appcompat:1.1.0'",
-      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
-    )
-
-    gradleTransformRunner.addSrc(
-      srcPath = "minimal/AbstractActivity.java",
-      srcContent =
-        """
-        package minimal;
-
-        import androidx.appcompat.app.AppCompatActivity;
-
-        @dagger.hilt.android.AndroidEntryPoint
-        public abstract class AbstractActivity extends AppCompatActivity {
-            public abstract void method();
-        }
-        """.trimIndent()
-    )
-
-    val result = gradleTransformRunner.build()
-    val assembleTask = result.getTask(":assembleDebug")
-    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
-
-    val transformedClass = result.getTransformedFile("minimal/AbstractActivity.class")
-    FileInputStream(transformedClass).use { fileInput ->
-      ClassFile(DataInputStream(fileInput)).let { classFile ->
-        assertEquals("minimal.Hilt_AbstractActivity", classFile.superclass)
-      }
-    }
-  }
-
-  // Verify transformation ignores native methods.
-  @Test
-  fun testAssemble_nativeMethod() {
-    gradleTransformRunner.addDependencies(
-      "implementation 'androidx.appcompat:appcompat:1.1.0'",
-      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
-    )
-
-    gradleTransformRunner.addSrc(
-      srcPath = "minimal/SimpleActivity.java",
-      srcContent =
-        """
-        package minimal;
-
-        import androidx.appcompat.app.AppCompatActivity;
-
-        @dagger.hilt.android.AndroidEntryPoint
-        public class SimpleActivity extends AppCompatActivity {
-            public native void method();
-        }
-        """.trimIndent()
-    )
-
-    val result = gradleTransformRunner.build()
-    val assembleTask = result.getTask(":assembleDebug")
-    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
-
-    val transformedClass = result.getTransformedFile("minimal/SimpleActivity.class")
-    FileInputStream(transformedClass).use { fileInput ->
-      ClassFile(DataInputStream(fileInput)).let { classFile ->
-        assertEquals("minimal.Hilt_SimpleActivity", classFile.superclass)
-      }
-    }
+    gradleRunner = GradleTestRunner(testProjectDir)
   }
 
   // Verify plugin configuration fails when runtime dependency is missing but plugin is applied.
   @Test
-  fun testAssemble_missingLibraryDep() {
-    gradleTransformRunner.addDependencies(
+  fun test_missingLibraryDep() {
+    gradleRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'"
     )
 
-    val result = gradleTransformRunner.buildAndFail()
+    val result = gradleRunner.buildAndFail()
     assertThat(result.getOutput()).contains(
       "The Hilt Android Gradle plugin is applied but no " +
         "com.google.dagger:hilt-android dependency was found."
@@ -223,125 +53,16 @@ class HiltGradlePluginTest {
 
   // Verify plugin configuration fails when compiler dependency is missing but plugin is applied.
   @Test
-  fun testAssemble_missingCompilerDep() {
-    gradleTransformRunner.addDependencies(
+  fun test_missingCompilerDep() {
+    gradleRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'",
       "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'"
     )
 
-    val result = gradleTransformRunner.buildAndFail()
+    val result = gradleRunner.buildAndFail()
     assertThat(result.getOutput()).contains(
       "The Hilt Android Gradle plugin is applied but no " +
         "com.google.dagger:hilt-compiler dependency was found."
     )
-  }
-
-  // Verifies the transformation is applied incrementally when a class to be transformed is updated.
-  @Test
-  fun testTransform_incrementalClass() {
-    gradleTransformRunner.addDependencies(
-      "implementation 'androidx.appcompat:appcompat:1.1.0'",
-      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
-    )
-
-    val srcFile = gradleTransformRunner.addSrc(
-      srcPath = "minimal/OtherActivity.java",
-      srcContent =
-        """
-        package minimal;
-
-        import androidx.appcompat.app.AppCompatActivity;
-
-        @dagger.hilt.android.AndroidEntryPoint
-        public class OtherActivity extends AppCompatActivity {
-
-        }
-        """.trimIndent()
-    )
-
-    gradleTransformRunner.build().let {
-      val assembleTask = it.getTask(TRANSFORM_TASK_NAME)
-      assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
-    }
-
-    gradleTransformRunner.build().let {
-      val assembleTask = it.getTask(TRANSFORM_TASK_NAME)
-      assertEquals(TaskOutcome.UP_TO_DATE, assembleTask.outcome)
-    }
-
-    srcFile.delete()
-    gradleTransformRunner.addSrc(
-      srcPath = "minimal/OtherActivity.java",
-      srcContent =
-        """
-        package minimal;
-
-        import androidx.fragment.app.FragmentActivity;
-
-        @dagger.hilt.android.AndroidEntryPoint
-        public class OtherActivity extends FragmentActivity {
-
-        }
-        """.trimIndent()
-    )
-
-    val result = gradleTransformRunner.build()
-    val assembleTask = result.getTask(TRANSFORM_TASK_NAME)
-    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
-
-    val transformedClass = result.getTransformedFile("minimal/OtherActivity.class")
-    FileInputStream(transformedClass).use { fileInput ->
-      ClassFile(DataInputStream(fileInput)).let { classFile ->
-        assertEquals("minimal.Hilt_OtherActivity", classFile.superclass)
-      }
-    }
-  }
-
-  // Verifies the transformation is applied incrementally when a new class is added to an existing
-  // directory.
-  @Test
-  fun testTransform_incrementalDir() {
-    gradleTransformRunner.addDependencies(
-      "implementation 'androidx.appcompat:appcompat:1.1.0'",
-      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
-    )
-
-    gradleTransformRunner.addSrcPackage("ui/")
-
-    gradleTransformRunner.build().let {
-      val assembleTask = it.getTask(TRANSFORM_TASK_NAME)
-      assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
-    }
-
-    gradleTransformRunner.build().let {
-      val assembleTask = it.getTask(TRANSFORM_TASK_NAME)
-      assertEquals(TaskOutcome.UP_TO_DATE, assembleTask.outcome)
-    }
-
-    gradleTransformRunner.addSrc(
-      srcPath = "ui/OtherActivity.java",
-      srcContent =
-        """
-        package ui;
-
-        import androidx.appcompat.app.AppCompatActivity;
-
-        @dagger.hilt.android.AndroidEntryPoint
-        public class OtherActivity extends AppCompatActivity {
-
-        }
-        """.trimIndent()
-    )
-
-    val result = gradleTransformRunner.build()
-    val assembleTask = result.getTask(TRANSFORM_TASK_NAME)
-    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
-  }
-
-  companion object {
-    const val TRANSFORM_TASK_NAME =
-      ":transformClassesWithAndroidEntryPointTransformForDebug"
   }
 }

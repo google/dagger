@@ -34,20 +34,25 @@ public final class AssistedFactoryParameterizedTest {
   @Singleton
   @Component
   interface ParentComponent {
-    // Parameterized Factory
-    ParameterizedFooFactory<Dep2, AssistedDep2> parameterizedFooFactory();
+    // Tests a parameterized Factory with unique @Assisted types
+    ParameterizedFooFactory<Dep2, AssistedDep2> uniqueParameterizedFooFactory();
 
-    // This class tests the request of factories from another binding.
+    // Tests a parameterized Factory with duplicate @Assisted types in its resolved request type.
+    // Note: this is fine since the @Assisted types are still unique on the @AssistedInject and
+    // @AssistedFactory types, so that the generated code can correctly matches types.
+    ParameterizedFooFactory<Dep1, AssistedDep1> dupeParameterizedFooFactory();
+
+    // Tests a parameterized Factory with same type as binding
+    ParameterizedFooFactory<Dep1, Dep1> bindingParameterizedFooFactory();
+
+    // Tests a parameterized Factory with fixed type parameters
+    FixedParameterizedFooFactory fixedParameterizedFooFactory();
+
+    // Tests a parameterized Factory that extends an interface with a parameterized return type
+    ExtendedFooFactory<Dep2, AssistedDep2> extendedParameterizedFooFactory();
+
+    // Tests a request of factories from another binding.
     SomeEntryPoint someEntryPoint();
-  }
-
-  static class SomeEntryPoint {
-    private final ParameterizedFooFactory<Dep1, AssistedDep1> parameterizedFooFactory;
-
-    @Inject
-    SomeEntryPoint(ParameterizedFooFactory<Dep1, AssistedDep1> parameterizedFooFactory) {
-      this.parameterizedFooFactory = parameterizedFooFactory;
-    }
   }
 
   static final class Dep1 {
@@ -110,19 +115,18 @@ public final class AssistedFactoryParameterizedTest {
 
   @AssistedFactory
   interface ParameterizedFooFactory<DepT, AssistedDepT> {
-    // Use different parameter names than Foo to make sure we're not assuming they're the same.
     ParameterizedFoo<DepT, AssistedDepT> create(
-        AssistedDep1 factoryAssistedDep1, AssistedDepT factoryAssistedDepT, int factoryAssistedInt);
+        AssistedDep1 assistedDep1, AssistedDepT assistedDepT, int assistedInt);
   }
 
   @Test
-  public void testParameterizedFooFactory() {
+  public void testUniqueParameterizedFooFactory() {
     AssistedDep1 assistedDep1 = new AssistedDep1();
     AssistedDep2 assistedDep2 = new AssistedDep2();
     int assistedInt = 7;
     ParameterizedFoo<Dep2, AssistedDep2> parameterizedFoo =
         DaggerAssistedFactoryParameterizedTest_ParentComponent.create()
-            .parameterizedFooFactory()
+            .uniqueParameterizedFooFactory()
             .create(assistedDep1, assistedDep2, assistedInt);
     assertThat(parameterizedFoo.dep1).isNotNull();
     assertThat(parameterizedFoo.depTProvider).isNotNull();
@@ -136,13 +140,117 @@ public final class AssistedFactoryParameterizedTest {
   }
 
   @Test
+  public void testDupeParameterizedFooFactory() {
+    AssistedDep1 assistedDep1 = new AssistedDep1();
+    int assistedInt = 7;
+    ParameterizedFoo<Dep1, AssistedDep1> parameterizedFoo =
+        DaggerAssistedFactoryParameterizedTest_ParentComponent.create()
+            .dupeParameterizedFooFactory()
+            .create(assistedDep1, assistedDep1, assistedInt);
+    assertThat(parameterizedFoo.dep1).isNotNull();
+    assertThat(parameterizedFoo.depTProvider).isNotNull();
+    assertThat(parameterizedFoo.depTProvider.get()).isNotNull();
+    assertThat(parameterizedFoo.dep3).isNotNull();
+    assertThat(parameterizedFoo.dep4).isNotNull();
+    assertThat(parameterizedFoo.assistedDep1).isEqualTo(assistedDep1);
+    assertThat(parameterizedFoo.assistedDepT).isEqualTo(assistedDep1);
+    assertThat(parameterizedFoo.assistedInt).isEqualTo(assistedInt);
+    assertThat(parameterizedFoo.factory).isNotNull();
+  }
+
+  @Test
+  public void testBindingParameterizedFooFactory() {
+    AssistedDep1 assistedDep1 = new AssistedDep1();
+    Dep1 dep1 = new Dep1(new Dep2(new Dep3(new Dep4())), new Dep3(new Dep4()));
+    int assistedInt = 7;
+    ParameterizedFoo<Dep1, Dep1> parameterizedFoo =
+        DaggerAssistedFactoryParameterizedTest_ParentComponent.create()
+            .bindingParameterizedFooFactory()
+            .create(assistedDep1, dep1, assistedInt);
+    assertThat(parameterizedFoo.dep1).isNotNull();
+    assertThat(parameterizedFoo.depTProvider).isNotNull();
+    assertThat(parameterizedFoo.depTProvider.get()).isNotNull();
+    assertThat(parameterizedFoo.dep3).isNotNull();
+    assertThat(parameterizedFoo.dep4).isNotNull();
+    assertThat(parameterizedFoo.assistedDep1).isEqualTo(assistedDep1);
+    assertThat(parameterizedFoo.assistedDepT).isEqualTo(dep1);
+    assertThat(parameterizedFoo.assistedInt).isEqualTo(assistedInt);
+    assertThat(parameterizedFoo.factory).isNotNull();
+  }
+
+  @AssistedFactory
+  interface FixedParameterizedFooFactory {
+    ParameterizedFoo<Dep2, AssistedDep2> create(
+        AssistedDep1 assistedDep1, AssistedDep2 assistedDep2, int assistedInt);
+  }
+
+  @Test
+  public void testFixedParameterizedFooFactory() {
+    AssistedDep1 assistedDep1 = new AssistedDep1();
+    AssistedDep2 assistedDep2 = new AssistedDep2();
+    int assistedInt = 7;
+    ParameterizedFoo<Dep2, AssistedDep2> parameterizedFoo =
+        DaggerAssistedFactoryParameterizedTest_ParentComponent.create()
+            .fixedParameterizedFooFactory()
+            .create(assistedDep1, assistedDep2, assistedInt);
+    assertThat(parameterizedFoo.dep1).isNotNull();
+    assertThat(parameterizedFoo.depTProvider).isNotNull();
+    assertThat(parameterizedFoo.depTProvider.get()).isNotNull();
+    assertThat(parameterizedFoo.dep3).isNotNull();
+    assertThat(parameterizedFoo.dep4).isNotNull();
+    assertThat(parameterizedFoo.assistedDep1).isEqualTo(assistedDep1);
+    assertThat(parameterizedFoo.assistedDepT).isEqualTo(assistedDep2);
+    assertThat(parameterizedFoo.assistedInt).isEqualTo(assistedInt);
+    assertThat(parameterizedFoo.factory).isNotNull();
+  }
+
+  interface ParameterizedFactory<ReturnT, DepT, AssistedDepT> {
+    // Use different parameter names than Foo to make sure we're not assuming they're the same.
+    ReturnT create(
+        AssistedDep1 factoryAssistedDep1, AssistedDepT factoryAssistedDepT, int factoryAssistedInt);
+  }
+
+  @AssistedFactory
+  interface ExtendedFooFactory<DepT, AssistedDepT>
+      extends ParameterizedFactory<ParameterizedFoo<DepT, AssistedDepT>, DepT, AssistedDepT> {}
+
+  @Test
+  public void testExtendedFooFactory() {
+    AssistedDep1 assistedDep1 = new AssistedDep1();
+    AssistedDep2 assistedDep2 = new AssistedDep2();
+    int assistedInt = 7;
+    ParameterizedFoo<Dep2, AssistedDep2> parameterizedFoo =
+        DaggerAssistedFactoryParameterizedTest_ParentComponent.create()
+            .extendedParameterizedFooFactory()
+            .create(assistedDep1, assistedDep2, assistedInt);
+    assertThat(parameterizedFoo.dep1).isNotNull();
+    assertThat(parameterizedFoo.depTProvider).isNotNull();
+    assertThat(parameterizedFoo.depTProvider.get()).isNotNull();
+    assertThat(parameterizedFoo.dep3).isNotNull();
+    assertThat(parameterizedFoo.dep4).isNotNull();
+    assertThat(parameterizedFoo.assistedDep1).isEqualTo(assistedDep1);
+    assertThat(parameterizedFoo.assistedDepT).isEqualTo(assistedDep2);
+    assertThat(parameterizedFoo.assistedInt).isEqualTo(assistedInt);
+    assertThat(parameterizedFoo.factory).isNotNull();
+  }
+
+  static class SomeEntryPoint {
+    private final ParameterizedFooFactory<Dep1, AssistedDep1> dupeParameterizedFooFactory;
+
+    @Inject
+    SomeEntryPoint(ParameterizedFooFactory<Dep1, AssistedDep1> dupeParameterizedFooFactory) {
+      this.dupeParameterizedFooFactory = dupeParameterizedFooFactory;
+    }
+  }
+
+  @Test
   public void testParameterizedFooFactoryFromSomeEntryPoint() {
     AssistedDep1 assistedDep1 = new AssistedDep1();
     int assistedInt = 7;
     ParameterizedFoo<Dep1, AssistedDep1> parameterizedFoo =
         DaggerAssistedFactoryParameterizedTest_ParentComponent.create()
             .someEntryPoint()
-            .parameterizedFooFactory
+            .dupeParameterizedFooFactory
             .create(assistedDep1, assistedDep1, assistedInt);
     assertThat(parameterizedFoo.dep1).isNotNull();
     assertThat(parameterizedFoo.depTProvider).isNotNull();

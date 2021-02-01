@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
 
 /** Hilt annotation processor options. */
-// TODO(user): Consider consolidating with Dagger compiler options logic.
+// TODO(danysantiago): Consider consolidating with Dagger compiler options logic.
 // TODO(user): Move this class to dagger/hilt/processor/internal
 public final class HiltCompilerOptions {
 
@@ -52,7 +52,7 @@ public final class HiltCompilerOptions {
       if (value == null) {
         return defaultValue;
       }
-      // TODO(user): Strictly verify input, either 'true' or 'false' and nothing else.
+      // TODO(danysantiago): Strictly verify input, either 'true' or 'false' and nothing else.
       return Boolean.parseBoolean(value);
     }
 

@@ -18,7 +18,7 @@ package dagger.hilt.internal;
 
 /**
  * A partial copy of Guava's {@code com.google.common.base.Preconditions} meant to be used by
- * generated code. TODO(user): Consolidate with dagger.internal.Preconditions
+ * generated code. TODO(danysantiago): Consolidate with dagger.internal.Preconditions
  */
 public final class Preconditions {
 

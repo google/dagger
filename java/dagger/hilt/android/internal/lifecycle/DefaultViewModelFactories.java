@@ -135,7 +135,7 @@ public final class DefaultViewModelFactories {
   /** The activity module to declare the optional factories. */
   @Module
   @InstallIn(ActivityComponent.class)
-  public interface ActivityModule {
+  interface ActivityModule {
     @Multibinds
     @HiltViewModelMap.KeySet
     abstract Set<String> viewModelKeys();

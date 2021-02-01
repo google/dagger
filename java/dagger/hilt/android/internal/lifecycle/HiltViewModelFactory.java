@@ -46,9 +46,10 @@ import javax.inject.Provider;
  */
 public final class HiltViewModelFactory implements ViewModelProvider.Factory {
 
+  /** Hilt entry point for getting the multi-binding map of ViewModels. */
   @EntryPoint
   @InstallIn(ViewModelComponent.class)
-  interface ViewModelFactoriesEntryPoint {
+  public interface ViewModelFactoriesEntryPoint {
     @HiltViewModelMap
     Map<String, Provider<ViewModel>> getHiltViewModelMap();
   }
@@ -56,25 +57,25 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
   /** Hilt module for providing the empty multi-binding map of ViewModels. */
   @Module
   @InstallIn(ViewModelComponent.class)
-  public abstract static class ViewModelModule {
+  interface ViewModelModule {
     @Multibinds
     @HiltViewModelMap
-    abstract Map<String, ViewModel> hiltViewModelMap();
+    Map<String, ViewModel> hiltViewModelMap();
   }
 
-  private final Set<String> viewModelInjectKeys;
+  private final Set<String> hiltViewModelKeys;
   private final ViewModelProvider.Factory delegateFactory;
-  private final AbstractSavedStateViewModelFactory viewModelInjectFactory;
+  private final AbstractSavedStateViewModelFactory hiltViewModelFactory;
 
   public HiltViewModelFactory(
       @NonNull SavedStateRegistryOwner owner,
       @Nullable Bundle defaultArgs,
-      @NonNull Set<String> viewModelInjectKeys,
+      @NonNull Set<String> hiltViewModelKeys,
       @NonNull ViewModelProvider.Factory delegateFactory,
       @NonNull ViewModelComponentBuilder viewModelComponentBuilder) {
-    this.viewModelInjectKeys = viewModelInjectKeys;
+    this.hiltViewModelKeys = hiltViewModelKeys;
     this.delegateFactory = delegateFactory;
-    this.viewModelInjectFactory =
+    this.hiltViewModelFactory =
         new AbstractSavedStateViewModelFactory(owner, defaultArgs) {
           @NonNull
           @Override
@@ -89,10 +90,10 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
                     .get(modelClass.getName());
             if (provider == null) {
               throw new IllegalStateException(
-                  "Expected the @ViewModelInject-annotated class '"
+                  "Expected the @HiltViewModel-annotated class '"
                       + modelClass.getName()
                       + "' to be available in the multi-binding of "
-                      + "@ViewModelInjectMap but none was found.");
+                      + "@HiltViewModelMap but none was found.");
             }
             return (T) provider.get();
           }
@@ -102,8 +103,8 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
   @NonNull
   @Override
   public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-    if (viewModelInjectKeys.contains(modelClass.getName())) {
-      return viewModelInjectFactory.create(modelClass);
+    if (hiltViewModelKeys.contains(modelClass.getName())) {
+      return hiltViewModelFactory.create(modelClass);
     } else {
       return delegateFactory.create(modelClass);
     }

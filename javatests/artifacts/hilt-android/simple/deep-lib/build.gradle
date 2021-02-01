@@ -1,0 +1,13 @@
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_7
+    targetCompatibility = JavaVersion.VERSION_1_7
+}
+
+dependencies {
+    implementation "com.google.dagger:hilt-core:$dagger_version"
+    annotationProcessor "com.google.dagger:hilt-compiler:$dagger_version"
+}

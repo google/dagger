@@ -111,13 +111,13 @@ class IncrementalProcessorTest {
       }
 
       android {
-        compileSdkVersion 29
-        buildToolsVersion "29.0.2"
+        compileSdkVersion 30
+        buildToolsVersion "30.0.2"
 
         defaultConfig {
           applicationId "hilt.simple"
           minSdkVersion 21
-          targetSdkVersion 29
+          targetSdkVersion 30
         }
 
         compileOptions {

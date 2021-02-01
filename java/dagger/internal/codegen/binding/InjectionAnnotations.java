@@ -126,7 +126,7 @@ public final class InjectionAnnotations {
               membersInjectorNameForType(asType(fieldElement.getEnclosingElement())));
       if (membersInjector != null) {
         String memberInjectedFieldSignature = memberInjectedFieldSignatureForVariable(fieldElement);
-        // TODO(user): We have to iterate over all the injection methods for every qualifier
+        // TODO(danysantiago): We have to iterate over all the injection methods for every qualifier
         //  look up. Making this N^2 when looking through all the injected fields. :(
         return ElementFilter.methodsIn(membersInjector.getEnclosedElements()).stream()
             .filter(
@@ -141,7 +141,12 @@ public final class InjectionAnnotations {
             .orElseThrow(
                 () ->
                     new IllegalStateException(
-                        "No matching InjectedFieldSignature for " + memberInjectedFieldSignature));
+                        String.format(
+                            "No matching InjectedFieldSignature for %1$s. This likely means that "
+                                + "%1$s was compiled with an older, incompatible version of "
+                                + "Dagger. Please update all Dagger dependencies to the same "
+                                + "version.",
+                            memberInjectedFieldSignature)));
       } else {
         throw new IllegalStateException(
             "No MembersInjector found for " + fieldElement.getEnclosingElement());

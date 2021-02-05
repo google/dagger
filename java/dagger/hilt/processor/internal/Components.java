@@ -93,19 +93,16 @@ public final class Components {
             || Processors.hasAnnotation(element, ClassNames.TEST_INSTALL_IN));
 
     ImmutableSet<TypeElement> components =
+        ImmutableSet.copyOf(
             Processors.hasAnnotation(element, ClassNames.INSTALL_IN)
                 ? Processors.getAnnotationClassValues(
                     elements,
                     Processors.getAnnotationMirror(element, ClassNames.INSTALL_IN),
-                    "value").stream()
-                        .map(component -> mapComponents(elements, component))
-                        .collect(toImmutableSet())
+                    "value")
                 : Processors.getAnnotationClassValues(
                     elements,
                     Processors.getAnnotationMirror(element, ClassNames.TEST_INSTALL_IN),
-                    "components").stream()
-                        .map(component -> mapComponents(elements, component))
-                        .collect(toImmutableSet());
+                    "components"));
 
     ImmutableSet<TypeElement> undefinedComponents =
         components.stream()
@@ -119,17 +116,6 @@ public final class Components {
         undefinedComponents);
 
     return components.stream().map(ClassName::get).collect(toImmutableSet());
-  }
-
-  // Temporary hack while ApplicationComponent is renamed to SingletonComponent
-  private static TypeElement mapComponents(Elements elements, TypeElement element) {
-    if (ClassNames.LEGACY_APPLICATION_COMPONENT.equals(ClassName.get(element))) {
-      TypeElement singletonComponent =
-          elements.getTypeElement(ClassNames.SINGLETON_COMPONENT.canonicalName());
-      Preconditions.checkState(singletonComponent != null);
-      return singletonComponent;
-    }
-    return element;
   }
 
   private Components() {}

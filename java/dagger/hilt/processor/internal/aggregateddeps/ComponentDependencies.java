@@ -243,7 +243,7 @@ public abstract class ComponentDependencies {
       // processor since new processors should convert to the new SingletonComponent when generating
       // the metadata class.
       if (descriptor.component().equals(ClassNames.SINGLETON_COMPONENT)) {
-        builder.put(ClassNames.LEGACY_APPLICATION_COMPONENT.toString(), descriptor);
+        builder.put("dagger.hilt.android.components.ApplicationComponent", descriptor);
       }
       builder.put(descriptor.component().toString(), descriptor);
     }

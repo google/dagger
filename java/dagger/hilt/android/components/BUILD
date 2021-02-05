@@ -22,7 +22,6 @@ android_library(
     srcs = [
         "ActivityComponent.java",
         "ActivityRetainedComponent.java",
-        "ApplicationComponent.java",
         "FragmentComponent.java",
         "ServiceComponent.java",
         "ViewComponent.java",

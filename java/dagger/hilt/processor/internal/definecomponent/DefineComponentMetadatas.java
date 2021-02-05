@@ -61,13 +61,6 @@ final class DefineComponentMetadatas {
   }
 
   private DefineComponentMetadata get(Element element, LinkedHashSet<Element> childPath) {
-    // This is a temporary hack to map the old ApplicationComponent to the new SingletonComponent
-    if (element.getKind().equals(ElementKind.INTERFACE)
-        && asType(element).getQualifiedName()
-            .contentEquals(ClassNames.LEGACY_APPLICATION_COMPONENT.toString())) {
-      element = asTypeElement(asType(element).getInterfaces().get(0));
-    }
-
     if (!metadatas.containsKey(element)) {
       metadatas.put(element, getUncached(element, childPath));
     }
@@ -159,7 +152,6 @@ final class DefineComponentMetadatas {
 
     ProcessorErrors.checkState(
         ClassName.get(parent).equals(ClassNames.DEFINE_COMPONENT_NO_PARENT)
-            || ClassName.get(parent).equals(ClassNames.LEGACY_APPLICATION_COMPONENT)
             || Processors.hasAnnotation(parent, ClassNames.DEFINE_COMPONENT),
         component,
         "@DefineComponent %s, references a type not annotated with @DefineComponent: %s",

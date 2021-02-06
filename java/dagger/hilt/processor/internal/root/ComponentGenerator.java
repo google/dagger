@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.processor.internal;
+package dagger.hilt.processor.internal.root;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static java.util.Comparator.comparing;
@@ -28,6 +28,8 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -39,8 +41,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 /** Generates a Dagger component or subcomponent interface. */
-// TODO(bcorso): Make this non-public
-public final class ComponentGenerator {
+final class ComponentGenerator {
   private static final Joiner JOINER = Joiner.on(".");
   private static final Comparator<ClassName> SIMPLE_NAME_SORTER =
       Comparator.comparing((ClassName c) -> JOINER.join(c.simpleNames()))

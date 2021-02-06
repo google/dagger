@@ -36,7 +36,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
-import dagger.hilt.processor.internal.ComponentGenerator;
 import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.ComponentTree;
 import dagger.hilt.processor.internal.Processors;

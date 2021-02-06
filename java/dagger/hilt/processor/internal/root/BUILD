@@ -29,6 +29,7 @@ java_plugin(
 java_library(
     name = "processor_lib",
     srcs = [
+        "ComponentGenerator.java",
         "RootFileFormatter.java",
         "RootGenerator.java",
         "RootProcessor.java",

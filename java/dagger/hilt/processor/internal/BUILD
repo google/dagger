@@ -99,12 +99,9 @@ java_library(
     name = "component_descriptor",
     srcs = [
         "ComponentDescriptor.java",
-        "ComponentGenerator.java",
         "ComponentTree.java",
     ],
     deps = [
-        ":classnames",
-        ":processors",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",

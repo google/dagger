@@ -163,14 +163,24 @@ final class DefineComponentMetadatas {
             ? Optional.empty()
             : Optional.of(get(parent, childPath));
 
+    ClassName componentClassName = ClassName.get(component);
+
     ProcessorErrors.checkState(
         parentComponent.isPresent()
-            || ClassName.get(component).equals(ClassNames.SINGLETON_COMPONENT),
+            || componentClassName.equals(ClassNames.SINGLETON_COMPONENT),
         component,
         "@DefineComponent %s is missing a parent declaration.\n"
             + "Please declare the parent, for example: @DefineComponent(parent ="
             + " SingletonComponent.class)",
         component);
+
+    ProcessorErrors.checkState(
+        componentClassName.equals(ClassNames.SINGLETON_COMPONENT)
+        || !componentClassName.simpleName().equals(ClassNames.SINGLETON_COMPONENT.simpleName()),
+        component,
+        "Cannot have a component with the same simple name as the reserved %s: %s",
+        ClassNames.SINGLETON_COMPONENT.simpleName(),
+        componentClassName);
 
     return new AutoValue_DefineComponentMetadatas_DefineComponentMetadata(
         component, scopes, parentComponent);

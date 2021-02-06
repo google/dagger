@@ -16,6 +16,7 @@
 
 package dagger.hilt.processor.internal.root;
 
+import static com.google.common.base.Preconditions.checkState;
 import static dagger.hilt.processor.internal.Processors.toClassNames;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -40,6 +41,8 @@ import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.ComponentTree;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
@@ -58,6 +61,8 @@ final class RootGenerator {
   private final RootMetadata metadata;
   private final ProcessingEnvironment env;
   private final Root root;
+  private final Map<String, Integer> simpleComponentNamesToDedupeSuffix = new HashMap<>();
+  private final Map<ComponentDescriptor, ClassName> componentNameMap = new HashMap<>();
 
   private RootGenerator(RootMetadata metadata, ProcessingEnvironment env) {
     this.metadata = metadata;
@@ -214,6 +219,34 @@ final class RootGenerator {
   }
 
   private ClassName getComponentClassName(ComponentDescriptor componentDescriptor) {
-    return ComponentNames.generatedComponent(root.classname(), componentDescriptor.component());
+    if (componentNameMap.containsKey(componentDescriptor)) {
+      return componentNameMap.get(componentDescriptor);
+    }
+
+    // Disallow any component names with the same name as our SingletonComponent because we treat
+    // that component specially and things may break.
+    checkState(
+        componentDescriptor.component().equals(ClassNames.SINGLETON_COMPONENT)
+        || !componentDescriptor.component().simpleName().equals(
+            ClassNames.SINGLETON_COMPONENT.simpleName()),
+        "Cannot have a component with the same simple name as the reserved %s: %s",
+        ClassNames.SINGLETON_COMPONENT.simpleName(),
+        componentDescriptor.component());
+
+    ClassName generatedComponent = ComponentNames.generatedComponent(
+        root.classname(), componentDescriptor.component());
+
+    Integer suffix = simpleComponentNamesToDedupeSuffix.get(generatedComponent.simpleName());
+    if (suffix != null) {
+      // If an entry exists, use the suffix in the map and the replace it with the value incremented
+      generatedComponent = Processors.append(generatedComponent, String.valueOf(suffix));
+      simpleComponentNamesToDedupeSuffix.put(generatedComponent.simpleName(), suffix + 1);
+    } else {
+      // Otherwise, just add an entry for any possible future duplicates
+      simpleComponentNamesToDedupeSuffix.put(generatedComponent.simpleName(), 2);
+    }
+
+    componentNameMap.put(componentDescriptor, generatedComponent);
+    return generatedComponent;
   }
 }

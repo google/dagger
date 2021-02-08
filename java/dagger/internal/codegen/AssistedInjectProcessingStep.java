@@ -76,7 +76,10 @@ final class AssistedInjectProcessingStep extends TypeCheckingProcessingStep<Exec
       for (AssistedParameter assistedParameter : assistedParameters) {
         if (!uniqueAssistedParameters.add(assistedParameter)) {
           report.addError(
-              "@AssistedInject constructor has duplicate @Assisted type: " + assistedParameter,
+              String.format("@AssistedInject constructor has duplicate @Assisted type: %s. "
+                  + "Consider setting an identifier on the parameter by using "
+                  + "@Assisted(\"identifier\") in both the factory and @AssistedInject constructor",
+                  assistedParameter),
               assistedParameter.variableElement());
         }
       }

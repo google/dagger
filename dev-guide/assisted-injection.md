@@ -105,6 +105,57 @@ However, there are some important differences.
      constructor does not contain any assisted parameters.
   2. `@AssistedInject` types cannot be scoped.
 
+## Disambiguating @Assisted parameters with the same type
+
+If multiple `@Assisted` parameters have the same type, you must distinguish
+them by giving them an identifier. This can be done by adding a name via the
+`@Assisted("name")` annotation. These must be put on both the factory method
+and the `@AssistedInject` type.
+
+For example:
+
+<div class="c-codeselector__button c-codeselector__button_java">Java</div>
+<div class="c-codeselector__button c-codeselector__button_kotlin">Kotlin</div>
+```java
+class MyDataService {
+  @AssistedInject
+  MyDataService(
+      DataFetcher dataFetcher,
+      @Assisted("server") Config serverConfig,
+      @Assisted("client") Config clientConfig) {}
+}
+
+@AssistedFactory
+public interface MyDataServiceFactory {
+  MyDataService create(
+      @Assisted("server") Config serverConfig,
+      @Assisted("client") Config clientConfig);
+}
+```
+{: .c-codeselector__code .c-codeselector__code_java }
+```kotlin
+class MyDataService @AssistedInject constructor(
+    dataFetcher: DataFetcher,
+    @Assisted("server") serverConfig: Config,
+    @Assisted("client") clientConfig: Config
+) {}
+
+@AssistedFactory
+interface MyDataServiceFactory {
+  fun create(
+    @Assisted("server") serverConfig: Config,
+    @Assisted("client") clientConfig: Config
+  ): MyDataService
+}
+```
+{: .c-codeselector__code .c-codeselector__code_kotlin }
+
+**Note:** Unfortunately, using parameter names to disambiguate parameters
+is not possible as there are situations where the parameter names are not kept.
+Please see this [issue](https://github.com/google/dagger/issues/2281) for more
+information.
+{: .c-callouts__note }
+
 ## What about AutoFactory and Square's AssistedInject?
 
 For Dagger users, we recommend using Dagger's assisted injection rather than

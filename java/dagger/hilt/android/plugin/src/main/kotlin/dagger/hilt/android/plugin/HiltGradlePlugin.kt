@@ -32,10 +32,12 @@ import com.android.build.gradle.api.UnitTestVariant
 import dagger.hilt.android.plugin.util.CopyTransform
 import dagger.hilt.android.plugin.util.SimpleAGPVersion
 import java.io.File
+import javax.inject.Inject
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
+import org.gradle.api.provider.ProviderFactory
 
 /**
  * A Gradle plugin that checks if the project is an Android project and if so, registers a
@@ -45,7 +47,9 @@ import org.gradle.api.attributes.Attribute
  * classes annotated with `@AndroidEntryPoint` since the registered transform by this plugin will
  * update the superclass.
  */
-class HiltGradlePlugin : Plugin<Project> {
+class HiltGradlePlugin @Inject constructor(
+  val providers: ProviderFactory
+) : Plugin<Project> {
   override fun apply(project: Project) {
     var configured = false
     project.plugins.withType(AndroidBasePlugin::class.java) {
@@ -127,6 +131,7 @@ class HiltGradlePlugin : Plugin<Project> {
     }
   }
 
+  @Suppress("UnstableApiUsage")
   private fun configureVariantCompileClasspath(
     project: Project,
     hiltExtension: HiltExtension,
@@ -160,7 +165,7 @@ class HiltGradlePlugin : Plugin<Project> {
           "android.injected.build.model.only.versioned", // Sent by AS 2.4+
           "android.injected.build.model.feature.full.dependencies", // Sent by AS 2.4+
           "android.injected.build.model.v2", // Sent by AS 4.2+
-        ).any { project.properties.containsKey(it) }
+        ).any { providers.gradleProperty(it).forUseAtConfigurationTime().isPresent }
     ) {
       // Do not configure compile classpath when AndroidStudio is building the model (syncing)
       // otherwise it will cause a freeze.

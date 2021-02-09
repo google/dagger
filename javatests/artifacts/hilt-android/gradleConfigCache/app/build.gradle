@@ -38,6 +38,9 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    lintOptions {
+        checkReleaseBuilds = false
+    }
     testOptions {
         unitTests.includeAndroidResources = true
     }
@@ -45,6 +48,7 @@ android {
 
 hilt {
     enableTransformForLocalTests = true
+    enableExperimentalClasspathAggregation = true
 }
 
 dependencies {

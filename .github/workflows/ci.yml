@@ -7,8 +7,23 @@ on:
   pull_request:
 
 jobs:
+  validate-latest-dagger-version:
+    name: 'Validate Dagger version'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Check out gh-docs repository'
+        uses: actions/checkout@v2
+        with:
+          ref: 'gh-pages'
+          path: 'gh-pages'
+      - name: 'Validate latest Dagger version'
+        run: ./util/validate-latest-dagger-version.sh gh-pages/_config.yml
+        shell: bash
   bazel-test:
     name: 'Bazel tests'
+    needs: validate-latest-dagger-version
     runs-on: ubuntu-latest
     env:
       # Our Bazel builds currently rely on JDK 8.

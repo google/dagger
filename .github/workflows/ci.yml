@@ -7,6 +7,8 @@ on:
   pull_request:
 
 jobs:
+  # TODO(bcorso): Add a "Validate Dagger version" job once we've commited the
+  # Scripts to the gh-pages repo.
   bazel-test:
     name: 'Bazel tests'
     runs-on: ubuntu-latest

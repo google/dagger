@@ -4,7 +4,7 @@ title: Hilt
 ---
 
 Hilt provides a standard way to incorporate Dagger
-dependency injection into an Android application.
+dependency injection into an Android application. The latest Hilt release is: <a href="https://github.com/google/dagger/releases/latest">Dagger {{site.hiltVersion}}</a>
 
 *The goals of Hilt are:*
 

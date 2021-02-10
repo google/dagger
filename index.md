@@ -7,6 +7,8 @@ Java, Kotlin, and Android. It is an adaptation of an
 [earlier version](https://github.com/square/dagger) created by
 [Square] and now maintained by Google.
 
+The latest Dagger release is: <a href="https://github.com/google/dagger/releases/latest">Dagger {{site.daggerVersion}}</a>
+
 Dagger aims to address many of the development and performance issues that have
 plagued reflection-based solutions. More details can be found in
 [this talk][dagger-talk-video] ([slides][dagger-talk-slides]) by

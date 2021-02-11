@@ -44,7 +44,7 @@ java_library(
     ],
     deps = [
         "//:dagger_with_compiler",
-        "//java/dagger/hilt/android/processor/internal/androidentrypoint:compiler_options",
+        "//java/dagger/hilt/processor/internal:compiler_options",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:components",

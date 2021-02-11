@@ -96,6 +96,14 @@ public abstract class BaseProcessor extends AbstractProcessor {
   private Messager messager;
   private ProcessorErrorHandler errorHandler;
 
+  @Override
+  public final Set<String> getSupportedOptions() {
+    // This is declared here rather than in the actual processors because KAPT will issue a
+    // warning if any used option is not unsupported. This can happen when there is a module
+    // which uses Hilt but lacks any @AndroidEntryPoint annotations
+    return HiltCompilerOptions.getProcessorOptions();
+  }
+
   /** Used to perform initialization before each round of processing. */
   protected void preRoundProcess(RoundEnvironment roundEnv) {};
 

@@ -35,9 +35,9 @@ java_library(
     srcs = ["AndroidEntryPointProcessor.java"],
     deps = [
         ":android_generators",
-        ":compiler_options",
         ":metadata",
         "//java/dagger/hilt/android/processor/internal:android_classnames",
+        "//java/dagger/hilt/processor/internal:compiler_options",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/internal/guava:collect",
@@ -81,7 +81,7 @@ java_library(
         "AndroidEntryPointMetadata.java",
     ],
     deps = [
-        ":compiler_options",
+        "//java/dagger/hilt/processor/internal:compiler_options",
         "//java/dagger/hilt/android/processor/internal:android_classnames",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:components",
@@ -96,11 +96,6 @@ java_library(
         "@google_bazel_common//third_party/java/javapoet",
         "@maven//:com_google_auto_auto_common",
     ],
-)
-
-java_library(
-    name = "compiler_options",
-    srcs = ["HiltCompilerOptions.java"],
 )
 
 filegroup(

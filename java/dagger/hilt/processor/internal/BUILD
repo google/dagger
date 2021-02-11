@@ -26,6 +26,7 @@ java_library(
     deps = [
         ":processor_errors",
         ":processors",
+        ":compiler_options",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:value",
@@ -132,6 +133,11 @@ java_library(
         "//:dagger_with_compiler",
         "//java/dagger/internal/codegen/kotlin",
     ],
+)
+
+java_library(
+    name = "compiler_options",
+    srcs = ["HiltCompilerOptions.java"],
 )
 
 filegroup(

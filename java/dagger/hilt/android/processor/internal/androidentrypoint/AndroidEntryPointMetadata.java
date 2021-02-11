@@ -16,7 +16,7 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import static dagger.hilt.android.processor.internal.androidentrypoint.HiltCompilerOptions.BooleanOption.DISABLE_ANDROID_SUPERCLASS_VALIDATION;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.BooleanOption.DISABLE_ANDROID_SUPERCLASS_VALIDATION;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.common.MoreElements;

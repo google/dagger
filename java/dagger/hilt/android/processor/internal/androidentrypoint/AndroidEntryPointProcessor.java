@@ -44,11 +44,6 @@ public final class AndroidEntryPointProcessor extends BaseProcessor {
   }
 
   @Override
-  public Set<String> getSupportedOptions() {
-    return HiltCompilerOptions.getProcessorOptions();
-  }
-
-  @Override
   public boolean delayErrors() {
     return true;
   }

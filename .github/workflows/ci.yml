@@ -4,11 +4,28 @@ on:
   push:
     branches:
       - master
+      - gh-pages
   pull_request:
 
 jobs:
+  validate-latest-dagger-version:
+    name: 'Validate Dagger version'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Check out gh-docs repository'
+        uses: actions/checkout@v2
+        with:
+          ref: 'gh-pages'
+          path: 'gh-pages'
+      - name: 'Validate latest Dagger version'
+        run: ./util/validate-latest-dagger-version.sh gh-pages/_config.yml
+        shell: bash
   bazel-test:
     name: 'Bazel tests'
+    if: github.ref != 'refs/heads/gh-pages'
+    needs: validate-latest-dagger-version
     runs-on: ubuntu-latest
     env:
       # Our Bazel builds currently rely on JDK 8.
@@ -61,6 +78,7 @@ jobs:
           path: ~/.m2/repository/com/google/dagger
   artifact-java-local-tests:
     name: 'Artifact Java local tests'
+    if: github.ref != 'refs/heads/gh-pages'
     needs: bazel-test
     runs-on: ubuntu-latest
     steps:
@@ -85,6 +103,7 @@ jobs:
       shell: bash
   artifact-android-local-tests:
     name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
+    if: github.ref != 'refs/heads/gh-pages'
     needs: bazel-test
     runs-on: ubuntu-latest
     strategy:
@@ -112,6 +131,7 @@ jobs:
         shell: bash
   artifact-android-emulator-tests:
     name: 'Artifact Android emulator tests (API 30)'
+    if: github.ref != 'refs/heads/gh-pages'
     needs: bazel-test
     # It's recommended to run emulator tests on macOS
     # See https://github.com/marketplace/actions/android-emulator-runner
@@ -142,10 +162,10 @@ jobs:
           script: ./util/run-local-emulator-tests.sh
   publish-snapshot:
     name: 'Publish snapshot'
+    if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     # TODO(bcorso): Consider also waiting on artifact-android-emulator-tests
     # and artifact-android-emulator-legacy-api-tests after checking flakiness.
     needs: [bazel-test, artifact-java-local-tests, artifact-android-local-tests]
-    if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: 'Check out repository'

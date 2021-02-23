@@ -1,0 +1,21 @@
+name: Docs CI
+
+on:
+  push:
+    branches:
+      - gh-pages
+  pull_request:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  validate-latest-dagger-version:
+    name: 'Validate Dagger version'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Validate latest Dagger version'
+        run: ./.github/scripts/validate-latest-dagger-version.sh _config.yml

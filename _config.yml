@@ -26,9 +26,9 @@ sass:
 
 googleAnalyticsId: UA-43772875-7
 
-daggerVersion: "2.32"
+daggerVersion: "2.33"
 
-hiltVersion: "2.32-alpha"
+hiltVersion: "2.33-alpha"
 
 plugins:
   - jekyll-redirect-from

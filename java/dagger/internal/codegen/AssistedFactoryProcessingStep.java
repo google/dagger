@@ -137,7 +137,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
       }
 
       ImmutableSet<ExecutableElement> abstractFactoryMethods =
-          AssistedInjectionAnnotations.assistedFactoryMethods(factory, elements, types);
+          AssistedInjectionAnnotations.assistedFactoryMethods(factory, elements);
 
       if (abstractFactoryMethods.isEmpty()) {
         report.addError(

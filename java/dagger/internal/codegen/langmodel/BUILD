@@ -26,6 +26,7 @@ java_library(
     tags = ["maven:merged"],
     deps = [
         "//java/dagger:core",
+        "//java/dagger/internal/codegen/base:shared",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/internal/guava:concurrent",

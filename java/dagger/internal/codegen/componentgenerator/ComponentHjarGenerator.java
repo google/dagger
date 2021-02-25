@@ -148,8 +148,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
         && !hasBindsInstanceMethods(componentDescriptor)
         && componentRequirements(componentDescriptor)
             .noneMatch(
-                requirement ->
-                    requirement.requiresAPassedInstance(elements, types, metadataUtil))) {
+                requirement -> requirement.requiresAPassedInstance(elements, metadataUtil))) {
       generatedComponent.addMethod(createMethod(componentDescriptor));
     }
 

@@ -318,7 +318,7 @@ public final class ComponentDescriptorValidator {
       Set<ComponentRequirement> mustBePassed =
           Sets.filter(
               componentModuleAndDependencyRequirements,
-              input -> input.nullPolicy(elements, types, metadataUtil).equals(NullPolicy.THROW));
+              input -> input.nullPolicy(elements, metadataUtil).equals(NullPolicy.THROW));
       // Component requirements that the creator must be able to set, but can't
       Set<ComponentRequirement> missingRequirements =
           Sets.difference(mustBePassed, creatorModuleAndDependencyRequirements);

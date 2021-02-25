@@ -59,14 +59,14 @@ import javax.lang.model.type.TypeMirror;
 public final class AssistedInjectionAnnotations {
   /** Returns the factory method for the given factory {@link TypeElement}. */
   public static ExecutableElement assistedFactoryMethod(
-      TypeElement factory, DaggerElements elements, DaggerTypes types) {
-    return getOnlyElement(assistedFactoryMethods(factory, elements, types));
+      TypeElement factory, DaggerElements elements) {
+    return getOnlyElement(assistedFactoryMethods(factory, elements));
   }
 
   /** Returns the list of abstract factory methods for the given factory {@link TypeElement}. */
   public static ImmutableSet<ExecutableElement> assistedFactoryMethods(
-      TypeElement factory, DaggerElements elements, DaggerTypes types) {
-    return MoreElements.getLocalAndInheritedMethods(factory, types, elements).stream()
+      TypeElement factory, DaggerElements elements) {
+    return elements.getLocalAndInheritedMethods(factory).stream()
         .filter(method -> method.getModifiers().contains(ABSTRACT))
         .filter(method -> !method.isDefault())
         .collect(toImmutableSet());
@@ -170,7 +170,7 @@ public final class AssistedInjectionAnnotations {
         TypeMirror factory, DaggerElements elements, DaggerTypes types) {
       DeclaredType factoryType = asDeclared(factory);
       TypeElement factoryElement = asTypeElement(factoryType);
-      ExecutableElement factoryMethod = assistedFactoryMethod(factoryElement, elements, types);
+      ExecutableElement factoryMethod = assistedFactoryMethod(factoryElement, elements);
       ExecutableType factoryMethodType = asExecutable(types.asMemberOf(factoryType, factoryMethod));
       DeclaredType assistedInjectType = asDeclared(factoryMethodType.getReturnType());
       return new AutoValue_AssistedInjectionAnnotations_AssistedFactoryMetadata(

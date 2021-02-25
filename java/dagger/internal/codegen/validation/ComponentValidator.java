@@ -17,7 +17,6 @@
 package dagger.internal.codegen.validation;
 
 import static com.google.auto.common.MoreElements.asType;
-import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
@@ -243,8 +242,7 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private void validateComponentMethods() {
-      getLocalAndInheritedMethods(component, types, elements).stream()
-          .filter(method -> method.getModifiers().contains(ABSTRACT))
+      elements.getUnimplementedMethods(component).stream()
           .map(ComponentMethodValidator::new)
           .forEachOrdered(ComponentMethodValidator::validateMethod);
     }

@@ -27,7 +27,6 @@ import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
 import java.lang.annotation.Annotation;
@@ -47,7 +46,6 @@ final class AssistedProcessingStep extends TypeCheckingProcessingStep<VariableEl
   private final KotlinMetadataUtil kotlinMetadataUtil;
   private final InjectionAnnotations injectionAnnotations;
   private final DaggerElements elements;
-  private final DaggerTypes types;
   private final Messager messager;
 
   @Inject
@@ -55,13 +53,11 @@ final class AssistedProcessingStep extends TypeCheckingProcessingStep<VariableEl
       KotlinMetadataUtil kotlinMetadataUtil,
       InjectionAnnotations injectionAnnotations,
       DaggerElements elements,
-      DaggerTypes types,
       Messager messager) {
     super(MoreElements::asVariable);
     this.kotlinMetadataUtil = kotlinMetadataUtil;
     this.injectionAnnotations = injectionAnnotations;
     this.elements = elements;
-    this.types = types;
     this.messager = messager;
   }
 
@@ -113,7 +109,7 @@ final class AssistedProcessingStep extends TypeCheckingProcessingStep<VariableEl
       TypeElement enclosingElement = closestEnclosingTypeElement(element);
       return AssistedInjectionAnnotations.isAssistedFactoryType(enclosingElement)
           // This assumes we've already validated AssistedFactory and that a valid method exists.
-          && AssistedInjectionAnnotations.assistedFactoryMethod(enclosingElement, elements, types)
+          && AssistedInjectionAnnotations.assistedFactoryMethod(enclosingElement, elements)
               .equals(element);
     }
     return false;

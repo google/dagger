@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.componentgenerator;
 
-import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
@@ -146,7 +145,8 @@ public final class ComponentImplementationBuilder {
         .map(ComponentCreatorImplementation::spec)
         .ifPresent(this::addCreatorClass);
 
-    getLocalAndInheritedMethods(graph.componentTypeElement(), types, elements)
+    elements
+        .getLocalAndInheritedMethods(graph.componentTypeElement())
         .forEach(method -> componentImplementation.claimMethodName(method.getSimpleName()));
 
     addFactoryMethods();
@@ -495,7 +495,7 @@ public final class ComponentImplementationBuilder {
   private boolean canInstantiateAllRequirements() {
     return !Iterables.any(
         graph.componentRequirements(),
-        dependency -> dependency.requiresAPassedInstance(elements, types, metadataUtil));
+        dependency -> dependency.requiresAPassedInstance(elements, metadataUtil));
   }
 
   private void createSubcomponentFactoryMethod(ExecutableElement factoryMethod) {

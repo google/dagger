@@ -276,7 +276,10 @@ public final class ComponentImplementation {
         "%s is not a child component of %s",
         childDescriptor.typeElement(),
         componentDescriptor().typeElement());
-    return name.nestedClass(subcomponentNames.get(childDescriptor) + "Impl");
+    // TODO(erichang): Hacky fix to shorten the suffix if we're too deeply
+    // nested to save on file name length. 2 chosen arbitrarily.
+    String suffix = name.simpleNames().size() > 2 ? "I" : "Impl";
+    return name.nestedClass(subcomponentNames.get(childDescriptor) + suffix);
   }
 
   /**

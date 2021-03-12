@@ -21,7 +21,6 @@ import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.CLASS_PATH_WITHOUT_GUAVA_OPTION;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
@@ -92,7 +91,7 @@ public class MapBindingExpressionTest {
                 "",
                 "import dagger.internal.MapBuilder;",
                 "",
-                GENERATED_CODE_ANNOTATIONS,
+                GeneratedLines.generatedAnnotations(),
                 "final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
                 FAST_INIT_MODE,
@@ -274,7 +273,7 @@ public class MapBindingExpressionTest {
             "import other.UsesInaccessible;",
             "import other.UsesInaccessible_Factory;",
             "",
-            GENERATED_CODE_ANNOTATIONS,
+            GeneratedLines.generatedAnnotations(),
             "final class DaggerTestComponent implements TestComponent {",
             "  @Override",
             "  public UsesInaccessible usesInaccessible() {",
@@ -337,7 +336,7 @@ public class MapBindingExpressionTest {
             "test.DaggerParent",
             "package test;",
             "",
-            GENERATED_CODE_ANNOTATIONS,
+            GeneratedLines.generatedAnnotations(),
             "final class DaggerParent implements Parent {",
             "  private final ParentModule parentModule;",
             "",

@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.COMPONENT_FACTORY;
 import static dagger.internal.codegen.binding.ErrorMessages.creatorMessagesFor;
 
@@ -87,7 +86,7 @@ public class ComponentFactoryTest {
             "",
             "import dagger.internal.Preconditions;",
             "",
-            GENERATED_CODE_ANNOTATIONS,
+            GeneratedLines.generatedAnnotations(),
             "final class DaggerTestComponent implements TestComponent {",
             "  private static final class Factory implements TestComponent.Factory {",
             "    @Override",

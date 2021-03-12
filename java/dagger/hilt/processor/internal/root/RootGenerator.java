@@ -134,7 +134,7 @@ final class RootGenerator {
   }
 
   private ImmutableMap<ComponentDescriptor, ClassName> subcomponentBuilderModules(
-      TypeSpec.Builder componentsWrapper) throws IOException {
+      TypeSpec.Builder componentsWrapper) {
     ImmutableMap.Builder<ComponentDescriptor, ClassName> modules = ImmutableMap.builder();
     for (ComponentDescriptor descriptor : metadata.componentTree().getComponentDescriptors()) {
       // Root component builders don't have subcomponent builder modules
@@ -155,7 +155,7 @@ final class RootGenerator {
   //   @Binds FooSubcomponentInterfaceBuilder bind(FooSubcomponent.Builder builder);
   // }
   private TypeSpec subcomponentBuilderModule(
-      ClassName componentName, ClassName builderName, ClassName moduleName) throws IOException {
+      ClassName componentName, ClassName builderName, ClassName moduleName) {
     TypeSpec.Builder subcomponentBuilderModule =
         TypeSpec.interfaceBuilder(moduleName)
             .addOriginatingElement(root.element())

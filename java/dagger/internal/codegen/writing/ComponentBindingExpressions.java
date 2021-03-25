@@ -322,11 +322,7 @@ public final class ComponentBindingExpressions {
       case COMPONENT:
         // The cast can be removed when we drop java 7 source support
         return new InstanceFactoryCreationExpression(
-            () ->
-                CodeBlock.of(
-                    "($T) $L",
-                    binding.key().type(),
-                    componentImplementation.componentFieldReference()));
+            () -> CodeBlock.of("($T) this", binding.key().type()));
 
       case BOUND_INSTANCE:
         return instanceFactoryCreationExpression(
@@ -530,7 +526,7 @@ public final class ComponentBindingExpressions {
 
       case COMPONENT:
         return Optional.of(
-            new ComponentInstanceBindingExpression(componentImplementation, binding));
+            new ComponentInstanceBindingExpression(binding, componentImplementation.name()));
 
       case COMPONENT_DEPENDENCY:
         return Optional.of(
@@ -549,7 +545,8 @@ public final class ComponentBindingExpressions {
 
       case SUBCOMPONENT_CREATOR:
         return Optional.of(
-            new SubcomponentCreatorBindingExpression(componentImplementation, binding));
+            new SubcomponentCreatorBindingExpression(
+                binding, componentImplementation.getSubcomponentCreatorSimpleName(binding.key())));
 
       case MULTIBOUND_SET:
         return Optional.of(

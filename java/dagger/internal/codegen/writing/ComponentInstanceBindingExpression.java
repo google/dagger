@@ -23,22 +23,21 @@ import dagger.internal.codegen.javapoet.Expression;
 
 /** A binding expression for the instance of the component itself, i.e. {@code this}. */
 final class ComponentInstanceBindingExpression extends SimpleInvocationBindingExpression {
-  private final ComponentImplementation componentImplementation;
+  private final ClassName componentName;
   private final ContributionBinding binding;
 
-  ComponentInstanceBindingExpression(
-      ComponentImplementation componentImplementation, ContributionBinding binding) {
+  ComponentInstanceBindingExpression(ContributionBinding binding, ClassName componentName) {
     super(binding);
-    this.componentImplementation = componentImplementation;
     this.binding = binding;
+    this.componentName = componentName;
   }
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     return Expression.create(
         binding.key().type(),
-        componentImplementation.name().equals(requestingClass)
+        componentName.equals(requestingClass)
             ? CodeBlock.of("this")
-            : componentImplementation.componentFieldReference());
+            : CodeBlock.of("$T.this", componentName));
   }
 }

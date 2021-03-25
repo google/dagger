@@ -95,7 +95,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
   @Override
   public final MemberSelect memberSelect() {
     initializeField();
-    return MemberSelect.localField(componentImplementation, checkNotNull(fieldSpec).name);
+    return MemberSelect.localField(componentImplementation.name(), checkNotNull(fieldSpec).name);
   }
 
   /** Adds the field and its initialization code to the component. */

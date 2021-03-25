@@ -250,7 +250,6 @@ public class ProductionComponentProcessorTest {
                 "final class DaggerTestClass_SimpleComponent",
                 "    implements TestClass.SimpleComponent, CancellationListener {",
                 "  private final TestClass.BModule bModule;",
-                "  private final DaggerTestClass_SimpleComponent simpleComponent = this;",
                 "  private volatile Object productionImplementationExecutor =",
                 "      new MemoizedSentinel();",
                 "  private volatile Provider<Executor> productionImplementationExecutorProvider;",
@@ -297,7 +296,7 @@ public class ProductionComponentProcessorTest {
                 "  private Provider<Executor> productionImplementationExecutorProvider() {",
                 "    Object local = productionImplementationExecutorProvider;",
                 "    if (local == null) {",
-                "      local = new SwitchingProvider<>(simpleComponent, 0);",
+                "      local = new SwitchingProvider<>(0);",
                 "      productionImplementationExecutorProvider = (Provider<Executor>) local;",
                 "    }",
                 "    return (Provider<Executor>) local;",
@@ -327,7 +326,7 @@ public class ProductionComponentProcessorTest {
                 "      productionComponentMonitorProvider() {",
                 "      Object local = monitorProvider;",
                 "      if (local == null) {",
-                "        local = new SwitchingProvider<>(simpleComponent, 1);",
+                "        local = new SwitchingProvider<>(1);",
                 "        monitorProvider = (Provider<ProductionComponentMonitor>) local;",
                 "      }",
                 "      return (Provider<ProductionComponentMonitor>) local;",
@@ -340,7 +339,7 @@ public class ProductionComponentProcessorTest {
                 "  private Provider<TestClass.B> bProvider() {",
                 "    Object local = bProvider;",
                 "    if (local == null) {",
-                "      local = new SwitchingProvider<>(simpleComponent, 2);",
+                "      local = new SwitchingProvider<>(2);",
                 "      bProvider = (Provider<TestClass.B>) local;",
                 "    }",
                 "    return (Provider<TestClass.B>) local;",
@@ -351,7 +350,7 @@ public class ProductionComponentProcessorTest {
                 "      final TestClass.AModule aModuleParam,",
                 "      final TestClass.BModule bModuleParam) {",
                 "    this.simpleComponentProvider =",
-                "        InstanceFactory.create((TestClass.SimpleComponent) simpleComponent);",
+                "        InstanceFactory.create((TestClass.SimpleComponent) this);",
                 "    this.bProducer = Producers.producerFromProvider(bProvider());",
                 "    this.aProducer =",
                 "        TestClass_AModule_AFactory.create(",
@@ -400,13 +399,10 @@ public class ProductionComponentProcessorTest {
                 "    }",
                 "  }",
                 "",
-                "  private static final class SwitchingProvider<T> implements Provider<T> {",
-                "    private final DaggerTestClass_SimpleComponent simpleComponent;",
-                "",
+                "  private final class SwitchingProvider<T> implements Provider<T> {",
                 "    private final int id;",
                 "",
-                "    SwitchingProvider(DaggerTestClass_SimpleComponent simpleComponent, int id) {",
-                "      this.simpleComponent = simpleComponent;",
+                "    SwitchingProvider(int id) {",
                 "      this.id = id;",
                 "    }",
                 "",
@@ -414,9 +410,12 @@ public class ProductionComponentProcessorTest {
                 "    @Override",
                 "    public T get() {",
                 "      switch (id) {",
-                "        case 0: return (T) simpleComponent.productionImplementationExecutor();",
-                "        case 1: return (T) simpleComponent.productionComponentMonitor();",
-                "        case 2: return (T) simpleComponent.b();",
+                "        case 0: return (T) DaggerTestClass_SimpleComponent.this",
+                "            .productionImplementationExecutor();",
+                "        case 1: return (T)",
+                "            DaggerTestClass_SimpleComponent.this.productionComponentMonitor();",
+                "        case 2: return (T)",
+                "            DaggerTestClass_SimpleComponent.this.b();",
                 "        default: throw new AssertionError(id);",
                 "      }",
                 "    }",
@@ -445,7 +444,6 @@ public class ProductionComponentProcessorTest {
                 GeneratedLines.generatedAnnotations(),
                 "final class DaggerTestClass_SimpleComponent",
                 "    implements TestClass.SimpleComponent, CancellationListener {",
-                "  private final DaggerTestClass_SimpleComponent simpleComponent = this;",
                 "  private Producer<TestClass.A> aEntryPoint;",
                 "  private Provider<Executor> executorProvider;",
                 "  private Provider<Executor> productionImplementationExecutorProvider;",
@@ -478,7 +476,7 @@ public class ProductionComponentProcessorTest {
                 "    this.productionImplementationExecutorProvider =",
                 "        DoubleCheck.provider((Provider) executorProvider);",
                 "    this.simpleComponentProvider = ",
-                "        InstanceFactory.create((TestClass.SimpleComponent) simpleComponent);",
+                "        InstanceFactory.create((TestClass.SimpleComponent) this);",
                 "    this.monitorProvider =",
                 "        DoubleCheck.provider(",
                 "            TestClass_SimpleComponent_MonitoringModule_MonitorFactory.create(",
@@ -652,16 +650,15 @@ public class ProductionComponentProcessorTest {
                     "package test;",
                     GeneratedLines.generatedAnnotations(),
                     "final class DaggerParent implements Parent, CancellationListener {",
-                    "  private static final class ChildImpl implements Child, ",
-                    "      CancellationListener {",
+                    "  private final class ChildImpl implements Child, CancellationListener {",
                     "    @Override",
                     "    public ProductionScoped productionScoped() {")
                 .addLinesIn(
                     CompilerMode.DEFAULT_MODE, //
-                    "      return parent.productionScopedProvider.get();")
+                    "      return DaggerParent.this.productionScopedProvider.get();")
                 .addLinesIn(
                     CompilerMode.FAST_INIT_MODE, //
-                    "      return parent.productionScoped();")
+                    "      return DaggerParent.this.productionScoped();")
                 .addLines(
                     "    }", //
                     "  }", //

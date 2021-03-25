@@ -20,6 +20,7 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
@@ -57,7 +58,6 @@ import dagger.internal.codegen.writing.ComponentImplementation;
 import dagger.internal.codegen.writing.ModuleProxies;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -105,8 +105,7 @@ final class ComponentCreatorImplementationFactory {
 
   /** Base class for building a creator implementation. */
   private abstract class Builder {
-    private final UniqueNameSet fieldNames = new UniqueNameSet();
-    private final ComponentImplementation componentImplementation;
+    final ComponentImplementation componentImplementation;
     final ClassName className;
     final TypeSpec.Builder classBuilder;
 
@@ -122,8 +121,8 @@ final class ComponentCreatorImplementationFactory {
     ComponentCreatorImplementation build() {
       setModifiers();
       setSupertype();
-      addConstructor();
       this.fields = addFields();
+      addConstructor();
       addSetterMethods();
       addFactoryMethod();
       return ComponentCreatorImplementation.create(classBuilder.build(), className, fields);
@@ -169,7 +168,10 @@ final class ComponentCreatorImplementationFactory {
 
     private void setModifiers() {
       visibility().ifPresent(classBuilder::addModifiers);
-      classBuilder.addModifiers(STATIC, FINAL);
+      if (!componentImplementation.isNested()) {
+        classBuilder.addModifiers(STATIC);
+      }
+      classBuilder.addModifiers(FINAL);
     }
 
     /** Returns the visibility modifier the generated class should have, if any. */
@@ -179,22 +181,11 @@ final class ComponentCreatorImplementationFactory {
     protected abstract void setSupertype();
 
     /** Adds a constructor for the creator type, if needed. */
-    protected void addConstructor() {
-      MethodSpec.Builder constructor = MethodSpec.constructorBuilder().addModifiers(PRIVATE);
-      componentImplementation
-          .creatorComponentFields()
-          .forEach(
-              field -> {
-                fieldNames.claim(field.name);
-                classBuilder.addField(field);
-                constructor.addParameter(field.type, field.name);
-                constructor.addStatement("this.$1N = $1N", field);
-              });
-      classBuilder.addMethod(constructor.build());
-    }
+    protected abstract void addConstructor();
 
     private ImmutableMap<ComponentRequirement, FieldSpec> addFields() {
       // Fields in an abstract creator class need to be visible from subclasses.
+      UniqueNameSet fieldNames = new UniqueNameSet();
       ImmutableMap<ComponentRequirement, FieldSpec> result =
           Maps.toMap(
               Sets.intersection(neededUserSettableRequirements(), setterMethods()),
@@ -355,20 +346,17 @@ final class ComponentCreatorImplementationFactory {
 
     private CodeBlock componentConstructorArgs(
         ImmutableMap<ComponentRequirement, String> factoryMethodParameters) {
-      return Stream.concat(
-              componentImplementation.creatorComponentFields().stream()
-                  .map(field -> CodeBlock.of("$N", field)),
-              componentConstructorRequirements().stream()
-                  .map(
-                      requirement -> {
-                        if (fields.containsKey(requirement)) {
-                          return CodeBlock.of("$N", fields.get(requirement));
-                        } else if (factoryMethodParameters.containsKey(requirement)) {
-                          return CodeBlock.of("$L", factoryMethodParameters.get(requirement));
-                        } else {
-                          return newModuleInstance(requirement);
-                        }
-                      }))
+      return componentConstructorRequirements().stream()
+          .map(
+              requirement -> {
+                if (fields.containsKey(requirement)) {
+                  return CodeBlock.of("$N", fields.get(requirement));
+                } else if (factoryMethodParameters.containsKey(requirement)) {
+                  return CodeBlock.of("$L", factoryMethodParameters.get(requirement));
+                } else {
+                  return newModuleInstance(requirement);
+                }
+              })
           .collect(toParametersCodeBlock());
     }
 
@@ -406,9 +394,7 @@ final class ComponentCreatorImplementationFactory {
 
     @Override
     protected void addConstructor() {
-      if (!componentImplementation.creatorComponentFields().isEmpty()) {
-        super.addConstructor();
-      }
+      // Just use the implicit no-arg public constructor.
     }
 
     @Override
@@ -502,6 +488,11 @@ final class ComponentCreatorImplementationFactory {
     @Override
     protected void setSupertype() {
       // There's never a supertype for a root component auto-generated builder type.
+    }
+
+    @Override
+    protected void addConstructor() {
+      classBuilder.addMethod(constructorBuilder().addModifiers(PRIVATE).build());
     }
 
     @Override

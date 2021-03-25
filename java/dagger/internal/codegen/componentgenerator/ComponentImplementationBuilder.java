@@ -25,7 +25,6 @@ import static dagger.internal.codegen.binding.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.javapoet.CodeBlocks.parameterNames;
-import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.BUILDER_METHOD;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.CANCELLATION_LISTENER_METHOD;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.COMPONENT_METHOD;
@@ -271,8 +270,8 @@ public final class ComponentImplementationBuilder {
     return Optional.of(
         CodeBlock.builder()
             .addStatement(
-                "$L.$N($N)",
-                parent.get().componentImplementation.componentFieldReference(),
+                "$T.this.$N($N)",
+                parent.get().componentImplementation.name(),
                 CANCELLATION_LISTENER_METHOD_NAME,
                 MAY_INTERRUPT_IF_RUNNING)
             .build());
@@ -331,19 +330,6 @@ public final class ComponentImplementationBuilder {
   private void implementInitializationMethod(
       MethodSpec.Builder initializationMethod,
       ImmutableMap<ComponentRequirement, ParameterSpec> initializationParameters) {
-    componentImplementation
-        .componentFieldsByImplementation()
-        .forEach(
-            (currComponentImplementation, field) -> {
-              if (currComponentImplementation.equals(componentImplementation)) {
-                componentImplementation.addField(
-                    COMPONENT_REQUIREMENT_FIELD, field.toBuilder().initializer("this").build());
-              } else {
-                componentImplementation.addField(COMPONENT_REQUIREMENT_FIELD, field);
-                initializationMethod.addStatement("this.$1N = $1N", field);
-                initializationMethod.addParameter(field.type, field.name);
-              }
-            });
     initializationMethod.addParameters(initializationParameters.values());
     initializationMethod.addCode(
         CodeBlocks.concat(componentImplementation.getComponentRequirementInitializations()));
@@ -516,18 +502,10 @@ public final class ComponentImplementationBuilder {
     checkState(parent.isPresent());
     Collection<ParameterSpec> params = getFactoryMethodParameters(graph).values();
     MethodSpec.Builder method = MethodSpec.overriding(factoryMethod, parentType(), types);
-    params.forEach(param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
+    params.forEach(
+        param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
     method.addStatement(
-        "return new $T($L)",
-        componentImplementation.name(),
-        parameterNames(
-            ImmutableList.<ParameterSpec>builder()
-            .addAll(
-                componentImplementation.creatorComponentFields().stream()
-                    .map(field -> ParameterSpec.builder(field.type, field.name).build())
-                    .collect(toImmutableList()))
-            .addAll(params)
-            .build()));
+        "return new $T($L)", componentImplementation.name(), parameterNames(params));
 
     parent.get().componentImplementation.addMethod(COMPONENT_METHOD, method.build());
   }

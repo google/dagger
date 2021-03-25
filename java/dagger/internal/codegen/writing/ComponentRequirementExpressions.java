@@ -153,7 +153,7 @@ public final class ComponentRequirementExpressions {
       FieldSpec field = createField();
       componentImplementation.addField(COMPONENT_REQUIREMENT_FIELD, field);
       componentImplementation.addComponentRequirementInitialization(fieldInitialization(field));
-      return MemberSelect.localField(componentImplementation, fieldName);
+      return MemberSelect.localField(componentImplementation.name(), fieldName);
     }
 
     private FieldSpec createField() {

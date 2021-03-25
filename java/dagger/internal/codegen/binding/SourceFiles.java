@@ -272,16 +272,7 @@ public class SourceFiles {
    */
   // TODO(gak): maybe this should be a function of TypeMirrors instead of Elements?
   public static String simpleVariableName(TypeElement typeElement) {
-    return simpleVariableName(ClassName.get(typeElement));
-  }
-
-  /**
-   * Returns a name to be used for variables of the given {@linkplain ClassName}. Prefer
-   * semantically meaningful variable names, but if none can be derived, this will produce something
-   * readable.
-   */
-  public static String simpleVariableName(ClassName className) {
-    String candidateName = UPPER_CAMEL.to(LOWER_CAMEL, className.simpleName());
+    String candidateName = UPPER_CAMEL.to(LOWER_CAMEL, typeElement.getSimpleName().toString());
     String variableName = protectAgainstKeywords(candidateName);
     verify(isName(variableName), "'%s' was expected to be a valid variable name");
     return variableName;

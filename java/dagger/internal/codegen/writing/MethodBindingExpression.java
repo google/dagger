@@ -95,7 +95,7 @@ abstract class MethodBindingExpression extends BindingExpression {
         returnType(),
         requestingClass.equals(componentImplementation.name())
             ? methodCall
-            : CodeBlock.of("$L.$L", componentImplementation.componentFieldReference(), methodCall));
+            : CodeBlock.of("$L.$L", componentImplementation.externalReferenceBlock(), methodCall));
   }
 
   @Override

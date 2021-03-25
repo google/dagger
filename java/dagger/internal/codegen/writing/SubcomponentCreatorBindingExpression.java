@@ -17,31 +17,24 @@
 package dagger.internal.codegen.writing;
 
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.binding.ContributionBinding;
-import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.Expression;
+import javax.lang.model.type.TypeMirror;
 
 /** A binding expression for a subcomponent creator that just invokes the constructor. */
 final class SubcomponentCreatorBindingExpression extends SimpleInvocationBindingExpression {
-  private final ComponentImplementation owningComponent;
-  private final ContributionBinding binding;
+  private final TypeMirror creatorType;
+  private final String creatorImplementationName;
 
   SubcomponentCreatorBindingExpression(
-      ComponentImplementation owningComponent, ContributionBinding binding) {
+      ContributionBinding binding, String creatorImplementationName) {
     super(binding);
-    this.binding = binding;
-    this.owningComponent = owningComponent;
+    this.creatorType = binding.key().type();
+    this.creatorImplementationName = creatorImplementationName;
   }
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
-    return Expression.create(
-        binding.key().type(),
-        "new $L($L)",
-        owningComponent.getSubcomponentCreatorSimpleName(binding.key()),
-        owningComponent.componentFieldsByImplementation().values().stream()
-            .map(field -> CodeBlock.of("$N", field))
-            .collect(CodeBlocks.toParametersCodeBlock()));
+    return Expression.create(creatorType, "new $L()", creatorImplementationName);
   }
 }

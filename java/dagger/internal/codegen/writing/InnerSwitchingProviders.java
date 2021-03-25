@@ -16,19 +16,17 @@
 
 package dagger.internal.codegen.writing;
 
+import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.model.RequestKind.INSTANCE;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.STATIC;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.binding.ContributionBinding;
-import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;
@@ -40,7 +38,6 @@ import javax.lang.model.type.TypeMirror;
  * an inner {@code SwitchingProvider} class.
  */
 final class InnerSwitchingProviders extends SwitchingProviders {
-  private final ComponentImplementation componentImplementation;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final DaggerTypes types;
 
@@ -49,7 +46,6 @@ final class InnerSwitchingProviders extends SwitchingProviders {
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types) {
     super(componentImplementation, types);
-    this.componentImplementation = componentImplementation;
     this.componentBindingExpressions = componentBindingExpressions;
     this.types = types;
   }
@@ -69,21 +65,14 @@ final class InnerSwitchingProviders extends SwitchingProviders {
 
   @Override
   protected TypeSpec createSwitchingProviderType(TypeSpec.Builder builder) {
-    MethodSpec.Builder constructor = MethodSpec.constructorBuilder();
-    componentImplementation
-        .componentFieldsByImplementation()
-        .values()
-        .forEach(
-            field -> {
-              builder.addField(field);
-              constructor.addParameter(field.type, field.name);
-              constructor.addStatement("this.$1N = $1N", field);
-            });
     return builder
-        .addModifiers(PRIVATE, FINAL, STATIC)
+        .addModifiers(PRIVATE, FINAL)
         .addField(TypeName.INT, "id", PRIVATE, FINAL)
         .addMethod(
-            constructor.addParameter(TypeName.INT, "id").addStatement("this.id = id").build())
+            constructorBuilder()
+                .addParameter(TypeName.INT, "id")
+                .addStatement("this.id = id")
+                .build())
         .build();
   }
 
@@ -106,13 +95,7 @@ final class InnerSwitchingProviders extends SwitchingProviders {
       TypeMirror instanceType = types.accessibleType(binding.contributedType(), requestingClass);
       return Expression.create(
           types.wrapType(instanceType, Provider.class),
-          CodeBlock.of(
-              "new $T<>($L, $L)",
-              switchingProviderClass,
-              componentImplementation.componentFieldsByImplementation().values().stream()
-                  .map(field -> CodeBlock.of("$N", field))
-                  .collect(CodeBlocks.toParametersCodeBlock()),
-              switchId));
+          CodeBlock.of("new $T<>($L)", switchingProviderClass, switchId));
     }
 
     @Override

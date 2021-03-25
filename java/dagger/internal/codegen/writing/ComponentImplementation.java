@@ -23,21 +23,17 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.binding.ComponentCreatorKind.BUILDER;
-import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
-import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -118,7 +114,8 @@ public final class ComponentImplementation {
      * The {@link dagger.producers.internal.CancellationListener#onProducerFutureCancelled(boolean)}
      * method for a production component.
      */
-    CANCELLATION_LISTENER_METHOD
+    CANCELLATION_LISTENER_METHOD,
+    ;
   }
 
   /** A type of nested class that this component can contain. */
@@ -136,7 +133,6 @@ public final class ComponentImplementation {
     SUBCOMPONENT
   }
 
-  private final Optional<ComponentImplementation> parent;
   private ComponentImplementation currentShard = this;
   private final Map<Key, ComponentImplementation> shardsByKey = new HashMap<>();
   private final Optional<ComponentImplementation> shardOwner;
@@ -145,7 +141,7 @@ public final class ComponentImplementation {
   private final TypeSpec.Builder component;
   private final SubcomponentNames subcomponentNames;
   private final CompilerOptions compilerOptions;
-  private final CodeBlock componentFieldReference;
+  private final CodeBlock externalReferenceBlock;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final List<CodeBlock> initializations = new ArrayList<>();
@@ -160,30 +156,22 @@ public final class ComponentImplementation {
   private final ListMultimap<TypeSpecKind, TypeSpec> typeSpecsMap =
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
   private final List<Supplier<TypeSpec>> typeSuppliers = new ArrayList<>();
-  private final ImmutableMap<ComponentImplementation, FieldSpec> componentFieldsByImplementation;
 
   private ComponentImplementation(
-      Optional<ComponentImplementation> parent,
       BindingGraph graph,
       ClassName name,
       SubcomponentNames subcomponentNames,
       CompilerOptions compilerOptions) {
-    this.parent = parent;
     this.graph = graph;
     this.name = name;
     this.component = classBuilder(name);
     this.subcomponentNames = subcomponentNames;
     this.shardOwner = Optional.empty();
+    this.externalReferenceBlock = CodeBlock.of("$T.this", name);
     this.compilerOptions = compilerOptions;
-    this.componentFieldsByImplementation = componentFieldsByImplementation(this);
-    this.componentFieldsByImplementation
-        .values()
-        .forEach(field -> componentFieldNames.claim(field.name));
-    this.componentFieldReference = CodeBlock.of("$N", componentFieldsByImplementation.get(this));
   }
 
   private ComponentImplementation(ComponentImplementation shardOwner, ClassName shardName) {
-    this.parent = shardOwner.parent;
     this.graph = shardOwner.graph;
     this.name = shardName;
     this.component = classBuilder(shardName);
@@ -192,9 +180,7 @@ public final class ComponentImplementation {
     this.shardOwner = Optional.of(shardOwner);
     String fieldName = UPPER_CAMEL.to(LOWER_CAMEL, name.simpleName());
     String uniqueFieldName = shardOwner.getUniqueFieldName(fieldName);
-    this.componentFieldReference =
-        CodeBlock.of("$L.$L", shardOwner.componentFieldReference, uniqueFieldName);
-    this.componentFieldsByImplementation = shardOwner.componentFieldsByImplementation;
+    this.externalReferenceBlock = CodeBlock.of("$T.this.$N", shardOwner.name, uniqueFieldName);
     shardOwner.addTypeSupplier(() -> generate().build());
     shardOwner.addField(
         FieldSpecKind.COMPONENT_SHARD,
@@ -209,16 +195,14 @@ public final class ComponentImplementation {
       ClassName name,
       SubcomponentNames subcomponentNames,
       CompilerOptions compilerOptions) {
-    return new ComponentImplementation(
-        Optional.empty(), graph, name, subcomponentNames, compilerOptions);
+    return new ComponentImplementation(graph, name, subcomponentNames, compilerOptions);
   }
 
   /** Returns a component implementation that is a child of the current implementation. */
   public ComponentImplementation childComponentImplementation(BindingGraph graph) {
     checkState(!shardOwner.isPresent(), "Shards cannot create child components.");
     ClassName childName = getSubcomponentName(graph.componentDescriptor());
-    return new ComponentImplementation(
-        Optional.of(this), graph, childName, subcomponentNames, compilerOptions);
+    return new ComponentImplementation(graph, childName, subcomponentNames, compilerOptions);
   }
 
   /** Returns a component implementation that is a shard of the current implementation. */
@@ -235,59 +219,9 @@ public final class ComponentImplementation {
     return shardsByKey.get(key);
   }
 
-  /** Returns a reference to this implementation when called from a different class. */
-  public CodeBlock componentFieldReference() {
-    // TODO(bcorso): This currently relies on all requesting classes having a reference to the
-    // component with the same name, which is kind of sketchy. Try to think of a better way that
-    // can accomodate the component missing in some classes if it's not used.
-    return componentFieldReference;
-  }
-
-  /** Returns the fields for all components in the component path. */
-  public ImmutableList<FieldSpec> componentFields() {
-    return ImmutableList.copyOf(componentFieldsByImplementation.values());
-  }
-
-  /** Returns the fields for all components in the component path except the current component. */
-  public ImmutableList<FieldSpec> creatorComponentFields() {
-    return componentFieldsByImplementation.entrySet().stream()
-        .filter(entry -> !this.equals(entry.getKey()))
-        .map(Map.Entry::getValue)
-        .collect(toImmutableList());
-  }
-
-  /** Returns the fields for all components in the component path by component implementation. */
-  public ImmutableMap<ComponentImplementation, FieldSpec> componentFieldsByImplementation() {
-    return componentFieldsByImplementation;
-  }
-
-  private static ImmutableMap<ComponentImplementation, FieldSpec> componentFieldsByImplementation(
-      ComponentImplementation componentImplementation) {
-    ImmutableList.Builder<ComponentImplementation> builder = ImmutableList.builder();
-    for (ComponentImplementation curr = componentImplementation;
-        curr != null;
-        curr = curr.parent().orElse(null)) {
-      builder.add(curr);
-    }
-    // For better readability when adding these fields/parameters to generated code, we collect the
-    // component implementations in reverse order so that parents appear before children.
-    return builder.build().reverse().stream()
-        .collect(
-            toImmutableMap(
-                componentImpl -> componentImpl,
-                componentImpl -> {
-                  TypeElement component = componentImpl.graph.componentPath().currentComponent();
-                  ClassName fieldType = componentImpl.name;
-                  String fieldName =
-                      componentImpl.isNested()
-                          ? simpleVariableName(componentImpl.name)
-                          : simpleVariableName(component);
-                  return FieldSpec.builder(fieldType, fieldName, PRIVATE, FINAL).build();
-                }));
-  }
-
-  private Optional<ComponentImplementation> parent() {
-    return parent;
+  /** Returns a reference to this compenent when called from a class nested in this component. */
+  public CodeBlock externalReferenceBlock() {
+    return externalReferenceBlock;
   }
 
   // TODO(ronshapiro): see if we can remove this method and instead inject it in the objects that
@@ -376,6 +310,11 @@ public final class ComponentImplementation {
   /** Adds the given method to the component. */
   public void addMethod(MethodSpecKind methodKind, MethodSpec methodSpec) {
     methodSpecsMap.put(methodKind, methodSpec);
+  }
+
+  /** Adds the given annotation to the component. */
+  public void addAnnotation(AnnotationSpec annotation) {
+    component.addAnnotation(annotation);
   }
 
   /** Adds the given type to the component. */
@@ -485,11 +424,8 @@ public final class ComponentImplementation {
   }
 
   private ImmutableSet<Modifier> modifiers() {
-    if (shardOwner.isPresent()) {
-      // TODO(bcorso): Consider making shards static and unnested too?
+    if (isNested()) {
       return ImmutableSet.of(PRIVATE, FINAL);
-    } else if (isNested()) {
-      return ImmutableSet.of(PRIVATE, STATIC, FINAL);
     }
     return graph.componentTypeElement().getModifiers().contains(PUBLIC)
         // TODO(ronshapiro): perhaps all generated components should be non-public?

@@ -279,6 +279,25 @@ kt_android_library(
 )
 
 android_local_test(
+    name = "InternalKtModuleTest",
+    size = "small",
+    srcs = ["InternalKtModuleTest.java"],
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
+    deps = [
+        "//:android_local_test_exports",
+        "//:dagger_with_compiler",
+        "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/android:package_info",
+        "//java/dagger/hilt/android/testing:hilt_android_test",
+        "//javatests/dagger/hilt/testmodules",
+        "@google_bazel_common//third_party/java/truth",
+    ],
+)
+
+android_local_test(
     name = "DefaultViewModelFactoryTest",
     srcs = ["DefaultViewModelFactoryTest.java"],
     manifest = "AndroidManifest.xml",

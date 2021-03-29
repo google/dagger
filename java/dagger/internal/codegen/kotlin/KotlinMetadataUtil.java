@@ -131,6 +131,15 @@ public final class KotlinMetadataUtil {
   }
 
   /**
+   * Returns {@code true} if the given type element was declared {@code internal} in its Kotlin
+   * source.
+   */
+  public boolean isVisibilityInternal(TypeElement type) {
+    return hasMetadata(type)
+        && metadataFactory.create(type).classMetadata().flags(Flag.IS_INTERNAL);
+  }
+
+  /**
    * Returns {@code true} if the given executable element was declared {@code internal} in its
    * Kotlin source.
    */

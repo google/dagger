@@ -24,10 +24,10 @@ import com.google.auto.value.AutoValue;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.KotlinMetadataUtils;
 import dagger.hilt.processor.internal.Processors;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
@@ -63,9 +63,11 @@ abstract class PkgPrivateMetadata {
    * Returns an Optional PkgPrivateMetadata requiring Hilt processing, otherwise returns an empty
    * Optional.
    */
-  static Optional<PkgPrivateMetadata> of(Elements elements, Element element, ClassName annotation) {
+  static Optional<PkgPrivateMetadata> of(
+      Elements elements, TypeElement element, ClassName annotation) {
     // If this is a public element no wrapping is needed
-    if (effectiveVisibilityOfElement(element) == Visibility.PUBLIC) {
+    if (effectiveVisibilityOfElement(element) == Visibility.PUBLIC
+        && !KotlinMetadataUtils.getMetadataUtil().isVisibilityInternal(element)) {
       return Optional.empty();
     }
 

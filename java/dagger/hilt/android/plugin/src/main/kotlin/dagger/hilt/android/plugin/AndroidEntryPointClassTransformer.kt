@@ -27,6 +27,8 @@ import javassist.bytecode.Bytecode
 import javassist.bytecode.CodeIterator
 import javassist.bytecode.Opcode
 import org.slf4j.LoggerFactory
+import java.util.jar.JarEntry
+import java.util.jar.JarFile
 
 typealias CodeArray = javassist.bytecode.ByteArray // Avoids conflict with Kotlin's stdlib ByteArray
 
@@ -99,6 +101,19 @@ internal class AndroidEntryPointClassTransformer(
       "Invalid file, '$inputFile' is not a class."
     }
     val clazz = inputFile.inputStream().use { classPool.makeClass(it, false) }
+    return transformClassToOutput(clazz)
+  }
+
+  /**
+   * The same as
+   * @link { dagger.hilt.android.plugin.AndroidEntryPointClassTransformer.transformFile(java.io.File) }
+   * but handle jar entries.
+   */
+  fun transformFile(jarFile: JarFile, jarEntry: JarEntry): Boolean {
+    check(jarEntry.isClassFile()) {
+      "Invalid file, '${jarEntry.name}' is not a class."
+    }
+    val clazz = jarFile.getInputStream(jarEntry).use { classPool.makeClass(it, false) }
     return transformClassToOutput(clazz)
   }
 

@@ -41,6 +41,7 @@ HILT_ANDROID_ARTIFACTS = [
     "com.google.dagger:hilt-android:" + _HILT_VERSION,
     "com.google.dagger:hilt-android-testing:" + _HILT_VERSION,
     "com.google.dagger:hilt-android-compiler:" + _HILT_VERSION,
+    "com.google.dagger:hilt-core:" + _HILT_VERSION,
 ]
 
 DAGGER_REPOSITORIES = [
@@ -173,6 +174,7 @@ def hilt_android_rules(repo_name = "@maven"):
             "%s//:javax_inject_javax_inject" % repo_name,  # For @Inject
             "%s//:androidx_annotation_annotation" % repo_name,  # For @CallSuper
             "%s//:com_google_dagger_hilt_android" % repo_name,
+            "%s//:com_google_dagger_hilt_core" % repo_name,
             "%s//:javax_annotation_jsr250_api" % repo_name,  # For @Generated
         ],
     )

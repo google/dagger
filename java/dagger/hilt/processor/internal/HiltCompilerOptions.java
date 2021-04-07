@@ -46,7 +46,7 @@ public final class HiltCompilerOptions {
      * dagger.hilt.android.testing.BindValue} or a test {@link dagger.Module}) cannot use the shared
      * component. In these cases, a component will be generated for the test.
      */
-    SHARE_TEST_COMPONENTS("shareTestComponents", false);
+    SHARE_TEST_COMPONENTS("shareTestComponents", true);
 
     private final String name;
     private final boolean defaultValue;

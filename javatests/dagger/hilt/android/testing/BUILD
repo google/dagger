@@ -97,24 +97,6 @@ android_local_test(
 )
 
 android_local_test(
-    name = "TestRootModulesTest",
-    size = "small",
-    srcs = ["TestRootModulesTest.java"],
-    manifest_values = {
-        "minSdkVersion": "15",
-        "targetSdkVersion": "27",
-    },
-    deps = [
-        "//:android_local_test_exports",
-        "//:dagger_with_compiler",
-        "@google_bazel_common//third_party/java/jsr330_inject",
-        "//java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android:android_entry_point",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-    ],
-)
-
-android_local_test(
     name = "HiltAndroidRuleTest",
     size = "small",
     srcs = ["HiltAndroidRuleTest.java"],

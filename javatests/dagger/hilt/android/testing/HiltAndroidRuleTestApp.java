@@ -21,4 +21,4 @@ import dagger.hilt.android.HiltAndroidApp;
 
 /** A Hilt application used to test errors in {@link HiltAndroidRuleTest}. */
 @HiltAndroidApp(Application.class)
-final class HiltAndroidRuleTestApp extends Hilt_HiltAndroidRuleTestApp {}
+public final class HiltAndroidRuleTestApp extends Hilt_HiltAndroidRuleTestApp {}

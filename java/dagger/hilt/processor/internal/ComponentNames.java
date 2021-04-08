@@ -18,6 +18,7 @@ package dagger.hilt.processor.internal;
 
 import static java.lang.Character.isUpperCase;
 import static java.lang.String.format;
+import static java.util.Comparator.comparing;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
@@ -148,9 +149,14 @@ public final class ComponentNames {
 
     // There are conflicting simple names, so disambiguate them with a unique prefix.
     // We keep them small to fix https://github.com/google/dagger/issues/421.
+    // Sorted in order to guarantee determinism if this is invoked by different processors.
+    ImmutableList<TypeElement> sortedRootsWithConflictingNames =
+        ImmutableList.sortedCopyOf(
+            comparing(typeElement -> typeElement.getQualifiedName().toString()),
+            rootsWithConflictingNames);
     Set<String> usedNames = new HashSet<>();
     ImmutableMap.Builder<ClassName, String> uniqueNames = ImmutableMap.builder();
-    for (TypeElement root : rootsWithConflictingNames) {
+    for (TypeElement root : sortedRootsWithConflictingNames) {
       String basePrefix = uniquingPrefix(root);
       String uniqueName = basePrefix;
       for (int differentiator = 2; !usedNames.add(uniqueName); differentiator++) {

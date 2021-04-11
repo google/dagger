@@ -24,8 +24,8 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimaps;
 import com.squareup.javapoet.ClassName;
@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.Function;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 
@@ -44,39 +45,61 @@ import javax.lang.model.element.TypeElement;
 public final class ComponentNames {
   private static final Splitter QUALIFIED_NAME_SPLITTER = Splitter.on('.');
 
-  private final boolean renameTestComponents;
-  private final String destinationPackage;
-  private final ImmutableMap<ClassName, String> simpleNameByClassName;
-
+  /**
+   * Returns an instance of {@link ComponentNames} that will base all component names off of the
+   * given root.
+   */
   public static ComponentNames withoutRenaming() {
-    return new ComponentNames(
-        /*renameTestComponents=*/ false, /*destinationPackage=*/ null, ImmutableMap.of());
+    return new ComponentNames(Function.identity());
   }
 
+  /**
+   * Returns an instance of {@link ComponentNames} that will base all component names off of the
+   * given root after mapping it with {@code rootRenamer}.
+   */
+  public static ComponentNames withRenaming(Function<ClassName, ClassName> rootRenamer) {
+    return new ComponentNames(rootRenamer);
+  }
+
+  /**
+   * Returns an instance of {@link ComponentNames} that will base all component names off of the
+   * given root after mapping it to the {@code destinationPackage} and giving it a unique name.
+   */
   public static ComponentNames withRenamingIntoPackage(
-      String destinationPackage, ImmutableList<TypeElement> roots) {
+      String destinationPackage, ImmutableSet<TypeElement> roots) {
     ImmutableMap.Builder<ClassName, String> builder = ImmutableMap.builder();
-    ImmutableListMultimap<String, TypeElement> rootsBySimpleName =
-        Multimaps.index(roots, typeElement -> typeElement.getSimpleName().toString());
-    rootsBySimpleName.asMap().values().stream()
+    Multimaps.index(roots, typeElement -> typeElement.getSimpleName().toString())
+        .asMap()
+        .values()
+        .stream()
         .map(ComponentNames::disambiguateConflictingSimpleNames)
         .forEach(builder::putAll);
-    return new ComponentNames(/*renameTestComponents=*/ true, destinationPackage, builder.build());
+    ImmutableMap<ClassName, String> simpleNameMap = builder.build();
+    return new ComponentNames(
+        rootName -> {
+          Preconditions.checkState(
+              simpleNameMap.containsKey(rootName),
+              "Class name %s not found in simple name map",
+              rootName.canonicalName());
+          return ClassName.get(destinationPackage, simpleNameMap.get(rootName));
+        });
   }
 
-  private ComponentNames(
-      boolean renameTestComponents,
-      String destinationPackage,
-      ImmutableMap<ClassName, String> simpleNameByClassName) {
-    this.renameTestComponents = renameTestComponents;
-    this.destinationPackage = destinationPackage;
-    this.simpleNameByClassName = simpleNameByClassName;
+  private final Function<ClassName, ClassName> rootRenamer;
+
+  private ComponentNames(Function<ClassName, ClassName> rootRenamer) {
+    this.rootRenamer = rootRenamer;
+  }
+
+  public ClassName generatedComponentTreeDeps(ClassName root) {
+    return Processors.append(
+        Processors.getEnclosedClassName(rootRenamer.apply(root)), "_ComponentTreeDeps");
   }
 
   /** Returns the name of the generated component wrapper. */
   public ClassName generatedComponentsWrapper(ClassName root) {
     return Processors.append(
-        Processors.getEnclosedClassName(maybeRenameComponent(root)), "_HiltComponents");
+        Processors.getEnclosedClassName(rootRenamer.apply(root)), "_HiltComponents");
   }
 
   /** Returns the name of the generated component. */
@@ -97,31 +120,6 @@ public final class ComponentNames {
     // long of class names.
     // Note: This uses regex matching so we only match if the name ends in "Component"
     return Processors.getEnclosedName(component).replaceAll("Component$", "C");
-  }
-
-  /**
-   * Rewrites the provided HiltAndroidTest-annotated class name using the shared component
-   * directory.
-   */
-  private ClassName maybeRenameComponent(ClassName className) {
-    return (renameTestComponents && !className.equals(ClassNames.DEFAULT_ROOT))
-        ? ClassName.get(destinationPackage, dedupeSimpleName(className))
-        : className;
-  }
-
-  /**
-   * Derives a new generated component base name, should the simple names of two roots have
-   * conflicting simple names.
-   *
-   * <p>This is lifted nearly verbatim (albeit with new different struct types) from {@link
-   * dagger.internal.codegen.writing.SubcomponentNames}.
-   */
-  private String dedupeSimpleName(ClassName className) {
-    Preconditions.checkState(
-        simpleNameByClassName.containsKey(className),
-        "Class name %s not found in simple name map",
-        className.canonicalName());
-    return simpleNameByClassName.get(className);
   }
 
   private static ImmutableMap<ClassName, String> disambiguateConflictingSimpleNames(

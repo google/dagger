@@ -37,16 +37,26 @@ import javax.lang.model.util.Elements;
 @AutoValue
 public abstract class AggregatedEarlyEntryPointMetadata {
 
+  /** Returns the aggregating element */
+  public abstract TypeElement aggregatingElement();
+
   /** Returns the element annotated with {@link dagger.hilt.android.EarlyEntryPoint}. */
   public abstract TypeElement earlyEntryPoint();
 
-  /** Returns all aggregated deps in the aggregating package. */
+  /** Returns metadata for all aggregated elements in the aggregating package. */
   public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(Elements elements) {
-    return AggregatedElements.from(
+    return from(
+        AggregatedElements.from(
             ClassNames.AGGREGATED_EARLY_ENTRY_POINT_PACKAGE,
             ClassNames.AGGREGATED_EARLY_ENTRY_POINT,
-            elements)
-        .stream()
+            elements),
+        elements);
+  }
+
+  /** Returns metadata for each aggregated element. */
+  public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(
+      ImmutableSet<TypeElement> aggregatedElements, Elements elements) {
+    return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
   }
@@ -59,6 +69,7 @@ public abstract class AggregatedEarlyEntryPointMetadata {
         Processors.getAnnotationValues(elements, annotationMirror);
 
     return new AutoValue_AggregatedEarlyEntryPointMetadata(
+        element,
         elements.getTypeElement(AnnotationValues.getString(values.get("earlyEntryPoint"))));
   }
 }

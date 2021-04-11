@@ -19,6 +19,7 @@ package dagger.hilt.processor.internal.root;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import dagger.hilt.processor.internal.AggregatedElements;
@@ -36,16 +37,31 @@ import javax.lang.model.util.Elements;
 @AutoValue
 abstract class AggregatedRootMetadata {
 
+  /** Returns the aggregating element */
+  public abstract TypeElement aggregatingElement();
+
   /** Returns the element that was annotated with the root annotation. */
   abstract TypeElement rootElement();
 
   /** Returns the root annotation as an element. */
   abstract TypeElement rootAnnotation();
 
+  @Memoized
+  RootType rootType() {
+    return RootType.of(rootElement());
+  }
+
   static ImmutableSet<AggregatedRootMetadata> from(Elements elements) {
-    return AggregatedElements.from(
-            ClassNames.AGGREGATED_ROOT_PACKAGE, ClassNames.AGGREGATED_ROOT, elements)
-        .stream()
+    return from(
+        AggregatedElements.from(
+            ClassNames.AGGREGATED_ROOT_PACKAGE, ClassNames.AGGREGATED_ROOT, elements),
+        elements);
+  }
+
+  /** Returns metadata for each aggregated element. */
+  public static ImmutableSet<AggregatedRootMetadata> from(
+      ImmutableSet<TypeElement> aggregatedElements, Elements elements) {
+    return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
   }
@@ -58,6 +74,7 @@ abstract class AggregatedRootMetadata {
         Processors.getAnnotationValues(elements, annotationMirror);
 
     return new AutoValue_AggregatedRootMetadata(
+        element,
         elements.getTypeElement(AnnotationValues.getString(values.get("root"))),
         AnnotationValues.getTypeElement(values.get("rootAnnotation")));
   }

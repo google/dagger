@@ -43,17 +43,26 @@ abstract class Root {
   static Root createDefaultRoot(ProcessingEnvironment env) {
     TypeElement rootElement =
         env.getElementUtils().getTypeElement(ClassNames.DEFAULT_ROOT.canonicalName());
-    return new AutoValue_Root(rootElement, /*isTestRoot=*/ true);
+    return new AutoValue_Root(rootElement, rootElement, /*isTestRoot=*/ true);
   }
 
   /** Creates a {@plainlink Root root} for the given {@plainlink Element element}. */
   static Root create(Element element, ProcessingEnvironment env) {
     TypeElement rootElement = MoreElements.asType(element);
-    return new AutoValue_Root(rootElement, RootType.of(rootElement).isTestRoot());
+    if (ClassNames.DEFAULT_ROOT.equals(ClassName.get(rootElement))) {
+      return createDefaultRoot(env);
+    }
+    return new AutoValue_Root(rootElement, rootElement, RootType.of(rootElement).isTestRoot());
   }
 
   /** Returns the root element that should be used with processing. */
   abstract TypeElement element();
+
+  /**
+   * Returns the originating root element. In most cases this will be the same as {@link
+   * #element()}.
+   */
+  abstract TypeElement originatingRootElement();
 
   /** Returns {@code true} if this is a test root. */
   abstract boolean isTestRoot();
@@ -63,9 +72,14 @@ abstract class Root {
     return ClassName.get(element());
   }
 
+  /** Returns the class name of the originating root element. */
+  ClassName originatingRootClassname() {
+    return ClassName.get(originatingRootElement());
+  }
+
   @Override
   public final String toString() {
-    return element().toString();
+    return originatingRootElement().toString();
   }
 
   /** Returns {@code true} if this uses the default root. */

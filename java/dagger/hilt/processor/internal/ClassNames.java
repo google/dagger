@@ -22,6 +22,11 @@ import com.squareup.javapoet.ClassName;
 
 /** Holder for commonly used class names. */
 public final class ClassNames {
+  public static final ClassName AGGREGATED_ELEMENT_PROXY =
+      get("dagger.hilt.android.internal.legacy", "AggregatedElementProxy");
+  public static final ClassName COMPONENT_TREE_DEPS =
+      get("dagger.hilt.internal.componenttreedeps", "ComponentTreeDeps");
+
   public static final String AGGREGATED_ROOT_PACKAGE =
       "dagger.hilt.internal.aggregatedroot.codegen";
   public static final ClassName AGGREGATED_ROOT =

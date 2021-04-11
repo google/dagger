@@ -35,18 +35,29 @@ import javax.lang.model.util.Elements;
  * dagger.hilt.internal.aliasof.AliasOfPropagatedData} annotation.
  */
 @AutoValue
-abstract class AliasOfPropagatedDataMetadata {
+public abstract class AliasOfPropagatedDataMetadata {
+
+  /** Returns the aggregating element */
+  public abstract TypeElement aggregatingElement();
 
   abstract TypeElement defineComponentScopeElement();
 
   abstract TypeElement aliasElement();
 
-  static ImmutableSet<AliasOfPropagatedDataMetadata> from(Elements elements) {
-    return AggregatedElements.from(
+  /** Returns metadata for all aggregated elements in the aggregating package. */
+  public static ImmutableSet<AliasOfPropagatedDataMetadata> from(Elements elements) {
+    return from(
+        AggregatedElements.from(
             ClassNames.ALIAS_OF_PROPAGATED_DATA_PACKAGE,
             ClassNames.ALIAS_OF_PROPAGATED_DATA,
-            elements)
-        .stream()
+            elements),
+        elements);
+  }
+
+  /** Returns metadata for each aggregated element. */
+  public static ImmutableSet<AliasOfPropagatedDataMetadata> from(
+      ImmutableSet<TypeElement> aggregatedElements, Elements elements) {
+    return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
   }
@@ -59,6 +70,7 @@ abstract class AliasOfPropagatedDataMetadata {
         Processors.getAnnotationValues(elements, annotationMirror);
 
     return new AutoValue_AliasOfPropagatedDataMetadata(
+        element,
         AnnotationValues.getTypeElement(values.get("defineComponentScope")),
         AnnotationValues.getTypeElement(values.get("alias")));
   }

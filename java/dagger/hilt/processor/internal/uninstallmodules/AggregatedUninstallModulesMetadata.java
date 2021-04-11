@@ -39,6 +39,9 @@ import javax.lang.model.util.Elements;
 @AutoValue
 public abstract class AggregatedUninstallModulesMetadata {
 
+  /** Returns the aggregating element */
+  public abstract TypeElement aggregatingElement();
+
   /** Returns the test annotated with {@link dagger.hilt.android.testing.UninstallModules}. */
   public abstract TypeElement testElement();
 
@@ -47,13 +50,20 @@ public abstract class AggregatedUninstallModulesMetadata {
    */
   public abstract ImmutableList<TypeElement> uninstallModuleElements();
 
-  /** Returns all aggregated deps in the aggregating package mapped by the top-level element. */
+  /** Returns metadata for all aggregated elements in the aggregating package. */
   public static ImmutableSet<AggregatedUninstallModulesMetadata> from(Elements elements) {
-    return AggregatedElements.from(
+    return from(
+        AggregatedElements.from(
             ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE,
             ClassNames.AGGREGATED_UNINSTALL_MODULES,
-            elements)
-        .stream()
+            elements),
+        elements);
+  }
+
+  /** Returns metadata for each aggregated element. */
+  public static ImmutableSet<AggregatedUninstallModulesMetadata> from(
+      ImmutableSet<TypeElement> aggregatedElements, Elements elements) {
+    return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
   }
@@ -66,6 +76,7 @@ public abstract class AggregatedUninstallModulesMetadata {
         Processors.getAnnotationValues(elements, annotationMirror);
 
     return new AutoValue_AggregatedUninstallModulesMetadata(
+        element,
         elements.getTypeElement(AnnotationValues.getString(values.get("test"))),
         AnnotationValues.getAnnotationValues(values.get("uninstallModules")).stream()
             .map(AnnotationValues::getString)

@@ -27,6 +27,7 @@ import dagger.hilt.processor.internal.definecomponent.DefineComponentProcessor;
 import dagger.hilt.processor.internal.earlyentrypoint.EarlyEntryPointProcessor;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputProcessor;
 import dagger.hilt.processor.internal.originatingelement.OriginatingElementProcessor;
+import dagger.hilt.processor.internal.root.ComponentTreeDepsProcessor;
 import dagger.hilt.processor.internal.root.RootProcessor;
 import dagger.hilt.processor.internal.uninstallmodules.UninstallModulesProcessor;
 import dagger.internal.codegen.ComponentProcessor;
@@ -78,6 +79,7 @@ public final class HiltCompilerTests {
         new OriginatingElementProcessor(),
         new CustomTestApplicationProcessor(),
         new UninstallModulesProcessor(),
+        new ComponentTreeDepsProcessor(),
         new RootProcessor());
   }
 

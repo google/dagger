@@ -44,15 +44,18 @@ import javax.lang.model.element.TypeElement;
 /** Generates an implementation of {@link dagger.hilt.android.internal.TestComponentData}. */
 public final class TestComponentDataGenerator {
   private final ProcessingEnvironment processingEnv;
+  private final TypeElement originatingElement;
   private final RootMetadata rootMetadata;
   private final ClassName name;
   private final ComponentNames componentNames;
 
   public TestComponentDataGenerator(
       ProcessingEnvironment processingEnv,
+      TypeElement originatingElement,
       RootMetadata rootMetadata,
       ComponentNames componentNames) {
     this.processingEnv = processingEnv;
+    this.originatingElement = originatingElement;
     this.rootMetadata = rootMetadata;
     this.componentNames = componentNames;
     this.name =
@@ -88,6 +91,7 @@ public final class TestComponentDataGenerator {
   public void generate() throws IOException {
     TypeSpec.Builder generator =
         TypeSpec.classBuilder(name)
+            .addOriginatingElement(originatingElement)
             .superclass(ClassNames.TEST_COMPONENT_DATA_SUPPLIER)
             .addModifiers(PUBLIC, FINAL)
             .addMethod(getMethod())
@@ -105,10 +109,7 @@ public final class TestComponentDataGenerator {
     TypeElement testElement = rootMetadata.testRootMetadata().testElement();
     ClassName component =
         componentNames.generatedComponent(
-            rootMetadata.canShareTestComponents()
-                ? ClassNames.DEFAULT_ROOT
-                : ClassName.get(testElement),
-            ClassNames.SINGLETON_COMPONENT);
+            ClassName.get(testElement), ClassNames.SINGLETON_COMPONENT);
     ImmutableSet<TypeElement> daggerRequiredModules =
         rootMetadata.modulesThatDaggerCannotConstruct(ClassNames.SINGLETON_COMPONENT);
     ImmutableSet<TypeElement> hiltRequiredModules =

@@ -33,7 +33,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 
 /**
  * A utility class for getting {@link DefineComponentMetadata} and {@link
@@ -78,10 +77,8 @@ public final class DefineComponents {
   }
 
   /** Returns the set of aggregated {@link ComponentDescriptor}s. */
-  public ImmutableSet<ComponentDescriptor> getComponentDescriptors(Elements elements) {
-    ImmutableSet<DefineComponentClassesMetadata> aggregatedMetadatas =
-        DefineComponentClassesMetadata.from(elements);
-
+  public ImmutableSet<ComponentDescriptor> getComponentDescriptors(
+      ImmutableSet<DefineComponentClassesMetadata> aggregatedMetadatas) {
     ImmutableSet<DefineComponentMetadata> components =
         aggregatedMetadatas.stream()
             .filter(DefineComponentClassesMetadata::isComponent)

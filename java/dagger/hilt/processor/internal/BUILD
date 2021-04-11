@@ -89,7 +89,6 @@ java_library(
         "ComponentNames.java",
     ],
     deps = [
-        ":classnames",
         ":processors",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
@@ -103,6 +102,7 @@ java_library(
         "AggregatedElements.java",
     ],
     deps = [
+        ":classnames",
         ":processor_errors",
         ":processors",
         "//java/dagger/internal/codegen/extension",

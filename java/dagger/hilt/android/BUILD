@@ -60,7 +60,8 @@ android_library(
     exported_plugins = [
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:plugin",
         "//java/dagger/hilt/android/processor/internal/viewmodel:validation_plugin",
-        "//java/dagger/hilt/processor/internal/root:plugin",
+        "//java/dagger/hilt/processor/internal/root:component_tree_deps_plugin",
+        "//java/dagger/hilt/processor/internal/root:root_plugin",
     ],
     exports = [
         ":activity_retained_lifecycle",
@@ -68,6 +69,7 @@ android_library(
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/internal/builders",
+        "//java/dagger/hilt/android/internal/legacy:aggregated_element_proxy",
         "//java/dagger/hilt/android/internal/managers",
         "//java/dagger/hilt/android/internal/managers:component_supplier",
         "//java/dagger/hilt/android/internal/modules",
@@ -77,6 +79,7 @@ android_library(
         "//java/dagger/hilt/internal:generated_component",
         "//java/dagger/hilt/internal:generated_entry_point",
         "//java/dagger/hilt/internal/aggregatedroot",
+        "//java/dagger/hilt/internal/componenttreedeps",
         "//java/dagger/hilt/internal/processedrootsentinel",
         "//java/dagger/hilt/migration:disable_install_in_check",
         "@maven//:androidx_activity_activity",
@@ -181,6 +184,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/internal",
         "//java/dagger/hilt/android/internal/builders",
         "//java/dagger/hilt/android/internal/earlyentrypoint",
+        "//java/dagger/hilt/android/internal/legacy:aggregated_element_proxy",
         "//java/dagger/hilt/android/internal/lifecycle",
         "//java/dagger/hilt/android/internal/managers",
         "//java/dagger/hilt/android/internal/managers:component_supplier",
@@ -198,6 +202,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/internal:test_singleton_component_manager",
         "//java/dagger/hilt/internal/aggregatedroot:aggregatedroot",
         "//java/dagger/hilt/internal/processedrootsentinel:processedrootsentinel",
+        "//java/dagger/hilt/internal/componenttreedeps:componenttreedeps",
     ],
     artifact_target_maven_deps = [
         "androidx.activity:activity",

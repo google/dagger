@@ -81,9 +81,9 @@ java_library(
     ],
     deps = [
         ":pkg_private_metadata",
+        "//java/dagger/hilt/processor/internal:aggregated_elements",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:component_descriptor",
-        "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/hilt/processor/internal/earlyentrypoint:aggregated_early_entry_point_metadata",
         "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
@@ -92,7 +92,6 @@ java_library(
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/javapoet",
-        "@maven//:com_google_auto_auto_common",
     ],
 )
 

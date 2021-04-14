@@ -16,17 +16,17 @@
 
 package dagger.hilt.processor.internal.aliasof;
 
-import static com.google.auto.common.MoreElements.asType;
-import static com.google.auto.common.MoreElements.isType;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import dagger.hilt.processor.internal.AggregatedElements;
+import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
@@ -42,56 +42,24 @@ abstract class AliasOfPropagatedDataMetadata {
   abstract TypeElement aliasElement();
 
   static ImmutableSet<AliasOfPropagatedDataMetadata> from(Elements elements) {
-    PackageElement packageElement =
-        elements.getPackageElement(ClassNames.ALIAS_OF_PROPAGATED_DATA_PACKAGE);
-
-    if (packageElement == null) {
-      return ImmutableSet.of();
-    }
-
-    ImmutableSet<Element> aggregatedElements =
-        ImmutableSet.copyOf(packageElement.getEnclosedElements());
-
-    ProcessorErrors.checkState(
-        !aggregatedElements.isEmpty(),
-        packageElement,
-        "No dependencies found. Did you remove code in package %s?",
-        ClassNames.ALIAS_OF_PROPAGATED_DATA_PACKAGE);
-
-    ImmutableSet.Builder<AliasOfPropagatedDataMetadata> builder = ImmutableSet.builder();
-    for (Element element : aggregatedElements) {
-      ProcessorErrors.checkState(
-          isType(element),
-          element,
-          "Only types may be in package %s. Did you add custom code in the package?",
-          ClassNames.ALIAS_OF_PROPAGATED_DATA_PACKAGE);
-
-      builder.add(create(asType(element), elements));
-    }
-    return builder.build();
+    return AggregatedElements.from(
+            ClassNames.ALIAS_OF_PROPAGATED_DATA_PACKAGE,
+            ClassNames.ALIAS_OF_PROPAGATED_DATA,
+            elements)
+        .stream()
+        .map(aggregatedElement -> create(aggregatedElement, elements))
+        .collect(toImmutableSet());
   }
 
   private static AliasOfPropagatedDataMetadata create(TypeElement element, Elements elements) {
     AnnotationMirror annotationMirror =
         Processors.getAnnotationMirror(element, ClassNames.ALIAS_OF_PROPAGATED_DATA);
 
-    ProcessorErrors.checkState(
-        annotationMirror != null,
-        element,
-        "Classes in package %s must be annotated with @%s: %s."
-            + " Found: %s. Files in this package are generated, did you add custom code in the"
-            + " package? ",
-        ClassNames.ALIAS_OF_PROPAGATED_DATA_PACKAGE,
-        ClassNames.ALIAS_OF_PROPAGATED_DATA,
-        element.getSimpleName(),
-        element.getAnnotationMirrors());
+    ImmutableMap<String, AnnotationValue> values =
+        Processors.getAnnotationValues(elements, annotationMirror);
 
-    TypeElement defineComponentScopeElement =
-        Processors.getAnnotationClassValue(elements, annotationMirror, "defineComponentScope");
-
-    TypeElement aliasElement =
-        Processors.getAnnotationClassValue(elements, annotationMirror, "alias");
-
-    return new AutoValue_AliasOfPropagatedDataMetadata(defineComponentScopeElement, aliasElement);
+    return new AutoValue_AliasOfPropagatedDataMetadata(
+        AnnotationValues.getTypeElement(values.get("defineComponentScope")),
+        AnnotationValues.getTypeElement(values.get("alias")));
   }
 }

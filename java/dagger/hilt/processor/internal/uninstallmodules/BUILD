@@ -50,13 +50,12 @@ java_library(
         "AggregatedUninstallModulesMetadata.java",
     ],
     deps = [
+        "//java/dagger/hilt/processor/internal:aggregated_elements",
         "//java/dagger/hilt/processor/internal:classnames",
-        "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:value",
-        "@maven//:com_google_auto_auto_common",
     ],
 )
 

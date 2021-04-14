@@ -21,21 +21,16 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
-import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import dagger.hilt.processor.internal.AggregatedElements;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
-import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
@@ -65,58 +60,32 @@ abstract class AggregatedDepsMetadata {
 
   /** Returns all aggregated deps in the aggregating package. */
   public static ImmutableSet<AggregatedDepsMetadata> from(Elements elements) {
-    PackageElement packageElement = elements.getPackageElement(AGGREGATED_DEPS_PACKAGE);
-    checkState(
-        packageElement != null,
-        "Couldn't find package %s. Did you mark your @Module classes with @InstallIn annotations?",
-        AGGREGATED_DEPS_PACKAGE);
-
-    List<? extends Element> aggregatedDepsElements = packageElement.getEnclosedElements();
-    checkState(
-        !aggregatedDepsElements.isEmpty(),
-        "No dependencies found. Did you mark your @Module classes with @InstallIn annotations?");
-
-    ImmutableSet.Builder<AggregatedDepsMetadata> builder = ImmutableSet.builder();
-    for (Element element : aggregatedDepsElements) {
-      ProcessorErrors.checkState(
-          element.getKind() == ElementKind.CLASS,
-          element,
-          "Only classes may be in package %s. Did you add custom code in the package?",
-          AGGREGATED_DEPS_PACKAGE);
-
-      builder.add(create(MoreElements.asType(element), elements));
-    }
-    return builder.build();
+    return AggregatedElements.from(AGGREGATED_DEPS_PACKAGE, ClassNames.AGGREGATED_DEPS, elements)
+        .stream()
+        .map(aggregatedElement -> create(aggregatedElement, elements))
+        .collect(toImmutableSet());
   }
 
   private static AggregatedDepsMetadata create(TypeElement element, Elements elements) {
-    AnnotationMirror aggregatedDeps =
+    AnnotationMirror annotationMirror =
         Processors.getAnnotationMirror(element, ClassNames.AGGREGATED_DEPS);
 
-    ProcessorErrors.checkState(
-        aggregatedDeps != null,
-        element,
-        "Classes in package %s must be annotated with @AggregatedDeps: %s. Found: %s.",
-        AGGREGATED_DEPS_PACKAGE,
-        element.getSimpleName(),
-        element.getAnnotationMirrors());
-
-    ImmutableMap<String, AnnotationValue> aggregatedDepsValues =
-        Processors.getAnnotationValues(elements, aggregatedDeps);
+    ImmutableMap<String, AnnotationValue> values =
+        Processors.getAnnotationValues(elements, annotationMirror);
 
     return new AutoValue_AggregatedDepsMetadata(
-        getTestElement(aggregatedDepsValues.get("test"), elements),
-        getComponents(aggregatedDepsValues.get("components"), elements),
+        getTestElement(values.get("test"), elements),
+        getComponents(values.get("components"), elements),
         getDependencyType(
-            aggregatedDepsValues.get("modules"),
-            aggregatedDepsValues.get("entryPoints"),
-            aggregatedDepsValues.get("componentEntryPoints")),
+            values.get("modules"),
+            values.get("entryPoints"),
+            values.get("componentEntryPoints")),
         getDependency(
-            aggregatedDepsValues.get("modules"),
-            aggregatedDepsValues.get("entryPoints"),
-            aggregatedDepsValues.get("componentEntryPoints"),
+            values.get("modules"),
+            values.get("entryPoints"),
+            values.get("componentEntryPoints"),
             elements),
-        getReplacedDependencies(aggregatedDepsValues.get("replaces"), elements));
+        getReplacedDependencies(values.get("replaces"), elements));
   }
 
   private static Optional<TypeElement> getTestElement(

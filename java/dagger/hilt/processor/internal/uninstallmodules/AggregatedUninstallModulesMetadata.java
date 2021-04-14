@@ -17,21 +17,18 @@
 package dagger.hilt.processor.internal.uninstallmodules;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
-import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import dagger.hilt.processor.internal.AggregatedElements;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
@@ -52,61 +49,27 @@ public abstract class AggregatedUninstallModulesMetadata {
 
   /** Returns all aggregated deps in the aggregating package mapped by the top-level element. */
   public static ImmutableSet<AggregatedUninstallModulesMetadata> from(Elements elements) {
-    PackageElement packageElement =
-        elements.getPackageElement(ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE);
-
-    if (packageElement == null) {
-      return ImmutableSet.of();
-    }
-
-    ImmutableSet<Element> aggregatedElements =
-        ImmutableSet.copyOf(packageElement.getEnclosedElements());
-
-    ProcessorErrors.checkState(
-        !aggregatedElements.isEmpty(),
-        packageElement,
-        "No dependencies found. Did you remove code in package %s?",
-        ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE);
-
-    ImmutableSet.Builder<AggregatedUninstallModulesMetadata> builder = ImmutableSet.builder();
-    for (Element element : aggregatedElements) {
-      ProcessorErrors.checkState(
-          element.getKind() == ElementKind.CLASS,
-          element,
-          "Only classes may be in package %s. Did you add custom code in the package?",
-          ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE);
-
-      builder.add(create(MoreElements.asType(element), elements));
-    }
-
-    return builder.build();
+    return AggregatedElements.from(
+            ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE,
+            ClassNames.AGGREGATED_UNINSTALL_MODULES,
+            elements)
+        .stream()
+        .map(aggregatedElement -> create(aggregatedElement, elements))
+        .collect(toImmutableSet());
   }
 
   private static AggregatedUninstallModulesMetadata create(TypeElement element, Elements elements) {
     AnnotationMirror annotationMirror =
         Processors.getAnnotationMirror(element, ClassNames.AGGREGATED_UNINSTALL_MODULES);
 
-    ProcessorErrors.checkState(
-        annotationMirror != null,
-        element,
-        "Classes in package %s must be annotated with @%s: %s. Found: %s.",
-        ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE,
-        ClassNames.AGGREGATED_UNINSTALL_MODULES,
-        element.getSimpleName(),
-        element.getAnnotationMirrors());
-
     ImmutableMap<String, AnnotationValue> values =
-          Processors.getAnnotationValues(elements, annotationMirror);
+        Processors.getAnnotationValues(elements, annotationMirror);
 
-    TypeElement testElement =
-        elements.getTypeElement(AnnotationValues.getString(values.get("test")));
-
-    ImmutableList<TypeElement> uninstallModuleElements =
+    return new AutoValue_AggregatedUninstallModulesMetadata(
+        elements.getTypeElement(AnnotationValues.getString(values.get("test"))),
         AnnotationValues.getAnnotationValues(values.get("uninstallModules")).stream()
             .map(AnnotationValues::getString)
             .map(elements::getTypeElement)
-            .collect(toImmutableList());
-
-    return new AutoValue_AggregatedUninstallModulesMetadata(testElement, uninstallModuleElements);
+            .collect(toImmutableList()));
   }
 }

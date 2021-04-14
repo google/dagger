@@ -112,6 +112,13 @@ public final class AnnotationValues {
     return EnumVisitor.INSTANCE.visit(value);
   }
 
+  /** Returns a string array value as a set of strings. */
+  public static ImmutableSet<String> getStrings(AnnotationValue value) {
+    return getAnnotationValues(value).stream()
+        .map(AnnotationValues::getString)
+        .collect(toImmutableSet());
+  }
+
   /**
    * Returns the value as a string.
    *

@@ -16,20 +16,17 @@
 
 package dagger.hilt.processor.internal.root;
 
-import static com.google.auto.common.MoreElements.asType;
-import static com.google.auto.common.MoreElements.isType;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import dagger.hilt.processor.internal.AggregatedElements;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
@@ -46,38 +43,16 @@ abstract class AggregatedRootMetadata {
   abstract TypeElement rootAnnotation();
 
   static ImmutableSet<AggregatedRootMetadata> from(Elements elements) {
-    PackageElement packageElement = elements.getPackageElement(ClassNames.AGGREGATED_ROOT_PACKAGE);
-
-    if (packageElement == null) {
-      return ImmutableSet.of();
-    }
-
-    ImmutableSet.Builder<AggregatedRootMetadata> builder = ImmutableSet.builder();
-    for (Element element : packageElement.getEnclosedElements()) {
-      ProcessorErrors.checkState(
-          isType(element),
-          element,
-          "Only types may be in package %s. Did you add custom code in the package?",
-          ClassNames.AGGREGATED_ROOT_PACKAGE);
-
-      builder.add(create(asType(element), elements));
-    }
-
-    return builder.build();
+    return AggregatedElements.from(
+            ClassNames.AGGREGATED_ROOT_PACKAGE, ClassNames.AGGREGATED_ROOT, elements)
+        .stream()
+        .map(aggregatedElement -> create(aggregatedElement, elements))
+        .collect(toImmutableSet());
   }
 
   private static AggregatedRootMetadata create(TypeElement element, Elements elements) {
     AnnotationMirror annotationMirror =
         Processors.getAnnotationMirror(element, ClassNames.AGGREGATED_ROOT);
-
-    ProcessorErrors.checkState(
-        annotationMirror != null,
-        element,
-        "Classes in package %s must be annotated with @%s: %s. Found: %s.",
-        ClassNames.AGGREGATED_ROOT_PACKAGE,
-        ClassNames.AGGREGATED_ROOT,
-        element.getSimpleName(),
-        element.getAnnotationMirrors());
 
     ImmutableMap<String, AnnotationValue> values =
         Processors.getAnnotationValues(elements, annotationMirror);

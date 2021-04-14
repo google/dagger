@@ -44,6 +44,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
         "//java/dagger/hilt/android/processor/internal/viewmodel:validation_plugin_lib",
         "//java/dagger/hilt/android/processor/internal/viewmodel:processor_lib",
+        "//java/dagger/hilt/processor/internal:aggregated_elements",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:compiler_options",

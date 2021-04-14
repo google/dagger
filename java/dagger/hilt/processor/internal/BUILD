@@ -63,11 +63,9 @@ java_library(
         ":processor_errors",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/kotlin",
-        "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/javapoet",
-        "@google_bazel_common//third_party/java/jsr305_annotations",
         "@google_bazel_common//third_party/java/jsr330_inject",
         "@maven//:com_google_auto_auto_common",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
@@ -96,6 +94,21 @@ java_library(
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/javapoet",
+    ],
+)
+
+java_library(
+    name = "aggregated_elements",
+    srcs = [
+        "AggregatedElements.java",
+    ],
+    deps = [
+        ":processor_errors",
+        ":processors",
+        "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
     ],
 )
 

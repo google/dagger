@@ -31,7 +31,7 @@ import javax.lang.model.type.TypeMirror;
 
 /** Static helper methods for throwing errors during code generation. */
 public final class ProcessorErrors {
-    /**
+  /**
    * Ensures the truth of an expression involving the state of the calling instance, but not
    * involving any parameters to the calling method.
    *

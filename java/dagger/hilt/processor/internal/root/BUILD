@@ -75,6 +75,7 @@ java_library(
     ],
     deps = [
         ":root_type",
+        "//java/dagger/hilt/processor/internal:aggregated_elements",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:compiler_options",
         "//java/dagger/hilt/processor/internal:component_descriptor",

@@ -16,20 +16,18 @@
 
 package dagger.hilt.processor.internal.definecomponent;
 
-import static com.google.auto.common.MoreElements.asType;
-import static com.google.auto.common.MoreElements.isType;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import dagger.hilt.processor.internal.AggregatedElements;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
@@ -55,48 +53,18 @@ abstract class DefineComponentClassesMetadata {
   }
 
   static ImmutableSet<DefineComponentClassesMetadata> from(Elements elements) {
-    PackageElement packageElement =
-        elements.getPackageElement(ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE);
-
-    if (packageElement == null) {
-      return ImmutableSet.of();
-    }
-
-    ImmutableSet<Element> aggregatedElements =
-        ImmutableSet.copyOf(packageElement.getEnclosedElements());
-
-    ProcessorErrors.checkState(
-        !aggregatedElements.isEmpty(),
-        packageElement,
-        "No dependencies found. Did you remove code in package %s?",
-        ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE);
-
-    ImmutableSet.Builder<DefineComponentClassesMetadata> builder = ImmutableSet.builder();
-    for (Element element : aggregatedElements) {
-      ProcessorErrors.checkState(
-          isType(element),
-          element,
-          "Only types may be in package %s. Did you add custom code in the package?",
-          packageElement);
-
-      builder.add(create(asType(element), elements));
-    }
-
-    return builder.build();
+    return AggregatedElements.from(
+            ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE,
+            ClassNames.DEFINE_COMPONENT_CLASSES,
+            elements)
+        .stream()
+        .map(aggregatedElement -> create(aggregatedElement, elements))
+        .collect(toImmutableSet());
   }
 
   private static DefineComponentClassesMetadata create(TypeElement element, Elements elements) {
     AnnotationMirror annotationMirror =
         Processors.getAnnotationMirror(element, ClassNames.DEFINE_COMPONENT_CLASSES);
-
-    ProcessorErrors.checkState(
-        annotationMirror != null,
-        element,
-        "Classes in package %s must be annotated with @%s: %s. Found: %s.",
-        ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE,
-        ClassNames.DEFINE_COMPONENT_CLASSES,
-        element.getSimpleName(),
-        element.getAnnotationMirrors());
 
     ImmutableMap<String, AnnotationValue> values =
         Processors.getAnnotationValues(elements, annotationMirror);

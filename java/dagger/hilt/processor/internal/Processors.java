@@ -512,6 +512,14 @@ public final class Processors {
     return ClassName.get(className.packageName(), getEnclosedName(className));
   }
 
+  /**
+   * Returns an equivalent class name with the {@code .} (dots) used for inner classes replaced with
+   * {@code _}.
+   */
+  public static ClassName getEnclosedClassName(TypeElement typeElement) {
+    return getEnclosedClassName(ClassName.get(typeElement));
+  }
+
   /** Returns the fully qualified class name, with _ instead of . */
   public static String getFullyQualifiedEnclosedClassName(ClassName className) {
     return className.packageName().replace('.', '_') + getEnclosedName(className);

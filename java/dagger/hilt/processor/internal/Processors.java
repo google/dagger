@@ -925,7 +925,10 @@ public final class Processors {
     return ElementFilter.methodsIn(elements.getAllMembers(module)).stream()
         .filter(Processors::isBindingMethod)
         .map(ExecutableElement::getModifiers)
-        .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
+        .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC))
+        // TODO(erichang): Getting a new KotlinMetadataUtil each time isn't great here, but until
+        // we have some sort of dependency management it will be difficult to share the instance.
+        && !KotlinMetadataUtils.getMetadataUtil().isObjectOrCompanionObjectClass(module);
   }
 
   private static boolean isBindingMethod(ExecutableElement method) {

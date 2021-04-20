@@ -32,3 +32,10 @@ internal abstract class InternalKtTestModule private constructor() {
     fun provideString(): String = "expected_string_value"
   }
 }
+
+@Module
+@InstallIn(SingletonComponent::class)
+internal object InternalKtObjectModule {
+  @Provides
+  fun provideString(): Int = 9
+}

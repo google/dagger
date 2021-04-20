@@ -37,10 +37,8 @@ import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Components;
-import dagger.hilt.processor.internal.KotlinMetadataUtils;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -167,7 +165,10 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     // Check that if Dagger needs an instance of the module, Hilt can provide it automatically by
     // calling a visible empty constructor.
     ProcessorErrors.checkState(
-        !daggerRequiresModuleInstance(module) || hasVisibleEmptyConstructor(module),
+        // Skip ApplicationContextModule, since Hilt manages this module internally.
+        ClassNames.APPLICATION_CONTEXT_MODULE.equals(ClassName.get(module))
+        || !Processors.requiresModuleInstance(getElementUtils(), module)
+        || hasVisibleEmptyConstructor(module),
         module,
         "Modules that need to be instantiated by Hilt must have a visible, empty constructor.");
 
@@ -442,27 +443,6 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     Name name = asType(annotationMirror.getAnnotationType().asElement()).getQualifiedName();
     return name.contentEquals("javax.annotation.Generated")
         || name.contentEquals("javax.annotation.processing.Generated");
-  }
-
-  private static boolean daggerRequiresModuleInstance(TypeElement module) {
-    return !module.getModifiers().contains(ABSTRACT)
-        && !hasOnlyStaticProvides(module)
-        // Skip ApplicationContextModule, since Hilt manages this module internally.
-        && !ClassNames.APPLICATION_CONTEXT_MODULE.equals(ClassName.get(module))
-        // Skip Kotlin object modules since all their provision methods are static
-        && !isKotlinObject(module);
-  }
-
-  private static boolean isKotlinObject(TypeElement type) {
-    KotlinMetadataUtil metadataUtil = KotlinMetadataUtils.getMetadataUtil();
-    return metadataUtil.isObjectClass(type) || metadataUtil.isCompanionObjectClass(type);
-  }
-
-  private static boolean hasOnlyStaticProvides(TypeElement module) {
-    // TODO(erichang): Check for @Produces too when we have a producers story
-    return ElementFilter.methodsIn(module.getEnclosedElements()).stream()
-        .filter(method -> Processors.hasAnnotation(method, ClassNames.PROVIDES))
-        .allMatch(method -> method.getModifiers().contains(STATIC));
   }
 
   private static boolean hasVisibleEmptyConstructor(TypeElement type) {

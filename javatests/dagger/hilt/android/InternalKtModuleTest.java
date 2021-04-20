@@ -37,6 +37,7 @@ public final class InternalKtModuleTest {
   @Rule public final HiltAndroidRule rule = new HiltAndroidRule(this);
 
   @Inject String string;
+  @Inject Integer intValue;
 
   @Before
   public void setUp() {
@@ -46,5 +47,6 @@ public final class InternalKtModuleTest {
   @Test
   public void testBindingFromInternalKtModule() {
     assertThat(string).isEqualTo("expected_string_value");
+    assertThat(intValue).isEqualTo(9);
   }
 }

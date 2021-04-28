@@ -111,7 +111,7 @@ public abstract class Key {
    * and {@code @A(c = "c", b = "b", attributeWithDefaultValue = "default value")}.
    */
   // TODO(ronshapiro): move this to auto-common
-  private static String stableAnnotationMirrorToString(AnnotationMirror qualifier) {
+  static String stableAnnotationMirrorToString(AnnotationMirror qualifier) {
     StringBuilder builder = new StringBuilder("@").append(qualifier.getAnnotationType());
     ImmutableMap<ExecutableElement, AnnotationValue> elementValues =
         AnnotationMirrors.getAnnotationValuesWithDefaults(qualifier);

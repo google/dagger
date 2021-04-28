@@ -32,13 +32,17 @@ package(
     ],
 )
 
-INTERNAL_PROXIES = ["BindingGraphProxies.java"]
+INTERNAL_PROXIES = [
+    "BindingGraphProxies.java",
+]
 
 filegroup(
     name = "model-srcs",
     srcs = glob(
         ["*.java"],
-        exclude = INTERNAL_PROXIES,
+        exclude =
+            INTERNAL_PROXIES + [
+            ],
     ),
 )
 

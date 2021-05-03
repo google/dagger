@@ -174,7 +174,6 @@ public final class GeneratorsTest {
             " public MyView(Context context, AttributeSet attributeSet){",
             "   super(context, attributeSet);",
             " }",
-            "",
             "}");
     Compilation compilation = compiler().compile(myView);
     assertThat(compilation).succeeded();

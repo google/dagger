@@ -24,8 +24,12 @@ import com.android.build.api.transform.Status
 import com.android.build.api.transform.Transform
 import com.android.build.api.transform.TransformInput
 import com.android.build.api.transform.TransformInvocation
+import dagger.hilt.android.plugin.util.copyTo
 import dagger.hilt.android.plugin.util.isClassFile
 import java.io.File
+import java.util.*
+import java.util.jar.JarEntry
+import java.util.jar.JarFile
 
 /**
  * Bytecode transformation to make @AndroidEntryPoint annotated classes extend the Hilt
@@ -77,11 +81,11 @@ class AndroidEntryPointTransform : Transform() {
             jarInput.name,
             jarInput.contentTypes,
             jarInput.scopes,
-            Format.JAR
+            Format.DIRECTORY
           )
         if (invocation.isIncremental) {
           when (jarInput.status) {
-            Status.ADDED, Status.CHANGED -> copyJar(jarInput.file, outputJar)
+            Status.ADDED, Status.CHANGED -> handleJar(jarInput, invocation, outputJar)
             Status.REMOVED -> outputJar.delete()
             Status.NOTCHANGED -> {
               // No need to transform.
@@ -91,7 +95,7 @@ class AndroidEntryPointTransform : Transform() {
             }
           }
         } else {
-          copyJar(jarInput.file, outputJar)
+          handleJar(jarInput, invocation, outputJar)
         }
       }
       transformInput.directoryInputs.forEach { directoryInput ->
@@ -128,6 +132,35 @@ class AndroidEntryPointTransform : Transform() {
     }
   }
 
+  // In AGP 4.0+, Desugar task generate jar output, so we need to handle jar files
+  // if run release build with AGP 4.0+
+  private fun handleJar(jarInput: JarInput, invocation: TransformInvocation, outputJar: File) {
+    // create transform, target is origin output directory
+    val classTransformer =
+            createHiltClassTransformer(invocation.inputs, invocation.referencedInputs, outputJar)
+
+    val jarFile = JarFile(jarInput.file)
+    val entries: Enumeration<JarEntry> = jarFile.entries()
+    while (entries.hasMoreElements()) {
+      val jarEntry = entries.nextElement()
+
+      // use this File to parse entries' path
+      val entryPathResolver = File(jarEntry.name)
+
+      if (jarEntry.isClassFile()) {
+        // if class files, transform it with classTransformer
+        classTransformer.transformFile(jarFile, jarEntry)
+      } else if (!jarEntry.isDirectory) {
+        // if other files, copy it to output directory
+        val outputDir = File(outputJar, entryPathResolver.parent)
+        outputDir.mkdirs()
+        val outputFile = File(outputDir, entryPathResolver.name)
+        jarEntry.copyTo(jarFile = jarFile, target = outputFile, overwrite = true)
+      }
+
+    }
+  }
+
   // Create a transformer given an invocation inputs. Note that since this is a PROJECT scoped
   // transform the actual transformation is only done on project files and not its dependencies.
   private fun createHiltClassTransformer(
@@ -160,13 +193,6 @@ class AndroidEntryPointTransform : Transform() {
       val outputFile = File(outputDir, inputFile.name)
       inputFile.copyTo(target = outputFile, overwrite = true)
     }
-  }
-
-  // We are only interested in project compiled classes but we have to copy received jars to the
-  // output.
-  private fun copyJar(inputJar: File, outputJar: File) {
-    outputJar.parentFile?.mkdirs()
-    inputJar.copyTo(target = outputJar, overwrite = true)
   }
 
   private fun toOutputFile(outputDir: File, inputDir: File, inputFile: File) =

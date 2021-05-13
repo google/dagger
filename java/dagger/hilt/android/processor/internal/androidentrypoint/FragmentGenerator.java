@@ -94,9 +94,10 @@ public final class FragmentGenerator {
 
   // @CallSuper
   // @Override
-  // public void onAttach(Activity activity) {
-  //   super.onAttach(activity);
+  // public void onAttach(Context context) {
+  //   super.onAttach(context);
   //   initializeComponentContext();
+  //   inject();
   // }
   private static MethodSpec onAttachContextMethod() {
     return MethodSpec.methodBuilder("onAttach")
@@ -106,6 +107,8 @@ public final class FragmentGenerator {
         .addParameter(AndroidClassNames.CONTEXT, "context")
         .addStatement("super.onAttach(context)")
         .addStatement("initializeComponentContext()")
+        // The inject method will internally check if injected already
+        .addStatement("inject()")
         .build();
   }
 
@@ -117,6 +120,7 @@ public final class FragmentGenerator {
   //       componentContext == null || FragmentComponentManager.findActivity(
   //           componentContext) == activity, "...");
   //   initializeComponentContext();
+  //   inject();
   // }
   private static MethodSpec onAttachActivityMethod() {
     return MethodSpec.methodBuilder("onAttach")
@@ -135,23 +139,22 @@ public final class FragmentGenerator {
             "onAttach called multiple times with different Context! "
         + "Hilt Fragments should not be retained.")
         .addStatement("initializeComponentContext()")
+        // The inject method will internally check if injected already
+        .addStatement("inject()")
         .build();
   }
 
   // private void initializeComponentContext() {
-  //   // Only inject on the first call to onAttach.
   //   if (componentContext == null) {
   //     // Note: The LayoutInflater provided by this componentContext may be different from super
   //     // Fragment's because we are getting it from base context instead of cloning from super
   //     // Fragment's LayoutInflater.
   //     componentContext = FragmentComponentManager.createContextWrapper(super.getContext(), this);
-  //     inject();
   //   }
   // }
   private MethodSpec initializeComponentContextMethod() {
     return MethodSpec.methodBuilder("initializeComponentContext")
         .addModifiers(Modifier.PRIVATE)
-        .addComment("Only inject on the first call to onAttach.")
         .beginControlFlow("if ($N == null)", COMPONENT_CONTEXT_FIELD)
         .addComment(
             "Note: The LayoutInflater provided by this componentContext may be different from"
@@ -161,13 +164,16 @@ public final class FragmentGenerator {
             "$N = $T.createContextWrapper(super.getContext(), this)",
             COMPONENT_CONTEXT_FIELD,
             metadata.componentManager())
-        .addStatement("inject()")
         .endControlFlow()
         .build();
   }
 
   // @Override
   // public Context getContext() {
+  //   if (super.getContext() == null) {
+  //     return null;
+  //   }
+  //   initializeComponentContext();
   //   return componentContext;
   // }
   private static MethodSpec getContextMethod() {
@@ -175,6 +181,10 @@ public final class FragmentGenerator {
         .returns(AndroidClassNames.CONTEXT)
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC)
+        .beginControlFlow("if (super.getContext() == null)")
+        .addStatement("return null")
+        .endControlFlow()
+        .addStatement("initializeComponentContext()")
         .addStatement("return $N", COMPONENT_CONTEXT_FIELD)
         .build();
   }

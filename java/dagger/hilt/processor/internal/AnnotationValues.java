@@ -18,15 +18,19 @@ package dagger.hilt.processor.internal;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -87,6 +91,18 @@ public final class AnnotationValues {
     }
   }
 
+  /** Returns a class array value as a set of {@link TypeElement}. */
+  public static ImmutableSet<TypeElement> getTypeElements(AnnotationValue value) {
+    return getAnnotationValues(value).stream()
+        .map(AnnotationValues::getTypeElement)
+        .collect(toImmutableSet());
+  }
+
+  /** Returns a class value as a {@link TypeElement}. */
+  public static TypeElement getTypeElement(AnnotationValue value) {
+    return asTypeElement(getTypeMirror(value));
+  }
+
   /**
    * Returns the value as a VariableElement.
    *
@@ -96,6 +112,13 @@ public final class AnnotationValues {
     return EnumVisitor.INSTANCE.visit(value);
   }
 
+  /** Returns a string array value as a set of strings. */
+  public static ImmutableSet<String> getStrings(AnnotationValue value) {
+    return getAnnotationValues(value).stream()
+        .map(AnnotationValues::getString)
+        .collect(toImmutableSet());
+  }
+
   /**
    * Returns the value as a string.
    *
@@ -103,6 +126,15 @@ public final class AnnotationValues {
    */
   public static String getString(AnnotationValue value) {
     return valueOfType(value, String.class);
+  }
+
+  /**
+   * Returns the value as a boolean.
+   *
+   * @throws IllegalArgumentException if the value is not a boolean.
+   */
+  public static boolean getBoolean(AnnotationValue value) {
+    return valueOfType(value, Boolean.class);
   }
 
   private static <T> T valueOfType(AnnotationValue annotationValue, Class<T> type) {

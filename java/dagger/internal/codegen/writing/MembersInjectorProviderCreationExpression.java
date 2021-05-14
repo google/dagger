@@ -87,7 +87,7 @@ final class MembersInjectorProviderCreationExpression
   }
 
   @Override
-  public boolean useInnerSwitchingProvider() {
+  public boolean useSwitchingProvider() {
     return !binding.injectionSites().isEmpty();
   }
 }

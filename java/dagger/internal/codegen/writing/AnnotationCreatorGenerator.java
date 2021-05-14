@@ -39,7 +39,6 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.LinkedHashSet;
-import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
@@ -88,18 +87,13 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement>
   }
 
   @Override
-  public ClassName nameGeneratedType(TypeElement annotationType) {
-    return getAnnotationCreatorClassName(annotationType);
-  }
-
-  @Override
   public Element originatingElement(TypeElement annotationType) {
     return annotationType;
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(TypeElement annotationType) {
-    ClassName generatedTypeName = nameGeneratedType(annotationType);
+  public ImmutableList<TypeSpec.Builder> topLevelTypes(TypeElement annotationType) {
+    ClassName generatedTypeName = getAnnotationCreatorClassName(annotationType);
     TypeSpec.Builder annotationCreatorBuilder =
         classBuilder(generatedTypeName)
             .addModifiers(PUBLIC, FINAL)
@@ -109,7 +103,7 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement>
       annotationCreatorBuilder.addMethod(buildCreateMethod(generatedTypeName, annotationElement));
     }
 
-    return Optional.of(annotationCreatorBuilder);
+    return ImmutableList.of(annotationCreatorBuilder);
   }
 
   private MethodSpec buildCreateMethod(ClassName generatedTypeName, TypeElement annotationElement) {

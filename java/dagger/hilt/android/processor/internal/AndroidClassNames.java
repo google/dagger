@@ -113,5 +113,10 @@ public final class AndroidClassNames {
   public static final ClassName SAVED_STATE_HANDLE =
       get("androidx.lifecycle", "SavedStateHandle");
 
+  public static final ClassName ON_CONTEXT_AVAILABLE_LISTENER =
+      get("androidx.activity.contextaware", "OnContextAvailableListener");
+  public static final ClassName INJECT_VIA_ON_CONTEXT_AVAILABLE_LISTENER =
+      get("dagger.hilt.android", "InjectViaOnContextAvailableListener");
+
   private AndroidClassNames() {}
 }

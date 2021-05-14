@@ -15,7 +15,7 @@
 # Description:
 #   Hilt android processors.
 
-load("//:build_defs.bzl", "POM_VERSION_ALPHA")
+load("//:build_defs.bzl", "POM_VERSION")
 load("//tools:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
@@ -27,22 +27,24 @@ java_library(
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/bindvalue:bind_value_processor_lib",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
-        "//java/dagger/hilt/android/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/hilt/android/processor/internal/viewmodel:processor_lib",
         "//java/dagger/hilt/android/processor/internal/viewmodel:validation_plugin_lib",
         "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",
         "//java/dagger/hilt/processor/internal/aliasof:processor_lib",
         "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
+        "//java/dagger/hilt/processor/internal/earlyentrypoint:processor_lib",
         "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",
         "//java/dagger/hilt/processor/internal/originatingelement:processor_lib",
-        "//java/dagger/hilt/processor/internal/root:processor_lib",
+        "//java/dagger/hilt/processor/internal/root:component_tree_deps_processor_lib",
+        "//java/dagger/hilt/processor/internal/root:root_processor_lib",
+        "//java/dagger/hilt/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/internal/codegen:processor",
     ],
 )
 
 java_library(
     name = "artifact-lib",
-    tags = ["maven_coordinates=com.google.dagger:hilt-compiler:" + POM_VERSION_ALPHA],
+    tags = ["maven_coordinates=com.google.dagger:hilt-compiler:" + POM_VERSION],
     visibility = ["//visibility:private"],
     exports = [
         ":artifact-lib-shared",
@@ -51,23 +53,23 @@ java_library(
 
 gen_maven_artifact(
     name = "artifact",
-    artifact_coordinates = "com.google.dagger:hilt-compiler:" + POM_VERSION_ALPHA,
+    artifact_coordinates = "com.google.dagger:hilt-compiler:" + POM_VERSION,
     artifact_name = "Hilt Processor",
     artifact_target = ":artifact-lib",
     artifact_target_libs = [
         "//java/dagger/hilt/android/processor/internal:android_classnames",
         "//java/dagger/hilt/android/processor/internal:utils",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:android_generators",
-        "//java/dagger/hilt/android/processor/internal/androidentrypoint:compiler_options",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:metadata",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/bindvalue:bind_value_processor_lib",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
         "//java/dagger/hilt/android/processor/internal/viewmodel:validation_plugin_lib",
-        "//java/dagger/hilt/android/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/hilt/android/processor/internal/viewmodel:processor_lib",
+        "//java/dagger/hilt/processor/internal:aggregated_elements",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
+        "//java/dagger/hilt/processor/internal:compiler_options",
         "//java/dagger/hilt/processor/internal:component_descriptor",
         "//java/dagger/hilt/processor/internal:component_names",
         "//java/dagger/hilt/processor/internal:components",
@@ -75,17 +77,23 @@ gen_maven_artifact(
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/hilt/processor/internal/aggregateddeps:component_dependencies",
+        "//java/dagger/hilt/processor/internal/aggregateddeps:pkg_private_metadata",
         "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",
         "//java/dagger/hilt/processor/internal/aliasof:alias_ofs",
         "//java/dagger/hilt/processor/internal/aliasof:processor_lib",
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
         "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
+        "//java/dagger/hilt/processor/internal/earlyentrypoint:aggregated_early_entry_point_metadata",
+        "//java/dagger/hilt/processor/internal/earlyentrypoint:processor_lib",
         "//java/dagger/hilt/processor/internal/generatesrootinput:generates_root_inputs",
         "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",
         "//java/dagger/hilt/processor/internal/originatingelement:processor_lib",
-        "//java/dagger/hilt/processor/internal/root:processor_lib",
+        "//java/dagger/hilt/processor/internal/root:component_tree_deps_processor_lib",
+        "//java/dagger/hilt/processor/internal/root:root_processor_lib",
         "//java/dagger/hilt/processor/internal/root:root_metadata",
         "//java/dagger/hilt/processor/internal/root:root_type",
+        "//java/dagger/hilt/processor/internal/uninstallmodules:processor_lib",
+        "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
     ],
     artifact_target_maven_deps = [
         "com.google.auto:auto-common",

@@ -90,7 +90,6 @@ gen_maven_artifact(
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/writing",
-        "//java/dagger/model:internal-proxies",
     ],
     artifact_target_maven_deps = [
         "com.google.auto:auto-common",
@@ -127,6 +126,8 @@ java_plugin(
         "genclass=${package}.Dagger${outerclasses}${classname}",
         "annotation=dagger.producers.ProductionComponent;" +
         "genclass=${package}.Dagger${outerclasses}${classname}",
+        "annotation=dagger.MapKey;" +
+        "genclass=${package}.${outerclasses}${classname}Creator",
     ],
     deps = [":processor"],
 )

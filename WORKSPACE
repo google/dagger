@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+#############################
+# Load nested repository
+#############################
+
 # Declare the nested workspace so that the top-level workspace doesn't try to
 # traverse it when calling `bazel build //...`
 local_repository(
@@ -19,7 +25,9 @@ local_repository(
     path = "examples/bazel",
 )
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+#############################
+# Load Bazel-Common repository
+#############################
 
 http_archive(
     name = "google_bazel_common",
@@ -32,16 +40,9 @@ load("@google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules
 
 google_common_workspace_rules()
 
-RULES_JVM_EXTERNAL_TAG = "2.7"
-
-RULES_JVM_EXTERNAL_SHA = "f04b1466a00a2845106801e0c5cec96841f49ea4e7d1df88dc8e4bf31523df74"
-
-http_archive(
-    name = "rules_jvm_external",
-    sha256 = RULES_JVM_EXTERNAL_SHA,
-    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
-    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
-)
+#############################
+# Load Protobuf dependencies
+#############################
 
 # rules_python and zlib are required by protobuf.
 # TODO(ronshapiro): Figure out if zlib is in fact necessary, or if proto can depend on the
@@ -64,6 +65,27 @@ http_archive(
     strip_prefix = "zlib-1.2.11",
     urls = ["https://github.com/madler/zlib/archive/v1.2.11.tar.gz"],
 )
+
+#############################
+# Load Robolectric repository
+#############################
+
+ROBOLECTRIC_VERSION = "4.4"
+
+http_archive(
+    name = "robolectric",
+    sha256 = "d4f2eb078a51f4e534ebf5e18b6cd4646d05eae9b362ac40b93831bdf46112c7",
+    strip_prefix = "robolectric-bazel-%s" % ROBOLECTRIC_VERSION,
+    urls = ["https://github.com/robolectric/robolectric-bazel/archive/%s.tar.gz" % ROBOLECTRIC_VERSION],
+)
+
+load("@robolectric//bazel:robolectric.bzl", "robolectric_repositories")
+
+robolectric_repositories()
+
+#############################
+# Load Kotlin repository
+#############################
 
 RULES_KOTLIN_COMMIT = "2c283821911439e244285b5bfec39148e7d90e21"
 
@@ -96,6 +118,21 @@ kotlin_repositories(compiler_release = KOTLINC_RELEASE)
 
 register_toolchains("//:kotlin_toolchain")
 
+#############################
+# Load Maven dependencies
+#############################
+
+RULES_JVM_EXTERNAL_TAG = "2.7"
+
+RULES_JVM_EXTERNAL_SHA = "f04b1466a00a2845106801e0c5cec96841f49ea4e7d1df88dc8e4bf31523df74"
+
+http_archive(
+    name = "rules_jvm_external",
+    sha256 = RULES_JVM_EXTERNAL_SHA,
+    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+)
+
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 ANDROID_LINT_VERSION = "26.6.2"
@@ -104,14 +141,16 @@ maven_install(
     artifacts = [
         "androidx.annotation:annotation:1.1.0",
         "androidx.appcompat:appcompat:1.2.0",
-        "androidx.activity:activity:1.1.0",
-        "androidx.fragment:fragment:1.2.5",
-        "androidx.lifecycle:lifecycle-viewmodel:2.2.0",
-        "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.2.0",
+        "androidx.activity:activity:1.2.2",
+        "androidx.fragment:fragment:1.3.2",
+        "androidx.lifecycle:lifecycle-common:2.3.1",
+        "androidx.lifecycle:lifecycle-viewmodel:2.3.1",
+        "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.1",
         "androidx.multidex:multidex:2.0.1",
         "androidx.savedstate:savedstate:1.0.0",
         "androidx.test:monitor:1.1.1",
         "androidx.test:core:1.1.0",
+        "androidx.test.ext:junit:1.1.2",
         "com.google.auto:auto-common:0.11",
         "com.android.support:appcompat-v7:25.0.0",
         "com.android.support:support-annotations:25.0.0",
@@ -126,9 +165,11 @@ maven_install(
         "com.android.tools:testutils:%s" % ANDROID_LINT_VERSION,
         "com.github.tschuchortdev:kotlin-compile-testing:1.2.8",
         "com.google.guava:guava:27.1-android",
+        "junit:junit:4.13",
         "org.jetbrains.kotlin:kotlin-stdlib:%s" % KOTLIN_VERSION,
-        "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0",
-        "org.robolectric:robolectric:4.3.1",
+        "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.2.0",
+        "org.robolectric:robolectric:4.4",
+        "org.robolectric:shadows-framework:4.4",  # For ActivityController
     ],
     repositories = [
         "https://repo1.maven.org/maven2",
@@ -136,6 +177,10 @@ maven_install(
         "https://jcenter.bintray.com/",  # Lint has one trove4j dependency in jCenter
     ],
 )
+
+#############################
+# Load Bazel Skylib rules
+#############################
 
 BAZEL_SKYLIB_VERSION = "1.0.2"
 

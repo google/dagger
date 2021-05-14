@@ -20,21 +20,25 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import android.app.Application;
+import android.os.Build;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.android.AndroidInjector;
 import dagger.android.HasAndroidInjector;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
+import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadows.support.v4.SupportFragmentTestUtil;
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(AndroidJUnit4.class)
+// Robolectric requires Java9 to run API 29 and above, so use API 28 instead
+@Config(sdk = Build.VERSION_CODES.P)
 public final class AndroidSupportInjectionTest {
   @Test
   public void injectFragment_simpleApplication() {
     Fragment fragment = new Fragment();
-    SupportFragmentTestUtil.startFragment(fragment);
+    startFragment(fragment);
 
     try {
       AndroidSupportInjection.inject(fragment);
@@ -56,7 +60,7 @@ public final class AndroidSupportInjectionTest {
   @Config(application = ApplicationReturnsNull.class)
   public void fragmentInjector_returnsNull() {
     Fragment fragment = new Fragment();
-    SupportFragmentTestUtil.startFragment(fragment);
+    startFragment(fragment);
 
     try {
       AndroidSupportInjection.inject(fragment);
@@ -74,5 +78,13 @@ public final class AndroidSupportInjectionTest {
     } catch (NullPointerException e) {
       assertThat(e).hasMessageThat().contains("fragment");
     }
+  }
+
+  void startFragment(Fragment fragment) {
+    Robolectric.setupActivity(FragmentActivity.class)
+        .getSupportFragmentManager()
+        .beginTransaction()
+        .add(fragment, "")
+        .commitNow();
   }
 }

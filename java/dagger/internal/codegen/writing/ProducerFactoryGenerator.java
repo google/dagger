@@ -103,10 +103,6 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
     this.keyFactory = keyFactory;
   }
 
-  @Override
-  public ClassName nameGeneratedType(ProductionBinding binding) {
-    return generatedClassNameForBinding(binding);
-  }
 
   @Override
   public Element originatingElement(ProductionBinding binding) {
@@ -115,7 +111,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(ProductionBinding binding) {
+  public ImmutableList<TypeSpec.Builder> topLevelTypes(ProductionBinding binding) {
     // We don't want to write out resolved bindings -- we want to write out the generic version.
     checkArgument(!binding.unresolved().isPresent());
     checkArgument(binding.bindingElement().isPresent());
@@ -123,7 +119,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
     TypeName providedTypeName = TypeName.get(binding.contributedType());
     TypeName futureTypeName = listenableFutureOf(providedTypeName);
 
-    ClassName generatedTypeName = nameGeneratedType(binding);
+    ClassName generatedTypeName = generatedClassNameForBinding(binding);
     TypeSpec.Builder factoryBuilder =
         classBuilder(generatedTypeName)
             .addModifiers(PUBLIC, FINAL)
@@ -233,7 +229,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
     gwtIncompatibleAnnotation(binding).ifPresent(factoryBuilder::addAnnotation);
 
     // TODO(gak): write a sensible toString
-    return Optional.of(factoryBuilder);
+    return ImmutableList.of(factoryBuilder);
   }
 
   private MethodSpec staticFactoryMethod(ProductionBinding binding, MethodSpec constructor) {

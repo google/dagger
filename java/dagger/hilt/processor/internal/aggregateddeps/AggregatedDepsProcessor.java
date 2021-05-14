@@ -20,7 +20,7 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.getPackage;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.hilt.android.processor.internal.androidentrypoint.HiltCompilerOptions.BooleanOption.DISABLE_MODULES_HAVE_INSTALL_IN_CHECK;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.isModuleInstallInCheckDisabled;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.ElementKind.CLASS;
@@ -37,10 +37,8 @@ import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Components;
-import dagger.hilt.processor.internal.KotlinMetadataUtils;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +63,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
   private static final ImmutableSet<ClassName> ENTRY_POINT_ANNOTATIONS =
       ImmutableSet.of(
           ClassNames.ENTRY_POINT,
+          ClassNames.EARLY_ENTRY_POINT,
           ClassNames.GENERATED_ENTRY_POINT,
           ClassNames.COMPONENT_ENTRY_POINT);
 
@@ -166,7 +165,10 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     // Check that if Dagger needs an instance of the module, Hilt can provide it automatically by
     // calling a visible empty constructor.
     ProcessorErrors.checkState(
-        !daggerRequiresModuleInstance(module) || hasVisibleEmptyConstructor(module),
+        // Skip ApplicationContextModule, since Hilt manages this module internally.
+        ClassNames.APPLICATION_CONTEXT_MODULE.equals(ClassName.get(module))
+        || !Processors.requiresModuleInstance(getElementUtils(), module)
+        || hasVisibleEmptyConstructor(module),
         module,
         "Modules that need to be instantiated by Hilt must have a visible, empty constructor.");
 
@@ -186,13 +188,14 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
 
     ImmutableList<TypeElement> replacedModules = ImmutableList.of();
     if (Processors.hasAnnotation(module, ClassNames.TEST_INSTALL_IN)) {
-      Optional<TypeElement> originatingTestElement = getOriginatingTestElement(module);
+      Optional<TypeElement> originatingTestElement =
+          Processors.getOriginatingTestElement(module, getElementUtils());
       ProcessorErrors.checkState(
           !originatingTestElement.isPresent(),
           // TODO(b/152801981): this should really error on the annotation value
           module,
           "@TestInstallIn modules cannot be nested in (or originate from) a "
-                + "@HiltAndroidTest-annotated class:  %s",
+              + "@HiltAndroidTest-annotated class:  %s",
           originatingTestElement
               .map(testElement -> testElement.getQualifiedName().toString())
               .orElse(""));
@@ -262,7 +265,10 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
       // Prevent users from uninstalling test-specific @InstallIn modules.
       ImmutableList<TypeElement> replacedTestSpecificInstallIn =
           replacedModules.stream()
-              .filter(replacedModule -> getOriginatingTestElement(replacedModule).isPresent())
+              .filter(
+                  replacedModule ->
+                      Processors.getOriginatingTestElement(replacedModule, getElementUtils())
+                          .isPresent())
               .collect(toImmutableList());
 
       ProcessorErrors.checkState(
@@ -304,6 +310,28 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         element);
     TypeElement entryPoint = asType(element);
 
+    if (entryPointAnnotation.equals(ClassNames.EARLY_ENTRY_POINT)) {
+      ImmutableSet<ClassName> components = Components.getComponents(getElementUtils(), element);
+      ProcessorErrors.checkState(
+          components.equals(ImmutableSet.of(ClassNames.SINGLETON_COMPONENT)),
+          element,
+          "@EarlyEntryPoint can only be installed into the SingletonComponent. Found: %s",
+          components);
+
+      Optional<TypeElement> optionalTestElement =
+          Processors.getOriginatingTestElement(element, getElementUtils());
+      ProcessorErrors.checkState(
+          !optionalTestElement.isPresent(),
+          element,
+          "@EarlyEntryPoint-annotated entry point, %s, cannot be nested in (or originate from) "
+              + "a @HiltAndroidTest-annotated class, %s. This requirement is to avoid confusion "
+              + "with other, test-specific entry points.",
+          asType(element).getQualifiedName().toString(),
+          optionalTestElement
+              .map(testElement -> testElement.getQualifiedName().toString())
+              .orElse(""));
+    }
+
     generateAggregatedDeps(
         entryPointAnnotation.equals(ClassNames.COMPONENT_ENTRY_POINT)
             ? "componentEntryPoints"
@@ -333,7 +361,8 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
               .generate();
         }
       } else {
-        Optional<ClassName> testName = getOriginatingTestElement(element).map(ClassName::get);
+        Optional<ClassName> testName =
+            Processors.getOriginatingTestElement(element, getElementUtils()).map(ClassName::get);
         new AggregatedDepsGenerator(
                 key, element, testName, components, replacedModules, getProcessingEnv())
             .generate();
@@ -362,25 +391,6 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     return Optional.of(getOnlyElement(usedAnnotations));
   }
 
-  private Optional<TypeElement> getOriginatingTestElement(Element element) {
-    TypeElement topLevelType = getOriginatingTopLevelType(element);
-    return Processors.hasAnnotation(topLevelType, ClassNames.HILT_ANDROID_TEST)
-        ? Optional.of(asType(topLevelType))
-        : Optional.empty();
-  }
-
-  private TypeElement getOriginatingTopLevelType(Element element) {
-    TypeElement topLevelType = Processors.getTopLevelType(element);
-    if (Processors.hasAnnotation(topLevelType, ClassNames.ORIGINATING_ELEMENT)) {
-      return getOriginatingTopLevelType(
-          Processors.getAnnotationClassValue(
-              getElementUtils(),
-              Processors.getAnnotationMirror(topLevelType, ClassNames.ORIGINATING_ELEMENT),
-              "topLevelClass"));
-    }
-    return topLevelType;
-  }
-
   private static boolean isValidKind(Element element) {
     // don't go down the rabbit hole of analyzing undefined types. N.B. we don't issue
     // an error here because javac already has and we don't want to spam the user.
@@ -388,7 +398,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
   }
 
   private boolean installInCheckDisabled(Element element) {
-    return DISABLE_MODULES_HAVE_INSTALL_IN_CHECK.get(getProcessingEnv())
+    return isModuleInstallInCheckDisabled(getProcessingEnv())
         || Processors.hasAnnotation(element, ClassNames.DISABLE_INSTALL_IN_CHECK);
   }
 
@@ -433,27 +443,6 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     Name name = asType(annotationMirror.getAnnotationType().asElement()).getQualifiedName();
     return name.contentEquals("javax.annotation.Generated")
         || name.contentEquals("javax.annotation.processing.Generated");
-  }
-
-  private static boolean daggerRequiresModuleInstance(TypeElement module) {
-    return !module.getModifiers().contains(ABSTRACT)
-        && !hasOnlyStaticProvides(module)
-        // Skip ApplicationContextModule, since Hilt manages this module internally.
-        && !ClassNames.APPLICATION_CONTEXT_MODULE.equals(ClassName.get(module))
-        // Skip Kotlin object modules since all their provision methods are static
-        && !isKotlinObject(module);
-  }
-
-  private static boolean isKotlinObject(TypeElement type) {
-    KotlinMetadataUtil metadataUtil = KotlinMetadataUtils.getMetadataUtil();
-    return metadataUtil.isObjectClass(type) || metadataUtil.isCompanionObjectClass(type);
-  }
-
-  private static boolean hasOnlyStaticProvides(TypeElement module) {
-    // TODO(erichang): Check for @Produces too when we have a producers story
-    return ElementFilter.methodsIn(module.getEnclosedElements()).stream()
-        .filter(method -> Processors.hasAnnotation(method, ClassNames.PROVIDES))
-        .allMatch(method -> method.getModifiers().contains(STATIC));
   }
 
   private static boolean hasVisibleEmptyConstructor(TypeElement type) {

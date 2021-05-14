@@ -18,7 +18,7 @@ package dagger.hilt.android.processor.internal.viewmodel
 
 import com.google.testing.compile.CompilationSubject.assertThat
 import com.google.testing.compile.Compiler
-import dagger.hilt.android.processor.AndroidCompilers.compiler
+import dagger.hilt.android.testing.compile.HiltCompilerTests.compiler
 import dagger.internal.codegen.ComponentProcessor
 import org.junit.Test
 import org.junit.runner.RunWith

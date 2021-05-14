@@ -51,8 +51,8 @@ android {
 }
 
 hilt {
-    enableExperimentalClasspathAggregation = true
     enableTransformForLocalTests = true
+    enableAggregatingTask = true
 }
 
 configurations.all {
@@ -97,9 +97,8 @@ dependencies {
 
   // To help us catch version skew related issues in hilt extensions.
   // TODO(bcorso): Add examples testing the actual API.
-  implementation 'androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha01'
-  implementation 'androidx.hilt:hilt-work:1.0.0-alpha01'
-  annotationProcessor 'androidx.hilt:hilt-compiler:1.0.0-alpha01'
-  testAnnotationProcessor 'androidx.hilt:hilt-compiler:1.0.0-alpha01'
-  androidTestAnnotationProcessor 'androidx.hilt:hilt-compiler:1.0.0-alpha01'
+  implementation 'androidx.hilt:hilt-work:1.0.0'
+  annotationProcessor 'androidx.hilt:hilt-compiler:1.0.0'
+  testAnnotationProcessor 'androidx.hilt:hilt-compiler:1.0.0'
+  androidTestAnnotationProcessor 'androidx.hilt:hilt-compiler:1.0.0'
 }

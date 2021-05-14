@@ -16,6 +16,10 @@
 
 package dagger.internal.codegen.base;
 
+import static com.google.auto.common.MoreTypes.asTypeElement;
+import static dagger.internal.codegen.base.ComponentAnnotation.allComponentAndCreatorAnnotations;
+import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
+
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -87,5 +91,15 @@ public final class Keys {
           }
         },
         null);
+  }
+
+  /**
+   * Returns {@code true} if the given key is for a component/subcomponent or a creator of a
+   * component/subcomponent.
+   */
+  public static boolean isComponentOrCreator(Key key) {
+    return !key.qualifier().isPresent()
+        && key.type().getKind() == TypeKind.DECLARED
+        && isAnyAnnotationPresent(asTypeElement(key.type()), allComponentAndCreatorAnnotations());
   }
 }

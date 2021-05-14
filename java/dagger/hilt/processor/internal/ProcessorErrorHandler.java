@@ -62,6 +62,9 @@ final class ProcessorErrorHandler {
 
     if (t instanceof BadInputException) {
       BadInputException badInput = (BadInputException) t;
+      if (badInput.getBadElements().isEmpty()) {
+        hiltErrors.add(HiltError.of(badInput.getMessage()));
+      }
       for (Element element : badInput.getBadElements()) {
         hiltErrors.add(HiltError.of(badInput.getMessage(), element));
       }

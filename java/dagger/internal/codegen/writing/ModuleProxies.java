@@ -27,6 +27,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
+import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeSpec;
@@ -78,25 +79,20 @@ public final class ModuleProxies {
     }
 
     @Override
-    public ClassName nameGeneratedType(TypeElement moduleElement) {
-      return moduleProxies.constructorProxyTypeName(moduleElement);
-    }
-
-    @Override
     public Element originatingElement(TypeElement moduleElement) {
       return moduleElement;
     }
 
     @Override
-    public Optional<TypeSpec.Builder> write(TypeElement moduleElement) {
+    public ImmutableList<TypeSpec.Builder> topLevelTypes(TypeElement moduleElement) {
       ModuleKind.checkIsModule(moduleElement, metadataUtil);
       return moduleProxies.nonPublicNullaryConstructor(moduleElement).isPresent()
-          ? Optional.of(buildProxy(moduleElement))
-          : Optional.empty();
+          ? ImmutableList.of(buildProxy(moduleElement))
+          : ImmutableList.of();
     }
 
     private TypeSpec.Builder buildProxy(TypeElement moduleElement) {
-      return classBuilder(nameGeneratedType(moduleElement))
+      return classBuilder(moduleProxies.constructorProxyTypeName(moduleElement))
           .addModifiers(PUBLIC, FINAL)
           .addMethod(constructorBuilder().addModifiers(PRIVATE).build())
           .addMethod(

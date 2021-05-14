@@ -22,14 +22,13 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
-import com.squareup.javapoet.ClassName;
+import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.MapKeys;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
@@ -53,24 +52,21 @@ public final class InaccessibleMapKeyProxyGenerator
   }
 
   @Override
-  public ClassName nameGeneratedType(ContributionBinding binding) {
-    return MapKeys.mapKeyProxyClassName(binding);
-  }
-
-  @Override
   public Element originatingElement(ContributionBinding binding) {
     // a map key is only ever present on bindings that have a binding element
     return binding.bindingElement().get();
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(ContributionBinding binding) {
+  public ImmutableList<TypeSpec.Builder> topLevelTypes(ContributionBinding binding) {
     return MapKeys.mapKeyFactoryMethod(binding, types, elements)
         .map(
             method ->
-                classBuilder(nameGeneratedType(binding))
+                classBuilder(MapKeys.mapKeyProxyClassName(binding))
                     .addModifiers(PUBLIC, FINAL)
                     .addMethod(constructorBuilder().addModifiers(PRIVATE).build())
-                    .addMethod(method));
+                    .addMethod(method))
+        .map(ImmutableList::of)
+        .orElse(ImmutableList.of());
   }
 }

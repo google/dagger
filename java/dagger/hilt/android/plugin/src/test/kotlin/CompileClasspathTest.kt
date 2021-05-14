@@ -21,8 +21,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-class CompileClasspathTest {
+// Test that verifies compile classpath aggregation done by the plugin.
+@RunWith(Parameterized::class)
+class CompileClasspathTest(private val pluginFlagName: String) {
   @get:Rule
   val testProjectDir = TemporaryFolder()
 
@@ -35,7 +39,7 @@ class CompileClasspathTest {
       "lintOptions.checkReleaseBuilds = false"
     )
     gradleRunner.addHiltOption(
-      "enableExperimentalClasspathAggregation = true"
+      "$pluginFlagName = true"
     )
     gradleRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'",
@@ -107,5 +111,14 @@ class CompileClasspathTest {
     val result = gradleRunner.build()
     val assembleTask = result.getTask(":assembleDebug")
     assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
+  }
+
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun parameters() = listOf(
+      "enableExperimentalClasspathAggregation",
+      "enableAggregatingTask"
+    )
   }
 }

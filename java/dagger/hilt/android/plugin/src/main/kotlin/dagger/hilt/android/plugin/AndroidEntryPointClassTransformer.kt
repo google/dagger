@@ -81,6 +81,7 @@ internal class AndroidEntryPointClassTransformer(
         if (entry.isClassFile()) {
           val clazz = classPool.makeClass(input, false)
           transformed = transformClassToOutput(clazz) || transformed
+          clazz.detach()
         }
         entry = input.nextEntry
       }
@@ -99,7 +100,9 @@ internal class AndroidEntryPointClassTransformer(
       "Invalid file, '$inputFile' is not a class."
     }
     val clazz = inputFile.inputStream().use { classPool.makeClass(it, false) }
-    return transformClassToOutput(clazz)
+    val transformed = transformClassToOutput(clazz)
+    clazz.detach()
+    return transformed
   }
 
   private fun transformClassToOutput(clazz: CtClass): Boolean {

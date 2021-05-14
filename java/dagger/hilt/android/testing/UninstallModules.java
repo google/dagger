@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.testing;
 
+import dagger.hilt.GeneratesRootInput;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
@@ -43,6 +44,7 @@ import java.lang.annotation.Target;
  *   }
  * </code></pre>
  */
+@GeneratesRootInput
 @Target({ElementType.TYPE})
 public @interface UninstallModules {
 

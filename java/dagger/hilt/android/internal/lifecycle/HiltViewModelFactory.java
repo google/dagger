@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.internal.lifecycle;
 
+import android.app.Activity;
 import androidx.lifecycle.AbstractSavedStateViewModelFactory;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
@@ -28,6 +29,7 @@ import dagger.Module;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
+import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.components.ViewModelComponent;
 import dagger.hilt.android.internal.builders.ViewModelComponentBuilder;
 import dagger.multibindings.Multibinds;
@@ -108,5 +110,29 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
     } else {
       return delegateFactory.create(modelClass);
     }
+  }
+
+  @EntryPoint
+  @InstallIn(ActivityComponent.class)
+  interface ActivityCreatorEntryPoint {
+    @HiltViewModelMap.KeySet
+    Set<String> getViewModelKeys();
+    ViewModelComponentBuilder getViewModelComponentBuilder();
+  }
+
+  public static ViewModelProvider.Factory createInternal(
+      @NonNull Activity activity,
+      @NonNull SavedStateRegistryOwner owner,
+      @Nullable Bundle defaultArgs,
+      @NonNull ViewModelProvider.Factory delegateFactory) {
+    ActivityCreatorEntryPoint entryPoint =
+        EntryPoints.get(activity, ActivityCreatorEntryPoint.class);
+    return new HiltViewModelFactory(
+        owner,
+        defaultArgs,
+        entryPoint.getViewModelKeys(),
+        delegateFactory,
+        entryPoint.getViewModelComponentBuilder()
+    );
   }
 }

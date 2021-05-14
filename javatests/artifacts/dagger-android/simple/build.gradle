@@ -16,7 +16,7 @@
 
 buildscript {
     ext {
-        agp_version = System.getenv('AGP_VERSION') ?: "4.2.0-beta04"
+        agp_version = System.getenv('AGP_VERSION') ?: "4.2.0"
     }
     repositories {
         google()
@@ -34,5 +34,20 @@ allprojects {
       mavenCentral()
       mavenLocal()
     }
+    // TODO(bcorso): Consider organizing all projects under a single project
+    // that share a build.gradle configuration to reduce the copy-paste.
+    // Local tests: Adds logs for individual local tests
+    tasks.withType(Test) {
+        testLogging {
+            exceptionFormat "full"
+            showCauses true
+            showExceptions true
+            showStackTraces true
+            showStandardStreams true
+            events = ["passed", "skipped", "failed", "standardOut", "standardError"]
+        }
+    }
 }
 
+// Instrumentation tests: Combines test reports for all modules
+apply plugin: 'android-reporting'

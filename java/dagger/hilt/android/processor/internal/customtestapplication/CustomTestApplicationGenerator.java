@@ -109,7 +109,7 @@ final class CustomTestApplicationGenerator {
     return MethodSpec.methodBuilder("componentManager")
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .returns(TypeName.OBJECT)
+        .returns(ParameterizedTypeName.get(ClassNames.GENERATED_COMPONENT_MANAGER, TypeName.OBJECT))
         .addStatement("return $N", COMPONENT_MANAGER)
         .build();
   }

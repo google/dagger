@@ -40,7 +40,7 @@ public final class HiltTestApplication extends MultiDexApplication
   }
 
   @Override
-  public final Object componentManager() {
+  public final GeneratedComponentManager<Object> componentManager() {
     return componentManager;
   }
 

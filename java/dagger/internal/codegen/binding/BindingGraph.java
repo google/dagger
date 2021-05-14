@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static com.google.common.collect.Iterables.transform;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.presentValues;
 import static dagger.internal.codegen.extension.DaggerStreams.stream;
@@ -26,11 +27,12 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
-import com.google.common.graph.Graphs;
 import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.Traverser;
 import dagger.model.BindingGraph.ChildFactoryMethodEdge;
@@ -39,7 +41,9 @@ import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.Node;
 import dagger.model.ComponentPath;
 import dagger.model.Key;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
@@ -104,6 +108,15 @@ public abstract class BindingGraph {
     public ImmutableSetMultimap<Class<? extends Node>, ? extends Node> nodesByClass() {
       return super.nodesByClass();
     }
+
+    /**
+     * Returns an index of each {@link BindingNode} by its {@link ComponentPath}. Accessing this for
+     * a component and its parent components is faster than doing a graph traversal.
+     */
+    @Memoized
+    ImmutableListMultimap<ComponentPath, BindingNode> bindingsByComponent() {
+      return Multimaps.index(transform(bindings(), BindingNode.class::cast), Node::componentPath);
+    }
   }
 
   static BindingGraph create(
@@ -115,12 +128,12 @@ public abstract class BindingGraph {
       Optional<BindingGraph> parent,
       ComponentNode componentNode,
       TopLevelBindingGraph topLevelBindingGraph) {
-    ImmutableSet<BindingNode> reachableBindingNodes =
-        Graphs.reachableNodes(topLevelBindingGraph.network().asGraph(), componentNode).stream()
-            .filter(node -> isSubpath(componentNode.componentPath(), node.componentPath()))
-            .filter(node -> node instanceof BindingNode)
-            .map(node -> (BindingNode) node)
-            .collect(toImmutableSet());
+    List<BindingNode> reachableBindingNodes = new ArrayList<>();
+    for (ComponentPath path = componentNode.componentPath();
+        !path.components().isEmpty();
+        path = ComponentPath.create(path.components().subList(0, path.components().size() - 1))) {
+      reachableBindingNodes.addAll(topLevelBindingGraph.bindingsByComponent().get(path));
+    }
 
     // Construct the maps of the ContributionBindings and MembersInjectionBindings.
     Map<Key, BindingNode> contributionBindings = new HashMap<>();
@@ -330,18 +343,5 @@ public abstract class BindingGraph {
         .addAll(contributionBindings.values())
         .addAll(membersInjectionBindings.values())
         .build();
-  }
-
-  // TODO(bcorso): Move this to ComponentPath
-  private static boolean isSubpath(ComponentPath path, ComponentPath subpath) {
-    if (path.components().size() < subpath.components().size()) {
-      return false;
-    }
-    for (int i = 0; i < subpath.components().size(); i++) {
-      if (!path.components().get(i).equals(subpath.components().get(i))) {
-        return false;
-      }
-    }
-    return true;
   }
 }

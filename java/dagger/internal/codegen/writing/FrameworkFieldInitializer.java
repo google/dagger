@@ -62,13 +62,13 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
 
     /**
      * Returns {@code true} if instead of using {@link #creationExpression()} to create a framework
-     * instance, a case in {@link InnerSwitchingProviders} should be created for this binding.
+     * instance, a case in {@link SwitchingProviders} should be created for this binding.
      */
     // TODO(ronshapiro): perhaps this isn't the right approach. Instead of saying "Use
     // SetFactory.EMPTY because you will only get 1 class for all types of bindings that use
     // SetFactory", maybe we should still use an inner switching provider but the same switching
     // provider index for all cases.
-    default boolean useInnerSwitchingProvider() {
+    default boolean useSwitchingProvider() {
       return true;
     }
   }

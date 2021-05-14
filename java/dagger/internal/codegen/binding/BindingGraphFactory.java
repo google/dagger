@@ -47,6 +47,7 @@ import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.ContributionType;
+import dagger.internal.codegen.base.Keys;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.compileroption.CompilerOptions;
@@ -796,7 +797,7 @@ public final class BindingGraphFactory implements ClearableCache {
        * 2. If there are any explicit bindings in this component, they may conflict with those in
        *    the ancestor component, so resolve them here so that conflicts can be caught.
        */
-      if (getPreviouslyResolvedBindings(key).isPresent()) {
+      if (getPreviouslyResolvedBindings(key).isPresent() && !Keys.isComponentOrCreator(key)) {
         /* Resolve in the parent in case there are multibinding contributions or conflicts in some
          * component between this one and the previously-resolved one. */
         parentResolver.get().resolve(key);

@@ -61,7 +61,6 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.model.DependencyRequest;
 import java.util.Map.Entry;
-import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
@@ -87,20 +86,15 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
   }
 
   @Override
-  public ClassName nameGeneratedType(MembersInjectionBinding binding) {
-    return membersInjectorNameForType(binding.membersInjectedType());
-  }
-
-  @Override
   public Element originatingElement(MembersInjectionBinding binding) {
     return binding.membersInjectedType();
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(MembersInjectionBinding binding) {
+  public ImmutableList<TypeSpec.Builder> topLevelTypes(MembersInjectionBinding binding) {
     // Empty members injection bindings are special and don't need source files.
     if (binding.injectionSites().isEmpty()) {
-      return Optional.empty();
+      return ImmutableList.of();
     }
 
     // Members injectors for classes with no local injection sites and no @Inject
@@ -108,7 +102,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
     if (!binding.hasLocalInjectionSites()
         && injectedConstructors(binding.membersInjectedType()).isEmpty()
         && assistedInjectedConstructors(binding.membersInjectedType()).isEmpty()) {
-      return Optional.empty();
+      return ImmutableList.of();
     }
 
 
@@ -118,7 +112,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
         "tried to generate a MembersInjector for a binding of a resolved generic type: %s",
         binding);
 
-    ClassName generatedTypeName = nameGeneratedType(binding);
+    ClassName generatedTypeName = membersInjectorNameForType(binding.membersInjectedType());
     ImmutableList<TypeVariableName> typeParameters = bindingTypeElementTypeVariableNames(binding);
     TypeSpec.Builder injectorTypeBuilder =
         classBuilder(generatedTypeName)
@@ -222,6 +216,6 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
 
     gwtIncompatibleAnnotation(binding).ifPresent(injectorTypeBuilder::addAnnotation);
 
-    return Optional.of(injectorTypeBuilder);
+    return ImmutableList.of(injectorTypeBuilder);
   }
 }

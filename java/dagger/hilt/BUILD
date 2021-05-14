@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("//tools:maven.bzl", "gen_maven_artifact")
-load("//:build_defs.bzl", "POM_VERSION_ALPHA")
+load("//:build_defs.bzl", "POM_VERSION")
 
 # Description:
 #   A library that wraps the Dagger API to make DI usage and testing easier.
@@ -46,11 +46,14 @@ java_library(
         # TODO(bcorso): Consider using a separate processor to validate @EntryPoint.
         "//java/dagger/hilt/processor/internal/aggregateddeps:plugin",
     ],
+    proguard_specs = ["proguard-rules.pro"],
     deps = [
         ":generates_root_input",
         ":package_info",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",
+        "//java/dagger/hilt/internal:preconditions",
+        "//java/dagger/hilt/internal:test_singleton_component",
         "@google_bazel_common//third_party/java/jsr305_annotations",
     ],
 )
@@ -162,7 +165,6 @@ filegroup(
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/bindvalue:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:srcs_filegroup",
-        "//java/dagger/hilt/android/processor/internal/uninstallmodules:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/viewmodel:srcs_filegroup",
         "//java/dagger/hilt/processor:srcs_filegroup",
         "//java/dagger/hilt/processor/internal:srcs_filegroup",
@@ -173,12 +175,13 @@ filegroup(
         "//java/dagger/hilt/processor/internal/generatesrootinput:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/originatingelement:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/root:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal/uninstallmodules:srcs_filegroup",
     ],
 )
 
 java_library(
     name = "artifact-core-lib",
-    tags = ["maven_coordinates=com.google.dagger:hilt-core:" + POM_VERSION_ALPHA],
+    tags = ["maven_coordinates=com.google.dagger:hilt-core:" + POM_VERSION],
     exports = [
         ":define_component",
         ":entry_point",
@@ -194,7 +197,7 @@ java_library(
 
 gen_maven_artifact(
     name = "artifact-core",
-    artifact_coordinates = "com.google.dagger:hilt-core:" + POM_VERSION_ALPHA,
+    artifact_coordinates = "com.google.dagger:hilt-core:" + POM_VERSION,
     artifact_name = "Hilt Core",
     artifact_target = ":artifact-core-lib",
     artifact_target_libs = [
@@ -210,6 +213,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",
         "//java/dagger/hilt/internal:preconditions",
+        "//java/dagger/hilt/internal:test_singleton_component",
         "//java/dagger/hilt/internal:unsafe_casts",
         "//java/dagger/hilt/internal/aliasof",
         "//java/dagger/hilt/internal/definecomponent",

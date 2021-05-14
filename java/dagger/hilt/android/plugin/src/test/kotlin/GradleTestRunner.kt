@@ -107,7 +107,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
             jcenter()
           }
           dependencies {
-            classpath 'com.android.tools.build:gradle:4.2.0-beta04'
+            classpath 'com.android.tools.build:gradle:4.2.0'
           }
         }
 

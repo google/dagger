@@ -23,8 +23,6 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatMethodInUnannotatedClass;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatProductionModuleMethod;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_ANNOTATION;
-import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -361,16 +359,16 @@ public class ProducerModuleFactoryGeneratorTest {
             "TestModule_ProduceStringFactory",
             "package test;",
             "",
-            "import com.google.common.util.concurrent.Futures;",
-            "import com.google.common.util.concurrent.ListenableFuture;",
-            "import dagger.producers.internal.AbstractProducesMethodProducer;",
-            "import dagger.producers.monitoring.ProducerToken;",
-            "import dagger.producers.monitoring.ProductionComponentMonitor;",
-            "import java.util.concurrent.Executor;",
-            IMPORT_GENERATED_ANNOTATION,
-            "import javax.inject.Provider;",
+            GeneratedLines.generatedImports(
+                "import com.google.common.util.concurrent.Futures;",
+                "import com.google.common.util.concurrent.ListenableFuture;",
+                "import dagger.producers.internal.AbstractProducesMethodProducer;",
+                "import dagger.producers.monitoring.ProducerToken;",
+                "import dagger.producers.monitoring.ProductionComponentMonitor;",
+                "import java.util.concurrent.Executor;",
+                "import javax.inject.Provider;"),
             "",
-            GENERATED_ANNOTATION,
+            GeneratedLines.generatedAnnotationsWithoutSuppressWarnings(),
             "@SuppressWarnings({\"FutureReturnValueIgnored\", \"unchecked\", \"rawtypes\"})",
             "public final class TestModule_ProduceStringFactory",
             "    extends AbstractProducesMethodProducer<Void, String> {",
@@ -434,16 +432,16 @@ public class ProducerModuleFactoryGeneratorTest {
             "TestModule_ProduceStringFactory",
             "package test;",
             "",
-            "import com.google.common.util.concurrent.Futures;",
-            "import com.google.common.util.concurrent.ListenableFuture;",
-            "import dagger.producers.internal.AbstractProducesMethodProducer;",
-            "import dagger.producers.monitoring.ProducerToken;",
-            "import dagger.producers.monitoring.ProductionComponentMonitor;",
-            "import java.util.concurrent.Executor;",
-            IMPORT_GENERATED_ANNOTATION,
-            "import javax.inject.Provider;",
+            GeneratedLines.generatedImports(
+                "import com.google.common.util.concurrent.Futures;",
+                "import com.google.common.util.concurrent.ListenableFuture;",
+                "import dagger.producers.internal.AbstractProducesMethodProducer;",
+                "import dagger.producers.monitoring.ProducerToken;",
+                "import dagger.producers.monitoring.ProductionComponentMonitor;",
+                "import java.util.concurrent.Executor;",
+                "import javax.inject.Provider;"),
             "",
-            GENERATED_ANNOTATION,
+            GeneratedLines.generatedAnnotationsWithoutSuppressWarnings(),
             "@SuppressWarnings({\"FutureReturnValueIgnored\", \"unchecked\", \"rawtypes\"})",
             "public final class TestModule_ProduceStringFactory",
             "    extends AbstractProducesMethodProducer<Void, String> {",

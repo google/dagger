@@ -24,6 +24,7 @@ java_library(
         "ProcessorErrorHandler.java",
     ],
     deps = [
+        ":compiler_options",
         ":processor_errors",
         ":processors",
         "//java/dagger/internal/guava:base",
@@ -62,11 +63,9 @@ java_library(
         ":processor_errors",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/kotlin",
-        "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/javapoet",
-        "@google_bazel_common//third_party/java/jsr305_annotations",
         "@google_bazel_common//third_party/java/jsr330_inject",
         "@maven//:com_google_auto_auto_common",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
@@ -91,24 +90,33 @@ java_library(
     ],
     deps = [
         ":processors",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/javapoet",
     ],
 )
 
 java_library(
-    name = "component_descriptor",
+    name = "aggregated_elements",
     srcs = [
-        "ComponentDescriptor.java",
-        "ComponentGenerator.java",
-        "ComponentTree.java",
+        "AggregatedElements.java",
     ],
     deps = [
         ":classnames",
+        ":processor_errors",
         ":processors",
         "//java/dagger/internal/codegen/extension",
-        "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "//java/dagger/internal/guava:graph",
+        "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
+    ],
+)
+
+java_library(
+    name = "component_descriptor",
+    srcs = ["ComponentDescriptor.java"],
+    deps = [
+        "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/javapoet",
     ],
@@ -140,6 +148,16 @@ java_library(
     deps = [
         "//:dagger_with_compiler",
         "//java/dagger/internal/codegen/kotlin",
+    ],
+)
+
+java_library(
+    name = "compiler_options",
+    srcs = ["HiltCompilerOptions.java"],
+    deps = [
+        ":processor_errors",
+        "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/javapoet",
     ],
 )
 

@@ -77,11 +77,21 @@ final class DependencyRequestValidator {
       // Don't validate assisted parameters. These are not dependency requests.
       return;
     }
-    checkQualifiers(report, requestElement);
-    checkType(report, requestElement, requestType);
+    if (missingQualifierMetadata(requestElement)) {
+      report.addError(
+          "Unable to read annotations on an injected Kotlin property. The Dagger compiler must"
+              + " also be applied to any project containing @Inject properties.",
+          requestElement);
+
+      // Skip any further validation if we don't have valid metadata for a type that needs it.
+      return;
+    }
+
+    new Validator(report, requestElement, requestType).validate();
   }
 
-  private void checkQualifiers(ValidationReport.Builder<?> report, Element requestElement) {
+  /** Returns {@code true} if a kotlin inject field is missing metadata about its qualifiers. */
+  private boolean missingQualifierMetadata(Element requestElement) {
     if (requestElement.getKind() == ElementKind.FIELD
         // static injected fields are not supported, no need to get qualifier from kotlin metadata
         && !requestElement.getModifiers().contains(STATIC)
@@ -91,64 +101,80 @@ final class DependencyRequestValidator {
           Optional.ofNullable(
               elements.getTypeElement(
                   membersInjectorNameForType(asType(requestElement.getEnclosingElement()))));
-      if (!membersInjector.isPresent()) {
-        report.addError(
-            "Unable to read annotations on an injected Kotlin property. The Dagger compiler must"
-                + " also be applied to any project containing @Inject properties.",
-            requestElement);
-        return; // finish checking qualifiers since current information is unreliable.
-      }
+      return !membersInjector.isPresent();
     }
-
-    ImmutableCollection<? extends AnnotationMirror> qualifiers =
-        injectionAnnotations.getQualifiers(requestElement);
-    if (qualifiers.size() > 1) {
-      for (AnnotationMirror qualifier : qualifiers) {
-        report.addError(
-            "A single dependency request may not use more than one @Qualifier",
-            requestElement,
-            qualifier);
-      }
-    }
+    return false;
   }
 
-  private void checkType(
-      ValidationReport.Builder<?> report, Element requestElement, TypeMirror requestType) {
-    TypeMirror keyType = extractKeyType(requestType);
-    RequestKind requestKind = RequestKinds.getRequestKind(requestType);
-    if (keyType.getKind() == TypeKind.DECLARED) {
-      TypeElement typeElement = asTypeElement(keyType);
-      if (isAssistedInjectionType(typeElement)) {
-        report.addError(
-            "Dagger does not support injecting @AssistedInject type, "
-                + requestType
-                + ". Did you mean to inject its assisted factory type instead?",
-            requestElement);
+  private final class Validator {
+    private final ValidationReport.Builder<?> report;
+    private final Element requestElement;
+    private final TypeMirror requestType;
+    private final TypeMirror keyType;
+    private final RequestKind requestKind;
+    private final ImmutableCollection<? extends AnnotationMirror> qualifiers;
+
+
+    Validator(ValidationReport.Builder<?> report, Element requestElement, TypeMirror requestType) {
+      this.report = report;
+      this.requestElement = requestElement;
+      this.requestType = requestType;
+      this.keyType = extractKeyType(requestType);
+      this.requestKind = RequestKinds.getRequestKind(requestType);
+      this.qualifiers = injectionAnnotations.getQualifiers(requestElement);
+    }
+
+    void validate() {
+      checkQualifiers();
+      checkType();
+    }
+
+    private void checkQualifiers() {
+      if (qualifiers.size() > 1) {
+        for (AnnotationMirror qualifier : qualifiers) {
+          report.addError(
+              "A single dependency request may not use more than one @Qualifier",
+              requestElement,
+              qualifier);
+        }
       }
-      if (requestKind != RequestKind.INSTANCE && isAssistedFactoryType(typeElement)) {
+    }
+
+    private void checkType() {
+      if (qualifiers.isEmpty() && keyType.getKind() == TypeKind.DECLARED) {
+        TypeElement typeElement = asTypeElement(keyType);
+        if (isAssistedInjectionType(typeElement)) {
+          report.addError(
+              "Dagger does not support injecting @AssistedInject type, "
+                  + requestType
+                  + ". Did you mean to inject its assisted factory type instead?",
+              requestElement);
+        }
+        if (requestKind != RequestKind.INSTANCE && isAssistedFactoryType(typeElement)) {
+          report.addError(
+              "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, "
+                  + "or Produced<T> when T is an @AssistedFactory-annotated type such as "
+                  + keyType,
+              requestElement);
+        }
+      }
+      if (keyType.getKind().equals(WILDCARD)) {
+        // TODO(ronshapiro): Explore creating this message using RequestKinds.
         report.addError(
             "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, "
-                + "or Produced<T> when T is an @AssistedFactory-annotated type such as "
+                + "or Produced<T> when T is a wildcard type such as "
                 + keyType,
             requestElement);
       }
-    }
-    if (keyType.getKind().equals(WILDCARD)) {
-      // TODO(ronshapiro): Explore creating this message using RequestKinds.
-      report.addError(
-          "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, "
-              + "or Produced<T> when T is a wildcard type such as "
-              + keyType,
-          requestElement);
-    }
-    if (MoreTypes.isType(keyType) && MoreTypes.isTypeOf(MembersInjector.class, keyType)) {
-      DeclaredType membersInjectorType = MoreTypes.asDeclared(keyType);
-      if (membersInjectorType.getTypeArguments().isEmpty()) {
-        report.addError("Cannot inject a raw MembersInjector", requestElement);
-      } else {
-        report.addSubreport(
-            membersInjectionValidator.validateMembersInjectionRequest(
-                requestElement, membersInjectorType.getTypeArguments().get(0)));
+      if (MoreTypes.isType(keyType) && MoreTypes.isTypeOf(MembersInjector.class, keyType)) {
+        DeclaredType membersInjectorType = MoreTypes.asDeclared(keyType);
+        if (membersInjectorType.getTypeArguments().isEmpty()) {
+          report.addError("Cannot inject a raw MembersInjector", requestElement);
+        } else {
+          report.addSubreport(
+              membersInjectionValidator.validateMembersInjectionRequest(
+                  requestElement, membersInjectorType.getTypeArguments().get(0)));
+        }
       }
     }
   }

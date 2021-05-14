@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import com.google.common.truth.Truth.assertThat
 import java.io.DataInputStream
 import java.io.FileInputStream
 import javassist.bytecode.ByteArray
 import javassist.bytecode.ClassFile
-import junit.framework.Assert.assertEquals
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert
 import org.junit.Before
@@ -278,12 +278,12 @@ class TransformTest {
 
     gradleRunner.build().let {
       val assembleTask = it.getTask(TRANSFORM_TASK_NAME)
-      assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
+      assertThat(assembleTask.outcome).isEqualTo(TaskOutcome.SUCCESS)
     }
 
     gradleRunner.build().let {
       val assembleTask = it.getTask(TRANSFORM_TASK_NAME)
-      assertEquals(TaskOutcome.UP_TO_DATE, assembleTask.outcome)
+      assertThat(assembleTask.outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
     }
 
     gradleRunner.addSrc(
@@ -303,7 +303,7 @@ class TransformTest {
 
     val result = gradleRunner.build()
     val assembleTask = result.getTask(TRANSFORM_TASK_NAME)
-    assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
+    assertThat(assembleTask.outcome).isEqualTo(TaskOutcome.SUCCESS)
   }
 
   companion object {

@@ -1,0 +1,47 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="dagger.hilt.android">
+
+  <uses-sdk android:minSdkVersion="14" />
+
+  <application>
+    <activity
+        android:name=".ActivityInjectedSavedStateViewModelTest$TestActivity"
+        android:exported="false"/>
+    <activity
+        android:name=".ActivityInjectedSavedStateViewModelTest$TestActivityWithSuperActivity"
+        android:exported="false"/>
+    <activity
+        android:name=".ActivityInjectedViewModelTest$TestActivity"
+        android:exported="false"/>
+    <activity
+        android:name=".ActivityRetainedClearedListenerTest$TestActivity"
+        android:exported="false"/>
+    <activity
+        android:name=".ActivityScenarioRuleTest$TestActivity"
+        android:exported="false"/>
+    <activity
+        android:name=".DefaultViewModelFactoryTest$TestActivity"
+        android:exported="false"/>
+    <activity
+        android:name=".QualifierInKotlinFieldsTest$TestActivity"
+        android:exported="false"/>
+    <activity
+        android:name=".UsesSharedComponent1Test$TestActivity"
+        android:exported="false"/>
+    <activity
+        android:name=".UsesSharedComponent2Test$TestActivity"
+        android:exported="false"/>
+    <activity
+        android:name=".UsesSharedComponentEnclosedTest$EnclosedTest$TestActivity"
+        android:exported="false"/>
+    <activity
+        android:name=".ViewModelScopedTest$TestActivity"
+        android:exported="false"/>
+    <activity
+        android:name=".ViewModelWithBaseTest$TestActivity"
+        android:exported="false"/>
+    <activity
+        android:name="dagger.hilt.android.testsubpackage.UsesSharedComponent1Test$TestActivity"
+        android:exported="false"/>
+  </application>
+</manifest>

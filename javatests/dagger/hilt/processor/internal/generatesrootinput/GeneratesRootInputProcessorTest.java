@@ -74,7 +74,7 @@ public final class GeneratesRootInputProcessorTest {
   }
 
   @Test
-  public void succeeds_ComponentProcessorWaitsForAnnotationsWithgeneratesstinginput() {
+  public void succeeds_ComponentProcessorWaitsForAnnotationsWithGeneratesRootInput() {
     JavaFileObject testAnnotation =
         JavaFileObjects.forSourceLines(
             "test.TestAnnotation",

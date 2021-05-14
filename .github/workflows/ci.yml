@@ -5,12 +5,43 @@ on:
     branches:
       - master
   pull_request:
+    branches:
+      - master
+
+env:
+  # Our Bazel builds currently rely on JDK 8.
+  USE_JAVA_VERSION: '8'
+  # Our Bazel builds currently rely on 3.7.1. The version is set via
+  # baselisk by USE_BAZEL_VERSION: https://github.com/bazelbuild/bazelisk.
+  USE_BAZEL_VERSION: '3.7.1'
 
 jobs:
-  bazel-test:
-    name: 'Bazel tests'
+  validate-latest-dagger-version:
+    name: 'Validate Dagger version'
     runs-on: ubuntu-latest
     steps:
+      # Cancel previous runs on the same branch to avoid unnecessary parallel
+      # runs of the same job. See https://github.com/google/go-github/pull/1821
+      - name: Cancel previous
+        uses: styfle/cancel-workflow-action@0.8.0
+        with:
+          access_token: ${{ github.token }}
+      - name: 'Check out gh-pages repository'
+        uses: actions/checkout@v2
+        with:
+          ref: 'refs/heads/gh-pages'
+          path: gh-pages
+      - name: 'Validate latest Dagger version'
+        run: ./gh-pages/.github/scripts/validate-latest-dagger-version.sh gh-pages/_config.yml
+  bazel-test:
+    name: 'Bazel tests'
+    needs: validate-latest-dagger-version
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
+        uses: actions/setup-java@v1
+        with:
+          java-version: '${{ env.USE_JAVA_VERSION }}'
       - name: 'Check out repository'
         uses: actions/checkout@v2
       - name: 'Cache local Maven repository'
@@ -39,7 +70,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: 'Run Bazel tests'
-        run: bazel test --test_output=errors //...
+        run: bazel test --test_output=errors //... --keep_going
         shell: bash
       - name: 'Install local snapshot'
         run: ./util/install-local-snapshot.sh
@@ -79,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        agp: ['4.1.0', '4.2.0-beta04']
+        agp: ['4.1.0', '4.2.0']
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2
@@ -100,6 +131,12 @@ jobs:
       - name: 'Gradle Android local tests (AGP ${{ matrix.agp }})'
         run: ./util/run-local-gradle-android-tests.sh "${{ matrix.agp }}"
         shell: bash
+      - name: 'Upload test reports (AGP ${{ matrix.agp }})'
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests-reports-agp-${{ matrix.agp }}
+          path: ${{ github.workspace }}/**/build/reports/tests/*
   artifact-android-emulator-tests:
     name: 'Artifact Android emulator tests (API 30)'
     needs: bazel-test
@@ -130,6 +167,12 @@ jobs:
           api-level: 30
           target: google_apis
           script: ./util/run-local-emulator-tests.sh
+      - name: 'Upload test reports (API 30)'
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: androidTests-reports-api-30
+          path: ${{ github.workspace }}/**/build/reports/androidTests/connected/*
   publish-snapshot:
     name: 'Publish snapshot'
     # TODO(bcorso): Consider also waiting on artifact-android-emulator-tests
@@ -138,6 +181,10 @@ jobs:
     if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
+      - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
+        uses: actions/setup-java@v1
+        with:
+          java-version: '${{ env.USE_JAVA_VERSION }}'
       - name: 'Check out repository'
         uses: actions/checkout@v2
       - name: 'Cache local Maven repository'
@@ -186,8 +233,8 @@ jobs:
     # See https://github.com/marketplace/actions/android-emulator-runner
     runs-on: macos-latest
     strategy:
-      matrix:
-        api-level: [16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 29]
+      matrix: # Run on 16 (PreL), 21 (L), and 26 (O).
+        api-level: [16, 21, 26]
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2
@@ -212,3 +259,9 @@ jobs:
           api-level: ${{ matrix.api-level }}
           target: google_apis
           script: ./util/run-local-emulator-tests.sh
+      - name: 'Upload test reports (API ${{ matrix.api-level }})'
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: androidTests-report-api-${{ matrix.api-level }}
+          path: ${{ github.workspace }}/**/build/reports/androidTests/connected/*

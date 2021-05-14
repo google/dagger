@@ -23,16 +23,19 @@ import static org.robolectric.annotation.LooperMode.Mode.LEGACY;
 import android.app.Activity;
 import android.app.Application;
 import android.app.Fragment;
+import android.os.Build;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.annotation.LooperMode;
 import org.robolectric.util.FragmentTestUtil;
 
 @LooperMode(LEGACY)
-@RunWith(RobolectricTestRunner.class)
+@RunWith(AndroidJUnit4.class)
+// Robolectric requires Java9 to run API 29 and above, so use API 28 instead
+@Config(sdk = Build.VERSION_CODES.P)
 public final class AndroidInjectionTest {
 
   // Most positive tests are performed in javatests/dagger/android/support/functional, but

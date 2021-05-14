@@ -17,6 +17,7 @@
 buildscript {
   repositories {
     google()
+    mavenCentral()
     jcenter()
   }
 }
@@ -29,6 +30,7 @@ plugins {
 
 repositories {
   google()
+  mavenCentral()
   jcenter()
 }
 
@@ -42,16 +44,16 @@ configurations {
 
 dependencies {
   implementation gradleApi()
-  compileOnly 'com.android.tools.build:gradle:4.2.0-beta04'
-  // TODO(danysantiago): Make compileOnly to avoid dep for non-Kotlin projects.
-  implementation 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20'
+  compileOnly 'com.android.tools.build:gradle:4.2.0'
+  compileOnly 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20'
   implementation 'org.javassist:javassist:3.26.0-GA'
   implementation 'org.ow2.asm:asm:9.0'
+  implementation "com.squareup:javapoet:1.13.0"
 
   testImplementation gradleTestKit()
   testImplementation 'junit:junit:4.12'
   testImplementation 'com.google.truth:truth:1.0.1'
-  additionalTestPlugin 'com.android.tools.build:gradle:4.2.0-beta04'
+  additionalTestPlugin 'com.android.tools.build:gradle:4.2.0'
 }
 
 // Configure the generating task of plugin-under-test-metadata.properties to
@@ -67,6 +69,28 @@ compileKotlin {
     jvmTarget = "1.8"
   }
 }
+
+// Task that generates a top-level property containing the version of the
+// project so that it can be used in code and at runtime.
+def pluginVersionOutDir = file("$buildDir/generated/source/plugin-version/")
+tasks.register("generatePluginVersionSource").configure {
+  def version = getPublishVersion()
+  inputs.property('version', version)
+  outputs.dir(pluginVersionOutDir)
+  doLast {
+    def versionFile =
+      file("$pluginVersionOutDir/dagger/hilt/android/plugin/Version.kt")
+    versionFile.parentFile.mkdirs()
+    versionFile.text = """
+      // Generated file. Do not edit!
+      package dagger.hilt.android.plugin
+
+      val HILT_VERSION = "${version}"
+    """.stripIndent()
+  }
+}
+sourceSets.main.java.srcDir pluginVersionOutDir
+tasks.getByName('compileKotlin').dependsOn('generatePluginVersionSource')
 
 // Create sources Jar from main kotlin sources
 tasks.register("sourcesJar", Jar).configure {
@@ -95,8 +119,7 @@ publishing {
   publications {
     plugin(MavenPublication) {
       artifactId = 'hilt-android-gradle-plugin'
-      def publishVersion = findProperty("PublishVersion")
-      version = (publishVersion != null) ? publishVersion : "LOCAL-SNAPSHOT"
+      version = getPublishVersion()
       from components.kotlin
       artifact(sourcesJar)
       artifact(javadocJar)
@@ -154,3 +177,8 @@ publishing {
 }
 
 group='com.google.dagger'
+
+def getPublishVersion() {
+  def publishVersion = findProperty("PublishVersion")
+  return (publishVersion != null) ? publishVersion : "LOCAL-SNAPSHOT"
+}

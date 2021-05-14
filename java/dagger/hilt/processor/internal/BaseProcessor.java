@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.squareup.javapoet.ClassName;
@@ -95,6 +96,23 @@ public abstract class BaseProcessor extends AbstractProcessor {
   private Types types;
   private Messager messager;
   private ProcessorErrorHandler errorHandler;
+
+  @Override
+  public final Set<String> getSupportedOptions() {
+    // This is declared here rather than in the actual processors because KAPT will issue a
+    // warning if any used option is not unsupported. This can happen when there is a module
+    // which uses Hilt but lacks any @AndroidEntryPoint annotations.
+    // See: https://github.com/google/dagger/issues/2040
+    return ImmutableSet.<String>builder()
+        .addAll(HiltCompilerOptions.getProcessorOptions())
+        .addAll(additionalProcessingOptions())
+        .build();
+  }
+
+  /** Returns additional processing options that should only be applied for a single processor. */
+  protected Set<String> additionalProcessingOptions() {
+    return ImmutableSet.of();
+  }
 
   /** Used to perform initialization before each round of processing. */
   protected void preRoundProcess(RoundEnvironment roundEnv) {};

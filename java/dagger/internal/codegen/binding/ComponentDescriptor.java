@@ -45,6 +45,8 @@ import dagger.model.DependencyRequest;
 import dagger.model.Scope;
 import dagger.producers.CancellationPolicy;
 import dagger.producers.ProductionComponent;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -240,19 +242,17 @@ public abstract class ComponentDescriptor {
 
   /** Returns the first component method associated with this binding request, if one exists. */
   public Optional<ComponentMethodDescriptor> firstMatchingComponentMethod(BindingRequest request) {
-    return componentMethods().stream()
-        .filter(method -> doesComponentMethodMatch(method, request))
-        .findFirst();
+    return Optional.ofNullable(firstMatchingComponentMethods().get(request));
   }
 
-  /** Returns true if the component method matches the binding request. */
-  private static boolean doesComponentMethodMatch(
-      ComponentMethodDescriptor componentMethod, BindingRequest request) {
-    return componentMethod
-        .dependencyRequest()
-        .map(BindingRequest::bindingRequest)
-        .filter(request::equals)
-        .isPresent();
+  @Memoized
+  ImmutableMap<BindingRequest, ComponentMethodDescriptor>
+      firstMatchingComponentMethods() {
+    Map<BindingRequest, ComponentMethodDescriptor> methods = new HashMap<>();
+    for (ComponentMethodDescriptor method : entryPointMethods()) {
+      methods.putIfAbsent(BindingRequest.bindingRequest(method.dependencyRequest().get()), method);
+    }
+    return ImmutableMap.copyOf(methods);
   }
 
   /** The entry point methods on the component type. Each has a {@link DependencyRequest}. */

@@ -97,6 +97,22 @@ jarjar_library(
     ],
 )
 
+android_library(
+    name = "android_local_test_exports",
+    exports = [
+        # TODO(bcorso): see if we can remove jsr250 dep from autovalue to prevent this.
+        "@javax_annotation_jsr250_api",  # For @Generated
+        "@maven//:org_robolectric_shadows_framework",  # For ActivityController
+        "@maven//:androidx_lifecycle_lifecycle_common",  # For Lifecycle.State
+        "@maven//:androidx_activity_activity",  # For ComponentActivity
+        "@maven//:androidx_test_core",  # For ApplicationProvider
+        "@maven//:androidx_test_ext_junit",
+        "@maven//:org_robolectric_annotations",
+        "@maven//:org_robolectric_robolectric",
+        "@robolectric//bazel:android-all",
+    ],
+)
+
 # coalesced javadocs used for the gh-pages site
 javadoc_library(
     name = "user-docs",

@@ -38,11 +38,13 @@ public final class ApplicationGenerator {
   private final ProcessingEnvironment env;
   private final AndroidEntryPointMetadata metadata;
   private final ClassName wrapperClassName;
+  private final ComponentNames componentNames;
 
   public ApplicationGenerator(ProcessingEnvironment env, AndroidEntryPointMetadata metadata) {
     this.env = env;
     this.metadata = metadata;
-    wrapperClassName = metadata.generatedClassName();
+    this.wrapperClassName = metadata.generatedClassName();
+    this.componentNames = ComponentNames.withoutRenaming();
   }
 
   // @Generated("ApplicationGenerator")
@@ -107,7 +109,7 @@ public final class ApplicationGenerator {
   // }
   private TypeSpec creatorType() {
     ClassName component =
-        ComponentNames.generatedComponent(
+        componentNames.generatedComponent(
             metadata.elementClassName(), AndroidClassNames.SINGLETON_COMPONENT);
     return TypeSpec.anonymousClassBuilder("")
         .addSuperinterface(AndroidClassNames.COMPONENT_SUPPLIER)

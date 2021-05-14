@@ -21,7 +21,6 @@ java_library(
     name = "test_injector",
     testonly = 1,
     srcs = [
-        "TestApplicationInjector.java",
         "TestInjector.java",
     ],
 )
@@ -37,15 +36,23 @@ android_library(
 )
 
 android_library(
+    name = "early_test_singleton_component_creator",
+    testonly = 1,
+    srcs = ["EarlySingletonComponentCreator.java"],
+)
+
+android_library(
     name = "test_application_component_manager",
     testonly = 1,
     srcs = ["TestApplicationComponentManager.java"],
     deps = [
+        ":early_test_singleton_component_creator",
         ":test_component_data",
         ":test_injector",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",
+        "//java/dagger/hilt/internal:test_singleton_component_manager",
         "@maven//:junit_junit",
     ],
 )
@@ -67,6 +74,9 @@ android_library(
     name = "test_application_component_manager_holder",
     testonly = 1,
     srcs = ["TestApplicationComponentManagerHolder.java"],
+    deps = [
+        "//java/dagger/hilt/internal:component_manager",
+    ],
 )
 
 android_library(

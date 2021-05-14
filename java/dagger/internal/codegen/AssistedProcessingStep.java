@@ -23,8 +23,10 @@ import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedInject;
+import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
 import java.lang.annotation.Annotation;
@@ -32,22 +34,30 @@ import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
-/** An annotation processor for {@link dagger.assisted.Assisted}-annotated types. */
+/**
+ * An annotation processor for {@link dagger.assisted.Assisted}-annotated types.
+ *
+ * <p>This processing step should run after {@link AssistedFactoryProcessingStep}.
+ */
 final class AssistedProcessingStep extends TypeCheckingProcessingStep<VariableElement> {
   private final KotlinMetadataUtil kotlinMetadataUtil;
   private final InjectionAnnotations injectionAnnotations;
+  private final DaggerElements elements;
   private final Messager messager;
 
   @Inject
   AssistedProcessingStep(
       KotlinMetadataUtil kotlinMetadataUtil,
       InjectionAnnotations injectionAnnotations,
+      DaggerElements elements,
       Messager messager) {
     super(MoreElements::asVariable);
     this.kotlinMetadataUtil = kotlinMetadataUtil;
     this.injectionAnnotations = injectionAnnotations;
+    this.elements = elements;
     this.messager = messager;
   }
 
@@ -68,9 +78,10 @@ final class AssistedProcessingStep extends TypeCheckingProcessingStep<VariableEl
 
       Element enclosingElement = assisted.getEnclosingElement();
       if (!isAssistedInjectConstructor(enclosingElement)
-              // The generated java stubs for kotlin data classes contain a "copy" method that has
-              // the same parameters (and annotations) as the constructor, so just ignore it.
-              && !isKotlinDataClassCopyMethod(enclosingElement)) {
+          && !isAssistedFactoryCreateMethod(enclosingElement)
+          // The generated java stubs for kotlin data classes contain a "copy" method that has
+          // the same parameters (and annotations) as the constructor, so just ignore it.
+          && !isKotlinDataClassCopyMethod(enclosingElement)) {
         report.addError(
             "@Assisted parameters can only be used within an @AssistedInject-annotated "
                 + "constructor.",
@@ -91,6 +102,17 @@ final class AssistedProcessingStep extends TypeCheckingProcessingStep<VariableEl
   private boolean isAssistedInjectConstructor(Element element) {
     return element.getKind() == ElementKind.CONSTRUCTOR
         && isAnnotationPresent(element, AssistedInject.class);
+  }
+
+  private boolean isAssistedFactoryCreateMethod(Element element) {
+    if (element.getKind() == ElementKind.METHOD) {
+      TypeElement enclosingElement = closestEnclosingTypeElement(element);
+      return AssistedInjectionAnnotations.isAssistedFactoryType(enclosingElement)
+          // This assumes we've already validated AssistedFactory and that a valid method exists.
+          && AssistedInjectionAnnotations.assistedFactoryMethod(enclosingElement, elements)
+              .equals(element);
+    }
+    return false;
   }
 
   private boolean isKotlinDataClassCopyMethod(Element element) {

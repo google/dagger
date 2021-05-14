@@ -62,8 +62,8 @@ android {
 }
 
 hilt {
-    enableExperimentalClasspathAggregation = true
     enableTransformForLocalTests = true
+    enableAggregatingTask = true
 }
 
 dependencies {

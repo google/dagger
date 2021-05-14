@@ -100,6 +100,11 @@ public final class KotlinMetadataUtil {
         && metadataFactory.create(typeElement).classMetadata().flags(IS_COMPANION_OBJECT);
   }
 
+  /** Returns {@code true} if this type element is a Kotlin object or companion object. */
+  public boolean isObjectOrCompanionObjectClass(TypeElement typeElement) {
+    return isObjectClass(typeElement) || isCompanionObjectClass(typeElement);
+  }
+
   /* Returns {@code true} if this type element has a Kotlin Companion Object. */
   public boolean hasEnclosedCompanionObject(TypeElement typeElement) {
     return hasMetadata(typeElement)
@@ -128,6 +133,15 @@ public final class KotlinMetadataUtil {
   public boolean isVisibilityPrivate(TypeElement typeElement) {
     return hasMetadata(typeElement)
         && metadataFactory.create(typeElement).classMetadata().flags(IS_PRIVATE);
+  }
+
+  /**
+   * Returns {@code true} if the given type element was declared {@code internal} in its Kotlin
+   * source.
+   */
+  public boolean isVisibilityInternal(TypeElement type) {
+    return hasMetadata(type)
+        && metadataFactory.create(type).classMetadata().flags(Flag.IS_INTERNAL);
   }
 
   /**

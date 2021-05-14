@@ -17,7 +17,6 @@
 package dagger.internal.codegen.validation;
 
 import static com.google.auto.common.MoreTypes.asTypeElement;
-import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verifyNotNull;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
@@ -142,10 +141,12 @@ public abstract class BindingElementValidator<E extends Element> {
   protected abstract class ElementValidator {
     protected final E element;
     protected final ValidationReport.Builder<E> report;
+    private final ImmutableCollection<? extends AnnotationMirror> qualifiers;
 
     protected ElementValidator(E element) {
       this.element = element;
       this.report = ValidationReport.about(element);
+      qualifiers = injectionAnnotations.getQualifiers(element);
     }
 
     /** Checks the element for validity. */
@@ -185,10 +186,15 @@ public abstract class BindingElementValidator<E extends Element> {
     protected void checkType() {
       switch (ContributionType.fromBindingElement(element)) {
         case UNIQUE:
-          /* Validate that a unique binding is not attempting to bind a framework type. This
-           * validation is only appropriate for unique bindings because multibindings may collect
-           * framework types.  E.g. Set<Provider<Foo>> is perfectly reasonable. */
+          // Validate that a unique binding is not attempting to bind a framework type. This
+          // validation is only appropriate for unique bindings because multibindings may collect
+          // framework types.  E.g. Set<Provider<Foo>> is perfectly reasonable.
           checkFrameworkType();
+
+          // Validate that a unique binding is not attempting to bind an unqualified assisted type.
+          // This validation is only appropriate for unique bindings because multibindings may
+          // collect assisted types.
+          checkAssistedType();
           // fall through
 
         case SET:
@@ -208,22 +214,26 @@ public abstract class BindingElementValidator<E extends Element> {
       TypeKind kind = keyType.getKind();
       if (kind.equals(VOID)) {
         report.addError(bindingElements("must %s a value (not void)", bindingElementTypeVerb()));
-      } else if (kind == DECLARED) {
-        checkNotAssistedInject(keyType);
-      } else if (!(kind.isPrimitive() || kind.equals(ARRAY) || kind.equals(TYPEVAR))) {
+      } else if (!(kind.isPrimitive()
+          || kind.equals(DECLARED)
+          || kind.equals(ARRAY)
+          || kind.equals(TYPEVAR))) {
         report.addError(badTypeMessage());
       }
     }
 
-    /** Adds errors for a method return type. */
-    private void checkNotAssistedInject(TypeMirror keyType) {
-      checkState(keyType.getKind() == TypeKind.DECLARED);
-      TypeElement keyElement = asTypeElement(keyType);
-      if (isAssistedInjectionType(keyElement)) {
-        report.addError("Dagger does not support providing @AssistedInject types.", keyElement);
-      }
-      if (isAssistedFactoryType(keyElement)) {
-        report.addError("Dagger does not support providing @AssistedFactory types.", keyElement);
+    /** Adds errors for unqualified assisted types. */
+    private void checkAssistedType() {
+      if (qualifiers.isEmpty()
+              && bindingElementType().isPresent()
+              && bindingElementType().get().getKind() == DECLARED) {
+        TypeElement keyElement = asTypeElement(bindingElementType().get());
+        if (isAssistedInjectionType(keyElement)) {
+          report.addError("Dagger does not support providing @AssistedInject types.", keyElement);
+        }
+        if (isAssistedFactoryType(keyElement)) {
+          report.addError("Dagger does not support providing @AssistedFactory types.", keyElement);
+        }
       }
     }
 
@@ -254,8 +264,6 @@ public abstract class BindingElementValidator<E extends Element> {
      * Adds an error if the element has more than one {@linkplain Qualifier qualifier} annotation.
      */
     private void checkQualifiers() {
-      ImmutableCollection<? extends AnnotationMirror> qualifiers =
-          injectionAnnotations.getQualifiers(element);
       if (qualifiers.size() > 1) {
         for (AnnotationMirror qualifier : qualifiers) {
           report.addError(

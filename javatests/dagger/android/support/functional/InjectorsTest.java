@@ -20,16 +20,19 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.os.Build;
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(AndroidJUnit4.class)
+// Robolectric requires Java9 to run API 29 and above, so use API 28 instead
+@Config(sdk = Build.VERSION_CODES.P)
 public class InjectorsTest {
   private ActivityController<TestActivity> activityController;
   private TestActivity activity;

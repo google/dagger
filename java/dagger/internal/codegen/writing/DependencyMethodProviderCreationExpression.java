@@ -96,7 +96,7 @@ final class DependencyMethodProviderCreationExpression
         COMPONENT_PROVISION_FACTORY,
         classBuilder(factoryClassName())
             .addSuperinterface(providerOf(keyType))
-            .addModifiers(PRIVATE, STATIC)
+            .addModifiers(PRIVATE, STATIC, FINAL)
             .addField(dependencyClassName, dependency().variableName(), PRIVATE, FINAL)
             .addMethod(
                 constructorBuilder()

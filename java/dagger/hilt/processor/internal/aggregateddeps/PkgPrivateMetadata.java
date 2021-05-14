@@ -24,16 +24,35 @@ import com.google.auto.value.AutoValue;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.KotlinMetadataUtils;
 import dagger.hilt.processor.internal.Processors;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
 /** PkgPrivateModuleMetadata contains a set of utilities for processing package private modules. */
 @AutoValue
-abstract class PkgPrivateMetadata {
+public abstract class PkgPrivateMetadata {
+  /** Returns the public Hilt wrapped type or the type itself if it is already public. */
+  public static TypeElement publicModule(TypeElement element, Elements elements) {
+    return publicDep(element, elements, ClassNames.MODULE);
+  }
+
+  /** Returns the public Hilt wrapped type or the type itself if it is already public. */
+  public static TypeElement publicEarlyEntryPoint(TypeElement element, Elements elements) {
+    return publicDep(element, elements, ClassNames.EARLY_ENTRY_POINT);
+  }
+
+  private static TypeElement publicDep(
+      TypeElement element, Elements elements, ClassName annotation) {
+    return of(elements, element, annotation)
+        .map(PkgPrivateMetadata::generatedClassName)
+        .map(ClassName::canonicalName)
+        .map(elements::getTypeElement)
+        .orElse(element);
+  }
+
   private static final String PREFIX = "HiltWrapper_";
 
   /** Returns the base class name of the elemenet. */
@@ -63,9 +82,11 @@ abstract class PkgPrivateMetadata {
    * Returns an Optional PkgPrivateMetadata requiring Hilt processing, otherwise returns an empty
    * Optional.
    */
-  static Optional<PkgPrivateMetadata> of(Elements elements, Element element, ClassName annotation) {
+  static Optional<PkgPrivateMetadata> of(
+      Elements elements, TypeElement element, ClassName annotation) {
     // If this is a public element no wrapping is needed
-    if (effectiveVisibilityOfElement(element) == Visibility.PUBLIC) {
+    if (effectiveVisibilityOfElement(element) == Visibility.PUBLIC
+        && !KotlinMetadataUtils.getMetadataUtil().isVisibilityInternal(element)) {
       return Optional.empty();
     }
 

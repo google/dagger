@@ -41,8 +41,7 @@ abstract class ActivityModule {
     try {
       return (FragmentActivity) activity;
     } catch (ClassCastException e) {
-      throw new IllegalStateException(
-          "Expected activity to be a FragmentActivity: " + activity, e);
+      throw new IllegalStateException("Expected activity to be a FragmentActivity: " + activity, e);
     }
   }
 

@@ -319,6 +319,12 @@ final class Generators {
           .endControlFlow();
     }
 
+    // Only add @Override if an ancestor extends a generated Hilt class.
+    // When using bytecode injection, this isn't always guaranteed.
+    if (metadata.overridesAndroidEntryPointClass()
+        && ancestorExtendsGeneratedHiltClass(metadata)) {
+      methodSpecBuilder.addAnnotation(Override.class);
+    }
     typeSpecBuilder.addField(injectedField(metadata));
 
     switch (metadata.androidType()) {
@@ -326,12 +332,6 @@ final class Generators {
       case FRAGMENT:
       case VIEW:
       case SERVICE:
-        // Only add @Override if an ancestor extends a generated Hilt class.
-        // When using bytecode injection, this isn't always guaranteed.
-        if (metadata.overridesAndroidEntryPointClass()
-            && ancestorExtendsGeneratedHiltClass(metadata)) {
-          methodSpecBuilder.addAnnotation(Override.class);
-        }
         methodSpecBuilder
             .beginControlFlow("if (!injected)")
             .addStatement("injected = true")

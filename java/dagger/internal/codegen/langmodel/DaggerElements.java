@@ -17,7 +17,6 @@
 package dagger.internal.codegen.langmodel;
 
 import static com.google.auto.common.MoreElements.asExecutable;
-import static com.google.auto.common.MoreElements.getLocalAndInheritedMethods;
 import static com.google.auto.common.MoreElements.hasModifiers;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.asList;
@@ -34,10 +33,12 @@ import com.google.common.collect.Iterables;
 import com.google.common.graph.Traverser;
 import com.squareup.javapoet.ClassName;
 import dagger.Reusable;
+import dagger.internal.codegen.base.ClearableCache;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -75,8 +76,9 @@ import javax.lang.model.util.Types;
 
 /** Extension of {@link Elements} that adds Dagger-specific methods. */
 @Reusable
-public final class DaggerElements implements Elements {
-
+public final class DaggerElements implements Elements, ClearableCache {
+  private final Map<TypeElement, ImmutableSet<ExecutableElement>> getLocalAndInheritedMethodsCache =
+      new HashMap<>();
   private final Elements elements;
   private final Types types;
 
@@ -100,8 +102,13 @@ public final class DaggerElements implements Elements {
   private static final Traverser<Element> GET_ENCLOSED_ELEMENTS =
       Traverser.forTree(Element::getEnclosedElements);
 
+  public ImmutableSet<ExecutableElement> getLocalAndInheritedMethods(TypeElement type) {
+    return getLocalAndInheritedMethodsCache.computeIfAbsent(
+        type, k -> MoreElements.getLocalAndInheritedMethods(type, types, elements));
+  }
+
   public ImmutableSet<ExecutableElement> getUnimplementedMethods(TypeElement type) {
-    return FluentIterable.from(getLocalAndInheritedMethods(type, types, elements))
+    return FluentIterable.from(getLocalAndInheritedMethods(type))
         .filter(hasModifiers(ABSTRACT))
         .toSet();
   }
@@ -118,7 +125,7 @@ public final class DaggerElements implements Elements {
 
   /** Returns the type element for a class name. */
   public TypeElement getTypeElement(ClassName className) {
-    return getTypeElement(className.withoutAnnotations().toString());
+    return getTypeElement(className.canonicalName());
   }
 
   /** Returns the argument or the closest enclosing element that is a {@link TypeElement}. */
@@ -491,5 +498,10 @@ public final class DaggerElements implements Elements {
   @Override
   public boolean isFunctionalInterface(TypeElement type) {
     return elements.isFunctionalInterface(type);
+  }
+
+  @Override
+  public void clearCache() {
+    getLocalAndInheritedMethodsCache.clear();
   }
 }

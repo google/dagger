@@ -17,5 +17,5 @@ pushd examples/maven && mvn compile && popd
 # Run local gradle tests
 util/run-local-gradle-tests.sh
 util/run-local-gradle-android-tests.sh "4.1.0"
-util/run-local-gradle-android-tests.sh "4.2.0-beta04"
+util/run-local-gradle-android-tests.sh "4.2.0"
 

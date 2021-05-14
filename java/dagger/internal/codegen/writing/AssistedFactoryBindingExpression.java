@@ -69,7 +69,12 @@ final class AssistedFactoryBindingExpression extends SimpleInvocationBindingExpr
     Expression assistedInjectionExpression =
         componentBindingExpressions.getDependencyExpression(
             BindingRequest.bindingRequest(assistedInjectionRequest.key(), RequestKind.INSTANCE),
-            requestingClass);
+            // This is kind of gross because the anonymous class doesn't really have a name we can
+            // reference. The requesting class name is really only needed to determine if we need to
+            // append "OwningClass.this." to the method call or not.
+            // TODO(bcorso): We should probably use a non-anonymous class here instead so that we
+            // actually have a proper class name.
+            requestingClass.peerClass(""));
     return Expression.create(
         assistedInjectionExpression.type(),
         CodeBlock.of("$L", anonymousfactoryImpl(assistedInjectionExpression)));
@@ -78,7 +83,7 @@ final class AssistedFactoryBindingExpression extends SimpleInvocationBindingExpr
   private TypeSpec anonymousfactoryImpl(Expression assistedInjectionExpression) {
     TypeElement factory = asType(binding.bindingElement().get());
     DeclaredType factoryType = asDeclared(binding.key().type());
-    ExecutableElement factoryMethod = assistedFactoryMethod(factory, elements, types);
+    ExecutableElement factoryMethod = assistedFactoryMethod(factory, elements);
 
     // We can't use MethodSpec.overriding directly because we need to control the parameter names.
     MethodSpec factoryOverride = MethodSpec.overriding(factoryMethod, factoryType, types).build();

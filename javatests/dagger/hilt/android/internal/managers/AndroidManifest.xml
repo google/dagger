@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="dagger.hilt.android.internal.managers">
+
+  <uses-sdk android:minSdkVersion="14" />
+
+  <application>
+    <activity
+        android:name=".FragmentContextWrapperLeakTest$TestActivity"
+        android:exported="false"/>
+  </application>
+</manifest>

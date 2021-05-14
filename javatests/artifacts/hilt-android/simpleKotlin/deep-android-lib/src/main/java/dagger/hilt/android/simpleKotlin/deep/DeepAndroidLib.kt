@@ -34,5 +34,7 @@ class DeepAndroidLib @Inject constructor() {
     fun getInstance(context: Context) =
       EntryPointAccessors.fromApplication(context, LibEntryPoint::class.java)
         .getDeepAndroidInstance()
+
+    internal fun internalFunction() = Any()
   }
 }

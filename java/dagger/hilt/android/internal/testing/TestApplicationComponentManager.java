@@ -21,7 +21,7 @@ import dagger.hilt.android.testing.OnComponentReadyRunner;
 import dagger.hilt.android.testing.OnComponentReadyRunner.OnComponentReadyRunnerHolder;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
-import java.lang.reflect.InvocationTargetException;
+import dagger.hilt.internal.TestSingletonComponentManager;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -35,17 +35,18 @@ import org.junit.runner.Description;
  * <p>A manager for the creation of components that live in the test Application.
  */
 public final class TestApplicationComponentManager
-    implements GeneratedComponentManager<Object>, OnComponentReadyRunnerHolder {
+    implements TestSingletonComponentManager, OnComponentReadyRunnerHolder {
 
-  // This is a generated class that we always generate in a known location.
-  private static final String TEST_COMPONENT_DATA_SUPPLIER_IMPL =
-      "dagger.hilt.android.internal.testing.TestComponentDataSupplierImpl";
+  private final Object earlyComponentLock = new Object();
+  private volatile Object earlyComponent = null;
+
+  private final Object testComponentDataLock = new Object();
+  private volatile TestComponentData testComponentData;
 
   private final Application application;
-  private final Map<Class<?>, TestComponentData> testComponentDataSupplier;
-
   private final AtomicReference<Object> component = new AtomicReference<>();
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
+  // TODO(bcorso): Consider using a lock here rather than ConcurrentHashMap to avoid b/37042460.
   private final Map<Class<?>, Object> registeredModules = new ConcurrentHashMap<>();
   private final AtomicReference<Boolean> autoAddModuleEnabled = new AtomicReference<>();
   private final AtomicReference<DelayedComponentState> delayedComponentState =
@@ -75,24 +76,18 @@ public final class TestApplicationComponentManager
 
   public TestApplicationComponentManager(Application application) {
     this.application = application;
-    try {
-      this.testComponentDataSupplier =
-          Class.forName(TEST_COMPONENT_DATA_SUPPLIER_IMPL)
-              .asSubclass(TestComponentDataSupplier.class)
-              .getDeclaredConstructor()
-              .newInstance()
-              .get();
-    } catch (ClassNotFoundException
-        | NoSuchMethodException
-        | IllegalAccessException
-        | InstantiationException
-        | InvocationTargetException e) {
-      throw new RuntimeException(
-          "Hilt classes generated from @HiltAndroidTest are missing. Check that you have annotated "
-              + "your test class with @HiltAndroidTest and that the processor is running over your "
-              + "test",
-          e);
+  }
+
+  @Override
+  public Object earlySingletonComponent() {
+    if (earlyComponent == null) {
+      synchronized (earlyComponentLock) {
+        if (earlyComponent == null) {
+          earlyComponent = EarlySingletonComponentCreator.createComponent();
+        }
+      }
     }
+    return earlyComponent;
   }
 
   @Override
@@ -149,19 +144,35 @@ public final class TestApplicationComponentManager
         testInstance == null,
         "The Hilt BindValue instance cannot be set before Hilt's test rule has run.");
     Preconditions.checkState(
+        testComponentData == null,
+        "The testComponentData instance cannot be set before Hilt's test rule has run.");
+    Preconditions.checkState(
         registeredModules.isEmpty(),
         "The Hilt registered modules cannot be set before Hilt's test rule has run.");
     Preconditions.checkState(
         onComponentReadyRunner.isEmpty(),
         "The Hilt onComponentReadyRunner cannot add listeners before Hilt's test rule has run.");
+    DelayedComponentState state = delayedComponentState.get();
+    switch (state) {
+      case NOT_DELAYED:
+      case COMPONENT_DELAYED:
+        // Expected
+        break;
+      case COMPONENT_READY:
+        throw new IllegalStateException("Called componentReady before test execution started");
+      case INJECTED:
+        throw new IllegalStateException("Called inject before test execution started");
+    }
   }
 
   void clearState() {
     component.set(null);
     hasHiltTestRule.set(null);
     testInstance = null;
+    testComponentData = null;
     registeredModules.clear();
     autoAddModuleEnabled.set(null);
+    delayedComponentState.set(DelayedComponentState.NOT_DELAYED);
     onComponentReadyRunner = new OnComponentReadyRunner();
   }
 
@@ -234,9 +245,7 @@ public final class TestApplicationComponentManager
       case COMPONENT_DELAYED:
         throw new IllegalStateException("Called inject() before calling componentReady()");
       case INJECTED:
-        // TODO(b/178810695): Enforce tests don't do this
-        // throw new IllegalStateException("Called inject() multiple times");
-        break;
+        throw new IllegalStateException("Called inject() multiple times");
     }
     Preconditions.checkNotNull(testInstance);
     testInjector().injectTest(testInstance);
@@ -298,7 +307,14 @@ public final class TestApplicationComponentManager
   }
 
   private TestComponentData testComponentData() {
-    return testComponentDataSupplier.get(testClass());
+    if (testComponentData == null) {
+      synchronized (testComponentDataLock) {
+        if (testComponentData == null) {
+          testComponentData = TestComponentDataSupplier.get(testClass());
+        }
+      }
+    }
+    return testComponentData;
   }
 
   private Class<?> testClass() {

@@ -69,7 +69,7 @@ abstract class MultibindingFactoryCreationExpression
   }
 
   @Override
-  public final boolean useInnerSwitchingProvider() {
+  public final boolean useSwitchingProvider() {
     return !binding.dependencies().isEmpty();
   }
 }

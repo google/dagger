@@ -17,9 +17,9 @@
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
@@ -30,7 +30,6 @@ import javax.lang.model.element.Modifier;
 
 /** Generates an Hilt Activity class for the @AndroidEntryPoint annotated class. */
 public final class ActivityGenerator {
-
   private final ProcessingEnvironment env;
   private final AndroidEntryPointMetadata metadata;
   private final ClassName generatedClassName;
@@ -56,9 +55,11 @@ public final class ActivityGenerator {
     Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
 
-      Generators.copyConstructors(metadata.baseElement(), builder);
-      builder.addMethod(onCreate());
-
+      Generators.copyConstructors(
+          metadata.baseElement(),
+          CodeBlock.builder().addStatement("_initHiltInternal()").build(),
+          builder);
+      builder.addMethod(init());
 
     metadata.baseElement().getTypeParameters().stream()
         .map(TypeVariableName::get)
@@ -79,29 +80,36 @@ public final class ActivityGenerator {
         .writeTo(env.getFiler());
   }
 
-  // @CallSuper
-  // @Override
-  // protected void onCreate(@Nullable Bundle savedInstanceState) {
-  //   inject();
-  //   super.onCreate(savedInstanceState);
+  // private void init() {
+  //   addOnContextAvailableListener(new OnContextAvailableListener() {
+  //     @Override
+  //     public void onContextAvailable(Context context) {
+  //       inject();
+  //     }
+  //   });
   // }
-  private MethodSpec onCreate() {
-    return MethodSpec.methodBuilder("onCreate")
-        .addAnnotation(AndroidClassNames.CALL_SUPER)
-        .addAnnotation(Override.class)
-        .addModifiers(Modifier.PROTECTED)
-        .addParameter(
-            ParameterSpec.builder(AndroidClassNames.BUNDLE, "savedInstanceState")
-                .addAnnotation(AndroidClassNames.NULLABLE)
+  private MethodSpec init() {
+    return MethodSpec.methodBuilder("_initHiltInternal")
+        .addModifiers(Modifier.PRIVATE)
+        .addStatement(
+            "addOnContextAvailableListener($L)",
+            TypeSpec.anonymousClassBuilder("")
+                .addSuperinterface(AndroidClassNames.ON_CONTEXT_AVAILABLE_LISTENER)
+                .addMethod(
+                    MethodSpec.methodBuilder("onContextAvailable")
+                        .addAnnotation(Override.class)
+                        .addModifiers(Modifier.PUBLIC)
+                        .addParameter(AndroidClassNames.CONTEXT, "context")
+                        .addStatement("inject()")
+                        .build())
                 .build())
-        .addStatement("inject()")
-        .addStatement("super.onCreate(savedInstanceState)")
         .build();
   }
 
   // @Override
   // public ViewModelProvider.Factory getDefaultViewModelProviderFactory() {
-  //   return DefaultViewModelFactories.getActivityFactory(this);
+  //   return DefaultViewModelFactories.getActivityFactory(
+  //       this, super.getDefaultViewModelProviderFactory());
   // }
   private MethodSpec getDefaultViewModelProviderFactory() {
     return MethodSpec.methodBuilder("getDefaultViewModelProviderFactory")
@@ -109,7 +117,7 @@ public final class ActivityGenerator {
         .addModifiers(Modifier.PUBLIC)
         .returns(AndroidClassNames.VIEW_MODEL_PROVIDER_FACTORY)
         .addStatement(
-            "return $T.getActivityFactory(this)",
+            "return $T.getActivityFactory(this, super.getDefaultViewModelProviderFactory())",
             AndroidClassNames.DEFAULT_VIEW_MODEL_FACTORIES)
         .build();
   }

@@ -16,7 +16,7 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import static dagger.hilt.android.processor.AndroidCompilers.kotlinCompiler;
+import static dagger.hilt.android.testing.compile.HiltCompilerTests.kotlinCompiler;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

@@ -2,6 +2,7 @@ plugins {
     id 'com.android.library'
     id 'kotlin-android'
     id 'kotlin-kapt'
+    id 'dagger.hilt.android.plugin'
 }
 
 android {
@@ -13,6 +14,8 @@ android {
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -21,9 +24,25 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    lintOptions {
+        checkReleaseBuilds = false
+    }
 }
 
 dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
     implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'
     kapt 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
+
+    testImplementation 'androidx.test.ext:junit:1.1.2'
+    testImplementation 'com.google.truth:truth:1.0.1'
+
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test:runner:1.3.0'
+    androidTestImplementation 'com.google.truth:truth:1.0.1'
+}
+
+hilt {
+    enableAggregatingTask = true
 }

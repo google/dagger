@@ -17,7 +17,7 @@
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.hilt.android.processor.AndroidCompilers.compiler;
+import static dagger.hilt.android.testing.compile.HiltCompilerTests.compiler;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;

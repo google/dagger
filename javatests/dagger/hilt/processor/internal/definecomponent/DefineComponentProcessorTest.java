@@ -64,7 +64,7 @@ public final class DefineComponentProcessorTest {
 
     JavaFileObject componentOutput =
         JavaFileObjects.forSourceLines(
-            "dagger.hilt.processor.internal.definecomponent.codegen.test_FooComponent",
+            "dagger.hilt.processor.internal.definecomponent.codegen._test_FooComponent",
             "package dagger.hilt.processor.internal.definecomponent.codegen;",
             "",
             "import dagger.hilt.internal.definecomponent.DefineComponentClasses;",
@@ -72,11 +72,11 @@ public final class DefineComponentProcessorTest {
             "",
             "@DefineComponentClasses(component = \"test.FooComponent\")",
             "@Generated(\"" + DefineComponentProcessor.class.getName() + "\")",
-            "interface test_FooComponent {}");
+            "public class _test_FooComponent {}");
 
     JavaFileObject builderOutput =
         JavaFileObjects.forSourceLines(
-            "dagger.hilt.processor.internal.definecomponent.codegen.test_FooComponentBuilder",
+            "dagger.hilt.processor.internal.definecomponent.codegen._test_FooComponentBuilder",
             "package dagger.hilt.processor.internal.definecomponent.codegen;",
             "",
             "import dagger.hilt.internal.definecomponent.DefineComponentClasses;",
@@ -84,7 +84,7 @@ public final class DefineComponentProcessorTest {
             "",
             "@DefineComponentClasses(builder = \"test.FooComponentBuilder\")",
             "@Generated(\"" + DefineComponentProcessor.class.getName() + "\")",
-            "interface test_FooComponentBuilder {}");
+            "public class _test_FooComponentBuilder {}");
 
     Compilation compilation = compiler().compile(component, builder);
     assertThat(compilation).succeeded();

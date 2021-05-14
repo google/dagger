@@ -18,36 +18,85 @@
 package(default_visibility = ["//:src"])
 
 java_plugin(
-    name = "plugin",
+    name = "component_tree_deps_plugin",
     generates_api = 1,
-    processor_class = "dagger.hilt.processor.internal.root.RootProcessor",
+    processor_class = "dagger.hilt.processor.internal.root.ComponentTreeDepsProcessor",
     deps = [
-        ":processor_lib",
+        ":component_tree_deps_processor_lib",
     ],
 )
 
 java_library(
-    name = "processor_lib",
+    name = "component_tree_deps_processor_lib",
     srcs = [
+        "ComponentGenerator.java",
+        "ComponentTreeDepsProcessor.java",
+        "EarlySingletonComponentCreatorGenerator.java",
         "RootFileFormatter.java",
         "RootGenerator.java",
-        "RootProcessor.java",
         "TestComponentDataGenerator.java",
-        "TestComponentDataSupplierGenerator.java",
-        "TestInjectorGenerator.java",
     ],
     deps = [
         ":root_metadata",
-        ":root_type",
+        "//java/dagger/hilt/android/processor/internal/androidentrypoint:android_generators",
+        "//java/dagger/hilt/android/processor/internal/androidentrypoint:metadata",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
+        "//java/dagger/hilt/processor/internal:compiler_options",
         "//java/dagger/hilt/processor/internal:component_descriptor",
         "//java/dagger/hilt/processor/internal:component_names",
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/hilt/processor/internal/aggregateddeps:component_dependencies",
+        "//java/dagger/hilt/processor/internal/aliasof:alias_ofs",
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
+        "//java/dagger/hilt/processor/internal/earlyentrypoint:aggregated_early_entry_point_metadata",
+        "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
+        "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/guava:base",
+        "//java/dagger/internal/guava:collect",
+        "//java/dagger/internal/guava:graph",
+        "@google_bazel_common//third_party/java/auto:service",
+        "@google_bazel_common//third_party/java/incap",
+        "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
+    ],
+)
+
+java_plugin(
+    name = "root_plugin",
+    generates_api = 1,
+    processor_class = "dagger.hilt.processor.internal.root.RootProcessor",
+    deps = [
+        ":root_processor_lib",
+    ],
+)
+
+java_library(
+    name = "root_processor_lib",
+    srcs = [
+        "AggregatedRootGenerator.java",
+        "ComponentTreeDepsGenerator.java",
+        "ProcessedRootSentinelGenerator.java",
+        "RootProcessor.java",
+        "TestInjectorGenerator.java",
+    ],
+    deps = [
+        ":root_metadata",
+        ":root_type",
+        "//java/dagger/hilt/processor/internal:aggregated_elements",
+        "//java/dagger/hilt/processor/internal:base_processor",
+        "//java/dagger/hilt/processor/internal:classnames",
+        "//java/dagger/hilt/processor/internal:compiler_options",
+        "//java/dagger/hilt/processor/internal:component_names",
+        "//java/dagger/hilt/processor/internal:processor_errors",
+        "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/hilt/processor/internal/aggregateddeps:component_dependencies",
+        "//java/dagger/hilt/processor/internal/aliasof:alias_ofs",
+        "//java/dagger/hilt/processor/internal/definecomponent:define_components",
+        "//java/dagger/hilt/processor/internal/earlyentrypoint:aggregated_early_entry_point_metadata",
         "//java/dagger/hilt/processor/internal/generatesrootinput:generates_root_inputs",
+        "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
@@ -61,12 +110,17 @@ java_library(
 java_library(
     name = "root_metadata",
     srcs = [
+        "AggregatedRootMetadata.java",
+        "ComponentTree.java",
+        "ComponentTreeDepsMetadata.java",
+        "ProcessedRootSentinelMetadata.java",
         "Root.java",
         "RootMetadata.java",
         "TestRootMetadata.java",
     ],
     deps = [
         ":root_type",
+        "//java/dagger/hilt/processor/internal:aggregated_elements",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:component_descriptor",
         "//java/dagger/hilt/processor/internal:kotlin",
@@ -78,6 +132,7 @@ java_library(
         "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
+        "//java/dagger/internal/guava:graph",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/javapoet",
         "@maven//:com_google_auto_auto_common",
@@ -89,7 +144,6 @@ java_library(
     srcs = ["RootType.java"],
     deps = [
         "//java/dagger/hilt/processor/internal:classnames",
-        "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
         "@google_bazel_common//third_party/java/javapoet",
     ],

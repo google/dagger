@@ -21,8 +21,6 @@ import static com.google.common.collect.Sets.immutableEnumSet;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
-import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
-import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.SUBCOMPONENT_BUILDER;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.SUBCOMPONENT_FACTORY;
 
@@ -99,9 +97,9 @@ public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorT
             "test.DaggerC",
             "package test;",
             "",
-            IMPORT_GENERATED_ANNOTATION,
+            GeneratedLines.generatedImports(),
             "",
-            GENERATED_CODE_ANNOTATIONS,
+            GeneratedLines.generatedAnnotations(),
             "final class DaggerC implements C {",
             "  @Override",
             "  public Sub.Builder sBuilder() {",

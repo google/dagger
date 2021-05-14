@@ -16,6 +16,7 @@
 
 package dagger.hilt.processor.internal.root;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Suppliers.memoize;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -29,7 +30,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
-import dagger.hilt.processor.internal.ComponentTree;
 import dagger.hilt.processor.internal.KotlinMetadataUtils;
 import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.aggregateddeps.ComponentDependencies;
@@ -52,8 +52,22 @@ public final class RootMetadata {
       Root root,
       ComponentTree componentTree,
       ComponentDependencies deps,
+      AliasOfs aliasOfs,
       ProcessingEnvironment env) {
-    RootMetadata metadata = new RootMetadata(root, componentTree, deps, env);
+    return createInternal(root, componentTree, deps, aliasOfs, env);
+  }
+
+  static RootMetadata copyWithNewTree(RootMetadata other, ComponentTree componentTree) {
+    return createInternal(other.root, componentTree, other.deps, other.aliasOfs, other.env);
+  }
+
+  private static RootMetadata createInternal(
+      Root root,
+      ComponentTree componentTree,
+      ComponentDependencies deps,
+      AliasOfs aliasOfs,
+      ProcessingEnvironment env) {
+    RootMetadata metadata = new RootMetadata(root, componentTree, deps, aliasOfs, env);
     metadata.validate();
     return metadata;
   }
@@ -63,6 +77,7 @@ public final class RootMetadata {
   private final Elements elements;
   private final ComponentTree componentTree;
   private final ComponentDependencies deps;
+  private final AliasOfs aliasOfs;
   private final Supplier<ImmutableSetMultimap<ClassName, ClassName>> scopesByComponent =
       memoize(this::getScopesByComponentUncached);
   private final Supplier<TestRootMetadata> testRootMetadata =
@@ -72,12 +87,14 @@ public final class RootMetadata {
       Root root,
       ComponentTree componentTree,
       ComponentDependencies deps,
+      AliasOfs aliasOfs,
       ProcessingEnvironment env) {
     this.root = root;
     this.env = env;
     this.elements = env.getElementUtils();
     this.componentTree = componentTree;
     this.deps = deps;
+    this.aliasOfs = aliasOfs;
   }
 
   public Root root() {
@@ -93,12 +110,19 @@ public final class RootMetadata {
   }
 
   public ImmutableSet<TypeElement> modules(ClassName componentName) {
-    return deps.modules().get(componentName, root.classname(), root.isTestRoot());
+    return deps.modules().get(componentName);
   }
 
   public ImmutableSet<TypeName> entryPoints(ClassName componentName) {
     return ImmutableSet.<TypeName>builder()
-        .addAll(getUserDefinedEntryPoints(componentName))
+        .addAll(
+            deps.entryPoints().get(componentName).stream()
+                .map(ClassName::get)
+                .collect(toImmutableSet()))
+        .add(
+            root.isTestRoot() && componentName.equals(ClassNames.SINGLETON_COMPONENT)
+                ? ClassNames.TEST_SINGLETON_COMPONENT
+                : ClassNames.GENERATED_COMPONENT)
         .add(componentName)
         .build();
   }
@@ -122,6 +146,7 @@ public final class RootMetadata {
   }
 
   public TestRootMetadata testRootMetadata() {
+    checkState(!root.isDefaultRoot(), "The default root does not have TestRootMetadata!");
     return testRootMetadata.get();
   }
 
@@ -143,47 +168,29 @@ public final class RootMetadata {
     for (ComponentDescriptor componentDescriptor : componentTree.getComponentDescriptors()) {
       ClassName componentName = componentDescriptor.component();
       for (TypeElement extraModule : modulesThatDaggerCannotConstruct(componentName)) {
-        if (root.type().isTestRoot() && !componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
+        if (root.isTestRoot() && !componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
           env.getMessager()
               .printMessage(
                   Diagnostic.Kind.ERROR,
                   "[Hilt] All test modules (unless installed in ApplicationComponent) must use "
                       + "static provision methods or have a visible, no-arg constructor. Found: "
                       + extraModule.getQualifiedName(),
-                  root.element());
-        } else if (!root.type().isTestRoot()) {
+                  root.originatingRootElement());
+        } else if (!root.isTestRoot()) {
           env.getMessager()
               .printMessage(
                   Diagnostic.Kind.ERROR,
                   "[Hilt] All modules must be static and use static provision methods or have a "
                       + "visible, no-arg constructor. Found: "
                       + extraModule.getQualifiedName(),
-                  root.element());
+                  root.originatingRootElement());
         }
       }
     }
   }
 
-  private ImmutableSet<TypeName> getUserDefinedEntryPoints(ClassName componentName) {
-    ImmutableSet.Builder<TypeName> entryPointSet = ImmutableSet.builder();
-    entryPointSet.add(ClassNames.GENERATED_COMPONENT);
-    for (TypeElement element :
-        deps.entryPoints().get(componentName, root.classname(), root.isTestRoot())) {
-      entryPointSet.add(ClassName.get(element));
-    }
-    return entryPointSet.build();
-  }
-
   private ImmutableSetMultimap<ClassName, ClassName> getScopesByComponentUncached() {
     ImmutableSetMultimap.Builder<ClassName, ClassName> builder = ImmutableSetMultimap.builder();
-
-    ImmutableSet<ClassName> defineComponentScopes =
-        componentTree.getComponentDescriptors().stream()
-            .flatMap(descriptor -> descriptor.scopes().stream())
-            .collect(toImmutableSet());
-
-    AliasOfs aliasOfs = new AliasOfs(env, defineComponentScopes);
-
     for (ComponentDescriptor componentDescriptor : componentTree.getComponentDescriptors()) {
       for (ClassName scope : componentDescriptor.scopes()) {
         builder.put(componentDescriptor.component(), scope);

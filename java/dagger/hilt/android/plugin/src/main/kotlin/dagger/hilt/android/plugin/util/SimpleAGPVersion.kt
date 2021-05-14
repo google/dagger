@@ -1,7 +1,5 @@
 package dagger.hilt.android.plugin.util
 
-import com.android.Version
-
 /**
  * Simple Android Gradle Plugin version class since there is no public API one. b/175816217
  */
@@ -20,7 +18,18 @@ internal data class SimpleAGPVersion(
 
   companion object {
 
-    val ANDROID_GRADLE_PLUGIN_VERSION by lazy { parse(Version.ANDROID_GRADLE_PLUGIN_VERSION) }
+    // TODO(danysantiago): Migrate to AndroidPluginVersion once it is available (b/175816217)
+    val ANDROID_GRADLE_PLUGIN_VERSION by lazy {
+      val clazz =
+        findClass("com.android.Version")
+          ?: findClass("com.android.builder.model.Version")
+      if (clazz != null) {
+        return@lazy parse(clazz.getField("ANDROID_GRADLE_PLUGIN_VERSION").get(null) as String)
+      }
+      error(
+        "Unable to obtain AGP version. It is likely that the AGP version being used is too old."
+      )
+    }
 
     fun parse(version: String?) =
       tryParse(version) ?: error("Unable to parse AGP version: $version")
@@ -36,6 +45,12 @@ internal data class SimpleAGPVersion(
       }
 
       return SimpleAGPVersion(parts[0].toInt(), parts[1].toInt())
+    }
+
+    private fun findClass(fqName: String) = try {
+      Class.forName(fqName)
+    } catch (ex: ClassNotFoundException) {
+      null
     }
   }
 }

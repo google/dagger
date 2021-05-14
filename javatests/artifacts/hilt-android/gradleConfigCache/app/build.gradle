@@ -38,13 +38,16 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    lintOptions {
+        checkReleaseBuilds = false
+    }
     testOptions {
         unitTests.includeAndroidResources = true
     }
 }
 
 hilt {
-    enableTransformForLocalTests = true
+    enableAggregatingTask = true
 }
 
 dependencies {

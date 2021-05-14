@@ -60,7 +60,7 @@ final class OptionalFactoryInstanceCreationExpression
   }
 
   @Override
-  public boolean useInnerSwitchingProvider() {
+  public boolean useSwitchingProvider() {
     // Share providers for empty optionals from OptionalFactories so we don't have numerous
     // switch cases that all return Optional.empty().
     return !binding.dependencies().isEmpty();

@@ -52,7 +52,7 @@ public abstract class BindingRequest {
     // FrameworkType. Then there are separate BindingExpressions, but we don't end up doing weird
     // things like creating two fields when there should only be one.
     return new AutoValue_BindingRequest(
-        key, Optional.of(requestKind), FrameworkType.forRequestKind(requestKind));
+        key, requestKind, FrameworkType.forRequestKind(requestKind));
   }
 
   /**
@@ -67,30 +67,23 @@ public abstract class BindingRequest {
   /** Returns the {@link Key} for the requested binding. */
   public abstract Key key();
 
-  /** Returns the request kind associated with this request, if any. */
-  public abstract Optional<RequestKind> requestKind();
+  /** Returns the request kind associated with this request. */
+  public abstract RequestKind requestKind();
 
   /** Returns the framework type associated with this request, if any. */
   public abstract Optional<FrameworkType> frameworkType();
 
   /** Returns whether this request is of the given kind. */
   public final boolean isRequestKind(RequestKind requestKind) {
-    return requestKind.equals(requestKind().orElse(null));
+    return requestKind.equals(requestKind());
   }
 
   public final TypeMirror requestedType(TypeMirror contributedType, DaggerTypes types) {
-    if (requestKind().isPresent()) {
-      return requestType(requestKind().get(), contributedType, types);
-    }
-    return types.wrapType(contributedType, frameworkType().get().frameworkClass());
+    return requestType(requestKind(), contributedType, types);
   }
 
   /** Returns a name that can be used for the kind of request this is. */
   public final String kindName() {
-    Object requestKindObject =
-        requestKind().isPresent()
-            ? requestKind().get()
-            : frameworkType().get().frameworkClass().getSimpleName();
-    return requestKindObject.toString();
+    return requestKind().toString();
   }
 }

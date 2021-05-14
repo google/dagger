@@ -19,6 +19,7 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
@@ -26,6 +27,7 @@ import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;
+import dagger.producers.internal.Producers;
 
 /** Binding expression for producer node instances. */
 final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindingExpression {
@@ -54,7 +56,13 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     Expression result = super.getDependencyExpression(requestingClass);
-    componentImplementation.addCancellableProducerKey(key);
+    componentImplementation.addCancellation(
+        key,
+        CodeBlock.of(
+            "$T.cancel($L, $N);",
+            Producers.class,
+            result.codeBlock(),
+            ComponentImplementation.MAY_INTERRUPT_IF_RUNNING_PARAM));
     return result;
   }
 

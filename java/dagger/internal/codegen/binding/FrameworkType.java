@@ -46,16 +46,6 @@ public enum FrameworkType {
   /** A {@link Provider}. */
   PROVIDER {
     @Override
-    public Class<?> frameworkClass() {
-      return Provider.class;
-    }
-
-    @Override
-    public Optional<RequestKind> requestKind() {
-      return Optional.of(RequestKind.PROVIDER);
-    }
-
-    @Override
     public CodeBlock to(RequestKind requestKind, CodeBlock from) {
       switch (requestKind) {
         case INSTANCE:
@@ -113,19 +103,6 @@ public enum FrameworkType {
   /** A {@link Producer}. */
   PRODUCER_NODE {
     @Override
-    public Class<?> frameworkClass() {
-      // TODO(cgdecker): Replace this with new class for representing internal producer nodes.
-      // Currently the new class is CancellableProducer, but it may be changed to ProducerNode and
-      // made to not implement Producer.
-      return Producer.class;
-    }
-
-    @Override
-    public Optional<RequestKind> requestKind() {
-      return Optional.empty();
-    }
-
-    @Override
     public CodeBlock to(RequestKind requestKind, CodeBlock from) {
       switch (requestKind) {
         case FUTURE:
@@ -156,8 +133,7 @@ public enum FrameworkType {
               String.format("Cannot request a %s from a %s", requestKind, this));
       }
     }
-  },
-  ;
+  };
 
   /** Returns the framework type appropriate for fields for a given binding type. */
   public static FrameworkType forBindingType(BindingType bindingType) {
@@ -182,7 +158,18 @@ public enum FrameworkType {
   }
 
   /** The class of fields of this type. */
-  public abstract Class<?> frameworkClass();
+  public Class<?> frameworkClass() {
+    switch (this) {
+      case PROVIDER:
+        return Provider.class;
+      case PRODUCER_NODE:
+        // TODO(cgdecker): Replace this with new class for representing internal producer nodes.
+        // Currently the new class is CancellableProducer, but it may be changed to ProducerNode and
+        // made to not implement Producer.
+        return Producer.class;
+    }
+    throw new AssertionError("Unknown value: " + this.name());
+  }
 
   /** Returns the {@link #frameworkClass()} parameterized with a type. */
   public ParameterizedTypeName frameworkClassOf(TypeName valueType) {
@@ -190,7 +177,15 @@ public enum FrameworkType {
   }
 
   /** The request kind that an instance of this framework type can satisfy directly, if any. */
-  public abstract Optional<RequestKind> requestKind();
+  public RequestKind requestKind() {
+    switch (this) {
+      case PROVIDER:
+        return RequestKind.PROVIDER;
+      case PRODUCER_NODE:
+        return RequestKind.PRODUCER;
+    }
+    throw new AssertionError("Unknown value: " + this.name());
+  }
 
   /**
    * Returns a {@link CodeBlock} that evaluates to a requested object given an expression that

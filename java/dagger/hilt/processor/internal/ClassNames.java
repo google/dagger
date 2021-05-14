@@ -22,6 +22,31 @@ import com.squareup.javapoet.ClassName;
 
 /** Holder for commonly used class names. */
 public final class ClassNames {
+  public static final ClassName AGGREGATED_ELEMENT_PROXY =
+      get("dagger.hilt.android.internal.legacy", "AggregatedElementProxy");
+  public static final ClassName COMPONENT_TREE_DEPS =
+      get("dagger.hilt.internal.componenttreedeps", "ComponentTreeDeps");
+
+  public static final String AGGREGATED_ROOT_PACKAGE =
+      "dagger.hilt.internal.aggregatedroot.codegen";
+  public static final ClassName AGGREGATED_ROOT =
+      get("dagger.hilt.internal.aggregatedroot", "AggregatedRoot");
+  public static final String PROCESSED_ROOT_SENTINEL_PACKAGE =
+      "dagger.hilt.internal.processedrootsentinel.codegen";
+  public static final ClassName PROCESSED_ROOT_SENTINEL =
+      get("dagger.hilt.internal.processedrootsentinel", "ProcessedRootSentinel");
+
+  public static final String AGGREGATED_EARLY_ENTRY_POINT_PACKAGE =
+      "dagger.hilt.android.internal.earlyentrypoint.codegen";
+  public static final ClassName AGGREGATED_EARLY_ENTRY_POINT =
+      get("dagger.hilt.android.internal.earlyentrypoint", "AggregatedEarlyEntryPoint");
+  public static final ClassName EARLY_ENTRY_POINT = get("dagger.hilt.android", "EarlyEntryPoint");
+
+  public static final String AGGREGATED_UNINSTALL_MODULES_PACKAGE =
+      "dagger.hilt.android.internal.uninstallmodules.codegen";
+  public static final ClassName AGGREGATED_UNINSTALL_MODULES =
+      get("dagger.hilt.android.internal.uninstallmodules", "AggregatedUninstallModules");
+
   public static final ClassName ORIGINATING_ELEMENT =
       get("dagger.hilt.codegen", "OriginatingElement");
   public static final ClassName AGGREGATED_DEPS =
@@ -32,9 +57,11 @@ public final class ClassNames {
       get("dagger.hilt.internal", "GeneratedComponentManager");
   public static final ClassName GENERATED_COMPONENT_MANAGER_HOLDER =
       get("dagger.hilt.internal", "GeneratedComponentManagerHolder");
-  public static final ClassName IGNORE_MODULES =
+  public static final ClassName UNINSTALL_MODULES =
       get("dagger.hilt.android.testing", "UninstallModules");
 
+  public static final String DEFINE_COMPONENT_CLASSES_PACKAGE =
+      "dagger.hilt.processor.internal.definecomponent.codegen";
   public static final ClassName DEFINE_COMPONENT = get("dagger.hilt", "DefineComponent");
   public static final ClassName DEFINE_COMPONENT_BUILDER =
       get("dagger.hilt", "DefineComponent", "Builder");
@@ -79,6 +106,8 @@ public final class ClassNames {
   public static final ClassName ALIAS_OF = get("dagger.hilt.migration", "AliasOf");
   public static final ClassName ALIAS_OF_PROPAGATED_DATA =
       get("dagger.hilt.internal.aliasof", "AliasOfPropagatedData");
+  public static final String ALIAS_OF_PROPAGATED_DATA_PACKAGE =
+      "dagger.hilt.processor.internal.aliasof.codegen";
 
   public static final ClassName GENERATES_ROOT_INPUT = get("dagger.hilt", "GeneratesRootInput");
   public static final ClassName GENERATES_ROOT_INPUT_PROPAGATED_DATA =
@@ -122,12 +151,12 @@ public final class ClassNames {
       get("dagger.hilt.android.internal.managers", "ComponentSupplier");
   public static final ClassName APPLICATION_CONTEXT_MODULE =
       get("dagger.hilt.android.internal.modules", "ApplicationContextModule");
+  public static final ClassName DEFAULT_ROOT =
+      ClassName.get("dagger.hilt.android.internal.testing.root", "Default");
   public static final ClassName INTERNAL_TEST_ROOT =
       get("dagger.hilt.android.internal.testing", "InternalTestRoot");
   public static final ClassName TEST_INJECTOR =
       get("dagger.hilt.android.internal.testing", "TestInjector");
-  public static final ClassName TEST_APPLICATION_INJECTOR =
-      get("dagger.hilt.android.internal.testing", "TestApplicationInjector");
   public static final ClassName TEST_APPLICATION_COMPONENT_MANAGER =
       get("dagger.hilt.android.internal.testing", "TestApplicationComponentManager");
   public static final ClassName TEST_APPLICATION_COMPONENT_MANAGER_HOLDER =
@@ -152,6 +181,8 @@ public final class ClassNames {
       get("dagger.hilt.android.testing", "BindValueIntoSet");
   public static final ClassName APPLICATION_CONTEXT =
       get("dagger.hilt.android.qualifiers", "ApplicationContext");
+  public static final ClassName TEST_SINGLETON_COMPONENT =
+      get("dagger.hilt.internal", "TestSingletonComponent");
   public static final ClassName TEST_COMPONENT_DATA =
       get("dagger.hilt.android.internal.testing", "TestComponentData");
   public static final ClassName TEST_COMPONENT_DATA_SUPPLIER =
@@ -167,8 +198,6 @@ public final class ClassNames {
   public static final ClassName ARRAYS = get("java.util", "Arrays");
 
   // Standard components
-  public static final ClassName LEGACY_APPLICATION_COMPONENT =
-      get("dagger.hilt.android.components", "ApplicationComponent");
   public static final ClassName SINGLETON_COMPONENT =
       get("dagger.hilt.components", "SingletonComponent");
   public static final ClassName ACTIVITY_COMPONENT =

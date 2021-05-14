@@ -18,6 +18,8 @@ package dagger.hilt.android.internal.managers;
 
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
+import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.activity.ComponentActivity;
@@ -82,23 +84,27 @@ final class ActivityRetainedComponentManager
   private final Object componentLock = new Object();
 
   ActivityRetainedComponentManager(ComponentActivity activity) {
-    this.viewModelProvider =
-        new ViewModelProvider(
-            activity,
-            new ViewModelProvider.Factory() {
-              @NonNull
-              @Override
-              @SuppressWarnings("unchecked")
-              public <T extends ViewModel> T create(@NonNull Class<T> aClass) {
-                ActivityRetainedComponent component =
-                    EntryPoints.get(
-                            activity.getApplication(),
-                            ActivityRetainedComponentBuilderEntryPoint.class)
-                        .retainedComponentBuilder()
-                        .build();
-                return (T) new ActivityRetainedComponentViewModel(component);
-              }
-            });
+    this.viewModelProvider = getViewModelProvider(activity, activity);
+  }
+
+  private ViewModelProvider getViewModelProvider(
+      ViewModelStoreOwner owner, Context context) {
+    return new ViewModelProvider(
+        owner,
+        new ViewModelProvider.Factory() {
+          @NonNull
+          @Override
+          @SuppressWarnings("unchecked")
+          public <T extends ViewModel> T create(@NonNull Class<T> aClass) {
+            ActivityRetainedComponent component =
+                EntryPoints.get(
+                        context.getApplicationContext(),
+                    ActivityRetainedComponentBuilderEntryPoint.class)
+                    .retainedComponentBuilder()
+                    .build();
+            return (T) new ActivityRetainedComponentViewModel(component);
+          }
+        });
   }
 
   @Override

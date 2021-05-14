@@ -17,10 +17,10 @@
 package dagger.android.support;
 
 import android.os.Bundle;
-import androidx.annotation.ContentView;
-import androidx.annotation.LayoutRes;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.ContentView;
+import androidx.annotation.LayoutRes;
 import dagger.android.AndroidInjection;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;

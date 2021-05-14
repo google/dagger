@@ -19,14 +19,15 @@ package dagger.internal.codegen.writing;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
+import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.base.SourceFileGenerator;
-import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 
@@ -47,18 +48,15 @@ public final class HjarSourceFileGenerator<T> extends SourceFileGenerator<T> {
   }
 
   @Override
-  public ClassName nameGeneratedType(T input) {
-    return delegate.nameGeneratedType(input);
-  }
-
-  @Override
   public Element originatingElement(T input) {
     return delegate.originatingElement(input);
   }
 
   @Override
-  public Optional<TypeSpec.Builder> write(T input) {
-    return delegate.write(input).map(completeType -> skeletonType(completeType.build()));
+  public ImmutableList<TypeSpec.Builder> topLevelTypes(T input) {
+    return delegate.topLevelTypes(input).stream()
+        .map(completeType -> skeletonType(completeType.build()))
+        .collect(toImmutableList());
   }
 
   private TypeSpec.Builder skeletonType(TypeSpec completeType) {

@@ -17,9 +17,9 @@
 package dagger.android.support;
 
 import android.content.Context;
+import androidx.fragment.app.Fragment;
 import androidx.annotation.ContentView;
 import androidx.annotation.LayoutRes;
-import androidx.fragment.app.Fragment;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasAndroidInjector;

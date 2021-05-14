@@ -20,6 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.os.Build;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.common.collect.ImmutableMap;
 import dagger.android.AndroidInjector.Factory;
 import dagger.android.DispatchingAndroidInjector.InvalidInjectorBindingException;
@@ -28,9 +30,11 @@ import javax.inject.Provider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(AndroidJUnit4.class)
+// Robolectric requires Java9 to run API 29 and above, so use API 28 instead
+@Config(sdk = Build.VERSION_CODES.P)
 public final class DispatchingAndroidInjectorTest {
   @Test
   public void withClassKeys() {
@@ -108,10 +112,7 @@ public final class DispatchingAndroidInjectorTest {
       Map<String, Provider<AndroidInjector.Factory<?>>>
           injectorFactoriesWithStringKeys) {
     return new DispatchingAndroidInjector<>(
-        injectorFactoriesWithClassKeys,
-        injectorFactoriesWithStringKeys ,
-        ImmutableMap.of(),
-        ImmutableMap.of());
+        injectorFactoriesWithClassKeys, injectorFactoriesWithStringKeys);
   }
 
   static class FooActivity extends Activity {}

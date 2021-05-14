@@ -51,7 +51,7 @@ final class InstanceFactoryCreationExpression implements FrameworkInstanceCreati
   }
 
   @Override
-  public boolean useInnerSwitchingProvider() {
+  public boolean useSwitchingProvider() {
     return false;
   }
 }

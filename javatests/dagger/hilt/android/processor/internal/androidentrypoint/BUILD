@@ -26,10 +26,10 @@ compiler_test(
         "@androidsdk//:platforms/android-30/android.jar",
     ],
     deps = [
-        "//javatests/dagger/hilt/android/processor:android_compilers",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",
+        "//java/dagger/hilt/android/testing/compile",
     ],
 )
 
@@ -42,10 +42,10 @@ compiler_test(
         "@androidsdk//:platforms/android-30/android.jar",
     ],
     deps = [
-        "//javatests/dagger/hilt/android/processor:android_compilers",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",
+        "//java/dagger/hilt/android/testing/compile",
     ],
 )
 
@@ -59,14 +59,9 @@ compiler_test(
     ],
     deps = [
         "//java/dagger/internal/guava:collect",
-        "//javatests/dagger/hilt/android/processor:android_compilers",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",
+        "//java/dagger/hilt/android/testing/compile",
         "@maven//:com_github_tschuchortdev_kotlin_compile_testing",
     ],
-)
-
-filegroup(
-    name = "srcs_filegroup",
-    srcs = glob(["*"]),
 )

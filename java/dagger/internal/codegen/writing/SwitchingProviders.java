@@ -21,10 +21,12 @@ import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
+import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
@@ -33,49 +35,30 @@ import com.google.common.collect.Lists;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.codegen.base.UniqueNameSet;
+import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;
+import dagger.model.RequestKind;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import javax.inject.Provider;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * Keeps track of all provider expression requests for a component.
  *
- * <p>The provider expression request will be satisfied by a single generated {@code Provider} inner
+ * <p>The provider expression request will be satisfied by a single generated {@code Provider}
  * class that can provide instances for all types by switching on an id.
  */
-// TODO(ronshapiro): either merge this with InnerSwitchingProviders, or repurpose this for
-// SwitchingProducers
-abstract class SwitchingProviders {
-  /**
-   * Defines the {@linkplain Expression expressions} for a switch case in a {@code SwitchProvider}
-   * for a particular binding.
-   */
-  // TODO(bcorso): Consider handling SwitchingProviders with dependency arguments in this class,
-  // then we wouldn't need the getProviderExpression method.
-  // TODO(bcorso): Consider making this an abstract class with equals/hashCode defined by the key
-  // and then using this class directly in Map types instead of Key.
-  interface SwitchCase {
-    /** Returns the {@link Key} for this switch case. */
-    Key key();
-
-    /** Returns the {@link Expression} that returns the provided instance for this case. */
-    Expression getReturnExpression(ClassName switchingProviderClass);
-
-    /**
-     * Returns the {@link Expression} that returns the {@code SwitchProvider} instance for this
-     * case.
-     */
-    Expression getProviderExpression(ClassName switchingProviderClass, int switchId);
-  }
-
+final class SwitchingProviders {
   /**
    * Each switch size is fixed at 100 cases each and put in its own method. This is to limit the
    * size of the methods so that we don't reach the "huge" method size limit for Android that will
@@ -97,26 +80,34 @@ abstract class SwitchingProviders {
       new LinkedHashMap<>();
 
   private final ComponentImplementation componentImplementation;
+  private final ComponentBindingExpressions componentBindingExpressions;
   private final ClassName owningComponent;
   private final DaggerTypes types;
   private final UniqueNameSet switchingProviderNames = new UniqueNameSet();
 
-  SwitchingProviders(ComponentImplementation componentImplementation, DaggerTypes types) {
+  SwitchingProviders(
+      ComponentImplementation componentImplementation,
+      ComponentBindingExpressions componentBindingExpressions,
+      DaggerTypes types) {
     this.componentImplementation = checkNotNull(componentImplementation);
+    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.types = checkNotNull(types);
     this.owningComponent = checkNotNull(componentImplementation).name();
   }
 
-  /** Returns the {@link TypeSpec} for a {@code SwitchingProvider} based on the given builder. */
-  protected abstract TypeSpec createSwitchingProviderType(TypeSpec.Builder builder);
-
   /**
-   * Returns the {@link Expression} that returns the {@code SwitchProvider} instance for the case.
+   * Returns the binding expression for a binding that satisfies a {@link Provider} requests with a
+   * inner {@code SwitchingProvider} class.
    */
-  protected final Expression getProviderExpression(SwitchCase switchCase) {
-    return switchingProviderBuilders
-        .computeIfAbsent(switchCase.key(), key -> getSwitchingProviderBuilder())
-        .getProviderExpression(switchCase);
+  BindingExpression newBindingExpression(ContributionBinding binding) {
+    return new BindingExpression() {
+      @Override
+      Expression getDependencyExpression(ClassName requestingClass) {
+        return switchingProviderBuilders
+            .computeIfAbsent(binding.key(), key -> getSwitchingProviderBuilder())
+            .getProviderExpression(binding, requestingClass);
+      }
+    };
   }
 
   private SwitchingProviderBuilder getSwitchingProviderBuilder() {
@@ -142,33 +133,47 @@ abstract class SwitchingProviders {
       this.switchingProviderType = checkNotNull(switchingProviderType);
     }
 
-    Expression getProviderExpression(SwitchCase switchCase) {
-      Key key = switchCase.key();
+    Expression getProviderExpression(ContributionBinding binding, ClassName requestingClass) {
+      Key key = binding.key();
       if (!switchIds.containsKey(key)) {
         int switchId = switchIds.size();
         switchIds.put(key, switchId);
-        switchCases.put(switchId, createSwitchCaseCodeBlock(switchCase));
+        switchCases.put(switchId, createSwitchCaseCodeBlock(key));
       }
-      return switchCase.getProviderExpression(switchingProviderType, switchIds.get(key));
+      TypeMirror instanceType = types.accessibleType(binding.contributedType(), requestingClass);
+      return Expression.create(
+          types.wrapType(instanceType, Provider.class),
+          CodeBlock.of("new $T<>($L)", switchingProviderType, switchIds.get(key)));
     }
 
-    private CodeBlock createSwitchCaseCodeBlock(SwitchCase switchCase) {
+    private CodeBlock createSwitchCaseCodeBlock(Key key) {
       CodeBlock instanceCodeBlock =
-          switchCase.getReturnExpression(switchingProviderType).box(types).codeBlock();
+          componentBindingExpressions
+              .getDependencyExpression(
+                  bindingRequest(key, RequestKind.INSTANCE), switchingProviderType)
+              .box(types)
+              .codeBlock();
 
       return CodeBlock.builder()
           // TODO(bcorso): Is there something else more useful than the key?
-          .add("case $L: // $L \n", switchIds.get(switchCase.key()), switchCase.key())
+          .add("case $L: // $L \n", switchIds.get(key), key)
           .addStatement("return ($T) $L", T, instanceCodeBlock)
           .build();
     }
 
     private TypeSpec build() {
-      return createSwitchingProviderType(
-          classBuilder(switchingProviderType)
-              .addTypeVariable(T)
-              .addSuperinterface(providerOf(T))
-              .addMethods(getMethods()));
+      return classBuilder(switchingProviderType)
+          .addTypeVariable(T)
+          .addSuperinterface(providerOf(T))
+          .addMethods(getMethods())
+          .addModifiers(PRIVATE, FINAL)
+          .addField(TypeName.INT, "id", PRIVATE, FINAL)
+          .addMethod(
+              MethodSpec.constructorBuilder()
+                  .addParameter(TypeName.INT, "id")
+                  .addStatement("this.id = id")
+                  .build())
+          .build();
     }
 
     private ImmutableList<MethodSpec> getMethods() {

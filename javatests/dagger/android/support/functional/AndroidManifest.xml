@@ -17,7 +17,7 @@
   package="dagger.android.support.functional">
 
   <!-- Bump targetSdk to 29 when we update to Java 11 -->
-  <uses-sdk android:minSdkVersion="1" android:targetSdkVersion="28" />
+  <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="28" />
 
   <application android:theme="@style/Theme.AppCompat"
       android:name=".UsesGeneratedModulesApplication">

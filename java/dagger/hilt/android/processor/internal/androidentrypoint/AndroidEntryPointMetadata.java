@@ -16,7 +16,7 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import static dagger.hilt.android.processor.internal.androidentrypoint.HiltCompilerOptions.BooleanOption.DISABLE_ANDROID_SUPERCLASS_VALIDATION;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.isAndroidSuperclassValidationDisabled;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.common.MoreElements;
@@ -245,7 +245,7 @@ public abstract class AndroidEntryPointMetadata {
     final TypeElement baseElement;
     final ClassName generatedClassName;
     boolean requiresBytecodeInjection =
-        DISABLE_ANDROID_SUPERCLASS_VALIDATION.get(env)
+        isAndroidSuperclassValidationDisabled(androidEntryPointElement, env)
             && MoreTypes.isTypeOf(Void.class, androidEntryPointClassValue.asType());
     if (requiresBytecodeInjection) {
       baseElement = MoreElements.asType(env.getTypeUtils().asElement(androidEntryPointElement.getSuperclass()));

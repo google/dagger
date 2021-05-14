@@ -18,7 +18,6 @@ package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
@@ -86,7 +85,7 @@ public final class ComponentBindingExpressions {
   private final SourceVersion sourceVersion;
   private final CompilerOptions compilerOptions;
   private final MembersInjectionMethods membersInjectionMethods;
-  private final InnerSwitchingProviders innerSwitchingProviders;
+  private final SwitchingProviders switchingProviders;
   private final Map<BindingRequest, BindingExpression> expressions = new HashMap<>();
   private final KotlinMetadataUtil metadataUtil;
 
@@ -116,8 +115,7 @@ public final class ComponentBindingExpressions {
     this.membersInjectionMethods =
         new MembersInjectionMethods(
             componentImplementation, this, graph, elements, types, metadataUtil);
-    this.innerSwitchingProviders =
-        new InnerSwitchingProviders(componentImplementation, this, types);
+    this.switchingProviders = new SwitchingProviders(componentImplementation, this, types);
     this.metadataUtil = metadataUtil;
   }
 
@@ -212,19 +210,14 @@ public final class ComponentBindingExpressions {
   public MethodSpec getComponentMethod(ComponentMethodDescriptor componentMethod) {
     checkArgument(componentMethod.dependencyRequest().isPresent());
     BindingRequest request = bindingRequest(componentMethod.dependencyRequest().get());
-    MethodSpec.Builder method =
-        MethodSpec.overriding(
+    return MethodSpec.overriding(
             componentMethod.methodElement(),
             MoreTypes.asDeclared(graph.componentTypeElement().asType()),
-            types);
-    // Even though this is not used if the method is abstract, we need to invoke the binding
-    // expression in order for the side of effect of the method being added to the
-    // ComponentImplementation
-    CodeBlock methodBody =
-        getBindingExpression(request)
-            .getComponentMethodImplementation(componentMethod, componentImplementation);
-
-    return method.addCode(methodBody).build();
+            types)
+        .addCode(
+            getBindingExpression(request)
+                .getComponentMethodImplementation(componentMethod, componentImplementation))
+        .build();
   }
 
   /** Returns the {@link BindingExpression} for the given {@link BindingRequest}. */
@@ -397,16 +390,8 @@ public final class ComponentBindingExpressions {
   /** Returns a binding expression for a provision binding. */
   private BindingExpression provisionBindingExpression(
       ContributionBinding binding, BindingRequest request) {
-    if (!request.requestKind().isPresent()) {
-      verify(
-          request.frameworkType().get().equals(FrameworkType.PRODUCER_NODE),
-          "expected a PRODUCER_NODE: %s",
-          request);
-      return producerFromProviderBindingExpression(binding);
-    }
-    RequestKind requestKind = request.requestKind().get();
     Key key = request.key();
-    switch (requestKind) {
+    switch (request.requestKind()) {
       case INSTANCE:
         return instanceBindingExpression(binding);
 
@@ -417,7 +402,7 @@ public final class ComponentBindingExpressions {
       case PRODUCED:
       case PROVIDER_OF_LAZY:
         return new DerivedFromFrameworkInstanceBindingExpression(
-            key, FrameworkType.PROVIDER, requestKind, this, types);
+            key, FrameworkType.PROVIDER, request.requestKind(), this, types);
 
       case PRODUCER:
         return producerFromProviderBindingExpression(binding);
@@ -435,14 +420,10 @@ public final class ComponentBindingExpressions {
   /** Returns a binding expression for a production binding. */
   private BindingExpression productionBindingExpression(
       ContributionBinding binding, BindingRequest request) {
-    if (request.frameworkType().isPresent()) {
-      return frameworkInstanceBindingExpression(binding);
-    } else {
-      // If no FrameworkType is present, a RequestKind is guaranteed to be present.
-      RequestKind requestKind = request.requestKind().get();
-      return new DerivedFromFrameworkInstanceBindingExpression(
-          request.key(), FrameworkType.PRODUCER_NODE, requestKind, this, types);
-    }
+    return request.frameworkType().isPresent()
+        ? frameworkInstanceBindingExpression(binding)
+        : new DerivedFromFrameworkInstanceBindingExpression(
+            request.key(), FrameworkType.PRODUCER_NODE, request.requestKind(), this, types);
   }
 
   /**
@@ -451,7 +432,7 @@ public final class ComponentBindingExpressions {
    * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching(ContributionBinding) need to be
    * cached} can use a {@link DelegateBindingExpression}.
    *
-   * <p>In fastInit mode, use an {@link InnerSwitchingProviders inner switching provider} unless
+   * <p>In fastInit mode, use an {@link SwitchingProviders inner switching provider} unless
    * that provider's case statement will simply call {@code get()} on another {@link Provider} (in
    * which case, just use that Provider directly).
    *
@@ -460,15 +441,14 @@ public final class ComponentBindingExpressions {
   private BindingExpression providerBindingExpression(ContributionBinding binding) {
     if (binding.kind().equals(DELEGATE) && !needsCaching(binding)) {
       return new DelegateBindingExpression(binding, RequestKind.PROVIDER, this, types, elements);
-    } else if (compilerOptions.fastInit(
-            topLevelComponentImplementation.componentDescriptor().typeElement())
-        && frameworkInstanceCreationExpression(binding).useInnerSwitchingProvider()
+    } else if (isFastInit()
+        && frameworkInstanceCreationExpression(binding).useSwitchingProvider()
         && !(instanceBindingExpression(binding)
             instanceof DerivedFromFrameworkInstanceBindingExpression)) {
       return wrapInMethod(
           binding,
           bindingRequest(binding.key(), RequestKind.PROVIDER),
-          innerSwitchingProviders.newBindingExpression(binding));
+          switchingProviders.newBindingExpression(binding));
     }
     return frameworkInstanceBindingExpression(binding);
   }
@@ -493,24 +473,27 @@ public final class ComponentBindingExpressions {
 
   /**
    * Returns a binding expression for {@link RequestKind#INSTANCE} requests.
-   *
-   * <p>If there is a direct expression (not calling {@link Provider#get()}) we can use for an
-   * instance of this binding, return it, wrapped in a method if the binding {@linkplain
-   * #needsCaching(ContributionBinding) needs to be cached} or the expression has dependencies.
-   *
-   * <p>In fastInit mode, we can use direct expressions unless the binding needs to be cached.
    */
   private BindingExpression instanceBindingExpression(ContributionBinding binding) {
     Optional<BindingExpression> maybeDirectInstanceExpression =
         unscopedDirectInstanceExpression(binding);
-    if (canUseDirectInstanceExpression(binding) && maybeDirectInstanceExpression.isPresent()) {
-      BindingExpression directInstanceExpression = maybeDirectInstanceExpression.get();
-      return directInstanceExpression.requiresMethodEncapsulation() || needsCaching(binding)
-          ? wrapInMethod(
-              binding,
-              bindingRequest(binding.key(), RequestKind.INSTANCE),
-              directInstanceExpression)
-          : directInstanceExpression;
+    if (maybeDirectInstanceExpression.isPresent()) {
+      // If this is the case where we don't need to use Provider#get() because there's no caching
+      // and it isn't an assisted factory, or because we're in fastInit mode (since fastInit avoids
+      // using Providers), we can try to use the direct expression, possibly wrapped in a method
+      // if necessary (e.g. it has dependencies).
+      if ((!needsCaching(binding) && binding.kind() != BindingKind.ASSISTED_FACTORY)
+          || isFastInit()) {
+        BindingExpression directInstanceExpression = maybeDirectInstanceExpression.get();
+        // While this can't require caching in default mode, if we're in fastInit mode and we need
+        // caching we also need to wrap it in a method.
+        return directInstanceExpression.requiresMethodEncapsulation() || needsCaching(binding)
+            ? wrapInMethod(
+                binding,
+                bindingRequest(binding.key(), RequestKind.INSTANCE),
+                directInstanceExpression)
+            : directInstanceExpression;
+      }
     }
     return new DerivedFromFrameworkInstanceBindingExpression(
         binding.key(), FrameworkType.PROVIDER, RequestKind.INSTANCE, this, types);
@@ -610,24 +593,9 @@ public final class ComponentBindingExpressions {
    * MapFactory} or {@code SetFactory}.
    */
   private boolean useStaticFactoryCreation(ContributionBinding binding) {
-    return !compilerOptions.fastInit(
-            topLevelComponentImplementation.componentDescriptor().typeElement())
+    return !isFastInit()
         || binding.kind().equals(MULTIBOUND_MAP)
         || binding.kind().equals(MULTIBOUND_SET);
-  }
-
-  /**
-   * Returns {@code true} if we can use a direct (not {@code Provider.get()}) expression for this
-   * binding. If the binding doesn't {@linkplain #needsCaching(ContributionBinding) need to be
-   * cached} and the binding is not an {@link BindingKind.ASSISTED_FACTORY}, we can.
-   *
-   * <p>In fastInit mode, we can use a direct expression even if the binding {@linkplain
-   * #needsCaching(ContributionBinding) needs to be cached}.
-   */
-  private boolean canUseDirectInstanceExpression(ContributionBinding binding) {
-    return (!needsCaching(binding) && binding.kind() != BindingKind.ASSISTED_FACTORY)
-        || compilerOptions.fastInit(
-            topLevelComponentImplementation.componentDescriptor().typeElement());
   }
 
   /**
@@ -690,8 +658,7 @@ public final class ComponentBindingExpressions {
 
   private MethodImplementationStrategy methodImplementationStrategy(
       ContributionBinding binding, BindingRequest request) {
-    if (compilerOptions.fastInit(
-        topLevelComponentImplementation.componentDescriptor().typeElement())) {
+    if (isFastInit()) {
       if (request.isRequestKind(RequestKind.PROVIDER)) {
         return MethodImplementationStrategy.SINGLE_CHECK;
       } else if (request.isRequestKind(RequestKind.INSTANCE) && needsCaching(binding)) {
@@ -717,5 +684,10 @@ public final class ComponentBindingExpressions {
       return isBindsScopeStrongerThanDependencyScope(binding, graph);
     }
     return true;
+  }
+
+  private boolean isFastInit() {
+    return compilerOptions.fastInit(
+        topLevelComponentImplementation.componentDescriptor().typeElement());
   }
 }

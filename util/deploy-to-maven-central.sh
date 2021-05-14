@@ -22,21 +22,6 @@ fi
 
 bash $(dirname $0)/run-local-tests.sh
 
-# Note: we detach from head before making any sed changes to avoid commiting
-# a particular version to master. This sed change used to be done at the very
-# end of the script, but with the introduction of "-alpha" to the Hilt
-# artifacts, we need to do the sed replacement before deploying the artifacts to
-# maven. Note, that this sed replacement is only done for versioned releases.
-# HEAD-SNAPSHOT and LOCAL_SNAPSHOT versions of Hilt artifacts do not contain
-# "-alpha".
-git checkout --detach
-
-# Set the version string that is used as a tag in all of our libraries. If
-# another repo depends on a versioned tag of Dagger, their java_library.tags
-# should match the versioned release.
-sed -i s/'#ALPHA_POSTFIX'/'+ "-alpha"'/g build_defs.bzl
-sed -i s/'${project.version}'/"${VERSION_NAME}"/g build_defs.bzl
-
 bash $(dirname $0)/deploy-dagger.sh \
   "gpg:sign-and-deploy-file" \
   "$VERSION_NAME" \
@@ -46,10 +31,19 @@ bash $(dirname $0)/deploy-dagger.sh \
 
 bash $(dirname $0)/deploy-hilt.sh \
   "gpg:sign-and-deploy-file" \
-  "${VERSION_NAME}-alpha" \
+  "$VERSION_NAME" \
   "-DrepositoryId=sonatype-nexus-staging" \
   "-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
   "-Dgpg.keyname=${KEY}"
+
+# Note: we detach from head before making any sed changes to avoid commiting
+# a particular version to master.
+git checkout --detach
+
+# Set the version string that is used as a tag in all of our libraries. If
+# another repo depends on a versioned tag of Dagger, their java_library.tags
+# should match the versioned release.
+sed -i s/'${project.version}'/"${VERSION_NAME}"/g build_defs.bzl
 
 # Note: We avoid commiting until after deploying in case deploying fails and
 # we need to run the script again.

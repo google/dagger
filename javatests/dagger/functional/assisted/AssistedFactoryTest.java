@@ -135,7 +135,7 @@ public final class AssistedFactoryTest {
   @AssistedFactory
   interface SimpleFooFactory {
     // Use different parameter names than Foo to make sure we're not assuming they're the same.
-    SimpleFoo createSimpleFoo(AssistedDep1 factoryAssistedDep1);
+    SimpleFoo createSimpleFoo(AssistedDep factoryAssistedDep1);
 
     // A no-op method to test static methods are allowed
     static void staticMethod() {

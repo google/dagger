@@ -26,6 +26,7 @@ android {
 dependencies {
     implementation project(':deep-android-lib')
     implementation project(':deep-kotlin-lib')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'
     kapt 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
 }

@@ -253,8 +253,8 @@ public class AssistedFactoryErrorsTest {
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining(
-            "The parameters of the factory method must be assignable to the list of @Assisted "
-                + "parameters in test.Foo.\n"
+            "The parameters in the factory method must match the @Assisted parameters in "
+                + "test.Foo.\n"
                 + "        Actual: test.FooFactory#create(java.lang.String)\n"
                 + "      Expected: test.FooFactory#create(int)");
   }
@@ -290,10 +290,44 @@ public class AssistedFactoryErrorsTest {
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining(
-            "The parameters of the factory method must be assignable to the list of @Assisted "
-                + "parameters in test.Foo<T>.\n"
+            "The parameters in the factory method must match the @Assisted parameters in "
+                + "test.Foo<T>.\n"
                 + "        Actual: test.FooFactory#create(java.lang.String)\n"
                 + "      Expected: test.FooFactory#create(T)");
+  }
+
+  @Test
+  public void testFactoryDuplicateGenericParameter() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class Foo<T> {",
+            "  @AssistedInject Foo(@Assisted String str, @Assisted T t) {}",
+            "}");
+
+    JavaFileObject fooFactory =
+        JavaFileObjects.forSourceLines(
+            "test.FooFactory",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "interface FooFactory {",
+            "  Foo<String> create(String str1, String str2);",
+            "}");
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts()).compile(foo, fooFactory);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "@AssistedFactory method has duplicate @Assisted types: @Assisted java.lang.String");
   }
 
   @Test
@@ -532,6 +566,56 @@ public class AssistedFactoryErrorsTest {
         .hadErrorContaining(
             "[test.Foo.Factory] Dagger does not support providing @AssistedFactory types.")
         .inFile(component)
+        .onLine(11);
+  }
+
+  @Test
+  public void testProvidesAssistedBindingsAsOptional() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "class Foo {",
+            "  @AssistedInject Foo() {}",
+            "",
+            "  @AssistedFactory",
+            "  interface Factory {",
+            "    Foo create();",
+            "  }",
+            "}");
+
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.FooModule",
+            "package test;",
+            "",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface FooModule {",
+            "  @BindsOptionalOf Foo optionalFoo();",
+            "",
+            "  @BindsOptionalOf Foo.Factory optionalFooFactory();",
+            "}");
+
+    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo, module);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(2);
+    assertThat(compilation)
+        .hadErrorContaining("[test.Foo] Dagger does not support providing @AssistedInject types.")
+        .inFile(module)
+        .onLine(9);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "[test.Foo.Factory] Dagger does not support providing @AssistedFactory types.")
+        .inFile(module)
         .onLine(11);
   }
 

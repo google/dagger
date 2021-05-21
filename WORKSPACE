@@ -173,7 +173,7 @@ http_archive(
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
-ANDROID_LINT_VERSION = "26.6.2"
+ANDROID_LINT_VERSION = "30.1.0"
 
 AUTO_COMMON_VERSION = "1.2.1"
 

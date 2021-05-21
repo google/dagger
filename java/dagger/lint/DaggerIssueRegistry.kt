@@ -35,6 +35,6 @@ class DaggerIssueRegistry : IssueRegistry() {
   // The api is meant to be the current api for which this registry was compiled, but we set a
   // higher number without depending on a newer Lint to avoid Lint warning users of custom checks
   // that might not work. This value eventually has to be updated as newer Api become available.
-  override val api: Int = 8
+  override val api: Int = 11
   override val issues: List<Issue> = DaggerKotlinIssueDetector.issues
 }

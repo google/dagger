@@ -16,6 +16,7 @@
 package dagger.lint
 
 import com.android.tools.lint.checks.infrastructure.LintDetectorTest
+import com.android.tools.lint.checks.infrastructure.TestMode
 import com.android.tools.lint.detector.api.Detector
 import com.android.tools.lint.detector.api.Issue
 import org.junit.Test
@@ -183,6 +184,8 @@ class DaggerKotlinIssueDetectorTest : LintDetectorTest() {
         ).indented()
       )
       .allowCompilationErrors(false)
+      // Unlikely that @JvmStatic would be aliased, so skipping these modes.
+      .skipTestModes(TestMode.TYPE_ALIAS, TestMode.IMPORT_ALIAS)
       .run()
       .expect(
         """

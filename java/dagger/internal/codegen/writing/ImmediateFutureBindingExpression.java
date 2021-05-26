@@ -23,6 +23,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;
@@ -35,8 +38,9 @@ final class ImmediateFutureBindingExpression extends BindingExpression {
   private final DaggerTypes types;
   private final SourceVersion sourceVersion;
 
+  @AssistedInject
   ImmediateFutureBindingExpression(
-      Key key,
+      @Assisted Key key,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       SourceVersion sourceVersion) {
@@ -69,5 +73,10 @@ final class ImmediateFutureBindingExpression extends BindingExpression {
       }
     }
     return expression.codeBlock();
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    ImmediateFutureBindingExpression create(Key key);
   }
 }

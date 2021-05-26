@@ -16,12 +16,16 @@
 
 package dagger.internal.codegen.writing;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.anonymousProvider;
 import static dagger.model.RequestKind.INSTANCE;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.Expression;
@@ -37,13 +41,14 @@ final class AnonymousProviderCreationExpression
   private final ComponentBindingExpressions componentBindingExpressions;
   private final ClassName requestingClass;
 
+  @AssistedInject
   AnonymousProviderCreationExpression(
-      ContributionBinding binding,
+      @Assisted ContributionBinding binding,
       ComponentBindingExpressions componentBindingExpressions,
-      ClassName requestingClass) {
-    this.binding = binding;
+      ComponentImplementation componentImplementation) {
+    this.binding = checkNotNull(binding);
     this.componentBindingExpressions = componentBindingExpressions;
-    this.requestingClass = requestingClass;
+    this.requestingClass = componentImplementation.name();
   }
 
   @Override
@@ -56,5 +61,10 @@ final class AnonymousProviderCreationExpression
             // given class, not that class itself.
             requestingClass.nestedClass("Anonymous"));
     return anonymousProvider(instanceExpression);
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    AnonymousProviderCreationExpression create(ContributionBinding binding);
   }
 }

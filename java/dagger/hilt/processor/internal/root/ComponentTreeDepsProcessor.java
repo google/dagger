@@ -97,7 +97,7 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
 
       boolean isDefaultRoot = ClassNames.DEFAULT_ROOT.equals(renamedRoot);
       ImmutableSet<Root> roots =
-          AggregatedRootMetadata.from(metadata.aggregatedRootDeps(), getElementUtils()).stream()
+          AggregatedRootMetadata.from(metadata.aggregatedRootDeps(), processingEnv).stream()
               .map(AggregatedRootMetadata::rootElement)
               .map(rootElement -> Root.create(rootElement, getProcessingEnv()))
               .collect(toImmutableSet());

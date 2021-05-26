@@ -29,6 +29,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.MapBuilder;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.binding.BindingGraph;
@@ -54,8 +57,9 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   private final DaggerTypes types;
   private final DaggerElements elements;
 
+  @AssistedInject
   MapBindingExpression(
-      ProvisionBinding binding,
+      @Assisted ProvisionBinding binding,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
@@ -166,5 +170,10 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
 
   private boolean isImmutableMapAvailable() {
     return elements.getTypeElement(ImmutableMap.class) != null;
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    MapBindingExpression create(ProvisionBinding binding);
   }
 }

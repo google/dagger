@@ -24,6 +24,9 @@ import static dagger.internal.codegen.javapoet.TypeNames.MEMBERS_INJECTORS;
 
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import javax.lang.model.element.TypeElement;
@@ -36,8 +39,9 @@ final class MembersInjectorProviderCreationExpression
   private final ComponentBindingExpressions componentBindingExpressions;
   private final ProvisionBinding binding;
 
+  @AssistedInject
   MembersInjectorProviderCreationExpression(
-      ProvisionBinding binding, ComponentBindingExpressions componentBindingExpressions) {
+      @Assisted ProvisionBinding binding, ComponentBindingExpressions componentBindingExpressions) {
     this.binding = checkNotNull(binding);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
   }
@@ -89,5 +93,10 @@ final class MembersInjectorProviderCreationExpression
   @Override
   public boolean useSwitchingProvider() {
     return !binding.injectionSites().isEmpty();
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    MembersInjectorProviderCreationExpression create(ProvisionBinding binding);
   }
 }

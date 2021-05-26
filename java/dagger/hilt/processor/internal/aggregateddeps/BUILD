@@ -86,6 +86,7 @@ java_library(
         "//java/dagger/hilt/processor/internal:component_descriptor",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/hilt/processor/internal/earlyentrypoint:aggregated_early_entry_point_metadata",
+        "//java/dagger/hilt/processor/internal/root/ir",
         "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/guava:base",

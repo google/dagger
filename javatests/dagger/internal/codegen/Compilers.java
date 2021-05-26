@@ -44,7 +44,8 @@ public final class Compilers {
           .collect(collectingAndThen(toList(), ImmutableList::copyOf));
 
   static final ImmutableList<String> DEFAULT_JAVACOPTS =
-      ImmutableList.of("-Adagger.experimentalDaggerErrorMessages=enabled");
+      ImmutableList.of(
+          "-Adagger.experimentalDaggerErrorMessages=enabled");
 
   /**
    * Returns a compiler that runs the Dagger and {@code @AutoAnnotation} processors, along with

@@ -16,7 +16,12 @@
 
 package dagger.internal.codegen.writing;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.squareup.javapoet.ClassName;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.Expression;
@@ -30,12 +35,13 @@ final class ComponentRequirementBindingExpression extends SimpleInvocationBindin
   private final ComponentRequirement componentRequirement;
   private final ComponentRequirementExpressions componentRequirementExpressions;
 
+  @AssistedInject
   ComponentRequirementBindingExpression(
-      ContributionBinding binding,
-      ComponentRequirement componentRequirement,
+      @Assisted ContributionBinding binding,
+      @Assisted ComponentRequirement componentRequirement,
       ComponentRequirementExpressions componentRequirementExpressions) {
     super(binding);
-    this.componentRequirement = componentRequirement;
+    this.componentRequirement = checkNotNull(componentRequirement);
     this.componentRequirementExpressions = componentRequirementExpressions;
   }
 
@@ -44,5 +50,11 @@ final class ComponentRequirementBindingExpression extends SimpleInvocationBindin
     return Expression.create(
         componentRequirement.type(),
         componentRequirementExpressions.getExpression(componentRequirement, requestingClass));
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    ComponentRequirementBindingExpression create(
+        ContributionBinding binding, ComponentRequirement componentRequirement);
   }
 }

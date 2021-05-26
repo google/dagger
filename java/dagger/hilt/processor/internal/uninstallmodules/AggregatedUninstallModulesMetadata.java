@@ -23,10 +23,13 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.root.ir.AggregatedUninstallModulesIr;
+import java.util.stream.Collectors;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
@@ -66,6 +69,15 @@ public abstract class AggregatedUninstallModulesMetadata {
     return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
+  }
+
+  public static AggregatedUninstallModulesIr toIr(AggregatedUninstallModulesMetadata metadata) {
+    return new AggregatedUninstallModulesIr(
+        ClassName.get(metadata.aggregatingElement()),
+        ClassName.get(metadata.testElement()),
+        metadata.uninstallModuleElements().stream()
+            .map(ClassName::get)
+            .collect(Collectors.toList()));
   }
 
   private static AggregatedUninstallModulesMetadata create(TypeElement element, Elements elements) {

@@ -51,20 +51,22 @@ abstract class MemberSelect {
 
   /**
    * Returns a {@link MemberSelect} that accesses the field given by {@code fieldName} owned by
-   * {@code owningClass}.  In this context "local" refers to the fact that the field is owned by the
-   * type (or an enclosing type) from which the code block will be used.  The returned
-   * {@link MemberSelect} will not be valid for accessing the field from a different class
-   * (regardless of accessibility).
+   * {@code owningClass}. In this context "local" refers to the fact that the field is owned by the
+   * type (or an enclosing type) from which the code block will be used. The returned {@link
+   * MemberSelect} will not be valid for accessing the field from a different class (regardless of
+   * accessibility).
    */
-  static MemberSelect localField(ClassName owningClass, String fieldName) {
-    return new LocalField(owningClass, fieldName);
+  static MemberSelect localField(ComponentImplementation owningComponent, String fieldName) {
+    return new LocalField(owningComponent, fieldName);
   }
 
   private static final class LocalField extends MemberSelect {
+    final ComponentImplementation owningComponent;
     final String fieldName;
 
-    LocalField(ClassName owningClass, String fieldName) {
-      super(owningClass, false);
+    LocalField(ComponentImplementation owningComponent, String fieldName) {
+      super(owningComponent.name(), false);
+      this.owningComponent = owningComponent;
       this.fieldName = checkNotNull(fieldName);
     }
 
@@ -72,34 +74,7 @@ abstract class MemberSelect {
     CodeBlock getExpressionFor(ClassName usingClass) {
       return owningClass().equals(usingClass)
           ? CodeBlock.of("$N", fieldName)
-          : CodeBlock.of("$T.this.$N", owningClass(), fieldName);
-    }
-  }
-
-  /**
-   * Returns a {@link MemberSelect} that accesses the method given by {@code methodName} owned by
-   * {@code owningClass}. In this context "local" refers to the fact that the method is owned by the
-   * type (or an enclosing type) from which the code block will be used. The returned {@link
-   * MemberSelect} will not be valid for accessing the method from a different class (regardless of
-   * accessibility).
-   */
-  static MemberSelect localMethod(ClassName owningClass, String methodName) {
-    return new LocalMethod(owningClass, methodName);
-  }
-
-  private static final class LocalMethod extends MemberSelect {
-    final String methodName;
-
-    LocalMethod(ClassName owningClass, String methodName) {
-      super(owningClass, false);
-      this.methodName = checkNotNull(methodName);
-    }
-
-    @Override
-    CodeBlock getExpressionFor(ClassName usingClass) {
-      return owningClass().equals(usingClass)
-          ? CodeBlock.of("$N()", methodName)
-          : CodeBlock.of("$T.this.$N()", owningClass(), methodName);
+          : CodeBlock.of("$L.$N", owningComponent.componentFieldReference(), fieldName);
     }
   }
 

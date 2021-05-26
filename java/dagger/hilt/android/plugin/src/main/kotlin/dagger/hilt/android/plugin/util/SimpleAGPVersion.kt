@@ -46,11 +46,5 @@ internal data class SimpleAGPVersion(
 
       return SimpleAGPVersion(parts[0].toInt(), parts[1].toInt())
     }
-
-    private fun findClass(fqName: String) = try {
-      Class.forName(fqName)
-    } catch (ex: ClassNotFoundException) {
-      null
-    }
   }
 }

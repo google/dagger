@@ -44,5 +44,5 @@ dependencies {
 }
 
 hilt {
-    enableAggregatingTask = true
+    enableExperimentalClasspathAggregation = true
 }

@@ -21,10 +21,12 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.root.ir.AliasOfPropagatedDataIr;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
@@ -60,6 +62,13 @@ public abstract class AliasOfPropagatedDataMetadata {
     return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
+  }
+
+  public static AliasOfPropagatedDataIr toIr(AliasOfPropagatedDataMetadata metadata) {
+    return new AliasOfPropagatedDataIr(
+        ClassName.get(metadata.aggregatingElement()),
+        ClassName.get(metadata.defineComponentScopeElement()),
+        ClassName.get(metadata.aliasElement()));
   }
 
   private static AliasOfPropagatedDataMetadata create(TypeElement element, Elements elements) {

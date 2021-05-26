@@ -1,6 +1,5 @@
 package dagger.hilt.android.plugin.util
 
-import com.android.SdkConstants
 import java.io.File
 import java.io.InputStream
 import java.util.Properties
@@ -9,13 +8,13 @@ import java.util.zip.ZipInputStream
 import org.gradle.api.Project
 
 /* Checks if a file is a .class file. */
-fun File.isClassFile() = this.isFile && this.extension == SdkConstants.EXT_CLASS
+fun File.isClassFile() = this.isFile && this.extension == "class"
 
 /* Checks if a Zip entry is a .class file. */
-fun ZipEntry.isClassFile() = !this.isDirectory && this.name.endsWith(SdkConstants.DOT_CLASS)
+fun ZipEntry.isClassFile() = !this.isDirectory && this.name.endsWith(".class")
 
 /* Checks if a file is a .jar file. */
-fun File.isJarFile() = this.isFile && this.extension == SdkConstants.EXT_JAR
+fun File.isJarFile() = this.isFile && this.extension == "jar"
 
 /* Executes the given [block] function over each [ZipEntry] in this [ZipInputStream]. */
 fun ZipInputStream.forEachZipEntry(block: (InputStream, ZipEntry) -> Unit) = use {

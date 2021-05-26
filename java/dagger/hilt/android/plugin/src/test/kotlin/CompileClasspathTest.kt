@@ -118,7 +118,6 @@ class CompileClasspathTest(private val pluginFlagName: String) {
     @Parameterized.Parameters(name = "{0}")
     fun parameters() = listOf(
       "enableExperimentalClasspathAggregation",
-      "enableAggregatingTask"
     )
   }
 }

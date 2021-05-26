@@ -84,6 +84,16 @@ public final class HiltCompilerOptions {
     return BooleanOption.USE_AGGREGATING_ROOT_PROCESSOR.get(env);
   }
 
+  /**
+   * Returns {@code true} if fragment code should use the fixed getContext() behavior where it
+   * correctly returns null after a fragment is removed. This fixed behavior matches the behavior
+   * of a regular fragment and can help catch issues where a removed or leaked fragment is
+   * incorrectly used.
+   */
+  public static boolean useFragmentGetContextFix(ProcessingEnvironment env) {
+    return BooleanOption.USE_FRAGMENT_GET_CONTEXT_FIX.get(env);
+  }
+
   /** Processor options which can have true or false values. */
   private enum BooleanOption {
     /** Do not use! This is for internal use only. */
@@ -97,7 +107,9 @@ public final class HiltCompilerOptions {
 
     DISABLE_MODULES_HAVE_INSTALL_IN_CHECK("disableModulesHaveInstallInCheck", false),
 
-    SHARE_TEST_COMPONENTS("shareTestComponents", false);
+    SHARE_TEST_COMPONENTS("shareTestComponents", false),
+
+    USE_FRAGMENT_GET_CONTEXT_FIX("android.useFragmentGetContextFix", false);
 
     private final String name;
     private final boolean defaultValue;

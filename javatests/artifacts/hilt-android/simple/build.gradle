@@ -17,7 +17,7 @@
 buildscript {
     ext {
         dagger_version = 'LOCAL-SNAPSHOT'
-        kotlin_version = '1.3.61'
+        kotlin_version = '1.5.0'
         agp_version = System.getenv('AGP_VERSION') ?: "4.2.0"
     }
     repositories {

@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedParameterSpecs;
@@ -25,10 +24,14 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.TypeName;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.model.BindingKind;
 
 /**
@@ -37,32 +40,33 @@ import dagger.model.BindingKind;
  * <p>Dependents of this binding expression will just call the no-arg private method.
  */
 final class PrivateMethodBindingExpression extends MethodBindingExpression {
+  private final ShardImplementation shardImplementation;
   private final ContributionBinding binding;
   private final BindingRequest request;
-  private final ComponentImplementation componentImplementation;
   private final CompilerOptions compilerOptions;
   private final DaggerTypes types;
   private String methodName;
 
+  @AssistedInject
   PrivateMethodBindingExpression(
-      BindingRequest request,
-      ContributionBinding binding,
-      MethodImplementationStrategy methodImplementationStrategy,
-      BindingExpression wrappedBindingExpression,
+      @Assisted BindingRequest request,
+      @Assisted ContributionBinding binding,
+      @Assisted MethodImplementationStrategy methodImplementationStrategy,
+      @Assisted BindingExpression wrappedBindingExpression,
       ComponentImplementation componentImplementation,
       DaggerTypes types,
       CompilerOptions compilerOptions) {
     super(
+        componentImplementation.shardImplementation(binding.key()),
         request,
         binding,
         methodImplementationStrategy,
         wrappedBindingExpression,
-        componentImplementation,
         types);
+    this.shardImplementation = componentImplementation.shardImplementation(binding.key());
     this.binding = binding;
-    this.request = checkNotNull(request);
-    this.componentImplementation = checkNotNull(componentImplementation);
-    this.compilerOptions = checkNotNull(compilerOptions);
+    this.request = request;
+    this.compilerOptions = compilerOptions;
     this.types = types;
   }
 
@@ -70,10 +74,10 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
   protected void addMethod() {
     if (methodName == null) {
       // Have to set methodName field before implementing the method in order to handle recursion.
-      methodName = componentImplementation.getUniqueMethodName(request);
+      methodName = shardImplementation.getUniqueMethodName(request);
 
       // TODO(bcorso): Fix the order that these generated methods are written to the component.
-      componentImplementation.addMethod(
+      shardImplementation.addMethod(
           PRIVATE_METHOD,
           methodBuilder(methodName)
               .addModifiers(PRIVATE)
@@ -92,5 +96,14 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
   protected String methodName() {
     checkState(methodName != null, "addMethod() must be called before methodName()");
     return methodName;
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    PrivateMethodBindingExpression create(
+        BindingRequest request,
+        ContributionBinding binding,
+        MethodImplementationStrategy methodImplementationStrategy,
+        BindingExpression wrappedBindingExpression);
   }
 }

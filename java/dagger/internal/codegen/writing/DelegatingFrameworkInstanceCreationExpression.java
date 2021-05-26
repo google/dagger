@@ -21,6 +21,9 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
@@ -34,13 +37,14 @@ final class DelegatingFrameworkInstanceCreationExpression
   private final ComponentImplementation componentImplementation;
   private final ComponentBindingExpressions componentBindingExpressions;
 
+  @AssistedInject
   DelegatingFrameworkInstanceCreationExpression(
-      ContributionBinding binding,
+      @Assisted ContributionBinding binding,
       ComponentImplementation componentImplementation,
       ComponentBindingExpressions componentBindingExpressions) {
     this.binding = checkNotNull(binding);
-    this.componentImplementation = checkNotNull(componentImplementation);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
+    this.componentImplementation = componentImplementation;
+    this.componentBindingExpressions = componentBindingExpressions;
   }
 
   @Override
@@ -53,5 +57,10 @@ final class DelegatingFrameworkInstanceCreationExpression
                 componentImplementation.name())
             .codeBlock(),
         binding.frameworkType().frameworkClass());
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    DelegatingFrameworkInstanceCreationExpression create(ContributionBinding binding);
   }
 }

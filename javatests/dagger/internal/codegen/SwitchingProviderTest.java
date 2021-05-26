@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.Compiler.javac;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
@@ -69,7 +69,7 @@ public class SwitchingProviderTest {
                 "package test;",
             GeneratedLines.generatedAnnotations(),
                 "final class DaggerTestComponent implements TestComponent {",
-                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "  private static final class SwitchingProvider<T> implements Provider<T> {",
                 "    @SuppressWarnings(\"unchecked\")",
                 "    private T get0() {",
                 "      switch (id) {",
@@ -254,7 +254,7 @@ public class SwitchingProviderTest {
                 "  private Provider<String> stringProvider() {",
                 "    Object local = sProvider;",
                 "    if (local == null) {",
-                "      local = new SwitchingProvider<>(0);",
+                "      local = new SwitchingProvider<>(testComponent, 0);",
                 "      sProvider = (Provider<String>) local;",
                 "    }",
                 "    return (Provider<String>) local;",
@@ -270,15 +270,13 @@ public class SwitchingProviderTest {
                 "    return (Provider) stringProvider();",
                 "  }",
                 "",
-                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "  private static final class SwitchingProvider<T> implements Provider<T> {",
                 "    @SuppressWarnings(\"unchecked\")",
                 "    @Override",
                 "    public T get() {",
                 "      switch (id) {",
-                "        case 0:",
-                "          return (T) TestModule_SFactory.s();",
-                "        default:",
-                "          throw new AssertionError(id);",
+                "        case 0: return (T) TestModule_SFactory.s();",
+                "        default: throw new AssertionError(id);",
                 "      }",
                 "    }",
                 "  }",
@@ -360,21 +358,19 @@ public class SwitchingProviderTest {
                 "  public Provider<CharSequence> charSequenceProvider() {",
                 "    Object local = cProvider;",
                 "    if (local == null) {",
-                "      local = new SwitchingProvider<>(0);",
+                "      local = new SwitchingProvider<>(testComponent, 0);",
                 "      cProvider = (Provider<CharSequence>) local;",
                 "    }",
                 "    return (Provider<CharSequence>) local;",
                 "  }",
                 "",
-                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "  private static final class SwitchingProvider<T> implements Provider<T> {",
                 "    @SuppressWarnings(\"unchecked\")",
                 "    @Override",
                 "    public T get() {",
                 "      switch (id) {",
-                "        case 0:",
-                "          return (T) DaggerTestComponent.this.charSequence();",
-                "        default:",
-                "          throw new AssertionError(id);",
+                "        case 0: return (T) testComponent.charSequence();",
+                "        default: throw new AssertionError(id);",
                 "      }",
                 "    }",
                 "  }",
@@ -558,7 +554,7 @@ public class SwitchingProviderTest {
                 "  public Provider<Optional<Present>> providerOfOptionalOfPresent() {",
                 "    Object local = optionalOfPresentProvider;",
                 "    if (local == null) {",
-                "      local = new SwitchingProvider<>(0);",
+                "      local = new SwitchingProvider<>(testComponent, 0);",
                 "      optionalOfPresentProvider = (Provider<Optional<Present>>) local;",
                 "    }",
                 "    return (Provider<Optional<Present>>) local;",
@@ -576,15 +572,13 @@ public class SwitchingProviderTest {
                 "    return provider;",
                 "  }",
                 "",
-                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "  private static final class SwitchingProvider<T> implements Provider<T> {",
                 "    @SuppressWarnings(\"unchecked\")",
                 "    @Override",
                 "    public T get() {",
                 "      switch (id) {",
-                "        case 0: // java.util.Optional<test.Present>",
-                "          return (T) Optional.of(TestModule_PFactory.p());",
-                "        default:",
-                "          throw new AssertionError(id);",
+                "        case 0: return (T) Optional.of(TestModule_PFactory.p());",
+                "        default: throw new AssertionError(id);",
                 "      }",
                 "    }",
                 "  }",
@@ -592,8 +586,6 @@ public class SwitchingProviderTest {
   }
 
   private Compiler compilerWithAndroidMode() {
-    return javac()
-        .withProcessors(new ComponentProcessor())
-        .withOptions(CompilerMode.FAST_INIT_MODE.javacopts());
+    return compilerWithOptions(CompilerMode.FAST_INIT_MODE.javacopts());
   }
 }

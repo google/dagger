@@ -21,10 +21,12 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.root.ir.AggregatedEarlyEntryPointIr;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
@@ -32,7 +34,7 @@ import javax.lang.model.util.Elements;
 
 /**
  * A class that represents the values stored in an {@link
- * dagger.hilt.android.internal.uninstallmodules.AggregatedUninstallModules} annotation.
+ * dagger.hilt.android.internal.earlyentrypoint.AggregatedEarlyEntryPoint} annotation.
  */
 @AutoValue
 public abstract class AggregatedEarlyEntryPointMetadata {
@@ -59,6 +61,12 @@ public abstract class AggregatedEarlyEntryPointMetadata {
     return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
+  }
+
+  public static AggregatedEarlyEntryPointIr toIr(AggregatedEarlyEntryPointMetadata metadata) {
+    return new AggregatedEarlyEntryPointIr(
+        ClassName.get(metadata.aggregatingElement()),
+        ClassName.get(metadata.earlyEntryPoint()));
   }
 
   private static AggregatedEarlyEntryPointMetadata create(TypeElement element, Elements elements) {

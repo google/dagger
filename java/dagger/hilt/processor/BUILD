@@ -92,6 +92,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/processor/internal/root:root_processor_lib",
         "//java/dagger/hilt/processor/internal/root:root_metadata",
         "//java/dagger/hilt/processor/internal/root:root_type",
+        "//java/dagger/hilt/processor/internal/root/ir:ir",
         "//java/dagger/hilt/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
     ],

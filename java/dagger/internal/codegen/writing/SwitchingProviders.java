@@ -29,6 +29,7 @@ import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -143,7 +144,13 @@ final class SwitchingProviders {
       TypeMirror instanceType = types.accessibleType(binding.contributedType(), requestingClass);
       return Expression.create(
           types.wrapType(instanceType, Provider.class),
-          CodeBlock.of("new $T<>($L)", switchingProviderType, switchIds.get(key)));
+          CodeBlock.of(
+              "new $T<>($L, $L)",
+              switchingProviderType,
+              componentImplementation.componentFieldsByImplementation().values().stream()
+                  .map(field -> CodeBlock.of("$N", field))
+                  .collect(CodeBlocks.toParametersCodeBlock()),
+              switchIds.get(key)));
     }
 
     private CodeBlock createSwitchCaseCodeBlock(Key key) {
@@ -162,18 +169,28 @@ final class SwitchingProviders {
     }
 
     private TypeSpec build() {
-      return classBuilder(switchingProviderType)
-          .addTypeVariable(T)
-          .addSuperinterface(providerOf(T))
-          .addMethods(getMethods())
-          .addModifiers(PRIVATE, FINAL)
-          .addField(TypeName.INT, "id", PRIVATE, FINAL)
-          .addMethod(
-              MethodSpec.constructorBuilder()
-                  .addParameter(TypeName.INT, "id")
-                  .addStatement("this.id = id")
-                  .build())
-          .build();
+      TypeSpec.Builder builder =
+          classBuilder(switchingProviderType)
+              .addModifiers(PRIVATE, FINAL, STATIC)
+              .addTypeVariable(T)
+              .addSuperinterface(providerOf(T))
+              .addMethods(getMethods());
+
+      // The SwitchingProvider constructor lists all component parameters first and switch id last.
+      MethodSpec.Builder constructor = MethodSpec.constructorBuilder();
+      componentImplementation
+          .componentFieldsByImplementation()
+          .values()
+          .forEach(
+              field -> {
+                builder.addField(field);
+                constructor.addParameter(field.type, field.name);
+                constructor.addStatement("this.$1N = $1N", field);
+              });
+      builder.addField(TypeName.INT, "id", PRIVATE, FINAL);
+      constructor.addParameter(TypeName.INT, "id").addStatement("this.id = id");
+
+      return builder.addMethod(constructor.build()).build();
     }
 
     private ImmutableList<MethodSpec> getMethods() {

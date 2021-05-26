@@ -16,10 +16,11 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
@@ -31,19 +32,19 @@ import dagger.producers.internal.Producers;
 
 /** Binding expression for producer node instances. */
 final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindingExpression {
-  /** The component defining this binding. */
   private final ComponentImplementation componentImplementation;
   private final Key key;
   private final ProducerEntryPointView producerEntryPointView;
 
+  @AssistedInject
   ProducerNodeInstanceBindingExpression(
-      ContributionBinding binding,
-      FrameworkInstanceSupplier frameworkInstanceSupplier,
+      @Assisted ContributionBinding binding,
+      @Assisted FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
       DaggerElements elements,
       ComponentImplementation componentImplementation) {
     super(binding, frameworkInstanceSupplier, types, elements);
-    this.componentImplementation = checkNotNull(componentImplementation);
+    this.componentImplementation = componentImplementation;
     this.key = binding.key();
     this.producerEntryPointView = new ProducerEntryPointView(types);
   }
@@ -73,5 +74,11 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
         .getProducerEntryPointField(this, componentMethod, component)
         .orElseGet(
             () -> super.getDependencyExpressionForComponentMethod(componentMethod, component));
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    ProducerNodeInstanceBindingExpression create(
+        ContributionBinding binding, FrameworkInstanceSupplier frameworkInstanceSupplier);
   }
 }

@@ -19,6 +19,7 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedParameterSpecs;
 import static dagger.internal.codegen.javapoet.CodeBlocks.parameterNames;
+import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.PRIVATE_METHOD_CACHED_PROVIDER_FIELD;
 import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
@@ -38,6 +39,7 @@ import dagger.internal.codegen.binding.FrameworkField;
 import dagger.internal.codegen.binding.KeyVariableNamer;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.model.BindingKind;
 import dagger.model.RequestKind;
 import java.util.Optional;
@@ -45,26 +47,26 @@ import javax.lang.model.type.TypeMirror;
 
 /** A binding expression that wraps another in a nullary method on the component. */
 abstract class MethodBindingExpression extends BindingExpression {
+  private final ShardImplementation shardImplementation;
   private final BindingRequest request;
   private final ContributionBinding binding;
   private final BindingMethodImplementation bindingMethodImplementation;
-  private final ComponentImplementation componentImplementation;
   private final ProducerEntryPointView producerEntryPointView;
   private final BindingExpression wrappedBindingExpression;
   private final DaggerTypes types;
 
   protected MethodBindingExpression(
+      ShardImplementation shardImplementation,
       BindingRequest request,
       ContributionBinding binding,
       MethodImplementationStrategy methodImplementationStrategy,
       BindingExpression wrappedBindingExpression,
-      ComponentImplementation componentImplementation,
       DaggerTypes types) {
+    this.shardImplementation = checkNotNull(shardImplementation);
     this.request = checkNotNull(request);
     this.binding = checkNotNull(binding);
     this.bindingMethodImplementation = bindingMethodImplementation(methodImplementationStrategy);
     this.wrappedBindingExpression = checkNotNull(wrappedBindingExpression);
-    this.componentImplementation = checkNotNull(componentImplementation);
     this.producerEntryPointView = new ProducerEntryPointView(types);
     this.types = checkNotNull(types);
   }
@@ -93,16 +95,17 @@ abstract class MethodBindingExpression extends BindingExpression {
 
     return Expression.create(
         returnType(),
-        requestingClass.equals(componentImplementation.name())
+        requestingClass.equals(shardImplementation.name())
             ? methodCall
-            : CodeBlock.of("$L.$L", componentImplementation.externalReferenceBlock(), methodCall));
+            : CodeBlock.of("$L.$L", shardImplementation.fieldReference(), methodCall));
   }
 
   @Override
   Expression getDependencyExpressionForComponentMethod(ComponentMethodDescriptor componentMethod,
       ComponentImplementation component) {
     return producerEntryPointView
-        .getProducerEntryPointField(this, componentMethod, component)
+        .getProducerEntryPointField(
+            this, componentMethod, shardImplementation.getComponentImplementation())
         .orElseGet(
             () -> super.getDependencyExpressionForComponentMethod(componentMethod, component));
   }
@@ -116,8 +119,7 @@ abstract class MethodBindingExpression extends BindingExpression {
   /** The method's body. */
   protected final CodeBlock methodBody() {
     return implementation(
-        wrappedBindingExpression.getDependencyExpression(componentImplementation.name())
-            ::codeBlock);
+        wrappedBindingExpression.getDependencyExpression(shardImplementation.name())::codeBlock);
   }
 
   /** The method's body if this method is a component method. */
@@ -125,7 +127,7 @@ abstract class MethodBindingExpression extends BindingExpression {
       ComponentMethodDescriptor componentMethod) {
     return implementation(
         wrappedBindingExpression.getDependencyExpressionForComponentMethod(
-                componentMethod, componentImplementation)
+                componentMethod, shardImplementation.getComponentImplementation())
             ::codeBlock);
   }
 
@@ -160,11 +162,11 @@ abstract class MethodBindingExpression extends BindingExpression {
     }
 
     TypeMirror requestedType = request.requestedType(binding.contributedType(), types);
-    return types.accessibleType(requestedType, componentImplementation.name());
+    return types.accessibleType(requestedType, shardImplementation.name());
   }
 
   private Optional<ComponentMethodDescriptor> matchingComponentMethod() {
-    return componentImplementation.componentDescriptor().firstMatchingComponentMethod(request);
+    return shardImplementation.componentDescriptor().firstMatchingComponentMethod(request);
   }
 
   /** Strateg for implementing the body of this method. */
@@ -225,7 +227,7 @@ abstract class MethodBindingExpression extends BindingExpression {
 
     FieldSpec createField() {
       String name =
-          componentImplementation.getUniqueFieldName(
+          shardImplementation.getUniqueFieldName(
               request.isRequestKind(RequestKind.INSTANCE)
                   ? KeyVariableNamer.name(binding.key())
                   : FrameworkField.forBinding(binding, Optional.empty()).name());
@@ -236,7 +238,11 @@ abstract class MethodBindingExpression extends BindingExpression {
       }
 
       FieldSpec field = builder.build();
-      componentImplementation.addField(PRIVATE_METHOD_SCOPED_FIELD, field);
+      shardImplementation.addField(
+          request.isRequestKind(RequestKind.PROVIDER)
+              ? PRIVATE_METHOD_CACHED_PROVIDER_FIELD
+              : PRIVATE_METHOD_SCOPED_FIELD,
+          field);
       return field;
     }
 
@@ -280,9 +286,8 @@ abstract class MethodBindingExpression extends BindingExpression {
     }
 
     private String createField() {
-      String name =
-          componentImplementation.getUniqueFieldName(KeyVariableNamer.name(binding.key()));
-      componentImplementation.addField(
+      String name = shardImplementation.getUniqueFieldName(KeyVariableNamer.name(binding.key()));
+      shardImplementation.addField(
           PRIVATE_METHOD_SCOPED_FIELD,
           FieldSpec.builder(TypeName.OBJECT, name, PRIVATE, VOLATILE)
               .initializer("new $T()", MemoizedSentinel.class)
@@ -290,5 +295,4 @@ abstract class MethodBindingExpression extends BindingExpression {
       return name;
     }
   }
-
 }

@@ -21,6 +21,9 @@ import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForB
 import static dagger.model.BindingKind.INJECTION;
 
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
@@ -37,10 +40,12 @@ final class InjectionOrProvisionProviderCreationExpression
   private final ContributionBinding binding;
   private final ComponentBindingExpressions componentBindingExpressions;
 
+  @AssistedInject
   InjectionOrProvisionProviderCreationExpression(
-      ContributionBinding binding, ComponentBindingExpressions componentBindingExpressions) {
+      @Assisted ContributionBinding binding,
+      ComponentBindingExpressions componentBindingExpressions) {
     this.binding = checkNotNull(binding);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
+    this.componentBindingExpressions = componentBindingExpressions;
   }
 
   @Override
@@ -60,5 +65,10 @@ final class InjectionOrProvisionProviderCreationExpression
     } else {
       return createFactory;
     }
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    InjectionOrProvisionProviderCreationExpression create(ContributionBinding binding);
   }
 }

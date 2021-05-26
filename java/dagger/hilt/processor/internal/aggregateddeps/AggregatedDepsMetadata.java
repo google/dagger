@@ -24,11 +24,14 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.root.ir.AggregatedDepsIr;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
@@ -78,6 +81,29 @@ public abstract class AggregatedDepsMetadata {
     return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
+  }
+
+  public static AggregatedDepsIr toIr(AggregatedDepsMetadata metadata) {
+    return new AggregatedDepsIr(
+        ClassName.get(metadata.aggregatingElement()),
+        metadata.componentElements().stream()
+            .map(ClassName::get)
+            .collect(Collectors.toList()),
+        metadata.testElement()
+            .map(ClassName::get)
+            .orElse(null),
+        metadata.replacedDependencies().stream()
+            .map(ClassName::get)
+            .collect(Collectors.toList()),
+        metadata.dependencyType() == DependencyType.MODULE
+            ? ClassName.get(metadata.dependency())
+            : null,
+        metadata.dependencyType() == DependencyType.ENTRY_POINT
+            ? ClassName.get(metadata.dependency())
+            : null,
+        metadata.dependencyType() == DependencyType.COMPONENT_ENTRY_POINT
+            ? ClassName.get(metadata.dependency())
+            : null);
   }
 
   private static AggregatedDepsMetadata create(TypeElement element, Elements elements) {

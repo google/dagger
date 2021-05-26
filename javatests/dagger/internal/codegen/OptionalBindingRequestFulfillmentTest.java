@@ -118,7 +118,7 @@ public class OptionalBindingRequestFulfillmentTest {
                 "  private Provider<Maybe> maybeProvider() {",
                 "    Object local = provideMaybeProvider;",
                 "    if (local == null) {",
-                "      local = new SwitchingProvider<>(0);",
+                "      local = new SwitchingProvider<>(testComponent, 0);",
                 "      provideMaybeProvider = (Provider<Maybe>) local;",
                 "    }",
                 "    return (Provider<Maybe>) local;",
@@ -154,13 +154,7 @@ public class OptionalBindingRequestFulfillmentTest {
                 "  }")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "  private final class SwitchingProvider<T> implements Provider<T> {",
-                "    private final int id;",
-                "",
-                "    SwitchingProvider(int id) {",
-                "      this.id = id;",
-                "    }",
-                "",
+                "  private static final class SwitchingProvider<T> implements Provider<T> {",
                 "    @SuppressWarnings(\"unchecked\")",
                 "    @Override",
                 "    public T get() {",

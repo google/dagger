@@ -20,6 +20,9 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 
@@ -34,9 +37,10 @@ final class OptionalFactoryInstanceCreationExpression
   private final ComponentImplementation componentImplementation;
   private final ComponentBindingExpressions componentBindingExpressions;
 
+  @AssistedInject
   OptionalFactoryInstanceCreationExpression(
+      @Assisted ContributionBinding binding,
       OptionalFactories optionalFactories,
-      ContributionBinding binding,
       ComponentImplementation componentImplementation,
       ComponentBindingExpressions componentBindingExpressions) {
     this.optionalFactories = optionalFactories;
@@ -64,5 +68,10 @@ final class OptionalFactoryInstanceCreationExpression
     // Share providers for empty optionals from OptionalFactories so we don't have numerous
     // switch cases that all return Optional.empty().
     return !binding.dependencies().isEmpty();
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    OptionalFactoryInstanceCreationExpression create(ContributionBinding binding);
   }
 }

@@ -29,6 +29,9 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ContributionBinding;
@@ -47,15 +50,16 @@ final class DependencyMethodProducerCreationExpression
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final BindingGraph graph;
 
+  @AssistedInject
   DependencyMethodProducerCreationExpression(
-      ContributionBinding binding,
+      @Assisted ContributionBinding binding,
       ComponentImplementation componentImplementation,
       ComponentRequirementExpressions componentRequirementExpressions,
       BindingGraph graph) {
     this.binding = checkNotNull(binding);
-    this.componentImplementation = checkNotNull(componentImplementation);
-    this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
-    this.graph = checkNotNull(graph);
+    this.componentImplementation = componentImplementation;
+    this.componentRequirementExpressions = componentRequirementExpressions;
+    this.graph = graph;
   }
 
   @Override
@@ -96,5 +100,10 @@ final class DependencyMethodProducerCreationExpression
                         binding.bindingElement().get().getSimpleName())
                     .build())
             .build());
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    DependencyMethodProducerCreationExpression create(ContributionBinding binding);
   }
 }

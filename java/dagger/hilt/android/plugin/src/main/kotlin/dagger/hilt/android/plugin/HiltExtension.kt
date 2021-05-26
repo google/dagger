@@ -40,19 +40,9 @@ interface HiltExtension {
    * deprecated in a future version.
    */
   var enableTransformForLocalTests: Boolean
-
-  /**
-   * If set to `true`, Hilt will perform module and entry points aggregation in a task instead of an
-   * aggregating annotation processor. Enabling this flag improves incremental build times.
-   *
-   * When this flag is enabled, 'enableExperimentalClasspathAggregation' has no effect since
-   * classpath aggregation will be done by default.
-   */
-  var enableAggregatingTask: Boolean
 }
 
 internal open class HiltExtensionImpl : HiltExtension {
   override var enableExperimentalClasspathAggregation: Boolean = false
   override var enableTransformForLocalTests: Boolean = false
-  override var enableAggregatingTask: Boolean = false
 }

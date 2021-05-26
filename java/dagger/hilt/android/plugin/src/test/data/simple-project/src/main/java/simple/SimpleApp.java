@@ -20,7 +20,7 @@ import android.app.Application;
 import dagger.hilt.android.HiltAndroidApp;
 
 /** Just an application. */
-@HiltAndroidApp(Application.class)
-public class SimpleApp extends Hilt_SimpleApp {
+@HiltAndroidApp
+public class SimpleApp extends Application {
   // Insert-change
 }

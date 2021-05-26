@@ -30,5 +30,7 @@ import java.lang.annotation.Target;
 public @interface AggregatedRoot {
   String root();
 
+  String originatingRoot();
+
   Class<?> rootAnnotation();
 }

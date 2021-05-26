@@ -22,13 +22,15 @@ import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFr
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.base.OptionalType.OptionalKind;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
-import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 
 /** A binding expression for optional bindings. */
@@ -38,9 +40,9 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
   private final DaggerTypes types;
   private final SourceVersion sourceVersion;
 
-  @Inject
+  @AssistedInject
   OptionalBindingExpression(
-      ProvisionBinding binding,
+      @Assisted ProvisionBinding binding,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       SourceVersion sourceVersion) {
@@ -90,5 +92,10 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
   boolean requiresMethodEncapsulation() {
     // TODO(dpb): Maybe require it for present bindings.
     return false;
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    OptionalBindingExpression create(ProvisionBinding binding);
   }
 }

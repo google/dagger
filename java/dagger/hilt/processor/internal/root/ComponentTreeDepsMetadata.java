@@ -19,6 +19,7 @@ package dagger.hilt.processor.internal.root;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.hilt.processor.internal.AggregatedElements.unwrapProxies;
 import static dagger.hilt.processor.internal.AnnotationValues.getTypeElements;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
@@ -26,6 +27,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.root.ir.ComponentTreeDepsIr;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
@@ -80,6 +82,29 @@ abstract class ComponentTreeDepsMetadata {
         unwrapProxies(getTypeElements(values.get("aggregatedDeps")), elements),
         unwrapProxies(getTypeElements(values.get("uninstallModulesDeps")), elements),
         unwrapProxies(getTypeElements(values.get("earlyEntryPointDeps")), elements));
+  }
+
+  static ComponentTreeDepsMetadata from(ComponentTreeDepsIr ir, Elements elements) {
+    return create(
+        ir.getName(),
+        ir.getRootDeps().stream()
+            .map(it -> elements.getTypeElement(it.canonicalName()))
+            .collect(toImmutableSet()),
+        ir.getDefineComponentDeps().stream()
+            .map(it -> elements.getTypeElement(it.canonicalName()))
+            .collect(toImmutableSet()),
+        ir.getAliasOfDeps().stream()
+            .map(it -> elements.getTypeElement(it.canonicalName()))
+            .collect(toImmutableSet()),
+        ir.getAggregatedDeps().stream()
+            .map(it -> elements.getTypeElement(it.canonicalName()))
+            .collect(toImmutableSet()),
+        ir.getUninstallModulesDeps().stream()
+            .map(it -> elements.getTypeElement(it.canonicalName()))
+            .collect(toImmutableSet()),
+        ir.getEarlyEntryPointDeps().stream()
+            .map(it -> elements.getTypeElement(it.canonicalName()))
+            .collect(toImmutableSet()));
   }
 
   static ComponentTreeDepsMetadata create(

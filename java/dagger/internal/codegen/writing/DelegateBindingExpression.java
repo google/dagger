@@ -25,6 +25,9 @@ import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFr
 import static dagger.model.BindingKind.DELEGATE;
 
 import com.squareup.javapoet.ClassName;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindsTypeChecker;
@@ -43,16 +46,17 @@ final class DelegateBindingExpression extends BindingExpression {
   private final DaggerTypes types;
   private final BindsTypeChecker bindsTypeChecker;
 
+  @AssistedInject
   DelegateBindingExpression(
-      ContributionBinding binding,
-      RequestKind requestKind,
+      @Assisted ContributionBinding binding,
+      @Assisted RequestKind requestKind,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       DaggerElements elements) {
     this.binding = checkNotNull(binding);
     this.requestKind = checkNotNull(requestKind);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
-    this.types = checkNotNull(types);
+    this.componentBindingExpressions = componentBindingExpressions;
+    this.types = types;
     this.bindsTypeChecker = new BindsTypeChecker(types, elements);
   }
 
@@ -129,5 +133,10 @@ final class DelegateBindingExpression extends BindingExpression {
     boolean isStrongerScopeThan(ScopeKind other) {
       return this.ordinal() > other.ordinal();
     }
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    DelegateBindingExpression create(ContributionBinding binding, RequestKind requestKind);
   }
 }

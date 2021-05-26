@@ -55,6 +55,7 @@ java_library(
         "//java/dagger/hilt/processor/internal:component_descriptor",
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/hilt/processor/internal/root/ir",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:value",

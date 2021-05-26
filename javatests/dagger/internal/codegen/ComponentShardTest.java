@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.Compiler.javac;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableList;
@@ -92,9 +92,9 @@ public class ComponentShardTest {
                 "final class DaggerTestComponent implements TestComponent {",
                 "  private final Shard1 shard1 = new Shard1();",
                 "",
-                "  private volatile Provider<Binding9> binding9Provider;",
-                "",
                 "  private volatile Object binding9 = new MemoizedSentinel();",
+                "",
+                "  private volatile Provider<Binding9> binding9Provider;",
                 "",
                 "  @Override",
                 "  public Binding9 getBinding9() {",
@@ -103,7 +103,7 @@ public class ComponentShardTest {
                 "      synchronized (local) {",
                 "        local = binding9;",
                 "        if (local instanceof MemoizedSentinel) {",
-                "          local = new Binding9(DaggerTestComponent.this.shard1.binding10());",
+                "          local = new Binding9(testComponent.shard1.binding10());",
                 "          binding9 = DoubleCheck.reentrantCheck(binding9, local);",
                 "        }",
                 "      }",
@@ -115,7 +115,7 @@ public class ComponentShardTest {
                 "  public Provider<Binding9> getBinding9Provider() {",
                 "    Object local = binding9Provider;",
                 "    if (local == null) {",
-                "      local = new SwitchingProvider<>(9);",
+                "      local = new SwitchingProvider<>(testComponent, 9);",
                 "      binding9Provider = (Provider<Binding9>) local;",
                 "    }",
                 "    return (Provider<Binding9>) local;",
@@ -123,32 +123,32 @@ public class ComponentShardTest {
                 "",
                 "  @Override",
                 "  public Binding10 getBinding10() {",
-                "    return DaggerTestComponent.this.shard1.binding10();",
+                "    return testComponent.shard1.binding10();",
                 "  }",
                 "",
                 "  @Override",
                 "  public Provider<Binding10> getBinding10Provider() {",
-                "    return DaggerTestComponent.this.shard1.binding10Provider();",
+                "    return testComponent.shard1.binding10Provider();",
                 "  }",
                 "",
                 "  @Override",
                 "  public Binding20 getBinding20() {",
-                "    return DaggerTestComponent.this.shard2.binding20();",
+                "    return testComponent.shard2.binding20();",
                 "  }",
                 "",
                 "  @Override",
                 "  public Provider<Binding20> getBinding20Provider() {",
-                "    return DaggerTestComponent.this.shard2.binding20Provider();",
+                "    return testComponent.shard2.binding20Provider();",
                 "  }",
                 "",
                 "  private final class Shard1 {",
                 "    private volatile Object binding10 = new MemoizedSentinel();",
                 "",
+                "    private volatile Object binding19 = new MemoizedSentinel();",
+                "",
                 "    private volatile Provider<Binding10> binding10Provider;",
                 "",
                 "    private volatile Provider<Binding19> binding19Provider;",
-                "",
-                "    private volatile Object binding19 = new MemoizedSentinel();",
                 "",
                 "    private Binding10 binding10() {",
                 "      Object local = binding10;",
@@ -157,7 +157,7 @@ public class ComponentShardTest {
                 "          local = binding10;",
                 "          if (local instanceof MemoizedSentinel) {",
                 "            local = new Binding10(",
-                "                DaggerTestComponent.this.getBinding9Provider());",
+                "                testComponent.getBinding9Provider());",
                 "            binding10 = DoubleCheck.reentrantCheck(binding10, local);",
                 "          }",
                 "        }",
@@ -168,7 +168,7 @@ public class ComponentShardTest {
                 "    private Provider<Binding10> binding10Provider() {",
                 "      Object local = binding10Provider;",
                 "      if (local == null) {",
-                "        local = new SwitchingProvider<>(10);",
+                "        local = new SwitchingProvider<>(testComponent, 10);",
                 "        binding10Provider = (Provider<Binding10>) local;",
                 "      }",
                 "      return (Provider<Binding10>) local;",
@@ -177,7 +177,7 @@ public class ComponentShardTest {
                 "    private Provider<Binding19> binding19Provider() {",
                 "      Object local = binding19Provider;",
                 "      if (local == null) {",
-                "        local = new SwitchingProvider<>(19);",
+                "        local = new SwitchingProvider<>(testComponent, 19);",
                 "        binding19Provider = (Provider<Binding19>) local;",
                 "      }",
                 "      return (Provider<Binding19>) local;",
@@ -189,7 +189,7 @@ public class ComponentShardTest {
                 "        synchronized (local) {",
                 "          local = binding19;",
                 "          if (local instanceof MemoizedSentinel) {",
-                "            local = new Binding19(DaggerTestComponent.this.shard2.binding20());",
+                "            local = new Binding19(testComponent.shard2.binding20());",
                 "            binding19 = DoubleCheck.reentrantCheck(binding19, local);",
                 "          }",
                 "        }",
@@ -210,7 +210,7 @@ public class ComponentShardTest {
                 "          local = binding20;",
                 "          if (local instanceof MemoizedSentinel) {",
                 "            local = new Binding20(",
-                "                DaggerTestComponent.this.shard1.binding19Provider());",
+                "                testComponent.shard1.binding19Provider());",
                 "            binding20 = DoubleCheck.reentrantCheck(binding20, local);",
                 "          }",
                 "        }",
@@ -221,7 +221,7 @@ public class ComponentShardTest {
                 "    private Provider<Binding20> binding20Provider() {",
                 "      Object local = binding20Provider;",
                 "      if (local == null) {",
-                "        local = new SwitchingProvider<>(20);",
+                "        local = new SwitchingProvider<>(testComponent, 20);",
                 "        binding20Provider = (Provider<Binding20>) local;",
                 "      }",
                 "      return (Provider<Binding20>) local;",
@@ -269,12 +269,10 @@ public class ComponentShardTest {
   }
 
   private static Compiler compilerWithAndroidMode() {
-    return javac()
-        .withProcessors(new ComponentProcessor())
-        .withOptions(
-            ImmutableSet.builder()
-                .add("-Adagger.keysPerComponentShard=" + BINDINGS_PER_SHARD)
-                .addAll(CompilerMode.FAST_INIT_MODE.javacopts())
-                .build());
+    return compilerWithOptions(
+        ImmutableSet.<String>builder()
+            .add("-Adagger.keysPerComponentShard=" + BINDINGS_PER_SHARD)
+            .addAll(CompilerMode.FAST_INIT_MODE.javacopts())
+            .build());
   }
 }

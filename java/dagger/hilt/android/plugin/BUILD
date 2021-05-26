@@ -17,6 +17,14 @@
 
 package(default_visibility = ["//:src"])
 
+genrule(
+    name = "import-shared-lib",
+    srcs = ["//java/dagger/hilt/processor/internal/root/ir"],
+    outs = ["processor-shared-lib.jar"],
+    cmd = "cp $< $@",
+    local = True,
+)
+
 filegroup(
     name = "srcs_filegroup",
     srcs = glob(

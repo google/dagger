@@ -17,12 +17,10 @@
 package dagger.hilt.processor.internal.root;
 
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isCrossCompilationRootValidationDisabled;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isSharedTestComponentsEnabled;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.Comparator.comparing;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.AGGREGATING;
@@ -31,34 +29,32 @@ import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.ListMultimap;
-import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
-import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsMetadata;
 import dagger.hilt.processor.internal.aliasof.AliasOfPropagatedDataMetadata;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentClassesMetadata;
 import dagger.hilt.processor.internal.earlyentrypoint.AggregatedEarlyEntryPointMetadata;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputs;
+import dagger.hilt.processor.internal.root.ir.AggregatedDepsIr;
+import dagger.hilt.processor.internal.root.ir.AggregatedEarlyEntryPointIr;
+import dagger.hilt.processor.internal.root.ir.AggregatedRootIr;
+import dagger.hilt.processor.internal.root.ir.AggregatedUninstallModulesIr;
+import dagger.hilt.processor.internal.root.ir.AliasOfPropagatedDataIr;
+import dagger.hilt.processor.internal.root.ir.ComponentTreeDepsIr;
+import dagger.hilt.processor.internal.root.ir.ComponentTreeDepsIrCreator;
+import dagger.hilt.processor.internal.root.ir.DefineComponentClassesIr;
 import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Processor that outputs dagger components based on transitive build deps. */
@@ -105,7 +101,10 @@ public final class RootProcessor extends BaseProcessor {
               getProcessingEnv(), TestRootMetadata.of(getProcessingEnv(), rootElement))
           .generate();
     }
-    new AggregatedRootGenerator(rootElement, annotation, getProcessingEnv()).generate();
+    TypeElement originatingRootElement =
+        Root.create(rootElement, getProcessingEnv()).originatingRootElement();
+    new AggregatedRootGenerator(rootElement, originatingRootElement, annotation, getProcessingEnv())
+        .generate();
   }
 
   @Override
@@ -145,7 +144,7 @@ public final class RootProcessor extends BaseProcessor {
 
   private ImmutableList<TypeElement> rootsToProcess() {
     ImmutableSet<Root> allRoots =
-        AggregatedRootMetadata.from(getElementUtils()).stream()
+        AggregatedRootMetadata.from(processingEnv).stream()
             .map(metadata -> Root.create(metadata.rootElement(), getProcessingEnv()))
             .collect(toImmutableSet());
 
@@ -236,206 +235,49 @@ public final class RootProcessor extends BaseProcessor {
   private ImmutableSet<ComponentTreeDepsMetadata> componentTreeDepsMetadatas(
       ImmutableList<TypeElement> rootElementsToProcess) {
     ImmutableSet<AggregatedRootMetadata> aggregatedRootMetadatas =
-        AggregatedRootMetadata.from(getElementUtils()).stream()
+        AggregatedRootMetadata.from(processingEnv).stream()
             // Filter to only the root elements that need processing.
             .filter(metadata -> rootElementsToProcess.contains(metadata.rootElement()))
             .collect(toImmutableSet());
-
     // We should be guaranteed that there are no mixed roots, so check if this is prod or test.
-    return aggregatedRootMetadatas.stream().anyMatch(metadata -> metadata.rootType().isTestRoot())
-        ? testComponentTreeDepsMetadatas(aggregatedRootMetadatas)
-        : prodComponentTreeDepsMetadatas(aggregatedRootMetadatas);
-  }
-
-  private ImmutableSet<ComponentTreeDepsMetadata> prodComponentTreeDepsMetadatas(
-      ImmutableSet<AggregatedRootMetadata> aggregatedRootMetadatas) {
-    // There should only be one prod root in a given build, so get the only element.
-    AggregatedRootMetadata aggregatedRootMetadata = getOnlyElement(aggregatedRootMetadatas);
-    ClassName rootName = ClassName.get(aggregatedRootMetadata.rootElement());
-    return ImmutableSet.of(
-        ComponentTreeDepsMetadata.create(
-            ComponentNames.withoutRenaming().generatedComponentTreeDeps(rootName),
-            ImmutableSet.of(aggregatedRootMetadata.aggregatingElement()),
-            defineComponentDeps(getElementUtils()),
-            aliasOfDeps(getElementUtils()),
-            AggregatedDepsMetadata.from(getElementUtils()).stream()
-                // @AggregatedDeps with non-empty replacedDependencies are from @TestInstallIn and
-                // should not be installed in production components
-                .filter(metadata -> metadata.replacedDependencies().isEmpty())
-                .map(AggregatedDepsMetadata::aggregatingElement)
-                .collect(toImmutableSet()),
-            /* aggregatedUninstallModulesDeps= */ ImmutableSet.of(),
-            /* aggregatedEarlyEntryPointDeps= */ ImmutableSet.of()));
-  }
-
-  private ImmutableSet<ComponentTreeDepsMetadata> testComponentTreeDepsMetadatas(
-      ImmutableSet<AggregatedRootMetadata> aggregatedRootMetadatas) {
-    ImmutableSet<AggregatedDepsMetadata> aggregatedDepsMetadatas =
-        AggregatedDepsMetadata.from(getElementUtils());
-
-    ImmutableSet<AggregatedUninstallModulesMetadata> uninstallModulesMetadatas =
-        AggregatedUninstallModulesMetadata.from(getElementUtils());
-
-    ImmutableSet<AggregatedEarlyEntryPointMetadata> earlyEntryPointMetadatas =
-        AggregatedEarlyEntryPointMetadata.from(getElementUtils());
-
-    ImmutableSet<TypeElement> rootsUsingSharedComponent =
-        rootsUsingSharedComponent(
-            aggregatedRootMetadatas, aggregatedDepsMetadatas, uninstallModulesMetadatas);
-
-    ImmutableMap<TypeElement, TypeElement> aggregatedRootsByRoot =
+    boolean isTest =
+        aggregatedRootMetadatas.stream().anyMatch(metadata -> metadata.rootType().isTestRoot());
+    ImmutableSet<AggregatedRootIr> aggregatedRoots =
         aggregatedRootMetadatas.stream()
-            .collect(
-                toImmutableMap(
-                    AggregatedRootMetadata::rootElement,
-                    AggregatedRootMetadata::aggregatingElement));
-
-    ImmutableSetMultimap<TypeElement, TypeElement> aggregatedDepsByRoot =
-        aggregatedDepsByRoot(
-            aggregatedRootMetadatas,
-            aggregatedDepsMetadatas,
-            rootsUsingSharedComponent,
-            !earlyEntryPointMetadatas.isEmpty());
-
-    ImmutableMap<TypeElement, TypeElement> uninstallModuleDepsByRoot =
-        uninstallModulesMetadatas.stream()
-            .collect(
-                toImmutableMap(
-                    AggregatedUninstallModulesMetadata::testElement,
-                    AggregatedUninstallModulesMetadata::aggregatingElement));
-
-    ComponentNames componentNames =
-        isSharedTestComponentsEnabled(getProcessingEnv())
-            ? ComponentNames.withRenamingIntoPackage(
-                ClassNames.DEFAULT_ROOT.packageName(), aggregatedDepsByRoot.keySet())
-            : ComponentNames.withoutRenaming();
-
-    ImmutableSet.Builder<ComponentTreeDepsMetadata> builder = ImmutableSet.builder();
-    for (TypeElement rootElement : aggregatedDepsByRoot.keySet()) {
-      boolean isDefaultRoot = ClassNames.DEFAULT_ROOT.equals(ClassName.get(rootElement));
-      boolean isEarlyEntryPointRoot = isDefaultRoot && rootsUsingSharedComponent.isEmpty();
-      // We want to base the generated name on the user written root rather than a generated root.
-      ClassName rootName = Root.create(rootElement, getProcessingEnv()).originatingRootClassname();
-      builder.add(
-          ComponentTreeDepsMetadata.create(
-              componentNames.generatedComponentTreeDeps(rootName),
-              // Non-default component: the root
-              // Shared component: all roots sharing the component
-              // EarlyEntryPoint component: empty
-              isDefaultRoot
-                  ? rootsUsingSharedComponent.stream()
-                      .map(aggregatedRootsByRoot::get)
-                      .collect(toImmutableSet())
-                  : ImmutableSet.of(aggregatedRootsByRoot.get(rootElement)),
-              defineComponentDeps(getElementUtils()),
-              aliasOfDeps(getElementUtils()),
-              aggregatedDepsByRoot.get(rootElement),
-              uninstallModuleDepsByRoot.containsKey(rootElement)
-                  ? ImmutableSet.of(uninstallModuleDepsByRoot.get(rootElement))
-                  : ImmutableSet.of(),
-              isEarlyEntryPointRoot
-                  ? earlyEntryPointMetadatas.stream()
-                      .map(AggregatedEarlyEntryPointMetadata::aggregatingElement)
-                      .collect(toImmutableSet())
-                  : ImmutableSet.of()));
-    }
-    return builder.build();
-  }
-
-  private ImmutableSetMultimap<TypeElement, TypeElement> aggregatedDepsByRoot(
-      ImmutableSet<AggregatedRootMetadata> aggregatedRootMetadatas,
-      ImmutableSet<AggregatedDepsMetadata> aggregatedDepsMetadatas,
-      ImmutableSet<TypeElement> rootsUsingSharedComponent,
-      boolean hasEarlyEntryPoints) {
-    ListMultimap<TypeElement, TypeElement> testDepsByRoot = ArrayListMultimap.create();
-    ListMultimap<TypeElement, TypeElement> globalEntryPointsByComponent =
-        ArrayListMultimap.create();
-    List<TypeElement> globalModules = new ArrayList<>();
-    for (AggregatedDepsMetadata metadata : aggregatedDepsMetadatas) {
-      if (metadata.testElement().isPresent()) {
-        testDepsByRoot.put(metadata.testElement().get(), metadata.aggregatingElement());
-      } else {
-        if (metadata.isModule()) {
-          globalModules.add(metadata.aggregatingElement());
-        } else {
-          for (TypeElement component : metadata.componentElements()) {
-            globalEntryPointsByComponent.put(component, metadata.aggregatingElement());
-          }
-        }
-      }
-    }
-
-    ImmutableSetMultimap.Builder<TypeElement, TypeElement> builder = ImmutableSetMultimap.builder();
-    for (AggregatedRootMetadata aggregatedRootMetadata : aggregatedRootMetadatas) {
-      TypeElement rootElement = aggregatedRootMetadata.rootElement();
-      if (!rootsUsingSharedComponent.contains(rootElement)) {
-        builder.putAll(rootElement, globalModules);
-        builder.putAll(rootElement, globalEntryPointsByComponent.values());
-        builder.putAll(rootElement, testDepsByRoot.get(rootElement));
-      }
-    }
-
-    // Add the Default/EarlyEntryPoint root if necessary.
-    TypeElement defaultRoot = getElementUtils().getTypeElement(ClassNames.DEFAULT_ROOT.toString());
-    if (!rootsUsingSharedComponent.isEmpty()) {
-      builder.putAll(defaultRoot, globalModules);
-      builder.putAll(defaultRoot, globalEntryPointsByComponent.values());
-      for (TypeElement rootElement : rootsUsingSharedComponent) {
-        builder.putAll(defaultRoot, testDepsByRoot.get(rootElement));
-      }
-    } else if (hasEarlyEntryPoints) {
-      builder.putAll(defaultRoot, globalModules);
-      TypeElement singletonComponent =
-          getElementUtils().getTypeElement(ClassNames.SINGLETON_COMPONENT.toString());
-      for (TypeElement component : globalEntryPointsByComponent.keySet()) {
-        if (!component.equals(singletonComponent)) {
-          // Skip all singleton component entry points. These will be replaced by eager entry points
-          builder.putAll(defaultRoot, globalEntryPointsByComponent.get(component));
-        }
-      }
-    }
-
-    return builder.build();
-  }
-
-  private ImmutableSet<TypeElement> rootsUsingSharedComponent(
-      ImmutableSet<AggregatedRootMetadata> aggregatedRootMetadatas,
-      ImmutableSet<AggregatedDepsMetadata> aggregatedDepsMetadatas,
-      ImmutableSet<AggregatedUninstallModulesMetadata> uninstallModulesMetadatas) {
-    if (!isSharedTestComponentsEnabled(getProcessingEnv())) {
-      return ImmutableSet.of();
-    }
-    ImmutableSet<TypeElement> hasLocalModuleDependencies =
-        ImmutableSet.<TypeElement>builder()
-            .addAll(
-                aggregatedDepsMetadatas.stream()
-                    .filter(metadata -> metadata.isModule() && metadata.testElement().isPresent())
-                    .map(metadata -> metadata.testElement().get())
-                    .collect(toImmutableSet()))
-            .addAll(
-                uninstallModulesMetadatas.stream()
-                    .map(AggregatedUninstallModulesMetadata::testElement)
-                    .collect(toImmutableSet()))
-            .build();
-
-    return aggregatedRootMetadatas.stream()
-        .map(AggregatedRootMetadata::rootElement)
-        .map(rootElement -> Root.create(rootElement, getProcessingEnv()))
-        .filter(Root::isTestRoot)
-        .map(Root::element)
-        .filter(rootElement -> !hasLocalModuleDependencies.contains(rootElement))
-        .collect(toImmutableSet());
-  }
-
-  private static ImmutableSet<TypeElement> defineComponentDeps(Elements elements) {
-    return DefineComponentClassesMetadata.from(elements).stream()
-        .map(DefineComponentClassesMetadata::aggregatingElement)
-        .collect(toImmutableSet());
-  }
-
-  private static ImmutableSet<TypeElement> aliasOfDeps(Elements elements) {
-    return AliasOfPropagatedDataMetadata.from(elements).stream()
-        .map(AliasOfPropagatedDataMetadata::aggregatingElement)
+            .map(AggregatedRootMetadata::toIr)
+            .collect(toImmutableSet());
+    ImmutableSet<DefineComponentClassesIr> defineComponentDeps =
+        DefineComponentClassesMetadata.from(getElementUtils()).stream()
+            .map(DefineComponentClassesMetadata::toIr)
+            .collect(toImmutableSet());
+    ImmutableSet<AliasOfPropagatedDataIr> aliasOfDeps =
+        AliasOfPropagatedDataMetadata.from(getElementUtils()).stream()
+            .map(AliasOfPropagatedDataMetadata::toIr)
+            .collect(toImmutableSet());
+    ImmutableSet<AggregatedDepsIr> aggregatedDeps =
+        AggregatedDepsMetadata.from(getElementUtils()).stream()
+            .map(AggregatedDepsMetadata::toIr)
+            .collect(toImmutableSet());
+    ImmutableSet<AggregatedUninstallModulesIr> aggregatedUninstallModulesDeps =
+        AggregatedUninstallModulesMetadata.from(getElementUtils()).stream()
+            .map(AggregatedUninstallModulesMetadata::toIr)
+            .collect(toImmutableSet());
+    ImmutableSet<AggregatedEarlyEntryPointIr> aggregatedEarlyEntryPointDeps =
+        AggregatedEarlyEntryPointMetadata.from(getElementUtils()).stream()
+            .map(AggregatedEarlyEntryPointMetadata::toIr)
+            .collect(toImmutableSet());
+    Set<ComponentTreeDepsIr> componentTreeDeps =
+        ComponentTreeDepsIrCreator.components(
+            isTest,
+            isSharedTestComponentsEnabled(processingEnv),
+            aggregatedRoots,
+            defineComponentDeps,
+            aliasOfDeps,
+            aggregatedDeps,
+            aggregatedUninstallModulesDeps,
+            aggregatedEarlyEntryPointDeps);
+    return componentTreeDeps.stream()
+        .map(it -> ComponentTreeDepsMetadata.from(it, getElementUtils()))
         .collect(toImmutableSet());
   }
 }

@@ -18,6 +18,7 @@ package dagger.internal.codegen.componentgenerator;
 
 import dagger.BindsInstance;
 import dagger.Subcomponent;
+import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.writing.ComponentImplementation;
 import dagger.internal.codegen.writing.PerGeneratedFile;
 import dagger.internal.codegen.writing.TopLevel;
@@ -33,10 +34,8 @@ public interface TopLevelImplementationComponent {
   CurrentImplementationSubcomponent.Builder currentImplementationSubcomponentBuilder();
 
   /** Returns the builder for {@link TopLevelImplementationComponent}. */
-  @Subcomponent.Builder
-  interface Builder {
-    @BindsInstance
-    Builder topLevelComponent(@TopLevel ComponentImplementation topLevelImplementation);
-    TopLevelImplementationComponent build();
+  @Subcomponent.Factory
+  interface Factory {
+    TopLevelImplementationComponent create(@BindsInstance @TopLevel BindingGraph bindingGraph);
   }
 }

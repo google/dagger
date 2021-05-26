@@ -21,11 +21,13 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.root.ir.DefineComponentClassesIr;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
@@ -105,5 +107,11 @@ public abstract class DefineComponentClassesMetadata {
         componentOrBuilderName);
     return new AutoValue_DefineComponentClassesMetadata(
         element, componentOrBuilderElement, isComponent);
+  }
+
+  public static DefineComponentClassesIr toIr(DefineComponentClassesMetadata metadata) {
+    return new DefineComponentClassesIr(
+        ClassName.get(metadata.aggregatingElement()),
+        ClassName.get(metadata.element()));
   }
 }

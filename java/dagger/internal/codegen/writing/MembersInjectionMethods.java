@@ -41,11 +41,13 @@ import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.model.Key;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import javax.inject.Inject;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /** Manages the member injection methods for a component. */
+@PerComponentImplementation
 final class MembersInjectionMethods {
   private final Map<Key, MethodSpec> membersInjectionMethods = new LinkedHashMap<>();
   private final ComponentImplementation componentImplementation;
@@ -55,6 +57,7 @@ final class MembersInjectionMethods {
   private final DaggerTypes types;
   private final KotlinMetadataUtil metadataUtil;
 
+  @Inject
   MembersInjectionMethods(
       ComponentImplementation componentImplementation,
       ComponentBindingExpressions bindingExpressions,

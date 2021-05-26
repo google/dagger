@@ -16,10 +16,11 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ComponentRequirement;
@@ -34,16 +35,17 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final CompilerOptions compilerOptions;
 
+  @AssistedInject
   ComponentProvisionBindingExpression(
-      ProvisionBinding binding,
+      @Assisted ProvisionBinding binding,
       BindingGraph bindingGraph,
       ComponentRequirementExpressions componentRequirementExpressions,
       CompilerOptions compilerOptions) {
     super(binding);
     this.binding = binding;
-    this.bindingGraph = checkNotNull(bindingGraph);
-    this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
-    this.compilerOptions = checkNotNull(compilerOptions);
+    this.bindingGraph = bindingGraph;
+    this.componentRequirementExpressions = componentRequirementExpressions;
+    this.compilerOptions = compilerOptions;
   }
 
   @Override
@@ -69,5 +71,10 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
     return binding.shouldCheckForNull(compilerOptions)
         ? CodeBlock.of("$T.checkNotNullFromComponent($L)", Preconditions.class, invocation)
         : invocation;
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    ComponentProvisionBindingExpression create(ProvisionBinding binding);
   }
 }

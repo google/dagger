@@ -22,9 +22,9 @@ import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static dagger.internal.codegen.binding.ComponentCreatorKind.BUILDER;
-import static dagger.internal.codegen.componentgenerator.ComponentGenerator.componentName;
 import static dagger.internal.codegen.javapoet.TypeSpecs.addSupertype;
 import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibleFrom;
+import static dagger.internal.codegen.writing.ComponentNames.getRootComponentClassName;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -97,7 +97,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
 
   @Override
   public ImmutableList<TypeSpec.Builder> topLevelTypes(ComponentDescriptor componentDescriptor) {
-    ClassName generatedTypeName = componentName(componentDescriptor.typeElement());
+    ClassName generatedTypeName = getRootComponentClassName(componentDescriptor);
     TypeSpec.Builder generatedComponent =
         TypeSpec.classBuilder(generatedTypeName)
             .addModifiers(FINAL)

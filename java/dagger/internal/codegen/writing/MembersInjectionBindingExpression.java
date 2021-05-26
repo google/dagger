@@ -22,6 +22,9 @@ import static javax.lang.model.type.TypeKind.VOID;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterSpec;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.javapoet.Expression;
@@ -35,8 +38,9 @@ final class MembersInjectionBindingExpression extends BindingExpression {
   private final MembersInjectionBinding binding;
   private final MembersInjectionMethods membersInjectionMethods;
 
+  @AssistedInject
   MembersInjectionBindingExpression(
-      MembersInjectionBinding binding, MembersInjectionMethods membersInjectionMethods) {
+      @Assisted MembersInjectionBinding binding, MembersInjectionMethods membersInjectionMethods) {
     this.binding = binding;
     this.membersInjectionMethods = membersInjectionMethods;
   }
@@ -68,5 +72,10 @@ final class MembersInjectionBindingExpression extends BindingExpression {
 
   CodeBlock membersInjectionInvocation(ParameterSpec target) {
     return CodeBlock.of("$N($N)", membersInjectionMethods.getOrCreate(binding.key()), target);
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    MembersInjectionBindingExpression create(MembersInjectionBinding binding);
   }
 }

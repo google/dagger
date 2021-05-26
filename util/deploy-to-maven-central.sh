@@ -22,14 +22,7 @@ fi
 
 bash $(dirname $0)/run-local-tests.sh
 
-bash $(dirname $0)/deploy-dagger.sh \
-  "gpg:sign-and-deploy-file" \
-  "$VERSION_NAME" \
-  "-DrepositoryId=sonatype-nexus-staging" \
-  "-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
-  "-Dgpg.keyname=${KEY}"
-
-bash $(dirname $0)/deploy-hilt.sh \
+bash $(dirname $0)/deploy-all.sh \
   "gpg:sign-and-deploy-file" \
   "$VERSION_NAME" \
   "-DrepositoryId=sonatype-nexus-staging" \

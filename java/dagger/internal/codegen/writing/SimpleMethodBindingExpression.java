@@ -29,6 +29,9 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
@@ -58,11 +61,12 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final SourceVersion sourceVersion;
   private final KotlinMetadataUtil metadataUtil;
 
+  @AssistedInject
   SimpleMethodBindingExpression(
-      ProvisionBinding binding,
+      @Assisted ProvisionBinding binding,
+      MembersInjectionMethods membersInjectionMethods,
       CompilerOptions compilerOptions,
       ComponentBindingExpressions componentBindingExpressions,
-      MembersInjectionMethods membersInjectionMethods,
       ComponentRequirementExpressions componentRequirementExpressions,
       DaggerElements elements,
       SourceVersion sourceVersion,
@@ -182,5 +186,10 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
 
   private TypeMirror simpleMethodReturnType() {
     return provisionBinding.contributedPrimitiveType().orElse(provisionBinding.key().type());
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    SimpleMethodBindingExpression create(ProvisionBinding binding);
   }
 }

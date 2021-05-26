@@ -99,6 +99,7 @@ public class AssistedFactoryTest {
             .addLinesIn(
                 FAST_INIT_MODE,
                 "final class DaggerTestComponent implements TestComponent {",
+                "  private final DaggerTestComponent testComponent = this;",
                 "",
                 "  private Foo foo(String str) {",
                 "    return new Foo(str, new Bar());",
@@ -109,7 +110,7 @@ public class AssistedFactoryTest {
                 "    return new FooFactory() {",
                 "      @Override",
                 "      public Foo create(String str) {",
-                "        return DaggerTestComponent.this.foo(str);",
+                "        return testComponent.foo(str);",
                 "      }",
                 "    };",
                 "  }",
@@ -195,6 +196,7 @@ public class AssistedFactoryTest {
             .addLinesIn(
                 FAST_INIT_MODE,
                 "final class DaggerTestComponent implements TestComponent {",
+                "  private final DaggerTestComponent testComponent = this;",
                 "",
                 "  private Bar bar() {",
                 "    return new Bar(fooFactory());",
@@ -209,7 +211,7 @@ public class AssistedFactoryTest {
                 "    return new FooFactory() {",
                 "      @Override",
                 "      public Foo create(String str) {",
-                "        return DaggerTestComponent.this.foo(str);",
+                "        return testComponent.foo(str);",
                 "      }",
                 "    };",
                 "  }",

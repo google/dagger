@@ -16,58 +16,32 @@
 
 package dagger.internal.codegen.componentgenerator;
 
-import static dagger.internal.codegen.componentgenerator.ComponentGenerator.componentName;
-
 import dagger.internal.codegen.binding.BindingGraph;
-import dagger.internal.codegen.binding.KeyFactory;
-import dagger.internal.codegen.compileroption.CompilerOptions;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.writing.ComponentImplementation;
-import dagger.internal.codegen.writing.SubcomponentNames;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+// TODO(bcorso): We don't need a separate class for this anymore. Merge it into ComponentGenerator.
 /** Factory for {@link ComponentImplementation}s. */
 @Singleton
 final class ComponentImplementationFactory {
-  private final KeyFactory keyFactory;
-  private final CompilerOptions compilerOptions;
-  private final DaggerElements elements;
-  private final TopLevelImplementationComponent.Builder topLevelImplementationComponentBuilder;
+  private final TopLevelImplementationComponent.Factory topLevelImplementationComponentFactory;
 
   @Inject
   ComponentImplementationFactory(
-      KeyFactory keyFactory,
-      CompilerOptions compilerOptions,
-      DaggerElements elements,
-      TopLevelImplementationComponent.Builder topLevelImplementationComponentBuilder) {
-    this.keyFactory = keyFactory;
-    this.compilerOptions = compilerOptions;
-    this.elements = elements;
-    this.topLevelImplementationComponentBuilder = topLevelImplementationComponentBuilder;
+      TopLevelImplementationComponent.Factory topLevelImplementationComponentFactory) {
+    this.topLevelImplementationComponentFactory = topLevelImplementationComponentFactory;
   }
 
-  /**
-   * Returns a top-level (non-nested) component implementation for a binding graph.
-   */
+  /** Returns a top-level (non-nested) component implementation for a binding graph. */
   ComponentImplementation createComponentImplementation(BindingGraph bindingGraph) {
-    ComponentImplementation componentImplementation =
-        ComponentImplementation.topLevelComponentImplementation(
-            bindingGraph,
-            componentName(bindingGraph.componentTypeElement()),
-            new SubcomponentNames(bindingGraph, keyFactory),
-            compilerOptions,
-            elements);
-
     // TODO(dpb): explore using optional bindings for the "parent" bindings
-    return topLevelImplementationComponentBuilder
-        .topLevelComponent(componentImplementation)
-        .build()
+    return topLevelImplementationComponentFactory
+        .create(bindingGraph)
         .currentImplementationSubcomponentBuilder()
-        .componentImplementation(componentImplementation)
         .bindingGraph(bindingGraph)
-        .parentBuilder(Optional.empty())
+        .parentImplementation(Optional.empty())
         .parentBindingExpressions(Optional.empty())
         .parentRequirementExpressions(Optional.empty())
         .build()

@@ -41,13 +41,11 @@ public interface CurrentImplementationSubcomponent {
   @Subcomponent.Builder
   interface Builder {
     @BindsInstance
-    Builder componentImplementation(ComponentImplementation componentImplementation);
-
-    @BindsInstance
     Builder bindingGraph(BindingGraph bindingGraph);
 
     @BindsInstance
-    Builder parentBuilder(@ParentComponent Optional<ComponentImplementationBuilder> parentBuilder);
+    Builder parentImplementation(
+        @ParentComponent Optional<ComponentImplementation> parentImplementation);
 
     @BindsInstance
     Builder parentBindingExpressions(

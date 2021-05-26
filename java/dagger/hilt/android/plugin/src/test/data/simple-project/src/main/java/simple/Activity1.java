@@ -21,8 +21,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 import javax.inject.Inject;
 
 /** Just an activity. */
-@AndroidEntryPoint(AppCompatActivity.class)
-public class Activity1 extends Hilt_Activity1 {
+@AndroidEntryPoint
+public class Activity1 extends AppCompatActivity {
   @Inject String data;
 
   // Insert-change

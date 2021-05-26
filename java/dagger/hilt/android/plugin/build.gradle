@@ -15,6 +15,9 @@
  */
 
 buildscript {
+  ext {
+    agp_version = System.getenv('AGP_VERSION') ?: "7.0.0-beta01"
+  }
   repositories {
     google()
     mavenCentral()
@@ -26,6 +29,7 @@ plugins {
   id 'org.jetbrains.kotlin.jvm' version '1.4.20'
   id 'java-gradle-plugin'
   id 'maven-publish'
+  id "com.github.johnrengelman.shadow" version "6.1.0"
 }
 
 repositories {
@@ -35,16 +39,34 @@ repositories {
 }
 
 configurations {
-  additionalTestPlugin {
+  // Config for dependencies that will be shadowed / jarjared
+  shadowed
+  // Make all shadowed dependencies be compileOnly dependencies to not affect
+  // main compilation / configuration
+  compileOnly.extendsFrom(shadowed)
+  // Make all shadowed dependencies be included in the plugin test classpath
+  // since they are compileOnly in the main configuration
+  testPluginCompile.extendsFrom(shadowed)
+  // Config for plugin classpath to be used during tests
+  testPluginCompile {
     canBeConsumed = false
     canBeResolved = true
-    extendsFrom implementation
   }
 }
 
+// Renames default jar to avoid using it in publications.
+jar {
+  archiveClassifier = "before-jarjar"
+}
+shadowJar {
+  archiveClassifier = ""
+  configurations = [project.configurations.shadowed]
+}
+
 dependencies {
+  shadowed fileTree(dir: 'libs', include: '*.jar')
   implementation gradleApi()
-  compileOnly 'com.android.tools.build:gradle:4.2.0'
+  compileOnly "com.android.tools.build:gradle:$agp_version"
   compileOnly 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20'
   implementation 'org.javassist:javassist:3.26.0-GA'
   implementation 'org.ow2.asm:asm:9.0'
@@ -53,7 +75,7 @@ dependencies {
   testImplementation gradleTestKit()
   testImplementation 'junit:junit:4.12'
   testImplementation 'com.google.truth:truth:1.0.1'
-  additionalTestPlugin 'com.android.tools.build:gradle:4.2.0'
+  testPluginCompile 'com.android.tools.build:gradle:4.2.0'
 }
 
 // Configure the generating task of plugin-under-test-metadata.properties to
@@ -61,14 +83,56 @@ dependencies {
 // are not present in the main runtime dependencies. This allows us to test
 // the desired AGP version while keeping a compileOnly dep on the main source.
 tasks.withType(PluginUnderTestMetadata.class).named("pluginUnderTestMetadata").configure {
-  it.pluginClasspath.from(configurations.additionalTestPlugin)
+  it.pluginClasspath.from(configurations.testPluginCompile)
 }
 
 compileKotlin {
   kotlinOptions {
     jvmTarget = "1.8"
+    allWarningsAsErrors = true
   }
 }
+
+// Imports a shared library from the main project. The library and its classes
+// will be shadowed in the plugin's artifact.
+tasks.register("importSharedLib").configure {
+  def outputDir = file("${project.projectDir}/libs")
+  outputs.dir(outputDir)
+  doLast {
+    def buildCmd = 'bazel'
+    def buildDir = 'bazel-bin'
+    def findGenFilesParent
+    findGenFilesParent = { File dir ->
+      if (dir == null || !dir.isDirectory()) {
+        return null
+      }
+      if (new File(dir, buildDir).exists()) {
+        return dir
+      } else {
+        return findGenFilesParent(dir.parentFile)
+      }
+    }
+    // Build shared lib
+    def bazelOutput = new ByteArrayOutputStream()
+    def buildResult = exec {
+      commandLine buildCmd, 'build', 'import-shared-lib'
+      standardOutput = bazelOutput
+      errorOutput = bazelOutput
+    }
+    buildResult.assertNormalExitValue()
+    // Find shared lib Jar in build directory.
+    def genFilesDir = findGenFilesParent(project.buildFile.parentFile)
+    if (genFilesDir == null) {
+      throw new GradleException("Couldn't find build folder '$buildDir'")
+    }
+    def libPath = bazelOutput.toString().split('\n')
+      .find { line -> line.contains("$buildDir/") }.trim()
+    def inputFile = file("$genFilesDir/$libPath")
+    def outputFile = file("$outputDir/${inputFile.name}")
+    outputFile << inputFile.newInputStream()
+  }
+}
+tasks.getByName('compileKotlin').dependsOn('importSharedLib')
 
 // Task that generates a top-level property containing the version of the
 // project so that it can be used in code and at runtime.
@@ -96,7 +160,7 @@ tasks.getByName('compileKotlin').dependsOn('generatePluginVersionSource')
 tasks.register("sourcesJar", Jar).configure {
   group = JavaBasePlugin.DOCUMENTATION_GROUP
   description = "Assembles sources JAR"
-  classifier = "sources"
+  archiveClassifier.set("sources")
   from(sourceSets["main"].allSource)
 }
 
@@ -106,7 +170,7 @@ tasks.register("sourcesJar", Jar).configure {
 tasks.register("javadocJar", Jar).configure {
   group = JavaBasePlugin.DOCUMENTATION_GROUP
   description = "Assembles javadoc JAR"
-  classifier = "javadoc"
+  archiveClassifier.set("javadoc")
 }
 
 // Disable Gradle metadata publication.
@@ -121,6 +185,7 @@ publishing {
       artifactId = 'hilt-android-gradle-plugin'
       version = getPublishVersion()
       from components.kotlin
+      artifact(shadowJar)
       artifact(sourcesJar)
       artifact(javadocJar)
       pom {

@@ -36,6 +36,7 @@ import dagger.hilt.android.plugin.task.HiltTransformTestClassesTask
 import dagger.hilt.android.plugin.util.AggregatedPackagesTransform
 import dagger.hilt.android.plugin.util.CopyTransform
 import dagger.hilt.android.plugin.util.SimpleAGPVersion
+import dagger.hilt.android.plugin.util.allTestVariants
 import dagger.hilt.android.plugin.util.getSdkPath
 import java.io.File
 import javax.inject.Inject
@@ -229,7 +230,7 @@ class HiltGradlePlugin @Inject constructor(
     project.dependencies.add(compileOnlyConfigName, artifactView.files)
   }
 
-  @Suppress("UnstableApiUsage")
+  @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   private fun configureBytecodeTransformASM(project: Project, hiltExtension: HiltExtension) {
     var warnAboutLocalTestsFlag = false
     fun registerTransform(androidComponent: Component) {
@@ -255,8 +256,10 @@ class HiltGradlePlugin @Inject constructor(
 
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
     androidComponents.onVariants { registerTransform(it) }
-    androidComponents.androidTests { registerTransform(it) }
-    androidComponents.unitTests { registerTransform(it) }
+    androidComponents.allTestVariants(
+      onAndroidTest = { registerTransform(it) },
+      onUnitTest = { registerTransform(it) }
+    )
   }
 
   private fun configureBytecodeTransform(project: Project, hiltExtension: HiltExtension) {
@@ -347,13 +350,13 @@ class HiltGradlePlugin @Inject constructor(
     ) {
       it.compileClasspath.setFrom(getInputClasspath(AGGREGATED_HILT_ARTIFACT_TYPE_VALUE))
       it.outputDir.set(
-        project.file(project.buildDir.resolve("generated/hilt_component_trees/${variant.name}/"))
+        project.file(project.buildDir.resolve("generated/hilt/component_trees/${variant.name}/"))
       )
       it.testEnvironment.set(variant is TestVariant || variant is UnitTestVariant)
     }
 
     val componentClasses = project.files(
-      project.buildDir.resolve("intermediates/hilt_component_classes/${variant.name}/")
+      project.buildDir.resolve("intermediates/hilt/component_classes/${variant.name}/")
     )
     val componentsJavaCompileTask = project.tasks.register(
       "hiltJavaCompile${variant.name.capitalize()}",
@@ -391,7 +394,7 @@ class HiltGradlePlugin @Inject constructor(
           project.dependencies.add(config.name, "com.google.dagger:hilt-compiler:$HILT_VERSION")
         }
         annotationProcessorGeneratedSourcesDirectory = project.file(
-          project.buildDir.resolve("generated/hilt_component_sources/${variant.name}/")
+          project.buildDir.resolve("generated/hilt/component_sources/${variant.name}/")
         )
         if (
           JavaVersion.current().isJava8Compatible &&
@@ -468,5 +471,9 @@ class HiltGradlePlugin @Inject constructor(
     val missingDepError: (String) -> String = { depCoordinate ->
       "The Hilt Android Gradle plugin is applied but no $depCoordinate dependency was found."
     }
+
+    // Temporarily default 'enableAggregatingTask' to false
+    private val HiltExtension.enableAggregatingTask: Boolean
+     get() = false
   }
 }

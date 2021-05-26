@@ -28,6 +28,9 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
@@ -50,16 +53,17 @@ final class AssistedFactoryBindingExpression extends SimpleInvocationBindingExpr
   private final DaggerElements elements;
   private final DaggerTypes types;
 
+  @AssistedInject
   AssistedFactoryBindingExpression(
-      ProvisionBinding binding,
+      @Assisted ProvisionBinding binding,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
       DaggerElements elements) {
     super(binding);
     this.binding = checkNotNull(binding);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
-    this.elements = checkNotNull(elements);
-    this.types = checkNotNull(types);
+    this.componentBindingExpressions = componentBindingExpressions;
+    this.elements = elements;
+    this.types = types;
   }
 
   @Override
@@ -107,5 +111,10 @@ final class AssistedFactoryBindingExpression extends SimpleInvocationBindingExpr
     }
 
     return builder.build();
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    AssistedFactoryBindingExpression create(ProvisionBinding binding);
   }
 }

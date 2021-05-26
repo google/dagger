@@ -20,6 +20,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 
@@ -33,8 +36,10 @@ final class ProducerCreationExpression implements FrameworkInstanceCreationExpre
   private final ComponentBindingExpressions componentBindingExpressions;
   private final ContributionBinding binding;
 
+  @AssistedInject
   ProducerCreationExpression(
-      ContributionBinding binding, ComponentBindingExpressions componentBindingExpressions) {
+      @Assisted ContributionBinding binding,
+      ComponentBindingExpressions componentBindingExpressions) {
     this.binding = checkNotNull(binding);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
   }
@@ -45,5 +50,10 @@ final class ProducerCreationExpression implements FrameworkInstanceCreationExpre
         "$T.create($L)",
         generatedClassNameForBinding(binding),
         componentBindingExpressions.getCreateMethodArgumentsCodeBlock(binding));
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    ProducerCreationExpression create(ContributionBinding binding);
   }
 }

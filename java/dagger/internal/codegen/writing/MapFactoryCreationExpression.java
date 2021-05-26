@@ -22,6 +22,9 @@ import static dagger.internal.codegen.binding.SourceFiles.mapFactoryClassName;
 
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ContributionBinding;
@@ -40,17 +43,18 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
   private final ContributionBinding binding;
   private final DaggerElements elements;
 
+  @AssistedInject
   MapFactoryCreationExpression(
-      ContributionBinding binding,
+      @Assisted ContributionBinding binding,
       ComponentImplementation componentImplementation,
       ComponentBindingExpressions componentBindingExpressions,
       BindingGraph graph,
       DaggerElements elements) {
     super(binding, componentImplementation, componentBindingExpressions);
     this.binding = checkNotNull(binding);
-    this.componentImplementation = checkNotNull(componentImplementation);
-    this.graph = checkNotNull(graph);
-    this.elements = checkNotNull(elements);
+    this.componentImplementation = componentImplementation;
+    this.graph = graph;
+    this.elements = elements;
   }
 
   @Override
@@ -83,5 +87,10 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
     builder.add(".build()");
 
     return builder.build();
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    MapFactoryCreationExpression create(ContributionBinding binding);
   }
 }

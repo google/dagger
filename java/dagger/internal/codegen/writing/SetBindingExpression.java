@@ -25,6 +25,9 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.SetBuilder;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.SetType;
@@ -46,8 +49,9 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
   private final DaggerTypes types;
   private final DaggerElements elements;
 
+  @AssistedInject
   SetBindingExpression(
-      ProvisionBinding binding,
+      @Assisted ProvisionBinding binding,
       BindingGraph graph,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types,
@@ -172,5 +176,10 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
 
   private boolean isImmutableSetAvailable() {
     return elements.getTypeElement(ImmutableSet.class) != null;
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    SetBindingExpression create(ProvisionBinding binding);
   }
 }

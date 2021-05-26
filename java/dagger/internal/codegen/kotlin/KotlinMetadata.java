@@ -194,7 +194,6 @@ abstract class KotlinMetadata {
         new KotlinClassHeader(
             getIntValue(metadataAnnotation.get(), "k"),
             getIntArrayValue(metadataAnnotation.get(), "mv"),
-            getIntArrayValue(metadataAnnotation.get(), "bv"),
             getStringArrayValue(metadataAnnotation.get(), "d1"),
             getStringArrayValue(metadataAnnotation.get(), "d2"),
             getStringValue(metadataAnnotation.get(), "xs"),

@@ -167,7 +167,7 @@ maven_install(
         "com.google.guava:guava:27.1-android",
         "junit:junit:4.13",
         "org.jetbrains.kotlin:kotlin-stdlib:%s" % KOTLIN_VERSION,
-        "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.2.0",
+        "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.3.0",
         "org.robolectric:robolectric:4.4",
         "org.robolectric:shadows-framework:4.4",  # For ActivityController
     ],

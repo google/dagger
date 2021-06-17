@@ -44,6 +44,118 @@ public final class ComponentValidationTest {
     assertThat(compilation).hadErrorContaining("interface");
   }
 
+  @Test
+  public void componentOnOverridingBuilder_failsWhenMethodNameConflictsWithStaticCreatorName() {
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules=TestModule.class)",
+            "interface TestComponent {",
+            "  String builder();",
+            "}");
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static String provideString() { return \"test\"; }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(componentFile, moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Cannot override generated method: TestComponent.builder()");
+  }
+
+  @Test
+  public void componentOnOverridingCreate_failsWhenGeneratedCreateMethod() {
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules=TestModule.class)",
+            "interface TestComponent {",
+            "  String create();",
+            "}");
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static String provideString() { return \"test\"; }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(componentFile, moduleFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("Cannot override generated method: TestComponent.create()");
+  }
+
+  @Test
+  public void subcomponentMethodNameBuilder_succeeds() {
+    JavaFileObject componentFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  TestSubcomponent.Builder subcomponent();",
+            "}");
+    JavaFileObject subcomponentFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestSubcomponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules=TestModule.class)",
+            "interface TestSubcomponent {",
+            "  String builder();",
+            "  @Subcomponent.Builder",
+            "  interface Builder {",
+            "    TestSubcomponent build();",
+            "  }",
+            "}");
+    JavaFileObject moduleFile =
+        JavaFileObjects.forSourceLines(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static String provideString() { return \"test\"; }",
+            "}");
+
+    Compilation compilation = daggerCompiler().compile(componentFile, subcomponentFile, moduleFile);
+    assertThat(compilation).succeeded();
+  }
+
   @Test public void componentOnEnum() {
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.NotAComponent",
         "package test;",

@@ -17,10 +17,12 @@
 package dagger.spi.model;
 
 import com.google.auto.common.AnnotationMirrors;
+import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Preconditions;
 import com.google.devtools.ksp.symbol.KSAnnotation;
+import com.squareup.javapoet.ClassName;
 import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
 
@@ -43,6 +45,15 @@ public abstract class DaggerAnnotation {
   @Nullable
   abstract Equivalence.Wrapper<AnnotationMirror> annotationMirror();
 
+  public DaggerTypeElement annotationTypeElement() {
+    return DaggerTypeElement.fromJava(
+        MoreTypes.asTypeElement(annotationMirror().get().getAnnotationType()));
+  }
+
+  public ClassName className() {
+    return annotationTypeElement().className();
+  }
+
   @Nullable
   public AnnotationMirror java() {
     return annotationMirror().get();
@@ -53,6 +64,6 @@ public abstract class DaggerAnnotation {
 
   @Override
   public final String toString() {
-    return java().toString();
+    return (ksp() != null ? ksp() : java()).toString();
   }
 }

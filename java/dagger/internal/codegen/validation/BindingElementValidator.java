@@ -369,7 +369,7 @@ public abstract class BindingElementValidator<E extends Element> {
       }
       verifyNotNull(error);
       for (Scope scope : scopes) {
-        report.addError(error, element, scope.scopeAnnotation());
+        report.addError(error, element, scope.scopeAnnotation().java());
       }
     }
 

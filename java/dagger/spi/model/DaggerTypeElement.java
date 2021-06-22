@@ -16,40 +16,36 @@
 
 package dagger.spi.model;
 
-import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Equivalence;
 import com.google.common.base.Preconditions;
-import com.google.devtools.ksp.symbol.KSType;
+import com.google.devtools.ksp.symbol.KSClassDeclaration;
+import com.squareup.javapoet.ClassName;
 import javax.annotation.Nullable;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.element.TypeElement;
 
-/** Wrapper type for a type. */
+/** Wrapper type for a type element. */
 @AutoValue
-public abstract class DaggerType {
+public abstract class DaggerTypeElement {
 
-  public static DaggerType fromJava(TypeMirror typeMirror) {
-    return new AutoValue_DaggerType(
-        MoreTypes.equivalence().wrap(Preconditions.checkNotNull(typeMirror)),
-        null);
-  }
-
-  public static DaggerType fromKsp(KSType ksType) {
-    return new AutoValue_DaggerType(
-        null,
-        Preconditions.checkNotNull(ksType));
+  public static DaggerTypeElement fromJava(TypeElement element) {
+    return new AutoValue_DaggerTypeElement(Preconditions.checkNotNull(element), null);
   }
 
   @Nullable
-  abstract Equivalence.Wrapper<TypeMirror> typeMirror();
+  public abstract TypeElement java();
 
   @Nullable
-  public TypeMirror java() {
-    return typeMirror().get();
+  public abstract KSClassDeclaration ksp();
+
+  public ClassName className() {
+    if (ksp() != null) {
+      // TODO(bcorso): Add support for KSP. Consider using xprocessing types internally since that
+      // already has support for KSP class names?
+      throw new UnsupportedOperationException("Method className() is not yet supported in KSP.");
+    } else {
+      return ClassName.get(java());
+    }
   }
-
-  @Nullable
-  public abstract KSType ksp();
 
   @Override
   public final String toString() {

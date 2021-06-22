@@ -16,40 +16,25 @@
 
 package dagger.spi.model;
 
-import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Equivalence;
 import com.google.common.base.Preconditions;
-import com.google.devtools.ksp.symbol.KSType;
+import com.google.devtools.ksp.symbol.KSDeclaration;
 import javax.annotation.Nullable;
-import javax.lang.model.type.TypeMirror;
+import javax.lang.model.element.Element;
 
-/** Wrapper type for a type. */
+/** Wrapper type for an element. */
 @AutoValue
-public abstract class DaggerType {
+public abstract class DaggerElement {
 
-  public static DaggerType fromJava(TypeMirror typeMirror) {
-    return new AutoValue_DaggerType(
-        MoreTypes.equivalence().wrap(Preconditions.checkNotNull(typeMirror)),
-        null);
-  }
-
-  public static DaggerType fromKsp(KSType ksType) {
-    return new AutoValue_DaggerType(
-        null,
-        Preconditions.checkNotNull(ksType));
+  public static DaggerElement fromJava(Element element) {
+    return new AutoValue_DaggerElement(Preconditions.checkNotNull(element), null);
   }
 
   @Nullable
-  abstract Equivalence.Wrapper<TypeMirror> typeMirror();
+  public abstract Element java();
 
   @Nullable
-  public TypeMirror java() {
-    return typeMirror().get();
-  }
-
-  @Nullable
-  public abstract KSType ksp();
+  public abstract KSDeclaration ksp();
 
   @Override
   public final String toString() {

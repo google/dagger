@@ -172,7 +172,7 @@ public final class InjectValidator implements ClearableCache {
     }
 
     for (Scope scope : scopesOf(constructorElement)) {
-      builder.addError(scopeErrorMsg, constructorElement, scope.scopeAnnotation());
+      builder.addError(scopeErrorMsg, constructorElement, scope.scopeAnnotation().java());
     }
 
     for (VariableElement parameter : constructorElement.getParameters()) {
@@ -229,14 +229,14 @@ public final class InjectValidator implements ClearableCache {
         builder.addError(
             "A type with an @AssistedInject-annotated constructor cannot be scoped",
             enclosingElement,
-            scope.scopeAnnotation());
+            scope.scopeAnnotation().java());
       }
     } else if (scopes.size() > 1) {
       for (Scope scope : scopes) {
         builder.addError(
             "A single binding may not declare more than one @Scope",
             enclosingElement,
-            scope.scopeAnnotation());
+            scope.scopeAnnotation().java());
       }
     }
 

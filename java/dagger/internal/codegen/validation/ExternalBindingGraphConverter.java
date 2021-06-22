@@ -151,7 +151,7 @@ public final class ExternalBindingGraphConverter {
   }
 
   private static Scope fromSpiModel(dagger.spi.model.Scope scope) {
-    return Scope.scope(scope.scopeAnnotation());
+    return Scope.scope(scope.scopeAnnotation().java());
   }
 
   private static ComponentPath fromSpiModel(dagger.spi.model.ComponentPath path) {

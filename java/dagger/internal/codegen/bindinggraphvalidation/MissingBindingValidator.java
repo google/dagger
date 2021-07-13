@@ -153,11 +153,12 @@ final class MissingBindingValidator implements BindingGraphPlugin {
     boolean hasSameComponentName = false;
     for (ComponentPath component : alternativeComponentPath) {
       message.append("\nA binding for ").append(missingBinding.key()).append(" exists in ");
-      if (component.currentComponent().getQualifiedName().contentEquals(missingComponentName)) {
+      String currentComponentName = component.currentComponent().className().canonicalName();
+      if (currentComponentName.contentEquals(missingComponentName)) {
         hasSameComponentName = true;
         message.append("[").append(component).append("]");
       } else {
-        message.append(component.currentComponent().getQualifiedName());
+        message.append(currentComponentName);
       }
       message.append(":");
     }
@@ -217,7 +218,7 @@ final class MissingBindingValidator implements BindingGraphPlugin {
     ComponentPath componentPath = graph.network().incidentNodes(edge).source().componentPath();
     return completePath
         ? componentPath.toString()
-        : componentPath.currentComponent().getQualifiedName().toString();
+        : componentPath.currentComponent().className().canonicalName();
   }
 
   private Node source(Edge edge, BindingGraph graph) {

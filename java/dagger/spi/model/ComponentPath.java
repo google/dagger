@@ -23,13 +23,13 @@ import static java.util.stream.Collectors.joining;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
-import javax.lang.model.element.TypeElement;
+import com.squareup.javapoet.ClassName;
 
 /** A path containing a component and all of its ancestor components. */
 @AutoValue
 public abstract class ComponentPath {
   /** Returns a new {@link ComponentPath} from {@code components}. */
-  public static ComponentPath create(Iterable<TypeElement> components) {
+  public static ComponentPath create(Iterable<DaggerTypeElement> components) {
     return new AutoValue_ComponentPath(ImmutableList.copyOf(components));
   }
 
@@ -37,19 +37,19 @@ public abstract class ComponentPath {
    * Returns the component types, starting from the {@linkplain #rootComponent() root
    * component} and ending with the {@linkplain #currentComponent() current component}.
    */
-  public abstract ImmutableList<TypeElement> components();
+  public abstract ImmutableList<DaggerTypeElement> components();
 
   /**
    * Returns the root {@link dagger.Component}- or {@link
    * dagger.producers.ProductionComponent}-annotated type
    */
-  public final TypeElement rootComponent() {
+  public final DaggerTypeElement rootComponent() {
     return components().get(0);
   }
 
   /** Returns the component at the end of the path. */
   @Memoized
-  public TypeElement currentComponent() {
+  public DaggerTypeElement currentComponent() {
     return getLast(components());
   }
 
@@ -58,7 +58,7 @@ public abstract class ComponentPath {
    *
    * @throws IllegalStateException if the current graph is the {@linkplain #atRoot() root component}
    */
-  public final TypeElement parentComponent() {
+  public final DaggerTypeElement parentComponent() {
     checkState(!atRoot());
     return components().reverse().get(1);
   }
@@ -75,8 +75,9 @@ public abstract class ComponentPath {
   }
 
   /** Returns the path from the root component to the {@code child} of the current component. */
-  public final ComponentPath childPath(TypeElement child) {
-    return create(ImmutableList.<TypeElement>builder().addAll(components()).add(child).build());
+  public final ComponentPath childPath(DaggerTypeElement child) {
+    return create(
+        ImmutableList.<DaggerTypeElement>builder().addAll(components()).add(child).build());
   }
 
   /**
@@ -89,7 +90,10 @@ public abstract class ComponentPath {
 
   @Override
   public final String toString() {
-    return components().stream().map(TypeElement::getQualifiedName).collect(joining(" → "));
+    return components().stream()
+        .map(DaggerTypeElement::className)
+        .map(ClassName::canonicalName)
+        .collect(joining(" → "));
   }
 
   @Memoized

@@ -217,7 +217,7 @@ public final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
       // TODO(erichang): This repeats some of the logic in DiagnosticReporterImpl. Remove when
       // merged.
       if (elementEncloses(
-          graph.rootComponentNode().componentPath().currentComponent(),
+          graph.rootComponentNode().componentPath().currentComponent().java(),
           childFactoryMethodEdge.factoryMethod())) {
         // Let this pass through since it is not an error reported on the root component
         delegate.reportSubcomponentFactoryMethod(diagnosticKind, childFactoryMethodEdge, message);

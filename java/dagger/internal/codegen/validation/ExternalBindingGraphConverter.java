@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.validation;
 
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
@@ -157,7 +158,8 @@ public final class ExternalBindingGraphConverter {
   }
 
   private static ComponentPath fromSpiModel(dagger.spi.model.ComponentPath path) {
-    return ComponentPath.create(path.components());
+    return ComponentPath.create(
+        path.components().stream().map(DaggerTypeElement::java).collect(toImmutableList()));
   }
 
   private static dagger.spi.model.BindingGraph.ComponentNode toSpiModel(

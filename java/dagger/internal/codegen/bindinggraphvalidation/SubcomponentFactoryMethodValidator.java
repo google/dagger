@@ -110,7 +110,7 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
   private ImmutableSet<TypeElement> subgraphFactoryMethodParameters(
       ChildFactoryMethodEdge edge, BindingGraph bindingGraph) {
     ComponentNode parent = (ComponentNode) bindingGraph.network().incidentNodes(edge).source();
-    DeclaredType parentType = asDeclared(parent.componentPath().currentComponent().asType());
+    DeclaredType parentType = asDeclared(parent.componentPath().currentComponent().java().asType());
     ExecutableType factoryMethodType =
         asExecutable(types.asMemberOf(parentType, edge.factoryMethod()));
     return asTypeElements(factoryMethodType.getParameterTypes());
@@ -153,7 +153,8 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
             .target()
             .componentPath()
             .currentComponent()
-            .getQualifiedName(),
+            .className()
+            .canonicalName(),
         Joiner.on(", ").join(missingModules));
   }
 }

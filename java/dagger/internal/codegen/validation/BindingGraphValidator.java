@@ -66,7 +66,7 @@ public final class BindingGraphValidator {
 
   /** Returns {@code true} if external plugins report no errors. */
   private boolean visitExternalPlugins(BindingGraph graph) {
-    TypeElement component = graph.rootComponentNode().componentPath().currentComponent();
+    TypeElement component = graph.rootComponentNode().componentPath().currentComponent().java();
     if (graph.isFullBindingGraph()
         // TODO(b/135938915): Consider not visiting plugins if only
         // fullBindingGraphValidation is enabled.

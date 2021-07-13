@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
 import static dagger.internal.codegen.extension.DaggerCollectors.onlyElement;
-import static java.lang.Character.isUpperCase;
 import static java.lang.String.format;
 
 import com.google.common.base.CharMatcher;
@@ -43,8 +42,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.inject.Inject;
-import javax.lang.model.element.Name;
-import javax.lang.model.element.TypeElement;
 
 /**
  * Holds the unique simple names for all components, keyed by their {@link ComponentPath} and {@link
@@ -179,22 +176,19 @@ public final class ComponentNames {
   }
 
   private static String simpleName(ComponentPath componentPath) {
-    return componentPath.currentComponent().getSimpleName().toString();
+    return componentPath.currentComponent().className().simpleName();
   }
 
   /** Returns a prefix that could make the component's simple name more unique. */
   private static String uniquingPrefix(ComponentPath componentPath) {
-    TypeElement typeElement = componentPath.currentComponent();
-    String containerName = typeElement.getEnclosingElement().getSimpleName().toString();
+    ClassName component = componentPath.currentComponent().className();
 
-    // If parent element looks like a class, use its initials as a prefix.
-    if (!containerName.isEmpty() && isUpperCase(containerName.charAt(0))) {
-      return CharMatcher.javaLowerCase().removeFrom(containerName);
+    if (component.enclosingClassName() != null) {
+      return CharMatcher.javaLowerCase().removeFrom(component.enclosingClassName().simpleName());
     }
 
     // Not in a normally named class. Prefix with the initials of the elements leading here.
-    Name qualifiedName = typeElement.getQualifiedName();
-    Iterator<String> pieces = QUALIFIED_NAME_SPLITTER.split(qualifiedName).iterator();
+    Iterator<String> pieces = QUALIFIED_NAME_SPLITTER.split(component.canonicalName()).iterator();
     StringBuilder b = new StringBuilder();
 
     while (pieces.hasNext()) {

@@ -41,6 +41,7 @@ import dagger.spi.model.BindingGraph.Edge;
 import dagger.spi.model.BindingGraph.MissingBinding;
 import dagger.spi.model.BindingGraph.Node;
 import dagger.spi.model.ComponentPath;
+import dagger.spi.model.DaggerTypeElement;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.ArrayDeque;
@@ -164,6 +165,7 @@ final class BindingGraphConverter {
               bindingGraphPath.stream()
                   .map(LegacyBindingGraph::componentDescriptor)
                   .map(ComponentDescriptor::typeElement)
+                  .map(DaggerTypeElement::fromJava)
                   .collect(toImmutableList()));
       componentPaths.addLast(graphPath);
       ComponentNode currentComponent =
@@ -256,7 +258,7 @@ final class BindingGraphConverter {
      */
     private ComponentPath pathFromRootToAncestor(TypeElement ancestor) {
       for (ComponentPath componentPath : componentPaths) {
-        if (componentPath.currentComponent().equals(ancestor)) {
+        if (componentPath.currentComponent().java().equals(ancestor)) {
           return componentPath;
         }
       }
@@ -325,7 +327,7 @@ final class BindingGraphConverter {
 
     private ResolvedBindings resolvedDependencies(
         Node source, DependencyRequest dependencyRequest) {
-      return graphForAncestor(source.componentPath().currentComponent())
+      return graphForAncestor(source.componentPath().currentComponent().java())
           .resolvedBindings(bindingRequest(dependencyRequest));
     }
 
@@ -377,7 +379,8 @@ final class BindingGraphConverter {
       ComponentDescriptor subcomponent =
           graph.componentDescriptor().getChildComponentWithBuilderType(subcomponentBuilderElement);
       return ComponentNodeImpl.create(
-          componentPath().childPath(subcomponent.typeElement()), subcomponent);
+          componentPath().childPath(DaggerTypeElement.fromJava(subcomponent.typeElement())),
+          subcomponent);
     }
   }
 

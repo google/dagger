@@ -94,7 +94,8 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
       DiagnosticReporter diagnosticReporter) {
     Diagnostic.Kind diagnosticKind = ERROR;
     StringBuilder message =
-        new StringBuilder(componentNode.componentPath().currentComponent().getQualifiedName());
+        new StringBuilder(
+            componentNode.componentPath().currentComponent().className().canonicalName());
 
     if (!componentNode.isRealComponent()) {
       // If the "component" is really a module, it will have no scopes attached. We want to report

@@ -97,7 +97,6 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -354,7 +353,8 @@ public final class ComponentImplementation {
             toImmutableMap(
                 componentImpl -> componentImpl,
                 componentImpl -> {
-                  TypeElement component = componentImpl.graph.componentPath().currentComponent();
+                  ClassName component =
+                      componentImpl.graph.componentPath().currentComponent().className();
                   ClassName fieldType = componentImpl.name();
                   String fieldName =
                       componentImpl.isNested()

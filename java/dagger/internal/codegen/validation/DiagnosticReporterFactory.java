@@ -71,7 +71,7 @@ final class DiagnosticReporterFactory {
     DiagnosticReporterImpl(BindingGraph graph, String plugin, boolean reportErrorsAsWarnings) {
       this.plugin = plugin;
       this.reportErrorsAsWarnings = reportErrorsAsWarnings;
-      this.rootComponent = graph.rootComponentNode().componentPath().currentComponent();
+      this.rootComponent = graph.rootComponentNode().componentPath().currentComponent().java();
       this.diagnosticMessageGenerator = diagnosticMessageGeneratorFactory.create(graph);
     }
 

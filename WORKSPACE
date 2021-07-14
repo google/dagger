@@ -135,7 +135,7 @@ http_archive(
 
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
-ANDROID_LINT_VERSION = "26.6.2"
+ANDROID_LINT_VERSION = "27.2.1"
 
 maven_install(
     artifacts = [

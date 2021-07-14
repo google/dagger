@@ -16,6 +16,7 @@
 package dagger.lint
 
 import com.android.tools.lint.client.api.IssueRegistry
+import com.android.tools.lint.client.api.Vendor
 import com.android.tools.lint.detector.api.CURRENT_API
 import com.android.tools.lint.detector.api.Issue
 import com.google.auto.service.AutoService
@@ -35,6 +36,12 @@ class DaggerIssueRegistry : IssueRegistry() {
   // The api is meant to be the current api for which this registry was compiled, but we set a
   // higher number without depending on a newer Lint to avoid Lint warning users of custom checks
   // that might not work. This value eventually has to be updated as newer Api become available.
-  override val api: Int = 8
+  override val api: Int = 10
   override val issues: List<Issue> = DaggerKotlinIssueDetector.issues
+  override val vendor = Vendor(
+    vendorName = "Google",
+    identifier = "com.google.dagger:dagger-lint",
+    feedbackUrl = "https://github.com/google/dagger/issues",
+    contact = "https://github.com/google/dagger"
+  )
 }

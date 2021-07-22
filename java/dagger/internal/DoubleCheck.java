@@ -61,9 +61,7 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
    * instance differs from the current instance, an {@link IllegalStateException} is thrown.
    */
   public static Object reentrantCheck(Object currentInstance, Object newInstance) {
-    boolean isReentrant = !(currentInstance == UNINITIALIZED
-        // This check is needed for fastInit's implementation, which uses MemoizedSentinel types.
-        || currentInstance instanceof MemoizedSentinel);
+    boolean isReentrant = currentInstance != UNINITIALIZED;
 
     if (isReentrant && currentInstance != newInstance) {
       throw new IllegalStateException("Scoped provider was invoked recursively returning "

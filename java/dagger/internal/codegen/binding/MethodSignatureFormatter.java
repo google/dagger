@@ -25,6 +25,7 @@ import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.compat.XConverters;
+import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import dagger.internal.codegen.base.Formatter;
@@ -171,6 +172,6 @@ public final class MethodSignatureFormatter extends Formatter<ExecutableElement>
   }
 
   private static String formatAnnotation(AnnotationMirror annotation) {
-    return stripCommonTypePrefixes(annotation.toString());
+    return stripCommonTypePrefixes(AnnotationMirrors.toString(annotation));
   }
 }

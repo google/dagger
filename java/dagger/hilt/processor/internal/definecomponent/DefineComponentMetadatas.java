@@ -23,6 +23,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
@@ -146,7 +147,7 @@ final class DefineComponentMetadatas {
         component,
         "@DefineComponent %s, references an invalid parent type: %s",
         component,
-        mirror);
+        AnnotationMirrors.toString(mirror));
 
     TypeElement parent = asTypeElement(AnnotationValues.getTypeMirror(parentValue));
 

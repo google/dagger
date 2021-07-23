@@ -91,6 +91,6 @@ public abstract class Scope {
   /** Returns a debug representation of the scope. */
   @Override
   public final String toString() {
-    return scopeAnnotation().toString();
+    return AnnotationMirrors.toString(scopeAnnotation());
   }
 }

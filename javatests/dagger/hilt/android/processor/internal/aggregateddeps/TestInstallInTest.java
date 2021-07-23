@@ -86,7 +86,7 @@ public class TestInstallInTest {
         .hadErrorContaining(
             "@TestInstallIn, 'components' class is invalid or missing: "
                 + "@dagger.hilt.testing.TestInstallIn("
-                + "components={}, replaces={test.InstallInModule.class})");
+                + "components = {}, replaces = test.InstallInModule.class)");
   }
 
   @Test
@@ -111,7 +111,7 @@ public class TestInstallInTest {
         .hadErrorContaining(
             "@TestInstallIn, 'replaces' class is invalid or missing: "
                 + "@dagger.hilt.testing.TestInstallIn("
-                + "components={dagger.hilt.components.SingletonComponent.class}, replaces={})");
+                + "components = dagger.hilt.components.SingletonComponent.class, replaces = {})");
   }
 
   @Test

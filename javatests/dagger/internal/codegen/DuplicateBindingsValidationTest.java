@@ -1160,9 +1160,9 @@ public class DuplicateBindingsValidationTest {
         .hadErrorContaining(
             message(
                 "String is bound multiple times:",
-                "    @Provides @Singleton @Modules.Foo(bar=String.class) String "
+                "    @Provides @Singleton @Modules.Foo(bar = String.class) String "
                     + "Modules.Module1.foo(int, ImmutableList<Boolean>)",
-                "    @Provides @Singleton @Modules.Foo(bar=String.class) String "
+                "    @Provides @Singleton @Modules.Foo(bar = String.class) String "
                     + "Modules.Module2.foo(int, ImmutableList<Boolean>)"))
         .inFile(component);
   }

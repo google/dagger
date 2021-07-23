@@ -182,7 +182,7 @@ public final class Processors {
         "@%s, '%s' class is invalid or missing: %s",
         annotation.getAnnotationType().asElement().getSimpleName(),
         key,
-        annotation);
+        AnnotationMirrors.toString(annotation));
 
     return values;
   }

@@ -42,6 +42,7 @@ import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
+import com.google.auto.common.AnnotationMirrors;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
@@ -431,7 +432,9 @@ public final class ModuleValidator {
     if (isComponentAnnotation(annotation)) {
       return ImmutableList.copyOf(annotation.getAsAnnotationValueList("modules"));
     }
-    throw new IllegalArgumentException(String.format("unsupported annotation: %s", annotation));
+    throw new IllegalArgumentException(
+        String.format(
+            "unsupported annotation: %s", AnnotationMirrors.toString(toJavac(annotation))));
   }
 
   private void validateBindingMethodOverrides(

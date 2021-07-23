@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.base;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
@@ -25,6 +26,7 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
+import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
@@ -195,7 +197,7 @@ public abstract class ComponentAnnotation {
   public static ComponentAnnotation componentAnnotation(XAnnotation annotation) {
     checkState(
         isComponentAnnotation(annotation),
-        annotation
+        AnnotationMirrors.toString(toJavac(annotation))
             + " must be a Component, Subcomponent, ProductionComponent, "
             + "or ProductionSubcomponent annotation");
     return create(annotation);

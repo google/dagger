@@ -16,6 +16,7 @@
 
 import java.io.File
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.BuildTask
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.rules.TemporaryFolder
 
@@ -206,6 +207,9 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
     private val projectRoot: File,
     private val buildResult: BuildResult
   ) {
+
+    val tasks: List<BuildTask> get() = buildResult.tasks
+
     // Finds a task by name.
     fun getTask(name: String) = buildResult.task(name) ?: error("Task '$name' not found.")
 

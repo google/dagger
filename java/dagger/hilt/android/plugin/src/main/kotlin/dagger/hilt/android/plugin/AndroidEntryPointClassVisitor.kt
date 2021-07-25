@@ -4,10 +4,10 @@ import com.android.build.api.instrumentation.AsmClassVisitorFactory
 import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
 import com.android.build.api.instrumentation.InstrumentationParameters
-import java.io.File
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.objectweb.asm.ClassReader
@@ -15,6 +15,7 @@ import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.FieldVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
+import java.io.File
 
 /**
  * ASM Adapter that transforms @AndroidEntryPoint-annotated classes to extend the Hilt
@@ -23,14 +24,15 @@ import org.objectweb.asm.Opcodes
 class AndroidEntryPointClassVisitor(
   private val apiVersion: Int,
   nextClassVisitor: ClassVisitor,
-  private val additionalClasses: File
+  private val additionalClasses: FileCollection
 ) : ClassVisitor(apiVersion, nextClassVisitor) {
 
   @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   interface AndroidEntryPointParams : InstrumentationParameters {
-    @get:InputDirectory
+    @get:Optional
+    @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    val additionalClassesDir: Property<File>
+    val additionalClassesDir: ConfigurableFileCollection
   }
 
   @Suppress("UnstableApiUsage") // ASM Pipeline APIs
@@ -42,7 +44,7 @@ class AndroidEntryPointClassVisitor(
       return AndroidEntryPointClassVisitor(
         apiVersion = instrumentationContext.apiVersion.get(),
         nextClassVisitor = nextClassVisitor,
-        additionalClasses = parameters.get().additionalClassesDir.get()
+        additionalClasses = parameters.get().additionalClassesDir
       )
     }
 
@@ -191,7 +193,7 @@ class AndroidEntryPointClassVisitor(
    * a super.onReceive invocation has to be inserted in the implementation.
    */
   private fun hasOnReceiveBytecodeInjectionMarker() =
-    findAdditionalClassFile(newSuperclassName).inputStream().use {
+    findAdditionalClassFile(newSuperclassName)?.inputStream()?.use {
       var hasMarker = false
       ClassReader(it).accept(
         object : ClassVisitor(apiVersion) {
@@ -211,10 +213,10 @@ class AndroidEntryPointClassVisitor(
         ClassReader.SKIP_CODE or ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES
       )
       return@use hasMarker
-    }
+    } ?: false
 
-  private fun findAdditionalClassFile(className: String) =
-    File(additionalClasses, "$className.class")
+  private fun findAdditionalClassFile(className: String): File? =
+    additionalClasses.takeIf { it.count() == 1 }?.singleFile?.let { File(it, "$className.class") }
 
   companion object {
     val ANDROID_ENTRY_POINT_ANNOTATIONS = setOf(

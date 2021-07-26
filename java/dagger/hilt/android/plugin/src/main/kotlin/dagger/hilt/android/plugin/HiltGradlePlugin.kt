@@ -26,9 +26,6 @@ import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.TestExtension
 import com.android.build.gradle.TestedExtension
 import com.android.build.gradle.api.AndroidBasePlugin
-import com.android.build.gradle.api.BaseVariant
-import com.android.build.gradle.api.TestVariant
-import com.android.build.gradle.api.UnitTestVariant
 import dagger.hilt.android.plugin.task.AggregateDepsTask
 import dagger.hilt.android.plugin.task.HiltTransformTestClassesTask
 import dagger.hilt.android.plugin.util.AggregatedPackagesTransform
@@ -124,7 +121,9 @@ class HiltGradlePlugin @Inject constructor(
 
   // Invokes the [block] function for each Android variant that is considered a Hilt root, where
   // dependencies are aggregated and components are generated.
-  private fun BaseExtension.forEachRootVariant(block: (variant: BaseVariant) -> Unit) {
+  private fun BaseExtension.forEachRootVariant(
+    @Suppress("DEPRECATION") block: (variant: com.android.build.gradle.api.BaseVariant) -> Unit
+  ) {
     when (this) {
       is AppExtension -> {
         // For an app project we configure the app variant and both androidTest and unitTest
@@ -150,7 +149,7 @@ class HiltGradlePlugin @Inject constructor(
     project: Project,
     hiltExtension: HiltExtension,
     androidExtension: BaseExtension,
-    variant: BaseVariant
+    @Suppress("DEPRECATION") variant: com.android.build.gradle.api.BaseVariant
   ) {
     if (
       !hiltExtension.enableExperimentalClasspathAggregation || hiltExtension.enableAggregatingTask
@@ -192,7 +191,8 @@ class HiltGradlePlugin @Inject constructor(
       return
     }
 
-    val runtimeConfiguration = if (variant is TestVariant) {
+    @Suppress("DEPRECATION") // Older variant API is deprecated
+    val runtimeConfiguration = if (variant is com.android.build.gradle.api.TestVariant) {
       // For Android test variants, the tested runtime classpath is used since the test app has
       // tested dependencies removed.
       variant.testedVariant.runtimeConfiguration
@@ -219,10 +219,11 @@ class HiltGradlePlugin @Inject constructor(
     // debugUnitTest    -> testDebugCompileOnly
     // release          -> releaseCompileOnly
     // releaseUnitTest  -> testReleaseCompileOnly
+    @Suppress("DEPRECATION") // Older variant API is deprecated
     val compileOnlyConfigName = when (variant) {
-      is TestVariant ->
+      is com.android.build.gradle.api.TestVariant ->
         "androidTest${variant.name.substringBeforeLast("AndroidTest").capitalize()}CompileOnly"
-      is UnitTestVariant ->
+      is com.android.build.gradle.api.UnitTestVariant ->
         "test${variant.name.substringBeforeLast("UnitTest").capitalize()}CompileOnly"
       else ->
         "${variant.name}CompileOnly"
@@ -284,7 +285,7 @@ class HiltGradlePlugin @Inject constructor(
     project: Project,
     hiltExtension: HiltExtension,
     androidExtension: BaseExtension,
-    variant: BaseVariant
+    @Suppress("DEPRECATION") variant: com.android.build.gradle.api.BaseVariant
   ) {
     if (!hiltExtension.enableAggregatingTask) {
       // Option is not enabled, don't configure aggregating task.
@@ -295,7 +296,8 @@ class HiltGradlePlugin @Inject constructor(
       "hiltCompileOnly${variant.name.capitalize()}"
     ).apply {
       // The runtime config of the test APK differs from the tested one.
-      if (variant is TestVariant) {
+      @Suppress("DEPRECATION") // Older variant API is deprecated
+      if (variant is com.android.build.gradle.api.TestVariant) {
         extendsFrom(variant.testedVariant.runtimeConfiguration)
       }
       extendsFrom(variant.runtimeConfiguration)
@@ -350,7 +352,11 @@ class HiltGradlePlugin @Inject constructor(
       it.outputDir.set(
         project.file(project.buildDir.resolve("generated/hilt/component_trees/${variant.name}/"))
       )
-      it.testEnvironment.set(variant is TestVariant || variant is UnitTestVariant)
+      @Suppress("DEPRECATION") // Older variant API is deprecated
+      it.testEnvironment.set(
+        variant is com.android.build.gradle.api.TestVariant ||
+          variant is com.android.build.gradle.api.UnitTestVariant
+      )
       it.crossCompilationRootValidationDisabled.set(
         hiltExtension.disableCrossCompilationRootValidation
       )

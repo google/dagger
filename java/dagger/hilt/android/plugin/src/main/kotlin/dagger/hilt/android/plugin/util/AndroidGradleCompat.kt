@@ -45,10 +45,17 @@ sealed class AndroidComponentsExtensionCompat {
   ) : AndroidComponentsExtensionCompat() {
     override fun onAllVariants(block: (ComponentCompat) -> Unit) {
       actual.onVariants { variant ->
+        // Use reflection to get the AndroidTest component out of the variant because a binary
+        // incompatible change was introduced in AGP 7.0-beta05 that changed the return type of the
+        // method.
+        fun ApplicationVariant.getAndroidTest() =
+          this::class.java.getDeclaredMethod("getAndroidTest").invoke(this) as? Component
+        fun LibraryVariant.getAndroidTest() =
+          this::class.java.getDeclaredMethod("getAndroidTest").invoke(this) as? Component
         block.invoke(ComponentCompat.Api70Impl(variant))
         when (variant) {
-          is ApplicationVariant -> variant.androidTest
-          is LibraryVariant -> variant.androidTest
+          is ApplicationVariant -> variant.getAndroidTest()
+          is LibraryVariant -> variant.getAndroidTest()
           else -> null
         }?.let { block.invoke(ComponentCompat.Api70Impl(it)) }
         variant.unitTest?.let { block.invoke(ComponentCompat.Api70Impl(it)) }

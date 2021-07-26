@@ -15,7 +15,6 @@
  */
 package dagger.hilt.android.plugin.task
 
-import com.android.build.gradle.api.UnitTestVariant
 import dagger.hilt.android.plugin.AndroidEntryPointClassTransformer
 import dagger.hilt.android.plugin.HiltExtension
 import dagger.hilt.android.plugin.util.getCompileKotlin
@@ -114,7 +113,7 @@ abstract class HiltTransformTestClassesTask @Inject constructor(
 
     fun create(
       project: Project,
-      unitTestVariant: UnitTestVariant,
+      @Suppress("DEPRECATION") unitTestVariant: com.android.build.gradle.api.UnitTestVariant,
       extension: HiltExtension
     ) {
       if (!extension.enableTransformForLocalTests) {

@@ -45,6 +45,7 @@ sealed class AndroidComponentsExtensionCompat {
   ) : AndroidComponentsExtensionCompat() {
     override fun onAllVariants(block: (ComponentCompat) -> Unit) {
       actual.onVariants { variant ->
+        block.invoke(ComponentCompat.Api70Impl(variant))
         when (variant) {
           is ApplicationVariant -> variant.androidTest
           is LibraryVariant -> variant.androidTest

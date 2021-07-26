@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        agp: ['4.1.0', '4.2.0']
+        agp: ['4.1.0', '4.2.0', '7.0.0-beta04']
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2

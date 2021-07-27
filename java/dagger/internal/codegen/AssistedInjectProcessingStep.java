@@ -20,8 +20,8 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
 
-import androidx.room.compiler.processing.XExecutableElement;
-import androidx.room.compiler.processing.compat.XConverters;
+import androidx.room.shaded.compiler.processing.XExecutableElement;
+import androidx.room.shaded.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;

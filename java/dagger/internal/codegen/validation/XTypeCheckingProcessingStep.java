@@ -21,9 +21,9 @@ import static com.google.common.collect.Sets.difference;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
-import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XProcessingStep;
+import androidx.room.shaded.compiler.processing.XElement;
+import androidx.room.shaded.compiler.processing.XProcessingEnv;
+import androidx.room.shaded.compiler.processing.XProcessingStep;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;

@@ -19,8 +19,8 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
 
-import androidx.room.compiler.processing.XVariableElement;
-import androidx.room.compiler.processing.compat.XConverters;
+import androidx.room.shaded.compiler.processing.XVariableElement;
+import androidx.room.shaded.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.assisted.AssistedInject;

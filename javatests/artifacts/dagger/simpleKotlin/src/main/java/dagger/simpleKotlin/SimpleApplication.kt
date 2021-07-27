@@ -14,38 +14,40 @@
  * limitations under the License.
  */
 
-package dagger.simple;
+package dagger.simpleKotlin
 
-import dagger.Component;
-import dagger.Module;
-import dagger.Provides;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import dagger.Component
+import dagger.Module
+import dagger.Provides
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /** A simple, skeletal application that defines a simple component. */
-public class SimpleApplication {
-  static final class Foo {
-    @Inject Foo() {}
-  }
+class SimpleApplication {
+  class Foo @Inject constructor()
 
   @Module
-  static final class SimpleModule {
+  object SimpleModule {
     @Provides
-    static Foo provideFoo() {
-      return new Foo();
+    fun provideFoo(): Foo {
+      return Foo()
     }
   }
 
   @Singleton
-  @Component(modules = { SimpleModule.class })
+  @Component(modules = [SimpleModule::class])
   interface SimpleComponent {
-    Foo foo();
+    fun foo(): Foo
   }
 
-  public static void main(String[] args) {
-    Foo foo = DaggerSimpleApplication_SimpleComponent.create().foo();
-
-    // Execute other classes
-    AssistedInjects.main(args);
+  companion object {
+    fun main() {
+      val foo: Foo = DaggerSimpleApplication_SimpleComponent.create().foo()
+    }
   }
+}
+
+fun main() {
+  SimpleApplication.main()
+  AssistedInjects.main()
 }

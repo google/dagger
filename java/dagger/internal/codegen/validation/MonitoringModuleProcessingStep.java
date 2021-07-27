@@ -16,8 +16,8 @@
 
 package dagger.internal.codegen.validation;
 
-import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
+import androidx.room.shaded.compiler.processing.XTypeElement;
+import androidx.room.shaded.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;

@@ -18,8 +18,8 @@ package dagger.internal.codegen.validation;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import androidx.room.compiler.processing.XExecutableElement;
-import androidx.room.compiler.processing.compat.XConverters;
+import androidx.room.shaded.compiler.processing.XExecutableElement;
+import androidx.room.shaded.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import javax.annotation.processing.Messager;

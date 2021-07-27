@@ -18,11 +18,11 @@ package dagger.internal.codegen;
 
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
-import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XProcessingStep;
-import androidx.room.compiler.processing.XRoundEnv;
-import androidx.room.compiler.processing.compat.XConverters;
-import androidx.room.compiler.processing.javac.JavacBasicAnnotationProcessor;
+import androidx.room.shaded.compiler.processing.XProcessingEnv;
+import androidx.room.shaded.compiler.processing.XProcessingStep;
+import androidx.room.shaded.compiler.processing.XRoundEnv;
+import androidx.room.shaded.compiler.processing.compat.XConverters;
+import androidx.room.shaded.compiler.processing.javac.JavacBasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;

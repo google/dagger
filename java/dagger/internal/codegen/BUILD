@@ -118,7 +118,9 @@ gen_maven_artifact(
         "//java/dagger/internal/codegen/xprocessing",
     ],
     shaded_rules = [
-        "rule androidx.room.compiler.processing.** dagger.shaded.androidx.room.compiler.processing.@1",
+        # Normally we would include shading rules for xprocessing here since it's
+        # included in shaded_deps (above) but the jar is already shaded. We still
+        # include it in shaded_deps so that the jarjar knows to add it since it.
         "rule com.google.auto.common.** dagger.shaded.auto.common.@1",
     ],
 )

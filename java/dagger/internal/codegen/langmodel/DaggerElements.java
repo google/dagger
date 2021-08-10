@@ -43,7 +43,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -81,10 +80,6 @@ public final class DaggerElements implements Elements, ClearableCache {
   public DaggerElements(Elements elements, Types types) {
     this.elements = checkNotNull(elements);
     this.types = checkNotNull(types);
-  }
-
-  public DaggerElements(ProcessingEnvironment processingEnv) {
-    this(processingEnv.getElementUtils(), processingEnv.getTypeUtils());
   }
 
   /**

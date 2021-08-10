@@ -33,7 +33,6 @@ import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 /**
@@ -85,8 +84,6 @@ public abstract class JavacPluginModule {
   static DaggerTypes daggerTypes(Context javaContext, DaggerElements elements) {
     return new DaggerTypes(JavacTypes.instance(javaContext), elements);
   }
-
-  @Binds abstract Types types(DaggerTypes daggerTypes);
 
   private JavacPluginModule() {}
 }

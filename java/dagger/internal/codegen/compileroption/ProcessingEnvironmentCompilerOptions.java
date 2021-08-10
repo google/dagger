@@ -75,23 +75,23 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   private static final String KEYS_PER_COMPONENT_SHARD = "dagger.keysPerComponentShard";
 
   private final ProcessingEnvironment processingEnvironment;
-  private final DaggerElements daggerElements;
+  private final DaggerElements elements;
   private final Map<EnumOption<?>, Object> enumOptions = new HashMap<>();
   private final Map<EnumOption<?>, ImmutableMap<String, ? extends Enum<?>>> allCommandLineOptions =
       new HashMap<>();
 
   @Inject
   ProcessingEnvironmentCompilerOptions(
-      ProcessingEnvironment processingEnvironment, DaggerElements daggerElements) {
+      ProcessingEnvironment processingEnvironment,
+      DaggerElements elements) {
     this.processingEnvironment = processingEnvironment;
-    this.daggerElements = daggerElements;
+    this.elements = elements;
     checkValid();
   }
 
   @Override
   public boolean usesProducers() {
-    return processingEnvironment.getElementUtils().getTypeElement(Produces.class.getCanonicalName())
-        != null;
+    return elements.getTypeElement(Produces.class.getCanonicalName()) != null;
   }
 
   @Override

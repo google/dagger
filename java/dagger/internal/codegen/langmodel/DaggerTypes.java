@@ -32,7 +32,6 @@ import com.squareup.javapoet.TypeName;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
-import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -55,7 +54,6 @@ public final class DaggerTypes implements Types {
   private final Types types;
   private final DaggerElements elements;
 
-  @Inject
   public DaggerTypes(Types types, DaggerElements elements) {
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);

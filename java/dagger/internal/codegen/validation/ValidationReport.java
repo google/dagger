@@ -18,6 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.langmodel.DaggerElements.transitivelyEncloses;
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 import static javax.tools.Diagnostic.Kind.WARNING;
@@ -103,7 +104,7 @@ public final class ValidationReport<T extends Element> {
     }
     hasPrintedErrors = true;
     for (Item item : items) {
-      if (isEnclosedIn(subject, item.element())) {
+      if (transitivelyEncloses(subject, item.element())) {
         if (item.annotation().isPresent()) {
           if (item.annotationValue().isPresent()) {
             messager.printMessage(
@@ -127,17 +128,6 @@ public final class ValidationReport<T extends Element> {
     for (ValidationReport<?> subreport : subreports) {
       subreport.printMessagesTo(messager);
     }
-  }
-
-  private static boolean isEnclosedIn(Element parent, Element child) {
-    Element current = child;
-    while (current != null) {
-      if (current.equals(parent)) {
-        return true;
-      }
-      current = current.getEnclosingElement();
-    }
-    return false;
   }
 
   /** Metadata about a {@link ValidationReport} item. */

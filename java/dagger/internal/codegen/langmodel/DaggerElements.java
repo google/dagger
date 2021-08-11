@@ -30,7 +30,6 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.graph.Traverser;
 import com.squareup.javapoet.ClassName;
 import dagger.Reusable;
 import dagger.internal.codegen.base.ClearableCache;
@@ -49,7 +48,6 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
@@ -70,7 +68,6 @@ import javax.lang.model.type.UnionType;
 import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.AbstractTypeVisitor8;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.SimpleElementVisitor8;
 import javax.lang.model.util.Types;
 
 /** Extension of {@link Elements} that adds Dagger-specific methods. */
@@ -91,15 +88,18 @@ public final class DaggerElements implements Elements, ClearableCache {
   }
 
   /**
-   * Returns {@code true} if {@code encloser} is equal to {@code enclosed} or recursively encloses
-   * it.
+   * Returns {@code true} if {@code encloser} is equal to or recursively encloses {@code enclosed}.
    */
-  public static boolean elementEncloses(TypeElement encloser, Element enclosed) {
-    return Iterables.contains(GET_ENCLOSED_ELEMENTS.breadthFirst(encloser), enclosed);
+  public static boolean transitivelyEncloses(Element encloser, Element enclosed) {
+    Element current = enclosed;
+    while (current != null) {
+      if (current.equals(encloser)) {
+        return true;
+      }
+      current = current.getEnclosingElement();
+    }
+    return false;
   }
-
-  private static final Traverser<Element> GET_ENCLOSED_ELEMENTS =
-      Traverser.forTree(Element::getEnclosedElements);
 
   public ImmutableSet<ExecutableElement> getLocalAndInheritedMethods(TypeElement type) {
     return getLocalAndInheritedMethodsCache.computeIfAbsent(
@@ -129,21 +129,15 @@ public final class DaggerElements implements Elements, ClearableCache {
 
   /** Returns the argument or the closest enclosing element that is a {@link TypeElement}. */
   public static TypeElement closestEnclosingTypeElement(Element element) {
-    return element.accept(CLOSEST_ENCLOSING_TYPE_ELEMENT, null);
+    Element current = element;
+    while (current != null) {
+      if (MoreElements.isType(current)) {
+        return MoreElements.asType(current);
+      }
+      current = current.getEnclosingElement();
+    }
+    throw new IllegalStateException("There is no enclosing TypeElement for: " + element);
   }
-
-  private static final ElementVisitor<TypeElement, Void> CLOSEST_ENCLOSING_TYPE_ELEMENT =
-      new SimpleElementVisitor8<TypeElement, Void>() {
-        @Override
-        protected TypeElement defaultAction(Element element, Void p) {
-          return element.getEnclosingElement().accept(this, null);
-        }
-
-        @Override
-        public TypeElement visitType(TypeElement type, Void p) {
-          return type;
-        }
-      };
 
   /**
    * Compares elements according to their declaration order among siblings. Only valid to compare

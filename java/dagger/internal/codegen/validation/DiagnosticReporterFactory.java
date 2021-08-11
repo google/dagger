@@ -18,7 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
-import static dagger.internal.codegen.langmodel.DaggerElements.elementEncloses;
+import static dagger.internal.codegen.langmodel.DaggerElements.transitivelyEncloses;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.common.collect.ImmutableSet;
@@ -173,9 +173,7 @@ final class DiagnosticReporterFactory {
       StringBuilder fullMessage = new StringBuilder();
       appendBracketPrefix(fullMessage, plugin);
 
-      // TODO(ronshapiro): should we create a HashSet out of elementEncloses() so we don't
-      // need to do an O(n) contains() each time?
-      if (elementToReport != null && !elementEncloses(rootComponent, elementToReport)) {
+      if (elementToReport != null && !transitivelyEncloses(rootComponent, elementToReport)) {
         appendBracketPrefix(fullMessage, elementToString(elementToReport));
         elementToReport = rootComponent;
       }

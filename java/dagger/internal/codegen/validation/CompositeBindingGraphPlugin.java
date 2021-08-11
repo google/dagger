@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerElements.elementEncloses;
+import static dagger.internal.codegen.langmodel.DaggerElements.transitivelyEncloses;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
@@ -216,7 +216,7 @@ public final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
         String message) {
       // TODO(erichang): This repeats some of the logic in DiagnosticReporterImpl. Remove when
       // merged.
-      if (elementEncloses(
+      if (transitivelyEncloses(
           graph.rootComponentNode().componentPath().currentComponent().java(),
           childFactoryMethodEdge.factoryMethod().java())) {
         // Let this pass through since it is not an error reported on the root component

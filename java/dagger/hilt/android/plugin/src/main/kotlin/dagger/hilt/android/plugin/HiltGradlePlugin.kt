@@ -182,7 +182,6 @@ class HiltGradlePlugin @Inject constructor(
         "android.injected.build.model.feature.full.dependencies", // Sent by AS 2.4+
         "android.injected.build.model.v2", // Sent by AS 4.2+
       ).any {
-        @Suppress("UnstableApiUsage")
         providers.gradleProperty(it).forUseAtConfigurationTime().isPresent
       }
     ) {
@@ -332,11 +331,7 @@ class HiltGradlePlugin @Inject constructor(
     )
     project.dependencies.add(
       hiltCompileConfiguration.name,
-      project.files(
-        variant.javaCompileProvider.map {
-          @Suppress("UnstableApiUsage") it.destinationDirectory.get()
-        }
-      )
+      project.files(variant.javaCompileProvider.map {it.destinationDirectory.get() })
     )
 
     fun getInputClasspath(artifactAttributeValue: String) =

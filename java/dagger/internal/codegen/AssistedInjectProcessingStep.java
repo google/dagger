@@ -31,8 +31,8 @@ import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedParameter;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.validation.ValidationReport;
 import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
-import dagger.internal.codegen.validation.XValidationReport;
 import java.util.HashSet;
 import java.util.Set;
 import javax.inject.Inject;
@@ -66,10 +66,10 @@ final class AssistedInjectProcessingStep extends XTypeCheckingProcessingStep<XEx
   }
 
   private final class AssistedInjectValidator {
-    XValidationReport<XExecutableElement> validate(XExecutableElement constructor) {
+    ValidationReport validate(XExecutableElement constructor) {
       ExecutableElement javaConstructor = XConverters.toJavac(constructor);
       checkState(javaConstructor.getKind() == ElementKind.CONSTRUCTOR);
-      XValidationReport.Builder<XExecutableElement> report = XValidationReport.about(constructor);
+      ValidationReport.Builder report = ValidationReport.about(constructor);
 
       DeclaredType assistedInjectType =
           asDeclared(closestEnclosingTypeElement(javaConstructor).asType());

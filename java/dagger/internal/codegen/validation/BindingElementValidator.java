@@ -58,7 +58,7 @@ public abstract class BindingElementValidator<E extends Element> {
   private final ClassName bindingAnnotation;
   private final AllowsMultibindings allowsMultibindings;
   private final AllowsScoping allowsScoping;
-  private final Map<E, ValidationReport<E>> cache = new HashMap<>();
+  private final Map<E, ValidationReport> cache = new HashMap<>();
   private final InjectionAnnotations injectionAnnotations;
 
   /**
@@ -78,11 +78,11 @@ public abstract class BindingElementValidator<E extends Element> {
   }
 
   /** Returns a {@link ValidationReport} for {@code element}. */
-  final ValidationReport<E> validate(E element) {
+  final ValidationReport validate(E element) {
     return reentrantComputeIfAbsent(cache, element, this::validateUncached);
   }
 
-  private ValidationReport<E> validateUncached(E element) {
+  private ValidationReport validateUncached(E element) {
     return elementValidator(element).validate();
   }
 
@@ -136,7 +136,7 @@ public abstract class BindingElementValidator<E extends Element> {
   /** Validator for a single binding element. */
   protected abstract class ElementValidator {
     protected final E element;
-    protected final ValidationReport.Builder<E> report;
+    protected final ValidationReport.Builder report;
     private final ImmutableCollection<? extends AnnotationMirror> qualifiers;
 
     protected ElementValidator(E element) {
@@ -146,7 +146,7 @@ public abstract class BindingElementValidator<E extends Element> {
     }
 
     /** Checks the element for validity. */
-    private ValidationReport<E> validate() {
+    private ValidationReport validate() {
       checkType();
       checkQualifiers();
       checkMapKeys();

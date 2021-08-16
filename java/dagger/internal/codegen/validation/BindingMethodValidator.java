@@ -257,7 +257,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
       protected void checkThrows(
           BindingMethodValidator validator,
           ExecutableElement element,
-          ValidationReport.Builder<ExecutableElement> report) {
+          ValidationReport.Builder report) {
         if (!element.getThrownTypes().isEmpty()) {
           report.addError(validator.bindingMethods("may not throw"));
           return;
@@ -302,7 +302,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
     protected void checkThrows(
         BindingMethodValidator validator,
         ExecutableElement element,
-        ValidationReport.Builder<ExecutableElement> report) {
+        ValidationReport.Builder report) {
       TypeMirror exceptionSupertype = validator.elements.getTypeElement(superclass).asType();
       TypeMirror errorType = validator.elements.getTypeElement(Error.class).asType();
       for (TypeMirror thrownType : element.getThrownTypes()) {

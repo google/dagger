@@ -31,8 +31,8 @@ import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.validation.ValidationReport;
 import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
-import dagger.internal.codegen.validation.XValidationReport;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -76,8 +76,8 @@ final class AssistedProcessingStep extends XTypeCheckingProcessingStep<XVariable
   }
 
   private final class AssistedValidator {
-    XValidationReport<XVariableElement> validate(XVariableElement assisted) {
-      XValidationReport.Builder<XVariableElement> report = XValidationReport.about(assisted);
+    ValidationReport validate(XVariableElement assisted) {
+      ValidationReport.Builder report = ValidationReport.about(assisted);
 
       VariableElement javaAssisted = XConverters.toJavac(assisted);
       Element enclosingElement = javaAssisted.getEnclosingElement();

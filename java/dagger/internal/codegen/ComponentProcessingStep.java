@@ -139,7 +139,7 @@ final class ComponentProcessingStep extends XTypeCheckingProcessingStep<XTypeEle
   }
 
   private boolean isComponentValid(Element component) {
-    ValidationReport<?> report = componentValidator.validate(asType(component));
+    ValidationReport report = componentValidator.validate(asType(component));
     report.printMessagesTo(messager);
     return report.isClean();
   }
@@ -155,7 +155,7 @@ final class ComponentProcessingStep extends XTypeCheckingProcessingStep<XTypeEle
   }
 
   private boolean isValid(ComponentDescriptor componentDescriptor) {
-    ValidationReport<TypeElement> componentDescriptorReport =
+    ValidationReport componentDescriptorReport =
         componentDescriptorValidator.validate(componentDescriptor);
     componentDescriptorReport.printMessagesTo(messager);
     return componentDescriptorReport.isClean();

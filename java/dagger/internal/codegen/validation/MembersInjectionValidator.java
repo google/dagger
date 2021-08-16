@@ -44,9 +44,9 @@ final class MembersInjectionValidator {
   }
 
   /** Reports errors if a request for a {@code MembersInjector<Foo>}) is invalid. */
-  ValidationReport<Element> validateMembersInjectionRequest(
+  ValidationReport validateMembersInjectionRequest(
       Element requestElement, TypeMirror membersInjectedType) {
-    ValidationReport.Builder<Element> report = ValidationReport.about(requestElement);
+    ValidationReport.Builder report = ValidationReport.about(requestElement);
     checkQualifiers(report, requestElement);
     membersInjectedType.accept(VALIDATE_MEMBERS_INJECTED_TYPE, report);
     return report.build();
@@ -57,59 +57,58 @@ final class MembersInjectionValidator {
    *
    * @throws IllegalArgumentException if the method doesn't have exactly one parameter
    */
-  ValidationReport<ExecutableElement> validateMembersInjectionMethod(
+  ValidationReport validateMembersInjectionMethod(
       ExecutableElement method, TypeMirror membersInjectedType) {
     checkArgument(
         method.getParameters().size() == 1, "expected a method with one parameter: %s", method);
 
-    ValidationReport.Builder<ExecutableElement> report = ValidationReport.about(method);
+    ValidationReport.Builder report = ValidationReport.about(method);
     checkQualifiers(report, method);
     checkQualifiers(report, method.getParameters().get(0));
     membersInjectedType.accept(VALIDATE_MEMBERS_INJECTED_TYPE, report);
     return report.build();
   }
 
-  private void checkQualifiers(ValidationReport.Builder<?> report, Element element) {
+  private void checkQualifiers(ValidationReport.Builder report, Element element) {
     for (AnnotationMirror qualifier : injectionAnnotations.getQualifiers(element)) {
       report.addError("Cannot inject members into qualified types", element, qualifier);
       break; // just report on the first qualifier, in case there is more than one
     }
   }
 
-  private static final TypeVisitor<Void, ValidationReport.Builder<?>>
-      VALIDATE_MEMBERS_INJECTED_TYPE =
-          new SimpleTypeVisitor8<Void, ValidationReport.Builder<?>>() {
-            // Only declared types can be members-injected.
-            @Override
-            protected Void defaultAction(TypeMirror type, ValidationReport.Builder<?> report) {
-              report.addError("Cannot inject members into " + type);
-              return null;
-            }
+  private static final TypeVisitor<Void, ValidationReport.Builder> VALIDATE_MEMBERS_INJECTED_TYPE =
+      new SimpleTypeVisitor8<Void, ValidationReport.Builder>() {
+        // Only declared types can be members-injected.
+        @Override
+        protected Void defaultAction(TypeMirror type, ValidationReport.Builder report) {
+          report.addError("Cannot inject members into " + type);
+          return null;
+        }
 
-            @Override
-            public Void visitDeclared(DeclaredType type, ValidationReport.Builder<?> report) {
-              if (type.getTypeArguments().isEmpty()) {
-                // If the type is the erasure of a generic type, that means the user referred to
-                // Foo<T> as just 'Foo', which we don't allow.  (This is a judgement call; we
-                // *could* allow it and instantiate the type bounds, but we don't.)
-                if (!MoreElements.asType(type.asElement()).getTypeParameters().isEmpty()) {
-                  report.addError("Cannot inject members into raw type " + type);
-                }
-              } else {
-                // If the type has arguments, validate that each type argument is declared.
-                // Otherwise the type argument may be a wildcard (or other type), and we can't
-                // resolve that to actual types.  For array type arguments, validate the type of the
-                // array.
-                for (TypeMirror arg : type.getTypeArguments()) {
-                  if (!arg.accept(DECLARED_OR_ARRAY, null)) {
-                    report.addError(
-                        "Cannot inject members into types with unbounded type arguments: " + type);
-                  }
-                }
-              }
-              return null;
+        @Override
+        public Void visitDeclared(DeclaredType type, ValidationReport.Builder report) {
+          if (type.getTypeArguments().isEmpty()) {
+            // If the type is the erasure of a generic type, that means the user referred to
+            // Foo<T> as just 'Foo', which we don't allow.  (This is a judgement call; we
+            // *could* allow it and instantiate the type bounds, but we don't.)
+            if (!MoreElements.asType(type.asElement()).getTypeParameters().isEmpty()) {
+              report.addError("Cannot inject members into raw type " + type);
             }
-          };
+          } else {
+            // If the type has arguments, validate that each type argument is declared.
+            // Otherwise the type argument may be a wildcard (or other type), and we can't
+            // resolve that to actual types.  For array type arguments, validate the type of the
+            // array.
+            for (TypeMirror arg : type.getTypeArguments()) {
+              if (!arg.accept(DECLARED_OR_ARRAY, null)) {
+                report.addError(
+                    "Cannot inject members into types with unbounded type arguments: " + type);
+              }
+            }
+          }
+          return null;
+        }
+      };
 
   // TODO(dpb): Can this be inverted so it explicitly rejects wildcards or type variables?
   // This logic is hard to describe.

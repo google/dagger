@@ -120,7 +120,7 @@ final class ModuleProcessingStep extends XTypeCheckingProcessingStep<XTypeElemen
       //  i.e. tell user to annotate parent instead.
       return;
     }
-    ValidationReport<TypeElement> report = moduleValidator.validate(module);
+    ValidationReport report = moduleValidator.validate(module);
     report.printMessagesTo(messager);
     if (report.isClean()) {
       generateForMethodsIn(module);

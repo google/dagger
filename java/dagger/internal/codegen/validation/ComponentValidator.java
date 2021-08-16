@@ -106,7 +106,7 @@ public final class ComponentValidator implements ClearableCache {
   private final MembersInjectionValidator membersInjectionValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFactory dependencyRequestFactory;
-  private final Map<TypeElement, ValidationReport<TypeElement>> reports = new HashMap<>();
+  private final Map<TypeElement, ValidationReport> reports = new HashMap<>();
   private final KotlinMetadataUtil metadataUtil;
 
   @Inject
@@ -137,17 +137,17 @@ public final class ComponentValidator implements ClearableCache {
   }
 
   /** Validates the given component. */
-  public ValidationReport<TypeElement> validate(TypeElement component) {
+  public ValidationReport validate(TypeElement component) {
     return reentrantComputeIfAbsent(reports, component, this::validateUncached);
   }
 
-  private ValidationReport<TypeElement> validateUncached(TypeElement component) {
+  private ValidationReport validateUncached(TypeElement component) {
     return new ElementValidator(component).validateElement();
   }
 
   private class ElementValidator {
     private final TypeElement component;
-    private final ValidationReport.Builder<TypeElement> report;
+    private final ValidationReport.Builder report;
     private final ImmutableSet<ComponentKind> componentKinds;
 
     // Populated by ComponentMethodValidators
@@ -172,7 +172,7 @@ public final class ComponentValidator implements ClearableCache {
       return asDeclared(component.asType());
     }
 
-    ValidationReport<TypeElement> validateElement() {
+    ValidationReport validateElement() {
       if (componentKinds.size() > 1) {
         return moreThanOneComponentAnnotation();
       }
@@ -191,7 +191,7 @@ public final class ComponentValidator implements ClearableCache {
       return report.build();
     }
 
-    private ValidationReport<TypeElement> moreThanOneComponentAnnotation() {
+    private ValidationReport moreThanOneComponentAnnotation() {
       String error =
           "Components may not be annotated with more than one component annotation: found "
               + annotationsFor(componentKinds);
@@ -500,7 +500,7 @@ public final class ComponentValidator implements ClearableCache {
     private void validateSubcomponents() {
       // Make sure we validate any subcomponents we're referencing.
       for (Element subcomponent : referencedSubcomponents.keySet()) {
-        ValidationReport<TypeElement> subreport = validate(asType(subcomponent));
+        ValidationReport subreport = validate(asType(subcomponent));
         report.addSubreport(subreport);
       }
     }
@@ -543,16 +543,16 @@ public final class ComponentValidator implements ClearableCache {
     return elements.overrides(overrider, overridden, asType(overrider.getEnclosingElement()));
   }
 
-  private static final TypeVisitor<Void, ValidationReport.Builder<?>> CHECK_DEPENDENCY_TYPES =
-      new SimpleTypeVisitor8<Void, ValidationReport.Builder<?>>() {
+  private static final TypeVisitor<Void, ValidationReport.Builder> CHECK_DEPENDENCY_TYPES =
+      new SimpleTypeVisitor8<Void, ValidationReport.Builder>() {
         @Override
-        protected Void defaultAction(TypeMirror type, ValidationReport.Builder<?> report) {
+        protected Void defaultAction(TypeMirror type, ValidationReport.Builder report) {
           report.addError(type + " is not a valid component dependency type");
           return null;
         }
 
         @Override
-        public Void visitDeclared(DeclaredType type, ValidationReport.Builder<?> report) {
+        public Void visitDeclared(DeclaredType type, ValidationReport.Builder report) {
           if (moduleAnnotation(MoreTypes.asTypeElement(type)).isPresent()) {
             report.addError(type + " is a module, which cannot be a component dependency");
           }

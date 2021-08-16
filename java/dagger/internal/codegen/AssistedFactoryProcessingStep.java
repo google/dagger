@@ -57,8 +57,8 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.validation.ValidationReport;
 import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
-import dagger.internal.codegen.validation.XValidationReport;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -109,7 +109,7 @@ final class AssistedFactoryProcessingStep extends XTypeCheckingProcessingStep<XT
 
   @Override
   protected void process(XTypeElement factory, ImmutableSet<ClassName> annotations) {
-    XValidationReport<XTypeElement> report = new AssistedFactoryValidator().validate(factory);
+    ValidationReport report = new AssistedFactoryValidator().validate(factory);
     report.printMessagesTo(messager);
     if (report.isClean()) {
       try {
@@ -123,8 +123,8 @@ final class AssistedFactoryProcessingStep extends XTypeCheckingProcessingStep<XT
   }
 
   private final class AssistedFactoryValidator {
-    XValidationReport<XTypeElement> validate(XTypeElement factory) {
-      XValidationReport.Builder<XTypeElement> report = XValidationReport.about(factory);
+    ValidationReport validate(XTypeElement factory) {
+      ValidationReport.Builder report = ValidationReport.about(factory);
 
       if (!factory.isAbstract()) {
         return report

@@ -37,8 +37,7 @@ import javax.lang.model.element.ExecutableElement;
 @Singleton
 public final class AnyBindingMethodValidator implements ClearableCache {
   private final ImmutableMap<ClassName, BindingMethodValidator> validators;
-  private final Map<ExecutableElement, ValidationReport<ExecutableElement>> reports =
-      new HashMap<>();
+  private final Map<ExecutableElement, ValidationReport> reports = new HashMap<>();
 
   @Inject
   AnyBindingMethodValidator(ImmutableMap<ClassName, BindingMethodValidator> validators) {
@@ -76,7 +75,7 @@ public final class AnyBindingMethodValidator implements ClearableCache {
    * @throws IllegalArgumentException if {@code method} is not annotated by any {@linkplain
    *     #methodAnnotations() binding method annotation}
    */
-  ValidationReport<ExecutableElement> validate(ExecutableElement method) {
+  ValidationReport validate(ExecutableElement method) {
     return reentrantComputeIfAbsent(reports, method, this::validateUncached);
   }
 
@@ -88,8 +87,8 @@ public final class AnyBindingMethodValidator implements ClearableCache {
     return reports.containsKey(method);
   }
 
-  private ValidationReport<ExecutableElement> validateUncached(ExecutableElement method) {
-    ValidationReport.Builder<ExecutableElement> report = ValidationReport.about(method);
+  private ValidationReport validateUncached(ExecutableElement method) {
+    ValidationReport.Builder report = ValidationReport.about(method);
     ImmutableSet<ClassName> bindingMethodAnnotations =
         methodAnnotations().stream()
             .filter(annotation -> isAnnotationPresent(method, annotation))

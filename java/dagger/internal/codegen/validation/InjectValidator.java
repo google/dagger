@@ -71,7 +71,7 @@ public final class InjectValidator implements ClearableCache {
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
   private final InjectionAnnotations injectionAnnotations;
   private final KotlinMetadataUtil metadataUtil;
-  private final Map<ExecutableElement, ValidationReport<TypeElement>> reports = new HashMap<>();
+  private final Map<ExecutableElement, ValidationReport> reports = new HashMap<>();
 
   @Inject
   InjectValidator(
@@ -131,13 +131,12 @@ public final class InjectValidator implements ClearableCache {
             metadataUtil);
   }
 
-  public ValidationReport<TypeElement> validateConstructor(ExecutableElement constructorElement) {
+  public ValidationReport validateConstructor(ExecutableElement constructorElement) {
     return reentrantComputeIfAbsent(reports, constructorElement, this::validateConstructorUncached);
   }
 
-  private ValidationReport<TypeElement> validateConstructorUncached(
-      ExecutableElement constructorElement) {
-    ValidationReport.Builder<TypeElement> builder =
+  private ValidationReport validateConstructorUncached(ExecutableElement constructorElement) {
+    ValidationReport.Builder builder =
         ValidationReport.about(asType(constructorElement.getEnclosingElement()));
 
     if (isAnnotationPresent(constructorElement, Inject.class)
@@ -243,8 +242,8 @@ public final class InjectValidator implements ClearableCache {
     return builder.build();
   }
 
-  private ValidationReport<VariableElement> validateField(VariableElement fieldElement) {
-    ValidationReport.Builder<VariableElement> builder = ValidationReport.about(fieldElement);
+  private ValidationReport validateField(VariableElement fieldElement) {
+    ValidationReport.Builder builder = ValidationReport.about(fieldElement);
     Set<Modifier> modifiers = fieldElement.getModifiers();
     if (modifiers.contains(FINAL)) {
       builder.addError("@Inject fields may not be final", fieldElement);
@@ -269,8 +268,8 @@ public final class InjectValidator implements ClearableCache {
     return builder.build();
   }
 
-  private ValidationReport<ExecutableElement> validateMethod(ExecutableElement methodElement) {
-    ValidationReport.Builder<ExecutableElement> builder = ValidationReport.about(methodElement);
+  private ValidationReport validateMethod(ExecutableElement methodElement) {
+    ValidationReport.Builder builder = ValidationReport.about(methodElement);
     Set<Modifier> modifiers = methodElement.getModifiers();
     if (modifiers.contains(ABSTRACT)) {
       builder.addError("Methods with @Inject may not be abstract", methodElement);
@@ -307,20 +306,20 @@ public final class InjectValidator implements ClearableCache {
   }
 
   private void validateDependencyRequest(
-      ValidationReport.Builder<?> builder, VariableElement parameter) {
+      ValidationReport.Builder builder, VariableElement parameter) {
     dependencyRequestValidator.validateDependencyRequest(builder, parameter, parameter.asType());
     dependencyRequestValidator.checkNotProducer(builder, parameter);
   }
 
-  public ValidationReport<TypeElement> validateMembersInjectionType(TypeElement typeElement) {
+  public ValidationReport validateMembersInjectionType(TypeElement typeElement) {
     // TODO(beder): This element might not be currently compiled, so this error message could be
     // left in limbo. Find an appropriate way to display the error message in that case.
-    ValidationReport.Builder<TypeElement> builder = ValidationReport.about(typeElement);
+    ValidationReport.Builder builder = ValidationReport.about(typeElement);
     boolean hasInjectedMembers = false;
     for (VariableElement element : ElementFilter.fieldsIn(typeElement.getEnclosedElements())) {
       if (MoreElements.isAnnotationPresent(element, Inject.class)) {
         hasInjectedMembers = true;
-        ValidationReport<VariableElement> report = validateField(element);
+        ValidationReport report = validateField(element);
         if (!report.isClean()) {
           builder.addSubreport(report);
         }
@@ -329,7 +328,7 @@ public final class InjectValidator implements ClearableCache {
     for (ExecutableElement element : ElementFilter.methodsIn(typeElement.getEnclosedElements())) {
       if (MoreElements.isAnnotationPresent(element, Inject.class)) {
         hasInjectedMembers = true;
-        ValidationReport<ExecutableElement> report = validateMethod(element);
+        ValidationReport report = validateMethod(element);
         if (!report.isClean()) {
           builder.addSubreport(report);
         }
@@ -342,7 +341,7 @@ public final class InjectValidator implements ClearableCache {
     }
     TypeMirror superclass = typeElement.getSuperclass();
     if (!superclass.getKind().equals(TypeKind.NONE)) {
-      ValidationReport<TypeElement> report = validateType(MoreTypes.asTypeElement(superclass));
+      ValidationReport report = validateType(MoreTypes.asTypeElement(superclass));
       if (!report.isClean()) {
         builder.addSubreport(report);
       }
@@ -350,10 +349,9 @@ public final class InjectValidator implements ClearableCache {
     return builder.build();
   }
 
-  public ValidationReport<TypeElement> validateType(TypeElement typeElement) {
-    ValidationReport.Builder<TypeElement> builder = ValidationReport.about(typeElement);
-    ValidationReport<TypeElement> membersInjectionReport =
-        validateMembersInjectionType(typeElement);
+  public ValidationReport validateType(TypeElement typeElement) {
+    ValidationReport.Builder builder = ValidationReport.about(typeElement);
+    ValidationReport membersInjectionReport = validateMembersInjectionType(typeElement);
     if (!membersInjectionReport.isClean()) {
       builder.addSubreport(membersInjectionReport);
     }
@@ -361,7 +359,7 @@ public final class InjectValidator implements ClearableCache {
         ElementFilter.constructorsIn(typeElement.getEnclosedElements())) {
       if (isAnnotationPresent(element, Inject.class)
           || isAnnotationPresent(element, AssistedInject.class)) {
-        ValidationReport<TypeElement> report = validateConstructor(element);
+        ValidationReport report = validateConstructor(element);
         if (!report.isClean()) {
           builder.addSubreport(report);
         }
@@ -390,8 +388,7 @@ public final class InjectValidator implements ClearableCache {
     return false;
   }
 
-  private void checkInjectIntoPrivateClass(
-      Element element, ValidationReport.Builder<TypeElement> builder) {
+  private void checkInjectIntoPrivateClass(Element element, ValidationReport.Builder builder) {
     if (!Accessibility.isElementAccessibleFromOwnPackage(
         DaggerElements.closestEnclosingTypeElement(element))) {
       builder.addItem(
@@ -401,8 +398,7 @@ public final class InjectValidator implements ClearableCache {
     }
   }
 
-  private void checkInjectIntoKotlinObject(
-      TypeElement element, ValidationReport.Builder<TypeElement> builder) {
+  private void checkInjectIntoKotlinObject(TypeElement element, ValidationReport.Builder builder) {
     if (metadataUtil.isObjectClass(element) || metadataUtil.isCompanionObjectClass(element)) {
       builder.addError("Dagger does not support injection into Kotlin objects", element);
     }

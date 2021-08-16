@@ -59,7 +59,7 @@ public final class ComponentCreatorValidator implements ClearableCache {
 
   private final DaggerElements elements;
   private final DaggerTypes types;
-  private final Map<TypeElement, ValidationReport<TypeElement>> reports = new HashMap<>();
+  private final Map<TypeElement, ValidationReport> reports = new HashMap<>();
   private final KotlinMetadataUtil metadataUtil;
 
   @Inject
@@ -76,12 +76,12 @@ public final class ComponentCreatorValidator implements ClearableCache {
   }
 
   /** Validates that the given {@code type} is potentially a valid component creator type. */
-  public ValidationReport<TypeElement> validate(TypeElement type) {
+  public ValidationReport validate(TypeElement type) {
     return reentrantComputeIfAbsent(reports, type, this::validateUncached);
   }
 
-  private ValidationReport<TypeElement> validateUncached(TypeElement type) {
-    ValidationReport.Builder<TypeElement> report = ValidationReport.about(type);
+  private ValidationReport validateUncached(TypeElement type) {
+    ValidationReport.Builder report = ValidationReport.about(type);
 
     ImmutableSet<ComponentCreatorAnnotation> creatorAnnotations = getCreatorAnnotations(type);
     if (!validateOnlyOneCreatorAnnotation(creatorAnnotations, report)) {
@@ -98,7 +98,7 @@ public final class ComponentCreatorValidator implements ClearableCache {
 
   private boolean validateOnlyOneCreatorAnnotation(
       ImmutableSet<ComponentCreatorAnnotation> creatorAnnotations,
-      ValidationReport.Builder<?> report) {
+      ValidationReport.Builder report) {
     // creatorAnnotations should never be empty because this should only ever be called for
     // types that have been found to have some creator annotation
     if (creatorAnnotations.size() > 1) {
@@ -120,14 +120,12 @@ public final class ComponentCreatorValidator implements ClearableCache {
   private final class ElementValidator {
     private final TypeElement type;
     private final Element component;
-    private final ValidationReport.Builder<TypeElement> report;
+    private final ValidationReport.Builder report;
     private final ComponentCreatorAnnotation annotation;
     private final ComponentCreatorMessages messages;
 
     private ElementValidator(
-        TypeElement type,
-        ValidationReport.Builder<TypeElement> report,
-        ComponentCreatorAnnotation annotation) {
+        TypeElement type, ValidationReport.Builder report, ComponentCreatorAnnotation annotation) {
       this.type = type;
       this.component = type.getEnclosingElement();
       this.report = report;
@@ -136,7 +134,7 @@ public final class ComponentCreatorValidator implements ClearableCache {
     }
 
     /** Validates the creator type. */
-    final ValidationReport<TypeElement> validate() {
+    final ValidationReport validate() {
       if (!isAnnotationPresent(component, annotation.componentAnnotation())) {
         report.addError(messages.mustBeInComponent());
       }

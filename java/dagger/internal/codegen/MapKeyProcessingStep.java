@@ -34,7 +34,6 @@ import dagger.internal.codegen.writing.AnnotationCreatorGenerator;
 import dagger.internal.codegen.writing.UnwrappedMapKeyGenerator;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -73,7 +72,7 @@ final class MapKeyProcessingStep extends XTypeCheckingProcessingStep<XTypeElemen
   protected void process(XTypeElement xElement, ImmutableSet<ClassName> annotations) {
     // TODO(bcorso): Remove conversion to javac type and use XProcessing throughout.
     TypeElement mapKeyAnnotationType = XConverters.toJavac(xElement);
-    ValidationReport<Element> mapKeyReport = mapKeyValidator.validate(mapKeyAnnotationType);
+    ValidationReport mapKeyReport = mapKeyValidator.validate(mapKeyAnnotationType);
     mapKeyReport.printMessagesTo(messager);
 
     if (mapKeyReport.isClean()) {

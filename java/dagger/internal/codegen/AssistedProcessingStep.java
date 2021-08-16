@@ -19,6 +19,8 @@ package dagger.internal.codegen;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
 
+import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XVariableElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
@@ -29,9 +31,8 @@ import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.validation.ValidationReport;
 import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
-import javax.annotation.processing.Messager;
+import dagger.internal.codegen.validation.XValidationReport;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -47,18 +48,21 @@ final class AssistedProcessingStep extends XTypeCheckingProcessingStep<XVariable
   private final KotlinMetadataUtil kotlinMetadataUtil;
   private final InjectionAnnotations injectionAnnotations;
   private final DaggerElements elements;
-  private final Messager messager;
+  private final XMessager messager;
+  private final XProcessingEnv processingEnv;
 
   @Inject
   AssistedProcessingStep(
       KotlinMetadataUtil kotlinMetadataUtil,
       InjectionAnnotations injectionAnnotations,
       DaggerElements elements,
-      Messager messager) {
+      XMessager messager,
+      XProcessingEnv processingEnv) {
     this.kotlinMetadataUtil = kotlinMetadataUtil;
     this.injectionAnnotations = injectionAnnotations;
     this.elements = elements;
     this.messager = messager;
+    this.processingEnv = processingEnv;
   }
 
   @Override
@@ -67,17 +71,16 @@ final class AssistedProcessingStep extends XTypeCheckingProcessingStep<XVariable
   }
 
   @Override
-  protected void process(XVariableElement xElement, ImmutableSet<ClassName> annotations) {
-    // TODO(bcorso): Remove conversion to javac type and use XProcessing throughout.
-    VariableElement assisted = XConverters.toJavac(xElement);
+  protected void process(XVariableElement assisted, ImmutableSet<ClassName> annotations) {
     new AssistedValidator().validate(assisted).printMessagesTo(messager);
   }
 
   private final class AssistedValidator {
-    ValidationReport<VariableElement> validate(VariableElement assisted) {
-      ValidationReport.Builder<VariableElement> report = ValidationReport.about(assisted);
+    XValidationReport<XVariableElement> validate(XVariableElement assisted) {
+      XValidationReport.Builder<XVariableElement> report = XValidationReport.about(assisted);
 
-      Element enclosingElement = assisted.getEnclosingElement();
+      VariableElement javaAssisted = XConverters.toJavac(assisted);
+      Element enclosingElement = javaAssisted.getEnclosingElement();
       if (!isAssistedInjectConstructor(enclosingElement)
           && !isAssistedFactoryCreateMethod(enclosingElement)
           // The generated java stubs for kotlin data classes contain a "copy" method that has
@@ -90,11 +93,13 @@ final class AssistedProcessingStep extends XTypeCheckingProcessingStep<XVariable
       }
 
       injectionAnnotations
-          .getQualifiers(assisted)
+          .getQualifiers(javaAssisted)
           .forEach(
               qualifier ->
                   report.addError(
-                      "Qualifiers cannot be used with @Assisted parameters.", assisted, qualifier));
+                      "Qualifiers cannot be used with @Assisted parameters.",
+                      assisted,
+                      XConverters.toXProcessing(qualifier, processingEnv)));
 
       return report.build();
     }

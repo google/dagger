@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * member whose type is {@code Class<? extends Something>}.
  */
 @Documented
-@Target({ElementType.METHOD, ElementType.FIELD})
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.TYPE})
 @Retention(RUNTIME)
 @MapKey
 public @interface ClassKey {

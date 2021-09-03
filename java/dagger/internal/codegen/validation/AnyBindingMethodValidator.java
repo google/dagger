@@ -16,16 +16,14 @@
 
 package dagger.internal.codegen.validation;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
-import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XExecutableElement;
-import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.compat.XConverters;
+import androidx.room.compiler.processing.XMethodElement;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -34,20 +32,16 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.lang.model.element.ExecutableElement;
 
 /** Validates any binding method. */
 @Singleton
 public final class AnyBindingMethodValidator implements ClearableCache {
   private final ImmutableMap<ClassName, BindingMethodValidator> validators;
-  private final Map<ExecutableElement, ValidationReport> reports = new HashMap<>();
-  private final XProcessingEnv processingEnv;
+  private final Map<XExecutableElement, ValidationReport> reports = new HashMap<>();
 
   @Inject
-  AnyBindingMethodValidator(
-      ImmutableMap<ClassName, BindingMethodValidator> validators, XProcessingEnv processingEnv) {
+  AnyBindingMethodValidator(ImmutableMap<ClassName, BindingMethodValidator> validators) {
     this.validators = validators;
-    this.processingEnv = processingEnv;
   }
 
   @Override
@@ -65,7 +59,7 @@ public final class AnyBindingMethodValidator implements ClearableCache {
    * #methodAnnotations()}.
    */
   boolean isBindingMethod(XExecutableElement method) {
-    return isAnyAnnotationPresent(XConverters.toJavac(method), methodAnnotations());
+    return method.hasAnyOf(methodAnnotations().toArray(new ClassName[0]));
   }
 
   /**
@@ -82,7 +76,7 @@ public final class AnyBindingMethodValidator implements ClearableCache {
    *     #methodAnnotations() binding method annotation}
    */
   ValidationReport validate(XExecutableElement method) {
-    return reentrantComputeIfAbsent(reports, XConverters.toJavac(method), this::validateUncached);
+    return reentrantComputeIfAbsent(reports, method, this::validateUncached);
   }
 
   /**
@@ -90,15 +84,13 @@ public final class AnyBindingMethodValidator implements ClearableCache {
    * validated}.
    */
   boolean wasAlreadyValidated(XExecutableElement method) {
-    return reports.containsKey(XConverters.toJavac(method));
+    return reports.containsKey(method);
   }
 
-  private ValidationReport validateUncached(ExecutableElement method) {
+  private ValidationReport validateUncached(XExecutableElement method) {
     ValidationReport.Builder report = ValidationReport.about(method);
     ImmutableSet<ClassName> bindingMethodAnnotations =
-        methodAnnotations().stream()
-            .filter(annotation -> isAnnotationPresent(method, annotation))
-            .collect(toImmutableSet());
+        methodAnnotations().stream().filter(method::hasAnnotation).collect(toImmutableSet());
     switch (bindingMethodAnnotations.size()) {
       case 0:
         throw new IllegalArgumentException(
@@ -106,16 +98,18 @@ public final class AnyBindingMethodValidator implements ClearableCache {
 
       case 1:
         report.addSubreport(
-            validators
-                .get(getOnlyElement(bindingMethodAnnotations))
-                .validate(XConverters.toXProcessing(method, processingEnv)));
+            validators.get(getOnlyElement(bindingMethodAnnotations)).validate(method));
         break;
 
       default:
+        // This is a validator for binding methods, so the passed in element must be a method
+        // element.
+        checkArgument(
+            method instanceof XMethodElement, "%s must be instanceof XMethodElement.", method);
         report.addError(
             String.format(
                 "%s is annotated with more than one of (%s)",
-                method.getSimpleName(),
+                ((XMethodElement) method).getName(),
                 methodAnnotations().stream().map(ClassName::canonicalName).collect(joining(", "))),
             method);
         break;

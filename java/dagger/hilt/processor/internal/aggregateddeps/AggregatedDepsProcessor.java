@@ -26,7 +26,6 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.ElementKind.CLASS;
 import static javax.lang.model.element.ElementKind.INTERFACE;
 import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
@@ -167,8 +166,8 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     ProcessorErrors.checkState(
         // Skip ApplicationContextModule, since Hilt manages this module internally.
         ClassNames.APPLICATION_CONTEXT_MODULE.equals(ClassName.get(module))
-        || !Processors.requiresModuleInstance(getElementUtils(), module)
-        || hasVisibleEmptyConstructor(module),
+            || !Processors.requiresModuleInstance(getElementUtils(), module)
+            || Processors.hasVisibleEmptyConstructor(module),
         module,
         "Modules that need to be instantiated by Hilt must have a visible, empty constructor.");
 
@@ -443,16 +442,5 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     Name name = asType(annotationMirror.getAnnotationType().asElement()).getQualifiedName();
     return name.contentEquals("javax.annotation.Generated")
         || name.contentEquals("javax.annotation.processing.Generated");
-  }
-
-  private static boolean hasVisibleEmptyConstructor(TypeElement type) {
-    List<ExecutableElement> constructors = ElementFilter.constructorsIn(type.getEnclosedElements());
-    return constructors.isEmpty()
-        || constructors.stream()
-            .filter(constructor -> constructor.getParameters().isEmpty())
-            .anyMatch(
-                constructor ->
-                    !constructor.getModifiers().contains(PRIVATE)
-                        );
   }
 }

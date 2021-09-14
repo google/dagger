@@ -98,14 +98,6 @@ final class MembersInjectorProviderCreationExpression
                 injectionSite.element().getEnclosingElement().equals(injectedTypeElement));
   }
 
-  @Override
-  public boolean useSwitchingProvider() {
-    // Currently, SwitchingProvider is not used for Provider<MembersInjector> since there's
-    // not a benefit over InstanceFactory.create(Foo_MembersInjector.create(...)).
-    // TODO(b/199889259): Consider optimizing this for fastInit mode.
-    return false;
-  }
-
   @AssistedFactory
   static interface Factory {
     MembersInjectorProviderCreationExpression create(ProvisionBinding binding);

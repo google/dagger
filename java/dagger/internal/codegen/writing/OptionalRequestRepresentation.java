@@ -34,7 +34,7 @@ import dagger.spi.model.DependencyRequest;
 import javax.lang.model.SourceVersion;
 
 /** A binding expression for optional bindings. */
-final class OptionalRequestRepresentation extends SimpleInvocationRequestRepresentation {
+final class OptionalRequestRepresentation extends RequestRepresentation {
   private final ProvisionBinding binding;
   private final ComponentRequestRepresentations componentRequestRepresentations;
   private final DaggerTypes types;
@@ -46,7 +46,6 @@ final class OptionalRequestRepresentation extends SimpleInvocationRequestReprese
       ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types,
       SourceVersion sourceVersion) {
-    super(binding);
     this.binding = binding;
     this.componentRequestRepresentations = componentRequestRepresentations;
     this.types = types;
@@ -88,13 +87,7 @@ final class OptionalRequestRepresentation extends SimpleInvocationRequestReprese
             types.erasure(binding.key().type().java()),
             optionalKind.presentObjectExpression(dependencyExpression));
   }
-
-  @Override
-  boolean requiresMethodEncapsulation() {
-    // TODO(dpb): Maybe require it for present bindings.
-    return false;
-  }
-
+  
   @AssistedFactory
   static interface Factory {
     OptionalRequestRepresentation create(ProvisionBinding binding);

@@ -29,7 +29,7 @@ import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.Expression;
 
 /** A binding expression for component provision methods. */
-final class ComponentProvisionRequestRepresentation extends SimpleInvocationRequestRepresentation {
+final class ComponentProvisionRequestRepresentation extends RequestRepresentation {
   private final ProvisionBinding binding;
   private final BindingGraph bindingGraph;
   private final ComponentRequirementExpressions componentRequirementExpressions;
@@ -41,7 +41,6 @@ final class ComponentProvisionRequestRepresentation extends SimpleInvocationRequ
       BindingGraph bindingGraph,
       ComponentRequirementExpressions componentRequirementExpressions,
       CompilerOptions compilerOptions) {
-    super(binding);
     this.binding = binding;
     this.bindingGraph = bindingGraph;
     this.componentRequirementExpressions = componentRequirementExpressions;

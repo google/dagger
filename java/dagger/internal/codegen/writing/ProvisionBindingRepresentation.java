@@ -33,7 +33,6 @@ import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
@@ -171,9 +170,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
         unscopedFrameworkInstanceCreationExpressionFactory.create(binding);
 
-    if (isFastInit
-        // Some creation expressions can opt out of using switching providers.
-        && frameworkInstanceCreationExpression.useSwitchingProvider()) {
+    if (useSwitchingProvider()) {
       // First try to get the instance expression via getRequestRepresentation(). However, if that
       // expression is a DerivedFromFrameworkInstanceRequestRepresentation (e.g. fooProvider.get()),
       // then we can't use it to create an instance within the SwitchingProvider since that would
@@ -190,7 +187,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
         frameworkInstanceCreationExpression =
             switchingProviders.newFrameworkInstanceCreationExpression(
                 binding,
-                unscopedInstanceExpression.requiresMethodEncapsulation()
+                requiresMethodEncapsulation()
                     ? privateMethodRequestRepresentationFactory.create(
                         instanceRequest, binding, unscopedInstanceExpression)
                     : unscopedInstanceExpression);
@@ -228,8 +225,8 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
   /**
    * Returns a binding expression for {@link RequestKind#PROVIDER} requests.
    *
-   * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching(ContributionBinding) need to be
-   * cached} can use a {@link DelegateRequestRepresentation}.
+   * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching() need to be cached} can use a
+   * {@link DelegateRequestRepresentation}.
    *
    * <p>Otherwise, return a {@link FrameworkInstanceRequestRepresentation}.
    */
@@ -284,6 +281,69 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
     }
   }
 
+  private boolean useSwitchingProvider() {
+    if (!isFastInit) {
+      return false;
+    }
+    switch (binding.kind()) {
+      case BOUND_INSTANCE:
+      case COMPONENT:
+      case COMPONENT_DEPENDENCY:
+      case DELEGATE:
+      case MEMBERS_INJECTOR: // TODO(b/199889259): Consider optimizing this for fastInit mode.
+        // These binding kinds avoid SwitchingProvider when the backing instance already exists,
+        // e.g. a component provider can use FactoryInstance.create(this).
+        return false;
+      case MULTIBOUND_SET:
+      case MULTIBOUND_MAP:
+      case OPTIONAL:
+        // These binding kinds avoid SwitchingProvider when their are no dependencies,
+        // e.g. a multibound set with no dependency can use a singleton, SetFactory.empty().
+        return !binding.dependencies().isEmpty();
+      case INJECTION:
+      case PROVISION:
+      case ASSISTED_INJECTION:
+      case ASSISTED_FACTORY:
+      case COMPONENT_PROVISION:
+      case SUBCOMPONENT_CREATOR:
+      case PRODUCTION:
+      case COMPONENT_PRODUCTION:
+      case MEMBERS_INJECTION:
+        return true;
+    }
+    throw new AssertionError(String.format("No such binding kind: %s", binding.kind()));
+  }
+
+  private boolean requiresMethodEncapsulation() {
+    switch (binding.kind()) {
+      case COMPONENT:
+      case COMPONENT_PROVISION:
+      case SUBCOMPONENT_CREATOR:
+      case COMPONENT_DEPENDENCY:
+      case MULTIBOUND_SET:
+      case MULTIBOUND_MAP:
+      case BOUND_INSTANCE:
+      case ASSISTED_FACTORY:
+      case ASSISTED_INJECTION:
+      case INJECTION:
+      case PROVISION:
+        // These binding kinds satify a binding request with a component method or a private
+        // method when the requested binding has dependencies. The method will wrap the logic of
+        // creating the binding instance. Without the encapsulation, we might see many level of
+        // nested instance creation code in a single statement to satisfy all dependencies of a
+        // binding request.
+        return !binding.dependencies().isEmpty();
+      case MEMBERS_INJECTOR:
+      case PRODUCTION:
+      case COMPONENT_PRODUCTION:
+      case OPTIONAL:
+      case DELEGATE:
+      case MEMBERS_INJECTION:
+        return false;
+    }
+    throw new AssertionError(String.format("No such binding kind: %s", binding.kind()));
+  }
+
   private RequestRepresentation directInstanceExpression() {
     RequestRepresentation directInstanceExpression =
         unscopedDirectInstanceRequestRepresentationFactory.create(binding);
@@ -292,7 +352,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
       return assistedPrivateMethodRequestRepresentationFactory.create(
           request, binding, directInstanceExpression);
     }
-    return directInstanceExpression.requiresMethodEncapsulation()
+    return requiresMethodEncapsulation()
         ? wrapInMethod(RequestKind.INSTANCE, directInstanceExpression)
         : directInstanceExpression;
   }

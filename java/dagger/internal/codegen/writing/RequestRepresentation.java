@@ -43,11 +43,6 @@ abstract class RequestRepresentation {
     return getDependencyExpression(component.name());
   }
 
-  /** Returns {@code true} if this binding expression should be encapsulated in a method. */
-  boolean requiresMethodEncapsulation() {
-    return false;
-  }
-
   /**
    * Returns an expression for the implementation of a component method with the given request.
    *

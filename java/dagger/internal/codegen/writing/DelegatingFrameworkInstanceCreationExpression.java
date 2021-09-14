@@ -60,15 +60,7 @@ final class DelegatingFrameworkInstanceCreationExpression
             .codeBlock(),
         binding.frameworkType().frameworkClass());
   }
-
-  @Override
-  public boolean useSwitchingProvider() {
-    // For delegate expressions, we just want to return the delegate field directly using the above
-    // creationExpression(). Using SwitchingProviders would be less efficient because it would
-    // create a new SwitchingProvider that just returns "delegateField.get()".
-    return false;
-  }
-
+  
   @AssistedFactory
   static interface Factory {
     DelegatingFrameworkInstanceCreationExpression create(ContributionBinding binding);

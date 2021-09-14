@@ -63,13 +63,6 @@ final class OptionalFactoryInstanceCreationExpression
                 .codeBlock());
   }
 
-  @Override
-  public boolean useSwitchingProvider() {
-    // Share providers for empty optionals from OptionalFactories so we don't have numerous
-    // switch cases that all return Optional.empty().
-    return !binding.dependencies().isEmpty();
-  }
-
   @AssistedFactory
   static interface Factory {
     OptionalFactoryInstanceCreationExpression create(ContributionBinding binding);

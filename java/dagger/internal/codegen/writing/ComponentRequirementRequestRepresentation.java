@@ -31,8 +31,7 @@ import dagger.internal.codegen.javapoet.Expression;
  * {@linkplain dagger.Component#dependencies() component} and {@linkplain
  * dagger.producers.ProductionComponent#dependencies() production component dependencies}.
  */
-final class ComponentRequirementRequestRepresentation
-    extends SimpleInvocationRequestRepresentation {
+final class ComponentRequirementRequestRepresentation extends RequestRepresentation {
   private final ComponentRequirement componentRequirement;
   private final ComponentRequirementExpressions componentRequirementExpressions;
 
@@ -41,7 +40,6 @@ final class ComponentRequirementRequestRepresentation
       @Assisted ContributionBinding binding,
       @Assisted ComponentRequirement componentRequirement,
       ComponentRequirementExpressions componentRequirementExpressions) {
-    super(binding);
     this.componentRequirement = checkNotNull(componentRequirement);
     this.componentRequirementExpressions = componentRequirementExpressions;
   }

@@ -68,9 +68,4 @@ abstract class MultibindingFactoryCreationExpression
   protected final boolean useRawType() {
     return !shardImplementation.isTypeAccessible(binding.key().type().java());
   }
-
-  @Override
-  public final boolean useSwitchingProvider() {
-    return !binding.dependencies().isEmpty();
-  }
 }

@@ -25,14 +25,13 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 
 /** A binding expression for the instance of the component itself, i.e. {@code this}. */
-final class ComponentInstanceRequestRepresentation extends SimpleInvocationRequestRepresentation {
+final class ComponentInstanceRequestRepresentation extends RequestRepresentation {
   private final ComponentImplementation componentImplementation;
   private final ContributionBinding binding;
 
   @AssistedInject
   ComponentInstanceRequestRepresentation(
       @Assisted ContributionBinding binding, ComponentImplementation componentImplementation) {
-    super(binding);
     this.componentImplementation = componentImplementation;
     this.binding = binding;
   }

@@ -47,7 +47,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** A {@link RequestRepresentation} for multibound maps. */
-final class MapRequestRepresentation extends SimpleInvocationRequestRepresentation {
+final class MapRequestRepresentation extends RequestRepresentation {
   /** Maximum number of key-value pairs that can be passed to ImmutableMap.of(K, V, K, V, ...). */
   private static final int MAX_IMMUTABLE_MAP_OF_KEY_VALUE_PAIRS = 5;
 
@@ -64,7 +64,6 @@ final class MapRequestRepresentation extends SimpleInvocationRequestRepresentati
       ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types,
       DaggerElements elements) {
-    super(binding);
     this.binding = binding;
     BindingKind bindingKind = this.binding.kind();
     checkArgument(bindingKind.equals(MULTIBOUND_MAP), bindingKind);

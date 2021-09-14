@@ -50,7 +50,7 @@ import javax.lang.model.type.TypeMirror;
  * A binding expression that invokes methods or constructors directly (without attempting to scope)
  * {@link dagger.spi.model.RequestKind#INSTANCE} requests.
  */
-final class SimpleMethodRequestRepresentation extends SimpleInvocationRequestRepresentation {
+final class SimpleMethodRequestRepresentation extends RequestRepresentation {
   private final CompilerOptions compilerOptions;
   private final ProvisionBinding provisionBinding;
   private final ComponentRequestRepresentations componentRequestRepresentations;
@@ -70,7 +70,6 @@ final class SimpleMethodRequestRepresentation extends SimpleInvocationRequestRep
       SourceVersion sourceVersion,
       KotlinMetadataUtil metadataUtil,
       ComponentImplementation componentImplementation) {
-    super(binding);
     this.compilerOptions = compilerOptions;
     this.provisionBinding = binding;
     this.metadataUtil = metadataUtil;

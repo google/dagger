@@ -44,7 +44,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** A binding expression for multibound sets. */
-final class SetRequestRepresentation extends SimpleInvocationRequestRepresentation {
+final class SetRequestRepresentation extends RequestRepresentation {
   private final ProvisionBinding binding;
   private final BindingGraph graph;
   private final ComponentRequestRepresentations componentRequestRepresentations;
@@ -58,7 +58,6 @@ final class SetRequestRepresentation extends SimpleInvocationRequestRepresentati
       ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types,
       DaggerElements elements) {
-    super(binding);
     this.binding = binding;
     this.graph = graph;
     this.componentRequestRepresentations = componentRequestRepresentations;

@@ -53,7 +53,7 @@ interface HiltExtension {
   /**
    * If set to `true`, Hilt will disable cross compilation root validation.
    *
-   * See [documentation](https://dagger.dev/hilt/compiler-options#disable-cross-compilation-root-validation)
+   * See [documentation](https://dagger.dev/hilt/flags#disable-cross-compilation-root-validation)
    * for more information.
    */
   var disableCrossCompilationRootValidation: Boolean

@@ -78,6 +78,9 @@ public final class AndroidClassNames {
   public static final ClassName VIEW_MODEL_COMPONENT =
       get("dagger.hilt.android.components", "ViewModelComponent");
 
+  public static final ClassName FRAGMENT_GET_CONTEXT_FIX =
+      get("dagger.hilt.android.flags", "FragmentGetContextFix");
+
   public static final ClassName ACTIVITY_COMPONENT_MANAGER =
       get("dagger.hilt.android.internal.managers", "ActivityComponentManager");
   public static final ClassName APPLICATION_COMPONENT_MANAGER =

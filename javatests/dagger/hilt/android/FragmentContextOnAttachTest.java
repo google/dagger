@@ -24,6 +24,8 @@ import android.os.Build;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import dagger.hilt.android.flags.FragmentGetContextFix;
+import dagger.hilt.android.testing.BindValueIntoSet;
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
 import dagger.hilt.android.testing.HiltTestApplication;
@@ -40,6 +42,10 @@ import org.robolectric.annotation.Config;
 public final class FragmentContextOnAttachTest {
 
   @Rule public final HiltAndroidRule rule = new HiltAndroidRule(this);
+
+  @BindValueIntoSet
+  @FragmentGetContextFix.DisableFragmentGetContextFix
+  boolean disableGetContextFix = false;
 
   /** Hilt Activity */
   @AndroidEntryPoint(FragmentActivity.class)
@@ -75,15 +81,24 @@ public final class FragmentContextOnAttachTest {
     assertThat(fragment.onAttachActivityContext).isNotNull();
   }
 
-  // Tests the default behavior of the useFragmentGetContextFix flag. Current default is false
-  // so this tests the broken behavior.
+  // Tests the behavior when using the useFragmentGetContextFix flag.
   @Test
-  public void testGetContextDoesNotReturnNullAfterRemoval() throws Exception {
+  public void testGetContextReturnsNullAfterRemoval() throws Exception {
     FragmentActivity activity = Robolectric.setupActivity(TestActivity.class);
     TestFragment fragment = new TestFragment();
     activity.getSupportFragmentManager().beginTransaction().add(fragment, "").commitNow();
     assertThat(fragment.getContext()).isNotNull();
     activity.getSupportFragmentManager().beginTransaction().remove(fragment).commitNow();
-    assertThat(fragment.getContext()).isNotNull();
+    // This should be null since the fix was enabled by the compiler flag and runtime flag
+    assertThat(fragment.getContext()).isNull();
+
+    // Flip the flag so that we now disable the fix
+    disableGetContextFix = true;
+    TestFragment fragment2 = new TestFragment();
+    activity.getSupportFragmentManager().beginTransaction().add(fragment2, "").commitNow();
+    assertThat(fragment2.getContext()).isNotNull();
+    activity.getSupportFragmentManager().beginTransaction().remove(fragment2).commitNow();
+    // This should not be null since the fix was disabled by the runtime flag
+    assertThat(fragment2.getContext()).isNotNull();
   }
 }

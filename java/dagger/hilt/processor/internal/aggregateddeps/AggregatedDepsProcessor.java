@@ -134,7 +134,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
             || installInCheckDisabled(element),
         element,
         "%s is missing an @InstallIn annotation. If this was intentional, see"
-            + " https://dagger.dev/hilt/compiler-options#disable-install-in-check for how to disable this"
+            + " https://dagger.dev/hilt/flags#disable-install-in-check for how to disable this"
             + " check.",
         element);
 

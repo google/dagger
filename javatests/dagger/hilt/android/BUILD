@@ -188,6 +188,9 @@ android_local_test(
     name = "FragmentContextOnAttachTest",
     size = "small",
     srcs = ["FragmentContextOnAttachTest.java"],
+    javacopts = [
+        "-Adagger.hilt.android.useFragmentGetContextFix=true",
+    ],
     manifest_values = {
         "minSdkVersion": "14",
     },
@@ -198,6 +201,7 @@ android_local_test(
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:package_info",
+        "//java/dagger/hilt/android/flags:fragment_get_context_fix",
         "//java/dagger/hilt/android/testing:bind_value",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "@google_bazel_common//third_party/java/jsr330_inject",

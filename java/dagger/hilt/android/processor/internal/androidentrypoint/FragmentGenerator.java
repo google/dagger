@@ -23,6 +23,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
@@ -36,6 +37,11 @@ import javax.lang.model.element.Modifier;
 public final class FragmentGenerator {
   private static final FieldSpec COMPONENT_CONTEXT_FIELD =
       FieldSpec.builder(AndroidClassNames.CONTEXT_WRAPPER, "componentContext")
+          .addModifiers(Modifier.PRIVATE)
+          .build();
+
+  private static final FieldSpec DISABLE_GET_CONTEXT_FIX_FIELD =
+      FieldSpec.builder(TypeName.BOOLEAN, "disableGetContextFix")
           .addModifiers(Modifier.PRIVATE)
           .build();
 
@@ -73,6 +79,10 @@ public final class FragmentGenerator {
             .addMethod(initializeComponentContextMethod())
             .addMethod(getContextMethod())
             .addMethod(inflatorMethod());
+
+    if (useFragmentGetContextFix(env)) {
+      builder.addField(DISABLE_GET_CONTEXT_FIX_FIELD);
+    }
 
     Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
@@ -158,10 +168,12 @@ public final class FragmentGenerator {
   //     // Fragment's because we are getting it from base context instead of cloning from super
   //     // Fragment's LayoutInflater.
   //     componentContext = FragmentComponentManager.createContextWrapper(super.getContext(), this);
+  //     disableGetContextFix = FragmentGetContextFix.isFragmentGetContextFixDisabled(
+  //         super.getContext());
   //   }
   // }
   private MethodSpec initializeComponentContextMethod() {
-    return MethodSpec.methodBuilder("initializeComponentContext")
+    MethodSpec.Builder builder = MethodSpec.methodBuilder("initializeComponentContext")
         .addModifiers(Modifier.PRIVATE)
         .beginControlFlow("if ($N == null)", COMPONENT_CONTEXT_FIELD)
         .addComment(
@@ -171,14 +183,22 @@ public final class FragmentGenerator {
         .addStatement(
             "$N = $T.createContextWrapper(super.getContext(), this)",
             COMPONENT_CONTEXT_FIELD,
-            metadata.componentManager())
+            metadata.componentManager());
+
+    if (useFragmentGetContextFix(env)) {
+      builder.addStatement("$N = $T.isFragmentGetContextFixDisabled(super.getContext())",
+          DISABLE_GET_CONTEXT_FIX_FIELD,
+          AndroidClassNames.FRAGMENT_GET_CONTEXT_FIX);
+    }
+
+    return builder
         .endControlFlow()
         .build();
   }
 
   // @Override
   // public Context getContext() {
-  //   if (super.getContext() == null) {
+  //   if (super.getContext() == null && !disableGetContextFix) {
   //     return null;
   //   }
   //   initializeComponentContext();
@@ -191,11 +211,17 @@ public final class FragmentGenerator {
         .addModifiers(Modifier.PUBLIC);
 
     if (useFragmentGetContextFix(env)) {
-      builder.beginControlFlow("if (super.getContext() == null)");
+      builder
+          // Note that disableGetContext can only be true if componentContext is set, so if it is
+          // true we don't need to check whether componentContext is set or not.
+          .beginControlFlow(
+              "if (super.getContext() == null && !$N)",
+              DISABLE_GET_CONTEXT_FIX_FIELD);
     } else {
-      builder.beginControlFlow(
-          "if (super.getContext() == null && $N == null)",
-          COMPONENT_CONTEXT_FIELD);
+      builder
+          .beginControlFlow(
+              "if (super.getContext() == null && $N == null)",
+              COMPONENT_CONTEXT_FIELD);
     }
 
     return builder

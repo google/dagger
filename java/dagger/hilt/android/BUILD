@@ -31,6 +31,7 @@ android_library(
     exports = [
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/components",
+        "//java/dagger/hilt/android/flags:fragment_get_context_fix",
         "//java/dagger/hilt/android/internal",
         "//java/dagger/hilt/android/internal/builders",
         "//java/dagger/hilt/android/internal/managers",
@@ -184,6 +185,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android:package_info",
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/components:package_info",
+        "//java/dagger/hilt/android/flags:fragment_get_context_fix",
         "//java/dagger/hilt/android/internal",
         "//java/dagger/hilt/android/internal/builders",
         "//java/dagger/hilt/android/internal/earlyentrypoint",

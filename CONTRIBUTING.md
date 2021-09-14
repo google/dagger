@@ -28,6 +28,10 @@ information on using pull requests.
 
 Dagger is built with [`bazel`](https://bazel.build).
 
+Ensure that Dagger is checked out on a case-sensitive filesystem. On a
+case-insensitive file system (e.g. Windows or MacOS by default) some tasks that
+attempt to delete the `build/` folder will also delete the bazel `BUILD` files.
+
 ### Building Dagger from the command line
 
 *   [Install Bazel](https://docs.bazel.build/versions/master/install.html)

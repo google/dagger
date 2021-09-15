@@ -40,6 +40,7 @@ import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import javax.lang.model.element.Element;
 
@@ -51,7 +52,7 @@ import javax.lang.model.element.Element;
 final class DependencyMethodProviderCreationExpression
     implements FrameworkInstanceCreationExpression {
 
-  private final ComponentImplementation componentImplementation;
+  private final ShardImplementation shardImplementation;
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final CompilerOptions compilerOptions;
   private final BindingGraph graph;
@@ -65,7 +66,7 @@ final class DependencyMethodProviderCreationExpression
       CompilerOptions compilerOptions,
       BindingGraph graph) {
     this.binding = checkNotNull(binding);
-    this.componentImplementation = componentImplementation;
+    this.shardImplementation = componentImplementation.shardImplementation(binding);
     this.componentRequirementExpressions = componentRequirementExpressions;
     this.compilerOptions = compilerOptions;
     this.graph = graph;
@@ -80,13 +81,13 @@ final class DependencyMethodProviderCreationExpression
     // using .class & String.format -- but that wouldn't be the whole story.
     // What should we do?
     CodeBlock invocation =
-        ComponentProvisionBindingExpression.maybeCheckForNull(
+        ComponentProvisionRequestRepresentation.maybeCheckForNull(
             (ProvisionBinding) binding,
             compilerOptions,
             CodeBlock.of(
                 "$N.$N()", dependency().variableName(), provisionMethod().getSimpleName()));
     ClassName dependencyClassName = ClassName.get(dependency().typeElement());
-    TypeName keyType = TypeName.get(binding.key().type());
+    TypeName keyType = TypeName.get(binding.key().type().java());
     MethodSpec.Builder getMethod =
         methodBuilder("get")
             .addAnnotation(Override.class)
@@ -96,9 +97,21 @@ final class DependencyMethodProviderCreationExpression
     if (binding.nullableType().isPresent()) {
       getMethod.addAnnotation(ClassName.get(MoreTypes.asTypeElement(binding.nullableType().get())));
     }
-    componentImplementation.addType(
+
+    // We need to use the componentShard here since the generated type is static and shards are
+    // not static classes so it can't be nested inside the shard.
+    ShardImplementation componentShard =
+        shardImplementation.getComponentImplementation().getComponentShard();
+    ClassName factoryClassName =
+        componentShard
+            .name()
+            .nestedClass(
+                ClassName.get(dependency().typeElement()).toString().replace('.', '_')
+                    + "_"
+                    + binding.bindingElement().get().getSimpleName());
+    componentShard.addType(
         COMPONENT_PROVISION_FACTORY,
-        classBuilder(factoryClassName())
+        classBuilder(factoryClassName)
             .addSuperinterface(providerOf(keyType))
             .addModifiers(PRIVATE, STATIC, FINAL)
             .addField(dependencyClassName, dependency().variableName(), PRIVATE, FINAL)
@@ -111,17 +124,9 @@ final class DependencyMethodProviderCreationExpression
             .build());
     return CodeBlock.of(
         "new $T($L)",
-        factoryClassName(),
+        factoryClassName,
         componentRequirementExpressions.getExpressionDuringInitialization(
-            dependency(), componentImplementation.name()));
-  }
-
-  private ClassName factoryClassName() {
-    String factoryName =
-        ClassName.get(dependency().typeElement()).toString().replace('.', '_')
-            + "_"
-            + binding.bindingElement().get().getSimpleName();
-    return componentImplementation.name().nestedClass(factoryName);
+            dependency(), shardImplementation.name()));
   }
 
   private ComponentRequirement dependency() {

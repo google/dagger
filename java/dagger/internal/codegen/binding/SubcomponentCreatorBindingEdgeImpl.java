@@ -22,8 +22,9 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableSet;
-import dagger.model.BindingGraph.SubcomponentCreatorBindingEdge;
-import javax.lang.model.element.TypeElement;
+import com.squareup.javapoet.ClassName;
+import dagger.spi.model.BindingGraph.SubcomponentCreatorBindingEdge;
+import dagger.spi.model.DaggerTypeElement;
 
 /** An implementation of {@link SubcomponentCreatorBindingEdge}. */
 public final class SubcomponentCreatorBindingEdgeImpl implements SubcomponentCreatorBindingEdge {
@@ -36,10 +37,11 @@ public final class SubcomponentCreatorBindingEdgeImpl implements SubcomponentCre
   }
 
   @Override
-  public ImmutableSet<TypeElement> declaringModules() {
+  public ImmutableSet<DaggerTypeElement> declaringModules() {
     return subcomponentDeclarations.stream()
         .map(SubcomponentDeclaration::contributingModule)
         .flatMap(presentValues())
+        .map(DaggerTypeElement::fromJava)
         .collect(toImmutableSet());
   }
 
@@ -47,9 +49,10 @@ public final class SubcomponentCreatorBindingEdgeImpl implements SubcomponentCre
   public String toString() {
     return "subcomponent declared by "
         + (subcomponentDeclarations.size() == 1
-            ? getOnlyElement(declaringModules()).getQualifiedName()
+            ? getOnlyElement(declaringModules()).className().canonicalName()
             : declaringModules().stream()
-                .map(TypeElement::getQualifiedName)
+                .map(DaggerTypeElement::className)
+                .map(ClassName::canonicalName)
                 .collect(joining(", ", "{", "}")));
   }
 }

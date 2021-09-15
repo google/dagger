@@ -44,13 +44,13 @@ java_library(
         "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/incap",
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/jsr250_annotations",
         "@google_bazel_common//third_party/java/jsr330_inject",
-        "@maven//:com_google_auto_auto_common",
     ],
 )
 

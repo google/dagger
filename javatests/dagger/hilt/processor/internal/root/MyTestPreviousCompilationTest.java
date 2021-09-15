@@ -73,9 +73,9 @@ public final class MyTestPreviousCompilationTest {
       assertThat(compilation)
           .hadErrorContaining(
               "Cannot process new roots when there are test roots from a previous compilation unit:"
-                  + "\n  \tTest roots from previous compilation unit: "
-                  + "[dagger.hilt.processor.internal.root.MyTestPreviousCompilation.MyTest]"
-                  + "\n  \tAll roots from this compilation unit: [test.TestRoot]");
+                  + "\n    Test roots from previous compilation unit: "
+                  + "dagger.hilt.processor.internal.root.MyTestPreviousCompilation.MyTest"
+                  + "\n    All roots from this compilation unit: test.TestRoot");
     }
   }
 
@@ -101,9 +101,9 @@ public final class MyTestPreviousCompilationTest {
       assertThat(compilation)
           .hadErrorContaining(
               "Cannot process new roots when there are test roots from a previous compilation unit:"
-                  + "\n  \tTest roots from previous compilation unit: "
-                  + "[dagger.hilt.processor.internal.root.MyTestPreviousCompilation.MyTest]"
-                  + "\n  \tAll roots from this compilation unit: [test.AppRoot]");
+                  + "\n    Test roots from previous compilation unit: "
+                  + "dagger.hilt.processor.internal.root.MyTestPreviousCompilation.MyTest"
+                  + "\n    All roots from this compilation unit: test.AppRoot");
     }
   }
 }

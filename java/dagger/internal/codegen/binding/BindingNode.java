@@ -24,25 +24,26 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import dagger.BindsOptionalOf;
 import dagger.Module;
-import dagger.model.BindingKind;
-import dagger.model.ComponentPath;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
-import dagger.model.Scope;
 import dagger.multibindings.Multibinds;
+import dagger.spi.model.BindingKind;
+import dagger.spi.model.ComponentPath;
+import dagger.spi.model.DaggerElement;
+import dagger.spi.model.DaggerTypeElement;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
+import dagger.spi.model.Scope;
 import java.util.Optional;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 
 /**
- * An implementation of {@link dagger.model.Binding} that also exposes {@link BindingDeclaration}s
- * associated with the binding.
+ * An implementation of {@link dagger.spi.model.Binding} that also exposes {@link
+ * BindingDeclaration}s associated with the binding.
  */
-// TODO(dpb): Consider a supertype of dagger.model.Binding that
+// TODO(dpb): Consider a supertype of dagger.spi.model.Binding that
 // dagger.internal.codegen.binding.Binding
 // could also implement.
 @AutoValue
-public abstract class BindingNode implements dagger.model.Binding {
+public abstract class BindingNode implements dagger.spi.model.Binding {
   public static BindingNode create(
       ComponentPath component,
       Binding delegate,
@@ -97,13 +98,13 @@ public abstract class BindingNode implements dagger.model.Binding {
   }
 
   @Override
-  public Optional<Element> bindingElement() {
-    return delegate().bindingElement();
+  public Optional<DaggerElement> bindingElement() {
+    return delegate().bindingElement().map(DaggerElement::fromJava);
   }
 
   @Override
-  public Optional<TypeElement> contributingModule() {
-    return delegate().contributingModule();
+  public Optional<DaggerTypeElement> contributingModule() {
+    return delegate().contributingModule().map(DaggerTypeElement::fromJava);
   }
 
   @Override

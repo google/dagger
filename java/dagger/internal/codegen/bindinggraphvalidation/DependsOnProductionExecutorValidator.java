@@ -21,11 +21,12 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 
 import dagger.internal.codegen.binding.KeyFactory;
 import dagger.internal.codegen.compileroption.CompilerOptions;
-import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.MaybeBinding;
-import dagger.model.Key;
-import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
+import dagger.spi.model.Binding;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraph.MaybeBinding;
+import dagger.spi.model.BindingGraphPlugin;
+import dagger.spi.model.DiagnosticReporter;
+import dagger.spi.model.Key;
 import javax.inject.Inject;
 
 /**
@@ -64,7 +65,7 @@ final class DependsOnProductionExecutorValidator implements BindingGraphPlugin {
         .forEach(binding -> reportError(diagnosticReporter, binding));
   }
 
-  private void reportError(DiagnosticReporter diagnosticReporter, dagger.model.Binding binding) {
+  private void reportError(DiagnosticReporter diagnosticReporter, Binding binding) {
     diagnosticReporter.reportBinding(
         ERROR, binding, "%s may not depend on the production executor", binding.key());
   }

@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import dagger.BindsOptionalOf;
-import dagger.model.Key;
+import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;

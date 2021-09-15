@@ -19,41 +19,41 @@ package dagger.internal.codegen.validation;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.ComponentAnnotation.anyComponentAnnotation;
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XVariableElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import dagger.internal.codegen.base.ModuleAnnotation;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
-final class BindsInstanceMethodValidator extends BindsInstanceElementValidator<ExecutableElement> {
+final class BindsInstanceMethodValidator extends BindsInstanceElementValidator<XExecutableElement> {
   @Inject
   BindsInstanceMethodValidator(InjectionAnnotations injectionAnnotations) {
     super(injectionAnnotations);
   }
 
   @Override
-  protected ElementValidator elementValidator(ExecutableElement element) {
-    return new Validator(element);
+  protected ElementValidator elementValidator(XExecutableElement xElement) {
+    return new Validator(xElement);
   }
 
   private class Validator extends ElementValidator {
-    Validator(ExecutableElement element) {
-      super(element);
+    Validator(XExecutableElement xElement) {
+      super(xElement);
     }
 
     @Override
     protected void checkAdditionalProperties() {
-      if (!element.getModifiers().contains(ABSTRACT)) {
+      if (!xElement.isAbstract()) {
         report.addError("@BindsInstance methods must be abstract");
       }
-      if (element.getParameters().size() != 1) {
+      if (xElement.getParameters().size() != 1) {
         report.addError(
             "@BindsInstance methods should have exactly one parameter for the bound type");
       }
@@ -72,10 +72,9 @@ final class BindsInstanceMethodValidator extends BindsInstanceElementValidator<E
 
     @Override
     protected Optional<TypeMirror> bindingElementType() {
-      List<? extends VariableElement> parameters =
-          MoreElements.asExecutable(element).getParameters();
+      List<? extends XVariableElement> parameters = xElement.getParameters();
       return parameters.size() == 1
-          ? Optional.of(getOnlyElement(parameters).asType())
+          ? Optional.of(XConverters.toJavac(getOnlyElement(parameters).getType()))
           : Optional.empty();
     }
   }

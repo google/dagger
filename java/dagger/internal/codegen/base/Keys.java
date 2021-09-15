@@ -23,7 +23,8 @@ import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPr
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.Key;
+import dagger.spi.model.DaggerAnnotation;
+import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ElementKind;
@@ -32,14 +33,14 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleTypeVisitor6;
+import javax.lang.model.util.SimpleTypeVisitor8;
 
 /** Utility methods related to {@link Key}s. */
 public final class Keys {
   public static boolean isValidMembersInjectionKey(Key key) {
     return !key.qualifier().isPresent()
         && !key.multibindingContributionIdentifier().isPresent()
-        && key.type().getKind().equals(TypeKind.DECLARED);
+        && key.type().java().getKind().equals(TypeKind.DECLARED);
   }
 
   /**
@@ -47,7 +48,8 @@ public final class Keys {
    * just-in-time binding by discovering an {@code @Inject} constructor).
    */
   public static boolean isValidImplicitProvisionKey(Key key, DaggerTypes types) {
-    return isValidImplicitProvisionKey(key.qualifier(), key.type(), types);
+    return isValidImplicitProvisionKey(
+        key.qualifier().map(DaggerAnnotation::java), key.type().java(), types);
   }
 
   /**
@@ -63,7 +65,7 @@ public final class Keys {
     }
 
     return type.accept(
-        new SimpleTypeVisitor6<Boolean, Void>(false) {
+        new SimpleTypeVisitor8<Boolean, Void>(false) {
           @Override
           public Boolean visitDeclared(DeclaredType type, Void ignored) {
             // Non-classes or abstract classes aren't allowed.
@@ -99,7 +101,8 @@ public final class Keys {
    */
   public static boolean isComponentOrCreator(Key key) {
     return !key.qualifier().isPresent()
-        && key.type().getKind() == TypeKind.DECLARED
-        && isAnyAnnotationPresent(asTypeElement(key.type()), allComponentAndCreatorAnnotations());
+        && key.type().java().getKind() == TypeKind.DECLARED
+        && isAnyAnnotationPresent(
+            asTypeElement(key.type().java()), allComponentAndCreatorAnnotations());
   }
 }

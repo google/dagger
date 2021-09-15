@@ -24,19 +24,17 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsS
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 
+import androidx.room.compiler.processing.XExecutableElement;
 import com.google.common.collect.ImmutableSet;
-import dagger.BindsOptionalOf;
-import dagger.Module;
 import dagger.internal.codegen.binding.InjectionAnnotations;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.producers.ProducerModule;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
 
-/** A validator for {@link BindsOptionalOf} methods. */
+/** A validator for {@link dagger.BindsOptionalOf} methods. */
 final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
 
   private final DaggerTypes types;
@@ -53,8 +51,8 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
         elements,
         types,
         kotlinMetadataUtil,
-        BindsOptionalOf.class,
-        ImmutableSet.of(Module.class, ProducerModule.class),
+        TypeNames.BINDS_OPTIONAL_OF,
+        ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
         dependencyRequestValidator,
         MUST_BE_ABSTRACT,
         NO_EXCEPTIONS,
@@ -65,15 +63,14 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
     this.injectionAnnotations = injectionAnnotations;
   }
 
-
   @Override
-  protected ElementValidator elementValidator(ExecutableElement element) {
-    return new Validator(element);
+  protected ElementValidator elementValidator(XExecutableElement xElement) {
+    return new Validator(xElement);
   }
 
   private class Validator extends MethodValidator {
-    Validator(ExecutableElement element) {
-      super(element);
+    Validator(XExecutableElement xElement) {
+      super(xElement);
     }
 
     @Override
@@ -90,7 +87,7 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
 
     @Override
     protected void checkParameters() {
-      if (!element.getParameters().isEmpty()) {
+      if (!xElement.getParameters().isEmpty()) {
         report.addError("@BindsOptionalOf methods cannot have parameters");
       }
     }

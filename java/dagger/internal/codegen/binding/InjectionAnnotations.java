@@ -34,9 +34,9 @@ import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
-import dagger.internal.InjectedFieldSignature;
 import dagger.internal.codegen.extension.DaggerCollectors;
 import dagger.internal.codegen.extension.DaggerStreams;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
@@ -131,7 +131,7 @@ public final class InjectionAnnotations {
         return ElementFilter.methodsIn(membersInjector.getEnclosedElements()).stream()
             .filter(
                 method ->
-                    getAnnotationMirror(method, InjectedFieldSignature.class)
+                    getAnnotationMirror(method, TypeNames.INJECTED_FIELD_SIGNATURE)
                         .map(annotation -> getStringValue(annotation, "value"))
                         .map(memberInjectedFieldSignature::equals)
                         // If a method is not an @InjectedFieldSignature method then filter it out

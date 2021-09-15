@@ -22,8 +22,8 @@ import static dagger.internal.codegen.binding.SourceFiles.protectAgainstKeywords
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
 import java.util.Iterator;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
@@ -97,10 +97,10 @@ public final class KeyVariableNamer {
 
     if (key.qualifier().isPresent()) {
       // TODO(gak): Use a better name for fields with qualifiers with members.
-      builder.append(key.qualifier().get().getAnnotationType().asElement().getSimpleName());
+      builder.append(key.qualifier().get().java().getAnnotationType().asElement().getSimpleName());
     }
 
-    key.type().accept(TYPE_NAMER, builder);
+    key.type().java().accept(TYPE_NAMER, builder);
 
     return protectAgainstKeywords(UPPER_CAMEL.to(LOWER_CAMEL, builder.toString()));
   }

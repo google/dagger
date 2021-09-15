@@ -1537,64 +1537,51 @@ public class MembersInjectionTest {
             .addLines(
                 "package test;",
                 "",
-                GeneratedLines.generatedImports(
-                    "import com.google.errorprone.annotations.CanIgnoreReturnValue;",
-                    "import other.InaccessiblesModule;",
-                    "import other.InaccessiblesModule_InaccessiblesFactory;",
-                    "import other.UsesInaccessibles;",
-                    "import other.UsesInaccessibles_Factory;",
-                    "import other.UsesInaccessibles_MembersInjector;"),
-                "",
                 GeneratedLines.generatedAnnotations(),
-                "final class DaggerTestComponent implements TestComponent {")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "  private volatile Object listOfInaccessible = new MemoizedSentinel();",
+                "final class DaggerTestComponent implements TestComponent {",
+                "  private final DaggerTestComponent testComponent = this;",
                 "",
-                "  private List listOfInaccessible() {",
-                "    Object local = listOfInaccessible;",
-                "    if (local instanceof MemoizedSentinel) {",
-                "      synchronized (local) {",
-                "        local = listOfInaccessible;",
-                "        if (local instanceof MemoizedSentinel) {",
-                "          local = InaccessiblesModule_InaccessiblesFactory.inaccessibles();",
-                "          listOfInaccessible =",
-                "              DoubleCheck.reentrantCheck(listOfInaccessible, local);",
-                "        }",
-                "      }",
-                "    }",
-                "    return (List) local;",
-                "  }")
+                "  @SuppressWarnings(\"rawtypes\")",
+                "  private Provider inaccessiblesProvider;")
             .addLinesIn(
                 DEFAULT_MODE,
-                "  @SuppressWarnings(\"rawtypes\")",
-                "  private Provider inaccessiblesProvider;",
-                "",
                 "  @SuppressWarnings(\"unchecked\")",
                 "  private void initialize() {",
                 "    this.inaccessiblesProvider =",
                 "        DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());",
                 "  }")
-            .addLines(
-                "",
-                "  @Override",
-                "  public UsesInaccessibles usesInaccessibles() {",
-                "    return injectUsesInaccessibles(",
-                "        UsesInaccessibles_Factory.newInstance());",
-                "  }",
-                "",
-                "  @CanIgnoreReturnValue",
-                "  private UsesInaccessibles injectUsesInaccessibles(",
-                "        UsesInaccessibles instance) {",
-                "    UsesInaccessibles_MembersInjector.injectInaccessibles(")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "        instance, (List) listOfInaccessible());")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "        instance, (List) inaccessiblesProvider.get());")
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize() {",
+                "    this.inaccessiblesProvider =",
+                "        DoubleCheck.provider(",
+                "            new SwitchingProvider<List>(testComponent, 0));",
+                "  }")
             .addLines(
+                "  @Override",
+                "  public UsesInaccessibles usesInaccessibles() {",
+                "    return injectUsesInaccessibles(UsesInaccessibles_Factory.newInstance());",
+                "  }")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "  @CanIgnoreReturnValue",
+                "  private UsesInaccessibles injectUsesInaccessibles(UsesInaccessibles instance) {",
+                "    UsesInaccessibles_MembersInjector",
+                "        .injectInaccessibles(instance, (List) inaccessiblesProvider.get());",
                 "    return instance;",
+                "  }",
+                "",
+                "  private static final class SwitchingProvider<T> implements Provider<T> {",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    @Override",
+                "    public T get() {",
+                "      switch (id) {",
+                "        case 0:",
+                "          return (T) InaccessiblesModule_InaccessiblesFactory.inaccessibles();",
+                "        default: throw new AssertionError(id);",
+                "      }",
+                "    }",
                 "  }",
                 "}")
             .build();

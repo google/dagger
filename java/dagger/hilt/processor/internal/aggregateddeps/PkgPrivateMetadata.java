@@ -44,6 +44,11 @@ public abstract class PkgPrivateMetadata {
     return publicDep(element, elements, ClassNames.EARLY_ENTRY_POINT);
   }
 
+  /** Returns the public Hilt wrapped type or the type itself if it is already public. */
+  public static TypeElement publicEntryPoint(TypeElement element, Elements elements) {
+    return publicDep(element, elements, ClassNames.ENTRY_POINT);
+  }
+
   private static TypeElement publicDep(
       TypeElement element, Elements elements, ClassName annotation) {
     return of(elements, element, annotation)
@@ -102,8 +107,11 @@ public abstract class PkgPrivateMetadata {
 
     if (annotation.equals(ClassNames.MODULE)
         ) {
-      // Skip modules that require a module instance. Required by
-      // dagger (b/31489617)
+      // Skip modules that require a module instance. Otherwise Dagger validation will (correctly)
+      // fail on the wrapper saying a public module can't include a private one, which makes the
+      // error more confusing for users since they probably aren't aware of the wrapper. When
+      // skipped, if the root is in a different package, the error will instead just be on the
+      // generated Hilt component.
       if (Processors.requiresModuleInstance(elements, MoreElements.asType(element))) {
         return Optional.empty();
       }

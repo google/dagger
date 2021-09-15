@@ -21,8 +21,8 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Formatter.INDENT;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSetMultimap;
-import static dagger.model.BindingKind.INJECTION;
-import static dagger.model.BindingKind.MEMBERS_INJECTION;
+import static dagger.spi.model.BindingKind.INJECTION;
+import static dagger.spi.model.BindingKind.MEMBERS_INJECTION;
 import static java.util.Comparator.comparing;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
@@ -42,14 +42,16 @@ import dagger.internal.codegen.binding.BindingDeclarationFormatter;
 import dagger.internal.codegen.binding.BindingNode;
 import dagger.internal.codegen.binding.MultibindingDeclaration;
 import dagger.internal.codegen.compileroption.CompilerOptions;
-import dagger.model.Binding;
-import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.ComponentNode;
-import dagger.model.BindingKind;
-import dagger.model.ComponentPath;
-import dagger.model.Key;
-import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
+import dagger.spi.model.Binding;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraph.ComponentNode;
+import dagger.spi.model.BindingGraphPlugin;
+import dagger.spi.model.BindingKind;
+import dagger.spi.model.ComponentPath;
+import dagger.spi.model.DaggerElement;
+import dagger.spi.model.DaggerTypeElement;
+import dagger.spi.model.DiagnosticReporter;
+import dagger.spi.model.Key;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Optional;
@@ -238,7 +240,7 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
   private String incompatibleBindingsMessage(
       Binding oneBinding, ImmutableSet<Binding> duplicateBindings, BindingGraph graph) {
     Key key = oneBinding.key();
-    ImmutableSet<dagger.model.Binding> multibindings =
+    ImmutableSet<dagger.spi.model.Binding> multibindings =
         duplicateBindings.stream()
             .filter(binding -> binding.kind().isMultibinding())
             .collect(toImmutableSet());
@@ -248,11 +250,11 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
     java.util.Formatter messageFormatter = new java.util.Formatter(message);
     messageFormatter.format("%s has incompatible bindings or declarations:\n", key);
     message.append(INDENT);
-    dagger.model.Binding multibinding = getOnlyElement(multibindings);
+    dagger.spi.model.Binding multibinding = getOnlyElement(multibindings);
     messageFormatter.format("%s bindings and declarations:", multibindingTypeString(multibinding));
     formatDeclarations(message, 2, declarations(graph, multibindings));
 
-    Set<dagger.model.Binding> uniqueBindings =
+    Set<dagger.spi.model.Binding> uniqueBindings =
         Sets.filter(duplicateBindings, binding -> !binding.equals(multibinding));
     message.append('\n').append(INDENT).append("Unique bindings and declarations:");
     formatDeclarations(
@@ -276,7 +278,7 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
   }
 
   private ImmutableSet<BindingDeclaration> declarations(
-      BindingGraph graph, Set<dagger.model.Binding> bindings) {
+      BindingGraph graph, Set<dagger.spi.model.Binding> bindings) {
     return bindings.stream()
         .flatMap(binding -> declarations(graph, binding).stream())
         .distinct()
@@ -285,7 +287,7 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
   }
 
   private ImmutableSet<BindingDeclaration> declarations(
-      BindingGraph graph, dagger.model.Binding binding) {
+      BindingGraph graph, dagger.spi.model.Binding binding) {
     ImmutableSet.Builder<BindingDeclaration> declarations = ImmutableSet.builder();
     BindingNode bindingNode = (BindingNode) binding;
     bindingNode.associatedDeclarations().forEach(declarations::add);
@@ -299,7 +301,7 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
     return declarations.build();
   }
 
-  private String multibindingTypeString(dagger.model.Binding multibinding) {
+  private String multibindingTypeString(dagger.spi.model.Binding multibinding) {
     switch (multibinding.kind()) {
       case MULTIBOUND_MAP:
         return "Map";
@@ -339,7 +341,9 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
 
     private static BindingElement forBinding(Binding binding) {
       return new AutoValue_DuplicateBindingsValidator_BindingElement(
-          binding.kind(), binding.bindingElement(), binding.contributingModule());
+          binding.kind(),
+          binding.bindingElement().map(DaggerElement::java),
+          binding.contributingModule().map(DaggerTypeElement::java));
     }
   }
 }

@@ -18,25 +18,25 @@ package dagger.internal.codegen.binding;
 
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
 
-import dagger.model.BindingGraph.ChildFactoryMethodEdge;
-import javax.lang.model.element.ExecutableElement;
+import dagger.spi.model.BindingGraph.ChildFactoryMethodEdge;
+import dagger.spi.model.DaggerExecutableElement;
 
 /** An implementation of {@link ChildFactoryMethodEdge}. */
 public final class ChildFactoryMethodEdgeImpl implements ChildFactoryMethodEdge {
 
-  private final ExecutableElement factoryMethod;
+  private final DaggerExecutableElement factoryMethod;
 
-  ChildFactoryMethodEdgeImpl(ExecutableElement factoryMethod) {
+  ChildFactoryMethodEdgeImpl(DaggerExecutableElement factoryMethod) {
     this.factoryMethod = factoryMethod;
   }
 
   @Override
-  public ExecutableElement factoryMethod() {
+  public DaggerExecutableElement factoryMethod() {
     return factoryMethod;
   }
 
   @Override
   public String toString() {
-    return elementToString(factoryMethod);
+    return elementToString(factoryMethod.java());
   }
 }

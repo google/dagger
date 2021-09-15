@@ -29,7 +29,7 @@ import javax.inject.Singleton;
  * accessible from the component, but the left-hand-side is. If the right-hand-side is represented
  * as a Provider (e.g. because it is scoped), then the raw {@code Provider.get()} will return {@link
  * Object}, which must be downcasted to the type accessible from the component. See {@code
- * instanceRequiresCast()} in {@link dagger.internal.codegen.DelegateBindingExpression}.
+ * instanceRequiresCast()} in {@link dagger.internal.codegen.DelegateRequestRepresentation}.
  */
 @Singleton
 @Component(modules = ExposedModule.class)

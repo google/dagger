@@ -36,7 +36,7 @@ import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.model.RequestKind;
+import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
@@ -72,7 +72,7 @@ final class DependencyRequestValidator {
    * non-instance request with a wildcard type.
    */
   void validateDependencyRequest(
-      ValidationReport.Builder<?> report, Element requestElement, TypeMirror requestType) {
+      ValidationReport.Builder report, Element requestElement, TypeMirror requestType) {
     if (MoreElements.isAnnotationPresent(requestElement, Assisted.class)) {
       // Don't validate assisted parameters. These are not dependency requests.
       return;
@@ -107,15 +107,14 @@ final class DependencyRequestValidator {
   }
 
   private final class Validator {
-    private final ValidationReport.Builder<?> report;
+    private final ValidationReport.Builder report;
     private final Element requestElement;
     private final TypeMirror requestType;
     private final TypeMirror keyType;
     private final RequestKind requestKind;
     private final ImmutableCollection<? extends AnnotationMirror> qualifiers;
 
-
-    Validator(ValidationReport.Builder<?> report, Element requestElement, TypeMirror requestType) {
+    Validator(ValidationReport.Builder report, Element requestElement, TypeMirror requestType) {
       this.report = report;
       this.requestElement = requestElement;
       this.requestType = requestType;
@@ -150,9 +149,10 @@ final class DependencyRequestValidator {
                   + ". Did you mean to inject its assisted factory type instead?",
               requestElement);
         }
-        if (requestKind != RequestKind.INSTANCE && isAssistedFactoryType(typeElement)) {
+        if (!(requestKind == RequestKind.INSTANCE || requestKind == RequestKind.PROVIDER)
+            && isAssistedFactoryType(typeElement)) {
           report.addError(
-              "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, "
+              "Dagger does not support injecting Lazy<T>, Producer<T>, "
                   + "or Produced<T> when T is an @AssistedFactory-annotated type such as "
                   + keyType,
               requestElement);
@@ -186,7 +186,7 @@ final class DependencyRequestValidator {
    * <p>Only call this when processing a provision binding.
    */
   // TODO(dpb): Should we disallow Producer entry points in non-production components?
-  void checkNotProducer(ValidationReport.Builder<?> report, VariableElement requestElement) {
+  void checkNotProducer(ValidationReport.Builder report, VariableElement requestElement) {
     TypeMirror requestType = requestElement.asType();
     if (FrameworkTypes.isProducerType(requestType)) {
       report.addError(

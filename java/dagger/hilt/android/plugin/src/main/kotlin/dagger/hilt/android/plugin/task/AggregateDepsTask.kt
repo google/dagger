@@ -19,6 +19,7 @@ package dagger.hilt.android.plugin.task
 import dagger.hilt.android.plugin.root.AggregatedElementProxyGenerator
 import dagger.hilt.android.plugin.root.ComponentTreeDepsGenerator
 import dagger.hilt.android.plugin.root.ProcessedRootSentinelGenerator
+import dagger.hilt.processor.internal.root.ir.AggregatedRootIrValidator
 import dagger.hilt.processor.internal.root.ir.ComponentTreeDepsIrCreator
 import javax.inject.Inject
 import org.gradle.api.DefaultTask
@@ -64,6 +65,9 @@ abstract class AggregateDepsTask @Inject constructor(
   @get:Input
   abstract val testEnvironment: Property<Boolean>
 
+  @get:Input
+  abstract val crossCompilationRootValidationDisabled: Property<Boolean>
+
   @TaskAction
   internal fun taskAction(@Suppress("UNUSED_PARAMETER") inputs: InputChanges) {
     workerExecutor.noIsolation().submit(WorkerAction::class.java) {
@@ -71,6 +75,7 @@ abstract class AggregateDepsTask @Inject constructor(
       it.asmApiVersion.set(asmApiVersion)
       it.outputDir.set(outputDir)
       it.testEnvironment.set(testEnvironment)
+      it.crossCompilationRootValidationDisabled.set(crossCompilationRootValidationDisabled)
     }
   }
 
@@ -79,6 +84,7 @@ abstract class AggregateDepsTask @Inject constructor(
     val asmApiVersion: Property<Int>
     val outputDir: DirectoryProperty
     val testEnvironment: Property<Boolean>
+    val crossCompilationRootValidationDisabled: Property<Boolean>
   }
 
   abstract class WorkerAction : WorkAction<Parameters> {
@@ -90,13 +96,15 @@ abstract class AggregateDepsTask @Inject constructor(
         asmApiVersion = parameters.asmApiVersion.getOrNull() ?: Opcodes.ASM7,
         input = parameters.compileClasspath
       )
-      // TODO(danysantiago): Add 3 checks:
-      //   * No new roots when test roots are already processed
-      //   * No app and test roots to process in the same task
-      //   * No multiple app roots
-      val processedRootNames = aggregator.processedRoots.flatMap { it.roots }.toSet()
-      val rootsToProcess =
-        aggregator.roots.filterNot { processedRootNames.contains(it.root) }.toSet()
+      val rootsToProcess = AggregatedRootIrValidator.rootsToProcess(
+        isCrossCompilationRootValidationDisabled =
+          parameters.crossCompilationRootValidationDisabled.get(),
+        processedRoots = aggregator.processedRoots,
+        aggregatedRoots = aggregator.aggregatedRoots
+      )
+      if (rootsToProcess.isEmpty()) {
+        return
+      }
       val componentTrees = ComponentTreeDepsIrCreator.components(
         isTest = parameters.testEnvironment.get(),
         isSharedTestComponentsEnabled = true,

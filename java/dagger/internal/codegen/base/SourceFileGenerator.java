@@ -22,6 +22,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHECKED;
 
+import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -34,7 +37,6 @@ import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
-import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -49,11 +51,11 @@ import javax.lang.model.element.Element;
 public abstract class SourceFileGenerator<T> {
   private static final String GENERATED_COMMENTS = "https://dagger.dev";
 
-  private final Filer filer;
+  private final XFiler filer;
   private final DaggerElements elements;
   private final SourceVersion sourceVersion;
 
-  public SourceFileGenerator(Filer filer, DaggerElements elements, SourceVersion sourceVersion) {
+  public SourceFileGenerator(XFiler filer, DaggerElements elements, SourceVersion sourceVersion) {
     this.filer = checkNotNull(filer);
     this.elements = checkNotNull(elements);
     this.sourceVersion = checkNotNull(sourceVersion);
@@ -61,6 +63,14 @@ public abstract class SourceFileGenerator<T> {
 
   public SourceFileGenerator(SourceFileGenerator<T> delegate) {
     this(delegate.filer, delegate.elements, delegate.sourceVersion);
+  }
+
+  /**
+   * Generates a source file to be compiled for {@code T}. Writes any generation exception to {@code
+   * messager} and does not throw.
+   */
+  public void generate(T input, XMessager messager) {
+    generate(input, XConverters.toJavac(messager));
   }
 
   /**
@@ -79,7 +89,7 @@ public abstract class SourceFileGenerator<T> {
   public void generate(T input) throws SourceFileGenerationException {
     for (TypeSpec.Builder type : topLevelTypes(input)) {
       try {
-        buildJavaFile(input, type).writeTo(filer);
+        buildJavaFile(input, type).writeTo(XConverters.toJavac(filer));
       } catch (Exception e) {
         // if the code above threw a SFGE, use that
         Throwables.propagateIfPossible(e, SourceFileGenerationException.class);

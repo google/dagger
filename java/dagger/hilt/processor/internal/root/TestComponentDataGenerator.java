@@ -78,7 +78,8 @@ public final class TestComponentDataGenerator {
    *         modules ->
    *             DaggerFooTest_ApplicationComponent.builder()
    *                 .applicationContextModule(
-   *                     new ApplicationContextModule(ApplicationProvider.getApplicationContext()))
+   *                     new ApplicationContextModule(
+   *                         Contexts.getApplication(ApplicationProvider.getApplicationContext())))
    *                 .testModule((FooTest.TestModule) modules.get(FooTest.TestModule.class))
    *                 .testModule(modules.containsKey(FooTest.TestModule.class)
    *                   ? (FooTest.TestModule) modules.get(FooTest.TestModule.class)
@@ -129,11 +130,13 @@ public final class TestComponentDataGenerator {
             getElementsListed(hiltRequiredModules),
             CodeBlock.of(
                 "(modules, testInstance, autoAddModuleEnabled) -> $T.builder()\n"
-                    + ".applicationContextModule(new $T($T.getApplicationContext()))\n"
+                    + ".applicationContextModule(\n"
+                    + "    new $T($T.getApplication($T.getApplicationContext())))\n"
                     + "$L"
                     + ".build()",
                 Processors.prepend(Processors.getEnclosedClassName(component), "Dagger"),
                 ClassNames.APPLICATION_CONTEXT_MODULE,
+                ClassNames.CONTEXTS,
                 ClassNames.APPLICATION_PROVIDER,
                 daggerRequiredModules.stream()
                     .map(module -> getAddModuleStatement(module, testElement))
@@ -217,9 +220,10 @@ public final class TestComponentDataGenerator {
 
   private CodeBlock callInjectTest(TypeElement testElement) {
     return CodeBlock.of(
-        "(($T) (($T) $T.getApplicationContext()).generatedComponent()).injectTest(testInstance)",
+        "(($T) (($T) $T.getApplication($T.getApplicationContext())).generatedComponent()).injectTest(testInstance)",
         rootMetadata.testRootMetadata().testInjectorName(),
         ClassNames.GENERATED_COMPONENT_MANAGER,
+        ClassNames.CONTEXTS,
         ClassNames.APPLICATION_PROVIDER);
   }
 }

@@ -16,19 +16,20 @@
 
 package dagger.hilt.android.internal.managers;
 
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleEventObserver;
-import androidx.lifecycle.LifecycleOwner;
 import android.content.Context;
 import android.content.ContextWrapper;
 import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleOwner;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.components.FragmentComponent;
+import dagger.hilt.android.internal.Contexts;
 import dagger.hilt.android.internal.builders.ViewComponentBuilder;
 import dagger.hilt.android.internal.builders.ViewWithFragmentComponentBuilder;
 import dagger.hilt.internal.GeneratedComponentManager;
@@ -143,8 +144,8 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
 
   private Context getParentContext(Class<?> parentType, boolean allowMissing) {
     Context context = unwrap(view.getContext(), parentType);
-    if (context == unwrap(context.getApplicationContext(), GeneratedComponentManager.class)) {
-      // If we searched for a type but ended up on the application context, just return null
+    if (context == Contexts.getApplication(context.getApplicationContext())) {
+      // If we searched for a type but ended up on the application, just return null
       // as this is never what we are looking for
       Preconditions.checkState(
           allowMissing,

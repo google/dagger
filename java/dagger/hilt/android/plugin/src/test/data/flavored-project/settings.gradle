@@ -1,0 +1,3 @@
+rootProject.name='Flavored Project'
+include ':app'
+include ':feature'

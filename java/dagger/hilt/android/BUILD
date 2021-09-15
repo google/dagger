@@ -31,6 +31,7 @@ android_library(
     exports = [
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/components",
+        "//java/dagger/hilt/android/internal",
         "//java/dagger/hilt/android/internal/builders",
         "//java/dagger/hilt/android/internal/managers",
         "//java/dagger/hilt/android/internal/managers:component_supplier",
@@ -101,6 +102,7 @@ android_library(
     deps = [
         ":package_info",
         "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt/android/internal",
         "@google_bazel_common//third_party/java/jsr305_annotations",
         "@maven//:androidx_activity_activity",
         "@maven//:androidx_fragment_fragment",
@@ -137,6 +139,7 @@ android_library(
         ":package_info",
         "//:dagger_with_compiler",
         "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt/android/internal",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",
         "//java/dagger/hilt/internal:test_singleton_component_manager",

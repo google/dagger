@@ -22,7 +22,7 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.base.Ascii;
 import com.google.common.base.CaseFormat;
 import dagger.Lazy;
-import dagger.model.DependencyRequest;
+import dagger.spi.model.DependencyRequest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Provider;
@@ -39,10 +39,10 @@ final class DependencyVariableNamer {
 
   static String name(DependencyRequest dependency) {
     if (!dependency.requestElement().isPresent()) {
-      return simpleVariableName(MoreTypes.asTypeElement(dependency.key().type()));
+      return simpleVariableName(MoreTypes.asTypeElement(dependency.key().type().java()));
     }
 
-    String variableName = dependency.requestElement().get().getSimpleName().toString();
+    String variableName = dependency.requestElement().get().java().getSimpleName().toString();
     if (Ascii.isUpperCase(variableName.charAt(0))) {
       variableName = toLowerCamel(variableName);
     }

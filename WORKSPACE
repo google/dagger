@@ -31,9 +31,9 @@ local_repository(
 
 http_archive(
     name = "google_bazel_common",
-    sha256 = "d8aa0ef609248c2a494d5dbdd4c89ef2a527a97c5a87687e5a218eb0b77ff640",
-    strip_prefix = "bazel-common-4a8d451e57fb7e1efecbf9495587a10684a19eb2",
-    urls = ["https://github.com/google/bazel-common/archive/4a8d451e57fb7e1efecbf9495587a10684a19eb2.zip"],
+    sha256 = "8b6aebdc095c8448b2f6a72bb8eae4a563891467e2d20c943f21940b1c444e38",
+    strip_prefix = "bazel-common-3d0e5005cfcbee836e31695d4ab91b5328ccc506",
+    urls = ["https://github.com/google/bazel-common/archive/3d0e5005cfcbee836e31695d4ab91b5328ccc506.zip"],
 )
 
 load("@google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules")
@@ -151,7 +151,6 @@ maven_install(
         "androidx.test:monitor:1.1.1",
         "androidx.test:core:1.1.0",
         "androidx.test.ext:junit:1.1.2",
-        "com.google.auto:auto-common:0.11",
         "com.android.support:appcompat-v7:25.0.0",
         "com.android.support:support-annotations:25.0.0",
         "com.android.support:support-fragment:25.0.0",
@@ -164,10 +163,11 @@ maven_install(
         "com.android.tools.lint:lint-tests:%s" % ANDROID_LINT_VERSION,
         "com.android.tools:testutils:%s" % ANDROID_LINT_VERSION,
         "com.github.tschuchortdev:kotlin-compile-testing:1.2.8",
+        "com.google.devtools.ksp:symbol-processing-api:1.5.30-1.0.0",
         "com.google.guava:guava:27.1-android",
         "junit:junit:4.13",
         "org.jetbrains.kotlin:kotlin-stdlib:%s" % KOTLIN_VERSION,
-        "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.2.0",
+        "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.3.0",
         "org.robolectric:robolectric:4.4",
         "org.robolectric:shadows-framework:4.4",  # For ActivityController
     ],

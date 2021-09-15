@@ -22,7 +22,7 @@ import dagger.Provides;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.validation.CompositeBindingGraphPlugin;
 import dagger.internal.codegen.validation.Validation;
-import dagger.spi.BindingGraphPlugin;
+import dagger.spi.model.BindingGraphPlugin;
 
 /** Binds the set of {@link BindingGraphPlugin}s used to implement Dagger validation. */
 @Module

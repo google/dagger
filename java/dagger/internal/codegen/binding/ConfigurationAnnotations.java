@@ -23,6 +23,7 @@ import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnot
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.getTypeListValue;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
+import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 import static javax.lang.model.util.ElementFilter.typesIn;
 
@@ -32,11 +33,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.squareup.javapoet.ClassName;
 import dagger.Component;
 import dagger.Module;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Optional;
@@ -126,10 +127,10 @@ public final class ConfigurationAnnotations {
 
   /** Returns the enclosed types annotated with the given annotation. */
   public static ImmutableList<DeclaredType> enclosedAnnotatedTypes(
-      TypeElement typeElement, Class<? extends Annotation> annotation) {
+      TypeElement typeElement, ClassName annotation) {
     final ImmutableList.Builder<DeclaredType> builders = ImmutableList.builder();
     for (TypeElement element : typesIn(typeElement.getEnclosedElements())) {
-      if (MoreElements.isAnnotationPresent(element, annotation)) {
+      if (isAnnotationPresent(element, annotation)) {
         builders.add(MoreTypes.asDeclared(element.asType()));
       }
     }

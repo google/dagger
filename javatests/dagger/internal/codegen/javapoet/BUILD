@@ -28,10 +28,10 @@ GenJavaTests(
     deps = [
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",
-        "@maven//:com_google_auto_auto_common",
     ],
 )

@@ -19,16 +19,18 @@ package dagger.internal.codegen.writing;
 import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.FRAMEWORK_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.RequestKind;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.producers.Producer;
 import dagger.producers.internal.CancellationListener;
 import dagger.producers.internal.Producers;
+import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
 
@@ -37,9 +39,11 @@ import javax.lang.model.type.TypeMirror;
  * views} of {@link Producer}s.
  */
 final class ProducerEntryPointView {
+  private final ShardImplementation shardImplementation;
   private final DaggerTypes types;
 
-  ProducerEntryPointView(DaggerTypes types) {
+  ProducerEntryPointView(ShardImplementation shardImplementation, DaggerTypes types) {
+    this.shardImplementation = shardImplementation;
     this.types = types;
   }
 
@@ -49,22 +53,20 @@ final class ProducerEntryPointView {
    * Producer} or {@link com.google.common.util.concurrent.ListenableFuture}.
    *
    * <p>This is intended to be a replacement implementation for {@link
-   * dagger.internal.codegen.writing.BindingExpression#getDependencyExpressionForComponentMethod(ComponentMethodDescriptor,
+   * dagger.internal.codegen.writing.RequestRepresentation#getDependencyExpressionForComponentMethod(ComponentMethodDescriptor,
    * ComponentImplementation)}, and in cases where {@link Optional#empty()} is returned, callers
    * should call {@code super.getDependencyExpressionForComponentMethod()}.
    */
   Optional<Expression> getProducerEntryPointField(
-      BindingExpression producerExpression,
+      RequestRepresentation producerExpression,
       ComponentMethodDescriptor componentMethod,
-      ComponentImplementation component) {
-    if (component.componentDescriptor().isProduction()
+      ClassName requestingClass) {
+    if (shardImplementation.componentDescriptor().isProduction()
         && (componentMethod.dependencyRequest().get().kind().equals(RequestKind.FUTURE)
             || componentMethod.dependencyRequest().get().kind().equals(RequestKind.PRODUCER))) {
+      MemberSelect field = createField(producerExpression, componentMethod);
       return Optional.of(
-          Expression.create(
-              fieldType(componentMethod),
-              "$N",
-              createField(producerExpression, componentMethod, component)));
+          Expression.create(fieldType(componentMethod), field.getExpressionFor(requestingClass)));
     } else {
       // If the component isn't a production component, it won't implement CancellationListener and
       // as such we can't create an entry point. But this binding must also just be a Producer from
@@ -75,10 +77,8 @@ final class ProducerEntryPointView {
     }
   }
 
-  private FieldSpec createField(
-      BindingExpression producerExpression,
-      ComponentMethodDescriptor componentMethod,
-      ComponentImplementation component) {
+  private MemberSelect createField(
+      RequestRepresentation producerExpression, ComponentMethodDescriptor componentMethod) {
     // TODO(cgdecker): Use a FrameworkFieldInitializer for this?
     // Though I don't think we need the once-only behavior of that, since I think
     // getComponentMethodImplementation will only be called once anyway
@@ -86,25 +86,34 @@ final class ProducerEntryPointView {
     FieldSpec field =
         FieldSpec.builder(
                 TypeName.get(fieldType(componentMethod)),
-                component.getUniqueFieldName(methodName + "EntryPoint"),
+                shardImplementation.getUniqueFieldName(methodName + "EntryPoint"),
                 PRIVATE)
             .build();
-    component.addField(FRAMEWORK_FIELD, field);
+    shardImplementation.addField(FRAMEWORK_FIELD, field);
 
     CodeBlock fieldInitialization =
         CodeBlock.of(
-            "this.$N = $T.entryPointViewOf($L, this);",
+            "this.$N = $T.entryPointViewOf($L, $L);",
             field,
             Producers.class,
-            producerExpression.getDependencyExpression(component.name()).codeBlock());
-    component.addInitialization(fieldInitialization);
+            producerExpression.getDependencyExpression(shardImplementation.name()).codeBlock(),
+            // Always pass in the componentShard reference here rather than the owning shard for
+            // this key because this needs to be the root CancellationListener.
+            shardImplementation.isComponentShard()
+                ? "this"
+                : shardImplementation
+                    .getComponentImplementation()
+                    .getComponentShard()
+                    .shardFieldReference());
+    shardImplementation.addInitialization(fieldInitialization);
 
-    return field;
+    return MemberSelect.localField(shardImplementation, field.name);
   }
 
   // TODO(cgdecker): Can we use producerExpression.getDependencyExpression().type() instead of
   // needing to (re)compute this?
   private TypeMirror fieldType(ComponentMethodDescriptor componentMethod) {
-    return types.wrapType(componentMethod.dependencyRequest().get().key().type(), Producer.class);
+    return types.wrapType(
+        componentMethod.dependencyRequest().get().key().type().java(), Producer.class);
   }
 }

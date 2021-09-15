@@ -27,6 +27,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
+import androidx.room.compiler.processing.XFiler;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -38,7 +39,6 @@ import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.Accessibility;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -68,7 +68,7 @@ public final class ModuleProxies {
 
     @Inject
     ModuleConstructorProxyGenerator(
-        Filer filer,
+        XFiler filer,
         DaggerElements elements,
         SourceVersion sourceVersion,
         ModuleProxies moduleProxies,

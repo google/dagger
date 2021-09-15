@@ -51,9 +51,11 @@ java_library(
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/writing",
+        "//java/dagger/internal/codegen/xprocessing",
+        "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "//java/dagger/producers",
         "//java/dagger/spi",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
@@ -61,7 +63,6 @@ java_library(
         "@google_bazel_common//third_party/java/incap",
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/jsr330_inject",
-        "@maven//:com_google_auto_auto_common",
     ],
 )
 
@@ -112,8 +113,13 @@ gen_maven_artifact(
     # The javadocs should only include ComponentProcessor.java, since that is the only class used
     # externally. Specifically, ComponentProcessor.forTesting() is required for testing SPI plugins.
     javadoc_srcs = ["ComponentProcessor.java"],
-    shaded_deps = ["@maven//:com_google_auto_auto_common"],
-    shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
+    # The shaded deps are added using jarjar, but they won't be shaded until later
+    # due to: https://github.com/google/dagger/issues/2765. For the shaded rules see
+    # util/deploy-dagger.sh
+    shaded_deps = [
+        "@com_google_auto_auto_common//jar",
+        "//java/dagger/internal/codegen/xprocessing",
+    ],
 )
 
 java_plugin(

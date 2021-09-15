@@ -17,22 +17,16 @@
 package dagger.android.processor;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
-import static com.google.auto.common.MoreElements.getAnnotationMirror;
-import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.android.processor.AndroidMapKeys.injectedTypeFromMapKey;
 
-import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
+import com.google.auto.common.BasicAnnotationProcessor.Step;
 import com.google.auto.common.MoreElements;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.SetMultimap;
-import dagger.Binds;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.squareup.javapoet.ClassName;
 import dagger.MapKey;
-import dagger.android.AndroidInjectionKey;
-import dagger.android.AndroidInjector;
-import dagger.multibindings.ClassKey;
-import java.lang.annotation.Annotation;
-import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Qualifier;
 import javax.inject.Scope;
@@ -46,8 +40,13 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
-/** Validates the correctness of {@link MapKey}s used with {@code dagger.android}. */
-final class AndroidMapKeyValidator implements ProcessingStep {
+/** Validates the correctness of {@link dagger.MapKey}s used with {@code dagger.android}. */
+final class AndroidMapKeyValidator implements Step {
+  private static final ImmutableMap<String, ClassName> SUPPORTED_ANNOTATIONS =
+      ImmutableMap.of(
+          TypeNames.ANDROID_INJECTION_KEY.toString(), TypeNames.ANDROID_INJECTION_KEY,
+          TypeNames.CLASS_KEY.toString(), TypeNames.CLASS_KEY);
+
   private final Elements elements;
   private final Types types;
   private final Messager messager;
@@ -59,16 +58,12 @@ final class AndroidMapKeyValidator implements ProcessingStep {
   }
 
   @Override
-  public Set<? extends Class<? extends Annotation>> annotations() {
-    return ImmutableSet.<Class<? extends Annotation>>builder()
-        .add(AndroidInjectionKey.class)
-        .add(ClassKey.class)
-        .build();
+  public ImmutableSet<String> annotations() {
+    return SUPPORTED_ANNOTATIONS.keySet();
   }
 
   @Override
-  public Set<Element> process(
-      SetMultimap<Class<? extends Annotation>, Element> elementsByAnnotation) {
+  public ImmutableSet<Element> process(ImmutableSetMultimap<String, Element> elementsByAnnotation) {
     ImmutableSet.Builder<Element> deferredElements = ImmutableSet.builder();
     elementsByAnnotation
         .entries()
@@ -83,7 +78,7 @@ final class AndroidMapKeyValidator implements ProcessingStep {
     return deferredElements.build();
   }
 
-  private void validateMethod(Class<? extends Annotation> annotation, ExecutableElement method) {
+  private void validateMethod(String annotation, ExecutableElement method) {
     if (!getAnnotatedAnnotations(method, Qualifier.class).isEmpty()) {
       return;
     }
@@ -107,7 +102,7 @@ final class AndroidMapKeyValidator implements ProcessingStep {
             Kind.ERROR,
             String.format(
                 "%s bindings should not be scoped. Scoping this method may leak instances of %s.",
-                AndroidInjector.Factory.class.getCanonicalName(),
+                TypeNames.ANDROID_INJECTOR_FACTORY.canonicalName(),
                 mapKeyValueElement.getQualifiedName()),
             method);
       }
@@ -117,7 +112,8 @@ final class AndroidMapKeyValidator implements ProcessingStep {
 
     // @Binds methods should only have one parameter, but we can't guarantee the order of Processors
     // in javac, so do a basic check for valid form
-    if (isAnnotationPresent(method, Binds.class) && method.getParameters().size() == 1) {
+    if (MoreDaggerElements.isAnnotationPresent(method, TypeNames.BINDS)
+        && method.getParameters().size() == 1) {
       validateMapKeyMatchesBindsParameter(annotation, method);
     }
   }
@@ -138,10 +134,10 @@ final class AndroidMapKeyValidator implements ProcessingStep {
   }
 
   /**
-   * A valid @Binds method could bind an {@link AndroidInjector.Factory} for one type, while giving
+   * A valid @Binds method could bind an {@code AndroidInjector.Factory} for one type, while giving
    * it a map key of a different type. The return type and parameter type would pass typical @Binds
-   * validation, but the map lookup in {@link dagger.android.DispatchingAndroidInjector} would
-   * retrieve the wrong injector factory.
+   * validation, but the map lookup in {@code DispatchingAndroidInjector} would retrieve the wrong
+   * injector factory.
    *
    * <pre>{@code
    * {@literal @Binds}
@@ -151,10 +147,10 @@ final class AndroidMapKeyValidator implements ProcessingStep {
    *     BlueActivityComponent.Builder builder);
    * }</pre>
    */
-  private void validateMapKeyMatchesBindsParameter(
-      Class<? extends Annotation> annotation, ExecutableElement method) {
+  private void validateMapKeyMatchesBindsParameter(String annotation, ExecutableElement method) {
     TypeMirror parameterType = getOnlyElement(method.getParameters()).asType();
-    AnnotationMirror annotationMirror = getAnnotationMirror(method, annotation).get();
+    AnnotationMirror annotationMirror =
+        MoreDaggerElements.getAnnotationMirror(method, SUPPORTED_ANNOTATIONS.get(annotation)).get();
     TypeMirror mapKeyType =
         elements.getTypeElement(injectedTypeFromMapKey(annotationMirror).get()).asType();
     if (!types.isAssignable(parameterType, injectorFactoryOf(mapKeyType))) {
@@ -172,6 +168,6 @@ final class AndroidMapKeyValidator implements ProcessingStep {
   }
 
   private TypeElement factoryElement() {
-    return elements.getTypeElement(AndroidInjector.Factory.class.getCanonicalName());
+    return elements.getTypeElement(TypeNames.ANDROID_INJECTOR_FACTORY.canonicalName());
   }
 }

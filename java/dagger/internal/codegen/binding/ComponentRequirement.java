@@ -32,15 +32,11 @@ import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
-import dagger.Binds;
-import dagger.BindsOptionalOf;
-import dagger.Provides;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.model.BindingKind;
-import dagger.model.Key;
-import dagger.multibindings.Multibinds;
-import dagger.producers.Produces;
+import dagger.spi.model.BindingKind;
+import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -177,13 +173,13 @@ public abstract class ComponentRequirement {
     // in one place; listing individual annotations all over the place is brittle.
     return isAnyAnnotationPresent(
         method,
-        Provides.class,
-        Produces.class,
+        TypeNames.PROVIDES,
+        TypeNames.PRODUCES,
         // TODO(ronshapiro): it would be cool to have internal meta-annotations that could describe
         // these, like @AbstractBindingMethod
-        Binds.class,
-        Multibinds.class,
-        BindsOptionalOf.class);
+        TypeNames.BINDS,
+        TypeNames.MULTIBINDS,
+        TypeNames.BINDS_OPTIONAL_OF);
   }
 
   /** The key for this requirement, if one is available. */
@@ -218,7 +214,7 @@ public abstract class ComponentRequirement {
   static ComponentRequirement forBoundInstance(Key key, boolean nullable, String variableName) {
     return new AutoValue_ComponentRequirement(
         Kind.BOUND_INSTANCE,
-        MoreTypes.equivalence().wrap(key.type()),
+        MoreTypes.equivalence().wrap(key.type().java()),
         nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
         Optional.of(key),
         variableName);

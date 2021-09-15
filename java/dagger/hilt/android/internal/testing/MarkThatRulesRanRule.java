@@ -19,8 +19,9 @@ package dagger.hilt.android.internal.testing;
 import static dagger.hilt.internal.Preconditions.checkNotNull;
 import static dagger.hilt.internal.Preconditions.checkState;
 
-import android.content.Context;
+import android.app.Application;
 import androidx.test.core.app.ApplicationProvider;
+import dagger.hilt.android.internal.Contexts;
 import dagger.hilt.internal.GeneratedComponentManager;
 import java.lang.annotation.Annotation;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,7 +39,8 @@ public final class MarkThatRulesRanRule implements TestRule {
   private static final String HILT_ANDROID_APP = "dagger.hilt.android.HiltAndroidApp";
   private static final String HILT_ANDROID_TEST = "dagger.hilt.android.testing.HiltAndroidTest";
 
-  private final Context context = ApplicationProvider.getApplicationContext();
+  private final Application application = Contexts.getApplication(
+      ApplicationProvider.getApplicationContext());
   private final Object testInstance;
   private final boolean autoAddModule;
 
@@ -52,19 +54,19 @@ public final class MarkThatRulesRanRule implements TestRule {
         "Expected %s to be annotated with @HiltAndroidTest.",
         testInstance.getClass().getName());
     checkState(
-        context instanceof GeneratedComponentManager,
+        application instanceof GeneratedComponentManager,
         "Hilt test, %s, must use a Hilt test application but found %s. To fix, configure the test "
             + "to use HiltTestApplication or a custom Hilt test application generated with "
             + "@CustomTestApplication.",
         testInstance.getClass().getName(),
-        context.getClass().getName());
+        application.getClass().getName());
     checkState(
-        !hasAnnotation(context, HILT_ANDROID_APP),
+        !hasAnnotation(application, HILT_ANDROID_APP),
         "Hilt test, %s, cannot use a @HiltAndroidApp application but found %s. To fix, configure "
             + "the test to use HiltTestApplication or a custom Hilt test application generated "
             +  "with @CustomTestApplication.",
         testInstance.getClass().getName(),
-        context.getClass().getName());
+        application.getClass().getName());
   }
 
   public void delayComponentReady() {
@@ -114,10 +116,11 @@ public final class MarkThatRulesRanRule implements TestRule {
 
   private TestApplicationComponentManager getTestApplicationComponentManager() {
     checkState(
-        context instanceof TestApplicationComponentManagerHolder,
-        "The context is not an instance of TestApplicationComponentManagerHolder: %s",
-        context);
-    Object componentManager = ((TestApplicationComponentManagerHolder) context).componentManager();
+        application instanceof TestApplicationComponentManagerHolder,
+        "The application is not an instance of TestApplicationComponentManagerHolder: %s",
+        application);
+    Object componentManager =
+        ((TestApplicationComponentManagerHolder) application).componentManager();
     checkState(
         componentManager instanceof TestApplicationComponentManager,
         "Expected TestApplicationComponentManagerHolder to return an instance of"

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("DEPRECATION") // com.android.build.api.transform is deprecated
+
 package dagger.hilt.android.plugin
 
 import com.android.build.api.transform.DirectoryInput

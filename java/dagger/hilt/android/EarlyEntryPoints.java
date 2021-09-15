@@ -16,8 +16,10 @@
 
 package dagger.hilt.android;
 
+import android.app.Application;
 import android.content.Context;
 import dagger.hilt.EntryPoints;
+import dagger.hilt.android.internal.Contexts;
 import dagger.hilt.internal.GeneratedComponentManagerHolder;
 import dagger.hilt.internal.Preconditions;
 import dagger.hilt.internal.TestSingletonComponentManager;
@@ -43,13 +45,13 @@ public final class EarlyEntryPoints {
   // this method easier to use, since most code will use this with an Application or Context type.
   @Nonnull
   public static <T> T get(Context applicationContext, Class<T> entryPoint) {
-    applicationContext = applicationContext.getApplicationContext();
+    Application application = Contexts.getApplication(applicationContext.getApplicationContext());
     Preconditions.checkState(
-        applicationContext instanceof GeneratedComponentManagerHolder,
+        application instanceof GeneratedComponentManagerHolder,
         "Expected application context to implement GeneratedComponentManagerHolder. "
             + "Check that you're passing in an application context that uses Hilt.");
     Object componentManager =
-        ((GeneratedComponentManagerHolder) applicationContext).componentManager();
+        ((GeneratedComponentManagerHolder) application).componentManager();
     if (componentManager instanceof TestSingletonComponentManager) {
       Preconditions.checkState(
           hasAnnotationReflection(entryPoint, EarlyEntryPoint.class),
@@ -62,7 +64,7 @@ public final class EarlyEntryPoints {
 
     // @EarlyEntryPoint only has an effect in test environment, so if this is not a test we
     // delegate to EntryPoints.
-    return EntryPoints.get(applicationContext, entryPoint);
+    return EntryPoints.get(application, entryPoint);
   }
 
   // Note: This method uses reflection but it should only be called in test environments.

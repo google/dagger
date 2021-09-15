@@ -18,6 +18,7 @@
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenJavaTests")
+load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
 package(default_visibility = ["//:src"])
 
@@ -58,6 +59,7 @@ GenJavaTests(
             "CompilerMode.java",
             "Compilers.java",
             "JavaFileBuilder.java",
+            "ComponentValidationKtTest.java",
         ],
     ),
     functional = False,
@@ -85,6 +87,7 @@ GenJavaTests(
         "//java/dagger/producers",
         "//java/dagger/spi",
         "@com_google_auto_value_auto_value//jar",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/javapoet",
@@ -93,6 +96,32 @@ GenJavaTests(
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/mockito",
         "@google_bazel_common//third_party/java/truth",
-        "@maven//:com_google_auto_auto_common",
+    ],
+)
+
+compiler_test(
+    name = "ComponentValidationKtTest",
+    srcs = ["ComponentValidationKtTest.java"],
+    compiler_deps = [
+        "//java/dagger:core",
+        "//java/dagger/internal/codegen:package_info",
+        "//java/dagger/internal/codegen:processor",
+        "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
+        "//java/dagger/internal/codegen/bindinggraphvalidation",
+        "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/javapoet",
+        "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/validation",
+        "//java/dagger/internal/codegen/writing",
+        "//java/dagger/model/testing",
+        "//java/dagger/producers",
+        "//java/dagger/spi",
+    ],
+    deps = [
+        "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/junit",
+        "@google_bazel_common//third_party/java/truth",
+        "@maven//:com_github_tschuchortdev_kotlin_compile_testing",
     ],
 )

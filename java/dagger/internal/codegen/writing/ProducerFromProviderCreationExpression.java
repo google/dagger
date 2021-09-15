@@ -28,34 +28,34 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
-import dagger.model.RequestKind;
 import dagger.producers.Producer;
+import dagger.spi.model.RequestKind;
 import java.util.Optional;
 
 /** An {@link Producer} creation expression for provision bindings. */
 final class ProducerFromProviderCreationExpression implements FrameworkInstanceCreationExpression {
   private final ContributionBinding binding;
   private final ComponentImplementation componentImplementation;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
 
   @AssistedInject
   ProducerFromProviderCreationExpression(
       @Assisted ContributionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentBindingExpressions componentBindingExpressions) {
+      ComponentRequestRepresentations componentRequestRepresentations) {
     this.binding = checkNotNull(binding);
     this.componentImplementation = componentImplementation;
-    this.componentBindingExpressions = componentBindingExpressions;
+    this.componentRequestRepresentations = componentRequestRepresentations;
   }
 
   @Override
   public CodeBlock creationExpression() {
     return FrameworkType.PROVIDER.to(
         RequestKind.PRODUCER,
-        componentBindingExpressions
+        componentRequestRepresentations
             .getDependencyExpression(
                 bindingRequest(binding.key(), FrameworkType.PROVIDER),
-                componentImplementation.name())
+                componentImplementation.shardImplementation(binding).name())
             .codeBlock());
   }
 

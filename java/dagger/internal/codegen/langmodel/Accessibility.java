@@ -39,8 +39,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.type.WildcardType;
-import javax.lang.model.util.SimpleElementVisitor6;
-import javax.lang.model.util.SimpleTypeVisitor6;
+import javax.lang.model.util.SimpleElementVisitor8;
 import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
@@ -73,7 +72,7 @@ public final class Accessibility {
     return type.accept(new TypeAccessibilityVisitor(packageName), null);
   }
 
-  private static final class TypeAccessibilityVisitor extends SimpleTypeVisitor6<Boolean, Void> {
+  private static final class TypeAccessibilityVisitor extends SimpleTypeVisitor8<Boolean, Void> {
     final Optional<String> packageName;
 
     TypeAccessibilityVisitor() {
@@ -176,7 +175,7 @@ public final class Accessibility {
   }
 
   private static final class ElementAccessibilityVisitor
-      extends SimpleElementVisitor6<Boolean, Void> {
+      extends SimpleElementVisitor8<Boolean, Void> {
     final Optional<String> packageName;
 
     ElementAccessibilityVisitor() {

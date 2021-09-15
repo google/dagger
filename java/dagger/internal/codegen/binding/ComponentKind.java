@@ -16,49 +16,44 @@
 
 package dagger.internal.codegen.binding;
 
-import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.extension.DaggerStreams.stream;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.valuesOf;
+import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static java.util.EnumSet.allOf;
 
 import com.google.common.collect.ImmutableSet;
-import dagger.Component;
-import dagger.Module;
-import dagger.Subcomponent;
-import dagger.producers.ProducerModule;
-import dagger.producers.ProductionComponent;
-import dagger.producers.ProductionSubcomponent;
-import java.lang.annotation.Annotation;
+import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.javapoet.TypeNames;
 import java.util.Optional;
 import javax.lang.model.element.TypeElement;
 
 /** Enumeration of the different kinds of components. */
 public enum ComponentKind {
   /** {@code @Component} */
-  COMPONENT(Component.class, true, false),
+  COMPONENT(TypeNames.COMPONENT, true, false),
 
   /** {@code @Subcomponent} */
-  SUBCOMPONENT(Subcomponent.class, false, false),
+  SUBCOMPONENT(TypeNames.SUBCOMPONENT, false, false),
 
   /** {@code @ProductionComponent} */
-  PRODUCTION_COMPONENT(ProductionComponent.class, true, true),
+  PRODUCTION_COMPONENT(TypeNames.PRODUCTION_COMPONENT, true, true),
 
   /** {@code @ProductionSubcomponent} */
-  PRODUCTION_SUBCOMPONENT(ProductionSubcomponent.class, false, true),
+  PRODUCTION_SUBCOMPONENT(TypeNames.PRODUCTION_SUBCOMPONENT, false, true),
 
   /**
-   * Kind for a descriptor that was generated from a {@link Module} instead of a component type in
-   * order to validate the module's bindings.
+   * Kind for a descriptor that was generated from a {@link dagger.Module} instead of a component
+   * type in order to validate the module's bindings.
    */
-  MODULE(Module.class, true, false),
+  MODULE(TypeNames.MODULE, true, false),
 
   /**
-   * Kind for a descriptor was generated from a {@link ProducerModule} instead of a component type
-   * in order to validate the module's bindings.
+   * Kind for a descriptor was generated from a {@link dagger.producers.ProducerModule} instead of a
+   * component type in order to validate the module's bindings.
    */
-  PRODUCER_MODULE(ProducerModule.class, true, true),
+  PRODUCER_MODULE(TypeNames.PRODUCER_MODULE, true, true),
   ;
 
   private static final ImmutableSet<ComponentKind> ROOT_COMPONENT_KINDS =
@@ -84,8 +79,7 @@ public enum ComponentKind {
   }
 
   /** Returns the annotations for components of the given kinds. */
-  public static ImmutableSet<Class<? extends Annotation>> annotationsFor(
-      Iterable<ComponentKind> kinds) {
+  public static ImmutableSet<ClassName> annotationsFor(Iterable<ComponentKind> kinds) {
     return stream(kinds).map(ComponentKind::annotation).collect(toImmutableSet());
   }
 
@@ -112,21 +106,18 @@ public enum ComponentKind {
     return kinds.stream().findAny();
   }
 
-  private final Class<? extends Annotation> annotation;
+  private final ClassName annotation;
   private final boolean isRoot;
   private final boolean production;
 
-  ComponentKind(
-      Class<? extends Annotation> annotation,
-      boolean isRoot,
-      boolean production) {
+  ComponentKind(ClassName annotation, boolean isRoot, boolean production) {
     this.annotation = annotation;
     this.isRoot = isRoot;
     this.production = production;
   }
 
   /** Returns the annotation that marks a component of this kind. */
-  public Class<? extends Annotation> annotation() {
+  public ClassName annotation() {
     return annotation;
   }
 

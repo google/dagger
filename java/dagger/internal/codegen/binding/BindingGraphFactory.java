@@ -26,12 +26,12 @@ import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.binding.SourceFiles.generatedMonitoringModuleName;
-import static dagger.model.BindingKind.ASSISTED_INJECTION;
-import static dagger.model.BindingKind.DELEGATE;
-import static dagger.model.BindingKind.INJECTION;
-import static dagger.model.BindingKind.OPTIONAL;
-import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
-import static dagger.model.RequestKind.MEMBERS_INJECTION;
+import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
+import static dagger.spi.model.BindingKind.DELEGATE;
+import static dagger.spi.model.BindingKind.INJECTION;
+import static dagger.spi.model.BindingKind.OPTIONAL;
+import static dagger.spi.model.BindingKind.SUBCOMPONENT_CREATOR;
+import static dagger.spi.model.RequestKind.MEMBERS_INJECTION;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
@@ -52,12 +52,12 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
-import dagger.model.Scope;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.internal.ProductionExecutorModule;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
+import dagger.spi.model.Scope;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -411,19 +411,20 @@ public final class BindingGraphFactory implements ClearableCache {
       }
 
       // Add members injector binding
-      if (isType(requestKey.type()) && isTypeOf(MembersInjector.class, requestKey.type())) {
+      if (isType(requestKey.type().java())
+          && isTypeOf(MembersInjector.class, requestKey.type().java())) {
         injectBindingRegistry
             .getOrFindMembersInjectorProvisionBinding(requestKey)
             .ifPresent(bindings::add);
       }
 
       // Add Assisted Factory binding
-      if (isType(requestKey.type())
-          && requestKey.type().getKind() == TypeKind.DECLARED
-          && isAssistedFactoryType(asTypeElement(requestKey.type()))) {
+      if (isType(requestKey.type().java())
+          && requestKey.type().java().getKind() == TypeKind.DECLARED
+          && isAssistedFactoryType(asTypeElement(requestKey.type().java()))) {
         bindings.add(
             bindingFactory.assistedFactoryBinding(
-                asTypeElement(requestKey.type()), Optional.of(requestKey.type())));
+                asTypeElement(requestKey.type().java()), Optional.of(requestKey.type().java())));
       }
 
       // If there are no bindings, add the implicit @Inject-constructed binding if there is one.
@@ -486,7 +487,8 @@ public final class BindingGraphFactory implements ClearableCache {
       checkArgument(subcomponentCreatorBinding.kind().equals(SUBCOMPONENT_CREATOR));
       Resolver owningResolver = getOwningResolver(subcomponentCreatorBinding).get();
 
-      TypeElement builderType = MoreTypes.asTypeElement(subcomponentCreatorBinding.key().type());
+      TypeElement builderType =
+          MoreTypes.asTypeElement(subcomponentCreatorBinding.key().type().java());
       owningResolver.subcomponentsToResolve.add(
           owningResolver.componentDescriptor.getChildComponentWithBuilderType(builderType));
     }

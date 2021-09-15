@@ -15,7 +15,6 @@
  */
 package dagger.hilt.android.plugin.task
 
-import com.android.build.gradle.api.UnitTestVariant
 import dagger.hilt.android.plugin.AndroidEntryPointClassTransformer
 import dagger.hilt.android.plugin.HiltExtension
 import dagger.hilt.android.plugin.util.getCompileKotlin
@@ -89,7 +88,6 @@ abstract class HiltTransformTestClassesTask @Inject constructor(
 
   @TaskAction
   fun transformClasses() {
-    @Suppress("UnstableApiUsage") // Worker API
     workerExecutor.noIsolation().submit(WorkerAction::class.java) {
       it.compiledClasses.from(compiledClasses)
       it.outputDir.set(outputDir)
@@ -114,7 +112,7 @@ abstract class HiltTransformTestClassesTask @Inject constructor(
 
     fun create(
       project: Project,
-      unitTestVariant: UnitTestVariant,
+      @Suppress("DEPRECATION") unitTestVariant: com.android.build.gradle.api.UnitTestVariant,
       extension: HiltExtension
     ) {
       if (!extension.enableTransformForLocalTests) {
@@ -133,19 +131,13 @@ abstract class HiltTransformTestClassesTask @Inject constructor(
       // classpath file collection. This also makes the transform task depend on the test compile
       // task.
       val testCompileTaskProvider = unitTestVariant.javaCompileProvider
-      inputClasspath.from(testCompileTaskProvider.map {
-        @Suppress("UnstableApiUsage") // Lazy property APIs
-        it.destinationDirectory
-      })
+      inputClasspath.from(testCompileTaskProvider.map { it.destinationDirectory })
 
       // Similarly, if the Kotlin plugin is configured, find the test sources Kotlin compile task
       // and add its output directory to our input classpath file collection.
       project.plugins.withType(KotlinBasePluginWrapper::class.java) {
         val kotlinCompileTaskProvider = getCompileKotlin(unitTestVariant, project)
-        inputClasspath.from(kotlinCompileTaskProvider.map {
-          @Suppress("UnstableApiUsage") // Lazy property APIs
-          it.destinationDirectory
-        })
+        inputClasspath.from(kotlinCompileTaskProvider.map { it.destinationDirectory })
       }
 
       // Create and configure the transform task.

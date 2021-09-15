@@ -31,9 +31,9 @@ import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.ContributionType.HasContributionType;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
-import dagger.model.BindingKind;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
+import dagger.spi.model.BindingKind;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -131,7 +131,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
         return SetType.from(key()).elementType();
       case SET_VALUES:
       case UNIQUE:
-        return key().type();
+        return key().type().java();
     }
     throw new AssertionError();
   }

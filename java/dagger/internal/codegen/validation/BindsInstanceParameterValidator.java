@@ -21,30 +21,31 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.TYPEVAR;
 
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.auto.common.MoreElements;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-final class BindsInstanceParameterValidator extends BindsInstanceElementValidator<VariableElement> {
+final class BindsInstanceParameterValidator
+    extends BindsInstanceElementValidator<XVariableElement> {
   @Inject
   BindsInstanceParameterValidator(InjectionAnnotations injectionAnnotations) {
     super(injectionAnnotations);
   }
 
   @Override
-  protected ElementValidator elementValidator(VariableElement element) {
-    return new Validator(element);
+  protected ElementValidator elementValidator(XVariableElement xElement) {
+    return new Validator(xElement);
   }
 
   private class Validator extends ElementValidator {
-    Validator(VariableElement element) {
-      super(element);
+    Validator(XVariableElement xElement) {
+      super(xElement);
     }
 
     @Override

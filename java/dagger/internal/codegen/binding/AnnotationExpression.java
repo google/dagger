@@ -35,8 +35,8 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleAnnotationValueVisitor6;
-import javax.lang.model.util.SimpleTypeVisitor6;
+import javax.lang.model.util.SimpleAnnotationValueVisitor8;
+import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * Returns an expression creating an instance of the visited annotation type. Its parameter must be
@@ -50,7 +50,7 @@ import javax.lang.model.util.SimpleTypeVisitor6;
  * but in code it would have to be {@code new int[] {1, 2, 3}}.
  */
 public class AnnotationExpression
-    extends SimpleAnnotationValueVisitor6<CodeBlock, AnnotationValue> {
+    extends SimpleAnnotationValueVisitor8<CodeBlock, AnnotationValue> {
 
   private final AnnotationMirror annotation;
   private final ClassName creatorClass;
@@ -175,8 +175,8 @@ public class AnnotationExpression
    * If the visited type is an array, prefixes the parameter code block with {@code new T[]}, where
    * {@code T} is the raw array component type.
    */
-  private static final SimpleTypeVisitor6<CodeBlock, CodeBlock> ARRAY_LITERAL_PREFIX =
-      new SimpleTypeVisitor6<CodeBlock, CodeBlock>() {
+  private static final SimpleTypeVisitor8<CodeBlock, CodeBlock> ARRAY_LITERAL_PREFIX =
+      new SimpleTypeVisitor8<CodeBlock, CodeBlock>() {
 
         @Override
         public CodeBlock visitArray(ArrayType t, CodeBlock p) {
@@ -193,8 +193,8 @@ public class AnnotationExpression
    * If the visited type is an array, returns the name of its raw component type; otherwise returns
    * the name of the type itself.
    */
-  private static final SimpleTypeVisitor6<TypeName, Void> RAW_TYPE_NAME =
-      new SimpleTypeVisitor6<TypeName, Void>() {
+  private static final SimpleTypeVisitor8<TypeName, Void> RAW_TYPE_NAME =
+      new SimpleTypeVisitor8<TypeName, Void>() {
         @Override
         public TypeName visitDeclared(DeclaredType t, Void p) {
           return ClassName.get(MoreTypes.asTypeElement(t));

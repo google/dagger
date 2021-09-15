@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
-import static dagger.model.BindingKind.MEMBERS_INJECTOR;
+import static dagger.spi.model.BindingKind.MEMBERS_INJECTOR;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.CaseFormat;
@@ -81,7 +81,7 @@ public abstract class FrameworkField {
   private static TypeMirror fieldValueType(ContributionBinding binding) {
     return binding.contributionType().isMultibinding()
         ? binding.contributedType()
-        : binding.key().type();
+        : binding.key().type().java();
   }
 
   private static String frameworkFieldName(ContributionBinding binding) {

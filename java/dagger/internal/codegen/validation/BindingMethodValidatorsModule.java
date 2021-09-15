@@ -19,11 +19,11 @@ package dagger.internal.codegen.validation;
 import static com.google.common.collect.Maps.uniqueIndex;
 
 import com.google.common.collect.ImmutableMap;
+import com.squareup.javapoet.ClassName;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.multibindings.IntoSet;
-import java.lang.annotation.Annotation;
 import java.util.Set;
 
 /**
@@ -33,7 +33,7 @@ import java.util.Set;
 @Module
 public interface BindingMethodValidatorsModule {
   @Provides
-  static ImmutableMap<Class<? extends Annotation>, BindingMethodValidator> indexValidators(
+  static ImmutableMap<ClassName, BindingMethodValidator> indexValidators(
       Set<BindingMethodValidator> validators) {
     return uniqueIndex(validators, BindingMethodValidator::methodAnnotation);
   }

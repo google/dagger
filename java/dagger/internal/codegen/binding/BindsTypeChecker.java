@@ -35,14 +35,14 @@ import javax.lang.model.type.TypeMirror;
  * Checks the assignability of one type to another, given a {@link ContributionType} context. This
  * is used by {@link dagger.internal.codegen.validation.BindsMethodValidator} to validate that the
  * right-hand- side of a {@link dagger.Binds} method is valid, as well as in {@link
- * dagger.internal.codegen.writing.DelegateBindingExpression} when the right-hand-side in generated
- * code might be an erased type due to accessibility.
+ * dagger.internal.codegen.writing.DelegateRequestRepresentation} when the right-hand-side in
+ * generated code might be an erased type due to accessibility.
  */
 public final class BindsTypeChecker {
   private final DaggerTypes types;
   private final DaggerElements elements;
 
-  // TODO(bcorso): Make this pkg-private. Used by DelegateBindingExpression.
+  // TODO(bcorso): Make this pkg-private. Used by DelegateRequestRepresentation.
   @Inject
   public BindsTypeChecker(DaggerTypes types, DaggerElements elements) {
     this.types = types;

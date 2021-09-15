@@ -35,9 +35,11 @@ class CompileClasspathTest(private val pluginFlagName: String) {
   @Before
   fun setup() {
     gradleRunner = GradleTestRunner(testProjectDir)
-    gradleRunner.addAndroidOption(
-      "lintOptions.checkReleaseBuilds = false"
-    )
+    if (pluginFlagName == "enableExperimentalClasspathAggregation") {
+      gradleRunner.addAndroidOption(
+        "lintOptions.checkReleaseBuilds = false"
+      )
+    }
     gradleRunner.addHiltOption(
       "$pluginFlagName = true"
     )
@@ -118,6 +120,7 @@ class CompileClasspathTest(private val pluginFlagName: String) {
     @Parameterized.Parameters(name = "{0}")
     fun parameters() = listOf(
       "enableExperimentalClasspathAggregation",
+      "enableAggregatingTask"
     )
   }
 }

@@ -41,15 +41,16 @@ import com.google.common.graph.NetworkBuilder;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
-import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.ComponentNode;
-import dagger.model.BindingGraph.DependencyEdge;
-import dagger.model.BindingGraph.Node;
-import dagger.model.BindingKind;
-import dagger.model.DependencyRequest;
-import dagger.model.RequestKind;
-import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
+import dagger.spi.model.Binding;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraph.ComponentNode;
+import dagger.spi.model.BindingGraph.DependencyEdge;
+import dagger.spi.model.BindingGraph.Node;
+import dagger.spi.model.BindingGraphPlugin;
+import dagger.spi.model.BindingKind;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.DiagnosticReporter;
+import dagger.spi.model.RequestKind;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -203,12 +204,12 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
     if (edge.dependencyRequest().key().multibindingContributionIdentifier().isPresent()) {
       return false;
     }
-    if (breaksCycle(edge.dependencyRequest().key().type(), edge.dependencyRequest().kind())) {
+    if (breaksCycle(
+        edge.dependencyRequest().key().type().java(), edge.dependencyRequest().kind())) {
       return true;
     }
     Node target = graph.network().incidentNodes(edge).target();
-    if (target instanceof dagger.model.Binding
-        && ((dagger.model.Binding) target).kind().equals(BindingKind.OPTIONAL)) {
+    if (target instanceof Binding && ((Binding) target).kind().equals(BindingKind.OPTIONAL)) {
       /* For @BindsOptionalOf bindings, unwrap the type inside the Optional. If the unwrapped type
        * breaks the cycle, so does the optional binding. */
       TypeMirror optionalValueType = OptionalType.from(edge.dependencyRequest().key()).valueType();

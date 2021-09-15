@@ -19,7 +19,10 @@ package(default_visibility = ["//:src"])
 
 android_library(
     name = "internal",
-    srcs = ["ThreadUtil.java"],
+    srcs = [
+        "Contexts.java",
+        "ThreadUtil.java",
+    ],
 )
 
 filegroup(

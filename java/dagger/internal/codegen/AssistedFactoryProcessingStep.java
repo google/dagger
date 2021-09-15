@@ -27,13 +27,16 @@ import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 import static java.util.stream.Collectors.joining;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import com.google.auto.common.MoreElements;
+import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -45,7 +48,6 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
-import dagger.assisted.AssistedFactory;
 import dagger.internal.codegen.base.SourceFileGenerationException;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
@@ -53,16 +55,14 @@ import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedFact
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedParameter;
 import dagger.internal.codegen.binding.BindingFactory;
 import dagger.internal.codegen.binding.ProvisionBinding;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
-import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.processing.Filer;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -75,9 +75,10 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /** An annotation processor for {@link dagger.assisted.AssistedFactory}-annotated types. */
-final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<TypeElement> {
-  private final Messager messager;
-  private final Filer filer;
+final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTypeElement> {
+  private final XProcessingEnv processingEnv;
+  private final XMessager messager;
+  private final XFiler filer;
   private final SourceVersion sourceVersion;
   private final DaggerElements elements;
   private final DaggerTypes types;
@@ -85,13 +86,14 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
 
   @Inject
   AssistedFactoryProcessingStep(
-      Messager messager,
-      Filer filer,
+      XProcessingEnv processingEnv,
+      XMessager messager,
+      XFiler filer,
       SourceVersion sourceVersion,
       DaggerElements elements,
       DaggerTypes types,
       BindingFactory bindingFactory) {
-    super(MoreElements::asType);
+    this.processingEnv = processingEnv;
     this.messager = messager;
     this.filer = filer;
     this.sourceVersion = sourceVersion;
@@ -101,30 +103,30 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
   }
 
   @Override
-  public ImmutableSet<Class<? extends Annotation>> annotations() {
-    return ImmutableSet.of(AssistedFactory.class);
+  public ImmutableSet<ClassName> annotationClassNames() {
+    return ImmutableSet.of(TypeNames.ASSISTED_FACTORY);
   }
 
   @Override
-  protected void process(
-      TypeElement factory, ImmutableSet<Class<? extends Annotation>> annotations) {
-    ValidationReport<TypeElement> report = new AssistedFactoryValidator().validate(factory);
+  protected void process(XTypeElement factory, ImmutableSet<ClassName> annotations) {
+    ValidationReport report = new AssistedFactoryValidator().validate(factory);
     report.printMessagesTo(messager);
     if (report.isClean()) {
       try {
-        ProvisionBinding binding = bindingFactory.assistedFactoryBinding(factory, Optional.empty());
+        ProvisionBinding binding =
+            bindingFactory.assistedFactoryBinding(XConverters.toJavac(factory), Optional.empty());
         new AssistedFactoryImplGenerator().generate(binding);
       } catch (SourceFileGenerationException e) {
-        e.printMessageTo(messager);
+        e.printMessageTo(XConverters.toJavac(messager));
       }
     }
   }
 
   private final class AssistedFactoryValidator {
-    ValidationReport<TypeElement> validate(TypeElement factory) {
-      ValidationReport.Builder<TypeElement> report = ValidationReport.about(factory);
+    ValidationReport validate(XTypeElement factory) {
+      ValidationReport.Builder report = ValidationReport.about(factory);
 
-      if (!factory.getModifiers().contains(ABSTRACT)) {
+      if (!factory.isAbstract()) {
         return report
             .addError(
                 "The @AssistedFactory-annotated type must be either an abstract class or "
@@ -133,12 +135,13 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
             .build();
       }
 
-      if (factory.getNestingKind().isNested() && !factory.getModifiers().contains(STATIC)) {
+      TypeElement javaFactory = XConverters.toJavac(factory);
+      if (javaFactory.getNestingKind().isNested() && !factory.isStatic()) {
         report.addError("Nested @AssistedFactory-annotated types must be static. ", factory);
       }
 
       ImmutableSet<ExecutableElement> abstractFactoryMethods =
-          AssistedInjectionAnnotations.assistedFactoryMethods(factory, elements);
+          AssistedInjectionAnnotations.assistedFactoryMethods(javaFactory, elements);
 
       if (abstractFactoryMethods.isEmpty()) {
         report.addError(
@@ -148,20 +151,20 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
       }
 
       for (ExecutableElement method : abstractFactoryMethods) {
-        ExecutableType methodType = types.resolveExecutableType(method, factory.asType());
+        ExecutableType methodType = types.resolveExecutableType(method, javaFactory.asType());
         if (!isAssistedInjectionType(methodType.getReturnType())) {
           report.addError(
               String.format(
                   "Invalid return type: %s. An assisted factory's abstract method must return a "
                       + "type with an @AssistedInject-annotated constructor.",
                   methodType.getReturnType()),
-              method);
+              XConverters.toXProcessing(method, processingEnv));
         }
         if (!method.getTypeParameters().isEmpty()) {
           report.addError(
               "@AssistedFactory does not currently support type parameters in the creator "
                   + "method. See https://github.com/google/dagger/issues/2279",
-              method);
+              XConverters.toXProcessing(method, processingEnv));
         }
       }
 
@@ -178,7 +181,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
       }
 
       AssistedFactoryMetadata metadata =
-          AssistedFactoryMetadata.create(factory.asType(), elements, types);
+          AssistedFactoryMetadata.create(javaFactory.asType(), elements, types);
 
       // Note: We check uniqueness of the @AssistedInject constructor parameters in
       // AssistedInjectProcessingStep. We need to check uniqueness for here too because we may
@@ -188,7 +191,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
         if (!uniqueAssistedParameters.add(assistedParameter)) {
           report.addError(
               "@AssistedFactory method has duplicate @Assisted types: " + assistedParameter,
-              assistedParameter.variableElement());
+              XConverters.toXProcessing(assistedParameter.variableElement(), processingEnv));
         }
       }
 
@@ -208,7 +211,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
                     .map(AssistedParameter::type)
                     .map(Object::toString)
                     .collect(joining(", "))),
-            metadata.factoryMethod());
+            XConverters.toXProcessing(metadata.factoryMethod(), processingEnv));
       }
 
       return report.build();

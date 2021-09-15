@@ -35,6 +35,8 @@ public final class AssistedFactoryTest {
     // Simple factory using a nested factory.
     SimpleFoo.Factory nestedSimpleFooFactory();
 
+    Provider<SimpleFoo.Factory> nestedSimpleFooFactoryProvider();
+
     // Simple factory using a non-nested factory.
     SimpleFooFactory nonNestedSimpleFooFactory();
 
@@ -58,6 +60,7 @@ public final class AssistedFactoryTest {
   static class SomeEntryPoint {
     private final SimpleFoo.Factory nestedSimpleFooFactory;
     private final SimpleFooFactory nonNestedSimpleFooFactory;
+    private final Provider<SimpleFoo.Factory> nestedSimpleFooFactoryProvider;
     private final ExtendedSimpleFooFactory extendedSimpleFooFactory;
     private final FooFactory fooFactory;
     private final AbstractFooFactory abstractFooFactory;
@@ -66,12 +69,14 @@ public final class AssistedFactoryTest {
     @Inject
     SomeEntryPoint(
         SimpleFoo.Factory nestedSimpleFooFactory,
+        Provider<SimpleFoo.Factory> nestedSimpleFooFactoryProvider,
         SimpleFooFactory nonNestedSimpleFooFactory,
         ExtendedSimpleFooFactory extendedSimpleFooFactory,
         FooFactory fooFactory,
         AbstractFooFactory abstractFooFactory,
         NoAssistedParametersFooFactory noAssistedParametersFooFactory) {
       this.nestedSimpleFooFactory = nestedSimpleFooFactory;
+      this.nestedSimpleFooFactoryProvider = nestedSimpleFooFactoryProvider;
       this.nonNestedSimpleFooFactory = nonNestedSimpleFooFactory;
       this.extendedSimpleFooFactory = extendedSimpleFooFactory;
       this.fooFactory = fooFactory;
@@ -265,6 +270,25 @@ public final class AssistedFactoryTest {
   }
 
   @Test
+  public void testNestedSimpleFooFactoryProvider() {
+    AssistedDep1 assistedDep1 = new AssistedDep1();
+    SimpleFoo simpleFoo1 =
+        DaggerAssistedFactoryTest_ParentComponent.create()
+            .nestedSimpleFooFactoryProvider()
+            .get()
+            .createSimpleFoo(assistedDep1);
+    assertThat(simpleFoo1.assistedDep).isEqualTo(assistedDep1);
+
+    AssistedDep2 assistedDep2 = new AssistedDep2();
+    SimpleFoo simpleFoo2 =
+        DaggerAssistedFactoryTest_ParentComponent.create()
+            .nestedSimpleFooFactoryProvider()
+            .get()
+            .createSimpleFoo(assistedDep2);
+    assertThat(simpleFoo2.assistedDep).isEqualTo(assistedDep2);
+  }
+
+  @Test
   public void testNonNestedSimpleFooFactory() {
     AssistedDep1 assistedDep1 = new AssistedDep1();
     SimpleFoo simpleFoo =
@@ -323,6 +347,7 @@ public final class AssistedFactoryTest {
     SomeEntryPoint someEntryPoint =
         DaggerAssistedFactoryTest_ParentComponent.create().someEntryPoint();
     assertThat(someEntryPoint.nestedSimpleFooFactory).isNotNull();
+    assertThat(someEntryPoint.nestedSimpleFooFactoryProvider).isNotNull();
     assertThat(someEntryPoint.nonNestedSimpleFooFactory).isNotNull();
     assertThat(someEntryPoint.extendedSimpleFooFactory).isNotNull();
     assertThat(someEntryPoint.fooFactory).isNotNull();

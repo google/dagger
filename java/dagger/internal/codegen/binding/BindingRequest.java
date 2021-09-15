@@ -20,9 +20,9 @@ import static dagger.internal.codegen.base.RequestKinds.requestType;
 
 import com.google.auto.value.AutoValue;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
-import dagger.model.RequestKind;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
+import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
 
@@ -47,10 +47,10 @@ public abstract class BindingRequest {
     // associated with that FrameworkType as well, because we want to ensure that if a request
     // comes in for that as a dependency first and as a framework instance later, they resolve to
     // the same binding expression.
-    // TODO(cgdecker): Instead of doing this, make ComponentBindingExpressions create a
-    // BindingExpression for the RequestKind that simply delegates to the BindingExpression for the
-    // FrameworkType. Then there are separate BindingExpressions, but we don't end up doing weird
-    // things like creating two fields when there should only be one.
+    // TODO(cgdecker): Instead of doing this, make ComponentRequestRepresentations create a
+    // RequestRepresentation for the RequestKind that simply delegates to the RequestRepresentation
+    // for the FrameworkType. Then there are separate RequestRepresentations, but we don't end up
+    // doing weird things like creating two fields when there should only be one.
     return new AutoValue_BindingRequest(
         key, requestKind, FrameworkType.forRequestKind(requestKind));
   }

@@ -31,7 +31,7 @@ java_library(
         "//java/dagger/internal/guava:collect",
         "//java/dagger/internal/guava:concurrent",
         "//java/dagger/internal/guava:graph",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/javapoet",
-        "@maven//:com_google_auto_auto_common",
     ],
 )

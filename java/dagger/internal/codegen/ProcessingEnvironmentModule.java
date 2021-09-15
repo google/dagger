@@ -16,28 +16,27 @@
 
 package dagger.internal.codegen;
 
+import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.googlejavaformat.java.filer.FormattingFiler;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.Reusable;
-import dagger.internal.codegen.SpiModule.ProcessorClassLoader;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions;
 import dagger.internal.codegen.compileroption.ProcessingOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.multibindings.IntoSet;
-import dagger.spi.BindingGraphPlugin;
 import java.util.Map;
-import javax.annotation.processing.Filer;
-import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.inject.Singleton;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.util.Types;
 
-/** Bindings that depend on the {@link ProcessingEnvironment}. */
+/** Bindings that depend on the {@link XProcessingEnv}. */
 @Module
 interface ProcessingEnvironmentModule {
   @Binds
@@ -47,47 +46,43 @@ interface ProcessingEnvironmentModule {
 
   @Provides
   @ProcessingOptions
-  static Map<String, String> processingOptions(ProcessingEnvironment processingEnvironment) {
-    return processingEnvironment.getOptions();
+  static Map<String, String> processingOptions(XProcessingEnv xProcessingEnv) {
+    return xProcessingEnv.getOptions();
   }
 
   @Provides
-  static Messager messager(ProcessingEnvironment processingEnvironment) {
-    return processingEnvironment.getMessager();
+  static XMessager messager(XProcessingEnv xProcessingEnv) {
+    return xProcessingEnv.getMessager();
   }
 
   @Provides
-  static Filer filer(CompilerOptions compilerOptions, ProcessingEnvironment processingEnvironment) {
-    if (compilerOptions.headerCompilation() || !compilerOptions.formatGeneratedSource()) {
-      return processingEnvironment.getFiler();
-    } else {
-      return new FormattingFiler(processingEnvironment.getFiler());
-    }
+  static XFiler filer(CompilerOptions compilerOptions, XProcessingEnv xProcessingEnv) {
+    return compilerOptions.headerCompilation() || !compilerOptions.formatGeneratedSource()
+        ? xProcessingEnv.getFiler()
+        : XConverters.toXProcessing(
+            new FormattingFiler(XConverters.toJavac(xProcessingEnv.getFiler())), xProcessingEnv);
   }
 
   @Provides
-  static Types types(ProcessingEnvironment processingEnvironment) {
-    return processingEnvironment.getTypeUtils();
-  }
-
-  @Provides
-  static SourceVersion sourceVersion(ProcessingEnvironment processingEnvironment) {
-    return processingEnvironment.getSourceVersion();
+  static SourceVersion sourceVersion(XProcessingEnv xProcessingEnv) {
+    return XConverters.toJavac(xProcessingEnv).getSourceVersion();
   }
 
   @Provides
   @Singleton
-  static DaggerElements daggerElements(ProcessingEnvironment processingEnvironment) {
-    return new DaggerElements(processingEnvironment);
+  static DaggerElements daggerElements(XProcessingEnv xProcessingEnv) {
+    return new DaggerElements(
+        XConverters.toJavac(xProcessingEnv).getElementUtils(),
+        XConverters.toJavac(xProcessingEnv).getTypeUtils());
+  }
+
+  @Provides
+  @Singleton
+  static DaggerTypes daggerTypes(XProcessingEnv xProcessingEnv, DaggerElements elements) {
+    return new DaggerTypes(XConverters.toJavac(xProcessingEnv).getTypeUtils(), elements);
   }
 
   @Binds
   @IntoSet
   ClearableCache daggerElementAsClearableCache(DaggerElements elements);
-
-  @Provides
-  @ProcessorClassLoader
-  static ClassLoader processorClassloader(ProcessingEnvironment processingEnvironment) {
-    return BindingGraphPlugin.class.getClassLoader();
-  }
 }

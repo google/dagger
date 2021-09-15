@@ -6,7 +6,7 @@ import com.android.build.api.instrumentation.ClassData
 import com.android.build.api.instrumentation.InstrumentationParameters
 import java.io.File
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.FieldVisitor
@@ -17,18 +17,19 @@ import org.objectweb.asm.Opcodes
  * ASM Adapter that transforms @AndroidEntryPoint-annotated classes to extend the Hilt
  * generated android class, including the @HiltAndroidApp application class.
  */
-@Suppress("UnstableApiUsage")
 class AndroidEntryPointClassVisitor(
   private val apiVersion: Int,
   nextClassVisitor: ClassVisitor,
   private val additionalClasses: File
 ) : ClassVisitor(apiVersion, nextClassVisitor) {
 
+  @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   interface AndroidEntryPointParams : InstrumentationParameters {
-    @get:Input
+    @get:Internal
     val additionalClassesDir: Property<File>
   }
 
+  @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   abstract class Factory : AsmClassVisitorFactory<AndroidEntryPointParams> {
     override fun createClassVisitor(
       classContext: ClassContext,
@@ -80,7 +81,11 @@ class AndroidEntryPointClassVisitor(
     exceptions: Array<out String>?
   ): MethodVisitor {
     val nextMethodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions)
-    val invokeSpecialVisitor = InvokeSpecialAdapter(apiVersion, nextMethodVisitor)
+    val invokeSpecialVisitor = InvokeSpecialAdapter(
+      apiVersion = apiVersion,
+      nextClassVisitor = nextMethodVisitor,
+      isConstructor = name == "<init>"
+    )
     if (name == ON_RECEIVE_METHOD_NAME &&
       descriptor == ON_RECEIVE_METHOD_DESCRIPTOR &&
       hasOnReceiveBytecodeInjectionMarker()
@@ -104,16 +109,22 @@ class AndroidEntryPointClassVisitor(
    * However, it has been observed that on APIs 19 to 22 the Android Runtime (ART) jumps over the
    * direct superclass and into the method reference class, causing unexpected behaviours.
    * Therefore, this method performs the additional transformation to rewrite direct super call
-   * invocations to use a method reference whose class in the pool is the new superclass. Note that
-   * this is not necessary for constructor calls since the Javassist library takes care of those.
+   * invocations to use a method reference whose class in the pool is the new superclass.
    *
    * @see: https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-6.html#jvms-6.5.invokespecial
    * @see: https://source.android.com/devices/tech/dalvik/dalvik-bytecode
    */
   inner class InvokeSpecialAdapter(
     apiVersion: Int,
-    nextClassVisitor: MethodVisitor
+    nextClassVisitor: MethodVisitor,
+    private val isConstructor: Boolean
   ) : MethodVisitor(apiVersion, nextClassVisitor) {
+
+    // Flag to know that we have visited the first invokespecial instruction in a constructor call
+    // which corresponds to the `super()` constructor call required as the first statement of an
+    // overridden constructor body.
+    private var visitedSuperConstructorInvokeSpecial = false
+
     override fun visitMethodInsn(
       opcode: Int,
       owner: String,
@@ -122,12 +133,28 @@ class AndroidEntryPointClassVisitor(
       isInterface: Boolean
     ) {
       if (opcode == Opcodes.INVOKESPECIAL && owner == oldSuperclassName) {
-        // Update the owner of all INVOKESPECIAL instructions, including those found in
-        // constructors.
-        super.visitMethodInsn(opcode, newSuperclassName, name, descriptor, isInterface)
+        // Update the owner of INVOKESPECIAL instructions, including those found in constructors.
+        super.visitMethodInsn(opcode, getAdaptedOwner(name) ?: owner, name, descriptor, isInterface)
       } else {
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
       }
+    }
+
+    // Gets the updated owner of an INVOKESPECIAL found in the method being visited.
+    private fun getAdaptedOwner(methodRefName: String): String? {
+      // If the method reference is a constructor and we are visiting a constructor then only the
+      // first INVOKESPECIAL instruction found should be transformed since that correponds to the
+      // super constructor call.
+      if (methodRefName == "<init>" && isConstructor && !visitedSuperConstructorInvokeSpecial) {
+        visitedSuperConstructorInvokeSpecial = true
+        return newSuperclassName
+      }
+      // If the method reference is not a constructor then the instruction for a super call that
+      // should be transformed.
+      if (methodRefName != "<init>") {
+        return newSuperclassName
+      }
+      return null
     }
   }
 

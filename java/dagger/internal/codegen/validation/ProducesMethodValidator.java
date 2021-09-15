@@ -22,24 +22,24 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsS
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.EXCEPTION;
 
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreTypes;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.codegen.binding.ConfigurationAnnotations;
 import dagger.internal.codegen.binding.InjectionAnnotations;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.multibindings.ElementsIntoSet;
-import dagger.producers.ProducerModule;
-import dagger.producers.Produces;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
-/** A validator for {@link Produces} methods. */
+/** A validator for {@link dagger.producers.Produces} methods. */
 final class ProducesMethodValidator extends BindingMethodValidator {
 
   @Inject
@@ -54,8 +54,8 @@ final class ProducesMethodValidator extends BindingMethodValidator {
         types,
         kotlinMetadataUtil,
         dependencyRequestValidator,
-        Produces.class,
-        ProducerModule.class,
+        TypeNames.PRODUCES,
+        TypeNames.PRODUCER_MODULE,
         MUST_BE_CONCRETE,
         EXCEPTION,
         ALLOWS_MULTIBINDINGS,
@@ -75,13 +75,13 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected ElementValidator elementValidator(ExecutableElement element) {
-    return new Validator(element);
+  protected ElementValidator elementValidator(XExecutableElement xElement) {
+    return new Validator(xElement);
   }
 
   private class Validator extends MethodValidator {
-    Validator(ExecutableElement element) {
-      super(element);
+    Validator(XExecutableElement xElement) {
+      super(xElement);
     }
 
     @Override
@@ -89,7 +89,9 @@ final class ProducesMethodValidator extends BindingMethodValidator {
       checkNullable();
     }
 
-    /** Adds a warning if a {@link Produces @Produces} method is declared nullable. */
+    /**
+     * Adds a warning if a {@link dagger.producers.Produces @Produces} method is declared nullable.
+     */
     // TODO(beder): Properly handle nullable with producer methods.
     private void checkNullable() {
       if (ConfigurationAnnotations.getNullableType(element).isPresent()) {
@@ -113,12 +115,13 @@ final class ProducesMethodValidator extends BindingMethodValidator {
     /**
      * {@inheritDoc}
      *
-     * <p>Allows an {@link ElementsIntoSet @ElementsIntoSet} or {@code SET_VALUES} method to return
-     * a {@link ListenableFuture} of a {@link Set} as well.
+     * <p>Allows an {@link dagger.multibindings.ElementsIntoSet @ElementsIntoSet} or {@code
+     * SET_VALUES} method to return a {@link ListenableFuture} of a {@link Set} as well.
      */
     @Override
     protected void checkSetValuesType() {
-      Optional<TypeMirror> typeToCheck = unwrapListenableFuture(element.getReturnType());
+      Optional<TypeMirror> typeToCheck =
+          unwrapListenableFuture(XConverters.toJavac(((XMethodElement) xElement).getReturnType()));
       if (typeToCheck.isPresent()) {
         checkSetValuesType(typeToCheck.get());
       }

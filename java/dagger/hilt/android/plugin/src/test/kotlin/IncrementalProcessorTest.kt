@@ -188,6 +188,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
       }
 
       hilt {
+        enableAggregatingTask = ${if (incapMode == ISOLATING_MODE) "true" else "false"}
       }
       """.trimIndent()
     )
@@ -1180,6 +1181,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
     fun parameters() = listOf(
+      ISOLATING_MODE,
       AGGREGATING_MODE
     )
 

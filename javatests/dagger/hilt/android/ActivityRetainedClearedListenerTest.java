@@ -19,9 +19,9 @@ package dagger.hilt.android;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
-import androidx.lifecycle.Lifecycle.State;
 import android.os.Build;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Lifecycle.State;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.hilt.android.ActivityRetainedLifecycle.OnClearedListener;

@@ -39,8 +39,8 @@ public final class MapKeyValidator {
     this.elements = elements;
   }
 
-  public ValidationReport<Element> validate(Element element) {
-    ValidationReport.Builder<Element> builder = ValidationReport.about(element);
+  public ValidationReport validate(Element element) {
+    ValidationReport.Builder builder = ValidationReport.about(element);
     List<ExecutableElement> members = methodsIn(((TypeElement) element).getEnclosedElements());
     if (members.isEmpty()) {
       builder.addError("Map key annotations must have members", element);

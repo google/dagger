@@ -35,7 +35,7 @@ import com.google.common.collect.Multimap;
 import dagger.BindsInstance;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.DependencyRequest;
+import dagger.spi.model.DependencyRequest;
 import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;

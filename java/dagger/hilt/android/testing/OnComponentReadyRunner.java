@@ -20,6 +20,7 @@ import android.app.Application;
 import android.content.Context;
 import com.google.auto.value.AutoValue;
 import dagger.hilt.EntryPoints;
+import dagger.hilt.android.internal.Contexts;
 import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
@@ -48,7 +49,7 @@ public final class OnComponentReadyRunner {
   /** Must be called on the test thread, before the Statement is evaluated. */
   public static <T> void addListener(
       Context context, Class<T> entryPoint, OnComponentReadyListener<T> listener) {
-    Application application = (Application) context.getApplicationContext();
+    Application application = Contexts.getApplication(context.getApplicationContext());
     if (application instanceof TestApplicationComponentManagerHolder) {
       TestApplicationComponentManagerHolder managerHolder =
           (TestApplicationComponentManagerHolder) application;

@@ -4,7 +4,6 @@ set -ex
 
 readonly AGP_VERSION_INPUT=$1
 readonly ANDROID_GRADLE_PROJECTS=(
-    "java/dagger/example/gradle/android/simple"
     "javatests/artifacts/dagger-android/simple"
     "javatests/artifacts/hilt-android/simple"
     "javatests/artifacts/hilt-android/simpleKotlin"

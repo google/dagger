@@ -16,6 +16,7 @@
 
 package dagger.hilt.processor.internal;
 
+import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Set;
@@ -124,8 +125,22 @@ public final class HiltCompilerOptions {
       if (value == null) {
         return defaultValue;
       }
-      // TODO(danysantiago): Strictly verify input, either 'true' or 'false' and nothing else.
-      return Boolean.parseBoolean(value);
+
+      // Using Boolean.parseBoolean will turn any non-"true" value into false. Strictly verify the
+      // inputs to reduce user errors.
+      String lowercaseValue = Ascii.toLowerCase(value);
+      switch (lowercaseValue) {
+        case "true":
+          return true;
+        case "false":
+          return false;
+        default:
+          throw new IllegalStateException(
+              "Expected a value of true/false for the flag \""
+                  + name
+                  + "\". Got instead: "
+                  + value);
+      }
     }
 
     String getQualifiedName() {

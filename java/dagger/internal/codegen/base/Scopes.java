@@ -16,16 +16,18 @@
 
 package dagger.internal.codegen.base;
 
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
+import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.common.AnnotationMirrors;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.model.Scope;
 import dagger.producers.ProductionScope;
-import java.lang.annotation.Annotation;
+import dagger.spi.model.DaggerAnnotation;
+import dagger.spi.model.Scope;
 import java.util.Optional;
 import javax.inject.Singleton;
 import javax.lang.model.element.Element;
@@ -35,20 +37,22 @@ public final class Scopes {
 
   /** Returns a representation for {@link ProductionScope @ProductionScope} scope. */
   public static Scope productionScope(DaggerElements elements) {
-    return scope(elements, ProductionScope.class);
+    return scope(elements, TypeNames.PRODUCTION_SCOPE);
   }
 
   /** Returns a representation for {@link Singleton @Singleton} scope. */
   public static Scope singletonScope(DaggerElements elements) {
-    return scope(elements, Singleton.class);
+    return scope(elements, TypeNames.SINGLETON);
   }
 
   /**
    * Creates a {@link Scope} object from the {@link javax.inject.Scope}-annotated annotation type.
    */
-  private static Scope scope(
-      DaggerElements elements, Class<? extends Annotation> scopeAnnotationClass) {
-    return Scope.scope(SimpleAnnotationMirror.of(elements.getTypeElement(scopeAnnotationClass)));
+  private static Scope scope(DaggerElements elements, ClassName scopeAnnotationClassName) {
+    return Scope.scope(
+        DaggerAnnotation.fromJava(
+            SimpleAnnotationMirror.of(
+                elements.getTypeElement(scopeAnnotationClassName.canonicalName()))));
   }
 
   /**
@@ -56,8 +60,7 @@ public final class Scopes {
    * exception if there are more than one.
    */
   public static Optional<Scope> uniqueScopeOf(Element element) {
-    // TODO(ronshapiro): Use MoreCollectors.toOptional() once we can use guava-jre
-    return Optional.ofNullable(getOnlyElement(scopesOf(element), null));
+    return scopesOf(element).stream().collect(toOptional());
   }
 
   /**
@@ -72,8 +75,10 @@ public final class Scopes {
 
   /** Returns all of the associated scopes for a source code element. */
   public static ImmutableSet<Scope> scopesOf(Element element) {
+    // TODO(bcorso): Replace Scope class reference with class name once auto-common is updated.
     return AnnotationMirrors.getAnnotatedAnnotations(element, javax.inject.Scope.class)
         .stream()
+        .map(DaggerAnnotation::fromJava)
         .map(Scope::scope)
         .collect(toImmutableSet());
   }

@@ -52,17 +52,19 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
 
   @Test
   public void testRefSubcomponentAndSubCreatorFails() {
-    JavaFileObject componentFile = preprocessedJavaFile("test.ParentComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import javax.inject.Provider;",
-        "",
-        "@Component",
-        "interface ParentComponent {",
-        "  ChildComponent child();",
-        "  ChildComponent.Builder builder();",
-        "}");
+    JavaFileObject componentFile =
+        preprocessedJavaFile(
+            "test.ParentComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component",
+            "interface ParentComponent {",
+            "  ChildComponent child();",
+            "  ChildComponent.Builder childComponentBuilder();",
+            "}");
     JavaFileObject childComponentFile = preprocessedJavaFile("test.ChildComponent",
         "package test;",
         "",
@@ -82,7 +84,7 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
             String.format(
                 moreThanOneRefToSubcomponent(),
                 "test.ChildComponent",
-                process("[child(), builder()]")))
+                process("[child(), childComponentBuilder()]")))
         .inFile(componentFile);
   }
 
@@ -244,16 +246,18 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
 
   @Test
   public void testCreatorMissingFactoryMethodFails() {
-    JavaFileObject componentFile = preprocessedJavaFile("test.ParentComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import javax.inject.Provider;",
-        "",
-        "@Component",
-        "interface ParentComponent {",
-        "  ChildComponent.Builder builder();",
-        "}");
+    JavaFileObject componentFile =
+        preprocessedJavaFile(
+            "test.ParentComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component",
+            "interface ParentComponent {",
+            "  ChildComponent.Builder childComponentBuilder();",
+            "}");
     JavaFileObject childComponentFile = preprocessedJavaFile("test.ChildComponent",
         "package test;",
         "",
@@ -726,8 +730,7 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
                 "  interface Factory {",
                 "    ChildComponent create(String s, Integer i);",
                 "  }")
-            .addLines( //
-                "}")
+            .addLines("}")
             .build();
     Compilation compilation = compile(componentFile, childComponentFile);
     assertThat(compilation).failed();

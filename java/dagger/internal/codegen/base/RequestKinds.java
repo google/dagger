@@ -26,11 +26,11 @@ import static dagger.internal.codegen.javapoet.TypeNames.producedOf;
 import static dagger.internal.codegen.javapoet.TypeNames.producerOf;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 import static dagger.internal.codegen.langmodel.DaggerTypes.checkTypePresent;
-import static dagger.model.RequestKind.LAZY;
-import static dagger.model.RequestKind.PRODUCED;
-import static dagger.model.RequestKind.PRODUCER;
-import static dagger.model.RequestKind.PROVIDER;
-import static dagger.model.RequestKind.PROVIDER_OF_LAZY;
+import static dagger.spi.model.RequestKind.LAZY;
+import static dagger.spi.model.RequestKind.PRODUCED;
+import static dagger.spi.model.RequestKind.PRODUCER;
+import static dagger.spi.model.RequestKind.PROVIDER;
+import static dagger.spi.model.RequestKind.PROVIDER_OF_LAZY;
 import static javax.lang.model.type.TypeKind.DECLARED;
 
 import com.google.common.collect.ImmutableMap;
@@ -38,9 +38,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.TypeName;
 import dagger.Lazy;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
+import dagger.spi.model.RequestKind;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
@@ -149,7 +149,7 @@ public final class RequestKinds {
 
   /**
    * A dagger- or {@code javax.inject}-defined class for {@code requestKind} that that can wrap
-   * another type but share the same {@link dagger.model.Key}.
+   * another type but share the same {@link dagger.spi.model.Key}.
    *
    * <p>For example, {@code Provider<String>} and {@code Lazy<String>} can both be requested if a
    * key exists for {@code String}; they all share the same key.

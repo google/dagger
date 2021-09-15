@@ -21,10 +21,13 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.root.ir.ProcessedRootSentinelIr;
+import java.util.stream.Collectors;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
@@ -36,6 +39,9 @@ import javax.lang.model.util.Elements;
  */
 @AutoValue
 abstract class ProcessedRootSentinelMetadata {
+
+  /** Returns the aggregating element */
+  public abstract TypeElement aggregatingElement();
 
   /** Returns the processed root elements. */
   abstract ImmutableSet<TypeElement> rootElements();
@@ -50,6 +56,13 @@ abstract class ProcessedRootSentinelMetadata {
         .collect(toImmutableSet());
   }
 
+  static ProcessedRootSentinelIr toIr(ProcessedRootSentinelMetadata metadata) {
+    return new ProcessedRootSentinelIr(
+        ClassName.get(metadata.aggregatingElement()),
+        metadata.rootElements().stream().map(ClassName::get).collect(Collectors.toList())
+    );
+  }
+
   private static ProcessedRootSentinelMetadata create(TypeElement element, Elements elements) {
     AnnotationMirror annotationMirror =
         Processors.getAnnotationMirror(element, ClassNames.PROCESSED_ROOT_SENTINEL);
@@ -58,6 +71,7 @@ abstract class ProcessedRootSentinelMetadata {
         Processors.getAnnotationValues(elements, annotationMirror);
 
     return new AutoValue_ProcessedRootSentinelMetadata(
+        element,
         AnnotationValues.getStrings(values.get("roots")).stream()
             .map(elements::getTypeElement)
             .collect(toImmutableSet()));

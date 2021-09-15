@@ -26,11 +26,12 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.Traverser;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
-import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -53,10 +54,84 @@ public final class DaggerTypes implements Types {
   private final Types types;
   private final DaggerElements elements;
 
-  @Inject
   public DaggerTypes(Types types, DaggerElements elements) {
     this.types = checkNotNull(types);
     this.elements = checkNotNull(elements);
+  }
+
+  // Note: This is similar to auto-common's MoreTypes except using ClassName rather than Class.
+  // TODO(bcorso): Contribute a String version to auto-common's MoreTypes?
+  /**
+   * Returns true if the raw type underlying the given {@link TypeMirror} represents the same raw
+   * type as the given {@link Class} and throws an IllegalArgumentException if the {@link
+   * TypeMirror} does not represent a type that can be referenced by a {@link Class}
+   */
+  public static boolean isTypeOf(final TypeName typeName, TypeMirror type) {
+    checkNotNull(typeName);
+    return type.accept(new IsTypeOf(typeName), null);
+  }
+
+  private static final class IsTypeOf extends SimpleTypeVisitor8<Boolean, Void> {
+    private final TypeName typeName;
+
+    IsTypeOf(TypeName typeName) {
+      this.typeName = typeName;
+    }
+
+    @Override
+    protected Boolean defaultAction(TypeMirror type, Void ignored) {
+      throw new IllegalArgumentException(type + " cannot be represented as a Class<?>.");
+    }
+
+    @Override
+    public Boolean visitNoType(NoType noType, Void p) {
+      if (noType.getKind().equals(TypeKind.VOID)) {
+        return typeName.equals(TypeName.VOID);
+      }
+      throw new IllegalArgumentException(noType + " cannot be represented as a Class<?>.");
+    }
+
+    @Override
+    public Boolean visitError(ErrorType errorType, Void p) {
+      return false;
+    }
+
+    @Override
+    public Boolean visitPrimitive(PrimitiveType type, Void p) {
+      switch (type.getKind()) {
+        case BOOLEAN:
+          return typeName.equals(TypeName.BOOLEAN);
+        case BYTE:
+          return typeName.equals(TypeName.BYTE);
+        case CHAR:
+          return typeName.equals(TypeName.CHAR);
+        case DOUBLE:
+          return typeName.equals(TypeName.DOUBLE);
+        case FLOAT:
+          return typeName.equals(TypeName.FLOAT);
+        case INT:
+          return typeName.equals(TypeName.INT);
+        case LONG:
+          return typeName.equals(TypeName.LONG);
+        case SHORT:
+          return typeName.equals(TypeName.SHORT);
+        default:
+          throw new IllegalArgumentException(type + " cannot be represented as a Class<?>.");
+      }
+    }
+
+    @Override
+    public Boolean visitArray(ArrayType array, Void p) {
+      return (typeName instanceof ArrayTypeName)
+          && isTypeOf(((ArrayTypeName) typeName).componentType, array.getComponentType());
+    }
+
+    @Override
+    public Boolean visitDeclared(DeclaredType type, Void ignored) {
+      TypeElement typeElement = MoreElements.asType(type.asElement());
+      return (typeName instanceof ClassName)
+          && typeElement.getQualifiedName().contentEquals(((ClassName) typeName).canonicalName());
+    }
   }
 
   /**

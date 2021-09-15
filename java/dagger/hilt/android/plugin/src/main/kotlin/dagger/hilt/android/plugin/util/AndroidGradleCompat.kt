@@ -16,44 +16,162 @@
 
 package dagger.hilt.android.plugin.util
 
-import com.android.build.api.AndroidPluginVersion
-import com.android.build.api.component.AndroidTest
-import com.android.build.api.component.UnitTest
-import com.android.build.api.extension.AndroidComponentsExtension
-import com.android.build.api.extension.VariantSelector
+import com.android.build.api.variant.Component
+import com.android.build.api.variant.AndroidComponentsExtension
+import com.android.build.api.instrumentation.AsmClassVisitorFactory
+import com.android.build.api.instrumentation.FramesComputationMode
+import com.android.build.api.instrumentation.InstrumentationParameters
+import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.variant.ApplicationVariant
 import com.android.build.api.variant.LibraryVariant
+import org.gradle.api.Project
 
 /**
- * Compatibility method to go over each Variant as Component (the newer
- * 'android.build.api.variant.Variant' version, not the older one
- * 'com.android.build.gradle.api.BaseVariant')
+ * Compatibility version of [com.android.build.api.variant.AndroidComponentsExtension]
+ * - In AGP 4.2 its package is 'com.android.build.api.extension'
+ * - In AGP 7.0 its packages is 'com.android.build.api.variant'
  */
-@Suppress("UnstableApiUsage")
-fun AndroidComponentsExtension<*, *, *>.allTestVariants(
-  onAndroidTest: (AndroidTest) -> Unit,
-  onUnitTest: (UnitTest) -> Unit
-) {
-  if (
-    findClass("com.android.build.api.AndroidPluginVersion") != null &&
-    this.pluginVersion >= AndroidPluginVersion(7, 0).beta(1)
-  ) {
-    this.onVariants { variant ->
-      when (variant) {
-        is ApplicationVariant -> variant.androidTest
-        is LibraryVariant -> variant.androidTest
-        else -> null
-      }?.let { onAndroidTest(it) }
-      variant.unitTest?.let { onUnitTest(it) }
+sealed class AndroidComponentsExtensionCompat {
+
+  /**
+   * A combined compatibility function of
+   * [com.android.build.api.variant.AndroidComponentsExtension.onVariants] that includes also
+   * [AndroidTest] and [UnitTest] variants.
+   */
+  abstract fun onAllVariants(block: (ComponentCompat) -> Unit)
+
+  class Api70Impl(
+    private val actual: AndroidComponentsExtension<*, *, *>
+  ) : AndroidComponentsExtensionCompat() {
+    override fun onAllVariants(block: (ComponentCompat) -> Unit) {
+      actual.onVariants { variant ->
+        // Use reflection to get the AndroidTest component out of the variant because a binary
+        // incompatible change was introduced in AGP 7.0-beta05 that changed the return type of the
+        // method.
+        fun ApplicationVariant.getAndroidTest() =
+          this::class.java.getDeclaredMethod("getAndroidTest").invoke(this) as? Component
+        fun LibraryVariant.getAndroidTest() =
+          this::class.java.getDeclaredMethod("getAndroidTest").invoke(this) as? Component
+        block.invoke(ComponentCompat.Api70Impl(variant))
+        when (variant) {
+          is ApplicationVariant -> variant.getAndroidTest()
+          is LibraryVariant -> variant.getAndroidTest()
+          else -> null
+        }?.let { block.invoke(ComponentCompat.Api70Impl(it)) }
+        variant.unitTest?.let { block.invoke(ComponentCompat.Api70Impl(it)) }
+      }
     }
-  } else {
-    // This methods were removed in 7.0.0-beta01 but are available in 4.2.0
-    AndroidComponentsExtension::class.java.getDeclaredMethod(
-      "androidTests", VariantSelector::class.java, Function1::class.java
-    ).invoke(this, this.selector().all(), onAndroidTest)
-    AndroidComponentsExtension::class.java.getDeclaredMethod(
-      "unitTests", VariantSelector::class.java, Function1::class.java
-    ).invoke(this, this.selector().all(), onUnitTest)
+  }
+
+  class Api42Impl(private val actual: Any) : AndroidComponentsExtensionCompat() {
+
+    private val extensionClazz =
+      Class.forName("com.android.build.api.extension.AndroidComponentsExtension")
+
+    private val variantSelectorClazz =
+      Class.forName("com.android.build.api.extension.VariantSelector")
+
+    override fun onAllVariants(block: (ComponentCompat) -> Unit) {
+      val selector = extensionClazz.getDeclaredMethod("selector").invoke(actual)
+      val allSelector = variantSelectorClazz.getDeclaredMethod("all").invoke(selector)
+      val wrapFunction: (Any) -> Unit = {
+        block.invoke(ComponentCompat.Api42Impl(it))
+      }
+      listOf("onVariants", "androidTests", "unitTests").forEach { methodName ->
+        extensionClazz.getDeclaredMethod(
+          methodName, variantSelectorClazz, Function1::class.java
+        ).invoke(actual, allSelector, wrapFunction)
+      }
+    }
+  }
+
+  companion object {
+    fun getAndroidComponentsExtension(project: Project): AndroidComponentsExtensionCompat {
+      return if (
+        findClass("com.android.build.api.variant.AndroidComponentsExtension") != null
+      ) {
+        val actualExtension = project.extensions.getByType(AndroidComponentsExtension::class.java)
+        Api70Impl(actualExtension)
+      } else {
+        val actualExtension = project.extensions.getByType(
+          Class.forName("com.android.build.api.extension.AndroidComponentsExtension")
+        )
+        Api42Impl(actualExtension)
+      }
+    }
+  }
+}
+
+/**
+ * Compatibility version of [com.android.build.api.variant.Component]
+ * - In AGP 4.2 its package is 'com.android.build.api.component'
+ * - In AGP 7.0 its packages is 'com.android.build.api.variant'
+ */
+@Suppress("UnstableApiUsage") // ASM Pipeline APIs
+sealed class ComponentCompat {
+
+  /**
+   * Redeclaration of [com.android.build.api.variant.ComponentIdentity.name]
+   */
+  abstract val name: String
+
+  /**
+   * Redeclaration of [com.android.build.api.variant.Component.transformClassesWith]
+   */
+  abstract fun <ParamT : InstrumentationParameters> transformClassesWith(
+    classVisitorFactoryImplClass: Class<out AsmClassVisitorFactory<ParamT>>,
+    scope: InstrumentationScope,
+    instrumentationParamsConfig: (ParamT) -> Unit
+  )
+
+  /**
+   * Redeclaration of [com.android.build.api.variant.Component.setAsmFramesComputationMode]
+   */
+  abstract fun setAsmFramesComputationMode(mode: FramesComputationMode)
+
+  class Api70Impl(private val component: Component) : ComponentCompat() {
+
+    override val name: String
+      get() = component.name
+
+    override fun <ParamT : InstrumentationParameters> transformClassesWith(
+      classVisitorFactoryImplClass: Class<out AsmClassVisitorFactory<ParamT>>,
+      scope: InstrumentationScope,
+      instrumentationParamsConfig: (ParamT) -> Unit
+    ) {
+      component.transformClassesWith(
+        classVisitorFactoryImplClass, scope, instrumentationParamsConfig
+      )
+    }
+
+    override fun setAsmFramesComputationMode(mode: FramesComputationMode) {
+      component.setAsmFramesComputationMode(mode)
+    }
+  }
+
+  class Api42Impl(private val actual: Any) : ComponentCompat() {
+
+    private val componentClazz = Class.forName("com.android.build.api.component.Component")
+
+    override val name: String
+      get() = componentClazz.getMethod("getName").invoke(actual) as String
+
+    override fun <ParamT : InstrumentationParameters> transformClassesWith(
+      classVisitorFactoryImplClass: Class<out AsmClassVisitorFactory<ParamT>>,
+      scope: InstrumentationScope,
+      instrumentationParamsConfig: (ParamT) -> Unit
+    ) {
+      componentClazz.getDeclaredMethod(
+        "transformClassesWith",
+        Class::class.java, InstrumentationScope::class.java, Function1::class.java
+      ).invoke(actual, classVisitorFactoryImplClass, scope, instrumentationParamsConfig)
+    }
+
+    override fun setAsmFramesComputationMode(mode: FramesComputationMode) {
+      componentClazz.getDeclaredMethod(
+        "setAsmFramesComputationMode", FramesComputationMode::class.java
+      ).invoke(actual, mode)
+    }
   }
 }
 

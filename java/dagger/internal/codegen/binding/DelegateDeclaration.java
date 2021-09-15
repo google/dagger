@@ -30,7 +30,7 @@ import dagger.Binds;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.ContributionType.HasContributionType;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.DependencyRequest;
+import dagger.spi.model.DependencyRequest;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;

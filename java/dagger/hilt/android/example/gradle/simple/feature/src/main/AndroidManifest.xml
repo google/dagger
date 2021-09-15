@@ -1,9 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="dagger.hilt.android.example.gradle.simple.feature">
-  <application>
-    <activity
-        android:name=".FeatureActivity"
-        android:theme="@style/Theme.AppCompat.Light"
-        android:exported="true"/>
-  </application>
-</manifest>

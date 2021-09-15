@@ -17,34 +17,47 @@
 package dagger.hilt.android.plugin.root
 
 // Annotations used for aggregating dependencies by the annotation processors.
-internal enum class AggregatedAnnotation(val descriptor: String) {
+internal enum class AggregatedAnnotation(
+  private val descriptor: String,
+  private val aggregatedPackage: String
+) {
   AGGREGATED_ROOT(
-    "Ldagger/hilt/internal/aggregatedroot/AggregatedRoot;"
+    "Ldagger/hilt/internal/aggregatedroot/AggregatedRoot;",
+    "dagger/hilt/internal/aggregatedroot/codegen"
   ),
   PROCESSED_ROOT_SENTINEL(
-    "Ldagger/hilt/internal/processedrootsentinel/ProcessedRootSentinel;"
+    "Ldagger/hilt/internal/processedrootsentinel/ProcessedRootSentinel;",
+    "dagger/hilt/internal/processedrootsentinel/codegen"
   ),
   DEFINE_COMPONENT(
-    "Ldagger/hilt/internal/definecomponent/DefineComponentClasses;"
+    "Ldagger/hilt/internal/definecomponent/DefineComponentClasses;",
+    "dagger/hilt/processor/internal/definecomponent/codegen"
   ),
   ALIAS_OF(
-    "Ldagger/hilt/internal/aliasof/AliasOfPropagatedData;"
+    "Ldagger/hilt/internal/aliasof/AliasOfPropagatedData;",
+    "dagger/hilt/processor/internal/aliasof/codegen"
   ),
   AGGREGATED_DEP(
-    "Ldagger/hilt/processor/internal/aggregateddeps/AggregatedDeps;"
+    "Ldagger/hilt/processor/internal/aggregateddeps/AggregatedDeps;",
+    "hilt_aggregated_deps"
   ),
   AGGREGATED_DEP_PROXY(
-    "Ldagger/hilt/android/internal/legacy/AggregatedElementProxy;"
+    "Ldagger/hilt/android/internal/legacy/AggregatedElementProxy;",
+    "", // Proxies share the same package name as the elements they are proxying.
   ),
   AGGREGATED_UNINSTALL_MODULES(
-    "Ldagger/hilt/android/internal/uninstallmodules/AggregatedUninstallModules;"
+    "Ldagger/hilt/android/internal/uninstallmodules/AggregatedUninstallModules;",
+    "dagger/hilt/android/internal/uninstallmodules/codegen"
   ),
   AGGREGATED_EARLY_ENTRY_POINT(
-    "Ldagger/hilt/android/internal/earlyentrypoint/AggregatedEarlyEntryPoint;"
+    "Ldagger/hilt/android/internal/earlyentrypoint/AggregatedEarlyEntryPoint;",
+    "dagger/hilt/android/internal/earlyentrypoint/codegen"
   ),
-  NONE("");
+  NONE("", "");
 
   companion object {
     fun fromString(str: String) = values().firstOrNull { it.descriptor == str } ?: NONE
+
+    val AGGREGATED_PACKAGES = values().map { it.aggregatedPackage }.filter { it.isNotEmpty() }
   }
 }

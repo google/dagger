@@ -31,11 +31,11 @@ GenJavaTests(
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal/generatesrootinput:generates_root_inputs",
         "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",
-        "@maven//:com_google_auto_auto_common",
     ],
 )
 

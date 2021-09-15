@@ -456,7 +456,9 @@ public class SubcomponentValidationTest {
                 "package test;",
                 "",
                 GeneratedLines.generatedAnnotations(),
-                "final class DaggerParentComponent implements ParentComponent {")
+                "final class DaggerParentComponent implements ParentComponent {",
+                "  private Provider<Dep1> dep1Provider;",
+                "  private Provider<Dep2> dep2Provider;")
             .addLinesIn(
                 DEFAULT_MODE,
                 "  @SuppressWarnings(\"unchecked\")",
@@ -465,54 +467,30 @@ public class SubcomponentValidationTest {
                 "    this.dep2Provider = DoubleCheck.provider(Dep2_Factory.create());",
                 "  }",
                 "")
-            .addLines(
-                "  @Override", //
-                "  public Dep1 dep1() {")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "   Object local = dep1;",
-                "    if (local instanceof MemoizedSentinel) {",
-                "      synchronized (local) {",
-                "        local = dep1;",
-                "        if (local instanceof MemoizedSentinel) {",
-                "          local = injectDep1(Dep1_Factory.newInstance());",
-                "          dep1 = DoubleCheck.reentrantCheck(dep1, local);",
-                "        }",
-                "      }",
-                "    }",
-                "    return (Dep1) local;")
-            .addLinesIn(
-                DEFAULT_MODE, //
-                "    return dep1Provider.get();")
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize() {",
+                "    this.dep1Provider = DoubleCheck.provider(",
+                "        new SwitchingProvider<Dep1>(parentComponent, 0));",
+                "    this.dep2Provider = DoubleCheck.provider(",
+                "        new SwitchingProvider<Dep2>(parentComponent, 1));",
+                "  }")
             .addLines(
-                "  }", //
+                "  @Override",
+                "  public Dep1 dep1() {",
+                "    return dep1Provider.get();",
+                "  }",
                 "",
                 "  @Override",
-                "  public Dep2 dep2() {")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "   Object local = dep2;",
-                "    if (local instanceof MemoizedSentinel) {",
-                "      synchronized (local) {",
-                "        local = dep2;",
-                "        if (local instanceof MemoizedSentinel) {",
-                "          local = injectDep2(Dep2_Factory.newInstance());",
-                "          dep2 = DoubleCheck.reentrantCheck(dep2, local);",
-                "        }",
-                "      }",
-                "    }",
-                "    return (Dep2) local;")
-            .addLinesIn(
-                DEFAULT_MODE, //
-                "    return dep2Provider.get();")
-            .addLines(
+                "  public Dep2 dep2() {",
+                "    return dep2Provider.get();",
                 "  }",
                 "",
                 "  @Override",
                 "  public ChildComponent childComponent() {",
                 "    return new ChildComponentImpl(parentComponent);",
-                "  }",
-                "")
+                "  }")
             .addLinesIn(
                 FAST_INIT_MODE,
                 "  @CanIgnoreReturnValue",
@@ -527,43 +505,17 @@ public class SubcomponentValidationTest {
                 "    return instance;",
                 "  }")
             .addLines(
-                "",
                 "  private static final class ChildComponentImpl implements ChildComponent {",
-                "    private final ChildModule childModule;",
-                "",
-                "    private final DaggerParentComponent parentComponent;",
-                "",
-                "    private final ChildComponentImpl childComponentImpl = this;",
-                "",
-                "    private ChildComponentImpl(DaggerParentComponent parentComponent) {",
-                "      this.parentComponent = parentComponent;",
-                "      this.childModule = new ChildModule();",
-                "    }",
-                "")
-            .addLinesIn(
-                DEFAULT_MODE,
                 "    private NeedsDep1 needsDep1() {",
                 "      return new NeedsDep1(parentComponent.dep1Provider.get());",
-                "    }")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "    private NeedsDep1 needsDep1() {",
-                "      return new NeedsDep1(parentComponent.dep1());",
-                "    }")
-            .addLines(
+                "    }",
+                "",
                 "    private A a() {",
                 "      return injectA(",
                 "          A_Factory.newInstance(",
-                "              needsDep1(),")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "              parentComponent.dep1Provider.get(),",
-                "              parentComponent.dep2Provider.get()));")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "              parentComponent.dep1(),",
-                "              parentComponent.dep2()));")
-            .addLines(
+                "          needsDep1(),",
+                "          parentComponent.dep1Provider.get(),",
+                "          parentComponent.dep2Provider.get()));",
                 "    }",
                 "",
                 "    @Override",
@@ -576,6 +528,21 @@ public class SubcomponentValidationTest {
                 "    private A injectA(A instance) {",
                 "      A_MembersInjector.injectMethodA(instance);",
                 "      return instance;",
+                "    }",
+                "  }")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "  private static final class SwitchingProvider<T> implements Provider<T> {",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    @Override",
+                "    public T get() {",
+                "      switch (id) {",
+                "        case 0:",
+                "          return (T) parentComponent.injectDep1(Dep1_Factory.newInstance());",
+                "        case 1:",
+                "          return (T) parentComponent.injectDep2(Dep2_Factory.newInstance());",
+                "        default: throw new AssertionError(id);",
+                "      }",
                 "    }",
                 "  }",
                 "}")
@@ -677,21 +644,11 @@ public class SubcomponentValidationTest {
             "    }",
             "  }",
             "",
-            "  private static final class F_SubImpl implements Foo.Sub {",
-            "    @Override",
-            "    public Bar.Sub newBarSubcomponent() {",
-            "      return new B_SubImpl(parentComponent, f_SubImpl);",
-            "    }",
+            "  private static final class ts_SubImpl implements Sub {}",
             "",
-            "    private static final class B_SubImpl implements Bar.Sub {",
-            "      @Override",
-            "      public Sub newSubcomponentInSubpackage() {",
-            "        return new ts_SubI(parentComponent, f_SubImpl, b_SubImpl);",
-            "      }",
+            "  private static final class B_SubImpl implements Bar.Sub {}",
             "",
-            "      private static final class ts_SubI implements Sub {}",
-            "    }",
-            "  }",
+            "  private static final class F_SubImpl implements Foo.Sub {}",
             "",
             "  private static final class NoConflictImpl implements NoConflict {}",
             "}");
@@ -754,22 +711,10 @@ public class SubcomponentValidationTest {
             "    }",
             "  }",
             "",
-            "  private static final class t_SubImpl implements Sub {",
-            "    @Override",
-            "    public test.deep.many.levels.that.match.test.Sub newDeepSubcomponent() {",
-            "      return new tdmltmt_SubImpl(parentComponent, t_SubImpl);",
-            "    }",
+            "  private static final class tdmltmt_SubImpl",
+            "      implements test.deep.many.levels.that.match.test.Sub {}",
             "",
-            "    private static final class tdmltmt_SubImpl implements ",
-            "        test.deep.many.levels.that.match.test.Sub {",
-            "      private tdmltmt_SubImpl(",
-            "          DaggerParentComponent parentComponent,",
-            "          t_SubImpl t_SubImpl) {",
-            "        this.parentComponent = parentComponent;",
-            "        this.t_SubImpl = t_SubImpl;",
-            "      }",
-            "    }",
-            "  }",
+            "  private static final class t_SubImpl implements Sub {}",
             "}");
     Compilation compilation =
         compilerWithOptions(compilerMode.javacopts()).compile(parent, sub, deepSub);
@@ -818,26 +763,10 @@ public class SubcomponentValidationTest {
             "    return new $_SubImpl(parentComponent);",
             "  }",
             "",
-            "  private static final class $_SubImpl implements Sub {",
-            "    private $_SubImpl(DaggerParentComponent parentComponent) {",
-            "      this.parentComponent = parentComponent;",
-            "    }",
+            "  private static final class tdmltmt_SubImpl",
+            "      implements test.deep.many.levels.that.match.test.Sub {}",
             "",
-            "    @Override",
-            "    public test.deep.many.levels.that.match.test.Sub newDeepSubcomponent() {",
-            "      return new tdmltmt_SubImpl(parentComponent, $_SubImpl);",
-            "    }",
-            "",
-            "    private static final class tdmltmt_SubImpl implements ",
-            "        test.deep.many.levels.that.match.test.Sub {",
-            "      private tdmltmt_SubImpl(",
-            "          DaggerParentComponent parentComponent,",
-            "          $_SubImpl $_SubImpl) {",
-            "        this.parentComponent = parentComponent;",
-            "        this.$_SubImpl = $_SubImpl;",
-            "      }",
-            "    }",
-            "  }",
+            "  private static final class $_SubImpl implements Sub {}",
             "}",
             "");
 
@@ -1038,16 +967,16 @@ public class SubcomponentValidationTest {
             "    }",
             "  }",
             "",
-            "  private static final class F_SubImpl implements C.Foo.Sub {",
-            "    private F_SubImpl(DaggerC c) {",
-            "      this.c = c;",
-            "    }",
-            "  }",
-            "",
             "  private static final class B_SubBuilder implements C.Bar.Sub.Builder {",
             "    @Override",
             "    public C.Bar.Sub build() {",
             "      return new B_SubImpl(c);",
+            "    }",
+            "  }",
+            "",
+            "  private static final class F_SubImpl implements C.Foo.Sub {",
+            "    private F_SubImpl(DaggerC c) {",
+            "      this.c = c;",
             "    }",
             "  }",
             "",

@@ -19,35 +19,33 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
-import static java.lang.Character.isUpperCase;
+import static dagger.internal.codegen.extension.DaggerCollectors.onlyElement;
 import static java.lang.String.format;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimaps;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
+import dagger.internal.codegen.binding.ComponentCreatorKind;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.KeyFactory;
-import dagger.model.Key;
+import dagger.spi.model.ComponentPath;
+import dagger.spi.model.Key;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.inject.Inject;
-import javax.lang.model.element.Name;
-import javax.lang.model.element.TypeElement;
 
 /**
- * Holds the unique simple names for all components, keyed by their {@link ComponentDescriptor} and
- * {@link Key} of the subcomponent builder.
+ * Holds the unique simple names for all components, keyed by their {@link ComponentPath} and {@link
+ * Key} of the subcomponent builder.
  */
 public final class ComponentNames {
   /** Returns the class name for the root component. */
@@ -59,99 +57,138 @@ public final class ComponentNames {
 
   private static final Splitter QUALIFIED_NAME_SPLITTER = Splitter.on('.');
 
-  private final ImmutableMap<ComponentDescriptor, String> namesByDescriptor;
-  private final ImmutableMap<Key, ComponentDescriptor> descriptorsByCreatorKey;
+  private final ClassName rootName;
+  private final ImmutableMap<ComponentPath, String> namesByPath;
+  private final ImmutableMap<ComponentPath, String> creatorNamesByPath;
+  private final ImmutableMultimap<Key, ComponentPath> pathsByCreatorKey;
 
   @Inject
   ComponentNames(@TopLevel BindingGraph graph, KeyFactory keyFactory) {
-    this.namesByDescriptor = namesByDescriptor(graph);
-    this.descriptorsByCreatorKey = descriptorsByCreatorKey(keyFactory, namesByDescriptor.keySet());
+    this.rootName = getRootComponentClassName(graph.componentDescriptor());
+    this.namesByPath = namesByPath(graph);
+    this.creatorNamesByPath = creatorNamesByPath(namesByPath, graph);
+    this.pathsByCreatorKey = pathsByCreatorKey(keyFactory, graph);
   }
 
   /** Returns the simple component name for the given {@link ComponentDescriptor}. */
-  String get(ComponentDescriptor componentDescriptor) {
-    return componentDescriptor.isSubcomponent()
-        ? namesByDescriptor.get(componentDescriptor)
-        : getRootComponentClassName(componentDescriptor).simpleName();
+  ClassName get(ComponentPath componentPath) {
+    return componentPath.atRoot()
+        ? rootName
+        : rootName.nestedClass(namesByPath.get(componentPath) + "Impl");
   }
 
   /**
-   * Returns the simple name for the subcomponent creator implementation with the given {@link Key}.
+   * Returns the component descriptor for the component with the given subcomponent creator {@link
+   * Key}.
    */
-  String getCreatorName(Key key) {
-    return getCreatorName(descriptorsByCreatorKey.get(key));
+  ClassName getSubcomponentCreatorName(ComponentPath componentPath, Key creatorKey) {
+    checkArgument(pathsByCreatorKey.containsKey(creatorKey));
+    // First, find the subcomponent path corresponding to the subcomponent creator key.
+    // The key may correspond to multiple paths, so we need to find the one under this component.
+    ComponentPath subcomponentPath =
+        pathsByCreatorKey.get(creatorKey).stream()
+            .filter(path -> path.parent().equals(componentPath))
+            .collect(onlyElement());
+    return getCreatorName(subcomponentPath);
   }
 
   /**
    * Returns the simple name for the subcomponent creator implementation for the given {@link
    * ComponentDescriptor}.
    */
-  String getCreatorName(ComponentDescriptor componentDescriptor) {
-    checkArgument(componentDescriptor.creatorDescriptor().isPresent());
-    ComponentCreatorDescriptor creatorDescriptor = componentDescriptor.creatorDescriptor().get();
-    return get(componentDescriptor) + creatorDescriptor.kind().typeName();
+  ClassName getCreatorName(ComponentPath componentPath) {
+    checkArgument(creatorNamesByPath.containsKey(componentPath));
+    return rootName.nestedClass(creatorNamesByPath.get(componentPath));
   }
 
-  private static ImmutableMap<ComponentDescriptor, String> namesByDescriptor(BindingGraph graph) {
-    ImmutableListMultimap<String, ComponentDescriptor> componentDescriptorsBySimpleName =
-        Multimaps.index(graph.componentDescriptors(), ComponentNames::simpleName);
-    Map<ComponentDescriptor, String> subcomponentImplSimpleNames = new LinkedHashMap<>();
-    componentDescriptorsBySimpleName.asMap().values().stream()
+  private static ImmutableMap<ComponentPath, String> creatorNamesByPath(
+      ImmutableMap<ComponentPath, String> namesByPath, BindingGraph graph) {
+    ImmutableMap.Builder<ComponentPath, String> builder = ImmutableMap.builder();
+    graph
+        .componentDescriptorsByPath()
+        .forEach(
+            (componentPath, componentDescriptor) -> {
+              if (componentPath.atRoot()) {
+                ComponentCreatorKind creatorKind =
+                    componentDescriptor
+                        .creatorDescriptor()
+                        .map(ComponentCreatorDescriptor::kind)
+                        .orElse(ComponentCreatorKind.BUILDER);
+                builder.put(componentPath, creatorKind.typeName());
+              } else if (componentDescriptor.creatorDescriptor().isPresent()) {
+                ComponentCreatorDescriptor creatorDescriptor =
+                    componentDescriptor.creatorDescriptor().get();
+                String componentName = namesByPath.get(componentPath);
+                builder.put(componentPath, componentName + creatorDescriptor.kind().typeName());
+              }
+            });
+    return builder.build();
+  }
+
+  private static ImmutableMap<ComponentPath, String> namesByPath(BindingGraph graph) {
+    Map<ComponentPath, String> componentPathsBySimpleName = new LinkedHashMap<>();
+    Multimaps.index(graph.componentDescriptorsByPath().keySet(), ComponentNames::simpleName)
+        .asMap()
+        .values()
+        .stream()
         .map(ComponentNames::disambiguateConflictingSimpleNames)
-        .forEach(subcomponentImplSimpleNames::putAll);
-    subcomponentImplSimpleNames.remove(graph.componentDescriptor());
-    return ImmutableMap.copyOf(subcomponentImplSimpleNames);
+        .forEach(componentPathsBySimpleName::putAll);
+    componentPathsBySimpleName.remove(graph.componentPath());
+    return ImmutableMap.copyOf(componentPathsBySimpleName);
   }
 
-  private static ImmutableMap<Key, ComponentDescriptor> descriptorsByCreatorKey(
-      KeyFactory keyFactory, ImmutableSet<ComponentDescriptor> subcomponents) {
-    return subcomponents.stream()
-        .filter(subcomponent -> subcomponent.creatorDescriptor().isPresent())
-        .collect(
-            toImmutableMap(
-                subcomponent ->
+  private static ImmutableMultimap<Key, ComponentPath> pathsByCreatorKey(
+      KeyFactory keyFactory, BindingGraph graph) {
+    ImmutableMultimap.Builder<Key, ComponentPath> builder = ImmutableMultimap.builder();
+    graph
+        .componentDescriptorsByPath()
+        .forEach(
+            (componentPath, componentDescriptor) -> {
+              if (componentDescriptor.creatorDescriptor().isPresent()) {
+                Key creatorKey =
                     keyFactory.forSubcomponentCreator(
-                        subcomponent.creatorDescriptor().get().typeElement().asType()),
-                subcomponent -> subcomponent));
+                        componentDescriptor.creatorDescriptor().get().typeElement().asType());
+                builder.put(creatorKey, componentPath);
+              }
+            });
+    return builder.build();
   }
 
-  private static ImmutableMap<ComponentDescriptor, String> disambiguateConflictingSimpleNames(
-      Collection<ComponentDescriptor> componentsWithConflictingNames) {
+  private static ImmutableMap<ComponentPath, String> disambiguateConflictingSimpleNames(
+      Collection<ComponentPath> componentsWithConflictingNames) {
     // If there's only 1 component there's nothing to disambiguate so return the simple name.
     if (componentsWithConflictingNames.size() == 1) {
-      ComponentDescriptor component = Iterables.getOnlyElement(componentsWithConflictingNames);
-      return ImmutableMap.of(component, simpleName(component));
+      ComponentPath componentPath = Iterables.getOnlyElement(componentsWithConflictingNames);
+      return ImmutableMap.of(componentPath, simpleName(componentPath));
     }
 
     // There are conflicting simple names, so disambiguate them with a unique prefix.
     // We keep them small to fix https://github.com/google/dagger/issues/421.
     UniqueNameSet nameSet = new UniqueNameSet();
-    ImmutableMap.Builder<ComponentDescriptor, String> uniqueNames = ImmutableMap.builder();
-    for (ComponentDescriptor component : componentsWithConflictingNames) {
-      String simpleName = simpleName(component);
-      String basePrefix = uniquingPrefix(component);
-      uniqueNames.put(component, format("%s_%s", nameSet.getUniqueName(basePrefix), simpleName));
+    ImmutableMap.Builder<ComponentPath, String> uniqueNames = ImmutableMap.builder();
+    for (ComponentPath componentPath : componentsWithConflictingNames) {
+      String simpleName = simpleName(componentPath);
+      String basePrefix = uniquingPrefix(componentPath);
+      uniqueNames.put(
+          componentPath, format("%s_%s", nameSet.getUniqueName(basePrefix), simpleName));
     }
     return uniqueNames.build();
   }
 
-  private static String simpleName(ComponentDescriptor component) {
-    return component.typeElement().getSimpleName().toString();
+  private static String simpleName(ComponentPath componentPath) {
+    return componentPath.currentComponent().className().simpleName();
   }
 
   /** Returns a prefix that could make the component's simple name more unique. */
-  private static String uniquingPrefix(ComponentDescriptor component) {
-    TypeElement typeElement = component.typeElement();
-    String containerName = typeElement.getEnclosingElement().getSimpleName().toString();
+  private static String uniquingPrefix(ComponentPath componentPath) {
+    ClassName component = componentPath.currentComponent().className();
 
-    // If parent element looks like a class, use its initials as a prefix.
-    if (!containerName.isEmpty() && isUpperCase(containerName.charAt(0))) {
-      return CharMatcher.javaLowerCase().removeFrom(containerName);
+    if (component.enclosingClassName() != null) {
+      return CharMatcher.javaLowerCase().removeFrom(component.enclosingClassName().simpleName());
     }
 
     // Not in a normally named class. Prefix with the initials of the elements leading here.
-    Name qualifiedName = typeElement.getQualifiedName();
-    Iterator<String> pieces = QUALIFIED_NAME_SPLITTER.split(qualifiedName).iterator();
+    Iterator<String> pieces = QUALIFIED_NAME_SPLITTER.split(component.canonicalName()).iterator();
     StringBuilder b = new StringBuilder();
 
     while (pieces.hasNext()) {

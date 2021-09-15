@@ -931,6 +931,17 @@ public final class Processors {
         && !KotlinMetadataUtils.getMetadataUtil().isObjectOrCompanionObjectClass(module);
   }
 
+  public static boolean hasVisibleEmptyConstructor(TypeElement type) {
+    List<ExecutableElement> constructors = ElementFilter.constructorsIn(type.getEnclosedElements());
+    return constructors.isEmpty()
+        || constructors.stream()
+            .filter(constructor -> constructor.getParameters().isEmpty())
+            .anyMatch(
+                constructor ->
+                    !constructor.getModifiers().contains(Modifier.PRIVATE)
+                        );
+  }
+
   private static boolean isBindingMethod(ExecutableElement method) {
     return hasAnnotation(method, ClassNames.PROVIDES)
         || hasAnnotation(method, ClassNames.BINDS)

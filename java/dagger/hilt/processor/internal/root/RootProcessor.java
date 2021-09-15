@@ -20,19 +20,16 @@ import static com.google.common.base.Preconditions.checkState;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isCrossCompilationRootValidationDisabled;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isSharedTestComponentsEnabled;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static java.util.Comparator.comparing;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.AGGREGATING;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.DYNAMIC;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import dagger.hilt.processor.internal.BadInputException;
 import dagger.hilt.processor.internal.BaseProcessor;
-import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsMetadata;
 import dagger.hilt.processor.internal.aliasof.AliasOfPropagatedDataMetadata;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentClassesMetadata;
@@ -41,14 +38,16 @@ import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputs;
 import dagger.hilt.processor.internal.root.ir.AggregatedDepsIr;
 import dagger.hilt.processor.internal.root.ir.AggregatedEarlyEntryPointIr;
 import dagger.hilt.processor.internal.root.ir.AggregatedRootIr;
+import dagger.hilt.processor.internal.root.ir.AggregatedRootIrValidator;
 import dagger.hilt.processor.internal.root.ir.AggregatedUninstallModulesIr;
 import dagger.hilt.processor.internal.root.ir.AliasOfPropagatedDataIr;
 import dagger.hilt.processor.internal.root.ir.ComponentTreeDepsIr;
 import dagger.hilt.processor.internal.root.ir.ComponentTreeDepsIrCreator;
 import dagger.hilt.processor.internal.root.ir.DefineComponentClassesIr;
+import dagger.hilt.processor.internal.root.ir.InvalidRootsException;
+import dagger.hilt.processor.internal.root.ir.ProcessedRootSentinelIr;
 import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Set;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
@@ -61,8 +60,6 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(DYNAMIC)
 @AutoService(Processor.class)
 public final class RootProcessor extends BaseProcessor {
-  private static final Comparator<TypeElement> QUALIFIED_NAME_COMPARATOR =
-      comparing(TypeElement::getQualifiedName, (n1, n2) -> n1.toString().compareTo(n2.toString()));
 
   private boolean processed;
   private GeneratesRootInputs generatesRootInputs;
@@ -123,7 +120,7 @@ public final class RootProcessor extends BaseProcessor {
     } else if (newElements.isEmpty()) {
       processed = true;
 
-      ImmutableList<TypeElement> rootsToProcess = rootsToProcess();
+      ImmutableSet<AggregatedRootIr> rootsToProcess = rootsToProcess();
       if (rootsToProcess.isEmpty()) {
         return;
       }
@@ -136,116 +133,40 @@ public final class RootProcessor extends BaseProcessor {
       }
 
       // Generate a sentinel for all processed roots.
-      for (TypeElement rootElement : rootsToProcess) {
+      for (AggregatedRootIr ir : rootsToProcess) {
+        TypeElement rootElement = getElementUtils().getTypeElement(ir.getRoot().canonicalName());
         new ProcessedRootSentinelGenerator(rootElement, getProcessingEnv()).generate();
       }
     }
   }
 
-  private ImmutableList<TypeElement> rootsToProcess() {
-    ImmutableSet<Root> allRoots =
-        AggregatedRootMetadata.from(processingEnv).stream()
-            .map(metadata -> Root.create(metadata.rootElement(), getProcessingEnv()))
-            .collect(toImmutableSet());
-
-    ImmutableSet<Root> processedRoots =
+  private ImmutableSet<AggregatedRootIr> rootsToProcess() {
+    ImmutableSet<ProcessedRootSentinelIr> processedRoots =
         ProcessedRootSentinelMetadata.from(getElementUtils()).stream()
-            .flatMap(metadata -> metadata.rootElements().stream())
-            .map(rootElement -> Root.create(rootElement, getProcessingEnv()))
+            .map(ProcessedRootSentinelMetadata::toIr)
+            .collect(toImmutableSet());
+    ImmutableSet<AggregatedRootIr> aggregatedRoots =
+        AggregatedRootMetadata.from(processingEnv).stream()
+            .map(AggregatedRootMetadata::toIr)
             .collect(toImmutableSet());
 
-    ImmutableSet<Root> rootsToProcess =
-        allRoots.stream().filter(root -> !processedRoots.contains(root)).collect(toImmutableSet());
-
-    ImmutableSet<TypeElement> rootElementsToProcess =
-        rootsToProcess.stream()
-            .map(Root::element)
-            .sorted(QUALIFIED_NAME_COMPARATOR)
-            .collect(toImmutableSet());
-
-    ImmutableSet<TypeElement> appRootElementsToProcess =
-        rootsToProcess.stream()
-            .filter(root -> !root.isTestRoot())
-            .map(Root::element)
-            .sorted(QUALIFIED_NAME_COMPARATOR)
-            .collect(toImmutableSet());
-
-    // Perform validation between roots in this compilation unit.
-    if (!appRootElementsToProcess.isEmpty()) {
-      ImmutableSet<TypeElement> testRootElementsToProcess =
-          rootsToProcess.stream()
-              .filter(Root::isTestRoot)
-              .map(Root::element)
-              .sorted(QUALIFIED_NAME_COMPARATOR)
-              .collect(toImmutableSet());
-
-      ProcessorErrors.checkState(
-          testRootElementsToProcess.isEmpty(),
-          "Cannot process test roots and app roots in the same compilation unit:"
-              + "\n\tApp root in this compilation unit: %s"
-              + "\n\tTest roots in this compilation unit: %s",
-          appRootElementsToProcess,
-          testRootElementsToProcess);
-
-      ProcessorErrors.checkState(
-          appRootElementsToProcess.size() == 1,
-          "Cannot process multiple app roots in the same compilation unit: %s",
-          appRootElementsToProcess);
+    boolean isCrossCompilationRootValidationDisabled =
+        isCrossCompilationRootValidationDisabled(
+            aggregatedRoots.stream()
+                .map(ir -> getElementUtils().getTypeElement(ir.getRoot().canonicalName()))
+                .collect(toImmutableSet()),
+            processingEnv);
+    try {
+      return ImmutableSet.copyOf(
+          AggregatedRootIrValidator.rootsToProcess(
+              isCrossCompilationRootValidationDisabled, processedRoots, aggregatedRoots));
+    } catch (InvalidRootsException ex) {
+      throw new BadInputException(ex.getMessage());
     }
-
-    // Perform validation across roots previous compilation units.
-    if (!isCrossCompilationRootValidationDisabled(rootElementsToProcess, getProcessingEnv())) {
-      ImmutableSet<TypeElement> processedTestRootElements =
-          allRoots.stream()
-              .filter(Root::isTestRoot)
-              .filter(root -> !rootsToProcess.contains(root))
-              .map(Root::element)
-              .sorted(QUALIFIED_NAME_COMPARATOR)
-              .collect(toImmutableSet());
-
-      // TODO(b/185742783): Add an explanation or link to docs to explain why we're forbidding this.
-      ProcessorErrors.checkState(
-          processedTestRootElements.isEmpty(),
-          "Cannot process new roots when there are test roots from a previous compilation unit:"
-              + "\n\tTest roots from previous compilation unit: %s"
-              + "\n\tAll roots from this compilation unit: %s",
-          processedTestRootElements,
-          rootElementsToProcess);
-
-      ImmutableSet<TypeElement> processedAppRootElements =
-          allRoots.stream()
-              .filter(root -> !root.isTestRoot())
-              .filter(root -> !rootsToProcess.contains(root))
-              .map(Root::element)
-              .sorted(QUALIFIED_NAME_COMPARATOR)
-              .collect(toImmutableSet());
-
-      ProcessorErrors.checkState(
-          processedAppRootElements.isEmpty() || appRootElementsToProcess.isEmpty(),
-          "Cannot process app roots in this compilation unit since there are app roots in a "
-              + "previous compilation unit:"
-              + "\n\tApp roots in previous compilation unit: %s"
-              + "\n\tApp roots in this compilation unit: %s",
-          processedAppRootElements,
-          appRootElementsToProcess);
-    }
-    return rootsToProcess.stream().map(Root::element).collect(toImmutableList());
   }
 
   private ImmutableSet<ComponentTreeDepsMetadata> componentTreeDepsMetadatas(
-      ImmutableList<TypeElement> rootElementsToProcess) {
-    ImmutableSet<AggregatedRootMetadata> aggregatedRootMetadatas =
-        AggregatedRootMetadata.from(processingEnv).stream()
-            // Filter to only the root elements that need processing.
-            .filter(metadata -> rootElementsToProcess.contains(metadata.rootElement()))
-            .collect(toImmutableSet());
-    // We should be guaranteed that there are no mixed roots, so check if this is prod or test.
-    boolean isTest =
-        aggregatedRootMetadatas.stream().anyMatch(metadata -> metadata.rootType().isTestRoot());
-    ImmutableSet<AggregatedRootIr> aggregatedRoots =
-        aggregatedRootMetadatas.stream()
-            .map(AggregatedRootMetadata::toIr)
-            .collect(toImmutableSet());
+      ImmutableSet<AggregatedRootIr> aggregatedRoots) {
     ImmutableSet<DefineComponentClassesIr> defineComponentDeps =
         DefineComponentClassesMetadata.from(getElementUtils()).stream()
             .map(DefineComponentClassesMetadata::toIr)
@@ -266,6 +187,9 @@ public final class RootProcessor extends BaseProcessor {
         AggregatedEarlyEntryPointMetadata.from(getElementUtils()).stream()
             .map(AggregatedEarlyEntryPointMetadata::toIr)
             .collect(toImmutableSet());
+
+    // We should be guaranteed that there are no mixed roots, so check if this is prod or test.
+    boolean isTest = aggregatedRoots.stream().anyMatch(AggregatedRootIr::isTestRoot);
     Set<ComponentTreeDepsIr> componentTreeDeps =
         ComponentTreeDepsIrCreator.components(
             isTest,

@@ -27,12 +27,13 @@ java_library(
     deps = [
         "//java/dagger:core",
         "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/producers",
-        "@google_bazel_common//third_party/java/google_java_format",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/jsr330_inject",
-        "@maven//:com_google_auto_auto_common",
     ],
 )

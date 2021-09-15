@@ -18,44 +18,40 @@ package dagger.internal.codegen.validation;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.auto.common.MoreElements;
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XMessager;
 import com.google.common.collect.ImmutableSet;
-import java.lang.annotation.Annotation;
-import java.util.Set;
-import javax.annotation.processing.Messager;
+import com.squareup.javapoet.ClassName;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
 
 /** A step that validates all binding methods that were not validated while processing modules. */
 public final class BindingMethodProcessingStep
-    extends TypeCheckingProcessingStep<ExecutableElement> {
+    extends TypeCheckingProcessingStep<XExecutableElement> {
 
-  private final Messager messager;
+  private final XMessager messager;
   private final AnyBindingMethodValidator anyBindingMethodValidator;
 
   @Inject
   BindingMethodProcessingStep(
-      Messager messager, AnyBindingMethodValidator anyBindingMethodValidator) {
-    super(MoreElements::asExecutable);
+      XMessager messager, AnyBindingMethodValidator anyBindingMethodValidator) {
     this.messager = messager;
     this.anyBindingMethodValidator = anyBindingMethodValidator;
   }
 
   @Override
-  public Set<? extends Class<? extends Annotation>> annotations() {
+  public ImmutableSet<ClassName> annotationClassNames() {
     return anyBindingMethodValidator.methodAnnotations();
   }
 
   @Override
-  protected void process(
-      ExecutableElement method, ImmutableSet<Class<? extends Annotation>> annotations) {
+  protected void process(XExecutableElement xElement, ImmutableSet<ClassName> annotations) {
     checkArgument(
-        anyBindingMethodValidator.isBindingMethod(method),
+        anyBindingMethodValidator.isBindingMethod(xElement),
         "%s is not annotated with any of %s",
-        method,
+        xElement,
         annotations());
-    if (!anyBindingMethodValidator.wasAlreadyValidated(method)) {
-      anyBindingMethodValidator.validate(method).printMessagesTo(messager);
+    if (!anyBindingMethodValidator.wasAlreadyValidated(xElement)) {
+      anyBindingMethodValidator.validate(xElement).printMessagesTo(messager);
     }
   }
 }

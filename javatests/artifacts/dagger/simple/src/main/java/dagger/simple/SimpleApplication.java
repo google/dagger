@@ -44,5 +44,8 @@ public class SimpleApplication {
 
   public static void main(String[] args) {
     Foo foo = DaggerSimpleApplication_SimpleComponent.create().foo();
+
+    // Execute other classes
+    AssistedInjects.main(args);
   }
 }

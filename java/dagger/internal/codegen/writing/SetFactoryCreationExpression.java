@@ -28,8 +28,8 @@ import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingType;
 import dagger.internal.codegen.binding.ContributionBinding;
-import dagger.model.DependencyRequest;
 import dagger.producers.Produced;
+import dagger.spi.model.DependencyRequest;
 
 /** A factory creation expression for a multibound set. */
 final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpression {
@@ -40,9 +40,9 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
   SetFactoryCreationExpression(
       @Assisted ContributionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequestRepresentations componentRequestRepresentations,
       BindingGraph graph) {
-    super(binding, componentImplementation, componentBindingExpressions);
+    super(binding, componentImplementation, componentRequestRepresentations);
     this.binding = checkNotNull(binding);
     this.graph = graph;
   }

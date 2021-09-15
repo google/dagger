@@ -18,7 +18,7 @@ package dagger.internal.codegen.binding;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
-import static dagger.model.RequestKind.INSTANCE;
+import static dagger.spi.model.RequestKind.INSTANCE;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -32,11 +32,11 @@ import dagger.internal.ProviderOfLazy;
 import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.DependencyRequest;
-import dagger.model.RequestKind;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.internal.Producers;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;

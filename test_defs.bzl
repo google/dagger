@@ -19,7 +19,9 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test")
 # Defines a set of build variants and the list of extra javacopts to build with.
 # The key will be appended to the generated test names to ensure uniqueness.
 BUILD_VARIANTS = {
+    "Shards": ["-Adagger.keysPerComponentShard=2"],
     "FastInit": ["-Adagger.fastInit=enabled"],
+    "FastInit_Shards": ["-Adagger.fastInit=enabled", "-Adagger.keysPerComponentShard=2"],
 }
 
 # TODO(ronshapiro): convert this to use bazel_common

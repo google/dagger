@@ -33,11 +33,11 @@ import dagger.internal.codegen.base.Util;
 import dagger.internal.codegen.binding.ComponentNodeImpl;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.ChildFactoryMethodEdge;
-import dagger.model.BindingGraph.ComponentNode;
-import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraph.ChildFactoryMethodEdge;
+import dagger.spi.model.BindingGraph.ComponentNode;
+import dagger.spi.model.BindingGraphPlugin;
+import dagger.spi.model.DiagnosticReporter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -96,7 +96,7 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
         .filter(binding -> binding.componentPath().equals(child.componentPath()))
         // that require a module instance
         .filter(binding -> binding.requiresModuleInstance())
-        .map(binding -> binding.contributingModule().get())
+        .map(binding -> binding.contributingModule().get().java())
         .distinct()
         // module owned by child
         .filter(module -> modulesOwnedByChild.contains(module))
@@ -110,9 +110,9 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
   private ImmutableSet<TypeElement> subgraphFactoryMethodParameters(
       ChildFactoryMethodEdge edge, BindingGraph bindingGraph) {
     ComponentNode parent = (ComponentNode) bindingGraph.network().incidentNodes(edge).source();
-    DeclaredType parentType = asDeclared(parent.componentPath().currentComponent().asType());
+    DeclaredType parentType = asDeclared(parent.componentPath().currentComponent().java().asType());
     ExecutableType factoryMethodType =
-        asExecutable(types.asMemberOf(parentType, edge.factoryMethod()));
+        asExecutable(types.asMemberOf(parentType, edge.factoryMethod().java()));
     return asTypeElements(factoryMethodType.getParameterTypes());
   }
 
@@ -153,7 +153,8 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
             .target()
             .componentPath()
             .currentComponent()
-            .getQualifiedName(),
+            .className()
+            .canonicalName(),
         Joiner.on(", ").join(missingModules));
   }
 }

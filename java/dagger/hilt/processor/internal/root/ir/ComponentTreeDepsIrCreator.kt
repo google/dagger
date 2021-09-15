@@ -48,7 +48,7 @@ class ComponentTreeDepsIrCreator private constructor(
   }
 
   private fun testComponents(): Set<ComponentTreeDepsIr> {
-    val rootsUsingSharedComponent = rootsUsingSharedComponent()
+    val rootsUsingSharedComponent = rootsUsingSharedComponent(aggregatedRoots)
     val aggregatedRootsByRoot = aggregatedRoots.associateBy { it.root }
     val aggregatedDepsByRoot = aggregatedDepsByRoot(
       aggregatedRoots = aggregatedRoots,
@@ -104,7 +104,7 @@ class ComponentTreeDepsIrCreator private constructor(
     }
   }
 
-  private fun rootsUsingSharedComponent(): Set<ClassName> {
+  private fun rootsUsingSharedComponent(roots: Set<AggregatedRootIr>): Set<ClassName> {
     if (!isSharedTestComponentsEnabled) {
       return emptySet()
     }
@@ -112,7 +112,7 @@ class ComponentTreeDepsIrCreator private constructor(
       addAll(aggregatedDeps.filter { it.module != null }.mapNotNull { it.test })
       addAll(aggregatedUninstallModulesDeps.map { it.test })
     }
-    return aggregatedRoots
+    return roots
       .filter { it.isTestRoot && it.allowsSharingComponent }
       .map { it.root }
       .filter { !hasLocalModuleDependencies.contains(it) }

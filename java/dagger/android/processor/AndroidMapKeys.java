@@ -19,7 +19,6 @@ package dagger.android.processor;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 
 import com.google.auto.common.MoreTypes;
-import dagger.android.AndroidInjectionKey;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
@@ -27,7 +26,7 @@ import javax.lang.model.type.TypeMirror;
 
 final class AndroidMapKeys {
   /**
-   * If {@code mapKey} is {@link AndroidInjectionKey}, returns the string value for the map key. If
+   * If {@code mapKey} is {@code AndroidInjectionKey}, returns the string value for the map key. If
    * it's {@link dagger.multibindings.ClassKey}, returns the fully-qualified class name of the
    * annotation value. Otherwise returns {@link Optional#empty()}.
    */

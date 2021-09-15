@@ -48,12 +48,14 @@ import dagger.internal.codegen.base.ElementFormatter;
 import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.DependencyEdge;
-import dagger.model.BindingGraph.Edge;
-import dagger.model.BindingGraph.MaybeBinding;
-import dagger.model.BindingGraph.Node;
-import dagger.model.ComponentPath;
+import dagger.spi.model.Binding;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraph.DependencyEdge;
+import dagger.spi.model.BindingGraph.Edge;
+import dagger.spi.model.BindingGraph.MaybeBinding;
+import dagger.spi.model.BindingGraph.Node;
+import dagger.spi.model.ComponentPath;
+import dagger.spi.model.DaggerElement;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.function.Function;
@@ -149,7 +151,7 @@ public final class DiagnosticMessageGenerator {
       dependencyTrace = ImmutableList.of(dependencyEdge);
     } else {
       // It's not an entry point, so it's part of a binding
-      dagger.model.Binding binding = (dagger.model.Binding) source(dependencyEdge);
+      Binding binding = (Binding) source(dependencyEdge);
       entryPoints = graph.entryPointEdgesDependingOnBinding(binding);
       dependencyTrace =
           ImmutableList.<DependencyEdge>builder()
@@ -178,7 +180,15 @@ public final class DiagnosticMessageGenerator {
         appendComponentPathUnlessAtRoot(message, source(getLast(dependencyTrace)));
       }
     }
+    message.append(getRequestsNotInTrace(dependencyTrace, requests, entryPoints));
+    return message.toString();
+  }
 
+  public String getRequestsNotInTrace(
+      ImmutableList<DependencyEdge> dependencyTrace,
+      ImmutableSet<DependencyEdge> requests,
+      ImmutableSet<DependencyEdge> entryPoints) {
+    StringBuilder message = new StringBuilder();
     // Print any dependency requests that aren't shown as part of the dependency trace.
     ImmutableSet<Element> requestsToPrint =
         requests.stream()
@@ -189,6 +199,7 @@ public final class DiagnosticMessageGenerator {
                         || (!request.isEntryPoint() && !isTracedRequest(dependencyTrace, request)))
             .map(request -> request.dependencyRequest().requestElement())
             .flatMap(presentValues())
+            .map(DaggerElement::java)
             .collect(toImmutableSet());
     if (!requestsToPrint.isEmpty()) {
       message
@@ -229,14 +240,14 @@ public final class DiagnosticMessageGenerator {
       new Formatter<DependencyEdge>() {
         @Override
         public String format(DependencyEdge object) {
-          Element requestElement = object.dependencyRequest().requestElement().get();
+          Element requestElement = object.dependencyRequest().requestElement().get().java();
           StringBuilder element = new StringBuilder(elementToString(requestElement));
 
           // For entry points declared in subcomponents or supertypes of the root component,
           // append the component path to make clear to the user which component it's in.
           ComponentPath componentPath = source(object).componentPath();
           if (!componentPath.atRoot()
-              || !requestElement.getEnclosingElement().equals(componentPath.rootComponent())) {
+              || !requestElement.getEnclosingElement().equals(componentPath.rootComponent().java())) {
             element.append(String.format(" [%s]", componentPath));
           }
           return element.toString();
@@ -252,9 +263,9 @@ public final class DiagnosticMessageGenerator {
    * Returns the dependency trace from one of the {@code entryPoints} to {@code binding} to {@code
    * message} as a list <i>ending with</i> the entry point.
    */
-  // TODO(ronshapiro): Adding a DependencyPath type to dagger.model could be useful, i.e.
+  // TODO(ronshapiro): Adding a DependencyPath type to dagger.spi.model could be useful, i.e.
   // bindingGraph.shortestPathFromEntryPoint(DependencyEdge, MaybeBindingNode)
-  ImmutableList<DependencyEdge> dependencyTrace(
+  public ImmutableList<DependencyEdge> dependencyTrace(
       MaybeBinding binding, ImmutableSet<DependencyEdge> entryPoints) {
     // Module binding graphs may have bindings unreachable from any entry points. If there are
     // no entry points for this DiagnosticInfo, don't try to print a dependency trace.
@@ -299,7 +310,7 @@ public final class DiagnosticMessageGenerator {
   }
 
   /** Returns all the nonsynthetic dependency requests for a binding. */
-  ImmutableSet<DependencyEdge> requests(MaybeBinding binding) {
+  public ImmutableSet<DependencyEdge> requests(MaybeBinding binding) {
     return graph.network().inEdges(binding).stream()
         .flatMap(instancesOf(DependencyEdge.class))
         .filter(edge -> edge.dependencyRequest().requestElement().isPresent())
@@ -353,12 +364,12 @@ public final class DiagnosticMessageGenerator {
   }
 
   TypeElement componentContainingEntryPoint(DependencyEdge entryPoint) {
-    return source(entryPoint).componentPath().currentComponent();
+    return source(entryPoint).componentPath().currentComponent().java();
   }
 
   TypeElement typeDeclaringEntryPoint(DependencyEdge entryPoint) {
     return MoreElements.asType(
-        entryPoint.dependencyRequest().requestElement().get().getEnclosingElement());
+        entryPoint.dependencyRequest().requestElement().get().java().getEnclosingElement());
   }
 
   /**
@@ -368,7 +379,7 @@ public final class DiagnosticMessageGenerator {
   Comparator<DependencyEdge> requestEnclosingTypeName() {
     return comparing(
         edge ->
-            closestEnclosingTypeElement(edge.dependencyRequest().requestElement().get())
+            closestEnclosingTypeElement(edge.dependencyRequest().requestElement().get().java())
                 .getQualifiedName()
                 .toString());
   }
@@ -380,7 +391,8 @@ public final class DiagnosticMessageGenerator {
    * <p>Only useful to compare edges whose request elements were declared in the same type.
    */
   Comparator<DependencyEdge> requestElementDeclarationOrder() {
-    return comparing(edge -> edge.dependencyRequest().requestElement().get(), DECLARATION_ORDER);
+    return comparing(
+        edge -> edge.dependencyRequest().requestElement().get().java(), DECLARATION_ORDER);
   }
 
   private Node source(Edge edge) {

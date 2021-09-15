@@ -20,15 +20,16 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
 import android.content.Context;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.activity.ComponentActivity;
+import androidx.annotation.NonNull;
 import dagger.Binds;
 import dagger.Module;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.ActivityRetainedLifecycle;
+import dagger.hilt.android.EntryPointAccessors;
 import dagger.hilt.android.components.ActivityRetainedComponent;
 import dagger.hilt.android.internal.ThreadUtil;
 import dagger.hilt.android.internal.builders.ActivityRetainedComponentBuilder;
@@ -97,9 +98,8 @@ final class ActivityRetainedComponentManager
           @SuppressWarnings("unchecked")
           public <T extends ViewModel> T create(@NonNull Class<T> aClass) {
             ActivityRetainedComponent component =
-                EntryPoints.get(
-                        context.getApplicationContext(),
-                    ActivityRetainedComponentBuilderEntryPoint.class)
+                EntryPointAccessors.fromApplication(
+                    context, ActivityRetainedComponentBuilderEntryPoint.class)
                     .retainedComponentBuilder()
                     .build();
             return (T) new ActivityRetainedComponentViewModel(component);

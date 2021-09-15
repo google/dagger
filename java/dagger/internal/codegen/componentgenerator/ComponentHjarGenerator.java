@@ -31,6 +31,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XFiler;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
@@ -45,13 +46,13 @@ import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
 import dagger.internal.codegen.binding.ComponentCreatorKind;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
+import dagger.internal.codegen.binding.MethodSignature;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.producers.internal.CancellationListener;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -79,7 +80,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
 
   @Inject
   ComponentHjarGenerator(
-      Filer filer,
+      XFiler filer,
       DaggerElements elements,
       DaggerTypes types,
       SourceVersion sourceVersion,

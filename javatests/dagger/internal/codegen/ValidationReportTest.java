@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.internal.codegen.validation.ValidationReport;
-import dagger.internal.codegen.validation.ValidationReport.Builder;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -50,7 +49,7 @@ public class ValidationReportTest {
                 new SimpleTestProcessor() {
                   @Override
                   void test() {
-                    Builder<TypeElement> reportBuilder =
+                    ValidationReport.Builder reportBuilder =
                         ValidationReport.about(getTypeElement("test.TestClass"));
                     reportBuilder.addError("simple error");
                     reportBuilder.build().printMessagesTo(processingEnv.getMessager());
@@ -69,7 +68,7 @@ public class ValidationReportTest {
                 new SimpleTestProcessor() {
                   @Override
                   void test() {
-                    Builder<TypeElement> reportBuilder =
+                    ValidationReport.Builder reportBuilder =
                         ValidationReport.about(getTypeElement("test.TestClass"));
                     reportBuilder.addError("simple error", getTypeElement(String.class));
                     reportBuilder.build().printMessagesTo(processingEnv.getMessager());
@@ -91,10 +90,10 @@ public class ValidationReportTest {
                 new SimpleTestProcessor() {
                   @Override
                   void test() {
-                    Builder<TypeElement> reportBuilder =
+                    ValidationReport.Builder reportBuilder =
                         ValidationReport.about(getTypeElement("test.TestClass"));
                     reportBuilder.addError("simple error");
-                    ValidationReport<TypeElement> parentReport =
+                    ValidationReport parentReport =
                         ValidationReport.about(getTypeElement(String.class))
                             .addSubreport(reportBuilder.build())
                             .build();

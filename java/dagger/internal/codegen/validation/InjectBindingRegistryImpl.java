@@ -26,6 +26,7 @@ import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConst
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 
+import androidx.room.compiler.processing.XMessager;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
@@ -47,13 +48,12 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.Key;
+import dagger.spi.model.Key;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -73,7 +73,7 @@ import javax.tools.Diagnostic.Kind;
 final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   private final DaggerElements elements;
   private final DaggerTypes types;
-  private final Messager messager;
+  private final XMessager messager;
   private final InjectValidator injectValidator;
   private final InjectValidator injectValidatorWhenGeneratingCode;
   private final KeyFactory keyFactory;
@@ -95,7 +95,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
           binding != null;
           binding = bindingsRequiringGeneration.poll()) {
         checkState(!binding.unresolved().isPresent());
-        if (injectValidatorWhenGeneratingCode.isValidType(binding.key().type())) {
+        if (injectValidatorWhenGeneratingCode.isValidType(binding.key().type().java())) {
           generator.generate(binding);
         }
         materializedBindingKeys.add(binding.key());
@@ -135,7 +135,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
                   "Generating a %s for %s. "
                       + "Prefer to run the dagger processor over that class instead.",
                   factoryClass.getSimpleName(),
-                  types.erasure(binding.key().type()))); // erasure to strip <T> from msgs.
+                  types.erasure(binding.key().type().java()))); // erasure to strip <T> from msgs.
         }
       }
     }
@@ -172,7 +172,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   InjectBindingRegistryImpl(
       DaggerElements elements,
       DaggerTypes types,
-      Messager messager,
+      XMessager messager,
       InjectValidator injectValidator,
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
@@ -251,7 +251,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
       return Optional.of(cachedBinding);
     }
 
-    ValidationReport<TypeElement> report = injectValidator.validateConstructor(constructorElement);
+    ValidationReport report = injectValidator.validateConstructor(constructorElement);
     report.printMessagesTo(messager);
     if (!report.isClean()) {
       return Optional.empty();
@@ -282,8 +282,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
       return Optional.of(cachedBinding);
     }
 
-    ValidationReport<TypeElement> report =
-        injectValidator.validateMembersInjectionType(typeElement);
+    ValidationReport report = injectValidator.validateMembersInjectionType(typeElement);
     report.printMessagesTo(messager);
     if (!report.isClean()) {
       return Optional.empty();
@@ -312,7 +311,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     }
 
     // ok, let's see if we can find an @Inject constructor
-    TypeElement element = MoreElements.asType(types.asElement(key.type()));
+    TypeElement element = MoreElements.asType(types.asElement(key.type().java()));
     ImmutableSet<ExecutableElement> injectConstructors =
         ImmutableSet.<ExecutableElement>builder()
             .addAll(injectedConstructors(element))
@@ -324,7 +323,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
         return Optional.empty();
       case 1:
         return tryRegisterConstructor(
-            Iterables.getOnlyElement(injectConstructors), Optional.of(key.type()), true);
+            Iterables.getOnlyElement(injectConstructors), Optional.of(key.type().java()), true);
       default:
         throw new IllegalStateException("Found multiple @Inject constructors: "
             + injectConstructors);
@@ -341,10 +340,8 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     if (binding != null) {
       return Optional.of(binding);
     }
-    Optional<MembersInjectionBinding> newBinding =
-        tryRegisterMembersInjectedType(
-            MoreTypes.asTypeElement(key.type()), Optional.of(key.type()), true);
-    return newBinding;
+    return tryRegisterMembersInjectedType(
+        MoreTypes.asTypeElement(key.type().java()), Optional.of(key.type().java()), true);
   }
 
   @Override
@@ -352,7 +349,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     if (!isValidMembersInjectionKey(key)) {
       return Optional.empty();
     }
-    Key membersInjectionKey = keyFactory.forMembersInjectedType(unwrapType(key.type()));
+    Key membersInjectionKey = keyFactory.forMembersInjectedType(unwrapType(key.type().java()));
     return getOrFindMembersInjectionBinding(membersInjectionKey)
         .map(binding -> bindingFactory.membersInjectorBinding(key, binding));
   }

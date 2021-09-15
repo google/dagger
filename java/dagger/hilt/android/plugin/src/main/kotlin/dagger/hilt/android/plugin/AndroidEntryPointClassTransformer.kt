@@ -189,6 +189,12 @@ internal class AndroidEntryPointClassTransformer(
           if (currentClassRef != oldSuperclassName) {
             return@forEachInstruction
           }
+          // If the method reference of the instruction is a constructor, then we should not
+          // rewrite it since its an instantiation and not a `super()` call.
+          val methodRefName = constantPool.getMethodrefName(methodRef)
+          if (methodRefName == "<init>") {
+            return@forEachInstruction
+          }
           val nameAndTypeRef = constantPool.getMethodrefNameAndType(methodRef)
           val newSuperclassRef = constantPool.addClassInfo(newSuperclassName)
           val newMethodRef = constantPool.addMethodrefInfo(newSuperclassRef, nameAndTypeRef)

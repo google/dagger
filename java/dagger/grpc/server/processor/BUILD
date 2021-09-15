@@ -20,11 +20,11 @@ java_library(
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/internal/guava:io",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/google_java_format",
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/jsr250_annotations",
-        "@maven//:com_google_auto_auto_common",
     ],
 )
 

@@ -17,11 +17,11 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
-import static dagger.model.RequestKind.INSTANCE;
-import static dagger.model.RequestKind.LAZY;
-import static dagger.model.RequestKind.PRODUCED;
-import static dagger.model.RequestKind.PRODUCER;
-import static dagger.model.RequestKind.PROVIDER;
+import static dagger.spi.model.RequestKind.INSTANCE;
+import static dagger.spi.model.RequestKind.LAZY;
+import static dagger.spi.model.RequestKind.PRODUCED;
+import static dagger.spi.model.RequestKind.PRODUCER;
+import static dagger.spi.model.RequestKind.PROVIDER;
 
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.FrameworkTypeMapper;

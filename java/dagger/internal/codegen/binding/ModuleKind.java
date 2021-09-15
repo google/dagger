@@ -20,14 +20,13 @@ import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
+import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 
-import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import dagger.Module;
+import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
-import dagger.producers.ProducerModule;
-import java.lang.annotation.Annotation;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
@@ -37,13 +36,13 @@ import javax.lang.model.element.TypeElement;
 /** Enumeration of the kinds of modules. */
 public enum ModuleKind {
   /** {@code @Module} */
-  MODULE(Module.class),
+  MODULE(TypeNames.MODULE),
 
   /** {@code @ProducerModule} */
-  PRODUCER_MODULE(ProducerModule.class);
+  PRODUCER_MODULE(TypeNames.PRODUCER_MODULE);
 
   /** Returns the annotations for modules of the given kinds. */
-  public static ImmutableSet<Class<? extends Annotation>> annotationsFor(Set<ModuleKind> kinds) {
+  public static ImmutableSet<ClassName> annotationsFor(Set<ModuleKind> kinds) {
     return kinds.stream().map(ModuleKind::annotation).collect(toImmutableSet());
   }
 
@@ -57,7 +56,7 @@ public enum ModuleKind {
   public static Optional<ModuleKind> forAnnotatedElement(TypeElement element) {
     Set<ModuleKind> kinds = EnumSet.noneOf(ModuleKind.class);
     for (ModuleKind kind : values()) {
-      if (MoreElements.isAnnotationPresent(element, kind.annotation())) {
+      if (isAnnotationPresent(element, kind.annotation())) {
         kinds.add(kind);
       }
     }
@@ -79,9 +78,9 @@ public enum ModuleKind {
     }
   }
 
-  private final Class<? extends Annotation> moduleAnnotation;
+  private final ClassName moduleAnnotation;
 
-  ModuleKind(Class<? extends Annotation> moduleAnnotation) {
+  ModuleKind(ClassName moduleAnnotation) {
     this.moduleAnnotation = moduleAnnotation;
   }
 
@@ -98,7 +97,7 @@ public enum ModuleKind {
   }
 
   /** Returns the annotation that marks a module of this kind. */
-  public Class<? extends Annotation> annotation() {
+  public ClassName annotation() {
     return moduleAnnotation;
   }
 

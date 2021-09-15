@@ -67,7 +67,7 @@ abstract class ComponentCreatorTestHelper {
               line ->
                   line.replace("Builder", "Factory")
                       .replace("builder", "factory")
-                      .replace("build", "create"));
+                      .replace("build", "createComponent"));
     }
     return stream.collect(joining("\n"));
   }

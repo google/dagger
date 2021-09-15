@@ -22,6 +22,7 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
+import androidx.room.compiler.processing.XFiler;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.base.SourceFileGenerator;
@@ -29,7 +30,6 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.MapKeys;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -45,7 +45,7 @@ public final class InaccessibleMapKeyProxyGenerator
 
   @Inject
   InaccessibleMapKeyProxyGenerator(
-      Filer filer, DaggerTypes types, DaggerElements elements, SourceVersion sourceVersion) {
+      XFiler filer, DaggerTypes types, DaggerElements elements, SourceVersion sourceVersion) {
     super(filer, elements, sourceVersion);
     this.types = types;
     this.elements = elements;

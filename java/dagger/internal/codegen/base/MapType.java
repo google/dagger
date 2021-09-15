@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
-import dagger.model.Key;
+import dagger.spi.model.Key;
 import java.util.Map;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -134,7 +134,7 @@ public abstract class MapType {
    * {@code true} if {@code key.type()} is a {@link Map} type.
    */
   public static boolean isMap(Key key) {
-    return isMap(key.type());
+    return isMap(key.type().java());
   }
 
   /**
@@ -153,6 +153,6 @@ public abstract class MapType {
    * @throws IllegalArgumentException if {@code key.type()} is not a {@link Map} type
    */
   public static MapType from(Key key) {
-    return from(key.type());
+    return from(key.type().java());
   }
 }

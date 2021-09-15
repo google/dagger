@@ -17,25 +17,50 @@
 package dagger.internal.codegen.componentgenerator;
 
 import dagger.BindsInstance;
+import dagger.Module;
+import dagger.Provides;
 import dagger.Subcomponent;
 import dagger.internal.codegen.binding.BindingGraph;
-import dagger.internal.codegen.writing.ComponentBindingExpressions;
 import dagger.internal.codegen.writing.ComponentImplementation;
+import dagger.internal.codegen.writing.ComponentImplementation.ChildComponentImplementationFactory;
+import dagger.internal.codegen.writing.ComponentRequestRepresentations;
 import dagger.internal.codegen.writing.ComponentRequirementExpressions;
 import dagger.internal.codegen.writing.ParentComponent;
 import dagger.internal.codegen.writing.PerComponentImplementation;
 import java.util.Optional;
+import javax.inject.Provider;
 
 /**
  * A subcomponent that injects all objects that are responsible for creating a single {@link
  * ComponentImplementation} instance. Each child {@link ComponentImplementation} will have its own
  * instance of {@link CurrentImplementationSubcomponent}.
  */
-@Subcomponent
+@Subcomponent(
+    modules = CurrentImplementationSubcomponent.ChildComponentImplementationFactoryModule.class)
 @PerComponentImplementation
 // This only needs to be public because the type is referenced by generated component.
 public interface CurrentImplementationSubcomponent {
-  ComponentImplementationBuilder componentImplementationBuilder();
+  ComponentImplementation componentImplementation();
+
+  /** A module to bind the {@link ChildComponentImplementationFactory}. */
+  @Module
+  interface ChildComponentImplementationFactoryModule {
+    @Provides
+    static ChildComponentImplementationFactory provideChildComponentImplementationFactory(
+        CurrentImplementationSubcomponent.Builder currentImplementationSubcomponentBuilder,
+        Provider<ComponentImplementation> componentImplementatation,
+        Provider<ComponentRequestRepresentations> componentRequestRepresentations,
+        Provider<ComponentRequirementExpressions> componentRequirementExpressions) {
+      return childGraph ->
+          currentImplementationSubcomponentBuilder
+              .bindingGraph(childGraph)
+              .parentImplementation(Optional.of(componentImplementatation.get()))
+              .parentRequestRepresentations(Optional.of(componentRequestRepresentations.get()))
+              .parentRequirementExpressions(Optional.of(componentRequirementExpressions.get()))
+              .build()
+              .componentImplementation();
+    }
+  }
 
   /** Returns the builder for {@link CurrentImplementationSubcomponent}. */
   @Subcomponent.Builder
@@ -48,8 +73,8 @@ public interface CurrentImplementationSubcomponent {
         @ParentComponent Optional<ComponentImplementation> parentImplementation);
 
     @BindsInstance
-    Builder parentBindingExpressions(
-        @ParentComponent Optional<ComponentBindingExpressions> parentBindingExpressions);
+    Builder parentRequestRepresentations(
+        @ParentComponent Optional<ComponentRequestRepresentations> parentRequestRepresentations);
 
     @BindsInstance
     Builder parentRequirementExpressions(

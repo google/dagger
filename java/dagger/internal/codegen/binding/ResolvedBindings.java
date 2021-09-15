@@ -26,7 +26,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
-import dagger.model.Key;
+import dagger.spi.model.Key;
 import javax.lang.model.element.TypeElement;
 
 /**

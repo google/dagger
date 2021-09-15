@@ -46,6 +46,7 @@ import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XFiler;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -70,17 +71,16 @@ import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
-import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import dagger.producers.internal.AbstractProducesMethodProducer;
 import dagger.producers.internal.Producers;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
+import dagger.spi.model.RequestKind;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -93,7 +93,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
 
   @Inject
   ProducerFactoryGenerator(
-      Filer filer,
+      XFiler filer,
       DaggerElements elements,
       SourceVersion sourceVersion,
       CompilerOptions compilerOptions,
@@ -303,7 +303,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
 
   /** Returns a name of the variable representing this dependency's future. */
   private static String dependencyFutureName(DependencyRequest dependency) {
-    return dependency.requestElement().get().getSimpleName() + "Future";
+    return dependency.requestElement().get().java().getSimpleName() + "Future";
   }
 
   /** Represents the transformation of an input future by a producer method. */
@@ -405,7 +405,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
 
     @Override
     String applyArgName() {
-      String argName = asyncDependency.requestElement().get().getSimpleName().toString();
+      String argName = asyncDependency.requestElement().get().java().getSimpleName().toString();
       if (argName.equals("module")) {
         return "moduleArg";
       }
@@ -495,7 +495,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
   }
 
   private static TypeName asyncDependencyType(DependencyRequest dependency) {
-    TypeName keyName = TypeName.get(dependency.key().type());
+    TypeName keyName = TypeName.get(dependency.key().type().java());
     switch (dependency.kind()) {
       case INSTANCE:
         return keyName;

@@ -55,6 +55,7 @@ android_library(
         "//:dagger_with_compiler",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/components",
+        "//java/dagger/hilt/android/internal",
         "//java/dagger/hilt/android/internal/builders",
         "//java/dagger/hilt/android/internal/legacy:aggregated_element_proxy",
         "//java/dagger/hilt/android/internal/managers",
@@ -121,6 +122,7 @@ android_library(
         ":package_info",
         "//:dagger_with_compiler",
         "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt/android/internal",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",
@@ -144,7 +146,7 @@ android_library(
     ],
 )
 
-java_library(
+android_library(
     name = "bind_value",
     testonly = 1,
     srcs = [

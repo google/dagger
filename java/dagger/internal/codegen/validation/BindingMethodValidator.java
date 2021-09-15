@@ -19,31 +19,33 @@ package dagger.internal.codegen.validation;
 import static com.google.auto.common.MoreElements.asType;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 import static java.util.stream.Collectors.joining;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.PRIVATE;
 
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XVariableElement;
+import androidx.room.compiler.processing.compat.XConverters;
+import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
+import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import java.lang.annotation.Annotation;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
 /** A validator for methods that represent binding declarations. */
-abstract class BindingMethodValidator extends BindingElementValidator<ExecutableElement> {
+abstract class BindingMethodValidator extends BindingElementValidator<XExecutableElement> {
 
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final KotlinMetadataUtil metadataUtil;
   private final DependencyRequestValidator dependencyRequestValidator;
-  private final Class<? extends Annotation> methodAnnotation;
-  private final ImmutableSet<? extends Class<? extends Annotation>> enclosingElementAnnotations;
+  private final ClassName methodAnnotation;
+  private final ImmutableSet<ClassName> enclosingElementAnnotations;
   private final Abstractness abstractness;
   private final ExceptionSuperclass exceptionSuperclass;
 
@@ -59,8 +61,8 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
       DaggerTypes types,
       KotlinMetadataUtil metadataUtil,
       DependencyRequestValidator dependencyRequestValidator,
-      Class<? extends Annotation> methodAnnotation,
-      Class<? extends Annotation> enclosingElementAnnotation,
+      ClassName methodAnnotation,
+      ClassName enclosingElementAnnotation,
       Abstractness abstractness,
       ExceptionSuperclass exceptionSuperclass,
       AllowsMultibindings allowsMultibindings,
@@ -91,8 +93,8 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
       DaggerElements elements,
       DaggerTypes types,
       KotlinMetadataUtil metadataUtil,
-      Class<? extends Annotation> methodAnnotation,
-      Iterable<? extends Class<? extends Annotation>> enclosingElementAnnotations,
+      ClassName methodAnnotation,
+      Iterable<ClassName> enclosingElementAnnotations,
       DependencyRequestValidator dependencyRequestValidator,
       Abstractness abstractness,
       ExceptionSuperclass exceptionSuperclass,
@@ -111,7 +113,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
   }
 
   /** The annotation that identifies binding methods validated by this object. */
-  final Class<? extends Annotation> methodAnnotation() {
+  final ClassName methodAnnotation() {
     return methodAnnotation;
   }
 
@@ -127,7 +129,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
 
   @Override
   protected final String bindingElements() {
-    return String.format("@%s methods", methodAnnotation.getSimpleName());
+    return String.format("@%s methods", methodAnnotation.simpleName());
   }
 
   @Override
@@ -137,13 +139,13 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
 
   /** Abstract validator for individual binding method elements. */
   protected abstract class MethodValidator extends ElementValidator {
-    protected MethodValidator(ExecutableElement element) {
-      super(element);
+    protected MethodValidator(XExecutableElement xElement) {
+      super(xElement);
     }
 
     @Override
     protected final Optional<TypeMirror> bindingElementType() {
-      return Optional.of(element.getReturnType());
+      return Optional.of(MoreElements.asExecutable(element).getReturnType());
     }
 
     @Override
@@ -165,7 +167,8 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
      * {@link #enclosingElementAnnotations}.
      */
     private void checkEnclosingElement() {
-      TypeElement enclosingElement = asType(element.getEnclosingElement());
+      ExecutableElement method = MoreElements.asExecutable(element);
+      TypeElement enclosingElement = asType(method.getEnclosingElement());
       if (metadataUtil.isCompanionObjectClass(enclosingElement)) {
         // Binding method is in companion object, use companion object's enclosing class instead.
         enclosingElement = asType(enclosingElement.getEnclosingElement());
@@ -175,28 +178,29 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
             bindingMethods(
                 "can only be present within a @%s",
                 enclosingElementAnnotations.stream()
-                    .map(Class::getSimpleName)
+                    .map(ClassName::simpleName)
                     .collect(joining(" or @"))));
       }
     }
 
     /** Adds an error if the method is generic. */
     private void checkTypeParameters() {
-      if (!element.getTypeParameters().isEmpty()) {
+      ExecutableElement method = MoreElements.asExecutable(element);
+      if (!method.getTypeParameters().isEmpty()) {
         report.addError(bindingMethods("may not have type parameters"));
       }
     }
 
     /** Adds an error if the method is private. */
     private void checkNotPrivate() {
-      if (element.getModifiers().contains(PRIVATE)) {
+      if (xElement.isPrivate()) {
         report.addError(bindingMethods("cannot be private"));
       }
     }
 
     /** Adds an error if the method is abstract but must not be, or is not and must be. */
     private void checkAbstractness() {
-      boolean isAbstract = element.getModifiers().contains(ABSTRACT);
+      boolean isAbstract = xElement.isAbstract();
       switch (abstractness) {
         case MUST_BE_ABSTRACT:
           if (!isAbstract) {
@@ -216,12 +220,12 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
      * subtype of {@link Exception}.
      */
     private void checkThrows() {
-      exceptionSuperclass.checkThrows(BindingMethodValidator.this, element, report);
+      exceptionSuperclass.checkThrows(BindingMethodValidator.this, xElement, report);
     }
 
     /** Adds errors for the method parameters. */
     protected void checkParameters() {
-      for (VariableElement parameter : element.getParameters()) {
+      for (XVariableElement parameter : xElement.getParameters()) {
         checkParameter(parameter);
       }
     }
@@ -230,8 +234,9 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
      * Adds errors for a method parameter. This implementation reports an error if the parameter has
      * more than one qualifier.
      */
-    protected void checkParameter(VariableElement parameter) {
-      dependencyRequestValidator.validateDependencyRequest(report, parameter, parameter.asType());
+    protected void checkParameter(XVariableElement parameter) {
+      dependencyRequestValidator.validateDependencyRequest(
+          report, XConverters.toJavac(parameter), XConverters.toJavac(parameter.getType()));
     }
   }
 
@@ -256,8 +261,8 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
       @Override
       protected void checkThrows(
           BindingMethodValidator validator,
-          ExecutableElement element,
-          ValidationReport.Builder<ExecutableElement> report) {
+          XExecutableElement element,
+          ValidationReport.Builder report) {
         if (!element.getThrownTypes().isEmpty()) {
           report.addError(validator.bindingMethods("may not throw"));
           return;
@@ -301,11 +306,12 @@ abstract class BindingMethodValidator extends BindingElementValidator<Executable
      */
     protected void checkThrows(
         BindingMethodValidator validator,
-        ExecutableElement element,
-        ValidationReport.Builder<ExecutableElement> report) {
+        XExecutableElement element,
+        ValidationReport.Builder report) {
       TypeMirror exceptionSupertype = validator.elements.getTypeElement(superclass).asType();
       TypeMirror errorType = validator.elements.getTypeElement(Error.class).asType();
-      for (TypeMirror thrownType : element.getThrownTypes()) {
+      for (XType type : element.getThrownTypes()) {
+        TypeMirror thrownType = XConverters.toJavac(type);
         if (!validator.types.isSubtype(thrownType, exceptionSupertype)
             && !validator.types.isSubtype(thrownType, errorType)) {
           report.addError(errorMessage(validator));

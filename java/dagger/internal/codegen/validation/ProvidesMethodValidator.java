@@ -21,19 +21,18 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsS
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.RUNTIME_EXCEPTION;
 
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XVariableElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
-import dagger.Module;
-import dagger.Provides;
 import dagger.internal.codegen.binding.InjectionAnnotations;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.producers.ProducerModule;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.VariableElement;
 
-/** A validator for {@link Provides} methods. */
+/** A validator for {@link dagger.Provides} methods. */
 final class ProvidesMethodValidator extends BindingMethodValidator {
 
   private final DependencyRequestValidator dependencyRequestValidator;
@@ -49,8 +48,8 @@ final class ProvidesMethodValidator extends BindingMethodValidator {
         elements,
         types,
         kotlinMetadataUtil,
-        Provides.class,
-        ImmutableSet.of(Module.class, ProducerModule.class),
+        TypeNames.PROVIDES,
+        ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
         dependencyRequestValidator,
         MUST_BE_CONCRETE,
         RUNTIME_EXCEPTION,
@@ -61,24 +60,24 @@ final class ProvidesMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected ElementValidator elementValidator(ExecutableElement element) {
-    return new Validator(element);
+  protected ElementValidator elementValidator(XExecutableElement xElement) {
+    return new Validator(xElement);
   }
 
   private class Validator extends MethodValidator {
-    Validator(ExecutableElement element) {
-      super(element);
+    Validator(XExecutableElement xElement) {
+      super(xElement);
     }
 
     @Override
     protected void checkAdditionalMethodProperties() {
     }
 
-    /** Adds an error if a {@link Provides @Provides} method depends on a producer type. */
+    /** Adds an error if a {@link dagger.Provides @Provides} method depends on a producer type. */
     @Override
-    protected void checkParameter(VariableElement parameter) {
+    protected void checkParameter(XVariableElement parameter) {
       super.checkParameter(parameter);
-      dependencyRequestValidator.checkNotProducer(report, parameter);
+      dependencyRequestValidator.checkNotProducer(report, XConverters.toJavac(parameter));
     }
   }
 }

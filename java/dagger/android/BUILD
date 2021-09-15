@@ -68,14 +68,6 @@ pom_file(
     targets = [":android"],
 )
 
-# b/37741866 and https://github.com/google/dagger/issues/715
-pom_file(
-    name = "jarimpl-pom",
-    artifact_id = "dagger-android-jarimpl",
-    artifact_name = "Dagger Android",
-    targets = [":android"],
-)
-
 dejetified_library(
     name = "dejetified-android",
     input = ":android.aar",

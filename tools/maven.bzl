@@ -74,7 +74,6 @@ def gen_maven_artifact(
         javadoc_exclude_packages,
         javadoc_android_api_level,
         shaded_deps,
-        shaded_rules,
         manifest,
         lint_deps,
         proguard_specs
@@ -96,7 +95,6 @@ def _gen_maven_artifact(
         javadoc_exclude_packages,
         javadoc_android_api_level,
         shaded_deps,
-        shaded_rules,
         manifest,
         lint_deps,
         proguard_specs):
@@ -131,7 +129,6 @@ def _gen_maven_artifact(
       javadoc_exclude_packages: The packages to exclude from the javadocs.
       javadoc_android_api_level: The android api level for the javadocs.
       shaded_deps: The shaded deps for the jarjar.
-      shaded_rules: The shaded rules for the jarjar.
       manifest: The AndroidManifest.xml to bundle in when packaing an 'aar'.
       lint_deps: The lint targets to be bundled in when packaging an 'aar'.
       proguard_specs: The proguard spec files to be bundled in when packaging an 'aar'
@@ -148,7 +145,6 @@ def _gen_maven_artifact(
     )
 
     shaded_deps = shaded_deps or []
-    shaded_rules = shaded_rules or []
     artifact_targets = [artifact_target] + (artifact_target_libs or [])
     lint_deps = lint_deps or []
 
@@ -172,7 +168,6 @@ def _gen_maven_artifact(
             name = name + "-classes",
             testonly = testonly,
             jars = artifact_targets + shaded_deps,
-            rules = shaded_rules,
             merge_meta_inf_files = merge_meta_inf_files,
         )
         if lint_deps:
@@ -217,7 +212,6 @@ def _gen_maven_artifact(
             name = name,
             testonly = testonly,
             jars = artifact_targets + shaded_deps,
-            rules = shaded_rules,
             merge_meta_inf_files = merge_meta_inf_files,
         )
 

@@ -13,9 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.gradle.util.VersionNumber
 
 apply plugin: 'com.android.application'
 apply plugin: 'dagger.hilt.android.plugin'
+
+// Gets additional test directories to be added to test and androidTest source
+// sets. If the directory name is appended with '-agp-x.x.x' then the directory
+// is conditionally added based on the AGP version of the project.
+def getAdditionalTestDirs(String variant) {
+    def testDirs = [
+        'androidTest': [],
+        'sharedTest': ['src/sharedTest/java'],
+        'test': []
+    ]
+    def suffix = '-agp-'
+    def agpVersion = VersionNumber.parse(agp_version)
+    file("${getProjectDir().absolutePath}/src").eachFile { file ->
+        int indexOf = file.name.indexOf(suffix)
+        if (file.isDirectory() && indexOf != -1) {
+            def dirAgpVersion =
+                VersionNumber.parse(file.name.substring(indexOf + suffix.length()))
+            if (agpVersion >= dirAgpVersion) {
+                testDirs[file.name.substring(0, indexOf)].add("src/${file.name}/java")
+            }
+        }
+    }
+    return testDirs[variant] + testDirs['sharedTest']
+}
 
 android {
     compileSdkVersion 30
@@ -40,19 +65,18 @@ android {
         checkReleaseBuilds = false
     }
     sourceSets {
-        String sharedTestDir = 'src/sharedTest/java'
         test {
-            java.srcDirs += sharedTestDir
+            java.srcDirs += getAdditionalTestDirs("test")
         }
         androidTest {
-            java.srcDirs += sharedTestDir
+            java.srcDirs += getAdditionalTestDirs("androidTest")
         }
     }
 }
 
 hilt {
     enableTransformForLocalTests = true
-    enableExperimentalClasspathAggregation = true
+    enableAggregatingTask = true
 }
 
 configurations.all {

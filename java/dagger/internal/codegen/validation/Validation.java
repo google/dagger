@@ -22,8 +22,8 @@ import java.lang.annotation.RetentionPolicy;
 import javax.inject.Qualifier;
 
 /**
- * Qualifier annotation for the {@link dagger.spi.BindingGraphPlugin}s that are used to implement
- * core Dagger validation.
+ * Qualifier annotation for the {@link dagger.spi.model.BindingGraphPlugin}s that are used to
+ * implement core Dagger validation.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

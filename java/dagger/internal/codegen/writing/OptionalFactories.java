@@ -61,9 +61,10 @@ import dagger.internal.codegen.binding.BindingType;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
-import dagger.model.RequestKind;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.producers.Producer;
 import dagger.producers.internal.Producers;
+import dagger.spi.model.RequestKind;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
@@ -108,14 +109,15 @@ final class OptionalFactories {
   }
 
   private final PerGeneratedFileCache perGeneratedFileCache;
-  private final ComponentImplementation componentImplementation;
+  private final ShardImplementation rootComponentShard;
 
   @Inject
   OptionalFactories(
       PerGeneratedFileCache perGeneratedFileCache,
       ComponentImplementation componentImplementation) {
     this.perGeneratedFileCache = perGeneratedFileCache;
-    this.componentImplementation = componentImplementation.rootComponentImplementation();
+    this.rootComponentShard =
+        componentImplementation.rootComponentImplementation().getComponentShard();
   }
 
   /**
@@ -134,7 +136,7 @@ final class OptionalFactories {
             optionalKind,
             kind -> {
               MethodSpec method = absentOptionalProviderMethod(kind);
-              componentImplementation.addMethod(ABSENT_OPTIONAL_METHOD, method);
+              rootComponentShard.addMethod(ABSENT_OPTIONAL_METHOD, method);
               return method;
             }));
   }
@@ -163,7 +165,7 @@ final class OptionalFactories {
                 optionalKind,
                 kind -> {
                   FieldSpec field = absentOptionalProviderField(kind);
-                  componentImplementation.addField(ABSENT_OPTIONAL_FIELD, field);
+                  rootComponentShard.addField(ABSENT_OPTIONAL_FIELD, field);
                   return field;
                 }))
         .addCode("return provider;")
@@ -312,7 +314,7 @@ final class OptionalFactories {
             PresentFactorySpec.of(binding),
             spec -> {
               TypeSpec type = presentOptionalFactoryClass(spec);
-              componentImplementation.addType(PRESENT_FACTORY, type);
+              rootComponentShard.addType(PRESENT_FACTORY, type);
               return type;
             }),
         delegateFactory);

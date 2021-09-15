@@ -19,7 +19,7 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.anonymousProvider;
-import static dagger.model.RequestKind.INSTANCE;
+import static dagger.spi.model.RequestKind.INSTANCE;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -38,16 +38,16 @@ import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstan
 final class AnonymousProviderCreationExpression
     implements FrameworkInstanceCreationExpression {
   private final ContributionBinding binding;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
   private final ClassName requestingClass;
 
   @AssistedInject
   AnonymousProviderCreationExpression(
       @Assisted ContributionBinding binding,
-      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequestRepresentations componentRequestRepresentations,
       ComponentImplementation componentImplementation) {
     this.binding = checkNotNull(binding);
-    this.componentBindingExpressions = componentBindingExpressions;
+    this.componentRequestRepresentations = componentRequestRepresentations;
     this.requestingClass = componentImplementation.name();
   }
 
@@ -55,7 +55,7 @@ final class AnonymousProviderCreationExpression
   public CodeBlock creationExpression() {
     BindingRequest instanceExpressionRequest = bindingRequest(binding.key(), INSTANCE);
     Expression instanceExpression =
-        componentBindingExpressions.getDependencyExpression(
+        componentRequestRepresentations.getDependencyExpression(
             instanceExpressionRequest,
             // Not a real class name, but the actual requestingClass is an inner class within the
             // given class, not that class itself.

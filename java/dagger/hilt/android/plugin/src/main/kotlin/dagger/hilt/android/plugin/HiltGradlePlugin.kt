@@ -18,8 +18,6 @@ package dagger.hilt.android.plugin
 
 import com.android.build.api.attributes.BuildTypeAttr
 import com.android.build.api.attributes.ProductFlavorAttr
-import com.android.build.api.component.Component
-import com.android.build.api.extension.AndroidComponentsExtension
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.gradle.AppExtension
@@ -28,15 +26,13 @@ import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.TestExtension
 import com.android.build.gradle.TestedExtension
 import com.android.build.gradle.api.AndroidBasePlugin
-import com.android.build.gradle.api.BaseVariant
-import com.android.build.gradle.api.TestVariant
-import com.android.build.gradle.api.UnitTestVariant
 import dagger.hilt.android.plugin.task.AggregateDepsTask
 import dagger.hilt.android.plugin.task.HiltTransformTestClassesTask
 import dagger.hilt.android.plugin.util.AggregatedPackagesTransform
+import dagger.hilt.android.plugin.util.AndroidComponentsExtensionCompat.Companion.getAndroidComponentsExtension
+import dagger.hilt.android.plugin.util.ComponentCompat
 import dagger.hilt.android.plugin.util.CopyTransform
 import dagger.hilt.android.plugin.util.SimpleAGPVersion
-import dagger.hilt.android.plugin.util.allTestVariants
 import dagger.hilt.android.plugin.util.getSdkPath
 import java.io.File
 import javax.inject.Inject
@@ -45,6 +41,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
+import org.gradle.api.attributes.Usage
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.compile.JavaCompile
 
@@ -124,7 +121,9 @@ class HiltGradlePlugin @Inject constructor(
 
   // Invokes the [block] function for each Android variant that is considered a Hilt root, where
   // dependencies are aggregated and components are generated.
-  private fun BaseExtension.forEachRootVariant(block: (variant: BaseVariant) -> Unit) {
+  private fun BaseExtension.forEachRootVariant(
+    @Suppress("DEPRECATION") block: (variant: com.android.build.gradle.api.BaseVariant) -> Unit
+  ) {
     when (this) {
       is AppExtension -> {
         // For an app project we configure the app variant and both androidTest and unitTest
@@ -150,7 +149,7 @@ class HiltGradlePlugin @Inject constructor(
     project: Project,
     hiltExtension: HiltExtension,
     androidExtension: BaseExtension,
-    variant: BaseVariant
+    @Suppress("DEPRECATION") variant: com.android.build.gradle.api.BaseVariant
   ) {
     if (
       !hiltExtension.enableExperimentalClasspathAggregation || hiltExtension.enableAggregatingTask
@@ -183,7 +182,6 @@ class HiltGradlePlugin @Inject constructor(
         "android.injected.build.model.feature.full.dependencies", // Sent by AS 2.4+
         "android.injected.build.model.v2", // Sent by AS 4.2+
       ).any {
-        @Suppress("UnstableApiUsage")
         providers.gradleProperty(it).forUseAtConfigurationTime().isPresent
       }
     ) {
@@ -192,7 +190,8 @@ class HiltGradlePlugin @Inject constructor(
       return
     }
 
-    val runtimeConfiguration = if (variant is TestVariant) {
+    @Suppress("DEPRECATION") // Older variant API is deprecated
+    val runtimeConfiguration = if (variant is com.android.build.gradle.api.TestVariant) {
       // For Android test variants, the tested runtime classpath is used since the test app has
       // tested dependencies removed.
       variant.testedVariant.runtimeConfiguration
@@ -219,10 +218,11 @@ class HiltGradlePlugin @Inject constructor(
     // debugUnitTest    -> testDebugCompileOnly
     // release          -> releaseCompileOnly
     // releaseUnitTest  -> testReleaseCompileOnly
+    @Suppress("DEPRECATION") // Older variant API is deprecated
     val compileOnlyConfigName = when (variant) {
-      is TestVariant ->
+      is com.android.build.gradle.api.TestVariant ->
         "androidTest${variant.name.substringBeforeLast("AndroidTest").capitalize()}CompileOnly"
-      is UnitTestVariant ->
+      is com.android.build.gradle.api.UnitTestVariant ->
         "test${variant.name.substringBeforeLast("UnitTest").capitalize()}CompileOnly"
       else ->
         "${variant.name}CompileOnly"
@@ -233,7 +233,7 @@ class HiltGradlePlugin @Inject constructor(
   @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   private fun configureBytecodeTransformASM(project: Project, hiltExtension: HiltExtension) {
     var warnAboutLocalTestsFlag = false
-    fun registerTransform(androidComponent: Component) {
+    fun registerTransform(androidComponent: ComponentCompat) {
       if (hiltExtension.enableTransformForLocalTests && !warnAboutLocalTestsFlag) {
         project.logger.warn(
           "The Hilt configuration option 'enableTransformForLocalTests' is no longer necessary " +
@@ -253,13 +253,7 @@ class HiltGradlePlugin @Inject constructor(
         FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
       )
     }
-
-    val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
-    androidComponents.onVariants { registerTransform(it) }
-    androidComponents.allTestVariants(
-      onAndroidTest = { registerTransform(it) },
-      onUnitTest = { registerTransform(it) }
-    )
+    getAndroidComponentsExtension(project).onAllVariants { registerTransform(it) }
   }
 
   private fun configureBytecodeTransform(project: Project, hiltExtension: HiltExtension) {
@@ -290,7 +284,7 @@ class HiltGradlePlugin @Inject constructor(
     project: Project,
     hiltExtension: HiltExtension,
     androidExtension: BaseExtension,
-    variant: BaseVariant
+    @Suppress("DEPRECATION") variant: com.android.build.gradle.api.BaseVariant
   ) {
     if (!hiltExtension.enableAggregatingTask) {
       // Option is not enabled, don't configure aggregating task.
@@ -301,7 +295,8 @@ class HiltGradlePlugin @Inject constructor(
       "hiltCompileOnly${variant.name.capitalize()}"
     ).apply {
       // The runtime config of the test APK differs from the tested one.
-      if (variant is TestVariant) {
+      @Suppress("DEPRECATION") // Older variant API is deprecated
+      if (variant is com.android.build.gradle.api.TestVariant) {
         extendsFrom(variant.testedVariant.runtimeConfiguration)
       }
       extendsFrom(variant.runtimeConfiguration)
@@ -309,13 +304,17 @@ class HiltGradlePlugin @Inject constructor(
       isCanBeResolved = true
       attributes { attrContainer ->
         attrContainer.attribute(
+          Usage.USAGE_ATTRIBUTE,
+          project.objects.named(Usage::class.java, Usage.JAVA_RUNTIME)
+        )
+        attrContainer.attribute(
           BuildTypeAttr.ATTRIBUTE,
           project.objects.named(BuildTypeAttr::class.java, variant.buildType.name)
         )
         variant.productFlavors.forEach { flavor ->
           attrContainer.attribute(
-            Attribute.of(flavor.name, ProductFlavorAttr::class.java),
-            project.objects.named(ProductFlavorAttr::class.java, flavor.getName())
+            Attribute.of(flavor.dimension!!, ProductFlavorAttr::class.java),
+            project.objects.named(ProductFlavorAttr::class.java, flavor.name)
           )
         }
       }
@@ -332,11 +331,7 @@ class HiltGradlePlugin @Inject constructor(
     )
     project.dependencies.add(
       hiltCompileConfiguration.name,
-      project.files(
-        variant.javaCompileProvider.map {
-          @Suppress("UnstableApiUsage") it.destinationDirectory.get()
-        }
-      )
+      project.files(variant.javaCompileProvider.map {it.destinationDirectory.get() })
     )
 
     fun getInputClasspath(artifactAttributeValue: String) =
@@ -352,7 +347,14 @@ class HiltGradlePlugin @Inject constructor(
       it.outputDir.set(
         project.file(project.buildDir.resolve("generated/hilt/component_trees/${variant.name}/"))
       )
-      it.testEnvironment.set(variant is TestVariant || variant is UnitTestVariant)
+      @Suppress("DEPRECATION") // Older variant API is deprecated
+      it.testEnvironment.set(
+        variant is com.android.build.gradle.api.TestVariant ||
+          variant is com.android.build.gradle.api.UnitTestVariant
+      )
+      it.crossCompilationRootValidationDisabled.set(
+        hiltExtension.disableCrossCompilationRootValidation
+      )
     }
 
     val componentClasses = project.files(
@@ -429,14 +431,21 @@ class HiltGradlePlugin @Inject constructor(
       argument("dagger.fastInit", "enabled")
       // Pass annotation processor flag to disable @AndroidEntryPoint superclass validation.
       argument("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
-      // Pass annotation processor flag to disable the aggregating processor via a
-      // CommandLineArgumentProvider so that the property is populated from the user's build
-      // file. Checking the option too early would make it seem like it is never set.
+      // Pass certain annotation processor flags via a CommandLineArgumentProvider so that plugin
+      // options defined in the extension are populated from the user's build file. Checking the
+      // option too early would make it seem like it is never set.
       compilerArgumentProvider {
-        if (hiltExtension.enableAggregatingTask) {
-          listOf("-Adagger.hilt.internal.useAggregatingRootProcessor=false")
-        } else {
-          emptyList()
+        mutableListOf<String>().apply {
+          // Pass annotation processor flag to disable the aggregating processor if aggregating task
+          // is enabled.
+          if (hiltExtension.enableAggregatingTask) {
+            add("-Adagger.hilt.internal.useAggregatingRootProcessor=false")
+          }
+          // Pass annotation processor flag to disable cross compilation root validation. The plugin
+          // option duplicates the processor flag because it is an input of the aggregating task.
+          if (hiltExtension.disableCrossCompilationRootValidation) {
+            add("-Adagger.hilt.disableCrossCompilationRootValidation=true")
+          }
         }
       }
     }
@@ -471,9 +480,5 @@ class HiltGradlePlugin @Inject constructor(
     val missingDepError: (String) -> String = { depCoordinate ->
       "The Hilt Android Gradle plugin is applied but no $depCoordinate dependency was found."
     }
-
-    // Temporarily default 'enableAggregatingTask' to false
-    private val HiltExtension.enableAggregatingTask: Boolean
-     get() = false
   }
 }

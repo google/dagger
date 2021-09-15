@@ -18,8 +18,8 @@ package dagger.internal.codegen.binding;
 
 import static dagger.internal.codegen.binding.BindingType.PRODUCTION;
 
-import dagger.model.RequestKind;
 import dagger.producers.Producer;
+import dagger.spi.model.RequestKind;
 import javax.inject.Provider;
 
 /**

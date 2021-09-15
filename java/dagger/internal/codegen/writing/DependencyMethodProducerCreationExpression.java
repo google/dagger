@@ -83,7 +83,7 @@ final class DependencyMethodProducerCreationExpression
                     componentImplementation.name().nestedClass("Anonymous")))
             .build();
     // TODO(b/70395982): Explore using a private static type instead of an anonymous class.
-    TypeName keyType = TypeName.get(binding.key().type());
+    TypeName keyType = TypeName.get(binding.key().type().java());
     return CodeBlock.of(
         "$L",
         anonymousClassBuilder("")

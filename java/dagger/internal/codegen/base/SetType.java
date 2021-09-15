@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
-import dagger.model.Key;
+import dagger.spi.model.Key;
 import java.util.Set;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -96,7 +96,7 @@ public abstract class SetType {
    * {@code true} if {@code key.type()} is a {@link Set} type.
    */
   public static boolean isSet(Key key) {
-    return isSet(key.type());
+    return isSet(key.type().java());
   }
 
   /**
@@ -115,6 +115,6 @@ public abstract class SetType {
    * @throws IllegalArgumentException if {@code key.type()} is not a {@link Set} type
    */
   public static SetType from(Key key) {
-    return from (key.type());
+    return from(key.type().java());
   }
 }

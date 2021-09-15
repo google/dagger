@@ -25,12 +25,11 @@ java_library(
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     tags = ["maven:merged"],
     deps = [
-        "//java/dagger:core",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/producers",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/error_prone:annotations",
         "@google_bazel_common//third_party/java/javapoet",
-        "@maven//:com_google_auto_auto_common",
     ],
 )

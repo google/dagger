@@ -42,7 +42,7 @@ import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescri
 import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.internal.codegen.binding.ModuleKind;
 import dagger.internal.codegen.compileroption.CompilerOptions;
-import dagger.model.Scope;
+import dagger.spi.model.Scope;
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.Map;
@@ -60,9 +60,8 @@ final class ComponentHierarchyValidator {
     this.compilerOptions = compilerOptions;
   }
 
-  ValidationReport<TypeElement> validate(ComponentDescriptor componentDescriptor) {
-    ValidationReport.Builder<TypeElement> report =
-        ValidationReport.about(componentDescriptor.typeElement());
+  ValidationReport validate(ComponentDescriptor componentDescriptor) {
+    ValidationReport.Builder report = ValidationReport.about(componentDescriptor.typeElement());
     validateSubcomponentMethods(
         report,
         componentDescriptor,
@@ -78,7 +77,7 @@ final class ComponentHierarchyValidator {
   }
 
   private void validateSubcomponentMethods(
-      ValidationReport.Builder<?> report,
+      ValidationReport.Builder report,
       ComponentDescriptor componentDescriptor,
       ImmutableMap<TypeElement, TypeElement> existingModuleToOwners) {
     componentDescriptor
@@ -109,7 +108,7 @@ final class ComponentHierarchyValidator {
   }
 
   private void validateFactoryMethodParameters(
-      ValidationReport.Builder<?> report,
+      ValidationReport.Builder report,
       ComponentMethodDescriptor subcomponentMethodDescriptor,
       ImmutableMap<TypeElement, TypeElement> existingModuleToOwners) {
     for (VariableElement factoryMethodParameter :
@@ -133,7 +132,7 @@ final class ComponentHierarchyValidator {
    * Checks that components do not have any scopes that are also applied on any of their ancestors.
    */
   private void validateScopeHierarchy(
-      ValidationReport.Builder<TypeElement> report,
+      ValidationReport.Builder report,
       ComponentDescriptor subject,
       SetMultimap<ComponentDescriptor, Scope> scopesByComponent) {
     scopesByComponent.putAll(subject, subject.scopes());
@@ -172,7 +171,7 @@ final class ComponentHierarchyValidator {
   }
 
   private void validateProductionModuleUniqueness(
-      ValidationReport.Builder<TypeElement> report,
+      ValidationReport.Builder report,
       ComponentDescriptor componentDescriptor,
       SetMultimap<ComponentDescriptor, ModuleDescriptor> producerModulesByComponent) {
     ImmutableSet<ModuleDescriptor> producerModules =
@@ -209,7 +208,7 @@ final class ComponentHierarchyValidator {
   }
 
   private void validateRepeatedScopedDeclarations(
-      ValidationReport.Builder<TypeElement> report,
+      ValidationReport.Builder report,
       ComponentDescriptor component,
       // TODO(ronshapiro): optimize ModuleDescriptor.hashCode()/equals. Otherwise this could be
       // quite costly

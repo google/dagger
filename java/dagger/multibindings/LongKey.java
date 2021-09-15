@@ -16,17 +16,21 @@
 
 package dagger.multibindings;
 
-import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import dagger.MapKey;
 import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /** A {@link MapKey} annotation for maps with {@code long} keys. */
 @Documented
-@Target(METHOD)
+// While METHOD is the only valid target for Dagger, FIELD was added to support Hilt's
+// @BindValueIntoMap and TYPE was added to support external extension types since it likely won't
+// cause confusion/maintenance issues as this isn't part of Dagger's core API.
+// See discussion on https://github.com/google/dagger/pull/2831#issuecomment-919417457 for details.
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.TYPE})
 @Retention(RUNTIME)
 @MapKey
 public @interface LongKey {

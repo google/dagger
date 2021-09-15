@@ -31,6 +31,7 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -44,7 +45,7 @@ import javax.lang.model.element.TypeElement;
 @PerComponentImplementation
 public final class ComponentRequirementExpressions {
 
-  // TODO(dpb,ronshapiro): refactor this and ComponentBindingExpressions into a
+  // TODO(dpb,ronshapiro): refactor this and ComponentRequestRepresentations into a
   // HierarchicalComponentMap<K, V>, or perhaps this use a flattened ImmutableMap, built from its
   // parents? If so, maybe make ComponentRequirementExpression.Factory create it.
 
@@ -52,10 +53,9 @@ public final class ComponentRequirementExpressions {
   private final Map<ComponentRequirement, ComponentRequirementExpression>
       componentRequirementExpressions = new HashMap<>();
   private final BindingGraph graph;
-  private final ComponentImplementation componentImplementation;
+  private final ShardImplementation componentShard;
   private final ModuleProxies moduleProxies;
 
-  // TODO(ronshapiro): give ComponentImplementation a graph() method
   @Inject
   ComponentRequirementExpressions(
       @ParentComponent Optional<ComponentRequirementExpressions> parent,
@@ -65,7 +65,8 @@ public final class ComponentRequirementExpressions {
       ModuleProxies moduleProxies) {
     this.parent = parent;
     this.graph = graph;
-    this.componentImplementation = componentImplementation;
+    // All component requirements go in the componentShard.
+    this.componentShard = componentImplementation.getComponentShard();
     this.moduleProxies = moduleProxies;
   }
 
@@ -76,6 +77,19 @@ public final class ComponentRequirementExpressions {
    */
   CodeBlock getExpression(ComponentRequirement componentRequirement, ClassName requestingClass) {
     return getExpression(componentRequirement).getExpression(requestingClass);
+  }
+
+  private ComponentRequirementExpression getExpression(ComponentRequirement componentRequirement) {
+    if (graph.componentRequirements().contains(componentRequirement)) {
+      return componentRequirementExpressions.computeIfAbsent(
+          componentRequirement, this::createExpression);
+    }
+    if (parent.isPresent()) {
+      return parent.get().getExpression(componentRequirement);
+    }
+
+    throw new IllegalStateException(
+        "no component requirement expression found for " + componentRequirement);
   }
 
   /**
@@ -90,58 +104,26 @@ public final class ComponentRequirementExpressions {
     return getExpression(componentRequirement).getExpressionDuringInitialization(requestingClass);
   }
 
-  ComponentRequirementExpression getExpression(ComponentRequirement componentRequirement) {
-    if (graph.componentRequirements().contains(componentRequirement)) {
-      return componentRequirementExpressions.computeIfAbsent(
-          componentRequirement, this::createField);
-    }
-    if (parent.isPresent()) {
-      return parent.get().getExpression(componentRequirement);
-    }
-
-    throw new IllegalStateException(
-        "no component requirement expression found for " + componentRequirement);
-  }
-
   /** Returns a field for a {@link ComponentRequirement}. */
-  private ComponentRequirementExpression createField(ComponentRequirement requirement) {
-    if (componentImplementation.componentDescriptor().hasCreator()) {
-      return new ComponentParameterField(requirement, componentImplementation, Optional.empty());
-    } else if (graph.factoryMethod().isPresent()
-        && graph.factoryMethodParameters().containsKey(requirement)) {
-      String parameterName =
-          graph.factoryMethodParameters().get(requirement).getSimpleName().toString();
-      return new ComponentParameterField(
-          requirement, componentImplementation, Optional.of(parameterName));
+  private ComponentRequirementExpression createExpression(ComponentRequirement requirement) {
+    if (componentShard.componentDescriptor().hasCreator()
+        || (graph.factoryMethod().isPresent()
+            && graph.factoryMethodParameters().containsKey(requirement))) {
+      return new ComponentParameterField(requirement);
     } else if (requirement.kind().isModule()) {
-      return new InstantiableModuleField(requirement, componentImplementation);
+      return new InstantiableModuleField(requirement);
     } else {
       throw new AssertionError(
-          String.format("Can't create %s in %s", requirement, componentImplementation.name()));
+          String.format("Can't create %s in %s", requirement, componentShard.name()));
     }
   }
 
-  private abstract static class AbstractField implements ComponentRequirementExpression {
+  private abstract class AbstractField implements ComponentRequirementExpression {
     final ComponentRequirement componentRequirement;
-    final ComponentImplementation componentImplementation;
-    final String fieldName;
-    private final Supplier<MemberSelect> field = memoize(this::addField);
+    private final Supplier<MemberSelect> field = memoize(this::createField);
 
-    private AbstractField(
-        ComponentRequirement componentRequirement,
-        ComponentImplementation componentImplementation) {
+    private AbstractField(ComponentRequirement componentRequirement) {
       this.componentRequirement = checkNotNull(componentRequirement);
-      this.componentImplementation = checkNotNull(componentImplementation);
-      // Note: The field name is being claimed eagerly here even though we don't know at this point
-      // whether or not the requirement will even need a field. This is done because:
-      // A) ComponentParameterField wants to ensure that it doesn't give the parameter the same name
-      //    as any field in the component, which requires that it claim a "field name" for itself
-      //    when naming the parameter.
-      // B) The parameter name may be needed before the field name is.
-      // C) We want to prefer giving the best name to the field rather than the parameter given its
-      //    wider scope.
-      this.fieldName =
-          componentImplementation.getUniqueFieldName(componentRequirement.variableName());
     }
 
     @Override
@@ -149,16 +131,13 @@ public final class ComponentRequirementExpressions {
       return field.get().getExpressionFor(requestingClass);
     }
 
-    private MemberSelect addField() {
-      FieldSpec field = createField();
-      componentImplementation.addField(COMPONENT_REQUIREMENT_FIELD, field);
-      componentImplementation.addComponentRequirementInitialization(fieldInitialization(field));
-      return MemberSelect.localField(componentImplementation, fieldName);
-    }
-
-    private FieldSpec createField() {
-      return FieldSpec.builder(TypeName.get(componentRequirement.type()), fieldName, PRIVATE, FINAL)
-          .build();
+    private MemberSelect createField() {
+      String fieldName = componentShard.getUniqueFieldName(componentRequirement.variableName());
+      TypeName fieldType = TypeName.get(componentRequirement.type());
+      FieldSpec field = FieldSpec.builder(fieldType, fieldName, PRIVATE, FINAL).build();
+      componentShard.addField(COMPONENT_REQUIREMENT_FIELD, field);
+      componentShard.addComponentRequirementInitialization(fieldInitialization(field));
+      return MemberSelect.localField(componentShard, fieldName);
     }
 
     /** Returns the {@link CodeBlock} that initializes the component field during construction. */
@@ -172,9 +151,8 @@ public final class ComponentRequirementExpressions {
   private final class InstantiableModuleField extends AbstractField {
     private final TypeElement moduleElement;
 
-    private InstantiableModuleField(
-        ComponentRequirement module, ComponentImplementation componentImplementation) {
-      super(module, componentImplementation);
+    InstantiableModuleField(ComponentRequirement module) {
+      super(module);
       checkArgument(module.kind().isModule());
       this.moduleElement = module.typeElement();
     }
@@ -184,7 +162,7 @@ public final class ComponentRequirementExpressions {
       return CodeBlock.of(
           "this.$N = $L;",
           componentField,
-          moduleProxies.newModuleInstance(moduleElement, componentImplementation.name()));
+          moduleProxies.newModuleInstance(moduleElement, componentShard.name()));
     }
   }
 
@@ -192,29 +170,17 @@ public final class ComponentRequirementExpressions {
    * A {@link ComponentRequirementExpression} for {@link ComponentRequirement}s that are passed in
    * as parameters to the component's constructor.
    */
-  private static final class ComponentParameterField extends AbstractField {
+  private final class ComponentParameterField extends AbstractField {
     private final String parameterName;
 
-    private ComponentParameterField(
-        ComponentRequirement componentRequirement,
-        ComponentImplementation componentImplementation,
-        Optional<String> name) {
-      super(componentRequirement, componentImplementation);
-      // Get the name that the component implementation will use for its parameter for the
-      // requirement. If the given name is different than the name of the field created for the
-      // requirement (as may be the case when the parameter name is derived from a user-written
-      // factory method parameter), just use that as the base name for the parameter. Otherwise,
-      // append "Param" to the end of the name to differentiate.
-      // In either case, componentImplementation.getParameterName() will ensure that the final name
-      // that is used is not the same name as any field in the component even if there's something
-      // weird where the component actually has fields named, say, "foo" and "fooParam".
-      String baseName = name.filter(n -> !n.equals(fieldName)).orElse(fieldName + "Param");
-      this.parameterName = componentImplementation.getParameterName(componentRequirement, baseName);
+    ComponentParameterField(ComponentRequirement module) {
+      super(module);
+      this.parameterName = componentShard.getParameterName(componentRequirement);
     }
 
     @Override
     public CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
-      if (componentImplementation.name().equals(requestingClass)) {
+      if (componentShard.name().equals(requestingClass)) {
         return CodeBlock.of("$L", parameterName);
       } else {
         // requesting this component requirement during initialization of a child component requires

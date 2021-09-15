@@ -43,9 +43,10 @@ import com.squareup.javapoet.TypeName;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.BindingKind;
+import dagger.spi.model.BindingKind;
 import java.util.List;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -96,7 +97,7 @@ public final class AssistedInjectionAnnotations {
     checkArgument(binding.kind() == BindingKind.ASSISTED_INJECTION);
     ExecutableElement constructor = asExecutable(binding.bindingElement().get());
     ExecutableType constructorType =
-        asExecutable(types.asMemberOf(asDeclared(binding.key().type()), constructor));
+        asExecutable(types.asMemberOf(asDeclared(binding.key().type().java()), constructor));
     return assistedParameterSpecs(constructor.getParameters(), constructorType.getParameterTypes());
   }
 
@@ -129,7 +130,8 @@ public final class AssistedInjectionAnnotations {
     AssistedFactoryMetadata metadata =
         AssistedFactoryMetadata.create(binding.bindingElement().get().asType(), elements, types);
     ExecutableType factoryMethodType =
-        asExecutable(types.asMemberOf(asDeclared(binding.key().type()), metadata.factoryMethod()));
+        asExecutable(
+            types.asMemberOf(asDeclared(binding.key().type().java()), metadata.factoryMethod()));
     return assistedParameterSpecs(
         // Use the order of the parameters from the @AssistedFactory method but use the parameter
         // names of the @AssistedInject constructor.
@@ -231,7 +233,7 @@ public final class AssistedInjectionAnnotations {
     public static AssistedParameter create(VariableElement parameter, TypeMirror parameterType) {
       AssistedParameter assistedParameter =
           new AutoValue_AssistedInjectionAnnotations_AssistedParameter(
-              getAnnotationMirror(parameter, Assisted.class)
+              getAnnotationMirror(parameter, TypeNames.ASSISTED)
                   .map(assisted -> getStringValue(assisted, "value"))
                   .orElse(""),
               MoreTypes.equivalence().wrap(parameterType));

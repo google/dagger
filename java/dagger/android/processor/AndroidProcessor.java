@@ -55,7 +55,7 @@ public final class AndroidProcessor extends BasicAnnotationProcessor {
       "dagger.android.experimentalUseStringKeys";
 
   @Override
-  protected Iterable<? extends ProcessingStep> initSteps() {
+  protected Iterable<? extends Step> steps() {
     Filer filer = new FormattingFiler(processingEnv.getFiler());
     Messager messager = processingEnv.getMessager();
     Elements elements = processingEnv.getElementUtils();

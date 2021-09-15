@@ -1,0 +1,66 @@
+/*
+ * Copyright (C) 2021 The Dagger Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+plugins {
+    id 'com.android.application'
+    id 'dagger.hilt.android.plugin'
+}
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.2"
+
+    flavorDimensions 'api', 'version'
+    productFlavors {
+        demo {
+            dimension 'version'
+        }
+        full {
+            dimension 'version'
+        }
+        minApi24 {
+            dimension 'api'
+            minSdkVersion '24'
+            versionNameSuffix "-minApi24"
+        }
+        minApi21 {
+            dimension "api"
+            minSdkVersion '21'
+            versionNameSuffix "-minApi21"
+        }
+    }
+
+    defaultConfig {
+        applicationId "simple.app"
+        minSdkVersion 21
+        targetSdkVersion 30
+    }
+
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+}
+
+dependencies {
+    implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'
+    annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
+    implementation project(':feature')
+}
+
+hilt {
+    enableAggregatingTask = true
+}

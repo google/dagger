@@ -22,32 +22,33 @@ import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
-import dagger.model.DependencyRequest;
+import dagger.spi.model.DependencyRequest;
 
 /** An abstract factory creation expression for multibindings. */
 abstract class MultibindingFactoryCreationExpression
     implements FrameworkInstanceCreationExpression {
-  private final ComponentImplementation componentImplementation;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ShardImplementation shardImplementation;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
   private final ContributionBinding binding;
 
   MultibindingFactoryCreationExpression(
       ContributionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentBindingExpressions componentBindingExpressions) {
+      ComponentRequestRepresentations componentRequestRepresentations) {
     this.binding = checkNotNull(binding);
-    this.componentImplementation = checkNotNull(componentImplementation);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
+    this.shardImplementation = checkNotNull(componentImplementation).shardImplementation(binding);
+    this.componentRequestRepresentations = checkNotNull(componentRequestRepresentations);
   }
 
   /** Returns the expression for a dependency of this multibinding. */
   protected final CodeBlock multibindingDependencyExpression(DependencyRequest dependency) {
     CodeBlock expression =
-        componentBindingExpressions
+        componentRequestRepresentations
             .getDependencyExpression(
                 BindingRequest.bindingRequest(dependency.key(), binding.frameworkType()),
-                componentImplementation.name())
+                shardImplementation.name())
             .codeBlock();
 
     return useRawType()
@@ -65,11 +66,6 @@ abstract class MultibindingFactoryCreationExpression
    * component, and therefore a raw type must be used.
    */
   protected final boolean useRawType() {
-    return !componentImplementation.isTypeAccessible(binding.key().type());
-  }
-
-  @Override
-  public final boolean useSwitchingProvider() {
-    return !binding.dependencies().isEmpty();
+    return !shardImplementation.isTypeAccessible(binding.key().type().java());
   }
 }

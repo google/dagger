@@ -18,10 +18,10 @@ package dagger.hilt.android.migration;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import android.view.View;
 import androidx.activity.ComponentActivity;
+import androidx.annotation.NonNull;
 import dagger.hilt.android.internal.migration.InjectedByHilt;
 import dagger.hilt.internal.Preconditions;
 

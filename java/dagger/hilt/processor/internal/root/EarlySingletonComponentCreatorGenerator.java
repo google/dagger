@@ -45,10 +45,12 @@ final class EarlySingletonComponentCreatorGenerator {
                     .returns(ClassName.OBJECT)
                     .addStatement(
                         "return $T.builder()\n"
-                            + ".applicationContextModule(new $T($T.getApplicationContext()))\n"
+                            + ".applicationContextModule(\n"
+                            + "    new $T($T.getApplication($T.getApplicationContext())))\n"
                             + ".build()",
                         DEFAULT_COMPONENT_IMPL,
                         ClassNames.APPLICATION_CONTEXT_MODULE,
+                        ClassNames.CONTEXTS,
                         ClassNames.APPLICATION_PROVIDER)
                     .build());
 

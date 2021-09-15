@@ -620,7 +620,7 @@ public class AssistedFactoryErrorsTest {
   }
 
   @Test
-  public void testInjectsProviderOfAssistedFactory() {
+  public void testInjectsLazyOfAssistedFactory() {
     JavaFileObject foo =
         JavaFileObjects.forSourceLines(
             "test.Foo",
@@ -644,12 +644,12 @@ public class AssistedFactoryErrorsTest {
             "test.Bar",
             "package test;",
             "",
+            "import dagger.Lazy;",
             "import javax.inject.Inject;",
-            "import javax.inject.Provider;",
             "",
             "class Bar {",
             "  @Inject",
-            "  Bar(Foo.Factory fooFactory, Provider<Foo.Factory> fooFactoryProvider) {}",
+            "  Bar(Foo.Factory fooFactory, Lazy<Foo.Factory> fooFactoryLazy) {}",
             "}");
 
     Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo, bar);
@@ -657,7 +657,7 @@ public class AssistedFactoryErrorsTest {
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining(
-            "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, or Produced<T> "
+            "Dagger does not support injecting Lazy<T>, Producer<T>, or Produced<T> "
                 + "when T is an @AssistedFactory-annotated type such as test.Foo.Factory")
         .inFile(bar)
         .onLine(8);

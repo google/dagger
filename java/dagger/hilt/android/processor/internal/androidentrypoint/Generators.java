@@ -393,7 +393,7 @@ final class Generators {
     switch (metadata.androidType()) {
       case ACTIVITY:
       case SERVICE:
-        return CodeBlock.of("getApplicationContext()");
+        return CodeBlock.of("$T.getApplication(getApplicationContext())", ClassNames.CONTEXTS);
       case FRAGMENT:
         return CodeBlock.of("getHost()");
       case VIEW:
@@ -401,7 +401,9 @@ final class Generators {
             "$L.maybeGetParentComponentManager()", componentManagerCallBlock(metadata));
       case BROADCAST_RECEIVER:
         // Broadcast receivers receive a "context" parameter
-        return CodeBlock.of("context.getApplicationContext()");
+        return CodeBlock.of(
+            "$T.getApplication(context.getApplicationContext())",
+            ClassNames.CONTEXTS);
       default:
         throw new AssertionError();
     }

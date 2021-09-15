@@ -21,7 +21,7 @@ import dagger.Component;
 import dagger.Provides;
 import dagger.internal.codegen.base.SourceFileGenerationException;
 import dagger.internal.codegen.base.SourceFileGenerator;
-import dagger.model.Key;
+import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;

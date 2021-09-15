@@ -16,7 +16,7 @@
 
 package(default_visibility = ["//:src"])
 
-android_library(
+java_library(
     name = "alias_of",
     srcs = [
         "AliasOf.java",

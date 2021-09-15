@@ -97,8 +97,10 @@ gen_maven_artifact(
     javadoc_srcs = [
         "//java/dagger/hilt:hilt_processing_filegroup",
     ],
-    shaded_deps = ["@maven//:com_google_auto_auto_common"],
-    shaded_rules = ["rule com.google.auto.common.** dagger.hilt.android.shaded.auto.common.@1"],
+    # The shaded deps are added using jarjar, but they won't be shaded until later
+    # due to: https://github.com/google/dagger/issues/2765. For the shaded rules see
+    # util/deploy-hilt.sh
+    shaded_deps = ["@com_google_auto_auto_common//jar"],
 )
 
 filegroup(

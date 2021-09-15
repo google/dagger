@@ -26,7 +26,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
-import dagger.model.Key;
+import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.Name;
 import javax.lang.model.type.DeclaredType;
@@ -135,7 +135,7 @@ public abstract class OptionalType {
 
   /** Returns {@code true} if {@code key.type()} is an {@code Optional} type. */
   public static boolean isOptional(Key key) {
-    return isOptional(key.type());
+    return isOptional(key.type().java());
   }
 
   /**
@@ -154,6 +154,6 @@ public abstract class OptionalType {
    * @throws IllegalArgumentException if {@code key.type()} is not an {@code Optional} type
    */
   public static OptionalType from(Key key) {
-    return from(key.type());
+    return from(key.type().java());
   }
 }

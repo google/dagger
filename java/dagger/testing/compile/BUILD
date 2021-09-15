@@ -28,5 +28,7 @@ java_library(
         "//java/dagger/internal/guava:collect",
         "//java/dagger/internal/guava:io",
         "@google_bazel_common//third_party/java/compile_testing",
+        "//java/dagger/internal/codegen:processor",
+        "@maven//:com_github_tschuchortdev_kotlin_compile_testing",
     ],
 )

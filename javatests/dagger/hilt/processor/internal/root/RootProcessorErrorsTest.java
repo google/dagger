@@ -83,7 +83,7 @@ public final class RootProcessorErrorsTest {
     assertThat(compilation)
         .hadErrorContaining(
             "Cannot process multiple app roots in the same compilation unit: "
-                + "[test.AppRoot1, test.AppRoot2]");
+                + "test.AppRoot1, test.AppRoot2");
   }
 
   @Test
@@ -116,7 +116,7 @@ public final class RootProcessorErrorsTest {
     assertThat(compilation)
         .hadErrorContaining(
             "Cannot process test roots and app roots in the same compilation unit:"
-                + "\n  \tApp root in this compilation unit: [test.AppRoot]"
-                + "\n  \tTest roots in this compilation unit: [test.TestRoot]");
+                + "\n    App root in this compilation unit: test.AppRoot"
+                + "\n    Test roots in this compilation unit: test.TestRoot");
   }
 }

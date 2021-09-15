@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-  <string name="appName">Simple Dagger Android</string>
-  <string name="welcome">Hello, %s!</string>
-</resources>

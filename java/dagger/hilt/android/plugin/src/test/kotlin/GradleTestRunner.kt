@@ -16,6 +16,7 @@
 
 import java.io.File
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.BuildTask
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.rules.TemporaryFolder
 
@@ -31,9 +32,11 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
   private var buildFile: File? = null
   private var gradlePropertiesFile: File? = null
   private var manifestFile: File? = null
+  private var additionalTasks = mutableListOf<String>()
 
   init {
     tempFolder.newFolder("src", "main", "java", "minimal")
+    tempFolder.newFolder("src", "test", "java", "minimal")
     tempFolder.newFolder("src", "main", "res")
   }
 
@@ -68,6 +71,12 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
     return tempFolder.newFile("/src/main/java/$srcPath").apply { writeText(srcContent) }
   }
 
+  // Adds a test source file to the project. The source path is relative to 'src/test/java'.
+  fun addTestSrc(srcPath: String, srcContent: String): File {
+    File(tempFolder.root, "src/test/java/${srcPath.substringBeforeLast(File.separator)}").mkdirs()
+    return tempFolder.newFile("/src/test/java/$srcPath").apply { writeText(srcContent) }
+  }
+
   // Adds a resource file to the project. The source path is relative to 'src/main/res'.
   fun addRes(resPath: String, resContent: String): File {
     File(tempFolder.root, "src/main/res/${resPath.substringBeforeLast(File.separator)}").mkdirs()
@@ -76,6 +85,10 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
 
   fun setAppClassName(name: String) {
     appClassName = name
+  }
+
+  fun runAdditionalTasks(taskName: String) {
+    additionalTasks.add(taskName)
   }
 
   // Executes a Gradle builds and expects it to succeed.
@@ -184,7 +197,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
 
   private fun createRunner() = GradleRunner.create()
     .withProjectDir(tempFolder.root)
-    .withArguments("assembleDebug", "--stacktrace")
+    .withArguments(listOf("--stacktrace", "assembleDebug") + additionalTasks)
     .withPluginClasspath()
 //    .withDebug(true) // Add this line to enable attaching a debugger to the gradle test invocation
     .forwardOutput()
@@ -194,6 +207,9 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
     private val projectRoot: File,
     private val buildResult: BuildResult
   ) {
+
+    val tasks: List<BuildTask> get() = buildResult.tasks
+
     // Finds a task by name.
     fun getTask(name: String) = buildResult.task(name) ?: error("Task '$name' not found.")
 

@@ -175,26 +175,15 @@ public class ComponentProcessorTest {
             .addLines(
                 "package test;",
                 "",
-                GeneratedLines.generatedImports(
-                    "import dagger.Lazy;",
-                    "import dagger.internal.DoubleCheck;",
-                    "import javax.inject.Provider;"),
-                "",
                 GeneratedLines.generatedAnnotations(),
                 "final class DaggerSimpleComponent implements SimpleComponent {",
                 "  private final DaggerSimpleComponent simpleComponent = this;")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "  private volatile Provider<SomeInjectableType> someInjectableTypeProvider;")
-            .addLines(
-                "  private DaggerSimpleComponent() {}",
-                "",
-                "  public static Builder builder() {",
-                "    return new Builder();",
-                "  }",
-                "",
-                "  public static SimpleComponent create() {",
-                "    return new Builder().build();",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize() {",
+                "    this.someInjectableTypeProvider =",
+                "        new SwitchingProvider<>(simpleComponent, 0);",
                 "  }",
                 "",
                 "  @Override",
@@ -203,50 +192,17 @@ public class ComponentProcessorTest {
                 "  }",
                 "",
                 "  @Override",
-                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {")
-            .addLinesIn(
-                DEFAULT_MODE, //
-                "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "    return DoubleCheck.lazy(someInjectableTypeProvider());")
-            .addLines(
+                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
+                "    return DoubleCheck.lazy(someInjectableTypeProvider);",
                 "  }",
                 "",
                 "  @Override",
-                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {")
-            .addLinesIn(
-                DEFAULT_MODE, //
-                "    return SomeInjectableType_Factory.create();")
-            .addLinesIn(
-                FAST_INIT_MODE, //
-                "    Object local = someInjectableTypeProvider;",
-                "    if (local == null) {",
-                "      local = new SwitchingProvider<>(simpleComponent, 0);",
-                "      someInjectableTypeProvider = (Provider<SomeInjectableType>) local;",
-                "    }",
-                "    return (Provider<SomeInjectableType>) local;")
-            .addLines(
+                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {",
+                "    return someInjectableTypeProvider",
                 "  }",
                 "",
-                "  static final class Builder {",
-                "    private Builder() {}",
-                "",
-                "    public SimpleComponent build() {",
-                "      return new DaggerSimpleComponent();",
-                "    }",
-                "  }")
-            .addLinesIn(
-                FAST_INIT_MODE,
                 "  private static final class SwitchingProvider<T> implements Provider<T> {",
                 "    private final DaggerSimpleComponent simpleComponent;",
-                "",
-                "    private final int id;",
-                "",
-                "    SwitchingProvider(DaggerSimpleComponent simpleComponent, int id) {",
-                "      this.simpleComponent = simpleComponent;",
-                "      this.id = id;",
-                "    }",
                 "",
                 "    @SuppressWarnings(\"unchecked\")",
                 "    @Override",
@@ -255,8 +211,24 @@ public class ComponentProcessorTest {
                 "        case 0: return (T) new SomeInjectableType();",
                 "        default: throw new AssertionError(id);",
                 "      }",
-                "    }",
-                "  }")
+                "    }")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "  @Override",
+                "  public SomeInjectableType someInjectableType() {",
+                "    return new SomeInjectableType();",
+                "  }",
+                "",
+                "  @Override",
+                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
+                "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());",
+                "  }",
+                "",
+                "  @Override",
+                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {",
+                "    return SomeInjectableType_Factory.create();",
+                "  }",
+                "}")
             .build();
 
     Compilation compilation =
@@ -265,7 +237,7 @@ public class ComponentProcessorTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test public void componentWithScope() {
@@ -302,78 +274,45 @@ public class ComponentProcessorTest {
                 "",
                 GeneratedLines.generatedAnnotations(),
                 "final class DaggerSimpleComponent implements SimpleComponent {",
-                "  private final DaggerSimpleComponent simpleComponent = this;")
+                "  private Provider<SomeInjectableType> someInjectableTypeProvider;")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "  private volatile Object someInjectableType = new MemoizedSentinel();",
-                "  private volatile Provider<SomeInjectableType> someInjectableTypeProvider;")
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize() {",
+                "    this.someInjectableTypeProvider =",
+                "        DoubleCheck.provider(",
+                "            new SwitchingProvider<SomeInjectableType>(simpleComponent, 0));",
+                "  }")
             .addLinesIn(
                 DEFAULT_MODE,
-                "  private Provider<SomeInjectableType> someInjectableTypeProvider;",
-                "",
                 "  @SuppressWarnings(\"unchecked\")",
                 "  private void initialize() {",
                 "    this.someInjectableTypeProvider =",
                 "        DoubleCheck.provider(SomeInjectableType_Factory.create());",
-                "  }",
-                "")
+                "  }")
             .addLines(
-                "  @Override", //
-                "  public SomeInjectableType someInjectableType() {")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "    Object local = someInjectableType;",
-                "    if (local instanceof MemoizedSentinel) {",
-                "      synchronized (local) {",
-                "        local = someInjectableType;",
-                "        if (local instanceof MemoizedSentinel) {",
-                "          local = new SomeInjectableType();",
-                "          someInjectableType =",
-                "              DoubleCheck.reentrantCheck(someInjectableType, local);",
-                "        }",
-                "      }",
-                "    }",
-                "    return (SomeInjectableType) local;")
-            .addLinesIn(
-                DEFAULT_MODE, //
-                "    return someInjectableTypeProvider.get();")
-            .addLines(
+                "  @Override",
+                "  public SomeInjectableType someInjectableType() {",
+                "    return someInjectableTypeProvider.get();",
                 "  }",
                 "",
                 "  @Override",
-                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {")
-            .addLinesIn(
-                DEFAULT_MODE, //
-                "    return DoubleCheck.lazy(someInjectableTypeProvider);")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "    return DoubleCheck.lazy(someInjectableTypeProvider());")
-            .addLines(
+                "  public Lazy<SomeInjectableType> lazySomeInjectableType() {",
+                "    return DoubleCheck.lazy(someInjectableTypeProvider);",
                 "  }",
                 "",
                 "  @Override",
-                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {")
-            .addLinesIn(
-                FAST_INIT_MODE, //
-                "    Object local = someInjectableTypeProvider;",
-                "    if (local == null) {",
-                "      local = new SwitchingProvider<>(simpleComponent, 0);",
-                "      someInjectableTypeProvider = (Provider<SomeInjectableType>) local;",
-                "    }",
-                "    return (Provider<SomeInjectableType>) local;")
-            .addLinesIn(
-                DEFAULT_MODE, //
-                "    return someInjectableTypeProvider;")
-            .addLines( //
+                "  public Provider<SomeInjectableType> someInjectableTypeProvider() {",
+                "    return someInjectableTypeProvider;",
                 "  }")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "  private final static class SwitchingProvider<T> implements Provider<T> {",
+                "  private static final class SwitchingProvider<T> implements Provider<T> {",
                 "    @SuppressWarnings(\"unchecked\")",
                 "    @Override",
                 "    public T get() {",
                 "      switch (id) {",
-                "        case 0: return (T) simpleComponent.someInjectableType();",
+                "        case 0: return (T) new SomeInjectableType();",
                 "        default: throw new AssertionError(id);",
                 "      }",
                 "    }",
@@ -1185,37 +1124,37 @@ public class ComponentProcessorTest {
                 "",
                 GeneratedLines.generatedAnnotations(),
                 "final class DaggerBComponent implements BComponent {")
-            .addLinesIn(DEFAULT_MODE, "  private Provider<A> aProvider;")
             .addLinesIn(
                 FAST_INIT_MODE,
                 "  private final AComponent aComponent;",
-                "",
                 "  private final DaggerBComponent bComponent = this;",
-                "",
-                "  private volatile Provider<A> aProvider;",
+                "  private Provider<A> aProvider;",
                 "",
                 "  private DaggerBComponent(AComponent aComponentParam) {",
                 "    this.aComponent = aComponentParam;",
+                "    initialize(aComponentParam);",
                 "  }",
                 "",
-                "  private Provider<A> aProvider() {",
-                "    Object local = aProvider;",
-                "    if (local == null) {",
-                "      local = new SwitchingProvider<>(bComponent, 0);",
-                "      aProvider = (Provider<A>) local;",
-                "    }",
-                "    return (Provider<A>) local;",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final AComponent aComponentParam) {",
+                "    this.aProvider = new SwitchingProvider<>(bComponent, 0);",
                 "  }")
             .addLinesIn(
                 DEFAULT_MODE,
+                "  private Provider<A> aProvider;",
+                "",
+                "  private DaggerBComponent(AComponent aComponentParam) {",
+                "    initialize(aComponentParam);",
+                "  }",
+                "",
                 "  @SuppressWarnings(\"unchecked\")",
                 "  private void initialize(final AComponent aComponentParam) {",
                 "    this.aProvider = new test_AComponent_a(aComponentParam);",
                 "  }")
-            .addLines("", "  @Override", "  public B b() {")
-            .addLinesIn(DEFAULT_MODE, "    return new B(aProvider);")
-            .addLinesIn(FAST_INIT_MODE, "    return new B(aProvider());")
             .addLines(
+                "  @Override",
+                "  public B b() {",
+                "    return new B(aProvider);",
                 "  }",
                 "",
                 "  static final class Builder {",
@@ -1325,9 +1264,9 @@ public class ComponentProcessorTest {
             "",
             "  private DaggerTestComponent(",
             "      TestModule testModuleParam,",
-            "      other.test.TestModule testModule2Param) {",
+            "      other.test.TestModule testModuleParam2) {",
             "    this.testModule = testModuleParam;",
-            "    this.testModule2 = testModule2Param;",
+            "    this.testModule2 = testModuleParam2;",
             "  }",
             "",
             "  @Override",
@@ -2661,6 +2600,109 @@ public class ComponentProcessorTest {
                 "    }",
                 "  }",
                 "}"));
+  }
+
+  @Test
+  public void providerComponentType() {
+    JavaFileObject entryPoint =
+        JavaFileObjects.forSourceLines(
+            "test.SomeEntryPoint",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Provider;",
+            "",
+            "public class SomeEntryPoint {",
+            "  @Inject SomeEntryPoint(Foo foo, Provider<Foo> fooProvider) {}",
+            "}");
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class Foo {",
+            "  @Inject Foo(Bar bar) {}",
+            "}");
+    JavaFileObject bar =
+        JavaFileObjects.forSourceLines(
+            "test.Bar",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class Bar {",
+            "  @Inject Bar() {}",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component",
+            "public interface TestComponent {",
+            "  SomeEntryPoint someEntryPoint();",
+            "}");
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts()).compile(component, foo, bar, entryPoint);
+
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(
+            compilerMode
+                .javaFileBuilder("test.DaggerSimpleComponent")
+                .addLines(
+                    "package test;",
+                    "",
+                    GeneratedLines.generatedAnnotations(),
+                    "public final class DaggerTestComponent implements TestComponent {",
+                    "  private Provider<Foo> fooProvider;")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  private Foo foo() {",
+                    "    return new Foo(new Bar());",
+                    "  }",
+                    "",
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize() {",
+                    "    this.fooProvider = Foo_Factory.create(Bar_Factory.create());",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public SomeEntryPoint someEntryPoint() {",
+                    "    return new SomeEntryPoint(foo(), fooProvider);",
+                    "  }")
+                .addLinesIn(
+                    FAST_INIT_MODE,
+                    "  private Foo foo() {",
+                    "    return new Foo(new Bar());",
+                    "  }",
+                    "",
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize() {",
+                    "    this.fooProvider = new SwitchingProvider<>(testComponent, 0);",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public SomeEntryPoint someEntryPoint() {",
+                    "    return new SomeEntryPoint(foo(), fooProvider);",
+                    "  }",
+                    "",
+                    "  private static final class SwitchingProvider<T> implements Provider<T> {",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    @Override",
+                    "    public T get() {",
+                    "      switch (id) {",
+                    "        case 0: return (T) testComponent.foo();",
+                    "        default: throw new AssertionError(id);",
+                    "      }",
+                    "    }",
+                    "  }")
+                .build());
   }
 
   /**

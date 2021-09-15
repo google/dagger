@@ -18,6 +18,7 @@ package dagger.hilt.android.internal.managers;
 
 import android.app.Application;
 import android.content.Context;
+import dagger.hilt.android.internal.Contexts;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
 
@@ -27,9 +28,9 @@ import dagger.hilt.internal.Preconditions;
  * <p>A manager for the creation of components that live in the BroadcastReceiver.
  */
 public final class BroadcastReceiverComponentManager {
-  @SuppressWarnings("unchecked")
+
   public static Object generatedComponent(Context context) {
-    Application application = (Application) context.getApplicationContext();
+    Application application = Contexts.getApplication(context.getApplicationContext());
 
     Preconditions.checkArgument(
         application instanceof GeneratedComponentManager,

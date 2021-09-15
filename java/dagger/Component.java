@@ -35,14 +35,16 @@ import javax.inject.Singleton;
  * example, {@code @Component interface MyComponent {...}} will produce an implementation named
  * {@code DaggerMyComponent}.
  *
- * <a name="component-methods"></a>
+ * <p><a id="component-methods"></a>
+ *
  * <h2>Component methods</h2>
  *
  * <p>Every type annotated with {@code @Component} must contain at least one abstract component
  * method. Component methods may have any name, but must have signatures that conform to either
  * {@linkplain Provider provision} or {@linkplain MembersInjector members-injection} contracts.
  *
- * <a name="provision-methods"></a>
+ * <p><a id="provision-methods"></a>
+ *
  * <h3>Provision methods</h3>
  *
  * <p>Provision methods have no parameters and return an {@link Inject injected} or {@link Provides
@@ -68,7 +70,8 @@ import javax.inject.Singleton;
  *   {@literal Lazy<SomeType>} getLazySomeType();
  * </code></pre>
  *
- * <a name="members-injection-methods"></a>
+ * <a id="members-injection-methods"></a>
+ *
  * <h3>Members-injection methods</h3>
  *
  * <p>Members-injection methods have a single parameter and inject dependencies into each of the
@@ -111,7 +114,8 @@ import javax.inject.Singleton;
  *   }
  * </code></pre>
  *
- * <a name="instantiation"></a>
+ * <a id="instantiation"></a>
+ *
  * <h2>Instantiation</h2>
  *
  * <p>Component implementations are primarily instantiated via a generated <a
@@ -131,17 +135,17 @@ import javax.inject.Singleton;
  * <p>Example of using a builder:
  *
  * <pre>{@code
- *   public static void main(String[] args) {
- *     OtherComponent otherComponent = ...;
- *     MyComponent component = DaggerMyComponent.builder()
- *         // required because component dependencies must be set
- *         .otherComponent(otherComponent)
- *         // required because FlagsModule has constructor parameters
- *         .flagsModule(new FlagsModule(args))
- *         // may be elided because a no-args constructor is visible
- *         .myApplicationModule(new MyApplicationModule())
- *         .build();
- *   }
+ * public static void main(String[] args) {
+ *   OtherComponent otherComponent = ...;
+ *   MyComponent component = DaggerMyComponent.builder()
+ *       // required because component dependencies must be set
+ *       .otherComponent(otherComponent)
+ *       // required because FlagsModule has constructor parameters
+ *       .flagsModule(new FlagsModule(args))
+ *       // may be elided because a no-args constructor is visible
+ *       .myApplicationModule(new MyApplicationModule())
+ *       .build();
+ * }
  * }</pre>
  *
  * <p>Example of using a factory:
@@ -162,7 +166,8 @@ import javax.inject.Singleton;
  * SomeComponent.create()} and {@code SomeComponent.builder().build()} are both valid and
  * equivalent.
  *
- * <a name="scope"></a>
+ * <p><a id="scope"></a>
+ *
  * <h2>Scope</h2>
  *
  * <p>Each Dagger component can be associated with a scope by annotating it with the {@linkplain
@@ -184,14 +189,16 @@ import javax.inject.Singleton;
  * self-contained implementations, exiting a scope is as simple as dropping all references to the
  * component instance.
  *
- * <a name="component-relationships"></a>
+ * <p><a id="component-relationships"></a>
+ *
  * <h2>Component relationships</h2>
  *
  * <p>While there is much utility in isolated components with purely unscoped bindings, many
  * applications will call for multiple components with multiple scopes to interact. Dagger provides
  * two mechanisms for relating components.
  *
- * <a name="subcomponents"></a>
+ * <p><a id="subcomponents"></a>
+ *
  * <h3>Subcomponents</h3>
  *
  * <p>The simplest way to relate two components is by declaring a {@link Subcomponent}. A
@@ -219,7 +226,8 @@ import javax.inject.Singleton;
  *   }
  * </code></pre>
  *
- * <a name="component-dependencies"></a>
+ * <a id="component-dependencies"></a>
+ *
  * <h3>Component dependencies</h3>
  *
  * <p>While subcomponents are the simplest way to compose subgraphs of bindings, subcomponents are

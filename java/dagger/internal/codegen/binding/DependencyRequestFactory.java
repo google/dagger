@@ -26,20 +26,21 @@ import static dagger.internal.codegen.base.RequestKinds.frameworkClass;
 import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
-import static dagger.model.RequestKind.FUTURE;
-import static dagger.model.RequestKind.INSTANCE;
-import static dagger.model.RequestKind.MEMBERS_INJECTION;
-import static dagger.model.RequestKind.PRODUCER;
-import static dagger.model.RequestKind.PROVIDER;
+import static dagger.spi.model.RequestKind.FUTURE;
+import static dagger.spi.model.RequestKind.INSTANCE;
+import static dagger.spi.model.RequestKind.MEMBERS_INJECTION;
+import static dagger.spi.model.RequestKind.PRODUCER;
+import static dagger.spi.model.RequestKind.PROVIDER;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Lazy;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
-import dagger.model.RequestKind;
+import dagger.spi.model.DaggerElement;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
+import dagger.spi.model.RequestKind;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -167,7 +168,7 @@ public final class DependencyRequestFactory {
       return DependencyRequest.builder()
           .kind(FUTURE)
           .key(keyFactory.forQualifiedType(qualifier, unwrapType(type)))
-          .requestElement(productionMethod)
+          .requestElement(DaggerElement.fromJava(productionMethod))
           .build();
     } else {
       return newDependencyRequest(productionMethod, type, qualifier);
@@ -185,7 +186,7 @@ public final class DependencyRequestFactory {
     return DependencyRequest.builder()
         .kind(MEMBERS_INJECTION)
         .key(keyFactory.forMembersInjectedType(membersInjectedType))
-        .requestElement(membersInjectionMethod)
+        .requestElement(DaggerElement.fromJava(membersInjectionMethod))
         .build();
   }
 
@@ -224,7 +225,7 @@ public final class DependencyRequestFactory {
     return DependencyRequest.builder()
         .kind(requestKind)
         .key(keyFactory.forQualifiedType(qualifier, extractKeyType(type)))
-        .requestElement(requestElement)
+        .requestElement(DaggerElement.fromJava(requestElement))
         .isNullable(allowsNull(requestKind, getNullableType(requestElement)))
         .build();
   }

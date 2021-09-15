@@ -245,4 +245,485 @@ public class AssistedFactoryTest {
         .generatedSourceFile("test.DaggerTestComponent")
         .containsElementsIn(generatedComponent);
   }
+
+  @Test
+  public void testInjectParamDuplicateNames() {
+    JavaFileObject componentSrc =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  @Component.Factory",
+            "  interface Factory {",
+            "    TestComponent create(@BindsInstance Bar arg);",
+            "  }",
+            "  FooFactory getFooFactory();",
+            "}");
+    JavaFileObject factorySrc =
+        JavaFileObjects.forSourceLines(
+            "test.FooFactory",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface FooFactory {",
+            "  Foo create(Integer arg);",
+            "}");
+    JavaFileObject barSrc =
+        JavaFileObjects.forSourceLines("test.Bar", "package test;", "", "interface Bar {}");
+    JavaFileObject injectSrc =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class Foo {",
+            "  @AssistedInject",
+            "  Foo(Bar bar, @Assisted Integer arg) {}",
+            "}");
+    JavaFileObject generatedSrc =
+        compilerMode
+            .javaFileBuilder("test.DaggerTestComponent")
+            .addLines("package test;", "", GeneratedLines.generatedAnnotations())
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "final class DaggerTestComponent implements TestComponent {",
+                "  private final Bar arg2;",
+                "  private final DaggerTestComponent testComponent = this;",
+                "",
+                "  private DaggerTestComponent(Bar argParam) {",
+                "    this.arg2 = argParam;",
+                "  }",
+                "",
+                "  public static TestComponent.Factory factory() {",
+                "    return new Factory();",
+                "  }",
+                "",
+                "  private Foo foo(Integer arg) {",
+                "    return new Foo(arg2, arg);",
+                "  }",
+                "",
+                "  @Override",
+                "  public FooFactory getFooFactory() {",
+                "    return new FooFactory() {",
+                "      @Override",
+                "      public Foo create(Integer arg) {",
+                "        return testComponent.foo(arg);",
+                "      }",
+                "    };",
+                "  }",
+                "",
+                "  private static final class Factory implements TestComponent.Factory {",
+                "    @Override",
+                "    public TestComponent create(Bar arg) {",
+                "      Preconditions.checkNotNull(arg);",
+                "      return new DaggerTestComponent(arg);",
+                "    }",
+                "  }",
+                "}")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "final class DaggerTestComponent implements TestComponent {",
+                "  private final DaggerTestComponent testComponent = this;",
+                "  private Provider<Bar> argProvider;",
+                "  private Foo_Factory fooProvider;",
+                "  private Provider<FooFactory> fooFactoryProvider;",
+                "",
+                "  private DaggerTestComponent(Bar argParam) {",
+                "    initialize(argParam);",
+                "  }",
+                "",
+                "  public static TestComponent.Factory factory() {",
+                "    return new Factory();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Bar argParam) {",
+                "    this.argProvider = InstanceFactory.create(argParam);",
+                "    this.fooProvider = Foo_Factory.create(argProvider);",
+                "    this.fooFactoryProvider = FooFactory_Impl.create(fooProvider);",
+                "  }",
+                "",
+                "  @Override",
+                "  public FooFactory getFooFactory() {",
+                "    return fooFactoryProvider.get();",
+                "  }",
+                "",
+                "  private static final class Factory implements TestComponent.Factory {",
+                "    @Override",
+                "    public TestComponent create(Bar arg) {",
+                "      Preconditions.checkNotNull(arg);",
+                "      return new DaggerTestComponent(arg);",
+                "    }",
+                "  }",
+                "}")
+            .build();
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts())
+            .compile(componentSrc, factorySrc, barSrc, injectSrc);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(generatedSrc);
+  }
+
+  @Test
+  public void testAssistParamDuplicateNames() {
+    JavaFileObject componentSrc =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  @Component.Factory",
+            "  interface Factory {",
+            "    TestComponent create(@BindsInstance Bar arg);",
+            "  }",
+            "  Bar getBar();",
+            "  FooFactory getFooFactory();",
+            "}");
+    JavaFileObject factorySrc =
+        JavaFileObjects.forSourceLines(
+            "test.FooFactory",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface FooFactory {",
+            "  Foo create(Integer arg);",
+            "}");
+    JavaFileObject barSrc =
+        JavaFileObjects.forSourceLines("test.Bar", "package test;", "", "interface Bar {}");
+    JavaFileObject injectSrc =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class Foo {",
+            "  @AssistedInject",
+            "  Foo(Bar bar, @Assisted Integer arg) {}",
+            "}");
+    JavaFileObject generatedSrc =
+        compilerMode
+            .javaFileBuilder("test.DaggerTestComponent")
+            .addLines("package test;", "", GeneratedLines.generatedAnnotations())
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "final class DaggerTestComponent implements TestComponent {",
+                "  private final Bar arg;",
+                "",
+                "  private final DaggerTestComponent testComponent = this;",
+                "",
+                "  private DaggerTestComponent(Bar argParam) {",
+                "    this.arg = argParam;",
+                "",
+                "  }",
+                "",
+                "  public static TestComponent.Factory factory() {",
+                "    return new Factory();",
+                "  }",
+                "",
+                "  private Foo foo(Integer arg2) {",
+                "    return new Foo(arg, arg2);",
+                "  }",
+                "",
+                "  @Override",
+                "  public Bar getBar() {",
+                "    return arg;",
+                "  }",
+                "",
+                "  @Override",
+                "  public FooFactory getFooFactory() {",
+                "    return new FooFactory() {",
+                "      @Override",
+                "      public Foo create(Integer arg) {",
+                "        return testComponent.foo(arg);",
+                "      }",
+                "    };",
+                "  }",
+                "",
+                "  private static final class Factory implements TestComponent.Factory {",
+                "    @Override",
+                "    public TestComponent create(Bar arg) {",
+                "      Preconditions.checkNotNull(arg);",
+                "      return new DaggerTestComponent(arg);",
+                "    }",
+                "  }",
+                "}")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "final class DaggerTestComponent implements TestComponent {",
+                "  private final Bar arg;",
+                "  private final DaggerTestComponent testComponent = this;",
+                "  private Provider<Bar> argProvider;",
+                "  private Foo_Factory fooProvider;",
+                "  private Provider<FooFactory> fooFactoryProvider;",
+                "",
+                "  private DaggerTestComponent(Bar argParam) {",
+                "    this.arg = argParam;",
+                "    initialize(argParam);",
+                "  }",
+                "",
+                "  public static TestComponent.Factory factory() {",
+                "    return new Factory();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final Bar argParam) {",
+                "    this.argProvider = InstanceFactory.create(argParam);",
+                "    this.fooProvider = Foo_Factory.create(argProvider);",
+                "    this.fooFactoryProvider = FooFactory_Impl.create(fooProvider);",
+                "  }",
+                "",
+                "  @Override",
+                "  public Bar getBar() {",
+                "    return arg;",
+                "  }",
+                "",
+                "  @Override",
+                "  public FooFactory getFooFactory() {",
+                "    return fooFactoryProvider.get();",
+                "  }",
+                "",
+                "  private static final class Factory implements TestComponent.Factory {",
+                "    @Override",
+                "    public TestComponent create(Bar arg) {",
+                "      Preconditions.checkNotNull(arg);",
+                "      return new DaggerTestComponent(arg);",
+                "    }",
+                "  }",
+                "}")
+            .build();
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts())
+            .compile(componentSrc, factorySrc, barSrc, injectSrc);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(generatedSrc);
+  }
+
+  @Test
+  public void testFactoryGeneratorDuplicatedParamNames() {
+    JavaFileObject componentSrc =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  @Component.Factory",
+            "  interface Factory {",
+            "    TestComponent create(@BindsInstance Bar arg);",
+            "}",
+            "  FooFactory getFooFactory();",
+            "}");
+    JavaFileObject factorySrc =
+        JavaFileObjects.forSourceLines(
+            "test.FooFactory",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface FooFactory {",
+            "  Foo create(Integer arg);",
+            "}");
+    JavaFileObject barSrc =
+        JavaFileObjects.forSourceLines("test.Bar", "package test;", "", "interface Bar {}");
+    JavaFileObject injectSrc =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class Foo {",
+            "  @AssistedInject",
+            "  Foo(Bar arg, @Assisted Integer argProvider) {}",
+            "}");
+    JavaFileObject generatedSrc =
+        compilerMode
+            .javaFileBuilder("test.DaggerTestComponent")
+            .addLines("package test;", "", GeneratedLines.generatedAnnotations())
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "public final class Foo_Factory {",
+                "  private final Provider<Bar> argProvider;",
+                "",
+                "  public Foo_Factory(Provider<Bar> argProvider) {",
+                "    this.argProvider = argProvider;",
+                "  }",
+                "",
+                "  public Foo get(Integer argProvider2) {",
+                "    return newInstance(argProvider.get(), argProvider2);",
+                "  }",
+                "",
+                "  public static Foo_Factory create(Provider<Bar> argProvider) {",
+                "    return new Foo_Factory(argProvider);",
+                "  }",
+                "",
+                "  public static Foo newInstance(Object arg, Integer argProvider) {",
+                "    return new Foo((Bar) arg, argProvider);",
+                "  }",
+                "}")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "public final class Foo_Factory {",
+                "  private final Provider<Bar> argProvider;",
+                "",
+                "  public Foo_Factory(Provider<Bar> argProvider) {",
+                "    this.argProvider = argProvider;",
+                "  }",
+                "",
+                "  public Foo get(Integer argProvider2) {",
+                "    return newInstance(argProvider.get(), argProvider2);",
+                "  }",
+                "",
+                "  public static Foo_Factory create(Provider<Bar> argProvider) {",
+                "    return new Foo_Factory(argProvider);",
+                "  }",
+                "",
+                "  public static Foo newInstance(Object arg, Integer argProvider) {",
+                "    return new Foo((Bar) arg, argProvider);",
+                "  }",
+                "}")
+            .build();
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts())
+            .compile(componentSrc, factorySrc, barSrc, injectSrc);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.Foo_Factory")
+        .containsElementsIn(generatedSrc);
+  }
+
+  @Test
+  public void testParameterizedAssistParam() {
+    JavaFileObject componentSrc =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  FooFactory<String> getFooFactory();",
+            "}");
+    JavaFileObject factorySrc =
+        JavaFileObjects.forSourceLines(
+            "test.FooFactory",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface FooFactory<T> {",
+            "  Foo<T> create(T arg);",
+            "}");
+    JavaFileObject injectSrc =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class Foo<T> {",
+            "  @AssistedInject",
+            "  Foo(@Assisted T arg) {}",
+            "}");
+    JavaFileObject generatedSrc =
+        compilerMode
+            .javaFileBuilder("test.DaggerTestComponent")
+            .addLines("package test;", "", GeneratedLines.generatedAnnotations())
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "final class DaggerTestComponent implements TestComponent {",
+                "  private final DaggerTestComponent testComponent = this;",
+                "",
+                "  private DaggerTestComponent() {",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "private Foo<String> fooOfString(String arg) {",
+                "  return new Foo<String>(arg);",
+                "}",
+                "",
+                "  @Override",
+                "  public FooFactory<String> getFooFactory() {",
+                "    return new FooFactory<String>() {",
+                "      @Override",
+                "      public Foo<String> create(String arg) {",
+                "        return testComponent.fooOfString(arg);",
+                "      }",
+                "    };",
+                "  }",
+                "}")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "final class DaggerTestComponent implements TestComponent {",
+                "  private final DaggerTestComponent testComponent = this;",
+                "  private Foo_Factory<String> fooProvider;",
+                "  private Provider<FooFactory<String>> fooFactoryProvider;",
+                "",
+                "  private DaggerTestComponent() {",
+                "    initialize();",
+                "  }",
+                "",
+                "  public static Builder builder() {",
+                "    return new Builder();",
+                "  }",
+                "",
+                "  public static TestComponent create() {",
+                "    return new Builder().build();",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize() {",
+                "    this.fooProvider = Foo_Factory.create();",
+                "    this.fooFactoryProvider = FooFactory_Impl.create(fooProvider);",
+                "  }",
+                "",
+                "  @Override",
+                "  public FooFactory<String> getFooFactory() {",
+                "    return fooFactoryProvider.get();",
+                "  }",
+                "}")
+            .build();
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts()).compile(componentSrc, factorySrc, injectSrc);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(generatedSrc);
+  }
 }

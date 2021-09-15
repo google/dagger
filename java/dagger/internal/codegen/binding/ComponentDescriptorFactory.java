@@ -41,7 +41,7 @@ import dagger.internal.codegen.base.ModuleAnnotation;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.Scope;
+import dagger.spi.model.Scope;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.inject.Inject;

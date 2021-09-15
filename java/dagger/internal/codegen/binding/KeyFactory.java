@@ -29,6 +29,8 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.Optionals.firstPresent;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
+import static dagger.spi.model.DaggerAnnotation.fromJava;
+import static dagger.spi.model.DaggerType.fromJava;
 import static java.util.Arrays.asList;
 import static javax.lang.model.element.ElementKind.METHOD;
 
@@ -45,15 +47,16 @@ import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.base.SimpleAnnotationMirror;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.Key;
-import dagger.model.Key.MultibindingContributionIdentifier;
-import dagger.model.RequestKind;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.Production;
 import dagger.producers.internal.ProductionImplementation;
 import dagger.producers.monitoring.ProductionComponentMonitor;
+import dagger.spi.model.DaggerAnnotation;
+import dagger.spi.model.Key;
+import dagger.spi.model.Key.MultibindingContributionIdentifier;
+import dagger.spi.model.RequestKind;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -122,11 +125,11 @@ public final class KeyFactory {
     checkArgument(subcomponentCreatorMethod.getKind().equals(METHOD));
     ExecutableType resolvedMethod =
         asExecutable(types.asMemberOf(declaredContainer, subcomponentCreatorMethod));
-    return Key.builder(resolvedMethod.getReturnType()).build();
+    return Key.builder(fromJava(resolvedMethod.getReturnType())).build();
   }
 
   public Key forSubcomponentCreator(TypeMirror creatorType) {
-    return Key.builder(creatorType).build();
+    return Key.builder(fromJava(creatorType)).build();
   }
 
   public Key forProvidesMethod(ExecutableElement method, TypeElement contributingModule) {
@@ -246,36 +249,41 @@ public final class KeyFactory {
   }
 
   public Key forInjectConstructorWithResolvedType(TypeMirror type) {
-    return Key.builder(type).build();
+    return Key.builder(fromJava(type)).build();
   }
 
   // TODO(ronshapiro): Remove these conveniences which are simple wrappers around Key.Builder
   Key forType(TypeMirror type) {
-    return Key.builder(type).build();
+    return Key.builder(fromJava(type)).build();
   }
 
   public Key forMembersInjectedType(TypeMirror type) {
-    return Key.builder(type).build();
+    return Key.builder(fromJava(type)).build();
   }
 
   Key forQualifiedType(Optional<AnnotationMirror> qualifier, TypeMirror type) {
-    return Key.builder(boxPrimitives(type)).qualifier(qualifier).build();
+    return Key.builder(fromJava(boxPrimitives(type)))
+        .qualifier(qualifier.map(DaggerAnnotation::fromJava))
+        .build();
   }
 
   public Key forProductionExecutor() {
-    return Key.builder(elements.getTypeElement(Executor.class).asType())
-        .qualifier(SimpleAnnotationMirror.of(elements.getTypeElement(Production.class)))
+    return Key.builder(fromJava(elements.getTypeElement(Executor.class).asType()))
+        .qualifier(fromJava(SimpleAnnotationMirror.of(elements.getTypeElement(Production.class))))
         .build();
   }
 
   public Key forProductionImplementationExecutor() {
-    return Key.builder(elements.getTypeElement(Executor.class).asType())
-        .qualifier(SimpleAnnotationMirror.of(elements.getTypeElement(ProductionImplementation.class)))
+    return Key.builder(fromJava(elements.getTypeElement(Executor.class).asType()))
+        .qualifier(
+            fromJava(
+                SimpleAnnotationMirror.of(elements.getTypeElement(ProductionImplementation.class))))
         .build();
   }
 
   public Key forProductionComponentMonitor() {
-    return Key.builder(elements.getTypeElement(ProductionComponentMonitor.class).asType()).build();
+    return Key.builder(fromJava(elements.getTypeElement(ProductionComponentMonitor.class).asType()))
+        .build();
   }
 
   /**
@@ -328,7 +336,8 @@ public final class KeyFactory {
         for (Class<?> frameworkClass : asList(Provider.class, Producer.class, Produced.class)) {
           if (mapType.valuesAreTypeOf(frameworkClass)) {
             return key.toBuilder()
-                .type(mapOf(mapType.keyType(), mapType.unwrappedValueType(frameworkClass)))
+                .type(
+                    fromJava(mapOf(mapType.keyType(), mapType.unwrappedValueType(frameworkClass))))
                 .build();
           }
         }
@@ -372,7 +381,9 @@ public final class KeyFactory {
             types.getDeclaredType(
                 wrappingElement, mapType.unwrappedValueType(currentWrappingClass));
         return Optional.of(
-            possibleMapKey.toBuilder().type(mapOf(mapType.keyType(), wrappedValueType)).build());
+            possibleMapKey.toBuilder()
+                .type(fromJava(mapOf(mapType.keyType(), wrappedValueType)))
+                .build());
       }
     }
     return Optional.empty();
@@ -397,7 +408,9 @@ public final class KeyFactory {
         }
         DeclaredType wrappedValueType = types.getDeclaredType(wrappingElement, mapType.valueType());
         return Optional.of(
-            possibleMapKey.toBuilder().type(mapOf(mapType.keyType(), wrappedValueType)).build());
+            possibleMapKey.toBuilder()
+                .type(fromJava(mapOf(mapType.keyType(), wrappedValueType)))
+                .build());
       }
     }
     return Optional.empty();
@@ -412,7 +425,9 @@ public final class KeyFactory {
       SetType setType = SetType.from(key);
       if (!setType.isRawType() && setType.elementsAreTypeOf(wrappingClass)) {
         return Optional.of(
-            key.toBuilder().type(setOf(setType.unwrappedElementType(wrappingClass))).build());
+            key.toBuilder()
+                .type(fromJava(setOf(setType.unwrappedElementType(wrappingClass))))
+                .build());
       }
     }
     return Optional.empty();
@@ -429,6 +444,6 @@ public final class KeyFactory {
     }
 
     TypeMirror optionalValueType = OptionalType.from(key).valueType();
-    return Optional.of(key.toBuilder().type(extractKeyType(optionalValueType)).build());
+    return Optional.of(key.toBuilder().type(fromJava(extractKeyType(optionalValueType))).build());
   }
 }

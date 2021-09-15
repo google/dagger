@@ -49,9 +49,4 @@ final class InstanceFactoryCreationExpression implements FrameworkInstanceCreati
         nullable ? "createNullable" : "create",
         instanceExpression.get());
   }
-
-  @Override
-  public boolean useSwitchingProvider() {
-    return false;
-  }
 }

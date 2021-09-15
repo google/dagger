@@ -29,9 +29,9 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.model.DependencyRequest;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
+import dagger.spi.model.DependencyRequest;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
@@ -47,10 +47,10 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
   MapFactoryCreationExpression(
       @Assisted ContributionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequestRepresentations componentRequestRepresentations,
       BindingGraph graph,
       DaggerElements elements) {
-    super(binding, componentImplementation, componentBindingExpressions);
+    super(binding, componentImplementation, componentRequestRepresentations);
     this.binding = checkNotNull(binding);
     this.componentImplementation = componentImplementation;
     this.graph = graph;
@@ -61,7 +61,7 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
   public CodeBlock creationExpression() {
     CodeBlock.Builder builder = CodeBlock.builder().add("$T.", mapFactoryClassName(binding));
     if (!useRawType()) {
-      MapType mapType = MapType.from(binding.key().type());
+      MapType mapType = MapType.from(binding.key().type().java());
       // TODO(ronshapiro): either inline this into mapFactoryClassName, or add a
       // mapType.unwrappedValueType() method that doesn't require a framework type
       TypeMirror valueType = mapType.valueType();

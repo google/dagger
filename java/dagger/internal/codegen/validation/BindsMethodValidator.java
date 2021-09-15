@@ -22,24 +22,24 @@ import static dagger.internal.codegen.validation.BindingMethodValidator.Abstract
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 import static dagger.internal.codegen.validation.TypeHierarchyValidator.validateTypeHierarchy;
 
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XVariableElement;
+import androidx.room.compiler.processing.compat.XConverters;
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
-import dagger.Binds;
-import dagger.Module;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.BindsTypeChecker;
 import dagger.internal.codegen.binding.InjectionAnnotations;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.producers.ProducerModule;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
-/** A validator for {@link Binds} methods. */
+/** A validator for {@link dagger.Binds} methods. */
 final class BindsMethodValidator extends BindingMethodValidator {
   private final DaggerTypes types;
   private final BindsTypeChecker bindsTypeChecker;
@@ -56,8 +56,8 @@ final class BindsMethodValidator extends BindingMethodValidator {
         elements,
         types,
         kotlinMetadataUtil,
-        Binds.class,
-        ImmutableSet.of(Module.class, ProducerModule.class),
+        TypeNames.BINDS,
+        ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
         dependencyRequestValidator,
         MUST_BE_ABSTRACT,
         NO_EXCEPTIONS,
@@ -69,18 +69,18 @@ final class BindsMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected ElementValidator elementValidator(ExecutableElement element) {
-    return new Validator(element);
+  protected ElementValidator elementValidator(XExecutableElement xElement) {
+    return new Validator(xElement);
   }
 
   private class Validator extends MethodValidator {
-    Validator(ExecutableElement element) {
-      super(element);
+    Validator(XExecutableElement xElement) {
+      super(xElement);
     }
 
     @Override
     protected void checkParameters() {
-      if (element.getParameters().size() != 1) {
+      if (xElement.getParameters().size() != 1) {
         report.addError(
             bindingMethods(
                 "must have exactly one parameter, whose type is assignable to the return type"));
@@ -90,10 +90,10 @@ final class BindsMethodValidator extends BindingMethodValidator {
     }
 
     @Override
-    protected void checkParameter(VariableElement parameter) {
+    protected void checkParameter(XVariableElement parameter) {
       super.checkParameter(parameter);
-      TypeMirror leftHandSide = boxIfNecessary(element.getReturnType());
-      TypeMirror rightHandSide = parameter.asType();
+      TypeMirror leftHandSide = boxIfNecessary(MoreElements.asExecutable(element).getReturnType());
+      TypeMirror rightHandSide = XConverters.toJavac(parameter.getType());
       ContributionType contributionType = ContributionType.fromBindingElement(element);
       if (contributionType.equals(ContributionType.SET_VALUES) && !SetType.isSet(leftHandSide)) {
         report.addError(

@@ -22,11 +22,12 @@ import static dagger.internal.codegen.base.RequestKinds.canBeSatisfiedByProducti
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
-import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.DependencyEdge;
-import dagger.model.BindingGraph.Node;
-import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
+import dagger.spi.model.Binding;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraph.DependencyEdge;
+import dagger.spi.model.BindingGraph.Node;
+import dagger.spi.model.BindingGraphPlugin;
+import dagger.spi.model.DiagnosticReporter;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 
@@ -68,8 +69,7 @@ final class ProvisionDependencyOnProducerBindingValidator implements BindingGrap
 
   /** Returns the dependencies on {@code binding}. */
   // TODO(dpb): Move to BindingGraph.
-  private Stream<DependencyEdge> incomingDependencies(
-      dagger.model.Binding binding, BindingGraph bindingGraph) {
+  private Stream<DependencyEdge> incomingDependencies(Binding binding, BindingGraph bindingGraph) {
     return bindingGraph.network().inEdges(binding).stream()
         .flatMap(instancesOf(DependencyEdge.class));
   }
@@ -88,16 +88,16 @@ final class ProvisionDependencyOnProducerBindingValidator implements BindingGrap
    *     DependencyEdge#isEntryPoint() entry point}.
    */
   // TODO(dpb): Move to BindingGraph.
-  private dagger.model.Binding bindingRequestingDependency(
+  private Binding bindingRequestingDependency(
       DependencyEdge dependency, BindingGraph bindingGraph) {
     checkArgument(!dependency.isEntryPoint());
     Node source = bindingGraph.network().incidentNodes(dependency).source();
     verify(
-        source instanceof dagger.model.Binding,
+        source instanceof Binding,
         "expected source of %s to be a binding, but was: %s",
         dependency,
         source);
-    return (dagger.model.Binding) source;
+    return (Binding) source;
   }
 
   private String entryPointErrorMessage(DependencyEdge entryPoint) {

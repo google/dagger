@@ -112,6 +112,11 @@ public final class CodeBlocks {
   }
 
   /** Returns {@code expression} cast to a type. */
+  public static CodeBlock cast(CodeBlock expression, ClassName castTo) {
+    return CodeBlock.of("($T) $L", castTo, expression);
+  }
+
+  /** Returns {@code expression} cast to a type. */
   public static CodeBlock cast(CodeBlock expression, Class<?> castTo) {
     return CodeBlock.of("($T) $L", castTo, expression);
   }

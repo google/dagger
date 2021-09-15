@@ -30,19 +30,20 @@ import static dagger.internal.codegen.binding.SourceFiles.frameworkTypeUsageStat
 import static dagger.internal.codegen.binding.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.binding.SourceFiles.parameterizedGeneratedTypeNameForBinding;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.factoryOf;
 import static dagger.internal.codegen.writing.GwtCompatibility.gwtIncompatibleAnnotation;
-import static dagger.model.BindingKind.PROVISION;
+import static dagger.spi.model.BindingKind.PROVISION;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XFiler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -64,14 +65,15 @@ import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
-import dagger.model.BindingKind;
-import dagger.model.DependencyRequest;
+import dagger.spi.model.BindingKind;
+import dagger.spi.model.DependencyRequest;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.VariableElement;
 
 /**
  * Generates {@link Factory} implementations from {@link ProvisionBinding} instances for {@link
@@ -84,7 +86,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
 
   @Inject
   FactoryGenerator(
-      Filer filer,
+      XFiler filer,
       SourceVersion sourceVersion,
       DaggerTypes types,
       DaggerElements elements,
@@ -223,28 +225,36 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
   }
 
   private MethodSpec getMethod(ProvisionBinding binding) {
+    UniqueNameSet uniqueFieldNames = new UniqueNameSet();
+    ImmutableMap<DependencyRequest, FieldSpec> frameworkFields = frameworkFields(binding);
+    frameworkFields.values().forEach(field -> uniqueFieldNames.claim(field.name));
+    Map<VariableElement, ParameterSpec> assistedParameters =
+        assistedParameters(binding).stream()
+            .collect(
+                toImmutableMap(
+                    element -> element,
+                    element ->
+                        ParameterSpec.builder(
+                                TypeName.get(element.asType()),
+                                uniqueFieldNames.getUniqueName(element.getSimpleName()))
+                            .build()));
     TypeName providedTypeName = providedTypeName(binding);
     MethodSpec.Builder getMethod =
         methodBuilder("get")
             .addModifiers(PUBLIC)
             .returns(providedTypeName)
-            .addParameters(
-                // The 'get' method for an assisted injection type takes in the assisted parameters.
-                assistedParameters(binding).stream()
-                    .map(ParameterSpec::get)
-                    .collect(toImmutableList()));
+            .addParameters(assistedParameters.values());
 
     if (factoryTypeName(binding).isPresent()) {
       getMethod.addAnnotation(Override.class);
     }
-
-    ImmutableMap<DependencyRequest, FieldSpec> frameworkFields = frameworkFields(binding);
     CodeBlock invokeNewInstance =
         ProvisionMethod.invoke(
             binding,
             request ->
                 frameworkTypeUsageStatement(
                     CodeBlock.of("$N", frameworkFields.get(request)), request.kind()),
+            param -> assistedParameters.get(param).name,
             generatedClassNameForBinding(binding),
             moduleParameter(binding).map(module -> CodeBlock.of("$N", module)),
             compilerOptions,
@@ -264,7 +274,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
                   binding.injectionSites(),
                   generatedClassNameForBinding(binding),
                   instance,
-                  binding.key().type(),
+                  binding.key().type().java(),
                   frameworkFieldUsages(binding.dependencies(), frameworkFields)::get,
                   types,
                   metadataUtil))

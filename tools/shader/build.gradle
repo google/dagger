@@ -1,0 +1,98 @@
+/*
+ * Copyright (C) 2020 The Dagger Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import java.util.jar.Manifest;
+import com.github.jengelman.gradle.plugins.shadow.transformers.Transformer
+import com.github.jengelman.gradle.plugins.shadow.transformers.TransformerContext
+import shadow.org.apache.tools.zip.ZipOutputStream
+import shadow.org.apache.tools.zip.ZipEntry
+
+plugins {
+  id 'java-library'
+  id 'com.github.johnrengelman.shadow' version '6.1.0'
+}
+
+repositories {
+  mavenCentral()
+  mavenLocal()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+}
+
+// This transformation makes sure the input jar's MANIFEST.MF properties,
+// such as "Created-by:" get merged into the final artifact jar (although it's
+// not clear how necessary this is).
+/** A transform that merges in the MANIFEST.MF files from the inputJar.  */
+class ManifestMerger implements Transformer {
+    private static final String MANIFEST_MF = "META-INF/MANIFEST.MF";
+
+    private Manifest manifest;
+
+    @Override
+    boolean canTransformResource(FileTreeElement element) {
+        return MANIFEST_MF.equalsIgnoreCase(element.relativePath.pathString);
+    }
+
+    @Override
+    void transform(TransformerContext context) {
+        if (manifest == null) {
+            manifest = new Manifest(context.is);
+        } else {
+            Manifest toMerge = new Manifest(context.is);
+            manifest.getMainAttributes()
+                .putAll(toMerge.getMainAttributes().entrySet());
+            manifest.getEntries().putAll(toMerge.getEntries().entrySet());
+        }
+    }
+
+    @Override
+    boolean hasTransformedResource() { true }
+
+    @Override
+    void modifyOutputStream(
+            ZipOutputStream os, boolean preserveFileTimestamps) {
+        os.putNextEntry(new ZipEntry(MANIFEST_MF));
+        if (manifest != null) {
+            ByteArrayOutputStream content = new ByteArrayOutputStream();
+            manifest.write(content);
+            os.write(content.toByteArray());
+        }
+    }
+}
+
+configurations {
+    shaded
+}
+
+shadowJar {
+    archiveClassifier = "" // postfix for output jar
+    configurations = [project.configurations.shaded]
+    transform(ManifestMerger.class)
+
+    // Add a 'relocate' declaration for each shaded rule.
+    //   Format: "key1,value1;key2,value2;key3,value3"
+    def rules = project.getProperty("shadedRules").split(";")
+    for (def i = 0; i < rules.size(); i++) {
+        def rule = rules[i].split(",")
+        relocate "${rule[0]}", "${rule[1]}"
+    }
+}
+
+dependencies {
+    shaded files(project.getProperty("inputJar"))
+}

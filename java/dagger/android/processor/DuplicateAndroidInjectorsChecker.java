@@ -30,8 +30,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import dagger.MapKey;
-import dagger.android.AndroidInjector;
-import dagger.android.DispatchingAndroidInjector;
 import dagger.model.Binding;
 import dagger.model.BindingGraph;
 import dagger.model.BindingKind;
@@ -43,13 +41,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /**
- * Validates that the two maps that {@link DispatchingAndroidInjector} injects have logically
+ * Validates that the two maps that {@code DispatchingAndroidInjector} injects have logically
  * different keys. If a contribution exists for the same {@code FooActivity} with
  * {@code @ActivityKey(FooActivity.class)} and
  * {@code @AndroidInjectionKey("com.example.FooActivity")}, report an error.
@@ -67,7 +64,7 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
 
   private boolean isDispatchingAndroidInjector(Binding binding) {
     Key key = binding.key();
-    return MoreTypes.isTypeOf(DispatchingAndroidInjector.class, key.type())
+    return MoreDaggerTypes.isTypeOf(TypeNames.DISPATCHING_ANDROID_INJECTOR, key.type())
         && !key.qualifier().isPresent();
   }
 
@@ -118,12 +115,12 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
             requestedBinding -> {
               TypeMirror valueType =
                   MoreTypes.asDeclared(requestedBinding.key().type()).getTypeArguments().get(1);
-              if (!MoreTypes.isTypeOf(Provider.class, valueType)
+              if (!MoreDaggerTypes.isTypeOf(TypeNames.PROVIDER, valueType)
                   || !valueType.getKind().equals(TypeKind.DECLARED)) {
                 return false;
               }
               TypeMirror providedType = MoreTypes.asDeclared(valueType).getTypeArguments().get(0);
-              return MoreTypes.isTypeOf(AndroidInjector.Factory.class, providedType);
+              return MoreDaggerTypes.isTypeOf(TypeNames.ANDROID_INJECTOR_FACTORY, providedType);
             });
   }
 

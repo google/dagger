@@ -26,9 +26,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.BindingKind;
-import dagger.model.DependencyRequest;
-import dagger.model.Scope;
+import dagger.spi.model.BindingKind;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Scope;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -38,7 +38,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleTypeVisitor6;
+import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * An abstract type for classes representing a Dagger binding. Particularly, contains the {@link
@@ -137,7 +137,7 @@ public abstract class Binding extends BindingDeclaration {
 
     List<TypeMirror> actualTypes =
         type.accept(
-            new SimpleTypeVisitor6<List<TypeMirror>, Void>() {
+            new SimpleTypeVisitor8<List<TypeMirror>, Void>() {
               @Override
               protected List<TypeMirror> defaultAction(TypeMirror e, Void p) {
                 return ImmutableList.of();

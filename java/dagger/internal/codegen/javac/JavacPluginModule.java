@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen.javac;
 
+import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.model.JavacTypes;
 import com.sun.tools.javac.util.Context;
@@ -29,11 +31,9 @@ import dagger.internal.codegen.compileroption.JavacPluginCompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.annotation.processing.Messager;
-import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 /**
@@ -45,14 +45,12 @@ public abstract class JavacPluginModule {
   @Binds
   abstract CompilerOptions compilerOptions(JavacPluginCompilerOptions compilerOptions);
 
-  @Binds
-  abstract Messager messager(NullMessager nullMessager);
+  @Provides
+  static XMessager messager() {
+    return XConverters.toXProcessing(new NullMessager());
+  }
 
   static final class NullMessager implements Messager {
-
-    @Inject
-    NullMessager() {}
-
     @Override
     public void printMessage(Diagnostic.Kind kind, CharSequence charSequence) {}
 
@@ -85,8 +83,6 @@ public abstract class JavacPluginModule {
   static DaggerTypes daggerTypes(Context javaContext, DaggerElements elements) {
     return new DaggerTypes(JavacTypes.instance(javaContext), elements);
   }
-
-  @Binds abstract Types types(DaggerTypes daggerTypes);
 
   private JavacPluginModule() {}
 }

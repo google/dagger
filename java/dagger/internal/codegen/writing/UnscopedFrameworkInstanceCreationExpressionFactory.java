@@ -104,7 +104,7 @@ final class UnscopedFrameworkInstanceCreationExpressionFactory {
             () ->
                 CodeBlock.of(
                     "($T) $L",
-                    binding.key().type(),
+                    binding.key().type().java(),
                     componentImplementation.componentFieldReference()));
 
       case BOUND_INSTANCE:
@@ -113,7 +113,7 @@ final class UnscopedFrameworkInstanceCreationExpressionFactory {
 
       case COMPONENT_DEPENDENCY:
         return instanceFactoryCreationExpression(
-            binding, ComponentRequirement.forDependency(binding.key().type()));
+            binding, ComponentRequirement.forDependency(binding.key().type().java()));
 
       case COMPONENT_PROVISION:
         return dependencyMethodProviderCreationExpressionFactory.create(binding);

@@ -28,6 +28,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XFiler;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -40,7 +41,6 @@ import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -48,7 +48,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.util.SimpleTypeVisitor6;
+import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * Generates classes that create annotation instances for an annotation type. The generated class
@@ -82,7 +82,7 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement>
       ClassName.get("com.google.auto.value", "AutoAnnotation");
 
   @Inject
-  AnnotationCreatorGenerator(Filer filer, DaggerElements elements, SourceVersion sourceVersion) {
+  AnnotationCreatorGenerator(XFiler filer, DaggerElements elements, SourceVersion sourceVersion) {
     super(filer, elements, sourceVersion);
   }
 
@@ -149,8 +149,8 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement>
     return annotationElements;
   }
 
-  private static final SimpleTypeVisitor6<Void, Set<TypeElement>> TRAVERSE_NESTED_ANNOTATIONS =
-      new SimpleTypeVisitor6<Void, Set<TypeElement>>() {
+  private static final SimpleTypeVisitor8<Void, Set<TypeElement>> TRAVERSE_NESTED_ANNOTATIONS =
+      new SimpleTypeVisitor8<Void, Set<TypeElement>>() {
         @Override
         public Void visitDeclared(DeclaredType t, Set<TypeElement> p) {
           TypeElement typeElement = MoreTypes.asTypeElement(t);

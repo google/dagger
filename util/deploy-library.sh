@@ -9,18 +9,30 @@ set -eu
 # parameter, if provided then javadoc must also be provided.
 # @param {string} javadoc the java doc jar of the library. This is an optional
 # parameter, if provided then srcjar must also be provided.
+# @param {string} module_name the JPMS module name to include in the jar. This
+# is an optional parameter and can only be used with jar files.
 deploy_library() {
-  local library=$1
-  local pomfile=$2
-  local srcjar=$3
-  local javadoc=$4
-  local mvn_goal=$5
-  local version_name=$6
-  shift 6
+  local shaded_rules=$1
+  local library=$2
+  local pomfile=$3
+  local srcjar=$4
+  local javadoc=$5
+  local module_name=$6
+  local mvn_goal=$7
+  local version_name=$8
+  shift 8
   local extra_maven_args=("$@")
 
   bazel build --define=pom_version="$version_name" \
     $library $pomfile
+
+  # Shade the library if shaded_rules exist
+  if [[ ! -z "$shaded_rules" ]]; then
+    bash $(dirname $0)/shade-library.sh \
+      $(bazel_output_file $library) $shaded_rules
+    # The output jar name is the same as the input library appended with -shaded
+    library="${library%.*}-shaded.${library##*.}"
+  fi
 
   # TODO(bcorso): Consider moving this into the "gen_maven_artifact" macro, this
   # requires having the version checked-in for the build system.
@@ -28,6 +40,12 @@ deploy_library() {
     $(bazel_output_file $library) \
     $(bazel_output_file $pomfile) \
     $version_name
+
+  # TODO(bcorso): Consider moving this into the "gen_maven_artifact" macro once
+  # all our targets are using gen_maven_artifact
+  add_automatic_module_name_manifest_entry \
+    $(bazel_output_file $library) \
+    "${module_name}"
 
   if [ -n "$srcjar" ] && [ -n "$javadoc" ] ; then
     bazel build --define=pom_version="$version_name" \
@@ -78,6 +96,22 @@ add_tracking_version() {
   else
     echo "Could not add tracking version file to $library"
     exit 1
+  fi
+}
+
+add_automatic_module_name_manifest_entry() {
+  local library=$1
+  local module_name=$2
+  if [ -n "$module_name" ] ; then
+    if [[ $library =~ \.jar$ ]]; then
+      local temp_dir=$(mktemp -d)
+      echo "Automatic-Module-Name: ${module_name}" > $temp_dir/module_name_file
+      # The "m" flag is specifically for adding manifest entries.
+      jar ufm $library $temp_dir/module_name_file
+    else
+      echo "Could not add module name to $library"
+      exit 1
+    fi
   fi
 }
 

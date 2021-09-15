@@ -18,6 +18,8 @@ package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+import static dagger.spi.model.DaggerAnnotation.fromJava;
+import static dagger.spi.model.DaggerType.fromJava;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.google.auto.common.MoreTypes;
@@ -31,12 +33,12 @@ import dagger.Provides;
 import dagger.internal.codegen.binding.KeyFactory;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.Key;
-import dagger.model.Key.MultibindingContributionIdentifier;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoSet;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
+import dagger.spi.model.Key;
+import dagger.spi.model.Key.MultibindingContributionIdentifier;
 import java.lang.annotation.Retention;
 import java.util.Set;
 import javax.inject.Inject;
@@ -76,7 +78,7 @@ public class KeyFactoryTest {
         Iterables.getOnlyElement(ElementFilter.constructorsIn(typeElement.getEnclosedElements()));
     Key key =
         keyFactory.forInjectConstructorWithResolvedType(constructor.getEnclosingElement().asType());
-    assertThat(key).isEqualTo(Key.builder(typeElement.asType()).build());
+    assertThat(key).isEqualTo(Key.builder(fromJava(typeElement.asType())).build());
     assertThat(key.toString()).isEqualTo("dagger.internal.codegen.KeyFactoryTest.InjectedClass");
   }
 
@@ -92,7 +94,7 @@ public class KeyFactoryTest {
     ExecutableElement providesMethod =
         Iterables.getOnlyElement(ElementFilter.methodsIn(moduleElement.getEnclosedElements()));
     Key key = keyFactory.forProvidesMethod(providesMethod, moduleElement);
-    assertThat(key).isEqualTo(Key.builder(stringType).build());
+    assertThat(key).isEqualTo(Key.builder(fromJava(stringType)).build());
     assertThat(key.toString()).isEqualTo("java.lang.String");
   }
 
@@ -112,9 +114,9 @@ public class KeyFactoryTest {
     ExecutableElement providesMethod =
         Iterables.getOnlyElement(ElementFilter.methodsIn(moduleElement.getEnclosedElements()));
     Key key = keyFactory.forProvidesMethod(providesMethod, moduleElement);
-    assertThat(MoreTypes.equivalence().wrap(key.qualifier().get().getAnnotationType()))
+    assertThat(MoreTypes.equivalence().wrap(key.qualifier().get().java().getAnnotationType()))
         .isEqualTo(MoreTypes.equivalence().wrap(qualifierElement.asType()));
-    assertThat(MoreTypes.equivalence().wrap(key.type()))
+    assertThat(MoreTypes.equivalence().wrap(key.type().java()))
         .isEqualTo(MoreTypes.equivalence().wrap(stringType));
     assertThat(key.toString())
         .isEqualTo(
@@ -141,7 +143,7 @@ public class KeyFactoryTest {
     Element injectionField =
         Iterables.getOnlyElement(ElementFilter.fieldsIn(injectableElement.getEnclosedElements()));
     AnnotationMirror qualifier = Iterables.getOnlyElement(injectionField.getAnnotationMirrors());
-    Key injectionKey = Key.builder(type).qualifier(qualifier).build();
+    Key injectionKey = Key.builder(fromJava(type)).qualifier(fromJava(qualifier)).build();
 
     assertThat(provisionKey).isEqualTo(injectionKey);
     assertThat(injectionKey.toString())
@@ -203,7 +205,7 @@ public class KeyFactoryTest {
       Key key = keyFactory.forProvidesMethod(providesMethod, moduleElement);
       assertThat(key)
           .isEqualTo(
-              Key.builder(setOfStringsType)
+              Key.builder(fromJava(setOfStringsType))
                   .multibindingContributionIdentifier(
                       new MultibindingContributionIdentifier(providesMethod, moduleElement))
                   .build());
@@ -270,7 +272,7 @@ public class KeyFactoryTest {
     for (ExecutableElement producesMethod
         : ElementFilter.methodsIn(moduleElement.getEnclosedElements())) {
       Key key = keyFactory.forProducesMethod(producesMethod, moduleElement);
-      assertThat(key).isEqualTo(Key.builder(stringType).build());
+      assertThat(key).isEqualTo(Key.builder(fromJava(stringType)).build());
       assertThat(key.toString()).isEqualTo("java.lang.String");
     }
   }
@@ -297,7 +299,7 @@ public class KeyFactoryTest {
       Key key = keyFactory.forProducesMethod(producesMethod, moduleElement);
       assertThat(key)
           .isEqualTo(
-              Key.builder(setOfStringsType)
+              Key.builder(fromJava(setOfStringsType))
                   .multibindingContributionIdentifier(
                       new MultibindingContributionIdentifier(producesMethod, moduleElement))
                   .build());

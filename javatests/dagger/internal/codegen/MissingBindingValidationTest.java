@@ -538,7 +538,7 @@ public class MissingBindingValidationTest {
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContainingMatch(
-            "(?s)\\QString cannot be provided\\E.*\\QChild.needsString()\\E")
+            "(?s)\\QString cannot be provided\\E.*\\Q[Child] Child.needsString()\\E")
         .inFile(parent)
         .onLineContaining("interface Parent");
   }
@@ -928,4 +928,239 @@ public class MissingBindingValidationTest {
         .onLineContaining("interface Parent");
   }
 
+  @Test
+  public void sameSubcomponentUsedInDifferentHierarchiesMissingBindingFromOneSide() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface Parent {",
+            "  Child1 getChild1();",
+            "  Child2 getChild2();",
+            "}");
+    JavaFileObject child1 =
+        JavaFileObjects.forSourceLines(
+            "test.Child1",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child1Module.class)",
+            "interface Child1 {",
+            "  RepeatedSub getSub();",
+            "}");
+    JavaFileObject child2 =
+        JavaFileObjects.forSourceLines(
+            "test.Child2",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child2Module.class)",
+            "interface Child2 {",
+            "  RepeatedSub getSub();",
+            "}");
+    JavaFileObject repeatedSub =
+        JavaFileObjects.forSourceLines(
+            "test.RepeatedSub",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = RepeatedSubModule.class)",
+            "interface RepeatedSub {",
+            "  Object getObject();",
+            "}");
+    JavaFileObject child1Module =
+        JavaFileObjects.forSourceLines(
+            "test.Child1Module",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Set;",
+            "import dagger.multibindings.Multibinds;",
+            "",
+            "@Module",
+            "interface Child1Module {",
+            "  @Multibinds Set<Integer> multibindIntegerSet();",
+            "}");
+    JavaFileObject child2Module =
+        JavaFileObjects.forSourceLines(
+            "test.Child2Module",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Set;",
+            "import dagger.multibindings.Multibinds;",
+            "",
+            "@Module",
+            "interface Child2Module {",
+            "  @Multibinds Set<Integer> multibindIntegerSet();",
+            "",
+            "  @Provides",
+            "  static Object provideObject(Set<Integer> intSet) {",
+            "    return new Object();",
+            "  }",
+            "}");
+    JavaFileObject repeatedSubModule =
+        JavaFileObjects.forSourceLines(
+            "test.RepeatedSubModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "import java.util.Set;",
+            "import dagger.multibindings.Multibinds;",
+            "",
+            "@Module",
+            "interface RepeatedSubModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  static Integer provideInt() {",
+            "    return 9;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
+                parent, child1, child2, repeatedSub, child1Module, child2Module, repeatedSubModule);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining("A binding for Object exists in [Parent → Child2 → RepeatedSub]:");
+    assertThat(compilation)
+        .hadErrorContaining(
+            "[Parent → Child1 → RepeatedSub] RepeatedSub.getObject() [Parent → Child1 →"
+                + " RepeatedSub]");
+  }
+
+  @Test
+  public void differentComponentPkgSameSimpleNameMissingBinding() {
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface Parent {",
+            "  Child1 getChild1();",
+            "  Child2 getChild2();",
+            "}");
+    JavaFileObject child1 =
+        JavaFileObjects.forSourceLines(
+            "test.Child1",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child1Module.class)",
+            "interface Child1 {",
+            "  foo.Sub getSub();",
+            "}");
+    JavaFileObject child2 =
+        JavaFileObjects.forSourceLines(
+            "test.Child2",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child2Module.class)",
+            "interface Child2 {",
+            "  bar.Sub getSub();",
+            "}");
+    JavaFileObject sub1 =
+        JavaFileObjects.forSourceLines(
+            "foo.Sub",
+            "package foo;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = test.RepeatedSubModule.class)",
+            "public interface Sub {",
+            "  Object getObject();",
+            "}");
+    JavaFileObject sub2 =
+        JavaFileObjects.forSourceLines(
+            "bar.Sub",
+            "package bar;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = test.RepeatedSubModule.class)",
+            "public interface Sub {",
+            "  Object getObject();",
+            "}");
+    JavaFileObject child1Module =
+        JavaFileObjects.forSourceLines(
+            "test.Child1Module",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Set;",
+            "import dagger.multibindings.Multibinds;",
+            "",
+            "@Module",
+            "interface Child1Module {",
+            "  @Multibinds Set<Integer> multibindIntegerSet();",
+            "}");
+    JavaFileObject child2Module =
+        JavaFileObjects.forSourceLines(
+            "test.Child2Module",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Set;",
+            "import dagger.multibindings.Multibinds;",
+            "",
+            "@Module",
+            "interface Child2Module {",
+            "  @Multibinds Set<Integer> multibindIntegerSet();",
+            "",
+            "  @Provides",
+            "  static Object provideObject(Set<Integer> intSet) {",
+            "    return new Object();",
+            "  }",
+            "}");
+    JavaFileObject repeatedSubModule =
+        JavaFileObjects.forSourceLines(
+            "test.RepeatedSubModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "import java.util.Set;",
+            "import dagger.multibindings.Multibinds;",
+            "",
+            "@Module",
+            "public interface RepeatedSubModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  static Integer provideInt() {",
+            "    return 9;",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler()
+            .compile(
+                parent, child1, child2, sub1, sub2, child1Module, child2Module, repeatedSubModule);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation).hadErrorContaining("A binding for Object exists in bar.Sub:");
+    assertThat(compilation)
+        .hadErrorContaining("[foo.Sub] foo.Sub.getObject() [Parent → Child1 → foo.Sub]");
+  }
 }

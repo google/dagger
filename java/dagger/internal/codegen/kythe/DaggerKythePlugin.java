@@ -41,13 +41,13 @@ import dagger.internal.codegen.binding.BindingNode;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.internal.codegen.javac.JavacPluginModule;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.validation.InjectBindingRegistryModule;
-import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.DependencyEdge;
-import dagger.model.BindingGraph.Edge;
-import dagger.model.BindingGraph.Node;
-import dagger.model.DependencyRequest;
-import dagger.producers.ProductionComponent;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraph.DependencyEdge;
+import dagger.spi.model.BindingGraph.Edge;
+import dagger.spi.model.BindingGraph.Node;
+import dagger.spi.model.DependencyRequest;
 import java.util.Optional;
 import java.util.logging.Logger;
 import javax.inject.Inject;
@@ -69,7 +69,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   @Override
   public Void visitClassDef(JCClassDecl tree, Void p) {
     if (tree.sym != null
-        && isAnyAnnotationPresent(tree.sym, Component.class, ProductionComponent.class)) {
+        && isAnyAnnotationPresent(tree.sym, TypeNames.COMPONENT, TypeNames.PRODUCTION_COMPONENT)) {
       addNodesForGraph(
           bindingGraphFactory.create(
               componentDescriptorFactory.rootComponentDescriptor(tree.sym), false));
@@ -128,7 +128,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
 
   private void addDependencyEdge(
       DependencyRequest dependency, BindingDeclaration bindingDeclaration) {
-    Element requestElement = dependency.requestElement().get();
+    Element requestElement = dependency.requestElement().get().java();
     Element bindingElement = bindingDeclaration.bindingElement().get();
     Optional<VName> requestElementNode = jvmNode(requestElement, "request element");
     Optional<VName> bindingElementNode = jvmNode(bindingElement, "binding element");

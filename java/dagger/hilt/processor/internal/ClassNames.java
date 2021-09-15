@@ -36,6 +36,8 @@ public final class ClassNames {
   public static final ClassName PROCESSED_ROOT_SENTINEL =
       get("dagger.hilt.internal.processedrootsentinel", "ProcessedRootSentinel");
 
+  public static final ClassName CONTEXTS = get("dagger.hilt.android.internal", "Contexts");
+
   public static final String AGGREGATED_EARLY_ENTRY_POINT_PACKAGE =
       "dagger.hilt.android.internal.earlyentrypoint.codegen";
   public static final ClassName AGGREGATED_EARLY_ENTRY_POINT =

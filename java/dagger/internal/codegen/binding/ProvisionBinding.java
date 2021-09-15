@@ -17,8 +17,8 @@
 package dagger.internal.codegen.binding;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.model.BindingKind.COMPONENT_PROVISION;
-import static dagger.model.BindingKind.PROVISION;
+import static dagger.spi.model.BindingKind.COMPONENT_PROVISION;
+import static dagger.spi.model.BindingKind.PROVISION;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -27,10 +27,10 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.compileroption.CompilerOptions;
-import dagger.model.BindingKind;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
-import dagger.model.Scope;
+import dagger.spi.model.BindingKind;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
+import dagger.spi.model.Scope;
 import java.util.Optional;
 
 /** A value object representing the mechanism by which a {@link Key} can be provided. */

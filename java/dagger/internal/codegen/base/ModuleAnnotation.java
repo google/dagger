@@ -28,9 +28,8 @@ import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import dagger.Module;
-import dagger.producers.ProducerModule;
-import java.lang.annotation.Annotation;
+import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.javapoet.TypeNames;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -39,8 +38,8 @@ import javax.lang.model.element.TypeElement;
 /** A {@code @Module} or {@code @ProducerModule} annotation. */
 @AutoValue
 public abstract class ModuleAnnotation {
-  private static final ImmutableSet<Class<? extends Annotation>> MODULE_ANNOTATIONS =
-      ImmutableSet.of(Module.class, ProducerModule.class);
+  private static final ImmutableSet<ClassName> MODULE_ANNOTATIONS =
+      ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE);
 
   /** The annotation itself. */
   // This does not use AnnotationMirrors.equivalence() because we want the actual annotation
@@ -93,12 +92,12 @@ public abstract class ModuleAnnotation {
   /** Returns {@code true} if the argument is a {@code @Module} or {@code @ProducerModule}. */
   public static boolean isModuleAnnotation(AnnotationMirror annotation) {
     return MODULE_ANNOTATIONS.stream()
-        .map(Class::getCanonicalName)
+        .map(ClassName::canonicalName)
         .anyMatch(asTypeElement(annotation.getAnnotationType()).getQualifiedName()::contentEquals);
   }
 
   /** The module annotation types. */
-  public static ImmutableSet<Class<? extends Annotation>> moduleAnnotations() {
+  public static ImmutableSet<ClassName> moduleAnnotations() {
     return MODULE_ANNOTATIONS;
   }
 
@@ -121,7 +120,7 @@ public abstract class ModuleAnnotation {
    * annotates {@code typeElement}.
    */
   public static Optional<ModuleAnnotation> moduleAnnotation(TypeElement typeElement) {
-    return getAnyAnnotation(typeElement, Module.class, ProducerModule.class)
+    return getAnyAnnotation(typeElement, TypeNames.MODULE, TypeNames.PRODUCER_MODULE)
         .map(ModuleAnnotation::moduleAnnotation);
   }
 }

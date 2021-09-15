@@ -50,7 +50,7 @@ import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleTypeVisitor6;
+import javax.lang.model.util.SimpleTypeVisitor8;
 
 /** Methods for extracting {@link MapKey} annotations and key code blocks from binding elements. */
 public final class MapKeys {
@@ -113,8 +113,8 @@ public final class MapKeys {
     final ExecutableElement onlyElement =
         getOnlyElement(methodsIn(mapKeyAnnotationType.asElement().getEnclosedElements()));
 
-    SimpleTypeVisitor6<DeclaredType, Void> keyTypeElementVisitor =
-        new SimpleTypeVisitor6<DeclaredType, Void>() {
+    SimpleTypeVisitor8<DeclaredType, Void> keyTypeElementVisitor =
+        new SimpleTypeVisitor8<DeclaredType, Void>() {
 
           @Override
           public DeclaredType visitArray(ArrayType t, Void p) {

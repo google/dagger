@@ -71,8 +71,8 @@ java_library(
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/javapoet",
-        "@maven//:com_google_auto_auto_common",
     ],
 )
 
@@ -93,9 +93,9 @@ java_library(
         "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/javapoet",
-        "@maven//:com_google_auto_auto_common",
     ],
 )
 

@@ -26,6 +26,10 @@
         android:theme="@style/Theme.AppCompat.Light"
         android:exported="false"/>
     <activity
+        android:name=".InvokeSpecialTransformTest$TestActivity"
+        android:theme="@style/Theme.AppCompat.Light"
+        android:exported="false"/>
+    <activity
         android:name=".ActivityScenarioRuleTest$TestActivity"
         android:theme="@style/Theme.AppCompat.Light"
         android:exported="false"/>

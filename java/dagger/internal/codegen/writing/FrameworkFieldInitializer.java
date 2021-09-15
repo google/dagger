@@ -34,8 +34,9 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkField;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.model.BindingKind;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.producers.internal.DelegateProducer;
+import dagger.spi.model.BindingKind;
 import java.util.Optional;
 
 /**
@@ -59,21 +60,9 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     default Optional<ClassName> alternativeFrameworkClass() {
       return Optional.empty();
     }
-
-    /**
-     * Returns {@code true} if instead of using {@link #creationExpression()} to create a framework
-     * instance, a case in {@link SwitchingProviders} should be created for this binding.
-     */
-    // TODO(ronshapiro): perhaps this isn't the right approach. Instead of saying "Use
-    // SetFactory.EMPTY because you will only get 1 class for all types of bindings that use
-    // SetFactory", maybe we should still use an inner switching provider but the same switching
-    // provider index for all cases.
-    default boolean useSwitchingProvider() {
-      return true;
-    }
   }
 
-  private final ComponentImplementation componentImplementation;
+  private final ShardImplementation shardImplementation;
   private final ContributionBinding binding;
   private final FrameworkInstanceCreationExpression frameworkInstanceCreationExpression;
   private FieldSpec fieldSpec;
@@ -83,8 +72,8 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       ComponentImplementation componentImplementation,
       ContributionBinding binding,
       FrameworkInstanceCreationExpression frameworkInstanceCreationExpression) {
-    this.componentImplementation = checkNotNull(componentImplementation);
     this.binding = checkNotNull(binding);
+    this.shardImplementation = checkNotNull(componentImplementation).shardImplementation(binding);
     this.frameworkInstanceCreationExpression = checkNotNull(frameworkInstanceCreationExpression);
   }
 
@@ -95,14 +84,14 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
   @Override
   public final MemberSelect memberSelect() {
     initializeField();
-    return MemberSelect.localField(componentImplementation, checkNotNull(fieldSpec).name);
+    return MemberSelect.localField(shardImplementation, checkNotNull(fieldSpec).name);
   }
 
   /** Adds the field and its initialization code to the component. */
   private void initializeField() {
     switch (fieldInitializationState) {
       case UNINITIALIZED:
-        // Change our state in case we are recursively invoked via initializeBindingExpression
+        // Change our state in case we are recursively invoked via initializeRequestRepresentation
         fieldInitializationState = InitializationState.INITIALIZING;
         CodeBlock.Builder codeBuilder = CodeBlock.builder();
         CodeBlock fieldInitialization = frameworkInstanceCreationExpression.creationExpression();
@@ -114,7 +103,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
         } else {
           codeBuilder.add(initCode);
         }
-        componentImplementation.addInitialization(codeBuilder.build());
+        shardImplementation.addInitialization(codeBuilder.build());
 
         fieldInitializationState = InitializationState.INITIALIZED;
         break;
@@ -122,7 +111,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       case INITIALIZING:
         // We were recursively invoked, so create a delegate factory instead
         fieldInitializationState = InitializationState.DELEGATED;
-        componentImplementation.addInitialization(
+        shardImplementation.addInitialization(
             CodeBlock.of("this.$N = new $T<>();", getOrCreateField(), delegateType()));
         break;
 
@@ -140,7 +129,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     if (fieldSpec != null) {
       return fieldSpec;
     }
-    boolean useRawType = !componentImplementation.isTypeAccessible(binding.key().type());
+    boolean useRawType = !shardImplementation.isTypeAccessible(binding.key().type().java());
     FrameworkField contributionBindingField =
         FrameworkField.forBinding(
             binding, frameworkInstanceCreationExpression.alternativeFrameworkClass());
@@ -152,7 +141,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       // An assisted injection factory doesn't extend Provider, so we reference the generated
       // factory type directly (i.e. Foo_Factory<T> instead of Provider<Foo<T>>).
       TypeName[] typeParameters =
-          MoreTypes.asDeclared(binding.key().type()).getTypeArguments().stream()
+          MoreTypes.asDeclared(binding.key().type().java()).getTypeArguments().stream()
               .map(TypeName::get)
               .toArray(TypeName[]::new);
       fieldType =
@@ -163,14 +152,14 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
 
     FieldSpec.Builder contributionField =
         FieldSpec.builder(
-            fieldType, componentImplementation.getUniqueFieldName(contributionBindingField.name()));
+            fieldType, shardImplementation.getUniqueFieldName(contributionBindingField.name()));
     contributionField.addModifiers(PRIVATE);
     if (useRawType) {
       contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));
     }
 
     fieldSpec = contributionField.build();
-    componentImplementation.addField(FRAMEWORK_FIELD, fieldSpec);
+    shardImplementation.addField(FRAMEWORK_FIELD, fieldSpec);
 
     return fieldSpec;
   }

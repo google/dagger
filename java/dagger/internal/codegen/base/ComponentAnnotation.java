@@ -19,22 +19,18 @@ package dagger.internal.codegen.base;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asTypeElements;
-import static com.google.auto.common.MoreTypes.isTypeOf;
 import static dagger.internal.codegen.base.MoreAnnotationValues.asAnnotationValues;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.javapoet.TypeNames.PRODUCER_MODULE;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnyAnnotation;
+import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
-import dagger.Component;
-import dagger.Subcomponent;
-import dagger.producers.ProductionComponent;
-import dagger.producers.ProductionSubcomponent;
-import java.lang.annotation.Annotation;
+import dagger.internal.codegen.javapoet.TypeNames;
 import java.util.Collection;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
@@ -50,39 +46,39 @@ import javax.lang.model.type.TypeMirror;
  */
 public abstract class ComponentAnnotation {
   /** The root component annotation types. */
-  private static final ImmutableSet<Class<? extends Annotation>> ROOT_COMPONENT_ANNOTATIONS =
-     ImmutableSet.of(Component.class, ProductionComponent.class);
+  private static final ImmutableSet<ClassName> ROOT_COMPONENT_ANNOTATIONS =
+      ImmutableSet.of(TypeNames.COMPONENT, TypeNames.PRODUCTION_COMPONENT);
 
   /** The subcomponent annotation types. */
-  private static final ImmutableSet<Class<? extends Annotation>> SUBCOMPONENT_ANNOTATIONS =
-     ImmutableSet.of(Subcomponent.class, ProductionSubcomponent.class);
+  private static final ImmutableSet<ClassName> SUBCOMPONENT_ANNOTATIONS =
+      ImmutableSet.of(TypeNames.SUBCOMPONENT, TypeNames.PRODUCTION_SUBCOMPONENT);
 
   // TODO(erichang): Move ComponentCreatorAnnotation into /base and use that here?
   /** The component/subcomponent creator annotation types. */
-  private static final ImmutableSet<Class<? extends Annotation>> CREATOR_ANNOTATIONS =
+  private static final ImmutableSet<ClassName> CREATOR_ANNOTATIONS =
       ImmutableSet.of(
-          Component.Builder.class,
-          Component.Factory.class,
-          ProductionComponent.Builder.class,
-          ProductionComponent.Factory.class,
-          Subcomponent.Builder.class,
-          Subcomponent.Factory.class,
-          ProductionSubcomponent.Builder.class,
-          ProductionSubcomponent.Factory.class);
+          TypeNames.COMPONENT_BUILDER,
+          TypeNames.COMPONENT_FACTORY,
+          TypeNames.PRODUCTION_COMPONENT_BUILDER,
+          TypeNames.PRODUCTION_COMPONENT_FACTORY,
+          TypeNames.SUBCOMPONENT_BUILDER,
+          TypeNames.SUBCOMPONENT_FACTORY,
+          TypeNames.PRODUCTION_SUBCOMPONENT_BUILDER,
+          TypeNames.PRODUCTION_SUBCOMPONENT_FACTORY);
 
   /** All component annotation types. */
-  private static final ImmutableSet<Class<? extends Annotation>> ALL_COMPONENT_ANNOTATIONS =
-     ImmutableSet.<Class<? extends Annotation>>builder()
-         .addAll(ROOT_COMPONENT_ANNOTATIONS)
-         .addAll(SUBCOMPONENT_ANNOTATIONS)
-         .build();
+  private static final ImmutableSet<ClassName> ALL_COMPONENT_ANNOTATIONS =
+      ImmutableSet.<ClassName>builder()
+          .addAll(ROOT_COMPONENT_ANNOTATIONS)
+          .addAll(SUBCOMPONENT_ANNOTATIONS)
+          .build();
 
   /** All component and creator annotation types. */
-  private static final ImmutableSet<Class<? extends Annotation>>
-      ALL_COMPONENT_AND_CREATOR_ANNOTATIONS = ImmutableSet.<Class<? extends Annotation>>builder()
-         .addAll(ALL_COMPONENT_ANNOTATIONS)
-         .addAll(CREATOR_ANNOTATIONS)
-         .build();
+  private static final ImmutableSet<ClassName> ALL_COMPONENT_AND_CREATOR_ANNOTATIONS =
+      ImmutableSet.<ClassName>builder()
+          .addAll(ALL_COMPONENT_ANNOTATIONS)
+          .addAll(CREATOR_ANNOTATIONS)
+          .build();
 
   /** The annotation itself. */
   public abstract AnnotationMirror annotation();
@@ -173,7 +169,7 @@ public abstract class ComponentAnnotation {
   }
 
   private static Optional<ComponentAnnotation> anyComponentAnnotation(
-      TypeElement typeElement, Collection<Class<? extends Annotation>> annotations) {
+      TypeElement typeElement, Collection<ClassName> annotations) {
     return getAnyAnnotation(typeElement, annotations).map(ComponentAnnotation::componentAnnotation);
   }
 
@@ -188,16 +184,16 @@ public abstract class ComponentAnnotation {
     RealComponentAnnotation.Builder annotationBuilder =
         RealComponentAnnotation.builder().annotation(annotation);
 
-    if (isTypeOf(Component.class, annotation.getAnnotationType())) {
+    if (isTypeOf(TypeNames.COMPONENT, annotation.getAnnotationType())) {
       return annotationBuilder.isProduction(false).isSubcomponent(false).build();
     }
-    if (isTypeOf(Subcomponent.class, annotation.getAnnotationType())) {
+    if (isTypeOf(TypeNames.SUBCOMPONENT, annotation.getAnnotationType())) {
       return annotationBuilder.isProduction(false).isSubcomponent(true).build();
     }
-    if (isTypeOf(ProductionComponent.class, annotation.getAnnotationType())) {
+    if (isTypeOf(TypeNames.PRODUCTION_COMPONENT, annotation.getAnnotationType())) {
       return annotationBuilder.isProduction(true).isSubcomponent(false).build();
     }
-    if (isTypeOf(ProductionSubcomponent.class, annotation.getAnnotationType())) {
+    if (isTypeOf(TypeNames.PRODUCTION_SUBCOMPONENT, annotation.getAnnotationType())) {
       return annotationBuilder.isProduction(true).isSubcomponent(true).build();
     }
     throw new IllegalArgumentException(
@@ -212,22 +208,22 @@ public abstract class ComponentAnnotation {
   }
 
   /** The root component annotation types. */
-  public static ImmutableSet<Class<? extends Annotation>> rootComponentAnnotations() {
+  public static ImmutableSet<ClassName> rootComponentAnnotations() {
     return ROOT_COMPONENT_ANNOTATIONS;
   }
 
   /** The subcomponent annotation types. */
-  public static ImmutableSet<Class<? extends Annotation>> subcomponentAnnotations() {
+  public static ImmutableSet<ClassName> subcomponentAnnotations() {
     return SUBCOMPONENT_ANNOTATIONS;
   }
 
   /** All component annotation types. */
-  public static ImmutableSet<Class<? extends Annotation>> allComponentAnnotations() {
+  public static ImmutableSet<ClassName> allComponentAnnotations() {
     return ALL_COMPONENT_ANNOTATIONS;
   }
 
   /** All component and creator annotation types. */
-  public static ImmutableSet<Class<? extends Annotation>> allComponentAndCreatorAnnotations() {
+  public static ImmutableSet<ClassName> allComponentAndCreatorAnnotations() {
     return ALL_COMPONENT_AND_CREATOR_ANNOTATIONS;
   }
 

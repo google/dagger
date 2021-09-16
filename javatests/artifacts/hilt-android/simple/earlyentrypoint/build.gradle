@@ -36,11 +36,12 @@ hilt {
 task checkSourceSetTask(){
     sourceSets {
         test {
+            def actualSrcs = allSource.files.name as Set
             def expectedSrcs = [
                 'EarlyEntryPointWithBindValueTest.java',
                 'EarlyEntryPointWithBindValueObjects.java'
-            ]
-            if (!allSource.files.name.equals(expectedSrcs)) {
+            ] as Set
+            if (!actualSrcs.equals(expectedSrcs)) {
                 throw new StopExecutionException(
                     'Unexpected test sources: ' + allSource.files.name)
             }

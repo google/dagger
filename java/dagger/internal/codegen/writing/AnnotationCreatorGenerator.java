@@ -26,10 +26,11 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
-import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import androidx.room.compiler.processing.XFiler;
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
@@ -44,11 +45,6 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * Generates classes that create annotation instances for an annotation type. The generated class
@@ -77,7 +73,7 @@ import javax.lang.model.util.SimpleTypeVisitor8;
  *   }
  * </pre>
  */
-public class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement> {
+public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement> {
   private static final ClassName AUTO_ANNOTATION =
       ClassName.get("com.google.auto.value", "AutoAnnotation");
 
@@ -87,37 +83,39 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement>
   }
 
   @Override
-  public Element originatingElement(TypeElement annotationType) {
-    return annotationType;
+  public Element originatingElement(XTypeElement annotationType) {
+    return XConverters.toJavac(annotationType);
   }
 
   @Override
-  public ImmutableList<TypeSpec.Builder> topLevelTypes(TypeElement annotationType) {
-    ClassName generatedTypeName = getAnnotationCreatorClassName(annotationType);
+  public ImmutableList<TypeSpec.Builder> topLevelTypes(XTypeElement annotationType) {
+    ClassName generatedTypeName =
+        getAnnotationCreatorClassName(XConverters.toJavac(annotationType));
     TypeSpec.Builder annotationCreatorBuilder =
         classBuilder(generatedTypeName)
             .addModifiers(PUBLIC, FINAL)
             .addMethod(constructorBuilder().addModifiers(PRIVATE).build());
 
-    for (TypeElement annotationElement : annotationsToCreate(annotationType)) {
+    for (XTypeElement annotationElement : annotationsToCreate(annotationType)) {
       annotationCreatorBuilder.addMethod(buildCreateMethod(generatedTypeName, annotationElement));
     }
 
     return ImmutableList.of(annotationCreatorBuilder);
   }
 
-  private MethodSpec buildCreateMethod(ClassName generatedTypeName, TypeElement annotationElement) {
-    String createMethodName = createMethodName(annotationElement);
+  private MethodSpec buildCreateMethod(
+      ClassName generatedTypeName, XTypeElement annotationElement) {
+    String createMethodName = createMethodName(XConverters.toJavac(annotationElement));
     MethodSpec.Builder createMethod =
         methodBuilder(createMethodName)
             .addAnnotation(AUTO_ANNOTATION)
             .addModifiers(PUBLIC, STATIC)
-            .returns(TypeName.get(annotationElement.asType()));
+            .returns(annotationElement.getType().getTypeName());
 
     ImmutableList.Builder<CodeBlock> parameters = ImmutableList.builder();
-    for (ExecutableElement annotationMember : methodsIn(annotationElement.getEnclosedElements())) {
-      String parameterName = annotationMember.getSimpleName().toString();
-      TypeName parameterType = TypeName.get(annotationMember.getReturnType());
+    for (XMethodElement annotationMember : annotationElement.getDeclaredMethods()) {
+      String parameterName = annotationMember.getName();
+      TypeName parameterType = annotationMember.getReturnType().getTypeName();
       createMethod.addParameter(parameterType, parameterName);
       parameters.add(CodeBlock.of("$L", parameterName));
     }
@@ -134,30 +132,23 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement>
    * Returns the annotation types for which {@code @AutoAnnotation static Foo createFoo(…)} methods
    * should be written.
    */
-  protected Set<TypeElement> annotationsToCreate(TypeElement annotationElement) {
+  protected Set<XTypeElement> annotationsToCreate(XTypeElement annotationElement) {
     return nestedAnnotationElements(annotationElement, new LinkedHashSet<>());
   }
 
   @CanIgnoreReturnValue
-  private static Set<TypeElement> nestedAnnotationElements(
-      TypeElement annotationElement, Set<TypeElement> annotationElements) {
+  private static Set<XTypeElement> nestedAnnotationElements(
+      XTypeElement annotationElement, Set<XTypeElement> annotationElements) {
     if (annotationElements.add(annotationElement)) {
-      for (ExecutableElement method : methodsIn(annotationElement.getEnclosedElements())) {
-        TRAVERSE_NESTED_ANNOTATIONS.visit(method.getReturnType(), annotationElements);
+      for (XMethodElement method : annotationElement.getDeclaredMethods()) {
+        XTypeElement returnType = method.getReturnType().getTypeElement();
+        // Return type may be null if it doesn't return a type or type is not known
+        if (returnType != null && returnType.isAnnotationClass()) {
+          // Ignore the return value since this method is just an accumulator method.
+          nestedAnnotationElements(returnType, annotationElements);
+        }
       }
     }
     return annotationElements;
   }
-
-  private static final SimpleTypeVisitor8<Void, Set<TypeElement>> TRAVERSE_NESTED_ANNOTATIONS =
-      new SimpleTypeVisitor8<Void, Set<TypeElement>>() {
-        @Override
-        public Void visitDeclared(DeclaredType t, Set<TypeElement> p) {
-          TypeElement typeElement = MoreTypes.asTypeElement(t);
-          if (typeElement.getKind() == ElementKind.ANNOTATION_TYPE) {
-            nestedAnnotationElements(typeElement, p);
-          }
-          return null;
-        }
-      };
 }

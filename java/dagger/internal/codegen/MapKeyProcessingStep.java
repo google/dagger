@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static dagger.internal.codegen.binding.MapKeys.getUnwrappedMapKeyType;
 import static javax.lang.model.element.ElementKind.ANNOTATION_TYPE;
 
+import androidx.room.compiler.processing.XAnnotationKt;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
@@ -69,18 +70,16 @@ final class MapKeyProcessingStep extends TypeCheckingProcessingStep<XTypeElement
   }
 
   @Override
-  protected void process(XTypeElement xElement, ImmutableSet<ClassName> annotations) {
-    // TODO(bcorso): Remove conversion to javac type and use XProcessing throughout.
-    TypeElement mapKeyAnnotationType = XConverters.toJavac(xElement);
-    ValidationReport mapKeyReport = mapKeyValidator.validate(mapKeyAnnotationType);
+  protected void process(XTypeElement mapAnnotation, ImmutableSet<ClassName> annotations) {
+    ValidationReport mapKeyReport = mapKeyValidator.validate(mapAnnotation);
     mapKeyReport.printMessagesTo(messager);
 
     if (mapKeyReport.isClean()) {
-      MapKey mapkey = mapKeyAnnotationType.getAnnotation(MapKey.class);
-      if (!mapkey.unwrapValue()) {
-        annotationCreatorGenerator.generate(mapKeyAnnotationType, messager);
-      } else if (unwrappedValueKind(mapKeyAnnotationType).equals(ANNOTATION_TYPE)) {
-        unwrappedMapKeyGenerator.generate(mapKeyAnnotationType, messager);
+      if (!XAnnotationKt.get(
+          mapAnnotation.getAnnotation(TypeNames.MAP_KEY), "unwrapValue", Boolean.class)) {
+        annotationCreatorGenerator.generate(mapAnnotation, messager);
+      } else if (unwrappedValueKind(XConverters.toJavac(mapAnnotation)).equals(ANNOTATION_TYPE)) {
+        unwrappedMapKeyGenerator.generate(mapAnnotation, messager);
       }
     }
   }

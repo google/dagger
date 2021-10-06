@@ -16,6 +16,7 @@
 #   A library based on Hilt that provides standard components and automated injection for Android.
 load("//:build_defs.bzl", "POM_VERSION")
 load("//tools:maven.bzl", "gen_maven_artifact")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
 
 package(default_visibility = ["//:src"])
 
@@ -94,22 +95,6 @@ android_library(
     deps = [
         ":package_info",
         "//java/dagger/hilt:generates_root_input",
-    ],
-)
-
-android_library(
-    name = "entry_point_accessors",
-    srcs = ["EntryPointAccessors.java"],
-    deps = [
-        ":package_info",
-        "//java/dagger/hilt:entry_point",
-        "//java/dagger/hilt/android/internal",
-        "//third_party/java/jsr305_annotations",
-        "@maven//:androidx_activity_activity",
-        "@maven//:androidx_fragment_fragment",
-        "@maven//:androidx_lifecycle_lifecycle_common",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
     ],
 )
 
@@ -245,6 +230,35 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/lifecycle:proguard-rules.pro",
         "//java/dagger/hilt/internal:proguard-rules.pro",
     ],
+)
+
+kt_android_library(
+    name = "entry_point_accessors_internal",
+    srcs = ["EntryPointAccessors.kt"],
+    deps = [
+        "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt/android/internal",
+        "@maven//:androidx_activity_activity",
+        "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_common",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
+    ],
+)
+
+alias(
+    name = "entry_point_accessors",
+    actual = ":entry_point_accessors_internal_kt",
+)
+
+alias(
+    name = "libentry_point_accessors.jar",
+    actual = ":entry_point_accessors_internal_kt.jar",
+)
+
+alias(
+    name = "libentry_point_accessors-src.jar",
+    actual = ":entry_point_accessors_internal_kt-sources.jar",
 )
 
 filegroup(

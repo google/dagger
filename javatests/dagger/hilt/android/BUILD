@@ -388,6 +388,75 @@ kt_android_library(
 )
 
 android_local_test(
+    name = "OptionalInjectWithHiltTest",
+    size = "small",
+    srcs = [
+        "OptionalInjectWithHiltTest.java",
+    ],
+    manifest = "AndroidManifest.xml",
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
+    deps = [
+        ":OptionalInjectTestClasses",
+        "//:android_local_test_exports",
+        "//java/dagger/hilt/android:android_entry_point",
+        "//java/dagger/hilt/android:package_info",
+        "//java/dagger/hilt/android/migration:optional_inject",
+        "//java/dagger/hilt/android/testing:hilt_android_test",
+        "@google_bazel_common//third_party/java/truth",
+        "@maven//:androidx_activity_activity",
+        "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_common",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
+    ],
+)
+
+android_local_test(
+    name = "OptionalInjectWithoutHiltTest",
+    size = "small",
+    srcs = [
+        "OptionalInjectWithoutHiltTest.java",
+    ],
+    manifest = "AndroidManifest.xml",
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
+    deps = [
+        ":OptionalInjectTestClasses",
+        "//:android_local_test_exports",
+        "//java/dagger/hilt/android:package_info",
+        "//java/dagger/hilt/android/migration:optional_inject",
+        "@google_bazel_common//third_party/java/truth",
+        "@maven//:androidx_activity_activity",
+        "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_common",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
+    ],
+)
+
+android_library(
+    name = "OptionalInjectTestClasses",
+    srcs = ["OptionalInjectTestClasses.java"],
+    manifest = "AndroidManifest.xml",
+    deps = [
+        "//:dagger_with_compiler",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/android:android_entry_point",
+        "//java/dagger/hilt/android:package_info",
+        "//java/dagger/hilt/android/migration:optional_inject",
+        "@google_bazel_common//third_party/java/jsr330_inject",
+        "@maven//:androidx_activity_activity",
+        "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_common",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
+    ],
+)
+
+android_local_test(
     name = "ActivityRetainedClearedListenerTest",
     srcs = ["ActivityRetainedClearedListenerTest.java"],
     manifest = "AndroidManifest.xml",

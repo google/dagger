@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="dagger.hilt.android">
 
   <uses-sdk android:minSdkVersion="14" />
@@ -6,42 +7,71 @@
   <application>
     <activity
         android:name=".ActivityInjectedSavedStateViewModelTest$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name=".ActivityInjectedSavedStateViewModelTest$TestActivityWithSuperActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name=".ActivityInjectedViewModelTest$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name=".ActivityRetainedClearedListenerTest$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name=".ActivityScenarioRuleTest$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name=".DefaultViewModelFactoryTest$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
+    <activity
+        android:name=".OptionalInjectTestClasses$TestActivity"
+        android:exported="false"
+        tools:ignore="MissingClass"/>
+    <activity
+        android:name=".OptionalInjectTestClasses$NonOptionalSubclassActivity"
+        android:exported="false"
+        tools:ignore="MissingClass"/>
+    <activity
+        android:name=".OptionalInjectTestClasses$OptionalSubclassActivity"
+        android:exported="false"
+        tools:ignore="MissingClass"/>
+    <activity
+        android:name=".OptionalInjectTestClasses$TestActivity"
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name=".QualifierInKotlinFieldsTest$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name=".UsesSharedComponent1Test$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name=".UsesSharedComponent2Test$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name=".UsesSharedComponentEnclosedTest$EnclosedTest$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name=".ViewModelScopedTest$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name=".ViewModelWithBaseTest$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
     <activity
         android:name="dagger.hilt.android.testsubpackage.UsesSharedComponent1Test$TestActivity"
-        android:exported="false"/>
+        android:exported="false"
+        tools:ignore="MissingClass"/>
   </application>
 </manifest>

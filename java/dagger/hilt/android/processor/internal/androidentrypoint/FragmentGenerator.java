@@ -259,10 +259,19 @@ public final class FragmentGenerator {
   //       this, super.getDefaultViewModelProviderFactory());
   // }
   private MethodSpec getDefaultViewModelProviderFactory() {
-    return MethodSpec.methodBuilder("getDefaultViewModelProviderFactory")
+    MethodSpec.Builder builder = MethodSpec.methodBuilder("getDefaultViewModelProviderFactory")
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC)
-        .returns(AndroidClassNames.VIEW_MODEL_PROVIDER_FACTORY)
+        .returns(AndroidClassNames.VIEW_MODEL_PROVIDER_FACTORY);
+
+    if (metadata.allowsOptionalInjection()) {
+      builder
+          .beginControlFlow("if (!optionalInjectParentUsesHilt(optionalInjectGetParent()))")
+          .addStatement("return super.getDefaultViewModelProviderFactory()")
+          .endControlFlow();
+    }
+
+    return builder
         .addStatement(
             "return $T.getFragmentFactory(this, super.getDefaultViewModelProviderFactory())",
             AndroidClassNames.DEFAULT_VIEW_MODEL_FACTORIES)

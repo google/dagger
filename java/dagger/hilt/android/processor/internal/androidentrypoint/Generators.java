@@ -35,6 +35,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
+import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPointMetadata.AndroidType;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.util.List;
@@ -216,7 +217,7 @@ final class Generators {
         addComponentManagerMethods(metadata, builder);
         // fall through
       case BROADCAST_RECEIVER:
-        addInjectMethod(metadata, builder);
+        addInjectAndMaybeOptionalInjectMethod(metadata, builder);
         break;
       default:
         throw new AssertionError();
@@ -323,7 +324,7 @@ final class Generators {
   //     injected = true;
   //   }
   // }
-  private static void addInjectMethod(
+  private static void addInjectAndMaybeOptionalInjectMethod(
       AndroidEntryPointMetadata metadata, TypeSpec.Builder typeSpecBuilder) {
     MethodSpec.Builder methodSpecBuilder = MethodSpec.methodBuilder("inject")
         .addModifiers(Modifier.PROTECTED);
@@ -331,22 +332,44 @@ final class Generators {
     // Check if the parent is a Hilt type. If it isn't or if it is but it
     // wasn't injected by hilt, then return.
     // Object parent = ...depends on type...
-    // if (!(parent instanceof GeneratedComponentManager)
-    //     || ((parent instanceof InjectedByHilt) &&
-    //         !((InjectedByHilt) parent).wasInjectedByHilt())) {
+    // if (!optionalInjectParentUsesHilt()) {
     //   return;
     //
     if (metadata.allowsOptionalInjection()) {
+      CodeBlock parentCodeBlock;
+      if (metadata.androidType() != AndroidType.BROADCAST_RECEIVER) {
+        parentCodeBlock = CodeBlock.of("optionalInjectGetParent()");
+
+        // Also, add the optionalInjectGetParent method we just used. This is a separate method so
+        // other parts of the code when dealing with @OptionalInject. BroadcastReceiver can't have
+        // this method since the context is only accessible as a parameter to receive()/inject().
+        typeSpecBuilder.addMethod(MethodSpec.methodBuilder("optionalInjectGetParent")
+            .addModifiers(Modifier.PRIVATE)
+            .returns(TypeName.OBJECT)
+            .addStatement("return $L", getParentCodeBlock(metadata))
+            .build());
+      } else {
+        // For BroadcastReceiver, use the "context" field that is on the stack.
+        parentCodeBlock = CodeBlock.of(
+            "$T.getApplication(context.getApplicationContext())", ClassNames.CONTEXTS);
+      }
+
       methodSpecBuilder
-          .addStatement("$T parent = $L", ClassNames.OBJECT, getParentCodeBlock(metadata))
-          .beginControlFlow(
-              "if (!(parent instanceof $T) "
-              + "|| ((parent instanceof $T) && !(($T) parent).wasInjectedByHilt()))",
+          .beginControlFlow("if (!optionalInjectParentUsesHilt($L))", parentCodeBlock)
+          .addStatement("return")
+          .endControlFlow();
+
+      // Add the optionalInjectParentUsesHilt used above.
+      typeSpecBuilder.addMethod(MethodSpec.methodBuilder("optionalInjectParentUsesHilt")
+          .addModifiers(Modifier.PRIVATE)
+          .addParameter(TypeName.OBJECT, "parent")
+          .returns(TypeName.BOOLEAN)
+          .addStatement("return (parent instanceof $T) "
+              + "&& (!(parent instanceof $T) || (($T) parent).wasInjectedByHilt())",
               ClassNames.GENERATED_COMPONENT_MANAGER,
               AndroidClassNames.INJECTED_BY_HILT,
               AndroidClassNames.INJECTED_BY_HILT)
-          .addStatement("return")
-          .endControlFlow();
+          .build());
     }
 
     // Only add @Override if an ancestor extends a generated Hilt class.
@@ -430,10 +453,9 @@ final class Generators {
         return CodeBlock.of(
             "$L.maybeGetParentComponentManager()", componentManagerCallBlock(metadata));
       case BROADCAST_RECEIVER:
-        // Broadcast receivers receive a "context" parameter
-        return CodeBlock.of(
-            "$T.getApplication(context.getApplicationContext())",
-            ClassNames.CONTEXTS);
+        // Broadcast receivers receive a "context" parameter that make it so this code block
+        // isn't really usable anywhere
+        throw new AssertionError("BroadcastReceiver types should not get here");
       default:
         throw new AssertionError();
     }

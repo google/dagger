@@ -284,8 +284,8 @@ public final class TestApplicationComponentManager
 
   void setAutoAddModule(boolean autoAddModule) {
     Preconditions.checkState(
-        autoAddModuleEnabled.get() == null, "autoAddModuleEnabled is already set!");
-    autoAddModuleEnabled.set(autoAddModule);
+        autoAddModuleEnabled.compareAndSet(null, autoAddModule),
+        "autoAddModuleEnabled is already set!");
   }
 
   private Set<Class<?>> requiredModules() {

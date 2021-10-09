@@ -189,19 +189,34 @@ public class ModuleFactoryGeneratorTest {
   }
 
   @Test public void validatesIncludedModules() {
-    JavaFileObject module = JavaFileObjects.forSourceLines("test.Parent",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "",
-        "@Module(includes = Void.class)",
-        "class TestModule {}");
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "",
+            "@Module(",
+            "    includes = {",
+            "        Void.class,",
+            "        String.class,",
+            "    }",
+            ")",
+            "class TestModule {}");
 
     Compilation compilation = daggerCompiler().compile(module);
     assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(2);
     assertThat(compilation)
         .hadErrorContaining(
-            "java.lang.Void is listed as a module, but is not annotated with @Module");
+            "java.lang.Void is listed as a module, but is not annotated with @Module")
+        .inFile(module)
+        .onLine(7);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.lang.String is listed as a module, but is not annotated with @Module")
+        .inFile(module)
+        .onLine(8);
   }
 
   @Test public void singleProvidesMethodNoArgs() {

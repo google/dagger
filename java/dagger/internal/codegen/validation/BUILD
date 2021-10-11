@@ -46,5 +46,6 @@ java_library(
         "@google_bazel_common//third_party/java/error_prone:annotations",
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/jsr330_inject",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8",
     ],
 )

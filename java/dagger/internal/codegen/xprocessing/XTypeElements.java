@@ -17,12 +17,14 @@
 package dagger.internal.codegen.xprocessing;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XHasModifiers;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
+import com.google.auto.common.Visibility;
 import com.google.common.collect.ImmutableList;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
@@ -35,6 +37,11 @@ public final class XTypeElements {
     // XTypeElement#hasTypeParameters() in XProcessing. XTypes#getTypeArguments() isn't quite the
     // same -- it tells you if the declared type has parameters rather than the element itself.
     return !toJavac(type).getTypeParameters().isEmpty();
+  }
+
+  /** Returns all non-private, non-static, abstract methods in {@code type}. */
+  public static Visibility effectiveVisibility(XTypeElement type) {
+    return effectiveVisibilityOfElement(toJavac(type));
   }
 
   /** Returns all non-private, non-static, abstract methods in {@code type}. */

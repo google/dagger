@@ -107,12 +107,14 @@ public final class ComponentDescriptorFactory {
    * Returns a descriptor for a fictional component based on a module type in order to validate its
    * bindings.
    */
-  public ComponentDescriptor moduleComponentDescriptor(TypeElement typeElement) {
+  public ComponentDescriptor moduleComponentDescriptor(XTypeElement typeElement) {
     return create(
-        typeElement,
+        toJavac(typeElement),
         ComponentAnnotation.fromModuleAnnotation(
             checkAnnotation(
-                typeElement, ModuleAnnotation::moduleAnnotation, "must have a module annotation")));
+                toJavac(typeElement),
+                ModuleAnnotation::moduleAnnotation,
+                "must have a module annotation")));
   }
 
   private static <A> A checkAnnotation(

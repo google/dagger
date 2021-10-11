@@ -16,9 +16,11 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 
+import androidx.room.compiler.processing.XMethodElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import dagger.internal.codegen.base.Formatter;
@@ -60,6 +62,10 @@ public final class MethodSignatureFormatter extends Formatter<ExecutableElement>
             MoreElements.asType(method.getEnclosingElement()));
       }
     };
+  }
+
+  public String format(XMethodElement method) {
+    return format(toJavac(method));
   }
 
   @Override

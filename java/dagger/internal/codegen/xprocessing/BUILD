@@ -31,6 +31,7 @@ java_library(
         ":xprocessing-lib",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/javapoet",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8",

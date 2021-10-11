@@ -16,8 +16,11 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.compat.XConverters;
+import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import javax.lang.model.type.TypeKind;
 
@@ -38,6 +41,15 @@ public final class XTypes {
   /** Returns {@code true} if the given type is a type variable. */
   public static boolean isTypeVariable(XType type) {
     return XConverters.toJavac(type).getKind() == TypeKind.TYPEVAR;
+  }
+
+  /**
+   * Returns {@code true} if {@code type1} is equivalent to {@code type2}.
+   *
+   * <p>See {@link MoreTypes#equivalence()}.
+   */
+  public static boolean areEquivalentTypes(XType type1, XType type2) {
+    return MoreTypes.equivalence().equivalent(toJavac(type1), toJavac(type2));
   }
 
   /** Returns {@code true} if the given type is a primitive type. */

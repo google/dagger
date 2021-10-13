@@ -42,7 +42,6 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UField
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.getUastParentOfType
-import org.jetbrains.uast.kotlin.KotlinUClass
 import org.jetbrains.uast.toUElement
 
 /**
@@ -257,6 +256,6 @@ class DaggerKotlinIssueDetector : Detector(), SourceCodeScanner {
 
   /** @return whether or not the [this] is a Kotlin `object` type. */
   private fun UClass.isObject(): Boolean {
-    return this is KotlinUClass && ktClass is KtObjectDeclaration
+    return sourcePsi is KtObjectDeclaration
   }
 }

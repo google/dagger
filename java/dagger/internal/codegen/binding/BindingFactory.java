@@ -26,11 +26,11 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.base.Scopes.uniqueScopeOf;
-import static dagger.internal.codegen.binding.Binding.hasNonDefaultTypeParameters;
 import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.binding.ContributionBinding.bindingKindForMultibindingKey;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.spi.model.BindingKind.ASSISTED_FACTORY;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
@@ -55,6 +55,7 @@ import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
@@ -79,9 +80,11 @@ import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /** A factory for {@link Binding} objects. */
@@ -599,5 +602,40 @@ public final class BindingFactory {
                 membersInjectionBinding(asDeclared(typeElement.asType()), Optional.empty()))
             : Optional.empty(),
         injectionSites);
+  }
+
+  private static boolean hasNonDefaultTypeParameters(TypeMirror type, DaggerTypes types) {
+    // If the type is not declared, then it can't have type parameters.
+    if (type.getKind() != TypeKind.DECLARED) {
+      return false;
+    }
+
+    // If the element has no type parameters, none can be non-default.
+    TypeElement element = asTypeElement(type);
+    if (element.getTypeParameters().isEmpty()) {
+      return false;
+    }
+
+    ImmutableList<TypeMirror> defaultTypes =
+        element.getTypeParameters().stream()
+            .map(TypeParameterElement::asType)
+            .collect(toImmutableList());
+
+    ImmutableList<TypeMirror> actualTypes =
+        type.getKind() == TypeKind.DECLARED
+            ? ImmutableList.copyOf(asDeclared(type).getTypeArguments())
+            : ImmutableList.of();
+
+    // The actual type parameter size can be different if the user is using a raw type.
+    if (defaultTypes.size() != actualTypes.size()) {
+      return true;
+    }
+
+    for (int i = 0; i < defaultTypes.size(); i++) {
+      if (!types.isSameType(defaultTypes.get(i), actualTypes.get(i))) {
+        return true;
+      }
+    }
+    return false;
   }
 }

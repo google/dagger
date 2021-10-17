@@ -17,9 +17,6 @@
 package dagger.internal.codegen.binding;
 
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.unwrapOptionalEquivalence;
-import static dagger.internal.codegen.binding.ContributionBinding.FactoryCreationStrategy.CLASS_CONSTRUCTOR;
-import static dagger.internal.codegen.binding.ContributionBinding.FactoryCreationStrategy.DELEGATE;
-import static dagger.internal.codegen.binding.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static java.util.Arrays.asList;
 
 import com.google.auto.common.MoreElements;
@@ -80,43 +77,6 @@ public abstract class ContributionBinding extends Binding implements HasContribu
    * object is also considered a Kotlin object.
    */
   abstract Optional<Boolean> isContributingModuleKotlinObject();
-
-  /** The strategy for getting an instance of a factory for a {@link ContributionBinding}. */
-  public enum FactoryCreationStrategy {
-    /** The factory class is a single instance. */
-    SINGLETON_INSTANCE,
-    /** The factory must be created by calling the constructor. */
-    CLASS_CONSTRUCTOR,
-    /** The factory is simply delegated to another. */
-    DELEGATE,
-  }
-
-  /**
-   * Returns the {@link FactoryCreationStrategy} appropriate for a binding.
-   *
-   * <p>Delegate bindings use the {@link FactoryCreationStrategy#DELEGATE} strategy.
-   *
-   * <p>Bindings without dependencies that don't require a module instance use the {@link
-   * FactoryCreationStrategy#SINGLETON_INSTANCE} strategy.
-   *
-   * <p>All other bindings use the {@link FactoryCreationStrategy#CLASS_CONSTRUCTOR} strategy.
-   */
-  public final FactoryCreationStrategy factoryCreationStrategy() {
-    switch (kind()) {
-      case DELEGATE:
-        return DELEGATE;
-      case PROVISION:
-        return dependencies().isEmpty() && !requiresModuleInstance()
-            ? SINGLETON_INSTANCE
-            : CLASS_CONSTRUCTOR;
-      case INJECTION:
-      case MULTIBOUND_SET:
-      case MULTIBOUND_MAP:
-        return dependencies().isEmpty() ? SINGLETON_INSTANCE : CLASS_CONSTRUCTOR;
-      default:
-        return CLASS_CONSTRUCTOR;
-    }
-  }
 
   /**
    * The {@link TypeMirror type} for the {@code Factory<T>} or {@code Producer<T>} which is created

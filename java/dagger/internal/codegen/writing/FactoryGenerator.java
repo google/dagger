@@ -22,8 +22,6 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedParameters;
-import static dagger.internal.codegen.binding.ContributionBinding.FactoryCreationStrategy.DELEGATE;
-import static dagger.internal.codegen.binding.ContributionBinding.FactoryCreationStrategy.SINGLETON_INSTANCE;
 import static dagger.internal.codegen.binding.SourceFiles.bindingTypeElementTypeVariableNames;
 import static dagger.internal.codegen.binding.SourceFiles.frameworkFieldUsages;
 import static dagger.internal.codegen.binding.SourceFiles.frameworkTypeUsageStatement;
@@ -37,6 +35,7 @@ import static dagger.internal.codegen.javapoet.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.factoryOf;
 import static dagger.internal.codegen.writing.GwtCompatibility.gwtIncompatibleAnnotation;
+import static dagger.spi.model.BindingKind.INJECTION;
 import static dagger.spi.model.BindingKind.PROVISION;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -57,6 +56,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.Factory;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.base.UniqueNameSet;
+import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.CodeBlocks;
@@ -110,7 +110,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
     checkArgument(!binding.unresolved().isPresent());
     checkArgument(binding.bindingElement().isPresent());
 
-    if (binding.factoryCreationStrategy().equals(DELEGATE)) {
+    if (binding.kind() == BindingKind.DELEGATE) {
       return ImmutableList.of();
     }
 
@@ -135,7 +135,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
   }
 
   private void addConstructorAndFields(ProvisionBinding binding, TypeSpec.Builder factoryBuilder) {
-    if (binding.factoryCreationStrategy().equals(SINGLETON_INSTANCE)) {
+    if (FactoryCreationStrategy.of(binding) == FactoryCreationStrategy.SINGLETON_INSTANCE) {
       return;
     }
     // TODO(bcorso): Make the constructor private?
@@ -188,7 +188,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
             .returns(parameterizedGeneratedTypeNameForBinding(binding))
             .addTypeVariables(bindingTypeElementTypeVariableNames(binding));
 
-    switch (binding.factoryCreationStrategy()) {
+    switch (FactoryCreationStrategy.of(binding)) {
       case SINGLETON_INSTANCE:
         FieldSpec.Builder instanceFieldBuilder =
             FieldSpec.builder(
@@ -297,5 +297,32 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
 
   private static ParameterSpec toParameter(FieldSpec field) {
     return ParameterSpec.builder(field.type, field.name).build();
+  }
+
+  /** The strategy for getting an instance of a factory for a {@link Binding}. */
+  private enum FactoryCreationStrategy {
+    /** The factory class is a single instance. */
+    SINGLETON_INSTANCE,
+    /** The factory must be created by calling the constructor. */
+    CLASS_CONSTRUCTOR;
+
+    static FactoryCreationStrategy of(Binding binding) {
+      switch (binding.kind()) {
+        case DELEGATE:
+          throw new AssertionError("Delegate bindings don't have a factory.");
+        case PROVISION:
+          return binding.dependencies().isEmpty() && !binding.requiresModuleInstance()
+              ? SINGLETON_INSTANCE
+              : CLASS_CONSTRUCTOR;
+        case INJECTION:
+        case MULTIBOUND_SET:
+        case MULTIBOUND_MAP:
+          return binding.dependencies().isEmpty()
+              ? SINGLETON_INSTANCE
+              : CLASS_CONSTRUCTOR;
+        default:
+          return CLASS_CONSTRUCTOR;
+      }
+    }
   }
 }

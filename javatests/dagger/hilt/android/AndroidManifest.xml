@@ -42,10 +42,6 @@
         android:exported="false"
         tools:ignore="MissingClass"/>
     <activity
-        android:name=".OptionalInjectTestClasses$TestActivity"
-        android:exported="false"
-        tools:ignore="MissingClass"/>
-    <activity
         android:name=".QualifierInKotlinFieldsTest$TestActivity"
         android:exported="false"
         tools:ignore="MissingClass"/>

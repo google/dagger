@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.XElementKt.isMethod;
+import static androidx.room.compiler.processing.XElementKt.isVariableElement;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
@@ -31,6 +33,8 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullab
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XElements.asMethod;
+import static dagger.internal.codegen.xprocessing.XElements.asVariable;
 import static dagger.spi.model.BindingKind.ASSISTED_FACTORY;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
 import static dagger.spi.model.BindingKind.BOUND_INSTANCE;
@@ -49,8 +53,11 @@ import static dagger.spi.model.DaggerType.fromJava;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.XVariableElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableCollection;
@@ -77,7 +84,6 @@ import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
@@ -418,17 +424,18 @@ public final class BindingFactory {
    * Returns a {@link dagger.spi.model.BindingKind#BOUND_INSTANCE} binding for a
    * {@code @BindsInstance}-annotated builder setter method or factory method parameter.
    */
-  ProvisionBinding boundInstanceBinding(ComponentRequirement requirement, Element element) {
-    checkArgument(element instanceof VariableElement || element instanceof ExecutableElement);
-    VariableElement parameterElement =
-        element instanceof VariableElement
-            ? MoreElements.asVariable(element)
-            : getOnlyElement(MoreElements.asExecutable(element).getParameters());
+  ProvisionBinding boundInstanceBinding(ComponentRequirement requirement, XElement element) {
+    checkArgument(isVariableElement(element) || isMethod(element));
+    XVariableElement parameterElement =
+        isVariableElement(element)
+            ? asVariable(element)
+            : getOnlyElement(asMethod(element).getParameters());
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(element)
+        .bindingElement(toJavac(element))
         .key(requirement.key().get())
-        .nullableType(getNullableType(parameterElement))
+        .nullableType(
+            getNullableType(parameterElement).map(XConverters::toJavac).map(MoreTypes::asDeclared))
         .kind(BOUND_INSTANCE)
         .build();
   }

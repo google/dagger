@@ -696,8 +696,8 @@ public final class ComponentImplementation {
       if (creatorDescriptor.isPresent()) {
         ComponentCreatorDescriptor descriptor = creatorDescriptor.get();
         creatorKind = descriptor.kind();
-        creatorType = ClassName.get(descriptor.typeElement());
-        factoryMethodName = descriptor.factoryMethod().getSimpleName().toString();
+        creatorType = descriptor.typeElement().getClassName();
+        factoryMethodName = descriptor.factoryMethod().getName();
         noArgFactoryMethod = descriptor.factoryParameters().isEmpty();
       } else {
         creatorKind = BUILDER;

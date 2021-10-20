@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
@@ -25,6 +26,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -193,6 +195,10 @@ public abstract class ComponentRequirement {
     return ParameterSpec.builder(TypeName.get(type()), variableName()).build();
   }
 
+  public static ComponentRequirement forDependency(XType type) {
+    return forDependency(toJavac(type));
+  }
+
   public static ComponentRequirement forDependency(TypeMirror type) {
     return new AutoValue_ComponentRequirement(
         Kind.DEPENDENCY,
@@ -200,6 +206,10 @@ public abstract class ComponentRequirement {
         Optional.empty(),
         Optional.empty(),
         simpleVariableName(MoreTypes.asTypeElement(type)));
+  }
+
+  public static ComponentRequirement forModule(XType type) {
+    return forModule(toJavac(type));
   }
 
   public static ComponentRequirement forModule(TypeMirror type) {

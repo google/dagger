@@ -16,8 +16,10 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.XElementKt.isMethod;
+import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
-import static com.google.auto.common.MoreTypes.asDeclared;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.collect.Collections2.transform;
@@ -29,13 +31,19 @@ import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSetMultimap;
+import static dagger.internal.codegen.xprocessing.XElements.asMethod;
+import static dagger.internal.codegen.xprocessing.XElements.asMethodParameter;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XExecutableParameterElement;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XProcessingEnv;
-import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XType;
 import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -56,7 +64,6 @@ import dagger.internal.codegen.compileroption.ValidationType;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.Scope;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -68,13 +75,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 
@@ -93,7 +95,6 @@ public final class ComponentDescriptorValidator {
 
   private final XProcessingEnv processingEnv;
   private final DaggerElements elements;
-  private final DaggerTypes types;
   private final CompilerOptions compilerOptions;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final ComponentHierarchyValidator componentHierarchyValidator;
@@ -103,14 +104,12 @@ public final class ComponentDescriptorValidator {
   ComponentDescriptorValidator(
       XProcessingEnv processingEnv,
       DaggerElements elements,
-      DaggerTypes types,
       CompilerOptions compilerOptions,
       MethodSignatureFormatter methodSignatureFormatter,
       ComponentHierarchyValidator componentHierarchyValidator,
       KotlinMetadataUtil metadataUtil) {
     this.processingEnv = processingEnv;
     this.elements = elements;
-    this.types = types;
     this.compilerOptions = compilerOptions;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.componentHierarchyValidator = componentHierarchyValidator;
@@ -304,9 +303,9 @@ public final class ComponentDescriptorValidator {
           Sets.difference(
               creatorModuleAndDependencyRequirements, componentModuleAndDependencyRequirements);
 
-      DeclaredType container = asDeclared(creator.typeElement().asType());
+      XType container = creator.typeElement().getType();
       if (!inapplicableRequirementsOnCreator.isEmpty()) {
-        Collection<Element> excessElements =
+        Collection<XElement> excessElements =
             Multimaps.filterKeys(
                     creator.unvalidatedRequirementElements(), in(inapplicableRequirementsOnCreator))
                 .values();
@@ -337,11 +336,12 @@ public final class ComponentDescriptorValidator {
       }
 
       // Validate that declared creator requirements (modules, dependencies) have unique types.
-      ImmutableSetMultimap<Wrapper<TypeMirror>, Element> declaredRequirementsByType =
+      ImmutableSetMultimap<Wrapper<TypeMirror>, XElement> declaredRequirementsByType =
           Multimaps.filterKeys(
                   creator.unvalidatedRequirementElements(),
                   creatorModuleAndDependencyRequirements::contains)
-              .entries().stream()
+              .entries()
+              .stream()
               .collect(
                   toImmutableSetMultimap(entry -> entry.getKey().wrappedType(), Entry::getValue));
       declaredRequirementsByType
@@ -369,40 +369,39 @@ public final class ComponentDescriptorValidator {
       // for subcomponents.
     }
 
-    private String formatElement(Element element, DeclaredType container) {
+    private String formatElement(XElement element, XType container) {
       // TODO(cgdecker): Extract some or all of this to another class?
       // But note that it does different formatting for parameters than
       // DaggerElements.elementToString(Element).
-      switch (element.getKind()) {
-        case METHOD:
-          return methodSignatureFormatter.format(
-              MoreElements.asExecutable(element), Optional.of(container));
-        case PARAMETER:
-          return formatParameter(MoreElements.asVariable(element), container);
-        default:
-          // This method shouldn't be called with any other type of element.
-          throw new AssertionError();
+      if (isMethod(element)) {
+        return methodSignatureFormatter.format(asMethod(element), Optional.of(container));
+      } else if (isMethodParameter(element)) {
+        return formatParameter(asMethodParameter(element), container);
       }
+      // This method shouldn't be called with any other type of element.
+      throw new AssertionError();
     }
 
-    private String formatParameter(VariableElement parameter, DeclaredType container) {
+    private String formatParameter(XExecutableParameterElement parameter, XType container) {
       // TODO(cgdecker): Possibly leave the type (and annotations?) off of the parameters here and
       // just use their names, since the type will be redundant in the context of the error message.
       StringJoiner joiner = new StringJoiner(" ");
-      parameter.getAnnotationMirrors().stream().map(Object::toString).forEach(joiner::add);
-      TypeMirror parameterType = resolveParameterType(parameter, container);
+      parameter.getAllAnnotations().stream()
+          .map(XAnnotation::getQualifiedName)
+          .forEach(joiner::add);
+      XType parameterType = resolveParameterType(parameter, container);
       return joiner
-          .add(stripCommonTypePrefixes(parameterType.toString()))
-          .add(parameter.getSimpleName())
+          .add(stripCommonTypePrefixes(parameterType.getTypeName().toString()))
+          .add(parameter.getName())
           .toString();
     }
 
-    private TypeMirror resolveParameterType(VariableElement parameter, DeclaredType container) {
-      ExecutableElement method =
-          MoreElements.asExecutable(parameter.getEnclosingElement());
+    private XType resolveParameterType(XExecutableParameterElement parameter, XType container) {
+      checkArgument(isMethod(parameter.getEnclosingMethodElement()));
+      XMethodElement method = asMethod(parameter.getEnclosingMethodElement());
       int parameterIndex = method.getParameters().indexOf(parameter);
 
-      ExecutableType methodType = MoreTypes.asExecutable(types.asMemberOf(container, method));
+      XMethodType methodType = method.asMemberOf(container);
       return methodType.getParameterTypes().get(parameterIndex);
     }
 

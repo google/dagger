@@ -16,11 +16,18 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static androidx.room.compiler.processing.XElementKt.isMethod;
+import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
+import static androidx.room.compiler.processing.XElementKt.isVariableElement;
+import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room.compiler.processing.XAnnotated;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XExecutableParameterElement;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import java.util.Collection;
@@ -29,6 +36,21 @@ import java.util.Optional;
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XElement} helper methods. */
 public final class XElements {
+
+  public static XExecutableParameterElement asMethodParameter(XElement element) {
+    checkState(isMethodParameter(element));
+    return (XExecutableParameterElement) element;
+  }
+
+  public static XVariableElement asVariable(XElement element) {
+    checkState(isVariableElement(element));
+    return (XVariableElement) element;
+  }
+
+  public static XMethodElement asMethod(XElement element) {
+    checkState(isMethod(element));
+    return (XMethodElement) element;
+  }
 
   public static ImmutableSet<XAnnotation> getAnnotatedAnnotations(
       XAnnotated annotated, ClassName annotationName) {

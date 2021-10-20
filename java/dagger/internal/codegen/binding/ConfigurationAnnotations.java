@@ -31,6 +31,7 @@ import static javax.lang.model.util.ElementFilter.typesIn;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableList;
@@ -96,6 +97,10 @@ public final class ConfigurationAnnotations {
     return element.getAllAnnotations().stream()
         .filter(annotation -> annotation.getName().contentEquals("Nullable"))
         .findFirst();
+  }
+
+  public static Optional<XType> getNullableType(XElement element) {
+    return getNullableAnnotation(element).map(XAnnotation::getType);
   }
 
   /** Returns the first type that specifies this' nullability, or empty if none. */

@@ -37,6 +37,7 @@ import static java.util.Arrays.asList;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -128,6 +129,10 @@ public final class KeyFactory {
     ExecutableType resolvedMethod =
         asExecutable(types.asMemberOf(declaredContainer, subcomponentCreatorMethod));
     return Key.builder(fromJava(resolvedMethod.getReturnType())).build();
+  }
+
+  public Key forSubcomponentCreator(XType creatorType) {
+    return forSubcomponentCreator(toJavac(creatorType));
   }
 
   public Key forSubcomponentCreator(TypeMirror creatorType) {

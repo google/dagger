@@ -34,6 +34,8 @@ import static dagger.spi.model.RequestKind.PRODUCER;
 import static dagger.spi.model.RequestKind.PROVIDER;
 
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Lazy;
@@ -130,6 +132,11 @@ public final class DependencyRequestFactory {
             "multibindingContribution must be a multibinding: " + multibindingContribution);
     }
     throw new AssertionError(multibindingContribution.toString());
+  }
+
+  DependencyRequest forRequiredResolvedVariable(
+      XVariableElement variableElement, XType resolvedType) {
+    return forRequiredResolvedVariable(toJavac(variableElement), toJavac(resolvedType));
   }
 
   DependencyRequest forRequiredResolvedVariable(

@@ -256,7 +256,7 @@ public abstract class ComponentDescriptor {
                       .filter(child -> child.creatorDescriptor().isPresent())
                       .collect(
                           toImmutableMap(
-                              child -> child.creatorDescriptor().get().typeElement(),
+                              child -> toJavac(child.creatorDescriptor().get().typeElement()),
                               child -> child)));
 
   /** Returns the child component with the given builder type. */

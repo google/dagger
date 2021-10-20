@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.auto.common.MoreTypes.asDeclared;
+import static androidx.room.compiler.processing.XTypeKt.isVoid;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -31,6 +31,9 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -51,22 +54,18 @@ import dagger.internal.codegen.binding.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.xprocessing.MethodSpecs;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
 
 /** Factory for creating {@link ComponentCreatorImplementation} instances. */
 final class ComponentCreatorImplementationFactory {
 
   private final ComponentImplementation componentImplementation;
   private final DaggerElements elements;
-  private final DaggerTypes types;
   private final KotlinMetadataUtil metadataUtil;
   private final ModuleProxies moduleProxies;
 
@@ -74,12 +73,10 @@ final class ComponentCreatorImplementationFactory {
   ComponentCreatorImplementationFactory(
       ComponentImplementation componentImplementation,
       DaggerElements elements,
-      DaggerTypes types,
       KotlinMetadataUtil metadataUtil,
       ModuleProxies moduleProxies) {
     this.componentImplementation = componentImplementation;
     this.elements = elements;
-    this.types = types;
     this.metadataUtil = metadataUtil;
     this.moduleProxies = moduleProxies;
   }
@@ -408,18 +405,16 @@ final class ComponentCreatorImplementationFactory {
     @Override
     protected ImmutableMap<ComponentRequirement, String> factoryMethodParameters() {
       return ImmutableMap.copyOf(
-          Maps.transformValues(
-              creatorDescriptor.factoryParameters(),
-              element -> element.getSimpleName().toString()));
+          Maps.transformValues(creatorDescriptor.factoryParameters(), XVariableElement::getName));
     }
 
-    private DeclaredType creatorType() {
-      return asDeclared(creatorDescriptor.typeElement().asType());
+    private XType creatorType() {
+      return creatorDescriptor.typeElement().getType();
     }
 
     @Override
     protected MethodSpec.Builder factoryMethodBuilder() {
-      return MethodSpec.overriding(creatorDescriptor.factoryMethod(), creatorType(), types);
+      return MethodSpecs.overriding(creatorDescriptor.factoryMethod(), creatorType());
     }
 
     private RequirementStatus requirementStatus(ComponentRequirement requirement) {
@@ -450,9 +445,9 @@ final class ComponentCreatorImplementationFactory {
 
     @Override
     protected MethodSpec.Builder setterMethodBuilder(ComponentRequirement requirement) {
-      ExecutableElement supertypeMethod = creatorDescriptor.setterMethods().get(requirement);
-      MethodSpec.Builder method = MethodSpec.overriding(supertypeMethod, creatorType(), types);
-      if (!supertypeMethod.getReturnType().getKind().equals(TypeKind.VOID)) {
+      XMethodElement supertypeMethod = creatorDescriptor.setterMethods().get(requirement);
+      MethodSpec.Builder method = MethodSpecs.overriding(supertypeMethod, creatorType());
+      if (!isVoid(supertypeMethod.getReturnType())) {
         // Take advantage of covariant returns so that we don't have to worry about type variables
         method.returns(componentImplementation.getCreatorName());
       }

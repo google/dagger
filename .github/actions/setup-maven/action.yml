@@ -1,0 +1,21 @@
+name: 'Setup Maven'
+
+env:
+  # Our Bazel builds currently rely on JDK 8.
+  USE_JAVA_VERSION: '8'
+  # Our Bazel builds currently rely on 3.7.1. The version is set via
+  # baselisk by USE_BAZEL_VERSION: https://github.com/bazelbuild/bazelisk.
+  USE_BAZEL_VERSION: '3.7.1'
+
+runs:
+  using: "composite"
+  steps:
+    - name: 'Cache local Maven repository'
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.m2/repository
+          !~/.m2/repository/com/google/dagger
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-

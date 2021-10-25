@@ -38,37 +38,14 @@ jobs:
     needs: validate-latest-dagger-version
     runs-on: ubuntu-latest
     steps:
-      - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
-        uses: actions/setup-java@v1
-        with:
-          java-version: '${{ env.USE_JAVA_VERSION }}'
       - name: 'Check out repository'
         uses: actions/checkout@v2
-      - name: 'Cache local Maven repository'
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.m2/repository
-            !~/.m2/repository/com/google/dagger
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-      - name: 'Cache Bazel files'
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/bazel
-          key: ${{ runner.os }}-bazel-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-bazel-
-      - name: 'Cache Gradle files'
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: 'Setup Maven'
+        uses: ./.github/actions/setup-maven
+      - name: 'Setup Gradle'
+        uses: ./.github/actions/setup-gradle
+      - name: 'Setup Bazel'
+        uses: ./.github/actions/setup-bazel
       - name: 'Run Bazel tests'
         run: bazel test --test_output=errors //... --keep_going
         shell: bash
@@ -88,25 +65,18 @@ jobs:
     needs: bazel-test
     runs-on: ubuntu-latest
     steps:
-    - name: 'Check out repository'
-      uses: actions/checkout@v2
-    - name: 'Cache Gradle files'
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    - name: 'Download local snapshot for tests'
-      uses: actions/download-artifact@v2
-      with:
-        name: local-snapshot
-        path: ~/.m2/repository/com/google/dagger
-    - name: 'Gradle Java local tests'
-      run: ./util/run-local-gradle-tests.sh
-      shell: bash
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Setup Gradle'
+        uses: ./.github/actions/setup-gradle
+      - name: 'Download local snapshot for tests'
+        uses: actions/download-artifact@v2
+        with:
+          name: local-snapshot
+          path: ~/.m2/repository/com/google/dagger
+      - name: 'Gradle Java local tests'
+        run: ./util/run-local-gradle-tests.sh
+        shell: bash
   artifact-android-local-tests:
     name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
     needs: bazel-test
@@ -117,15 +87,8 @@ jobs:
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2
-      - name: 'Cache Gradle files'
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: 'Setup Gradle'
+        uses: ./.github/actions/setup-gradle
       - name: 'Download local snapshot for tests'
         uses: actions/download-artifact@v2
         with:
@@ -149,15 +112,8 @@ jobs:
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2
-      - name: 'Cache Gradle files'
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: 'Setup Gradle'
+        uses: ./.github/actions/setup-gradle
       - name: 'Download local snapshot for tests'
         uses: actions/download-artifact@v2
         with:
@@ -184,37 +140,14 @@ jobs:
     if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
-      - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
-        uses: actions/setup-java@v1
-        with:
-          java-version: '${{ env.USE_JAVA_VERSION }}'
       - name: 'Check out repository'
         uses: actions/checkout@v2
-      - name: 'Cache local Maven repository'
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.m2/repository
-            !~/.m2/repository/com/google/dagger
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-      - name: 'Cache Bazel files'
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/bazel
-          key: ${{ runner.os }}-bazel-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-bazel-
-      - name: 'Cache Gradle files'
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: 'Setup Maven'
+        uses: ./.github/actions/setup-maven
+      - name: 'Setup Gradle'
+        uses: ./.github/actions/setup-gradle
+      - name: 'Setup Bazel'
+        uses: ./.github/actions/setup-bazel
       - name: 'Publish latest docs'
         run: ./util/generate-latest-docs.sh
         shell: bash
@@ -241,15 +174,8 @@ jobs:
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2
-      - name: 'Cache Gradle files'
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: 'Setup Gradle'
+        uses: ./.github/actions/setup-gradle
       - name: 'Download local snapshot for tests'
         uses: actions/download-artifact@v2
         with:
@@ -276,38 +202,15 @@ jobs:
     needs: bazel-test
     runs-on: ubuntu-latest
     steps:
-    - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
-      uses: actions/setup-java@v1
-      with:
-        java-version: '${{ env.USE_JAVA_VERSION }}'
-    - name: 'Check out repository'
-      uses: actions/checkout@v2
-    - name: 'Cache local Maven repository'
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.m2/repository
-          !~/.m2/repository/com/google/dagger
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-        restore-keys: |
-          ${{ runner.os }}-maven-
-    - name: 'Cache Bazel files'
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/bazel
-        key: ${{ runner.os }}-bazel-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-bazel-
-    - name: 'Cache Gradle files'
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    - name: 'Build and install Hilt Gradle plugin local snapshot'
-      run: ./util/deploy-hilt-gradle-plugin.sh "install:install-file" "LOCAL-SNAPSHOT"
-      env:
-        AGP_VERSION: '+'
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Setup Maven'
+        uses: ./.github/actions/setup-maven
+      - name: 'Setup Gradle'
+        uses: ./.github/actions/setup-gradle
+      - name: 'Setup Bazel'
+        uses: ./.github/actions/setup-bazel
+      - name: 'Build and install Hilt Gradle plugin local snapshot'
+        run: ./util/deploy-hilt-gradle-plugin.sh "install:install-file" "LOCAL-SNAPSHOT"
+        env:
+          AGP_VERSION: '+'

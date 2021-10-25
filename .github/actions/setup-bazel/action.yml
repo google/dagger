@@ -1,0 +1,16 @@
+name: 'Setup Bazel'
+
+runs:
+  using: "composite"
+  steps:
+    - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
+      uses: actions/setup-java@v1
+      with:
+        java-version: '${{ env.USE_JAVA_VERSION }}'
+    - name: 'Cache Bazel files'
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/bazel
+        key: ${{ runner.os }}-bazel-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-bazel-

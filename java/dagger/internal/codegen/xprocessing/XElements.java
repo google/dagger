@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static androidx.room.compiler.processing.XElementKt.isConstructor;
+import static androidx.room.compiler.processing.XElementKt.isField;
 import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
@@ -25,8 +27,10 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room.compiler.processing.XAnnotated;
 import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
+import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
@@ -49,9 +53,19 @@ public final class XElements {
     return (XExecutableParameterElement) element;
   }
 
+  public static XFieldElement asField(XElement element) {
+    checkState(isField(element));
+    return (XFieldElement) element;
+  }
+
   public static XVariableElement asVariable(XElement element) {
     checkState(isVariableElement(element));
     return (XVariableElement) element;
+  }
+
+  public static XConstructorElement asConstructor(XElement element) {
+    checkState(isConstructor(element));
+    return (XConstructorElement) element;
   }
 
   public static XMethodElement asMethod(XElement element) {

@@ -16,6 +16,9 @@
 
 package dagger.internal.codegen.binding;
 
+import androidx.room.compiler.processing.XConstructorElement;
+import androidx.room.compiler.processing.XFieldElement;
+import androidx.room.compiler.processing.XMethodElement;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Component;
 import dagger.Provides;
@@ -24,8 +27,6 @@ import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
 /**
  * Maintains the collection of provision bindings from {@link Inject} constructors and members
@@ -53,10 +54,13 @@ public interface InjectBindingRegistry {
   Optional<ProvisionBinding> getOrFindMembersInjectorProvisionBinding(Key key);
 
   @CanIgnoreReturnValue
-  Optional<ProvisionBinding> tryRegisterConstructor(ExecutableElement constructorElement);
+  Optional<ProvisionBinding> tryRegisterInjectConstructor(XConstructorElement constructorElement);
 
   @CanIgnoreReturnValue
-  Optional<MembersInjectionBinding> tryRegisterMembersInjectedType(TypeElement typeElement);
+  Optional<MembersInjectionBinding> tryRegisterInjectField(XFieldElement fieldElement);
+
+  @CanIgnoreReturnValue
+  Optional<MembersInjectionBinding> tryRegisterInjectMethod(XMethodElement methodElement);
 
   /**
    * This method ensures that sources for all registered {@link Binding bindings} (either explicitly

@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -25,8 +27,12 @@ import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assis
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 
+import androidx.room.compiler.processing.XConstructorElement;
+import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.XMethodElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
@@ -234,8 +240,9 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   }
 
   @Override
-  public Optional<ProvisionBinding> tryRegisterConstructor(ExecutableElement constructorElement) {
-    return tryRegisterConstructor(constructorElement, Optional.empty(), false);
+  public Optional<ProvisionBinding> tryRegisterInjectConstructor(
+      XConstructorElement constructorElement) {
+    return tryRegisterConstructor(toJavac(constructorElement), Optional.empty(), false);
   }
 
   @CanIgnoreReturnValue
@@ -266,8 +273,31 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   }
 
   @Override
-  public Optional<MembersInjectionBinding> tryRegisterMembersInjectedType(TypeElement typeElement) {
-    return tryRegisterMembersInjectedType(typeElement, Optional.empty(), false);
+  public Optional<MembersInjectionBinding> tryRegisterInjectField(XFieldElement fieldElement) {
+    // TODO(b/204116636): Add a test for this once we're able to test kotlin sources.
+    // TODO(b/204208307): Add validation for KAPT to test if this came from a top-level field.
+    if (!isTypeElement(fieldElement.getEnclosingElement())) {
+      messager.printMessage(
+          Kind.ERROR,
+          "@Inject fields must be enclosed in a type.",
+          fieldElement);
+    }
+    return tryRegisterMembersInjectedType(
+        toJavac(asTypeElement(fieldElement.getEnclosingElement())), Optional.empty(), false);
+  }
+
+  @Override
+  public Optional<MembersInjectionBinding> tryRegisterInjectMethod(XMethodElement methodElement) {
+    // TODO(b/204116636): Add a test for this once we're able to test kotlin sources.
+    // TODO(b/204208307): Add validation for KAPT to test if this came from a top-level method.
+    if (!isTypeElement(methodElement.getEnclosingElement())) {
+      messager.printMessage(
+          Kind.ERROR,
+          "@Inject methods must be enclosed in a type.",
+          methodElement);
+    }
+    return tryRegisterMembersInjectedType(
+        toJavac(asTypeElement(methodElement.getEnclosingElement())), Optional.empty(), false);
   }
 
   @CanIgnoreReturnValue

@@ -17,6 +17,7 @@
 package dagger.internal.codegen.langmodel;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreElements.hasModifiers;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -25,6 +26,7 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
@@ -117,6 +119,12 @@ public final class DaggerElements implements Elements, ClearableCache {
   /** Returns the type element for a class name. */
   public TypeElement getTypeElement(ClassName className) {
     return getTypeElement(className.canonicalName());
+  }
+
+  /** Returns the argument or the closest enclosing element that is a {@link XTypeElement}. */
+  public static XTypeElement closestEnclosingTypeElement(
+      XElement element, XProcessingEnv processingEnv) {
+    return toXProcessing(closestEnclosingTypeElement(toJavac(element)), processingEnv);
   }
 
   /** Returns the argument or the closest enclosing element that is a {@link TypeElement}. */

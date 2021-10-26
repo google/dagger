@@ -32,6 +32,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -61,10 +62,22 @@ import javax.lang.model.type.TypeMirror;
 
 /** Assisted injection utility methods. */
 public final class AssistedInjectionAnnotations {
+  /** Returns the factory method for the given factory {@link XTypeElement}. */
+  public static ExecutableElement assistedFactoryMethod(
+      XTypeElement factory, DaggerElements elements) {
+    return assistedFactoryMethod(toJavac(factory), elements);
+  }
+
   /** Returns the factory method for the given factory {@link TypeElement}. */
   public static ExecutableElement assistedFactoryMethod(
       TypeElement factory, DaggerElements elements) {
     return getOnlyElement(assistedFactoryMethods(factory, elements));
+  }
+
+  /** Returns the list of abstract factory methods for the given factory {@link XTypeElement}. */
+  public static ImmutableSet<ExecutableElement> assistedFactoryMethods(
+      XTypeElement factory, DaggerElements elements) {
+    return assistedFactoryMethods(toJavac(factory), elements);
   }
 
   /** Returns the list of abstract factory methods for the given factory {@link TypeElement}. */
@@ -182,6 +195,11 @@ public final class AssistedInjectionAnnotations {
   @AutoValue
   public abstract static class AssistedFactoryMetadata {
     public static AssistedFactoryMetadata create(
+        XType factory, DaggerElements elements, DaggerTypes types) {
+      return create(toJavac(factory), elements, types);
+    }
+
+    public static AssistedFactoryMetadata create(
         TypeMirror factory, DaggerElements elements, DaggerTypes types) {
       DeclaredType factoryType = asDeclared(factory);
       TypeElement factoryElement = asTypeElement(factoryType);
@@ -277,6 +295,11 @@ public final class AssistedInjectionAnnotations {
           ? String.format("@Assisted %s", type())
           : String.format("@Assisted(\"%s\") %s", qualifier(), type());
     }
+  }
+
+  public static ImmutableList<AssistedParameter> assistedInjectAssistedParameters(
+      XType assistedInjectType, DaggerTypes types) {
+    return assistedInjectAssistedParameters(asDeclared(toJavac(assistedInjectType)), types);
   }
 
   public static ImmutableList<AssistedParameter> assistedInjectAssistedParameters(

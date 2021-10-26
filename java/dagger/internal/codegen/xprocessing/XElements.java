@@ -18,6 +18,7 @@ package dagger.internal.codegen.xprocessing;
 
 import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static androidx.room.compiler.processing.XElementKt.isVariableElement;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -27,6 +28,7 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -36,6 +38,11 @@ import java.util.Optional;
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XElement} helper methods. */
 public final class XElements {
+
+  public static XTypeElement asTypeElement(XElement element) {
+    checkState(isTypeElement(element));
+    return (XTypeElement) element;
+  }
 
   public static XExecutableParameterElement asMethodParameter(XElement element) {
     checkState(isMethodParameter(element));

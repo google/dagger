@@ -17,16 +17,20 @@
 package dagger.internal.codegen.writing;
 
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
-import static dagger.internal.codegen.writing.BindingRepresentations.scope;
+import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
+import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.writing.ProvisionBindingRepresentation.usesDirectInstanceExpression;
 
+import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
+import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.spi.model.BindingKind;
 import dagger.spi.model.RequestKind;
 
 /**
@@ -61,16 +65,28 @@ final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSuppli
                 : unscopedDirectInstanceRequestRepresentationFactory.create(binding));
     this.frameworkInstanceSupplier =
         new FrameworkFieldInitializer(
-            componentImplementation,
-            binding,
-            binding.scope().isPresent()
-                ? scope(binding, frameworkInstanceCreationExpression)
-                : frameworkInstanceCreationExpression);
+            componentImplementation, binding, scope(binding, frameworkInstanceCreationExpression));
   }
 
   @Override
   public MemberSelect memberSelect() {
     return frameworkInstanceSupplier.memberSelect();
+  }
+
+  private FrameworkInstanceCreationExpression scope(
+      Binding binding, FrameworkInstanceCreationExpression unscoped) {
+    // Caching assisted factory provider, so that there won't be new factory created for each
+    // provider.get() call.
+    if (!binding.scope().isPresent() && !binding.kind().equals(BindingKind.ASSISTED_FACTORY)) {
+      return unscoped;
+    }
+    return () ->
+        CodeBlock.of(
+            "$T.provider($L)",
+            binding.scope().isPresent()
+                ? (binding.scope().get().isReusable() ? SINGLE_CHECK : DOUBLE_CHECK)
+                : SINGLE_CHECK,
+            unscoped.creationExpression());
   }
 
   @AssistedFactory

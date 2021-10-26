@@ -61,6 +61,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     }
   }
 
+  private final boolean isFastInit;
   private final ShardImplementation shardImplementation;
   private final ContributionBinding binding;
   private final FrameworkInstanceCreationExpression frameworkInstanceCreationExpression;
@@ -72,6 +73,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       ContributionBinding binding,
       FrameworkInstanceCreationExpression frameworkInstanceCreationExpression) {
     this.binding = checkNotNull(binding);
+    this.isFastInit = componentImplementation.isFastInit();
     this.shardImplementation = checkNotNull(componentImplementation).shardImplementation(binding);
     this.frameworkInstanceCreationExpression = checkNotNull(frameworkInstanceCreationExpression);
   }
@@ -108,10 +110,17 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
         break;
 
       case INITIALIZING:
+        fieldSpec = getOrCreateField();
+        // If this is an ASSISTED_FACTORY binding in fastInit, then we don't have to worry about
+        // cycles since the creation of the factory itself doesn't actually take any dependencies.
+        // TODO(wanyingd): all switching providers do not need the delegation
+        if (isFastInit && binding.kind().equals(BindingKind.ASSISTED_FACTORY)) {
+          break;
+        }
         // We were recursively invoked, so create a delegate factory instead
         fieldInitializationState = InitializationState.DELEGATED;
         shardImplementation.addInitialization(
-            CodeBlock.of("this.$N = new $T<>();", getOrCreateField(), delegateType()));
+            CodeBlock.of("this.$N = new $T<>();", fieldSpec, delegateType()));
         break;
 
       case DELEGATED:

@@ -255,6 +255,7 @@ public final class ComponentImplementation {
   private final KotlinMetadataUtil metadataUtil;
   private final ImmutableMap<ComponentImplementation, FieldSpec> componentFieldsByImplementation;
   private final XMessager messager;
+  private final boolean isFastInit;
 
   @Inject
   ComponentImplementation(
@@ -296,6 +297,8 @@ public final class ComponentImplementation {
     this.componentFieldsByImplementation =
         createComponentFieldsByImplementation(this, compilerOptions);
     this.messager = messager;
+    this.isFastInit =
+        compilerOptions.fastInit(rootComponentImplementation().componentDescriptor().typeElement());
   }
 
   /**
@@ -386,6 +389,11 @@ public final class ComponentImplementation {
     return componentShard.name;
   }
 
+  /** Returns if the current compile mode is fast init. */
+  public boolean isFastInit() {
+    return isFastInit;
+  }
+
   /** Returns whether or not the implementation is nested within another class. */
   private boolean isNested() {
     return name().enclosingClassName() != null;
@@ -422,6 +430,7 @@ public final class ComponentImplementation {
     private final ClassName name;
     private final UniqueNameSet componentFieldNames = new UniqueNameSet();
     private final UniqueNameSet componentMethodNames = new UniqueNameSet();
+    private final UniqueNameSet componentClassNames = new UniqueNameSet();
     private final List<CodeBlock> initializations = new ArrayList<>();
     private final Map<Key, CodeBlock> cancellations = new LinkedHashMap<>();
     private final Map<VariableElement, String> uniqueAssistedName = new LinkedHashMap<>();
@@ -580,7 +589,7 @@ public final class ComponentImplementation {
       return name;
     }
 
-    /** Returns a new, unique method name for the component based on the given name. */
+    /** Returns a new, unique nested class name for the component based on the given name. */
     public String getUniqueMethodName(String name) {
       return componentMethodNames.getUniqueName(name);
     }
@@ -588,6 +597,11 @@ public final class ComponentImplementation {
     /** Returns a new, unique method name for a getter method for the given request. */
     String getUniqueMethodName(BindingRequest request) {
       return uniqueMethodName(request, KeyVariableNamer.name(request.key()));
+    }
+
+    /** Returns a new, unique method name for the component based on the given name. */
+    public String getUniqueClassName(String name) {
+      return componentClassNames.getUniqueName(name);
     }
 
     private String uniqueMethodName(BindingRequest request, String bindingName) {

@@ -20,7 +20,6 @@ import static dagger.internal.codegen.writing.DelegateRequestRepresentation.isBi
 import static dagger.internal.codegen.writing.StaticFactoryInstanceSupplier.usesStaticFactoryCreation;
 import static dagger.spi.model.BindingKind.DELEGATE;
 
-import androidx.room.compiler.processing.XTypeElement;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
@@ -56,9 +55,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
       DaggerTypes types) {
     this.binding = binding;
     this.graph = graph;
-    XTypeElement rootComponent =
-        componentImplementation.rootComponentImplementation().componentDescriptor().typeElement();
-    this.isFastInit = compilerOptions.fastInit(rootComponent);
+    this.isFastInit = componentImplementation.isFastInit();
     this.directInstanceBindingRepresentation =
         directInstanceBindingRepresentationFactory.create(binding);
     FrameworkInstanceSupplier frameworkInstanceSupplier = null;
@@ -92,14 +89,15 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
         // Currently, we always use a framework instance for MembersInjectors, e.g.
         // InstanceFactory.create(Foo_MembersInjector.create(...)).
         // TODO(b/199889259): Consider optimizing this for fastInit mode.
-        return false;
-      case ASSISTED_INJECTION:
       case ASSISTED_FACTORY:
-        // We choose not to use a direct expression for assisted injection/factory in default mode
-        // because they technically act more similar to a Provider than an instance, so we cache
-        // them using a field in the component similar to Provider requests. This should also be the
-        // case in FastInit, but it hasn't been implemented yet. We also don't need to check for
-        // caching since assisted bindings can't be scoped.
+        return false;
+        // Assisted factory binding can be requested with framework request, and it is essentially a
+        // provider for assisted injection binding. So we will always return framework instance for
+        // assisted factory bindings.
+      case ASSISTED_INJECTION:
+        // We still return direct instance for assisted injection binding in fast init mode, because
+        // we want to avoid requiring dependencies as providers in fast init for now. This might
+        // change after we merge fast init mode and default mode.
         return isFastInit;
       default:
         // We don't need to use Provider#get() if there's no caching, so use a direct instance.
@@ -114,6 +112,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
       return false;
     }
     switch (binding.kind()) {
+      case ASSISTED_INJECTION:
       case BOUND_INSTANCE:
       case COMPONENT:
       case COMPONENT_DEPENDENCY:
@@ -130,7 +129,6 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
         return !binding.dependencies().isEmpty();
       case INJECTION:
       case PROVISION:
-      case ASSISTED_INJECTION:
       case ASSISTED_FACTORY:
       case COMPONENT_PROVISION:
       case SUBCOMPONENT_CREATOR:

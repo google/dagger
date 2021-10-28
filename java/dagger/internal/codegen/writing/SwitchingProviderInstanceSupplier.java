@@ -18,7 +18,6 @@ package dagger.internal.codegen.writing;
 
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.writing.BindingRepresentations.scope;
-import static dagger.internal.codegen.writing.ProvisionBindingRepresentation.requiresMethodEncapsulation;
 import static dagger.internal.codegen.writing.ProvisionBindingRepresentation.usesDirectInstanceExpression;
 
 import dagger.assisted.Assisted;
@@ -44,26 +43,22 @@ final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSuppli
       SwitchingProviders switchingProviders,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      PrivateMethodRequestRepresentation.Factory privateMethodRequestRepresentationFactory,
       UnscopedDirectInstanceRequestRepresentationFactory
           unscopedDirectInstanceRequestRepresentationFactory) {
-    // First try to get the instance expression via getRequestRepresentation(). However, if that
-    // expression is a DerivedFromFrameworkInstanceRequestRepresentation (e.g. fooProvider.get()),
-    // then we can't use it to create an instance within the SwitchingProvider since that would
-    // cause a cycle. In such cases, we try to use the unscopedDirectInstanceRequestRepresentation
-    // directly.
     BindingRequest instanceRequest = bindingRequest(binding.key(), RequestKind.INSTANCE);
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
         switchingProviders.newFrameworkInstanceCreationExpression(
             binding,
+            // Use the directInstanceBindingRepresentation if possible, that way we share a private
+            // method implementation if one already exists. Otherwise, we use the
+            // unscopedDirectInstanceRequestRepresentation and, since we're guaranteed this is the
+            // only place that will be using the expression in this case, there is no need to wrap
+            // the expression in a private method.
+            // Note: we can't use ComponentBindingRepresentation.getRequestRepresentation(
+            // instanceRequest) here, since that would return fooProvider.get() and cause a cycle.
             usesDirectInstanceExpression(RequestKind.INSTANCE, binding, graph, true)
                 ? directInstanceBindingRepresentation.getRequestRepresentation(instanceRequest)
-                : (requiresMethodEncapsulation(binding)
-                    ? privateMethodRequestRepresentationFactory.create(
-                        instanceRequest,
-                        binding,
-                        unscopedDirectInstanceRequestRepresentationFactory.create(binding))
-                    : unscopedDirectInstanceRequestRepresentationFactory.create(binding)));
+                : unscopedDirectInstanceRequestRepresentationFactory.create(binding));
     this.frameworkInstanceSupplier =
         new FrameworkFieldInitializer(
             componentImplementation,

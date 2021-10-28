@@ -142,36 +142,6 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
     throw new AssertionError(String.format("No such binding kind: %s", binding.kind()));
   }
 
-  static boolean requiresMethodEncapsulation(ProvisionBinding binding) {
-    switch (binding.kind()) {
-      case COMPONENT:
-      case COMPONENT_PROVISION:
-      case SUBCOMPONENT_CREATOR:
-      case COMPONENT_DEPENDENCY:
-      case MULTIBOUND_SET:
-      case MULTIBOUND_MAP:
-      case BOUND_INSTANCE:
-      case ASSISTED_FACTORY:
-      case ASSISTED_INJECTION:
-      case INJECTION:
-      case PROVISION:
-        // These binding kinds satify a binding request with a component method or a private
-        // method when the requested binding has dependencies. The method will wrap the logic of
-        // creating the binding instance. Without the encapsulation, we might see many level of
-        // nested instance creation code in a single statement to satisfy all dependencies of a
-        // binding request.
-        return !binding.dependencies().isEmpty();
-      case MEMBERS_INJECTOR:
-      case PRODUCTION:
-      case COMPONENT_PRODUCTION:
-      case OPTIONAL:
-      case DELEGATE:
-      case MEMBERS_INJECTION:
-        return false;
-    }
-    throw new AssertionError(String.format("No such binding kind: %s", binding.kind()));
-  }
-
   /**
    * Returns {@code true} if the component needs to make sure the provided value is cached.
    *

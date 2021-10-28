@@ -34,6 +34,11 @@ public final class XTypes {
   }
 
   /** Returns {@code true} if the given type is a declared type. */
+  public static boolean isWildcard(XType type) {
+    return toJavac(type).getKind().equals(TypeKind.WILDCARD);
+  }
+
+  /** Returns {@code true} if the given type is a declared type. */
   public static boolean isDeclared(XType type) {
     return type.getTypeElement() != null;
   }

@@ -186,6 +186,10 @@ public class SourceFiles {
         : ParameterizedTypeName.get(className, Iterables.toArray(typeParameters, TypeName.class));
   }
 
+  public static ClassName membersInjectorNameForType(XTypeElement typeElement) {
+    return membersInjectorNameForType(toJavac(typeElement));
+  }
+
   public static ClassName membersInjectorNameForType(TypeElement typeElement) {
     return siblingClassName(typeElement,  "_MembersInjector");
   }

@@ -22,6 +22,7 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableList;
@@ -47,7 +48,7 @@ final class MembersInjectionValidator {
 
   /** Reports errors if a request for a {@code MembersInjector<Foo>}) is invalid. */
   ValidationReport validateMembersInjectionRequest(
-      Element requestElement, TypeMirror membersInjectedType) {
+      XElement requestElement, XType membersInjectedType) {
     ValidationReport.Builder report = ValidationReport.about(requestElement);
     checkQualifiers(report, requestElement);
     checkMembersInjectedType(report, membersInjectedType);
@@ -81,11 +82,19 @@ final class MembersInjectionValidator {
     return report.build();
   }
 
+  private void checkQualifiers(ValidationReport.Builder report, XElement element) {
+    checkQualifiers(report, toJavac(element));
+  }
+
   private void checkQualifiers(ValidationReport.Builder report, Element element) {
     for (AnnotationMirror qualifier : injectionAnnotations.getQualifiers(element)) {
       report.addError("Cannot inject members into qualified types", element, qualifier);
       break; // just report on the first qualifier, in case there is more than one
     }
+  }
+
+  private void checkMembersInjectedType(ValidationReport.Builder report, XType type) {
+    checkMembersInjectedType(report, toJavac(type));
   }
 
   private void checkMembersInjectedType(ValidationReport.Builder report, TypeMirror type) {

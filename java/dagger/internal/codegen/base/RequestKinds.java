@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.base;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -26,6 +27,7 @@ import static dagger.internal.codegen.javapoet.TypeNames.producerOf;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 import static dagger.internal.codegen.langmodel.DaggerTypes.checkTypePresent;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
+import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 import static dagger.spi.model.RequestKind.LAZY;
 import static dagger.spi.model.RequestKind.PRODUCED;
 import static dagger.spi.model.RequestKind.PRODUCER;
@@ -33,6 +35,7 @@ import static dagger.spi.model.RequestKind.PROVIDER;
 import static dagger.spi.model.RequestKind.PROVIDER_OF_LAZY;
 import static javax.lang.model.type.TypeKind.DECLARED;
 
+import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
@@ -99,6 +102,11 @@ public final class RequestKinds {
           PRODUCED, TypeNames.PRODUCED);
 
   /** Returns the {@link RequestKind} that matches the wrapping types (if any) of {@code type}. */
+  public static RequestKind getRequestKind(XType type) {
+    return getRequestKind(toJavac(type));
+  }
+
+  /** Returns the {@link RequestKind} that matches the wrapping types (if any) of {@code type}. */
   public static RequestKind getRequestKind(TypeMirror type) {
     checkTypePresent(type);
     if (!isType(type) // TODO(b/147320669): isType check can be removed once this bug is fixed.
@@ -110,13 +118,37 @@ public final class RequestKinds {
     }
     for (RequestKind kind : FRAMEWORK_CLASSES.keySet()) {
       if (isTypeOf(frameworkClassName(kind), type)) {
-        if (kind.equals(PROVIDER) && getRequestKind(DaggerTypes.unwrapType(type)).equals(LAZY)) {
+        if (kind.equals(PROVIDER) && getRequestKind(unwrapType(type)).equals(LAZY)) {
           return PROVIDER_OF_LAZY;
         }
         return kind;
       }
     }
     return RequestKind.INSTANCE;
+  }
+
+  /**
+   * Unwraps the framework class(es) of {@code requestKind} from {@code type}. If {@code
+   * requestKind} is {@link RequestKind#INSTANCE}, this acts as an identity function.
+   *
+   * @throws TypeNotPresentException if {@code type} is an {@link javax.lang.model.type.ErrorType},
+   *     which may mean that the type will be generated in a later round of processing
+   * @throws IllegalArgumentException if {@code type} is not wrapped with {@code requestKind}'s
+   *     framework class(es).
+   */
+  public static XType extractKeyType(XType type) {
+    return extractKeyType(getRequestKind(type), type);
+  }
+
+  private static XType extractKeyType(RequestKind requestKind, XType type) {
+    switch (requestKind) {
+      case INSTANCE:
+        return type;
+      case PROVIDER_OF_LAZY:
+        return extractKeyType(LAZY, extractKeyType(PROVIDER, type));
+      default:
+        return unwrapType(type);
+    }
   }
 
   /**
@@ -140,7 +172,7 @@ public final class RequestKinds {
         return extractKeyType(LAZY, extractKeyType(PROVIDER, type));
       default:
         checkArgument(isType(type));
-        return DaggerTypes.unwrapType(type);
+        return unwrapType(type);
     }
   }
 

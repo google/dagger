@@ -23,7 +23,9 @@ import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asElement;
 import static com.google.auto.common.MoreTypes.asExecutable;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verify;
+import static com.google.common.collect.Iterables.consumingIterable;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Multimaps.asMap;
 import static com.google.common.collect.Sets.intersection;
@@ -35,7 +37,6 @@ import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.product
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static dagger.internal.codegen.binding.ComponentKind.annotationsFor;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.enclosedAnnotatedTypes;
-import static dagger.internal.codegen.binding.ConfigurationAnnotations.getTransitiveModules;
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.builderMethodRequiresNoArgs;
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -61,6 +62,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
 import dagger.Component;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.ComponentAnnotation;
@@ -75,12 +77,14 @@ import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -341,7 +345,6 @@ public final class ComponentValidator implements ClearableCache {
         // TODO(gak): This logic maybe/probably shouldn't live here as it requires us to traverse
         // subcomponents and their modules separately from how it is done in ComponentDescriptor and
         // ModuleDescriptor
-        @SuppressWarnings("deprecation")
         ImmutableSet<TypeElement> transitiveModules = getTransitiveModules(moduleTypes);
 
         Set<XTypeElement> referencedModules = Sets.newHashSet();
@@ -375,6 +378,44 @@ public final class ComponentValidator implements ClearableCache {
                 parameter);
           }
         }
+      }
+
+      /**
+       * Returns the full set of modules transitively included from the given seed modules, which
+       * includes all transitive {@link Module#includes} and all transitive super classes. If a
+       * module is malformed and a type listed in {@link Module#includes} is not annotated with
+       * {@link Module}, it is ignored.
+       */
+      private ImmutableSet<TypeElement> getTransitiveModules(Collection<TypeElement> seedModules) {
+        Set<TypeElement> processedElements = Sets.newLinkedHashSet();
+        Queue<TypeElement> moduleQueue = new ArrayDeque<>(seedModules);
+        ImmutableSet.Builder<TypeElement> moduleElements = ImmutableSet.builder();
+        for (TypeElement moduleElement : consumingIterable(moduleQueue)) {
+          if (processedElements.add(moduleElement)) {
+            moduleAnnotation(moduleElement)
+                .ifPresent(
+                    moduleAnnotation -> {
+                      moduleElements.add(moduleElement);
+                      moduleQueue.addAll(moduleAnnotation.includes());
+                      moduleQueue.addAll(includesFromSuperclasses(moduleElement));
+                    });
+          }
+        }
+        return moduleElements.build();
+      }
+
+      /** Returns {@link Module#includes()} from all transitive super classes. */
+      private ImmutableSet<TypeElement> includesFromSuperclasses(TypeElement element) {
+        ImmutableSet.Builder<TypeElement> builder = ImmutableSet.builder();
+        TypeMirror superclass = element.getSuperclass();
+        while (superclass.getKind() == TypeKind.DECLARED
+                   && !TypeName.OBJECT.equals(TypeName.get(superclass))) {
+          element = asTypeElement(superclass);
+          moduleAnnotation(element)
+              .ifPresent(moduleAnnotation -> builder.addAll(moduleAnnotation.includes()));
+          superclass = element.getSuperclass();
+        }
+        return builder.build();
       }
 
       private void validateSubcomponentCreatorMethod() {

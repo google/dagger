@@ -17,13 +17,9 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Iterables.consumingIterable;
-import static com.squareup.javapoet.TypeName.OBJECT;
 import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotation;
-import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.getTypeListValue;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -37,22 +33,15 @@ import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.TypeName;
 import dagger.Component;
 import dagger.Module;
-import java.util.ArrayDeque;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -113,52 +102,12 @@ public final class ConfigurationAnnotations {
     return Optional.empty();
   }
 
-  /**
-   * Returns the full set of modules transitively {@linkplain Module#includes included} from the
-   * given seed modules. If a module is malformed and a type listed in {@link Module#includes} is
-   * not annotated with {@link Module}, it is ignored.
-   *
-   * @deprecated Use {@link ComponentDescriptor#modules()}.
-   */
-  @Deprecated
-  public static ImmutableSet<TypeElement> getTransitiveModules(
-      Collection<TypeElement> seedModules) {
-    Set<TypeElement> processedElements = Sets.newLinkedHashSet();
-    Queue<TypeElement> moduleQueue = new ArrayDeque<>(seedModules);
-    ImmutableSet.Builder<TypeElement> moduleElements = ImmutableSet.builder();
-    for (TypeElement moduleElement : consumingIterable(moduleQueue)) {
-      if (processedElements.add(moduleElement)) {
-        moduleAnnotation(moduleElement)
-            .ifPresent(
-                moduleAnnotation -> {
-                  moduleElements.add(moduleElement);
-                  moduleQueue.addAll(moduleAnnotation.includes());
-                  moduleQueue.addAll(includesFromSuperclasses(moduleElement));
-                });
-      }
-    }
-    return moduleElements.build();
-  }
-
   /** Returns the enclosed types annotated with the given annotation. */
   public static ImmutableSet<XTypeElement> enclosedAnnotatedTypes(
       XTypeElement typeElement, ImmutableSet<ClassName> annotations) {
     return typeElement.getEnclosedTypeElements().stream()
         .filter(enclosedType -> hasAnyAnnotation(enclosedType, annotations))
         .collect(toImmutableSet());
-  }
-
-  /** Returns {@link Module#includes()} from all transitive super classes. */
-  private static ImmutableSet<TypeElement> includesFromSuperclasses(TypeElement element) {
-    ImmutableSet.Builder<TypeElement> builder = ImmutableSet.builder();
-    TypeMirror superclass = element.getSuperclass();
-    while (superclass.getKind() == TypeKind.DECLARED && !OBJECT.equals(TypeName.get(superclass))) {
-      element = asTypeElement(superclass);
-      moduleAnnotation(element)
-          .ifPresent(moduleAnnotation -> builder.addAll(moduleAnnotation.includes()));
-      superclass = element.getSuperclass();
-    }
-    return builder.build();
   }
 
   private ConfigurationAnnotations() {}

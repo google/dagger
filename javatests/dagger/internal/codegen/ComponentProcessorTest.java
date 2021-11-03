@@ -188,7 +188,7 @@ public class ComponentProcessorTest {
                 "",
                 "  @Override",
                 "  public SomeInjectableType someInjectableType() {",
-                "    return new SomeInjectableType();",
+                "    return someInjectableTypeProvider.get();",
                 "  }",
                 "",
                 "  @Override",
@@ -983,32 +983,42 @@ public class ComponentProcessorTest {
         "  Provider<SimpleComponent> selfProvider();",
         "}");
     JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerSimpleComponent",
-            "package test;",
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "final class DaggerSimpleComponent implements SimpleComponent {",
-            "  private final DaggerSimpleComponent simpleComponent = this;",
-            "",
-            "  private Provider<SimpleComponent> simpleComponentProvider;",
-            "",
-            "  @SuppressWarnings(\"unchecked\")",
-            "  private void initialize() {",
-            "    this.simpleComponentProvider =",
-            "        InstanceFactory.create((SimpleComponent) simpleComponent);",
-            "  }",
-            "",
-            "  @Override",
-            "  public SomeInjectableType someInjectableType() {",
-            "    return new SomeInjectableType(this)",
-            "  }",
-            "",
-            "  @Override",
-            "  public Provider<SimpleComponent> selfProvider() {",
-            "    return simpleComponentProvider;",
-            "  }",
-            "}");
+        compilerMode
+            .javaFileBuilder("test.DaggerSimpleComponent")
+            .addLines(
+                "package test;",
+                "",
+                GeneratedLines.generatedAnnotations(),
+                "final class DaggerSimpleComponent implements SimpleComponent {",
+                "  private final DaggerSimpleComponent simpleComponent = this;",
+                "",
+                "  private Provider<SimpleComponent> simpleComponentProvider;",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize() {",
+                "    this.simpleComponentProvider =",
+                "        InstanceFactory.create((SimpleComponent) simpleComponent);",
+                "  }",
+                "")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "  @Override",
+                "  public SomeInjectableType someInjectableType() {",
+                "    return new SomeInjectableType(this)",
+                "  }")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "  @Override",
+                "  public SomeInjectableType someInjectableType() {",
+                "    return new SomeInjectableType(simpleComponentProvider.get());",
+                "  }")
+            .addLines(
+                "  @Override",
+                "  public Provider<SimpleComponent> selfProvider() {",
+                "    return simpleComponentProvider;",
+                "  }",
+                "}")
+            .build();
     Compilation compilation =
         compilerWithOptions(compilerMode.javacopts())
             .compile(injectableTypeFile, componentFile);
@@ -2743,10 +2753,6 @@ public class ComponentProcessorTest {
                     "  }")
                 .addLinesIn(
                     FAST_INIT_MODE,
-                    "  private Foo foo() {",
-                    "    return new Foo(new Bar());",
-                    "  }",
-                    "",
                     "  @SuppressWarnings(\"unchecked\")",
                     "  private void initialize() {",
                     "    this.fooProvider = new SwitchingProvider<>(testComponent, 0);",
@@ -2754,7 +2760,7 @@ public class ComponentProcessorTest {
                     "",
                     "  @Override",
                     "  public SomeEntryPoint someEntryPoint() {",
-                    "    return new SomeEntryPoint(foo(), fooProvider);",
+                    "    return new SomeEntryPoint(fooProvider.get(), fooProvider);",
                     "  }",
                     "",
                     "  private static final class SwitchingProvider<T> implements Provider<T> {",
@@ -2762,11 +2768,13 @@ public class ComponentProcessorTest {
                     "    @Override",
                     "    public T get() {",
                     "      switch (id) {",
-                    "        case 0: return (T) testComponent.foo();",
+                    "        case 0: return (T) new Foo(new Bar());",
+                    "",
                     "        default: throw new AssertionError(id);",
                     "      }",
                     "    }",
-                    "  }")
+                    "  }",
+                    "}")
                 .build());
   }
 

@@ -117,10 +117,17 @@ public class OptionalBindingRequestFulfillmentTest {
                 "  private void initialize() {",
                 "    this.provideMaybeProvider = new SwitchingProvider<>(testComponent, 0);",
                 "  }")
-            .addLines(
+            .addLinesIn(
+                DEFAULT_MODE,
                 "  @Override",
                 "  public Optional<Maybe> maybe() {",
                 "    return Optional.of(Maybe_MaybeModule_ProvideMaybeFactory.provideMaybe());",
+                "  }")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "  @Override",
+                "  public Optional<Maybe> maybe() {",
+                "    return Optional.of(provideMaybeProvider.get());",
                 "  }")
             .addLinesIn(
                 DEFAULT_MODE,

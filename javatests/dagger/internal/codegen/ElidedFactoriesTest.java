@@ -202,10 +202,6 @@ public class ElidedFactoriesTest {
                     "  }")
                 .addLinesIn(
                     FAST_INIT_MODE,
-                    "  private DependsOnScoped dependsOnScoped() {",
-                    "    return new DependsOnScoped(scopedTypeProvider.get());",
-                    "  }",
-                    "",
                     "  @SuppressWarnings(\"unchecked\")",
                     "  private void initialize() {",
                     "    this.scopedTypeProvider =",
@@ -226,7 +222,8 @@ public class ElidedFactoriesTest {
                     "    @Override",
                     "    public T get() {",
                     "      switch (id) {",
-                    "        case 0: return (T) simpleComponent.dependsOnScoped();",
+                    "        case 0: return (T) new DependsOnScoped(",
+                    "          simpleComponent.scopedTypeProvider.get());",
                     "        case 1: return (T) new ScopedType();",
                     "        default: throw new AssertionError(id);",
                     "      }",

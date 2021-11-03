@@ -111,13 +111,13 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
 
       case INITIALIZING:
         fieldSpec = getOrCreateField();
-        // If this is an ASSISTED_FACTORY binding in fastInit, then we don't have to worry about
-        // cycles since the creation of the factory itself doesn't actually take any dependencies.
-        // TODO(wanyingd): all switching providers do not need the delegation
-        if (isFastInit && binding.kind().equals(BindingKind.ASSISTED_FACTORY)) {
+        // We were recursively invoked, so create a delegate factory instead to break the loop.
+        // However, because SwitchingProvider takes no dependencies, even if they are recursively
+        // invoked, we don't need to delegate it since there is no dependency cycle.
+        if (ProvisionBindingRepresentation.usesSwitchingProvider(binding, isFastInit)) {
           break;
         }
-        // We were recursively invoked, so create a delegate factory instead
+
         fieldInitializationState = InitializationState.DELEGATED;
         shardImplementation.addInitialization(
             CodeBlock.of("this.$N = new $T<>();", fieldSpec, delegateType()));

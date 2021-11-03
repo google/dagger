@@ -16,10 +16,8 @@
 
 package dagger.internal.codegen.writing;
 
-import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
-import static dagger.internal.codegen.writing.ProvisionBindingRepresentation.usesDirectInstanceExpression;
 
 import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
@@ -27,11 +25,9 @@ import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingGraph;
-import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.spi.model.BindingKind;
-import dagger.spi.model.RequestKind;
 
 /**
  * An object that initializes a framework-type component field for a binding using instances created
@@ -43,26 +39,14 @@ final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSuppli
   @AssistedInject
   SwitchingProviderInstanceSupplier(
       @Assisted ProvisionBinding binding,
-      @Assisted DirectInstanceBindingRepresentation directInstanceBindingRepresentation,
       SwitchingProviders switchingProviders,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
       UnscopedDirectInstanceRequestRepresentationFactory
           unscopedDirectInstanceRequestRepresentationFactory) {
-    BindingRequest instanceRequest = bindingRequest(binding.key(), RequestKind.INSTANCE);
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
         switchingProviders.newFrameworkInstanceCreationExpression(
-            binding,
-            // Use the directInstanceBindingRepresentation if possible, that way we share a private
-            // method implementation if one already exists. Otherwise, we use the
-            // unscopedDirectInstanceRequestRepresentation and, since we're guaranteed this is the
-            // only place that will be using the expression in this case, there is no need to wrap
-            // the expression in a private method.
-            // Note: we can't use ComponentBindingRepresentation.getRequestRepresentation(
-            // instanceRequest) here, since that would return fooProvider.get() and cause a cycle.
-            usesDirectInstanceExpression(RequestKind.INSTANCE, binding, graph, true)
-                ? directInstanceBindingRepresentation.getRequestRepresentation(instanceRequest)
-                : unscopedDirectInstanceRequestRepresentationFactory.create(binding));
+            binding, unscopedDirectInstanceRequestRepresentationFactory.create(binding));
     this.frameworkInstanceSupplier =
         new FrameworkFieldInitializer(
             componentImplementation, binding, scope(binding, frameworkInstanceCreationExpression));
@@ -91,8 +75,6 @@ final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSuppli
 
   @AssistedFactory
   static interface Factory {
-    SwitchingProviderInstanceSupplier create(
-        ProvisionBinding binding,
-        DirectInstanceBindingRepresentation directInstanceBindingRepresentation);
+    SwitchingProviderInstanceSupplier create(ProvisionBinding binding);
   }
 }

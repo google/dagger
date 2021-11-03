@@ -115,13 +115,22 @@ public class MapRequestRepresentationTest {
                 "  public Map<String, Provider<String>> providerStrings() {",
                 "    return Collections.<String, Provider<String>>emptyMap();",
                 "  }",
-                "",
+                "")
+            .addLinesIn(
+                DEFAULT_MODE,
                 "  @Override",
                 "  public Map<Integer, Integer> ints() {",
                 "    return Collections.<Integer, Integer>",
                 "        singletonMap(0, MapModule.provideInt());",
-                "  }",
-                "",
+                "  }")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "  @Override",
+                "  public Map<Integer, Integer> ints() {",
+                "    return Collections.<Integer, Integer>singletonMap(0,"
+                    + " provideIntProvider.get());",
+                "  }")
+            .addLines(
                 "  @Override",
                 "  public Map<Integer, Provider<Integer>> providerInts() {",
                 "    return Collections.<Integer, Provider<Integer>>singletonMap(")
@@ -129,7 +138,8 @@ public class MapRequestRepresentationTest {
                 DEFAULT_MODE, //
                 "        0, MapModule_ProvideIntFactory.create());")
             .addLinesIn(FAST_INIT_MODE, "        0, provideIntProvider;")
-            .addLines(
+            .addLinesIn(
+                DEFAULT_MODE,
                 "  }",
                 "",
                 "  @Override",
@@ -139,8 +149,20 @@ public class MapRequestRepresentationTest {
                 "        .put(1L, MapModule.provideLong1())",
                 "        .put(2L, MapModule.provideLong2())",
                 "        .build();",
+                "  }")
+            .addLinesIn(
+                FAST_INIT_MODE,
                 "  }",
                 "",
+                "  @Override",
+                "  public Map<Long, Long> longs() {",
+                "    return MapBuilder.<Long, Long>newMapBuilder(3)",
+                "        .put(0L, provideLong0Provider.get())",
+                "        .put(1L, provideLong1Provider.get())",
+                "        .put(2L, provideLong2Provider.get())",
+                "        .build();",
+                "  }")
+            .addLines(
                 "  @Override",
                 "  public Map<Long, Provider<Long>> providerLongs() {",
                 "    return MapBuilder.<Long, Provider<Long>>newMapBuilder(3)")

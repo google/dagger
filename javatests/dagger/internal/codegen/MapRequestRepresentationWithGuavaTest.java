@@ -151,11 +151,18 @@ public class MapRequestRepresentationWithGuavaTest {
                 "  @Override",
                 "  public Map<String, Provider<String>> providerStrings() {",
                 "    return ImmutableMap.<String, Provider<String>>of();",
-                "  }",
-                "",
+                "  }")
+            .addLinesIn(
+                DEFAULT_MODE,
                 "  @Override",
                 "  public Map<Integer, Integer> ints() {",
                 "    return ImmutableMap.<Integer, Integer>of(0, MapModule.provideInt());",
+                "  }")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "  @Override",
+                "  public Map<Integer, Integer> ints() {",
+                "    return ImmutableMap.<Integer, Integer>of(0, provideIntProvider.get());",
                 "  }")
             .addLinesIn(
                 DEFAULT_MODE,
@@ -170,13 +177,23 @@ public class MapRequestRepresentationWithGuavaTest {
                 "  public Map<Integer, Provider<Integer>> providerInts() {",
                 "    return ImmutableMap.<Integer, Provider<Integer>>of(0, provideIntProvider);",
                 "  }")
-            .addLines(
+            .addLinesIn(
+                DEFAULT_MODE,
                 "  @Override",
                 "  public Map<Long, Long> longs() {",
                 "    return ImmutableMap.<Long, Long>of(",
                 "      0L, MapModule.provideLong0(),",
                 "      1L, MapModule.provideLong1(),",
                 "      2L, MapModule.provideLong2());",
+                "  }")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "  @Override",
+                "  public Map<Long, Long> longs() {",
+                "    return ImmutableMap.<Long, Long>of(",
+                "      0L, provideLong0Provider.get(),",
+                "      1L, provideLong1Provider.get(),",
+                "      2L, provideLong2Provider.get());",
                 "  }")
             .addLinesIn(
                 DEFAULT_MODE,
@@ -218,7 +235,8 @@ public class MapRequestRepresentationWithGuavaTest {
                 "      this.provideLong5Provider =",
                 "          new SwitchingProvider<>(testComponent, subImpl, 2);",
                 "    }")
-            .addLines(
+            .addLinesIn(
+                DEFAULT_MODE,
                 "    @Override",
                 "    public Map<Long, Long> longs() {",
                 "      return ImmutableMap.<Long, Long>builderWithExpectedSize(6)",
@@ -228,6 +246,19 @@ public class MapRequestRepresentationWithGuavaTest {
                 "          .put(3L, SubcomponentMapModule.provideLong3())",
                 "          .put(4L, SubcomponentMapModule.provideLong4())",
                 "          .put(5L, SubcomponentMapModule.provideLong5())",
+                "          .build();",
+                "    }")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "    @Override",
+                "    public Map<Long, Long> longs() {",
+                "      return ImmutableMap.<Long, Long>builderWithExpectedSize(6)",
+                "          .put(0L, testComponent.provideLong0Provider.get())",
+                "          .put(1L, testComponent.provideLong1Provider.get())",
+                "          .put(2L, testComponent.provideLong2Provider.get())",
+                "          .put(3L, provideLong3Provider.get())",
+                "          .put(4L, provideLong4Provider.get())",
+                "          .put(5L, provideLong5Provider.get())",
                 "          .build();",
                 "    }")
             .addLinesIn(

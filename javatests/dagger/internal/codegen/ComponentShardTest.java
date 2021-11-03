@@ -240,15 +240,12 @@ public class ComponentShardTest {
                     "    private void initialize() {",
                     "      this.binding5Provider = DoubleCheck.provider(",
                     "          new SwitchingProvider<Binding5>(testComponent, 4));",
-                    "      this.binding2Provider = new DelegateFactory<>();",
                     "      this.binding4Provider = DoubleCheck.provider(",
                     "          new SwitchingProvider<Binding4>(testComponent, 3));",
                     "      this.binding3Provider = DoubleCheck.provider(",
                     "          new SwitchingProvider<Binding3>(testComponent, 2));",
-                    "      DelegateFactory.setDelegate(",
-                    "          binding2Provider,",
-                    "          DoubleCheck.provider(",
-                    "              new SwitchingProvider<Binding2>(testComponent, 1)));",
+                    "      this.binding2Provider = DoubleCheck.provider(",
+                    "          new SwitchingProvider<Binding2>(testComponent, 1));",
                     "    }",
                     "  }")
                 .addLines(

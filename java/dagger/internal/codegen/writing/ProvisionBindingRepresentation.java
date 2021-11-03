@@ -25,6 +25,7 @@ import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingRequest;
+import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -59,10 +60,8 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
     this.directInstanceBindingRepresentation =
         directInstanceBindingRepresentationFactory.create(binding);
     FrameworkInstanceSupplier frameworkInstanceSupplier = null;
-    if (usesSwitchingProvider()) {
-      frameworkInstanceSupplier =
-          switchingProviderInstanceSupplierFactory.create(
-              binding, directInstanceBindingRepresentation);
+    if (usesSwitchingProvider(binding, isFastInit)) {
+      frameworkInstanceSupplier = switchingProviderInstanceSupplierFactory.create(binding);
     } else if (usesStaticFactoryCreation(binding, isFastInit)) {
       frameworkInstanceSupplier = staticFactoryInstanceSupplierFactory.create(binding);
     } else {
@@ -74,16 +73,27 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
 
   @Override
   public RequestRepresentation getRequestRepresentation(BindingRequest request) {
-    return usesDirectInstanceExpression(request.requestKind(), binding, graph, isFastInit)
+    return usesDirectInstanceExpression(request.requestKind())
         ? directInstanceBindingRepresentation.getRequestRepresentation(request)
         : frameworkInstanceBindingRepresentation.getRequestRepresentation(request);
   }
 
-  static boolean usesDirectInstanceExpression(
-      RequestKind requestKind, ProvisionBinding binding, BindingGraph graph, boolean isFastInit) {
+  private boolean usesDirectInstanceExpression(RequestKind requestKind) {
     if (requestKind != RequestKind.INSTANCE && requestKind != RequestKind.FUTURE) {
       return false;
     }
+
+    // In fast init mode, we can avoid generating direct instance expressions if a framework
+    // instance expression already exists in the graph. Default mode has more edge cases, so can not
+    // be handled with simple pre-check in the graph. For example, a provider for a subcomponent
+    // builder is backed with its direct instance, returning framework instance for both cases will
+    // form a loop. There are also difficulties introduced by manually created framework requests.
+    // TODO(wanyingd): refactor framework instance so that we don't need to generate both direct
+    // instance and framework instance representation for the same binding.
+    if (isFastInit && graph.topLevelBindingGraph().hasframeworkRequest(binding)) {
+      return false;
+    }
+
     switch (binding.kind()) {
       case MEMBERS_INJECTOR:
         // Currently, we always use a framework instance for MembersInjectors, e.g.
@@ -107,7 +117,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
     }
   }
 
-  private boolean usesSwitchingProvider() {
+  public static boolean usesSwitchingProvider(ContributionBinding binding, boolean isFastInit) {
     if (!isFastInit) {
       return false;
     }

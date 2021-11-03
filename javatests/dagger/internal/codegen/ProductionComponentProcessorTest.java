@@ -275,10 +275,6 @@ public class ProductionComponentProcessorTest {
                     "  }")
                 .addLinesIn(
                     FAST_INIT_MODE,
-                    "  private TestClass.B b() {",
-                    "    return TestClass_BModule_BFactory.b(bModule, new TestClass.C());",
-                    "  }",
-                    "",
                     "  @SuppressWarnings(\"unchecked\")",
                     "  private void initialize(",
                     "      final TestClass.AModule aModuleParam,",
@@ -325,7 +321,8 @@ public class ProductionComponentProcessorTest {
                     "                .monitor(",
                     "                    simpleComponent.simpleComponentProvider,",
                     "                    SetFactory.<ProductionComponentMonitor.Factory>empty());",
-                    "        case 2: return (T) simpleComponent.b();",
+                    "        case 2: return (T) TestClass_BModule_BFactory.b(",
+                    "            simpleComponent.bModule, new TestClass.C());",
                     "        default: throw new AssertionError(id);",
                     "      }",
                     "    }",

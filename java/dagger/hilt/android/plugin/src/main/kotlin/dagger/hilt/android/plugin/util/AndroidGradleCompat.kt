@@ -16,14 +16,15 @@
 
 package dagger.hilt.android.plugin.util
 
-import com.android.build.api.variant.Component
-import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.instrumentation.AsmClassVisitorFactory
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationParameters
 import com.android.build.api.instrumentation.InstrumentationScope
+import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.ApplicationVariant
+import com.android.build.api.variant.Component
 import com.android.build.api.variant.LibraryVariant
+import com.android.build.api.variant.Variant
 import org.gradle.api.Project
 
 /**
@@ -58,7 +59,13 @@ sealed class AndroidComponentsExtensionCompat {
           is LibraryVariant -> variant.getAndroidTest()
           else -> null
         }?.let { block.invoke(ComponentCompat.Api70Impl(it)) }
-        variant.unitTest?.let { block.invoke(ComponentCompat.Api70Impl(it)) }
+        // Use reflection too to get the UnitTest component since in 7.2
+        // com.android.build.api.component.UnitTest was removed and replaced by
+        // com.android.build.api.variant.UnitTest causing the return type of Variant#getUnitTest()
+        // to change and break ABI.
+        fun Variant.getUnitTest() =
+          this::class.java.getDeclaredMethod("getUnitTest").invoke(this) as? Component
+        variant.getUnitTest()?.let { block.invoke(ComponentCompat.Api70Impl(it)) }
       }
     }
   }

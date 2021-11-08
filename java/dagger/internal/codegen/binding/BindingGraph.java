@@ -44,7 +44,6 @@ import dagger.spi.model.BindingGraph.ComponentNode;
 import dagger.spi.model.BindingGraph.DependencyEdge;
 import dagger.spi.model.BindingGraph.Edge;
 import dagger.spi.model.BindingGraph.Node;
-import dagger.spi.model.BindingKind;
 import dagger.spi.model.ComponentPath;
 import dagger.spi.model.DaggerTypeElement;
 import dagger.spi.model.DependencyRequest;
@@ -158,7 +157,7 @@ public abstract class BindingGraph {
               network().successors(node).stream().sorted(nodeOrder()).collect(toImmutableList()));
     }
 
-    public boolean hasframeworkRequest(Binding binding) {
+    public boolean hasFrameworkRequest(Binding binding) {
       return frameworkTypeBindings.contains(binding);
     }
 
@@ -166,31 +165,6 @@ public abstract class BindingGraph {
         ImmutableNetwork<Node, Edge> network, ImmutableSet<dagger.spi.model.Binding> bindings) {
       Set<Binding> frameworkRequestBindings = new HashSet<>();
       for (dagger.spi.model.Binding binding : bindings) {
-        // When a delegator binding received an instance request, it will manually create an
-        // instance request for its delegated binding in direct instance binding representation. It
-        // is possible a provider.get() expression will be returned to satisfy the request for the
-        // delegated binding. In this case, the returned expression should have a type cast, because
-        // the returned expression's type can be Object. The type cast is handled by
-        // DelegateRequestRepresentation. If we change to use framework instance binding
-        // representation to handle the delegate bindings, then we will be missing the type cast.
-        // Because in this case, when requesting an instance for the delegator binding, framework
-        // instance binding representation will manually create a provider request for delegated
-        // binding first, then use DerivedFromFrameworkInstanceRequestRepresentaion to wrap that
-        // provider expression. Then we will still have a provider.get(), but it is generated with
-        // two different request representation, so the type cast step is skipped. As the result, we
-        // can't directly switch the delegation binding to always use the framework instance if a
-        // framework request already exists. So I'm adding an temporary exemption for delegate
-        // binding here to make it still use the old generation logic. We might be able to remove
-        // the exemption when we handle the type cast differently.
-        // TODO(wanyingd): fix the type cast problem and remove the exemption for delegate binding.
-        if (binding.kind().equals(BindingKind.DELEGATE)
-            // In fast init mode, for Assisted injection binding, since we manually create a direct
-            // instance when the request type is a Provider, then there can't really be any
-            // framework requests for the binding.
-            // TODO(wanyingd): inline assisted injection binding expression in assisted factory.
-            || binding.kind().equals(BindingKind.ASSISTED_INJECTION)) {
-          continue;
-        }
         ImmutableList<DependencyEdge> edges =
             network.inEdges(binding).stream()
                 .flatMap(instancesOf(DependencyEdge.class))

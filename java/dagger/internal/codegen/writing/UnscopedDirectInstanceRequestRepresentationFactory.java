@@ -115,11 +115,11 @@ final class UnscopedDirectInstanceRequestRepresentationFactory {
       case ASSISTED_FACTORY:
         return assistedFactoryRequestRepresentationFactory.create((ProvisionBinding) binding);
 
-      case ASSISTED_INJECTION:
       case INJECTION:
       case PROVISION:
         return simpleMethodRequestRepresentationFactory.create((ProvisionBinding) binding);
 
+      case ASSISTED_INJECTION:
       case MEMBERS_INJECTOR:
       case MEMBERS_INJECTION:
       case COMPONENT_PRODUCTION:

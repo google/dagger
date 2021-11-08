@@ -102,10 +102,6 @@ public class AssistedFactoryTest {
                 "  private final DaggerTestComponent testComponent = this;",
                 "  private Provider<FooFactory> fooFactoryProvider;",
                 "",
-                "  private Foo foo(String str) {",
-                "    return new Foo(str, new Bar());",
-                "  }",
-                "",
                 "  @SuppressWarnings(\"unchecked\")",
                 "  private void initialize() {",
                 "    this.fooFactoryProvider = SingleCheck.provider(new"
@@ -129,7 +125,7 @@ public class AssistedFactoryTest {
                 "        return (T) new FooFactory() {",
                 "          @Override",
                 "          public Foo create(String str) {",
-                "            return testComponent.foo(str);",
+                "            return new Foo(str, new Bar());",
                 "          }",
                 "        };",
                 "",
@@ -226,10 +222,6 @@ public class AssistedFactoryTest {
                 "    return new Bar(fooFactoryProvider.get());",
                 "  }",
                 "",
-                "  private Foo foo(String str) {",
-                "    return new Foo(str, bar());",
-                "  }",
-                "",
                 "  @SuppressWarnings(\"unchecked\")",
                 "  private void initialize() {",
                 "    this.fooFactoryProvider = SingleCheck.provider(new"
@@ -253,7 +245,7 @@ public class AssistedFactoryTest {
                 "        return (T) new FooFactory() {",
                 "          @Override",
                 "          public Foo create(String str) {",
-                "            return testComponent.foo(str);",
+                "            return new Foo(str, testComponent.bar())",
                 "          }",
                 "        };",
                 "",
@@ -293,24 +285,21 @@ public class AssistedFactoryTest {
   }
 
   @Test
-  public void testInjectParamDuplicateNames() {
-    JavaFileObject componentSrc =
+  public void assistedParamConflictsWithComponentFieldName_successfulyDeduped() {
+    JavaFileObject foo =
         JavaFileObjects.forSourceLines(
-            "test.TestComponent",
+            "test.Foo",
             "package test;",
             "",
-            "import dagger.BindsInstance;",
-            "import dagger.Component;",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "import javax.inject.Provider;",
             "",
-            "@Component",
-            "interface TestComponent {",
-            "  @Component.Factory",
-            "  interface Factory {",
-            "    TestComponent create(@BindsInstance Bar arg);",
-            "  }",
-            "  FooFactory getFooFactory();",
+            "class Foo {",
+            "  @AssistedInject",
+            "  Foo(@Assisted String testComponent, Provider<Bar> bar) {}",
             "}");
-    JavaFileObject factorySrc =
+    JavaFileObject fooFactory =
         JavaFileObjects.forSourceLines(
             "test.FooFactory",
             "package test;",
@@ -318,58 +307,55 @@ public class AssistedFactoryTest {
             "import dagger.assisted.AssistedFactory;",
             "",
             "@AssistedFactory",
-            "public interface FooFactory {",
-            "  Foo create(Integer arg);",
+            "interface FooFactory {",
+            "  Foo create(String factoryStr);",
             "}");
-    JavaFileObject barSrc =
-        JavaFileObjects.forSourceLines("test.Bar", "package test;", "", "interface Bar {}");
-    JavaFileObject injectSrc =
+    JavaFileObject bar =
         JavaFileObjects.forSourceLines(
-            "test.Foo",
+            "test.Bar",
             "package test;",
             "",
-            "import dagger.assisted.Assisted;",
-            "import dagger.assisted.AssistedInject;",
+            "import javax.inject.Inject;",
             "",
-            "class Foo {",
-            "  @AssistedInject",
-            "  Foo(Bar bar, @Assisted Integer arg) {}",
+            "class Bar {",
+            "  @Inject Bar() {}",
             "}");
-    JavaFileObject generatedSrc =
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  FooFactory fooFactory();",
+            "}");
+    JavaFileObject generatedComponent =
         compilerMode
             .javaFileBuilder("test.DaggerTestComponent")
             .addLines("package test;", "", GeneratedLines.generatedAnnotations())
             .addLinesIn(
                 FAST_INIT_MODE,
                 "final class DaggerTestComponent implements TestComponent {",
-                "  private final Bar arg2;",
                 "  private final DaggerTestComponent testComponent = this;",
                 "  private Provider<FooFactory> fooFactoryProvider;",
                 "",
-                "  private DaggerTestComponent(Bar argParam) {",
-                "    this.arg2 = argParam;",
-                "    initialize(argParam);",
-                "  }",
-                "",
-                "  private Foo foo(Integer arg) {",
-                "    return new Foo(arg2, arg);",
-                "  }",
-                "",
                 "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Bar argParam) {",
-                "    this.fooFactoryProvider = SingleCheck.provider(new"
-                    + " SwitchingProvider<FooFactory>(testComponent, 0));",
+                "  private void initialize() {",
+                "    this.barProvider = new SwitchingProvider<>(testComponent, 1);",
+                "    this.fooFactoryProvider = SingleCheck.provider(",
+                "      new SwitchingProvider<FooFactory>(testComponent, 0));",
                 "  }",
                 "",
                 "  @Override",
-                "  public FooFactory getFooFactory() {",
+                "  public FooFactory fooFactory() {",
                 "    return fooFactoryProvider.get();",
                 "  }",
                 "",
                 "  private static final class SwitchingProvider<T> implements Provider<T> {",
                 "    private final DaggerTestComponent testComponent;",
                 "    private final int id;",
-                "",
                 "",
                 "    @SuppressWarnings(\"unchecked\")",
                 "    @Override",
@@ -378,11 +364,11 @@ public class AssistedFactoryTest {
                 "        case 0:",
                 "        return (T) new FooFactory() {",
                 "          @Override",
-                "          public Foo create(Integer arg) {",
-                "            return testComponent.foo(arg);",
+                "          public Foo create(String testComponent2) {",
+                "            return new Foo(testComponent2, testComponent.barProvider);",
                 "          }",
                 "        };",
-                "",
+                "        case 1: return (T) new Bar();",
                 "        default: throw new AssertionError(id);",
                 "      }",
                 "    }",
@@ -391,201 +377,31 @@ public class AssistedFactoryTest {
             .addLinesIn(
                 DEFAULT_MODE,
                 "final class DaggerTestComponent implements TestComponent {",
-                "  private final DaggerTestComponent testComponent = this;",
-                "  private Provider<Bar> argProvider;",
+                "",
                 "  private Foo_Factory fooProvider;",
+                "",
                 "  private Provider<FooFactory> fooFactoryProvider;",
                 "",
-                "  private DaggerTestComponent(Bar argParam) {",
-                "    initialize(argParam);",
-                "  }",
-                "",
-                "  public static TestComponent.Factory factory() {",
-                "    return new Factory();",
-                "  }",
-                "",
                 "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Bar argParam) {",
-                "    this.argProvider = InstanceFactory.create(argParam);",
-                "    this.fooProvider = Foo_Factory.create(argProvider);",
+                "  private void initialize() {",
+                "    this.fooProvider = Foo_Factory.create(Bar_Factory.create());",
                 "    this.fooFactoryProvider = FooFactory_Impl.create(fooProvider);",
                 "  }",
                 "",
                 "  @Override",
-                "  public FooFactory getFooFactory() {",
+                "  public FooFactory fooFactory() {",
                 "    return fooFactoryProvider.get();",
-                "  }",
-                "",
-                "  private static final class Factory implements TestComponent.Factory {",
-                "    @Override",
-                "    public TestComponent create(Bar arg) {",
-                "      Preconditions.checkNotNull(arg);",
-                "      return new DaggerTestComponent(arg);",
-                "    }",
                 "  }",
                 "}")
             .build();
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(componentSrc, factorySrc, barSrc, injectSrc);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .containsElementsIn(generatedSrc);
-  }
 
-  @Test
-  public void testAssistParamDuplicateNames() {
-    JavaFileObject componentSrc =
-        JavaFileObjects.forSourceLines(
-            "test.TestComponent",
-            "package test;",
-            "",
-            "import dagger.BindsInstance;",
-            "import dagger.Component;",
-            "",
-            "@Component",
-            "interface TestComponent {",
-            "  @Component.Factory",
-            "  interface Factory {",
-            "    TestComponent create(@BindsInstance Bar arg);",
-            "  }",
-            "  Bar getBar();",
-            "  FooFactory getFooFactory();",
-            "}");
-    JavaFileObject factorySrc =
-        JavaFileObjects.forSourceLines(
-            "test.FooFactory",
-            "package test;",
-            "",
-            "import dagger.assisted.AssistedFactory;",
-            "",
-            "@AssistedFactory",
-            "public interface FooFactory {",
-            "  Foo create(Integer arg);",
-            "}");
-    JavaFileObject barSrc =
-        JavaFileObjects.forSourceLines("test.Bar", "package test;", "", "interface Bar {}");
-    JavaFileObject injectSrc =
-        JavaFileObjects.forSourceLines(
-            "test.Foo",
-            "package test;",
-            "",
-            "import dagger.assisted.Assisted;",
-            "import dagger.assisted.AssistedInject;",
-            "",
-            "class Foo {",
-            "  @AssistedInject",
-            "  Foo(Bar bar, @Assisted Integer arg) {}",
-            "}");
-    JavaFileObject generatedSrc =
-        compilerMode
-            .javaFileBuilder("test.DaggerTestComponent")
-            .addLines("package test;", "", GeneratedLines.generatedAnnotations())
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "final class DaggerTestComponent implements TestComponent {",
-                "  private final Bar arg;",
-                "  private final DaggerTestComponent testComponent = this;",
-                "  private Provider<FooFactory> fooFactoryProvider;",
-                "",
-                "  private DaggerTestComponent(Bar argParam) {",
-                "    this.arg = argParam;",
-                "    initialize(argParam);",
-                "  }",
-                "",
-                "  private Foo foo(Integer arg2) {",
-                "    return new Foo(arg, arg2);",
-                "  }",
-                "",
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Bar argParam) {",
-                "    this.fooFactoryProvider = SingleCheck.provider(new"
-                    + " SwitchingProvider<FooFactory>(testComponent, 0));",
-                "  }",
-                "",
-                "  @Override",
-                "  public Bar getBar() {",
-                "    return arg;",
-                "  }",
-                "",
-                "  @Override",
-                "  public FooFactory getFooFactory() {",
-                "    return fooFactoryProvider.get();",
-                "  }",
-                "",
-                "  private static final class SwitchingProvider<T> implements Provider<T> {",
-                "    private final DaggerTestComponent testComponent;",
-                "    private final int id;",
-                "",
-                "    @SuppressWarnings(\"unchecked\")",
-                "    @Override",
-                "    public T get() {",
-                "      switch (id) {",
-                "        case 0:",
-                "        return (T) new FooFactory() {",
-                "          @Override",
-                "          public Foo create(Integer arg) {",
-                "            return testComponent.foo(arg);",
-                "          }",
-                "        };",
-                "",
-                "        default: throw new AssertionError(id);",
-                "      }",
-                "    }",
-                "  }",
-                "}")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "final class DaggerTestComponent implements TestComponent {",
-                "  private final Bar arg;",
-                "  private final DaggerTestComponent testComponent = this;",
-                "  private Provider<Bar> argProvider;",
-                "  private Foo_Factory fooProvider;",
-                "  private Provider<FooFactory> fooFactoryProvider;",
-                "",
-                "  private DaggerTestComponent(Bar argParam) {",
-                "    this.arg = argParam;",
-                "    initialize(argParam);",
-                "  }",
-                "",
-                "  public static TestComponent.Factory factory() {",
-                "    return new Factory();",
-                "  }",
-                "",
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize(final Bar argParam) {",
-                "    this.argProvider = InstanceFactory.create(argParam);",
-                "    this.fooProvider = Foo_Factory.create(argProvider);",
-                "    this.fooFactoryProvider = FooFactory_Impl.create(fooProvider);",
-                "  }",
-                "",
-                "  @Override",
-                "  public Bar getBar() {",
-                "    return arg;",
-                "  }",
-                "",
-                "  @Override",
-                "  public FooFactory getFooFactory() {",
-                "    return fooFactoryProvider.get();",
-                "  }",
-                "",
-                "  private static final class Factory implements TestComponent.Factory {",
-                "    @Override",
-                "    public TestComponent create(Bar arg) {",
-                "      Preconditions.checkNotNull(arg);",
-                "      return new DaggerTestComponent(arg);",
-                "    }",
-                "  }",
-                "}")
-            .build();
     Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(componentSrc, factorySrc, barSrc, injectSrc);
+        compilerWithOptions(compilerMode.javacopts()).compile(foo, bar, fooFactory, component);
+
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .containsElementsIn(generatedSrc);
+        .containsElementsIn(generatedComponent);
   }
 
   @Test
@@ -733,10 +549,6 @@ public class AssistedFactoryTest {
                 "  private final DaggerTestComponent testComponent = this;",
                 "  private Provider<FooFactory<String>> fooFactoryProvider;",
                 "",
-                "  private Foo<String> fooOfString(String arg) {",
-                "    return new Foo<String>(arg);",
-                "  }",
-                "",
                 "  @SuppressWarnings(\"unchecked\")",
                 "  private void initialize() {",
                 "    this.fooFactoryProvider = SingleCheck.provider(new"
@@ -759,7 +571,7 @@ public class AssistedFactoryTest {
                 "        case 0: return (T) new FooFactory<String>() {",
                 "          @Override",
                 "          public Foo<String> create(String arg) {",
-                "            return testComponent.fooOfString(arg);",
+                "            return new Foo<String>(arg)",
                 "          }",
                 "        };",
                 "",

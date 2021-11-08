@@ -20,12 +20,15 @@ import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.common.base.Preconditions.checkArgument;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
+import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedFactoryMetadata;
 import dagger.internal.codegen.binding.Binding;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.spi.model.BindingKind;
@@ -37,6 +40,34 @@ import javax.lang.model.type.TypeMirror;
 
 /** Utility class for generating unique assisted parameter names for a component shard. */
 final class AssistedInjectionParameters {
+  /**
+   * Returns the list of assisted factory parameters as {@link ParameterSpec}s.
+   *
+   * <p>The type of each parameter will be the resolved type given by the binding key, and the name
+   * of each parameter will be the name given in the {@link
+   * dagger.assisted.AssistedInject}-annotated constructor.
+   */
+  public static ImmutableList<ParameterSpec> assistedFactoryParameterSpecs(
+      Binding binding,
+      DaggerElements elements,
+      DaggerTypes types,
+      ShardImplementation shardImplementation) {
+    checkArgument(binding.kind() == BindingKind.ASSISTED_FACTORY);
+    AssistedFactoryMetadata metadata =
+        AssistedFactoryMetadata.create(binding.bindingElement().get().asType(), elements, types);
+    ExecutableType factoryMethodType =
+        asExecutable(
+            types.asMemberOf(asDeclared(binding.key().type().java()), metadata.factoryMethod()));
+    return assistedParameterSpecs(
+        // Use the order of the parameters from the @AssistedFactory method but use the parameter
+        // names of the @AssistedInject constructor.
+        metadata.assistedFactoryAssistedParameters().stream()
+            .map(metadata.assistedInjectAssistedParametersMap()::get)
+            .collect(toImmutableList()),
+        factoryMethodType.getParameterTypes(),
+        shardImplementation);
+  }
+
   /**
    * Returns the list of assisted parameters as {@link ParameterSpec}s.
    *

@@ -29,6 +29,7 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.spi.model.BindingKind;
 import dagger.spi.model.RequestKind;
 
 /**
@@ -90,7 +91,31 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
     // form a loop. There are also difficulties introduced by manually created framework requests.
     // TODO(wanyingd): refactor framework instance so that we don't need to generate both direct
     // instance and framework instance representation for the same binding.
-    if (isFastInit && graph.topLevelBindingGraph().hasframeworkRequest(binding)) {
+    if (isFastInit
+        && graph.topLevelBindingGraph().hasFrameworkRequest(binding)
+        // When a delegator binding receives an instance request, it will manually create an
+        // instance request for its delegated binding in direct instance binding representation. It
+        // is possible a provider.get() expression will be returned to satisfy the request for the
+        // delegated binding. In this case, the returned expression should have a type cast, because
+        // the returned expression's type can be Object. The type cast is handled by
+        // DelegateRequestRepresentation.
+        //
+        // If framework instance binding representation is used to handle the delegate bindings
+        // instead of direct instance, then the type cast will be skipped.
+        //
+        // Because in this case, when requesting an instance for the delegator binding, framework
+        // instance binding representation will manually create a provider request for delegated
+        // binding first, then use DerivedFromFrameworkInstanceRequestRepresentaion to wrap that
+        // provider expression. Eventually, the returned expression will still be a provider.get(),
+        // but it is generated with two different request representations, so the type cast step is
+        // skipped, and a type cast error will be thrown.
+        //
+        // That's why a temporary exemption for delegate binding is needed to make it still use the
+        // old generation logic. The exemption might be removable if the code is changed to handle
+        // the type case differently.
+        // TODO(b/206111117): fix the type cast problem and remove the exemption for delegate
+        // binding.
+        && !binding.kind().equals(BindingKind.DELEGATE)) {
       return false;
     }
 
@@ -100,15 +125,13 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
         // InstanceFactory.create(Foo_MembersInjector.create(...)).
         // TODO(b/199889259): Consider optimizing this for fastInit mode.
       case ASSISTED_FACTORY:
-        return false;
         // Assisted factory binding can be requested with framework request, and it is essentially a
         // provider for assisted injection binding. So we will always return framework instance for
         // assisted factory bindings.
+        return false;
       case ASSISTED_INJECTION:
-        // We still return direct instance for assisted injection binding in fast init mode, because
-        // we want to avoid requiring dependencies as providers in fast init for now. This might
-        // change after we merge fast init mode and default mode.
-        return isFastInit;
+        throw new IllegalStateException(
+            "Assisted injection binding shouldn't be requested with an instance request.");
       default:
         // We don't need to use Provider#get() if there's no caching, so use a direct instance.
         // TODO(bcorso): This can be optimized in cases where we know a Provider field already

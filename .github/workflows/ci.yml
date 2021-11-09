@@ -56,7 +56,7 @@ jobs:
       - name: 'Cache Bazel files'
         uses: actions/cache@v2
         with:
-          path: ~/.cache/bazel
+          path: ~/.cache/bazel/*/cache
           key: ${{ runner.os }}-bazel-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-bazel-
@@ -71,6 +71,9 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: 'Run Bazel tests'
         run: bazel test --test_output=errors //... --keep_going
+        shell: bash
+      - name: 'Show cache sizes'
+        run: du -sh ~/.cache/bazel/*/* | sort -h; du -sh ~/.cache/bazel/*/[a-z0-9]*/* | sort -h
         shell: bash
       - name: 'Run Bazel examples'
         run: cd examples/bazel; bazel test --test_output=errors //...
@@ -202,7 +205,7 @@ jobs:
       - name: 'Cache Bazel files'
         uses: actions/cache@v2
         with:
-          path: ~/.cache/bazel
+          path: ~/.cache/bazel/*/cache
           key: ${{ runner.os }}-bazel-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-bazel-
@@ -294,7 +297,7 @@ jobs:
     - name: 'Cache Bazel files'
       uses: actions/cache@v2
       with:
-        path: ~/.cache/bazel
+        path: ~/.cache/bazel/*/cache
         key: ${{ runner.os }}-bazel-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-bazel-

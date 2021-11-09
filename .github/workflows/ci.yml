@@ -88,25 +88,25 @@ jobs:
     needs: bazel-test
     runs-on: ubuntu-latest
     steps:
-    - name: 'Check out repository'
-      uses: actions/checkout@v2
-    - name: 'Cache Gradle files'
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    - name: 'Download local snapshot for tests'
-      uses: actions/download-artifact@v2
-      with:
-        name: local-snapshot
-        path: ~/.m2/repository/com/google/dagger
-    - name: 'Gradle Java local tests'
-      run: ./util/run-local-gradle-tests.sh
-      shell: bash
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+      - name: 'Cache Gradle files'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: 'Download local snapshot for tests'
+        uses: actions/download-artifact@v2
+        with:
+          name: local-snapshot
+          path: ~/.m2/repository/com/google/dagger
+      - name: 'Gradle Java local tests'
+        run: ./util/run-local-gradle-tests.sh
+        shell: bash
   artifact-android-local-tests:
     name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
     needs: bazel-test

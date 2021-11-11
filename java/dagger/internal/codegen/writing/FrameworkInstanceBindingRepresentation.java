@@ -89,7 +89,7 @@ final class FrameworkInstanceBindingRepresentation {
       case PRODUCED:
       case PROVIDER_OF_LAZY:
         return derivedFromFrameworkInstanceRequestRepresentationFactory.create(
-            providerRequestRepresentation, request.requestKind(), FrameworkType.PROVIDER);
+            binding, providerRequestRepresentation, request.requestKind(), FrameworkType.PROVIDER);
       case PROVIDER:
         return providerRequestRepresentation;
       case PRODUCER:

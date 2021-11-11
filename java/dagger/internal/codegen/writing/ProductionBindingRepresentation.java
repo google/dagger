@@ -82,6 +82,7 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
     return request.frameworkType().isPresent()
         ? frameworkInstanceRequestRepresentation
         : derivedFromFrameworkInstanceRequestRepresentationFactory.create(
+            binding,
             frameworkInstanceRequestRepresentation,
             request.requestKind(),
             FrameworkType.PRODUCER_NODE);

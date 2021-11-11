@@ -23,6 +23,7 @@ import com.google.testing.compile.Compiler;
 import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPointProcessor;
 import dagger.hilt.android.processor.internal.customtestapplication.CustomTestApplicationProcessor;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessor;
+import dagger.hilt.processor.internal.aliasof.AliasOfProcessor;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentProcessor;
 import dagger.hilt.processor.internal.earlyentrypoint.EarlyEntryPointProcessor;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputProcessor;
@@ -71,16 +72,17 @@ public final class HiltCompilerTests {
   private static ImmutableList<Processor> defaultProcessors() {
     return ImmutableList.of(
         new AggregatedDepsProcessor(),
+        new AliasOfProcessor(),
         new AndroidEntryPointProcessor(),
         new ComponentProcessor(),
+        new ComponentTreeDepsProcessor(),
+        new CustomTestApplicationProcessor(),
         new DefineComponentProcessor(),
         new EarlyEntryPointProcessor(),
         new GeneratesRootInputProcessor(),
         new OriginatingElementProcessor(),
-        new CustomTestApplicationProcessor(),
-        new UninstallModulesProcessor(),
-        new ComponentTreeDepsProcessor(),
-        new RootProcessor());
+        new RootProcessor(),
+        new UninstallModulesProcessor());
   }
 
   private HiltCompilerTests() {}

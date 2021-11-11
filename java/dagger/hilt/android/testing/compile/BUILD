@@ -26,6 +26,7 @@ java_library(
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
         "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",
+        "//java/dagger/hilt/processor/internal/aliasof:processor_lib",
         "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
         "//java/dagger/hilt/processor/internal/earlyentrypoint:processor_lib",
         "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",

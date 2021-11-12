@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.bindinggraphvalidation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.limit;
@@ -30,7 +29,6 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
@@ -60,18 +58,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.lang.model.type.TypeMirror;
 
 /** Reports errors for dependency cycles. */
 final class DependencyCycleValidator implements BindingGraphPlugin {
 
-  private final XProcessingEnv processingEnv;
   private final DependencyRequestFormatter dependencyRequestFormatter;
 
   @Inject
-  DependencyCycleValidator(
-      XProcessingEnv processingEnv, DependencyRequestFormatter dependencyRequestFormatter) {
-    this.processingEnv = processingEnv;
+  DependencyCycleValidator(DependencyRequestFormatter dependencyRequestFormatter) {
     this.dependencyRequestFormatter = dependencyRequestFormatter;
   }
 
@@ -218,10 +212,9 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
     if (target instanceof Binding && ((Binding) target).kind().equals(BindingKind.OPTIONAL)) {
       /* For @BindsOptionalOf bindings, unwrap the type inside the Optional. If the unwrapped type
        * breaks the cycle, so does the optional binding. */
-      TypeMirror optionalValueType = OptionalType.from(edge.dependencyRequest().key()).valueType();
+      XType optionalValueType = OptionalType.from(edge.dependencyRequest().key()).valueType();
       RequestKind requestKind = getRequestKind(optionalValueType);
-      return breaksCycle(
-          toXProcessing(extractKeyType(optionalValueType), processingEnv), requestKind);
+      return breaksCycle(extractKeyType(optionalValueType), requestKind);
     }
     return false;
   }

@@ -486,8 +486,9 @@ public final class KeyFactory {
       return Optional.empty();
     }
 
-    TypeMirror optionalValueType = OptionalType.from(key).valueType();
-    return Optional.of(key.toBuilder().type(fromJava(extractKeyType(optionalValueType))).build());
+    XType optionalValueType = OptionalType.from(key).valueType();
+    return Optional.of(
+        key.toBuilder().type(DaggerType.from(extractKeyType(optionalValueType))).build());
   }
 
   private DaggerAnnotation fromJava(AnnotationMirror annotation) {

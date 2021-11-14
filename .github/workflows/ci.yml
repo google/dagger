@@ -33,9 +33,16 @@ jobs:
           path: gh-pages
       - name: 'Validate latest Dagger version'
         run: ./gh-pages/.github/scripts/validate-latest-dagger-version.sh gh-pages/_config.yml
+  bazel-build:
+    name: 'Bazel build'
+    needs: validate-latest-dagger-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/bazel-build
   bazel-test:
     name: 'Bazel tests'
-    needs: validate-latest-dagger-version
+    needs: bazel-build
     runs-on: ubuntu-latest
     steps:
       - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
@@ -57,9 +64,14 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.cache/bazel
-          key: ${{ runner.os }}-bazel-${{ github.sha }}
+          # Note: we could use the same key as bazel-build, but we separate them
+          # so that bazel-build's cache is smaller (~200Mb vs ~900Mb) and faster
+          # to load than this cache since it's the bottleneck of all other steps
+          key: ${{ runner.os }}-bazel-test-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-bazel-
+            ${{ runner.os }}-bazel-test-
+            ${{ runner.os }}-bazel-build-${{ github.sha }}
+            ${{ runner.os }}-bazel-build-
       - name: 'Cache Gradle files'
         uses: actions/cache@v2
         with:
@@ -70,19 +82,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: 'Run Bazel tests'
-        run: bazel test --test_output=errors //... --keep_going
+        run: bazel test --test_output=errors //...
         shell: bash
       - name: 'Run Bazel examples'
         run: cd examples/bazel; bazel test --test_output=errors //...
         shell: bash
-      - name: 'Install local snapshot'
-        run: ./util/install-local-snapshot.sh
-        shell: bash
-      - name: 'Upload local snapshot for tests'
-        uses: actions/upload-artifact@v2
-        with:
-          name: local-snapshot
-          path: ~/.m2/repository/com/google/dagger
       - name: 'Clean bazel cache'
         # According to the documentation, we should be able to exclude these via
         # the actions/cache path, e.g. "!~/.cache/bazel/*/*/external/" but that
@@ -92,7 +96,7 @@ jobs:
           rm -rf ~/.cache/bazel/*/*/external/
   artifact-java-local-tests:
     name: 'Artifact Java local tests'
-    needs: bazel-test
+    needs: bazel-build
     runs-on: ubuntu-latest
     steps:
     - name: 'Check out repository'
@@ -116,7 +120,7 @@ jobs:
       shell: bash
   artifact-android-local-tests:
     name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
-    needs: bazel-test
+    needs: bazel-build
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -149,7 +153,7 @@ jobs:
           path: ${{ github.workspace }}/**/build/reports/tests/*
   artifact-android-emulator-tests:
     name: 'Artifact Android emulator tests (API 30)'
-    needs: bazel-test
+    needs: bazel-build
     # It's recommended to run emulator tests on macOS
     # See https://github.com/marketplace/actions/android-emulator-runner
     runs-on: macos-latest
@@ -210,9 +214,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.cache/bazel
-          key: ${{ runner.os }}-bazel-${{ github.sha }}
+          key: ${{ runner.os }}-bazel-build-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-bazel-
+            ${{ runner.os }}-bazel-build-
       - name: 'Cache Gradle files'
         uses: actions/cache@v2
         with:
@@ -245,7 +249,7 @@ jobs:
     # We only run this on master push (essentially a postsubmit) since these
     # can take a while to run
     if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
-    needs: bazel-test
+    needs: bazel-build
     # It's recommended to run emulator tests on macOS
     # See https://github.com/marketplace/actions/android-emulator-runner
     runs-on: macos-latest
@@ -287,7 +291,7 @@ jobs:
     # We only run this on master push (essentially a postsubmit) since we
     # don't want this job to prevent merges
     if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
-    needs: bazel-test
+    needs: bazel-build
     runs-on: ubuntu-latest
     steps:
     - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
@@ -309,9 +313,9 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/bazel
-        key: ${{ runner.os }}-bazel-${{ github.sha }}
+        key: ${{ runner.os }}-bazel-build-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-bazel-
+          ${{ runner.os }}-bazel-build-
     - name: 'Cache Gradle files'
       uses: actions/cache@v2
       with:

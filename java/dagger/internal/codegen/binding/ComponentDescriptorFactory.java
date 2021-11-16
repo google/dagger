@@ -182,7 +182,6 @@ public final class ComponentDescriptorFactory {
     }
 
     return ComponentDescriptor.create(
-        processingEnv,
         componentAnnotation,
         typeElement,
         componentDependencies,

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.squareup.javapoet.AnnotationSpec;
@@ -33,7 +34,7 @@ final class GwtCompatibility {
    */
   static Optional<AnnotationSpec> gwtIncompatibleAnnotation(Binding binding) {
     checkArgument(binding.bindingElement().isPresent());
-    Element element = binding.bindingElement().get();
+    Element element = toJavac(binding.bindingElement().get());
     while (element != null) {
       Optional<AnnotationSpec> gwtIncompatible =
           element

@@ -30,7 +30,6 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -49,6 +48,7 @@ import dagger.spi.model.Scope;
 import java.util.Collection;
 import java.util.Formatter;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.VariableElement;
 
@@ -268,12 +268,10 @@ final class ComponentHierarchyValidator {
   }
 
   private ImmutableSet<Scope> moduleScopes(ModuleDescriptor module) {
-    return FluentIterable.concat(module.allBindingDeclarations())
-        .transform(
-            declaration ->
-                uniqueScopeOf(toXProcessing(declaration.bindingElement().get(), processingEnv)))
+    return module.allBindingDeclarations().stream()
+        .map(declaration -> uniqueScopeOf(declaration.bindingElement().get()))
         .filter(scope -> scope.isPresent() && !scope.get().isReusable())
-        .transform(scope -> scope.get())
-        .toSet();
+        .map(Optional::get)
+        .collect(toImmutableSet());
   }
 }

@@ -17,8 +17,6 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
-import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -35,7 +33,6 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XHasModifiers;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
@@ -105,11 +102,9 @@ public final class AssistedInjectionAnnotations {
    * of each parameter will be the name given in the {@link
    * dagger.assisted.AssistedInject}-annotated constructor.
    */
-  public static ImmutableList<ParameterSpec> assistedParameterSpecs(
-      Binding binding, XProcessingEnv processingEnv) {
+  public static ImmutableList<ParameterSpec> assistedParameterSpecs(Binding binding) {
     checkArgument(binding.kind() == BindingKind.ASSISTED_INJECTION);
-    XConstructorElement constructor =
-        asConstructor(toXProcessing(binding.bindingElement().get(), processingEnv));
+    XConstructorElement constructor = asConstructor(binding.bindingElement().get());
     XConstructorType constructorType = constructor.asMemberOf(binding.key().type().xprocessing());
     return assistedParameterSpecs(constructor.getParameters(), constructorType.getParameterTypes());
   }
@@ -135,12 +130,10 @@ public final class AssistedInjectionAnnotations {
    * of each parameter will be the name given in the {@link
    * dagger.assisted.AssistedInject}-annotated constructor.
    */
-  public static ImmutableList<ParameterSpec> assistedFactoryParameterSpecs(
-      Binding binding, XProcessingEnv processingEnv) {
+  public static ImmutableList<ParameterSpec> assistedFactoryParameterSpecs(Binding binding) {
     checkArgument(binding.kind() == BindingKind.ASSISTED_FACTORY);
 
-    XTypeElement factory =
-        asTypeElement(toXProcessing(binding.bindingElement().get(), processingEnv));
+    XTypeElement factory = asTypeElement(binding.bindingElement().get());
     AssistedFactoryMetadata metadata = AssistedFactoryMetadata.create(factory.getType());
     XMethodType factoryMethodType =
         metadata.factoryMethod().asMemberOf(binding.key().type().xprocessing());
@@ -167,16 +160,12 @@ public final class AssistedInjectionAnnotations {
         .collect(toImmutableSet());
   }
 
-  public static ImmutableList<VariableElement> assistedParameters(Binding binding) {
+  public static ImmutableList<XVariableElement> assistedParameters(Binding binding) {
     return binding.kind() == BindingKind.ASSISTED_INJECTION
-        ? assistedParameters(asExecutable(binding.bindingElement().get()))
+        ? asConstructor(binding.bindingElement().get()).getParameters().stream()
+            .filter(AssistedInjectionAnnotations::isAssistedParameter)
+            .collect(toImmutableList())
         : ImmutableList.of();
-  }
-
-  private static ImmutableList<VariableElement> assistedParameters(ExecutableElement constructor) {
-    return constructor.getParameters().stream()
-        .filter(AssistedInjectionAnnotations::isAssistedParameter)
-        .collect(toImmutableList());
   }
 
   /** Returns {@code true} if this binding is uses assisted injection. */

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.spi.model.BindingKind.MEMBERS_INJECTOR;
 
 import com.google.auto.value.AutoValue;
@@ -84,7 +85,7 @@ public abstract class FrameworkField {
 
   private static String frameworkFieldName(ContributionBinding binding) {
     if (binding.bindingElement().isPresent()) {
-      String name = BINDING_ELEMENT_NAME.visit(binding.bindingElement().get(), binding);
+      String name = BINDING_ELEMENT_NAME.visit(toJavac(binding.bindingElement().get()), binding);
       return binding.kind().equals(MEMBERS_INJECTOR) ? name + "MembersInjector" : name;
     }
     return KeyVariableNamer.name(binding.key());

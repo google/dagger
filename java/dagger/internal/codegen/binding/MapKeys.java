@@ -21,6 +21,7 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
+import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
@@ -36,7 +37,6 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
-import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -190,8 +190,7 @@ public final class MapKeys {
    * DaggerTypes, DaggerElements)} is generated.
    */
   public static ClassName mapKeyProxyClassName(ContributionBinding binding) {
-    return elementBasedClassName(
-        MoreElements.asExecutable(binding.bindingElement().get()), "MapKey");
+    return elementBasedClassName(asExecutable(toJavac(binding.bindingElement().get())), "MapKey");
   }
 
   /**

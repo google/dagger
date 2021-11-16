@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
@@ -97,7 +98,7 @@ final class DependencyMethodProducerCreationExpression
                     .addStatement(
                         "return $N.$L()",
                         dependencyField,
-                        binding.bindingElement().get().getSimpleName())
+                        toJavac(binding.bindingElement().get()).getSimpleName())
                     .build())
             .build());
   }

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
@@ -57,7 +58,7 @@ public final class BindingDeclarationFormatter extends Formatter<BindingDeclarat
       return true;
     }
     if (bindingDeclaration.bindingElement().isPresent()) {
-      Element bindingElement = bindingDeclaration.bindingElement().get();
+      Element bindingElement = toJavac(bindingDeclaration.bindingElement().get());
       return bindingElement.getKind().equals(PARAMETER)
           || FORMATTABLE_ELEMENT_TYPE_KINDS.contains(bindingElement.asType().getKind());
     }
@@ -72,7 +73,7 @@ public final class BindingDeclarationFormatter extends Formatter<BindingDeclarat
     }
 
     if (bindingDeclaration.bindingElement().isPresent()) {
-      Element bindingElement = bindingDeclaration.bindingElement().get();
+      Element bindingElement = toJavac(bindingDeclaration.bindingElement().get());
       if (bindingElement.getKind().equals(PARAMETER)) {
         return elementToString(bindingElement);
       }

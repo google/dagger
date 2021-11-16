@@ -26,9 +26,9 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -40,7 +40,6 @@ import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.multibindings.Multibinds;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 
 /** Generates a monitoring module for use with production components. */
 final class MonitoringModuleGenerator extends SourceFileGenerator<XTypeElement> {
@@ -51,8 +50,8 @@ final class MonitoringModuleGenerator extends SourceFileGenerator<XTypeElement> 
   }
 
   @Override
-  public Element originatingElement(XTypeElement componentElement) {
-    return XConverters.toJavac(componentElement);
+  public XElement originatingElement(XTypeElement componentElement) {
+    return componentElement;
   }
 
   @Override

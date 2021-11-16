@@ -22,13 +22,13 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
+import androidx.room.compiler.processing.XElement;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.base.SourceFileGenerator;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 
 /**
@@ -48,7 +48,7 @@ public final class HjarSourceFileGenerator<T> extends SourceFileGenerator<T> {
   }
 
   @Override
-  public Element originatingElement(T input) {
+  public XElement originatingElement(T input) {
     return delegate.originatingElement(input);
   }
 

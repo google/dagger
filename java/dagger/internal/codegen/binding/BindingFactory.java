@@ -21,7 +21,6 @@ import static androidx.room.compiler.processing.XElementKt.isVariableElement;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreTypes.asDeclared;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -157,7 +156,7 @@ public final class BindingFactory {
     ProvisionBinding.Builder builder =
         ProvisionBinding.builder()
             .contributionType(ContributionType.UNIQUE)
-            .bindingElement(toJavac(constructorElement))
+            .bindingElement(constructorElement)
             .key(keyFactory.forInjectConstructorWithResolvedType(enclosingType))
             .provisionDependencies(provisionDependencies.build())
             .injectionSites(injectionSiteFactory.getInjectionSites(enclosingType))
@@ -188,7 +187,7 @@ public final class BindingFactory {
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
         .key(Key.builder(DaggerType.from(factoryType)).build())
-        .bindingElement(toJavac(factory))
+        .bindingElement(factory)
         .provisionDependencies(
             ImmutableSet.of(
                 DependencyRequest.builder()
@@ -286,7 +285,7 @@ public final class BindingFactory {
             || metadataUtil.isCompanionObjectClass(contributedBy);
     return builder
         .contributionType(ContributionType.fromBindingElement(method))
-        .bindingElement(method)
+        .bindingElement(toXProcessing(method, processingEnv))
         .contributingModule(contributedBy)
         .isContributingModuleKotlinObject(isKotlinObject)
         .key(key)
@@ -348,7 +347,7 @@ public final class BindingFactory {
     checkNotNull(componentDefinitionType);
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(toJavac(componentDefinitionType))
+        .bindingElement(componentDefinitionType)
         .key(keyFactory.forType(toJavac(componentDefinitionType.getType())))
         .kind(COMPONENT)
         .build();
@@ -362,7 +361,7 @@ public final class BindingFactory {
     checkNotNull(dependency);
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(dependency.typeElement())
+        .bindingElement(toXProcessing(dependency.typeElement(), processingEnv))
         .key(keyFactory.forType(dependency.type()))
         .kind(COMPONENT_DEPENDENCY)
         .build();
@@ -397,7 +396,7 @@ public final class BindingFactory {
     }
     return builder
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(dependencyMethod)
+        .bindingElement(toXProcessing(dependencyMethod, processingEnv))
         .build();
   }
 
@@ -413,7 +412,7 @@ public final class BindingFactory {
             : getOnlyElement(asMethod(element).getParameters());
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(toJavac(element))
+        .bindingElement(element)
         .key(requirement.key().get())
         .nullableType(
             getNullableType(parameterElement).map(XConverters::toJavac).map(MoreTypes::asDeclared))
@@ -438,7 +437,7 @@ public final class BindingFactory {
             subcomponentCreatorMethod, asDeclared(component.asType()));
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(subcomponentCreatorMethod)
+        .bindingElement(toXProcessing(subcomponentCreatorMethod, processingEnv))
         .key(key)
         .kind(SUBCOMPONENT_CREATOR)
         .build();
@@ -476,9 +475,7 @@ public final class BindingFactory {
       case PROVISION:
         return buildDelegateBinding(
             ProvisionBinding.builder()
-                .scope(
-                    uniqueScopeOf(
-                        toXProcessing(delegateDeclaration.bindingElement().get(), processingEnv)))
+                .scope(uniqueScopeOf(delegateDeclaration.bindingElement().get()))
                 .nullableType(actualBinding.nullableType()),
             delegateDeclaration,
             TypeNames.PROVIDER);
@@ -494,10 +491,7 @@ public final class BindingFactory {
    */
   public ContributionBinding unresolvedDelegateBinding(DelegateDeclaration delegateDeclaration) {
     return buildDelegateBinding(
-        ProvisionBinding.builder()
-            .scope(
-                uniqueScopeOf(
-                    toXProcessing(delegateDeclaration.bindingElement().get(), processingEnv))),
+        ProvisionBinding.builder().scope(uniqueScopeOf(delegateDeclaration.bindingElement().get())),
         delegateDeclaration,
         TypeNames.PROVIDER);
   }
@@ -561,7 +555,7 @@ public final class BindingFactory {
         .key(key)
         .contributionType(ContributionType.UNIQUE)
         .kind(MEMBERS_INJECTOR)
-        .bindingElement(asTypeElement(membersInjectionBinding.key().type().java()))
+        .bindingElement(membersInjectionBinding.key().type().xprocessing().getTypeElement())
         .provisionDependencies(membersInjectionBinding.dependencies())
         .injectionSites(membersInjectionBinding.injectionSites())
         .build();

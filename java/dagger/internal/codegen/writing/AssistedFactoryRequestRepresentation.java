@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -25,7 +24,6 @@ import static dagger.internal.codegen.writing.AssistedInjectionParameters.assist
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 
 import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.squareup.javapoet.ClassName;
@@ -48,7 +46,6 @@ import java.util.Optional;
  * dagger.assisted.AssistedFactory} methods.
  */
 final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
-  private final XProcessingEnv processingEnv;
   private final ProvisionBinding binding;
   private final BindingGraph graph;
   private final SimpleMethodRequestRepresentation.Factory simpleMethodRequestRepresentationFactory;
@@ -59,13 +56,11 @@ final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
       @Assisted ProvisionBinding binding,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      SimpleMethodRequestRepresentation.Factory simpleMethodRequestRepresentationFactory,
-      XProcessingEnv processingEnv) {
+      SimpleMethodRequestRepresentation.Factory simpleMethodRequestRepresentationFactory) {
     this.binding = checkNotNull(binding);
     this.graph = graph;
     this.componentImplementation = componentImplementation;
     this.simpleMethodRequestRepresentationFactory = simpleMethodRequestRepresentationFactory;
-    this.processingEnv = processingEnv;
   }
 
   @Override
@@ -88,8 +83,7 @@ final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
 
   private TypeSpec anonymousfactoryImpl(
       Binding assistedBinding, Expression assistedInjectionExpression) {
-    XTypeElement factory =
-        asTypeElement(toXProcessing(binding.bindingElement().get(), processingEnv));
+    XTypeElement factory = asTypeElement(binding.bindingElement().get());
     XType factoryType = binding.key().type().xprocessing();
     XMethodElement factoryMethod = assistedFactoryMethod(factory);
 
@@ -106,9 +100,7 @@ final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
                     .addExceptions(factoryOverride.exceptions)
                     .addParameters(
                         assistedFactoryParameterSpecs(
-                            binding,
-                            processingEnv,
-                            componentImplementation.shardImplementation(assistedBinding)))
+                            binding, componentImplementation.shardImplementation(assistedBinding)))
                     .addStatement("return $L", assistedInjectionExpression.codeBlock())
                     .build());
 

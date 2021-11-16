@@ -22,6 +22,7 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableList;
@@ -32,7 +33,6 @@ import dagger.internal.codegen.binding.MapKeys;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 
 /**
  * Generates a class that exposes a non-{@code public} {@link
@@ -55,7 +55,7 @@ public final class InaccessibleMapKeyProxyGenerator
   }
 
   @Override
-  public Element originatingElement(ContributionBinding binding) {
+  public XElement originatingElement(ContributionBinding binding) {
     // a map key is only ever present on bindings that have a binding element
     return binding.bindingElement().get();
   }

@@ -16,9 +16,12 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.extension.Optionals.emptiesLast;
 import static java.util.Comparator.comparing;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.Key;
@@ -52,8 +55,8 @@ public abstract class BindingDeclaration {
           .thenComparing(
               (BindingDeclaration declaration) -> declaration.bindingElement(),
               emptiesLast(
-                  comparing((Element element) -> element.getSimpleName().toString())
-                      .thenComparing((Element element) -> element.asType().toString())));
+                  comparing((XElement element) -> toJavac(element).getSimpleName().toString())
+                      .thenComparing((XElement element) -> toJavac(element).asType().toString())));
 
   /** The {@link Key} of this declaration. */
   public abstract Key key();
@@ -68,14 +71,16 @@ public abstract class BindingDeclaration {
    * contribute a synthetic binding, but since multiple {@code @Multibinds} methods can coexist in
    * the same component (and contribute to one single binding), it has no binding element.
    */
-  public abstract Optional<Element> bindingElement();
+  public abstract Optional<XElement> bindingElement();
 
   /**
    * The type enclosing the {@link #bindingElement()}, or {@link Optional#empty()} if {@link
    * #bindingElement()} is empty.
    */
   public final Optional<TypeElement> bindingTypeElement() {
-    return bindingElement().map(DaggerElements::closestEnclosingTypeElement);
+    return bindingElement()
+        .map(XConverters::toJavac)
+        .map(DaggerElements::closestEnclosingTypeElement);
   }
 
   /**

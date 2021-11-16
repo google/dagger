@@ -16,10 +16,13 @@
 
 package dagger.internal.codegen.componentgenerator;
 
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.writing.ComponentNames.getRootComponentClassName;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.TypeSpec;
 import dagger.Component;
@@ -30,10 +33,10 @@ import dagger.internal.codegen.writing.ComponentImplementation;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 
 /** Generates the implementation of the abstract types annotated with {@link Component}. */
 final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
+  private final XProcessingEnv processingEnv;
   private final TopLevelImplementationComponent.Factory topLevelImplementationComponentFactory;
 
   @Inject
@@ -41,14 +44,16 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
       XFiler filer,
       DaggerElements elements,
       SourceVersion sourceVersion,
+      XProcessingEnv processingEnv,
       TopLevelImplementationComponent.Factory topLevelImplementationComponentFactory) {
     super(filer, elements, sourceVersion);
+    this.processingEnv = processingEnv;
     this.topLevelImplementationComponentFactory = topLevelImplementationComponentFactory;
   }
 
   @Override
-  public Element originatingElement(BindingGraph input) {
-    return input.componentTypeElement();
+  public XElement originatingElement(BindingGraph input) {
+    return toXProcessing(input.componentTypeElement(), processingEnv);
   }
 
   @Override

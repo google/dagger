@@ -18,7 +18,6 @@ package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -30,7 +29,6 @@ import static javax.lang.model.type.TypeKind.VOID;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -56,7 +54,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -75,7 +72,6 @@ import javax.lang.model.type.TypeMirror;
 public abstract class ComponentDescriptor {
   /** Creates a {@link ComponentDescriptor}. */
   static ComponentDescriptor create(
-      XProcessingEnv processingEnv,
       ComponentAnnotation componentAnnotation,
       XTypeElement component,
       ImmutableSet<ComponentRequirement> componentDependencies,
@@ -100,12 +96,8 @@ public abstract class ComponentDescriptor {
             subcomponentsByBuilderMethod,
             componentMethods,
             creator);
-    descriptor.processingEnv = processingEnv;
     return descriptor;
   }
-
-  // This is required temporarily during the XProcessing migration to use toXProcessing().
-  private XProcessingEnv processingEnv;
 
   /** The annotation that specifies that {@link #typeElement()} is a component. */
   public abstract ComponentAnnotation annotation();
@@ -202,8 +194,7 @@ public abstract class ComponentDescriptor {
       dependenciesByDependencyMethod();
 
   /** The {@linkplain #dependencies() component dependency} that defines a method. */
-  public final ComponentRequirement getDependencyThatDefinesMethod(Element javaMethod) {
-    XElement method = toXProcessing(javaMethod, processingEnv);
+  public final ComponentRequirement getDependencyThatDefinesMethod(XElement method) {
     checkArgument(isMethod(method), "method must be an executable element: %s", method);
     checkState(
         dependenciesByDependencyMethod().containsKey(method),

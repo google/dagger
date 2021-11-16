@@ -20,6 +20,8 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.unwrapOptionalEquivalence;
 import static java.util.Arrays.asList;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Preconditions;
@@ -34,8 +36,7 @@ import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -58,7 +59,8 @@ public abstract class ContributionBinding extends Binding implements HasContribu
   /** If {@link #bindingElement()} is a method that returns a primitive type, returns that type. */
   public final Optional<TypeMirror> contributedPrimitiveType() {
     return bindingElement()
-        .filter(bindingElement -> bindingElement instanceof ExecutableElement)
+        .map(XConverters::toJavac)
+        .filter(bindingElement -> bindingElement.getKind() == ElementKind.METHOD)
         .map(bindingElement -> MoreElements.asExecutable(bindingElement).getReturnType())
         .filter(type -> type.getKind().isPrimitive());
   }
@@ -115,9 +117,9 @@ public abstract class ContributionBinding extends Binding implements HasContribu
 
     public abstract B contributionType(ContributionType contributionType);
 
-    public abstract B bindingElement(Element bindingElement);
+    public abstract B bindingElement(XElement bindingElement);
 
-    abstract B bindingElement(Optional<Element> bindingElement);
+    abstract B bindingElement(Optional<XElement> bindingElement);
 
     public final B clearBindingElement() {
       return bindingElement(Optional.empty());

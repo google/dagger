@@ -133,7 +133,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   private void addDependencyEdge(
       DependencyRequest dependency, BindingDeclaration bindingDeclaration) {
     Element requestElement = dependency.requestElement().get().java();
-    Element bindingElement = bindingDeclaration.bindingElement().get();
+    Element bindingElement = toJavac(bindingDeclaration.bindingElement().get());
     Optional<VName> requestElementNode = jvmNode(requestElement, "request element");
     Optional<VName> bindingElementNode = jvmNode(bindingElement, "binding element");
     emitEdge(requestElementNode, "/inject/satisfiedby", bindingElementNode);

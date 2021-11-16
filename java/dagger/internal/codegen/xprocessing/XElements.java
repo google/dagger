@@ -29,6 +29,7 @@ import androidx.room.compiler.processing.XAnnotated;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMethodElement;
@@ -43,11 +44,21 @@ import java.util.Optional;
 /** A utility class for {@link XElement} helper methods. */
 public final class XElements {
 
+  public static boolean isExecutable(XElement element) {
+    return isConstructor(element) || isMethod(element);
+  }
+
+  public static XExecutableElement asExecutable(XElement element) {
+    checkState(isExecutable(element));
+    return (XExecutableElement) element;
+  }
+
   public static XTypeElement asTypeElement(XElement element) {
     checkState(isTypeElement(element));
     return (XTypeElement) element;
   }
 
+  // TODO(bcorso): Rename this and the XElementKt.isMethodParameter to isExecutableParameter.
   public static XExecutableParameterElement asMethodParameter(XElement element) {
     checkState(isMethodParameter(element));
     return (XExecutableParameterElement) element;

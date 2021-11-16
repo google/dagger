@@ -116,7 +116,7 @@ final class UnscopedFrameworkInstanceCreationExpressionFactory {
             binding, ComponentRequirement.forDependency(binding.key().type().java()));
 
       case COMPONENT_PROVISION:
-        return dependencyMethodProviderCreationExpressionFactory.create(binding);
+        return dependencyMethodProviderCreationExpressionFactory.create((ProvisionBinding) binding);
 
       case SUBCOMPONENT_CREATOR:
         return anonymousProviderCreationExpressionFactory.create(binding);

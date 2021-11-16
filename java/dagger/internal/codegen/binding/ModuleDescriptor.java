@@ -188,7 +188,9 @@ public abstract class ModuleDescriptor {
         XTypeElement companionModule, ImmutableSet.Builder<ContributionBinding> bindings) {
       ImmutableSet<String> bindingElementDescriptors =
           bindings.build().stream()
-              .map(binding -> getMethodDescriptor(asExecutable(binding.bindingElement().get())))
+              .map(
+                  binding ->
+                      getMethodDescriptor(asExecutable(toJavac(binding.bindingElement().get()))))
               .collect(toImmutableSet());
 
       methodsIn(elements.getAllMembers(toJavac(companionModule))).stream()

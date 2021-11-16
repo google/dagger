@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -99,7 +100,7 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
                 provisionBinding,
                 request -> dependencyArgument(request, requestingClass).codeBlock(),
                 shardImplementation::getUniqueFieldNameForAssistedParam));
-    ExecutableElement method = asExecutable(provisionBinding.bindingElement().get());
+    ExecutableElement method = asExecutable(toJavac(provisionBinding.bindingElement().get()));
     CodeBlock invocation;
     switch (method.getKind()) {
       case CONSTRUCTOR:

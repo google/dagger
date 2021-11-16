@@ -80,7 +80,7 @@ public abstract class SubcomponentDeclaration extends BindingDeclaration {
       for (XTypeElement subcomponent : moduleAnnotation.subcomponents()) {
         declarations.add(
             new AutoValue_SubcomponentDeclaration(
-                Optional.of(toJavac(subcomponentAttribute)),
+                Optional.of(subcomponentAttribute),
                 Optional.of(toJavac(module)),
                 keyFactory.forSubcomponentCreator(
                     toJavac(getSubcomponentCreator(subcomponent).get().getType())),

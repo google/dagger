@@ -236,7 +236,7 @@ public abstract class ComponentRequirement {
     return forBoundInstance(
         binding.key(),
         binding.nullableType().isPresent(),
-        binding.bindingElement().get().getSimpleName().toString());
+        toJavac(binding.bindingElement().get()).getSimpleName().toString());
   }
 
   /**

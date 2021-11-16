@@ -42,7 +42,9 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -72,7 +74,6 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
 
 /**
@@ -99,7 +100,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
   }
 
   @Override
-  public Element originatingElement(ProvisionBinding binding) {
+  public XElement originatingElement(ProvisionBinding binding) {
     // we only create factories for bindings that have a binding element
     return binding.bindingElement().get();
   }
@@ -232,11 +233,11 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
         assistedParameters(binding).stream()
             .collect(
                 toImmutableMap(
-                    element -> element,
+                    XConverters::toJavac,
                     element ->
                         ParameterSpec.builder(
-                                TypeName.get(element.asType()),
-                                uniqueFieldNames.getUniqueName(element.getSimpleName()))
+                                element.getType().getTypeName(),
+                                uniqueFieldNames.getUniqueName(element.getName()))
                             .build()));
     TypeName providedTypeName = providedTypeName(binding);
     MethodSpec.Builder getMethod =

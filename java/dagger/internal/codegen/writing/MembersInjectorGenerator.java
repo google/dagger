@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
@@ -39,6 +40,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -64,7 +66,6 @@ import dagger.spi.model.DependencyRequest;
 import java.util.Map.Entry;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 
 /**
  * Generates {@link MembersInjector} implementations from {@link MembersInjectionBinding} instances.
@@ -86,7 +87,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
   }
 
   @Override
-  public Element originatingElement(MembersInjectionBinding binding) {
+  public XElement originatingElement(MembersInjectionBinding binding) {
     return binding.membersInjectedType();
   }
 
@@ -209,7 +210,10 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
     injectorTypeBuilder.addMethod(injectMembersBuilder.build());
 
     for (InjectionSite injectionSite : binding.injectionSites()) {
-      if (injectionSite.element().getEnclosingElement().equals(binding.membersInjectedType())) {
+      if (injectionSite
+          .element()
+          .getEnclosingElement()
+          .equals(toJavac(binding.membersInjectedType()))) {
         injectorTypeBuilder.addMethod(InjectionSiteMethod.create(injectionSite, metadataUtil));
       }
     }

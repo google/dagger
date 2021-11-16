@@ -17,7 +17,6 @@
 package dagger.internal.codegen;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedFactoryMethods;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
@@ -35,13 +34,12 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -71,11 +69,9 @@ import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 
 /** An annotation processor for {@link dagger.assisted.AssistedFactory}-annotated types. */
 final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTypeElement> {
-  private final XProcessingEnv processingEnv;
   private final XMessager messager;
   private final XFiler filer;
   private final SourceVersion sourceVersion;
@@ -85,14 +81,12 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
 
   @Inject
   AssistedFactoryProcessingStep(
-      XProcessingEnv processingEnv,
       XMessager messager,
       XFiler filer,
       SourceVersion sourceVersion,
       DaggerElements elements,
       DaggerTypes types,
       BindingFactory bindingFactory) {
-    this.processingEnv = processingEnv;
     this.messager = messager;
     this.filer = filer;
     this.sourceVersion = sourceVersion;
@@ -115,7 +109,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
         ProvisionBinding binding = bindingFactory.assistedFactoryBinding(factory, Optional.empty());
         new AssistedFactoryImplGenerator().generate(binding);
       } catch (SourceFileGenerationException e) {
-        e.printMessageTo(XConverters.toJavac(messager));
+        e.printMessageTo(messager);
       }
     }
   }
@@ -225,7 +219,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
     }
 
     @Override
-    public Element originatingElement(ProvisionBinding binding) {
+    public XElement originatingElement(ProvisionBinding binding) {
       return binding.bindingElement().get();
     }
 
@@ -263,8 +257,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
     // }
     @Override
     public ImmutableList<TypeSpec.Builder> topLevelTypes(ProvisionBinding binding) {
-      XTypeElement factory =
-          asTypeElement(toXProcessing(binding.bindingElement().get(), processingEnv));
+      XTypeElement factory = asTypeElement(binding.bindingElement().get());
 
       ClassName name = generatedClassNameForBinding(binding);
       TypeSpec.Builder builder =

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verifyNotNull;
 import static com.squareup.javapoet.ClassName.OBJECT;
@@ -46,6 +47,7 @@ import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -83,7 +85,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 
 /** Generates {@link Producer} implementations from {@link ProductionBinding} instances. */
@@ -103,9 +104,8 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
     this.keyFactory = keyFactory;
   }
 
-
   @Override
-  public Element originatingElement(ProductionBinding binding) {
+  public XElement originatingElement(ProductionBinding binding) {
     // we only create factories for bindings that have a binding element
     return binding.bindingElement().get();
   }
@@ -296,7 +296,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
                 String.format(
                     "%s#%s",
                     ClassName.get(binding.bindingTypeElement().get()),
-                    binding.bindingElement().get().getSimpleName()))
+                    toJavac(binding.bindingElement().get()).getSimpleName()))
             : CodeBlock.of("$T.class", generatedTypeName);
     return CodeBlock.of("$T.create($L)", PRODUCER_TOKEN, producerTokenArgs);
   }
@@ -524,7 +524,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
             binding.requiresModuleInstance()
                 ? "module"
                 : CodeBlock.of("$T", ClassName.get(binding.bindingTypeElement().get())),
-            binding.bindingElement().get().getSimpleName(),
+            toJavac(binding.bindingElement().get()).getSimpleName(),
             makeParametersCodeBlock(parameterCodeBlocks));
 
     final CodeBlock returnCodeBlock;

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Suppliers.memoize;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -47,7 +48,7 @@ public abstract class Binding extends BindingDeclaration {
     if (!bindingElement().isPresent() || !contributingModule().isPresent()) {
       return false;
     }
-    Set<Modifier> modifiers = bindingElement().get().getModifiers();
+    Set<Modifier> modifiers = toJavac(bindingElement().get()).getModifiers();
     return !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC);
   }
 

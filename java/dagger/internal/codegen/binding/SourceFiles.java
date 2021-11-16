@@ -17,6 +17,8 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static com.google.auto.common.MoreElements.asExecutable;
+import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -143,10 +145,10 @@ public class SourceFiles {
           case PROVISION:
           case PRODUCTION:
             return elementBasedClassName(
-                MoreElements.asExecutable(binding.bindingElement().get()), "Factory");
+                asExecutable(toJavac(binding.bindingElement().get())), "Factory");
 
           case ASSISTED_FACTORY:
-            return siblingClassName(MoreElements.asType(binding.bindingElement().get()), "_Impl");
+            return siblingClassName(asType(toJavac(binding.bindingElement().get())), "_Impl");
 
           default:
             throw new AssertionError();

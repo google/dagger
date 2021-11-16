@@ -60,7 +60,7 @@ abstract class OptionalBindingDeclaration extends BindingDeclaration {
     OptionalBindingDeclaration forMethod(XMethodElement method, XTypeElement contributingModule) {
       checkArgument(method.hasAnnotation(TypeNames.BINDS_OPTIONAL_OF));
       return new AutoValue_OptionalBindingDeclaration(
-          Optional.of(toJavac(method)),
+          Optional.of(method),
           Optional.of(toJavac(contributingModule)),
           keyFactory.forBindsOptionalOfMethod(method, contributingModule));
     }

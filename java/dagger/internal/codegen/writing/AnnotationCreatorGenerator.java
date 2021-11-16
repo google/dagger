@@ -27,6 +27,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
@@ -44,7 +45,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 
 /**
  * Generates classes that create annotation instances for an annotation type. The generated class
@@ -83,8 +83,8 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement
   }
 
   @Override
-  public Element originatingElement(XTypeElement annotationType) {
-    return XConverters.toJavac(annotationType);
+  public XElement originatingElement(XTypeElement annotationType) {
+    return annotationType;
   }
 
   @Override

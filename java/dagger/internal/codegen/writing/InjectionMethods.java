@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.asVariable;
@@ -117,7 +118,7 @@ final class InjectionMethods {
         ProvisionBinding binding,
         CompilerOptions compilerOptions,
         KotlinMetadataUtil metadataUtil) {
-      ExecutableElement element = asExecutable(binding.bindingElement().get());
+      ExecutableElement element = asExecutable(toJavac(binding.bindingElement().get()));
       switch (element.getKind()) {
         case CONSTRUCTOR:
           return constructorProxy(element);
@@ -167,7 +168,7 @@ final class InjectionMethods {
                       request -> request));
 
       ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
-      ExecutableElement method = asExecutable(binding.bindingElement().get());
+      ExecutableElement method = asExecutable(toJavac(binding.bindingElement().get()));
       for (VariableElement parameter : method.getParameters()) {
         if (AssistedInjectionAnnotations.isAssistedParameter(parameter)) {
           arguments.add(CodeBlock.of("$L", uniqueAssistedParameterName.apply(parameter)));
@@ -204,7 +205,7 @@ final class InjectionMethods {
      */
     static boolean requiresInjectionMethod(
         ProvisionBinding binding, CompilerOptions compilerOptions, ClassName requestingClass) {
-      ExecutableElement method = MoreElements.asExecutable(binding.bindingElement().get());
+      ExecutableElement method = asExecutable(toJavac(binding.bindingElement().get()));
       return !binding.injectionSites().isEmpty()
           || binding.shouldCheckForNull(compilerOptions)
           || !isElementAccessibleFrom(method, requestingClass.packageName())

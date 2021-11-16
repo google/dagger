@@ -28,6 +28,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
@@ -43,7 +44,6 @@ import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
@@ -81,8 +81,8 @@ public final class ModuleProxies {
     }
 
     @Override
-    public Element originatingElement(XTypeElement moduleElement) {
-      return toJavac(moduleElement);
+    public XElement originatingElement(XTypeElement moduleElement) {
+      return moduleElement;
     }
 
     @Override

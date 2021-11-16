@@ -16,10 +16,12 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static java.util.stream.Collectors.toList;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
@@ -47,12 +49,12 @@ public abstract class MembersInjectionBinding extends Binding {
   }
 
   @Override
-  public final Optional<Element> bindingElement() {
+  public final Optional<XElement> bindingElement() {
     return Optional.of(membersInjectedType());
   }
 
-  public final TypeElement membersInjectedType() {
-    return asTypeElement(key().type().java());
+  public final XTypeElement membersInjectedType() {
+    return key().type().xprocessing().getTypeElement();
   }
 
   @Override
@@ -85,11 +87,13 @@ public abstract class MembersInjectionBinding extends Binding {
    * Returns {@code true} if any of this binding's injection sites are directly on the bound type.
    */
   public boolean hasLocalInjectionSites() {
-    return injectionSites()
-        .stream()
+    return injectionSites().stream()
         .anyMatch(
             injectionSite ->
-                injectionSite.element().getEnclosingElement().equals(membersInjectedType()));
+                injectionSite
+                    .element()
+                    .getEnclosingElement()
+                    .equals(toJavac(membersInjectedType())));
   }
 
   @Override

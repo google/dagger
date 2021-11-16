@@ -208,7 +208,7 @@ public class ComponentProcessor extends JavacBasicAnnotationProcessor {
         injectBindingRegistry.generateSourcesForRequiredBindings(
             factoryGenerator, membersInjectorGenerator);
       } catch (SourceFileGenerationException e) {
-        e.printMessageTo(processingEnv.getMessager());
+        e.printMessageTo(env.getMessager());
       }
     }
     clearableCaches.forEach(ClearableCache::clearCache);

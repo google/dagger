@@ -32,6 +32,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
@@ -57,7 +58,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -94,8 +94,8 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
   }
 
   @Override
-  public Element originatingElement(ComponentDescriptor input) {
-    return toJavac(input.typeElement());
+  public XElement originatingElement(ComponentDescriptor input) {
+    return input.typeElement();
   }
 
   @Override

@@ -16,12 +16,14 @@
 
 package dagger.internal.codegen.base;
 
-
+import static androidx.room.compiler.processing.JavaPoetExtKt.addOriginatingElement;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.GeneratedAnnotations.generatedAnnotation;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHECKED;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.compat.XConverters;
@@ -37,9 +39,7 @@ import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
-import javax.annotation.processing.Messager;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 
 /**
  * A template class that provides a framework for properly handling IO while generating source files
@@ -70,14 +70,6 @@ public abstract class SourceFileGenerator<T> {
    * messager} and does not throw.
    */
   public void generate(T input, XMessager messager) {
-    generate(input, XConverters.toJavac(messager));
-  }
-
-  /**
-   * Generates a source file to be compiled for {@code T}. Writes any generation exception to {@code
-   * messager} and does not throw.
-   */
-  public void generate(T input, Messager messager) {
     try {
       generate(input);
     } catch (SourceFileGenerationException e) {
@@ -100,7 +92,7 @@ public abstract class SourceFileGenerator<T> {
   }
 
   private JavaFile buildJavaFile(T input, TypeSpec.Builder typeSpecBuilder) {
-    typeSpecBuilder.addOriginatingElement(originatingElement(input));
+    addOriginatingElement(typeSpecBuilder, originatingElement(input));
     typeSpecBuilder.addAnnotation(DaggerGenerated.class);
     Optional<AnnotationSpec> generatedAnnotation =
         generatedAnnotation(elements, sourceVersion)
@@ -122,7 +114,10 @@ public abstract class SourceFileGenerator<T> {
 
     JavaFile.Builder javaFileBuilder =
         JavaFile.builder(
-                elements.getPackageOf(originatingElement(input)).getQualifiedName().toString(),
+                elements
+                    .getPackageOf(toJavac(originatingElement(input)))
+                    .getQualifiedName()
+                    .toString(),
                 typeSpecBuilder.build())
             .skipJavaLangImports(true);
     if (!generatedAnnotation.isPresent()) {
@@ -132,7 +127,7 @@ public abstract class SourceFileGenerator<T> {
   }
 
   /** Returns the originating element of the generating type. */
-  public abstract Element originatingElement(T input);
+  public abstract XElement originatingElement(T input);
 
   /**
    * Returns {@link TypeSpec.Builder types} be generated for {@code T}, or an empty list if no types

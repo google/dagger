@@ -158,8 +158,8 @@ final class OptionalFactories {
             Provider.class,
             optionalKind.absentValueExpression())
         .addCode("$L // safe covariant cast\n", AnnotationSpecs.suppressWarnings(UNCHECKED))
-        .addCode(
-            "$1T provider = ($1T) $2N;",
+        .addStatement(
+            "$1T provider = ($1T) $2N",
             providerOf(optionalKind.of(typeVariable)),
             perGeneratedFileCache.absentOptionalProviderFields.computeIfAbsent(
                 optionalKind,
@@ -168,7 +168,7 @@ final class OptionalFactories {
                   rootComponentShard.addField(ABSENT_OPTIONAL_FIELD, field);
                   return field;
                 }))
-        .addCode("return provider;")
+        .addStatement("return provider")
         .build();
   }
 

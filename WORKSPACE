@@ -170,8 +170,7 @@ load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 ANDROID_LINT_VERSION = "26.6.2"
 
-# TODO(b/204390647): Update to 1.2 once this bug is fixed.
-AUTO_COMMON_VERSION = "1.0"
+AUTO_COMMON_VERSION = "1.2.1"
 
 # NOTE(bcorso): Even though we set the version here, our Guava version in
 #  processor code will use whatever version is built into JavaBuilder, which is

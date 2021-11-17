@@ -747,7 +747,7 @@ public class MembersInjectionTest {
         "}");
     JavaFileObject expectedMembersInjector =
         JavaFileObjects.forSourceLines(
-            "test.AllInjections_MembersInjector",
+            "test.B_MembersInjector",
             "package test;",
             "",
             GeneratedLines.generatedImports(

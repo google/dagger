@@ -36,29 +36,41 @@ final class ComponentProvisionRequestRepresentation extends RequestRepresentatio
   private final BindingGraph bindingGraph;
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final CompilerOptions compilerOptions;
+  private final boolean isExperimentalMergedMode;
 
   @AssistedInject
   ComponentProvisionRequestRepresentation(
       @Assisted ProvisionBinding binding,
       BindingGraph bindingGraph,
+      ComponentImplementation componentImplementation,
       ComponentRequirementExpressions componentRequirementExpressions,
       CompilerOptions compilerOptions) {
     this.binding = binding;
     this.bindingGraph = bindingGraph;
     this.componentRequirementExpressions = componentRequirementExpressions;
     this.compilerOptions = compilerOptions;
+    this.isExperimentalMergedMode =
+        componentImplementation.compilerMode().isExperimentalMergedMode();
   }
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
+    CodeBlock componentDependency =
+        isExperimentalMergedMode
+            ? CodeBlock.of("(($T) dependencies[0])", componentRequirement().type().getTypeName())
+            : getComponentRequirementExpression(requestingClass);
     CodeBlock invocation =
         CodeBlock.of(
             "$L.$L()",
-            componentRequirementExpressions.getExpression(componentRequirement(), requestingClass),
+            componentDependency,
             toJavac(binding.bindingElement().get()).getSimpleName());
     return Expression.create(
         binding.contributedPrimitiveType().orElse(binding.key().type().xprocessing()),
         maybeCheckForNull(binding, compilerOptions, invocation));
+  }
+
+  CodeBlock getComponentRequirementExpression(ClassName requestingClass) {
+    return componentRequirementExpressions.getExpression(componentRequirement(), requestingClass);
   }
 
   private ComponentRequirement componentRequirement() {

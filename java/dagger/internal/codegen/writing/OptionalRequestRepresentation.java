@@ -39,10 +39,12 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
   private final ComponentRequestRepresentations componentRequestRepresentations;
   private final DaggerTypes types;
   private final SourceVersion sourceVersion;
+  private final boolean isExperimentalMergedMode;
 
   @AssistedInject
   OptionalRequestRepresentation(
       @Assisted ProvisionBinding binding,
+      ComponentImplementation componentImplementation,
       ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types,
       SourceVersion sourceVersion) {
@@ -50,6 +52,8 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
     this.componentRequestRepresentations = componentRequestRepresentations;
     this.types = types;
     this.sourceVersion = sourceVersion;
+    this.isExperimentalMergedMode =
+        componentImplementation.compilerMode().isExperimentalMergedMode();
   }
 
   @Override
@@ -74,9 +78,15 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
     DependencyRequest dependency = getOnlyElement(binding.dependencies());
 
     CodeBlock dependencyExpression =
-        componentRequestRepresentations
-            .getDependencyExpression(bindingRequest(dependency), requestingClass)
-            .codeBlock();
+        isExperimentalMergedMode
+            ? componentRequestRepresentations
+                .getExperimentalSwitchingProviderDependencyRepresentation(
+                    bindingRequest(dependency))
+                .getDependencyExpression(dependency.kind(), binding)
+                .codeBlock()
+            : componentRequestRepresentations
+                .getDependencyExpression(bindingRequest(dependency), requestingClass)
+                .codeBlock();
 
     // If the dependency type is inaccessible, then we have to use Optional.<Object>of(...), or else
     // we will get "incompatible types: inference variable has incompatible bounds.
@@ -87,7 +97,7 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
             types.erasure(binding.key().type().java()),
             optionalKind.presentObjectExpression(dependencyExpression));
   }
-  
+
   @AssistedFactory
   static interface Factory {
     OptionalRequestRepresentation create(ProvisionBinding binding);

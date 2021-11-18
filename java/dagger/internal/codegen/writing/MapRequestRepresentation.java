@@ -58,11 +58,13 @@ final class MapRequestRepresentation extends RequestRepresentation {
   private final ComponentRequestRepresentations componentRequestRepresentations;
   private final DaggerTypes types;
   private final DaggerElements elements;
+  private final boolean isExperimentalMergedMode;
 
   @AssistedInject
   MapRequestRepresentation(
       @Assisted ProvisionBinding binding,
       BindingGraph graph,
+      ComponentImplementation componentImplementation,
       ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types,
       DaggerElements elements) {
@@ -74,6 +76,8 @@ final class MapRequestRepresentation extends RequestRepresentation {
     this.elements = elements;
     this.dependencies =
         Maps.toMap(binding.dependencies(), dep -> graph.contributionBinding(dep.key()));
+    this.isExperimentalMergedMode =
+        componentImplementation.compilerMode().isExperimentalMergedMode();
   }
 
   @Override
@@ -138,9 +142,15 @@ final class MapRequestRepresentation extends RequestRepresentation {
     return CodeBlock.of(
         "$L, $L",
         getMapKeyExpression(dependencies.get(dependency), requestingClass, elements),
-        componentRequestRepresentations
-            .getDependencyExpression(bindingRequest(dependency), requestingClass)
-            .codeBlock());
+        isExperimentalMergedMode
+            ? componentRequestRepresentations
+                .getExperimentalSwitchingProviderDependencyRepresentation(
+                    bindingRequest(dependency))
+                .getDependencyExpression(dependency.kind(), binding)
+                .codeBlock()
+            : componentRequestRepresentations
+                .getDependencyExpression(bindingRequest(dependency), requestingClass)
+                .codeBlock());
   }
 
   private Expression collectionsStaticFactoryInvocation(

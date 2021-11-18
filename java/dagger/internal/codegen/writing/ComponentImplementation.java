@@ -47,6 +47,7 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -116,13 +117,17 @@ public final class ComponentImplementation {
   }
 
   /** Compiler Modes. */
-  // TODO(wanyingd): add experimental merged mode.
   public enum CompilerMode {
     DEFAULT,
-    FAST_INIT;
+    FAST_INIT,
+    EXPERIMENTAL_MERGED_MODE;
 
     public boolean isFastInit() {
       return this == CompilerMode.FAST_INIT;
+    }
+
+    public boolean isExperimentalMergedMode() {
+      return this == CompilerMode.EXPERIMENTAL_MERGED_MODE;
     }
   }
 
@@ -310,10 +315,13 @@ public final class ComponentImplementation {
     this.componentFieldsByImplementation =
         createComponentFieldsByImplementation(this, compilerOptions);
     this.messager = messager;
+    XTypeElement typeElement = rootComponentImplementation().componentDescriptor().typeElement();
     this.compilerMode =
-        compilerOptions.fastInit(rootComponentImplementation().componentDescriptor().typeElement())
+        compilerOptions.fastInit(typeElement)
             ? CompilerMode.FAST_INIT
-            : CompilerMode.DEFAULT;
+            : (compilerOptions.experimentalMergedMode(typeElement)
+                ? CompilerMode.EXPERIMENTAL_MERGED_MODE
+                : CompilerMode.DEFAULT);
   }
 
   /**

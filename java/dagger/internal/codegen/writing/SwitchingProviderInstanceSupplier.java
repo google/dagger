@@ -40,13 +40,17 @@ final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSuppli
   SwitchingProviderInstanceSupplier(
       @Assisted ProvisionBinding binding,
       SwitchingProviders switchingProviders,
+      ExperimentalSwitchingProviders experimentalSwitchingProviders,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
       UnscopedDirectInstanceRequestRepresentationFactory
           unscopedDirectInstanceRequestRepresentationFactory) {
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
-        switchingProviders.newFrameworkInstanceCreationExpression(
-            binding, unscopedDirectInstanceRequestRepresentationFactory.create(binding));
+        componentImplementation.compilerMode().isExperimentalMergedMode()
+            ? experimentalSwitchingProviders.newFrameworkInstanceCreationExpression(
+                binding, unscopedDirectInstanceRequestRepresentationFactory.create(binding))
+            : switchingProviders.newFrameworkInstanceCreationExpression(
+                binding, unscopedDirectInstanceRequestRepresentationFactory.create(binding));
     this.frameworkInstanceSupplier =
         new FrameworkFieldInitializer(
             componentImplementation, binding, scope(binding, frameworkInstanceCreationExpression));

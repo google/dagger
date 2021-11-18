@@ -51,11 +51,13 @@ final class SetRequestRepresentation extends RequestRepresentation {
   private final ComponentRequestRepresentations componentRequestRepresentations;
   private final DaggerTypes types;
   private final DaggerElements elements;
+  private final boolean isExperimentalMergedMode;
 
   @AssistedInject
   SetRequestRepresentation(
       @Assisted ProvisionBinding binding,
       BindingGraph graph,
+      ComponentImplementation componentImplementation,
       ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types,
       DaggerElements elements) {
@@ -64,6 +66,8 @@ final class SetRequestRepresentation extends RequestRepresentation {
     this.componentRequestRepresentations = componentRequestRepresentations;
     this.types = types;
     this.elements = elements;
+    this.isExperimentalMergedMode =
+        componentImplementation.compilerMode().isExperimentalMergedMode();
   }
 
   @Override
@@ -141,7 +145,15 @@ final class SetRequestRepresentation extends RequestRepresentation {
       DependencyRequest dependency, ClassName requestingClass) {
     RequestRepresentation bindingExpression =
         componentRequestRepresentations.getRequestRepresentation(bindingRequest(dependency));
-    CodeBlock expression = bindingExpression.getDependencyExpression(requestingClass).codeBlock();
+    CodeBlock expression =
+        isExperimentalMergedMode
+            ? componentRequestRepresentations
+                .getExperimentalSwitchingProviderDependencyRepresentation(
+                    bindingRequest(dependency))
+                .getDependencyExpression(dependency.kind(), binding)
+                .codeBlock()
+            : bindingExpression.getDependencyExpression(requestingClass).codeBlock();
+
     // TODO(b/211774331): Type casting should be Set after contributions to Set multibinding are
     // limited to be Set.
     // Add a cast to "(Collection)" when the contribution is a raw "Provider" type because the

@@ -17,12 +17,15 @@
 package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.MEMBERS_INJECTION_METHOD;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -52,6 +55,7 @@ import javax.lang.model.type.TypeMirror;
 @PerComponentImplementation
 final class MembersInjectionMethods {
   private final Map<Key, Expression> injectMethodExpressions = new LinkedHashMap<>();
+  private final Map<Key, Expression> experimentalInjectMethodExpressions = new LinkedHashMap<>();
   private final ComponentImplementation componentImplementation;
   private final ComponentRequestRepresentations bindingExpressions;
   private final BindingGraph graph;
@@ -86,7 +90,7 @@ final class MembersInjectionMethods {
             : graph.localContributionBinding(key).get();
     Expression expression =
         reentrantComputeIfAbsent(
-            injectMethodExpressions, key, k -> injectMethodExpression(binding));
+            injectMethodExpressions, key, k -> injectMethodExpression(binding, false));
     ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
     return Expression.create(
         expression.type(),
@@ -99,8 +103,32 @@ final class MembersInjectionMethods {
                 instance));
   }
 
-  private Expression injectMethodExpression(Binding binding) {
-    ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
+  /**
+   * Returns the members injection {@link Expression} for the given {@link Key}, creating it if
+   * necessary.
+   */
+  Expression getInjectExpressionExperimental(
+      ProvisionBinding provisionBinding, CodeBlock instance, ClassName requestingClass) {
+    checkState(
+        componentImplementation.compilerMode().isExperimentalMergedMode(),
+        "Compiler mode should be experimentalMergedMode!");
+    Expression expression =
+        reentrantComputeIfAbsent(
+            experimentalInjectMethodExpressions,
+            provisionBinding.key(),
+            k -> injectMethodExpression(provisionBinding, true));
+    return Expression.create(
+        expression.type(), CodeBlock.of("$L($L, dependencies)", expression.codeBlock(), instance));
+  }
+
+  private Expression injectMethodExpression(Binding binding, boolean useStaticInjectionMethod) {
+    // TODO(wanyingd): move Switching Providers and injection methods to Shard classes to avoid
+    // exceeding component class constant pool limit.
+    // Add to Component Shard so that is can be accessible from Switching Providers.
+    ShardImplementation shardImplementation =
+        useStaticInjectionMethod
+            ? componentImplementation.getComponentShard()
+            : componentImplementation.shardImplementation(binding);
     TypeMirror keyType = binding.key().type().java();
     TypeMirror membersInjectedType =
         isTypeAccessibleFrom(keyType, shardImplementation.name().packageName())
@@ -113,10 +141,16 @@ final class MembersInjectionMethods {
     String methodName = shardImplementation.getUniqueMethodName("inject" + bindingTypeName);
     ParameterSpec parameter = ParameterSpec.builder(membersInjectedTypeName, "instance").build();
     MethodSpec.Builder methodBuilder =
-        methodBuilder(methodName)
-            .addModifiers(PRIVATE)
-            .returns(membersInjectedTypeName)
-            .addParameter(parameter);
+        useStaticInjectionMethod
+            ? methodBuilder(methodName)
+                .addModifiers(PRIVATE, STATIC)
+                .returns(membersInjectedTypeName)
+                .addParameter(parameter)
+                .addParameter(Object[].class, "dependencies")
+            : methodBuilder(methodName)
+                .addModifiers(PRIVATE)
+                .returns(membersInjectedTypeName)
+                .addParameter(parameter);
     TypeElement canIgnoreReturnValue =
         elements.getTypeElement("com.google.errorprone.annotations.CanIgnoreReturnValue");
     if (canIgnoreReturnValue != null) {
@@ -130,8 +164,13 @@ final class MembersInjectionMethods {
             instance,
             membersInjectedType,
             request ->
-                bindingExpressions
-                    .getDependencyArgumentExpression(request, shardImplementation.name())
+                (useStaticInjectionMethod
+                        ? bindingExpressions
+                            .getExperimentalSwitchingProviderDependencyRepresentation(
+                                bindingRequest(request))
+                            .getDependencyExpression(request.kind(), (ProvisionBinding) binding)
+                        : bindingExpressions.getDependencyArgumentExpression(
+                            request, shardImplementation.name()))
                     .codeBlock(),
             types,
             metadataUtil));

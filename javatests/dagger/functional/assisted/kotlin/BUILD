@@ -25,6 +25,7 @@ kt_jvm_library(
     srcs = ["KotlinAssistedInjectionClasses.kt"],
     deps = [
         "//:dagger_with_compiler",
+        "//third_party/java/auto:factory",
     ],
 )
 

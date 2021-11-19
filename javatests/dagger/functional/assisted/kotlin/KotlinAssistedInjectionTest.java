@@ -33,6 +33,7 @@ public final class KotlinAssistedInjectionTest {
     FooDataFactory fooDataFactory();
 
     BarManager.Factory barManagerFactory();
+
   }
 
   @Test

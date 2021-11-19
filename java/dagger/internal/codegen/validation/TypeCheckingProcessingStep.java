@@ -61,11 +61,8 @@ public abstract class TypeCheckingProcessingStep<E extends XElement> implements 
                 // TODO(b/201479062): It's inefficient to require validation of the entire enclosing
                 //  type, we should try to remove this and handle any additional validation into the
                 //  steps that need it.
-                if (elementValidator.validateEnclosingType(element)) {
-                  process((E) element, annotations);
-                } else {
-                  deferredElements.add(element);
-                }
+                elementValidator.validateEnclosingType(element);
+                process((E) element, annotations);
               } catch (TypeNotPresentException e) {
                 deferredElements.add(element);
               }

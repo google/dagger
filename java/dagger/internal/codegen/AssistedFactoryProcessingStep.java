@@ -62,6 +62,7 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.validation.EnclosingTypeElementValidator;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
 import dagger.internal.codegen.xprocessing.MethodSpecs;
@@ -79,6 +80,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final BindingFactory bindingFactory;
+  private final EnclosingTypeElementValidator elementValidator;
 
   @Inject
   AssistedFactoryProcessingStep(
@@ -87,13 +89,15 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
       SourceVersion sourceVersion,
       DaggerElements elements,
       DaggerTypes types,
-      BindingFactory bindingFactory) {
+      BindingFactory bindingFactory,
+      EnclosingTypeElementValidator elementValidator) {
     this.messager = messager;
     this.filer = filer;
     this.sourceVersion = sourceVersion;
     this.elements = elements;
     this.types = types;
     this.bindingFactory = bindingFactory;
+    this.elementValidator = elementValidator;
   }
 
   @Override
@@ -143,6 +147,12 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
 
       for (XMethodElement method : abstractFactoryMethods) {
         XType returnType = method.asMemberOf(factory.getType()).getReturnType();
+        // The default superficial validation only applies to the @AssistedFactory-annotated
+        // element, so we have to manually check the superficial validation  of the @AssistedInject
+        // element before using it to ensure it's ready for processing.
+        if (isDeclared(returnType)) {
+          elementValidator.validateEnclosingType(returnType.getTypeElement());
+        }
         if (!isAssistedInjectionType(returnType)) {
           report.addError(
               String.format(

@@ -15,9 +15,12 @@ util/install-local-snapshot.sh
 pushd examples/maven && mvn compile && popd
 
 # Run local gradle tests
-util/run-local-gradle-tests.sh
-util/run-local-gradle-android-tests.sh "4.1.0"
-util/run-local-gradle-android-tests.sh "4.2.0"
-util/run-local-gradle-android-tests.sh "7.0.0"
+util/run-local-gradle-tests.sh "java/dagger/hilt/android/plugin"
+util/run-local-gradle-tests.sh "javatests/artifacts/dagger/simple"
+util/run-local-gradle-tests.sh "javatests/artifacts/dagger/simpleKotlin"
+
+util/run-local-gradle-android-tests.sh "javatests/artifacts/dagger-android/simple" "4.1.0"
+util/run-local-gradle-android-tests.sh "javatests/artifacts/hilt-android/simple" "4.2.0"
+util/run-local-gradle-android-tests.sh "javatests/artifacts/hilt-android/simpleKotlin" "7.0.0"
 
 

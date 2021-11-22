@@ -73,6 +73,25 @@ jobs:
           rm -rf $(bazel info repository_cache)
           rm -rf ~/.cache/bazel/*/*/external/
         shell: bash
+  gradle-plugin-test:
+    name: 'Hilt Gradle plugin tests'
+    needs: validate-latest-dagger-version
+    runs-on: ubuntu-latest
+    steps:
+    - name: 'Check out repository'
+      uses: actions/checkout@v2
+    - name: 'Cache Gradle files'
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    - name: 'Gradle Java local tests'
+      run: ./util/run-local-gradle-tests.sh java/dagger/hilt/android/plugin
+      shell: bash
   bazel-test:
     name: 'Bazel tests'
     needs: validate-latest-dagger-version
@@ -129,9 +148,15 @@ jobs:
           rm -rf ~/.cache/bazel/*/*/external/
         shell: bash
   artifact-java-local-tests:
-    name: 'Artifact Java local tests'
+    name: 'Artifact Java local tests - ${{ matrix.gradleProject }}'
     needs: bazel-build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        gradleProject: [
+            "javatests/artifacts/dagger/simple",
+            "javatests/artifacts/dagger/simpleKotlin"
+        ]
     steps:
     - name: 'Check out repository'
       uses: actions/checkout@v2
@@ -150,7 +175,7 @@ jobs:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
     - name: 'Gradle Java local tests'
-      run: ./util/run-local-gradle-tests.sh
+      run: ./util/run-local-gradle-tests.sh ${{ matrix.gradleProject }}
       shell: bash
   artifact-android-local-tests:
     name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
@@ -186,11 +211,17 @@ jobs:
           name: tests-reports-agp-${{ matrix.agp }}
           path: ${{ github.workspace }}/**/build/reports/tests/*
   artifact-android-emulator-tests:
-    name: 'Artifact Android emulator tests (API 30)'
+    name: 'Artifact Android emulator tests (API 30) - ${{ matrix.gradleProject }}'
     needs: bazel-build
     # It's recommended to run emulator tests on macOS
     # See https://github.com/marketplace/actions/android-emulator-runner
     runs-on: macos-latest
+    strategy:
+      matrix:
+        gradleProject: [
+            "javatests/artifacts/hilt-android/simple",
+            "javatests/artifacts/hilt-android/simpleKotlin"
+        ]
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2
@@ -214,7 +245,7 @@ jobs:
         with:
           api-level: 30
           target: google_apis
-          script: ./util/run-local-emulator-tests.sh
+          script: ./util/run-local-emulator-tests.sh ${{ matrix.gradleProject }}
       - name: 'Upload test reports (API 30)'
         if: ${{ always() }}
         uses: actions/upload-artifact@v2
@@ -225,7 +256,7 @@ jobs:
     name: 'Publish snapshot'
     # TODO(bcorso): Consider also waiting on artifact-android-emulator-tests
     # and artifact-android-emulator-legacy-api-tests after checking flakiness.
-    needs: [bazel-test, artifact-java-local-tests, artifact-android-local-tests]
+    needs: [gradle-plugin-test, bazel-test, artifact-java-local-tests, artifact-android-local-tests]
     if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
@@ -327,7 +358,7 @@ jobs:
     # We only run this on master push (essentially a postsubmit) since we
     # don't want this job to prevent merges
     if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
-    needs: bazel-build
+    needs: validate-latest-dagger-version
     runs-on: ubuntu-latest
     steps:
     - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'

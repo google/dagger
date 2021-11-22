@@ -2,13 +2,8 @@
 
 set -ex
 
-readonly GRADLE_PROJECTS=(
-    "java/dagger/hilt/android/plugin"
-    "javatests/artifacts/dagger/simple"
-    "javatests/artifacts/dagger/simpleKotlin"
-)
-for project in "${GRADLE_PROJECTS[@]}"; do
-    echo "Running gradle tests for $project"
-    ./$project/gradlew -p $project build --no-daemon --stacktrace
-    ./$project/gradlew -p $project test  --continue --no-daemon --stacktrace
-done
+readonly GRADLE_PROJECT=$1
+
+echo "Running gradle tests for $GRADLE_PROJECT"
+./$GRADLE_PROJECT/gradlew -p $GRADLE_PROJECT build --no-daemon --stacktrace
+./$GRADLE_PROJECT/gradlew -p $GRADLE_PROJECT test  --continue --no-daemon --stacktrace

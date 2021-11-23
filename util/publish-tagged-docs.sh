@@ -1,4 +1,5 @@
 #!/bin/bash
+# TODO(bcorso): Consider sharing this script with utils/generate-latest-docs.sh
 
 set -eux
 
@@ -21,8 +22,15 @@ fi
 
 # Publish javadocs to gh-pages
 bazel build //:user-docs.jar
-git clone --quiet --branch gh-pages \
-    https://github.com/google/dagger gh-pages > /dev/null
+
+# If a token exists, then use the token to clone the repo. This allows our
+# automated workflows to commit without manually authenticating.
+if [[ ! -z "$GH_TOKEN" ]]; then
+  git clone --quiet --branch=gh-pages https://x-access-token:${GH_TOKEN}@github.com/google/dagger gh-pages > /dev/null
+else
+  git clone --quiet --branch=gh-pages https://github.com/google/dagger gh-pages > /dev/null
+fi
+
 cd gh-pages
 unzip ../bazel-bin/user-docs.jar -d api/$VERSION_NAME
 rm -rf api/$VERSION_NAME/META-INF/

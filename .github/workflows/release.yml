@@ -253,6 +253,8 @@ jobs:
       - name: 'Publish tagged docs'
         run: util/publish-tagged-docs.sh ${{ env.DAGGER_RELEASE_VERSION }}
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: 'Clean bazel cache'
         # According to the documentation, we should be able to exclude these via
         # the actions/cache path, e.g. "!~/.cache/bazel/*/*/external/" but that

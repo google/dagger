@@ -27,7 +27,6 @@ import dagger.spi.model.BindingKind;
 import dagger.spi.model.Key;
 import java.util.Comparator;
 import java.util.Optional;
-import javax.lang.model.element.Element;
 
 /** An object that declares or specifies a binding. */
 public abstract class BindingDeclaration {
@@ -61,7 +60,7 @@ public abstract class BindingDeclaration {
   public abstract Key key();
 
   /**
-   * The {@link Element} that declares this binding. Absent for {@linkplain BindingKind binding
+   * The {@link XElement} that declares this binding. Absent for {@linkplain BindingKind binding
    * kinds} that are not always declared by exactly one element.
    *
    * <p>For example, consider {@link BindingKind#MULTIBOUND_SET}. A component with many

@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
+import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.compat.XConverters;
@@ -99,7 +100,7 @@ public final class MethodSignatureFormatter extends Formatter<ExecutableElement>
    * Formats an ExecutableElement as if it were contained within the container, if the container is
    * present.
    */
-  public String format(XMethodElement method, Optional<XType> container) {
+  public String format(XExecutableElement method, Optional<XType> container) {
     return format(toJavac(method), container.map(XConverters::toJavac).map(MoreTypes::asDeclared));
   }
 

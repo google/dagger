@@ -30,7 +30,6 @@ runs:
         key: ${{ runner.os }}-bazel-test-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-bazel-test-
-          ${{ runner.os }}-bazel-build-
     - name: 'Cache Gradle files'
       uses: actions/cache@v2
       with:

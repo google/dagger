@@ -58,7 +58,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -256,7 +255,7 @@ public abstract class ComponentDescriptor {
   abstract ImmutableBiMap<ComponentMethodDescriptor, ComponentDescriptor>
       childComponentsDeclaredByBuilderEntryPoints();
 
-  private final Supplier<ImmutableMap<TypeElement, ComponentDescriptor>>
+  private final Supplier<ImmutableMap<XTypeElement, ComponentDescriptor>>
       childComponentsByBuilderType =
           Suppliers.memoize(
               () ->
@@ -264,11 +263,11 @@ public abstract class ComponentDescriptor {
                       .filter(child -> child.creatorDescriptor().isPresent())
                       .collect(
                           toImmutableMap(
-                              child -> toJavac(child.creatorDescriptor().get().typeElement()),
+                              child -> child.creatorDescriptor().get().typeElement(),
                               child -> child)));
 
   /** Returns the child component with the given builder type. */
-  final ComponentDescriptor getChildComponentWithBuilderType(TypeElement builderType) {
+  final ComponentDescriptor getChildComponentWithBuilderType(XTypeElement builderType) {
     return checkNotNull(
         childComponentsByBuilderType.get().get(builderType),
         "no child component found for builder type %s",

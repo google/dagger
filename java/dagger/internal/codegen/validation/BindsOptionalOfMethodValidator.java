@@ -33,7 +33,6 @@ import javax.inject.Inject;
 
 /** A validator for {@link dagger.BindsOptionalOf} methods. */
 final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
-  private final DaggerTypes types;
   private final InjectionAnnotations injectionAnnotations;
 
   @Inject
@@ -51,7 +50,6 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
         NO_MULTIBINDINGS,
         NO_SCOPING,
         injectionAnnotations);
-    this.types = types;
     this.injectionAnnotations = injectionAnnotations;
   }
 
@@ -72,7 +70,7 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
     protected void checkKeyType(XType keyType) {
       super.checkKeyType(keyType);
       if (isValidImplicitProvisionKey(
-              injectionAnnotations.getQualifiers(method).stream().findFirst(), keyType, types)
+              injectionAnnotations.getQualifiers(method).stream().findFirst(), keyType)
           && !injectedConstructors(keyType.getTypeElement()).isEmpty()) {
         report.addError(
             "@BindsOptionalOf methods cannot return unqualified types that have an @Inject-"

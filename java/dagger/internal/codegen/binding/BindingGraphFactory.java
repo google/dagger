@@ -41,7 +41,6 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.MoreTypes;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -495,8 +494,8 @@ public final class BindingGraphFactory implements ClearableCache {
       checkArgument(subcomponentCreatorBinding.kind().equals(SUBCOMPONENT_CREATOR));
       Resolver owningResolver = getOwningResolver(subcomponentCreatorBinding).get();
 
-      TypeElement builderType =
-          MoreTypes.asTypeElement(subcomponentCreatorBinding.key().type().java());
+      XTypeElement builderType =
+          subcomponentCreatorBinding.key().type().xprocessing().getTypeElement();
       owningResolver.subcomponentsToResolve.add(
           owningResolver.componentDescriptor.getChildComponentWithBuilderType(builderType));
     }

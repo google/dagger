@@ -23,13 +23,13 @@ import static dagger.internal.codegen.base.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.base.RequestKinds.canBeSatisfiedByProductionBinding;
 import static dagger.internal.codegen.binding.DependencyRequestFormatter.DOUBLE_INDENT;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
+import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
 import dagger.internal.codegen.binding.InjectBindingRegistry;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
@@ -45,23 +45,19 @@ import dagger.spi.model.Key;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.lang.model.type.TypeKind;
 
 /** Reports errors for missing bindings. */
 final class MissingBindingValidator implements BindingGraphPlugin {
 
-  private final DaggerTypes types;
   private final InjectBindingRegistry injectBindingRegistry;
   private final DependencyRequestFormatter dependencyRequestFormatter;
   private final DiagnosticMessageGenerator.Factory diagnosticMessageGeneratorFactory;
 
   @Inject
   MissingBindingValidator(
-      DaggerTypes types,
       InjectBindingRegistry injectBindingRegistry,
       DependencyRequestFormatter dependencyRequestFormatter,
       DiagnosticMessageGenerator.Factory diagnosticMessageGeneratorFactory) {
-    this.types = types;
     this.injectBindingRegistry = injectBindingRegistry;
     this.dependencyRequestFormatter = dependencyRequestFormatter;
     this.diagnosticMessageGeneratorFactory = diagnosticMessageGeneratorFactory;
@@ -109,13 +105,10 @@ final class MissingBindingValidator implements BindingGraphPlugin {
     Key key = missingBinding.key();
     StringBuilder errorMessage = new StringBuilder();
     // Wildcards should have already been checked by DependencyRequestValidator.
-    verify(
-        !key.type().java().getKind().equals(TypeKind.WILDCARD),
-        "unexpected wildcard request: %s",
-        key);
+    verify(!isWildcard(key.type().xprocessing()), "unexpected wildcard request: %s", key);
     // TODO(ronshapiro): replace "provided" with "satisfied"?
     errorMessage.append(key).append(" cannot be provided without ");
-    if (isValidImplicitProvisionKey(key, types)) {
+    if (isValidImplicitProvisionKey(key)) {
       errorMessage.append("an @Inject constructor or ");
     }
     errorMessage.append("an @Provides-"); // TODO(dpb): s/an/a

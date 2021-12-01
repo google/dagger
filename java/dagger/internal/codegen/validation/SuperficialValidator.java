@@ -31,14 +31,14 @@ import javax.lang.model.element.TypeElement;
 
 /** Validates enclosing type elements in a round. */
 @Singleton
-public final class EnclosingTypeElementValidator implements ClearableCache {
+public final class SuperficialValidator implements ClearableCache {
 
   private final Map<TypeElement, Boolean> validatedTypeElements = new HashMap<>();
 
   @Inject
-  EnclosingTypeElementValidator() {}
+  SuperficialValidator() {}
 
-  public void validateEnclosingType(XElement element) {
+  public void throwIfNearestEnclosingTypeNotValid(XElement element) {
     Element javaElement = XConverters.toJavac(element);
     if (!validatedTypeElements.computeIfAbsent(
         closestEnclosingTypeElement(javaElement), SuperficialValidation::validateElement)) {

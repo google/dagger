@@ -39,7 +39,7 @@ import javax.inject.Inject;
  */
 public abstract class TypeCheckingProcessingStep<E extends XElement> implements XProcessingStep {
 
-  @Inject EnclosingTypeElementValidator elementValidator;
+  @Inject SuperficialValidator superficialValidator;
 
   @Override
   public final ImmutableSet<String> annotations() {
@@ -61,7 +61,7 @@ public abstract class TypeCheckingProcessingStep<E extends XElement> implements 
                 // TODO(b/201479062): It's inefficient to require validation of the entire enclosing
                 //  type, we should try to remove this and handle any additional validation into the
                 //  steps that need it.
-                elementValidator.validateEnclosingType(element);
+                superficialValidator.throwIfNearestEnclosingTypeNotValid(element);
                 process((E) element, annotations);
               } catch (TypeNotPresentException e) {
                 deferredElements.add(element);

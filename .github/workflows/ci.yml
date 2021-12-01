@@ -99,6 +99,9 @@ jobs:
         with:
           distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
           java-version: '${{ env.USE_JAVA_VERSION }}'
+          server-id: sonatype-nexus-snapshots
+          server-username: CI_DEPLOY_USERNAME
+          server-password: CI_DEPLOY_PASSWORD
       - name: 'Check out repository'
         uses: actions/checkout@v2
       - name: 'Cache local Maven repository'
@@ -132,7 +135,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - name: 'Publish latest snapshot'
-        run: ./util/publish-snapshot-on-commit.sh
+        run: |
+          util/deploy-all.sh \
+            "deploy:deploy-file" \
+            "HEAD-SNAPSHOT" \
+            "-DrepositoryId=sonatype-nexus-snapshots" \
+            "-Durl=https://oss.sonatype.org/content/repositories/snapshots"
         shell: bash
         env:
           CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}

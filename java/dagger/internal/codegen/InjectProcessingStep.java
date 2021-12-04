@@ -38,6 +38,8 @@ import javax.inject.Inject;
  * annotation.
  */
 // TODO(gak): add some error handling for bad source files
+// TODO(bcorso): Add support in TypeCheckingProcessingStep to perform custom validation and use
+// SuperficialInjectValidator rather than SuperficialValidator.
 final class InjectProcessingStep extends TypeCheckingProcessingStep<XElement> {
   private final InjectBindingRegistry injectBindingRegistry;
   private final Set<XElement> processedElements = Sets.newHashSet();

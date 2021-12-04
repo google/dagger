@@ -41,6 +41,7 @@ kt_jvm_library(
         ":java_qualifier",
         "//:dagger_with_compiler",
         "//javatests/dagger/functional/kotlin/processor:annotation",
+        "//third_party/java/auto:factory",
     ],
 )
 

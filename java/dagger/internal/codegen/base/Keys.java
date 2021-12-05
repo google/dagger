@@ -96,10 +96,7 @@ public final class Keys {
       }
     }
 
-    // The "definedType" is the type we get from the element itself, as opposed to the type the user
-    // declared. This "definedType" includes any type parameters that appear on the element, whereas
-    // the "declaredType" may contain resolved or raw types as declared by the user.
-    DeclaredType definedType = asDeclared(declaredType.asElement().asType());
+    DeclaredType definedType = declaredType;
 
     // Also validate that the key is not the erasure of a generic type.
     // If it is, that means the user referred to Foo<T> as just 'Foo',

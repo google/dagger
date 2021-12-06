@@ -70,7 +70,8 @@ class AndroidEntryPointClassVisitor(
     newSuperclassName =
       packageName + "/Hilt_" + className.replace("$", "_")
     oldSuperclassName = superName ?: error { "Superclass of $name is null!" }
-    super.visit(version, access, name, signature, newSuperclassName, interfaces)
+    val newSignature = signature?.replaceFirst(oldSuperclassName, newSuperclassName)
+    super.visit(version, access, name, newSignature, newSuperclassName, interfaces)
   }
 
   override fun visitMethod(

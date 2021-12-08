@@ -22,6 +22,7 @@ import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPrese
 import androidx.room.compiler.processing.XTypeElement;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.validation.DaggerSuperficialValidation.ValidationException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
@@ -53,12 +54,19 @@ public final class SuperficialInjectValidator implements ClearableCache {
     // TODO(bcorso): Call the #validate() methods from XProcessing instead once we have validation
     // for types other than elements, e.g. annotations, annotation values, and types.
     TypeElement injectTypeElement = toJavac(xInjectTypeElement);
-    return DaggerSuperficialValidation.validateType(injectTypeElement.asType())
-        && DaggerSuperficialValidation.validateAnnotations(injectTypeElement.getAnnotationMirrors())
-        && DaggerSuperficialValidation.validateType(injectTypeElement.getSuperclass())
-        && injectTypeElement.getEnclosedElements().stream()
+    try {
+      return DaggerSuperficialValidation.validateType("class type", injectTypeElement.asType())
+          && DaggerSuperficialValidation.validateAnnotations(
+              injectTypeElement.getAnnotationMirrors())
+          && DaggerSuperficialValidation.validateType(
+              "superclass type", injectTypeElement.getSuperclass())
+          && injectTypeElement.getEnclosedElements().stream()
             .filter(element -> isAnnotationPresent(element, TypeNames.INJECT))
             .allMatch(DaggerSuperficialValidation::validateElement);
+    } catch (RuntimeException exception) {
+      throw ValidationException.create(
+          "SuperficialInjectValidator.validate: " + injectTypeElement, exception);
+    }
   }
 
   @Override

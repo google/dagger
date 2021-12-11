@@ -108,6 +108,7 @@ def _GenTests(
     if functional:
         for (variant_name, extra_javacopts) in BUILD_VARIANTS.items():
             variant_javacopts = (javacopts or []) + extra_javacopts
+
             _gen_tests(
                 library_rule_type,
                 test_rule_type,

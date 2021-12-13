@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.validation.DaggerSuperficialValidation.ValidationException;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
@@ -64,6 +65,16 @@ public abstract class TypeCheckingProcessingStep<E extends XElement> implements 
                 superficialValidator.throwIfNearestEnclosingTypeNotValid(element);
                 process((E) element, annotations);
               } catch (TypeNotPresentException e) {
+                deferredElements.add(element);
+              } catch (ValidationException validationException) {
+                if (validationException.fromUnexpectedThrowable()) {
+                  // Rethrow since the exception was created from an unexpected throwable so
+                  // deferring to another round is unlikely to help.
+                  throw validationException;
+                }
+                // TODO(bcorso): Pass the ValidationException information to XProcessing so that we
+                // can include it in the error message once we've updated XProcessing to allow it.
+                // For now, we just return the element like normal.
                 deferredElements.add(element);
               }
             });

@@ -29,23 +29,24 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.element.TypeElement;
 
-
 /** Validates inject types in a round. */
 @Singleton
 public final class SuperficialInjectValidator implements ClearableCache {
 
-  private final Map<XTypeElement, Boolean> validatedTypeElements = new HashMap<>();
+  private final Map<XTypeElement, ValidationException> validatedTypeElements = new HashMap<>();
 
   @Inject
   SuperficialInjectValidator() {}
 
   public void throwIfNotValid(XTypeElement injectTypeElement) {
-    if (!validatedTypeElements.computeIfAbsent(injectTypeElement, this::validate)) {
-      throw new TypeNotPresentException(injectTypeElement.toString(), null);
+    ValidationException validationException =
+        validatedTypeElements.computeIfAbsent(injectTypeElement, this::validate);
+    if (validationException != null) {
+      throw validationException;
     }
   }
 
-  private boolean validate(XTypeElement xInjectTypeElement) {
+  private ValidationException validate(XTypeElement xInjectTypeElement) {
     // The inject validator inspects:
     //   1. the type itself
     //   2. the type's annotations (needed for scoping)
@@ -55,17 +56,16 @@ public final class SuperficialInjectValidator implements ClearableCache {
     // for types other than elements, e.g. annotations, annotation values, and types.
     TypeElement injectTypeElement = toJavac(xInjectTypeElement);
     try {
-      return DaggerSuperficialValidation.validateType("class type", injectTypeElement.asType())
-          && DaggerSuperficialValidation.validateAnnotations(
-              injectTypeElement.getAnnotationMirrors())
-          && DaggerSuperficialValidation.validateType(
-              "superclass type", injectTypeElement.getSuperclass())
-          && injectTypeElement.getEnclosedElements().stream()
-            .filter(element -> isAnnotationPresent(element, TypeNames.INJECT))
-            .allMatch(DaggerSuperficialValidation::validateElement);
-    } catch (RuntimeException exception) {
-      throw ValidationException.create(
-          "SuperficialInjectValidator.validate: " + injectTypeElement, exception);
+      DaggerSuperficialValidation.validateType("class type", injectTypeElement.asType());
+      DaggerSuperficialValidation.validateAnnotations(injectTypeElement.getAnnotationMirrors());
+      DaggerSuperficialValidation.validateType(
+          "superclass type", injectTypeElement.getSuperclass());
+      injectTypeElement.getEnclosedElements().stream()
+          .filter(element -> isAnnotationPresent(element, TypeNames.INJECT))
+          .forEach(DaggerSuperficialValidation::validateElement);
+      return null;
+    } catch (ValidationException validationException) {
+      return validationException.append("InjectValidator.validate: " + injectTypeElement);
     }
   }
 

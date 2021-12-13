@@ -23,7 +23,6 @@ import com.google.auto.common.MoreTypes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.StreamSupport;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
@@ -55,52 +54,61 @@ public final class DaggerSuperficialValidation {
   /**
    * Returns true if all of the given elements return true from {@link #validateElement(Element)}.
    */
-  public static boolean validateElements(Iterable<? extends Element> elements) {
-    return StreamSupport.stream(elements.spliterator(), false)
-        .allMatch(DaggerSuperficialValidation::validateElement);
+  public static void validateElements(Iterable<? extends Element> elements) {
+    for (Element element : elements) {
+      validateElement(element);
+    }
   }
 
-  private static final ElementVisitor<Boolean, Void> ELEMENT_VALIDATING_VISITOR =
-      new AbstractElementVisitor8<Boolean, Void>() {
+  private static final ElementVisitor<Void, Void> ELEMENT_VALIDATING_VISITOR =
+      new AbstractElementVisitor8<Void, Void>() {
         @Override
-        public Boolean visitPackage(PackageElement e, Void p) {
+        public Void visitPackage(PackageElement e, Void p) {
           // don't validate enclosed elements because it will return types in the package
-          return validateAnnotations(e.getAnnotationMirrors());
+          validateAnnotations(e.getAnnotationMirrors());
+          return null;
         }
 
         @Override
-        public Boolean visitType(TypeElement e, Void p) {
-          return isValidBaseElement(e)
-              && validateElements(e.getTypeParameters())
-              && validateTypes("interface", e.getInterfaces())
-              && validateType("superclass", e.getSuperclass());
+        public Void visitType(TypeElement e, Void p) {
+          validateBaseElement(e);
+          validateElements(e.getTypeParameters());
+          validateTypes("interface", e.getInterfaces());
+          validateType("superclass", e.getSuperclass());
+          return null;
         }
 
         @Override
-        public Boolean visitVariable(VariableElement e, Void p) {
-          return isValidBaseElement(e);
+        public Void visitVariable(VariableElement e, Void p) {
+          validateBaseElement(e);
+          return null;
         }
 
         @Override
-        public Boolean visitExecutable(ExecutableElement e, Void p) {
+        public Void visitExecutable(ExecutableElement e, Void p) {
           AnnotationValue defaultValue = e.getDefaultValue();
-          return isValidBaseElement(e)
-              && (defaultValue == null || validateAnnotationValue(defaultValue, e.getReturnType()))
-              && validateType("return type", e.getReturnType())
-              && validateTypes("thrown type", e.getThrownTypes())
-              && validateElements(e.getTypeParameters())
-              && validateElements(e.getParameters());
+          validateBaseElement(e);
+          if (defaultValue != null) {
+            validateAnnotationValue(defaultValue, e.getReturnType());
+          }
+          validateType("return type", e.getReturnType());
+          validateTypes("thrown type", e.getThrownTypes());
+          validateElements(e.getTypeParameters());
+          validateElements(e.getParameters());
+          return null;
         }
 
         @Override
-        public Boolean visitTypeParameter(TypeParameterElement e, Void p) {
-          return isValidBaseElement(e) && validateTypes("bound type", e.getBounds());
+        public Void visitTypeParameter(TypeParameterElement e, Void p) {
+          validateBaseElement(e);
+          validateTypes("bound type", e.getBounds());
+          return null;
         }
 
         @Override
-        public Boolean visitUnknown(Element e, Void p) {
+        public Void visitUnknown(Element e, Void p) {
           // just assume that unknown elements are OK
-          return true;
+          return null;
         }
       };
 
@@ -110,28 +118,25 @@ public final class DaggerSuperficialValidation {
    * are fully defined. For other element kinds, it means that types referenced by the element,
    * anything it contains, and any of its annotations element are all defined.
    */
-  public static boolean validateElement(Element element) {
+  public static void validateElement(Element element) {
     try {
-      return element.accept(ELEMENT_VALIDATING_VISITOR, null);
+      element.accept(ELEMENT_VALIDATING_VISITOR, null);
     } catch (RuntimeException exception) {
-      throw ValidationException.create(
-          String.format("%s element: %s", element.getKind(), element), exception);
+      throw ValidationException.from(exception)
+          .append(String.format("%s element: %s", element.getKind(), element));
     }
   }
 
-  private static boolean isValidBaseElement(Element e) {
-    return validateType(e.getKind() + " type", e.asType())
-        && validateAnnotations(e.getAnnotationMirrors())
-        && validateElements(e.getEnclosedElements());
+  private static void validateBaseElement(Element e) {
+    validateType(e.getKind() + " type", e.asType());
+    validateAnnotations(e.getAnnotationMirrors());
+    validateElements(e.getEnclosedElements());
   }
 
-  private static boolean validateTypes(String desc, Iterable<? extends TypeMirror> types) {
+  private static void validateTypes(String desc, Iterable<? extends TypeMirror> types) {
     for (TypeMirror type : types) {
-      if (!validateType(desc, type)) {
-        return false;
-      }
+      validateType(desc, type);
     }
-    return true;
   }
 
   /*
@@ -139,48 +144,56 @@ public final class DaggerSuperficialValidation {
    * an issue.  Javac turns the whole type parameter into an error type if it can't figure out the
    * bounds.
    */
-  private static final TypeVisitor<Boolean, Void> TYPE_VALIDATING_VISITOR =
-      new SimpleTypeVisitor8<Boolean, Void>() {
+  private static final TypeVisitor<Void, Void> TYPE_VALIDATING_VISITOR =
+      new SimpleTypeVisitor8<Void, Void>() {
         @Override
-        protected Boolean defaultAction(TypeMirror t, Void p) {
-          return true;
+        protected Void defaultAction(TypeMirror t, Void p) {
+          return null;
         }
 
         @Override
-        public Boolean visitArray(ArrayType t, Void p) {
-          return validateType("array component type", t.getComponentType());
+        public Void visitArray(ArrayType t, Void p) {
+          validateType("array component type", t.getComponentType());
+          return null;
         }
 
         @Override
-        public Boolean visitDeclared(DeclaredType t, Void p) {
-          return validateTypes("type argument", t.getTypeArguments());
+        public Void visitDeclared(DeclaredType t, Void p) {
+          validateTypes("type argument", t.getTypeArguments());
+          return null;
         }
 
         @Override
-        public Boolean visitError(ErrorType t, Void p) {
-          return false;
+        public Void visitError(ErrorType t, Void p) {
+          throw ValidationException.create();
         }
 
         @Override
-        public Boolean visitUnknown(TypeMirror t, Void p) {
+        public Void visitUnknown(TypeMirror t, Void p) {
           // just make the default choice for unknown types
           return defaultAction(t, p);
         }
 
         @Override
-        public Boolean visitWildcard(WildcardType t, Void p) {
+        public Void visitWildcard(WildcardType t, Void p) {
           TypeMirror extendsBound = t.getExtendsBound();
           TypeMirror superBound = t.getSuperBound();
-          return (extendsBound == null || validateType("extends bound type", extendsBound))
-              && (superBound == null || validateType("super bound type", superBound));
+          if (extendsBound != null) {
+            validateType("extends bound type", extendsBound);
+          }
+          if (superBound != null) {
+            validateType("super bound type", superBound);
+          }
+          return null;
         }
 
         @Override
-        public Boolean visitExecutable(ExecutableType t, Void p) {
-          return validateTypes("parameter type", t.getParameterTypes())
-              && validateType("return type", t.getReturnType())
-              && validateTypes("thrown type", t.getThrownTypes())
-              && validateTypes("type variable", t.getTypeVariables());
+        public Void visitExecutable(ExecutableType t, Void p) {
+          validateTypes("parameter type", t.getParameterTypes());
+          validateType("return type", t.getReturnType());
+          validateTypes("thrown type", t.getThrownTypes());
+          validateTypes("type variable", t.getTypeVariables());
+          return null;
         }
       };
 
@@ -190,188 +203,206 @@ public final class DaggerSuperficialValidation {
    * ExecutableType}, the parameter and return types must be fully defined, as must types declared
    * in a {@code throws} clause or in the bounds of any type parameters.
    */
-  public static boolean validateType(String desc, TypeMirror type) {
+  public static void validateType(String desc, TypeMirror type) {
     try {
-      return type.accept(TYPE_VALIDATING_VISITOR, null);
+      type.accept(TYPE_VALIDATING_VISITOR, null);
     } catch (RuntimeException e) {
-      throw ValidationException.create(String.format("(%s) %s: %s", type.getKind(), desc, type), e);
+      throw ValidationException.from(e)
+          .append(String.format("(%s) %s: %s", type.getKind(), desc, type));
     }
   }
 
-  public static boolean validateAnnotations(
-      Iterable<? extends AnnotationMirror> annotationMirrors) {
+  public static void validateAnnotations(Iterable<? extends AnnotationMirror> annotationMirrors) {
     for (AnnotationMirror annotationMirror : annotationMirrors) {
-      if (!validateAnnotation(annotationMirror)) {
-        return false;
-      }
+      validateAnnotation(annotationMirror);
     }
-    return true;
   }
 
-  public static boolean validateAnnotation(AnnotationMirror annotationMirror) {
+  public static void validateAnnotation(AnnotationMirror annotationMirror) {
     try {
-      return validateType("annotation type", annotationMirror.getAnnotationType())
-          && validateAnnotationValues(annotationMirror.getElementValues());
+      validateType("annotation type", annotationMirror.getAnnotationType());
+      validateAnnotationValues(annotationMirror.getElementValues());
     } catch (RuntimeException exception) {
-      throw ValidationException.create("annotation: " + annotationMirror, exception);
+      throw ValidationException.from(exception).append("annotation: " + annotationMirror);
     }
   }
 
-  public static boolean validateAnnotationValues(
+  public static void validateAnnotationValues(
       Map<? extends ExecutableElement, ? extends AnnotationValue> valueMap) {
-    return valueMap.entrySet().stream()
-        .allMatch(
-            valueEntry -> {
-              try {
-                TypeMirror expectedType = valueEntry.getKey().getReturnType();
-                return validateAnnotationValue(valueEntry.getValue(), expectedType);
-              } catch (RuntimeException exception) {
-                throw ValidationException.create(
-                    "annotation value: " + valueEntry.getKey().getSimpleName(), exception);
-              }
-            });
+    valueMap.forEach(
+        (method, annotationValue) -> {
+          try {
+            TypeMirror expectedType = method.getReturnType();
+            validateAnnotationValue(annotationValue, expectedType);
+          } catch (RuntimeException exception) {
+            throw ValidationException.from(exception)
+                .append("annotation value: " + method.getSimpleName());
+          }
+        });
   }
 
-  private static final AnnotationValueVisitor<Boolean, TypeMirror> VALUE_VALIDATING_VISITOR =
-      new SimpleAnnotationValueVisitor8<Boolean, TypeMirror>() {
+  private static final AnnotationValueVisitor<Void, TypeMirror> VALUE_VALIDATING_VISITOR =
+      new SimpleAnnotationValueVisitor8<Void, TypeMirror>() {
         @Override
-        protected Boolean defaultAction(Object o, TypeMirror expectedType) {
+        protected Void defaultAction(Object o, TypeMirror expectedType) {
           try {
-            return MoreTypes.isTypeOf(o.getClass(), expectedType);
+            validateIsTypeOf(o.getClass(), expectedType);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(
-                exceptionMessage("default", o, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("default", o, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitUnknown(AnnotationValue av, TypeMirror expectedType) {
+        public Void visitUnknown(AnnotationValue av, TypeMirror expectedType) {
           // just take the default action for the unknown
-          return defaultAction(av, expectedType);
+          defaultAction(av, expectedType);
+          return null;
         }
 
         @Override
-        public Boolean visitAnnotation(AnnotationMirror a, TypeMirror expectedType) {
+        public Void visitAnnotation(AnnotationMirror a, TypeMirror expectedType) {
           try {
-            return MoreTypes.equivalence().equivalent(a.getAnnotationType(), expectedType)
-                && validateAnnotation(a);
+            validateIsEquivalentType(a.getAnnotationType(), expectedType);
+            validateAnnotation(a);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(
-                exceptionMessage("annotation", a, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("annotation", a, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitArray(List<? extends AnnotationValue> values, TypeMirror expectedType) {
+        public Void visitArray(List<? extends AnnotationValue> values, TypeMirror expectedType) {
           try {
             if (!expectedType.getKind().equals(TypeKind.ARRAY)) {
-              return false;
+              throw ValidationException.create();
             }
             TypeMirror componentType = MoreTypes.asArray(expectedType).getComponentType();
-            return values.stream().allMatch(value -> value.accept(this, componentType));
+            for (AnnotationValue value : values) {
+              value.accept(this, componentType);
+            }
           } catch (RuntimeException exception) {
-            throw ValidationException.create(
-                exceptionMessage("array", values, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("array", values, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitEnumConstant(VariableElement enumConstant, TypeMirror expectedType) {
+        public Void visitEnumConstant(VariableElement enumConstant, TypeMirror expectedType) {
           try {
-            return MoreTypes.equivalence().equivalent(enumConstant.asType(), expectedType)
-                && validateElement(enumConstant);
+            validateIsEquivalentType(enumConstant.asType(), expectedType);
+            validateElement(enumConstant);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(
-                exceptionMessage("enumConstant", enumConstant, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("enumConstant", enumConstant, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitType(TypeMirror type, TypeMirror expectedType) {
+        public Void visitType(TypeMirror type, TypeMirror expectedType) {
           try {
             // We could check assignability here, but would require a Types instance. Since this
             // isn't really the sort of thing that shows up in a bad AST from upstream compilation
             // we ignore the expected type and just validate the type.  It might be wrong, but
             // it's valid.
-            return validateType("type", type);
+            validateType("type", type);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(
-                exceptionMessage("type", type, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("type", type, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitBoolean(boolean b, TypeMirror expectedType) {
+        public Void visitBoolean(boolean b, TypeMirror expectedType) {
           try {
-            return MoreTypes.isTypeOf(Boolean.TYPE, expectedType);
+            validateIsTypeOf(Boolean.TYPE, expectedType);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(
-                exceptionMessage("boolean", b, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("boolean", b, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitByte(byte b, TypeMirror expectedType) {
+        public Void visitByte(byte b, TypeMirror expectedType) {
           try {
-            return MoreTypes.isTypeOf(Byte.TYPE, expectedType);
+            validateIsTypeOf(Byte.TYPE, expectedType);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(exceptionMessage("byte", b, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("byte", b, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitChar(char c, TypeMirror expectedType) {
+        public Void visitChar(char c, TypeMirror expectedType) {
           try {
-            return MoreTypes.isTypeOf(Character.TYPE, expectedType);
+            validateIsTypeOf(Character.TYPE, expectedType);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(exceptionMessage("char", c, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("char", c, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitDouble(double d, TypeMirror expectedType) {
+        public Void visitDouble(double d, TypeMirror expectedType) {
           try {
-            return MoreTypes.isTypeOf(Double.TYPE, expectedType);
+            validateIsTypeOf(Double.TYPE, expectedType);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(
-                exceptionMessage("double", d, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("double", d, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitFloat(float f, TypeMirror expectedType) {
+        public Void visitFloat(float f, TypeMirror expectedType) {
           try {
-            return MoreTypes.isTypeOf(Float.TYPE, expectedType);
+            validateIsTypeOf(Float.TYPE, expectedType);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(exceptionMessage("float", f, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("float", f, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitInt(int i, TypeMirror expectedType) {
+        public Void visitInt(int i, TypeMirror expectedType) {
           try {
-            return MoreTypes.isTypeOf(Integer.TYPE, expectedType);
+            validateIsTypeOf(Integer.TYPE, expectedType);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(exceptionMessage("int", i, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("int", i, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitLong(long l, TypeMirror expectedType) {
+        public Void visitLong(long l, TypeMirror expectedType) {
           try {
-            return MoreTypes.isTypeOf(Long.TYPE, expectedType);
+            validateIsTypeOf(Long.TYPE, expectedType);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(exceptionMessage("long", l, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("long", l, expectedType));
           }
+          return null;
         }
 
         @Override
-        public Boolean visitShort(short s, TypeMirror expectedType) {
+        public Void visitShort(short s, TypeMirror expectedType) {
           try {
-            return MoreTypes.isTypeOf(Short.TYPE, expectedType);
+            validateIsTypeOf(Short.TYPE, expectedType);
           } catch (RuntimeException exception) {
-            throw ValidationException.create(exceptionMessage("short", s, expectedType), exception);
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("short", s, expectedType));
           }
+          return null;
         }
 
         private <T> String exceptionMessage(String valueType, T value, TypeMirror expectedType) {
@@ -380,25 +411,56 @@ public final class DaggerSuperficialValidation {
         }
       };
 
+  private static void validateIsTypeOf(Class<?> clazz, TypeMirror expectedType) {
+    if (!MoreTypes.isTypeOf(clazz, expectedType)) {
+      throw ValidationException.create();
+    }
+  }
+
+  private static void validateIsEquivalentType(TypeMirror type, TypeMirror expectedType) {
+    if (!MoreTypes.equivalence().equivalent(type, expectedType)) {
+      throw ValidationException.create();
+    }
+  }
+
   /**
    * A runtime exception that can be used during superficial validation to collect information about
    * unexpected exceptions during validation.
    */
   public static final class ValidationException extends RuntimeException {
-    public static ValidationException create(String message, Throwable throwable) {
-      // We only ever create one instance of the ValidationException.
-      ValidationException validationException =
-          throwable instanceof ValidationException
-              ? ((ValidationException) throwable)
-              : new ValidationException(throwable);
-      validationException.messages.add(message);
-      return validationException;
+    private static ValidationException create() {
+      return new ValidationException();
     }
 
+    private static ValidationException from(Throwable throwable) {
+      // We only ever create one instance of the ValidationException.
+      return throwable instanceof ValidationException
+          ? ((ValidationException) throwable)
+          : new ValidationException(throwable);
+    }
+
+    private final boolean fromUnexpectedThrowable;
     private final List<String> messages = new ArrayList<>();
+
+    private ValidationException() {
+      super("");
+      fromUnexpectedThrowable = false;
+    }
 
     private ValidationException(Throwable throwable) {
       super("", throwable);
+      fromUnexpectedThrowable = true;
+    }
+
+    /** Returns {@code true} if this exception was created from an unexpected throwable. */
+    public boolean fromUnexpectedThrowable() {
+      return fromUnexpectedThrowable;
+    }
+
+    /** Appends the given message and returns this instance of {@link ValidationException} */
+    public ValidationException append(String message) {
+      messages.add(message);
+      return this;
     }
 
     @Override
@@ -409,9 +471,9 @@ public final class DaggerSuperficialValidation {
     }
   }
 
-  public static boolean validateAnnotationValue(
+  public static void validateAnnotationValue(
       AnnotationValue annotationValue, TypeMirror expectedType) {
-    return annotationValue.accept(VALUE_VALIDATING_VISITOR, expectedType);
+    annotationValue.accept(VALUE_VALIDATING_VISITOR, expectedType);
   }
 
   private DaggerSuperficialValidation() {}

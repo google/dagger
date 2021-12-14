@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.validation;
 
-
 import androidx.room.compiler.processing.XAnnotationKt;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
@@ -27,9 +26,7 @@ import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.List;
 import javax.inject.Inject;
 
-/**
- * A validator for {@link MapKey} annotations.
- */
+/** A validator for {@link MapKey} annotations. */
 // TODO(dpb,gak): Should unwrapped MapKeys be required to have their single member be named "value"?
 public final class MapKeyValidator {
   private final DaggerElements elements;
@@ -55,7 +52,10 @@ public final class MapKeyValidator {
     } else if (autoAnnotationIsMissing()) {
       builder.addError(
           "@AutoAnnotation is a necessary dependency if @MapKey(unwrapValue = false). Add a "
-              + "dependency on com.google.auto.value:auto-value:<current version>");
+              + "dependency for the annotation, "
+              + "\"com.google.auto.value:auto-value-annotations:<current version>\", "
+              + "and the annotation processor, "
+              + "\"com.google.auto.value:auto-value:<current version>\"");
     }
     return builder.build();
   }

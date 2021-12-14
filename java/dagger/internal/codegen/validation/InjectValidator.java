@@ -146,7 +146,7 @@ public final class InjectValidator implements ClearableCache {
   }
 
   private ValidationReport validateUncached(XTypeElement typeElement) {
-    superficialInjectValidator.throwIfNotValid(typeElement);
+    superficialInjectValidator.throwIfInjectTypeNotValid(typeElement);
     ValidationReport.Builder builder = ValidationReport.about(typeElement);
     builder.addSubreport(validateMembersInjectionType(typeElement));
 
@@ -167,6 +167,17 @@ public final class InjectValidator implements ClearableCache {
     }
 
     return builder.build();
+  }
+
+  private ValidationReport validateSupertype(XTypeElement typeElement) {
+    superficialInjectValidator.throwIfInjectSuperTypeNotValid(typeElement);
+
+    // Note: For super types, we don't look at constructors. Even if the super type has an @Inject
+    // constructor, we don't care in this case because it's being requested as a subtype and Dagger
+    // will use the subtype's constructor to create the object if it needs to.
+    return ValidationReport.about(typeElement)
+        .addSubreport(validateMembersInjectionType(typeElement))
+        .build();
   }
 
   private ValidationReport validateConstructor(XConstructorElement constructorElement) {
@@ -362,7 +373,7 @@ public final class InjectValidator implements ClearableCache {
       checkInjectIntoKotlinObject(typeElement, builder);
     }
     if (typeElement.getSuperType() != null) {
-      ValidationReport report = validate(typeElement.getSuperType().getTypeElement());
+      ValidationReport report = validateSupertype(typeElement.getSuperType().getTypeElement());
       if (!report.isClean()) {
         builder.addSubreport(report);
       }

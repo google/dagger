@@ -22,7 +22,9 @@ import shadow.org.apache.tools.zip.ZipEntry
 
 plugins {
   id 'java-library'
-  id 'com.github.johnrengelman.shadow' version '6.1.0'
+  // Use shadow version >= 7.1.1 to get log4j vulnerability patches:
+  //   https://github.com/johnrengelman/shadow/releases/tag/7.1.1
+  id 'com.github.johnrengelman.shadow' version '7.1.1'
 }
 
 repositories {

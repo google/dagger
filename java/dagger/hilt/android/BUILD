@@ -16,7 +16,7 @@
 #   A library based on Hilt that provides standard components and automated injection for Android.
 load("//:build_defs.bzl", "POM_VERSION")
 load("//tools:maven.bzl", "gen_maven_artifact")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
+load("//tools:bazel_compat.bzl", "compat_kt_android_library")
 
 package(default_visibility = ["//:src"])
 
@@ -207,6 +207,7 @@ gen_maven_artifact(
         "com.google.dagger:dagger",
         "com.google.dagger:hilt-core",
         "javax.inject:javax.inject",
+        "org.jetbrains.kotlin:kotlin-stdlib",
     ],
     artifact_target_maven_deps_banned = [
         "com.google.guava:guava",
@@ -232,8 +233,8 @@ gen_maven_artifact(
     ],
 )
 
-kt_android_library(
-    name = "entry_point_accessors_internal",
+compat_kt_android_library(
+    name = "entry_point_accessors",
     srcs = ["EntryPointAccessors.kt"],
     deps = [
         "//java/dagger/hilt:entry_point",
@@ -244,21 +245,6 @@ kt_android_library(
         "@maven//:androidx_lifecycle_lifecycle_viewmodel",
         "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
     ],
-)
-
-alias(
-    name = "entry_point_accessors",
-    actual = ":entry_point_accessors_internal_kt",
-)
-
-alias(
-    name = "libentry_point_accessors.jar",
-    actual = ":entry_point_accessors_internal_kt.jar",
-)
-
-alias(
-    name = "libentry_point_accessors-src.jar",
-    actual = ":entry_point_accessors_internal_kt-sources.jar",
 )
 
 filegroup(

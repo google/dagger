@@ -17,7 +17,6 @@
 package dagger.hilt.android.simple;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertThrows;
 
 import android.os.Build;
 import androidx.test.core.app.ApplicationProvider;
@@ -39,10 +38,6 @@ public class BuildTest {
         .isInstanceOf(SimpleApplication.class);
     SimpleApplication app = (SimpleApplication) ApplicationProvider.getApplicationContext();
     assertThat(app.str).isNotNull();
-
-    // TODO(bcorso): This should no longer throw after we fix the issue.
-    assertThrows(
-        NoClassDefFoundError.class,
-        () -> assertThat(app.str).isEqualTo(app.getStringEntryPoint()));
+    assertThat(app.str).isEqualTo(app.getStringEntryPoint());
   }
 }

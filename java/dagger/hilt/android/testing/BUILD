@@ -231,6 +231,7 @@ gen_maven_artifact(
         "com.google.dagger:hilt-android",
         "javax.inject:javax.inject",
         "junit:junit",
+        "org.jetbrains.kotlin:kotlin-stdlib",
     ],
     artifact_target_maven_deps_banned = [
         "com.google.guava:guava",

@@ -1,5 +1,6 @@
 rootProject.name='Simple Hilt Android'
 include ':app'
+include ':app-java-only'
 include ':feature'
 include ':lib'
 include ':deep-android-lib'

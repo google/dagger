@@ -20,7 +20,6 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.langmodel.DaggerElements.DECLARATION_ORDER;
-import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -32,7 +31,6 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.SetMultimap;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
-import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.ArrayList;
@@ -150,7 +148,7 @@ final class InjectionSiteFactory {
     }
 
     private boolean shouldBeInjected(Element injectionSite) {
-      return isAnnotationPresent(injectionSite, TypeNames.INJECT)
+      return InjectionAnnotations.hasInjectAnnotation(injectionSite)
           && !injectionSite.getModifiers().contains(PRIVATE)
           && !injectionSite.getModifiers().contains(STATIC);
     }

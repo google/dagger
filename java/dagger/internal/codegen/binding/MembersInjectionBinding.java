@@ -17,7 +17,6 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static java.util.stream.Collectors.toList;
 
 import androidx.room.compiler.processing.XElement;
@@ -26,7 +25,6 @@ import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
-import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
@@ -134,7 +132,7 @@ public abstract class MembersInjectionBinding extends Binding {
           .getEnclosingElement()
           .getEnclosedElements()
           .stream()
-          .filter(element -> isAnnotationPresent(element, TypeNames.INJECT))
+          .filter(InjectionAnnotations::hasInjectAnnotation)
           .filter(element -> !element.getModifiers().contains(Modifier.PRIVATE))
           .filter(element -> element.getSimpleName().equals(this.element().getSimpleName()))
           .collect(toList())

@@ -45,8 +45,10 @@ public final class TypeNames {
 
   // Other classnames
   public static final ClassName PROVIDER = ClassName.get("javax.inject", "Provider");
-  public static final ClassName QUALIFIER = ClassName.get("javax.inject", "Qualifier");
-  public static final ClassName SCOPE = ClassName.get("javax.inject", "Scope");
+  public static final ClassName QUALIFIER = ClassName.get("jakarta.inject", "Qualifier");
+  public static final ClassName QUALIFIER_JAVAX = ClassName.get("javax.inject", "Qualifier");
+  public static final ClassName SCOPE = ClassName.get("jakarta.inject", "Scope");
+  public static final ClassName SCOPE_JAVAX = ClassName.get("javax.inject", "Scope");
 
   private TypeNames() {}
 }

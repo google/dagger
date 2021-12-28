@@ -26,6 +26,7 @@ import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import dagger.MapKey;
 import javax.annotation.processing.Messager;
@@ -78,7 +79,8 @@ final class AndroidMapKeyValidator implements Step {
   }
 
   private void validateMethod(String annotation, ExecutableElement method) {
-    if (!getAnnotatedAnnotations(method, TypeNames.QUALIFIER).isEmpty()) {
+    if (!Sets.union(getAnnotatedAnnotations(method, TypeNames.QUALIFIER),
+        getAnnotatedAnnotations(method, TypeNames.QUALIFIER_JAVAX)).isEmpty()) {
       return;
     }
 
@@ -88,7 +90,8 @@ final class AndroidMapKeyValidator implements Step {
       return;
     }
 
-    if (!getAnnotatedAnnotations(method, TypeNames.SCOPE).isEmpty()) {
+    if (!Sets.union(getAnnotatedAnnotations(method, TypeNames.SCOPE),
+          getAnnotatedAnnotations(method, TypeNames.SCOPE_JAVAX)).isEmpty()) {
       SuppressWarnings suppressedWarnings = method.getAnnotation(SuppressWarnings.class);
       if (suppressedWarnings == null
           || !ImmutableSet.copyOf(suppressedWarnings.value())

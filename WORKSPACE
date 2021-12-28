@@ -242,6 +242,7 @@ maven_install(
         "io.grpc:grpc-core:%s" % GRPC_VERSION,
         "io.grpc:grpc-netty:%s" % GRPC_VERSION,
         "io.grpc:grpc-protobuf:%s" % GRPC_VERSION,
+        "jakarta.inject:jakarta.inject-api:2.0.1",
         "javax.annotation:jsr250-api:1.0",
         "javax.inject:javax.inject:1",
         "javax.inject:javax.inject-tck:1",

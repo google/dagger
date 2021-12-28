@@ -25,6 +25,7 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
@@ -126,13 +127,15 @@ abstract class AndroidInjectorDescriptor {
         }
       }
 
-      for (AnnotationMirror scope
-          : getAnnotatedAnnotations(method, TypeNames.SCOPE)) {
+      for (AnnotationMirror scope : Sets.union(
+          getAnnotatedAnnotations(method, TypeNames.SCOPE),
+          getAnnotatedAnnotations(method, TypeNames.SCOPE_JAVAX))) {
         builder.scopesBuilder().add(AnnotationSpec.get(scope));
       }
 
-      for (AnnotationMirror qualifier
-          : getAnnotatedAnnotations(method, TypeNames.QUALIFIER)) {
+      for (AnnotationMirror qualifier : Sets.union(
+          getAnnotatedAnnotations(method, TypeNames.QUALIFIER),
+          getAnnotatedAnnotations(method, TypeNames.QUALIFIER_JAVAX))) {
         reporter.reportError(
             "@ContributesAndroidInjector methods cannot have qualifiers", qualifier);
       }

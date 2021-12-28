@@ -26,7 +26,6 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.getSubcom
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
-import static dagger.internal.codegen.xprocessing.XElements.getAnnotatedAnnotations;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XTypeElements.hasTypeParameters;
@@ -53,6 +52,7 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
+import dagger.internal.codegen.base.Scopes;
 import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.ComponentCreatorAnnotation;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
@@ -61,6 +61,7 @@ import dagger.internal.codegen.binding.ModuleKind;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.xprocessing.XElements;
 import dagger.spi.model.BindingGraph;
+import dagger.spi.model.Scope;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -550,13 +551,13 @@ public final class ModuleValidator {
 
   private void validateNoScopeAnnotationsOnModuleElement(
       XTypeElement module, ModuleKind moduleKind, ValidationReport.Builder report) {
-    for (XAnnotation scope : getAnnotatedAnnotations(module, TypeNames.SCOPE)) {
+    for (Scope scope : Scopes.scopesOf(module)) {
       report.addError(
           String.format(
               "@%ss cannot be scoped. Did you mean to scope a method instead?",
               moduleKind.annotation().simpleName()),
           module,
-          scope);
+          scope.scopeAnnotation().xprocessing());
     }
   }
 

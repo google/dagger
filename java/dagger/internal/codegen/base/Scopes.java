@@ -24,6 +24,7 @@ import static dagger.internal.codegen.xprocessing.XElements.getAnnotatedAnnotati
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.Scope;
@@ -57,7 +58,8 @@ public final class Scopes {
 
   /** Returns all of the associated scopes for a source code element. */
   public static ImmutableSet<Scope> scopesOf(XElement element) {
-    return getAnnotatedAnnotations(element, TypeNames.SCOPE).stream()
+    return Sets.union(getAnnotatedAnnotations(element, TypeNames.SCOPE),
+        getAnnotatedAnnotations(element, TypeNames.SCOPE_JAVAX)).stream()
         .map(DaggerAnnotation::from)
         .map(Scope::scope)
         .collect(toImmutableSet());

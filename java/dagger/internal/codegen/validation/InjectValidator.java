@@ -177,15 +177,17 @@ public final class InjectValidator implements ClearableCache {
     ValidationReport.Builder builder =
         ValidationReport.about(constructorElement.getEnclosingElement());
 
-    if (constructorElement.hasAnnotation(TypeNames.INJECT)
+    if (InjectionAnnotations.hasInjectAnnotation(constructorElement)
         && constructorElement.hasAnnotation(TypeNames.ASSISTED_INJECT)) {
       builder.addError("Constructors cannot be annotated with both @Inject and @AssistedInject");
     }
 
     ClassName injectAnnotation =
-        getAnyAnnotation(constructorElement, TypeNames.INJECT, TypeNames.ASSISTED_INJECT)
-            .map(XAnnotations::getClassName)
-            .get();
+        getAnyAnnotation(
+            constructorElement,
+            TypeNames.INJECT,
+            TypeNames.INJECT_JAVAX,
+            TypeNames.ASSISTED_INJECT).map(XAnnotations::getClassName).get();
 
     if (constructorElement.isPrivate()) {
       builder.addError(
@@ -212,7 +214,8 @@ public final class InjectValidator implements ClearableCache {
               "@Scope annotations are not allowed on @%s constructors",
               injectAnnotation.simpleName());
 
-      if (injectAnnotation.equals(TypeNames.INJECT)) {
+      if (injectAnnotation.equals(TypeNames.INJECT)
+          || injectAnnotation.equals(TypeNames.INJECT_JAVAX)) {
         scopeErrorMsg += "; annotate the class instead";
       }
 
@@ -369,7 +372,7 @@ public final class InjectValidator implements ClearableCache {
     ValidationReport.Builder builder = ValidationReport.about(typeElement);
     boolean hasInjectedMembers = false;
     for (XFieldElement field : typeElement.getDeclaredFields()) {
-      if (field.hasAnnotation(TypeNames.INJECT)) {
+      if (InjectionAnnotations.hasInjectAnnotation(field)) {
         hasInjectedMembers = true;
         ValidationReport report = validateField(field);
         if (!report.isClean()) {
@@ -378,7 +381,7 @@ public final class InjectValidator implements ClearableCache {
       }
     }
     for (XMethodElement method : typeElement.getDeclaredMethods()) {
-      if (method.hasAnnotation(TypeNames.INJECT)) {
+      if (InjectionAnnotations.hasInjectAnnotation(method)) {
         hasInjectedMembers = true;
         ValidationReport report = validateMethod(method);
         if (!report.isClean()) {

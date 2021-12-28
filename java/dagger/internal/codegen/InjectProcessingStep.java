@@ -51,7 +51,7 @@ final class InjectProcessingStep extends TypeCheckingProcessingStep<XElement> {
 
   @Override
   public ImmutableSet<ClassName> annotationClassNames() {
-    return ImmutableSet.of(TypeNames.INJECT, TypeNames.ASSISTED_INJECT);
+    return ImmutableSet.of(TypeNames.INJECT, TypeNames.INJECT_JAVAX, TypeNames.ASSISTED_INJECT);
   }
 
   @Override

@@ -202,7 +202,8 @@ public final class ComponentDescriptorValidator {
       if (!scopes.isEmpty()) {
         // Dagger 1.x scope compatibility requires this be suppress-able.
         if (compilerOptions.scopeCycleValidationType().diagnosticKind().isPresent()
-            && scopes.contains(TypeNames.SINGLETON)) {
+            && (scopes.contains(TypeNames.SINGLETON)
+                || scopes.contains(TypeNames.SINGLETON_JAVAX))) {
           // Singleton is a special-case representing the longest lifetime, and therefore
           // @Singleton components may not depend on scoped components
           if (!scopedDependencies.isEmpty()) {

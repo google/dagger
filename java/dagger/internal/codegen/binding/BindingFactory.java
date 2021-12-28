@@ -112,9 +112,7 @@ public final class BindingFactory {
   // TODO(dpb): See if we can just pass the parameterized type and not also the constructor.
   public ProvisionBinding injectionBinding(
       XConstructorElement constructorElement, Optional<XType> resolvedEnclosingType) {
-    checkArgument(
-        constructorElement.hasAnnotation(TypeNames.INJECT)
-            || constructorElement.hasAnnotation(TypeNames.ASSISTED_INJECT));
+    checkArgument(InjectionAnnotations.hasInjectOrAssistedInjectAnnotation(constructorElement));
 
     XConstructorType constructorType = constructorElement.getExecutableType();
     XType enclosingType = constructorElement.getEnclosingElement().getType();

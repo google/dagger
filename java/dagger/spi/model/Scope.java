@@ -44,14 +44,17 @@ public abstract class Scope {
    * Returns {@code true} if {@code scopeAnnotationType} is a {@link javax.inject.Scope} annotation.
    */
   public static boolean isScope(DaggerTypeElement scopeAnnotationType) {
-    return isAnnotationPresent(scopeAnnotationType.java(), SCOPE.canonicalName());
+    return isAnnotationPresent(scopeAnnotationType.java(), SCOPE.canonicalName())
+        || isAnnotationPresent(scopeAnnotationType.java(), SCOPE_JAVAX.canonicalName());
   }
 
   private static final ClassName PRODUCTION_SCOPE =
       ClassName.get("dagger.producers", "ProductionScope");
-  private static final ClassName SINGLETON = ClassName.get("javax.inject", "Singleton");
+  private static final ClassName SINGLETON = ClassName.get("jakarta.inject", "Singleton");
+  private static final ClassName SINGLETON_JAVAX = ClassName.get("javax.inject", "Singleton");
   private static final ClassName REUSABLE = ClassName.get("dagger", "Reusable");
-  private static final ClassName SCOPE = ClassName.get("javax.inject", "Scope");
+  private static final ClassName SCOPE = ClassName.get("jakarta.inject", "Scope");
+  private static final ClassName SCOPE_JAVAX = ClassName.get("javax.inject", "Scope");
 
 
   /** The {@link DaggerAnnotation} that represents the scope annotation. */
@@ -63,7 +66,7 @@ public abstract class Scope {
 
   /** Returns {@code true} if this scope is the {@link javax.inject.Singleton @Singleton} scope. */
   public final boolean isSingleton() {
-    return isScope(SINGLETON);
+    return isScope(SINGLETON) || isScope(SINGLETON_JAVAX);
   }
 
   /** Returns {@code true} if this scope is the {@link dagger.Reusable @Reusable} scope. */

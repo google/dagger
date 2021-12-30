@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.validation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.ComponentAnnotation.isComponentAnnotation;
 import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotation;
@@ -505,29 +504,20 @@ public final class ModuleValidator {
     } else if (isEffectivelyPrivate(moduleElement)) {
       reportBuilder.addError("Modules cannot be enclosed in private types.", moduleElement);
     }
-
-    switch (toJavac(moduleElement).getNestingKind()) {
-      case ANONYMOUS:
-        throw new IllegalStateException("Can't apply @Module to an anonymous class");
-      case LOCAL:
-        throw new IllegalStateException("Local classes shouldn't show up in the processor");
-      case MEMBER:
-      case TOP_LEVEL:
-        if (isEffectivelyPublic(moduleElement)) {
-          ImmutableSet<XTypeElement> invalidVisibilityIncludes =
-              getModuleIncludesWithInvalidVisibility(moduleKind.getModuleAnnotation(moduleElement));
-          if (!invalidVisibilityIncludes.isEmpty()) {
-            reportBuilder.addError(
-                String.format(
-                    "This module is public, but it includes non-public (or effectively non-public) "
-                        + "modules (%s) that have non-static, non-abstract binding methods. Either "
-                        + "reduce the visibility of this module, make the included modules "
-                        + "public, or make all of the binding methods on the included modules "
-                        + "abstract or static.",
-                    formatListForErrorMessage(invalidVisibilityIncludes.asList())),
-                moduleElement);
-          }
-        }
+    if (isEffectivelyPublic(moduleElement)) {
+      ImmutableSet<XTypeElement> invalidVisibilityIncludes =
+          getModuleIncludesWithInvalidVisibility(moduleKind.getModuleAnnotation(moduleElement));
+      if (!invalidVisibilityIncludes.isEmpty()) {
+        reportBuilder.addError(
+            String.format(
+                "This module is public, but it includes non-public (or effectively non-public) "
+                    + "modules (%s) that have non-static, non-abstract binding methods. Either "
+                    + "reduce the visibility of this module, make the included modules "
+                    + "public, or make all of the binding methods on the included modules "
+                    + "abstract or static.",
+                formatListForErrorMessage(invalidVisibilityIncludes.asList())),
+            moduleElement);
+      }
     }
   }
 

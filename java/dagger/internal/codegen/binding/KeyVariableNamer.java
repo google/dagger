@@ -16,22 +16,21 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.XTypeKt.isArray;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static dagger.internal.codegen.binding.SourceFiles.protectAgainstKeywords;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XArrayType;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.Iterator;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.PrimitiveType;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVisitor;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * Suggests a variable name for a type based on a {@link Key}. Prefer {@link
@@ -47,45 +46,6 @@ public final class KeyVariableNamer {
           "Subcomponent",
           "Injector");
 
-  private static final TypeVisitor<Void, StringBuilder> TYPE_NAMER =
-      new SimpleTypeVisitor8<Void, StringBuilder>() {
-        @Override
-        public Void visitDeclared(DeclaredType declaredType, StringBuilder builder) {
-          TypeElement element = MoreTypes.asTypeElement(declaredType);
-          if (element.getNestingKind().isNested()
-              && VERY_SIMPLE_NAMES.contains(element.getSimpleName().toString())) {
-            builder.append(element.getEnclosingElement().getSimpleName());
-          }
-
-          builder.append(element.getSimpleName());
-          Iterator<? extends TypeMirror> argumentIterator =
-              declaredType.getTypeArguments().iterator();
-          if (argumentIterator.hasNext()) {
-            builder.append("Of");
-            TypeMirror first = argumentIterator.next();
-            first.accept(this, builder);
-            while (argumentIterator.hasNext()) {
-              builder.append("And");
-              argumentIterator.next().accept(this, builder);
-            }
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitPrimitive(PrimitiveType type, StringBuilder builder) {
-          builder.append(LOWER_CAMEL.to(UPPER_CAMEL, type.toString()));
-          return null;
-        }
-
-        @Override
-        public Void visitArray(ArrayType type, StringBuilder builder) {
-          type.getComponentType().accept(this, builder);
-          builder.append("Array");
-          return null;
-        }
-      };
-
   private KeyVariableNamer() {}
 
   public static String name(Key key) {
@@ -100,8 +60,33 @@ public final class KeyVariableNamer {
       builder.append(key.qualifier().get().java().getAnnotationType().asElement().getSimpleName());
     }
 
-    key.type().java().accept(TYPE_NAMER, builder);
-
+    typeNamer(key.type().xprocessing(), builder);
     return protectAgainstKeywords(UPPER_CAMEL.to(LOWER_CAMEL, builder.toString()));
+  }
+
+  private static void typeNamer(XType type, StringBuilder builder) {
+    if (isDeclared(type)) {
+      XTypeElement element = type.getTypeElement();
+      if (element.isNested() && VERY_SIMPLE_NAMES.contains(getSimpleName(element))) {
+        builder.append(getSimpleName(element.getEnclosingTypeElement()));
+      }
+
+      builder.append(getSimpleName(element));
+      Iterator<? extends XType> argumentIterator = type.getTypeArguments().iterator();
+      if (argumentIterator.hasNext()) {
+        builder.append("Of");
+        XType first = argumentIterator.next();
+        typeNamer(first, builder);
+        while (argumentIterator.hasNext()) {
+          builder.append("And");
+          typeNamer(argumentIterator.next(), builder);
+        }
+      }
+    } else if (isPrimitive(type)) {
+      builder.append(LOWER_CAMEL.to(UPPER_CAMEL, type.toString()));
+    } else if (isArray(type)) {
+      typeNamer(((XArrayType) type).getComponentType(), builder);
+      builder.append("Array");
+    }
   }
 }

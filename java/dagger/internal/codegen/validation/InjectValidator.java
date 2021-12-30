@@ -248,7 +248,7 @@ public final class InjectValidator implements ClearableCache {
           constructorElement);
     }
 
-    if (toJavac(enclosingElement).getNestingKind().isNested() && !enclosingElement.isStatic()) {
+    if (enclosingElement.isNested() && !enclosingElement.isStatic()) {
       builder.addError(
           String.format(
               "@%s constructors are invalid on inner classes. "

@@ -132,7 +132,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
             .build();
       }
 
-      if (toJavac(factory).getNestingKind().isNested() && !factory.isStatic()) {
+      if (factory.isNested() && !factory.isStatic()) {
         report.addError("Nested @AssistedFactory-annotated types must be static. ", factory);
       }
 

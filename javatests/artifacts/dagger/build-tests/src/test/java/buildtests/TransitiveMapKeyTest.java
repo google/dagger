@@ -37,12 +37,14 @@ public class TransitiveMapKeyTest {
   @Test
   public void testTransitiveMapKey_WithImplementation() throws IOException {
     BuildResult result = setupRunnerWith("implementation").buildAndFail();
-
-    // TODO(bcorso): This is a repro of https://github.com/google/dagger/issues/3133.
-    // We should update the error message to include the provision method.
     assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
     assertThat(result.getOutput())
-        .contains("Caused by: java.util.NoSuchElementException: No value present");
+        .contains(
+            "Missing map key annotation for method: library1.MyModule#provideString(). "
+                + "That method was annotated with: "
+                + "@dagger.Provides,"
+                + "@dagger.multibindings.IntoMap,"
+                + "@library2.MyMapKey(\"some-key\")");
   }
 
   @Test

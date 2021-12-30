@@ -20,6 +20,7 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.ProducerAnnotations.productionImplementationQualifier;
 import static dagger.internal.codegen.base.ProducerAnnotations.productionQualifier;
@@ -253,7 +254,23 @@ public final class KeyFactory {
       case SET:
         return setOf(returnType);
       case MAP:
-        TypeMirror mapKeyType = mapKeyType(toXProcessing(getMapKey(method).get(), processingEnv));
+        Optional<AnnotationMirror> mapKey = getMapKey(method);
+        // TODO(bcorso): We've added a special checkState here since a number of people have run
+        // into this particular case, but technically it shouldn't be necessary if we are properly
+        // doing superficial validation and deferring on unresolvable types. We should revisit
+        // whether this is necessary once we're able to properly defer this case.
+        checkState(
+            mapKey.isPresent(),
+            "Missing map key annotation for method: %s#%s. That method was annotated with: %s. If a"
+                + " map key annotation is included in that list, it means Dagger wasn't able to"
+                + " detect that it was a map key because the dependency is missing from the"
+                + " classpath of the current build. To fix, add a dependency for the map key to the"
+                + " current build. For more details, see"
+                + " https://github.com/google/dagger/issues/3133#issuecomment-1002790894.",
+            method.getEnclosingElement(),
+            method,
+            method.getAnnotationMirrors());
+        TypeMirror mapKeyType = mapKeyType(toXProcessing(mapKey.get(), processingEnv));
         return frameworkClassName.isPresent()
             ? mapOfFrameworkType(mapKeyType, frameworkClassName.get(), returnType)
             : mapOf(mapKeyType, returnType);

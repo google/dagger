@@ -66,7 +66,6 @@ public final class InjectValidator implements ClearableCache {
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
-  private final SuperficialInjectValidator superficialInjectValidator;
   private final DependencyRequestValidator dependencyRequestValidator;
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
   private final InjectionAnnotations injectionAnnotations;
@@ -78,7 +77,6 @@ public final class InjectValidator implements ClearableCache {
       XProcessingEnv processingEnv,
       DaggerTypes types,
       DaggerElements elements,
-      SuperficialInjectValidator superficialInjectValidator,
       DependencyRequestValidator dependencyRequestValidator,
       CompilerOptions compilerOptions,
       InjectionAnnotations injectionAnnotations,
@@ -88,7 +86,6 @@ public final class InjectValidator implements ClearableCache {
         types,
         elements,
         compilerOptions,
-        superficialInjectValidator,
         dependencyRequestValidator,
         Optional.empty(),
         injectionAnnotations,
@@ -100,7 +97,6 @@ public final class InjectValidator implements ClearableCache {
       DaggerTypes types,
       DaggerElements elements,
       CompilerOptions compilerOptions,
-      SuperficialInjectValidator superficialInjectValidator,
       DependencyRequestValidator dependencyRequestValidator,
       Optional<Kind> privateAndStaticInjectionDiagnosticKind,
       InjectionAnnotations injectionAnnotations,
@@ -109,7 +105,6 @@ public final class InjectValidator implements ClearableCache {
     this.types = types;
     this.elements = elements;
     this.compilerOptions = compilerOptions;
-    this.superficialInjectValidator = superficialInjectValidator;
     this.dependencyRequestValidator = dependencyRequestValidator;
     this.privateAndStaticInjectionDiagnosticKind = privateAndStaticInjectionDiagnosticKind;
     this.injectionAnnotations = injectionAnnotations;
@@ -134,7 +129,6 @@ public final class InjectValidator implements ClearableCache {
             types,
             elements,
             compilerOptions,
-            superficialInjectValidator,
             dependencyRequestValidator,
             Optional.of(Diagnostic.Kind.ERROR),
             injectionAnnotations,
@@ -146,7 +140,6 @@ public final class InjectValidator implements ClearableCache {
   }
 
   private ValidationReport validateUncached(XTypeElement typeElement) {
-    superficialInjectValidator.throwIfInjectTypeNotValid(typeElement);
     ValidationReport.Builder builder = ValidationReport.about(typeElement);
     builder.addSubreport(validateMembersInjectionType(typeElement));
 
@@ -169,18 +162,8 @@ public final class InjectValidator implements ClearableCache {
     return builder.build();
   }
 
-  private ValidationReport validateSupertype(XTypeElement typeElement) {
-    superficialInjectValidator.throwIfInjectSuperTypeNotValid(typeElement);
-
-    // Note: For super types, we don't look at constructors. Even if the super type has an @Inject
-    // constructor, we don't care in this case because it's being requested as a subtype and Dagger
-    // will use the subtype's constructor to create the object if it needs to.
-    return ValidationReport.about(typeElement)
-        .addSubreport(validateMembersInjectionType(typeElement))
-        .build();
-  }
-
   private ValidationReport validateConstructor(XConstructorElement constructorElement) {
+    DaggerSuperficialValidation.validateElement(constructorElement);
     ValidationReport.Builder builder =
         ValidationReport.about(constructorElement.getEnclosingElement());
 
@@ -257,6 +240,7 @@ public final class InjectValidator implements ClearableCache {
           constructorElement);
     }
 
+    DaggerSuperficialValidation.validateAnnotationsOf(enclosingElement);
     ImmutableSet<Scope> scopes = scopesOf(enclosingElement);
     if (injectAnnotation.equals(TypeNames.ASSISTED_INJECT)) {
       for (Scope scope : scopes) {
@@ -278,6 +262,7 @@ public final class InjectValidator implements ClearableCache {
   }
 
   private ValidationReport validateField(XFieldElement fieldElement) {
+    DaggerSuperficialValidation.validateElement(fieldElement);
     ValidationReport.Builder builder = ValidationReport.about(fieldElement);
     if (fieldElement.isFinal()) {
       builder.addError("@Inject fields may not be final", fieldElement);
@@ -303,6 +288,7 @@ public final class InjectValidator implements ClearableCache {
   }
 
   private ValidationReport validateMethod(XMethodElement methodElement) {
+    DaggerSuperficialValidation.validateElement(methodElement);
     ValidationReport.Builder builder = ValidationReport.about(methodElement);
     if (methodElement.isAbstract()) {
       builder.addError("Methods with @Inject may not be abstract", methodElement);
@@ -345,6 +331,7 @@ public final class InjectValidator implements ClearableCache {
   }
 
   private ValidationReport validateMembersInjectionType(XTypeElement typeElement) {
+    DaggerSuperficialValidation.validateTypeOf(typeElement);
     // TODO(beder): This element might not be currently compiled, so this error message could be
     // left in limbo. Find an appropriate way to display the error message in that case.
     ValidationReport.Builder builder = ValidationReport.about(typeElement);
@@ -373,7 +360,9 @@ public final class InjectValidator implements ClearableCache {
       checkInjectIntoKotlinObject(typeElement, builder);
     }
     if (typeElement.getSuperType() != null) {
-      ValidationReport report = validateSupertype(typeElement.getSuperType().getTypeElement());
+      DaggerSuperficialValidation.validateSuperTypeOf(typeElement);
+      ValidationReport report =
+          validateMembersInjectionType(typeElement.getSuperType().getTypeElement());
       if (!report.isClean()) {
         builder.addSubreport(report);
       }
@@ -385,6 +374,7 @@ public final class InjectValidator implements ClearableCache {
   private boolean throwsCheckedExceptions(XConstructorElement constructorElement) {
     XType runtimeException = processingEnv.findType(TypeNames.RUNTIME_EXCEPTION);
     XType error = processingEnv.findType(TypeNames.ERROR);
+    DaggerSuperficialValidation.validateThrownTypesOf(constructorElement);
     return !constructorElement.getThrownTypes().stream()
         .allMatch(type -> types.isSubtype(type, runtimeException) || types.isSubtype(type, error));
   }

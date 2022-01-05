@@ -42,7 +42,7 @@ public class FooBase {
   @MyTransitiveAnnotation(VALUE)
   void baseNonDaggerMethod(@MyTransitiveAnnotation(VALUE) int i) {}
 
-  // @MyTransitiveAnnotation(VALUE): Not supported on inject-method yet.
+  @MyTransitiveAnnotation(VALUE)
   @Inject
   void baseDaggerMethod(
       // @MyTransitiveAnnotation(VALUE): Not supported on inject-method parameters yet.

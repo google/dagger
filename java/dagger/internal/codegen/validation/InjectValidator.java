@@ -288,7 +288,7 @@ public final class InjectValidator implements ClearableCache {
   }
 
   private ValidationReport validateMethod(XMethodElement methodElement) {
-    DaggerSuperficialValidation.validateElement(methodElement);
+    DaggerSuperficialValidation.validateTypeOf(methodElement);
     ValidationReport.Builder builder = ValidationReport.about(methodElement);
     if (methodElement.isAbstract()) {
       builder.addError("Methods with @Inject may not be abstract", methodElement);
@@ -308,16 +308,19 @@ public final class InjectValidator implements ClearableCache {
           methodElement);
     }
 
+    // No need to resolve type parameters since we're only checking existence.
     if (hasTypeParameters(methodElement)) {
       builder.addError("Methods with @Inject may not declare type parameters", methodElement);
     }
 
+    // No need to resolve thrown types since we're only checking existence.
     if (!methodElement.getThrownTypes().isEmpty()) {
       builder.addError("Methods with @Inject may not throw checked exceptions. "
           + "Please wrap your exceptions in a RuntimeException instead.", methodElement);
     }
 
     for (XExecutableParameterElement parameter : methodElement.getParameters()) {
+      DaggerSuperficialValidation.validateElement(parameter);
       validateDependencyRequest(builder, parameter);
     }
 

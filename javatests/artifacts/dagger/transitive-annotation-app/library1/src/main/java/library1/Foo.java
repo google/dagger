@@ -54,7 +54,7 @@ public final class Foo extends FooBase {
   @MyTransitiveAnnotation(VALUE)
   void nonDaggerMethod(@MyTransitiveAnnotation(VALUE) int i) {}
 
-  // @MyTransitiveAnnotation(VALUE): Not supported on inject-method yet.
+  @MyTransitiveAnnotation(VALUE)
   @Inject
   void daggerMethod(
       // @MyTransitiveAnnotation(VALUE): Not supported on inject-method parameters yet.

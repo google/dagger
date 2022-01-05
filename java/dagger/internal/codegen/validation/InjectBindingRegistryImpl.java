@@ -314,7 +314,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   private Optional<MembersInjectionBinding> tryRegisterMembersInjectedType(
       XTypeElement typeElement, Optional<XType> resolvedType, boolean warnIfNotAlreadyGenerated) {
     // Validating here shouldn't have a performance penalty because the validator caches its reports
-    ValidationReport report = injectValidator.validate(typeElement);
+    ValidationReport report = injectValidator.validateForMembersInjection(typeElement);
     report.printMessagesTo(messager);
     if (!report.isClean()) {
       return Optional.empty();

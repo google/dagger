@@ -70,7 +70,8 @@ public final class InjectValidator implements ClearableCache {
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
   private final InjectionAnnotations injectionAnnotations;
   private final KotlinMetadataUtil metadataUtil;
-  private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
+  private final Map<XTypeElement, ValidationReport> provisionReports = new HashMap<>();
+  private final Map<XTypeElement, ValidationReport> membersInjectionReports = new HashMap<>();
 
   @Inject
   InjectValidator(
@@ -113,7 +114,8 @@ public final class InjectValidator implements ClearableCache {
 
   @Override
   public void clearCache() {
-    reports.clear();
+    provisionReports.clear();
+    membersInjectionReports.clear();
   }
 
   /**
@@ -136,12 +138,12 @@ public final class InjectValidator implements ClearableCache {
   }
 
   public ValidationReport validate(XTypeElement typeElement) {
-    return reentrantComputeIfAbsent(reports, typeElement, this::validateUncached);
+    return reentrantComputeIfAbsent(provisionReports, typeElement, this::validateUncached);
   }
 
   private ValidationReport validateUncached(XTypeElement typeElement) {
     ValidationReport.Builder builder = ValidationReport.about(typeElement);
-    builder.addSubreport(validateMembersInjectionType(typeElement));
+    builder.addSubreport(validateForMembersInjection(typeElement));
 
     ImmutableSet<XConstructorElement> injectConstructors =
         ImmutableSet.<XConstructorElement>builder()
@@ -333,7 +335,14 @@ public final class InjectValidator implements ClearableCache {
     dependencyRequestValidator.checkNotProducer(builder, parameter);
   }
 
-  private ValidationReport validateMembersInjectionType(XTypeElement typeElement) {
+  public ValidationReport validateForMembersInjection(XTypeElement typeElement) {
+    // TODO(bcorso): validate the entire type if a factory hasn't been generated yet so that we
+    // we can report any errors on the constructor etc. that may have been missed.
+    return reentrantComputeIfAbsent(
+        membersInjectionReports, typeElement, this::validateForMembersInjectionUncached);
+  }
+
+  private ValidationReport validateForMembersInjectionUncached(XTypeElement typeElement) {
     DaggerSuperficialValidation.validateTypeOf(typeElement);
     // TODO(beder): This element might not be currently compiled, so this error message could be
     // left in limbo. Find an appropriate way to display the error message in that case.
@@ -365,7 +374,7 @@ public final class InjectValidator implements ClearableCache {
     if (typeElement.getSuperType() != null) {
       DaggerSuperficialValidation.validateSuperTypeOf(typeElement);
       ValidationReport report =
-          validateMembersInjectionType(typeElement.getSuperType().getTypeElement());
+          validateForMembersInjection(typeElement.getSuperType().getTypeElement());
       if (!report.isClean()) {
         builder.addSubreport(report);
       }

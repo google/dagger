@@ -22,7 +22,7 @@ import javax.inject.Inject;
 import library2.MyTransitiveAnnotation;
 
 /** A baseclass for {@link Foo}. */
-// @MyTransitiveAnnotation(VALUE): Not supported on base-types yet.
+@MyTransitiveAnnotation(VALUE)
 public class FooBase {
   @MyTransitiveAnnotation(VALUE)
   int baseNonDaggerField;
@@ -33,11 +33,9 @@ public class FooBase {
   @MyTransitiveAnnotation(VALUE)
   FooBase(@MyTransitiveAnnotation(VALUE) String str) {}
 
-  // @MyTransitiveAnnotation(VALUE): Not supported on inject-constructors yet.
+  @MyTransitiveAnnotation(VALUE)
   @Inject
-  FooBase(
-      // @MyTransitiveAnnotation(VALUE): Not supported on inject-constructor parameters yet.
-      int i) {}
+  FooBase(@MyTransitiveAnnotation(VALUE) int i) {}
 
   @MyTransitiveAnnotation(VALUE)
   void baseNonDaggerMethod(@MyTransitiveAnnotation(VALUE) int i) {}

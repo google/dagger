@@ -86,20 +86,17 @@ public final class BindingFactory {
   private final KeyFactory keyFactory;
   private final DependencyRequestFactory dependencyRequestFactory;
   private final InjectionSiteFactory injectionSiteFactory;
-  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
   BindingFactory(
       DaggerTypes types,
       KeyFactory keyFactory,
       DependencyRequestFactory dependencyRequestFactory,
-      InjectionSiteFactory injectionSiteFactory,
-      InjectionAnnotations injectionAnnotations) {
+      InjectionSiteFactory injectionSiteFactory) {
     this.types = types;
     this.keyFactory = keyFactory;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.injectionSiteFactory = injectionSiteFactory;
-    this.injectionAnnotations = injectionAnnotations;
   }
 
   /**
@@ -115,7 +112,6 @@ public final class BindingFactory {
     checkArgument(
         constructorElement.hasAnnotation(TypeNames.INJECT)
             || constructorElement.hasAnnotation(TypeNames.ASSISTED_INJECT));
-    checkArgument(!injectionAnnotations.getQualifier(constructorElement).isPresent());
 
     XConstructorType constructorType = constructorElement.getExecutableType();
     XType enclosingType = constructorElement.getEnclosingElement().getType();

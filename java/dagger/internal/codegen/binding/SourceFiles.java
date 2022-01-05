@@ -17,7 +17,6 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
@@ -37,12 +36,14 @@ import static dagger.internal.codegen.javapoet.TypeNames.PROVIDER_OF_LAZY;
 import static dagger.internal.codegen.javapoet.TypeNames.SET_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.SET_OF_PRODUCED_PRODUCER;
 import static dagger.internal.codegen.javapoet.TypeNames.SET_PRODUCER;
+import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
 import static dagger.spi.model.BindingKind.INJECTION;
 import static dagger.spi.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.spi.model.BindingKind.MULTIBOUND_SET;
 import static javax.lang.model.SourceVersion.isName;
 
+import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Joiner;
@@ -144,8 +145,7 @@ public class SourceFiles {
           case INJECTION:
           case PROVISION:
           case PRODUCTION:
-            return elementBasedClassName(
-                asExecutable(toJavac(binding.bindingElement().get())), "Factory");
+            return factoryNameForElement(asExecutable(binding.bindingElement().get()));
 
           case ASSISTED_FACTORY:
             return siblingClassName(asType(toJavac(binding.bindingElement().get())), "_Impl");
@@ -159,6 +159,18 @@ public class SourceFiles {
             ((MembersInjectionBinding) binding).membersInjectedType());
     }
     throw new AssertionError();
+  }
+
+  /**
+   * Returns the generated factory name for the given element.
+   *
+   * <p>This method is useful during validation before a {@link Binding} can be created. If a
+   * binding already exists for the given element, prefer to call {@link
+   * #generatedClassNameForBinding(Binding)} instead since this method does not validate that the
+   * given element is actually a binding element or not.
+   */
+  public static ClassName factoryNameForElement(XExecutableElement element) {
+    return elementBasedClassName(toJavac(element), "Factory");
   }
 
   /**
@@ -193,7 +205,7 @@ public class SourceFiles {
   }
 
   public static ClassName membersInjectorNameForType(TypeElement typeElement) {
-    return siblingClassName(typeElement,  "_MembersInjector");
+    return siblingClassName(typeElement, "_MembersInjector");
   }
 
   public static String memberInjectedFieldSignatureForVariable(VariableElement variableElement) {

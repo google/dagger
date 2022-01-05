@@ -43,7 +43,7 @@ public final class Foo extends FooBase {
     super(str);
   }
 
-  // @MyTransitiveAnnotation(VALUE): Not supported on inject-constructors yet.
+  @MyTransitiveAnnotation(VALUE)
   @Inject
   Foo(
       // @MyTransitiveAnnotation(VALUE): Not supported on inject-constructor parameters yet.

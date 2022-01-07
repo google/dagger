@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.plugin.util
 
+import com.android.build.api.AndroidPluginVersion
 import com.android.build.api.instrumentation.AsmClassVisitorFactory
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationParameters
@@ -44,6 +45,15 @@ sealed class AndroidComponentsExtensionCompat {
   class Api70Impl(
     private val actual: AndroidComponentsExtension<*, *, *>
   ) : AndroidComponentsExtensionCompat() {
+
+    private val componentInit: (component: Component) -> ComponentCompat = {
+      if (actual.pluginVersion < AndroidPluginVersion(7, 2)) {
+        ComponentCompat.Api70Impl(it)
+      } else {
+        ComponentCompat.Api72Impl(it)
+      }
+    }
+
     override fun onAllVariants(block: (ComponentCompat) -> Unit) {
       actual.onVariants { variant ->
         // Use reflection to get the AndroidTest component out of the variant because a binary
@@ -53,19 +63,19 @@ sealed class AndroidComponentsExtensionCompat {
           this::class.java.getDeclaredMethod("getAndroidTest").invoke(this) as? Component
         fun LibraryVariant.getAndroidTest() =
           this::class.java.getDeclaredMethod("getAndroidTest").invoke(this) as? Component
-        block.invoke(ComponentCompat.Api70Impl(variant))
+        block.invoke(componentInit(variant))
         when (variant) {
           is ApplicationVariant -> variant.getAndroidTest()
           is LibraryVariant -> variant.getAndroidTest()
           else -> null
-        }?.let { block.invoke(ComponentCompat.Api70Impl(it)) }
+        }?.let { block.invoke(componentInit(it)) }
         // Use reflection too to get the UnitTest component since in 7.2
         // com.android.build.api.component.UnitTest was removed and replaced by
         // com.android.build.api.variant.UnitTest causing the return type of Variant#getUnitTest()
         // to change and break ABI.
         fun Variant.getUnitTest() =
           this::class.java.getDeclaredMethod("getUnitTest").invoke(this) as? Component
-        variant.getUnitTest()?.let { block.invoke(ComponentCompat.Api70Impl(it)) }
+        variant.getUnitTest()?.let { block.invoke(componentInit(it)) }
       }
     }
   }
@@ -136,6 +146,26 @@ sealed class ComponentCompat {
    */
   abstract fun setAsmFramesComputationMode(mode: FramesComputationMode)
 
+  class Api72Impl(private val component: Component) : ComponentCompat() {
+
+    override val name: String
+      get() = component.name
+
+    override fun <ParamT : InstrumentationParameters> transformClassesWith(
+      classVisitorFactoryImplClass: Class<out AsmClassVisitorFactory<ParamT>>,
+      scope: InstrumentationScope,
+      instrumentationParamsConfig: (ParamT) -> Unit
+    ) {
+      component.instrumentation.transformClassesWith(
+        classVisitorFactoryImplClass, scope, instrumentationParamsConfig
+      )
+    }
+
+    override fun setAsmFramesComputationMode(mode: FramesComputationMode) {
+      component.instrumentation.setAsmFramesComputationMode(mode)
+    }
+  }
+
   class Api70Impl(private val component: Component) : ComponentCompat() {
 
     override val name: String
@@ -146,13 +176,19 @@ sealed class ComponentCompat {
       scope: InstrumentationScope,
       instrumentationParamsConfig: (ParamT) -> Unit
     ) {
-      component.transformClassesWith(
-        classVisitorFactoryImplClass, scope, instrumentationParamsConfig
-      )
+      Component::class.java.getDeclaredMethod(
+        "transformClassesWith",
+        Class::class.java,
+        InstrumentationScope::class.java,
+        Function1::class.java
+      ).invoke(component, classVisitorFactoryImplClass, scope, instrumentationParamsConfig)
     }
 
     override fun setAsmFramesComputationMode(mode: FramesComputationMode) {
-      component.setAsmFramesComputationMode(mode)
+      Component::class.java.getDeclaredMethod(
+        "setAsmFramesComputationMode",
+        FramesComputationMode::class.java
+      ).invoke(component, mode)
     }
   }
 

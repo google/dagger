@@ -219,7 +219,7 @@ public final class InjectValidator implements ClearableCache {
     }
 
     for (XExecutableParameterElement parameter : constructorElement.getParameters()) {
-      DaggerSuperficialValidation.validateElement(parameter);
+      DaggerSuperficialValidation.validateTypeOf(parameter);
       validateDependencyRequest(builder, parameter);
     }
 
@@ -274,7 +274,7 @@ public final class InjectValidator implements ClearableCache {
   }
 
   private ValidationReport validateField(XFieldElement fieldElement) {
-    DaggerSuperficialValidation.validateElement(fieldElement);
+    DaggerSuperficialValidation.validateTypeOf(fieldElement);
     ValidationReport.Builder builder = ValidationReport.about(fieldElement);
     if (fieldElement.isFinal()) {
       builder.addError("@Inject fields may not be final", fieldElement);
@@ -332,7 +332,7 @@ public final class InjectValidator implements ClearableCache {
     }
 
     for (XExecutableParameterElement parameter : methodElement.getParameters()) {
-      DaggerSuperficialValidation.validateElement(parameter);
+      DaggerSuperficialValidation.validateTypeOf(parameter);
       validateDependencyRequest(builder, parameter);
     }
 

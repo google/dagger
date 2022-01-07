@@ -50,8 +50,8 @@ public class TransitiveQualifierTest {
 
   @Test
   public void testQualifierOnInjectConstructorParameter() throws IOException {
-    BuildResult result =
-        setupBuildWith(
+    GradleRunner runner =
+        setupRunnerWith(
             GradleFile.create(
                 "QualifierUsage.java",
                 "package library1;",
@@ -62,15 +62,20 @@ public class TransitiveQualifierTest {
                 "public class QualifierUsage {",
                 "  @Inject QualifierUsage(@MyQualifier int i) {}",
                 "}"));
+    BuildResult result;
     switch (transitiveDependencyType) {
       case "implementation":
-        // TODO(bcorso): This is a repro of https://github.com/google/dagger/issues/3136, where
-        // a qualifier will be missing if the it is not in the classpath during compilation.
-        // Once the issue is fixed, this test case should fail to build.
-        assertThat(result.task(":app:assemble").getOutcome()).isEqualTo(SUCCESS);
-        assertThat(result.getOutput()).contains("REQUEST: java.lang.Integer");
+        result = runner.buildAndFail();
+        assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
+        // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the
+        // issue described in https://github.com/google/dagger/issues/2208.
+        assertThat(result.getOutput())
+            .contains(
+                "error: dagger.internal.codegen.ComponentProcessor was unable to process "
+                    + "'app.MyComponent' because not all of its dependencies could be resolved.");
         break;
       case "api":
+        result = runner.build();
         assertThat(result.task(":app:assemble").getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("REQUEST: @library2.MyQualifier java.lang.Integer");
         break;
@@ -79,8 +84,8 @@ public class TransitiveQualifierTest {
 
   @Test
   public void testQualifierOnInjectField() throws IOException {
-    BuildResult result =
-        setupBuildWith(
+    GradleRunner runner =
+        setupRunnerWith(
             GradleFile.create(
                 "QualifierUsage.java",
                 "package library1;",
@@ -93,15 +98,20 @@ public class TransitiveQualifierTest {
                 "",
                 "  @Inject QualifierUsage() {}",
                 "}"));
+    BuildResult result;
     switch (transitiveDependencyType) {
       case "implementation":
-        // TODO(bcorso): This is a repro of https://github.com/google/dagger/issues/3136, where
-        // a qualifier will be missing if the it is not in the classpath during compilation.
-        // Once the issue is fixed, this test case should fail to build.
-        assertThat(result.task(":app:assemble").getOutcome()).isEqualTo(SUCCESS);
-        assertThat(result.getOutput()).contains("REQUEST: java.lang.Integer");
+        result = runner.buildAndFail();
+        assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
+        // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the
+        // issue described in https://github.com/google/dagger/issues/2208.
+        assertThat(result.getOutput())
+            .contains(
+                "error: dagger.internal.codegen.ComponentProcessor was unable to process "
+                    + "'app.MyComponent' because not all of its dependencies could be resolved.");
         break;
       case "api":
+        result = runner.build();
         assertThat(result.task(":app:assemble").getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("REQUEST: @library2.MyQualifier java.lang.Integer");
         break;
@@ -110,8 +120,8 @@ public class TransitiveQualifierTest {
 
   @Test
   public void testQualifierOnInjectMethodParameter() throws IOException {
-    BuildResult result =
-        setupBuildWith(
+    GradleRunner runner =
+        setupRunnerWith(
             GradleFile.create(
                 "QualifierUsage.java",
                 "package library1;",
@@ -124,22 +134,27 @@ public class TransitiveQualifierTest {
                 "",
                 "  @Inject void injectMethod(@MyQualifier int i) {}",
                 "}"));
+    BuildResult result;
     switch (transitiveDependencyType) {
       case "implementation":
-        // TODO(bcorso): This is a repro of https://github.com/google/dagger/issues/3136, where
-        // a qualifier will be missing if the it is not in the classpath during compilation.
-        // Once the issue is fixed, this test case should fail to build.
-        assertThat(result.task(":app:assemble").getOutcome()).isEqualTo(SUCCESS);
-        assertThat(result.getOutput()).contains("REQUEST: java.lang.Integer");
+        result = runner.buildAndFail();
+        assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
+        // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the
+        // issue described in https://github.com/google/dagger/issues/2208.
+        assertThat(result.getOutput())
+            .contains(
+                "error: dagger.internal.codegen.ComponentProcessor was unable to process "
+                    + "'app.MyComponent' because not all of its dependencies could be resolved.");
         break;
       case "api":
+        result = runner.build();
         assertThat(result.task(":app:assemble").getOutcome()).isEqualTo(SUCCESS);
         assertThat(result.getOutput()).contains("REQUEST: @library2.MyQualifier java.lang.Integer");
         break;
     }
   }
 
-  private BuildResult setupBuildWith(GradleFile qualifierUsage) throws IOException {
+  private GradleRunner setupRunnerWith(GradleFile qualifierUsage) throws IOException {
     File projectDir = folder.getRoot();
     GradleModule.create(projectDir)
         .addSettingsFile(
@@ -272,7 +287,6 @@ public class TransitiveQualifierTest {
 
     return GradleRunner.create()
         .withArguments("--stacktrace", "build")
-        .withProjectDir(projectDir)
-        .build();
+        .withProjectDir(projectDir);
   }
 }

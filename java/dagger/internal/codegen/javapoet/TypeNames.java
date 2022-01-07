@@ -71,6 +71,8 @@ public final class TypeNames {
   public static final ClassName PROVIDER_OF_LAZY =
       ClassName.get("dagger.internal", "ProviderOfLazy");
   public static final ClassName SCOPE_METADATA = ClassName.get("dagger.internal", "ScopeMetadata");
+  public static final ClassName QUALIFIER_METADATA =
+      ClassName.get("dagger.internal", "QualifierMetadata");
   public static final ClassName SET_FACTORY = ClassName.get("dagger.internal", "SetFactory");
   public static final ClassName SINGLE_CHECK = ClassName.get("dagger.internal", "SingleCheck");
   public static final ClassName LAZY = ClassName.get("dagger", "Lazy");

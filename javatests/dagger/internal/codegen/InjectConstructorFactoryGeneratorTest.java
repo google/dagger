@@ -134,10 +134,12 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<T> implements Factory<GenericClass<T>> {",
             "  private final Provider<T> tProvider;",
@@ -185,10 +187,12 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<A, B> implements",
             "    Factory<GenericClass<A, B>> {",
@@ -240,9 +244,11 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<T> implements Factory<GenericClass<T>> {",
             "  @Override",
@@ -286,10 +292,12 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<A, B>",
             "    implements Factory<GenericClass<A, B>> {",
@@ -340,11 +348,13 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;",
                 "import java.util.List;",
                 "import javax.inject.Provider;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<A extends Number & Comparable<A>,",
             "        B extends List<? extends String>,",
@@ -411,10 +421,12 @@ public final class InjectConstructorFactoryGeneratorTest {
                 "import dagger.Lazy;",
                 "import dagger.internal.DoubleCheck;",
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata(\"test.QualifierA\")",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<A, B>",
             "    implements Factory<GenericClass<A, B>> {",
@@ -1077,10 +1089,12 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class InjectConstructor_Factory ",
             "    implements Factory<InjectConstructor> {",
@@ -1126,10 +1140,12 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class AllInjections_Factory implements Factory<AllInjections> {",
             "  private final Provider<String> sProvider;",
@@ -1188,11 +1204,13 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;",
                 "import java.util.List;",
                 "import javax.inject.Provider;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class InjectConstructor_Factory ",
             "    implements Factory<InjectConstructor> {",
@@ -1243,10 +1261,12 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class InjectConstructor_Factory ",
             "    implements Factory<InjectConstructor> {",
@@ -1301,11 +1321,13 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;",
                 "import other.pkg.Outer;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class InjectConstructor_Factory ",
             "    implements Factory<InjectConstructor> {",
@@ -1362,10 +1384,12 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class InjectConstructor_Factory ",
             "    implements Factory<InjectConstructor> {",
@@ -1419,9 +1443,11 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class SimpleType_Factory implements Factory<SimpleType> {",
             "  @Override public SimpleType get() {",
@@ -1469,9 +1495,11 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.QualifierMetadata;",
                 "import dagger.internal.ScopeMetadata;"),
             "",
             "@ScopeMetadata",
+            "@QualifierMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class OuterType_A_Factory implements Factory<OuterType.A> {",
             "  @Override public OuterType.A get() {",
@@ -1521,6 +1549,7 @@ public final class InjectConstructorFactoryGeneratorTest {
                 "package test;",
                 "",
                 "@ScopeMetadata(\"javax.inject.Singleton\")",
+                "@QualifierMetadata",
                 GeneratedLines.generatedAnnotations(),
                 "public final class ScopedBinding_Factory implements Factory<ScopedBinding> {}"));
   }
@@ -1573,7 +1602,373 @@ public final class InjectConstructorFactoryGeneratorTest {
                 "package test;",
                 "",
                 "@ScopeMetadata(\"test.CustomScope\")",
+                "@QualifierMetadata",
                 GeneratedLines.generatedAnnotations(),
                 "public final class ScopedBinding_Factory implements Factory<ScopedBinding> {}"));
+  }
+
+  @Test
+  public void testQualifierMetadata() {
+    JavaFileObject someBinding =
+        JavaFileObjects.forSourceLines(
+            "test.SomeBinding",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Singleton;",
+            "",
+            "@NonQualifier",
+            "@MisplacedQualifier",
+            "class SomeBinding {",
+            "  @NonQualifier @FieldQualifier @Inject String injectField;",
+            "  @NonQualifier @MisplacedQualifier String nonDaggerField;",
+            "",
+            "  @NonQualifier",
+            "  @Inject",
+            "  SomeBinding(@NonQualifier @ConstructorParameterQualifier Double d) {}",
+            "",
+            "  @NonQualifier",
+            "  @MisplacedQualifier",
+            "  SomeBinding(@NonQualifier @MisplacedQualifier Double d, int i) {}",
+            "",
+            "  @NonQualifier",
+            "  @MisplacedQualifier",
+            "  @Inject",
+            "  void injectMethod(@NonQualifier @MethodParameterQualifier Float f) {}",
+            "",
+            "  @NonQualifier",
+            "  @MisplacedQualifier",
+            "  void nonDaggerMethod(@NonQualifier @MisplacedQualifier Float f) {}",
+            "}");
+    JavaFileObject fieldQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.FieldQualifier",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "@interface FieldQualifier {}");
+    JavaFileObject constructorParameterQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.ConstructorParameterQualifier",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "@interface ConstructorParameterQualifier {}");
+    JavaFileObject methodParameterQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.MethodParameterQualifier",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "@interface MethodParameterQualifier {}");
+    JavaFileObject misplacedQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.MisplacedQualifier",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "@interface MisplacedQualifier {}");
+    JavaFileObject nonQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.NonQualifier",
+            "package test;",
+            "",
+            "@interface NonQualifier {}");
+    Compilation compilation =
+        daggerCompiler().compile(
+            someBinding,
+            fieldQualifier,
+            constructorParameterQualifier,
+            methodParameterQualifier,
+            misplacedQualifier,
+            nonQualifier);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.SomeBinding_Factory")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.SomeBinding_Factory",
+                "package test;",
+                "",
+                // Verifies that the @QualifierMetadata for the generated Factory does not contain
+                // @MisplacedQualifier, @NonQualifier, @MethodParameterQualifier or @FieldQualifier.
+                "@ScopeMetadata",
+                "@QualifierMetadata(\"test.ConstructorParameterQualifier\")",
+                GeneratedLines.generatedAnnotations(),
+                "public final class SomeBinding_Factory implements Factory<SomeBinding> {}"));
+    assertThat(compilation)
+        .generatedSourceFile("test.SomeBinding_MembersInjector")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.SomeBinding_MembersInjector",
+                "package test;",
+                "",
+                // Verifies that the @QualifierMetadata for the generated MembersInjector does not
+                // contain @MisplacedQualifier, @NonQualifier, or @ConstructorParameterQualifier.
+                "@QualifierMetadata({",
+                "    \"test.FieldQualifier\",",
+                "    \"test.MethodParameterQualifier\"",
+                "})",
+                GeneratedLines.generatedAnnotations(),
+                "public final class SomeBinding_MembersInjector",
+                "    implements MembersInjector<SomeBinding> {}"));
+  }
+
+  @Test
+  public void testComplexQualifierMetadata() {
+    JavaFileObject someBinding =
+        JavaFileObjects.forSourceLines(
+            "test.SomeBinding",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Inject;",
+            "",
+            "class SomeBinding {",
+            "  @QualifierWithValue(1) @Inject String injectField;",
+            "",
+            "  @Inject",
+            "  SomeBinding(",
+            "      @pkg1.SameNameQualifier String str1,",
+            "      @pkg2.SameNameQualifier String str2) {}",
+            "",
+            "  @Inject",
+            "  void injectMethod(@test.Outer.NestedQualifier Float f) {}",
+            "}");
+    JavaFileObject qualifierWithValue =
+        JavaFileObjects.forSourceLines(
+            "test.QualifierWithValue",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "@interface QualifierWithValue {",
+            "  int value();",
+            "}");
+    JavaFileObject pkg1SameNameQualifier =
+        JavaFileObjects.forSourceLines(
+            "pkg1.SameNameQualifier",
+            "package pkg1;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "public @interface SameNameQualifier {}");
+    JavaFileObject pkg2SameNameQualifier =
+        JavaFileObjects.forSourceLines(
+            "pkg2.SameNameQualifier",
+            "package pkg2;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "public @interface SameNameQualifier {}");
+    JavaFileObject nestedQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.Outer",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "interface Outer {",
+            "  @Qualifier",
+            "  @interface NestedQualifier {}",
+            "}");
+    Compilation compilation =
+        daggerCompiler().compile(
+            someBinding,
+            qualifierWithValue,
+            pkg1SameNameQualifier,
+            pkg2SameNameQualifier,
+            nestedQualifier);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.SomeBinding_Factory")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.SomeBinding_Factory",
+                "package test;",
+                "",
+                "@ScopeMetadata",
+                "@QualifierMetadata({\"pkg1.SameNameQualifier\", \"pkg2.SameNameQualifier\"})",
+                GeneratedLines.generatedAnnotations(),
+                "public final class SomeBinding_Factory implements Factory<SomeBinding> {}"));
+    assertThat(compilation)
+        .generatedSourceFile("test.SomeBinding_MembersInjector")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.SomeBinding_MembersInjector",
+                "package test;",
+                "",
+                "@QualifierMetadata({",
+                "    \"test.QualifierWithValue\",",
+                "    \"test.Outer.NestedQualifier\"",
+                "})",
+                GeneratedLines.generatedAnnotations(),
+                "public final class SomeBinding_MembersInjector",
+                "    implements MembersInjector<SomeBinding> {}"));
+  }
+
+  @Test
+  public void testBaseClassQualifierMetadata() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Singleton;",
+            "",
+            "class Foo extends FooBase {",
+            "  @FooFieldQualifier @Inject String injectField;",
+            "",
+            "  @Inject",
+            "  Foo(@FooConstructorQualifier int i) { super(i); }",
+            "",
+            "  @Inject",
+            "  void injectMethod(@FooMethodQualifier float f) {}",
+            "}");
+    JavaFileObject fooFieldQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.FooFieldQualifier",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "@interface FooFieldQualifier {}");
+    JavaFileObject fooConstructorQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.FooConstructorQualifier",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "@interface FooConstructorQualifier {}");
+    JavaFileObject fooMethodQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.FooMethodQualifier",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "@interface FooMethodQualifier {}");
+    JavaFileObject fooBase =
+        JavaFileObjects.forSourceLines(
+            "test.FooBase",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Singleton;",
+            "",
+            "class FooBase {",
+            "  @FooBaseFieldQualifier @Inject String injectField;",
+            "",
+            "  @Inject",
+            "  FooBase(@FooBaseConstructorQualifier int i) {}",
+            "",
+            "  @Inject",
+            "  void injectMethod(@FooBaseMethodQualifier float f) {}",
+            "}");
+    JavaFileObject fooBaseFieldQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.FooBaseFieldQualifier",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "@interface FooBaseFieldQualifier {}");
+    JavaFileObject fooBaseConstructorQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.FooBaseConstructorQualifier",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "@interface FooBaseConstructorQualifier {}");
+    JavaFileObject fooBaseMethodQualifier =
+        JavaFileObjects.forSourceLines(
+            "test.FooBaseMethodQualifier",
+            "package test;",
+            "",
+            "import javax.inject.Qualifier;",
+            "",
+            "@Qualifier",
+            "@interface FooBaseMethodQualifier {}");
+    Compilation compilation =
+        daggerCompiler().compile(
+            foo,
+            fooBase,
+            fooFieldQualifier,
+            fooConstructorQualifier,
+            fooMethodQualifier,
+            fooBaseFieldQualifier,
+            fooBaseConstructorQualifier,
+            fooBaseMethodQualifier);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.Foo_Factory")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.Foo_Factory",
+                "package test;",
+                "",
+                "@ScopeMetadata",
+                // Verifies that Foo_Factory only contains Foo's qualifiers and not FooBase's too.
+                "@QualifierMetadata(\"test.FooConstructorQualifier\")",
+                GeneratedLines.generatedAnnotations(),
+                "public final class Foo_Factory implements Factory<Foo> {}"));
+    assertThat(compilation)
+        .generatedSourceFile("test.Foo_MembersInjector")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.Foo_MembersInjector",
+                "package test;",
+                "",
+                // Verifies that Foo_Factory only contains Foo's qualifiers and not FooBase's too.
+                "@QualifierMetadata({",
+                "    \"test.FooFieldQualifier\",",
+                "    \"test.FooMethodQualifier\"",
+                "})",
+                GeneratedLines.generatedAnnotations(),
+                "public final class Foo_MembersInjector implements MembersInjector<Foo> {}"));
+    assertThat(compilation)
+        .generatedSourceFile("test.FooBase_Factory")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.Foo_Factory",
+                "package test;",
+                "",
+                "@ScopeMetadata",
+                "@QualifierMetadata(\"test.FooBaseConstructorQualifier\")",
+                GeneratedLines.generatedAnnotations(),
+                "public final class FooBase_Factory implements Factory<FooBase> {}"));
+    assertThat(compilation)
+        .generatedSourceFile("test.FooBase_MembersInjector")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.FooBase_MembersInjector",
+                "package test;",
+                "",
+                "@QualifierMetadata({",
+                "    \"test.FooBaseFieldQualifier\",",
+                "    \"test.FooBaseMethodQualifier\"",
+                "})",
+                GeneratedLines.generatedAnnotations(),
+                "public final class FooBase_MembersInjector",
+                "    implements MembersInjector<FooBase> {}"));
   }
 }

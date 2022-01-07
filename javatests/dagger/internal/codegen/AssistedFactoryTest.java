@@ -454,6 +454,7 @@ public class AssistedFactoryTest {
                 "package test;",
                 "",
                 "@ScopeMetadata",
+                "@QualifierMetadata",
                 GeneratedLines.generatedAnnotations())
             .addLinesIn(
                 FAST_INIT_MODE,

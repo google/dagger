@@ -39,7 +39,7 @@ public final class Foo extends FooBase {
   int nonDaggerField;
 
   @MySimpleTransitiveAnnotation
-  // @MyTransitiveAnnotation(VALUE): Not supported on inject-fields yet.
+  @MyTransitiveAnnotation(VALUE)
   @Inject int daggerField;
 
   @MySimpleTransitiveAnnotation
@@ -51,10 +51,7 @@ public final class Foo extends FooBase {
   @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
   @Inject
-  Foo(
-      @MySimpleTransitiveAnnotation
-      // @MyTransitiveAnnotation(VALUE): Not supported on inject-constructor parameters yet.
-      int i) {
+  Foo(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i) {
     super(i);
   }
 
@@ -65,8 +62,5 @@ public final class Foo extends FooBase {
   @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
   @Inject
-  void daggerMethod(
-      @MySimpleTransitiveAnnotation
-      // @MyTransitiveAnnotation(VALUE): Not supported on inject-method parameters yet.
-      int i) {}
+  void daggerMethod(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i) {}
 }

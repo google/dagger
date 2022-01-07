@@ -16,42 +16,41 @@
 
 package library1;
 
-import static library2.MyTransitiveAnnotation.VALUE;
+import static library2.MyTransitiveBaseAnnotation.VALUE;
 
 import javax.inject.Inject;
-import library2.MySimpleTransitiveAnnotation;
-import library2.MyTransitiveAnnotation;
+import library2.MySimpleTransitiveBaseAnnotation;
+import library2.MyTransitiveBaseAnnotation;
 
 /** A baseclass for {@link Foo}. */
-@MySimpleTransitiveAnnotation
-@MyTransitiveAnnotation(VALUE)
+@MySimpleTransitiveBaseAnnotation
+@MyTransitiveBaseAnnotation(VALUE)
 public class FooBase {
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MySimpleTransitiveBaseAnnotation
+  @MyTransitiveBaseAnnotation(VALUE)
   int baseNonDaggerField;
 
-  @MySimpleTransitiveAnnotation
-  // @MyTransitiveAnnotation(VALUE): Not supported on inject-method parameters yet.
+  @MySimpleTransitiveBaseAnnotation
+  @MyTransitiveBaseAnnotation(VALUE)
   @Inject int baseDaggerField;
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
-  FooBase(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) String str) {}
+  @MySimpleTransitiveBaseAnnotation
+  @MyTransitiveBaseAnnotation(VALUE)
+  FooBase(@MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) String str) {}
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MySimpleTransitiveBaseAnnotation
+  @MyTransitiveBaseAnnotation(VALUE)
   @Inject
-  FooBase(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i) {}
+  FooBase(@MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) int i) {}
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
-  void baseNonDaggerMethod(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i) {}
+  @MySimpleTransitiveBaseAnnotation
+  @MyTransitiveBaseAnnotation(VALUE)
+  void baseNonDaggerMethod(
+      @MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) int i) {}
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MySimpleTransitiveBaseAnnotation
+  @MyTransitiveBaseAnnotation(VALUE)
   @Inject
   void baseDaggerMethod(
-      @MySimpleTransitiveAnnotation
-      // @MyTransitiveAnnotation(VALUE): Not supported on inject-method parameters yet.
-      int i) {}
+      @MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) int i) {}
 }

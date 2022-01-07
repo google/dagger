@@ -40,6 +40,7 @@ import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.ClearableCache;
+import dagger.internal.codegen.binding.DaggerSuperficialValidation;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
@@ -251,8 +252,8 @@ public final class InjectValidator implements ClearableCache {
           constructorElement);
     }
 
-    DaggerSuperficialValidation.validateAnnotationsOf(enclosingElement);
-    ImmutableSet<Scope> scopes = scopesOf(enclosingElement);
+    // Note: superficial validation of the annotations is done as part of getting the scopes.
+    ImmutableSet<Scope> scopes = injectionAnnotations.getScopes(constructorElement);
     if (injectAnnotation.equals(TypeNames.ASSISTED_INJECT)) {
       for (Scope scope : scopes) {
         builder.addError(

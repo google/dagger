@@ -36,22 +36,24 @@ public class TransitiveScopeTest {
 
   @Test
   public void testTransitiveScope_WithImplementation() throws IOException {
-    BuildResult result = setupBuildWith("implementation");
-
-    // TODO(bcorso): This is a repro of https://github.com/google/dagger/issues/3136.
-    // Once the issue is fixed, this test case should fail to build.
-    assertThat(result.task(":app:assemble").getOutcome()).isEqualTo(SUCCESS);
-    assertThat(result.getOutput()).contains("@Inject library1.Foo(): UNSCOPED");
+    BuildResult result = setupRunnerWith("implementation").buildAndFail();
+    assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
+    // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the issue
+    // described in https://github.com/google/dagger/issues/2208.
+    assertThat(result.getOutput())
+        .contains(
+            "error: dagger.internal.codegen.ComponentProcessor was unable to process "
+                + "'app.MyComponent' because not all of its dependencies could be resolved.");
   }
 
   @Test
   public void testTransitiveScope_WithApi() throws IOException {
-    BuildResult result = setupBuildWith("api");
+    BuildResult result = setupRunnerWith("api").build();
     assertThat(result.task(":app:assemble").getOutcome()).isEqualTo(SUCCESS);
     assertThat(result.getOutput()).contains("@Inject library1.Foo(): SCOPED");
   }
 
-  private BuildResult setupBuildWith(String dependencyType) throws IOException {
+  private GradleRunner setupRunnerWith(String dependencyType) throws IOException {
     File projectDir = folder.getRoot();
     GradleModule.create(projectDir)
         .addSettingsFile(
@@ -190,7 +192,6 @@ public class TransitiveScopeTest {
 
     return GradleRunner.create()
         .withArguments("--stacktrace", "build")
-        .withProjectDir(projectDir)
-        .build();
+        .withProjectDir(projectDir);
   }
 }

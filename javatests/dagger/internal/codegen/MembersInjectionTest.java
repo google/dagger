@@ -1296,8 +1296,10 @@ public class MembersInjectionTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class InjectedType_Factory implements Factory<InjectedType> {",
             "  private final Provider<Integer> primitiveIntProvider;",

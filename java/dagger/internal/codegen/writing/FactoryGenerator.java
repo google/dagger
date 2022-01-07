@@ -50,6 +50,7 @@ import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -63,13 +64,16 @@ import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
 import dagger.spi.model.BindingKind;
+import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Scope;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -124,6 +128,11 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
         classBuilder(generatedClassNameForBinding(binding))
             .addModifiers(PUBLIC, FINAL)
             .addTypeVariables(bindingTypeElementTypeVariableNames(binding));
+
+    if (binding.kind() == BindingKind.INJECTION
+        || binding.kind() == BindingKind.ASSISTED_INJECTION) {
+      factoryBuilder.addAnnotation(scopeMetadataAnnotation(binding));
+    }
 
     factoryTypeName(binding).ifPresent(factoryBuilder::addSuperinterface);
     addConstructorAndFields(binding, factoryBuilder);
@@ -290,6 +299,16 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
       getMethod.addStatement("return $L", invokeNewInstance);
     }
     return getMethod.build();
+  }
+
+  private AnnotationSpec scopeMetadataAnnotation(ProvisionBinding binding) {
+    AnnotationSpec.Builder builder = AnnotationSpec.builder(TypeNames.SCOPE_METADATA);
+    binding.scope()
+        .map(Scope::scopeAnnotation)
+        .map(DaggerAnnotation::className)
+        .map(ClassName::canonicalName)
+        .ifPresent(scopeCanonicalName -> builder.addMember("value", "$S", scopeCanonicalName));
+    return builder.build();
   }
 
   private static TypeName providedTypeName(ProvisionBinding binding) {

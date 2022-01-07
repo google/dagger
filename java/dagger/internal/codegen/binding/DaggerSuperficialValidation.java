@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.validation;
+package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Lists.reverse;
 import static java.util.stream.Collectors.joining;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XTypeElement;
@@ -125,6 +126,42 @@ public final class DaggerSuperficialValidation {
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception)
           .append(String.format("%s element: %s", element.getKind(), element));
+    }
+  }
+
+  /**
+   * Strictly validates the given annotation belonging to the given element.
+   *
+   * <p>This validation is considered "strict" because it will fail if an annotation's type is not
+   * valid. This fixes the bug described in b/213880825, but cannot be applied indiscriminately or
+   * it would break in many cases where we don't care about an annotation.
+   *
+   * <p>Note: This method does not actually check that the given annotation belongs to the given
+   * element. The element is only used to given better context to the error message in the case that
+   * validation fails.
+   */
+  public static void strictValidateAnnotationsOf(XElement element) {
+    element.getAllAnnotations()
+        .forEach(annotation -> strictValidateAnnotationOf(element, annotation));
+  }
+
+  /**
+   * Strictly validates the given annotation belonging to the given element.
+   *
+   * <p>This validation is considered "strict" because it will fail if an annotation's type is not
+   * valid. This fixes the bug described in b/213880825, but cannot be applied indiscriminately or
+   * it would break in many cases where we don't care about an annotation.
+   *
+   * <p>Note: This method does not actually check that the given annotation belongs to the given
+   * element. The element is only used to given better context to the error message in the case that
+   * validation fails.
+   */
+  public static void strictValidateAnnotationOf(XElement element, XAnnotation annotation) {
+    try {
+      strictValidateAnnotation(toJavac(annotation));
+    } catch (RuntimeException exception) {
+      throw ValidationException.from(exception)
+          .append(String.format("%s element: %s", toJavac(element).getKind(), element));
     }
   }
 
@@ -302,6 +339,29 @@ public final class DaggerSuperficialValidation {
   public static void validateAnnotations(Iterable<? extends AnnotationMirror> annotationMirrors) {
     for (AnnotationMirror annotationMirror : annotationMirrors) {
       validateAnnotation(annotationMirror);
+    }
+  }
+
+  /**
+   * This validation is the same as {@link #validateAnnotation(AnnotationMirror)} but also
+   * validates the annotation's kind directly to look for {@link TypeKind.ERROR} types.
+   *
+   * See b/213880825.
+   */
+  // TODO(bcorso): Merge this into the normal validateAnnotation() method. For now, this method is
+  // separated to avoid breaking existing usages that aren't setup to handle this extra validation.
+  private static void strictValidateAnnotation(AnnotationMirror annotationMirror) {
+    try {
+      validateType("annotation type", annotationMirror.getAnnotationType());
+      // There's a bug in TypeVisitor specifically when validating annotation types which will
+      // visit the visitDeclared() method rather than visitError() even when it's an ERROR kind.
+      // Thus, we check the kind directly here and fail validation if it's an ERROR kind.
+      if (annotationMirror.getAnnotationType().getKind() == TypeKind.ERROR) {
+        throw ValidationException.create();
+      }
+      validateAnnotationValues(annotationMirror.getElementValues());
+    } catch (RuntimeException exception) {
+      throw ValidationException.from(exception).append("annotation: " + annotationMirror);
     }
   }
 

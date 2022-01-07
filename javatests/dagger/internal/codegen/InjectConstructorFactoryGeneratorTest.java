@@ -134,8 +134,10 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<T> implements Factory<GenericClass<T>> {",
             "  private final Provider<T> tProvider;",
@@ -183,8 +185,10 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<A, B> implements",
             "    Factory<GenericClass<A, B>> {",
@@ -234,8 +238,11 @@ public final class InjectConstructorFactoryGeneratorTest {
             "test.GenericClass_Factory",
             "package test;",
             "",
-            GeneratedLines.generatedImports("import dagger.internal.Factory;"),
+            GeneratedLines.generatedImports(
+                "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<T> implements Factory<GenericClass<T>> {",
             "  @Override",
@@ -279,8 +286,10 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<A, B>",
             "    implements Factory<GenericClass<A, B>> {",
@@ -331,9 +340,11 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import java.util.List;",
                 "import javax.inject.Provider;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<A extends Number & Comparable<A>,",
             "        B extends List<? extends String>,",
@@ -400,8 +411,10 @@ public final class InjectConstructorFactoryGeneratorTest {
                 "import dagger.Lazy;",
                 "import dagger.internal.DoubleCheck;",
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class GenericClass_Factory<A, B>",
             "    implements Factory<GenericClass<A, B>> {",
@@ -1064,8 +1077,10 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class InjectConstructor_Factory ",
             "    implements Factory<InjectConstructor> {",
@@ -1111,8 +1126,10 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class AllInjections_Factory implements Factory<AllInjections> {",
             "  private final Provider<String> sProvider;",
@@ -1171,9 +1188,11 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import java.util.List;",
                 "import javax.inject.Provider;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class InjectConstructor_Factory ",
             "    implements Factory<InjectConstructor> {",
@@ -1224,8 +1243,10 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class InjectConstructor_Factory ",
             "    implements Factory<InjectConstructor> {",
@@ -1280,9 +1301,11 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;",
                 "import other.pkg.Outer;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class InjectConstructor_Factory ",
             "    implements Factory<InjectConstructor> {",
@@ -1339,8 +1362,10 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             GeneratedLines.generatedImports(
                 "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;",
                 "import javax.inject.Provider;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class InjectConstructor_Factory ",
             "    implements Factory<InjectConstructor> {",
@@ -1392,8 +1417,11 @@ public final class InjectConstructorFactoryGeneratorTest {
             "test.SimpleType_Factory",
             "package test;",
             "",
-            GeneratedLines.generatedImports("import dagger.internal.Factory;"),
+            GeneratedLines.generatedImports(
+                "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class SimpleType_Factory implements Factory<SimpleType> {",
             "  @Override public SimpleType get() {",
@@ -1439,8 +1467,11 @@ public final class InjectConstructorFactoryGeneratorTest {
             "test.OuterType_A_Factory",
             "package test;",
             "",
-            GeneratedLines.generatedImports("import dagger.internal.Factory;"),
+            GeneratedLines.generatedImports(
+                "import dagger.internal.Factory;",
+                "import dagger.internal.ScopeMetadata;"),
             "",
+            "@ScopeMetadata",
             GeneratedLines.generatedAnnotations(),
             "public final class OuterType_A_Factory implements Factory<OuterType.A> {",
             "  @Override public OuterType.A get() {",
@@ -1463,5 +1494,86 @@ public final class InjectConstructorFactoryGeneratorTest {
         .processedWith(new ComponentProcessor())
         .compilesWithoutError()
         .and().generatesSources(aFactory);
+  }
+
+  @Test
+  public void testScopedMetadata() {
+    JavaFileObject scopedBinding =
+        JavaFileObjects.forSourceLines(
+            "test.ScopedBinding",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Singleton",
+            "class ScopedBinding {",
+            "  @Inject",
+            "  ScopedBinding() {}",
+            "}");
+    Compilation compilation = daggerCompiler().compile(scopedBinding);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.ScopedBinding_Factory")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.ScopedBinding_Factory",
+                "package test;",
+                "",
+                "@ScopeMetadata(\"javax.inject.Singleton\")",
+                GeneratedLines.generatedAnnotations(),
+                "public final class ScopedBinding_Factory implements Factory<ScopedBinding> {}"));
+  }
+
+  @Test
+  public void testScopedMetadataWithCustomScope() {
+    JavaFileObject customScope =
+        JavaFileObjects.forSourceLines(
+            "test.CustomScope",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope",
+            "@interface CustomScope {",
+            "  String value();",
+            "}");
+
+    JavaFileObject customAnnotation =
+        JavaFileObjects.forSourceLines(
+            "test.CustomAnnotation",
+            "package test;",
+            "",
+            "@interface CustomAnnotation {",
+            "  String value();",
+            "}");
+
+    JavaFileObject scopedBinding =
+        JavaFileObjects.forSourceLines(
+            "test.ScopedBinding",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Singleton;",
+            "",
+            "@CustomAnnotation(\"someValue\")",
+            "@CustomScope(\"someOtherValue\")",
+            "class ScopedBinding {",
+            "  @Inject",
+            "  ScopedBinding() {}",
+            "}");
+    Compilation compilation =
+        daggerCompiler().compile(scopedBinding, customScope, customAnnotation);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.ScopedBinding_Factory")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.ScopedBinding_Factory",
+                "package test;",
+                "",
+                "@ScopeMetadata(\"test.CustomScope\")",
+                GeneratedLines.generatedAnnotations(),
+                "public final class ScopedBinding_Factory implements Factory<ScopedBinding> {}"));
   }
 }

@@ -86,17 +86,20 @@ public final class BindingFactory {
   private final KeyFactory keyFactory;
   private final DependencyRequestFactory dependencyRequestFactory;
   private final InjectionSiteFactory injectionSiteFactory;
+  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
   BindingFactory(
       DaggerTypes types,
       KeyFactory keyFactory,
       DependencyRequestFactory dependencyRequestFactory,
-      InjectionSiteFactory injectionSiteFactory) {
+      InjectionSiteFactory injectionSiteFactory,
+      InjectionAnnotations injectionAnnotations) {
     this.types = types;
     this.keyFactory = keyFactory;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.injectionSiteFactory = injectionSiteFactory;
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   /**
@@ -145,7 +148,7 @@ public final class BindingFactory {
                 constructorElement.hasAnnotation(TypeNames.ASSISTED_INJECT)
                     ? ASSISTED_INJECTION
                     : INJECTION)
-            .scope(uniqueScopeOf(constructorElement.getEnclosingElement()));
+            .scope(injectionAnnotations.getScope(constructorElement));
 
     if (hasNonDefaultTypeParameters(enclosingType)) {
       builder.unresolved(injectionBinding(constructorElement, Optional.empty()));

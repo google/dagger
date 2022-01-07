@@ -30,7 +30,7 @@ import library2.MyTransitiveAnnotation;
  * the classpath. In most cases, Dagger shouldn't care that the annotation isn't on the classpath
  */
 @Singleton
-// @MyTransitiveAnnotation(VALUE): Not supported on inject-types yet.
+@MyTransitiveAnnotation(VALUE)
 public final class Foo extends FooBase {
   @MyTransitiveAnnotation(VALUE)
   int nonDaggerField;

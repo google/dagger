@@ -29,7 +29,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
-import dagger.internal.codegen.validation.DaggerSuperficialValidation.ValidationException;
+import dagger.internal.codegen.binding.DaggerSuperficialValidation.ValidationException;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;

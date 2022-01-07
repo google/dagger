@@ -450,7 +450,11 @@ public class AssistedFactoryTest {
     JavaFileObject generatedSrc =
         compilerMode
             .javaFileBuilder("test.DaggerTestComponent")
-            .addLines("package test;", "", GeneratedLines.generatedAnnotations())
+            .addLines(
+                "package test;",
+                "",
+                "@ScopeMetadata",
+                GeneratedLines.generatedAnnotations())
             .addLinesIn(
                 FAST_INIT_MODE,
                 "public final class Foo_Factory {",

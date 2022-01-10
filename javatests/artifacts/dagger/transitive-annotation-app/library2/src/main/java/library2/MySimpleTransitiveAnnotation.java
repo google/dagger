@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Dagger Authors.
+ * Copyright (C) 2022 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,7 @@
  * limitations under the License.
  */
 
-package app;
+package library2;
 
-import dagger.Component;
-import javax.inject.Singleton;
-import library1.Foo;
-import library1.MyComponentModule;
-
-@Singleton
-@Component(modules = MyComponentModule.class)
-interface MyComponent {
-  Foo foo();
-}
+/** A simple annotation that is a transitive dependency of the app. */
+public @interface MySimpleTransitiveAnnotation {}

@@ -18,8 +18,10 @@ package library1;
 
 import static library2.MyTransitiveAnnotation.VALUE;
 
+import dagger.Binds;
+import dagger.Module;
+import dagger.Provides;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import library2.MySimpleTransitiveAnnotation;
 import library2.MyTransitiveAnnotation;
 
@@ -30,43 +32,66 @@ import library2.MyTransitiveAnnotation;
  * <p>During the compilation of {@code :app}, {@link MyTransitiveAnnotation} will no longer be on
  * the classpath. In most cases, Dagger shouldn't care that the annotation isn't on the classpath
  */
-@Singleton
 @MySimpleTransitiveAnnotation
 @MyTransitiveAnnotation(VALUE)
-public final class Foo extends FooBase {
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
-  int nonDaggerField;
-
-  @MySimpleTransitiveAnnotation
-  // @MyTransitiveAnnotation(VALUE): Not supported on inject-fields yet.
-  @Inject int daggerField;
-
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
-  Foo(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) String str) {
-    super(str);
+@Module(includes = {
+  MyComponentModule.MyAbstractModule.class
+})
+public final class MyComponentModule {
+  public static final class Dep {
+    @Inject Dep() {}
   }
 
   @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
-  @Inject
-  Foo(
-      @MySimpleTransitiveAnnotation
-      // @MyTransitiveAnnotation(VALUE): Not supported on inject-constructor parameters yet.
-      int i) {
-    super(i);
+  @Module
+  interface MyAbstractModule {
+    @MySimpleTransitiveAnnotation
+    // @MyTransitiveAnnotation(VALUE): Not yet supported
+    @Binds
+    Number bindNumber(
+        @MySimpleTransitiveAnnotation
+        // @MyTransitiveAnnotation(VALUE): Not yet supported
+        int i);
   }
 
   @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
-  void nonDaggerMethod(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i) {}
+  private final String nonDaggerField = "";
 
   @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
-  @Inject
-  void daggerMethod(
+  MyComponentModule(
       @MySimpleTransitiveAnnotation
-      // @MyTransitiveAnnotation(VALUE): Not supported on inject-method parameters yet.
-      int i) {}
+      @MyTransitiveAnnotation(VALUE)
+      Dep dep) {}
+
+  @MySimpleTransitiveAnnotation
+  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @Provides
+  int provideInt(
+      @MySimpleTransitiveAnnotation
+      // @MyTransitiveAnnotation(VALUE): Not yet supported
+      Dep dep) {
+    return 1;
+  }
+
+  @MySimpleTransitiveAnnotation
+  @MyTransitiveAnnotation(VALUE)
+  String nonDaggerMethod(
+      @MySimpleTransitiveAnnotation
+      @MyTransitiveAnnotation(VALUE)
+      String str) {
+    return str;
+  }
+
+
+  @MySimpleTransitiveAnnotation
+  @MyTransitiveAnnotation(VALUE)
+  static String nonDaggerStaticMethod(
+      @MySimpleTransitiveAnnotation
+      @MyTransitiveAnnotation(VALUE)
+      String str) {
+    return str;
+  }
 }

@@ -19,30 +19,39 @@ package library1;
 import static library2.MyTransitiveAnnotation.VALUE;
 
 import javax.inject.Inject;
+import library2.MySimpleTransitiveAnnotation;
 import library2.MyTransitiveAnnotation;
 
 /** A baseclass for {@link Foo}. */
+@MySimpleTransitiveAnnotation
 @MyTransitiveAnnotation(VALUE)
 public class FooBase {
+  @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
   int baseNonDaggerField;
 
+  @MySimpleTransitiveAnnotation
   // @MyTransitiveAnnotation(VALUE): Not supported on inject-method parameters yet.
   @Inject int baseDaggerField;
 
+  @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
-  FooBase(@MyTransitiveAnnotation(VALUE) String str) {}
+  FooBase(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) String str) {}
 
+  @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
   @Inject
-  FooBase(@MyTransitiveAnnotation(VALUE) int i) {}
+  FooBase(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i) {}
 
+  @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
-  void baseNonDaggerMethod(@MyTransitiveAnnotation(VALUE) int i) {}
+  void baseNonDaggerMethod(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i) {}
 
+  @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
   @Inject
   void baseDaggerMethod(
+      @MySimpleTransitiveAnnotation
       // @MyTransitiveAnnotation(VALUE): Not supported on inject-method parameters yet.
       int i) {}
 }

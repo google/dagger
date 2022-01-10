@@ -49,9 +49,17 @@ public final class GradleModule {
     return this;
   }
 
+  public GradleModule addFile(GradleFile gradleFile) throws IOException {
+    return addFile(gradleFile.fileName(), gradleFile.fileContent());
+  }
+
   public GradleModule addFile(String fileName, String... content) throws IOException {
     writeFile(createFile(moduleDir, fileName), content);
     return this;
+  }
+
+  public GradleModule addSrcFile(GradleFile gradleFile) throws IOException {
+    return addSrcFile(gradleFile.fileName(), gradleFile.fileContent());
   }
 
   public GradleModule addSrcFile(String fileName, String... content) throws IOException {

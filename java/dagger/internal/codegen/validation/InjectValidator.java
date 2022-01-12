@@ -262,7 +262,8 @@ public final class InjectValidator implements ClearableCache {
     }
 
     // Note: superficial validation of the annotations is done as part of getting the scopes.
-    ImmutableSet<Scope> scopes = injectionAnnotations.getScopes(constructorElement);
+    ImmutableSet<Scope> scopes =
+        injectionAnnotations.getScopes(constructorElement.getEnclosingElement());
     if (injectAnnotation.equals(TypeNames.ASSISTED_INJECT)) {
       for (Scope scope : scopes) {
         builder.addError(

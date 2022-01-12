@@ -79,6 +79,7 @@ import dagger.spi.model.Scope;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.VariableElement;
@@ -132,7 +133,8 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
             .addTypeVariables(bindingTypeElementTypeVariableNames(binding));
 
     if (binding.kind() == BindingKind.INJECTION
-            || binding.kind() == BindingKind.ASSISTED_INJECTION) {
+        || binding.kind() == BindingKind.ASSISTED_INJECTION
+        || binding.kind() == BindingKind.PROVISION) {
       factoryBuilder.addAnnotation(scopeMetadataAnnotation(binding));
       factoryBuilder.addAnnotation(qualifierMetadataAnnotation(binding));
     }
@@ -316,8 +318,10 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
 
   private AnnotationSpec qualifierMetadataAnnotation(ProvisionBinding binding) {
     AnnotationSpec.Builder builder = AnnotationSpec.builder(TypeNames.QUALIFIER_METADATA);
-    binding.provisionDependencies().stream()
-        .map(DependencyRequest::key)
+    // Collect all qualifiers on the binding itself or its dependencies
+    Stream.concat(
+            Stream.of(binding.key()),
+            binding.provisionDependencies().stream().map(DependencyRequest::key))
         .map(Key::qualifier)
         .flatMap(presentValues())
         .map(DaggerAnnotation::className)

@@ -146,7 +146,7 @@ public final class BindingFactory {
                 constructorElement.hasAnnotation(TypeNames.ASSISTED_INJECT)
                     ? ASSISTED_INJECTION
                     : INJECTION)
-            .scope(injectionAnnotations.getScope(constructorElement));
+            .scope(injectionAnnotations.getScope(constructorElement.getEnclosingElement()));
 
     if (hasNonDefaultTypeParameters(enclosingType)) {
       builder.unresolved(injectionBinding(constructorElement, Optional.empty()));
@@ -195,7 +195,7 @@ public final class BindingFactory {
             keyFactory.forProvidesMethod(providesMethod, contributedBy),
             this::providesMethodBinding)
         .kind(PROVISION)
-        .scope(uniqueScopeOf(providesMethod))
+        .scope(injectionAnnotations.getScope(providesMethod))
         .nullableType(getNullableType(providesMethod))
         .build();
   }

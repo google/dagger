@@ -49,98 +49,86 @@ public final class MyComponentModule {
   public static final class UnscopedUnqualifiedProvidesType extends UnscopedUnqualifiedBindsType {}
 
   @MySimpleTransitiveAnnotation
-  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @MyTransitiveAnnotation(VALUE)
   @Provides
   @Singleton
   @MyQualifier
   ScopedQualifiedProvidesType scopedQualifiedProvidesType(
-      @MyQualifier
-      @MySimpleTransitiveAnnotation
-      // @MyTransitiveAnnotation(VALUE): Not yet supported
-      Dep dep) {
+      @MyQualifier @MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) Dep dep) {
     return new ScopedQualifiedProvidesType();
   }
 
   @MySimpleTransitiveAnnotation
-  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @MyTransitiveAnnotation(VALUE)
   @Provides
   @Singleton
   ScopedUnqualifiedProvidesType scopedUnqualifiedProvidesType(
-      @MyQualifier
-      @MySimpleTransitiveAnnotation
-      // @MyTransitiveAnnotation(VALUE): Not yet supported
-      Dep dep) {
+      @MyQualifier @MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) Dep dep) {
     return new ScopedUnqualifiedProvidesType();
   }
 
   @MySimpleTransitiveAnnotation
-  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @MyTransitiveAnnotation(VALUE)
   @Provides
   @MyQualifier
   UnscopedQualifiedProvidesType unscopedQualifiedProvidesType(
-      @MyQualifier
-      @MySimpleTransitiveAnnotation
-      // @MyTransitiveAnnotation(VALUE): Not yet supported
-      Dep dep) {
+      @MyQualifier @MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) Dep dep) {
     return new UnscopedQualifiedProvidesType();
   }
 
   @MySimpleTransitiveAnnotation
-  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @MyTransitiveAnnotation(VALUE)
   @Provides
   UnscopedUnqualifiedProvidesType unscopedUnqualifiedProvidesType(
-      @MyQualifier
-      @MySimpleTransitiveAnnotation
-      // @MyTransitiveAnnotation(VALUE): Not yet supported
-      Dep dep) {
+      @MyQualifier @MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) Dep dep) {
     return new UnscopedUnqualifiedProvidesType();
   }
 
   @MySimpleTransitiveAnnotation
-  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @MyTransitiveAnnotation(VALUE)
   @Module
   interface MyAbstractModule {
-    @MySimpleTransitiveAnnotation
+    // @MySimpleTransitiveAnnotation: Not yet supported
     // @MyTransitiveAnnotation(VALUE): Not yet supported
     @Binds
     @Singleton
     @MyQualifier
     ScopedQualifiedBindsType scopedQualifiedBindsType(
         @MyQualifier
-        @MySimpleTransitiveAnnotation
+        // @MySimpleTransitiveAnnotation: Not yet supported
         // @MyTransitiveAnnotation(VALUE): Not yet supported
         ScopedQualifiedProvidesType scopedQualifiedProvidesType);
 
-    @MySimpleTransitiveAnnotation
+    // @MySimpleTransitiveAnnotation: Not yet supported
     // @MyTransitiveAnnotation(VALUE): Not yet supported
     @Binds
     @Singleton
     ScopedUnqualifiedBindsType scopedUnqualifiedBindsType(
-        @MySimpleTransitiveAnnotation
+        // @MySimpleTransitiveAnnotation: Not yet supported
         // @MyTransitiveAnnotation(VALUE): Not yet supported
         ScopedUnqualifiedProvidesType scopedUnqualifiedProvidesType);
 
-    @MySimpleTransitiveAnnotation
+    // @MySimpleTransitiveAnnotation: Not yet supported
     // @MyTransitiveAnnotation(VALUE): Not yet supported
     @Binds
     @MyQualifier
     UnscopedQualifiedBindsType unscopedQualifiedBindsType(
         @MyQualifier
-        @MySimpleTransitiveAnnotation
+        // @MySimpleTransitiveAnnotation: Not yet supported
         // @MyTransitiveAnnotation(VALUE): Not yet supported
         UnscopedQualifiedProvidesType unscopedQualifiedProvidesType);
 
-    @MySimpleTransitiveAnnotation
+    // @MySimpleTransitiveAnnotation: Not yet supported
     // @MyTransitiveAnnotation(VALUE): Not yet supported
     @Binds
     UnscopedUnqualifiedBindsType unscopedUnqualifiedBindsType(
-        @MySimpleTransitiveAnnotation
+        // @MySimpleTransitiveAnnotation: Not yet supported
         // @MyTransitiveAnnotation(VALUE): Not yet supported
         UnscopedUnqualifiedProvidesType unscopedUnqualifiedProvidesType);
   }
 
   @MySimpleTransitiveAnnotation
-  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @MyTransitiveAnnotation(VALUE)
   @Provides
   @MyQualifier
   Dep provideQualifiedDep() {
@@ -150,7 +138,7 @@ public final class MyComponentModule {
   // Provide an unqualified Dep to ensure that if we accidentally drop the qualifier
   // we'll get a runtime exception.
   @MySimpleTransitiveAnnotation
-  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @MyTransitiveAnnotation(VALUE)
   @Provides
   Dep provideDep() {
     throw new UnsupportedOperationException();

@@ -21,7 +21,6 @@ import static androidx.room.compiler.processing.XTypeKt.isVoid;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Verify.verifyNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedInjectionType;
@@ -344,7 +343,7 @@ public abstract class BindingElementValidator<E extends XElement> {
      * one {@linkplain Scope scope} annotation.
      */
     private void checkScopes() {
-      ImmutableSet<Scope> scopes = scopesOf(element);
+      ImmutableSet<Scope> scopes = injectionAnnotations.getScopes(element);
       String error = null;
       switch (allowsScoping) {
         case ALLOWS_SCOPING:

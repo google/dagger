@@ -24,6 +24,7 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XTypeElement;
+import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreTypes;
 import java.util.ArrayList;
 import java.util.List;
@@ -120,7 +121,7 @@ public final class DaggerSuperficialValidation {
     validateAnnotationsOf(toJavac(element));
   }
 
-  private static void validateAnnotationsOf(Element element) {
+  public static void validateAnnotationsOf(Element element) {
     try {
       validateAnnotations(element.getAnnotationMirrors());
     } catch (RuntimeException exception) {
@@ -141,7 +142,22 @@ public final class DaggerSuperficialValidation {
    * validation fails.
    */
   public static void strictValidateAnnotationsOf(XElement element) {
-    element.getAllAnnotations()
+    strictValidateAnnotationsOf(toJavac(element));
+  }
+
+  /**
+   * Strictly validates the given annotation belonging to the given element.
+   *
+   * <p>This validation is considered "strict" because it will fail if an annotation's type is not
+   * valid. This fixes the bug described in b/213880825, but cannot be applied indiscriminately or
+   * it would break in many cases where we don't care about an annotation.
+   *
+   * <p>Note: This method does not actually check that the given annotation belongs to the given
+   * element. The element is only used to given better context to the error message in the case that
+   * validation fails.
+   */
+  public static void strictValidateAnnotationsOf(Element element) {
+    element.getAnnotationMirrors()
         .forEach(annotation -> strictValidateAnnotationOf(element, annotation));
   }
 
@@ -157,11 +173,26 @@ public final class DaggerSuperficialValidation {
    * validation fails.
    */
   public static void strictValidateAnnotationOf(XElement element, XAnnotation annotation) {
+    strictValidateAnnotationOf(toJavac(element), toJavac(annotation));
+  }
+
+  /**
+   * Strictly validates the given annotation belonging to the given element.
+   *
+   * <p>This validation is considered "strict" because it will fail if an annotation's type is not
+   * valid. This fixes the bug described in b/213880825, but cannot be applied indiscriminately or
+   * it would break in many cases where we don't care about an annotation.
+   *
+   * <p>Note: This method does not actually check that the given annotation belongs to the given
+   * element. The element is only used to given better context to the error message in the case that
+   * validation fails.
+   */
+  public static void strictValidateAnnotationOf(Element element, AnnotationMirror annotation) {
     try {
-      strictValidateAnnotation(toJavac(annotation));
+      strictValidateAnnotation(annotation);
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception)
-          .append(String.format("%s element: %s", toJavac(element).getKind(), element));
+          .append(String.format("%s element: %s", element.getKind(), element));
     }
   }
 
@@ -361,7 +392,9 @@ public final class DaggerSuperficialValidation {
       }
       validateAnnotationValues(annotationMirror.getElementValues());
     } catch (RuntimeException exception) {
-      throw ValidationException.from(exception).append("annotation: " + annotationMirror);
+      throw ValidationException.from(exception)
+          // Note: Calling #toString() directly on the annotation throws NPE (b/216180336).
+          .append("annotation: " + AnnotationMirrors.toString(annotationMirror));
     }
   }
 
@@ -370,7 +403,9 @@ public final class DaggerSuperficialValidation {
       validateType("annotation type", annotationMirror.getAnnotationType());
       validateAnnotationValues(annotationMirror.getElementValues());
     } catch (RuntimeException exception) {
-      throw ValidationException.from(exception).append("annotation: " + annotationMirror);
+      throw ValidationException.from(exception)
+          // Note: Calling #toString() directly on the annotation throws NPE (b/216180336).
+          .append("annotation: " + AnnotationMirrors.toString(annotationMirror));
     }
   }
 

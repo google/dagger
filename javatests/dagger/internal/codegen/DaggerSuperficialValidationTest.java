@@ -422,7 +422,7 @@ public class DaggerSuperficialValidationTest {
                         NEW_LINES.join(
                             "Validation trace:",
                             "  => CLASS element: test.Outer.TestClass",
-                            "  => annotation: @test.Outer.TestAnnotation(classes={<error>})",
+                            "  => annotation: @test.Outer.TestAnnotation(classes = \"<error>\")",
                             "  => annotation value: classes",
                             "  => 'array' annotation value, <error>, with expected type:"
                                 + " java.lang.Class[]",

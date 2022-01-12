@@ -70,7 +70,6 @@ public class TransitiveMapKeyTest {
             "",
             "allprojects {",
             "  repositories {",
-            "    jcenter()",
             "    mavenCentral()",
             "    mavenLocal()",
             "  }",

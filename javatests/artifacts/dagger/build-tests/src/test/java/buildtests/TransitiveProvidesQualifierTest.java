@@ -83,7 +83,6 @@ public class TransitiveProvidesQualifierTest {
             "",
             "allprojects {",
             "  repositories {",
-            "    jcenter()",
             "    mavenCentral()",
             "    mavenLocal()",
             "  }",

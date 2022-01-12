@@ -156,7 +156,6 @@ public class TransitiveQualifierTest {
             "",
             "allprojects {",
             "  repositories {",
-            "    jcenter()",
             "    mavenCentral()",
             "    mavenLocal()",
             "  }",

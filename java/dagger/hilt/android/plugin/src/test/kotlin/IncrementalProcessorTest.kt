@@ -133,7 +133,6 @@ class IncrementalProcessorTest(private val incapMode: String) {
       buildscript {
         repositories {
           google()
-          jcenter()
         }
         dependencies {
           classpath 'com.android.tools.build:gradle:4.2.0'
@@ -169,7 +168,6 @@ class IncrementalProcessorTest(private val incapMode: String) {
       repositories {
         mavenLocal()
         google()
-        jcenter()
       }
 
       dependencies {

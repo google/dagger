@@ -265,7 +265,6 @@ maven_install(
     repositories = [
         "https://repo1.maven.org/maven2",
         "https://maven.google.com",
-        "https://jcenter.bintray.com/",  # Lint has one trove4j dependency in jCenter
     ],
 )
 

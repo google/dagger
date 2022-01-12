@@ -20,7 +20,6 @@ buildscript {
     }
     repositories {
         google()
-        jcenter()
     }
     dependencies {
         classpath "com.android.tools.build:gradle:$agp_version"
@@ -30,7 +29,6 @@ buildscript {
 allprojects {
     repositories {
       google()
-      jcenter()
       mavenCentral()
       mavenLocal()
     }

@@ -127,9 +127,7 @@ android_local_test(
         "//:android_local_test_exports",
         "//third_party/java/guava/collect",
         "//:dagger_with_compiler",
-        "//third_party/java/jsr330_inject",
         "//third_party/java/truth",
-        "//java/dagger/hilt/android/qualifiers",
         "//java/dagger/hilt/android/testing:hilt_android_rule",
         "//java/dagger/hilt/android/testing:hilt_android_test",
     ],
@@ -152,7 +150,6 @@ android_local_test(
     },
     deps = [
         "//:android_local_test_exports",
-        "//third_party/java/jsr330_inject",
         "//third_party/java/truth",
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt/android:android_entry_point",

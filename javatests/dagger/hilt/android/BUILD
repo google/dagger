@@ -246,14 +246,12 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
-        "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:package_info",
         "//java/dagger/hilt/android/flags:fragment_get_context_fix",
         "//java/dagger/hilt/android/testing:bind_value",
         "//java/dagger/hilt/android/testing:hilt_android_test",
-        "//third_party/java/jsr330_inject",
         "//third_party/java/truth",
     ],
 )
@@ -277,7 +275,6 @@ android_local_test(
     },
     deps = [
         "//:android_local_test_exports",
-        "//:dagger_with_compiler",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:package_info",
@@ -362,7 +359,6 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
-        "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:package_info",
         "//java/dagger/hilt/android/testing:hilt_android_test",
@@ -381,7 +377,6 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
-        "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:package_info",
@@ -513,7 +508,6 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
-        "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:activity_retained_lifecycle",
         "//java/dagger/hilt/android:android_entry_point",
@@ -540,7 +534,6 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
-        "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:package_info",
@@ -566,7 +559,6 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
-        "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:package_info",
@@ -594,7 +586,6 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
-        "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:package_info",
@@ -621,7 +612,6 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
-        "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:package_info",

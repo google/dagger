@@ -18,6 +18,8 @@ buildscript {
   ext {
     kotlin_version = "1.5.32"
     agp_version = System.getenv('AGP_VERSION') ?: "7.2.0-alpha06"
+    pluginArtifactId = 'hilt-android-gradle-plugin'
+    pluginId = 'com.google.dagger.hilt.android'
   }
   repositories {
     google()
@@ -168,6 +170,7 @@ tasks.register("sourcesJar", Jar).configure {
   description = "Assembles sources JAR"
   archiveClassifier.set("sources")
   from(sourceSets["main"].allSource)
+  dependsOn('generatePluginVersionSource')
 }
 
 // Create javadoc Jar. The jar is empty since we don't really have docs
@@ -188,53 +191,29 @@ tasks.withType(GenerateModuleMetadata) {
 publishing {
   publications {
     plugin(MavenPublication) {
-      artifactId = 'hilt-android-gradle-plugin'
+      artifactId = pluginArtifactId
       version = getPublishVersion()
       from components.kotlin
       artifact(shadowJar)
       artifact(sourcesJar)
       artifact(javadocJar)
       pom {
-        name = 'Hilt Android Gradle Plugin'
-        description = 'A fast dependency injector for Android and Java.'
-        url = 'https://github.com/google/dagger'
-        scm {
-          url = 'https://github.com/google/dagger/'
-          connection = 'scm:git:git://github.com/google/dagger.git'
-          developerConnection = 'scm:git:ssh://git@github.com/google/dagger.git'
-          tag = 'HEAD'
-        }
-        issueManagement {
-          system = 'GitHub Issues'
-          url = 'https://github.com/google/dagger/issues'
-        }
-        licenses {
-          license {
-            name = 'Apache 2.0'
-            url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
-          }
-        }
-        organization {
-          name = 'Google, Inc.'
-          url = 'https://www.google.com'
-        }
+        addPomTemplate(owner)
+      }
+    }
+    // https://docs.gradle.org/current/userguide/plugins.html#sec:plugin_markers
+    pluginMarker(MavenPublication) {
+      groupId = pluginId
+      artifactId = "${pluginId}.gradle.plugin"
+      version = getPublishVersion()
+      pom {
+        addPomTemplate(owner)
         withXml {
-          def projectNode = asNode()
-          // Adds:
-          // <parent>
-          //   <groupId>org.sonatype.oss</groupId>
-          //   <artifactId>oss-parent</artifactId>
-          //   <version>7</version>
-          // </parent>
-          def parentNode = projectNode.appendNode('parent')
-          parentNode.appendNode('groupId', 'org.sonatype.oss')
-          parentNode.appendNode('artifactId', 'oss-parent')
-          parentNode.appendNode('version', '7')
-          // Adds scm->tag because for some reason the DSL API does not.
-          // <scm>
-          //   <tag>HEAD</tag>
-          // </scm>
-          projectNode.get('scm').first().appendNode('tag', 'HEAD')
+          def dependencyNode =
+                  asNode().appendNode("dependencies").appendNode("dependency")
+          dependencyNode.appendNode("groupId", group)
+          dependencyNode.appendNode("artifactId", pluginArtifactId)
+          dependencyNode.appendNode("version", getPublishVersion())
         }
       }
     }
@@ -247,7 +226,52 @@ publishing {
   }
 }
 
-group='com.google.dagger'
+group = 'com.google.dagger'
+
+// TODO(danysantiago): Use POM template in tools/ to avoid duplicating lines.
+def addPomTemplate(pom) {
+  pom.name = 'Hilt Android Gradle Plugin'
+  pom.description = 'A fast dependency injector for Android and Java.'
+  pom.url = 'https://github.com/google/dagger'
+  pom.scm {
+    url = 'https://github.com/google/dagger/'
+    connection = 'scm:git:git://github.com/google/dagger.git'
+    developerConnection = 'scm:git:ssh://git@github.com/google/dagger.git'
+    tag = 'HEAD'
+  }
+  pom.issueManagement {
+    system = 'GitHub Issues'
+    url = 'https://github.com/google/dagger/issues'
+  }
+  pom.licenses {
+    license {
+      name = 'Apache 2.0'
+      url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+    }
+  }
+  pom.organization {
+    name = 'Google, Inc.'
+    url = 'https://www.google.com'
+  }
+  pom.withXml {
+    def projectNode = asNode()
+    // Adds:
+    // <parent>
+    //   <groupId>org.sonatype.oss</groupId>
+    //   <artifactId>oss-parent</artifactId>
+    //   <version>7</version>
+    // </parent>
+    def parentNode = projectNode.appendNode('parent')
+    parentNode.appendNode('groupId', 'org.sonatype.oss')
+    parentNode.appendNode('artifactId', 'oss-parent')
+    parentNode.appendNode('version', '7')
+    // Adds scm->tag because for some reason the DSL API does not.
+    // <scm>
+    //   <tag>HEAD</tag>
+    // </scm>
+    projectNode.get('scm').first().appendNode('tag', 'HEAD')
+  }
+}
 
 def getPublishVersion() {
   def publishVersion = findProperty("PublishVersion")

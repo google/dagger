@@ -13,6 +13,7 @@ _deploy_plugin() {
   ./$plugindir/gradlew -p $plugindir --no-daemon clean \
     publishAllPublicationsToMavenRepository -PPublishVersion="$VERSION_NAME"
   local outdir=$plugindir/build/repo/com/google/dagger/hilt-android-gradle-plugin/$VERSION_NAME
+  local markerOutDir=$plugindir/build/repo/com/google/dagger/hilt/android/com.google.dagger.hilt.android.gradle.plugin/$VERSION_NAME
   # When building '-SNAPSHOT' versions in gradle, the filenames replaces
   # '-SNAPSHOT' with timestamps, so we need to disambiguate by finding each file
   # to deploy. See: https://stackoverflow.com/questions/54182823/
@@ -29,6 +30,10 @@ _deploy_plugin() {
     -DpomFile="$(find $outdir -name "*-$suffix.pom")" \
     -Dsources="$(find $outdir -name "*-$suffix-sources.jar")" \
     -Djavadoc="$(find $outdir -name "*-$suffix-javadoc.jar")" \
+    "${EXTRA_MAVEN_ARGS[@]:+${EXTRA_MAVEN_ARGS[@]}}"
+  mvn "$MVN_GOAL" \
+    -Dfile="$(find $markerOutDir -name "*-$suffix.pom")" \
+    -DpomFile="$(find $markerOutDir -name "*-$suffix.pom")" \
     "${EXTRA_MAVEN_ARGS[@]:+${EXTRA_MAVEN_ARGS[@]}}"
 }
 

@@ -255,6 +255,7 @@ public final class InjectionAnnotations {
 
     // Fall back to validating all annotations if the ScopeMetadata isn't available.
     DaggerSuperficialValidation.strictValidateAnnotationsOf(element);
+
     return ImmutableSet.copyOf(element.getAnnotationsAnnotatedWith(TypeNames.QUALIFIER));
   }
 

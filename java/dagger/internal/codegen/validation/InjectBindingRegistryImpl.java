@@ -22,12 +22,12 @@ import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.base.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
+import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static javax.lang.model.type.TypeKind.DECLARED;
@@ -39,7 +39,6 @@ import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -64,6 +63,7 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.type.DeclaredType;
@@ -200,7 +200,6 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     this.bindingFactory = bindingFactory;
     this.compilerOptions = compilerOptions;
   }
-
 
   // TODO(dpb): make the SourceFileGenerators fields so they don't have to be passed in
   @Override
@@ -349,24 +348,21 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
       return Optional.of(binding);
     }
 
-    // ok, let's see if we can find an @Inject constructor
-    XTypeElement element = key.type().xprocessing().getTypeElement();
-    ImmutableSet<XConstructorElement> injectConstructors =
-        ImmutableSet.<XConstructorElement>builder()
-            .addAll(injectedConstructors(element))
-            .addAll(assistedInjectedConstructors(element))
-            .build();
-    switch (injectConstructors.size()) {
-      case 0:
-        // No constructor found.
-        return Optional.empty();
-      case 1:
-        return tryRegisterConstructor(
-            getOnlyElement(injectConstructors), Optional.of(key.type().xprocessing()), true);
-      default:
-        throw new IllegalStateException("Found multiple @Inject constructors: "
-            + injectConstructors);
+    XType type = key.type().xprocessing();
+    XTypeElement element = type.getTypeElement();
+
+    ValidationReport report = injectValidator.validate(element);
+    report.printMessagesTo(messager);
+    if (!report.isClean()) {
+      return Optional.empty();
     }
+
+    return Stream.concat(
+            injectedConstructors(element).stream(),
+            assistedInjectedConstructors(element).stream())
+        // We're guaranteed that there's at most 1 @Inject constructors from above validation.
+        .collect(toOptional())
+        .flatMap(constructor -> tryRegisterConstructor(constructor, Optional.of(type), true));
   }
 
   @CanIgnoreReturnValue

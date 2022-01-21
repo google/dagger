@@ -51,6 +51,15 @@ java_library(
     ],
 )
 
+java_library(
+    name = "InvalidInjectConstructor",
+    srcs = ["InvalidInjectConstructor.java"],
+    # Note: We purposely leave off the dagger processor here.
+    deps = [
+        "//third_party/java/jsr330_inject",
+    ],
+)
+
 GenJavaTests(
     name = "compiler_tests",
     srcs = glob(
@@ -60,12 +69,14 @@ GenJavaTests(
             "Compilers.java",
             "JavaFileBuilder.java",
             "ComponentValidationKtTest.java",
+            "InvalidInjectConstructor.java",
         ],
     ),
     functional = False,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     deps = [
+        ":InvalidInjectConstructor",
         ":compilers",
         ":kotlin_sources",
         "//java/dagger:core",

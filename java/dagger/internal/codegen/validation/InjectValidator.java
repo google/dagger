@@ -24,6 +24,7 @@ import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.binding.SourceFiles.factoryNameForElement;
+import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
 
@@ -145,7 +146,7 @@ public final class InjectValidator implements ClearableCache {
 
   private ValidationReport validateUncached(XTypeElement typeElement) {
     ValidationReport.Builder builder = ValidationReport.about(typeElement);
-    builder.addSubreport(validateForMembersInjection(typeElement));
+    builder.addSubreport(validateForMembersInjectionInternal(typeElement));
 
     ImmutableSet<XConstructorElement> injectConstructors =
         ImmutableSet.<XConstructorElement>builder()
@@ -160,7 +161,12 @@ public final class InjectValidator implements ClearableCache {
         builder.addSubreport(validateConstructor(getOnlyElement(injectConstructors)));
         break;
       default:
-        builder.addError("Types may only contain one injected constructor", typeElement);
+        builder.addError(
+            String.format(
+                "Type %s may only contain one injected constructor. Found: %s",
+                typeElement,
+                injectConstructors),
+            typeElement);
     }
 
     return builder.build();
@@ -346,13 +352,17 @@ public final class InjectValidator implements ClearableCache {
   }
 
   public ValidationReport validateForMembersInjection(XTypeElement typeElement) {
-    // TODO(bcorso): validate the entire type if a factory hasn't been generated yet so that we
-    // we can report any errors on the constructor etc. that may have been missed.
-    return reentrantComputeIfAbsent(
-        membersInjectionReports, typeElement, this::validateForMembersInjectionUncached);
+    return !processedInPreviousRoundOrCompilationUnit(typeElement)
+        ? validate(typeElement) // validate everything
+        : validateForMembersInjectionInternal(typeElement); // validate only inject members
   }
 
-  private ValidationReport validateForMembersInjectionUncached(XTypeElement typeElement) {
+  private ValidationReport validateForMembersInjectionInternal(XTypeElement typeElement) {
+    return reentrantComputeIfAbsent(
+        membersInjectionReports, typeElement, this::validateForMembersInjectionInternalUncached);
+  }
+
+  private ValidationReport validateForMembersInjectionInternalUncached(XTypeElement typeElement) {
     DaggerSuperficialValidation.validateTypeOf(typeElement);
     // TODO(beder): This element might not be currently compiled, so this error message could be
     // left in limbo. Find an appropriate way to display the error message in that case.
@@ -429,5 +439,9 @@ public final class InjectValidator implements ClearableCache {
 
   private boolean processedInPreviousRoundOrCompilationUnit(XConstructorElement injectConstructor) {
     return processingEnv.findTypeElement(factoryNameForElement(injectConstructor)) != null;
+  }
+
+  private boolean processedInPreviousRoundOrCompilationUnit(XTypeElement membersInjectedType) {
+    return processingEnv.findTypeElement(membersInjectorNameForType(membersInjectedType)) != null;
   }
 }

@@ -574,7 +574,12 @@ public final class InjectConstructorFactoryGeneratorTest {
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
-        .hadErrorContaining("Types may only contain one injected constructor")
+        .hadErrorContaining(
+            "Type test.TooManyInjectConstructors may only contain one injected constructor. "
+                + "Found: ["
+                + "TooManyInjectConstructors(), "
+                + "TooManyInjectConstructors(java.lang.String)"
+                + "]")
         .inFile(file)
         .onLine(5);
   }

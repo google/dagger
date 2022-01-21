@@ -40,6 +40,11 @@ public final class MyComponentTest {
   }
 
   @Test
+  public void testAssistedFoo() {
+    assertThat(component.assistedFooFactory().create(5)).isNotNull();
+  }
+
+  @Test
   public void testScopedQualifiedBindsTypeIsScoped() {
     assertThat(component.scopedQualifiedBindsType())
         .isEqualTo(component.scopedQualifiedBindsType());

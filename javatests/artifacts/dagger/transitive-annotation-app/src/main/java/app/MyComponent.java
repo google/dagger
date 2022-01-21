@@ -18,6 +18,7 @@ package app;
 
 import dagger.Component;
 import javax.inject.Singleton;
+import library1.AssistedFoo;
 import library1.Foo;
 import library1.MyComponentModule;
 import library1.MyQualifier;
@@ -26,6 +27,8 @@ import library1.MyQualifier;
 @Component(modules = MyComponentModule.class)
 interface MyComponent {
   Foo foo();
+
+  AssistedFoo.Factory assistedFooFactory();
 
   @MyQualifier
   MyComponentModule.ScopedQualifiedBindsType scopedQualifiedBindsType();

@@ -128,6 +128,25 @@ public abstract class CompilerOptions {
 
   public abstract boolean experimentalDaggerErrorMessages();
 
+  /**
+   * Returns {@code true} if strict superficial validation is enabled.
+   *
+   * <p>This option is enabled by default and allows Dagger to detect and fail if an element that
+   * supports being annotated with a scope or qualifier annotation is annotated with any
+   * unresolvable annotation types. This option is considered "strict" because in most cases we must
+   * fail for any unresolvable annotation types, not just scopes and qualifiers. In particular, if
+   * an annotation type is not resolvable, we don't have enough information to tell if it's a scope
+   * or qualifier, so we must fail for all unresolvable annotations.
+   *
+   * <p>This option can be disabled to allow easier migration from the legacy behavior of Dagger
+   * (i.e. versions less than or equal to 2.40.5). However, we will remove this option in a future
+   * version of Dagger.
+   *
+   * <p>Warning:Disabling this option means that Dagger may miss a scope or qualifier on a
+   * binding, leading to a (wrong) unscoped binding or a (wrong) unqualified binding, respectively.
+   */
+  public abstract boolean strictSuperficialValidation();
+
   /** Returns the number of bindings allowed per shard. */
   public int keysPerComponentShard(XTypeElement component) {
     return 3500;

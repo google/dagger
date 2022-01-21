@@ -35,17 +35,26 @@ import org.junit.runners.Parameterized.Parameters;
 // This is a regression test for https://github.com/google/dagger/issues/3136
 @RunWith(Parameterized.class)
 public class TransitiveQualifierTest {
-  @Parameters(name = "{0}")
+  @Parameters(name = "transitiveDependencyType = {0}, strictSuperficialValidationMode = {1}")
   public static Collection<Object[]> parameters() {
-    return Arrays.asList(new Object[][] {{ "implementation" }, { "api" }});
+    return Arrays.asList(
+        new Object[][] {
+          { "implementation", "ENABLED" },
+          { "implementation", "DISABLED" },
+          { "api", "ENABLED" },
+          { "api", "DISABLED" }
+        });
   }
 
   @Rule public TemporaryFolder folder = new TemporaryFolder();
 
   private final String transitiveDependencyType;
+  private final String strictSuperficialValidationMode;
 
-  public TransitiveQualifierTest(String transitiveDependencyType) {
+  public TransitiveQualifierTest(
+      String transitiveDependencyType, String strictSuperficialValidationMode) {
     this.transitiveDependencyType = transitiveDependencyType;
+    this.strictSuperficialValidationMode = strictSuperficialValidationMode;
   }
 
   @Test
@@ -65,17 +74,31 @@ public class TransitiveQualifierTest {
     BuildResult result;
     switch (transitiveDependencyType) {
       case "implementation":
-        result = runner.buildAndFail();
-        assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
-        assertThat(result.getOutput())
-            .contains(
-                "ComponentProcessingStep was unable to process 'app.MyComponent' because "
-                    + "'library2.MyQualifier' could not be resolved."
-                    + "\n  "
-                    + "\n  Dependency trace:"
-                    + "\n      => element (INTERFACE): library1.MyModule"
-                    + "\n      => element (METHOD): provideInt()"
-                    + "\n      => annotation: @library2.MyQualifier");
+        switch (strictSuperficialValidationMode) {
+          case "ENABLED":
+            result = runner.buildAndFail();
+            assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
+            // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the
+            // issue described in https://github.com/google/dagger/issues/2208.
+            assertThat(result.getOutput())
+                .contains(
+                    "ComponentProcessingStep was unable to process 'app.MyComponent' because "
+                        + "'library2.MyQualifier' could not be resolved."
+                        + "\n  "
+                        + "\n  Dependency trace:"
+                        + "\n      => element (INTERFACE): library1.MyModule"
+                        + "\n      => element (METHOD): provideInt()"
+                        + "\n      => annotation: @library2.MyQualifier");
+            break;
+          case "DISABLED":
+            // When strict mode is disabled we fall back to the old behavior where the qualifier is
+            // missing and we do not throw an exception.
+            result = runner.build();
+            assertThat(result.task(":app:assemble").getOutcome()).isEqualTo(SUCCESS);
+            assertThat(result.getOutput()).contains("REQUEST: java.lang.Integer");
+            break;
+          default: throw new AssertionError("Unexpected mode: " + strictSuperficialValidationMode);
+        }
         break;
       case "api":
         result = runner.build();
@@ -104,17 +127,31 @@ public class TransitiveQualifierTest {
     BuildResult result;
     switch (transitiveDependencyType) {
       case "implementation":
-        result = runner.buildAndFail();
-        assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
-        assertThat(result.getOutput())
-            .contains(
-                "ComponentProcessingStep was unable to process 'app.MyComponent' because "
-                    + "'library2.MyQualifier' could not be resolved."
-                    + "\n  "
-                    + "\n  Dependency trace:"
-                    + "\n      => element (INTERFACE): library1.MyModule"
-                    + "\n      => element (METHOD): provideInt()"
-                    + "\n      => annotation: @library2.MyQualifier");
+        switch (strictSuperficialValidationMode) {
+          case "ENABLED":
+            result = runner.buildAndFail();
+            assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
+            // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the
+            // issue described in https://github.com/google/dagger/issues/2208.
+            assertThat(result.getOutput())
+                .contains(
+                    "ComponentProcessingStep was unable to process 'app.MyComponent' because "
+                        + "'library2.MyQualifier' could not be resolved."
+                        + "\n  "
+                        + "\n  Dependency trace:"
+                        + "\n      => element (INTERFACE): library1.MyModule"
+                        + "\n      => element (METHOD): provideInt()"
+                        + "\n      => annotation: @library2.MyQualifier");
+            break;
+          case "DISABLED":
+            // When strict mode is disabled we fall back to the old behavior where the qualifier is
+            // missing and we do not throw an exception.
+            result = runner.build();
+            assertThat(result.task(":app:assemble").getOutcome()).isEqualTo(SUCCESS);
+            assertThat(result.getOutput()).contains("REQUEST: java.lang.Integer");
+            break;
+          default: throw new AssertionError("Unexpected mode: " + strictSuperficialValidationMode);
+        }
         break;
       case "api":
         result = runner.build();
@@ -143,17 +180,31 @@ public class TransitiveQualifierTest {
     BuildResult result;
     switch (transitiveDependencyType) {
       case "implementation":
-        result = runner.buildAndFail();
-        assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
-        assertThat(result.getOutput())
-            .contains(
-                "ComponentProcessingStep was unable to process 'app.MyComponent' because "
-                    + "'library2.MyQualifier' could not be resolved."
-                    + "\n  "
-                    + "\n  Dependency trace:"
-                    + "\n      => element (INTERFACE): library1.MyModule"
-                    + "\n      => element (METHOD): provideInt()"
-                    + "\n      => annotation: @library2.MyQualifier");
+        switch (strictSuperficialValidationMode) {
+          case "ENABLED":
+            result = runner.buildAndFail();
+            assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
+            // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the
+            // issue described in https://github.com/google/dagger/issues/2208.
+            assertThat(result.getOutput())
+                .contains(
+                    "ComponentProcessingStep was unable to process 'app.MyComponent' because "
+                        + "'library2.MyQualifier' could not be resolved."
+                        + "\n  "
+                        + "\n  Dependency trace:"
+                        + "\n      => element (INTERFACE): library1.MyModule"
+                        + "\n      => element (METHOD): provideInt()"
+                        + "\n      => annotation: @library2.MyQualifier");
+            break;
+          case "DISABLED":
+            // When strict mode is disabled we fall back to the old behavior where the qualifier is
+            // missing and we do not throw an exception.
+            result = runner.build();
+            assertThat(result.task(":app:assemble").getOutcome()).isEqualTo(SUCCESS);
+            assertThat(result.getOutput()).contains("REQUEST: java.lang.Integer");
+            break;
+          default: throw new AssertionError("Unexpected mode: " + strictSuperficialValidationMode);
+        }
         break;
       case "api":
         result = runner.build();
@@ -192,7 +243,9 @@ public class TransitiveQualifierTest {
             "  id 'application'",
             "}",
             "tasks.withType(JavaCompile) {",
-            "    options.compilerArgs += '-Adagger.experimentalDaggerErrorMessages=ENABLED'",
+            String.format(
+                "    options.compilerArgs += '-Adagger.strictSuperficialValidation=%s'",
+                strictSuperficialValidationMode),
             "}",
             "dependencies {",
             "  implementation project(':library1')",

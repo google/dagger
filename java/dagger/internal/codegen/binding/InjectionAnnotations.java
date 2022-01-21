@@ -35,7 +35,6 @@ import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameFor
 import static dagger.internal.codegen.extension.DaggerCollectors.onlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotatedAnnotations;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
@@ -58,8 +57,8 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.extension.DaggerCollectors;
 import dagger.internal.codegen.extension.DaggerStreams;
 import dagger.internal.codegen.javapoet.TypeNames;
@@ -86,15 +85,18 @@ public final class InjectionAnnotations {
   private final XProcessingEnv processingEnv;
   private final DaggerElements elements;
   private final KotlinMetadataUtil kotlinMetadataUtil;
+  private final CompilerOptions compilerOptions;
 
   @Inject
   InjectionAnnotations(
       XProcessingEnv processingEnv,
       DaggerElements elements,
-      KotlinMetadataUtil kotlinMetadataUtil) {
+      KotlinMetadataUtil kotlinMetadataUtil,
+      CompilerOptions compilerOptions) {
     this.processingEnv = processingEnv;
     this.elements = elements;
     this.kotlinMetadataUtil = kotlinMetadataUtil;
+    this.compilerOptions = compilerOptions;
   }
 
   /**
@@ -123,7 +125,11 @@ public final class InjectionAnnotations {
         .orElseGet(
             () -> {
               // Validating all annotations if the ScopeMetadata isn't available.
-              DaggerSuperficialValidation.strictValidateAnnotationsOf(element);
+              if (compilerOptions.strictSuperficialValidation()) {
+                DaggerSuperficialValidation.strictValidateAnnotationsOf(element);
+              } else {
+                DaggerSuperficialValidation.validateAnnotationsOf(element);
+              }
               return scopesOf(element);
             });
   }
@@ -146,8 +152,17 @@ public final class InjectionAnnotations {
             .collect(onlyElement());
     // Do superficial validation before we convert to a Scope, otherwise the @Scope annotation may
     // appear to be missing from the annotation if it's no longer on the classpath.
-    DaggerSuperficialValidation.strictValidateAnnotationOf(element, scopeAnnotation);
-    return Optional.of(ImmutableSet.of(Scope.scope(DaggerAnnotation.from(scopeAnnotation))));
+    if (compilerOptions.strictSuperficialValidation()) {
+      DaggerSuperficialValidation.strictValidateAnnotationOf(element, scopeAnnotation);
+      return Optional.of(ImmutableSet.of(Scope.scope(DaggerAnnotation.from(scopeAnnotation))));
+    } else {
+      // If strictSuperficialValidation is disabled, then we fall back to the old behavior where
+      // we may potentially miss a scope rather than report an exception.
+      DaggerSuperficialValidation.validateAnnotationOf(element, scopeAnnotation);
+      return Scope.isScope(DaggerAnnotation.from(scopeAnnotation))
+          ? Optional.of(ImmutableSet.of(Scope.scope(DaggerAnnotation.from(scopeAnnotation))))
+          : Optional.empty();
+    }
   }
 
   private Optional<XAnnotation> getScopeMetadata(XElement element) {
@@ -232,11 +247,14 @@ public final class InjectionAnnotations {
             .orElseGet(
                 () -> {
                   // Validating all annotations if the QualifierMetadata isn't available.
-                  DaggerSuperficialValidation.strictValidateAnnotationsOf(element);
-                  return Sets.union(
-                          getAnnotatedAnnotations(element, TypeNames.QUALIFIER),
-                          getAnnotatedAnnotations(element, TypeNames.QUALIFIER_JAVAX))
-                      .immutableCopy();
+                  if (compilerOptions.strictSuperficialValidation()) {
+                    DaggerSuperficialValidation.strictValidateAnnotationsOf(element);
+                  } else {
+                    DaggerSuperficialValidation.validateAnnotationsOf(element);
+                  }
+                  return element.getAnnotationMirrors().stream()
+                      .filter(InjectionAnnotations::hasQualifierAnnotation)
+                      .collect(toImmutableSet());
                 });
     if (element.getKind() == ElementKind.FIELD
         // static injected fields are not supported, no need to get qualifier from kotlin metadata
@@ -280,10 +298,20 @@ public final class InjectionAnnotations {
     // @QualifierMetadata means that this element has already been processed and multiple
     // qualifiers would have been caught already.
     XAnnotation qualifierAnnotation = getOnlyElement(qualifierAnnotations);
-    // Ensure the annotation type is superficially valid before we check for @Qualifier, otherwise
-    // the @Qualifier marker may appear to be missing from the annotation (b/213880825).
-    DaggerSuperficialValidation.strictValidateAnnotationOf(element, qualifierAnnotation);
-    return Optional.of(ImmutableSet.of(toJavac(qualifierAnnotation)));
+
+    if (compilerOptions.strictSuperficialValidation()) {
+      // Ensure the annotation type is superficially valid before we check for @Qualifier, otherwise
+      // the @Qualifier marker may appear to be missing from the annotation (b/213880825).
+      DaggerSuperficialValidation.strictValidateAnnotationOf(element, qualifierAnnotation);
+      return Optional.of(ImmutableSet.of(toJavac(qualifierAnnotation)));
+    } else {
+      // If strictSuperficialValidation is disabled, then we fall back to the old behavior where
+      // we may potentially miss a qualifier rather than report an exception.
+      DaggerSuperficialValidation.validateAnnotationOf(element, qualifierAnnotation);
+      return hasQualifierAnnotation(toJavac(qualifierAnnotation))
+          ? Optional.of(ImmutableSet.of(toJavac(qualifierAnnotation)))
+          : Optional.empty();
+    }
   }
 
   /**
@@ -333,6 +361,13 @@ public final class InjectionAnnotations {
     return FluentIterable.from(constructorsIn(type.getEnclosedElements()))
         .filter(InjectionAnnotations::hasInjectAnnotation)
         .toSet();
+  }
+
+  private static boolean hasQualifierAnnotation(AnnotationMirror annotation) {
+    return isAnyAnnotationPresent(
+        annotation.getAnnotationType().asElement(),
+        TypeNames.QUALIFIER,
+        TypeNames.QUALIFIER_JAVAX);
   }
 
   /** Returns true if the given element is annotated with {@link Inject}. */

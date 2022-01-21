@@ -131,6 +131,18 @@ public final class DaggerSuperficialValidation {
     }
   }
 
+  public static void validateAnnotationOf(XElement element, XAnnotation annotation) {
+    validateAnnotationOf(toJavac(element), toJavac(annotation));
+  }
+
+  public static void validateAnnotationOf(Element element, AnnotationMirror annotation) {
+    try {
+      validateAnnotation(annotation);
+    } catch (RuntimeException exception) {
+      throw ValidationException.from(exception).append(element);
+    }
+  }
+
   /**
    * Strictly validates the given annotation belonging to the given element.
    *

@@ -125,4 +125,9 @@ final class JavacPluginCompilerOptions extends CompilerOptions {
   public boolean strictMultibindingValidation() {
     return false;
   }
+
+  @Override
+  public boolean strictSuperficialValidation() {
+    return true;
+  }
 }

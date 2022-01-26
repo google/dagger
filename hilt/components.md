@@ -158,7 +158,7 @@ abstract class FooModule {
 {: .c-codeselector__code .c-codeselector__code_java }
 ```kotlin
 @Module
-@InstallIn(FragmentComponent.class)
+@InstallIn(FragmentComponent::class)
 object FooModule {
   // This binding is "unscoped".
   @Provides

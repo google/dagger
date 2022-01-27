@@ -64,6 +64,10 @@ shadowJar {
   configurations = [project.configurations.shadowed]
 }
 
+tasks.withType(Test).configureEach {
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+}
+
 dependencies {
   shadowed fileTree(dir: 'libs', include: '*.jar')
   implementation gradleApi()

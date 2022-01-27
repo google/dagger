@@ -10,7 +10,7 @@ readonly EXTRA_MAVEN_ARGS=("$@")
 # Builds and deploy the Gradle plugin.
 _deploy_plugin() {
   local plugindir=java/dagger/hilt/android/plugin
-  ./$plugindir/gradlew -p $plugindir --no-daemon clean \
+  ./$plugindir/gradlew -p $plugindir clean \
     publishAllPublicationsToMavenRepository -PPublishVersion="$VERSION_NAME"
   local outdir=$plugindir/build/repo/com/google/dagger/hilt-android-gradle-plugin/$VERSION_NAME
   # When building '-SNAPSHOT' versions in gradle, the filenames replaces

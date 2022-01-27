@@ -11,7 +11,7 @@ readonly GRADLE_PROJECTS=(
 )
 for project in "${GRADLE_PROJECTS[@]}"; do
     echo "Running gradle Android emulator tests for $project"
-    ./$project/gradlew -p $project connectedAndroidTest --continue --no-daemon --stacktrace --configuration-cache
+    ./$project/gradlew -p $project connectedAndroidTest --continue --stacktrace --configuration-cache
 done
 
 # Close logcat

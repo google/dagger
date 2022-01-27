@@ -29,6 +29,10 @@ allprojects {
     mavenLocal()
   }
 
+  tasks.withType(Test).configureEach {
+      maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+  }
+
   configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
       if (details.requested.group == 'com.google.dagger'

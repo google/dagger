@@ -38,12 +38,14 @@ public class TransitiveScopeTest {
   public void testTransitiveScope_WithImplementation() throws IOException {
     BuildResult result = setupRunnerWith("implementation").buildAndFail();
     assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
-    // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the issue
-    // described in https://github.com/google/dagger/issues/2208.
     assertThat(result.getOutput())
         .contains(
-            "error: dagger.internal.codegen.ComponentProcessor was unable to process "
-                + "'app.MyComponent' because not all of its dependencies could be resolved.");
+            "ComponentProcessingStep was unable to process 'app.MyComponent' because "
+                + "'library2.MyScope' could not be resolved."
+                + "\n  "
+                + "\n  Dependency trace:"
+                + "\n      => element (CLASS): library1.Foo"
+                + "\n      => annotation: @library2.MyScope");
   }
 
   @Test

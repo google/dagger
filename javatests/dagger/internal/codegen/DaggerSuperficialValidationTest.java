@@ -62,9 +62,8 @@ public class DaggerSuperficialValidationTest {
                     processingEnv.getElementUtils().getTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
-                        ValidationException.class,
+                        ValidationException.KnownErrorType.class,
                         () -> DaggerSuperficialValidation.validateElement(testClassElement));
-                assertThat(exception.fromUnexpectedThrowable()).isFalse();
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -99,9 +98,8 @@ public class DaggerSuperficialValidationTest {
                     processingEnv.getElementUtils().getTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
-                        ValidationException.class,
+                        ValidationException.KnownErrorType.class,
                         () -> DaggerSuperficialValidation.validateElement(testClassElement));
-                assertThat(exception.fromUnexpectedThrowable()).isFalse();
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -139,9 +137,8 @@ public class DaggerSuperficialValidationTest {
                     processingEnv.getElementUtils().getTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
-                        ValidationException.class,
+                        ValidationException.KnownErrorType.class,
                         () -> DaggerSuperficialValidation.validateElement(testClassElement));
-                assertThat(exception.fromUnexpectedThrowable()).isFalse();
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -177,9 +174,8 @@ public class DaggerSuperficialValidationTest {
                     processingEnv.getElementUtils().getTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
-                        ValidationException.class,
+                        ValidationException.KnownErrorType.class,
                         () -> DaggerSuperficialValidation.validateElement(testClassElement));
-                assertThat(exception.fromUnexpectedThrowable()).isFalse();
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -213,9 +209,8 @@ public class DaggerSuperficialValidationTest {
                     processingEnv.getElementUtils().getTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
-                        ValidationException.class,
+                        ValidationException.KnownErrorType.class,
                         () -> DaggerSuperficialValidation.validateElement(testClassElement));
-                assertThat(exception.fromUnexpectedThrowable()).isFalse();
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -249,9 +244,8 @@ public class DaggerSuperficialValidationTest {
                     processingEnv.getElementUtils().getTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
-                        ValidationException.class,
+                        ValidationException.KnownErrorType.class,
                         () -> DaggerSuperficialValidation.validateElement(testClassElement));
-                assertThat(exception.fromUnexpectedThrowable()).isFalse();
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -339,9 +333,8 @@ public class DaggerSuperficialValidationTest {
                     processingEnv.getElementUtils().getTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
-                        ValidationException.class,
+                        ValidationException.KnownErrorType.class,
                         () -> DaggerSuperficialValidation.validateElement(testClassElement));
-                assertThat(exception.fromUnexpectedThrowable()).isFalse();
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -377,9 +370,8 @@ public class DaggerSuperficialValidationTest {
                     processingEnv.getElementUtils().getTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
-                        ValidationException.class,
+                        ValidationException.KnownErrorType.class,
                         () -> DaggerSuperficialValidation.validateElement(testClassElement));
-                assertThat(exception.fromUnexpectedThrowable()).isFalse();
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -418,9 +410,8 @@ public class DaggerSuperficialValidationTest {
                     processingEnv.getElementUtils().getTypeElement("test.Outer.TestClass");
                 ValidationException exception =
                     assertThrows(
-                        ValidationException.class,
+                        ValidationException.KnownErrorType.class,
                         () -> DaggerSuperficialValidation.validateElement(testClassElement));
-                assertThat(exception.fromUnexpectedThrowable()).isFalse();
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -467,9 +458,8 @@ public class DaggerSuperficialValidationTest {
                 VariableElement parameter = constructor.getParameters().get(0);
                 ValidationException exception =
                     assertThrows(
-                        ValidationException.class,
+                        ValidationException.KnownErrorType.class,
                         () -> DaggerSuperficialValidation.validateElement(parameter));
-                assertThat(exception.fromUnexpectedThrowable()).isFalse();
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(

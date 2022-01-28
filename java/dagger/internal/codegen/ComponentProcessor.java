@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XProcessingEnvConfig;
 import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.XRoundEnv;
 import androidx.room.compiler.processing.compat.XConverters;
@@ -52,6 +53,7 @@ import dagger.internal.codegen.validation.MultibindingAnnotationsProcessingStep;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugins;
 import dagger.spi.BindingGraphPlugin;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.Processor;
@@ -69,6 +71,10 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
 public class ComponentProcessor extends JavacBasicAnnotationProcessor {
+  private static XProcessingEnvConfig envConfig(Map<String, String> options)  {
+    return new XProcessingEnvConfig.Builder().disableAnnotatedElementValidation(true).build();
+  }
+
   private final Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins;
 
   @Inject InjectBindingRegistry injectBindingRegistry;
@@ -80,10 +86,12 @@ public class ComponentProcessor extends JavacBasicAnnotationProcessor {
   @Inject Set<ClearableCache> clearableCaches;
 
   public ComponentProcessor() {
+    super(ComponentProcessor::envConfig);
     this.testingPlugins = Optional.empty();
   }
 
   private ComponentProcessor(Iterable<BindingGraphPlugin> testingPlugins) {
+    super(ComponentProcessor::envConfig);
     this.testingPlugins = Optional.of(ImmutableSet.copyOf(testingPlugins));
   }
 

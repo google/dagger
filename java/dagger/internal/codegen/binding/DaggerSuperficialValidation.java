@@ -17,7 +17,9 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.isType;
+import static com.google.auto.common.MoreTypes.asDeclared;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
@@ -318,7 +320,7 @@ public final class DaggerSuperficialValidation {
 
         @Override
         public Void visitError(ErrorType t, Void p) {
-          throw ValidationException.create();
+          throw new ValidationException.KnownErrorType(t);
         }
 
         @Override
@@ -386,7 +388,7 @@ public final class DaggerSuperficialValidation {
       // visit the visitDeclared() method rather than visitError() even when it's an ERROR kind.
       // Thus, we check the kind directly here and fail validation if it's an ERROR kind.
       if (annotationMirror.getAnnotationType().getKind() == TypeKind.ERROR) {
-        throw ValidationException.create();
+        throw new ValidationException.KnownErrorType(annotationMirror.getAnnotationType());
       }
       validateAnnotationValues(annotationMirror.getElementValues());
     } catch (RuntimeException exception) {
@@ -433,7 +435,16 @@ public final class DaggerSuperficialValidation {
         @Override
         public Void visitString(String str, TypeMirror expectedType) {
           try {
-            validateIsTypeOf(String.class, expectedType);
+            if (!MoreTypes.isTypeOf(String.class, expectedType)) {
+              if (str.contentEquals("<error>")) {
+                // Invalid annotation value types will visit visitString() with a value of "<error>"
+                // Technically, we don't know the error type in this case, but it will be referred
+                // to as "<error>" in the dependency trace, so we use that.
+                throw new ValidationException.KnownErrorType("<error>");
+              } else {
+                throw new ValidationException.UnknownErrorType();
+              }
+            }
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
                 .append(exceptionMessage("STRING", str, expectedType));
@@ -464,7 +475,7 @@ public final class DaggerSuperficialValidation {
         public Void visitArray(List<? extends AnnotationValue> values, TypeMirror expectedType) {
           try {
             if (!expectedType.getKind().equals(TypeKind.ARRAY)) {
-              throw ValidationException.create();
+              throw new ValidationException.UnknownErrorType();
             }
             TypeMirror componentType = MoreTypes.asArray(expectedType).getComponentType();
             for (AnnotationValue value : values) {
@@ -480,7 +491,7 @@ public final class DaggerSuperficialValidation {
         @Override
         public Void visitEnumConstant(VariableElement enumConstant, TypeMirror expectedType) {
           try {
-            validateIsEquivalentType(enumConstant.asType(), expectedType);
+            validateIsEquivalentType(asDeclared(enumConstant.asType()), expectedType);
             validateElement(enumConstant);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
@@ -601,13 +612,13 @@ public final class DaggerSuperficialValidation {
 
   private static void validateIsTypeOf(Class<?> clazz, TypeMirror expectedType) {
     if (!MoreTypes.isTypeOf(clazz, expectedType)) {
-      throw ValidationException.create();
+      throw new ValidationException.UnknownErrorType();
     }
   }
 
-  private static void validateIsEquivalentType(TypeMirror type, TypeMirror expectedType) {
+  private static void validateIsEquivalentType(DeclaredType type, TypeMirror expectedType) {
     if (!MoreTypes.equivalence().equivalent(type, expectedType)) {
-      throw ValidationException.create();
+      throw new ValidationException.KnownErrorType(type);
     }
   }
 
@@ -615,35 +626,55 @@ public final class DaggerSuperficialValidation {
    * A runtime exception that can be used during superficial validation to collect information about
    * unexpected exceptions during validation.
    */
-  public static final class ValidationException extends RuntimeException {
-    private static ValidationException create() {
-      return new ValidationException();
+  public abstract static class ValidationException extends RuntimeException {
+    /** A {@link ValidationException} that originated from an unexpected exception. */
+    public static final class UnexpectedException extends ValidationException {
+      private UnexpectedException(Throwable throwable) {
+        super(throwable);
+      }
     }
+
+    /** A {@link ValidationException} that originated from a known error type. */
+    public static final class KnownErrorType extends ValidationException {
+      private final String errorTypeName;
+
+      private KnownErrorType(DeclaredType errorType) {
+        Element errorElement = errorType.asElement();
+        this.errorTypeName =
+            isType(errorElement)
+                 ? asType(errorElement).getQualifiedName().toString()
+                 // Maybe this case should be handled by UnknownErrorType?
+                 : errorElement.getSimpleName().toString();
+      }
+
+      private KnownErrorType(String errorTypeName) {
+        this.errorTypeName = errorTypeName;
+      }
+
+      public String getErrorTypeName() {
+        return errorTypeName;
+      }
+    }
+
+    /** A {@link ValidationException} that originated from an unknown error type. */
+    public static final class UnknownErrorType extends ValidationException {}
 
     private static ValidationException from(Throwable throwable) {
       // We only ever create one instance of the ValidationException.
       return throwable instanceof ValidationException
           ? ((ValidationException) throwable)
-          : new ValidationException(throwable);
+          : new UnexpectedException(throwable);
     }
 
     private Optional<Element> lastReportedElement = Optional.empty();
-    private final boolean fromUnexpectedThrowable;
     private final List<String> messages = new ArrayList<>();
 
     private ValidationException() {
       super("");
-      fromUnexpectedThrowable = false;
     }
 
     private ValidationException(Throwable throwable) {
       super("", throwable);
-      fromUnexpectedThrowable = true;
-    }
-
-    /** Returns {@code true} if this exception was created from an unexpected throwable. */
-    public boolean fromUnexpectedThrowable() {
-      return fromUnexpectedThrowable;
     }
 
     /**
@@ -672,9 +703,11 @@ public final class DaggerSuperficialValidation {
 
     @Override
     public String getMessage() {
-      return String.format(
-          "\n  Validation trace:\n    => %s",
-          String.join("\n    => ", getMessageInternal().reverse()));
+      return String.format("\n  Validation trace:\n    => %s", getTrace());
+    }
+
+    public String getTrace() {
+      return String.join("\n    => ", getMessageInternal().reverse());
     }
 
     private ImmutableList<String> getMessageInternal() {

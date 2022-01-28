@@ -55,12 +55,16 @@ public class TransitiveProvidesQualifierTest {
       case "implementation":
         result = setupRunner().buildAndFail();
         assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
-        // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the
-        // issue described in https://github.com/google/dagger/issues/2208.
         assertThat(result.getOutput())
             .contains(
-                "error: dagger.internal.codegen.ComponentProcessor was unable to process "
-                    + "'app.MyComponent' because not all of its dependencies could be resolved.");
+                "ComponentProcessingStep was unable to process 'app.MyComponent' because "
+                    + "'library2.MyQualifier' could not be resolved."
+                    + "\n  "
+                    + "\n  Dependency trace:"
+                    + "\n      => element (INTERFACE): library1.MyModule"
+                    + "\n      => element (METHOD): provideString(int)"
+                    + "\n      => element (PARAMETER): i"
+                    + "\n      => annotation: @library2.MyQualifier");
         break;
       case "api":
         result = setupRunner().build();

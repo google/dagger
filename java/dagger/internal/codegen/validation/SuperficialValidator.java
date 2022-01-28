@@ -16,38 +16,52 @@
 
 package dagger.internal.codegen.validation;
 
-import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 
 import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.compat.XConverters;
-import com.google.auto.common.SuperficialValidation;
 import dagger.internal.codegen.base.ClearableCache;
+import dagger.internal.codegen.binding.DaggerSuperficialValidation;
+import dagger.internal.codegen.binding.DaggerSuperficialValidation.ValidationException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 /** Validates enclosing type elements in a round. */
 @Singleton
 public final class SuperficialValidator implements ClearableCache {
 
-  private final Map<TypeElement, Boolean> validatedTypeElements = new HashMap<>();
+  private final Map<TypeElement, Optional<ValidationException>> validationExceptions =
+      new HashMap<>();
 
   @Inject
   SuperficialValidator() {}
 
   public void throwIfNearestEnclosingTypeNotValid(XElement element) {
-    Element javaElement = XConverters.toJavac(element);
-    if (!validatedTypeElements.computeIfAbsent(
-        closestEnclosingTypeElement(javaElement), SuperficialValidation::validateElement)) {
-      throw new TypeNotPresentException(element.toString(), null);
+    Optional<ValidationException> validationException =
+        validationExceptions.computeIfAbsent(
+            toJavac(closestEnclosingTypeElement(element)),
+            this::validationExceptionsUncached);
+
+    if (validationException.isPresent()) {
+      throw validationException.get();
     }
+  }
+
+  private Optional<ValidationException> validationExceptionsUncached(TypeElement element) {
+    try {
+      DaggerSuperficialValidation.validateElement(element);
+    } catch (ValidationException validationException) {
+      return Optional.of(validationException);
+    }
+    return Optional.empty();
   }
 
   @Override
   public void clearCache() {
-    validatedTypeElements.clear();
+    validationExceptions.clear();
   }
 }

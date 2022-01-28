@@ -28,10 +28,6 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public final class UnresolvableDependencyTest {
-  private static final String DEFERRED_ERROR_MESSAGE =
-      "dagger.internal.codegen.ComponentProcessor was unable to process 'test.FooComponent' "
-          + "because not all of its dependencies could be resolved. Check for compilation errors "
-          + "or a circular dependency with generated code.";
 
   @Test
   public void referencesUnresolvableDependency() {
@@ -73,7 +69,23 @@ public final class UnresolvableDependencyTest {
 
     Compilation compilation = daggerCompiler().compile(fooComponent, foo, bar);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(DEFERRED_ERROR_MESSAGE);
+    assertThat(compilation).hadErrorCount(3);
+    assertThat(compilation).hadErrorContaining(
+        "cannot find symbol"
+            + "\n  symbol:   class UnresolvableDependency"
+            + "\n  location: class test.Bar");
+    String trace = "\n  "
+        + "\n  Dependency trace:"
+        + "\n      => element (CLASS): test.Bar"
+        + "\n      => element (CONSTRUCTOR): Bar(UnresolvableDependency)"
+        + "\n      => type (EXECUTABLE constructor): (UnresolvableDependency)void"
+        + "\n      => type (ERROR parameter type): UnresolvableDependency";
+    assertThat(compilation).hadErrorContaining(
+        "InjectProcessingStep was unable to process 'Bar(UnresolvableDependency)' because "
+            + "'UnresolvableDependency' could not be resolved." + trace);
+    assertThat(compilation).hadErrorContaining(
+        "ComponentProcessingStep was unable to process 'test.FooComponent' because "
+            + "'UnresolvableDependency' could not be resolved." + trace);
   }
 
   @Test
@@ -117,7 +129,21 @@ public final class UnresolvableDependencyTest {
 
     Compilation compilation = daggerCompiler().compile(fooComponent, foo, bar);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(DEFERRED_ERROR_MESSAGE);
+    assertThat(compilation).hadErrorCount(3);
+    assertThat(compilation).hadErrorContaining(
+        "cannot find symbol"
+            + "\n  symbol: class UnresolvableAnnotation");
+    String trace = "\n  "
+        + "\n  Dependency trace:"
+        + "\n      => element (CLASS): test.Bar"
+        + "\n      => annotation: @UnresolvableAnnotation"
+        + "\n      => type (ERROR annotation type): UnresolvableAnnotation";
+    assertThat(compilation).hadErrorContaining(
+        "InjectProcessingStep was unable to process 'Bar(java.lang.String)' because "
+            + "'UnresolvableAnnotation' could not be resolved." + trace);
+    assertThat(compilation).hadErrorContaining(
+        "ComponentProcessingStep was unable to process 'test.FooComponent' because "
+            + "'UnresolvableAnnotation' could not be resolved." + trace);
   }
 
   @Test
@@ -160,6 +186,23 @@ public final class UnresolvableDependencyTest {
 
     Compilation compilation = daggerCompiler().compile(fooComponent, foo, bar);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining(DEFERRED_ERROR_MESSAGE);
+    assertThat(compilation).hadErrorCount(3);
+    assertThat(compilation).hadErrorContaining(
+        "cannot find symbol"
+            + "\n  symbol:   class UnresolvableAnnotation"
+            + "\n  location: class test.Bar");
+    String trace = "\n  "
+        + "\n  Dependency trace:"
+        + "\n      => element (CLASS): test.Bar"
+        + "\n      => element (CONSTRUCTOR): Bar(java.lang.String)"
+        + "\n      => element (PARAMETER): dep"
+        + "\n      => annotation: @UnresolvableAnnotation"
+        + "\n      => type (ERROR annotation type): UnresolvableAnnotation";
+    assertThat(compilation).hadErrorContaining(
+        "InjectProcessingStep was unable to process 'Bar(java.lang.String)' because "
+            + "'UnresolvableAnnotation' could not be resolved." + trace);
+    assertThat(compilation).hadErrorContaining(
+        "ComponentProcessingStep was unable to process 'test.FooComponent' because "
+            + "'UnresolvableAnnotation' could not be resolved." + trace);
   }
 }

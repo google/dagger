@@ -37,7 +37,7 @@ import org.junit.runners.Parameterized.Parameters;
 public class TransitiveSubcomponentQualifierTest {
   @Parameters(name = "{0}")
   public static Collection<Object[]> parameters() {
-    return Arrays.asList(new Object[][] {{ "implementation" }, { "api" }});
+    return Arrays.asList(new Object[][] {{"implementation"}, {"api"}});
   }
 
   @Rule public TemporaryFolder folder = new TemporaryFolder();
@@ -80,8 +80,13 @@ public class TransitiveSubcomponentQualifierTest {
         // issue described in https://github.com/google/dagger/issues/2208.
         assertThat(result.getOutput())
             .contains(
-                "error: dagger.internal.codegen.ComponentProcessor was unable to process "
-                    + "'app.MyComponent' because not all of its dependencies could be resolved.");
+                "error: ComponentProcessingStep was unable to process 'app.MyComponent' because "
+                    + "'library2.MyQualifier' could not be resolved."
+                    + "\n  "
+                    + "\n  Dependency trace:"
+                    + "\n      => element (CLASS): library1.MySubcomponent"
+                    + "\n      => element (METHOD): getQualifiedInt()"
+                    + "\n      => annotation: @library2.MyQualifier");
         break;
       case "api":
         result = runner.build();
@@ -133,8 +138,13 @@ public class TransitiveSubcomponentQualifierTest {
         // issue described in https://github.com/google/dagger/issues/2208.
         assertThat(result.getOutput())
             .contains(
-                "error: dagger.internal.codegen.ComponentProcessor was unable to process "
-                    + "'app.MyComponent' because not all of its dependencies could be resolved.");
+                "error: ComponentProcessingStep was unable to process 'app.MyComponent' because "
+                    + "'library2.MyQualifier' could not be resolved."
+                    + "\n  "
+                    + "\n  Dependency trace:"
+                    + "\n      => element (CLASS): library1.MyBaseSubcomponent"
+                    + "\n      => element (METHOD): getQualifiedInt()"
+                    + "\n      => annotation: @library2.MyQualifier");
         break;
       case "api":
         result = runner.build();
@@ -178,8 +188,13 @@ public class TransitiveSubcomponentQualifierTest {
         // issue described in https://github.com/google/dagger/issues/2208.
         assertThat(result.getOutput())
             .contains(
-                "error: dagger.internal.codegen.ComponentProcessor was unable to process "
-                    + "'app.MyComponent' because not all of its dependencies could be resolved.");
+                "error: ComponentProcessingStep was unable to process 'app.MyComponent' because "
+                    + "'library2.MyQualifier' could not be resolved."
+                    + "\n  "
+                    + "\n  Dependency trace:"
+                    + "\n      => element (CLASS): library1.MySubcomponent"
+                    + "\n      => element (METHOD): getQualifiedInt()"
+                    + "\n      => annotation: @library2.MyQualifier");
         break;
       case "api":
         result = runner.build();
@@ -232,8 +247,13 @@ public class TransitiveSubcomponentQualifierTest {
         // issue described in https://github.com/google/dagger/issues/2208.
         assertThat(result.getOutput())
             .contains(
-                "error: dagger.internal.codegen.ComponentProcessor was unable to process "
-                    + "'app.MyComponent' because not all of its dependencies could be resolved.");
+                "error: ComponentProcessingStep was unable to process 'app.MyComponent' because "
+                    + "'library2.MyQualifier' could not be resolved."
+                    + "\n  "
+                    + "\n  Dependency trace:"
+                    + "\n      => element (CLASS): library1.MyBaseSubcomponent"
+                    + "\n      => element (METHOD): getQualifiedInt()"
+                    + "\n      => annotation: @library2.MyQualifier");
         break;
       case "api":
         result = runner.build();
@@ -248,10 +268,7 @@ public class TransitiveSubcomponentQualifierTest {
     File projectDir = folder.getRoot();
     GradleModule.create(projectDir)
         .addSettingsFile(
-            "include 'app'",
-            "include 'library1'",
-            "include 'library2'",
-            "include 'spi-plugin'")
+            "include 'app'", "include 'library1'", "include 'library2'", "include 'spi-plugin'")
         .addBuildFile(
             "buildscript {",
             "  ext {",
@@ -358,8 +375,6 @@ public class TransitiveSubcomponentQualifierTest {
             "  }",
             "}");
 
-    return GradleRunner.create()
-        .withArguments("--stacktrace", "build")
-        .withProjectDir(projectDir);
+    return GradleRunner.create().withArguments("--stacktrace", "build").withProjectDir(projectDir);
   }
 }

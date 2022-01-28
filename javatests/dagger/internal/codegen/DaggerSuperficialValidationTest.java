@@ -29,7 +29,10 @@ import dagger.internal.codegen.binding.DaggerSuperficialValidation.ValidationExc
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.util.ElementFilter;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -422,6 +425,57 @@ public class DaggerSuperficialValidationTest {
                         NEW_LINES.join(
                             "Validation trace:",
                             "  => CLASS element: test.Outer.TestClass",
+                            "  => annotation: @test.Outer.TestAnnotation(classes = \"<error>\")",
+                            "  => annotation value: classes",
+                            "  => 'array' annotation value, <error>, with expected type:"
+                                + " java.lang.Class[]",
+                            "  => 'default' annotation value, <error>, with expected type:"
+                                + " java.lang.Class"));
+              }
+            })
+        .failsToCompile();
+  }
+
+  @Test
+  public void invalidAnnotationValueOnParameter() {
+    JavaFileObject javaFileObject =
+        JavaFileObjects.forSourceLines(
+            "test.Outer",
+            "package test;",
+            "",
+            "final class Outer {",
+            "  @interface TestAnnotation {",
+            "    Class[] classes();",
+            "  }",
+            "",
+            "  static class TestClass {",
+            "    TestClass(@TestAnnotation(classes = Foo) String strParam) {}",
+            "  }",
+            "}");
+    assertAbout(javaSource())
+        .that(javaFileObject)
+        .processedWith(
+            new AssertingProcessor() {
+              @Override
+              void runAssertions() {
+                TypeElement testClassElement =
+                    processingEnv.getElementUtils().getTypeElement("test.Outer.TestClass");
+                ExecutableElement constructor =
+                    ElementFilter.constructorsIn(testClassElement.getEnclosedElements()).get(0);
+                VariableElement parameter = constructor.getParameters().get(0);
+                ValidationException exception =
+                    assertThrows(
+                        ValidationException.class,
+                        () -> DaggerSuperficialValidation.validateElement(parameter));
+                assertThat(exception.fromUnexpectedThrowable()).isFalse();
+                assertThat(exception)
+                    .hasMessageThat()
+                    .contains(
+                        NEW_LINES.join(
+                            "Validation trace:",
+                            "  => CLASS element: test.Outer.TestClass",
+                            "  => CONSTRUCTOR element: TestClass(java.lang.String)",
+                            "  => PARAMETER element: strParam",
                             "  => annotation: @test.Outer.TestAnnotation(classes = \"<error>\")",
                             "  => annotation value: classes",
                             "  => 'array' annotation value, <error>, with expected type:"

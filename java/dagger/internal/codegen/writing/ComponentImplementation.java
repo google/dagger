@@ -214,7 +214,7 @@ public final class ComponentImplementation {
       ShardImplementation shard = i == 0 ? componentShard : componentShard.createShard("Shard" + i);
       partitions.get(i).forEach(binding -> builder.put(binding, shard));
     }
-    return builder.build();
+    return builder.buildOrThrow();
   }
 
   private static ImmutableList<ImmutableList<Binding>> bindingPartitions(

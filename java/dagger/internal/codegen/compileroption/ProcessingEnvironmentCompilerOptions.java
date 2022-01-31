@@ -505,7 +505,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     getUsedNames(option)
         .forEach(
             name -> parseOptionWithName(option, name).ifPresent(value -> values.put(name, value)));
-    return values.build();
+    return values.buildOrThrow();
   }
 
   private <T extends Enum<T>> Optional<T> parseOptionWithName(EnumOption<T> option, String key) {

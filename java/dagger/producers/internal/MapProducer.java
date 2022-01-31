@@ -70,7 +70,7 @@ public final class MapProducer<K, V> extends AbstractMapProducer<K, V, V> {
 
     /** Returns a new {@link MapProducer}. */
     public MapProducer<K, V> build() {
-      return new MapProducer<>(mapBuilder.build());
+      return new MapProducer<>(mapBuilder.buildOrThrow());
     }
   }
 

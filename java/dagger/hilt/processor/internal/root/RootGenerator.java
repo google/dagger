@@ -166,7 +166,7 @@ final class RootGenerator {
         modules.put(descriptor, module);
       }
     }
-    return modules.build();
+    return modules.buildOrThrow();
   }
 
   // Generates:

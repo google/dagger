@@ -122,7 +122,7 @@ public final class ComponentNames {
                 builder.put(componentPath, componentName + creatorDescriptor.kind().typeName());
               }
             });
-    return builder.build();
+    return builder.buildOrThrow();
   }
 
   private static ImmutableMap<ComponentPath, String> namesByPath(BindingGraph graph) {
@@ -172,7 +172,7 @@ public final class ComponentNames {
       uniqueNames.put(
           componentPath, format("%s_%s", nameSet.getUniqueName(basePrefix), simpleName));
     }
-    return uniqueNames.build();
+    return uniqueNames.buildOrThrow();
   }
 
   private static String simpleName(ComponentPath componentPath) {

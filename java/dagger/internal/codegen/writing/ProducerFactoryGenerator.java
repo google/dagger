@@ -165,7 +165,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
         frameworkFieldAssignments.add(fieldAssignment(field, bindingField.type()));
       }
     }
-    ImmutableMap<DependencyRequest, FieldSpec> fields = fieldsBuilder.build();
+    ImmutableMap<DependencyRequest, FieldSpec> fields = fieldsBuilder.buildOrThrow();
 
     constructorBuilder.addStatement(
         "super($N, $L, $N)",

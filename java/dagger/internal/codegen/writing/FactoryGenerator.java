@@ -194,7 +194,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
                 FieldSpec.builder(
                         field.type(), uniqueFieldNames.getUniqueName(field.name()), PRIVATE, FINAL)
                     .build()));
-    return builder.build();
+    return builder.buildOrThrow();
   }
 
   private void addCreateMethod(ProvisionBinding binding, TypeSpec.Builder factoryBuilder) {

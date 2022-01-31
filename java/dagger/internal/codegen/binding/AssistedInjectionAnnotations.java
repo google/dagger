@@ -196,7 +196,7 @@ public final class AssistedInjectionAnnotations {
       for (AssistedParameter assistedParameter : assistedInjectAssistedParameters()) {
         builder.put(assistedParameter, assistedParameter.element());
       }
-      return builder.build();
+      return builder.buildOrThrow();
     }
 
     @Memoized
@@ -206,7 +206,7 @@ public final class AssistedInjectionAnnotations {
       for (AssistedParameter assistedParameter : assistedFactoryAssistedParameters()) {
         builder.put(assistedParameter, assistedParameter.element());
       }
-      return builder.build();
+      return builder.buildOrThrow();
     }
   }
 

@@ -44,6 +44,6 @@ final class BindingGraphCapturer implements BindingGraphPlugin {
 
   /** Returns a map of binding graphs, indexed by the canonical name of the root component type. */
   public ImmutableMap<String, BindingGraph> bindingGraphs() {
-    return bindingGraphs.build();
+    return bindingGraphs.buildOrThrow();
   }
 }

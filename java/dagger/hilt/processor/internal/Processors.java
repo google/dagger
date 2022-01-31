@@ -119,7 +119,7 @@ public final class Processors {
         : elements.getElementValuesWithDefaults(annotation).entrySet()) {
       annotationMembers.put(e.getKey().getSimpleName().toString(), e.getValue());
     }
-    return annotationMembers.build();
+    return annotationMembers.buildOrThrow();
   }
 
   /**
@@ -437,7 +437,7 @@ public final class Processors {
       String attribute = e.getKey().getSimpleName().toString();
       builder.put(attribute, e.getValue());
     }
-    return builder.build();
+    return builder.buildOrThrow();
   }
 
   /** Returns the given elements containing package element. */

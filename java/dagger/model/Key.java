@@ -121,7 +121,7 @@ public abstract class Key {
           (key, value) ->
               namedValuesBuilder.put(
                   key.getSimpleName().toString(), stableAnnotationValueToString(value)));
-      ImmutableMap<String, String> namedValues = namedValuesBuilder.build();
+      ImmutableMap<String, String> namedValues = namedValuesBuilder.buildOrThrow();
       builder.append('(');
       if (namedValues.size() == 1 && namedValues.containsKey("value")) {
         // Omit "value ="

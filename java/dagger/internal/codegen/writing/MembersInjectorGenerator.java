@@ -198,7 +198,8 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
     injectorTypeBuilder.addMethod(constructorBuilder.build());
     injectorTypeBuilder.addMethod(createMethodBuilder.build());
 
-    ImmutableMap<DependencyRequest, FieldSpec> dependencyFields = dependencyFieldsBuilder.build();
+    ImmutableMap<DependencyRequest, FieldSpec> dependencyFields =
+        dependencyFieldsBuilder.buildOrThrow();
 
     injectMembersBuilder.addCode(
         InjectionSiteMethod.invokeAll(

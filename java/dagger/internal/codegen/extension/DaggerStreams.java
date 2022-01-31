@@ -68,7 +68,7 @@ public final class DaggerStreams {
         Collector.of(
             ImmutableMap::builder,
             (ImmutableMap.Builder<K, V> builder, Map.Entry<K, V> entry) -> builder.put(entry),
-            (left, right) -> left.putAll(right.build()),
+            (left, right) -> left.putAll(right.buildOrThrow()),
             ImmutableMap.Builder::build));
   }
 

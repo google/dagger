@@ -104,7 +104,7 @@ final class ComponentHierarchyValidator {
                               Sets.difference(
                                   childComponent.moduleTypes(), existingModuleToOwners.keySet()),
                               constant(childComponent.typeElement())))
-                      .build());
+                      .buildOrThrow());
             });
   }
 

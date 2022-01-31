@@ -462,7 +462,7 @@ public final class DaggerElements implements Elements, ClearableCache {
       AnnotationMirror a) {
     ImmutableMap.Builder<String, AnnotationValue> builder = ImmutableMap.builder();
     getElementValuesWithDefaults(a).forEach((k, v) -> builder.put(k.getSimpleName().toString(), v));
-    return builder.build();
+    return builder.buildOrThrow();
   }
 
   @Override

@@ -185,7 +185,7 @@ public final class ComponentDescriptorFactory {
         typeElement,
         componentDependencies,
         transitiveModules,
-        dependenciesByDependencyMethod.build(),
+        dependenciesByDependencyMethod.buildOrThrow(),
         scopes,
         subcomponentsFromModules,
         subcomponentsByFactoryMethod.build(),

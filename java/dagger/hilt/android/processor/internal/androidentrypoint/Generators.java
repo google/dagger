@@ -55,7 +55,7 @@ final class Generators {
       ImmutableMap.<ClassName, String>builder()
           .put(ClassNames.SUPPRESS_WARNINGS, "value")
           .put(ClassNames.KOTLIN_SUPPRESS, "names")
-          .build();
+          .buildOrThrow();
 
   static void addGeneratedBaseClassJavadoc(TypeSpec.Builder builder, ClassName annotation) {
     builder.addJavadoc("A generated base class to be extended by the @$T annotated class. If using"

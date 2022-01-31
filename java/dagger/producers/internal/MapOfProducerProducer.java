@@ -73,7 +73,7 @@ public final class MapOfProducerProducer<K, V> extends AbstractMapProducer<K, V,
 
     /** Returns a new {@link MapOfProducerProducer}. */
     public MapOfProducerProducer<K, V> build() {
-      return new MapOfProducerProducer<>(mapBuilder.build());
+      return new MapOfProducerProducer<>(mapBuilder.buildOrThrow());
     }
   }
 

@@ -70,10 +70,10 @@ public class DaggerSuperficialValidationTest {
                     .contains(
                         NEW_LINES.join(
                             "Validation trace:",
-                            "  => CLASS element: test.TestClass",
-                            "  => METHOD element: blah()",
-                            "  => (EXECUTABLE) METHOD type: ()MissingType",
-                            "  => (ERROR) return type: MissingType"));
+                            "  => element (CLASS): test.TestClass",
+                            "  => element (METHOD): blah()",
+                            "  => type (EXECUTABLE method): ()MissingType",
+                            "  => type (ERROR return type): MissingType"));
               }
             })
         .failsToCompile();
@@ -107,10 +107,10 @@ public class DaggerSuperficialValidationTest {
                     .contains(
                         NEW_LINES.join(
                             "Validation trace:",
-                            "  => CLASS element: test.TestClass",
-                            "  => METHOD element: blah()",
-                            "  => (EXECUTABLE) METHOD type: ()<any>",
-                            "  => (ERROR) return type: <any>"));
+                            "  => element (CLASS): test.TestClass",
+                            "  => element (METHOD): blah()",
+                            "  => type (EXECUTABLE method): ()<any>",
+                            "  => type (ERROR return type): <any>"));
               }
             })
         .failsToCompile();
@@ -147,12 +147,13 @@ public class DaggerSuperficialValidationTest {
                     .contains(
                         NEW_LINES.join(
                             "Validation trace:",
-                            "  => CLASS element: test.TestClass",
-                            "  => METHOD element: blah()",
-                            "  => (EXECUTABLE) METHOD type:"
-                                + " ()java.util.Map<java.util.Set<?>,<any>>",
-                            "  => (DECLARED) return type: java.util.Map<java.util.Set<?>,<any>>",
-                            "  => (ERROR) type argument: <any>"));
+                            "  => element (CLASS): test.TestClass",
+                            "  => element (METHOD): blah()",
+                            "  => type (EXECUTABLE method): "
+                                + "()java.util.Map<java.util.Set<?>,<any>>",
+                            "  => type (DECLARED return type): "
+                                + "java.util.Map<java.util.Set<?>,<any>>",
+                            "  => type (ERROR type argument): <any>"));
               }
             })
         .failsToCompile();
@@ -184,9 +185,9 @@ public class DaggerSuperficialValidationTest {
                     .contains(
                         NEW_LINES.join(
                             "Validation trace:",
-                            "  => CLASS element: test.TestClass",
-                            "  => TYPE_PARAMETER element: T",
-                            "  => (ERROR) bound type: MissingType"));
+                            "  => element (CLASS): test.TestClass",
+                            "  => element (TYPE_PARAMETER): T",
+                            "  => type (ERROR bound type): MissingType"));
               }
             })
         .failsToCompile();
@@ -220,10 +221,10 @@ public class DaggerSuperficialValidationTest {
                     .contains(
                         NEW_LINES.join(
                             "Validation trace:",
-                            "  => CLASS element: test.TestClass",
-                            "  => METHOD element: foo(MissingType)",
-                            "  => (EXECUTABLE) METHOD type: (MissingType)void",
-                            "  => (ERROR) parameter type: MissingType"));
+                            "  => element (CLASS): test.TestClass",
+                            "  => element (METHOD): foo(MissingType)",
+                            "  => type (EXECUTABLE method): (MissingType)void",
+                            "  => type (ERROR parameter type): MissingType"));
               }
             })
         .failsToCompile();
@@ -256,9 +257,9 @@ public class DaggerSuperficialValidationTest {
                     .contains(
                         NEW_LINES.join(
                             "Validation trace:",
-                            "  => CLASS element: test.TestClass",
+                            "  => element (CLASS): test.TestClass",
                             "  => annotation: @MissingAnnotation",
-                            "  => (ERROR) annotation type: MissingAnnotation"));
+                            "  => type (ERROR annotation type): MissingAnnotation"));
               }
             })
         .failsToCompile();
@@ -346,12 +347,13 @@ public class DaggerSuperficialValidationTest {
                     .contains(
                         NEW_LINES.join(
                             "Validation trace:",
-                            "  => CLASS element: test.TestClass",
-                            "  => METHOD element: extendsTest()",
-                            "  => (EXECUTABLE) METHOD type: ()java.util.Set<? extends MissingType>",
-                            "  => (DECLARED) return type: java.util.Set<? extends MissingType>",
-                            "  => (WILDCARD) type argument: ? extends MissingType",
-                            "  => (ERROR) extends bound type: MissingType"));
+                            "  => element (CLASS): test.TestClass",
+                            "  => element (METHOD): extendsTest()",
+                            "  => type (EXECUTABLE method): ()java.util.Set<? extends MissingType>",
+                            "  => type (DECLARED return type): "
+                                + "java.util.Set<? extends MissingType>",
+                            "  => type (WILDCARD type argument): ? extends MissingType",
+                            "  => type (ERROR extends bound type): MissingType"));
               }
             })
         .failsToCompile();
@@ -383,9 +385,9 @@ public class DaggerSuperficialValidationTest {
                     .contains(
                         NEW_LINES.join(
                             "Validation trace:",
-                            "  => CLASS element: test.TestClass",
-                            "  => TYPE_PARAMETER element: T",
-                            "  => (ERROR) bound type: Missing"));
+                            "  => element (CLASS): test.TestClass",
+                            "  => element (TYPE_PARAMETER): T",
+                            "  => type (ERROR bound type): Missing"));
               }
             })
         .failsToCompile();
@@ -424,12 +426,12 @@ public class DaggerSuperficialValidationTest {
                     .contains(
                         NEW_LINES.join(
                             "Validation trace:",
-                            "  => CLASS element: test.Outer.TestClass",
+                            "  => element (CLASS): test.Outer.TestClass",
                             "  => annotation: @test.Outer.TestAnnotation(classes = \"<error>\")",
-                            "  => annotation value: classes",
-                            "  => 'array' annotation value, <error>, with expected type:"
+                            "  => annotation method: java.lang.Class[] classes()",
+                            "  => annotation value (ARRAY): value '<error>' with expected type"
                                 + " java.lang.Class[]",
-                            "  => 'default' annotation value, <error>, with expected type:"
+                            "  => annotation value (STRING): value '<error>' with expected type"
                                 + " java.lang.Class"));
               }
             })
@@ -473,14 +475,14 @@ public class DaggerSuperficialValidationTest {
                     .contains(
                         NEW_LINES.join(
                             "Validation trace:",
-                            "  => CLASS element: test.Outer.TestClass",
-                            "  => CONSTRUCTOR element: TestClass(java.lang.String)",
-                            "  => PARAMETER element: strParam",
+                            "  => element (CLASS): test.Outer.TestClass",
+                            "  => element (CONSTRUCTOR): TestClass(java.lang.String)",
+                            "  => element (PARAMETER): strParam",
                             "  => annotation: @test.Outer.TestAnnotation(classes = \"<error>\")",
-                            "  => annotation value: classes",
-                            "  => 'array' annotation value, <error>, with expected type:"
+                            "  => annotation method: java.lang.Class[] classes()",
+                            "  => annotation value (ARRAY): value '<error>' with expected type"
                                 + " java.lang.Class[]",
-                            "  => 'default' annotation value, <error>, with expected type:"
+                            "  => annotation value (STRING): value '<error>' with expected type"
                                 + " java.lang.Class"));
               }
             })

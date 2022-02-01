@@ -25,6 +25,7 @@ import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreTypes;
+import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +74,7 @@ public final class DaggerSuperficialValidation {
 
   private static void validateTypeOf(Element element) {
     try {
-      validateType(element.getKind() + " type", element.asType());
+      validateType(Ascii.toLowerCase(element.getKind().name()), element.asType());
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception).append(element);
     }
@@ -91,7 +92,7 @@ public final class DaggerSuperficialValidation {
 
   private static void validateSuperTypeOf(TypeElement element) {
     try {
-      validateType("super type", element.getSuperclass());
+      validateType("superclass", element.getSuperclass());
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception).append(element);
     }
@@ -280,7 +281,7 @@ public final class DaggerSuperficialValidation {
   }
 
   private static void validateBaseElement(Element e) {
-    validateType(e.getKind() + " type", e.asType());
+    validateType(Ascii.toLowerCase(e.getKind().name()), e.asType());
     validateAnnotations(e.getAnnotationMirrors());
     validateElements(e.getEnclosedElements());
   }
@@ -360,7 +361,7 @@ public final class DaggerSuperficialValidation {
       type.accept(TYPE_VALIDATING_VISITOR, null);
     } catch (RuntimeException e) {
       throw ValidationException.from(e)
-          .append(String.format("(%s) %s: %s", type.getKind(), desc, type));
+          .append(String.format("type (%s %s): %s", type.getKind().name(), desc, type));
     }
   }
 
@@ -411,7 +412,7 @@ public final class DaggerSuperficialValidation {
             validateAnnotationValue(annotationValue, expectedType);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append("annotation value: " + method.getSimpleName());
+                .append(String.format("annotation method: %s %s", method.getReturnType(), method));
           }
         });
   }
@@ -424,7 +425,18 @@ public final class DaggerSuperficialValidation {
             validateIsTypeOf(o.getClass(), expectedType);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("default", o, expectedType));
+                .append(exceptionMessage("DEFAULT", o, expectedType));
+          }
+          return null;
+        }
+
+        @Override
+        public Void visitString(String str, TypeMirror expectedType) {
+          try {
+            validateIsTypeOf(String.class, expectedType);
+          } catch (RuntimeException exception) {
+            throw ValidationException.from(exception)
+                .append(exceptionMessage("STRING", str, expectedType));
           }
           return null;
         }
@@ -443,7 +455,7 @@ public final class DaggerSuperficialValidation {
             validateAnnotation(a);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("annotation", a, expectedType));
+                .append(exceptionMessage("ANNOTATION", a, expectedType));
           }
           return null;
         }
@@ -460,7 +472,7 @@ public final class DaggerSuperficialValidation {
             }
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("array", values, expectedType));
+                .append(exceptionMessage("ARRAY", values, expectedType));
           }
           return null;
         }
@@ -472,7 +484,7 @@ public final class DaggerSuperficialValidation {
             validateElement(enumConstant);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("enumConstant", enumConstant, expectedType));
+                .append(exceptionMessage("ENUM_CONSTANT", enumConstant, expectedType));
           }
           return null;
         }
@@ -484,10 +496,10 @@ public final class DaggerSuperficialValidation {
             // isn't really the sort of thing that shows up in a bad AST from upstream compilation
             // we ignore the expected type and just validate the type.  It might be wrong, but
             // it's valid.
-            validateType("type", type);
+            validateType("annotation value type", type);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("type", type, expectedType));
+                .append(exceptionMessage("TYPE", type, expectedType));
           }
           return null;
         }
@@ -498,7 +510,7 @@ public final class DaggerSuperficialValidation {
             validateIsTypeOf(Boolean.TYPE, expectedType);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("boolean", b, expectedType));
+                .append(exceptionMessage("BOOLEAN", b, expectedType));
           }
           return null;
         }
@@ -509,7 +521,7 @@ public final class DaggerSuperficialValidation {
             validateIsTypeOf(Byte.TYPE, expectedType);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("byte", b, expectedType));
+                .append(exceptionMessage("BYTE", b, expectedType));
           }
           return null;
         }
@@ -520,7 +532,7 @@ public final class DaggerSuperficialValidation {
             validateIsTypeOf(Character.TYPE, expectedType);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("char", c, expectedType));
+                .append(exceptionMessage("CHAR", c, expectedType));
           }
           return null;
         }
@@ -531,7 +543,7 @@ public final class DaggerSuperficialValidation {
             validateIsTypeOf(Double.TYPE, expectedType);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("double", d, expectedType));
+                .append(exceptionMessage("DOUBLE", d, expectedType));
           }
           return null;
         }
@@ -542,7 +554,7 @@ public final class DaggerSuperficialValidation {
             validateIsTypeOf(Float.TYPE, expectedType);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("float", f, expectedType));
+                .append(exceptionMessage("FLOAT", f, expectedType));
           }
           return null;
         }
@@ -553,7 +565,7 @@ public final class DaggerSuperficialValidation {
             validateIsTypeOf(Integer.TYPE, expectedType);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("int", i, expectedType));
+                .append(exceptionMessage("INT", i, expectedType));
           }
           return null;
         }
@@ -564,7 +576,7 @@ public final class DaggerSuperficialValidation {
             validateIsTypeOf(Long.TYPE, expectedType);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("long", l, expectedType));
+                .append(exceptionMessage("LONG", l, expectedType));
           }
           return null;
         }
@@ -575,14 +587,15 @@ public final class DaggerSuperficialValidation {
             validateIsTypeOf(Short.TYPE, expectedType);
           } catch (RuntimeException exception) {
             throw ValidationException.from(exception)
-                .append(exceptionMessage("short", s, expectedType));
+                .append(exceptionMessage("SHORT", s, expectedType));
           }
           return null;
         }
 
         private <T> String exceptionMessage(String valueType, T value, TypeMirror expectedType) {
           return String.format(
-              "'%s' annotation value, %s, with expected type: %s", valueType, value, expectedType);
+              "annotation value (%s): value '%s' with expected type %s",
+              valueType, value, expectedType);
         }
       };
 
@@ -692,7 +705,7 @@ public final class DaggerSuperficialValidation {
     }
 
     private String getMessageForElement(Element element) {
-      return String.format("%s element: %s", element.getKind(), element);
+      return String.format("element (%s): %s", element.getKind().name(), element);
     }
   }
 

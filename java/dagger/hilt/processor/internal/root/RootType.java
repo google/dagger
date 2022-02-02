@@ -23,13 +23,13 @@ import javax.lang.model.element.TypeElement;
 
 /** The valid root types for Hilt applications. */
 // TODO(erichang): Fix this class so we don't have to have placeholders
-  enum RootType {
-    ROOT(ClassNames.HILT_ANDROID_APP),
+enum RootType {
+  ROOT(ClassNames.HILT_ANDROID_APP),
 
-    // Placeholder to make sure @HiltAndroidTest usages get processed
-    HILT_ANDROID_TEST_ROOT(ClassNames.HILT_ANDROID_TEST),
+  // Placeholder to make sure @HiltAndroidTest usages get processed
+  HILT_ANDROID_TEST_ROOT(ClassNames.HILT_ANDROID_TEST),
 
-    TEST_ROOT(ClassNames.INTERNAL_TEST_ROOT);
+  TEST_ROOT(ClassNames.INTERNAL_TEST_ROOT);
 
   @SuppressWarnings("ImmutableEnumChecker")
   private final ClassName annotation;

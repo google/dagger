@@ -151,9 +151,6 @@ public final class ApplicationGenerator {
   //   }
   // }
   private TypeSpec creatorType() {
-    ClassName component =
-        componentNames.generatedComponent(
-            metadata.elementClassName(), AndroidClassNames.SINGLETON_COMPONENT);
     return TypeSpec.anonymousClassBuilder("")
         .addSuperinterface(AndroidClassNames.COMPONENT_SUPPLIER)
         .addMethod(
@@ -161,14 +158,24 @@ public final class ApplicationGenerator {
                 .addAnnotation(Override.class)
                 .addModifiers(Modifier.PUBLIC)
                 .returns(TypeName.OBJECT)
-                .addStatement(
-                    "return $T.builder()\n"
-                        + ".applicationContextModule(new $T($T.this))\n"
-                        + ".build()",
-                    Processors.prepend(Processors.getEnclosedClassName(component), "Dagger"),
-                    AndroidClassNames.APPLICATION_CONTEXT_MODULE,
-                    wrapperClassName)
+                .addCode(componentBuilder())
                 .build())
+        .build();
+  }
+
+  // return DaggerApplicationComponent.builder()
+  //     .applicationContextModule(new ApplicationContextModule(Hilt_$APP.this))
+  //     .build();
+  private CodeBlock componentBuilder() {
+    ClassName component =
+        componentNames.generatedComponent(
+            metadata.elementClassName(), AndroidClassNames.SINGLETON_COMPONENT);
+    return CodeBlock.builder()
+        .addStatement(
+            "return $T.builder()$Z" + ".applicationContextModule(new $T($T.this))$Z" + ".build()",
+            Processors.prepend(Processors.getEnclosedClassName(component), "Dagger"),
+            AndroidClassNames.APPLICATION_CONTEXT_MODULE,
+            wrapperClassName)
         .build();
   }
 

@@ -195,7 +195,10 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
     if (!useAggregatingRootProcessor(getProcessingEnv())) {
       AndroidEntryPointMetadata metadata =
           AndroidEntryPointMetadata.of(getProcessingEnv(), rootElement);
-      new ApplicationGenerator(getProcessingEnv(), metadata).generate();
+      new ApplicationGenerator(
+              getProcessingEnv(),
+              metadata)
+          .generate();
     }
   }
 }

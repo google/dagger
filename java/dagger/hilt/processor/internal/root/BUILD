@@ -84,6 +84,8 @@ java_library(
     deps = [
         ":root_metadata",
         ":root_type",
+        "//java/dagger/hilt/android/processor/internal/androidentrypoint:android_generators",
+        "//java/dagger/hilt/android/processor/internal/androidentrypoint:metadata",
         "//java/dagger/hilt/processor/internal:aggregated_elements",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",

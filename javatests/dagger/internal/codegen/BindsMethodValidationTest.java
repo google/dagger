@@ -16,11 +16,15 @@
 
 package dagger.internal.codegen;
 
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatMethodInUnannotatedClass;
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatModuleMethod;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import com.google.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
+import com.google.testing.compile.JavaFileObjects;
 import dagger.Module;
 import dagger.multibindings.IntKey;
 import dagger.multibindings.LongKey;
@@ -29,6 +33,7 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.util.Collection;
 import javax.inject.Qualifier;
+import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -41,10 +46,12 @@ public class BindsMethodValidationTest {
     return ImmutableList.copyOf(new Object[][] {{Module.class}, {ProducerModule.class}});
   }
 
+  private final String moduleAnnotation;
   private final String moduleDeclaration;
 
   public BindsMethodValidationTest(Class<? extends Annotation> moduleAnnotation) {
-    moduleDeclaration = "@" + moduleAnnotation.getCanonicalName() + " abstract class %s { %s }";
+    this.moduleAnnotation = "@" + moduleAnnotation.getCanonicalName();
+    moduleDeclaration = this.moduleAnnotation + " abstract class %s { %s }";
   }
 
   @Test
@@ -139,6 +146,113 @@ public class BindsMethodValidationTest {
             "@Binds @IntoMap @IntKey(1) @LongKey(2L) abstract Object manyMapKeys(String string);")
         .importing(IntKey.class, LongKey.class)
         .hasError("may not have more than one map key");
+  }
+
+  @Test
+  public void bindsMissingTypeInParameterHierarchy() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "",
+            moduleAnnotation,
+            "interface TestModule {",
+            "  @Binds String bindObject(Child<String> child);",
+            "}");
+
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "class Child<T> extends Parent<T> {}");
+
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "class Parent<T> extends MissingType {}");
+
+    Compilation compilation = daggerCompiler().compile(module, child, parent);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(3);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "cannot find symbol"
+                + "\n  symbol: class MissingType");
+    assertThat(compilation)
+        .hadErrorContaining(
+            "ModuleProcessingStep was unable to process 'test.TestModule' because 'MissingType' "
+                + "could not be resolved.");
+    assertThat(compilation)
+        .hadErrorContaining(
+            "BindingMethodProcessingStep was unable to process"
+                + " 'bindObject(test.Child<java.lang.String>)' because 'MissingType' could not be"
+                + " resolved."
+                + "\n  "
+                + "\n  Dependency trace:"
+                + "\n      => element (INTERFACE): test.TestModule"
+                + "\n      => element (METHOD): bindObject(test.Child<java.lang.String>)"
+                + "\n      => element (PARAMETER): child"
+                + "\n      => type (DECLARED parameter): test.Child<java.lang.String>"
+                + "\n      => type (DECLARED supertype): test.Parent<java.lang.String>"
+                + "\n      => type (ERROR supertype): MissingType");
+  }
+
+
+  @Test
+  public void bindsMissingTypeInReturnTypeHierarchy() {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "",
+            moduleAnnotation,
+            "interface TestModule {",
+            "  @Binds Child<String> bindChild(String str);",
+            "}");
+
+    JavaFileObject child =
+        JavaFileObjects.forSourceLines(
+            "test.Child",
+            "package test;",
+            "",
+            "class Child<T> extends Parent<T> {}");
+
+    JavaFileObject parent =
+        JavaFileObjects.forSourceLines(
+            "test.Parent",
+            "package test;",
+            "",
+            "class Parent<T> extends MissingType {}");
+
+    Compilation compilation = daggerCompiler().compile(module, child, parent);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(3);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "cannot find symbol"
+                + "\n  symbol: class MissingType");
+    assertThat(compilation)
+        .hadErrorContaining(
+            "ModuleProcessingStep was unable to process 'test.TestModule' because 'MissingType' "
+                + "could not be resolved.");
+    assertThat(compilation)
+        .hadErrorContaining(
+            "BindingMethodProcessingStep was unable to process 'bindChild(java.lang.String)'"
+                + " because 'MissingType' could not be resolved."
+                + "\n  "
+                + "\n  Dependency trace:"
+                + "\n      => element (INTERFACE): test.TestModule"
+                + "\n      => element (METHOD): bindChild(java.lang.String)"
+                + "\n      => type (DECLARED return type): test.Child<java.lang.String>"
+                + "\n      => type (DECLARED supertype): test.Parent<java.lang.String>"
+                + "\n      => type (ERROR supertype): MissingType");
   }
 
   private DaggerModuleMethodSubject assertThatMethod(String method) {

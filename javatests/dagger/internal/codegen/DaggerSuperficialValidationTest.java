@@ -21,18 +21,23 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static org.junit.Assert.assertThrows;
 
+import androidx.room.compiler.processing.XConstructorElement;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.Component;
 import dagger.internal.codegen.binding.DaggerSuperficialValidation;
 import dagger.internal.codegen.binding.DaggerSuperficialValidation.ValidationException;
+import dagger.internal.codegen.javac.JavacPluginModule;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
-import javax.lang.model.element.ExecutableElement;
+import javax.inject.Singleton;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.ElementFilter;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,9 +62,8 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.TestClass");
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
@@ -93,9 +97,8 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.TestClass");
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
@@ -132,9 +135,8 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.TestClass");
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
@@ -169,9 +171,8 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.TestClass");
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
@@ -204,9 +205,8 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.TestClass");
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
@@ -239,9 +239,8 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.TestClass");
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
@@ -272,9 +271,8 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.TestClass");
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 DaggerSuperficialValidation.validateElement(testClassElement);
               }
             })
@@ -296,9 +294,8 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.TestClass");
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 DaggerSuperficialValidation.validateElement(testClassElement);
               }
             })
@@ -328,9 +325,8 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.TestClass");
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
@@ -365,9 +361,8 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.TestClass");
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
@@ -405,9 +400,9 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.Outer.TestClass");
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement =
+                    processingEnv.findTypeElement("test.Outer.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
@@ -450,12 +445,11 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions() {
-                TypeElement testClassElement =
-                    processingEnv.getElementUtils().getTypeElement("test.Outer.TestClass");
-                ExecutableElement constructor =
-                    ElementFilter.constructorsIn(testClassElement.getEnclosedElements()).get(0);
-                VariableElement parameter = constructor.getParameters().get(0);
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement testClassElement =
+                    processingEnv.findTypeElement("test.Outer.TestClass");
+                XConstructorElement constructor = testClassElement.getConstructors().get(0);
+                XVariableElement parameter = constructor.getParameters().get(0);
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
@@ -479,7 +473,95 @@ public class DaggerSuperficialValidationTest {
         .failsToCompile();
   }
 
+  @Test
+  public void invalidSuperclassInTypeHierarchy() {
+    JavaFileObject javaFileObject =
+        JavaFileObjects.forSourceLines(
+            "test.Outer",
+            "package test;",
+            "",
+            "final class Outer {",
+            "  Child<Long> getChild() { return null; }",
+            "",
+            "  static class Child<T> extends Parent<T> {}",
+            "",
+            "  static class Parent<T> extends MissingType<T> {}",
+            "}");
+    assertAbout(javaSource())
+        .that(javaFileObject)
+        .processedWith(
+            new AssertingProcessor() {
+              @Override
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement outerElement = processingEnv.findTypeElement("test.Outer");
+                XMethodElement getChildMethod = outerElement.getDeclaredMethods().get(0);
+                ValidationException exception =
+                    assertThrows(
+                        ValidationException.KnownErrorType.class,
+                        () ->
+                            DaggerSuperficialValidation.validateTypeHierarchyOf(
+                                "return type", getChildMethod, getChildMethod.getReturnType()));
+                assertThat(exception)
+                    .hasMessageThat()
+                    .contains(
+                        NEW_LINES.join(
+                            "Validation trace:",
+                            "  => element (CLASS): test.Outer",
+                            "  => element (METHOD): getChild()",
+                            "  => type (DECLARED return type): test.Outer.Child<java.lang.Long>",
+                            "  => type (DECLARED supertype): test.Outer.Parent<java.lang.Long>",
+                            "  => type (ERROR supertype): MissingType<T>"));
+              }
+            })
+        .failsToCompile();
+  }
+
+  @Test
+  public void invalidSuperclassTypeParameterInTypeHierarchy() {
+    JavaFileObject javaFileObject =
+        JavaFileObjects.forSourceLines(
+            "test.Outer",
+            "package test;",
+            "",
+            "final class Outer {",
+            "  Child getChild() { return null; }",
+            "",
+            "  static class Child extends Parent<MissingType> {}",
+            "",
+            "  static class Parent<T> {}",
+            "}");
+    assertAbout(javaSource())
+        .that(javaFileObject)
+        .processedWith(
+            new AssertingProcessor() {
+              @Override
+              void runAssertions(XProcessingEnv processingEnv) {
+                XTypeElement outerElement = processingEnv.findTypeElement("test.Outer");
+                XMethodElement getChildMethod = outerElement.getDeclaredMethods().get(0);
+                ValidationException exception =
+                    assertThrows(
+                        ValidationException.KnownErrorType.class,
+                        () ->
+                            DaggerSuperficialValidation.validateTypeHierarchyOf(
+                                "return type", getChildMethod, getChildMethod.getReturnType()));
+                assertThat(exception)
+                    .hasMessageThat()
+                    .contains(
+                        NEW_LINES.join(
+                            "Validation trace:",
+                            "  => element (CLASS): test.Outer",
+                            "  => element (METHOD): getChild()",
+                            "  => type (DECLARED return type): test.Outer.Child",
+                            "  => type (DECLARED supertype): test.Outer.Parent<MissingType>",
+                            "  => type (ERROR type argument): MissingType"));
+              }
+            })
+        .failsToCompile();
+  }
+
   private abstract static class AssertingProcessor extends AbstractProcessor {
+    private boolean processed = false;
+
     @Override
     public Set<String> getSupportedAnnotationTypes() {
       return ImmutableSet.of("*");
@@ -487,14 +569,30 @@ public class DaggerSuperficialValidationTest {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-      try {
-        runAssertions();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
+      if (!processed) {
+        processed = true; // only process once.
+        XProcessingEnv xProcessingEnv =
+            DaggerDaggerSuperficialValidationTest_TestComponent.builder()
+                .javacPluginModule(
+                    new JavacPluginModule(
+                        processingEnv.getElementUtils(), processingEnv.getTypeUtils()))
+                .build()
+                .processingEnv();
+        try {
+          runAssertions(xProcessingEnv);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
       return false;
     }
 
-    abstract void runAssertions() throws Exception;
+    abstract void runAssertions(XProcessingEnv processingEnv) throws Exception;
+  }
+
+  @Singleton
+  @Component(modules = JavacPluginModule.class)
+  interface TestComponent {
+    XProcessingEnv processingEnv();
   }
 }

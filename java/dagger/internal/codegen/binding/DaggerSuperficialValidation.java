@@ -25,6 +25,7 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreTypes;
@@ -232,6 +233,29 @@ public final class DaggerSuperficialValidation {
   }
 
   /**
+   * Validate the type hierarchy for the given type (with the given type description) within the
+   * given element.
+   *
+   * <p>Validation includes all superclasses, interfaces, and type parameters of those types.
+   */
+  public static void validateTypeHierarchyOf(String typeDescription, XElement element, XType type) {
+    try {
+      validateTypeHierarchy(typeDescription, type);
+    } catch (RuntimeException exception) {
+      throw  ValidationException.from(exception).append(toJavac(element));
+    }
+  }
+
+  private static void validateTypeHierarchy(String desc, XType type) {
+    validateType(desc, toJavac(type));
+    try {
+      type.getSuperTypes().forEach(supertype -> validateTypeHierarchy("supertype", supertype));
+    } catch (RuntimeException exception) {
+      throw ValidationException.from(exception).append(desc, toJavac(type));
+    }
+  }
+
+  /**
    * Returns true if all of the given elements return true from {@link #validateElement(Element)}.
    */
   public static void validateElements(Iterable<? extends Element> elements) {
@@ -396,8 +420,7 @@ public final class DaggerSuperficialValidation {
     try {
       type.accept(TYPE_VALIDATING_VISITOR, null);
     } catch (RuntimeException e) {
-      throw ValidationException.from(e)
-          .append(String.format("type (%s %s): %s", type.getKind().name(), desc, type));
+      throw ValidationException.from(e).append(desc, type);
     }
   }
 
@@ -718,6 +741,14 @@ public final class DaggerSuperficialValidation {
     private ValidationException append(Element element) {
       lastReportedElement = Optional.of(element);
       return append(getMessageForElement(element));
+    }
+
+    /**
+     * Appends a message for the given type mirror and returns this instance of {@link
+     * ValidationException}
+     */
+    private ValidationException append(String desc, TypeMirror type) {
+      return append(String.format("type (%s %s): %s", type.getKind().name(), desc, type));
     }
 
     /**

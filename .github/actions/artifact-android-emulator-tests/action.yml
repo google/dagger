@@ -5,6 +5,10 @@ inputs:
   api-level:
     description: 'The version of Android emulator API to test with.'
     required: true
+  cache-snapshot:
+    description: 'If true, caches an AVD snapshot for the given API-level'
+    type: boolean
+    default: true
 
 runs:
   using: "composite"
@@ -25,11 +29,30 @@ runs:
       with:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
+    - name: 'Load AVD cache'
+      uses: actions/cache@v2
+      id: avd-cache
+      with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+        key: avd-${{ inputs.api-level }}
+    - name: 'Create AVD snapshot for caching (API ${{ inputs.api-level }})'
+      # if: (steps.avd-cache.outputs.cache-hit == 'false') && (inputs.cache-snapshot == 'true')
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ inputs.api-level }}
+        target: google_apis
+        force-avd-creation: false
+        emulator-options: -no-snapshot-load -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        script: echo "Created AVD snapshot for caching."
     - name: 'Gradle Android emulator tests (API ${{ inputs.api-level }})'
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: ${{ inputs.api-level }}
         target: google_apis
+        force-avd-creation: false
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
         script: ./util/run-local-emulator-tests.sh
     - name: 'Upload test reports (API ${{ inputs.api-level }})'
       if: ${{ always() }}

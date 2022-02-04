@@ -93,6 +93,10 @@ jobs:
         timeout-minutes: 25
         with:
           api-level: '${{ matrix.api-level }}'
+          # AVD snapshots make subsequent runs faster but can also be expensive
+          # (~1gb per snapshot) so we avoid saving the snapshot here since it
+          # only runs on post-submit.
+          cache-snapshot: false
   publish-snapshot:
     name: 'Publish snapshot'
     # TODO(bcorso): Consider also waiting on artifact-android-emulator-tests

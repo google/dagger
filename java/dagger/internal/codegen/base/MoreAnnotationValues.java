@@ -25,7 +25,6 @@ import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 
 /** Utility methods for working with {@link AnnotationValue} instances. */
@@ -53,28 +52,6 @@ public final class MoreAnnotationValues {
               throw new IllegalArgumentException(elementName + " is not an array: " + o);
             }
           };
-
-  /**
-   * Returns the type represented by an annotation value.
-   *
-   * @throws IllegalArgumentException unless {@code annotationValue} represents a single type
-   */
-  public static TypeMirror asType(AnnotationValue annotationValue) {
-    return AS_TYPE.visit(annotationValue);
-  }
-
-  private static final AnnotationValueVisitor<TypeMirror, Void> AS_TYPE =
-      new SimpleAnnotationValueVisitor8<TypeMirror, Void>() {
-        @Override
-        public TypeMirror visitType(TypeMirror t, Void p) {
-          return t;
-        }
-
-        @Override
-        protected TypeMirror defaultAction(Object o, Void p) {
-          throw new TypeNotPresentException(o.toString(), null);
-        }
-      };
 
   /** Returns the int value of an annotation */
   public static int getIntValue(AnnotationMirror annotation, String valueName) {

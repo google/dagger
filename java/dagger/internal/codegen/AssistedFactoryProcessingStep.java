@@ -326,8 +326,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
                       INSTANCE_FACTORY,
                       // Java 7 type inference requires the method call provide the exact type here.
                       sourceVersion.compareTo(SourceVersion.RELEASE_7) <= 0
-                          ? CodeBlock.of(
-                              "<$T>", types.accessibleType(toJavac(metadata.factoryType()), name))
+                          ? CodeBlock.of("<$T>", types.accessibleType(metadata.factoryType(), name))
                           : CodeBlock.of(""),
                       name,
                       delegateFactoryParam)

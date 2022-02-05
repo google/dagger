@@ -18,36 +18,26 @@ package dagger.internal.codegen.langmodel;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.asExecutable;
-import static com.google.auto.common.MoreElements.hasModifiers;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.toSet;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.TypeName;
 import dagger.Reusable;
 import dagger.internal.codegen.base.ClearableCache;
 import java.io.Writer;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -103,12 +93,6 @@ public final class DaggerElements implements Elements, ClearableCache {
   public ImmutableSet<ExecutableElement> getLocalAndInheritedMethods(TypeElement type) {
     return getLocalAndInheritedMethodsCache.computeIfAbsent(
         type, k -> MoreElements.getLocalAndInheritedMethods(type, types, elements));
-  }
-
-  public ImmutableSet<ExecutableElement> getUnimplementedMethods(TypeElement type) {
-    return FluentIterable.from(getLocalAndInheritedMethods(type))
-        .filter(hasModifiers(ABSTRACT))
-        .toSet();
   }
 
   @Override
@@ -170,16 +154,6 @@ public final class DaggerElements implements Elements, ClearableCache {
   }
 
   /**
-   * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose {@linkplain
-   * AnnotationMirror#getAnnotationType() annotation type} is equivalent to {@code annotationType}.
-   */
-  public static boolean isAnnotationPresent(Element element, TypeMirror annotationType) {
-    return element.getAnnotationMirrors().stream()
-        .map(AnnotationMirror::getAnnotationType)
-        .anyMatch(candidate -> TypeName.get(candidate).equals(TypeName.get(annotationType)));
-  }
-
-  /**
    * Returns {@code true} iff the given element has an {@link AnnotationMirror} whose {@link
    * AnnotationMirror#getAnnotationType() annotation type} has the same canonical name as that of
    * {@code annotationClass}. This method is a safer alternative to calling {@link
@@ -188,37 +162,6 @@ public final class DaggerElements implements Elements, ClearableCache {
    */
   public static boolean isAnnotationPresent(Element element, ClassName annotationName) {
     return getAnnotationMirror(element, annotationName).isPresent();
-  }
-
-  /**
-   * Returns the annotation present on {@code element} whose type is {@code first} or within {@code
-   * rest}, checking each annotation type in order.
-   */
-  @SafeVarargs
-  public static Optional<AnnotationMirror> getAnyAnnotation(
-      Element element, ClassName first, ClassName... rest) {
-    return getAnyAnnotation(element, asList(first, rest));
-  }
-
-  /**
-   * Returns the annotation present on {@code element} whose type is in {@code annotations},
-   * checking each annotation type in order.
-   */
-  public static Optional<AnnotationMirror> getAnyAnnotation(
-      Element element, Collection<ClassName> annotations) {
-    return element.getAnnotationMirrors().stream()
-        .filter(hasAnnotationTypeIn(annotations))
-        .map((AnnotationMirror a) -> a) // Avoid returning Optional<? extends AnnotationMirror>.
-        .findFirst();
-  }
-
-  /** Returns the annotations present on {@code element} of all types. */
-  @SafeVarargs
-  public static ImmutableSet<AnnotationMirror> getAllAnnotations(
-      Element element, ClassName first, ClassName... rest) {
-    return ImmutableSet.copyOf(
-        Iterables.filter(
-            element.getAnnotationMirrors(), hasAnnotationTypeIn(asList(first, rest))::test));
   }
 
   // Note: This is similar to auto-common's MoreElements except using ClassName rather than Class.
@@ -242,28 +185,11 @@ public final class DaggerElements implements Elements, ClearableCache {
     return Optional.empty();
   }
 
-  private static Predicate<AnnotationMirror> hasAnnotationTypeIn(
-      Collection<ClassName> annotations) {
-    Set<String> annotationClassNames =
-        annotations.stream().map(ClassName::canonicalName).collect(toSet());
-    return annotation ->
-        annotationClassNames.contains(
-            MoreTypes.asTypeElement(annotation.getAnnotationType()).getQualifiedName().toString());
-  }
-
   public static ImmutableSet<? extends AnnotationMirror> getAnnotatedAnnotations(
       Element element, ClassName annotationName) {
     return element.getAnnotationMirrors().stream()
         .filter(input -> isAnnotationPresent(input.getAnnotationType().asElement(), annotationName))
         .collect(toImmutableSet());
-  }
-
-  public static ImmutableSet<String> suppressedWarnings(Element element) {
-    SuppressWarnings suppressedWarnings = element.getAnnotation(SuppressWarnings.class);
-    if (suppressedWarnings == null) {
-      return ImmutableSet.of();
-    }
-    return ImmutableSet.copyOf(suppressedWarnings.value());
   }
 
   /**

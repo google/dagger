@@ -41,7 +41,6 @@ import javax.lang.model.SourceVersion;
 public final class InaccessibleMapKeyProxyGenerator
     extends SourceFileGenerator<ContributionBinding> {
   private final XProcessingEnv processingEnv;
-  private final DaggerElements elements;
 
   @Inject
   InaccessibleMapKeyProxyGenerator(
@@ -51,7 +50,6 @@ public final class InaccessibleMapKeyProxyGenerator
       SourceVersion sourceVersion) {
     super(filer, elements, sourceVersion);
     this.processingEnv = processingEnv;
-    this.elements = elements;
   }
 
   @Override
@@ -62,7 +60,7 @@ public final class InaccessibleMapKeyProxyGenerator
 
   @Override
   public ImmutableList<TypeSpec.Builder> topLevelTypes(ContributionBinding binding) {
-    return MapKeys.mapKeyFactoryMethod(binding, processingEnv, elements)
+    return MapKeys.mapKeyFactoryMethod(binding, processingEnv)
         .map(
             method ->
                 classBuilder(MapKeys.mapKeyProxyClassName(binding))

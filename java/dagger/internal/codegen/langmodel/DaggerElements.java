@@ -353,19 +353,12 @@ public final class DaggerElements implements Elements, ClearableCache {
 
   /** Returns the type element or throws {@link TypeNotPresentException} if it is null. */
   public static XTypeElement checkTypePresent(XProcessingEnv processingEnv, ClassName className) {
-    XTypeElement type = processingEnv.findTypeElement(className);
-    if (type == null) {
-      throw new TypeNotPresentException(className.canonicalName(), null);
-    }
-    return type;
+    return checkTypePresent(processingEnv, className.canonicalName());
   }
 
-  /**
-   * Invokes {@link Elements#getTypeElement(CharSequence)}, throwing {@link TypeNotPresentException}
-   * if it is not accessible in the current compilation.
-   */
-  public TypeElement checkTypePresent(String typeName) {
-    TypeElement type = elements.getTypeElement(typeName);
+  /** Returns the type element or throws {@link TypeNotPresentException} if it is null. */
+  public static XTypeElement checkTypePresent(XProcessingEnv processingEnv, String typeName) {
+    XTypeElement type = processingEnv.findTypeElement(typeName);
     if (type == null) {
       throw new TypeNotPresentException(typeName, null);
     }

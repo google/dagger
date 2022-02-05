@@ -21,6 +21,7 @@ import static dagger.internal.codegen.binding.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.binding.SourceFiles.mapFactoryClassName;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
@@ -30,30 +31,29 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.spi.model.DependencyRequest;
 import java.util.stream.Stream;
 
 /** A factory creation expression for a multibound map. */
 final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpression {
 
+  private final XProcessingEnv processingEnv;
   private final ComponentImplementation componentImplementation;
   private final BindingGraph graph;
   private final ContributionBinding binding;
-  private final DaggerElements elements;
 
   @AssistedInject
   MapFactoryCreationExpression(
       @Assisted ContributionBinding binding,
+      XProcessingEnv processingEnv,
       ComponentImplementation componentImplementation,
       ComponentRequestRepresentations componentRequestRepresentations,
-      BindingGraph graph,
-      DaggerElements elements) {
+      BindingGraph graph) {
     super(binding, componentImplementation, componentRequestRepresentations);
+    this.processingEnv = processingEnv;
     this.binding = checkNotNull(binding);
     this.componentImplementation = componentImplementation;
     this.graph = graph;
-    this.elements = elements;
   }
 
   @Override
@@ -78,7 +78,7 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
       ContributionBinding contributionBinding = graph.contributionBinding(dependency.key());
       builder.add(
           ".put($L, $L)",
-          getMapKeyExpression(contributionBinding, componentImplementation.name(), elements),
+          getMapKeyExpression(contributionBinding, componentImplementation.name(), processingEnv),
           multibindingDependencyExpression(dependency));
     }
     builder.add(".build()");

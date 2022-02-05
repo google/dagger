@@ -16,16 +16,17 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.binding.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.spi.model.BindingKind.MULTIBOUND_MAP;
-import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
@@ -40,12 +41,9 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.DependencyRequest;
 import java.util.Collections;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** A {@link RequestRepresentation} for multibound maps. */
@@ -53,27 +51,24 @@ final class MapRequestRepresentation extends RequestRepresentation {
   /** Maximum number of key-value pairs that can be passed to ImmutableMap.of(K, V, K, V, ...). */
   private static final int MAX_IMMUTABLE_MAP_OF_KEY_VALUE_PAIRS = 5;
 
+  private final XProcessingEnv processingEnv;
   private final ProvisionBinding binding;
   private final ImmutableMap<DependencyRequest, ContributionBinding> dependencies;
   private final ComponentRequestRepresentations componentRequestRepresentations;
-  private final DaggerTypes types;
-  private final DaggerElements elements;
   private final boolean isExperimentalMergedMode;
 
   @AssistedInject
   MapRequestRepresentation(
       @Assisted ProvisionBinding binding,
+      XProcessingEnv processingEnv,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      ComponentRequestRepresentations componentRequestRepresentations,
-      DaggerTypes types,
-      DaggerElements elements) {
+      ComponentRequestRepresentations componentRequestRepresentations) {
     this.binding = binding;
+    this.processingEnv = processingEnv;
     BindingKind bindingKind = this.binding.kind();
     checkArgument(bindingKind.equals(MULTIBOUND_MAP), bindingKind);
     this.componentRequestRepresentations = componentRequestRepresentations;
-    this.types = types;
-    this.elements = elements;
     this.dependencies =
         Maps.toMap(binding.dependencies(), dep -> graph.contributionBinding(dep.key()));
     this.isExperimentalMergedMode =
@@ -125,23 +120,23 @@ final class MapRequestRepresentation extends RequestRepresentation {
           instantiation.add(".put($L)", keyAndValueExpression(dependency, requestingClass));
         }
         return Expression.create(
-            isImmutableMapAvailable ? immutableMapType() : binding.key().type().java(),
+            isImmutableMapAvailable ? immutableMapType() : binding.key().type().xprocessing(),
             instantiation.add(".build()").build());
     }
   }
 
-  private DeclaredType immutableMapType() {
+  private XType immutableMapType() {
     MapType mapType = MapType.from(binding.key());
-    return types.getDeclaredType(
-        elements.getTypeElement(TypeNames.IMMUTABLE_MAP),
-        toJavac(mapType.keyType()),
-        toJavac(mapType.valueType()));
+    return processingEnv.getDeclaredType(
+        processingEnv.requireTypeElement(TypeNames.IMMUTABLE_MAP),
+        mapType.keyType(),
+        mapType.valueType());
   }
 
   private CodeBlock keyAndValueExpression(DependencyRequest dependency, ClassName requestingClass) {
     return CodeBlock.of(
         "$L, $L",
-        getMapKeyExpression(dependencies.get(dependency), requestingClass, elements),
+        getMapKeyExpression(dependencies.get(dependency), requestingClass, processingEnv),
         isExperimentalMergedMode
             ? componentRequestRepresentations
                 .getExperimentalSwitchingProviderDependencyRepresentation(
@@ -174,16 +169,13 @@ final class MapRequestRepresentation extends RequestRepresentation {
   }
 
   private boolean isImmutableMapBuilderWithExpectedSizeAvailable() {
-    if (isImmutableMapAvailable()) {
-      return methodsIn(elements.getTypeElement(TypeNames.IMMUTABLE_MAP).getEnclosedElements())
-          .stream()
-          .anyMatch(method -> method.getSimpleName().contentEquals("builderWithExpectedSize"));
-    }
-    return false;
+    return isImmutableMapAvailable()
+        && processingEnv.requireTypeElement(TypeNames.IMMUTABLE_MAP).getDeclaredMethods().stream()
+            .anyMatch(method -> getSimpleName(method).contentEquals("builderWithExpectedSize"));
   }
 
   private boolean isImmutableMapAvailable() {
-    return elements.getTypeElement(TypeNames.IMMUTABLE_MAP) != null;
+    return processingEnv.findTypeElement(TypeNames.IMMUTABLE_MAP) != null;
   }
 
   @AssistedFactory

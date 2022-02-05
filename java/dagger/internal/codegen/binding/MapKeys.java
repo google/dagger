@@ -27,6 +27,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.base.MapKeyAccessibility.isMapKeyPubliclyAccessible;
 import static dagger.internal.codegen.binding.SourceFiles.elementBasedClassName;
+import static dagger.internal.codegen.langmodel.DaggerElements.checkTypePresent;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
@@ -38,6 +39,7 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -55,7 +57,6 @@ import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /** Methods for extracting {@link MapKey} annotations and key code blocks from binding elements. */
@@ -154,11 +155,11 @@ public final class MapKeys {
    *     map} contribution.
    */
   public static CodeBlock getMapKeyExpression(
-      ContributionBinding binding, ClassName requestingClass, DaggerElements elements) {
+      ContributionBinding binding, ClassName requestingClass, XProcessingEnv processingEnv) {
     AnnotationMirror mapKeyAnnotation = binding.mapKeyAnnotation().get();
     return MapKeyAccessibility.isMapKeyAccessibleFrom(
             mapKeyAnnotation, requestingClass.packageName())
-        ? directMapKeyExpression(mapKeyAnnotation, elements)
+        ? directMapKeyExpression(mapKeyAnnotation, processingEnv)
         : CodeBlock.of("$T.create()", mapKeyProxyClassName(binding));
   }
 
@@ -175,19 +176,19 @@ public final class MapKeys {
    *     annotation
    */
   private static CodeBlock directMapKeyExpression(
-      AnnotationMirror mapKey, DaggerElements elements) {
+      AnnotationMirror mapKey, XProcessingEnv processingEnv) {
     Optional<? extends AnnotationValue> unwrappedValue = unwrapValue(mapKey);
     AnnotationExpression annotationExpression = new AnnotationExpression(mapKey);
 
     if (MoreTypes.asTypeElement(mapKey.getAnnotationType())
         .getQualifiedName()
         .contentEquals("dagger.android.AndroidInjectionKey")) {
-      TypeElement unwrappedType =
-          elements.checkTypePresent((String) unwrappedValue.get().getValue());
+      XTypeElement unwrappedType =
+          checkTypePresent(processingEnv, (String) unwrappedValue.get().getValue());
       return CodeBlock.of(
           "$T.of($S)",
           ClassName.get("dagger.android.internal", "AndroidInjectionKeys"),
-          ClassName.get(unwrappedType).reflectionName());
+          unwrappedType.getClassName().reflectionName());
     }
 
     if (unwrappedValue.isPresent()) {
@@ -213,7 +214,7 @@ public final class MapKeys {
    * accessible.
    */
   public static Optional<MethodSpec> mapKeyFactoryMethod(
-      ContributionBinding binding, XProcessingEnv processingEnv, DaggerElements elements) {
+      ContributionBinding binding, XProcessingEnv processingEnv) {
     return binding
         .mapKeyAnnotation()
         .filter(mapKey -> !isMapKeyPubliclyAccessible(mapKey))
@@ -222,7 +223,7 @@ public final class MapKeys {
                 methodBuilder("create")
                     .addModifiers(PUBLIC, STATIC)
                     .returns(TypeName.get(mapKeyType(toXProcessing(mapKey, processingEnv))))
-                    .addStatement("return $L", directMapKeyExpression(mapKey, elements))
+                    .addStatement("return $L", directMapKeyExpression(mapKey, processingEnv))
                     .build());
   }
 

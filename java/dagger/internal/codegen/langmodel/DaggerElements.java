@@ -24,8 +24,6 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.Comparator.comparing;
 
 import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -350,20 +348,6 @@ public final class DaggerElements implements Elements, ClearableCache {
           return element.getSimpleName().toString();
         }
       };
-
-  /** Returns the type element or throws {@link TypeNotPresentException} if it is null. */
-  public static XTypeElement checkTypePresent(XProcessingEnv processingEnv, ClassName className) {
-    return checkTypePresent(processingEnv, className.canonicalName());
-  }
-
-  /** Returns the type element or throws {@link TypeNotPresentException} if it is null. */
-  public static XTypeElement checkTypePresent(XProcessingEnv processingEnv, String typeName) {
-    XTypeElement type = processingEnv.findTypeElement(typeName);
-    if (type == null) {
-      throw new TypeNotPresentException(typeName, null);
-    }
-    return type;
-  }
 
   @Override
   public PackageElement getPackageElement(CharSequence name) {

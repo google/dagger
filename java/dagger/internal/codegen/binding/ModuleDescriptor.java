@@ -28,7 +28,6 @@ import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerElements.checkTypePresent;
 import static dagger.internal.codegen.langmodel.DaggerElements.getMethodDescriptor;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
@@ -262,7 +261,8 @@ public abstract class ModuleDescriptor {
           .filter(method -> method.hasAnnotation(CONTRIBUTES_ANDROID_INJECTOR))
           .map(
               method ->
-                  checkTypePresent(processingEnv, implicitlyIncludedModuleName(module, method)))
+                  DaggerSuperficialValidation.requireTypeElement(
+                      processingEnv, implicitlyIncludedModuleName(module, method)))
           .collect(toImmutableSet());
     }
 

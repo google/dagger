@@ -27,7 +27,6 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.base.MapKeyAccessibility.isMapKeyPubliclyAccessible;
 import static dagger.internal.codegen.binding.SourceFiles.elementBasedClassName;
-import static dagger.internal.codegen.langmodel.DaggerElements.checkTypePresent;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
@@ -184,7 +183,8 @@ public final class MapKeys {
         .getQualifiedName()
         .contentEquals("dagger.android.AndroidInjectionKey")) {
       XTypeElement unwrappedType =
-          checkTypePresent(processingEnv, (String) unwrappedValue.get().getValue());
+          DaggerSuperficialValidation.requireTypeElement(
+              processingEnv, (String) unwrappedValue.get().getValue());
       return CodeBlock.of(
           "$T.of($S)",
           ClassName.get("dagger.android.internal", "AndroidInjectionKeys"),

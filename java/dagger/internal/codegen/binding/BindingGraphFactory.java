@@ -27,7 +27,6 @@ import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.binding.SourceFiles.generatedMonitoringModuleName;
-import static dagger.internal.codegen.langmodel.DaggerElements.checkTypePresent;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
@@ -292,7 +291,8 @@ public final class BindingGraphFactory implements ClearableCache {
    */
   private ModuleDescriptor descriptorForMonitoringModule(XTypeElement componentDefinitionType) {
     return moduleDescriptorFactory.create(
-        checkTypePresent(processingEnv, generatedMonitoringModuleName(componentDefinitionType)));
+        DaggerSuperficialValidation.requireTypeElement(
+            processingEnv, generatedMonitoringModuleName(componentDefinitionType)));
   }
 
   /** Returns a descriptor {@link ProductionExecutorModule}. */

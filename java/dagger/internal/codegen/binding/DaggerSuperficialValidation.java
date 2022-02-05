@@ -24,11 +24,13 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
+import com.squareup.javapoet.ClassName;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +64,26 @@ import javax.lang.model.util.SimpleTypeVisitor8;
  */
 // TODO(bcorso): Consider contributing this to Auto-Common's SuperficialValidation.
 public final class DaggerSuperficialValidation {
+  /**
+   * Returns the type element with the given class name or throws {@link ValidationException} if it
+   * is not accessible in the current compilation.
+   */
+  public static XTypeElement requireTypeElement(XProcessingEnv processingEnv, ClassName className) {
+    return requireTypeElement(processingEnv, className.canonicalName());
+  }
+
+  /**
+   * Returns the type element with the given class name or throws {@link ValidationException} if it
+   * is not accessible in the current compilation.
+   */
+  public static XTypeElement requireTypeElement(XProcessingEnv processingEnv, String className) {
+    XTypeElement type = processingEnv.findTypeElement(className);
+    if (type == null) {
+      throw new ValidationException.KnownErrorType(className);
+    }
+    return type;
+  }
+
   /**
    * Validates the {@link XElement#getType()} type of the given element.
    *

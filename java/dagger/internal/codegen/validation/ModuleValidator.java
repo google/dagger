@@ -52,10 +52,10 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
-import dagger.internal.codegen.base.Scopes;
 import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.ComponentCreatorAnnotation;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.binding.ModuleKind;
 import dagger.internal.codegen.javapoet.TypeNames;
@@ -108,9 +108,10 @@ public final class ModuleValidator {
   private final ComponentDescriptorFactory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
   private final BindingGraphValidator bindingGraphValidator;
+  private final InjectionAnnotations injectionAnnotations;
+  private final XProcessingEnv processingEnv;
   private final Map<XTypeElement, ValidationReport> cache = new HashMap<>();
   private final Set<XTypeElement> knownModules = new HashSet<>();
-  private final XProcessingEnv processingEnv;
 
   @Inject
   ModuleValidator(
@@ -119,12 +120,14 @@ public final class ModuleValidator {
       ComponentDescriptorFactory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       BindingGraphValidator bindingGraphValidator,
+      InjectionAnnotations injectionAnnotations,
       XProcessingEnv processingEnv) {
     this.anyBindingMethodValidator = anyBindingMethodValidator;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.bindingGraphFactory = bindingGraphFactory;
     this.bindingGraphValidator = bindingGraphValidator;
+    this.injectionAnnotations = injectionAnnotations;
     this.processingEnv = processingEnv;
   }
 
@@ -551,7 +554,7 @@ public final class ModuleValidator {
 
   private void validateNoScopeAnnotationsOnModuleElement(
       XTypeElement module, ModuleKind moduleKind, ValidationReport.Builder report) {
-    for (Scope scope : Scopes.scopesOf(module)) {
+    for (Scope scope : injectionAnnotations.getScopes(module)) {
       report.addError(
           String.format(
               "@%ss cannot be scoped. Did you mean to scope a method instead?",

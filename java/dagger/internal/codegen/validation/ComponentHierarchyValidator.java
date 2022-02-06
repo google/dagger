@@ -21,7 +21,6 @@ import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static dagger.internal.codegen.base.Scopes.getReadableSource;
-import static dagger.internal.codegen.base.Scopes.uniqueScopeOf;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
@@ -40,6 +39,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.internal.codegen.binding.ModuleKind;
 import dagger.internal.codegen.compileroption.CompilerOptions;
@@ -55,10 +55,13 @@ final class ComponentHierarchyValidator {
   private static final Joiner COMMA_SEPARATED_JOINER = Joiner.on(", ");
 
   private final CompilerOptions compilerOptions;
+  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
-  ComponentHierarchyValidator(CompilerOptions compilerOptions) {
+  ComponentHierarchyValidator(
+      CompilerOptions compilerOptions, InjectionAnnotations injectionAnnotations) {
     this.compilerOptions = compilerOptions;
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   ValidationReport validate(ComponentDescriptor componentDescriptor) {
@@ -265,7 +268,7 @@ final class ComponentHierarchyValidator {
 
   private ImmutableSet<Scope> moduleScopes(ModuleDescriptor module) {
     return module.allBindingDeclarations().stream()
-        .map(declaration -> uniqueScopeOf(declaration.bindingElement().get()))
+        .map(declaration -> injectionAnnotations.getScope(declaration.bindingElement().get()))
         .filter(scope -> scope.isPresent() && !scope.get().isReusable())
         .map(Optional::get)
         .collect(toImmutableSet());

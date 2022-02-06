@@ -26,7 +26,6 @@ import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnno
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.base.Formatter.INDENT;
 import static dagger.internal.codegen.base.Scopes.getReadableSource;
-import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSetMultimap;
@@ -57,6 +56,7 @@ import dagger.internal.codegen.binding.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.ErrorMessages;
 import dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages;
+import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.internal.codegen.compileroption.CompilerOptions;
@@ -91,15 +91,18 @@ public final class ComponentDescriptorValidator {
   private final CompilerOptions compilerOptions;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final ComponentHierarchyValidator componentHierarchyValidator;
+  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
   ComponentDescriptorValidator(
       CompilerOptions compilerOptions,
       MethodSignatureFormatter methodSignatureFormatter,
-      ComponentHierarchyValidator componentHierarchyValidator) {
+      ComponentHierarchyValidator componentHierarchyValidator,
+      InjectionAnnotations injectionAnnotations) {
     this.compilerOptions = compilerOptions;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.componentHierarchyValidator = componentHierarchyValidator;
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   public ValidationReport validate(ComponentDescriptor component) {
@@ -404,7 +407,7 @@ public final class ComponentDescriptorValidator {
         XTypeElement dependency,
         Deque<ImmutableSet<Scope>> scopeStack,
         Deque<XTypeElement> scopedDependencyStack) {
-      ImmutableSet<Scope> scopes = scopesOf(dependency);
+      ImmutableSet<Scope> scopes = injectionAnnotations.getScopes(dependency);
       if (stackOverlaps(scopeStack, scopes)) {
         scopedDependencyStack.push(dependency);
         // Current scope has already appeared in the component chain.
@@ -458,7 +461,7 @@ public final class ComponentDescriptorValidator {
     private void appendIndentedComponentsList(StringBuilder message, Iterable<XTypeElement> types) {
       for (XTypeElement scopedComponent : types) {
         message.append(INDENT);
-        for (Scope scope : scopesOf(scopedComponent)) {
+        for (Scope scope : injectionAnnotations.getScopes(scopedComponent)) {
           message.append(getReadableSource(scope)).append(' ');
         }
         message
@@ -472,7 +475,9 @@ public final class ComponentDescriptorValidator {
      * scoping annotation.
      */
     private ImmutableSet<XTypeElement> scopedTypesIn(Collection<XTypeElement> types) {
-      return types.stream().filter(type -> !scopesOf(type).isEmpty()).collect(toImmutableSet());
+      return types.stream()
+          .filter(type -> !injectionAnnotations.getScopes(type).isEmpty())
+          .collect(toImmutableSet());
     }
   }
 }

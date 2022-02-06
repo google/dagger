@@ -28,7 +28,6 @@ import static com.google.auto.common.MoreElements.asVariable;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.MoreAnnotationValues.getStringValue;
-import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.binding.SourceFiles.factoryNameForElement;
 import static dagger.internal.codegen.binding.SourceFiles.memberInjectedFieldSignatureForVariable;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
@@ -115,6 +114,10 @@ public final class InjectionAnnotations {
   /**
    * Returns the scopes on the given element, or an empty set if none exist.
    *
+   * <p>Note: Use {@link #getScope(XElement)} if the usage of the scope on the given element has
+   * already been validated and known to be unique. This method should typically only be used in the
+   * process of such validation.
+   *
    * <p>The {@code ScopeMetadata} is used to avoid superficial validation on unnecessary
    * annotations. If the {@code ScopeMetadata} does not exist, then all annotations must be
    * superficially validated before we can determine if they are scopes or not.
@@ -130,7 +133,11 @@ public final class InjectionAnnotations {
               } else {
                 DaggerSuperficialValidation.validateAnnotationsOf(element);
               }
-              return scopesOf(element);
+              return element.getAllAnnotations().stream()
+                  .filter(InjectionAnnotations::hasScopeAnnotation)
+                  .map(DaggerAnnotation::from)
+                  .map(Scope::scope)
+                  .collect(toImmutableSet());
             });
   }
 
@@ -368,6 +375,13 @@ public final class InjectionAnnotations {
         annotation.getAnnotationType().asElement(),
         TypeNames.QUALIFIER,
         TypeNames.QUALIFIER_JAVAX);
+  }
+
+  private static boolean hasScopeAnnotation(XAnnotation annotation) {
+    return annotation
+        .getType()
+        .getTypeElement()
+        .hasAnyAnnotation(TypeNames.SCOPE, TypeNames.SCOPE_JAVAX);
   }
 
   /** Returns true if the given element is annotated with {@link Inject}. */

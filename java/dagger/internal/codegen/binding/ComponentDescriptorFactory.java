@@ -25,7 +25,6 @@ import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnno
 import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotation;
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.base.Scopes.productionScope;
-import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.creatorAnnotationsFor;
 import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.enclosedAnnotatedTypes;
@@ -174,7 +173,7 @@ public final class ComponentDescriptorFactory {
                 ComponentCreatorDescriptor.create(
                     getOnlyElement(enclosedCreators), types, dependencyRequestFactory));
 
-    ImmutableSet<Scope> scopes = scopesOf(typeElement);
+    ImmutableSet<Scope> scopes = injectionAnnotations.getScopes(typeElement);
     if (componentAnnotation.isProduction()) {
       scopes =
           ImmutableSet.<Scope>builder().addAll(scopes).add(productionScope(processingEnv)).build();

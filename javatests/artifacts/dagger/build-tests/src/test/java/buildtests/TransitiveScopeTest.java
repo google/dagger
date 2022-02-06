@@ -44,7 +44,9 @@ public class TransitiveScopeTest {
                 + "'library2.MyScope' could not be resolved."
                 + "\n  "
                 + "\n  Dependency trace:"
-                + "\n      => element (CLASS): library1.Foo"
+                // Note: this fails on the subcomponent rather than Foo because the subcomponent is
+                // validated before any of its dependencies.
+                + "\n      => element (INTERFACE): library1.MySubcomponent"
                 + "\n      => annotation: @library2.MyScope");
   }
 

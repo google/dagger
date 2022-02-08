@@ -339,7 +339,7 @@ public final class ComponentValidator implements ClearableCache {
             if (referencedModules.contains(module)) {
               report.addError(
                   String.format(
-                      "A module may only occur once an an argument in a Subcomponent factory "
+                      "A module may only occur once as an argument in a Subcomponent factory "
                           + "method, but %s was already passed.",
                       module.getQualifiedName()),
                   parameter);

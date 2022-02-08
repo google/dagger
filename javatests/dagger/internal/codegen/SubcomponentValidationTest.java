@@ -222,7 +222,7 @@ public class SubcomponentValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "A module may only occur once an an argument in a Subcomponent factory method, "
+            "A module may only occur once as an argument in a Subcomponent factory method, "
                 + "but test.TestModule was already passed.")
         .inFile(componentFile)
         .onLine(7)

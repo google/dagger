@@ -16,12 +16,10 @@
 
 package library1;
 
-import static library2.MyTransitiveAnnotation.VALUE;
-
 import dagger.BindsInstance;
 import dagger.Subcomponent;
-import library2.MySimpleTransitiveAnnotation;
 import library2.MyTransitiveAnnotation;
+import library2.MyTransitiveType;
 
 /**
  * A class used to test that Dagger won't fail when non-dagger related annotations cannot be
@@ -30,105 +28,105 @@ import library2.MyTransitiveAnnotation;
  * <p>During the compilation of {@code :app}, {@link MyTransitiveAnnotation} will no longer be on
  * the classpath. In most cases, Dagger shouldn't care that the annotation isn't on the classpath
  */
-// @MySimpleTransitiveAnnotation: Not yet supported
-// @MyTransitiveAnnotation(VALUE): Not yet supported
+// @MyTransitiveAnnotation: Not yet supported
+// @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
 @MySubcomponentScope
 @Subcomponent(modules = MySubcomponentModule.class)
 public abstract class MySubcomponentWithBuilder {
   @MyQualifier
-  // @MySimpleTransitiveAnnotation: Not yet supported
-  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  // @MyTransitiveAnnotation: Not yet supported
+  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
   public abstract MySubcomponentBinding qualifiedMySubcomponentBinding();
 
-  // @MySimpleTransitiveAnnotation: Not yet supported
-  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  // @MyTransitiveAnnotation: Not yet supported
+  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
   public abstract MySubcomponentBinding unqualifiedMySubcomponentBinding();
 
-  // @MySimpleTransitiveAnnotation: Not yet supported
-  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  // @MyTransitiveAnnotation: Not yet supported
+  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
   public abstract void injectFoo(
-      // @MySimpleTransitiveAnnotation: Not yet supported
-      // @MyTransitiveAnnotation(VALUE): Not yet supported
+      // @MyTransitiveAnnotation: Not yet supported
+      // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
       Foo foo);
 
-  // @MySimpleTransitiveAnnotation: Not yet supported
-  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  // @MyTransitiveAnnotation: Not yet supported
+  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
   @Subcomponent.Builder
   public abstract static class Builder {
-    @MySimpleTransitiveAnnotation
-    @MyTransitiveAnnotation(VALUE)
+    @MyTransitiveAnnotation
+    @MyAnnotation(MyTransitiveType.VALUE)
     public abstract Builder mySubcomponentModule(
-        @MySimpleTransitiveAnnotation
-        @MyTransitiveAnnotation(VALUE)
+        @MyTransitiveAnnotation
+        @MyAnnotation(MyTransitiveType.VALUE)
         MySubcomponentModule mySubcomponentModule);
 
     @BindsInstance
-    @MySimpleTransitiveAnnotation
-    @MyTransitiveAnnotation(VALUE)
+    @MyTransitiveAnnotation
+    @MyAnnotation(MyTransitiveType.VALUE)
     public abstract Builder qualifiedMySubcomponentBinding(
         @MyQualifier
-        // @MySimpleTransitiveAnnotation: Not yet supported
-        // @MyTransitiveAnnotation(VALUE): Not yet supported
+        // @MyTransitiveAnnotation: Not yet supported
+        // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
         MySubcomponentBinding subcomponentBinding);
 
     @BindsInstance
-    @MySimpleTransitiveAnnotation
-    @MyTransitiveAnnotation(VALUE)
+    @MyTransitiveAnnotation
+    @MyAnnotation(MyTransitiveType.VALUE)
     public abstract Builder unqualifiedMySubcomponentBinding(
-        // @MySimpleTransitiveAnnotation: Not yet supported
-        // @MyTransitiveAnnotation(VALUE): Not yet supported
+        // @MyTransitiveAnnotation: Not yet supported
+        // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
         MySubcomponentBinding subcomponentBinding);
 
-    @MySimpleTransitiveAnnotation
-    @MyTransitiveAnnotation(VALUE)
+    @MyTransitiveAnnotation
+    @MyAnnotation(MyTransitiveType.VALUE)
     public abstract MySubcomponentWithBuilder build();
 
     // Non-dagger code
 
-    @MySimpleTransitiveAnnotation
-    @MyTransitiveAnnotation(VALUE)
+    @MyTransitiveAnnotation
+    @MyAnnotation(MyTransitiveType.VALUE)
     public String nonDaggerField = "";
 
-    @MySimpleTransitiveAnnotation
-    @MyTransitiveAnnotation(VALUE)
+    @MyTransitiveAnnotation
+    @MyAnnotation(MyTransitiveType.VALUE)
     public static String nonDaggerStaticField = "";
 
-    @MySimpleTransitiveAnnotation
-    @MyTransitiveAnnotation(VALUE)
+    @MyTransitiveAnnotation
+    @MyAnnotation(MyTransitiveType.VALUE)
     public void nonDaggerMethod(
-        @MySimpleTransitiveAnnotation
-        @MyTransitiveAnnotation(VALUE)
+        @MyTransitiveAnnotation
+        @MyAnnotation(MyTransitiveType.VALUE)
         String str) {}
 
-    @MySimpleTransitiveAnnotation
-    @MyTransitiveAnnotation(VALUE)
+    @MyTransitiveAnnotation
+    @MyAnnotation(MyTransitiveType.VALUE)
     public static void nonDaggerStaticMethod(
-        @MySimpleTransitiveAnnotation
-        @MyTransitiveAnnotation(VALUE)
+        @MyTransitiveAnnotation
+        @MyAnnotation(MyTransitiveType.VALUE)
         String str) {}
   }
 
   // Non-dagger code
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   public String nonDaggerField = "";
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   public static String nonDaggerStaticField = "";
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   public void nonDaggerMethod(
-      @MySimpleTransitiveAnnotation
-      @MyTransitiveAnnotation(VALUE)
+      @MyTransitiveAnnotation
+      @MyAnnotation(MyTransitiveType.VALUE)
       String str) {}
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   public static void nonDaggerStaticMethod(
-      @MySimpleTransitiveAnnotation
-      @MyTransitiveAnnotation(VALUE)
+      @MyTransitiveAnnotation
+      @MyAnnotation(MyTransitiveType.VALUE)
       String str) {}
 }

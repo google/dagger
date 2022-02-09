@@ -16,21 +16,19 @@
 
 package library1;
 
-import static library2.MyTransitiveAnnotation.VALUE;
-
 import dagger.Module;
-import library2.MySimpleTransitiveAnnotation;
 import library2.MyTransitiveAnnotation;
+import library2.MyTransitiveType;
 
 /** A simple module that needs to be passed in when creating this component. */
-@MySimpleTransitiveAnnotation
-@MyTransitiveAnnotation(VALUE)
+@MyTransitiveAnnotation
+@MyAnnotation(MyTransitiveType.VALUE)
 @Module
 public final class MySubcomponentModule {
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   public MySubcomponentModule(
-      @MySimpleTransitiveAnnotation
-      @MyTransitiveAnnotation(VALUE)
+      @MyTransitiveAnnotation
+      @MyAnnotation(MyTransitiveType.VALUE)
       int i) {}
 }

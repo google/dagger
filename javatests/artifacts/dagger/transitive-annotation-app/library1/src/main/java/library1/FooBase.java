@@ -16,44 +16,45 @@
 
 package library1;
 
-import static library2.MyTransitiveBaseAnnotation.VALUE;
-
 import javax.inject.Inject;
-import library2.MySimpleTransitiveBaseAnnotation;
 import library2.MyTransitiveBaseAnnotation;
+import library2.MyTransitiveType;
 
 /** A baseclass for {@link Foo}. */
-@MySimpleTransitiveBaseAnnotation
-@MyTransitiveBaseAnnotation(VALUE)
+@MyTransitiveBaseAnnotation
+@MyAnnotation(MyTransitiveType.VALUE)
 public class FooBase {
-  @MySimpleTransitiveBaseAnnotation
-  @MyTransitiveBaseAnnotation(VALUE)
+  @MyTransitiveBaseAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   int baseNonDaggerField;
 
-  @MySimpleTransitiveBaseAnnotation
-  @MyTransitiveBaseAnnotation(VALUE)
+  @MyTransitiveBaseAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   @Inject
   @MyQualifier
   Dep baseDaggerField;
 
-  @MySimpleTransitiveBaseAnnotation
-  @MyTransitiveBaseAnnotation(VALUE)
-  FooBase(@MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) String str) {}
+  @MyTransitiveBaseAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
+  FooBase(@MyTransitiveBaseAnnotation @MyAnnotation(MyTransitiveType.VALUE) String str) {}
 
-  @MySimpleTransitiveBaseAnnotation
-  @MyTransitiveBaseAnnotation(VALUE)
+  @MyTransitiveBaseAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   @Inject
   FooBase(
-      @MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) @MyQualifier Dep dep) {}
+      @MyTransitiveBaseAnnotation
+      @MyAnnotation(MyTransitiveType.VALUE)
+      @MyQualifier
+      Dep dep) {}
 
-  @MySimpleTransitiveBaseAnnotation
-  @MyTransitiveBaseAnnotation(VALUE)
+  @MyTransitiveBaseAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   void baseNonDaggerMethod(
-      @MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) int i) {}
+      @MyTransitiveBaseAnnotation @MyAnnotation(MyTransitiveType.VALUE) int i) {}
 
-  @MySimpleTransitiveBaseAnnotation
-  @MyTransitiveBaseAnnotation(VALUE)
+  @MyTransitiveBaseAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   @Inject
   void baseDaggerMethod(
-      @MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) @MyQualifier Dep dep) {}
+      @MyTransitiveBaseAnnotation @MyAnnotation(MyTransitiveType.VALUE) @MyQualifier Dep dep) {}
 }

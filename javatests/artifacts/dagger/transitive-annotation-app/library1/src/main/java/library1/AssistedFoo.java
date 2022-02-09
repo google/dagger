@@ -16,14 +16,12 @@
 
 package library1;
 
-import static library2.MyTransitiveAnnotation.VALUE;
-
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import javax.inject.Inject;
-import library2.MySimpleTransitiveAnnotation;
 import library2.MyTransitiveAnnotation;
+import library2.MyTransitiveType;
 
 /**
  * A class used to test that Dagger won't fail when non-dagger related annotations cannot be
@@ -32,50 +30,50 @@ import library2.MyTransitiveAnnotation;
  * <p>During the compilation of {@code :app}, {@link MyTransitiveAnnotation} will no longer be on
  * the classpath. In most cases, Dagger shouldn't care that the annotation isn't on the classpath
  */
-@MySimpleTransitiveAnnotation
-@MyTransitiveAnnotation(VALUE)
+@MyTransitiveAnnotation
+@MyAnnotation(MyTransitiveType.VALUE)
 public final class AssistedFoo extends FooBase {
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   int nonDaggerField;
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   @Inject
   @MyQualifier
   Dep daggerField;
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
-  AssistedFoo(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) String str) {
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
+  AssistedFoo(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) String str) {
     super(str);
   }
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   @AssistedInject
   AssistedFoo(
-      @MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) @Assisted int i,
-      @MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) @MyQualifier Dep dep) {
+      @MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) @Assisted int i,
+      @MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) @MyQualifier Dep dep) {
     super(dep);
   }
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
-  void nonDaggerMethod(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i) {}
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
+  void nonDaggerMethod(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) int i) {}
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   @Inject
   void daggerMethod(
-      @MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) @MyQualifier Dep dep) {}
+      @MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) @MyQualifier Dep dep) {}
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   @AssistedFactory
   public interface Factory {
-    @MySimpleTransitiveAnnotation
-    @MyTransitiveAnnotation(VALUE)
-    AssistedFoo create(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i);
+    @MyTransitiveAnnotation
+    @MyAnnotation(MyTransitiveType.VALUE)
+    AssistedFoo create(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) int i);
   }
 }

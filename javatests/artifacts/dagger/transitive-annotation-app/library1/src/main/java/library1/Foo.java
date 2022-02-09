@@ -16,12 +16,10 @@
 
 package library1;
 
-import static library2.MyTransitiveAnnotation.VALUE;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import library2.MySimpleTransitiveAnnotation;
 import library2.MyTransitiveAnnotation;
+import library2.MyTransitiveType;
 
 /**
  * A class used to test that Dagger won't fail when non-dagger related annotations cannot be
@@ -31,39 +29,39 @@ import library2.MyTransitiveAnnotation;
  * the classpath. In most cases, Dagger shouldn't care that the annotation isn't on the classpath
  */
 @Singleton
-@MySimpleTransitiveAnnotation
-@MyTransitiveAnnotation(VALUE)
+@MyTransitiveAnnotation
+@MyAnnotation(MyTransitiveType.VALUE)
 public final class Foo extends FooBase {
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   int nonDaggerField;
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   @Inject
   @MyQualifier
   Dep daggerField;
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
-  Foo(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) String str) {
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
+  Foo(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) String str) {
     super(str);
   }
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   @Inject
-  Foo(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) @MyQualifier Dep dep) {
+  Foo(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) @MyQualifier Dep dep) {
     super(dep);
   }
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
-  void nonDaggerMethod(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i) {}
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
+  void nonDaggerMethod(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) int i) {}
 
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
   @Inject
   void daggerMethod(
-      @MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) @MyQualifier Dep dep) {}
+      @MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) @MyQualifier Dep dep) {}
 }

@@ -16,5 +16,8 @@
 
 package library2;
 
-/** A simple annotation that is a transitive dependency of the app. */
-public @interface MySimpleTransitiveAnnotation {}
+
+/** A class that is a transitive dependency of the app. */
+public final class MyTransitiveType {
+  public static final int VALUE = 3;
+}

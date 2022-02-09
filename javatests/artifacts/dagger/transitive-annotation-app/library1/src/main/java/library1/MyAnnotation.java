@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package library2;
+package library1;
 
-/** A simple annotation that is a transitive dependency of the app. */
-public @interface MySimpleTransitiveBaseAnnotation {}
+/** An annotation that is a direct dependency of the app. */
+public @interface MyAnnotation {
+  int value();
+}

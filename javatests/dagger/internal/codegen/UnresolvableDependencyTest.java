@@ -16,8 +16,11 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static java.util.stream.Collectors.joining;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -86,6 +89,26 @@ public final class UnresolvableDependencyTest {
     assertThat(compilation).hadErrorContaining(
         "ComponentProcessingStep was unable to process 'test.FooComponent' because "
             + "'UnresolvableDependency' could not be resolved." + trace);
+
+    // Only include a minimal portion of the stacktrace to minimize breaking tests due to refactors.
+    String stacktraceErrorMessage =
+        "dagger.internal.codegen.base"
+            + ".DaggerSuperficialValidation$ValidationException$KnownErrorType";
+
+    // Check that the stacktrace is not included in the error message by default.
+    assertThat(
+            compilation.errors().stream()
+                .map(error -> error.getMessage(null))
+                .collect(joining("\n")))
+        .doesNotContain(stacktraceErrorMessage);
+
+    // Recompile with the option enabled and check that the stacktrace is now included
+    compilation =
+        compilerWithOptions("-Adagger.includeStacktraceWithDeferredErrorMessages=ENABLED")
+            .compile(fooComponent, foo, bar);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(3);
+    assertThat(compilation).hadErrorContaining(stacktraceErrorMessage);
   }
 
   @Test

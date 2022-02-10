@@ -17,6 +17,7 @@
 package dagger.internal.codegen.validation;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Throwables.getStackTraceAsString;
 import static com.google.common.collect.Sets.difference;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -32,6 +33,7 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.DaggerSuperficialValidation.ValidationException;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +48,7 @@ public abstract class TypeCheckingProcessingStep<E extends XElement> implements 
 
   private final List<String> lastDeferredErrorMessages = new ArrayList<>();
   @Inject XMessager messager;
+  @Inject CompilerOptions compilerOptions;
   @Inject SuperficialValidator superficialValidator;
 
   @Override
@@ -78,19 +81,17 @@ public abstract class TypeCheckingProcessingStep<E extends XElement> implements 
                 // TODO(bcorso): We should be able to remove this once we replace all calls to
                 // SuperficialValidation with DaggerSuperficialValidation.
                 deferredElements.add(element);
-                lastDeferredErrorMessages.add(typeNotPresentErrorMessage(element, e));
+                cacheErrorMessage(typeNotPresentErrorMessage(element, e), e);
               } catch (ValidationException.UnexpectedException unexpectedException) {
                 // Rethrow since the exception was created from an unexpected throwable so
                 // deferring to another round is unlikely to help.
                 throw unexpectedException;
-              } catch (ValidationException.KnownErrorType validationException) {
+              } catch (ValidationException.KnownErrorType e) {
                 deferredElements.add(element);
-                lastDeferredErrorMessages.add(
-                    knownErrorTypeErrorMessage(element, validationException));
-              } catch (ValidationException.UnknownErrorType validationException) {
+                cacheErrorMessage(knownErrorTypeErrorMessage(element, e), e);
+              } catch (ValidationException.UnknownErrorType e) {
                 deferredElements.add(element);
-                lastDeferredErrorMessages.add(
-                    unknownErrorTypeErrorMessage(element, validationException));
+                cacheErrorMessage(unknownErrorTypeErrorMessage(element, e), e);
               }
             });
     return deferredElements.build();
@@ -103,6 +104,13 @@ public abstract class TypeCheckingProcessingStep<E extends XElement> implements 
     // call to process(). Instead, we just report the last deferred error messages, if any.
     lastDeferredErrorMessages.forEach(errorMessage -> messager.printMessage(ERROR, errorMessage));
     lastDeferredErrorMessages.clear();
+  }
+
+  private void cacheErrorMessage(String errorMessage, Exception exception) {
+    lastDeferredErrorMessages.add(
+        compilerOptions.includeStacktraceWithDeferredErrorMessages()
+            ? String.format("%s\n\n%s", errorMessage, getStackTraceAsString(exception))
+            : errorMessage);
   }
 
   private String typeNotPresentErrorMessage(XElement element, TypeNotPresentException exception) {

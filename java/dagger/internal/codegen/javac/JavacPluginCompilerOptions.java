@@ -72,6 +72,11 @@ final class JavacPluginCompilerOptions extends CompilerOptions {
   }
 
   @Override
+  public boolean includeStacktraceWithDeferredErrorMessages() {
+    return false;
+  }
+
+  @Override
   public boolean ignorePrivateAndStaticInjectionForComponent() {
     return false;
   }

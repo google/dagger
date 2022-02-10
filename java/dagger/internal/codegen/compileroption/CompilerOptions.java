@@ -85,6 +85,15 @@ public abstract class CompilerOptions {
   public abstract Diagnostic.Kind staticMemberValidationKind();
 
   /**
+   * Returns {@code true} if the stacktrace should be included in the deferred error message.
+   *
+   * <p>The default for this option is {@code false}. The stacktrace is mostly useful for special
+   * debugging purposes to gather more information about where the exception was thrown from within
+   * Dagger's own processors.
+   */
+  public abstract boolean includeStacktraceWithDeferredErrorMessages();
+
+  /**
    * If {@code true}, Dagger will generate factories and components even if some members-injected
    * types have {@code private} or {@code static} {@code @Inject}-annotated members.
    *
@@ -142,8 +151,8 @@ public abstract class CompilerOptions {
    * (i.e. versions less than or equal to 2.40.5). However, we will remove this option in a future
    * version of Dagger.
    *
-   * <p>Warning:Disabling this option means that Dagger may miss a scope or qualifier on a
-   * binding, leading to a (wrong) unscoped binding or a (wrong) unqualified binding, respectively.
+   * <p>Warning:Disabling this option means that Dagger may miss a scope or qualifier on a binding,
+   * leading to a (wrong) unscoped binding or a (wrong) unqualified binding, respectively.
    */
   public abstract boolean strictSuperficialValidation();
 

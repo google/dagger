@@ -19,7 +19,7 @@ package dagger.internal.codegen.binding;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.getCreatorAnnotations;
-import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
+import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotations;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
 
@@ -211,7 +211,7 @@ public abstract class ComponentCreatorDescriptor {
           request.key(), request.isNullable(), elementForVariableName);
     }
 
-    return moduleAnnotation(parameterType.getTypeElement()).isPresent()
+    return parameterType.getTypeElement().hasAnyAnnotation(moduleAnnotations())
         ? ComponentRequirement.forModule(parameterType)
         : ComponentRequirement.forDependency(parameterType);
   }

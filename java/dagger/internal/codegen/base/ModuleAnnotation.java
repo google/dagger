@@ -88,13 +88,7 @@ public abstract class ModuleAnnotation {
     return MODULE_ANNOTATIONS;
   }
 
-  /**
-   * Creates an object that represents a {@code @Module} or {@code @ProducerModule}.
-   *
-   * @throws IllegalArgumentException if {@link #isModuleAnnotation(XAnnotation)} returns {@code
-   *     false}
-   */
-  public static ModuleAnnotation moduleAnnotation(XAnnotation annotation) {
+  private static ModuleAnnotation create(XAnnotation annotation) {
     checkArgument(
         isModuleAnnotation(annotation),
         "%s is not a Module or ProducerModule annotation",
@@ -108,8 +102,13 @@ public abstract class ModuleAnnotation {
    * Returns an object representing the {@code @Module} or {@code @ProducerModule} annotation if one
    * annotates {@code typeElement}.
    */
-  public static Optional<ModuleAnnotation> moduleAnnotation(XElement element) {
+  public static Optional<ModuleAnnotation> moduleAnnotation(
+      XElement element, DaggerSuperficialValidation superficialValidation) {
     return getAnyAnnotation(element, TypeNames.MODULE, TypeNames.PRODUCER_MODULE)
-        .map(ModuleAnnotation::moduleAnnotation);
+        .map(
+            annotation -> {
+              superficialValidation.validateAnnotationOf(element, annotation);
+              return create(annotation);
+            });
   }
 }

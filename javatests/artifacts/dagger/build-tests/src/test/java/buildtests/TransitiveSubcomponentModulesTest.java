@@ -68,11 +68,20 @@ public class TransitiveSubcomponentModulesTest {
       case "implementation":
         result = runner.buildAndFail();
         assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
-        // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the
-        // issue described in https://github.com/google/dagger/issues/2208.
         String expectedErrorMsg =
-            "error: ComponentProcessingStep was unable to process 'app.MyComponent'"
-                + " because 'library2.TransitiveModule' could not be resolved.";
+            "error: ComponentProcessingStep was unable to process 'app.MyComponent' because"
+                + " 'library2.TransitiveModule' could not be resolved."
+                + "\n  "
+                + "\n  Dependency trace:"
+                + "\n      => element (CLASS): library1.MySubcomponent"
+                + "\n      => annotation:"
+                + " @dagger.Subcomponent(modules = library2.TransitiveModule.class)"
+                + "\n      => annotation method: java.lang.Class<?>[] modules()"
+                + "\n      => annotation value (ARRAY):"
+                + " value 'library2.TransitiveModule.class' with expected type java.lang.Class<?>[]"
+                + "\n      => annotation value (TYPE):"
+                + " value 'library2.TransitiveModule' with expected type java.lang.Class<?>"
+                + "\n      => type (ERROR annotation value type): library2.TransitiveModule";
         assertThat(result.getOutput()).contains(expectedErrorMsg);
         break;
       case "api":
@@ -102,11 +111,19 @@ public class TransitiveSubcomponentModulesTest {
       case "implementation":
         result = runner.buildAndFail();
         assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
-        // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the
-        // issue described in https://github.com/google/dagger/issues/2208.
         String expectedErrorMsg =
             "error: ComponentProcessingStep was unable to process 'app.MyComponent' because"
-                + " 'library2.TransitiveModule' could not be resolved.";
+                + " 'library2.TransitiveModule' could not be resolved."
+                + "\n  "
+                + "\n  Dependency trace:"
+                + "\n      => element (INTERFACE): library1.IncludesTransitiveModule"
+                + "\n      => annotation:"
+                + " @dagger.Module(includes = library2.TransitiveModule.class)"
+                + "\n      => annotation method: java.lang.Class<?>[] includes()"
+                + "\n      => annotation value (ARRAY):"
+                + " value 'library2.TransitiveModule.class' with expected type java.lang.Class<?>[]"
+                + "\n      => annotation value (TYPE):"
+                + " value 'library2.TransitiveModule' with expected type java.lang.Class<?>";
         assertThat(result.getOutput()).contains(expectedErrorMsg);
         break;
       case "api":

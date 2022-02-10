@@ -49,6 +49,7 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
+import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
@@ -92,17 +93,20 @@ public final class ComponentDescriptorValidator {
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final ComponentHierarchyValidator componentHierarchyValidator;
   private final InjectionAnnotations injectionAnnotations;
+  private final DaggerSuperficialValidation superficialValidation;
 
   @Inject
   ComponentDescriptorValidator(
       CompilerOptions compilerOptions,
       MethodSignatureFormatter methodSignatureFormatter,
       ComponentHierarchyValidator componentHierarchyValidator,
-      InjectionAnnotations injectionAnnotations) {
+      InjectionAnnotations injectionAnnotations,
+      DaggerSuperficialValidation superficialValidation) {
     this.compilerOptions = compilerOptions;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.componentHierarchyValidator = componentHierarchyValidator;
     this.injectionAnnotations = injectionAnnotations;
+    this.superficialValidation = superficialValidation;
   }
 
   public ValidationReport validate(ComponentDescriptor component) {
@@ -177,7 +181,7 @@ public final class ComponentDescriptorValidator {
           // Always validate direct component dependencies referenced by this component regardless
           // of the flag value
           || dependencyStack.isEmpty()) {
-        rootComponentAnnotation(dependency)
+        rootComponentAnnotation(dependency, superficialValidation)
             .ifPresent(
                 componentAnnotation -> {
                   dependencyStack.push(dependency);
@@ -427,7 +431,7 @@ public final class ComponentDescriptorValidator {
           // of the flag value
           || scopedDependencyStack.isEmpty()) {
         // TODO(beder): transitively check scopes of production components too.
-        rootComponentAnnotation(dependency)
+        rootComponentAnnotation(dependency, superficialValidation)
             .filter(componentAnnotation -> !componentAnnotation.isProduction())
             .ifPresent(
                 componentAnnotation -> {

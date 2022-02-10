@@ -25,11 +25,13 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Multimaps.asMap;
 import static com.google.common.collect.Sets.intersection;
 import static dagger.internal.codegen.base.ComponentAnnotation.anyComponentAnnotation;
+import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotation;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.creatorAnnotationsFor;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.productionCreatorAnnotations;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static dagger.internal.codegen.base.ComponentKind.annotationsFor;
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
+import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotations;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.enclosedAnnotatedTypes;
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.builderMethodRequiresNoArgs;
@@ -64,6 +66,7 @@ import dagger.Component;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.ComponentAnnotation;
 import dagger.internal.codegen.base.ComponentKind;
+import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ModuleKind;
 import dagger.internal.codegen.binding.DependencyRequestFactory;
 import dagger.internal.codegen.binding.ErrorMessages;
@@ -100,6 +103,7 @@ public final class ComponentValidator implements ClearableCache {
   private final MembersInjectionValidator membersInjectionValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFactory dependencyRequestFactory;
+  private final DaggerSuperficialValidation superficialValidation;
   private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
   private final KotlinMetadataUtil metadataUtil;
 
@@ -113,6 +117,7 @@ public final class ComponentValidator implements ClearableCache {
       MembersInjectionValidator membersInjectionValidator,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFactory dependencyRequestFactory,
+      DaggerSuperficialValidation superficialValidation,
       KotlinMetadataUtil metadataUtil) {
     this.processingEnv = processingEnv;
     this.elements = elements;
@@ -122,6 +127,7 @@ public final class ComponentValidator implements ClearableCache {
     this.membersInjectionValidator = membersInjectionValidator;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFactory = dependencyRequestFactory;
+    this.superficialValidation = superficialValidation;
     this.metadataUtil = metadataUtil;
   }
 
@@ -159,7 +165,7 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private ComponentAnnotation componentAnnotation() {
-      return anyComponentAnnotation(component).get();
+      return anyComponentAnnotation(component, superficialValidation).get();
     }
 
     ValidationReport validateElement() {
@@ -269,7 +275,7 @@ public final class ComponentValidator implements ClearableCache {
         // abstract methods are ones we have to implement, so they each need to be validated
         // first, check the return type. if it's a subcomponent, validate that method as
         // such.
-        Optional<XAnnotation> subcomponentAnnotation = subcomponentAnnotation();
+        Optional<ComponentAnnotation> subcomponentAnnotation = legalSubcomponentAnnotation();
         if (subcomponentAnnotation.isPresent()) {
           validateSubcomponentFactoryMethod(subcomponentAnnotation.get());
         } else if (subcomponentCreatorAnnotation().isPresent()) {
@@ -296,12 +302,17 @@ public final class ComponentValidator implements ClearableCache {
         }
       }
 
-      private Optional<XAnnotation> subcomponentAnnotation() {
-        return checkForAnnotations(
-            returnType,
-            componentKind().legalSubcomponentKinds().stream()
-                .map(ComponentKind::annotation)
-                .collect(toImmutableSet()));
+      private Optional<ComponentAnnotation> legalSubcomponentAnnotation() {
+        return Optional.ofNullable(returnType.getTypeElement())
+            .flatMap(element -> subcomponentAnnotation(element, superficialValidation))
+            // TODO(bcorso): Consider failing on illegal subcomponents rather than just filtering.
+            .filter(annotation -> legalSubcomponentAnnotations().contains(annotation.className()));
+      }
+
+      private ImmutableSet<ClassName> legalSubcomponentAnnotations() {
+        return componentKind().legalSubcomponentKinds().stream()
+            .map(ComponentKind::annotation)
+            .collect(toImmutableSet());
       }
 
       private Optional<XAnnotation> subcomponentCreatorAnnotation() {
@@ -312,7 +323,7 @@ public final class ComponentValidator implements ClearableCache {
                 : subcomponentCreatorAnnotations());
       }
 
-      private void validateSubcomponentFactoryMethod(XAnnotation subcomponentAnnotation) {
+      private void validateSubcomponentFactoryMethod(ComponentAnnotation subcomponentAnnotation) {
         referencedSubcomponents.put(returnType.getTypeElement(), method);
 
         ImmutableSet<ClassName> legalModuleAnnotations =
@@ -322,8 +333,7 @@ public final class ComponentValidator implements ClearableCache {
                 .stream()
                 .map(ModuleKind::annotation)
                 .collect(toImmutableSet());
-        ImmutableSet<XTypeElement> moduleTypes =
-            ComponentAnnotation.componentAnnotation(subcomponentAnnotation).modules();
+        ImmutableSet<XTypeElement> moduleTypes = subcomponentAnnotation.modules();
 
         // TODO(gak): This logic maybe/probably shouldn't live here as it requires us to traverse
         // subcomponents and their modules separately from how it is done in ComponentDescriptor and
@@ -376,7 +386,7 @@ public final class ComponentValidator implements ClearableCache {
         ImmutableSet.Builder<XTypeElement> moduleElements = ImmutableSet.builder();
         for (XTypeElement moduleElement : consumingIterable(moduleQueue)) {
           if (processedElements.add(moduleElement)) {
-            moduleAnnotation(moduleElement)
+            moduleAnnotation(moduleElement, superficialValidation)
                 .ifPresent(
                     moduleAnnotation -> {
                       moduleElements.add(moduleElement);
@@ -394,7 +404,7 @@ public final class ComponentValidator implements ClearableCache {
         XType superclass = element.getSuperType();
         while (superclass != null && !TypeName.OBJECT.equals(superclass.getTypeName())) {
           element = superclass.getTypeElement();
-          moduleAnnotation(element)
+          moduleAnnotation(element, superficialValidation)
               .ifPresent(moduleAnnotation -> builder.addAll(moduleAnnotation.includes()));
           superclass = element.getSuperType();
         }
@@ -492,7 +502,7 @@ public final class ComponentValidator implements ClearableCache {
       for (XType type : componentAnnotation().dependencyTypes()) {
         if (!isDeclared(type)) {
           report.addError(type + " is not a valid component dependency type");
-        } else if (moduleAnnotation(type.getTypeElement()).isPresent()) {
+        } else if (type.getTypeElement().hasAnyAnnotation(moduleAnnotations())) {
           report.addError(type + " is a module, which cannot be a component dependency");
         }
       }
@@ -523,7 +533,7 @@ public final class ComponentValidator implements ClearableCache {
 
     private DependencyRequest dependencyRequest(XMethodElement method) {
       XMethodType methodType = method.asMemberOf(component.getType());
-      return ComponentKind.forAnnotatedElement(component).get().isProducer()
+      return componentKind().isProducer()
           ? dependencyRequestFactory.forComponentProductionMethod(method, methodType)
           : dependencyRequestFactory.forComponentProvisionMethod(method, methodType);
     }

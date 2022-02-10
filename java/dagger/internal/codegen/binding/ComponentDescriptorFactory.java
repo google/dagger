@@ -23,6 +23,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotation;
 import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotation;
+import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotations;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.creatorAnnotationsFor;
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.base.Scopes.productionScope;
@@ -43,6 +44,7 @@ import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.ComponentAnnotation;
+import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ModuleAnnotation;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.langmodel.DaggerElements;
@@ -60,6 +62,7 @@ public final class ComponentDescriptorFactory {
   private final DependencyRequestFactory dependencyRequestFactory;
   private final ModuleDescriptor.Factory moduleDescriptorFactory;
   private final InjectionAnnotations injectionAnnotations;
+  private final DaggerSuperficialValidation superficialValidation;
 
   @Inject
   ComponentDescriptorFactory(
@@ -68,25 +71,29 @@ public final class ComponentDescriptorFactory {
       DaggerTypes types,
       DependencyRequestFactory dependencyRequestFactory,
       ModuleDescriptor.Factory moduleDescriptorFactory,
-      InjectionAnnotations injectionAnnotations) {
+      InjectionAnnotations injectionAnnotations,
+      DaggerSuperficialValidation superficialValidation) {
     this.processingEnv = processingEnv;
     this.elements = elements;
     this.types = types;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.moduleDescriptorFactory = moduleDescriptorFactory;
     this.injectionAnnotations = injectionAnnotations;
+    this.superficialValidation = superficialValidation;
   }
 
   /** Returns a descriptor for a root component type. */
   public ComponentDescriptor rootComponentDescriptor(XTypeElement typeElement) {
-    Optional<ComponentAnnotation> annotation = rootComponentAnnotation(typeElement);
+    Optional<ComponentAnnotation> annotation =
+        rootComponentAnnotation(typeElement, superficialValidation);
     checkArgument(annotation.isPresent(), "%s must have a component annotation", typeElement);
     return create(typeElement, annotation.get());
   }
 
   /** Returns a descriptor for a subcomponent type. */
   public ComponentDescriptor subcomponentDescriptor(XTypeElement typeElement) {
-    Optional<ComponentAnnotation> annotation = subcomponentAnnotation(typeElement);
+    Optional<ComponentAnnotation> annotation =
+        subcomponentAnnotation(typeElement, superficialValidation);
     checkArgument(annotation.isPresent(), "%s must have a subcomponent annotation", typeElement);
     return create(typeElement, annotation.get());
   }
@@ -96,7 +103,7 @@ public final class ComponentDescriptorFactory {
    * bindings.
    */
   public ComponentDescriptor moduleComponentDescriptor(XTypeElement typeElement) {
-    Optional<ModuleAnnotation> annotation = moduleAnnotation(typeElement);
+    Optional<ModuleAnnotation> annotation = moduleAnnotation(typeElement, superficialValidation);
     checkArgument(annotation.isPresent(), "%s must have a module annotation", typeElement);
     return create(typeElement, ComponentAnnotation.fromModuleAnnotation(annotation.get()));
   }
@@ -204,7 +211,7 @@ public final class ComponentDescriptorFactory {
     XType returnType = resolvedComponentMethod.getReturnType();
     if (isDeclared(returnType) && !injectionAnnotations.getQualifier(componentMethod).isPresent()) {
       XTypeElement returnTypeElement = returnType.getTypeElement();
-      if (subcomponentAnnotation(returnTypeElement).isPresent()) {
+      if (returnTypeElement.hasAnyAnnotation(subcomponentAnnotations())) {
         // It's a subcomponent factory method. There is no dependency request, and there could be
         // any number of parameters. Just return the descriptor.
         return descriptor.subcomponent(subcomponentDescriptor(returnTypeElement)).build();

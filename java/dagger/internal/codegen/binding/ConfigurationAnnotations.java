@@ -17,7 +17,7 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotation;
+import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotations;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
@@ -44,7 +44,7 @@ import javax.lang.model.type.DeclaredType;
 public final class ConfigurationAnnotations {
 
   public static Optional<XTypeElement> getSubcomponentCreator(XTypeElement subcomponent) {
-    checkArgument(subcomponentAnnotation(subcomponent).isPresent());
+    checkArgument(subcomponent.hasAnyAnnotation(subcomponentAnnotations()));
     return subcomponent.getEnclosedTypeElements().stream()
         .filter(ConfigurationAnnotations::isSubcomponentCreator)
         // TODO(bcorso): Consider doing toOptional() instead since there should be at most 1.

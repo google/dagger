@@ -55,11 +55,20 @@ public class TransitiveComponentDependenciesTest {
       case "implementation":
         result = setupRunner().buildAndFail();
         assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
-        // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the
-        // issue described in https://github.com/google/dagger/issues/2208.
         String expectedErrorMsg =
             "error: ComponentProcessingStep was unable to process 'app.ComponentC' because"
-                + " 'libraryA.ComponentA' could not be resolved.";
+                + " 'libraryA.ComponentA' could not be resolved."
+                + "\n  "
+                + "\n  Dependency trace:"
+                + "\n      => element (CLASS): libraryB.ComponentB"
+                + "\n      => annotation:"
+                + " @dagger.Component(dependencies = libraryA.ComponentA.class)"
+                + "\n      => annotation method: java.lang.Class<?>[] dependencies()"
+                + "\n      => annotation value (ARRAY):"
+                + " value 'libraryA.ComponentA.class' with expected type java.lang.Class<?>[]"
+                + "\n      => annotation value (TYPE):"
+                + " value 'libraryA.ComponentA' with expected type java.lang.Class<?>"
+                + "\n      => type (ERROR annotation value type): libraryA.ComponentA";
         assertThat(result.getOutput()).contains(expectedErrorMsg);
         break;
       case "api":
@@ -122,7 +131,6 @@ public class TransitiveComponentDependenciesTest {
             "public class C {",
             "  @Inject C(B b) {}",
             "}");
-    ;
 
     GradleModule.create(projectDir, "libraryB")
         .addBuildFile(

@@ -25,6 +25,7 @@ import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
+import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ModuleAnnotation;
 import dagger.spi.model.Key;
 import java.util.Optional;
@@ -62,14 +63,17 @@ public abstract class SubcomponentDeclaration extends BindingDeclaration {
   /** A {@link SubcomponentDeclaration} factory. */
   public static class Factory {
     private final KeyFactory keyFactory;
+    private final DaggerSuperficialValidation superficialValidation;
 
     @Inject
-    Factory(KeyFactory keyFactory) {
+    Factory(KeyFactory keyFactory, DaggerSuperficialValidation superficialValidation) {
       this.keyFactory = keyFactory;
+      this.superficialValidation = superficialValidation;
     }
 
     ImmutableSet<SubcomponentDeclaration> forModule(XTypeElement module) {
-      ModuleAnnotation moduleAnnotation = ModuleAnnotation.moduleAnnotation(module).get();
+      ModuleAnnotation moduleAnnotation =
+          ModuleAnnotation.moduleAnnotation(module, superficialValidation).get();
       XElement subcomponentAttribute =
           moduleAnnotation.annotation().getType().getTypeElement().getDeclaredMethods().stream()
               .filter(method -> getSimpleName(method).contentEquals("subcomponents"))

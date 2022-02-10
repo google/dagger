@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.base;
 
-import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
@@ -161,44 +160,44 @@ public abstract class ComponentAnnotation {
    * Returns an object representing a root component annotation, not a subcomponent annotation, if
    * one is present on {@code typeElement}.
    */
-  public static Optional<ComponentAnnotation> rootComponentAnnotation(XTypeElement typeElement) {
-    return anyComponentAnnotation(typeElement, ROOT_COMPONENT_ANNOTATIONS);
+  public static Optional<ComponentAnnotation> rootComponentAnnotation(
+      XTypeElement typeElement, DaggerSuperficialValidation superficialValidation) {
+    return anyComponentAnnotation(typeElement, ROOT_COMPONENT_ANNOTATIONS, superficialValidation);
   }
 
   /**
    * Returns an object representing a subcomponent annotation, if one is present on {@code
    * typeElement}.
    */
-  public static Optional<ComponentAnnotation> subcomponentAnnotation(XTypeElement typeElement) {
-    return anyComponentAnnotation(typeElement, SUBCOMPONENT_ANNOTATIONS);
+  public static Optional<ComponentAnnotation> subcomponentAnnotation(
+      XTypeElement typeElement, DaggerSuperficialValidation superficialValidation) {
+    return anyComponentAnnotation(typeElement, SUBCOMPONENT_ANNOTATIONS, superficialValidation);
   }
 
   /**
    * Returns an object representing a root component or subcomponent annotation, if one is present
    * on {@code typeElement}.
    */
-  public static Optional<ComponentAnnotation> anyComponentAnnotation(XElement element) {
-    return anyComponentAnnotation(element, ALL_COMPONENT_ANNOTATIONS);
+  public static Optional<ComponentAnnotation> anyComponentAnnotation(
+      XElement element, DaggerSuperficialValidation superficialValidation) {
+    return anyComponentAnnotation(element, ALL_COMPONENT_ANNOTATIONS, superficialValidation);
   }
 
   private static Optional<ComponentAnnotation> anyComponentAnnotation(
-      XElement element, Collection<ClassName> annotations) {
-    return getAnyAnnotation(element, annotations).map(ComponentAnnotation::componentAnnotation);
+      XElement element,
+      Collection<ClassName> annotations,
+      DaggerSuperficialValidation superficialValidation) {
+    return getAnyAnnotation(element, annotations)
+        .map(
+            annotation -> {
+              superficialValidation.validateAnnotationOf(element, annotation);
+              return create(annotation);
+            });
   }
 
   /** Returns {@code true} if the argument is a component annotation. */
   public static boolean isComponentAnnotation(XAnnotation annotation) {
     return ALL_COMPONENT_ANNOTATIONS.contains(getClassName(annotation));
-  }
-
-  /** Creates an object representing a component or subcomponent annotation. */
-  public static ComponentAnnotation componentAnnotation(XAnnotation annotation) {
-    checkState(
-        isComponentAnnotation(annotation),
-        annotation
-            + " must be a Component, Subcomponent, ProductionComponent, "
-            + "or ProductionSubcomponent annotation");
-    return create(annotation);
   }
 
   /** Creates a fictional component annotation representing a module. */

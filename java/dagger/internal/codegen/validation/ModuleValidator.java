@@ -53,6 +53,7 @@ import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
+import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ModuleKind;
 import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
@@ -109,6 +110,7 @@ public final class ModuleValidator {
   private final BindingGraphFactory bindingGraphFactory;
   private final BindingGraphValidator bindingGraphValidator;
   private final InjectionAnnotations injectionAnnotations;
+  private final DaggerSuperficialValidation superficialValidation;
   private final XProcessingEnv processingEnv;
   private final Map<XTypeElement, ValidationReport> cache = new HashMap<>();
   private final Set<XTypeElement> knownModules = new HashSet<>();
@@ -121,6 +123,7 @@ public final class ModuleValidator {
       BindingGraphFactory bindingGraphFactory,
       BindingGraphValidator bindingGraphValidator,
       InjectionAnnotations injectionAnnotations,
+      DaggerSuperficialValidation superficialValidation,
       XProcessingEnv processingEnv) {
     this.anyBindingMethodValidator = anyBindingMethodValidator;
     this.methodSignatureFormatter = methodSignatureFormatter;
@@ -128,6 +131,7 @@ public final class ModuleValidator {
     this.bindingGraphFactory = bindingGraphFactory;
     this.bindingGraphValidator = bindingGraphValidator;
     this.injectionAnnotations = injectionAnnotations;
+    this.superficialValidation = superficialValidation;
     this.processingEnv = processingEnv;
   }
 
@@ -264,20 +268,19 @@ public final class ModuleValidator {
         + " is not a @Subcomponent or @ProductionSubcomponent";
   }
 
-  private static String moduleSubcomponentsIncludesCreator(
-      XTypeElement moduleSubcomponentsAttribute) {
+  private String moduleSubcomponentsIncludesCreator(XTypeElement moduleSubcomponentsAttribute) {
     XTypeElement subcomponentType = moduleSubcomponentsAttribute.getEnclosingTypeElement();
     ComponentCreatorAnnotation creatorAnnotation =
         getOnlyElement(getCreatorAnnotations(moduleSubcomponentsAttribute));
     return String.format(
         "%s is a @%s.%s. Did you mean to use %s?",
         moduleSubcomponentsAttribute.getQualifiedName(),
-        subcomponentAnnotation(subcomponentType).get().simpleName(),
+        subcomponentAnnotation(subcomponentType, superficialValidation).get().simpleName(),
         creatorAnnotation.creatorKind().typeName(),
         subcomponentType.getQualifiedName());
   }
 
-  private static void validateSubcomponentHasBuilder(
+  private void validateSubcomponentHasBuilder(
       XTypeElement subject,
       XTypeElement subcomponentAttribute,
       XAnnotation moduleAnnotation,
@@ -291,13 +294,13 @@ public final class ModuleValidator {
         moduleAnnotation);
   }
 
-  private static String moduleSubcomponentsDoesntHaveCreator(
+  private String moduleSubcomponentsDoesntHaveCreator(
       XTypeElement subcomponent, XAnnotation moduleAnnotation) {
     return String.format(
         "%1$s doesn't have a @%2$s.Builder or @%2$s.Factory, which is required when used with "
             + "@%3$s.subcomponents",
         subcomponent.getQualifiedName(),
-        subcomponentAnnotation(subcomponent).get().simpleName(),
+        subcomponentAnnotation(subcomponent, superficialValidation).get().simpleName(),
         getClassName(moduleAnnotation).simpleName());
   }
 
@@ -371,6 +374,8 @@ public final class ModuleValidator {
       XAnnotation annotation,
       ImmutableSet<ModuleKind> validModuleKinds,
       Set<XTypeElement> visitedModules) {
+    superficialValidation.validateAnnotationOf(annotatedType, annotation);
+
     ValidationReport.Builder subreport = ValidationReport.about(annotatedType);
     // TODO(bcorso): Consider creating a DiagnosticLocation object to encapsulate the location in a
     // single object to avoid duplication across all reported errors

@@ -55,14 +55,19 @@ public class TransitiveProvidesParameterizedTypeTest {
       case "implementation":
         result = setupRunner().buildAndFail();
         assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
-        // TODO(bcorso): This error message is due to insufficient superficial validation. Once
-        // we fix this issue, the error message should describe exactly what failed.
         assertThat(result.getOutput())
             .contains(
-                "java.lang.ClassCastException: class "
-                + "dagger.spi.shaded.androidx.room.compiler.processing.javac.DefaultJavacType "
-                + "cannot be cast to class "
-                + "dagger.spi.shaded.androidx.room.compiler.processing.javac.JavacDeclaredType");
+                "error: ComponentProcessingStep was unable to process 'app.MyComponent' because"
+                    + " 'library2.TransitiveType' could not be resolved."
+                    + "\n  "
+                    + "\n  Dependency trace:"
+                    + "\n      => element (INTERFACE): library1.MyModule"
+                    + "\n      => element (METHOD):"
+                    + " provideInt(library2.TransitiveType<java.lang.String>)"
+                    + "\n      => type (EXECUTABLE method):"
+                    + " (library2.TransitiveType<java.lang.String>)java.lang.String"
+                    + "\n      => type (ERROR parameter type):"
+                    + " library2.TransitiveType<java.lang.String>");
         break;
       case "api":
         result = setupRunner().build();

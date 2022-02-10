@@ -32,10 +32,13 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
+import dagger.Reusable;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
@@ -60,11 +63,20 @@ import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
- * A fork of {@link com.google.auto.common.SuperficialValidation} that exposes validation for things
- * like annotations and annotation values.
+ * A fork of {@link com.google.auto.common.SuperficialValidation}.
+ *
+ * <p>This fork makes a couple changes from the original:
+ *
+ * <ul>
+ *   <li>Throws {@link ValidationException} rather than returning {@code false} for invalid types.
+ *   <li>Fixes a bug that incorrectly validates error types in annotations (b/213880825)
+ *   <li>Exposes extra methods needed to validate various parts of an element rather than just the
+ *       entire element.
+ * </ul>
  */
-// TODO(bcorso): Consider contributing this to Auto-Common's SuperficialValidation.
+@Reusable
 public final class DaggerSuperficialValidation {
+
   /**
    * Returns the type element with the given class name or throws {@link ValidationException} if it
    * is not accessible in the current compilation.
@@ -85,6 +97,17 @@ public final class DaggerSuperficialValidation {
     return type;
   }
 
+  private final boolean isStrictValidationEnabled;
+
+  @Inject
+  DaggerSuperficialValidation(CompilerOptions compilerOptions) {
+    this(compilerOptions.strictSuperficialValidation());
+  }
+
+  private DaggerSuperficialValidation(boolean isStrictValidationEnabled) {
+    this.isStrictValidationEnabled = isStrictValidationEnabled;
+  }
+
   /**
    * Validates the {@link XElement#getType()} type of the given element.
    *
@@ -93,11 +116,11 @@ public final class DaggerSuperficialValidation {
    * defined, as must types declared in a {@code throws} clause or in the bounds of any type
    * parameters.
    */
-  public static void validateTypeOf(XElement element) {
+  public void validateTypeOf(XElement element) {
     validateTypeOf(toJavac(element));
   }
 
-  private static void validateTypeOf(Element element) {
+  private void validateTypeOf(Element element) {
     try {
       validateType(Ascii.toLowerCase(element.getKind().name()), element.asType());
     } catch (RuntimeException exception) {
@@ -111,11 +134,11 @@ public final class DaggerSuperficialValidation {
    * <p>Validating the type also validates any types it references, such as any type arguments or
    * type bounds.
    */
-  public static void validateSuperTypeOf(XTypeElement element) {
+  public void validateSuperTypeOf(XTypeElement element) {
     validateSuperTypeOf(toJavac(element));
   }
 
-  private static void validateSuperTypeOf(TypeElement element) {
+  private void validateSuperTypeOf(TypeElement element) {
     try {
       validateType("superclass", element.getSuperclass());
     } catch (RuntimeException exception) {
@@ -129,11 +152,11 @@ public final class DaggerSuperficialValidation {
    * <p>Validating the type also validates any types it references, such as any type arguments or
    * type bounds.
    */
-  public static void validateThrownTypesOf(XExecutableElement element) {
+  public void validateThrownTypesOf(XExecutableElement element) {
     validateThrownTypesOf(toJavac(element));
   }
 
-  private static void validateThrownTypesOf(ExecutableElement element) {
+  private void validateThrownTypesOf(ExecutableElement element) {
     try {
       validateTypes("thrown type", element.getThrownTypes());
     } catch (RuntimeException exception) {
@@ -142,11 +165,11 @@ public final class DaggerSuperficialValidation {
   }
 
   /** Validate the annotations of the given element. */
-  public static void validateAnnotationsOf(XElement element) {
+  public void validateAnnotationsOf(XElement element) {
     validateAnnotationsOf(toJavac(element));
   }
 
-  public static void validateAnnotationsOf(Element element) {
+  public void validateAnnotationsOf(Element element) {
     try {
       validateAnnotations(element.getAnnotationMirrors());
     } catch (RuntimeException exception) {
@@ -154,79 +177,13 @@ public final class DaggerSuperficialValidation {
     }
   }
 
-  public static void validateAnnotationOf(XElement element, XAnnotation annotation) {
+  public void validateAnnotationOf(XElement element, XAnnotation annotation) {
     validateAnnotationOf(toJavac(element), toJavac(annotation));
   }
 
-  public static void validateAnnotationOf(Element element, AnnotationMirror annotation) {
+  public void validateAnnotationOf(Element element, AnnotationMirror annotation) {
     try {
       validateAnnotation(annotation);
-    } catch (RuntimeException exception) {
-      throw ValidationException.from(exception).append(element);
-    }
-  }
-
-  /**
-   * Strictly validates the given annotation belonging to the given element.
-   *
-   * <p>This validation is considered "strict" because it will fail if an annotation's type is not
-   * valid. This fixes the bug described in b/213880825, but cannot be applied indiscriminately or
-   * it would break in many cases where we don't care about an annotation.
-   *
-   * <p>Note: This method does not actually check that the given annotation belongs to the given
-   * element. The element is only used to given better context to the error message in the case that
-   * validation fails.
-   */
-  public static void strictValidateAnnotationsOf(XElement element) {
-    strictValidateAnnotationsOf(toJavac(element));
-  }
-
-  /**
-   * Strictly validates the given annotation belonging to the given element.
-   *
-   * <p>This validation is considered "strict" because it will fail if an annotation's type is not
-   * valid. This fixes the bug described in b/213880825, but cannot be applied indiscriminately or
-   * it would break in many cases where we don't care about an annotation.
-   *
-   * <p>Note: This method does not actually check that the given annotation belongs to the given
-   * element. The element is only used to given better context to the error message in the case that
-   * validation fails.
-   */
-  public static void strictValidateAnnotationsOf(Element element) {
-    element
-        .getAnnotationMirrors()
-        .forEach(annotation -> strictValidateAnnotationOf(element, annotation));
-  }
-
-  /**
-   * Strictly validates the given annotation belonging to the given element.
-   *
-   * <p>This validation is considered "strict" because it will fail if an annotation's type is not
-   * valid. This fixes the bug described in b/213880825, but cannot be applied indiscriminately or
-   * it would break in many cases where we don't care about an annotation.
-   *
-   * <p>Note: This method does not actually check that the given annotation belongs to the given
-   * element. The element is only used to given better context to the error message in the case that
-   * validation fails.
-   */
-  public static void strictValidateAnnotationOf(XElement element, XAnnotation annotation) {
-    strictValidateAnnotationOf(toJavac(element), toJavac(annotation));
-  }
-
-  /**
-   * Strictly validates the given annotation belonging to the given element.
-   *
-   * <p>This validation is considered "strict" because it will fail if an annotation's type is not
-   * valid. This fixes the bug described in b/213880825, but cannot be applied indiscriminately or
-   * it would break in many cases where we don't care about an annotation.
-   *
-   * <p>Note: This method does not actually check that the given annotation belongs to the given
-   * element. The element is only used to given better context to the error message in the case that
-   * validation fails.
-   */
-  public static void strictValidateAnnotationOf(Element element, AnnotationMirror annotation) {
-    try {
-      strictValidateAnnotation(annotation);
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception).append(element);
     }
@@ -238,15 +195,15 @@ public final class DaggerSuperficialValidation {
    *
    * <p>Validation includes all superclasses, interfaces, and type parameters of those types.
    */
-  public static void validateTypeHierarchyOf(String typeDescription, XElement element, XType type) {
+  public void validateTypeHierarchyOf(String typeDescription, XElement element, XType type) {
     try {
       validateTypeHierarchy(typeDescription, type);
     } catch (RuntimeException exception) {
-      throw  ValidationException.from(exception).append(toJavac(element));
+      throw ValidationException.from(exception).append(toJavac(element));
     }
   }
 
-  private static void validateTypeHierarchy(String desc, XType type) {
+  private void validateTypeHierarchy(String desc, XType type) {
     validateType(desc, toJavac(type));
     try {
       type.getSuperTypes().forEach(supertype -> validateTypeHierarchy("supertype", supertype));
@@ -258,13 +215,13 @@ public final class DaggerSuperficialValidation {
   /**
    * Returns true if all of the given elements return true from {@link #validateElement(Element)}.
    */
-  public static void validateElements(Iterable<? extends Element> elements) {
+  public void validateElements(Iterable<? extends Element> elements) {
     for (Element element : elements) {
       validateElement(element);
     }
   }
 
-  private static final ElementVisitor<Void, Void> ELEMENT_VALIDATING_VISITOR =
+  private final ElementVisitor<Void, Void> elementValidatingVisitor =
       new AbstractElementVisitor8<Void, Void>() {
         @Override
         public Void visitPackage(PackageElement e, Void p) {
@@ -322,7 +279,7 @@ public final class DaggerSuperficialValidation {
    * are fully defined. For other element kinds, it means that types referenced by the element,
    * anything it contains, and any of its annotations element are all defined.
    */
-  public static void validateElement(XElement element) {
+  public void validateElement(XElement element) {
     validateElement(toJavac(element));
   }
 
@@ -332,21 +289,21 @@ public final class DaggerSuperficialValidation {
    * are fully defined. For other element kinds, it means that types referenced by the element,
    * anything it contains, and any of its annotations element are all defined.
    */
-  public static void validateElement(Element element) {
+  public void validateElement(Element element) {
     try {
-      element.accept(ELEMENT_VALIDATING_VISITOR, null);
+      element.accept(elementValidatingVisitor, null);
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception).append(element);
     }
   }
 
-  private static void validateBaseElement(Element e) {
+  private void validateBaseElement(Element e) {
     validateType(Ascii.toLowerCase(e.getKind().name()), e.asType());
     validateAnnotations(e.getAnnotationMirrors());
     validateElements(e.getEnclosedElements());
   }
 
-  private static void validateTypes(String desc, Iterable<? extends TypeMirror> types) {
+  private void validateTypes(String desc, Iterable<? extends TypeMirror> types) {
     for (TypeMirror type : types) {
       validateType(desc, type);
     }
@@ -357,7 +314,7 @@ public final class DaggerSuperficialValidation {
    * an issue.  Javac turns the whole type parameter into an error type if it can't figure out the
    * bounds.
    */
-  private static final TypeVisitor<Void, Void> TYPE_VALIDATING_VISITOR =
+  private final TypeVisitor<Void, Void> typeValidatingVisitor =
       new SimpleTypeVisitor8<Void, Void>() {
         @Override
         protected Void defaultAction(TypeMirror t, Void p) {
@@ -372,6 +329,14 @@ public final class DaggerSuperficialValidation {
 
         @Override
         public Void visitDeclared(DeclaredType t, Void p) {
+          if (isStrictValidationEnabled) {
+            // There's a bug in TypeVisitor which will visit the visitDeclared() method rather than
+            // visitError() even when it's an ERROR kind. Thus, we check the kind directly here and
+            // fail validation if it's an ERROR kind (see b/213880825).
+            if (t.getKind() == TypeKind.ERROR) {
+              throw new ValidationException.KnownErrorType(t);
+            }
+          }
           validateTypes("type argument", t.getTypeArguments());
           return null;
         }
@@ -416,44 +381,32 @@ public final class DaggerSuperficialValidation {
    * ExecutableType}, the parameter and return types must be fully defined, as must types declared
    * in a {@code throws} clause or in the bounds of any type parameters.
    */
-  private static void validateType(String desc, TypeMirror type) {
+  private void validateType(String desc, TypeMirror type) {
     try {
-      type.accept(TYPE_VALIDATING_VISITOR, null);
+      type.accept(typeValidatingVisitor, null);
+      if (isStrictValidationEnabled) {
+        // Note: We don't actually expect to get an ERROR type here as it should have been caught
+        // by the visitError() or visitDeclared()  methods above. However, we check here as a last
+        // resort.
+        if (type.getKind() == TypeKind.ERROR) {
+          // In this case, the type is not guaranteed to be a DeclaredType, so we report the
+          // toString() of the type. We could report using UnknownErrorType but the type's toString
+          // may actually contain useful information.
+          throw new ValidationException.KnownErrorType(type.toString());
+        }
+      }
     } catch (RuntimeException e) {
       throw ValidationException.from(e).append(desc, type);
     }
   }
 
-  private static void validateAnnotations(Iterable<? extends AnnotationMirror> annotationMirrors) {
+  private void validateAnnotations(Iterable<? extends AnnotationMirror> annotationMirrors) {
     for (AnnotationMirror annotationMirror : annotationMirrors) {
       validateAnnotation(annotationMirror);
     }
   }
 
-  /**
-   * This validation is the same as {@link #validateAnnotation(AnnotationMirror)} but also validates
-   * the annotation's kind directly to look for {@link TypeKind.ERROR} types.
-   *
-   * <p>See b/213880825.
-   */
-  // TODO(bcorso): Merge this into the normal validateAnnotation() method. For now, this method is
-  // separated to avoid breaking existing usages that aren't setup to handle this extra validation.
-  private static void strictValidateAnnotation(AnnotationMirror annotationMirror) {
-    try {
-      validateType("annotation type", annotationMirror.getAnnotationType());
-      // There's a bug in TypeVisitor specifically when validating annotation types which will
-      // visit the visitDeclared() method rather than visitError() even when it's an ERROR kind.
-      // Thus, we check the kind directly here and fail validation if it's an ERROR kind.
-      if (annotationMirror.getAnnotationType().getKind() == TypeKind.ERROR) {
-        throw new ValidationException.KnownErrorType(annotationMirror.getAnnotationType());
-      }
-      validateAnnotationValues(annotationMirror.getElementValues());
-    } catch (RuntimeException exception) {
-      throw ValidationException.from(exception).append(annotationMirror);
-    }
-  }
-
-  private static void validateAnnotation(AnnotationMirror annotationMirror) {
+  private void validateAnnotation(AnnotationMirror annotationMirror) {
     try {
       validateType("annotation type", annotationMirror.getAnnotationType());
       validateAnnotationValues(annotationMirror.getElementValues());
@@ -462,7 +415,7 @@ public final class DaggerSuperficialValidation {
     }
   }
 
-  private static void validateAnnotationValues(
+  private void validateAnnotationValues(
       Map<? extends ExecutableElement, ? extends AnnotationValue> valueMap) {
     valueMap.forEach(
         (method, annotationValue) -> {
@@ -476,7 +429,11 @@ public final class DaggerSuperficialValidation {
         });
   }
 
-  private static final AnnotationValueVisitor<Void, TypeMirror> VALUE_VALIDATING_VISITOR =
+  private void validateAnnotationValue(AnnotationValue annotationValue, TypeMirror expectedType) {
+    annotationValue.accept(valueValidatingVisitor, expectedType);
+  }
+
+  private final AnnotationValueVisitor<Void, TypeMirror> valueValidatingVisitor =
       new SimpleAnnotationValueVisitor8<Void, TypeMirror>() {
         @Override
         protected Void defaultAction(Object o, TypeMirror expectedType) {
@@ -667,13 +624,13 @@ public final class DaggerSuperficialValidation {
         }
       };
 
-  private static void validateIsTypeOf(Class<?> clazz, TypeMirror expectedType) {
+  private void validateIsTypeOf(Class<?> clazz, TypeMirror expectedType) {
     if (!MoreTypes.isTypeOf(clazz, expectedType)) {
       throw new ValidationException.UnknownErrorType();
     }
   }
 
-  private static void validateIsEquivalentType(DeclaredType type, TypeMirror expectedType) {
+  private void validateIsEquivalentType(DeclaredType type, TypeMirror expectedType) {
     if (!MoreTypes.equivalence().equivalent(type, expectedType)) {
       throw new ValidationException.KnownErrorType(type);
     }
@@ -699,9 +656,9 @@ public final class DaggerSuperficialValidation {
         Element errorElement = errorType.asElement();
         this.errorTypeName =
             isType(errorElement)
-                 ? asType(errorElement).getQualifiedName().toString()
-                 // Maybe this case should be handled by UnknownErrorType?
-                 : errorElement.getSimpleName().toString();
+                ? asType(errorElement).getQualifiedName().toString()
+                // Maybe this case should be handled by UnknownErrorType?
+                : errorElement.getSimpleName().toString();
       }
 
       private KnownErrorType(String errorTypeName) {
@@ -806,11 +763,4 @@ public final class DaggerSuperficialValidation {
       return String.format("element (%s): %s", element.getKind().name(), element);
     }
   }
-
-  private static void validateAnnotationValue(
-      AnnotationValue annotationValue, TypeMirror expectedType) {
-    annotationValue.accept(VALUE_VALIDATING_VISITOR, expectedType);
-  }
-
-  private DaggerSuperficialValidation() {}
 }

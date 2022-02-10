@@ -35,8 +35,8 @@ java_library(
     tags = ["maven:merged"],
     exports = [":shared"],
     deps = [
-        ":shared",
         "//java/dagger:core",
+        "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",

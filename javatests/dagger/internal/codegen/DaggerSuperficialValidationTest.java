@@ -62,12 +62,13 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
-                        () -> DaggerSuperficialValidation.validateElement(testClassElement));
+                        () -> superficialValidation.validateElement(testClassElement));
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -97,12 +98,13 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
-                        () -> DaggerSuperficialValidation.validateElement(testClassElement));
+                        () -> superficialValidation.validateElement(testClassElement));
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -135,12 +137,13 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
-                        () -> DaggerSuperficialValidation.validateElement(testClassElement));
+                        () -> superficialValidation.validateElement(testClassElement));
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -171,12 +174,13 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
-                        () -> DaggerSuperficialValidation.validateElement(testClassElement));
+                        () -> superficialValidation.validateElement(testClassElement));
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -205,12 +209,13 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
-                        () -> DaggerSuperficialValidation.validateElement(testClassElement));
+                        () -> superficialValidation.validateElement(testClassElement));
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -239,12 +244,13 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
-                        () -> DaggerSuperficialValidation.validateElement(testClassElement));
+                        () -> superficialValidation.validateElement(testClassElement));
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -271,9 +277,10 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
-                DaggerSuperficialValidation.validateElement(testClassElement);
+                superficialValidation.validateElement(testClassElement);
               }
             })
         .compilesWithoutError();
@@ -294,9 +301,10 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
-                DaggerSuperficialValidation.validateElement(testClassElement);
+                superficialValidation.validateElement(testClassElement);
               }
             })
         .compilesWithoutError();
@@ -325,12 +333,13 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
-                        () -> DaggerSuperficialValidation.validateElement(testClassElement));
+                        () -> superficialValidation.validateElement(testClassElement));
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -361,12 +370,13 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
-                        () -> DaggerSuperficialValidation.validateElement(testClassElement));
+                        () -> superficialValidation.validateElement(testClassElement));
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -400,13 +410,14 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement =
                     processingEnv.findTypeElement("test.Outer.TestClass");
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
-                        () -> DaggerSuperficialValidation.validateElement(testClassElement));
+                        () -> superficialValidation.validateElement(testClassElement));
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -445,7 +456,8 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement testClassElement =
                     processingEnv.findTypeElement("test.Outer.TestClass");
                 XConstructorElement constructor = testClassElement.getConstructors().get(0);
@@ -453,7 +465,7 @@ public class DaggerSuperficialValidationTest {
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
-                        () -> DaggerSuperficialValidation.validateElement(parameter));
+                        () -> superficialValidation.validateElement(parameter));
                 assertThat(exception)
                     .hasMessageThat()
                     .contains(
@@ -492,14 +504,15 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement outerElement = processingEnv.findTypeElement("test.Outer");
                 XMethodElement getChildMethod = outerElement.getDeclaredMethods().get(0);
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
                         () ->
-                            DaggerSuperficialValidation.validateTypeHierarchyOf(
+                            superficialValidation.validateTypeHierarchyOf(
                                 "return type", getChildMethod, getChildMethod.getReturnType()));
                 assertThat(exception)
                     .hasMessageThat()
@@ -535,14 +548,15 @@ public class DaggerSuperficialValidationTest {
         .processedWith(
             new AssertingProcessor() {
               @Override
-              void runAssertions(XProcessingEnv processingEnv) {
+              void runAssertions(
+                  XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation) {
                 XTypeElement outerElement = processingEnv.findTypeElement("test.Outer");
                 XMethodElement getChildMethod = outerElement.getDeclaredMethods().get(0);
                 ValidationException exception =
                     assertThrows(
                         ValidationException.KnownErrorType.class,
                         () ->
-                            DaggerSuperficialValidation.validateTypeHierarchyOf(
+                            superficialValidation.validateTypeHierarchyOf(
                                 "return type", getChildMethod, getChildMethod.getReturnType()));
                 assertThat(exception)
                     .hasMessageThat()
@@ -571,15 +585,14 @@ public class DaggerSuperficialValidationTest {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
       if (!processed) {
         processed = true; // only process once.
-        XProcessingEnv xProcessingEnv =
+        TestComponent component =
             DaggerDaggerSuperficialValidationTest_TestComponent.builder()
                 .javacPluginModule(
                     new JavacPluginModule(
                         processingEnv.getElementUtils(), processingEnv.getTypeUtils()))
-                .build()
-                .processingEnv();
+                .build();
         try {
-          runAssertions(xProcessingEnv);
+          runAssertions(component.processingEnv(), component.superficialValidation());
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
@@ -587,12 +600,16 @@ public class DaggerSuperficialValidationTest {
       return false;
     }
 
-    abstract void runAssertions(XProcessingEnv processingEnv) throws Exception;
+    abstract void runAssertions(
+        XProcessingEnv processingEnv, DaggerSuperficialValidation superficialValidation)
+        throws Exception;
   }
 
   @Singleton
   @Component(modules = JavacPluginModule.class)
   interface TestComponent {
     XProcessingEnv processingEnv();
+
+    DaggerSuperficialValidation superficialValidation();
   }
 }

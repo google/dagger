@@ -38,12 +38,14 @@ import javax.inject.Inject;
 /** A validator for {@link dagger.Binds} methods. */
 final class BindsMethodValidator extends BindingMethodValidator {
   private final BindsTypeChecker bindsTypeChecker;
+  private final DaggerSuperficialValidation superficialValidation;
 
   @Inject
   BindsMethodValidator(
       DaggerTypes types,
       BindsTypeChecker bindsTypeChecker,
       DependencyRequestValidator dependencyRequestValidator,
+      DaggerSuperficialValidation superficialValidation,
       InjectionAnnotations injectionAnnotations) {
     super(
         types,
@@ -56,6 +58,7 @@ final class BindsMethodValidator extends BindingMethodValidator {
         ALLOWS_SCOPING,
         injectionAnnotations);
     this.bindsTypeChecker = bindsTypeChecker;
+    this.superficialValidation = superficialValidation;
   }
 
   @Override
@@ -99,8 +102,8 @@ final class BindsMethodValidator extends BindingMethodValidator {
         // Note: BasicAnnotationProcessor only performs superficial validation on the referenced
         // types within the module. Thus, we're guaranteed that the types in the @Binds method are
         // valid, but it says nothing about their supertypes, which are needed for isAssignable.
-        DaggerSuperficialValidation.validateTypeHierarchyOf("return type", method, returnType);
-        DaggerSuperficialValidation.validateTypeHierarchyOf("parameter", parameter, parameterType);
+        superficialValidation.validateTypeHierarchyOf("return type", method, returnType);
+        superficialValidation.validateTypeHierarchyOf("parameter", parameter, parameterType);
         // TODO(ronshapiro): clarify this error message for @ElementsIntoSet cases, where the
         // right-hand-side might not be assignable to the left-hand-side, but still compatible with
         // Set.addAll(Collection<? extends E>)

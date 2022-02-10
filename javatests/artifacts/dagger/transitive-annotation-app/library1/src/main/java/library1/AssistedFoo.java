@@ -32,48 +32,81 @@ import library2.MyTransitiveType;
  */
 @MyTransitiveAnnotation
 @MyAnnotation(MyTransitiveType.VALUE)
+@MyOtherAnnotation(MyTransitiveType.class)
 public final class AssistedFoo extends FooBase {
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
+  @MyOtherAnnotation(MyTransitiveType.class)
   int nonDaggerField;
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
+  @MyOtherAnnotation(MyTransitiveType.class)
   @Inject
   @MyQualifier
   Dep daggerField;
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
-  AssistedFoo(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) String str) {
+  @MyOtherAnnotation(MyTransitiveType.class)
+  AssistedFoo(
+      @MyTransitiveAnnotation
+          @MyAnnotation(MyTransitiveType.VALUE)
+          @MyOtherAnnotation(MyTransitiveType.class)
+          String str) {
     super(str);
   }
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
+  @MyOtherAnnotation(MyTransitiveType.class)
   @AssistedInject
   AssistedFoo(
-      @MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) @Assisted int i,
-      @MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) @MyQualifier Dep dep) {
+      @MyTransitiveAnnotation
+          @MyAnnotation(MyTransitiveType.VALUE)
+          @MyOtherAnnotation(MyTransitiveType.class)
+          @Assisted
+          int i,
+      @MyTransitiveAnnotation
+          @MyAnnotation(MyTransitiveType.VALUE)
+          @MyOtherAnnotation(MyTransitiveType.class)
+          @MyQualifier
+          Dep dep) {
     super(dep);
   }
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
-  void nonDaggerMethod(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) int i) {}
+  @MyOtherAnnotation(MyTransitiveType.class)
+  void nonDaggerMethod(
+      @MyTransitiveAnnotation
+          @MyAnnotation(MyTransitiveType.VALUE)
+          @MyOtherAnnotation(MyTransitiveType.class)
+          int i) {}
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
+  @MyOtherAnnotation(MyTransitiveType.class)
   @Inject
   void daggerMethod(
-      @MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) @MyQualifier Dep dep) {}
+      @MyTransitiveAnnotation
+          @MyAnnotation(MyTransitiveType.VALUE)
+          @MyOtherAnnotation(MyTransitiveType.class)
+          @MyQualifier
+          Dep dep) {}
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
+  @MyOtherAnnotation(MyTransitiveType.class)
   @AssistedFactory
   public interface Factory {
     @MyTransitiveAnnotation
     @MyAnnotation(MyTransitiveType.VALUE)
-    AssistedFoo create(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) int i);
+    @MyOtherAnnotation(MyTransitiveType.class)
+    AssistedFoo create(
+        @MyTransitiveAnnotation
+            @MyAnnotation(MyTransitiveType.VALUE)
+            @MyOtherAnnotation(MyTransitiveType.class)
+            int i);
   }
 }

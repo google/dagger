@@ -31,37 +31,61 @@ import library2.MyTransitiveType;
 @Singleton
 @MyTransitiveAnnotation
 @MyAnnotation(MyTransitiveType.VALUE)
+@MyOtherAnnotation(MyTransitiveType.class)
 public final class Foo extends FooBase {
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
+  @MyOtherAnnotation(MyTransitiveType.class)
   int nonDaggerField;
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
+  @MyOtherAnnotation(MyTransitiveType.class)
   @Inject
   @MyQualifier
   Dep daggerField;
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
-  Foo(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) String str) {
+  @MyOtherAnnotation(MyTransitiveType.class)
+  Foo(
+      @MyTransitiveAnnotation
+          @MyAnnotation(MyTransitiveType.VALUE)
+          @MyOtherAnnotation(MyTransitiveType.class)
+          String str) {
     super(str);
   }
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
+  @MyOtherAnnotation(MyTransitiveType.class)
   @Inject
-  Foo(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) @MyQualifier Dep dep) {
+  Foo(
+      @MyTransitiveAnnotation
+          @MyAnnotation(MyTransitiveType.VALUE)
+          @MyOtherAnnotation(MyTransitiveType.class)
+          @MyQualifier
+          Dep dep) {
     super(dep);
   }
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
-  void nonDaggerMethod(@MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) int i) {}
+  @MyOtherAnnotation(MyTransitiveType.class)
+  void nonDaggerMethod(
+      @MyTransitiveAnnotation
+          @MyAnnotation(MyTransitiveType.VALUE)
+          @MyOtherAnnotation(MyTransitiveType.class)
+          int i) {}
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
+  @MyOtherAnnotation(MyTransitiveType.class)
   @Inject
   void daggerMethod(
-      @MyTransitiveAnnotation @MyAnnotation(MyTransitiveType.VALUE) @MyQualifier Dep dep) {}
+      @MyTransitiveAnnotation
+          @MyAnnotation(MyTransitiveType.VALUE)
+          @MyOtherAnnotation(MyTransitiveType.class)
+          @MyQualifier
+          Dep dep) {}
 }

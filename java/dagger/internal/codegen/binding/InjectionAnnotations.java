@@ -128,17 +128,25 @@ public final class InjectionAnnotations {
    */
   public ImmutableSet<Scope> getScopes(XElement element) {
     superficialValidation.validateTypeOf(element);
-    return getScopesFromScopeMetadata(element)
-        .orElseGet(
-            () -> {
-              // Validating all annotations if the ScopeMetadata isn't available.
-              superficialValidation.validateAnnotationsOf(element);
-              return element.getAllAnnotations().stream()
-                  .filter(InjectionAnnotations::hasScopeAnnotation)
-                  .map(DaggerAnnotation::from)
-                  .map(Scope::scope)
-                  .collect(toImmutableSet());
-            });
+    ImmutableSet<Scope> scopes =
+        getScopesFromScopeMetadata(element)
+            .orElseGet(
+                () -> {
+                  // Validate the annotation types before we check for @Scope, otherwise the @Scope
+                  // annotation may appear to be missing (b/213880825).
+                  superficialValidation.validateAnnotationTypesOf(element);
+                  return element.getAllAnnotations().stream()
+                      .filter(InjectionAnnotations::hasScopeAnnotation)
+                      .map(DaggerAnnotation::from)
+                      .map(Scope::scope)
+                      .collect(toImmutableSet());
+                });
+
+    // Fully validate each scope to ensure its values are also valid.
+    scopes.stream()
+        .map(scope -> scope.scopeAnnotation().xprocessing())
+        .forEach(scope -> superficialValidation.validateAnnotationOf(element, scope));
+    return scopes;
   }
 
   private Optional<ImmutableSet<Scope>> getScopesFromScopeMetadata(XElement element) {
@@ -159,7 +167,7 @@ public final class InjectionAnnotations {
             .collect(onlyElement());
     // Do superficial validation before we convert to a Scope, otherwise the @Scope annotation may
     // appear to be missing from the annotation if it's no longer on the classpath.
-    superficialValidation.validateAnnotationOf(element, scopeAnnotation);
+    superficialValidation.validateAnnotationTypeOf(element, scopeAnnotation);
 
     // If strictSuperficialValidation is disabled, then we fall back to the old behavior where
     // we may potentially miss a scope rather than report an exception.
@@ -253,26 +261,35 @@ public final class InjectionAnnotations {
         getQualifiersFromQualifierMetadata(element)
             .orElseGet(
                 () -> {
-                  // Validating all annotations if the QualifierMetadata isn't available.
-                  superficialValidation.validateAnnotationsOf(element);
+                  // Validate the annotation types before we check for @Qualifier, otherwise the
+                  // @Qualifier annotation may appear to be missing (b/213880825).
+                  superficialValidation.validateAnnotationTypesOf(element);
                   return element.getAnnotationMirrors().stream()
                       .filter(InjectionAnnotations::hasQualifierAnnotation)
                       .collect(toImmutableSet());
                 });
+
     if (element.getKind() == ElementKind.FIELD
         // static injected fields are not supported, no need to get qualifier from kotlin metadata
         && !element.getModifiers().contains(STATIC)
         && hasInjectAnnotation(element)
         && kotlinMetadataUtil.hasMetadata(element)) {
-      return Stream.concat(
-              qualifiers.stream(), getQualifiersForKotlinProperty(asVariable(element)).stream())
-          .map(EQUIVALENCE::wrap) // Wrap in equivalence to deduplicate
-          .distinct()
-          .map(Wrapper::get)
-          .collect(DaggerStreams.toImmutableList());
-    } else {
-      return ImmutableList.copyOf(qualifiers);
+      qualifiers =
+          Stream.concat(
+                  qualifiers.stream(), getQualifiersForKotlinProperty(asVariable(element)).stream())
+              .map(EQUIVALENCE::wrap) // Wrap in equivalence to deduplicate
+              .distinct()
+              .map(Wrapper::get)
+              .collect(DaggerStreams.toImmutableSet());
     }
+
+    // Fully validate each qualifier to ensure its values are also valid.
+    qualifiers.forEach(
+        qualifier -> {
+          superficialValidation.validateAnnotationOf(element, qualifier);
+        });
+
+    return qualifiers.asList();
   }
 
   private Optional<ImmutableSet<? extends AnnotationMirror>> getQualifiersFromQualifierMetadata(
@@ -304,7 +321,7 @@ public final class InjectionAnnotations {
 
     // Ensure the annotation type is superficially valid before we check for @Qualifier, otherwise
     // the @Qualifier marker may appear to be missing from the annotation (b/213880825).
-    superficialValidation.validateAnnotationOf(element, qualifierAnnotation);
+    superficialValidation.validateAnnotationTypeOf(element, qualifierAnnotation);
     if (compilerOptions.strictSuperficialValidation()) {
       return Optional.of(ImmutableSet.of(toJavac(qualifierAnnotation)));
     } else {
@@ -367,9 +384,7 @@ public final class InjectionAnnotations {
 
   private static boolean hasQualifierAnnotation(AnnotationMirror annotation) {
     return isAnyAnnotationPresent(
-        annotation.getAnnotationType().asElement(),
-        TypeNames.QUALIFIER,
-        TypeNames.QUALIFIER_JAVAX);
+        annotation.getAnnotationType().asElement(), TypeNames.QUALIFIER, TypeNames.QUALIFIER_JAVAX);
   }
 
   private static boolean hasScopeAnnotation(XAnnotation annotation) {

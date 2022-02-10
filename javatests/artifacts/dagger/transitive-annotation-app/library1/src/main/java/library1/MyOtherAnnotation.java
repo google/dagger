@@ -16,22 +16,7 @@
 
 package library1;
 
-import dagger.Module;
-import library2.MyTransitiveAnnotation;
-import library2.MyTransitiveType;
-
-/** A simple module that needs to be passed in when creating this component. */
-@MyTransitiveAnnotation
-@MyAnnotation(MyTransitiveType.VALUE)
-@MyOtherAnnotation(MyTransitiveType.class)
-@Module
-public final class MySubcomponentModule {
-  @MyTransitiveAnnotation
-  @MyAnnotation(MyTransitiveType.VALUE)
-  @MyOtherAnnotation(MyTransitiveType.class)
-  public MySubcomponentModule(
-      @MyTransitiveAnnotation
-          @MyAnnotation(MyTransitiveType.VALUE)
-          @MyOtherAnnotation(MyTransitiveType.class)
-          int i) {}
+/** An annotation that is a direct dependency of the app. */
+public @interface MyOtherAnnotation {
+  Class<?> value();
 }

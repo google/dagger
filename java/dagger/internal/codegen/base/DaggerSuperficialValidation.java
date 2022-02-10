@@ -164,6 +164,63 @@ public final class DaggerSuperficialValidation {
     }
   }
 
+  /**
+   * Validates the annotation types of the given element.
+   *
+   * <p>Note: this method does not validate annotation values. This method is useful if you care
+   * about the annotation's annotations (e.g. to check for {@code Scope} or {@code Qualifier}). In
+   * such cases, we just need to validate the annotation's type.
+   */
+  public void validateAnnotationTypesOf(XElement element) {
+    validateAnnotationTypesOf(toJavac(element));
+  }
+
+  /**
+   * Validates the annotation types of the given element.
+   *
+   * <p>Note: this method does not validate annotation values. This method is useful if you care
+   * about the annotation's annotations (e.g. to check for {@code Scope} or {@code Qualifier}). In
+   * such cases, we just need to validate the annotation's type.
+   */
+  public void validateAnnotationTypesOf(Element element) {
+    element
+        .getAnnotationMirrors()
+        .forEach(annotation -> validateAnnotationTypeOf(element, annotation));
+  }
+
+  /**
+   * Validates the type of the given annotation.
+   *
+   * <p>The annotation is assumed to be annotating the given element, but this is not checked. The
+   * element is only in the error message if a {@link ValidatationException} is thrown.
+   *
+   * <p>Note: this method does not validate annotation values. This method is useful if you care
+   * about the annotation's annotations (e.g. to check for {@code Scope} or {@code Qualifier}). In
+   * such cases, we just need to validate the annotation's type.
+   */
+  // TODO(bcorso): See CL/427767370 for suggestions to make this API clearer.
+  public void validateAnnotationTypeOf(XElement element, XAnnotation annotation) {
+    validateAnnotationTypeOf(toJavac(element), toJavac(annotation));
+  }
+
+  /**
+   * Validates the type of the given annotation.
+   *
+   * <p>The annotation is assumed to be annotating the given element, but this is not checked. The
+   * element is only in the error message if a {@link ValidatationException} is thrown.
+   *
+   * <p>Note: this method does not validate annotation values. This method is useful if you care
+   * about the annotation's annotations (e.g. to check for {@code Scope} or {@code Qualifier}). In
+   * such cases, we just need to validate the annotation's type.
+   */
+  public void validateAnnotationTypeOf(Element element, AnnotationMirror annotation) {
+    try {
+      validateType("annotation type", annotation.getAnnotationType());
+    } catch (RuntimeException exception) {
+      throw ValidationException.from(exception).append(annotation).append(element);
+    }
+  }
+
   /** Validate the annotations of the given element. */
   public void validateAnnotationsOf(XElement element) {
     validateAnnotationsOf(toJavac(element));

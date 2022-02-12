@@ -30,52 +30,15 @@ import java.util.Optional;
 
 /** Enumeration of the different kinds of components. */
 public enum ComponentKind {
-  /** {@code @Component} */
-  COMPONENT(TypeNames.COMPONENT, true, false),
+  COMPONENT(TypeNames.COMPONENT),
+  SUBCOMPONENT(TypeNames.SUBCOMPONENT),
+  PRODUCTION_COMPONENT(TypeNames.PRODUCTION_COMPONENT),
+  PRODUCTION_SUBCOMPONENT(TypeNames.PRODUCTION_SUBCOMPONENT),
+  MODULE(TypeNames.MODULE),
+  PRODUCER_MODULE(TypeNames.PRODUCER_MODULE);
 
-  /** {@code @Subcomponent} */
-  SUBCOMPONENT(TypeNames.SUBCOMPONENT, false, false),
-
-  /** {@code @ProductionComponent} */
-  PRODUCTION_COMPONENT(TypeNames.PRODUCTION_COMPONENT, true, true),
-
-  /** {@code @ProductionSubcomponent} */
-  PRODUCTION_SUBCOMPONENT(TypeNames.PRODUCTION_SUBCOMPONENT, false, true),
-
-  /**
-   * Kind for a descriptor that was generated from a {@link dagger.Module} instead of a component
-   * type in order to validate the module's bindings.
-   */
-  MODULE(TypeNames.MODULE, true, false),
-
-  /**
-   * Kind for a descriptor was generated from a {@link dagger.producers.ProducerModule} instead of a
-   * component type in order to validate the module's bindings.
-   */
-  PRODUCER_MODULE(TypeNames.PRODUCER_MODULE, true, true),
-  ;
-
-  private static final ImmutableSet<ComponentKind> ROOT_COMPONENT_KINDS =
-      valuesOf(ComponentKind.class)
-          .filter(kind -> !kind.isForModuleValidation())
-          .filter(kind -> kind.isRoot())
-          .collect(toImmutableSet());
-
-  private static final ImmutableSet<ComponentKind> SUBCOMPONENT_KINDS =
-      valuesOf(ComponentKind.class)
-          .filter(kind -> !kind.isForModuleValidation())
-          .filter(kind -> !kind.isRoot())
-          .collect(toImmutableSet());
-
-  /** Returns the set of kinds for root components. */
-  public static ImmutableSet<ComponentKind> rootComponentKinds() {
-    return ROOT_COMPONENT_KINDS;
-  }
-
-  /** Returns the set of kinds for subcomponents. */
-  public static ImmutableSet<ComponentKind> subcomponentKinds() {
-    return SUBCOMPONENT_KINDS;
-  }
+  private static final ImmutableSet<ComponentKind> PRODUCER_KINDS =
+      ImmutableSet.of(PRODUCTION_COMPONENT, PRODUCTION_SUBCOMPONENT, PRODUCER_MODULE);
 
   /** Returns the annotations for components of the given kinds. */
   public static ImmutableSet<ClassName> annotationsFor(Iterable<ComponentKind> kinds) {
@@ -106,13 +69,9 @@ public enum ComponentKind {
   }
 
   private final ClassName annotation;
-  private final boolean isRoot;
-  private final boolean production;
 
-  ComponentKind(ClassName annotation, boolean isRoot, boolean production) {
+  ComponentKind(ClassName annotation) {
     this.annotation = annotation;
-    this.isRoot = isRoot;
-    this.production = production;
   }
 
   /** Returns the annotation that marks a component of this kind. */
@@ -134,28 +93,8 @@ public enum ComponentKind {
         : immutableEnumSet(SUBCOMPONENT, PRODUCTION_SUBCOMPONENT);
   }
 
-  /**
-   * Returns {@code true} if the descriptor is for a root component (not a subcomponent) or is for
-   * {@linkplain #isForModuleValidation() module-validation}.
-   */
-  public boolean isRoot() {
-    return isRoot;
-  }
-
   /** Returns true if this is a production component. */
   public boolean isProducer() {
-    return production;
-  }
-
-  /** Returns {@code true} if the descriptor is for a module in order to validate its bindings. */
-  public boolean isForModuleValidation() {
-    switch (this) {
-      case MODULE:
-      case PRODUCER_MODULE:
-        return true;
-      default:
-        // fall through
-    }
-    return false;
+    return PRODUCER_KINDS.contains(this);
   }
 }

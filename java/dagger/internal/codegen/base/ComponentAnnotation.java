@@ -49,19 +49,6 @@ public abstract class ComponentAnnotation {
   private static final ImmutableSet<ClassName> SUBCOMPONENT_ANNOTATIONS =
       ImmutableSet.of(TypeNames.SUBCOMPONENT, TypeNames.PRODUCTION_SUBCOMPONENT);
 
-  // TODO(erichang): Move ComponentCreatorAnnotation into /base and use that here?
-  /** The component/subcomponent creator annotation types. */
-  private static final ImmutableSet<ClassName> CREATOR_ANNOTATIONS =
-      ImmutableSet.of(
-          TypeNames.COMPONENT_BUILDER,
-          TypeNames.COMPONENT_FACTORY,
-          TypeNames.PRODUCTION_COMPONENT_BUILDER,
-          TypeNames.PRODUCTION_COMPONENT_FACTORY,
-          TypeNames.SUBCOMPONENT_BUILDER,
-          TypeNames.SUBCOMPONENT_FACTORY,
-          TypeNames.PRODUCTION_SUBCOMPONENT_BUILDER,
-          TypeNames.PRODUCTION_SUBCOMPONENT_FACTORY);
-
   /** All component annotation types. */
   private static final ImmutableSet<ClassName> ALL_COMPONENT_ANNOTATIONS =
       ImmutableSet.<ClassName>builder()
@@ -73,7 +60,7 @@ public abstract class ComponentAnnotation {
   private static final ImmutableSet<ClassName> ALL_COMPONENT_AND_CREATOR_ANNOTATIONS =
       ImmutableSet.<ClassName>builder()
           .addAll(ALL_COMPONENT_ANNOTATIONS)
-          .addAll(CREATOR_ANNOTATIONS)
+          .addAll(ComponentCreatorAnnotation.allCreatorAnnotations())
           .build();
 
   /** All production annotation types. */

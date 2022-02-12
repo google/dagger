@@ -16,10 +16,8 @@
 
 package dagger.internal.codegen.base;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XTypeElement;
@@ -30,7 +28,6 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
-import javax.lang.model.element.TypeElement;
 
 /** Enumeration of the kinds of modules. */
 public enum ModuleKind {
@@ -41,7 +38,7 @@ public enum ModuleKind {
   PRODUCER_MODULE(TypeNames.PRODUCER_MODULE);
 
   /** Returns the annotations for modules of the given kinds. */
-  public static ImmutableSet<ClassName> annotationsFor(Set<ModuleKind> kinds) {
+  private static ImmutableSet<ClassName> annotationsFor(Set<ModuleKind> kinds) {
     return kinds.stream().map(ModuleKind::annotation).collect(toImmutableSet());
   }
 
@@ -53,20 +50,9 @@ public enum ModuleKind {
    *     annotations
    */
   public static Optional<ModuleKind> forAnnotatedElement(XTypeElement element) {
-    return forAnnotatedElement(toJavac(element));
-  }
-
-  /**
-   * Returns the kind of an annotated element if it is annotated with one of the module {@linkplain
-   * #annotation() annotations}.
-   *
-   * @throws IllegalArgumentException if the element is annotated with more than one of the module
-   *     annotations
-   */
-  public static Optional<ModuleKind> forAnnotatedElement(TypeElement element) {
     Set<ModuleKind> kinds = EnumSet.noneOf(ModuleKind.class);
     for (ModuleKind kind : values()) {
-      if (isAnnotationPresent(element, kind.annotation())) {
+      if (element.hasAnnotation(kind.annotation())) {
         kinds.add(kind);
       }
     }

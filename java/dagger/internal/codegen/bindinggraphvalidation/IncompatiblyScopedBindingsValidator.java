@@ -18,12 +18,12 @@ package dagger.internal.codegen.bindinggraphvalidation;
 
 import static dagger.internal.codegen.base.Formatter.INDENT;
 import static dagger.internal.codegen.base.Scopes.getReadableSource;
-import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
+import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 import static dagger.spi.model.BindingKind.INJECTION;
 import static java.util.stream.Collectors.joining;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
-import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
 import dagger.internal.codegen.base.Scopes;
@@ -135,7 +135,7 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
         case PROVISION:
           message.append(
               methodSignatureFormatter.format(
-                  MoreElements.asExecutable(binding.bindingElement().get().java())));
+                  asExecutable(binding.bindingElement().get().xprocessing())));
           break;
 
         case INJECTION:
@@ -143,8 +143,8 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
               .append(getReadableSource(binding.scope().get()))
               .append(" class ")
               .append(
-                  closestEnclosingTypeElement(
-                      binding.bindingElement().get().java()).getQualifiedName())
+                  closestEnclosingTypeElement(binding.bindingElement().get().xprocessing())
+                      .getQualifiedName())
               .append(diagnosticMessageGenerator.getMessage(binding));
 
           break;

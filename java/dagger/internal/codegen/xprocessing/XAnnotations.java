@@ -16,12 +16,20 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+
 import androidx.room.compiler.processing.XAnnotation;
+import com.google.auto.common.AnnotationMirrors;
 import com.squareup.javapoet.ClassName;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XAnnotation} helper methods. */
 public final class XAnnotations {
+
+  /** Returns the string representation of the given annotation. */
+  public static String toString(XAnnotation annotation) {
+    return AnnotationMirrors.toString(toJavac(annotation));
+  }
 
   /** Returns the class name of the given annotation */
   public static ClassName getClassName(XAnnotation annotation) {

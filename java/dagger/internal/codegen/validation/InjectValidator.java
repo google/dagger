@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.validation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
@@ -24,6 +23,7 @@ import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assis
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.binding.SourceFiles.factoryNameForElement;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
+import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
 
@@ -45,7 +45,6 @@ import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.Accessibility;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.spi.model.Scope;
@@ -65,7 +64,6 @@ import javax.tools.Diagnostic.Kind;
 public final class InjectValidator implements ClearableCache {
   private final XProcessingEnv processingEnv;
   private final DaggerTypes types;
-  private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
   private final DependencyRequestValidator dependencyRequestValidator;
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
@@ -78,7 +76,6 @@ public final class InjectValidator implements ClearableCache {
   InjectValidator(
       XProcessingEnv processingEnv,
       DaggerTypes types,
-      DaggerElements elements,
       DependencyRequestValidator dependencyRequestValidator,
       CompilerOptions compilerOptions,
       InjectionAnnotations injectionAnnotations,
@@ -86,7 +83,6 @@ public final class InjectValidator implements ClearableCache {
     this(
         processingEnv,
         types,
-        elements,
         compilerOptions,
         dependencyRequestValidator,
         Optional.empty(),
@@ -97,7 +93,6 @@ public final class InjectValidator implements ClearableCache {
   private InjectValidator(
       XProcessingEnv processingEnv,
       DaggerTypes types,
-      DaggerElements elements,
       CompilerOptions compilerOptions,
       DependencyRequestValidator dependencyRequestValidator,
       Optional<Kind> privateAndStaticInjectionDiagnosticKind,
@@ -105,7 +100,6 @@ public final class InjectValidator implements ClearableCache {
       DaggerSuperficialValidation superficialValidation) {
     this.processingEnv = processingEnv;
     this.types = types;
-    this.elements = elements;
     this.compilerOptions = compilerOptions;
     this.dependencyRequestValidator = dependencyRequestValidator;
     this.privateAndStaticInjectionDiagnosticKind = privateAndStaticInjectionDiagnosticKind;
@@ -130,7 +124,6 @@ public final class InjectValidator implements ClearableCache {
         : new InjectValidator(
             processingEnv,
             types,
-            elements,
             compilerOptions,
             dependencyRequestValidator,
             Optional.of(Diagnostic.Kind.ERROR),
@@ -414,8 +407,7 @@ public final class InjectValidator implements ClearableCache {
   }
 
   private void checkInjectIntoPrivateClass(XElement element, ValidationReport.Builder builder) {
-    if (!Accessibility.isElementAccessibleFromOwnPackage(
-        DaggerElements.closestEnclosingTypeElement(toJavac(element)))) {
+    if (!Accessibility.isElementAccessibleFromOwnPackage(closestEnclosingTypeElement(element))) {
       builder.addItem(
           "Dagger does not support injection into private classes",
           privateMemberDiagnosticKind(),

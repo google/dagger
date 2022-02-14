@@ -69,7 +69,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 /** {@link CompilerOptions} for the given processor. */
@@ -104,7 +103,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
-  public boolean experimentalMergedMode(TypeElement component) {
+  public boolean experimentalMergedMode(XTypeElement component) {
     boolean isExperimental = experimentalMergedModeInternal();
     if (isExperimental) {
       checkState(
@@ -116,7 +115,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
-  public boolean fastInit(TypeElement component) {
+  public boolean fastInit(XTypeElement component) {
     boolean isFastInit = fastInitInternal(component);
     if (isFastInit) {
       checkState(
@@ -127,7 +126,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     return isFastInit;
   }
 
-  private boolean fastInitInternal(TypeElement component) {
+  private boolean fastInitInternal(XTypeElement component) {
     return isEnabled(FAST_INIT);
   }
 
@@ -191,7 +190,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
-  public boolean pluginsVisitFullBindingGraphs(TypeElement component) {
+  public boolean pluginsVisitFullBindingGraphs(XTypeElement component) {
     return isEnabled(PLUGINS_VISIT_FULL_BINDING_GRAPHS);
   }
 

@@ -19,10 +19,10 @@ package dagger.internal.codegen.javac;
 import static dagger.internal.codegen.compileroption.ValidationType.NONE;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
+import androidx.room.compiler.processing.XTypeElement;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ValidationType;
 import javax.inject.Inject;
-import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 /** {@link CompilerOptions} for Javac plugins (e.g. for Dagger statistics or Kythe). */
@@ -37,12 +37,12 @@ final class JavacPluginCompilerOptions extends CompilerOptions {
   }
 
   @Override
-  public boolean experimentalMergedMode(TypeElement element) {
+  public boolean experimentalMergedMode(XTypeElement element) {
     return false;
   }
 
   @Override
-  public boolean fastInit(TypeElement element) {
+  public boolean fastInit(XTypeElement element) {
     return false;
   }
 
@@ -107,7 +107,7 @@ final class JavacPluginCompilerOptions extends CompilerOptions {
   }
 
   @Override
-  public boolean pluginsVisitFullBindingGraphs(TypeElement element) {
+  public boolean pluginsVisitFullBindingGraphs(XTypeElement element) {
     return false;
   }
 

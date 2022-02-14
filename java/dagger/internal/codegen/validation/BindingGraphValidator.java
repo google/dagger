@@ -17,13 +17,11 @@
 package dagger.internal.codegen.validation;
 
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ValidationType;
 import dagger.spi.model.BindingGraph;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.lang.model.element.TypeElement;
 
 /** Validates a {@link BindingGraph}. */
 @Singleton
@@ -45,7 +43,7 @@ public final class BindingGraphValidator {
   /** Returns {@code true} if validation or analysis is required on the full binding graph. */
   public boolean shouldDoFullBindingGraphValidation(XTypeElement component) {
     return requiresFullBindingGraphValidation()
-        || compilerOptions.pluginsVisitFullBindingGraphs(XConverters.toJavac(component));
+        || compilerOptions.pluginsVisitFullBindingGraphs(component);
   }
 
   private boolean requiresFullBindingGraphValidation() {
@@ -68,12 +66,12 @@ public final class BindingGraphValidator {
 
   /** Returns {@code true} if external plugins report no errors. */
   private boolean visitExternalPlugins(BindingGraph graph) {
-    TypeElement component = graph.rootComponentNode().componentPath().currentComponent().java();
     if (graph.isFullBindingGraph()
         // TODO(b/135938915): Consider not visiting plugins if only
         // fullBindingGraphValidation is enabled.
         && !requiresFullBindingGraphValidation()
-        && !compilerOptions.pluginsVisitFullBindingGraphs(component)) {
+        && !compilerOptions.pluginsVisitFullBindingGraphs(
+            graph.rootComponentNode().componentPath().currentComponent().xprocessing())) {
       return true;
     }
 

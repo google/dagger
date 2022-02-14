@@ -194,6 +194,11 @@ public final class Accessibility {
   }
 
   /** Returns true if the given element can be referenced from other code in its own package. */
+  public static boolean isElementAccessibleFromOwnPackage(XElement element) {
+    return isElementAccessibleFromOwnPackage(toJavac(element));
+  }
+
+  /** Returns true if the given element can be referenced from other code in its own package. */
   public static boolean isElementAccessibleFromOwnPackage(Element element) {
     return isElementAccessibleFrom(element, getPackage(element).getQualifiedName().toString());
   }

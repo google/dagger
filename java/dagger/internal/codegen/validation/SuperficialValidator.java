@@ -16,10 +16,10 @@
 
 package dagger.internal.codegen.validation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XTypeElement;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.DaggerSuperficialValidation.ValidationException;
@@ -28,14 +28,13 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.lang.model.element.TypeElement;
 
 /** Validates enclosing type elements in a round. */
 @Singleton
 public final class SuperficialValidator implements ClearableCache {
 
   private final DaggerSuperficialValidation superficialValidation;
-  private final Map<TypeElement, Optional<ValidationException>> validationExceptions =
+  private final Map<XTypeElement, Optional<ValidationException>> validationExceptions =
       new HashMap<>();
 
   @Inject
@@ -46,7 +45,7 @@ public final class SuperficialValidator implements ClearableCache {
   public void throwIfNearestEnclosingTypeNotValid(XElement element) {
     Optional<ValidationException> validationException =
         validationExceptions.computeIfAbsent(
-            toJavac(closestEnclosingTypeElement(element)),
+            closestEnclosingTypeElement(element),
             this::validationExceptionsUncached);
 
     if (validationException.isPresent()) {
@@ -54,7 +53,7 @@ public final class SuperficialValidator implements ClearableCache {
     }
   }
 
-  private Optional<ValidationException> validationExceptionsUncached(TypeElement element) {
+  private Optional<ValidationException> validationExceptionsUncached(XTypeElement element) {
     try {
       superficialValidation.validateElement(element);
     } catch (ValidationException validationException) {

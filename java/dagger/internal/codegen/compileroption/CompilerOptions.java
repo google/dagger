@@ -16,10 +16,7 @@
 
 package dagger.internal.codegen.compileroption;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-
 import androidx.room.compiler.processing.XTypeElement;
-import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 /** A collection of options that dictate how the compiler will run. */
@@ -34,19 +31,7 @@ public abstract class CompilerOptions {
    * <p>Issues related to this flag will not be supported. This flag could break your build, cause
    * memory leaks in your app, or cause other unknown issues at runtime.
    */
-  public final boolean experimentalMergedMode(XTypeElement element) {
-    return experimentalMergedMode(toJavac(element));
-  }
-
-  /**
-   * Returns true if the experimental Android mode is enabled.
-   *
-   * <p><b>Warning: Do Not use! This flag is for internal, experimental use only!</b>
-   *
-   * <p>Issues related to this flag will not be supported. This flag could break your build, cause
-   * memory leaks in your app, or cause other unknown issues at runtime.
-   */
-  public abstract boolean experimentalMergedMode(TypeElement element);
+  public abstract boolean experimentalMergedMode(XTypeElement element);
 
   /**
    * Returns true if the fast initialization flag, {@code fastInit}, is enabled.
@@ -56,19 +41,7 @@ public abstract class CompilerOptions {
    * number of eagerly initialized fields at the cost of potential memory leaks and higher
    * per-provision instantiation time.
    */
-  public final boolean fastInit(XTypeElement element) {
-    return fastInit(toJavac(element));
-  }
-
-  /**
-   * Returns true if the fast initialization flag, {@code fastInit}, is enabled.
-   *
-   * <p>If enabled, the generated code will attempt to optimize for fast component initialization.
-   * This is done by reducing the number of factory classes loaded during initialization and the
-   * number of eagerly initialized fields at the cost of potential memory leaks and higher
-   * per-provision instantiation time.
-   */
-  public abstract boolean fastInit(TypeElement element);
+  public abstract boolean fastInit(XTypeElement element);
 
   public abstract boolean formatGeneratedSource();
 
@@ -129,7 +102,7 @@ public abstract class CompilerOptions {
    *
    * @throws IllegalArgumentException if {@code element} is not a module or (sub)component
    */
-  public abstract boolean pluginsVisitFullBindingGraphs(TypeElement element);
+  public abstract boolean pluginsVisitFullBindingGraphs(XTypeElement element);
 
   public abstract Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind();
 

@@ -30,6 +30,7 @@ import androidx.room.compiler.processing.XAnnotated;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XEnumEntry;
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XFieldElement;
@@ -75,6 +76,10 @@ public final class XElements {
           asMethodParameter(element).getEnclosingMethodElement());
     }
     return Optional.empty();
+  }
+
+  public static boolean isEnumEntry(XElement element) {
+    return element instanceof XEnumEntry;
   }
 
   public static boolean isEnum(XElement element) {

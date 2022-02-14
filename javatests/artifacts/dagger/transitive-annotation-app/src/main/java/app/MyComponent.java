@@ -20,44 +20,54 @@ import dagger.Component;
 import javax.inject.Singleton;
 import library1.AssistedFoo;
 import library1.Foo;
+import library1.MyBaseComponent;
+import library1.MyComponentDependency;
+import library1.MyComponentDependencyBinding;
 import library1.MyComponentModule;
 import library1.MyQualifier;
 import library1.MySubcomponentWithBuilder;
 import library1.MySubcomponentWithFactory;
 
 @Singleton
-@Component(modules = MyComponentModule.class)
-interface MyComponent {
-  Foo foo();
+@Component(dependencies = MyComponentDependency.class, modules = MyComponentModule.class)
+abstract class MyComponent extends MyBaseComponent {
+  abstract Foo foo();
 
-  AssistedFoo.Factory assistedFooFactory();
-
-  @MyQualifier
-  MyComponentModule.ScopedQualifiedBindsType scopedQualifiedBindsType();
-
-  MyComponentModule.ScopedUnqualifiedBindsType scopedUnqualifiedBindsType();
+  abstract AssistedFoo.Factory assistedFooFactory();
 
   @MyQualifier
-  MyComponentModule.UnscopedQualifiedBindsType unscopedQualifiedBindsType();
+  abstract MyComponentModule.ScopedQualifiedBindsType scopedQualifiedBindsType();
 
-  MyComponentModule.UnscopedUnqualifiedBindsType unscopedUnqualifiedBindsType();
-
-  @MyQualifier
-  MyComponentModule.ScopedQualifiedProvidesType scopedQualifiedProvidesType();
-
-  MyComponentModule.ScopedUnqualifiedProvidesType scopedUnqualifiedProvidesType();
+  abstract MyComponentModule.ScopedUnqualifiedBindsType scopedUnqualifiedBindsType();
 
   @MyQualifier
-  MyComponentModule.UnscopedQualifiedProvidesType unscopedQualifiedProvidesType();
+  abstract MyComponentModule.UnscopedQualifiedBindsType unscopedQualifiedBindsType();
 
-  MyComponentModule.UnscopedUnqualifiedProvidesType unscopedUnqualifiedProvidesType();
+  abstract MyComponentModule.UnscopedUnqualifiedBindsType unscopedUnqualifiedBindsType();
 
-  MySubcomponentWithFactory.Factory mySubcomponentWithFactory();
+  @MyQualifier
+  abstract MyComponentModule.ScopedQualifiedProvidesType scopedQualifiedProvidesType();
 
-  MySubcomponentWithBuilder.Builder mySubcomponentWithBuilder();
+  abstract MyComponentModule.ScopedUnqualifiedProvidesType scopedUnqualifiedProvidesType();
+
+  @MyQualifier
+  abstract MyComponentModule.UnscopedQualifiedProvidesType unscopedQualifiedProvidesType();
+
+  abstract MyComponentModule.UnscopedUnqualifiedProvidesType unscopedUnqualifiedProvidesType();
+
+  abstract MySubcomponentWithFactory.Factory mySubcomponentWithFactory();
+
+  abstract MySubcomponentWithBuilder.Builder mySubcomponentWithBuilder();
+
+  @MyQualifier
+  abstract MyComponentDependencyBinding qualifiedMyComponentDependencyBinding();
+
+  abstract MyComponentDependencyBinding unqualifiedMyComponentDependencyBinding();
 
   @Component.Factory
-  interface Factory {
-    MyComponent create(MyComponentModule myComponentModule);
+  abstract static class Factory extends MyBaseComponent.Factory {
+    public abstract MyComponent create(
+        MyComponentModule myComponentModule,
+        MyComponentDependency myComponentDependency);
   }
 }

@@ -19,6 +19,7 @@ package app;
 import static com.google.common.truth.Truth.assertThat;
 
 import library1.Dep;
+import library1.MyComponentDependency;
 import library1.MyComponentModule;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +32,8 @@ public final class MyComponentTest {
 
   @Before
   public void setup() {
-    component = DaggerMyComponent.factory().create(new MyComponentModule(new Dep()));
+    component = DaggerMyComponent.factory()
+        .create(new MyComponentModule(new Dep()), new MyComponentDependency());
   }
 
   @Test
@@ -90,5 +92,11 @@ public final class MyComponentTest {
   public void testUnscopedUnqualifiedProvidesTypeIsNotScoped() {
     assertThat(component.unscopedUnqualifiedProvidesType())
         .isNotEqualTo(component.unscopedUnqualifiedProvidesType());
+  }
+
+  @Test
+  public void testMyComponentDependencyBinding() {
+    assertThat(component.qualifiedMyComponentDependencyBinding())
+        .isNotEqualTo(component.unqualifiedMyComponentDependencyBinding());
   }
 }

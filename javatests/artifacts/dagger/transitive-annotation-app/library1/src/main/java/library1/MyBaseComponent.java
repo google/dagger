@@ -16,68 +16,53 @@
 
 package library1;
 
-import dagger.BindsInstance;
-import dagger.Subcomponent;
 import library2.MyTransitiveAnnotation;
 import library2.MyTransitiveType;
 
 /**
- * A class used to test that Dagger won't fail when non-dagger related annotations cannot be
- * resolved.
- *
- * <p>During the compilation of {@code :app}, {@link MyTransitiveAnnotation} will no longer be on
- * the classpath. In most cases, Dagger shouldn't care that the annotation isn't on the classpath
+ * A class used to test that Dagger won't fail on unresolvable transitive types used in non-dagger
+ * related elements and annotations.
  */
 // @MyTransitiveAnnotation: Not yet supported
 @MyAnnotation(MyTransitiveType.VALUE)
 @MyOtherAnnotation(MyTransitiveType.class)
-@MySubcomponentScope
-@Subcomponent(modules = MySubcomponentModule.class)
-public abstract class MySubcomponentWithFactory {
-  // @MyTransitiveAnnotation: Not yet supported
+public abstract class MyBaseComponent {
   @MyQualifier
+  // @MyTransitiveAnnotation: Not yet supported
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  public abstract MySubcomponentBinding qualifiedMySubcomponentBinding();
+  public abstract MyComponentModule.UnscopedQualifiedBindsType unscopedQualifiedBindsTypeBase();
 
   // @MyTransitiveAnnotation: Not yet supported
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  public abstract MySubcomponentBinding unqualifiedMySubcomponentBinding();
+  public abstract MyComponentModule.UnscopedUnqualifiedBindsType unscopedUnqualifiedBindsTypeBase();
 
   // @MyTransitiveAnnotation: Not yet supported
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  public abstract void injectFoo(
+  public abstract void injectFooBase(
       // @MyTransitiveAnnotation: Not yet supported
-      @MyAnnotation(MyTransitiveType.VALUE) @MyOtherAnnotation(MyTransitiveType.class) Foo foo);
+      @MyAnnotation(MyTransitiveType.VALUE) @MyOtherAnnotation(MyTransitiveType.class) Foo binding);
 
   // @MyTransitiveAnnotation: Not yet supported
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  @Subcomponent.Factory
   public abstract static class Factory {
     @MyTransitiveAnnotation
     @MyAnnotation(MyTransitiveType.VALUE)
     @MyOtherAnnotation(MyTransitiveType.class)
-    public abstract MySubcomponentWithFactory create(
+    public abstract MyBaseComponent create(
         @MyTransitiveAnnotation
             @MyAnnotation(MyTransitiveType.VALUE)
             @MyOtherAnnotation(MyTransitiveType.class)
-            MySubcomponentModule mySubcomponentModule,
-        @BindsInstance
-            @MyQualifier
-            // @MyTransitiveAnnotation: Not yet supported
+            MyComponentModule myComponentModule,
+        @MyTransitiveAnnotation
             @MyAnnotation(MyTransitiveType.VALUE)
             @MyOtherAnnotation(MyTransitiveType.class)
-            MySubcomponentBinding qualifiedSubcomponentBinding,
-        @BindsInstance
-            // @MyTransitiveAnnotation: Not yet supported
-            @MyAnnotation(MyTransitiveType.VALUE)
-            @MyOtherAnnotation(MyTransitiveType.class)
-            MySubcomponentBinding unqualifiedSubcomponentBinding);
+            MyComponentDependency myComponentDependency);
 
-    // Non-dagger code
+    // Non-dagger factory code
 
     @MyTransitiveAnnotation
     @MyAnnotation(MyTransitiveType.VALUE)

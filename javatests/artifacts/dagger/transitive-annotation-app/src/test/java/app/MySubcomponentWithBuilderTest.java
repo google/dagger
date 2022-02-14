@@ -19,6 +19,7 @@ package app;
 import static com.google.common.truth.Truth.assertThat;
 
 import library1.Dep;
+import library1.MyComponentDependency;
 import library1.MyComponentModule;
 import library1.MySubcomponentBinding;
 import library1.MySubcomponentModule;
@@ -35,7 +36,8 @@ public final class MySubcomponentWithBuilderTest {
   @Before
   public void setup() {
     subcomponentWithBuilder =
-        DaggerMyComponent.factory().create(new MyComponentModule(new Dep()))
+        DaggerMyComponent.factory()
+            .create(new MyComponentModule(new Dep()), new MyComponentDependency())
             .mySubcomponentWithBuilder()
             .mySubcomponentModule(new MySubcomponentModule(3))
             .qualifiedMySubcomponentBinding(new MySubcomponentBinding())

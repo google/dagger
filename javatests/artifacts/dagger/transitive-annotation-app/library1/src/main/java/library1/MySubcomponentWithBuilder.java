@@ -28,31 +28,31 @@ import library2.MyTransitiveType;
  * <p>During the compilation of {@code :app}, {@link MyTransitiveAnnotation} will no longer be on
  * the classpath. In most cases, Dagger shouldn't care that the annotation isn't on the classpath
  */
-// @MyTransitiveAnnotation: Not yet supported
+// TODO(b/219587431): Support @MyTransitiveAnnotation (Requires generating metadata).
 @MyAnnotation(MyTransitiveType.VALUE)
 @MyOtherAnnotation(MyTransitiveType.class)
 @MySubcomponentScope
 @Subcomponent(modules = MySubcomponentModule.class)
 public abstract class MySubcomponentWithBuilder {
   @MyQualifier
-  // @MyTransitiveAnnotation: Not yet supported
+  // TODO(b/219587431): Support @MyTransitiveAnnotation (Requires generating metadata).
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
   public abstract MySubcomponentBinding qualifiedMySubcomponentBinding();
 
-  // @MyTransitiveAnnotation: Not yet supported
+  // TODO(b/219587431): Support @MyTransitiveAnnotation (Requires generating metadata).
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
   public abstract MySubcomponentBinding unqualifiedMySubcomponentBinding();
 
-  // @MyTransitiveAnnotation: Not yet supported
+  // TODO(b/219587431): Support @MyTransitiveAnnotation (We shouldn't need scope/qualifier here).
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
   public abstract void injectFoo(
-      // @MyTransitiveAnnotation: Not yet supported
+      // TODO(b/219587431): Support @MyTransitiveAnnotation (We shouldn't need scope/qualifier here)
       @MyAnnotation(MyTransitiveType.VALUE) @MyOtherAnnotation(MyTransitiveType.class) Foo foo);
 
-  // @MyTransitiveAnnotation: Not yet supported
+  // TODO(b/219587431): Support @MyTransitiveAnnotation (We shouldn't need scope/qualifier here).
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
   @Subcomponent.Builder
@@ -72,7 +72,7 @@ public abstract class MySubcomponentWithBuilder {
     @MyOtherAnnotation(MyTransitiveType.class)
     public abstract Builder qualifiedMySubcomponentBinding(
         @MyQualifier
-            // @MyTransitiveAnnotation: Not yet supported
+            // TODO(b/219587431): Support @MyTransitiveAnnotation (Requires generating metadata).
             @MyAnnotation(MyTransitiveType.VALUE)
             @MyOtherAnnotation(MyTransitiveType.class)
             MySubcomponentBinding subcomponentBinding);
@@ -82,7 +82,7 @@ public abstract class MySubcomponentWithBuilder {
     @MyAnnotation(MyTransitiveType.VALUE)
     @MyOtherAnnotation(MyTransitiveType.class)
     public abstract Builder unqualifiedMySubcomponentBinding(
-        // @MyTransitiveAnnotation: Not yet supported
+        // TODO(b/219587431): Support @MyTransitiveAnnotation (Requires generating metadata).
         @MyAnnotation(MyTransitiveType.VALUE) @MyOtherAnnotation(MyTransitiveType.class)
             MySubcomponentBinding subcomponentBinding);
 

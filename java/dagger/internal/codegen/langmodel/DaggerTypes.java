@@ -17,14 +17,11 @@
 package dagger.internal.codegen.langmodel;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
 import androidx.room.compiler.processing.XType;
-import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
@@ -141,14 +138,6 @@ public final class DaggerTypes implements Types {
    * Returns the non-{@link Object} superclass of the type with the proper type parameters. An empty
    * {@link Optional} is returned if there is no non-{@link Object} superclass.
    */
-  public Optional<DeclaredType> nonObjectSuperclass(XType type) {
-    return isDeclared(type) ? nonObjectSuperclass(asDeclared(toJavac(type))) : Optional.empty();
-  }
-
-  /**
-   * Returns the non-{@link Object} superclass of the type with the proper type parameters. An empty
-   * {@link Optional} is returned if there is no non-{@link Object} superclass.
-   */
   public Optional<DeclaredType> nonObjectSuperclass(DeclaredType type) {
     return Optional.ofNullable(MoreTypes.nonObjectSuperclass(types, elements, type).orNull());
   }
@@ -159,20 +148,6 @@ public final class DaggerTypes implements Types {
    */
   public Iterable<TypeMirror> supertypes(TypeMirror type) {
     return Traverser.<TypeMirror>forGraph(this::directSupertypes).breadthFirst(type);
-  }
-
-  /**
-   * Returns {@code type}'s single type argument.
-   *
-   * <p>For example, if {@code type} is {@code List<Number>} this will return {@code Number}.
-   *
-   * @throws IllegalArgumentException if {@code type} is not a declared type or has zero or more
-   *     than one type arguments.
-   */
-  public static XType unwrapType(XType type) {
-    XType unwrapped = unwrapTypeOrDefault(type, null);
-    checkArgument(unwrapped != null, "%s is a raw type", type);
-    return unwrapped;
   }
 
   /**
@@ -197,18 +172,6 @@ public final class DaggerTypes implements Types {
         "%s does not have a type parameter",
         typeElement.getQualifiedName());
     return getOnlyElement(declaredType.getTypeArguments(), defaultType);
-  }
-
-  private static XType unwrapTypeOrDefault(XType type, XType defaultType) {
-    // Check the type parameters of the element's XType since the input XType could be raw.
-    checkArgument(isDeclared(type));
-    XTypeElement typeElement = type.getTypeElement();
-    checkArgument(
-        typeElement.getType().getTypeArguments().size() == 1,
-        "%s does not have exactly 1 type parameter. Found: %s",
-        typeElement.getQualifiedName(),
-        typeElement.getType().getTypeArguments());
-    return getOnlyElement(type.getTypeArguments(), defaultType);
   }
 
   /**

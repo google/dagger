@@ -18,7 +18,6 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XTypeKt.isVoid;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.consumingIterable;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -37,20 +36,18 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.enclosedA
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.builderMethodRequiresNoArgs;
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static java.util.Comparator.comparing;
-import static javax.lang.model.util.ElementFilter.methodsIn;
+import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.HashMultimap;
@@ -95,7 +92,6 @@ import javax.lang.model.SourceVersion;
  */
 @Singleton
 public final class ComponentValidator implements ClearableCache {
-  private final XProcessingEnv processingEnv;
   private final DaggerElements elements;
   private final ModuleValidator moduleValidator;
   private final ComponentCreatorValidator creatorValidator;
@@ -109,7 +105,6 @@ public final class ComponentValidator implements ClearableCache {
 
   @Inject
   ComponentValidator(
-      XProcessingEnv processingEnv,
       DaggerElements elements,
       ModuleValidator moduleValidator,
       ComponentCreatorValidator creatorValidator,
@@ -119,7 +114,6 @@ public final class ComponentValidator implements ClearableCache {
       DependencyRequestFactory dependencyRequestFactory,
       DaggerSuperficialValidation superficialValidation,
       KotlinMetadataUtil metadataUtil) {
-    this.processingEnv = processingEnv;
     this.elements = elements;
     this.moduleValidator = moduleValidator;
     this.creatorValidator = creatorValidator;
@@ -451,17 +445,7 @@ public final class ComponentValidator implements ClearableCache {
       // Collect entry point methods that are not overridden by others. If the "same" method is
       // inherited from more than one supertype, each will be in the multimap.
       SetMultimap<String, XMethodElement> entryPoints = HashMultimap.create();
-
-      // TODO(b/201729320): There's a bug in auto-common's MoreElements#overrides(), b/201729320,
-      // which prevents us from using XTypeElement#getAllMethods() here (since that method relies on
-      // MoreElements#overrides() under the hood).
-      //
-      // There's two options here.
-      //    1. Fix the bug in auto-common and update XProcessing's auto-common dependency
-      //    2. Add a new method in XProcessing which relies on Elements#overrides(), which does not
-      //       have this issue. However, this approach risks causing issues for EJC (Eclipse) users.
-      methodsIn(elements.getAllMembers(toJavac(component))).stream()
-          .map(method -> asMethod(toXProcessing(method, processingEnv)))
+      asStream(component.getAllMethods())
           .filter(method -> isEntryPoint(method, method.asMemberOf(component.getType())))
           .forEach(
               method -> addMethodUnlessOverridden(method, entryPoints.get(getSimpleName(method))));

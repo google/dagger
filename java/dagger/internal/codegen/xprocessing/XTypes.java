@@ -17,11 +17,18 @@
 package dagger.internal.codegen.xprocessing;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
 import androidx.room.compiler.processing.XArrayType;
 import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
+import java.util.Optional;
 import javax.lang.model.type.TypeKind;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
@@ -75,6 +82,45 @@ public final class XTypes {
   /** Returns {@code true} if the given type has type parameters. */
   public static boolean hasTypeParameters(XType type) {
     return !type.getTypeArguments().isEmpty();
+  }
+
+  /**
+   * Returns the non-{@link Object} superclass of the type with the proper type parameters. An empty
+   * {@link Optional} is returned if there is no non-{@link Object} superclass.
+   */
+  public static Optional<XType> nonObjectSuperclass(XType type) {
+    return isDeclared(type)
+        ? type.getSuperTypes().stream()
+            .filter(supertype -> !supertype.getTypeName().equals(TypeName.OBJECT))
+            .filter(supertype -> isDeclared(supertype) && supertype.getTypeElement().isClass())
+            .collect(toOptional())
+        : Optional.empty();
+  }
+
+  /**
+   * Returns {@code type}'s single type argument.
+   *
+   * <p>For example, if {@code type} is {@code List<Number>} this will return {@code Number}.
+   *
+   * @throws IllegalArgumentException if {@code type} is not a declared type or has zero or more
+   *     than one type arguments.
+   */
+  public static XType unwrapType(XType type) {
+    XType unwrapped = unwrapTypeOrDefault(type, null);
+    checkArgument(unwrapped != null, "%s is a raw type", type);
+    return unwrapped;
+  }
+
+  private static XType unwrapTypeOrDefault(XType type, XType defaultType) {
+    // Check the type parameters of the element's XType since the input XType could be raw.
+    checkArgument(isDeclared(type));
+    XTypeElement typeElement = type.getTypeElement();
+    checkArgument(
+        typeElement.getType().getTypeArguments().size() == 1,
+        "%s does not have exactly 1 type parameter. Found: %s",
+        typeElement.getQualifiedName(),
+        typeElement.getType().getTypeArguments());
+    return getOnlyElement(type.getTypeArguments(), defaultType);
   }
 
   private XTypes() {}

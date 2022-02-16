@@ -73,7 +73,7 @@ public final class XElements {
       return optionalClosestEnclosingTypeElement(asField(element).getEnclosingElement());
     } else if (isMethodParameter(element)) {
       return optionalClosestEnclosingTypeElement(
-          asMethodParameter(element).getEnclosingMethodElement());
+          asMethodParameter(element).getEnclosingElement());
     }
     return Optional.empty();
   }

@@ -350,7 +350,7 @@ public final class InjectionAnnotations {
     } else if (isMethod(element) && element.hasAnnotation(TypeNames.PROVIDES)) {
       return Optional.of(factoryNameForElement(asMethod(element)));
     } else if (isMethodParameter(element)) {
-      XExecutableElement executableElement = asMethodParameter(element).getEnclosingMethodElement();
+      XExecutableElement executableElement = asMethodParameter(element).getEnclosingElement();
       if (isConstructor(executableElement)
           && hasInjectOrAssistedInjectAnnotation(executableElement)) {
         return Optional.of(factoryNameForElement(executableElement));

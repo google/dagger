@@ -66,7 +66,7 @@ final class AssistedProcessingStep extends TypeCheckingProcessingStep<XExecutabl
     ValidationReport validate(XExecutableParameterElement assisted) {
       ValidationReport.Builder report = ValidationReport.about(assisted);
 
-      XExecutableElement enclosingElement = assisted.getEnclosingMethodElement();
+      XExecutableElement enclosingElement = assisted.getEnclosingElement();
       if (!isAssistedInjectConstructor(enclosingElement)
           && !isAssistedFactoryCreateMethod(enclosingElement)
           // The generated java stubs for kotlin data classes contain a "copy" method that has

@@ -389,8 +389,8 @@ public final class ComponentDescriptorValidator {
     }
 
     private XType resolveParameterType(XExecutableParameterElement parameter, XType container) {
-      checkArgument(isMethod(parameter.getEnclosingMethodElement()));
-      XMethodElement method = asMethod(parameter.getEnclosingMethodElement());
+      checkArgument(isMethod(parameter.getEnclosingElement()));
+      XMethodElement method = asMethod(parameter.getEnclosingElement());
       int parameterIndex = method.getParameters().indexOf(parameter);
 
       XMethodType methodType = method.asMemberOf(container);

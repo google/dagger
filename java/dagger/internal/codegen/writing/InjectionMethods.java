@@ -41,6 +41,7 @@ import static dagger.internal.codegen.langmodel.Accessibility.isRawTypePubliclyA
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
 import static dagger.internal.codegen.xprocessing.XElements.asMethodParameter;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -269,7 +270,7 @@ final class InjectionMethods {
       switch (injectionSite.kind()) {
         case METHOD:
           return methodProxy(
-              asExecutable(injectionSite.element()),
+              asExecutable(toJavac(injectionSite.element())),
               methodName,
               InstanceCastPolicy.CAST_IF_NOT_PUBLIC,
               CheckNotNullPolicy.IGNORE,
@@ -282,7 +283,7 @@ final class InjectionMethods {
                   .key()
                   .qualifier()
                   .map(DaggerAnnotation::java);
-          return fieldProxy(asVariable(injectionSite.element()), methodName, qualifier);
+          return fieldProxy(asVariable(toJavac(injectionSite.element())), methodName, qualifier);
       }
       throw new AssertionError(injectionSite);
     }
@@ -305,7 +306,7 @@ final class InjectionMethods {
           .map(
               injectionSite -> {
                 TypeMirror injectSiteType =
-                    types.erasure(injectionSite.element().getEnclosingElement().asType());
+                    types.erasure(toJavac(injectionSite.element()).getEnclosingElement().asType());
 
                 // If instance has been declared as Object because it is not accessible from the
                 // component, but the injectionSite is in a supertype of instanceType that is
@@ -346,8 +347,7 @@ final class InjectionMethods {
             injectionSite.dependencies().stream().map(dependencyUsage).collect(toList()));
       }
 
-      ClassName enclosingClass =
-          membersInjectorNameForType(asType(injectionSite.element().getEnclosingElement()));
+      ClassName enclosingClass = membersInjectorNameForType(injectionSite.enclosingTypeElement());
       MethodSpec methodSpec = create(injectionSite, metadataUtil);
       return invokeMethod(methodSpec, arguments.build(), enclosingClass, generatedTypeName);
     }
@@ -371,7 +371,7 @@ final class InjectionMethods {
       int index = injectionSite.indexAmongAtInjectMembersWithSameSimpleName();
       String indexString = index == 0 ? "" : String.valueOf(index + 1);
       return "inject"
-          + LOWER_CAMEL.to(UPPER_CAMEL, injectionSite.element().getSimpleName().toString())
+          + LOWER_CAMEL.to(UPPER_CAMEL, getSimpleName(injectionSite.element()))
           + indexString;
     }
   }

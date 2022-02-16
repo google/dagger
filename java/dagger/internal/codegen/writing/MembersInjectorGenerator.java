@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
@@ -216,10 +215,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
     injectorTypeBuilder.addMethod(injectMembersBuilder.build());
 
     for (InjectionSite injectionSite : binding.injectionSites()) {
-      if (injectionSite
-          .element()
-          .getEnclosingElement()
-          .equals(toJavac(binding.membersInjectedType()))) {
+      if (injectionSite.enclosingTypeElement().equals(binding.membersInjectedType())) {
         injectorTypeBuilder.addMethod(InjectionSiteMethod.create(injectionSite, metadataUtil));
       }
     }
@@ -236,10 +232,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
         // own generated _MembersInjector class.
         .filter(
             injectionSite ->
-                injectionSite
-                    .element()
-                    .getEnclosingElement()
-                    .equals(toJavac(binding.membersInjectedType())))
+                injectionSite.enclosingTypeElement().equals(binding.membersInjectedType()))
         .flatMap(injectionSite -> injectionSite.dependencies().stream())
         .map(DependencyRequest::key)
         .map(Key::qualifier)

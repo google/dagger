@@ -241,7 +241,7 @@ public final class BindingFactory {
         .contributingModule(contributedBy)
         .key(key)
         .dependencies(
-            dependencyRequestFactory.forRequiredResolvedXVariables(
+            dependencyRequestFactory.forRequiredResolvedVariables(
                 method.getParameters(), methodType.getParameterTypes()))
         .wrappedMapKeyAnnotation(wrapOptionalInEquivalence(getMapKey(method)));
   }

@@ -43,6 +43,7 @@ import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.UnknownElementException;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
@@ -83,7 +84,12 @@ final class InjectionSiteFactory {
       DeclaredType type = currentType.get();
       ancestors.add(MoreElements.asType(type.asElement()));
       for (Element enclosedElement : type.asElement().getEnclosedElements()) {
-        injectionSiteVisitor.visit(enclosedElement, type).ifPresent(injectionSites::add);
+        try {
+          injectionSiteVisitor.visit(enclosedElement, type).ifPresent(injectionSites::add);
+        } catch (UnknownElementException e) {
+          // Ignore if element visitor encounters unkown elements, for example 
+          // language features from newer Java versions
+        }
       }
     }
     return ImmutableSortedSet.copyOf(

@@ -16,6 +16,10 @@
 
 package dagger.spi.model;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Joiner;
@@ -109,6 +113,17 @@ public abstract class Key {
   public static final class MultibindingContributionIdentifier {
     private final String module;
     private final String bindingElement;
+
+    /**
+     * @deprecated This is only meant to be called from code in {@code dagger.internal.codegen}. It
+     *     is not part of a specified API and may change at any point.
+     */
+    @Deprecated
+    public MultibindingContributionIdentifier(
+        // TODO(ronshapiro): reverse the order of these parameters
+        XMethodElement bindingMethod, XTypeElement contributingModule) {
+      this(toJavac(bindingMethod), toJavac(contributingModule));
+    }
 
     /**
      * @deprecated This is only meant to be called from code in {@code dagger.internal.codegen}.

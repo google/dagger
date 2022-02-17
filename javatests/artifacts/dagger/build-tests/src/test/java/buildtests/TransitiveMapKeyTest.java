@@ -41,10 +41,11 @@ public class TransitiveMapKeyTest {
     assertThat(result.getOutput())
         .contains(
             "Missing map key annotation for method: library1.MyModule#provideString(). "
-                + "That method was annotated with: "
-                + "@dagger.Provides,"
-                + "@dagger.multibindings.IntoMap,"
-                + "@library2.MyMapKey(\"some-key\")");
+                + "That method was annotated with: ["
+                + "@dagger.Provides, "
+                + "@dagger.multibindings.IntoMap, "
+                + "@library2.MyMapKey(\"some-key\")"
+                + "]");
   }
 
   @Test

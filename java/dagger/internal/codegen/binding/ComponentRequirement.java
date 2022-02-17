@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isNested;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
@@ -183,51 +184,49 @@ public abstract class ComponentRequirement {
 
   public static ComponentRequirement forDependency(XType type) {
     checkArgument(isDeclared(checkNotNull(type)));
-    ComponentRequirement requirement =
-        new AutoValue_ComponentRequirement(
-            Kind.DEPENDENCY,
-            type.getTypeName(),
-            Optional.empty(),
-            Optional.empty(),
-            simpleVariableName(type.getTypeElement().getClassName()));
-    requirement.type = type;
-    return requirement;
+    return create(Kind.DEPENDENCY, type);
   }
 
   public static ComponentRequirement forModule(XType type) {
     checkArgument(isDeclared(checkNotNull(type)));
-    ComponentRequirement requirement =
-        new AutoValue_ComponentRequirement(
-            Kind.MODULE,
-            type.getTypeName(),
-            Optional.empty(),
-            Optional.empty(),
-            simpleVariableName(type.getTypeElement().getClassName()));
-    requirement.type = type;
-    return requirement;
-  }
-
-  static ComponentRequirement forBoundInstance(
-      Key key, boolean nullable, XElement elementForVariableName) {
-    ComponentRequirement requirement =
-        new AutoValue_ComponentRequirement(
-            Kind.BOUND_INSTANCE,
-            key.type().xprocessing().getTypeName(),
-            nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
-            Optional.of(key),
-            toJavac(elementForVariableName).getSimpleName().toString());
-    requirement.type = key.type().xprocessing();
-    return requirement;
+    return create(Kind.MODULE, type);
   }
 
   public static ComponentRequirement forBoundInstance(ContributionBinding binding) {
     checkArgument(binding.kind().equals(BindingKind.BOUND_INSTANCE));
+    return forBoundInstance(
+        binding.key(), binding.nullableType().isPresent(), binding.bindingElement().get());
+  }
+
+  static ComponentRequirement forBoundInstance(
+      Key key, boolean nullable, XElement elementForVariableName) {
+    return create(
+        Kind.BOUND_INSTANCE,
+        key.type().xprocessing(),
+        nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
+        Optional.of(key),
+        getSimpleName(elementForVariableName));
+  }
+
+  private static ComponentRequirement create(Kind kind, XType type) {
+    return create(
+        kind,
+        type,
+        Optional.empty(),
+        Optional.empty(),
+        simpleVariableName(type.getTypeElement().getClassName()));
+  }
+
+  private static ComponentRequirement create(
+      Kind kind,
+      XType type,
+      Optional<NullPolicy> overrideNullPolicy,
+      Optional<Key> key,
+      String variableName) {
     ComponentRequirement requirement =
-        forBoundInstance(
-            binding.key(),
-            binding.nullableType().isPresent(),
-            binding.bindingElement().get());
-    requirement.type = binding.key().type().xprocessing();
+        new AutoValue_ComponentRequirement(
+            kind, type.getTypeName(), overrideNullPolicy, key, variableName);
+    requirement.type = type;
     return requirement;
   }
 

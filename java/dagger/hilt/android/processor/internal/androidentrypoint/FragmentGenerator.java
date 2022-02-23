@@ -245,8 +245,7 @@ public final class FragmentGenerator {
             "$T inflater = super.onGetLayoutInflater(savedInstanceState)",
             AndroidClassNames.LAYOUT_INFLATER)
         .addStatement(
-            "return $T.from($T.createContextWrapper(inflater, this))",
-            AndroidClassNames.LAYOUT_INFLATER,
+            "return inflater.cloneInContext($T.createContextWrapper(inflater, this))",
             metadata.componentManager())
         .build();
   }

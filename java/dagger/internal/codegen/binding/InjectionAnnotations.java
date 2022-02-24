@@ -284,10 +284,7 @@ public final class InjectionAnnotations {
     }
 
     // Fully validate each qualifier to ensure its values are also valid.
-    qualifiers.forEach(
-        qualifier -> {
-          superficialValidation.validateAnnotationOf(element, qualifier);
-        });
+    qualifiers.forEach(qualifier -> superficialValidation.validateAnnotationOf(element, qualifier));
 
     return qualifiers.asList();
   }

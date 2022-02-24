@@ -29,6 +29,7 @@ import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompil
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FAST_INIT;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FLOATING_BINDS_METHODS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FORMAT_GENERATED_SOURCE;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.GENERATED_CLASS_EXTENDS_COMPONENT;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.INCLUDE_STACKTRACE_WITH_DEFERRED_ERROR_MESSAGES;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.PLUGINS_VISIT_FULL_BINDING_GRAPHS;
@@ -220,6 +221,11 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
+  public boolean generatedClassExtendsComponent() {
+    return isEnabled(GENERATED_CLASS_EXTENDS_COMPONENT);
+  }
+
+  @Override
   public int keysPerComponentShard(XTypeElement component) {
     if (options.containsKey(KEYS_PER_COMPONENT_SHARD)) {
       checkArgument(
@@ -342,6 +348,8 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     STRICT_MULTIBINDING_VALIDATION,
 
     STRICT_SUPERFICIAL_VALIDATION(ENABLED),
+
+    GENERATED_CLASS_EXTENDS_COMPONENT,
 
     VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES(ENABLED)
     ;

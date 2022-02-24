@@ -22,7 +22,8 @@ package dagger.hilt.android;
 public abstract class UsesComponentHelper {
 
   public static String defaultComponentName() {
-    return "dagger.hilt.android.internal.testing.root.DaggerDefault_HiltComponents_SingletonC";
+    return "dagger.hilt.android.internal.testing.root."
+        + "DaggerDefault_HiltComponents_SingletonC$SingletonCImpl";
   }
 
   /**
@@ -32,7 +33,7 @@ public abstract class UsesComponentHelper {
   public static String perTestComponentName(Object testInstance) {
     return "dagger.hilt.android.internal.testing.root.Dagger"
         + testInstance.getClass().getSimpleName()
-        + "_HiltComponents_SingletonC";
+        + "_HiltComponents_SingletonC$SingletonCImpl";
   }
 
   /**
@@ -44,7 +45,7 @@ public abstract class UsesComponentHelper {
     return "dagger.hilt.android.internal.testing.root.Dagger"
         + expectedPrefix
         + testInstance.getClass().getSimpleName()
-        + "_HiltComponents_SingletonC";
+        + "_HiltComponents_SingletonC$SingletonCImpl";
   }
 
   private UsesComponentHelper() {}

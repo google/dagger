@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.truth.TruthJUnit.assume;
 import static java.util.Arrays.stream;
 
+import com.squareup.javapoet.ClassName;
 import dagger.functional.cycle.LongCycle.LongCycleComponent;
 import java.lang.reflect.Method;
 import org.junit.Test;
@@ -45,10 +46,19 @@ public class LongCycleTest {
    * factory is created in a separate method from the delegate factory.
    */
   @Test
-  public void longCycleHasMoreThanOneInitializeMethod() {
+  public void longCycleHasMoreThanOneInitializeMethod() throws Exception {
     assume().that(System.getProperty("dagger.mode")).doesNotContain("FastInit");
+    ClassName componentImpl =
+        System.getProperty("dagger.mode").contains("ExtendsComponent")
+            ? ClassName.get(DaggerLongCycle_LongCycleComponent.class)
+            : ClassName.get(DaggerLongCycle_LongCycleComponent.class)
+                .nestedClass("LongCycleComponentImpl");
     boolean hasInitialize2 =
-        stream(DaggerLongCycle_LongCycleComponent.class.getDeclaredMethods())
+        stream(
+                DaggerLongCycle_LongCycleComponent.class
+                    .getClassLoader()
+                    .loadClass(componentImpl.reflectionName())
+                    .getDeclaredMethods())
             .map(Method::getName)
             .anyMatch(name -> name.equals("initialize2"));
     assertWithMessage("LongCycleComponent impl has an initialize2 method")

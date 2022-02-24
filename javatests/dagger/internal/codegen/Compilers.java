@@ -45,6 +45,7 @@ public final class Compilers {
 
   static final ImmutableList<String> DEFAULT_JAVACOPTS =
       ImmutableList.of(
+          "-Adagger.generatedClassExtendsComponent=enabled",
           "-Adagger.experimentalDaggerErrorMessages=enabled");
 
   /**

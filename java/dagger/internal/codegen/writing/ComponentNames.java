@@ -35,6 +35,7 @@ import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.KeyFactory;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.spi.model.ComponentPath;
 import dagger.spi.model.Key;
 import java.util.Collection;
@@ -48,8 +49,8 @@ import javax.inject.Inject;
  * Key} of the subcomponent builder.
  */
 public final class ComponentNames {
-  /** Returns the class name for the root component. */
-  public static ClassName getRootComponentClassName(ComponentDescriptor componentDescriptor) {
+  /** Returns the class name for the top-level generated class. */
+  public static ClassName getTopLevelClassName(ComponentDescriptor componentDescriptor) {
     checkState(!componentDescriptor.isSubcomponent());
     ClassName componentName = componentDescriptor.typeElement().getClassName();
     return ClassName.get(componentName.packageName(), "Dagger" + classFileName(componentName));
@@ -57,14 +58,17 @@ public final class ComponentNames {
 
   private static final Splitter QUALIFIED_NAME_SPLITTER = Splitter.on('.');
 
-  private final ClassName rootName;
+  private final CompilerOptions compilerOptions;
+  private final ClassName topLevelClassName;
   private final ImmutableMap<ComponentPath, String> namesByPath;
   private final ImmutableMap<ComponentPath, String> creatorNamesByPath;
   private final ImmutableMultimap<Key, ComponentPath> pathsByCreatorKey;
 
   @Inject
-  ComponentNames(@TopLevel BindingGraph graph, KeyFactory keyFactory) {
-    this.rootName = getRootComponentClassName(graph.componentDescriptor());
+  ComponentNames(
+      CompilerOptions compilerOptions, @TopLevel BindingGraph graph, KeyFactory keyFactory) {
+    this.compilerOptions = compilerOptions;
+    this.topLevelClassName = getTopLevelClassName(graph.componentDescriptor());
     this.namesByPath = namesByPath(graph);
     this.creatorNamesByPath = creatorNamesByPath(namesByPath, graph);
     this.pathsByCreatorKey = pathsByCreatorKey(keyFactory, graph);
@@ -72,9 +76,9 @@ public final class ComponentNames {
 
   /** Returns the simple component name for the given {@link ComponentDescriptor}. */
   ClassName get(ComponentPath componentPath) {
-    return componentPath.atRoot()
-        ? rootName
-        : rootName.nestedClass(namesByPath.get(componentPath) + "Impl");
+    return compilerOptions.generatedClassExtendsComponent() && componentPath.atRoot()
+        ? topLevelClassName
+        : topLevelClassName.nestedClass(namesByPath.get(componentPath) + "Impl");
   }
 
   /**
@@ -98,7 +102,7 @@ public final class ComponentNames {
    */
   ClassName getCreatorName(ComponentPath componentPath) {
     checkArgument(creatorNamesByPath.containsKey(componentPath));
-    return rootName.nestedClass(creatorNamesByPath.get(componentPath));
+    return topLevelClassName.nestedClass(creatorNamesByPath.get(componentPath));
   }
 
   private static ImmutableMap<ComponentPath, String> creatorNamesByPath(
@@ -133,7 +137,6 @@ public final class ComponentNames {
         .stream()
         .map(ComponentNames::disambiguateConflictingSimpleNames)
         .forEach(componentPathsBySimpleName::putAll);
-    componentPathsBySimpleName.remove(graph.componentPath());
     return ImmutableMap.copyOf(componentPathsBySimpleName);
   }
 

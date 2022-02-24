@@ -21,12 +21,16 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.Subcomponent;
 import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.writing.ComponentImplementation;
 import dagger.internal.codegen.writing.ComponentImplementation.ChildComponentImplementationFactory;
 import dagger.internal.codegen.writing.ComponentRequestRepresentations;
 import dagger.internal.codegen.writing.ComponentRequirementExpressions;
+import dagger.internal.codegen.writing.ComponentWrapperImplementation;
+import dagger.internal.codegen.writing.GeneratedImplementation;
 import dagger.internal.codegen.writing.ParentComponent;
 import dagger.internal.codegen.writing.PerComponentImplementation;
+import dagger.internal.codegen.writing.TopLevel;
 import java.util.Optional;
 import javax.inject.Provider;
 
@@ -59,6 +63,17 @@ public interface CurrentImplementationSubcomponent {
               .parentRequirementExpressions(Optional.of(componentRequirementExpressions.get()))
               .build()
               .componentImplementation();
+    }
+
+    @Provides
+    @TopLevel
+    static GeneratedImplementation provideTopLevelImplementation(
+        ComponentImplementation componentImplementation,
+        ComponentWrapperImplementation componentWrapperImplementation,
+        CompilerOptions compilerOptions) {
+      return compilerOptions.generatedClassExtendsComponent()
+          ? componentImplementation.rootComponentImplementation().getComponentShard()
+          : componentWrapperImplementation;
     }
   }
 

@@ -192,8 +192,8 @@ public final class ComponentImplementation {
     /** A class for a component shard. */
     COMPONENT_SHARD_TYPE,
 
-    /** A class for the subcomponent or subcomponent builder. */
-    SUBCOMPONENT
+    /** A class for the component/subcomponent or subcomponent builder implementation. */
+    COMPONENT_IMPL
   }
 
   /**
@@ -266,11 +266,13 @@ public final class ComponentImplementation {
   private final List<CodeBlock> shardCancellations = new ArrayList<>();
   private final Optional<ComponentImplementation> parent;
   private final ChildComponentImplementationFactory childComponentImplementationFactory;
+  private final Provider<GeneratedImplementation> topLevelImplementationProvider;
   private final Provider<ComponentRequestRepresentations> bindingExpressionsProvider;
   private final Provider<ComponentCreatorImplementationFactory>
       componentCreatorImplementationFactoryProvider;
   private final BindingGraph graph;
   private final ComponentNames componentNames;
+  private final CompilerOptions compilerOptions;
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final ImmutableMap<ComponentImplementation, FieldSpec> componentFieldsByImplementation;
@@ -282,6 +284,7 @@ public final class ComponentImplementation {
       @ParentComponent Optional<ComponentImplementation> parent,
       ChildComponentImplementationFactory childComponentImplementationFactory,
       // Inject as Provider<> to prevent a cycle.
+      @TopLevel Provider<GeneratedImplementation> topLevelImplementationProvider,
       Provider<ComponentRequestRepresentations> bindingExpressionsProvider,
       Provider<ComponentCreatorImplementationFactory> componentCreatorImplementationFactoryProvider,
       BindingGraph graph,
@@ -292,11 +295,13 @@ public final class ComponentImplementation {
       XMessager messager) {
     this.parent = parent;
     this.childComponentImplementationFactory = childComponentImplementationFactory;
+    this.topLevelImplementationProvider = topLevelImplementationProvider;
     this.bindingExpressionsProvider = bindingExpressionsProvider;
     this.componentCreatorImplementationFactoryProvider =
         componentCreatorImplementationFactoryProvider;
     this.graph = graph;
     this.componentNames = componentNames;
+    this.compilerOptions = compilerOptions;
     this.elements = elements;
     this.types = types;
 
@@ -334,8 +339,13 @@ public final class ComponentImplementation {
     return shardsByBinding.get(binding);
   }
 
+  /** Returns the {@link GeneratedImplementation} for the top-level generated class. */
+  private GeneratedImplementation topLevelImplementation() {
+    return topLevelImplementationProvider.get();
+  }
+
   /** Returns the root {@link ComponentImplementation}. */
-  ComponentImplementation rootComponentImplementation() {
+  public ComponentImplementation rootComponentImplementation() {
     return parent.map(ComponentImplementation::rootComponentImplementation).orElse(this);
   }
 
@@ -449,7 +459,7 @@ public final class ComponentImplementation {
    * nested "shard" class within the component implementation (e.g. {@code
    * MySubcomponentImpl.Shard1}, {@code MySubcomponentImpl.Shard2}, etc).
    */
-  public final class ShardImplementation {
+  public final class ShardImplementation implements GeneratedImplementation {
     private final ClassName name;
     private final UniqueNameSet componentFieldNames = new UniqueNameSet();
     private final UniqueNameSet componentMethodNames = new UniqueNameSet();
@@ -702,8 +712,8 @@ public final class ComponentImplementation {
       componentMethodNames.claim(name);
     }
 
-    /** Generates the component and returns the resulting {@link TypeSpec.Builder}. */
-    private TypeSpec generate() {
+    @Override
+    public TypeSpec generate() {
       TypeSpec.Builder builder = classBuilder(name);
 
       if (isComponentShard()) {
@@ -730,6 +740,14 @@ public final class ComponentImplementation {
       methodSpecsMap.asMap().values().forEach(builder::addMethods);
       typeSpecsMap.asMap().values().forEach(builder::addTypes);
       typeSuppliers.stream().map(Supplier::get).forEach(builder::addType);
+
+      if (!compilerOptions.generatedClassExtendsComponent()
+          && isComponentShard()
+          && graph.componentPath().atRoot()) {
+        topLevelImplementation().addType(TypeSpecKind.COMPONENT_IMPL, builder.build());
+        return topLevelImplementation().generate();
+      }
+
       return builder.build();
     }
 
@@ -752,10 +770,7 @@ public final class ComponentImplementation {
           .create()
           .map(ComponentCreatorImplementation::spec)
           .ifPresent(
-              creator ->
-                  rootComponentImplementation()
-                      .getComponentShard()
-                      .addType(TypeSpecKind.COMPONENT_CREATOR, creator));
+              creator -> topLevelImplementation().addType(TypeSpecKind.COMPONENT_CREATOR, creator));
     }
 
     private void addFactoryMethods() {
@@ -804,11 +819,11 @@ public final class ComponentImplementation {
               .returns(creatorType)
               .addStatement("return new $T()", getCreatorName())
               .build();
-      addMethod(MethodSpecKind.BUILDER_METHOD, creatorFactoryMethod);
+      topLevelImplementation().addMethod(MethodSpecKind.BUILDER_METHOD, creatorFactoryMethod);
       if (noArgFactoryMethod && canInstantiateAllRequirements()) {
         validateMethodNameDoesNotOverrideGeneratedCreator("create");
         claimMethodName("create");
-        addMethod(
+        topLevelImplementation().addMethod(
             MethodSpecKind.BUILDER_METHOD,
             methodBuilder("create")
                 .returns(graph.componentTypeElement().getClassName())
@@ -880,11 +895,9 @@ public final class ComponentImplementation {
 
     private void addChildComponents() {
       for (BindingGraph subgraph : graph.subgraphs()) {
-        rootComponentImplementation()
-            .getComponentShard()
-            .addType(
-                TypeSpecKind.SUBCOMPONENT,
-                childComponentImplementationFactory.create(subgraph).generate());
+        topLevelImplementation().addType(
+            TypeSpecKind.COMPONENT_IMPL,
+            childComponentImplementationFactory.create(subgraph).generate());
       }
     }
 

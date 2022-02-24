@@ -129,6 +129,16 @@ public abstract class CompilerOptions {
    */
   public abstract boolean strictSuperficialValidation();
 
+  /**
+   * Returns {@code true} if the Dagger generated class should extend the {@code @Component}
+   * annotated interface/class.
+   *
+   * <p>The default value is {@code false}. This flag was introduced in Dagger 2.42 to allow users
+   * to switch back to the previous behavior ({@code true}) so that they can migrate incrementally.
+   * This flag will be removed in a future release.
+   */
+  public abstract boolean generatedClassExtendsComponent();
+
   /** Returns the number of bindings allowed per shard. */
   public int keysPerComponentShard(XTypeElement component) {
     return 3500;

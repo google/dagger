@@ -34,6 +34,7 @@ GenJavaTests(
         "//third_party/java/guava:testlib",
         "//third_party/java/truth",
         "//third_party/java/junit",
+        "//third_party/java/javapoet",
     ],
     # NOTE: This should not depend on Guava or jsr305 to ensure that Dagger can be
     # used without Guava and jsr305 deps.

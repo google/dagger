@@ -16,9 +16,14 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.XElementKt.isConstructor;
+import static androidx.room.compiler.processing.XElementKt.isMethod;
+import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.spi.model.BindingKind.MEMBERS_INJECTOR;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.CaseFormat;
@@ -26,12 +31,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import java.util.Optional;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementVisitor;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.ElementKindVisitor8;
 
 /**
  * A value object that represents a field in the generated Component class.
@@ -85,40 +84,25 @@ public abstract class FrameworkField {
 
   private static String frameworkFieldName(ContributionBinding binding) {
     if (binding.bindingElement().isPresent()) {
-      String name = BINDING_ELEMENT_NAME.visit(toJavac(binding.bindingElement().get()), binding);
+      String name = bindingElementName(binding.bindingElement().get());
       return binding.kind().equals(MEMBERS_INJECTOR) ? name + "MembersInjector" : name;
     }
     return KeyVariableNamer.name(binding.key());
   }
 
-  private static final ElementVisitor<String, Binding> BINDING_ELEMENT_NAME =
-      new ElementKindVisitor8<String, Binding>() {
-
-        @Override
-        protected String defaultAction(Element e, Binding p) {
-          throw new IllegalArgumentException("Unexpected binding " + p);
-        }
-
-        @Override
-        public String visitExecutableAsConstructor(ExecutableElement e, Binding p) {
-          return visit(e.getEnclosingElement(), p);
-        }
-
-        @Override
-        public String visitExecutableAsMethod(ExecutableElement e, Binding p) {
-          return e.getSimpleName().toString();
-        }
-
-        @Override
-        public String visitType(TypeElement e, Binding p) {
-          return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, e.getSimpleName().toString());
-        }
-
-        @Override
-        public String visitVariableAsParameter(VariableElement e, Binding p) {
-          return e.getSimpleName().toString();
-        }
-      };
+  private static String bindingElementName(XElement bindingElement) {
+    if (isConstructor(bindingElement)) {
+      return bindingElementName(bindingElement.getEnclosingElement());
+    } else if (isMethod(bindingElement)) {
+      return getSimpleName(bindingElement);
+    } else if (isTypeElement(bindingElement)) {
+      return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, getSimpleName(bindingElement));
+    } else if (isMethodParameter(bindingElement)) {
+      return getSimpleName(bindingElement);
+    } else {
+      throw new IllegalArgumentException("Unexpected binding " + bindingElement);
+    }
+  }
 
   public abstract ParameterizedTypeName type();
 

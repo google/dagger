@@ -44,6 +44,7 @@ import static dagger.spi.model.BindingKind.MULTIBOUND_SET;
 import static javax.lang.model.SourceVersion.isName;
 
 import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Joiner;
@@ -206,6 +207,10 @@ public class SourceFiles {
 
   public static ClassName membersInjectorNameForType(TypeElement typeElement) {
     return siblingClassName(typeElement, "_MembersInjector");
+  }
+
+  public static String memberInjectedFieldSignatureForVariable(XFieldElement field) {
+    return memberInjectedFieldSignatureForVariable(toJavac(field));
   }
 
   public static String memberInjectedFieldSignatureForVariable(VariableElement variableElement) {

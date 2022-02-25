@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen.kotlin;
 
-
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
@@ -27,6 +27,8 @@ import static kotlinx.metadata.Flag.Class.IS_DATA;
 import static kotlinx.metadata.Flag.Class.IS_OBJECT;
 import static kotlinx.metadata.Flag.IS_PRIVATE;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XFieldElement;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -58,8 +60,27 @@ public final class KotlinMetadataUtil {
    * Returns {@code true} if this element has the Kotlin Metadata annotation or if it is enclosed in
    * an element that does.
    */
+  public boolean hasMetadata(XElement element) {
+    return hasMetadata(toJavac(element));
+  }
+
+  /**
+   * Returns {@code true} if this element has the Kotlin Metadata annotation or if it is enclosed in
+   * an element that does.
+   */
   public boolean hasMetadata(Element element) {
     return isAnnotationPresent(closestEnclosingTypeElement(element), Metadata.class);
+  }
+
+  /**
+   * Returns the synthetic annotations of a Kotlin property.
+   *
+   * <p>Note that this method only looks for additional annotations in the synthetic property
+   * method, if any, of a Kotlin property and not for annotations in its backing field.
+   */
+  public ImmutableCollection<? extends AnnotationMirror> getSyntheticPropertyAnnotations(
+      XFieldElement fieldElement, ClassName annotationType) {
+    return getSyntheticPropertyAnnotations(toJavac(fieldElement), annotationType);
   }
 
   /**
@@ -76,6 +97,15 @@ public final class KotlinMetadataUtil {
         .map(methodElement ->
             getAnnotatedAnnotations(methodElement, annotationType).asList())
         .orElse(ImmutableList.of());
+  }
+
+  /**
+   * Returns {@code true} if the synthetic method for annotations is missing. This can occur when
+   * the Kotlin metadata of the property reports that it contains a synthetic method for annotations
+   * but such method is not found since it is synthetic and ignored by the processor.
+   */
+  public boolean isMissingSyntheticPropertyForAnnotations(XFieldElement field) {
+    return isMissingSyntheticPropertyForAnnotations(toJavac(field));
   }
 
   /**

@@ -259,9 +259,9 @@ final class BindingGraphConverter {
      * Returns the subpath from the root component to the matching {@code ancestor} of the current
      * component.
      */
-    private ComponentPath pathFromRootToAncestor(TypeElement ancestor) {
+    private ComponentPath pathFromRootToAncestor(XTypeElement ancestor) {
       for (ComponentPath componentPath : componentPaths) {
-        if (componentPath.currentComponent().java().equals(ancestor)) {
+        if (componentPath.currentComponent().xprocessing().equals(ancestor)) {
           return componentPath;
         }
       }
@@ -358,7 +358,7 @@ final class BindingGraphConverter {
     }
 
     private BindingNode bindingNode(
-        ResolvedBindings resolvedBindings, Binding binding, TypeElement owningComponent) {
+        ResolvedBindings resolvedBindings, Binding binding, XTypeElement owningComponent) {
       return BindingNode.create(
           pathFromRootToAncestor(owningComponent),
           binding,

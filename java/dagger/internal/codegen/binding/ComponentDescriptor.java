@@ -25,9 +25,8 @@ import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
-import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
-import static javax.lang.model.type.TypeKind.VOID;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
@@ -57,7 +56,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.lang.model.element.ExecutableElement;
 
 /**
  * A component declaration.
@@ -399,18 +397,10 @@ public abstract class ComponentDescriptor {
    * method.
    */
   static boolean isComponentContributionMethod(XMethodElement method) {
-    return isComponentContributionMethod(toJavac(method));
-  }
-
-  /**
-   * Returns {@code true} if a method could be a component entry point but not a members-injection
-   * method.
-   */
-  static boolean isComponentContributionMethod(ExecutableElement method) {
     return method.getParameters().isEmpty()
-        && !method.getReturnType().getKind().equals(VOID)
-        && !isTypeOf(TypeName.OBJECT, method.getEnclosingElement().asType())
-        && !NON_CONTRIBUTING_OBJECT_METHOD_NAMES.contains(method.getSimpleName().toString());
+        && !isVoid(method.getReturnType())
+        && !method.getEnclosingElement().getClassName().equals(TypeName.OBJECT)
+        && !NON_CONTRIBUTING_OBJECT_METHOD_NAMES.contains(getSimpleName(method));
   }
 
   /** Returns {@code true} if a method could be a component production entry point. */

@@ -16,10 +16,10 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableCollection;
@@ -28,7 +28,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import dagger.spi.model.Key;
-import javax.lang.model.element.TypeElement;
 
 /**
  * The collection of bindings that have been resolved for a key. For valid graphs, contains exactly
@@ -48,13 +47,13 @@ abstract class ResolvedBindings {
    * The {@link ContributionBinding}s for {@link #key()} indexed by the component that owns the
    * binding. Each key in the multimap is a part of the same component ancestry.
    */
-  abstract ImmutableSetMultimap<TypeElement, ContributionBinding> allContributionBindings();
+  abstract ImmutableSetMultimap<XTypeElement, ContributionBinding> allContributionBindings();
 
   /**
    * The {@link MembersInjectionBinding}s for {@link #key()} indexed by the component that owns the
-   * binding.  Each key in the map is a part of the same component ancestry.
+   * binding. Each key in the map is a part of the same component ancestry.
    */
-  abstract ImmutableMap<TypeElement, MembersInjectionBinding> allMembersInjectionBindings();
+  abstract ImmutableMap<XTypeElement, MembersInjectionBinding> allMembersInjectionBindings();
 
   /** The multibinding declarations for {@link #key()}. */
   abstract ImmutableSet<MultibindingDeclaration> multibindingDeclarations();
@@ -75,7 +74,7 @@ abstract class ResolvedBindings {
   public abstract boolean equals(Object other);
 
   /** All bindings for {@link #key()}, indexed by the component that owns the binding. */
-  final ImmutableSetMultimap<TypeElement, ? extends Binding> allBindings() {
+  final ImmutableSetMultimap<XTypeElement, ? extends Binding> allBindings() {
     return !allMembersInjectionBindings().isEmpty()
         ? allMembersInjectionBindings().asMultimap()
         : allContributionBindings();
@@ -100,7 +99,7 @@ abstract class ResolvedBindings {
 
   /** All bindings for {@link #key()} that are owned by a component. */
   ImmutableSet<? extends Binding> bindingsOwnedBy(ComponentDescriptor component) {
-    return allBindings().get(toJavac(component.typeElement()));
+    return allBindings().get(component.typeElement());
   }
 
   /**
@@ -117,7 +116,7 @@ abstract class ResolvedBindings {
   }
 
   /** The component that owns {@code binding}. */
-  final TypeElement owningComponent(ContributionBinding binding) {
+  final XTypeElement owningComponent(ContributionBinding binding) {
     checkArgument(
         contributionBindings().contains(binding),
         "binding is not resolved for %s: %s",
@@ -129,7 +128,7 @@ abstract class ResolvedBindings {
   /** Creates a {@link ResolvedBindings} for contribution bindings. */
   static ResolvedBindings forContributionBindings(
       Key key,
-      Multimap<TypeElement, ContributionBinding> contributionBindings,
+      Multimap<XTypeElement, ContributionBinding> contributionBindings,
       Iterable<MultibindingDeclaration> multibindings,
       Iterable<SubcomponentDeclaration> subcomponentDeclarations,
       Iterable<OptionalBindingDeclaration> optionalBindingDeclarations) {
@@ -152,7 +151,7 @@ abstract class ResolvedBindings {
     return new AutoValue_ResolvedBindings(
         key,
         ImmutableSetMultimap.of(),
-        ImmutableMap.of(toJavac(owningComponent.typeElement()), ownedMembersInjectionBinding),
+        ImmutableMap.of(owningComponent.typeElement(), ownedMembersInjectionBinding),
         ImmutableSet.of(),
         ImmutableSet.of(),
         ImmutableSet.of());

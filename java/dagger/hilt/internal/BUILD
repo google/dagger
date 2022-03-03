@@ -40,7 +40,6 @@ java_library(
         "GeneratedComponentManager.java",
         "GeneratedComponentManagerHolder.java",
     ],
-    # TODO(bcorso): Migrate these usages to the third_party/java/dagger alias.
     exports = [
         ":preconditions",
         ":unsafe_casts",

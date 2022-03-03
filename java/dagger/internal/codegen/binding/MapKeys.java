@@ -18,7 +18,6 @@ package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.XTypeKt.isArray;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -50,6 +49,7 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.xprocessing.XElements;
+import dagger.spi.model.DaggerAnnotation;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -132,7 +132,7 @@ public final class MapKeys {
    */
   public static CodeBlock getMapKeyExpression(
       ContributionBinding binding, ClassName requestingClass, XProcessingEnv processingEnv) {
-    XAnnotation mapKeyAnnotation = toXProcessing(binding.mapKeyAnnotation().get(), processingEnv);
+    XAnnotation mapKeyAnnotation = binding.mapKey().get().xprocessing();
     return MapKeyAccessibility.isMapKeyAccessibleFrom(
             mapKeyAnnotation, requestingClass.packageName())
         ? directMapKeyExpression(mapKeyAnnotation, processingEnv)
@@ -190,8 +190,8 @@ public final class MapKeys {
   public static Optional<MethodSpec> mapKeyFactoryMethod(
       ContributionBinding binding, XProcessingEnv processingEnv) {
     return binding
-        .mapKeyAnnotation()
-        .map(mapKey -> toXProcessing(mapKey, processingEnv))
+        .mapKey()
+        .map(DaggerAnnotation::xprocessing)
         .filter(mapKey -> !isMapKeyPubliclyAccessible(mapKey))
         .map(
             mapKey ->

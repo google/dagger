@@ -24,7 +24,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.base.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
@@ -57,7 +56,6 @@ import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -72,6 +70,7 @@ import dagger.internal.codegen.binding.ProductionBinding.ProductionKind;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.BindingKind;
+import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.DaggerType;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
@@ -244,8 +243,7 @@ public final class BindingFactory {
         .dependencies(
             dependencyRequestFactory.forRequiredResolvedVariables(
                 method.getParameters(), methodType.getParameterTypes()))
-        .wrappedMapKeyAnnotation(
-            wrapOptionalInEquivalence(getMapKey(method).map(XConverters::toJavac)));
+        .mapKey(getMapKey(method).map(DaggerAnnotation::from));
   }
 
   /**
@@ -456,7 +454,7 @@ public final class BindingFactory {
         .contributingModule(delegateDeclaration.contributingModule().get())
         .key(keyFactory.forDelegateBinding(delegateDeclaration, frameworkType))
         .dependencies(delegateDeclaration.delegateRequest())
-        .wrappedMapKeyAnnotation(delegateDeclaration.wrappedMapKey())
+        .mapKey(delegateDeclaration.mapKey())
         .kind(DELEGATE)
         .build();
   }

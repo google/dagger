@@ -17,26 +17,23 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.base.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
-import com.google.common.base.Equivalence;
 import com.google.common.collect.Iterables;
 import dagger.Binds;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.ContributionType.HasContributionType;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.DependencyRequest;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.element.AnnotationMirror;
 
 /** The declaration for a delegate binding established by a {@link Binds} method. */
 @AutoValue
@@ -44,7 +41,8 @@ public abstract class DelegateDeclaration extends BindingDeclaration
     implements HasContributionType {
   abstract DependencyRequest delegateRequest();
 
-  abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKey();
+  // Note: We're using DaggerAnnotation instead of XAnnotation for its equals/hashcode
+  abstract Optional<DaggerAnnotation> mapKey();
 
   @Memoized
   @Override
@@ -79,7 +77,7 @@ public abstract class DelegateDeclaration extends BindingDeclaration
           Optional.<XElement>of(bindsMethod),
           Optional.of(contributingModule),
           delegateRequest,
-          wrapOptionalInEquivalence(getMapKey(bindsMethod).map(XConverters::toJavac)));
+          getMapKey(bindsMethod).map(DaggerAnnotation::from));
     }
   }
 }

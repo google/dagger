@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.binding;
 
-import static dagger.internal.codegen.base.MoreAnnotationMirrors.unwrapOptionalEquivalence;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static java.util.Arrays.asList;
 
@@ -24,7 +23,6 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XElementKt;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.common.base.Equivalence;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.internal.codegen.base.ContributionType;
@@ -33,10 +31,10 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.xprocessing.XTypes;
 import dagger.spi.model.BindingKind;
+import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.Optional;
-import javax.lang.model.element.AnnotationMirror;
 
 /**
  * An abstract class for a value object representing the mechanism by which a {@link Key} can be
@@ -47,11 +45,8 @@ public abstract class ContributionBinding extends Binding implements HasContribu
   /** Returns the type that specifies this' nullability, absent if not nullable. */
   public abstract Optional<XType> nullableType();
 
-  public abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKeyAnnotation();
-
-  public final Optional<AnnotationMirror> mapKeyAnnotation() {
-    return unwrapOptionalEquivalence(wrappedMapKeyAnnotation());
-  }
+  // Note: We're using DaggerAnnotation instead of XAnnotation for its equals/hashcode
+  public abstract Optional<DaggerAnnotation> mapKey();
 
   /** If {@link #bindingElement()} is a method that returns a primitive type, returns that type. */
   public final Optional<XType> contributedPrimitiveType() {
@@ -131,8 +126,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
 
     public abstract B nullableType(Optional<XType> nullableType);
 
-    abstract B wrappedMapKeyAnnotation(
-        Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKeyAnnotation);
+    abstract B mapKey(Optional<DaggerAnnotation> mapKey);
 
     public abstract B kind(BindingKind kind);
 

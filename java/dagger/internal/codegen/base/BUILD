@@ -21,7 +21,6 @@ package(default_visibility = ["//:src"])
 
 SHARED_SOURCES = [
     "ClearableCache.java",
-    "MoreAnnotationMirrors.java",
 ]
 
 java_library(
@@ -56,8 +55,4 @@ java_library(
     name = "shared",
     srcs = SHARED_SOURCES,
     tags = ["maven:merged"],
-    deps = [
-        "//third_party/java/auto:common",
-        "//third_party/java/guava/base",
-    ],
 )

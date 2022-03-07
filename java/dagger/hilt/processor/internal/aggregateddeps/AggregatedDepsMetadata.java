@@ -60,7 +60,7 @@ public abstract class AggregatedDepsMetadata {
 
   abstract DependencyType dependencyType();
 
-  abstract TypeElement dependency();
+  public abstract TypeElement dependency();
 
   public abstract ImmutableSet<TypeElement> replacedDependencies();
 

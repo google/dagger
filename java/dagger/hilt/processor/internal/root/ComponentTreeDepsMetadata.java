@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsMetadata;
 import dagger.hilt.processor.internal.root.ir.ComponentTreeDepsIr;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -105,6 +106,14 @@ abstract class ComponentTreeDepsMetadata {
         ir.getEarlyEntryPointDeps().stream()
             .map(it -> elements.getTypeElement(it.canonicalName()))
             .collect(toImmutableSet()));
+  }
+
+  /** Returns all modules included in a component tree deps. */
+  public ImmutableSet<TypeElement> modules(Elements elements) {
+    return AggregatedDepsMetadata.from(aggregatedDeps(), elements).stream()
+        .filter(AggregatedDepsMetadata::isModule)
+        .map(AggregatedDepsMetadata::dependency)
+        .collect(toImmutableSet());
   }
 
   static ComponentTreeDepsMetadata create(

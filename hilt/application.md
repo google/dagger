@@ -24,6 +24,13 @@ Just like other Hilt [Android entry points](android-entry-point.md),
 Applications are members injected as well. This means you can use injected
 fields in the Application after `super.onCreate()` has been called.
 
+**Note:** Since all injected fields are created at the same time in `onCreate`,
+if an object is only needed later or conditionally, remember that you can use
+a `Provider` to defer injection. Especially in the `Application` class which is
+on the critical startup path, avoiding unnecessary injections can be important
+to performance.
+{: .c-callouts__note }
+
 For example, take the class called `MyApplication` that extends
 `MyBaseApplication` and has a member variable `Bar`:
 

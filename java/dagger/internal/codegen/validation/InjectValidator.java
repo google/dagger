@@ -39,6 +39,7 @@ import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.binding.InjectionAnnotations;
@@ -386,14 +387,18 @@ public final class InjectValidator implements ClearableCache {
       checkInjectIntoPrivateClass(typeElement, builder);
       checkInjectIntoKotlinObject(typeElement, builder);
     }
-    if (typeElement.getSuperType() != null) {
-      superficialValidation.validateSuperTypeOf(typeElement);
-      ValidationReport report =
-          validateForMembersInjection(typeElement.getSuperType().getTypeElement());
-      if (!report.isClean()) {
-        builder.addSubreport(report);
-      }
-    }
+
+    Optional.ofNullable(typeElement.getSuperType())
+        .filter(supertype -> !supertype.getTypeName().equals(TypeName.OBJECT))
+        .ifPresent(
+            supertype -> {
+              superficialValidation.validateSuperTypeOf(typeElement);
+              ValidationReport report = validateForMembersInjection(supertype.getTypeElement());
+              if (!report.isClean()) {
+                builder.addSubreport(report);
+              }
+            });
+
     return builder.build();
   }
 

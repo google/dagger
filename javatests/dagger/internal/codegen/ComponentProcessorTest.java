@@ -1117,7 +1117,7 @@ public class ComponentProcessorTest {
         "interface AComponent {",
         "  A a();",
         "}");
-    JavaFileObject bComponentFile = JavaFileObjects.forSourceLines("test.AComponent",
+    JavaFileObject bComponentFile = JavaFileObjects.forSourceLines("test.BComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -1159,7 +1159,7 @@ public class ComponentProcessorTest {
                 "",
                 "  @SuppressWarnings(\"unchecked\")",
                 "  private void initialize(final AComponent aComponentParam) {",
-                "    this.aProvider = new test_AComponent_a(aComponentParam);",
+                "    this.aProvider = new AProvider(aComponentParam);",
                 "  }")
             .addLines(
                 "  @Override",
@@ -1182,14 +1182,14 @@ public class ComponentProcessorTest {
                 "  }")
             .addLinesIn(
                 DEFAULT_MODE,
-                "  private static final class test_AComponent_a implements Provider<A> {",
+                "  private static final class AProvider implements Provider<A> {",
                 "    private final AComponent aComponent;",
                 "    ",
-                "    test_AComponent_a(AComponent aComponent) {",
+                "    AProvider(AComponent aComponent) {",
                 "        this.aComponent = aComponent;",
                 "    }",
                 "    ",
-                "    @Override()",
+                "    @Override",
                 "    public A get() {",
                 "      return Preconditions.checkNotNullFromComponent(aComponent.a());",
                 "    }",
@@ -1218,6 +1218,363 @@ public class ComponentProcessorTest {
     assertThat(compilation)
         .generatedSourceFile("test.DaggerBComponent")
         .containsElementsIn(generatedComponent);
+  }
+
+  @Test public void primitiveComponentDependency() {
+    JavaFileObject bFile = JavaFileObjects.forSourceLines("test.B",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "import javax.inject.Provider;",
+        "",
+        "final class B {",
+        "  @Inject B(Provider<Integer> i) {}",
+        "}");
+    JavaFileObject intComponentFile = JavaFileObjects.forSourceLines("test.IntComponent",
+        "package test;",
+        "",
+        "interface IntComponent {",
+        "  int i();",
+        "}");
+    JavaFileObject bComponentFile = JavaFileObjects.forSourceLines("test.BComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = IntComponent.class)",
+        "interface BComponent {",
+        "  B b();",
+        "}");
+    JavaFileObject generatedComponent =
+        compilerMode
+            .javaFileBuilder("test.DaggerBComponent")
+            .addLines(
+                "package test;",
+                "",
+                GeneratedLines.generatedAnnotations(),
+                "final class DaggerBComponent implements BComponent {")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "  private final IntComponent intComponent;",
+                "  private final DaggerBComponent bComponent = this;",
+                "  private Provider<Integer> iProvider;",
+                "",
+                "  private DaggerBComponent(IntComponent intComponentParam) {",
+                "    this.intComponent = intComponentParam;",
+                "    initialize(intComponentParam);",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final IntComponent intComponentParam) {",
+                "    this.iProvider = new SwitchingProvider<>(bComponent, 0);",
+                "  }")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "  private Provider<Integer> iProvider;",
+                "",
+                "  private DaggerBComponent(IntComponent intComponentParam) {",
+                "    initialize(intComponentParam);",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final IntComponent intComponentParam) {",
+                "    this.iProvider = new IProvider(intComponentParam);",
+                "  }")
+            .addLines(
+                "  @Override",
+                "  public B b() {",
+                "    return new B(iProvider);",
+                "  }",
+                "",
+                "  static final class Builder {",
+                "    private IntComponent intComponent;",
+                "",
+                "    public Builder intComponent(IntComponent intComponent) {",
+                "      this.intComponent = Preconditions.checkNotNull(intComponent);",
+                "      return this;",
+                "    }",
+                "",
+                "    public BComponent build() {",
+                "      Preconditions.checkBuilderRequirement(intComponent, IntComponent.class);",
+                "      return new DaggerBComponent(intComponent);",
+                "    }",
+                "  }")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "  private static final class IProvider implements Provider<Integer> {",
+                "    private final IntComponent intComponent;",
+                "    ",
+                "    IProvider(IntComponent intComponent) {",
+                "        this.intComponent = intComponent;",
+                "    }",
+                "    ",
+                "    @Override",
+                "    public Integer get() {",
+                "      return intComponent.i();",
+                "    }",
+                "  }",
+                "}")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "  private static final class SwitchingProvider<T> implements Provider<T> {",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    @Override",
+                "    public T get() {",
+                "      switch (id) {",
+                "        case 0:",
+                "          return (T) (Integer) bComponent.intComponent.i();",
+                "        default:",
+                "          throw new AssertionError(id);",
+                "      }",
+                "    }",
+                "  }")
+            .build();
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts())
+            .compile(bFile, intComponentFile, bComponentFile);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerBComponent")
+        .containsElementsIn(generatedComponent);
+  }
+
+
+  @Test public void arrayComponentDependency() {
+    JavaFileObject bFile = JavaFileObjects.forSourceLines("test.B",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "import javax.inject.Provider;",
+        "",
+        "final class B {",
+        "  @Inject B(Provider<String[]> i) {}",
+        "}");
+    JavaFileObject arrayComponentFile = JavaFileObjects.forSourceLines("test.ArrayComponent",
+        "package test;",
+        "",
+        "interface ArrayComponent {",
+        "  String[] strings();",
+        "}");
+    JavaFileObject bComponentFile = JavaFileObjects.forSourceLines("test.BComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = ArrayComponent.class)",
+        "interface BComponent {",
+        "  B b();",
+        "}");
+    JavaFileObject generatedComponent =
+        compilerMode
+            .javaFileBuilder("test.DaggerBComponent")
+            .addLines(
+                "package test;",
+                "",
+                GeneratedLines.generatedAnnotations(),
+                "final class DaggerBComponent implements BComponent {")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "  private final ArrayComponent arrayComponent;",
+                "  private final DaggerBComponent bComponent = this;",
+                "  private Provider<String[]> stringsProvider;",
+                "",
+                "  private DaggerBComponent(ArrayComponent arrayComponentParam) {",
+                "    this.arrayComponent = arrayComponentParam;",
+                "    initialize(arrayComponentParam);",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final ArrayComponent arrayComponentParam) {",
+                "    this.stringsProvider = new SwitchingProvider<>(bComponent, 0);",
+                "  }")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "  private Provider<String[]> stringsProvider;",
+                "",
+                "  private DaggerBComponent(ArrayComponent arrayComponentParam) {",
+                "    initialize(arrayComponentParam);",
+                "  }",
+                "",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize(final ArrayComponent arrayComponentParam) {",
+                "    this.stringsProvider = new StringsProvider(arrayComponentParam);",
+                "  }")
+            .addLines(
+                "  @Override",
+                "  public B b() {",
+                "    return new B(stringsProvider);",
+                "  }",
+                "",
+                "  static final class Builder {",
+                "    private ArrayComponent arrayComponent;",
+                "",
+                "    public Builder arrayComponent(ArrayComponent arrayComponent) {",
+                "      this.arrayComponent = Preconditions.checkNotNull(arrayComponent);",
+                "      return this;",
+                "    }",
+                "",
+                "    public BComponent build() {",
+                "      Preconditions.checkBuilderRequirement(",
+                "          arrayComponent, ArrayComponent.class);",
+                "      return new DaggerBComponent(arrayComponent);",
+                "    }",
+                "  }")
+            .addLinesIn(
+                DEFAULT_MODE,
+                "  private static final class StringsProvider implements Provider<String[]> {",
+                "    private final ArrayComponent arrayComponent;",
+                "    ",
+                "    StringsProvider(ArrayComponent arrayComponent) {",
+                "        this.arrayComponent = arrayComponent;",
+                "    }",
+                "    ",
+                "    @Override",
+                "    public String[] get() {",
+                "      return Preconditions.checkNotNullFromComponent(arrayComponent.strings());",
+                "    }",
+                "  }",
+                "}")
+            .addLinesIn(
+                FAST_INIT_MODE,
+                "  private static final class SwitchingProvider<T> implements Provider<T> {",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    @Override",
+                "    public T get() {",
+                "      switch (id) {",
+                "        case 0:",
+                "          return (T) Preconditions.checkNotNullFromComponent(",
+                "              bComponent.arrayComponent.strings());",
+                "        default:",
+                "          throw new AssertionError(id);",
+                "      }",
+                "    }",
+                "  }")
+            .build();
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts())
+            .compile(bFile, arrayComponentFile, bComponentFile);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerBComponent")
+        .containsElementsIn(generatedComponent);
+  }
+
+  @Test public void dependencyNameCollision() {
+    JavaFileObject a1 = JavaFileObjects.forSourceLines("pkg1.A",
+        "package pkg1;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "public final class A {",
+        "  @Inject A() {}",
+        "}");
+    JavaFileObject a2 = JavaFileObjects.forSourceLines("pkg2.A",
+        "package pkg2;",
+        "",
+        "import javax.inject.Inject;",
+        "",
+        "public final class A {",
+        "  @Inject A() {}",
+        "}");
+    JavaFileObject a1Component = JavaFileObjects.forSourceLines("pkg1.AComponent",
+        "package pkg1;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component",
+        "public interface AComponent {",
+        "  A a();",
+        "}");
+    JavaFileObject a2Component = JavaFileObjects.forSourceLines("pkg2.AComponent",
+        "package pkg2;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component",
+        "public interface AComponent {",
+        "  A a();",
+        "}");
+    JavaFileObject bComponent = JavaFileObjects.forSourceLines("test.BComponent",
+        "package test;",
+        "",
+        "import dagger.Component;",
+        "",
+        "@Component(dependencies = {pkg1.AComponent.class, pkg2.AComponent.class})",
+        "interface BComponent {",
+        "  B b();",
+        "}");
+    JavaFileObject b = JavaFileObjects.forSourceLines("test.B",
+        "package test;",
+        "",
+        "import javax.inject.Inject;",
+        "import javax.inject.Provider;",
+        "",
+        "final class B {",
+        "  @Inject B(Provider<pkg1.A> a1, Provider<pkg2.A> a2) {}",
+        "}");
+
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts())
+            .compile(a1, a2, b, a1Component, a2Component, bComponent);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerBComponent")
+        .containsElementsIn(
+            compilerMode
+                .javaFileBuilder("test.DaggerBComponent")
+                .addLines(
+                    "package test;",
+                    "",
+                    GeneratedLines.generatedAnnotations(),
+                    "final class DaggerBComponent implements BComponent {")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  private static final class AProvider implements Provider<A> {",
+                    "    private final AComponent aComponent;",
+                    "",
+                    "    AProvider(AComponent aComponent) {",
+                    "      this.aComponent = aComponent;",
+                    "    }",
+                    "",
+                    "    @Override",
+                    "    public A get() {",
+                    "      return Preconditions.checkNotNullFromComponent(aComponent.a());",
+                    "    }",
+                    "  }",
+                    "",
+                    "  private static final class AProvider2 implements Provider<pkg2.A> {",
+                    "    private final pkg2.AComponent aComponent;",
+                    "",
+                    "    AProvider2(pkg2.AComponent aComponent) {",
+                    "      this.aComponent = aComponent;",
+                    "    }",
+                    "",
+                    "    @Override",
+                    "    public pkg2.A get() {",
+                    "      return Preconditions.checkNotNullFromComponent(aComponent.a());",
+                    "    }",
+                    "  }")
+                .addLinesIn(
+                    FAST_INIT_MODE,
+                    "  private static final class SwitchingProvider<T> implements Provider<T> {",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    @Override",
+                    "    public T get() {",
+                    "      switch (id) {",
+                    "        case 0:",
+                    "          return (T)",
+                    "              Preconditions.checkNotNullFromComponent(",
+                    "                  bComponent.aComponent.a());",
+                    "        case 1:",
+                    "          return (T)",
+                    "              Preconditions.checkNotNullFromComponent(",
+                    "                  bComponent.aComponent2.a());",
+                    "        default:",
+                    "          throw new AssertionError(id);",
+                    "      }",
+                    "    }",
+                    "  }")
+                .build());
   }
 
   @Test public void moduleNameCollision() {
@@ -1374,7 +1731,7 @@ public class ComponentProcessorTest {
             "}");
     JavaFileObject bComponentFile =
         JavaFileObjects.forSourceLines(
-            "test.AComponent",
+            "test.BComponent",
             "package test;",
             "",
             "import dagger.Component;",

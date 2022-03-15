@@ -16,6 +16,7 @@
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
+
 def compiler_test(name, size = "large", compiler_deps = None, **kwargs):
     """Generates a java_test that tests java compilation with the given compiler deps.
 

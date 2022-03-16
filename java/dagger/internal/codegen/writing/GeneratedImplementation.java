@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -25,6 +26,12 @@ import dagger.internal.codegen.writing.ComponentImplementation.TypeSpecKind;
 
 /** Represents the implementation of a generated class. */
 public interface GeneratedImplementation {
+  /** Returns the name of the component. */
+  ClassName name();
+
+  /** Returns a new, unique method name for the component based on the given name. */
+  String getUniqueClassName(String name);
+
   /** Adds the given field to the generated implementation. */
   void addField(FieldSpecKind fieldKind, FieldSpec fieldSpec);
 

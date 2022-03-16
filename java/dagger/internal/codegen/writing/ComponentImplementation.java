@@ -23,6 +23,7 @@ import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Suppliers.memoize;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
@@ -189,11 +190,11 @@ public final class ComponentImplementation {
     /** A provider class for a component provision. */
     COMPONENT_PROVISION_FACTORY,
 
-    /** A class for a component shard. */
-    COMPONENT_SHARD_TYPE,
-
     /** A class for the component/subcomponent or subcomponent builder implementation. */
-    COMPONENT_IMPL
+    COMPONENT_IMPL,
+
+    /** A class for a component shard. */
+    COMPONENT_SHARD_TYPE
   }
 
   /**
@@ -211,7 +212,7 @@ public final class ComponentImplementation {
     ImmutableList<ImmutableList<Binding>> partitions = bindingPartitions(graph, compilerOptions);
     ImmutableMap.Builder<Binding, ShardImplementation> builder = ImmutableMap.builder();
     for (int i = 0; i < partitions.size(); i++) {
-      ShardImplementation shard = i == 0 ? componentShard : componentShard.createShard("Shard" + i);
+      ShardImplementation shard = i == 0 ? componentShard : componentShard.createShard();
       partitions.get(i).forEach(binding -> builder.put(binding, shard));
     }
     return builder.build();
@@ -260,7 +261,7 @@ public final class ComponentImplementation {
   private static final int STATEMENTS_PER_METHOD = 100;
 
   private final ShardImplementation componentShard;
-  private final ImmutableMap<Binding, ShardImplementation> shardsByBinding;
+  private final Supplier<ImmutableMap<Binding, ShardImplementation>> shardsByBinding;
   private final Map<ShardImplementation, FieldSpec> shardFieldsByImplementation = new HashMap<>();
   private final List<CodeBlock> shardInitializations = new ArrayList<>();
   private final List<CodeBlock> shardCancellations = new ArrayList<>();
@@ -314,7 +315,8 @@ public final class ComponentImplementation {
         .forEach(method -> componentShard.componentMethodNames.claim(method.getSimpleName()));
 
     // Create the shards for this component, indexed by binding.
-    this.shardsByBinding = createShardsByBinding(componentShard, graph, compilerOptions);
+    this.shardsByBinding =
+        memoize(() -> createShardsByBinding(componentShard, graph, compilerOptions));
 
     // Create and claim the fields for this and all ancestor components stored as fields.
     this.componentFieldsByImplementation =
@@ -335,8 +337,9 @@ public final class ComponentImplementation {
    * <p>Each set of {@link CompilerOptions#keysPerShard()} will get its own shard instance.
    */
   public ShardImplementation shardImplementation(Binding binding) {
-    checkState(shardsByBinding.containsKey(binding), "No shard in %s for: %s", name(), binding);
-    return shardsByBinding.get(binding);
+    checkState(
+        shardsByBinding.get().containsKey(binding), "No shard in %s for: %s", name(), binding);
+    return shardsByBinding.get().get(binding);
   }
 
   /** Returns the {@link GeneratedImplementation} for the top-level generated class. */
@@ -499,9 +502,14 @@ public final class ComponentImplementation {
                               .build()));
     }
 
-    private ShardImplementation createShard(String shardName) {
+    private ShardImplementation createShard() {
       checkState(isComponentShard(), "Only the componentShard can create other shards.");
-      return new ShardImplementation(name.nestedClass(shardName));
+      return new ShardImplementation(
+          topLevelImplementation()
+              .name()
+              .nestedClass(
+                  topLevelImplementation()
+                      .getUniqueClassName(getComponentShard().name().simpleName() + "Shard")));
     }
 
     /** Returns the {@link ComponentImplementation} that owns this shard. */
@@ -552,7 +560,7 @@ public final class ComponentImplementation {
       return graph.componentDescriptor();
     }
 
-    /** Returns the name of the component. */
+    @Override
     public ClassName name() {
       return name;
     }
@@ -683,7 +691,7 @@ public final class ComponentImplementation {
       return uniqueMethodName(request, KeyVariableNamer.name(request.key()));
     }
 
-    /** Returns a new, unique method name for the component based on the given name. */
+    @Override
     public String getUniqueClassName(String name) {
       return componentClassNames.getUniqueName(name);
     }
@@ -752,16 +760,12 @@ public final class ComponentImplementation {
     }
 
     private ImmutableSet<Modifier> modifiers() {
-      if (!isComponentShard()) {
-        // TODO(bcorso): Consider making shards static and unnested too?
-        return ImmutableSet.of(PRIVATE, FINAL);
-      } else if (isNested()) {
-        return ImmutableSet.of(PRIVATE, STATIC, FINAL);
-      }
-      return graph.componentTypeElement().isPublic()
-          // TODO(ronshapiro): perhaps all generated components should be non-public?
-          ? ImmutableSet.of(PUBLIC, FINAL)
-          : ImmutableSet.of(FINAL);
+      return isNested() || !isComponentShard()
+          ? ImmutableSet.of(PRIVATE, STATIC, FINAL)
+          : graph.componentTypeElement().isPublic()
+              // TODO(ronshapiro): perhaps all generated components should be non-public?
+              ? ImmutableSet.of(PUBLIC, FINAL)
+              : ImmutableSet.of(FINAL);
     }
 
     private void addCreator() {
@@ -813,26 +817,29 @@ public final class ComponentImplementation {
       }
       validateMethodNameDoesNotOverrideGeneratedCreator(creatorKind.methodName());
       claimMethodName(creatorKind.methodName());
-      MethodSpec creatorFactoryMethod =
-          methodBuilder(creatorKind.methodName())
-              .addModifiers(PUBLIC, STATIC)
-              .returns(creatorType)
-              .addStatement("return new $T()", getCreatorName())
-              .build();
-      topLevelImplementation().addMethod(MethodSpecKind.BUILDER_METHOD, creatorFactoryMethod);
+      topLevelImplementation()
+          .addMethod(
+              MethodSpecKind.BUILDER_METHOD,
+              methodBuilder(creatorKind.methodName())
+                  .addModifiers(PUBLIC, STATIC)
+                  .returns(creatorType)
+                  .addStatement("return new $T()", getCreatorName())
+                  .build());
       if (noArgFactoryMethod && canInstantiateAllRequirements()) {
         validateMethodNameDoesNotOverrideGeneratedCreator("create");
         claimMethodName("create");
-        topLevelImplementation().addMethod(
-            MethodSpecKind.BUILDER_METHOD,
-            methodBuilder("create")
-                .returns(graph.componentTypeElement().getClassName())
-                .addModifiers(PUBLIC, STATIC)
-                .addStatement("return new $L().$L()", creatorKind.typeName(), factoryMethodName)
-                .build());
+        topLevelImplementation()
+            .addMethod(
+                MethodSpecKind.BUILDER_METHOD,
+                methodBuilder("create")
+                    .returns(graph.componentTypeElement().getClassName())
+                    .addModifiers(PUBLIC, STATIC)
+                    .addStatement("return new $L().$L()", creatorKind.typeName(), factoryMethodName)
+                    .build());
       }
     }
 
+    // TODO(bcorso): This can be removed once we delete generatedClassExtendsComponent flag.
     private void validateMethodNameDoesNotOverrideGeneratedCreator(String creatorName) {
       // Check if there is any client added method has the same signature as generated creatorName.
       MoreElements.getAllMethods(toJavac(graph.componentTypeElement()), types, elements).stream()
@@ -895,19 +902,20 @@ public final class ComponentImplementation {
 
     private void addChildComponents() {
       for (BindingGraph subgraph : graph.subgraphs()) {
-        topLevelImplementation().addType(
-            TypeSpecKind.COMPONENT_IMPL,
-            childComponentImplementationFactory.create(subgraph).generate());
+        topLevelImplementation()
+            .addType(
+                TypeSpecKind.COMPONENT_IMPL,
+                childComponentImplementationFactory.create(subgraph).generate());
       }
     }
 
     private void addShards() {
       // Generate all shards and add them to this component implementation.
-      for (ShardImplementation shard : ImmutableSet.copyOf(shardsByBinding.values())) {
+      for (ShardImplementation shard : ImmutableSet.copyOf(shardsByBinding.get().values())) {
         if (shardFieldsByImplementation.containsKey(shard)) {
           addField(FieldSpecKind.COMPONENT_SHARD_FIELD, shardFieldsByImplementation.get(shard));
           TypeSpec shardTypeSpec = shard.generate();
-          addType(TypeSpecKind.COMPONENT_SHARD_TYPE, shardTypeSpec);
+          topLevelImplementation().addType(TypeSpecKind.COMPONENT_SHARD_TYPE, shardTypeSpec);
         }
       }
     }
@@ -917,25 +925,26 @@ public final class ComponentImplementation {
       MethodSpec.Builder constructor = constructorBuilder().addModifiers(PRIVATE);
       ImmutableList<ParameterSpec> parameters = constructorParameters.values().asList();
 
+      // Add a constructor parameter and initialization for each component field. We initialize
+      // these fields immediately so that we don't need to be pass them to each initialize method
+      // and shard constructor.
+      componentFieldsByImplementation()
+          .forEach(
+              (componentImplementation, field) -> {
+                if (isComponentShard()
+                    && componentImplementation.equals(ComponentImplementation.this)) {
+                  // For the self-referenced component field,
+                  // just initialize it in the initializer.
+                  addField(
+                      FieldSpecKind.COMPONENT_REQUIREMENT_FIELD,
+                      field.toBuilder().initializer("this").build());
+                } else {
+                  addField(FieldSpecKind.COMPONENT_REQUIREMENT_FIELD, field);
+                  constructor.addStatement("this.$1N = $1N", field);
+                  constructor.addParameter(field.type, field.name);
+                }
+              });
       if (isComponentShard()) {
-        // Add a constructor parameter and initialization for each component field. We initialize
-        // these fields immediately so that we don't need to be pass them to each initialize method
-        // and shard constructor.
-        componentFieldsByImplementation()
-            .forEach(
-                (componentImplementation, field) -> {
-                  if (componentImplementation.equals(ComponentImplementation.this)) {
-                    // For the self-referenced component field,
-                    // just initialize it in the initializer.
-                    addField(
-                        FieldSpecKind.COMPONENT_REQUIREMENT_FIELD,
-                        field.toBuilder().initializer("this").build());
-                  } else {
-                    addField(FieldSpecKind.COMPONENT_REQUIREMENT_FIELD, field);
-                    constructor.addStatement("this.$1N = $1N", field);
-                    constructor.addParameter(field.type, field.name);
-                  }
-                });
         constructor.addCode(CodeBlocks.concat(componentRequirementInitializations));
       }
       constructor.addParameters(parameters);
@@ -978,8 +987,19 @@ public final class ComponentImplementation {
         // This initialization is called from the componentShard, so we need to use those args.
         CodeBlock componentArgs =
             parameterNames(componentShard.constructorParameters.values().asList());
-        FieldSpec shardField = shardFieldsByImplementation.get(this);
-        shardInitializations.add(CodeBlock.of("$N = new $T($L);", shardField, name, componentArgs));
+        CodeBlock componentFields =
+            componentFieldsByImplementation().values().stream()
+                .map(field -> CodeBlock.of("$N", field))
+                .collect(CodeBlocks.toParametersCodeBlock());
+        shardInitializations.add(
+            CodeBlock.of(
+                "$N = new $T($L);",
+                shardFieldsByImplementation.get(this),
+                name,
+                componentArgs.isEmpty()
+                    ? componentFields
+                    : CodeBlocks.makeParametersCodeBlock(
+                        ImmutableList.of(componentFields, componentArgs))));
       }
 
       addMethod(MethodSpecKind.CONSTRUCTOR, constructor.build());

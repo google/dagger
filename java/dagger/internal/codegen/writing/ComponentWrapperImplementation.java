@@ -25,9 +25,11 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind;
 import dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind;
@@ -38,6 +40,8 @@ import javax.inject.Inject;
 @PerGeneratedFile
 public final class ComponentWrapperImplementation implements GeneratedImplementation {
   private final BindingGraph graph;
+  private final ClassName name;
+  private final UniqueNameSet componentClassNames = new UniqueNameSet();
   private final ListMultimap<FieldSpecKind, FieldSpec> fieldSpecsMap =
       MultimapBuilder.enumKeys(FieldSpecKind.class).arrayListValues().build();
   private final ListMultimap<MethodSpecKind, MethodSpec> methodSpecsMap =
@@ -48,6 +52,17 @@ public final class ComponentWrapperImplementation implements GeneratedImplementa
   @Inject
   ComponentWrapperImplementation(@TopLevel BindingGraph graph) {
     this.graph = graph;
+    this.name = ComponentNames.getTopLevelClassName(graph.componentDescriptor());
+  }
+
+  @Override
+  public ClassName name() {
+    return name;
+  }
+
+  @Override
+  public String getUniqueClassName(String name) {
+    return componentClassNames.getUniqueName(name);
   }
 
   @Override

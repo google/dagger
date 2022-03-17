@@ -19,5 +19,6 @@ util/run-local-gradle-tests.sh
 util/run-local-gradle-android-tests.sh "4.1.0"
 util/run-local-gradle-android-tests.sh "4.2.0"
 util/run-local-gradle-android-tests.sh "7.0.0"
+util/run-local-gradle-android-tests.sh "7.1.2"
 
 

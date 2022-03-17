@@ -37,6 +37,16 @@ android {
             shrinkResources true
         }
     }
+    flavorDimensions "tier"
+    productFlavors {
+        free {
+            dimension "tier"
+        }
+        pro {
+            dimension "tier"
+            matchingFallbacks = ["free"]
+        }
+    }
     compileOptions {
         sourceCompatibility 1.8
         targetCompatibility 1.8

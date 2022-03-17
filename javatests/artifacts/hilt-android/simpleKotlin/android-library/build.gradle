@@ -21,6 +21,15 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    flavorDimensions "tier"
+    productFlavors {
+        free {
+            dimension "tier"
+        }
+        premium {
+            dimension "tier"
+        }
+    }
 }
 
 dependencies {

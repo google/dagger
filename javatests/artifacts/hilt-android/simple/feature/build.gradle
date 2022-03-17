@@ -33,6 +33,15 @@ android {
         sourceCompatibility 1.8
         targetCompatibility 1.8
     }
+    flavorDimensions "tier"
+    productFlavors {
+        free {
+            dimension "tier"
+        }
+        premium {
+            dimension "tier"
+        }
+    }
 }
 
 kapt {

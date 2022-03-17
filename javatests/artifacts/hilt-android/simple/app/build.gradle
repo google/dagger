@@ -72,6 +72,16 @@ android {
             java.srcDirs += getAdditionalTestDirs("androidTest")
         }
     }
+    flavorDimensions "tier"
+    productFlavors {
+        free {
+            dimension "tier"
+        }
+        pro {
+            dimension "tier"
+            matchingFallbacks = ["free"]
+        }
+    }
 }
 
 hilt {

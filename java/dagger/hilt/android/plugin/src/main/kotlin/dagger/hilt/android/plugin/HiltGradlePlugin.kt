@@ -16,8 +16,6 @@
 
 package dagger.hilt.android.plugin
 
-import com.android.build.api.attributes.BuildTypeAttr
-import com.android.build.api.attributes.ProductFlavorAttr
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.gradle.AppExtension
@@ -40,9 +38,9 @@ import javax.inject.Inject
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
-import org.gradle.api.attributes.Usage
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.process.CommandLineArgumentProvider
@@ -97,8 +95,8 @@ class HiltGradlePlugin @Inject constructor(
       // Java/Kotlin library projects offer an artifact of type 'jar'.
       spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "jar")
       // Android library projects (with or without Kotlin) offer an artifact of type
-      // 'processed-jar', which AGP can offer as a jar.
-      spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "processed-jar")
+      // 'android-classes', which AGP can offer as a jar.
+      spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "android-classes")
       spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, DAGGER_ARTIFACT_TYPE_VALUE)
     }
     registerTransform(CopyTransform::class.java) { spec ->
@@ -300,30 +298,8 @@ class HiltGradlePlugin @Inject constructor(
     val hiltCompileConfiguration = project.configurations.create(
       "hiltCompileOnly${variant.name.capitalize()}"
     ).apply {
-      // The runtime config of the test APK differs from the tested one.
-      @Suppress("DEPRECATION") // Older variant API is deprecated
-      if (variant is com.android.build.gradle.api.TestVariant) {
-        extendsFrom(variant.testedVariant.runtimeConfiguration)
-      }
-      extendsFrom(variant.runtimeConfiguration)
       isCanBeConsumed = false
       isCanBeResolved = true
-      attributes { attrContainer ->
-        attrContainer.attribute(
-          Usage.USAGE_ATTRIBUTE,
-          project.objects.named(Usage::class.java, Usage.JAVA_RUNTIME)
-        )
-        attrContainer.attribute(
-          BuildTypeAttr.ATTRIBUTE,
-          project.objects.named(BuildTypeAttr::class.java, variant.buildType.name)
-        )
-        variant.productFlavors.forEach { flavor ->
-          attrContainer.attribute(
-            Attribute.of(flavor.dimension!!, ProductFlavorAttr::class.java),
-            project.objects.named(ProductFlavorAttr::class.java, flavor.name)
-          )
-        }
-      }
     }
     // Add the JavaCompile task classpath and output dir to the config, the task's classpath
     // will contain:
@@ -341,9 +317,20 @@ class HiltGradlePlugin @Inject constructor(
     )
 
     fun getInputClasspath(artifactAttributeValue: String) =
-      hiltCompileConfiguration.incoming.artifactView { view ->
-        view.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, artifactAttributeValue)
-      }.files
+      mutableListOf<Configuration>().apply {
+        @Suppress("DEPRECATION") // Older variant API is deprecated
+        if (variant is com.android.build.gradle.api.TestVariant) {
+          add(variant.testedVariant.runtimeConfiguration)
+        }
+        add(variant.runtimeConfiguration)
+        add(hiltCompileConfiguration)
+      }.map { configuration ->
+        configuration.incoming.artifactView { view ->
+          view.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, artifactAttributeValue)
+        }.files
+      }.let {
+        project.files(*it.toTypedArray())
+      }
 
     val aggregatingTask = project.tasks.register(
       "hiltAggregateDeps${variant.name.capitalize()}",

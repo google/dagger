@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        agp: ['4.1.0', '4.2.0', '7.0.0']
+        agp: ['4.1.0', '4.2.0', '7.0.0', '7.1.2']
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/artifact-android-local-tests

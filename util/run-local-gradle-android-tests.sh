@@ -18,6 +18,6 @@ for project in "${ANDROID_GRADLE_PROJECTS[@]}"; do
     else
       CONFIG_CACHE_ARG=""
     fi
-    AGP_VERSION=$AGP_VERSION_INPUT ./$project/gradlew -p $project buildDebug --no-daemon --stacktrace $CONFIG_CACHE_ARG
+    AGP_VERSION=$AGP_VERSION_INPUT ./$project/gradlew -p $project assembleDebug --no-daemon --stacktrace $CONFIG_CACHE_ARG
     AGP_VERSION=$AGP_VERSION_INPUT ./$project/gradlew -p $project testDebug  --continue --no-daemon --stacktrace $CONFIG_CACHE_ARG
 done

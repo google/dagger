@@ -116,6 +116,14 @@ abstract class ComponentTreeDepsMetadata {
         .collect(toImmutableSet());
   }
 
+  /** Returns all entry points included in a component tree deps. */
+  public ImmutableSet<TypeElement> entrypoints(Elements elements) {
+    return AggregatedDepsMetadata.from(aggregatedDeps(), elements).stream()
+        .filter(dependency -> !dependency.isModule())
+        .map(AggregatedDepsMetadata::dependency)
+        .collect(toImmutableSet());
+  }
+
   static ComponentTreeDepsMetadata create(
       ClassName name,
       ImmutableSet<TypeElement> aggregatedRootDeps,

@@ -65,9 +65,11 @@ public final class ApplicationGenerator {
         TypeSpec.classBuilder(wrapperClassName.simpleName())
             .addOriginatingElement(metadata.element())
             .superclass(metadata.baseClassName())
-            .addModifiers(metadata.generatedClassModifiers())
-            .addField(componentManagerField())
-            .addMethod(componentManagerMethod());
+            .addModifiers(metadata.generatedClassModifiers());
+
+    typeSpecBuilder
+        .addField(componentManagerField())
+        .addMethod(componentManagerMethod());
 
     Generators.addGeneratedBaseClassJavadoc(typeSpecBuilder, AndroidClassNames.HILT_ANDROID_APP);
     Processors.addGeneratedAnnotation(typeSpecBuilder, env, getClass());

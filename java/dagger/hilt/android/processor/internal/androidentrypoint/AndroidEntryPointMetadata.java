@@ -438,10 +438,6 @@ public abstract class AndroidEntryPointMetadata {
       this.componentManagerInitArgs = componentManagerInitArgs;
     }
 
-    AndroidType androidType() {
-      return androidType;
-    }
-
     private static Type of(TypeElement element, TypeElement baseElement) {
       if (Processors.hasAnnotation(element, AndroidClassNames.HILT_ANDROID_APP)) {
         return forHiltAndroidApp(element, baseElement);

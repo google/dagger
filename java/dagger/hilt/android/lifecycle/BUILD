@@ -25,8 +25,11 @@ android_library(
     ],
     proguard_specs = ["proguard-rules.pro"],
     exports = [
+        "//:dagger_with_compiler",
+        "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/internal/lifecycle",
+        "//java/dagger/hilt/codegen:originating_element",
     ],
     deps = [
         "//java/dagger/hilt:generates_root_input",

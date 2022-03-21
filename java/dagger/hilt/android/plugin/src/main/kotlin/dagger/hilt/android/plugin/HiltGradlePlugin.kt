@@ -261,7 +261,11 @@ class HiltGradlePlugin @Inject constructor(
   private fun configureBytecodeTransform(project: Project, hiltExtension: HiltExtension) {
     val androidExtension = project.extensions.findByType(BaseExtension::class.java)
       ?: throw error("Android BaseExtension not found.")
-    androidExtension.registerTransform(AndroidEntryPointTransform())
+    androidExtension::class.java.getMethod(
+      "registerTransform",
+      Class.forName("com.android.build.api.transform.Transform"),
+      Array<Any>::class.java
+    ).invoke(androidExtension, AndroidEntryPointTransform(), emptyArray<Any>())
 
     // Create and configure a task for applying the transform for host-side unit tests. b/37076369
     val testedExtensions = project.extensions.findByType(TestedExtension::class.java)

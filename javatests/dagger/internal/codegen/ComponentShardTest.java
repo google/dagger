@@ -296,6 +296,338 @@ public class ComponentShardTest {
                 .build());
   }
 
+  @Test
+  public void testNewShardCreatedWithDependencies() {
+    ImmutableList.Builder<JavaFileObject> javaFileObjects = ImmutableList.builder();
+    javaFileObjects.add(
+        createBinding("Binding1"),
+        createBinding("Binding2"),
+        JavaFileObjects.forSourceLines(
+            "dagger.internal.codegen.Binding3",
+            "package dagger.internal.codegen;",
+            "",
+            "class Binding3 {}"),
+        JavaFileObjects.forSourceLines(
+            "dagger.internal.codegen.Dependency",
+            "package dagger.internal.codegen;",
+            "",
+            "interface Dependency {",
+            "  Binding3 binding3();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "dagger.internal.codegen.TestComponent",
+            "package dagger.internal.codegen;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Singleton",
+            "@Component(dependencies = Dependency.class)",
+            "interface TestComponent {",
+            "  Binding1 binding1();",
+            "  Binding2 binding2();",
+            "  Binding3 binding3();",
+            "  Provider<Binding1> providerBinding1();",
+            "  Provider<Binding2> providerBinding2();",
+            "  Provider<Binding3> providerBinding3();",
+            "}"));
+
+    Compilation compilation = compiler().compile(javaFileObjects.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("dagger.internal.codegen.DaggerTestComponent")
+        .containsElementsIn(
+            compilerMode
+                .javaFileBuilder("dagger.internal.codegen.DaggerTestComponent")
+                .addLines(
+                    "package dagger.internal.codegen;",
+                    "",
+                    GeneratedLines.generatedAnnotations(),
+                    "final class DaggerTestComponent implements TestComponent {",
+                    "  private Shard1 shard1;",
+                    "  private final Dependency dependency;",
+                    "  private final DaggerTestComponent testComponent = this;",
+                    "  private Provider<Binding1> binding1Provider;",
+                    "  private Provider<Binding2> binding2Provider;",
+                    "",
+                    "  private DaggerTestComponent(Dependency dependencyParam) {",
+                    "    this.dependency = dependencyParam;",
+                    "    initialize(dependencyParam);",
+                    "    shard1 = new Shard1(dependencyParam);",
+                    "  }")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize(final Dependency dependencyParam) {",
+                    "    this.binding1Provider = DoubleCheck.provider(Binding1_Factory.create());",
+                    "    this.binding2Provider = DoubleCheck.provider(Binding2_Factory.create());",
+                    "  }")
+                .addLinesIn(
+                    FAST_INIT_MODE,
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize(final Dependency dependencyParam) {",
+                    "    this.binding1Provider = DoubleCheck.provider(",
+                    "        new SwitchingProvider<Binding1>(testComponent, 0));",
+                    "    this.binding2Provider = DoubleCheck.provider(",
+                    "        new SwitchingProvider<Binding2>(testComponent, 1));",
+                    "  }")
+                .addLines(
+                    "  @Override",
+                    "  public Binding1 binding1() {",
+                    "    return binding1Provider.get();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding2 binding2() {",
+                    "    return binding2Provider.get();",
+                    "  }")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  @Override",
+                    "  public Binding3 binding3() {",
+                    "    return Preconditions.checkNotNullFromComponent(dependency.binding3());",
+                    "  }")
+                .addLinesIn(
+                    FAST_INIT_MODE,
+                    "  @Override",
+                    "  public Binding3 binding3() {",
+                    "    return testComponent.shard1.binding3Provider.get();",
+                    "  }")
+                .addLines(
+                    "  @Override",
+                    "  public Provider<Binding1> providerBinding1() {",
+                    "    return binding1Provider;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding2> providerBinding2() {",
+                    "    return binding2Provider;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding3> providerBinding3() {",
+                    "    return testComponent.shard1.binding3Provider;",
+                    "  }",
+                    "",
+                    "  private final class Shard1 {",
+                    "    private Provider<Binding3> binding3Provider;",
+                    "",
+                    "    private Shard1(Dependency dependencyParam) {",
+                    "      initialize(dependencyParam);",
+                    "    }")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    private void initialize(final Dependency dependencyParam) {",
+                    "      this.binding3Provider =",
+                    "          new Binding3Provider(testComponent.dependency);",
+                    "    }",
+                    "  }")
+                .addLinesIn(
+                    FAST_INIT_MODE,
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    private void initialize(final Dependency dependencyParam) {",
+                    "      this.binding3Provider = new SwitchingProvider<>(testComponent, 2);",
+                    "    }",
+                    "  }",
+                    "",
+                    "  private static final class SwitchingProvider<T> implements Provider<T> {",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    @Override",
+                    "    public T get() {",
+                    "      switch (id) {",
+                    "        case 0: return (T) new Binding1();",
+                    "        case 1: return (T) new Binding2();",
+                    "        case 2: return (T) Preconditions.checkNotNullFromComponent(",
+                    "            testComponent.dependency.binding3());",
+                    "        default: throw new AssertionError(id);",
+                    "      }",
+                    "    }",
+                    "  }")
+                .build());
+  }
+
+  @Test
+  public void testNewShardSubcomponentCreated() {
+    ImmutableList.Builder<JavaFileObject> javaFileObjects = ImmutableList.builder();
+    javaFileObjects.add(
+        JavaFileObjects.forSourceLines(
+            "dagger.internal.codegen.SubcomponentScope",
+            "package dagger.internal.codegen;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope",
+            "public @interface SubcomponentScope {}"),
+        JavaFileObjects.forSourceLines(
+            "dagger.internal.codegen.Binding1",
+            "package dagger.internal.codegen;",
+            "",
+            "@SubcomponentScope",
+            "final class Binding1 {",
+            "  @javax.inject.Inject Binding1() {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "dagger.internal.codegen.Binding2",
+            "package dagger.internal.codegen;",
+            "",
+            "@SubcomponentScope",
+            "final class Binding2 {",
+            "  @javax.inject.Inject Binding2() {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "dagger.internal.codegen.Binding3",
+            "package dagger.internal.codegen;",
+            "",
+            "@SubcomponentScope",
+            "final class Binding3 {",
+            "  @javax.inject.Inject Binding3() {}",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "dagger.internal.codegen.TestComponent",
+            "package dagger.internal.codegen;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  TestSubcomponent subcomponent();",
+            "}"),
+        JavaFileObjects.forSourceLines(
+            "dagger.internal.codegen.TestSubcomponent",
+            "package dagger.internal.codegen;",
+            "",
+            "import dagger.Subcomponent;",
+            "import javax.inject.Provider;",
+            "",
+            "@SubcomponentScope",
+            "@Subcomponent",
+            "interface TestSubcomponent {",
+            "  Binding1 binding1();",
+            "  Binding2 binding2();",
+            "  Binding3 binding3();",
+            "  Provider<Binding1> providerBinding1();",
+            "  Provider<Binding2> providerBinding2();",
+            "  Provider<Binding3> providerBinding3();",
+            "}"));
+
+    Compilation compilation = compiler().compile(javaFileObjects.build());
+    assertThat(compilation).succeededWithoutWarnings();
+    assertThat(compilation)
+        .generatedSourceFile("dagger.internal.codegen.DaggerTestComponent")
+        .containsElementsIn(
+            compilerMode
+                .javaFileBuilder("dagger.internal.codegen.DaggerTestComponent")
+                .addLines(
+                    "package dagger.internal.codegen;",
+                    "",
+                    GeneratedLines.generatedAnnotations(),
+                    "final class DaggerTestComponent implements TestComponent {",
+                    "  private static final class TestSubcomponentImpl",
+                    "      implements TestSubcomponent {",
+                    "    private Shard1 shard1;",
+                    "    private final DaggerTestComponent testComponent;",
+                    "    private final TestSubcomponentImpl testSubcomponentImpl = this;",
+                    "    private Provider<Binding1> binding1Provider;",
+                    "    private Provider<Binding2> binding2Provider;",
+                    "",
+                    "    private TestSubcomponentImpl(DaggerTestComponent testComponent) {",
+                    "      this.testComponent = testComponent;",
+                    "      initialize();",
+                    "      shard1 = new Shard1();",
+                    "    }")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    private void initialize() {",
+                    "      this.binding1Provider =",
+                    "          DoubleCheck.provider(Binding1_Factory.create());",
+                    "      this.binding2Provider =",
+                    "          DoubleCheck.provider(Binding2_Factory.create());",
+                    "    }")
+                .addLinesIn(
+                    FAST_INIT_MODE,
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    private void initialize() {",
+                    "      this.binding1Provider = DoubleCheck.provider(",
+                    "          new SwitchingProvider<Binding1>(",
+                    "              testComponent, testSubcomponentImpl, 0));",
+                    "      this.binding2Provider = DoubleCheck.provider(",
+                    "          new SwitchingProvider<Binding2>(",
+                    "              testComponent, testSubcomponentImpl, 1));",
+                    "    }")
+                .addLines(
+                    "    @Override",
+                    "    public Binding1 binding1() {",
+                    "      return binding1Provider.get();",
+                    "    }",
+                    "",
+                    "    @Override",
+                    "    public Binding2 binding2() {",
+                    "      return binding2Provider.get();",
+                    "    }",
+                    "",
+                    "    @Override",
+                    "    public Binding3 binding3() {",
+                    "      return testSubcomponentImpl.shard1",
+                    "          .binding3Provider.get();",
+                    "    }",
+                    "",
+                    "    @Override",
+                    "    public Provider<Binding1> providerBinding1() {",
+                    "      return binding1Provider;",
+                    "    }",
+                    "",
+                    "    @Override",
+                    "    public Provider<Binding2> providerBinding2() {",
+                    "      return binding2Provider;",
+                    "    }",
+                    "",
+                    "    @Override",
+                    "    public Provider<Binding3> providerBinding3() {",
+                    "      return testSubcomponentImpl.shard1.binding3Provider;",
+                    "    }")
+                .addLines(
+                    "    private final class Shard1 {",
+                    "      private Provider<Binding3> binding3Provider;",
+                    "",
+                    "      private Shard1() {",
+                    "        initialize();",
+                    "      }")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "      @SuppressWarnings(\"unchecked\")",
+                    "      private void initialize() {",
+                    "        this.binding3Provider =",
+                    "            DoubleCheck.provider(Binding3_Factory.create());",
+                    "      }")
+                .addLinesIn(
+                    FAST_INIT_MODE,
+                    "      @SuppressWarnings(\"unchecked\")",
+                    "      private void initialize() {",
+                    "        this.binding3Provider = DoubleCheck.provider(",
+                    "            new SwitchingProvider<Binding3>(",
+                    "                testComponent, testSubcomponentImpl, 2));",
+                    "      }",
+                    "    }")
+                .addLinesIn(
+                    FAST_INIT_MODE,
+                    "    private static final class SwitchingProvider<T> implements Provider<T> {",
+                    "      @SuppressWarnings(\"unchecked\")",
+                    "      @Override",
+                    "      public T get() {",
+                    "        switch (id) {",
+                    "          case 0: return (T) new Binding1();",
+                    "          case 1: return (T) new Binding2();",
+                    "          case 2: return (T) new Binding3();",
+                    "          default: throw new AssertionError(id);",
+                    "        }",
+                    "      }",
+                    "    }")
+                .build());
+  }
+
   private static JavaFileObject createBinding(String bindingName, String... deps) {
     return JavaFileObjects.forSourceLines(
         "dagger.internal.codegen." + bindingName,

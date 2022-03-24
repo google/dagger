@@ -39,7 +39,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
-import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -51,7 +50,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import javax.inject.Inject;
 
 /**
  * Keeps track of all provider expression requests for a component.
@@ -83,13 +81,10 @@ final class SwitchingProviders {
 
   private final ShardImplementation shardImplementation;
   private final DaggerTypes types;
-  private final UniqueNameSet switchingProviderNames = new UniqueNameSet();
 
-  @Inject
-  SwitchingProviders(ComponentImplementation componentImplementation, DaggerTypes types) {
-    // Currently, the SwitchingProviders types are only added to the componentShard.
-    this.shardImplementation = checkNotNull(componentImplementation).getComponentShard();
-    this.types = checkNotNull(types);
+  SwitchingProviders(ShardImplementation shardImplementation, DaggerTypes types) {
+    this.shardImplementation = shardImplementation;
+    this.types = types;
   }
 
   /** Returns the framework instance creation expression for an inner switching provider class. */
@@ -107,7 +102,7 @@ final class SwitchingProviders {
 
   private SwitchingProviderBuilder getSwitchingProviderBuilder() {
     if (switchingProviderBuilders.size() % MAX_CASES_PER_CLASS == 0) {
-      String name = switchingProviderNames.getUniqueName("SwitchingProvider");
+      String name = shardImplementation.getUniqueClassName("SwitchingProvider");
       SwitchingProviderBuilder switchingProviderBuilder =
           new SwitchingProviderBuilder(shardImplementation.name().nestedClass(name));
       shardImplementation.addTypeSupplier(switchingProviderBuilder::build);

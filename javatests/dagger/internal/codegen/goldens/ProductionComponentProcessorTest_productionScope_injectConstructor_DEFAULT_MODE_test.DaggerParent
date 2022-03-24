@@ -49,30 +49,23 @@ final class DaggerParent {
 
     @Override
     public ProductionScoped productionScoped() {
-      return parentImpl.productionScopedProvider.get();
+      return parentImpl.parentImplShard.productionScopedProvider.get();
     }
 
     @Override
     public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
 
-
     }
   }
 
   private static final class ParentImpl implements Parent, CancellationListener {
-    private final ParentImpl parentImpl = this;
+    private final ParentImplShard parentImplShard;
 
-    private Provider<ProductionScoped> productionScopedProvider;
+    private final ParentImpl parentImpl = this;
 
     private ParentImpl() {
 
-      initialize();
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private void initialize() {
-      this.productionScopedProvider = DoubleCheck.provider(ProductionScoped_Factory.create());
+      parentImplShard = new ParentImplShard(parentImpl);
     }
 
     @Override
@@ -83,7 +76,22 @@ final class DaggerParent {
     @Override
     public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
 
+    }
+  }
 
+  private static final class ParentImplShard {
+    private final ParentImpl parentImpl;
+
+    private Provider<ProductionScoped> productionScopedProvider;
+
+    private ParentImplShard(ParentImpl parentImpl) {
+      this.parentImpl = parentImpl;
+      initialize();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.productionScopedProvider = DoubleCheck.provider(ProductionScoped_Factory.create());
     }
   }
 }

@@ -37,9 +37,79 @@ final class DaggerTestComponent {
   }
 
   private static final class SubImpl implements Sub {
+    private final SubImplShard subImplShard;
+
     private final TestComponentImpl testComponentImpl;
 
     private final SubImpl subImpl = this;
+
+    private SubImpl(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+
+      subImplShard = new SubImplShard(testComponentImpl, subImpl);
+    }
+
+    @Override
+    public Map<Long, Long> longs() {
+      return subImpl.subImplShard.mapOfLongAndLong();
+    }
+
+    @Override
+    public Map<Long, Provider<Long>> providerLongs() {
+      return subImpl.subImplShard.mapOfLongAndProviderOfLong();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImplShard testComponentImplShard;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+    }
+
+    @Override
+    public Map<String, String> strings() {
+      return ImmutableMap.<String, String>of();
+    }
+
+    @Override
+    public Map<String, Provider<String>> providerStrings() {
+      return ImmutableMap.<String, Provider<String>>of();
+    }
+
+    @Override
+    public Map<Integer, Integer> ints() {
+      return testComponentImpl.testComponentImplShard.mapOfIntegerAndInteger();
+    }
+
+    @Override
+    public Map<Integer, Provider<Integer>> providerInts() {
+      return testComponentImpl.testComponentImplShard.mapOfIntegerAndProviderOfInteger();
+    }
+
+    @Override
+    public Map<Long, Long> longs() {
+      return testComponentImpl.testComponentImplShard.mapOfLongAndLong();
+    }
+
+    @Override
+    public Map<Long, Provider<Long>> providerLongs() {
+      return testComponentImpl.testComponentImplShard.mapOfLongAndProviderOfLong();
+    }
+
+    @Override
+    public Sub sub() {
+      return new SubImpl(testComponentImpl);
+    }
+  }
+
+  private static final class SubImplShard {
+    private final TestComponentImpl testComponentImpl;
+
+    private final SubImpl subImpl;
 
     private Provider<Long> provideLong3Provider;
 
@@ -47,11 +117,18 @@ final class DaggerTestComponent {
 
     private Provider<Long> provideLong5Provider;
 
-    private SubImpl(TestComponentImpl testComponentImpl) {
+    private SubImplShard(TestComponentImpl testComponentImpl, SubImpl subImpl) {
       this.testComponentImpl = testComponentImpl;
-
+      this.subImpl = subImpl;
       initialize();
+    }
 
+    private Map<Long, Long> mapOfLongAndLong() {
+      return ImmutableMap.<Long, Long>builderWithExpectedSize(6).put(0L, testComponentImpl.testComponentImplShard.provideLong0Provider.get()).put(1L, testComponentImpl.testComponentImplShard.provideLong1Provider.get()).put(2L, testComponentImpl.testComponentImplShard.provideLong2Provider.get()).put(3L, provideLong3Provider.get()).put(4L, provideLong4Provider.get()).put(5L, provideLong5Provider.get()).build();
+    }
+
+    private Map<Long, Provider<Long>> mapOfLongAndProviderOfLong() {
+      return ImmutableMap.<Long, Provider<Long>>builderWithExpectedSize(6).put(0L, testComponentImpl.testComponentImplShard.provideLong0Provider).put(1L, testComponentImpl.testComponentImplShard.provideLong1Provider).put(2L, testComponentImpl.testComponentImplShard.provideLong2Provider).put(3L, provideLong3Provider).put(4L, provideLong4Provider).put(5L, provideLong5Provider).build();
     }
 
     @SuppressWarnings("unchecked")
@@ -59,16 +136,6 @@ final class DaggerTestComponent {
       this.provideLong3Provider = new SwitchingProvider<>(testComponentImpl, subImpl, 0);
       this.provideLong4Provider = new SwitchingProvider<>(testComponentImpl, subImpl, 1);
       this.provideLong5Provider = new SwitchingProvider<>(testComponentImpl, subImpl, 2);
-    }
-
-    @Override
-    public Map<Long, Long> longs() {
-      return ImmutableMap.<Long, Long>builderWithExpectedSize(6).put(0L, testComponentImpl.provideLong0Provider.get()).put(1L, testComponentImpl.provideLong1Provider.get()).put(2L, testComponentImpl.provideLong2Provider.get()).put(3L, provideLong3Provider.get()).put(4L, provideLong4Provider.get()).put(5L, provideLong5Provider.get()).build();
-    }
-
-    @Override
-    public Map<Long, Provider<Long>> providerLongs() {
-      return ImmutableMap.<Long, Provider<Long>>builderWithExpectedSize(6).put(0L, testComponentImpl.provideLong0Provider).put(1L, testComponentImpl.provideLong1Provider).put(2L, testComponentImpl.provideLong2Provider).put(3L, provideLong3Provider).put(4L, provideLong4Provider).put(5L, provideLong5Provider).build();
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -103,8 +170,8 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
 
     private Provider<Integer> provideIntProvider;
 
@@ -114,10 +181,25 @@ final class DaggerTestComponent {
 
     private Provider<Long> provideLong2Provider;
 
-    private TestComponentImpl() {
-
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
       initialize();
+    }
 
+    private Map<Integer, Integer> mapOfIntegerAndInteger() {
+      return ImmutableMap.<Integer, Integer>of(0, provideIntProvider.get());
+    }
+
+    private Map<Integer, Provider<Integer>> mapOfIntegerAndProviderOfInteger() {
+      return ImmutableMap.<Integer, Provider<Integer>>of(0, provideIntProvider);
+    }
+
+    private Map<Long, Long> mapOfLongAndLong() {
+      return ImmutableMap.<Long, Long>of(0L, provideLong0Provider.get(), 1L, provideLong1Provider.get(), 2L, provideLong2Provider.get());
+    }
+
+    private Map<Long, Provider<Long>> mapOfLongAndProviderOfLong() {
+      return ImmutableMap.<Long, Provider<Long>>of(0L, provideLong0Provider, 1L, provideLong1Provider, 2L, provideLong2Provider);
     }
 
     @SuppressWarnings("unchecked")
@@ -126,41 +208,6 @@ final class DaggerTestComponent {
       this.provideLong0Provider = new SwitchingProvider<>(testComponentImpl, 1);
       this.provideLong1Provider = new SwitchingProvider<>(testComponentImpl, 2);
       this.provideLong2Provider = new SwitchingProvider<>(testComponentImpl, 3);
-    }
-
-    @Override
-    public Map<String, String> strings() {
-      return ImmutableMap.<String, String>of();
-    }
-
-    @Override
-    public Map<String, Provider<String>> providerStrings() {
-      return ImmutableMap.<String, Provider<String>>of();
-    }
-
-    @Override
-    public Map<Integer, Integer> ints() {
-      return ImmutableMap.<Integer, Integer>of(0, provideIntProvider.get());
-    }
-
-    @Override
-    public Map<Integer, Provider<Integer>> providerInts() {
-      return ImmutableMap.<Integer, Provider<Integer>>of(0, provideIntProvider);
-    }
-
-    @Override
-    public Map<Long, Long> longs() {
-      return ImmutableMap.<Long, Long>of(0L, provideLong0Provider.get(), 1L, provideLong1Provider.get(), 2L, provideLong2Provider.get());
-    }
-
-    @Override
-    public Map<Long, Provider<Long>> providerLongs() {
-      return ImmutableMap.<Long, Provider<Long>>of(0L, provideLong0Provider, 1L, provideLong1Provider, 2L, provideLong2Provider);
-    }
-
-    @Override
-    public Sub sub() {
-      return new SubImpl(testComponentImpl);
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

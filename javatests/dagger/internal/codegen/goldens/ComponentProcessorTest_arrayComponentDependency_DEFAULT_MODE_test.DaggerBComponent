@@ -40,24 +40,40 @@ final class DaggerBComponent {
   }
 
   private static final class BComponentImpl implements BComponent {
+    private final BComponentImplShard bComponentImplShard;
+
+    private final ArrayComponent arrayComponent;
+
     private final BComponentImpl bComponentImpl = this;
 
-    private Provider<String[]> stringsProvider;
-
     private BComponentImpl(ArrayComponent arrayComponentParam) {
-
-      initialize(arrayComponentParam);
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private void initialize(final ArrayComponent arrayComponentParam) {
-      this.stringsProvider = new StringsProvider(arrayComponentParam);
+      this.arrayComponent = arrayComponentParam;
+      bComponentImplShard = new BComponentImplShard(bComponentImpl, arrayComponentParam);
     }
 
     @Override
     public B b() {
+      return bComponentImpl.bComponentImplShard.b();
+    }
+  }
+
+  private static final class BComponentImplShard {
+    private final BComponentImpl bComponentImpl;
+
+    private Provider<String[]> stringsProvider;
+
+    private BComponentImplShard(BComponentImpl bComponentImpl, ArrayComponent arrayComponentParam) {
+      this.bComponentImpl = bComponentImpl;
+      initialize(arrayComponentParam);
+    }
+
+    private B b() {
       return new B(stringsProvider);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final ArrayComponent arrayComponentParam) {
+      this.stringsProvider = new StringsProvider(bComponentImpl.arrayComponent);
     }
 
     private static final class StringsProvider implements Provider<String[]> {
@@ -74,4 +90,3 @@ final class DaggerBComponent {
     }
   }
 }
-

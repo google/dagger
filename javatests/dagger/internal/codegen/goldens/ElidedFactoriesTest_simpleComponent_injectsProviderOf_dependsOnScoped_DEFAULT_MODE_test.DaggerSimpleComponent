@@ -36,27 +36,41 @@ final class DaggerSimpleComponent {
   }
 
   private static final class SimpleComponentImpl implements SimpleComponent {
+    private final SimpleComponentImplShard simpleComponentImplShard;
+
     private final SimpleComponentImpl simpleComponentImpl = this;
+
+    private SimpleComponentImpl() {
+
+      simpleComponentImplShard = new SimpleComponentImplShard(simpleComponentImpl);
+    }
+
+    @Override
+    public NeedsProvider needsProvider() {
+      return simpleComponentImpl.simpleComponentImplShard.needsProvider();
+    }
+  }
+
+  private static final class SimpleComponentImplShard {
+    private final SimpleComponentImpl simpleComponentImpl;
 
     private Provider<ScopedType> scopedTypeProvider;
 
     private Provider<DependsOnScoped> dependsOnScopedProvider;
 
-    private SimpleComponentImpl() {
-
+    private SimpleComponentImplShard(SimpleComponentImpl simpleComponentImpl) {
+      this.simpleComponentImpl = simpleComponentImpl;
       initialize();
+    }
 
+    private NeedsProvider needsProvider() {
+      return new NeedsProvider(dependsOnScopedProvider);
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());
       this.dependsOnScopedProvider = DependsOnScoped_Factory.create(scopedTypeProvider);
-    }
-
-    @Override
-    public NeedsProvider needsProvider() {
-      return new NeedsProvider(dependsOnScopedProvider);
     }
   }
 }

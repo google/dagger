@@ -37,6 +37,8 @@ public final class DaggerMyComponent {
   }
 
   private static final class MySubcomponentImpl implements MySubcomponent {
+    private final MySubcomponentImplShard mySubcomponentImplShard;
+
     private final MyComponentImpl myComponentImpl;
 
     private final MySubcomponentImpl mySubcomponentImpl = this;
@@ -44,7 +46,45 @@ public final class DaggerMyComponent {
     private MySubcomponentImpl(MyComponentImpl myComponentImpl) {
       this.myComponentImpl = myComponentImpl;
 
+      mySubcomponentImplShard = new MySubcomponentImplShard(myComponentImpl, mySubcomponentImpl);
+    }
 
+    @Override
+    public Foo foo() {
+      return mySubcomponentImpl.mySubcomponentImplShard.foo();
+    }
+  }
+
+  private static final class MyComponentImpl implements MyComponent {
+    private final MyComponentImplShard myComponentImplShard;
+
+    private final MyComponentImpl myComponentImpl = this;
+
+    private MyComponentImpl() {
+
+      myComponentImplShard = new MyComponentImplShard(myComponentImpl);
+    }
+
+    @Override
+    public void inject(Bar bar) {
+      myComponentImpl.myComponentImplShard.injectBar(bar);
+    }
+
+    @Override
+    public MySubcomponent subcomponent() {
+      return new MySubcomponentImpl(myComponentImpl);
+    }
+  }
+
+  private static final class MySubcomponentImplShard {
+    private final MyComponentImpl myComponentImpl;
+
+    private final MySubcomponentImpl mySubcomponentImpl;
+
+    private MySubcomponentImplShard(MyComponentImpl myComponentImpl,
+        MySubcomponentImpl mySubcomponentImpl) {
+      this.myComponentImpl = myComponentImpl;
+      this.mySubcomponentImpl = mySubcomponentImpl;
     }
 
     private Set<String> setOfString() {
@@ -55,8 +95,7 @@ public final class DaggerMyComponent {
       return injectBar(Bar_Factory.newInstance());
     }
 
-    @Override
-    public Foo foo() {
+    private Foo foo() {
       return new Foo(bar());
     }
 
@@ -67,26 +106,15 @@ public final class DaggerMyComponent {
     }
   }
 
-  private static final class MyComponentImpl implements MyComponent {
-    private final MyComponentImpl myComponentImpl = this;
+  private static final class MyComponentImplShard {
+    private final MyComponentImpl myComponentImpl;
 
-    private MyComponentImpl() {
-
-
+    private MyComponentImplShard(MyComponentImpl myComponentImpl) {
+      this.myComponentImpl = myComponentImpl;
     }
 
     private Set<String> setOfString() {
       return ImmutableSet.<String>of(MyComponentModule_ProvideStringFactory.provideString());
-    }
-
-    @Override
-    public void inject(Bar bar) {
-      injectBar(bar);
-    }
-
-    @Override
-    public MySubcomponent subcomponent() {
-      return new MySubcomponentImpl(myComponentImpl);
     }
 
     @CanIgnoreReturnValue

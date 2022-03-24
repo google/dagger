@@ -38,24 +38,34 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+    private final TestComponentImplShard testComponentImplShard;
 
-    private Provider<MembersInjector<Foo>> fooMembersInjectorProvider;
+    private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-      initialize();
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+    }
 
+    @Override
+    public Provider<MembersInjector<Foo>> providerOfMembersInjector() {
+      return testComponentImpl.testComponentImplShard.fooMembersInjectorProvider;
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
+
+    private Provider<MembersInjector<Foo>> fooMembersInjectorProvider;
+
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+      initialize();
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.fooMembersInjectorProvider = InstanceFactory.create(MembersInjectors.<Foo>noOp());
-    }
-
-    @Override
-    public Provider<MembersInjector<Foo>> providerOfMembersInjector() {
-      return fooMembersInjectorProvider;
     }
   }
 }

@@ -40,24 +40,40 @@ final class DaggerBComponent {
   }
 
   private static final class BComponentImpl implements BComponent {
+    private final BComponentImplShard bComponentImplShard;
+
+    private final IntComponent intComponent;
+
     private final BComponentImpl bComponentImpl = this;
 
-    private Provider<Integer> iProvider;
-
     private BComponentImpl(IntComponent intComponentParam) {
-
-      initialize(intComponentParam);
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private void initialize(final IntComponent intComponentParam) {
-      this.iProvider = new IProvider(intComponentParam);
+      this.intComponent = intComponentParam;
+      bComponentImplShard = new BComponentImplShard(bComponentImpl, intComponentParam);
     }
 
     @Override
     public B b() {
+      return bComponentImpl.bComponentImplShard.b();
+    }
+  }
+
+  private static final class BComponentImplShard {
+    private final BComponentImpl bComponentImpl;
+
+    private Provider<Integer> iProvider;
+
+    private BComponentImplShard(BComponentImpl bComponentImpl, IntComponent intComponentParam) {
+      this.bComponentImpl = bComponentImpl;
+      initialize(intComponentParam);
+    }
+
+    private B b() {
       return new B(iProvider);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final IntComponent intComponentParam) {
+      this.iProvider = new IProvider(bComponentImpl.intComponent);
     }
 
     private static final class IProvider implements Provider<Integer> {
@@ -74,4 +90,3 @@ final class DaggerBComponent {
     }
   }
 }
-

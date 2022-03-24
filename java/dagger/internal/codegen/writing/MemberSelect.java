@@ -35,16 +35,28 @@ abstract class MemberSelect {
    * accessibility).
    */
   static MemberSelect localField(ShardImplementation owningShard, String fieldName) {
-    return new LocalField(owningShard, fieldName);
+    return new LocalField(owningShard.name(), owningShard.shardFieldReference(), fieldName);
+  }
+
+  /**
+   * Returns a {@link MemberSelect} that accesses the field given by {@code fieldName} owned by
+   * {@code owningClass}. In this context "local" refers to the fact that the field is owned by the
+   * type (or an enclosing type) from which the code block will be used. The returned {@link
+   * MemberSelect} will not be valid for accessing the field from a different class (regardless of
+   * accessibility).
+   */
+  static MemberSelect localField(ComponentImplementation owningComponent, String fieldName) {
+    return new LocalField(
+        owningComponent.name(), owningComponent.componentFieldReference(), fieldName);
   }
 
   private static final class LocalField extends MemberSelect {
-    final ShardImplementation owningShard;
+    final CodeBlock owningFieldReference;
     final String fieldName;
 
-    LocalField(ShardImplementation owningShard, String fieldName) {
-      super(owningShard.name(), false);
-      this.owningShard = owningShard;
+    LocalField(ClassName owningClassName, CodeBlock owningFieldReference, String fieldName) {
+      super(owningClassName, false);
+      this.owningFieldReference = owningFieldReference;
       this.fieldName = checkNotNull(fieldName);
     }
 
@@ -52,7 +64,7 @@ abstract class MemberSelect {
     CodeBlock getExpressionFor(ClassName usingClass) {
       return owningClass().equals(usingClass)
           ? CodeBlock.of("$N", fieldName)
-          : CodeBlock.of("$L.$N", owningShard.shardFieldReference(), fieldName);
+          : CodeBlock.of("$L.$N", owningFieldReference, fieldName);
     }
   }
 

@@ -39,25 +39,39 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImplShard testComponentImplShard;
+
     private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+    }
+
+    @Override
+    public UsesSupertype usesSupertype() {
+      return testComponentImpl.testComponentImplShard.usesSupertype();
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
 
     @SuppressWarnings("rawtypes")
     private Provider subtypeProvider;
 
-    private TestComponentImpl() {
-
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
       initialize();
+    }
 
+    private UsesSupertype usesSupertype() {
+      return UsesSupertype_Factory.newInstance(subtypeProvider.get());
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.subtypeProvider = DoubleCheck.provider(new SwitchingProvider<Object>(testComponentImpl, 0));
-    }
-
-    @Override
-    public UsesSupertype usesSupertype() {
-      return UsesSupertype_Factory.newInstance(subtypeProvider.get());
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

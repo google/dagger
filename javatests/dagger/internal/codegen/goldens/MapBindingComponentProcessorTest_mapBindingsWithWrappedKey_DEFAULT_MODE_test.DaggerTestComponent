@@ -58,7 +58,28 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImplShard testComponentImplShard;
+
+    private final MapModuleOne mapModuleOne;
+
+    private final MapModuleTwo mapModuleTwo;
+
     private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+      this.mapModuleOne = mapModuleOneParam;
+      this.mapModuleTwo = mapModuleTwoParam;
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl, mapModuleOneParam, mapModuleTwoParam);
+    }
+
+    @Override
+    public Provider<Map<WrappedClassKey, Provider<Handler>>> dispatcher() {
+      return testComponentImpl.testComponentImplShard.mapOfWrappedClassKeyAndProviderOfHandlerProvider;
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
 
     private Provider<Handler> provideAdminHandlerProvider;
 
@@ -66,23 +87,18 @@ final class DaggerTestComponent {
 
     private Provider<Map<WrappedClassKey, Provider<Handler>>> mapOfWrappedClassKeyAndProviderOfHandlerProvider;
 
-    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
-
+    private TestComponentImplShard(TestComponentImpl testComponentImpl,
+        MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+      this.testComponentImpl = testComponentImpl;
       initialize(mapModuleOneParam, mapModuleTwoParam);
-
     }
 
     @SuppressWarnings("unchecked")
     private void initialize(final MapModuleOne mapModuleOneParam,
         final MapModuleTwo mapModuleTwoParam) {
-      this.provideAdminHandlerProvider = MapModuleOne_ProvideAdminHandlerFactory.create(mapModuleOneParam);
-      this.provideLoginHandlerProvider = MapModuleTwo_ProvideLoginHandlerFactory.create(mapModuleTwoParam);
+      this.provideAdminHandlerProvider = MapModuleOne_ProvideAdminHandlerFactory.create(testComponentImpl.mapModuleOne);
+      this.provideLoginHandlerProvider = MapModuleTwo_ProvideLoginHandlerFactory.create(testComponentImpl.mapModuleTwo);
       this.mapOfWrappedClassKeyAndProviderOfHandlerProvider = MapProviderFactory.<WrappedClassKey, Handler>builder(2).put(WrappedClassKeyCreator.createWrappedClassKey(Integer.class), provideAdminHandlerProvider).put(WrappedClassKeyCreator.createWrappedClassKey(Long.class), provideLoginHandlerProvider).build();
-    }
-
-    @Override
-    public Provider<Map<WrappedClassKey, Provider<Handler>>> dispatcher() {
-      return mapOfWrappedClassKeyAndProviderOfHandlerProvider;
     }
   }
 }

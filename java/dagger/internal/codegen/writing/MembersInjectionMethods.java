@@ -121,13 +121,7 @@ final class MembersInjectionMethods {
   }
 
   private Expression injectMethodExpression(Binding binding, boolean useStaticInjectionMethod) {
-    // TODO(wanyingd): move Switching Providers and injection methods to Shard classes to avoid
-    // exceeding component class constant pool limit.
-    // Add to Component Shard so that is can be accessible from Switching Providers.
-    ShardImplementation shardImplementation =
-        useStaticInjectionMethod
-            ? componentImplementation.getComponentShard()
-            : componentImplementation.shardImplementation(binding);
+    ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
     TypeMirror keyType = binding.key().type().java();
     TypeMirror membersInjectedType =
         isTypeAccessibleFrom(keyType, shardImplementation.name().packageName())

@@ -41,7 +41,9 @@ import javax.inject.Inject;
 public final class ComponentWrapperImplementation implements GeneratedImplementation {
   private final BindingGraph graph;
   private final ClassName name;
-  private final UniqueNameSet componentClassNames = new UniqueNameSet();
+  private final UniqueNameSet typeNames = new UniqueNameSet();
+  private final UniqueNameSet fieldNames = new UniqueNameSet();
+  private final UniqueNameSet methodNames = new UniqueNameSet();
   private final ListMultimap<FieldSpecKind, FieldSpec> fieldSpecsMap =
       MultimapBuilder.enumKeys(FieldSpecKind.class).arrayListValues().build();
   private final ListMultimap<MethodSpecKind, MethodSpec> methodSpecsMap =
@@ -62,7 +64,22 @@ public final class ComponentWrapperImplementation implements GeneratedImplementa
 
   @Override
   public String getUniqueClassName(String name) {
-    return componentClassNames.getUniqueName(name);
+    return typeNames.getUniqueName(name);
+  }
+
+  @Override
+  public String getUniqueFieldName(String name) {
+    return fieldNames.getUniqueName(name);
+  }
+
+  @Override
+  public String getUniqueMethodName(String name) {
+    return methodNames.getUniqueName(name);
+  }
+
+  @Override
+  public void claimMethodName(String name) {
+    methodNames.claim(name);
   }
 
   @Override

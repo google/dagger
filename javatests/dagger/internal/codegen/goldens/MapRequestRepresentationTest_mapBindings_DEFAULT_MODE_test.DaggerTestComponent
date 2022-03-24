@@ -38,11 +38,13 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImplShard testComponentImplShard;
+
     private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
     }
 
     @Override
@@ -57,21 +59,45 @@ final class DaggerTestComponent {
 
     @Override
     public Map<Integer, Integer> ints() {
-      return Collections.<Integer, Integer>singletonMap(0, MapModule.provideInt());
+      return testComponentImpl.testComponentImplShard.mapOfIntegerAndInteger();
     }
 
     @Override
     public Map<Integer, Provider<Integer>> providerInts() {
-      return Collections.<Integer, Provider<Integer>>singletonMap(0, MapModule_ProvideIntFactory.create());
+      return testComponentImpl.testComponentImplShard.mapOfIntegerAndProviderOfInteger();
     }
 
     @Override
     public Map<Long, Long> longs() {
-      return MapBuilder.<Long, Long>newMapBuilder(3).put(0L, MapModule.provideLong0()).put(1L, MapModule.provideLong1()).put(2L, MapModule.provideLong2()).build();
+      return testComponentImpl.testComponentImplShard.mapOfLongAndLong();
     }
 
     @Override
     public Map<Long, Provider<Long>> providerLongs() {
+      return testComponentImpl.testComponentImplShard.mapOfLongAndProviderOfLong();
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
+
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+    }
+
+    private Map<Integer, Integer> mapOfIntegerAndInteger() {
+      return Collections.<Integer, Integer>singletonMap(0, MapModule.provideInt());
+    }
+
+    private Map<Integer, Provider<Integer>> mapOfIntegerAndProviderOfInteger() {
+      return Collections.<Integer, Provider<Integer>>singletonMap(0, MapModule_ProvideIntFactory.create());
+    }
+
+    private Map<Long, Long> mapOfLongAndLong() {
+      return MapBuilder.<Long, Long>newMapBuilder(3).put(0L, MapModule.provideLong0()).put(1L, MapModule.provideLong1()).put(2L, MapModule.provideLong2()).build();
+    }
+
+    private Map<Long, Provider<Long>> mapOfLongAndProviderOfLong() {
       return MapBuilder.<Long, Provider<Long>>newMapBuilder(3).put(0L, MapModule_ProvideLong0Factory.create()).put(1L, MapModule_ProvideLong1Factory.create()).put(2L, MapModule_ProvideLong2Factory.create()).build();
     }
   }

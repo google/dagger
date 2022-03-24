@@ -35,28 +35,42 @@ public final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+    private final TestComponentImplShard testComponentImplShard;
 
-    private Provider<Foo> fooProvider;
+    private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-      initialize();
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+    }
 
+    @Override
+    public SomeEntryPoint someEntryPoint() {
+      return testComponentImpl.testComponentImplShard.someEntryPoint();
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
+
+    private Provider<Foo> fooProvider;
+
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+      initialize();
     }
 
     private Foo foo() {
       return new Foo(new Bar());
     }
 
+    private SomeEntryPoint someEntryPoint() {
+      return new SomeEntryPoint(foo(), fooProvider);
+    }
+
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.fooProvider = Foo_Factory.create(Bar_Factory.create());
-    }
-
-    @Override
-    public SomeEntryPoint someEntryPoint() {
-      return new SomeEntryPoint(foo(), fooProvider);
     }
   }
 }

@@ -37,34 +37,44 @@ final class DaggerSimpleComponent {
   }
 
   private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+    private final SimpleComponentImplShard simpleComponentImplShard;
 
-    private Provider<SomeInjectableType> someInjectableTypeProvider;
+    private final SimpleComponentImpl simpleComponentImpl = this;
 
     private SimpleComponentImpl() {
 
-      initialize();
+      simpleComponentImplShard = new SimpleComponentImplShard(simpleComponentImpl);
+    }
 
+    @Override
+    public SomeInjectableType someInjectableType() {
+      return simpleComponentImpl.simpleComponentImplShard.someInjectableTypeProvider.get();
+    }
+
+    @Override
+    public Lazy<SomeInjectableType> lazySomeInjectableType() {
+      return DoubleCheck.lazy(simpleComponentImpl.simpleComponentImplShard.someInjectableTypeProvider);
+    }
+
+    @Override
+    public Provider<SomeInjectableType> someInjectableTypeProvider() {
+      return simpleComponentImpl.simpleComponentImplShard.someInjectableTypeProvider;
+    }
+  }
+
+  private static final class SimpleComponentImplShard {
+    private final SimpleComponentImpl simpleComponentImpl;
+
+    private Provider<SomeInjectableType> someInjectableTypeProvider;
+
+    private SimpleComponentImplShard(SimpleComponentImpl simpleComponentImpl) {
+      this.simpleComponentImpl = simpleComponentImpl;
+      initialize();
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.someInjectableTypeProvider = DoubleCheck.provider(new SwitchingProvider<SomeInjectableType>(simpleComponentImpl, 0));
-    }
-
-    @Override
-    public SomeInjectableType someInjectableType() {
-      return someInjectableTypeProvider.get();
-    }
-
-    @Override
-    public Lazy<SomeInjectableType> lazySomeInjectableType() {
-      return DoubleCheck.lazy(someInjectableTypeProvider);
-    }
-
-    @Override
-    public Provider<SomeInjectableType> someInjectableTypeProvider() {
-      return someInjectableTypeProvider;
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

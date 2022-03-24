@@ -46,16 +46,18 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImplShard testComponentImplShard;
+
     private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
     }
 
     @Override
     public Set<String> strings() {
-      return ImmutableSet.<String>builderWithExpectedSize(2).addAll(EmptySetModule_EmptySetFactory.emptySet()).add(SetModule_StringFactory.string()).build();
+      return testComponentImpl.testComponentImplShard.setOfString();
     }
 
     @Override
@@ -65,6 +67,22 @@ final class DaggerTestComponent {
 
     @Override
     public Set<Integer> onlyContributionIsElementsIntoSet() {
+      return testComponentImpl.testComponentImplShard.setOfInteger();
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
+
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+    }
+
+    private Set<String> setOfString() {
+      return ImmutableSet.<String>builderWithExpectedSize(2).addAll(EmptySetModule_EmptySetFactory.emptySet()).add(SetModule_StringFactory.string()).build();
+    }
+
+    private Set<Integer> setOfInteger() {
       return ImmutableSet.<Integer>copyOf(EmptySetModule_OnlyContributionIsElementsIntoSetFactory.onlyContributionIsElementsIntoSet());
     }
   }

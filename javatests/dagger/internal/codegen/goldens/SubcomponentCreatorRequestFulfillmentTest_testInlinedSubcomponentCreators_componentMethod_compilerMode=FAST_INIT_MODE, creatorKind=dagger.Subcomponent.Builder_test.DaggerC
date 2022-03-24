@@ -59,11 +59,13 @@ final class DaggerC {
   }
 
   private static final class CImpl implements C {
+    private final CImplShard cImplShard;
+
     private final CImpl cImpl = this;
 
     private CImpl() {
 
-
+      cImplShard = new CImplShard(cImpl);
     }
 
     @Override
@@ -73,6 +75,18 @@ final class DaggerC {
 
     @Override
     public UsesSubcomponent usesSubcomponent() {
+      return cImpl.cImplShard.usesSubcomponent();
+    }
+  }
+
+  private static final class CImplShard {
+    private final CImpl cImpl;
+
+    private CImplShard(CImpl cImpl) {
+      this.cImpl = cImpl;
+    }
+
+    private UsesSubcomponent usesSubcomponent() {
       return new UsesSubcomponent(new SubBuilder(cImpl));
     }
   }

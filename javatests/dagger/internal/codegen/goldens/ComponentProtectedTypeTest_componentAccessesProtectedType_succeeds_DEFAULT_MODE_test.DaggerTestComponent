@@ -38,25 +38,36 @@ public final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl extends TestComponent {
+    private final TestComponentImplShard testComponentImplShard;
+
     private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+    }
+
+    @Override
+    test.sub.TestComponentBase.ProtectedType provideProtectedType() {
+      return (test.sub.TestComponentBase.ProtectedType) testComponentImpl.testComponentImplShard.protectedTypeProvider.get();
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
 
     @SuppressWarnings("rawtypes")
     private Provider protectedTypeProvider;
 
-    private TestComponentImpl() {
-
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
       initialize();
-
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.protectedTypeProvider = DoubleCheck.provider(TestComponentBase_ProtectedType_Factory.create(TestComponentBase_Dep_Factory.create()));
     }
-
-    @Override
-    test.sub.TestComponentBase.ProtectedType provideProtectedType() {
-      return (test.sub.TestComponentBase.ProtectedType) protectedTypeProvider.get();
-    }
   }
 }
+

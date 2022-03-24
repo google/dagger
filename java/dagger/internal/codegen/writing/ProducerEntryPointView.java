@@ -99,14 +99,9 @@ final class ProducerEntryPointView {
             field,
             Producers.class,
             producerExpression.getDependencyExpression(shardImplementation.name()).codeBlock(),
-            // Always pass in the componentShard reference here rather than the owning shard for
+            // Always pass in the component reference here rather than the owning shard for
             // this key because this needs to be the root CancellationListener.
-            shardImplementation.isComponentShard()
-                ? "this"
-                : shardImplementation
-                    .getComponentImplementation()
-                    .getComponentShard()
-                    .shardFieldReference());
+            shardImplementation.getComponentImplementation().componentFieldReference());
     shardImplementation.addInitialization(fieldInitialization);
 
     return MemberSelect.localField(shardImplementation, field.name);

@@ -52,32 +52,42 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImplShard testComponentImplShard;
+
     private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+    }
+
+    @Override
+    public Provider<Optional<Present>> providerOfOptionalOfPresent() {
+      return testComponentImpl.testComponentImplShard.optionalOfPresentProvider;
+    }
+
+    @Override
+    public Provider<Optional<Absent>> providerOfOptionalOfAbsent() {
+      return testComponentImpl.testComponentImplShard.optionalOfAbsentProvider;
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
 
     private Provider<Optional<Present>> optionalOfPresentProvider;
 
     private Provider<Optional<Absent>> optionalOfAbsentProvider;
 
-    private TestComponentImpl() {
-
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
       initialize();
-
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.optionalOfPresentProvider = new SwitchingProvider<>(testComponentImpl, 0);
       this.optionalOfAbsentProvider = absentJdkOptionalProvider();
-    }
-
-    @Override
-    public Provider<Optional<Present>> providerOfOptionalOfPresent() {
-      return optionalOfPresentProvider;
-    }
-
-    @Override
-    public Provider<Optional<Absent>> providerOfOptionalOfAbsent() {
-      return optionalOfAbsentProvider;
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

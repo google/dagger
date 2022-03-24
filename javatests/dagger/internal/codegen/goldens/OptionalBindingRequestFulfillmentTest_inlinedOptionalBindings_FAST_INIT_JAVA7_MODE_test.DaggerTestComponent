@@ -51,29 +51,23 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+    private final TestComponentImplShard testComponentImplShard;
 
-    private Provider<Maybe> provideMaybeProvider;
+    private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-      initialize();
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private void initialize() {
-      this.provideMaybeProvider = new SwitchingProvider<>(testComponentImpl, 0);
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
     }
 
     @Override
     public Optional<Maybe> maybe() {
-      return Optional.of(provideMaybeProvider.get());
+      return Optional.of(testComponentImpl.testComponentImplShard.provideMaybeProvider.get());
     }
 
     @Override
     public Optional<Provider<Lazy<Maybe>>> providerOfLazyOfMaybe() {
-      return Optional.of(ProviderOfLazy.create(provideMaybeProvider));
+      return Optional.of(ProviderOfLazy.create(testComponentImpl.testComponentImplShard.provideMaybeProvider));
     }
 
     @Override
@@ -84,6 +78,22 @@ final class DaggerTestComponent {
     @Override
     public Optional<Provider<Lazy<DefinitelyNot>>> providerOfLazyOfDefinitelyNot() {
       return Optional.<Provider<Lazy<DefinitelyNot>>>absent();
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
+
+    private Provider<Maybe> provideMaybeProvider;
+
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+      initialize();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.provideMaybeProvider = new SwitchingProvider<>(testComponentImpl, 0);
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

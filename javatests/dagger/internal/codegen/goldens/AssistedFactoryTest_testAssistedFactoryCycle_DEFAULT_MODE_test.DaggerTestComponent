@@ -36,7 +36,23 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImplShard testComponentImplShard;
+
     private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+    }
+
+    @Override
+    public FooFactory fooFactory() {
+      return testComponentImpl.testComponentImplShard.fooFactoryProvider.get();
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
 
     private Provider<FooFactory> fooFactoryProvider;
 
@@ -44,10 +60,9 @@ final class DaggerTestComponent {
 
     private Foo_Factory fooProvider;
 
-    private TestComponentImpl() {
-
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
       initialize();
-
     }
 
     @SuppressWarnings("unchecked")
@@ -56,11 +71,6 @@ final class DaggerTestComponent {
       this.barProvider = Bar_Factory.create(fooFactoryProvider);
       this.fooProvider = Foo_Factory.create(barProvider);
       DelegateFactory.setDelegate(fooFactoryProvider, FooFactory_Impl.create(fooProvider));
-    }
-
-    @Override
-    public FooFactory fooFactory() {
-      return fooFactoryProvider.get();
     }
   }
 }

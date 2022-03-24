@@ -48,34 +48,48 @@ final class DaggerParent {
 
     @Override
     public String string() {
-      return parentImpl.string();
+      return parentImpl.parentImplShard.string();
     }
   }
 
   private static final class ParentImpl implements Parent {
-    private final ParentImpl parentImpl = this;
+    private final ParentImplShard parentImplShard;
 
-    private Provider<Number> numberProvider;
+    private final ParentImpl parentImpl = this;
 
     private ParentImpl() {
 
-      initialize();
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private void initialize() {
-      this.numberProvider = DoubleCheck.provider(TestModule_NumberFactory.create());
+      parentImplShard = new ParentImplShard(parentImpl);
     }
 
     @Override
     public String string() {
-      return TestModule_StringFactory.string(numberProvider.get());
+      return parentImpl.parentImplShard.string();
     }
 
     @Override
     public Child child() {
       return new ChildImpl(parentImpl);
+    }
+  }
+
+  private static final class ParentImplShard {
+    private final ParentImpl parentImpl;
+
+    private Provider<Number> numberProvider;
+
+    private ParentImplShard(ParentImpl parentImpl) {
+      this.parentImpl = parentImpl;
+      initialize();
+    }
+
+    private String string() {
+      return TestModule_StringFactory.string(numberProvider.get());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.numberProvider = DoubleCheck.provider(TestModule_NumberFactory.create());
     }
   }
 }

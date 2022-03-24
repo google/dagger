@@ -35,29 +35,39 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+    private final TestComponentImplShard testComponentImplShard;
 
-    private Provider<String> provideStringProvider;
+    private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-      initialize();
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+    }
 
+    @Override
+    public Provider<CharSequence> charSequence() {
+      return ((Provider) testComponentImpl.testComponentImplShard.provideStringProvider);
+    }
+
+    @Override
+    public Provider<Object> object() {
+      return ((Provider) testComponentImpl.testComponentImplShard.provideStringProvider);
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
+
+    private Provider<String> provideStringProvider;
+
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+      initialize();
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.provideStringProvider = new SwitchingProvider<>(testComponentImpl, 0);
-    }
-
-    @Override
-    public Provider<CharSequence> charSequence() {
-      return ((Provider) provideStringProvider);
-    }
-
-    @Override
-    public Provider<Object> object() {
-      return ((Provider) provideStringProvider);
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

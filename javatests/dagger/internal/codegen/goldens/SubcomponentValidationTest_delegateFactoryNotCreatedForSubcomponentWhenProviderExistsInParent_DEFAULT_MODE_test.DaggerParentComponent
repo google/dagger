@@ -37,6 +37,8 @@ final class DaggerParentComponent {
   }
 
   private static final class ChildComponentImpl implements ChildComponent {
+    private final ChildComponentImplShard childComponentImplShard;
+
     private final ChildModule childModule;
 
     private final ParentComponentImpl parentComponentImpl;
@@ -46,20 +48,62 @@ final class DaggerParentComponent {
     private ChildComponentImpl(ParentComponentImpl parentComponentImpl) {
       this.parentComponentImpl = parentComponentImpl;
       this.childModule = new ChildModule();
-
-    }
-
-    private NeedsDep1 needsDep1() {
-      return new NeedsDep1(parentComponentImpl.dep1Provider.get());
-    }
-
-    private A a() {
-      return injectA(A_Factory.newInstance(needsDep1(), parentComponentImpl.dep1Provider.get(), parentComponentImpl.dep2Provider.get()));
+      childComponentImplShard = new ChildComponentImplShard(parentComponentImpl, childComponentImpl);
     }
 
     @Override
     public Object object() {
-      return ChildModule_ProvideObjectFactory.provideObject(childModule, a());
+      return childComponentImpl.childComponentImplShard.object();
+    }
+  }
+
+  private static final class ParentComponentImpl implements ParentComponent {
+    private final ParentComponentImplShard parentComponentImplShard;
+
+    private final ParentComponentImpl parentComponentImpl = this;
+
+    private ParentComponentImpl() {
+
+      parentComponentImplShard = new ParentComponentImplShard(parentComponentImpl);
+    }
+
+    @Override
+    public Dep1 dep1() {
+      return parentComponentImpl.parentComponentImplShard.dep1Provider.get();
+    }
+
+    @Override
+    public Dep2 dep2() {
+      return parentComponentImpl.parentComponentImplShard.dep2Provider.get();
+    }
+
+    @Override
+    public ChildComponent childComponent() {
+      return new ChildComponentImpl(parentComponentImpl);
+    }
+  }
+
+  private static final class ChildComponentImplShard {
+    private final ParentComponentImpl parentComponentImpl;
+
+    private final ChildComponentImpl childComponentImpl;
+
+    private ChildComponentImplShard(ParentComponentImpl parentComponentImpl,
+        ChildComponentImpl childComponentImpl) {
+      this.parentComponentImpl = parentComponentImpl;
+      this.childComponentImpl = childComponentImpl;
+    }
+
+    private NeedsDep1 needsDep1() {
+      return new NeedsDep1(parentComponentImpl.parentComponentImplShard.dep1Provider.get());
+    }
+
+    private A a() {
+      return injectA(A_Factory.newInstance(needsDep1(), parentComponentImpl.parentComponentImplShard.dep1Provider.get(), parentComponentImpl.parentComponentImplShard.dep2Provider.get()));
+    }
+
+    private Object object() {
+      return ChildModule_ProvideObjectFactory.provideObject(childComponentImpl.childModule, a());
     }
 
     @CanIgnoreReturnValue
@@ -69,38 +113,22 @@ final class DaggerParentComponent {
     }
   }
 
-  private static final class ParentComponentImpl implements ParentComponent {
-    private final ParentComponentImpl parentComponentImpl = this;
+  private static final class ParentComponentImplShard {
+    private final ParentComponentImpl parentComponentImpl;
 
     private Provider<Dep1> dep1Provider;
 
     private Provider<Dep2> dep2Provider;
 
-    private ParentComponentImpl() {
-
+    private ParentComponentImplShard(ParentComponentImpl parentComponentImpl) {
+      this.parentComponentImpl = parentComponentImpl;
       initialize();
-
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.dep1Provider = DoubleCheck.provider(Dep1_Factory.create());
       this.dep2Provider = DoubleCheck.provider(Dep2_Factory.create());
-    }
-
-    @Override
-    public Dep1 dep1() {
-      return dep1Provider.get();
-    }
-
-    @Override
-    public Dep2 dep2() {
-      return dep2Provider.get();
-    }
-
-    @Override
-    public ChildComponent childComponent() {
-      return new ChildComponentImpl(parentComponentImpl);
     }
   }
 }

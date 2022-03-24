@@ -53,25 +53,39 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImplShard testComponentImplShard;
+
     private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+    }
+
+    @Override
+    public UsesInaccessibles usesInaccessibles() {
+      return testComponentImpl.testComponentImplShard.usesInaccessibles();
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
 
     @SuppressWarnings("rawtypes")
     private Provider inaccessiblesProvider;
 
-    private TestComponentImpl() {
-
+    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
       initialize();
+    }
 
+    private UsesInaccessibles usesInaccessibles() {
+      return injectUsesInaccessibles(UsesInaccessibles_Factory.newInstance());
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.inaccessiblesProvider = DoubleCheck.provider(new SwitchingProvider<List>(testComponentImpl, 0));
-    }
-
-    @Override
-    public UsesInaccessibles usesInaccessibles() {
-      return injectUsesInaccessibles(UsesInaccessibles_Factory.newInstance());
     }
 
     @CanIgnoreReturnValue

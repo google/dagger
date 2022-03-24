@@ -29,8 +29,17 @@ public interface GeneratedImplementation {
   /** Returns the name of the component. */
   ClassName name();
 
-  /** Returns a new, unique method name for the component based on the given name. */
+  /** Returns a unique class name for the generated implementation based on the given name. */
   String getUniqueClassName(String name);
+
+  /** Returns a unique field name for the generated implementation based on the given name. */
+  String getUniqueFieldName(String name);
+
+  /** Returns a unique method name for the generated implementation based on the given name. */
+  String getUniqueMethodName(String name);
+
+  /** Claims the method name for the generated implementation. */
+  void claimMethodName(String name);
 
   /** Adds the given field to the generated implementation. */
   void addField(FieldSpecKind fieldKind, FieldSpec fieldSpec);

@@ -36,6 +36,8 @@ final class DaggerSimpleComponent {
   }
 
   private static final class SubImpl implements Sub {
+    private final SubImplShard subImplShard;
+
     private final SimpleComponentImpl simpleComponentImpl;
 
     private final SubImpl subImpl = this;
@@ -43,34 +45,59 @@ final class DaggerSimpleComponent {
     private SubImpl(SimpleComponentImpl simpleComponentImpl) {
       this.simpleComponentImpl = simpleComponentImpl;
 
-
+      subImplShard = new SubImplShard(simpleComponentImpl, subImpl);
     }
 
     @Override
     public DependsOnScoped dependsOnScoped() {
-      return new DependsOnScoped(simpleComponentImpl.scopedTypeProvider.get());
+      return subImpl.subImplShard.dependsOnScoped();
     }
   }
 
   private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+    private final SimpleComponentImplShard simpleComponentImplShard;
 
-    private Provider<ScopedType> scopedTypeProvider;
+    private final SimpleComponentImpl simpleComponentImpl = this;
 
     private SimpleComponentImpl() {
 
-      initialize();
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private void initialize() {
-      this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());
+      simpleComponentImplShard = new SimpleComponentImplShard(simpleComponentImpl);
     }
 
     @Override
     public Sub sub() {
       return new SubImpl(simpleComponentImpl);
+    }
+  }
+
+  private static final class SubImplShard {
+    private final SimpleComponentImpl simpleComponentImpl;
+
+    private final SubImpl subImpl;
+
+    private SubImplShard(SimpleComponentImpl simpleComponentImpl, SubImpl subImpl) {
+      this.simpleComponentImpl = simpleComponentImpl;
+      this.subImpl = subImpl;
+    }
+
+    private DependsOnScoped dependsOnScoped() {
+      return new DependsOnScoped(simpleComponentImpl.simpleComponentImplShard.scopedTypeProvider.get());
+    }
+  }
+
+  private static final class SimpleComponentImplShard {
+    private final SimpleComponentImpl simpleComponentImpl;
+
+    private Provider<ScopedType> scopedTypeProvider;
+
+    private SimpleComponentImplShard(SimpleComponentImpl simpleComponentImpl) {
+      this.simpleComponentImpl = simpleComponentImpl;
+      initialize();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());
     }
   }
 }

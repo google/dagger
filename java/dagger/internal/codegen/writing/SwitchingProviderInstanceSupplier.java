@@ -40,7 +40,6 @@ final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSuppli
   @AssistedInject
   SwitchingProviderInstanceSupplier(
       @Assisted ProvisionBinding binding,
-      ExperimentalSwitchingProviders experimentalSwitchingProviders,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
       UnscopedDirectInstanceRequestRepresentationFactory
@@ -48,8 +47,9 @@ final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSuppli
     ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
         componentImplementation.compilerMode().isExperimentalMergedMode()
-            ? experimentalSwitchingProviders.newFrameworkInstanceCreationExpression(
-                binding, unscopedDirectInstanceRequestRepresentationFactory.create(binding))
+            ? shardImplementation.getExperimentalSwitchingProviders()
+                .newFrameworkInstanceCreationExpression(
+                    binding, unscopedDirectInstanceRequestRepresentationFactory.create(binding))
             : shardImplementation.getSwitchingProviders().newFrameworkInstanceCreationExpression(
                 binding, unscopedDirectInstanceRequestRepresentationFactory.create(binding));
     this.frameworkInstanceSupplier =

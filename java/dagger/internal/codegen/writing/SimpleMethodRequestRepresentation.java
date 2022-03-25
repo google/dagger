@@ -72,8 +72,7 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
       ComponentRequirementExpressions componentRequirementExpressions,
       SourceVersion sourceVersion,
       KotlinMetadataUtil metadataUtil,
-      ComponentImplementation componentImplementation,
-      ExperimentalSwitchingProviders switchingProviders) {
+      ComponentImplementation componentImplementation) {
     this.compilerOptions = compilerOptions;
     this.provisionBinding = binding;
     this.metadataUtil = metadataUtil;

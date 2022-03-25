@@ -57,7 +57,6 @@ import java.util.TreeMap;
  * <p>The provider expression request will be satisfied by a single generated {@code Provider} class
  * that can provide instances for all types by switching on an id.
  */
-@PerComponentImplementation
 final class SwitchingProviders {
   /**
    * Each switch size is fixed at 100 cases each and put in its own method. This is to limit the
@@ -83,8 +82,8 @@ final class SwitchingProviders {
   private final DaggerTypes types;
 
   SwitchingProviders(ShardImplementation shardImplementation, DaggerTypes types) {
-    this.shardImplementation = shardImplementation;
-    this.types = types;
+    this.shardImplementation = checkNotNull(shardImplementation);
+    this.types = checkNotNull(types);
   }
 
   /** Returns the framework instance creation expression for an inner switching provider class. */

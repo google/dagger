@@ -39,7 +39,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
-import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -50,7 +49,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -59,7 +58,6 @@ import javax.lang.model.type.TypeMirror;
  * <p>The provider expression request will be satisfied by a single generated {@code Provider} class
  * that can provide instances for all types by switching on an id.
  */
-@PerComponentImplementation
 final class ExperimentalSwitchingProviders {
   /**
    * Each switch size is fixed at 100 cases each and put in its own method. This is to limit the
@@ -81,20 +79,17 @@ final class ExperimentalSwitchingProviders {
   private final Map<Key, SwitchingProviderBuilder> switchingProviderBuilders =
       new LinkedHashMap<>();
 
-  private final ShardImplementation componentShard;
+  private final ShardImplementation shardImplementation;
+  private final Provider<ComponentRequestRepresentations> componentRequestRepresentationsProvider;
   private final DaggerTypes types;
-  private final UniqueNameSet switchingProviderNames = new UniqueNameSet();
-  private final ComponentRequestRepresentations componentRequestRepresentations;
-  private final ComponentImplementation componentImplementation;
 
-  @Inject
   ExperimentalSwitchingProviders(
-      ComponentImplementation componentImplementation,
-      ComponentRequestRepresentations componentRequestRepresentations,
+      ShardImplementation shardImplementation,
+      Provider<ComponentRequestRepresentations> componentRequestRepresentationsProvider,
       DaggerTypes types) {
-    this.componentShard = checkNotNull(componentImplementation).getComponentShard();
-    this.componentRequestRepresentations = componentRequestRepresentations;
-    this.componentImplementation = componentImplementation;
+    this.shardImplementation = checkNotNull(shardImplementation);
+    this.componentRequestRepresentationsProvider =
+        checkNotNull(componentRequestRepresentationsProvider);
     this.types = checkNotNull(types);
   }
 
@@ -113,12 +108,12 @@ final class ExperimentalSwitchingProviders {
 
   private SwitchingProviderBuilder getSwitchingProviderBuilder() {
     if (switchingProviderBuilders.size() % MAX_CASES_PER_CLASS == 0) {
-      String name = switchingProviderNames.getUniqueName("SwitchingProvider");
+      String name = shardImplementation.getUniqueClassName("SwitchingProvider");
       // TODO(wanyingd): move Switching Providers and injection methods to Shard classes to avoid
       // exceeding component class constant pool limit.
       SwitchingProviderBuilder switchingProviderBuilder =
-          new SwitchingProviderBuilder(componentShard.name().nestedClass(name));
-      componentShard.addTypeSupplier(switchingProviderBuilder::build);
+          new SwitchingProviderBuilder(shardImplementation.name().nestedClass(name));
+      shardImplementation.addTypeSupplier(switchingProviderBuilder::build);
       return switchingProviderBuilder;
     }
     return getLast(switchingProviderBuilders.values());
@@ -146,8 +141,6 @@ final class ExperimentalSwitchingProviders {
             switchId, createSwitchCaseCodeBlock(key, unscopedInstanceRequestRepresentation));
       }
 
-      ShardImplementation shardImplementation =
-          componentImplementation.shardImplementation(binding);
       CodeBlock switchingProviderDependencies;
       switch (binding.kind()) {
           // TODO(wanyingd): there might be a better way to get component requirement information
@@ -171,7 +164,7 @@ final class ExperimentalSwitchingProviders {
           // Arguments built in the order of module reference, provision dependencies and members
           // injection dependencies
           switchingProviderDependencies =
-              componentRequestRepresentations.getCreateMethodArgumentsCodeBlock(
+              componentRequestRepresentationsProvider.get().getCreateMethodArgumentsCodeBlock(
                   binding, shardImplementation.name());
           break;
         default:

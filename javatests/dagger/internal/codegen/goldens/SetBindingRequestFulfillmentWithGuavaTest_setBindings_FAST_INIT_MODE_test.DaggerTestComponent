@@ -1,0 +1,67 @@
+package test;
+
+import com.google.common.collect.ImmutableSet;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private DaggerTestComponent() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @Override
+  public Set<String> strings() {
+    return ImmutableSet.<String>builderWithExpectedSize(2).addAll(EmptySetModule_EmptySetFactory.emptySet()).add(SetModule_StringFactory.string()).build();
+  }
+
+  @Override
+  public Set<Object> objects() {
+    return ImmutableSet.<Object>of();
+  }
+
+  @Override
+  public Set<Integer> onlyContributionIsElementsIntoSet() {
+    return ImmutableSet.<Integer>copyOf(EmptySetModule_OnlyContributionIsElementsIntoSetFactory.onlyContributionIsElementsIntoSet());
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    /**
+     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
+     */
+    @Deprecated
+    public Builder setModule(SetModule setModule) {
+      Preconditions.checkNotNull(setModule);
+      return this;
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+}
+

@@ -1,0 +1,57 @@
+package test;
+
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private DaggerTestComponent() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @Override
+  public Integer nonNullableInteger() {
+    return TestModule.primitiveInteger();
+  }
+
+  @Override
+  public void inject(InjectsMember member) {
+    injectInjectsMember(member);
+  }
+
+  @CanIgnoreReturnValue
+  private InjectsMember injectInjectsMember(InjectsMember instance) {
+    InjectsMember_MembersInjector.injectMember(instance, TestModule.primitiveInteger());
+    return instance;
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+}
+

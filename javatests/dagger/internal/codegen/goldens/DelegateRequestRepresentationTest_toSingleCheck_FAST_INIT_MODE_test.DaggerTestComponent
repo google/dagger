@@ -1,0 +1,103 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.SingleCheck;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private Provider<RegularScoped> regularScopedProvider;
+
+  private Provider<ReusableScoped> reusableScopedProvider;
+
+  private Provider<Unscoped> unscopedProvider;
+
+  private Provider<Object> unscopedProvider2;
+
+  private DaggerTestComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.regularScopedProvider = DoubleCheck.provider(new SwitchingProvider<RegularScoped>(testComponent, 0));
+    this.reusableScopedProvider = SingleCheck.provider(new SwitchingProvider<ReusableScoped>(testComponent, 1));
+    this.unscopedProvider = new SwitchingProvider<>(testComponent, 2);
+    this.unscopedProvider2 = SingleCheck.provider((Provider) unscopedProvider);
+  }
+
+  @Override
+  public Object regular() {
+    return regularScopedProvider.get();
+  }
+
+  @Override
+  public Object reusable() {
+    return reusableScopedProvider.get();
+  }
+
+  @Override
+  public Object unscoped() {
+    return unscopedProvider2.get();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+
+  private static final class SwitchingProvider<T> implements Provider<T> {
+    private final DaggerTestComponent testComponent;
+
+    private final int id;
+
+    SwitchingProvider(DaggerTestComponent testComponent, int id) {
+      this.testComponent = testComponent;
+      this.id = id;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get() {
+      switch (id) {
+        case 0: // test.RegularScoped 
+        return (T) new RegularScoped();
+
+        case 1: // test.ReusableScoped 
+        return (T) new ReusableScoped();
+
+        case 2: // test.Unscoped 
+        return (T) new Unscoped();
+
+        default: throw new AssertionError(id);
+      }
+    }
+  }
+}
+

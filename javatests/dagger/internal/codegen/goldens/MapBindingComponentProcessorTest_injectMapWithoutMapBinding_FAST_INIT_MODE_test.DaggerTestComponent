@@ -1,0 +1,59 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final MapModule mapModule;
+
+  private final DaggerTestComponent testComponent = this;
+
+  private DaggerTestComponent(MapModule mapModuleParam) {
+    this.mapModule = mapModuleParam;
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @Override
+  public Map<String, String> dispatcher() {
+    return MapModule_ProvideAMapFactory.provideAMap(mapModule);
+  }
+
+  static final class Builder {
+    private MapModule mapModule;
+
+    private Builder() {
+    }
+
+    public Builder mapModule(MapModule mapModule) {
+      this.mapModule = Preconditions.checkNotNull(mapModule);
+      return this;
+    }
+
+    public TestComponent build() {
+      if (mapModule == null) {
+        this.mapModule = new MapModule();
+      }
+      return new DaggerTestComponent(mapModule);
+    }
+  }
+}
+

@@ -1,0 +1,52 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@ScopeMetadata
+@QualifierMetadata("test.FooBaseConstructorQualifier")
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class FooBase_Factory implements Factory<FooBase> {
+  private final Provider<Integer> iProvider;
+
+  private final Provider<String> injectFieldProvider;
+
+  private final Provider<Float> fProvider;
+
+  public FooBase_Factory(Provider<Integer> iProvider, Provider<String> injectFieldProvider,
+      Provider<Float> fProvider) {
+    this.iProvider = iProvider;
+    this.injectFieldProvider = injectFieldProvider;
+    this.fProvider = fProvider;
+  }
+
+  @Override
+  public FooBase get() {
+    FooBase instance = newInstance(iProvider.get());
+    FooBase_MembersInjector.injectInjectField(instance, injectFieldProvider.get());
+    FooBase_MembersInjector.injectInjectMethod(instance, fProvider.get());
+    return instance;
+  }
+
+  public static FooBase_Factory create(Provider<Integer> iProvider,
+      Provider<String> injectFieldProvider, Provider<Float> fProvider) {
+    return new FooBase_Factory(iProvider, injectFieldProvider, fProvider);
+  }
+
+  public static FooBase newInstance(int i) {
+    return new FooBase(i);
+  }
+}
+

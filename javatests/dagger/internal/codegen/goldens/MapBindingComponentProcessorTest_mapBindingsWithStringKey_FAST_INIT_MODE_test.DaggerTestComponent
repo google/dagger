@@ -1,0 +1,117 @@
+package test;
+
+import com.google.common.collect.ImmutableMap;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final MapModuleOne mapModuleOne;
+
+  private final MapModuleTwo mapModuleTwo;
+
+  private final DaggerTestComponent testComponent = this;
+
+  private Provider<Handler> provideAdminHandlerProvider;
+
+  private Provider<Handler> provideLoginHandlerProvider;
+
+  private Provider<Map<String, Provider<Handler>>> mapOfStringAndProviderOfHandlerProvider;
+
+  private DaggerTestComponent(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+    this.mapModuleOne = mapModuleOneParam;
+    this.mapModuleTwo = mapModuleTwoParam;
+    initialize(mapModuleOneParam, mapModuleTwoParam);
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize(final MapModuleOne mapModuleOneParam,
+      final MapModuleTwo mapModuleTwoParam) {
+    this.provideAdminHandlerProvider = new SwitchingProvider<>(testComponent, 1);
+    this.provideLoginHandlerProvider = new SwitchingProvider<>(testComponent, 2);
+    this.mapOfStringAndProviderOfHandlerProvider = new SwitchingProvider<>(testComponent, 0);
+  }
+
+  @Override
+  public Provider<Map<String, Provider<Handler>>> dispatcher() {
+    return mapOfStringAndProviderOfHandlerProvider;
+  }
+
+  static final class Builder {
+    private MapModuleOne mapModuleOne;
+
+    private MapModuleTwo mapModuleTwo;
+
+    private Builder() {
+    }
+
+    public Builder mapModuleOne(MapModuleOne mapModuleOne) {
+      this.mapModuleOne = Preconditions.checkNotNull(mapModuleOne);
+      return this;
+    }
+
+    public Builder mapModuleTwo(MapModuleTwo mapModuleTwo) {
+      this.mapModuleTwo = Preconditions.checkNotNull(mapModuleTwo);
+      return this;
+    }
+
+    public TestComponent build() {
+      if (mapModuleOne == null) {
+        this.mapModuleOne = new MapModuleOne();
+      }
+      if (mapModuleTwo == null) {
+        this.mapModuleTwo = new MapModuleTwo();
+      }
+      return new DaggerTestComponent(mapModuleOne, mapModuleTwo);
+    }
+  }
+
+  private static final class SwitchingProvider<T> implements Provider<T> {
+    private final DaggerTestComponent testComponent;
+
+    private final int id;
+
+    SwitchingProvider(DaggerTestComponent testComponent, int id) {
+      this.testComponent = testComponent;
+      this.id = id;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get() {
+      switch (id) {
+        case 0: // java.util.Map<java.lang.String,javax.inject.Provider<test.Handler>> 
+        return (T) ImmutableMap.<String, Provider<Handler>>of("Admin", testComponent.provideAdminHandlerProvider, "Login", testComponent.provideLoginHandlerProvider);
+
+        case 1: // java.util.Map<java.lang.String,javax.inject.Provider<test.Handler>> test.MapModuleOne#provideAdminHandler 
+        return (T) MapModuleOne_ProvideAdminHandlerFactory.provideAdminHandler(testComponent.mapModuleOne);
+
+        case 2: // java.util.Map<java.lang.String,javax.inject.Provider<test.Handler>> test.MapModuleTwo#provideLoginHandler 
+        return (T) MapModuleTwo_ProvideLoginHandlerFactory.provideLoginHandler(testComponent.mapModuleTwo);
+
+        default: throw new AssertionError(id);
+      }
+    }
+  }
+}
+

@@ -1,0 +1,83 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerBComponent implements BComponent {
+  private final ArrayComponent arrayComponent;
+
+  private final DaggerBComponent bComponent = this;
+
+  private Provider<String[]> stringsProvider;
+
+  private DaggerBComponent(ArrayComponent arrayComponentParam) {
+    this.arrayComponent = arrayComponentParam;
+    initialize(arrayComponentParam);
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize(final ArrayComponent arrayComponentParam) {
+    this.stringsProvider = new SwitchingProvider<>(bComponent, 0);
+  }
+
+  @Override
+  public B b() {
+    return new B(stringsProvider);
+  }
+
+  static final class Builder {
+    private ArrayComponent arrayComponent;
+
+    private Builder() {
+    }
+
+    public Builder arrayComponent(ArrayComponent arrayComponent) {
+      this.arrayComponent = Preconditions.checkNotNull(arrayComponent);
+      return this;
+    }
+
+    public BComponent build() {
+      Preconditions.checkBuilderRequirement(arrayComponent, ArrayComponent.class);
+      return new DaggerBComponent(arrayComponent);
+    }
+  }
+
+  private static final class SwitchingProvider<T> implements Provider<T> {
+    private final DaggerBComponent bComponent;
+
+    private final int id;
+
+    SwitchingProvider(DaggerBComponent bComponent, int id) {
+      this.bComponent = bComponent;
+      this.id = id;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get() {
+      switch (id) {
+        case 0: // java.lang.String[] 
+        return (T) Preconditions.checkNotNullFromComponent(bComponent.arrayComponent.strings());
+
+        default: throw new AssertionError(id);
+      }
+    }
+  }
+}
+

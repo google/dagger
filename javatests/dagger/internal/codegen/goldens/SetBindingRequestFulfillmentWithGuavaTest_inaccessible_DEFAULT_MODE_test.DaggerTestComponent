@@ -1,0 +1,54 @@
+package test;
+
+import com.google.common.collect.ImmutableSet;
+import dagger.internal.DaggerGenerated;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+import other.TestModule_EmptySetFactory;
+import other.UsesInaccessible;
+import other.UsesInaccessible_Factory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private DaggerTestComponent() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  private Set setOfInaccessible2() {
+    return ImmutableSet.copyOf(TestModule_EmptySetFactory.emptySet());
+  }
+
+  @Override
+  public UsesInaccessible usesInaccessible() {
+    return UsesInaccessible_Factory.newInstance((Set) ImmutableSet.of(), (Set) setOfInaccessible2());
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+}
+

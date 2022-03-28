@@ -1,0 +1,72 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerBComponent implements BComponent {
+  private final DaggerBComponent bComponent = this;
+
+  private Provider<Integer> iProvider;
+
+  private DaggerBComponent(IntComponent intComponentParam) {
+
+    initialize(intComponentParam);
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize(final IntComponent intComponentParam) {
+    this.iProvider = new IProvider(intComponentParam);
+  }
+
+  @Override
+  public B b() {
+    return new B(iProvider);
+  }
+
+  static final class Builder {
+    private IntComponent intComponent;
+
+    private Builder() {
+    }
+
+    public Builder intComponent(IntComponent intComponent) {
+      this.intComponent = Preconditions.checkNotNull(intComponent);
+      return this;
+    }
+
+    public BComponent build() {
+      Preconditions.checkBuilderRequirement(intComponent, IntComponent.class);
+      return new DaggerBComponent(intComponent);
+    }
+  }
+
+  private static final class IProvider implements Provider<Integer> {
+    private final IntComponent intComponent;
+
+    IProvider(IntComponent intComponent) {
+      this.intComponent = intComponent;
+    }
+
+    @Override
+    public Integer get() {
+      return intComponent.i();
+    }
+  }
+}
+

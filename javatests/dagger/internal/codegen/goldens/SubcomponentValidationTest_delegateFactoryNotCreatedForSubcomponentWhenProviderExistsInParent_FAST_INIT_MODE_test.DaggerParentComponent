@@ -1,0 +1,139 @@
+package test;
+
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerParentComponent implements ParentComponent {
+  private final DaggerParentComponent parentComponent = this;
+
+  private Provider<Dep1> dep1Provider;
+
+  private Provider<Dep2> dep2Provider;
+
+  private DaggerParentComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static ParentComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.dep1Provider = DoubleCheck.provider(new SwitchingProvider<Dep1>(parentComponent, 0));
+    this.dep2Provider = DoubleCheck.provider(new SwitchingProvider<Dep2>(parentComponent, 1));
+  }
+
+  @Override
+  public Dep1 dep1() {
+    return dep1Provider.get();
+  }
+
+  @Override
+  public Dep2 dep2() {
+    return dep2Provider.get();
+  }
+
+  @Override
+  public ChildComponent childComponent() {
+    return new ChildComponentImpl(parentComponent);
+  }
+
+  @CanIgnoreReturnValue
+  private Dep1 injectDep1(Dep1 instance) {
+    Dep1_MembersInjector.injectDep1Method(instance);
+    return instance;
+  }
+
+  @CanIgnoreReturnValue
+  private Dep2 injectDep2(Dep2 instance) {
+    Dep2_MembersInjector.injectDep2Method(instance);
+    return instance;
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public ParentComponent build() {
+      return new DaggerParentComponent();
+    }
+  }
+
+  private static final class ChildComponentImpl implements ChildComponent {
+    private final ChildModule childModule;
+
+    private final DaggerParentComponent parentComponent;
+
+    private final ChildComponentImpl childComponentImpl = this;
+
+    private ChildComponentImpl(DaggerParentComponent parentComponent) {
+      this.parentComponent = parentComponent;
+      this.childModule = new ChildModule();
+
+    }
+
+    private NeedsDep1 needsDep1() {
+      return new NeedsDep1(parentComponent.dep1Provider.get());
+    }
+
+    private A a() {
+      return injectA(A_Factory.newInstance(needsDep1(), parentComponent.dep1Provider.get(), parentComponent.dep2Provider.get()));
+    }
+
+    @Override
+    public Object object() {
+      return ChildModule_ProvideObjectFactory.provideObject(childModule, a());
+    }
+
+    @CanIgnoreReturnValue
+    private A injectA(A instance) {
+      A_MembersInjector.injectMethodA(instance);
+      return instance;
+    }
+  }
+
+  private static final class SwitchingProvider<T> implements Provider<T> {
+    private final DaggerParentComponent parentComponent;
+
+    private final int id;
+
+    SwitchingProvider(DaggerParentComponent parentComponent, int id) {
+      this.parentComponent = parentComponent;
+      this.id = id;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get() {
+      switch (id) {
+        case 0: // test.Dep1 
+        return (T) parentComponent.injectDep1(Dep1_Factory.newInstance());
+
+        case 1: // test.Dep2 
+        return (T) parentComponent.injectDep2(Dep2_Factory.newInstance());
+
+        default: throw new AssertionError(id);
+      }
+    }
+  }
+}
+

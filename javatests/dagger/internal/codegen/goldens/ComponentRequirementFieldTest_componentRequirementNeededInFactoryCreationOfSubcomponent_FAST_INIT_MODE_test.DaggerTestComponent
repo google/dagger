@@ -1,0 +1,155 @@
+package test;
+
+import com.google.common.collect.ImmutableSet;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final ParentModule parentModule;
+
+  private final DaggerTestComponent testComponent = this;
+
+  private Provider<Object> reliesOnMultibindingProvider;
+
+  private DaggerTestComponent(ParentModule parentModuleParam) {
+    this.parentModule = parentModuleParam;
+    initialize(parentModuleParam);
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  private Set<Object> setOfObject() {
+    return ImmutableSet.<Object>of(ParentModule_ContributionFactory.contribution());
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize(final ParentModule parentModuleParam) {
+    this.reliesOnMultibindingProvider = new SwitchingProvider<>(testComponent, 0);
+  }
+
+  @Override
+  public Provider<Object> dependsOnMultibinding() {
+    return reliesOnMultibindingProvider;
+  }
+
+  @Override
+  public TestSubcomponent subcomponent() {
+    return new TestSubcomponentImpl(testComponent);
+  }
+
+  static final class Builder {
+    private ParentModule parentModule;
+
+    private Builder() {
+    }
+
+    public Builder parentModule(ParentModule parentModule) {
+      this.parentModule = Preconditions.checkNotNull(parentModule);
+      return this;
+    }
+
+    public TestComponent build() {
+      if (parentModule == null) {
+        this.parentModule = new ParentModule();
+      }
+      return new DaggerTestComponent(parentModule);
+    }
+  }
+
+  private static final class TestSubcomponentImpl implements TestSubcomponent {
+    private final DaggerTestComponent testComponent;
+
+    private final TestSubcomponentImpl testSubcomponentImpl = this;
+
+    private Provider<Object> reliesOnMultibindingProvider;
+
+    private TestSubcomponentImpl(DaggerTestComponent testComponent) {
+      this.testComponent = testComponent;
+
+      initialize();
+
+    }
+
+    private Set<Object> setOfObject() {
+      return ImmutableSet.<Object>of(ParentModule_ContributionFactory.contribution(), ChildModule_ContributionFactory.contribution());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.reliesOnMultibindingProvider = new SwitchingProvider<>(testComponent, testSubcomponentImpl, 0);
+    }
+
+    @Override
+    public Provider<Object> dependsOnMultibinding() {
+      return reliesOnMultibindingProvider;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final DaggerTestComponent testComponent;
+
+      private final TestSubcomponentImpl testSubcomponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(DaggerTestComponent testComponent,
+          TestSubcomponentImpl testSubcomponentImpl, int id) {
+        this.testComponent = testComponent;
+        this.testSubcomponentImpl = testSubcomponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // java.lang.Object 
+          return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(testComponent.parentModule, testSubcomponentImpl.setOfObject());
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+
+  private static final class SwitchingProvider<T> implements Provider<T> {
+    private final DaggerTestComponent testComponent;
+
+    private final int id;
+
+    SwitchingProvider(DaggerTestComponent testComponent, int id) {
+      this.testComponent = testComponent;
+      this.id = id;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get() {
+      switch (id) {
+        case 0: // java.lang.Object 
+        return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(testComponent.parentModule, testComponent.setOfObject());
+
+        default: throw new AssertionError(id);
+      }
+    }
+  }
+}
+

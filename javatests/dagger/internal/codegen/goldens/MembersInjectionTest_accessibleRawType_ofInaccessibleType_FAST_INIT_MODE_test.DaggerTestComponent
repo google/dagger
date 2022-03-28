@@ -1,0 +1,101 @@
+package test;
+
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Preconditions;
+import java.util.List;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+import other.InaccessiblesModule;
+import other.InaccessiblesModule_InaccessiblesFactory;
+import other.UsesInaccessibles;
+import other.UsesInaccessibles_Factory;
+import other.UsesInaccessibles_MembersInjector;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  @SuppressWarnings("rawtypes")
+  private Provider inaccessiblesProvider;
+
+  private DaggerTestComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.inaccessiblesProvider = DoubleCheck.provider(new SwitchingProvider<List>(testComponent, 0));
+  }
+
+  @Override
+  public UsesInaccessibles usesInaccessibles() {
+    return injectUsesInaccessibles(UsesInaccessibles_Factory.newInstance());
+  }
+
+  @CanIgnoreReturnValue
+  private UsesInaccessibles injectUsesInaccessibles(UsesInaccessibles instance) {
+    UsesInaccessibles_MembersInjector.injectInaccessibles(instance, (List) inaccessiblesProvider.get());
+    return instance;
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    /**
+     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
+     */
+    @Deprecated
+    public Builder inaccessiblesModule(InaccessiblesModule inaccessiblesModule) {
+      Preconditions.checkNotNull(inaccessiblesModule);
+      return this;
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+
+  private static final class SwitchingProvider<T> implements Provider<T> {
+    private final DaggerTestComponent testComponent;
+
+    private final int id;
+
+    SwitchingProvider(DaggerTestComponent testComponent, int id) {
+      this.testComponent = testComponent;
+      this.id = id;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get() {
+      switch (id) {
+        case 0: // java.util.List<other.Inaccessible> 
+        return (T) InaccessiblesModule_InaccessiblesFactory.inaccessibles();
+
+        default: throw new AssertionError(id);
+      }
+    }
+  }
+}
+

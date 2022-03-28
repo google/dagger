@@ -1,0 +1,59 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@QualifierMetadata({
+    "test.FooFieldQualifier",
+    "test.FooMethodQualifier"
+})
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class Foo_MembersInjector implements MembersInjector<Foo> {
+  private final Provider<String> injectFieldProvider;
+
+  private final Provider<String> injectFieldProvider2;
+
+  private final Provider<Float> fProvider;
+
+  public Foo_MembersInjector(Provider<String> injectFieldProvider,
+      Provider<String> injectFieldProvider2, Provider<Float> fProvider) {
+    this.injectFieldProvider = injectFieldProvider;
+    this.injectFieldProvider2 = injectFieldProvider2;
+    this.fProvider = fProvider;
+  }
+
+  public static MembersInjector<Foo> create(Provider<String> injectFieldProvider,
+      Provider<String> injectFieldProvider2, Provider<Float> fProvider) {
+    return new Foo_MembersInjector(injectFieldProvider, injectFieldProvider2, fProvider);
+  }
+
+  @Override
+  public void injectMembers(Foo instance) {
+    FooBase_MembersInjector.injectInjectField(instance, injectFieldProvider.get());
+    injectInjectField(instance, injectFieldProvider2.get());
+    injectInjectMethod(instance, fProvider.get());
+  }
+
+  @InjectedFieldSignature("test.Foo.injectField")
+  @FooFieldQualifier
+  public static void injectInjectField(Object instance, String injectField) {
+    ((Foo) instance).injectField = injectField;
+  }
+
+  public static void injectInjectMethod(Object instance, float f) {
+    ((Foo) instance).injectMethod(f);
+  }
+}
+

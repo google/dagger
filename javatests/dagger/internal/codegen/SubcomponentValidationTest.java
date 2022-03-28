@@ -17,15 +17,15 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
 import javax.tools.JavaFileObject;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -43,6 +43,8 @@ public class SubcomponentValidationTest {
   public SubcomponentValidationTest(CompilerMode compilerMode) {
     this.compilerMode = compilerMode;
   }
+
+  @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
 
   @Test public void factoryMethod_missingModulesWithParameters() {
     JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
@@ -362,7 +364,8 @@ public class SubcomponentValidationTest {
   }
 
   @Test
-  public void delegateFactoryNotCreatedForSubcomponentWhenProviderExistsInParent() {
+  public void delegateFactoryNotCreatedForSubcomponentWhenProviderExistsInParent()
+      throws Exception {
     JavaFileObject parentComponentFile =
         JavaFileObjects.forSourceLines(
             "test.ParentComponent",
@@ -449,105 +452,6 @@ public class SubcomponentValidationTest {
             "  @Inject public void dep2Method() { }",
             "}");
 
-    JavaFileObject generatedComponent =
-        compilerMode
-            .javaFileBuilder("test.DaggerParentComponent")
-            .addLines(
-                "package test;",
-                "",
-                GeneratedLines.generatedAnnotations(),
-                "final class DaggerParentComponent implements ParentComponent {",
-                "  private Provider<Dep1> dep1Provider;",
-                "  private Provider<Dep2> dep2Provider;")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize() {",
-                "    this.dep1Provider = DoubleCheck.provider(Dep1_Factory.create());",
-                "    this.dep2Provider = DoubleCheck.provider(Dep2_Factory.create());",
-                "  }",
-                "")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "  @SuppressWarnings(\"unchecked\")",
-                "  private void initialize() {",
-                "    this.dep1Provider = DoubleCheck.provider(",
-                "        new SwitchingProvider<Dep1>(parentComponent, 0));",
-                "    this.dep2Provider = DoubleCheck.provider(",
-                "        new SwitchingProvider<Dep2>(parentComponent, 1));",
-                "  }")
-            .addLines(
-                "  @Override",
-                "  public Dep1 dep1() {",
-                "    return dep1Provider.get();",
-                "  }",
-                "",
-                "  @Override",
-                "  public Dep2 dep2() {",
-                "    return dep2Provider.get();",
-                "  }",
-                "",
-                "  @Override",
-                "  public ChildComponent childComponent() {",
-                "    return new ChildComponentImpl(parentComponent);",
-                "  }")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "  @CanIgnoreReturnValue",
-                "  private Dep1 injectDep1(Dep1 instance) {",
-                "    Dep1_MembersInjector.injectDep1Method(instance);",
-                "    return instance;",
-                "  }",
-                "",
-                "  @CanIgnoreReturnValue",
-                "  private Dep2 injectDep2(Dep2 instance) {",
-                "    Dep2_MembersInjector.injectDep2Method(instance);",
-                "    return instance;",
-                "  }")
-            .addLines(
-                "  private static final class ChildComponentImpl implements ChildComponent {",
-                "    private NeedsDep1 needsDep1() {",
-                "      return new NeedsDep1(parentComponent.dep1Provider.get());",
-                "    }",
-                "",
-                "    private A a() {",
-                "      return injectA(",
-                "          A_Factory.newInstance(",
-                "          needsDep1(),",
-                "          parentComponent.dep1Provider.get(),",
-                "          parentComponent.dep2Provider.get()));",
-                "    }",
-                "",
-                "    @Override",
-                "    public Object object() {",
-                "      return ChildModule_ProvideObjectFactory.provideObject(",
-                "          childModule, a());",
-                "    }",
-                "",
-                "    @CanIgnoreReturnValue",
-                "    private A injectA(A instance) {",
-                "      A_MembersInjector.injectMethodA(instance);",
-                "      return instance;",
-                "    }",
-                "  }")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "  private static final class SwitchingProvider<T> implements Provider<T> {",
-                "    @SuppressWarnings(\"unchecked\")",
-                "    @Override",
-                "    public T get() {",
-                "      switch (id) {",
-                "        case 0:",
-                "          return (T) parentComponent.injectDep1(Dep1_Factory.newInstance());",
-                "        case 1:",
-                "          return (T) parentComponent.injectDep2(Dep2_Factory.newInstance());",
-                "        default: throw new AssertionError(id);",
-                "      }",
-                "    }",
-                "  }",
-                "}")
-            .build();
-
     Compilation compilation =
         compilerWithOptions(compilerMode.javacopts())
             .compile(
@@ -561,11 +465,11 @@ public class SubcomponentValidationTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParentComponent")
-        .containsElementsIn(generatedComponent);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParentComponent"));
   }
 
   @Test
-  public void multipleSubcomponentsWithSameSimpleNamesCanExistInSameComponent() {
+  public void multipleSubcomponentsWithSameSimpleNamesCanExistInSameComponent() throws Exception {
     JavaFileObject parent =
         JavaFileObjects.forSourceLines(
             "test.ParentComponent",
@@ -619,50 +523,17 @@ public class SubcomponentValidationTest {
             "",
             "@Subcomponent interface NoConflict {}");
 
-    JavaFileObject componentGeneratedFile =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerParentComponent",
-            "package test;",
-            "",
-            "import test.subpackage.Sub;",
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "final class DaggerParentComponent implements ParentComponent {",
-            "  @Override",
-            "  public Foo.Sub newInstanceSubcomponent() {",
-            "    return new F_SubImpl(parentComponent);",
-            "  }",
-            "",
-            "  @Override",
-            "  public NoConflict newNoConflictSubcomponent() {",
-            "    return new NoConflictImpl(parentComponent);",
-            "  }",
-            "",
-            "  static final class Builder {",
-            "    public ParentComponent build() {",
-            "      return new DaggerParentComponent();",
-            "    }",
-            "  }",
-            "",
-            "  private static final class ts_SubImpl implements Sub {}",
-            "",
-            "  private static final class B_SubImpl implements Bar.Sub {}",
-            "",
-            "  private static final class F_SubImpl implements Foo.Sub {}",
-            "",
-            "  private static final class NoConflictImpl implements NoConflict {}",
-            "}");
     Compilation compilation =
         compilerWithOptions(compilerMode.javacopts())
             .compile(parent, foo, bar, baz, noConflict);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParentComponent")
-        .containsElementsIn(componentGeneratedFile);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParentComponent"));
   }
 
   @Test
-  public void subcomponentSimpleNamesDisambiguated() {
+  public void subcomponentSimpleNamesDisambiguated() throws Exception {
     JavaFileObject parent =
         JavaFileObjects.forSourceLines(
             "test.ParentComponent",
@@ -693,39 +564,16 @@ public class SubcomponentValidationTest {
             "",
             "@Subcomponent public interface Sub {}");
 
-    JavaFileObject componentGeneratedFile =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerParentComponent",
-            "package test;",
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "final class DaggerParentComponent implements ParentComponent {",
-            "  @Override",
-            "  public Sub newSubcomponent() {",
-            "    return new t_SubImpl(parentComponent);",
-            "  }",
-            "",
-            "  static final class Builder {",
-            "    public ParentComponent build() {",
-            "      return new DaggerParentComponent();",
-            "    }",
-            "  }",
-            "",
-            "  private static final class tdmltmt_SubImpl",
-            "      implements test.deep.many.levels.that.match.test.Sub {}",
-            "",
-            "  private static final class t_SubImpl implements Sub {}",
-            "}");
     Compilation compilation =
         compilerWithOptions(compilerMode.javacopts()).compile(parent, sub, deepSub);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParentComponent")
-        .containsElementsIn(componentGeneratedFile);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParentComponent"));
   }
 
   @Test
-  public void subcomponentSimpleNamesDisambiguatedInRoot() {
+  public void subcomponentSimpleNamesDisambiguatedInRoot() throws Exception {
     JavaFileObject parent =
         JavaFileObjects.forSourceLines(
             "ParentComponent",
@@ -752,34 +600,16 @@ public class SubcomponentValidationTest {
             "",
             "@Subcomponent public interface Sub {}");
 
-    JavaFileObject componentGeneratedFile =
-        JavaFileObjects.forSourceLines(
-            "DaggerParentComponent",
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "final class DaggerParentComponent implements ParentComponent {",
-            "  @Override",
-            "  public Sub newSubcomponent() {",
-            "    return new $_SubImpl(parentComponent);",
-            "  }",
-            "",
-            "  private static final class tdmltmt_SubImpl",
-            "      implements test.deep.many.levels.that.match.test.Sub {}",
-            "",
-            "  private static final class $_SubImpl implements Sub {}",
-            "}",
-            "");
-
     Compilation compilation =
         compilerWithOptions(compilerMode.javacopts()).compile(parent, sub, deepSub);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("DaggerParentComponent")
-        .containsElementsIn(componentGeneratedFile);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParentComponent"));
   }
 
   @Test
-  public void subcomponentImplNameUsesFullyQualifiedClassNameIfNecessary() {
+  public void subcomponentImplNameUsesFullyQualifiedClassNameIfNecessary() throws Exception {
     JavaFileObject parent =
         JavaFileObjects.forSourceLines(
             "test.ParentComponent",
@@ -817,47 +647,17 @@ public class SubcomponentValidationTest {
             "  }",
             "}");
 
-    JavaFileObject componentGeneratedFile =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerParentComponent",
-            "package test;",
-            "",
-            "import top1.a.b.c.d.E;",
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "final class DaggerParentComponent implements ParentComponent {",
-            "  @Override",
-            "  public E.F.Sub top1() {",
-            "    return new F_SubImpl(parentComponent);",
-            "  }",
-            "",
-            "  @Override",
-            "  public top2.a.b.c.d.E.F.Sub top2() {",
-            "    return new F2_SubImpl(parentComponent);",
-            "  }",
-            "",
-            "  private static final class F_SubImpl implements E.F.Sub {",
-            "    private F_SubImpl(DaggerParentComponent parentComponent) {",
-            "      this.parentComponent = parentComponent;",
-            "    }",
-            "  }",
-            "  private static final class F2_SubImpl implements top2.a.b.c.d.E.F.Sub {",
-            "    private F2_SubImpl(DaggerParentComponent parentComponent) {",
-            "      this.parentComponent = parentComponent;",
-            "    }",
-            "  }",
-            "}");
-
     Compilation compilation =
         compilerWithOptions(compilerMode.javacopts()).compile(parent, top1, top2);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParentComponent")
-        .containsElementsIn(componentGeneratedFile);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParentComponent"));
   }
 
   @Test
-  public void parentComponentNameShouldNotBeDisambiguatedWhenItConflictsWithASubcomponent() {
+  public void parentComponentNameShouldNotBeDisambiguatedWhenItConflictsWithASubcomponent()
+      throws Exception {
     JavaFileObject parent =
         JavaFileObjects.forSourceLines(
             "test.C",
@@ -880,32 +680,17 @@ public class SubcomponentValidationTest {
             "  @Subcomponent interface C {}",
             "}");
 
-    JavaFileObject componentGeneratedFile =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerC",
-            "package test;",
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "final class DaggerC implements C {",
-            "  @Override",
-            "  public Foo.C newInstanceC() {",
-            "    return new F_CImpl(c);",
-            "  }",
-            "",
-            "  private static final class F_CImpl implements Foo.C {}",
-            "}");
-
     Compilation compilation =
         compilerWithOptions(compilerMode.javacopts())
             .compile(parent, subcomponentWithSameSimpleNameAsParent);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerC")
-        .containsElementsIn(componentGeneratedFile);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerC"));
   }
 
   @Test
-  public void subcomponentBuilderNamesShouldNotConflict() {
+  public void subcomponentBuilderNamesShouldNotConflict() throws Exception {
     JavaFileObject parent =
         JavaFileObjects.forSourceLines(
             "test.C",
@@ -939,59 +724,13 @@ public class SubcomponentValidationTest {
             "    }",
             "  }",
             "}");
-    JavaFileObject componentGeneratedFile =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerC",
-            "package test;",
-            "",
-            GeneratedLines.generatedImports(),
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "final class DaggerC implements C {",
-            "  @Override",
-            "  public C.Foo.Sub.Builder fooBuilder() {",
-            "    return new F_SubBuilder(c);",
-            "  }",
-            "",
-            "  @Override",
-            "  public C.Bar.Sub.Builder barBuilder() {",
-            "    return new B_SubBuilder(c);",
-            "  }",
-            "",
-            // TODO(bcorso): Reverse the order of subcomponent and builder so that subcomponent
-            // comes first.
-            "  private static final class F_SubBuilder implements C.Foo.Sub.Builder {",
-            "    @Override",
-            "    public C.Foo.Sub build() {",
-            "      return new F_SubImpl(c);",
-            "    }",
-            "  }",
-            "",
-            "  private static final class B_SubBuilder implements C.Bar.Sub.Builder {",
-            "    @Override",
-            "    public C.Bar.Sub build() {",
-            "      return new B_SubImpl(c);",
-            "    }",
-            "  }",
-            "",
-            "  private static final class F_SubImpl implements C.Foo.Sub {",
-            "    private F_SubImpl(DaggerC c) {",
-            "      this.c = c;",
-            "    }",
-            "  }",
-            "",
-            "  private static final class B_SubImpl implements C.Bar.Sub {",
-            "    private B_SubImpl(DaggerC c) {",
-            "      this.c = c;",
-            "    }",
-            "  }",
-            "}");
+
     Compilation compilation =
         compilerWithOptions(compilerMode.javacopts()).compile(parent);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerC")
-        .containsElementsIn(componentGeneratedFile);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerC"));
   }
 
   @Test

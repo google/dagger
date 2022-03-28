@@ -1,0 +1,62 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DelegateFactory;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private Provider<FooFactory> fooFactoryProvider;
+
+  private Provider<Bar> barProvider;
+
+  private Foo_Factory fooProvider;
+
+  private DaggerTestComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.fooFactoryProvider = new DelegateFactory<>();
+    this.barProvider = Bar_Factory.create(fooFactoryProvider);
+    this.fooProvider = Foo_Factory.create(barProvider);
+    DelegateFactory.setDelegate(fooFactoryProvider, FooFactory_Impl.create(fooProvider));
+  }
+
+  @Override
+  public FooFactory fooFactory() {
+    return fooFactoryProvider.get();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+}
+

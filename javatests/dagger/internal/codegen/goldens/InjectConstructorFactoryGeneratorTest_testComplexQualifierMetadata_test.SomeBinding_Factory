@@ -1,0 +1,59 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@ScopeMetadata
+@QualifierMetadata({
+    "pkg1.SameNameQualifier",
+    "pkg2.SameNameQualifier"
+})
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class SomeBinding_Factory implements Factory<SomeBinding> {
+  private final Provider<String> str1Provider;
+
+  private final Provider<String> str2Provider;
+
+  private final Provider<String> injectFieldProvider;
+
+  private final Provider<Float> fProvider;
+
+  public SomeBinding_Factory(Provider<String> str1Provider, Provider<String> str2Provider,
+      Provider<String> injectFieldProvider, Provider<Float> fProvider) {
+    this.str1Provider = str1Provider;
+    this.str2Provider = str2Provider;
+    this.injectFieldProvider = injectFieldProvider;
+    this.fProvider = fProvider;
+  }
+
+  @Override
+  public SomeBinding get() {
+    SomeBinding instance = newInstance(str1Provider.get(), str2Provider.get());
+    SomeBinding_MembersInjector.injectInjectField(instance, injectFieldProvider.get());
+    SomeBinding_MembersInjector.injectInjectMethod(instance, fProvider.get());
+    return instance;
+  }
+
+  public static SomeBinding_Factory create(Provider<String> str1Provider,
+      Provider<String> str2Provider, Provider<String> injectFieldProvider,
+      Provider<Float> fProvider) {
+    return new SomeBinding_Factory(str1Provider, str2Provider, injectFieldProvider, fProvider);
+  }
+
+  public static SomeBinding newInstance(String str1, String str2) {
+    return new SomeBinding(str1, str2);
+  }
+}
+

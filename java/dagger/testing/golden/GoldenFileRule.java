@@ -1,0 +1,117 @@
+/*
+ * Copyright (C) 2022 The Dagger Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package dagger.testing.golden;
+
+import com.google.common.io.Resources;
+import com.google.testing.compile.JavaFileObjects;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.tools.JavaFileObject;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
+
+
+/** A test rule that manages golden files for tests. */
+public final class GoldenFileRule implements TestRule {
+  /** The generated import used in the golden files */
+  private static final String GOLDEN_GENERATED_IMPORT =
+      "import javax.annotation.processing.Generated;";
+
+  /** The generated import used with the current jdk version */
+  private static final String JDK_GENERATED_IMPORT =
+      isBeforeJava9()
+          ? "import javax.annotation.Generated;"
+          : "import javax.annotation.processing.Generated;";
+
+  private static boolean isBeforeJava9() {
+    try {
+      Class.forName("java.lang.Module");
+      return false;
+    } catch (ClassNotFoundException e) {
+      return true;
+    }
+  }
+
+  // Parameterized arguments in junit4 are added in brackets to the end of test methods, e.g.
+  // `myTestMethod[testParam1=FOO,testParam2=BAR]`. This pattern captures theses into two separate
+  // groups, `<GROUP1>[<GROUP2>]` to make it easier when generating the golden file name.
+  private static final Pattern JUNIT_PARAMETERIZED_METHOD = Pattern.compile("(.*?)\\[(.*?)\\]");
+
+  private Description description;
+
+  @Override
+  public Statement apply(Statement base, Description description) {
+    this.description = description;
+    return base;
+  }
+
+  /**
+   * Returns the golden file as a {@link JavaFileObject} containing the file's content.
+   *
+   * If the golden file does not exist, the returned file object contain an error message pointing
+   * to the location of the missing golden file. This can be used with scripting tools to output
+   * the correct golden file in the proper location.
+   */
+  public JavaFileObject goldenFile(String qualifiedName) throws IOException {
+    return JavaFileObjects.forSourceLines(qualifiedName, goldenFileContent(qualifiedName));
+  }
+
+  /**
+   * Returns the golden file content.
+   *
+   * If the golden file does not exist, the returned content contains an error message pointing
+   * to the location of the missing golden file. This can be used with scripting tools to output
+   * the correct golden file in the proper location.
+   */
+  public String goldenFileContent(String qualifiedName) throws IOException {
+    String fileName =
+        String.format(
+            "%s_%s_%s",
+            description.getTestClass().getSimpleName(),
+            getFormattedMethodName(description),
+            qualifiedName);
+
+    URL url = description.getTestClass().getResource("goldens/" + fileName);
+    return url == null
+        // If the golden file does not exist, create a fake file with a comment pointing to the
+        // missing golden file. This is helpful for scripts that need to generate golden files from
+        // the test failures.
+        ? "// Error: Missing golden file for goldens/" + fileName
+        // The goldens are generated using jdk 11, so we use this replacement to allow the
+        // goldens to also work when compiling using jdk < 9.
+        : Resources.toString(url, StandardCharsets.UTF_8)
+            .replace(GOLDEN_GENERATED_IMPORT, JDK_GENERATED_IMPORT);
+  }
+
+  /**
+   * Returns the formatted method name for the given description.
+   *
+   * <p>If this is not a parameterized test, we return the method name as is. If it is a
+   * parameterized test, we format it from {@code someTestMethod[PARAMETER]} to
+   * {@code someTestMethod_PARAMETER} to avoid brackets in the name.
+   */
+  private static String getFormattedMethodName(Description description) {
+    Matcher matcher = JUNIT_PARAMETERIZED_METHOD.matcher(description.getMethodName());
+
+    // If this is a parameterized method, separate the parameters with an underscore
+    return matcher.find() ? matcher.group(1) + "_" + matcher.group(2) : description.getMethodName();
+  }
+}

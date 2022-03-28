@@ -1,0 +1,119 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+import test.subpackage.Sub;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerParentComponent implements ParentComponent {
+  private final DaggerParentComponent parentComponent = this;
+
+  private DaggerParentComponent() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static ParentComponent create() {
+    return new Builder().build();
+  }
+
+  @Override
+  public Foo.Sub newInstanceSubcomponent() {
+    return new F_SubImpl(parentComponent);
+  }
+
+  @Override
+  public NoConflict newNoConflictSubcomponent() {
+    return new NoConflictImpl(parentComponent);
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public ParentComponent build() {
+      return new DaggerParentComponent();
+    }
+  }
+
+  private static final class ts_SubImpl implements Sub {
+    private final DaggerParentComponent parentComponent;
+
+    private final F_SubImpl f_SubImpl;
+
+    private final B_SubImpl b_SubImpl;
+
+    private final ts_SubImpl ts_SubImpl = this;
+
+    private ts_SubImpl(DaggerParentComponent parentComponent, F_SubImpl f_SubImpl,
+        B_SubImpl b_SubImpl) {
+      this.parentComponent = parentComponent;
+      this.f_SubImpl = f_SubImpl;
+      this.b_SubImpl = b_SubImpl;
+
+
+    }
+  }
+
+  private static final class B_SubImpl implements Bar.Sub {
+    private final DaggerParentComponent parentComponent;
+
+    private final F_SubImpl f_SubImpl;
+
+    private final B_SubImpl b_SubImpl = this;
+
+    private B_SubImpl(DaggerParentComponent parentComponent, F_SubImpl f_SubImpl) {
+      this.parentComponent = parentComponent;
+      this.f_SubImpl = f_SubImpl;
+
+
+    }
+
+    @Override
+    public Sub newSubcomponentInSubpackage() {
+      return new ts_SubImpl(parentComponent, f_SubImpl, b_SubImpl);
+    }
+  }
+
+  private static final class F_SubImpl implements Foo.Sub {
+    private final DaggerParentComponent parentComponent;
+
+    private final F_SubImpl f_SubImpl = this;
+
+    private F_SubImpl(DaggerParentComponent parentComponent) {
+      this.parentComponent = parentComponent;
+
+
+    }
+
+    @Override
+    public Bar.Sub newBarSubcomponent() {
+      return new B_SubImpl(parentComponent, f_SubImpl);
+    }
+  }
+
+  private static final class NoConflictImpl implements NoConflict {
+    private final DaggerParentComponent parentComponent;
+
+    private final NoConflictImpl noConflictImpl = this;
+
+    private NoConflictImpl(DaggerParentComponent parentComponent) {
+      this.parentComponent = parentComponent;
+
+
+    }
+  }
+}
+

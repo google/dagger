@@ -1,0 +1,88 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.SingleCheck;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private Provider<Bar> barProvider;
+
+  private Provider<FooFactory> fooFactoryProvider;
+
+  private DaggerTestComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.barProvider = new SwitchingProvider<>(testComponent, 1);
+    this.fooFactoryProvider = SingleCheck.provider(new SwitchingProvider<FooFactory>(testComponent, 0));
+  }
+
+  @Override
+  public FooFactory fooFactory() {
+    return fooFactoryProvider.get();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+
+  private static final class SwitchingProvider<T> implements Provider<T> {
+    private final DaggerTestComponent testComponent;
+
+    private final int id;
+
+    SwitchingProvider(DaggerTestComponent testComponent, int id) {
+      this.testComponent = testComponent;
+      this.id = id;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get() {
+      switch (id) {
+        case 0: // test.FooFactory 
+        return (T) new FooFactory() {
+          @Override
+          public Foo create(String testComponent2) {
+            return new Foo(testComponent2, testComponent.barProvider);
+          }
+        };
+
+        case 1: // test.Bar 
+        return (T) new Bar();
+
+        default: throw new AssertionError(id);
+      }
+    }
+  }
+}
+

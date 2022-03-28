@@ -1,0 +1,60 @@
+package test;
+
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import dagger.internal.DaggerGenerated;
+import dagger.producers.internal.CancellationListener;
+import java.util.Collections;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent, CancellationListener {
+  private final DaggerTestComponent testComponent = this;
+
+  private DaggerTestComponent() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  private Map<Integer, String> mapOfIntegerAndString() {
+    return Collections.<Integer, String>singletonMap(1, TestModule_Value1Factory.value1());
+  }
+
+  @Override
+  public ListenableFuture<Map<Integer, String>> map() {
+    return Futures.immediateFuture(mapOfIntegerAndString());
+  }
+
+  @Override
+  public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
+
+
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+}
+

@@ -1,0 +1,58 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+import other.Subtype_Factory;
+import other.Supertype;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  @SuppressWarnings("rawtypes")
+  private Provider subtypeProvider;
+
+  private DaggerTestComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.subtypeProvider = DoubleCheck.provider(Subtype_Factory.create());
+  }
+
+  @Override
+  public Supertype supertype() {
+    return (Supertype) subtypeProvider.get();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+}
+

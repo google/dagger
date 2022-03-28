@@ -1,0 +1,48 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+import other.Subtype_Factory;
+import other.Supertype;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerRequestsSubtypeAsProvider implements RequestsSubtypeAsProvider {
+  private final DaggerRequestsSubtypeAsProvider requestsSubtypeAsProvider = this;
+
+  private DaggerRequestsSubtypeAsProvider() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static RequestsSubtypeAsProvider create() {
+    return new Builder().build();
+  }
+
+  @Override
+  public Provider<Supertype> supertypeProvider() {
+    return ((Provider) Subtype_Factory.create());
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public RequestsSubtypeAsProvider build() {
+      return new DaggerRequestsSubtypeAsProvider();
+    }
+  }
+}
+

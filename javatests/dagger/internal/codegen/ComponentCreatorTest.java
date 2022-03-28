@@ -34,8 +34,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
+import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
 import javax.tools.JavaFileObject;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -60,6 +62,8 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
       new Object[]{FAST_INIT_MODE, COMPONENT_FACTORY, JAVAC});
   }
 
+  @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
+
   public ComponentCreatorTest(
       CompilerMode compilerMode,
       ComponentCreatorAnnotation componentCreatorAnnotation,
@@ -70,7 +74,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
   }
 
   @Test
-  public void testEmptyCreator() {
+  public void testEmptyCreator() throws Exception {
     assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject injectableTypeFile =
         JavaFileObjects.forSourceLines(
@@ -99,29 +103,16 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
             "     SimpleComponent build();",
             "  }",
             "}");
-    JavaFileObject generatedComponent =
-        preprocessedJavaFile(
-            "test.DaggerSimpleComponent",
-            "package test;",
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "final class DaggerSimpleComponent implements SimpleComponent {",
-            "  private static final class Builder implements SimpleComponent.Builder {",
-            "    @Override",
-            "    public SimpleComponent build() {",
-            "      return new DaggerSimpleComponent();",
-            "    }",
-            "  }",
-            "}");
+
     Compilation compilation = compile(injectableTypeFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")
-        .containsElementsIn(generatedComponent);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
   }
 
   @Test
-  public void testCanInstantiateModulesUserCannotSet() {
+  public void testCanInstantiateModulesUserCannotSet() throws Exception {
     assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
@@ -152,48 +143,12 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
             "    TestComponent build();",
             "  }",
             "}");
-    JavaFileObject generatedComponent =
-        preprocessedJavaFile(
-            "test.DaggerTestComponent",
-            "package test;",
-            "",
-            GeneratedLines.generatedImports(),
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "final class DaggerTestComponent implements TestComponent {",
-            "  private final TestModule testModule;",
-            "",
-            "  private final DaggerTestComponent testComponent = this;",
-            "",
-            "  private DaggerTestComponent(TestModule testModuleParam) {",
-            "    this.testModule = testModuleParam;",
-            "  }",
-            "",
-            "  public static TestComponent.Builder builder() {",
-            "    return new Builder();",
-            "  }",
-            "",
-            "  public static TestComponent create() {",
-            "    return new Builder().build();",
-            "  }",
-            "",
-            "  @Override",
-            "  public String string() {",
-            "    return TestModule_StringFactory.string(testModule);",
-            "  }",
-            "",
-            "  private static final class Builder implements TestComponent.Builder {",
-            "    @Override",
-            "    public TestComponent build() {",
-            "      return new DaggerTestComponent(new TestModule());",
-            "    }",
-            "  }",
-            "}");
+
     Compilation compilation = compile(module, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
   }
 
   @Test
@@ -321,7 +276,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
   }
 
   @Test
-  public void testCreatorWithBindsInstanceNoStaticCreateGenerated() {
+  public void testCreatorWithBindsInstanceNoStaticCreateGenerated() throws Exception {
     assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject componentFile =
         javaFileBuilder("test.SimpleComponent")
@@ -352,78 +307,15 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
             .addLines("}")
             .build();
 
-    JavaFileObject generatedComponent =
-        javaFileBuilder("test.DaggerSimpleComponent")
-            .addLines(
-                "package test;",
-                "",
-                GeneratedLines.generatedImports("import dagger.internal.Preconditions;"),
-                "",
-                GeneratedLines.generatedAnnotations(),
-                "final class DaggerSimpleComponent implements SimpleComponent {",
-                "  private final Object object;",
-                "",
-                "  private final DaggerSimpleComponent simpleComponent = this;",
-                "",
-                "  private DaggerSimpleComponent(Object objectParam) {",
-                "    this.object = objectParam;",
-                "  }",
-                "")
-            .addLinesIf(
-                BUILDER,
-                "  public static SimpleComponent.Builder builder() {",
-                "    return new Builder();",
-                "  }")
-            .addLinesIf(
-                FACTORY,
-                "  public static SimpleComponent.Factory factory() {",
-                "    return new Factory();",
-                "  }")
-            .addLines(
-                "", //
-                "  @Override",
-                "  public Object object() {",
-                "    return object;",
-                "  }",
-                "")
-            .addLinesIf(
-                BUILDER,
-                "  private static final class Builder implements SimpleComponent.Builder {",
-                "    private Object object;",
-                "",
-                "    @Override",
-                "    public Builder object(Object object) {",
-                "      this.object = Preconditions.checkNotNull(object);",
-                "      return this;",
-                "    }",
-                "",
-                "    @Override",
-                "    public SimpleComponent build() {",
-                "      Preconditions.checkBuilderRequirement(object, Object.class);",
-                "      return new DaggerSimpleComponent(object);",
-                "    }",
-                "  }")
-            .addLinesIf(
-                FACTORY,
-                "  private static final class Factory implements SimpleComponent.Factory {",
-                "    @Override",
-                "    public SimpleComponent create(Object object) {",
-                "      Preconditions.checkNotNull(object);",
-                "      return new DaggerSimpleComponent(object);",
-                "    }",
-                "  }")
-            .addLines("}")
-            .build();
-
     Compilation compilation = compile(componentFile);
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")
-        .hasSourceEquivalentTo(generatedComponent);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
   }
 
   @Test
-  public void testCreatorWithPrimitiveBindsInstance() {
+  public void testCreatorWithPrimitiveBindsInstance() throws Exception {
     assume().that(compilerType).isEqualTo(JAVAC);
     JavaFileObject componentFile =
         javaFileBuilder("test.SimpleComponent")
@@ -455,61 +347,11 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
                 "}")
             .build();
 
-    JavaFileObject generatedComponent =
-        javaFileBuilder("test.DaggerSimpleComponent")
-            .addLines(
-                "package test;",
-                "",
-                GeneratedLines.generatedImports("import dagger.internal.Preconditions;"),
-                "",
-                GeneratedLines.generatedAnnotations(),
-                "final class DaggerSimpleComponent implements SimpleComponent {",
-                "  private final Integer i;",
-                "",
-                "  private DaggerSimpleComponent(Integer iParam) {",
-                "    this.i = iParam;",
-                "  }",
-                "",
-                "  @Override",
-                "  public int anInt() {",
-                "    return i;",
-                "  }",
-                "")
-            .addLinesIf(
-                BUILDER,
-                "  private static final class Builder implements SimpleComponent.Builder {",
-                "    private Integer i;",
-                "",
-                "    @Override",
-                "    public Builder i(int i) {",
-                "      this.i = Preconditions.checkNotNull(i);",
-                "      return this;",
-                "    }",
-                "",
-                "    @Override",
-                "    public SimpleComponent build() {",
-                "      Preconditions.checkBuilderRequirement(i, Integer.class);",
-                "      return new DaggerSimpleComponent(i);",
-                "    }",
-                "  }")
-            .addLinesIf(
-                FACTORY,
-                "  private static final class Factory implements SimpleComponent.Factory {",
-                "    @Override",
-                "    public SimpleComponent create(int i) {",
-                "      Preconditions.checkNotNull(i);",
-                "      return new DaggerSimpleComponent(i);",
-                "    }",
-                "  }")
-            .addLines(
-                "}")
-            .build();
-
     Compilation compilation = compile(componentFile);
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerSimpleComponent")
-        .containsElementsIn(generatedComponent);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
   }
 
   @Test

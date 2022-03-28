@@ -1,0 +1,84 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.MapProviderFactory;
+import dagger.internal.Preconditions;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private Provider<Handler> provideAdminHandlerProvider;
+
+  private Provider<Handler> provideLoginHandlerProvider;
+
+  private Provider<Map<WrappedClassKey, Provider<Handler>>> mapOfWrappedClassKeyAndProviderOfHandlerProvider;
+
+  private DaggerTestComponent(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+
+    initialize(mapModuleOneParam, mapModuleTwoParam);
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize(final MapModuleOne mapModuleOneParam,
+      final MapModuleTwo mapModuleTwoParam) {
+    this.provideAdminHandlerProvider = MapModuleOne_ProvideAdminHandlerFactory.create(mapModuleOneParam);
+    this.provideLoginHandlerProvider = MapModuleTwo_ProvideLoginHandlerFactory.create(mapModuleTwoParam);
+    this.mapOfWrappedClassKeyAndProviderOfHandlerProvider = MapProviderFactory.<WrappedClassKey, Handler>builder(2).put(WrappedClassKeyCreator.createWrappedClassKey(Integer.class), provideAdminHandlerProvider).put(WrappedClassKeyCreator.createWrappedClassKey(Long.class), provideLoginHandlerProvider).build();
+  }
+
+  @Override
+  public Provider<Map<WrappedClassKey, Provider<Handler>>> dispatcher() {
+    return mapOfWrappedClassKeyAndProviderOfHandlerProvider;
+  }
+
+  static final class Builder {
+    private MapModuleOne mapModuleOne;
+
+    private MapModuleTwo mapModuleTwo;
+
+    private Builder() {
+    }
+
+    public Builder mapModuleOne(MapModuleOne mapModuleOne) {
+      this.mapModuleOne = Preconditions.checkNotNull(mapModuleOne);
+      return this;
+    }
+
+    public Builder mapModuleTwo(MapModuleTwo mapModuleTwo) {
+      this.mapModuleTwo = Preconditions.checkNotNull(mapModuleTwo);
+      return this;
+    }
+
+    public TestComponent build() {
+      if (mapModuleOne == null) {
+        this.mapModuleOne = new MapModuleOne();
+      }
+      if (mapModuleTwo == null) {
+        this.mapModuleTwo = new MapModuleTwo();
+      }
+      return new DaggerTestComponent(mapModuleOne, mapModuleTwo);
+    }
+  }
+}
+

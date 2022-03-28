@@ -96,6 +96,7 @@ GenJavaTests(
         "//java/dagger/model/testing",
         "//java/dagger/producers",
         "//java/dagger/spi",
+        "//java/dagger/testing/golden",
         "//third_party/java/auto:common",
         "//third_party/java/auto:value",
         "//third_party/java/compile_testing",

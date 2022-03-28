@@ -1,0 +1,45 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerSimpleComponent implements SimpleComponent {
+  private final DaggerSimpleComponent simpleComponent = this;
+
+  private DaggerSimpleComponent() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static SimpleComponent create() {
+    return new Builder().build();
+  }
+
+  @Override
+  public DependsOnInjected dependsOnInjected() {
+    return new DependsOnInjected(new InjectedType());
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public SimpleComponent build() {
+      return new DaggerSimpleComponent();
+    }
+  }
+}
+

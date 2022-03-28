@@ -1,0 +1,43 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerSimpleComponent implements SimpleComponent {
+  private final Object object;
+
+  private final DaggerSimpleComponent simpleComponent = this;
+
+  private DaggerSimpleComponent(Object objectParam) {
+    this.object = objectParam;
+
+  }
+
+  public static SimpleComponent.Factory factory() {
+    return new Factory();
+  }
+
+  @Override
+  public Object object() {
+    return object;
+  }
+
+  private static final class Factory implements SimpleComponent.Factory {
+    @Override
+    public SimpleComponent create(Object object) {
+      Preconditions.checkNotNull(object);
+      return new DaggerSimpleComponent(object);
+    }
+  }
+}
+

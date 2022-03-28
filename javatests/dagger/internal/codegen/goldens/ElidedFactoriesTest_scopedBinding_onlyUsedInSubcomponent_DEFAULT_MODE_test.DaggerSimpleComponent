@@ -1,0 +1,72 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerSimpleComponent implements SimpleComponent {
+  private final DaggerSimpleComponent simpleComponent = this;
+
+  private Provider<ScopedType> scopedTypeProvider;
+
+  private DaggerSimpleComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static SimpleComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());
+  }
+
+  @Override
+  public Sub sub() {
+    return new SubImpl(simpleComponent);
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public SimpleComponent build() {
+      return new DaggerSimpleComponent();
+    }
+  }
+
+  private static final class SubImpl implements Sub {
+    private final DaggerSimpleComponent simpleComponent;
+
+    private final SubImpl subImpl = this;
+
+    private SubImpl(DaggerSimpleComponent simpleComponent) {
+      this.simpleComponent = simpleComponent;
+
+
+    }
+
+    @Override
+    public DependsOnScoped dependsOnScoped() {
+      return new DependsOnScoped(simpleComponent.scopedTypeProvider.get());
+    }
+  }
+}
+

@@ -1,0 +1,77 @@
+package test;
+
+import com.google.common.collect.ImmutableMap;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerParent implements Parent {
+  private final ParentModule parentModule;
+
+  private final DaggerParent parent = this;
+
+  private DaggerParent(ParentModule parentModuleParam) {
+    this.parentModule = parentModuleParam;
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static Parent create() {
+    return new Builder().build();
+  }
+
+  @Override
+  public Child child() {
+    return new ChildImpl(parent);
+  }
+
+  static final class Builder {
+    private ParentModule parentModule;
+
+    private Builder() {
+    }
+
+    public Builder parentModule(ParentModule parentModule) {
+      this.parentModule = Preconditions.checkNotNull(parentModule);
+      return this;
+    }
+
+    public Parent build() {
+      if (parentModule == null) {
+        this.parentModule = new ParentModule();
+      }
+      return new DaggerParent(parentModule);
+    }
+  }
+
+  private static final class ChildImpl implements Child {
+    private final DaggerParent parent;
+
+    private final ChildImpl childImpl = this;
+
+    private ChildImpl(DaggerParent parent) {
+      this.parent = parent;
+
+
+    }
+
+    @Override
+    public Map<String, Object> objectMap() {
+      return ImmutableMap.<String, Object>of("parent key", ParentModule_ParentKeyObjectFactory.parentKeyObject(parent.parentModule));
+    }
+  }
+}
+

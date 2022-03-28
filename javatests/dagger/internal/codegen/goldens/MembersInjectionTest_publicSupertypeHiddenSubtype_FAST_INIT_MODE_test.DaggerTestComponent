@@ -1,0 +1,62 @@
+package test;
+
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+import other.Foo_Factory;
+import other.InjectsSubtype;
+import other.InjectsSubtype_Factory;
+import other.Subtype_Factory;
+import other.Supertype;
+import other.Supertype_MembersInjector;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private DaggerTestComponent() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  private Object subtype() {
+    return injectSubtype(Subtype_Factory.newInstance());
+  }
+
+  @Override
+  public InjectsSubtype injectsSubtype() {
+    return InjectsSubtype_Factory.newInstance(subtype());
+  }
+
+  @CanIgnoreReturnValue
+  private Object injectSubtype(Object instance) {
+    Supertype_MembersInjector.injectT((Supertype) instance, Foo_Factory.newInstance());
+    return instance;
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+}
+

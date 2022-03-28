@@ -1,0 +1,79 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+import test.sub.TestComponentBase_Dep_Factory;
+import test.sub.TestComponentBase_ProtectedType_Factory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class DaggerTestComponent extends TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private Provider<test.sub.TestComponentBase.ProtectedType> protectedTypeProvider;
+
+  private DaggerTestComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.protectedTypeProvider = DoubleCheck.provider(new SwitchingProvider<test.sub.TestComponentBase.ProtectedType>(testComponent, 0));
+  }
+
+  @Override
+  test.sub.TestComponentBase.ProtectedType provideProtectedType() {
+    return protectedTypeProvider.get();
+  }
+
+  public static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+
+  private static final class SwitchingProvider<T> implements Provider<T> {
+    private final DaggerTestComponent testComponent;
+
+    private final int id;
+
+    SwitchingProvider(DaggerTestComponent testComponent, int id) {
+      this.testComponent = testComponent;
+      this.id = id;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get() {
+      switch (id) {
+        case 0: // test.sub.TestComponentBase.ProtectedType 
+        return (T) TestComponentBase_ProtectedType_Factory.newInstance(TestComponentBase_Dep_Factory.newInstance());
+
+        default: throw new AssertionError(id);
+      }
+    }
+  }
+}
+

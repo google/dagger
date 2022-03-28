@@ -17,8 +17,6 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
-import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static java.util.stream.Collectors.joining;
 
@@ -28,8 +26,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.golden.GoldenFileRule;
 import java.util.Arrays;
 import javax.tools.JavaFileObject;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -44,6 +44,8 @@ public class ComponentShardTest {
     return CompilerMode.TEST_PARAMETERS;
   }
 
+  @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
+
   private final CompilerMode compilerMode;
 
   public ComponentShardTest(CompilerMode compilerMode) {
@@ -51,7 +53,7 @@ public class ComponentShardTest {
   }
 
   @Test
-  public void testNewShardCreated() {
+  public void testNewShardCreated() throws Exception {
     // Add all bindings.
     //
     //     1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
@@ -103,243 +105,12 @@ public class ComponentShardTest {
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("dagger.internal.codegen.DaggerTestComponent")
-        .containsElementsIn(
-            compilerMode
-                .javaFileBuilder("dagger.internal.codegen.DaggerTestComponent")
-                .addLines(
-                    "package dagger.internal.codegen;",
-                    "",
-                    GeneratedLines.generatedAnnotations(),
-                    "final class DaggerTestComponent {",
-                    "  private static final class TestComponentImpl implements TestComponent {",
-                    "    private TestComponentImplShard testComponentImplShard;",
-                    "    private TestComponentImplShard2 testComponentImplShard2;",
-                    "    private final TestComponentImpl testComponentImpl = this;",
-                    "    private Provider<Binding7> binding7Provider;",
-                    "    private Provider<Binding6> binding6Provider;",
-                    "",
-                    "    private TestComponentImpl() {",
-                    "      initialize();",
-                    "      testComponentImplShard =",
-                    "          new TestComponentImplShard(testComponentImpl);",
-                    "      testComponentImplShard2 =",
-                    "          new TestComponentImplShard2(testComponentImpl);",
-                    "    }")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize() {",
-                    "      this.binding7Provider =",
-                    "          DoubleCheck.provider(Binding7_Factory.create());",
-                    "      this.binding6Provider =",
-                    "          DoubleCheck.provider(Binding6_Factory.create(binding7Provider));",
-                    "    }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize() {",
-                    "      this.binding7Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding7>(testComponentImpl, 1));",
-                    "      this.binding6Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding6>(testComponentImpl, 0));",
-                    "    }")
-                .addLines(
-                    "    @Override",
-                    "    public Binding1 binding1() {",
-                    "      return testComponentImpl",
-                    "          .testComponentImplShard2.binding1Provider.get();",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Binding2 binding2() {",
-                    "      return testComponentImpl.testComponentImplShard.binding2Provider.get();",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Binding3 binding3() {",
-                    "      return testComponentImpl.testComponentImplShard.binding3Provider.get();",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Binding4 binding4() {",
-                    "      return testComponentImpl.testComponentImplShard.binding4Provider.get();",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Binding5 binding5() {",
-                    "      return testComponentImpl.testComponentImplShard.binding5Provider.get();",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Binding6 binding6() {",
-                    "      return binding6Provider.get();",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Binding7 binding7() {",
-                    "      return binding7Provider.get();",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding1> providerBinding1() {",
-                    "      return testComponentImpl.testComponentImplShard2.binding1Provider;",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding2> providerBinding2() {",
-                    "      return testComponentImpl.testComponentImplShard.binding2Provider;",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding3> providerBinding3() {",
-                    "      return testComponentImpl.testComponentImplShard.binding3Provider;",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding4> providerBinding4() {",
-                    "      return testComponentImpl.testComponentImplShard.binding4Provider;",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding5> providerBinding5() {",
-                    "      return testComponentImpl.testComponentImplShard.binding5Provider;",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding6> providerBinding6() {",
-                    "      return binding6Provider;",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding7> providerBinding7() {",
-                    "      return binding7Provider;",
-                    "    }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    private static final class SwitchingProvider<T> implements Provider<T> {",
-                    "      @SuppressWarnings(\"unchecked\")",
-                    "      @Override",
-                    "      public T get() {",
-                    "        switch (id) {",
-                    "          case 0: return (T) new Binding6(",
-                    "              testComponentImpl.binding7Provider.get());",
-                    "          case 1: return (T) new Binding7();",
-                    "          default: throw new AssertionError(id);",
-                    "        }",
-                    "      }",
-                    "    }")
-                .addLines(
-                    "  }",
-                    "",
-                    "  private static final class TestComponentImplShard {",
-                    "    private final TestComponentImpl testComponentImpl;",
-                    "    private Provider<Binding5> binding5Provider;",
-                    "    private Provider<Binding2> binding2Provider;",
-                    "    private Provider<Binding4> binding4Provider;",
-                    "    private Provider<Binding3> binding3Provider;",
-                    "",
-                    "    private TestComponentImplShard(TestComponentImpl testComponentImpl) {",
-                    "      this.testComponentImpl = testComponentImpl;",
-                    "      initialize();",
-                    "    }")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize() {",
-                    "      this.binding5Provider =",
-                    "          DoubleCheck.provider(",
-                    "              Binding5_Factory.create(testComponentImpl.binding6Provider));",
-                    "      this.binding2Provider = new DelegateFactory<>();",
-                    "      this.binding4Provider =",
-                    "          DoubleCheck.provider(",
-                    "              Binding4_Factory.create(binding5Provider, binding2Provider));",
-                    "      this.binding3Provider =",
-                    "          DoubleCheck.provider(Binding3_Factory.create(binding4Provider));",
-                    "      DelegateFactory.setDelegate(",
-                    "          binding2Provider,",
-                    "          DoubleCheck.provider(Binding2_Factory.create(binding3Provider)));",
-                    "    }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize() {",
-                    "      this.binding5Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding5>(testComponentImpl, 3));",
-                    "      this.binding4Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding4>(testComponentImpl, 2));",
-                    "      this.binding3Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding3>(testComponentImpl, 1));",
-                    "      this.binding2Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding2>(testComponentImpl, 0));",
-                    "    }",
-                    "",
-                    "    private static final class SwitchingProvider<T> implements Provider<T> {",
-                    "      @SuppressWarnings(\"unchecked\")",
-                    "      @Override",
-                    "      public T get() {",
-                    "        switch (id) {",
-                    "          case 0: return (T) new Binding2(",
-                    "              testComponentImpl.testComponentImplShard",
-                    "                  .binding3Provider.get());",
-                    "          case 1: return (T) new Binding3(",
-                    "              testComponentImpl.testComponentImplShard",
-                    "                  .binding4Provider.get());",
-                    "          case 2: return (T) new Binding4(",
-                    "              testComponentImpl.testComponentImplShard",
-                    "                  .binding5Provider.get(),",
-                    "              testComponentImpl.testComponentImplShard.binding2Provider);",
-                    "          case 3: return (T) new Binding5(",
-                    "              testComponentImpl.binding6Provider.get());",
-                    "          default: throw new AssertionError(id);",
-                    "        }",
-                    "      }",
-                    "    }")
-                .addLines(
-                    "  }",
-                    "",
-                    "  private static final class TestComponentImplShard2 {",
-                    "    private final TestComponentImpl testComponentImpl;",
-                    "    private Provider<Binding1> binding1Provider;",
-                    "",
-                    "    private TestComponentImplShard2(TestComponentImpl testComponentImpl) {",
-                    "      this.testComponentImpl = testComponentImpl;",
-                    "      initialize();",
-                    "    }")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize() {",
-                    "      this.binding1Provider =",
-                    "          DoubleCheck.provider(",
-                    "              Binding1_Factory.create(",
-                    "                  testComponentImpl",
-                    "                      .testComponentImplShard.binding2Provider));",
-                    "    }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize() {",
-                    "      this.binding1Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding1>(testComponentImpl, 0));",
-                    "    }",
-                    "",
-                    "    private static final class SwitchingProvider<T> implements Provider<T> {",
-                    "      @SuppressWarnings(\"unchecked\")",
-                    "      @Override",
-                    "      public T get() {",
-                    "        switch (id) {",
-                    "          case 0: return (T) new Binding1(",
-                    "              testComponentImpl.testComponentImplShard",
-                    "                  .binding2Provider.get());",
-                    "          default: throw new AssertionError(id);",
-                    "        }",
-                    "      }",
-                    "    }")
-                .build());
+        .hasSourceEquivalentTo(
+            goldenFileRule.goldenFile("dagger.internal.codegen.DaggerTestComponent"));
   }
 
   @Test
-  public void testNewShardCreatedWithDependencies() {
+  public void testNewShardCreatedWithDependencies() throws Exception {
     ImmutableList.Builder<JavaFileObject> javaFileObjects = ImmutableList.builder();
     javaFileObjects.add(
         createBinding("Binding1"),
@@ -379,138 +150,12 @@ public class ComponentShardTest {
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("dagger.internal.codegen.DaggerTestComponent")
-        .containsElementsIn(
-            compilerMode
-                .javaFileBuilder("dagger.internal.codegen.DaggerTestComponent")
-                .addLines(
-                    "package dagger.internal.codegen;",
-                    "",
-                    GeneratedLines.generatedAnnotations(),
-                    "final class DaggerTestComponent {",
-                    "  private static final class TestComponentImpl implements TestComponent {",
-                    "    private TestComponentImplShard testComponentImplShard;",
-                    "    private final Dependency dependency;",
-                    "    private final TestComponentImpl testComponentImpl = this;",
-                    "    private Provider<Binding1> binding1Provider;",
-                    "    private Provider<Binding2> binding2Provider;",
-                    "",
-                    "    private TestComponentImpl(Dependency dependencyParam) {",
-                    "      this.dependency = dependencyParam;",
-                    "      initialize(dependencyParam);",
-                    "      testComponentImplShard =",
-                    "          new TestComponentImplShard(testComponentImpl, dependencyParam);",
-                    "    }")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize(final Dependency dependencyParam) {",
-                    "      this.binding1Provider =",
-                    "          DoubleCheck.provider(Binding1_Factory.create());",
-                    "      this.binding2Provider =",
-                    "          DoubleCheck.provider(Binding2_Factory.create());",
-                    "    }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize(final Dependency dependencyParam) {",
-                    "      this.binding1Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding1>(testComponentImpl, 0));",
-                    "      this.binding2Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding2>(testComponentImpl, 1));",
-                    "    }")
-                .addLines(
-                    "    @Override",
-                    "    public Binding1 binding1() {",
-                    "      return binding1Provider.get();",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Binding2 binding2() {",
-                    "      return binding2Provider.get();",
-                    "    }")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    @Override",
-                    "    public Binding3 binding3() {",
-                    "      return Preconditions.checkNotNullFromComponent(dependency.binding3());",
-                    "    }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    @Override",
-                    "    public Binding3 binding3() {",
-                    "      return testComponentImpl.testComponentImplShard.binding3Provider.get();",
-                    "    }")
-                .addLines(
-                    "    @Override",
-                    "    public Provider<Binding1> providerBinding1() {",
-                    "      return binding1Provider;",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding2> providerBinding2() {",
-                    "      return binding2Provider;",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding3> providerBinding3() {",
-                    "      return testComponentImpl.testComponentImplShard.binding3Provider;",
-                    "    }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    private static final class SwitchingProvider<T> implements Provider<T> {",
-                    "      @SuppressWarnings(\"unchecked\")",
-                    "      @Override",
-                    "      public T get() {",
-                    "        switch (id) {",
-                    "          case 0: return (T) new Binding1();",
-                    "          case 1: return (T) new Binding2();",
-                    "          default: throw new AssertionError(id);",
-                    "        }",
-                    "      }",
-                    "    }")
-                .addLines(
-                    "  }",
-                    "",
-                    "  private static final class TestComponentImplShard {",
-                    "    private final TestComponentImpl testComponentImpl;",
-                    "    private Provider<Binding3> binding3Provider;",
-                    "",
-                    "    private TestComponentImplShard(",
-                    "        TestComponentImpl testComponentImpl, Dependency dependencyParam) {",
-                    "      this.testComponentImpl = testComponentImpl;",
-                    "      initialize(dependencyParam);",
-                    "    }")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize(final Dependency dependencyParam) {",
-                    "      this.binding3Provider =",
-                    "          new TestComponentImpl.Binding3Provider(",
-                    "              testComponentImpl.dependency);",
-                    "    }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize(final Dependency dependencyParam) {",
-                    "      this.binding3Provider = new SwitchingProvider<>(testComponentImpl, 0);",
-                    "    }",
-                    "",
-                    "    private static final class SwitchingProvider<T> implements Provider<T> {",
-                    "      @SuppressWarnings(\"unchecked\")",
-                    "      @Override",
-                    "      public T get() {",
-                    "        switch (id) {",
-                    "          case 0: return (T) Preconditions.checkNotNullFromComponent(",
-                    "              testComponentImpl.dependency.binding3());",
-                    "          default: throw new AssertionError(id);",
-                    "        }",
-                    "      }",
-                    "    }")
-                .build());
+        .hasSourceEquivalentTo(
+            goldenFileRule.goldenFile("dagger.internal.codegen.DaggerTestComponent"));
   }
 
   @Test
-  public void testNewShardSubcomponentCreated() {
+  public void testNewShardSubcomponentCreated() throws Exception {
     ImmutableList.Builder<JavaFileObject> javaFileObjects = ImmutableList.builder();
     javaFileObjects.add(
         JavaFileObjects.forSourceLines(
@@ -577,135 +222,8 @@ public class ComponentShardTest {
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("dagger.internal.codegen.DaggerTestComponent")
-        .containsElementsIn(
-            compilerMode
-                .javaFileBuilder("dagger.internal.codegen.DaggerTestComponent")
-                .addLines(
-                    "package dagger.internal.codegen;",
-                    "",
-                    GeneratedLines.generatedAnnotations(),
-                    "final class DaggerTestComponent {",
-                    "  private static final class TestSubcomponentImpl",
-                    "      implements TestSubcomponent {",
-                    "    private TestSubcomponentImplShard testSubcomponentImplShard;",
-                    "    private final TestComponentImpl testComponentImpl;",
-                    "    private final TestSubcomponentImpl testSubcomponentImpl = this;",
-                    "    private Provider<Binding1> binding1Provider;",
-                    "    private Provider<Binding2> binding2Provider;",
-                    "",
-                    "    private TestSubcomponentImpl(TestComponentImpl testComponentImpl) {",
-                    "      this.testComponentImpl = testComponentImpl;",
-                    "      initialize();",
-                    "      testSubcomponentImplShard =",
-                    "          new TestSubcomponentImplShard(",
-                    "              testComponentImpl, testSubcomponentImpl);",
-                    "    }")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize() {",
-                    "      this.binding1Provider =",
-                    "          DoubleCheck.provider(Binding1_Factory.create());",
-                    "      this.binding2Provider =",
-                    "          DoubleCheck.provider(Binding2_Factory.create());",
-                    "    }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize() {",
-                    "      this.binding1Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding1>(",
-                    "              testComponentImpl, testSubcomponentImpl, 0));",
-                    "      this.binding2Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding2>(",
-                    "              testComponentImpl, testSubcomponentImpl, 1));",
-                    "    }")
-                .addLines(
-                    "    @Override",
-                    "    public Binding1 binding1() {",
-                    "      return binding1Provider.get();",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Binding2 binding2() {",
-                    "      return binding2Provider.get();",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Binding3 binding3() {",
-                    "      return testSubcomponentImpl.testSubcomponentImplShard",
-                    "          .binding3Provider.get();",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding1> providerBinding1() {",
-                    "      return binding1Provider;",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding2> providerBinding2() {",
-                    "      return binding2Provider;",
-                    "    }",
-                    "",
-                    "    @Override",
-                    "    public Provider<Binding3> providerBinding3() {",
-                    "      return testSubcomponentImpl.testSubcomponentImplShard.binding3Provider;",
-                    "    }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    private static final class SwitchingProvider<T> implements Provider<T> {",
-                    "      @SuppressWarnings(\"unchecked\")",
-                    "      @Override",
-                    "      public T get() {",
-                    "        switch (id) {",
-                    "          case 0: return (T) new Binding1();",
-                    "          case 1: return (T) new Binding2();",
-                    "          default: throw new AssertionError(id);",
-                    "        }",
-                    "      }",
-                    "    }")
-                .addLines(
-                    "  }",
-                    "",
-                    "  private static final class TestSubcomponentImplShard {",
-                    "    private final TestComponentImpl testComponentImpl;",
-                    "    private final TestSubcomponentImpl testSubcomponentImpl;",
-                    "    private Provider<Binding3> binding3Provider;",
-                    "",
-                    "    private TestSubcomponentImplShard(",
-                    "        TestComponentImpl testComponentImpl,",
-                    "        TestSubcomponentImpl testSubcomponentImpl) {",
-                    "      this.testComponentImpl = testComponentImpl;",
-                    "      this.testSubcomponentImpl = testSubcomponentImpl;",
-                    "      initialize();",
-                    "    }")
-                .addLinesIn(
-                    DEFAULT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize() {",
-                    "      this.binding3Provider =",
-                    "          DoubleCheck.provider(Binding3_Factory.create());",
-                    "    }")
-                .addLinesIn(
-                    FAST_INIT_MODE,
-                    "    @SuppressWarnings(\"unchecked\")",
-                    "    private void initialize() {",
-                    "      this.binding3Provider = DoubleCheck.provider(",
-                    "          new SwitchingProvider<Binding3>(",
-                    "              testComponentImpl, testSubcomponentImpl, 0));",
-                    "    }",
-                    "",
-                    "    private static final class SwitchingProvider<T> implements Provider<T> {",
-                    "      @SuppressWarnings(\"unchecked\")",
-                    "      @Override",
-                    "      public T get() {",
-                    "        switch (id) {",
-                    "          case 0: return (T) new Binding3();",
-                    "          default: throw new AssertionError(id);",
-                    "        }",
-                    "      }",
-                    "    }")
-                .build());
+        .hasSourceEquivalentTo(
+            goldenFileRule.goldenFile("dagger.internal.codegen.DaggerTestComponent"));
   }
 
   private static JavaFileObject createBinding(String bindingName, String... deps) {

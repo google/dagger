@@ -1,0 +1,75 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerC implements C {
+  private final DaggerC c = this;
+
+  private DaggerC() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static C create() {
+    return new Builder().build();
+  }
+
+  @Override
+  public Sub.Factory sFactory() {
+    return new SubFactory(c);
+  }
+
+  @Override
+  public UsesSubcomponent usesSubcomponent() {
+    return new UsesSubcomponent(new SubFactory(c));
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public C build() {
+      return new DaggerC();
+    }
+  }
+
+  private static final class SubFactory implements Sub.Factory {
+    private final DaggerC c;
+
+    private SubFactory(DaggerC c) {
+      this.c = c;
+    }
+
+    @Override
+    public Sub createComponent() {
+      return new SubImpl(c);
+    }
+  }
+
+  private static final class SubImpl implements Sub {
+    private final DaggerC c;
+
+    private final SubImpl subImpl = this;
+
+    private SubImpl(DaggerC c) {
+      this.c = c;
+
+
+    }
+  }
+}
+

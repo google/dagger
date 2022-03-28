@@ -1,0 +1,122 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.MapBuilder;
+import java.util.Collections;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private Provider<Integer> provideIntProvider;
+
+  private Provider<Long> provideLong0Provider;
+
+  private Provider<Long> provideLong1Provider;
+
+  private Provider<Long> provideLong2Provider;
+
+  private DaggerTestComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.provideIntProvider = new SwitchingProvider<>(testComponent, 0);
+    this.provideLong0Provider = new SwitchingProvider<>(testComponent, 1);
+    this.provideLong1Provider = new SwitchingProvider<>(testComponent, 2);
+    this.provideLong2Provider = new SwitchingProvider<>(testComponent, 3);
+  }
+
+  @Override
+  public Map<String, String> strings() {
+    return Collections.<String, String>emptyMap();
+  }
+
+  @Override
+  public Map<String, Provider<String>> providerStrings() {
+    return Collections.<String, Provider<String>>emptyMap();
+  }
+
+  @Override
+  public Map<Integer, Integer> ints() {
+    return Collections.<Integer, Integer>singletonMap(0, provideIntProvider.get());
+  }
+
+  @Override
+  public Map<Integer, Provider<Integer>> providerInts() {
+    return Collections.<Integer, Provider<Integer>>singletonMap(0, provideIntProvider);
+  }
+
+  @Override
+  public Map<Long, Long> longs() {
+    return MapBuilder.<Long, Long>newMapBuilder(3).put(0L, provideLong0Provider.get()).put(1L, provideLong1Provider.get()).put(2L, provideLong2Provider.get()).build();
+  }
+
+  @Override
+  public Map<Long, Provider<Long>> providerLongs() {
+    return MapBuilder.<Long, Provider<Long>>newMapBuilder(3).put(0L, provideLong0Provider).put(1L, provideLong1Provider).put(2L, provideLong2Provider).build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+
+  private static final class SwitchingProvider<T> implements Provider<T> {
+    private final DaggerTestComponent testComponent;
+
+    private final int id;
+
+    SwitchingProvider(DaggerTestComponent testComponent, int id) {
+      this.testComponent = testComponent;
+      this.id = id;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get() {
+      switch (id) {
+        case 0: // java.util.Map<java.lang.Integer,javax.inject.Provider<java.lang.Integer>> test.MapModule#provideInt 
+        return (T) (Integer) MapModule.provideInt();
+
+        case 1: // java.util.Map<java.lang.Long,javax.inject.Provider<java.lang.Long>> test.MapModule#provideLong0 
+        return (T) (Long) MapModule.provideLong0();
+
+        case 2: // java.util.Map<java.lang.Long,javax.inject.Provider<java.lang.Long>> test.MapModule#provideLong1 
+        return (T) (Long) MapModule.provideLong1();
+
+        case 3: // java.util.Map<java.lang.Long,javax.inject.Provider<java.lang.Long>> test.MapModule#provideLong2 
+        return (T) (Long) MapModule.provideLong2();
+
+        default: throw new AssertionError(id);
+      }
+    }
+  }
+}
+

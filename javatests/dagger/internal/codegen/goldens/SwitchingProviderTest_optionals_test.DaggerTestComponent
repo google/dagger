@@ -1,0 +1,101 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InstanceFactory;
+import java.util.Optional;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  /**
+   * A {@link Provider} that returns {@code Optional.empty()}.
+   */
+  @SuppressWarnings("rawtypes")
+  private static final Provider ABSENT_JDK_OPTIONAL_PROVIDER = InstanceFactory.create(Optional.empty());
+
+  private final DaggerTestComponent testComponent = this;
+
+  private Provider<Optional<Present>> optionalOfPresentProvider;
+
+  private Provider<Optional<Absent>> optionalOfAbsentProvider;
+
+  private DaggerTestComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.optionalOfPresentProvider = new SwitchingProvider<>(testComponent, 0);
+    this.optionalOfAbsentProvider = absentJdkOptionalProvider();
+  }
+
+  @Override
+  public Provider<Optional<Present>> providerOfOptionalOfPresent() {
+    return optionalOfPresentProvider;
+  }
+
+  @Override
+  public Provider<Optional<Absent>> providerOfOptionalOfAbsent() {
+    return optionalOfAbsentProvider;
+  }
+
+  /**
+   * Returns a {@link Provider} that returns {@code Optional.empty()}.
+   */
+  private static <T> Provider<Optional<T>> absentJdkOptionalProvider() {
+    @SuppressWarnings("unchecked") // safe covariant cast
+    Provider<Optional<T>> provider = (Provider<Optional<T>>) ABSENT_JDK_OPTIONAL_PROVIDER;
+    return provider;
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+
+  private static final class SwitchingProvider<T> implements Provider<T> {
+    private final DaggerTestComponent testComponent;
+
+    private final int id;
+
+    SwitchingProvider(DaggerTestComponent testComponent, int id) {
+      this.testComponent = testComponent;
+      this.id = id;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T get() {
+      switch (id) {
+        case 0: // java.util.Optional<test.Present> 
+        return (T) Optional.of(TestModule_PFactory.p());
+
+        default: throw new AssertionError(id);
+      }
+    }
+  }
+}
+

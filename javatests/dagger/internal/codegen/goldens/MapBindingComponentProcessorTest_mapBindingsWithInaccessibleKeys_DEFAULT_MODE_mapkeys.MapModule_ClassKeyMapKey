@@ -1,0 +1,23 @@
+package mapkeys;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class MapModule_ClassKeyMapKey {
+  private MapModule_ClassKeyMapKey() {
+  }
+
+  public static Class<?> create() {
+    return MapKeys.Inaccessible.class;
+  }
+}
+

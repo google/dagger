@@ -26,7 +26,9 @@ import static dagger.internal.codegen.Compilers.daggerCompiler;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.golden.GoldenFileRule;
 import javax.tools.JavaFileObject;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -62,6 +64,8 @@ public final class InjectConstructorFactoryGeneratorTest {
           "import javax.inject.Scope;",
           "",
           "@Scope @interface ScopeB {}");
+
+  @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
 
   @Test public void injectOnPrivateConstructor() {
     JavaFileObject file = JavaFileObjects.forSourceLines("test.PrivateConstructor",
@@ -1530,7 +1534,7 @@ public final class InjectConstructorFactoryGeneratorTest {
   }
 
   @Test
-  public void testScopedMetadata() {
+  public void testScopedMetadata() throws Exception {
     JavaFileObject scopedBinding =
         JavaFileObjects.forSourceLines(
             "test.ScopedBinding",
@@ -1548,19 +1552,11 @@ public final class InjectConstructorFactoryGeneratorTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.ScopedBinding_Factory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.ScopedBinding_Factory",
-                "package test;",
-                "",
-                "@ScopeMetadata(\"javax.inject.Singleton\")",
-                "@QualifierMetadata",
-                GeneratedLines.generatedAnnotations(),
-                "public final class ScopedBinding_Factory implements Factory<ScopedBinding> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.ScopedBinding_Factory"));
   }
 
   @Test
-  public void testScopedMetadataWithCustomScope() {
+  public void testScopedMetadataWithCustomScope() throws Exception {
     JavaFileObject customScope =
         JavaFileObjects.forSourceLines(
             "test.CustomScope",
@@ -1601,19 +1597,11 @@ public final class InjectConstructorFactoryGeneratorTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.ScopedBinding_Factory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.ScopedBinding_Factory",
-                "package test;",
-                "",
-                "@ScopeMetadata(\"test.CustomScope\")",
-                "@QualifierMetadata",
-                GeneratedLines.generatedAnnotations(),
-                "public final class ScopedBinding_Factory implements Factory<ScopedBinding> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.ScopedBinding_Factory"));
   }
 
   @Test
-  public void testQualifierMetadata() {
+  public void testQualifierMetadata() throws Exception {
     JavaFileObject someBinding =
         JavaFileObjects.forSourceLines(
             "test.SomeBinding",
@@ -1698,37 +1686,14 @@ public final class InjectConstructorFactoryGeneratorTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.SomeBinding_Factory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.SomeBinding_Factory",
-                "package test;",
-                "",
-                // Verifies that the @QualifierMetadata for the generated Factory does not contain
-                // @MisplacedQualifier, @NonQualifier, @MethodParameterQualifier or @FieldQualifier.
-                "@ScopeMetadata",
-                "@QualifierMetadata(\"test.ConstructorParameterQualifier\")",
-                GeneratedLines.generatedAnnotations(),
-                "public final class SomeBinding_Factory implements Factory<SomeBinding> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.SomeBinding_Factory"));
     assertThat(compilation)
         .generatedSourceFile("test.SomeBinding_MembersInjector")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.SomeBinding_MembersInjector",
-                "package test;",
-                "",
-                // Verifies that the @QualifierMetadata for the generated MembersInjector does not
-                // contain @MisplacedQualifier, @NonQualifier, or @ConstructorParameterQualifier.
-                "@QualifierMetadata({",
-                "    \"test.FieldQualifier\",",
-                "    \"test.MethodParameterQualifier\"",
-                "})",
-                GeneratedLines.generatedAnnotations(),
-                "public final class SomeBinding_MembersInjector",
-                "    implements MembersInjector<SomeBinding> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.SomeBinding_MembersInjector"));
   }
 
   @Test
-  public void testComplexQualifierMetadata() {
+  public void testComplexQualifierMetadata() throws Exception {
     JavaFileObject someBinding =
         JavaFileObjects.forSourceLines(
             "test.SomeBinding",
@@ -1798,33 +1763,14 @@ public final class InjectConstructorFactoryGeneratorTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.SomeBinding_Factory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.SomeBinding_Factory",
-                "package test;",
-                "",
-                "@ScopeMetadata",
-                "@QualifierMetadata({\"pkg1.SameNameQualifier\", \"pkg2.SameNameQualifier\"})",
-                GeneratedLines.generatedAnnotations(),
-                "public final class SomeBinding_Factory implements Factory<SomeBinding> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.SomeBinding_Factory"));
     assertThat(compilation)
         .generatedSourceFile("test.SomeBinding_MembersInjector")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.SomeBinding_MembersInjector",
-                "package test;",
-                "",
-                "@QualifierMetadata({",
-                "    \"test.QualifierWithValue\",",
-                "    \"test.Outer.NestedQualifier\"",
-                "})",
-                GeneratedLines.generatedAnnotations(),
-                "public final class SomeBinding_MembersInjector",
-                "    implements MembersInjector<SomeBinding> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.SomeBinding_MembersInjector"));
   }
 
   @Test
-  public void testBaseClassQualifierMetadata() {
+  public void testBaseClassQualifierMetadata() throws Exception {
     JavaFileObject foo =
         JavaFileObjects.forSourceLines(
             "test.Foo",
@@ -1926,54 +1872,15 @@ public final class InjectConstructorFactoryGeneratorTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.Foo_Factory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Foo_Factory",
-                "package test;",
-                "",
-                "@ScopeMetadata",
-                // Verifies that Foo_Factory only contains Foo's qualifiers and not FooBase's too.
-                "@QualifierMetadata(\"test.FooConstructorQualifier\")",
-                GeneratedLines.generatedAnnotations(),
-                "public final class Foo_Factory implements Factory<Foo> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.Foo_Factory"));
     assertThat(compilation)
         .generatedSourceFile("test.Foo_MembersInjector")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Foo_MembersInjector",
-                "package test;",
-                "",
-                // Verifies that Foo_Factory only contains Foo's qualifiers and not FooBase's too.
-                "@QualifierMetadata({",
-                "    \"test.FooFieldQualifier\",",
-                "    \"test.FooMethodQualifier\"",
-                "})",
-                GeneratedLines.generatedAnnotations(),
-                "public final class Foo_MembersInjector implements MembersInjector<Foo> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.Foo_MembersInjector"));
     assertThat(compilation)
         .generatedSourceFile("test.FooBase_Factory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Foo_Factory",
-                "package test;",
-                "",
-                "@ScopeMetadata",
-                "@QualifierMetadata(\"test.FooBaseConstructorQualifier\")",
-                GeneratedLines.generatedAnnotations(),
-                "public final class FooBase_Factory implements Factory<FooBase> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.FooBase_Factory"));
     assertThat(compilation)
         .generatedSourceFile("test.FooBase_MembersInjector")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.FooBase_MembersInjector",
-                "package test;",
-                "",
-                "@QualifierMetadata({",
-                "    \"test.FooBaseFieldQualifier\",",
-                "    \"test.FooBaseMethodQualifier\"",
-                "})",
-                GeneratedLines.generatedAnnotations(),
-                "public final class FooBase_MembersInjector",
-                "    implements MembersInjector<FooBase> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.FooBase_MembersInjector"));
   }
 }

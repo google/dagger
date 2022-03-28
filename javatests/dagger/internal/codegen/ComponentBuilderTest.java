@@ -24,8 +24,10 @@ import static dagger.internal.codegen.binding.ErrorMessages.creatorMessagesFor;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.internal.codegen.binding.ErrorMessages;
+import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
 import javax.tools.JavaFileObject;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -39,6 +41,8 @@ public class ComponentBuilderTest {
     return CompilerMode.TEST_PARAMETERS;
   }
 
+  @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
+
   private final CompilerMode compilerMode;
 
   public ComponentBuilderTest(CompilerMode compilerMode) {
@@ -49,7 +53,7 @@ public class ComponentBuilderTest {
       creatorMessagesFor(COMPONENT_BUILDER);
 
   @Test
-  public void testUsesBuildAndSetterNames() {
+  public void testUsesBuildAndSetterNames() throws Exception {
     JavaFileObject moduleFile =
         JavaFileObjects.forSourceLines(
             "test.TestModule",
@@ -80,39 +84,12 @@ public class ComponentBuilderTest {
             "    TestComponent create();",
             "  }",
             "}");
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerTestComponent",
-            "package test;",
-            "",
-            "import dagger.internal.Preconditions;",
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "final class DaggerTestComponent implements TestComponent {",
-            "  private static final class Builder implements TestComponent.Builder {",
-            "    private TestModule testModule;",
-            "",
-            "    @Override",
-            "    public Builder setTestModule(TestModule testModule) {",
-            "      this.testModule = Preconditions.checkNotNull(testModule);",
-            "      return this;",
-            "    }",
-            "",
-            "    @Override",
-            "    public TestComponent create() {",
-            "      if (testModule == null) {",
-            "        this.testModule = new TestModule();",
-            "      }",
-            "      return new DaggerTestComponent(testModule);",
-            "    }",
-            "  }",
-            "}");
     Compilation compilation =
         compilerWithOptions(compilerMode.javacopts()).compile(moduleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .containsElementsIn(generatedComponent);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
   }
 
   @Test

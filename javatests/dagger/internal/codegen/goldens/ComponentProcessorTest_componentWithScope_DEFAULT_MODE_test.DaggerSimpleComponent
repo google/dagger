@@ -1,0 +1,66 @@
+package test;
+
+import dagger.Lazy;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerSimpleComponent implements SimpleComponent {
+  private final DaggerSimpleComponent simpleComponent = this;
+
+  private Provider<SomeInjectableType> someInjectableTypeProvider;
+
+  private DaggerSimpleComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static SimpleComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.someInjectableTypeProvider = DoubleCheck.provider(SomeInjectableType_Factory.create());
+  }
+
+  @Override
+  public SomeInjectableType someInjectableType() {
+    return someInjectableTypeProvider.get();
+  }
+
+  @Override
+  public Lazy<SomeInjectableType> lazySomeInjectableType() {
+    return DoubleCheck.lazy(someInjectableTypeProvider);
+  }
+
+  @Override
+  public Provider<SomeInjectableType> someInjectableTypeProvider() {
+    return someInjectableTypeProvider;
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public SimpleComponent build() {
+      return new DaggerSimpleComponent();
+    }
+  }
+}
+

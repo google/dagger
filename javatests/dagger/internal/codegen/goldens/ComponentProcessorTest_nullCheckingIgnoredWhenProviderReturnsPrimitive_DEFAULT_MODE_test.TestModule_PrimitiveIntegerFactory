@@ -1,0 +1,38 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class TestModule_PrimitiveIntegerFactory implements Factory<Integer> {
+  @Override
+  public Integer get() {
+    return primitiveInteger();
+  }
+
+  public static TestModule_PrimitiveIntegerFactory create() {
+    return InstanceHolder.INSTANCE;
+  }
+
+  public static int primitiveInteger() {
+    return TestModule.primitiveInteger();
+  }
+
+  private static final class InstanceHolder {
+    private static final TestModule_PrimitiveIntegerFactory INSTANCE = new TestModule_PrimitiveIntegerFactory();
+  }
+}
+

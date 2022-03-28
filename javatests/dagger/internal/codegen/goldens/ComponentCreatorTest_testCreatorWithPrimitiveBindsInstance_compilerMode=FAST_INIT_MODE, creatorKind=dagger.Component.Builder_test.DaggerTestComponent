@@ -1,0 +1,51 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerSimpleComponent implements SimpleComponent {
+  private final Integer i;
+
+  private final DaggerSimpleComponent simpleComponent = this;
+
+  private DaggerSimpleComponent(Integer iParam) {
+    this.i = iParam;
+
+  }
+
+  public static SimpleComponent.Builder builder() {
+    return new Builder();
+  }
+
+  @Override
+  public int anInt() {
+    return i;
+  }
+
+  private static final class Builder implements SimpleComponent.Builder {
+    private Integer i;
+
+    @Override
+    public Builder i(int i) {
+      this.i = Preconditions.checkNotNull(i);
+      return this;
+    }
+
+    @Override
+    public SimpleComponent build() {
+      Preconditions.checkBuilderRequirement(i, Integer.class);
+      return new DaggerSimpleComponent(i);
+    }
+  }
+}
+

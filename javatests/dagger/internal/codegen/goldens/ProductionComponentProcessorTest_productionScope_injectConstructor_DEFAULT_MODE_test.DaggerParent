@@ -1,0 +1,85 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.producers.internal.CancellationListener;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerParent implements Parent, CancellationListener {
+  private final DaggerParent parent = this;
+
+  private Provider<ProductionScoped> productionScopedProvider;
+
+  private DaggerParent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static Parent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.productionScopedProvider = DoubleCheck.provider(ProductionScoped_Factory.create());
+  }
+
+  @Override
+  public Child child() {
+    return new ChildImpl(parent);
+  }
+
+  @Override
+  public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
+
+
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public Parent build() {
+      return new DaggerParent();
+    }
+  }
+
+  private static final class ChildImpl implements Child, CancellationListener {
+    private final DaggerParent parent;
+
+    private final ChildImpl childImpl = this;
+
+    private ChildImpl(DaggerParent parent) {
+      this.parent = parent;
+
+
+    }
+
+    @Override
+    public ProductionScoped productionScoped() {
+      return parent.productionScopedProvider.get();
+    }
+
+    @Override
+    public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
+
+
+    }
+  }
+}
+

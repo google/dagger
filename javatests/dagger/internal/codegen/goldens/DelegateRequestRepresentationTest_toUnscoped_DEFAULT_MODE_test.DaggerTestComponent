@@ -1,0 +1,69 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.SingleCheck;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private Provider<RegularScoped> regularScopedProvider;
+
+  private Provider<ReusableScoped> reusableScopedProvider;
+
+  private DaggerTestComponent() {
+
+    initialize();
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void initialize() {
+    this.regularScopedProvider = DoubleCheck.provider(RegularScoped_Factory.create());
+    this.reusableScopedProvider = SingleCheck.provider(ReusableScoped_Factory.create());
+  }
+
+  @Override
+  public Object regular() {
+    return regularScopedProvider.get();
+  }
+
+  @Override
+  public Object reusable() {
+    return reusableScopedProvider.get();
+  }
+
+  @Override
+  public Object unscoped() {
+    return new Unscoped();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+}
+

@@ -1,0 +1,94 @@
+package test;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.DaggerGenerated;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class DaggerMyComponent implements MyComponent {
+  private final DaggerMyComponent myComponent = this;
+
+  private DaggerMyComponent() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static MyComponent create() {
+    return new Builder().build();
+  }
+
+  private Set<String> setOfString() {
+    return ImmutableSet.<String>of(MyComponentModule_ProvideStringFactory.provideString());
+  }
+
+  @Override
+  public void inject(Bar bar) {
+    injectBar(bar);
+  }
+
+  @Override
+  public MySubcomponent subcomponent() {
+    return new MySubcomponentImpl(myComponent);
+  }
+
+  @CanIgnoreReturnValue
+  private Bar injectBar(Bar instance) {
+    Bar_MembersInjector.injectMultibindingStrings(instance, setOfString());
+    return instance;
+  }
+
+  public static final class Builder {
+    private Builder() {
+    }
+
+    public MyComponent build() {
+      return new DaggerMyComponent();
+    }
+  }
+
+  private static final class MySubcomponentImpl implements MySubcomponent {
+    private final DaggerMyComponent myComponent;
+
+    private final MySubcomponentImpl mySubcomponentImpl = this;
+
+    private MySubcomponentImpl(DaggerMyComponent myComponent) {
+      this.myComponent = myComponent;
+
+
+    }
+
+    private Set<String> setOfString() {
+      return ImmutableSet.<String>of(MyComponentModule_ProvideStringFactory.provideString(), MySubcomponentModule_ProvideStringFactory.provideString());
+    }
+
+    private Bar bar() {
+      return injectBar(Bar_Factory.newInstance());
+    }
+
+    @Override
+    public Foo foo() {
+      return new Foo(bar());
+    }
+
+    @CanIgnoreReturnValue
+    private Bar injectBar(Bar instance) {
+      Bar_MembersInjector.injectMultibindingStrings(instance, setOfString());
+      return instance;
+    }
+  }
+}
+

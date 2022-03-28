@@ -90,7 +90,7 @@ def _GenTests(
         lib_javacopts = None,
         test_javacopts = None,
         functional = True,
-        test_kwargs = {}):
+        test_kwargs = None):
     _gen_tests(
         library_rule_type,
         test_rule_type,
@@ -139,7 +139,7 @@ def _gen_tests(
         test_javacopts,
         functional,
         variant_name = None,
-        test_kwargs = {}):
+        test_kwargs = None):
     if variant_name:
         suffix = "_" + variant_name
         tags = [variant_name]
@@ -160,6 +160,9 @@ def _gen_tests(
         else:
             supporting_files.append(src)
 
+    if not test_kwargs:
+        test_kwargs = {}
+
     if not test_only_deps:
         test_only_deps = []
 
@@ -179,12 +182,15 @@ def _gen_tests(
         if functional:
             _hjar_test(supporting_files_name, tags)
 
+    should_add_goldens = not functional and (test_rule_type == java_test)
     for test_file in test_files:
         test_name = test_file.replace(".java", "")
         prefix_path = "src/test/java/"
         package_name = native.package_name()
         if package_name.find("javatests/") != -1:
             prefix_path = "javatests/"
+        if should_add_goldens:
+            test_kwargs["resources"] = native.glob(["goldens/%s_*" % test_name])
         test_class = (package_name + "/" + test_name).rpartition(prefix_path)[2].replace("/", ".")
         test_rule_type(
             name = test_name + suffix,

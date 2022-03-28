@@ -1,0 +1,45 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Preconditions;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@ScopeMetadata
+@QualifierMetadata({
+    "test.MethodQualifier",
+    "test.ParamQualifier"
+})
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class MyModule_ProvideStringFactory implements Factory<String> {
+  private final Provider<Integer> iProvider;
+
+  public MyModule_ProvideStringFactory(Provider<Integer> iProvider) {
+    this.iProvider = iProvider;
+  }
+
+  @Override
+  public String get() {
+    return provideString(iProvider.get());
+  }
+
+  public static MyModule_ProvideStringFactory create(Provider<Integer> iProvider) {
+    return new MyModule_ProvideStringFactory(iProvider);
+  }
+
+  public static String provideString(int i) {
+    return Preconditions.checkNotNullFromProvides(MyModule.provideString(i));
+  }
+}
+

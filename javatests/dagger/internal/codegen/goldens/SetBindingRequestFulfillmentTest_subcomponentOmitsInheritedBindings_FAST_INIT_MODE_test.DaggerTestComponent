@@ -1,0 +1,74 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import java.util.Collections;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerParent implements Parent {
+  private final DaggerParent parent = this;
+
+  private DaggerParent() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static Parent create() {
+    return new Builder().build();
+  }
+
+  @Override
+  public Child child() {
+    return new ChildImpl(parent);
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    /**
+     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
+     */
+    @Deprecated
+    public Builder parentModule(ParentModule parentModule) {
+      Preconditions.checkNotNull(parentModule);
+      return this;
+    }
+
+    public Parent build() {
+      return new DaggerParent();
+    }
+  }
+
+  private static final class ChildImpl implements Child {
+    private final DaggerParent parent;
+
+    private final ChildImpl childImpl = this;
+
+    private ChildImpl(DaggerParent parent) {
+      this.parent = parent;
+
+
+    }
+
+    @Override
+    public Set<Object> objectSet() {
+      return Collections.<Object>singleton(ParentModule_ParentObjectFactory.parentObject());
+    }
+  }
+}
+

@@ -1,0 +1,56 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent implements TestComponent {
+  private final DaggerTestComponent testComponent = this;
+
+  private DaggerTestComponent() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  @Override
+  public Provider<CharSequence> charSequence() {
+    return ((Provider) TestModule_ProvideStringFactory.create());
+  }
+
+  @Override
+  public CharSequence charSequenceInstance() {
+    return TestModule_ProvideStringFactory.provideString();
+  }
+
+  @Override
+  public Provider<String> namedString() {
+    return TestModule_ProvideStringFactory.create();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new DaggerTestComponent();
+    }
+  }
+}
+

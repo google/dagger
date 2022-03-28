@@ -1,0 +1,40 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class DaggerPublicComponent implements PublicComponent {
+  private final DaggerPublicComponent publicComponent = this;
+
+  private DaggerPublicComponent() {
+
+
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static PublicComponent create() {
+    return new Builder().build();
+  }
+
+  public static final class Builder {
+    private Builder() {
+    }
+
+    public PublicComponent build() {
+      return new DaggerPublicComponent();
+    }
+  }
+}
+

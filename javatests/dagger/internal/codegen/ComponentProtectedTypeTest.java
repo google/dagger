@@ -22,7 +22,9 @@ import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.golden.GoldenFileRule;
 import javax.tools.JavaFileObject;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -35,6 +37,8 @@ public final class ComponentProtectedTypeTest {
     return CompilerMode.TEST_PARAMETERS;
   }
 
+  @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
+
   private final CompilerMode compilerMode;
 
   public ComponentProtectedTypeTest(CompilerMode compilerMode) {
@@ -42,7 +46,7 @@ public final class ComponentProtectedTypeTest {
   }
 
   @Test
-  public void componentAccessesProtectedType_succeeds() {
+  public void componentAccessesProtectedType_succeeds() throws Exception {
     JavaFileObject baseSrc =
         JavaFileObjects.forSourceLines(
             "test.sub.TestComponentBase",
@@ -85,20 +89,6 @@ public final class ComponentProtectedTypeTest {
             // a type.
             "  abstract TestComponentBase.ProtectedType provideProtectedType();",
             "}");
-    JavaFileObject generatedComponent =
-        JavaFileObjects.forSourceLines(
-            "test.DaggerTestComponent",
-            "package test;",
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "public final class DaggerTestComponent extends TestComponent {",
-            "  private Provider<test.sub.TestComponentBase.ProtectedType> protectedTypeProvider;",
-            "",
-            "  @Override",
-            "  test.sub.TestComponentBase.ProtectedType provideProtectedType() {",
-            "    return protectedTypeProvider.get();",
-            "  }",
-            "}");
 
     Compilation compilation =
         compilerWithOptions(compilerMode.javacopts()).compile(baseSrc, componentSrc);
@@ -106,6 +96,6 @@ public final class ComponentProtectedTypeTest {
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
-        .containsElementsIn(generatedComponent);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
   }
 }

@@ -1,0 +1,39 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class Foo_Factory {
+  private final Provider<Bar> argProvider;
+
+  public Foo_Factory(Provider<Bar> argProvider) {
+    this.argProvider = argProvider;
+  }
+
+  public Foo get(Integer argProvider2) {
+    return newInstance(argProvider.get(), argProvider2);
+  }
+
+  public static Foo_Factory create(Provider<Bar> argProvider) {
+    return new Foo_Factory(argProvider);
+  }
+
+  public static Foo newInstance(Object arg, Integer argProvider) {
+    return new Foo((Bar) arg, argProvider);
+  }
+}
+

@@ -28,10 +28,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.testing.compile.Compilation;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
+import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import javax.tools.JavaFileObject;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -48,13 +50,15 @@ public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorT
     return ImmutableList.copyOf(Iterables.transform(params, Collection::toArray));
   }
 
+  @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
+
   public SubcomponentCreatorRequestFulfillmentTest(
       CompilerMode compilerMode, ComponentCreatorAnnotation componentCreatorAnnotation) {
     super(compilerMode, componentCreatorAnnotation);
   }
 
   @Test
-  public void testInlinedSubcomponentCreators_componentMethod() {
+  public void testInlinedSubcomponentCreators_componentMethod() throws Exception {
     JavaFileObject subcomponent =
         preprocessedJavaFile(
             "test.Sub",
@@ -92,43 +96,10 @@ public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorT
             "  UsesSubcomponent usesSubcomponent();",
             "}");
 
-    JavaFileObject generatedComponent =
-        preprocessedJavaFile(
-            "test.DaggerC",
-            "package test;",
-            "",
-            GeneratedLines.generatedImports(),
-            "",
-            GeneratedLines.generatedAnnotations(),
-            "final class DaggerC implements C {",
-            "  @Override",
-            "  public Sub.Builder sBuilder() {",
-            "    return new SubBuilder(c);",
-            "  }",
-            "",
-            "  @Override",
-            "  public UsesSubcomponent usesSubcomponent() {",
-            "    return new UsesSubcomponent(new SubBuilder(c));",
-            "  }",
-            "",
-            "  private static final class SubBuilder implements Sub.Builder {",
-            "    @Override",
-            "    public Sub build() {",
-            "      return new SubImpl(c);",
-            "    }",
-            "  }",
-            "",
-            "  private static final class SubImpl implements Sub {",
-            "    private SubImpl(DaggerC c) {",
-            "      this.c = c;",
-            "    }",
-            "  }",
-            "}");
-
     Compilation compilation = compile(subcomponent, usesSubcomponent, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerC")
-        .containsElementsIn(generatedComponent);
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerC"));
   }
 }

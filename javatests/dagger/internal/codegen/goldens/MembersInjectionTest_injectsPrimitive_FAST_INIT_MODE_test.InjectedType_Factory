@@ -1,0 +1,49 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class InjectedType_Factory implements Factory<InjectedType> {
+  private final Provider<Integer> primitiveIntProvider;
+
+  private final Provider<Integer> boxedIntProvider;
+
+  public InjectedType_Factory(Provider<Integer> primitiveIntProvider,
+      Provider<Integer> boxedIntProvider) {
+    this.primitiveIntProvider = primitiveIntProvider;
+    this.boxedIntProvider = boxedIntProvider;
+  }
+
+  @Override
+  public InjectedType get() {
+    InjectedType instance = newInstance();
+    InjectedType_MembersInjector.injectPrimitiveInt(instance, primitiveIntProvider.get());
+    InjectedType_MembersInjector.injectBoxedInt(instance, boxedIntProvider.get());
+    return instance;
+  }
+
+  public static InjectedType_Factory create(Provider<Integer> primitiveIntProvider,
+      Provider<Integer> boxedIntProvider) {
+    return new InjectedType_Factory(primitiveIntProvider, boxedIntProvider);
+  }
+
+  public static InjectedType newInstance() {
+    return new InjectedType();
+  }
+}
+

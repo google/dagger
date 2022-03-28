@@ -28,7 +28,9 @@ import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertTh
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.golden.GoldenFileRule;
 import javax.tools.JavaFileObject;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -39,6 +41,8 @@ public class ModuleFactoryGeneratorTest {
   private static final JavaFileObject NULLABLE =
       JavaFileObjects.forSourceLines(
           "test.Nullable", "package test;", "public @interface Nullable {}");
+
+  @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
 
   // TODO(gak): add tests for invalid combinations of scope and qualifier annotations like we have
   // for @Inject
@@ -1452,7 +1456,7 @@ public class ModuleFactoryGeneratorTest {
   }
 
   @Test
-  public void proxyMethodsConflictWithOtherFactoryMethods() {
+  public void proxyMethodsConflictWithOtherFactoryMethods() throws Exception {
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
             "test.TestModule",
@@ -1474,57 +1478,14 @@ public class ModuleFactoryGeneratorTest {
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.TestModule_GetFactory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.TestModule_GetFactory",
-                "package test;",
-                "",
-                "@ScopeMetadata",
-                "@QualifierMetadata",
-                GeneratedLines.generatedAnnotations(),
-                "public final class TestModule_GetFactory implements Factory<Integer> {",
-                "  @Override",
-                "  public Integer get() {",
-                "    return proxyGet();",
-                "  }",
-                "",
-                "  public static TestModule_GetFactory create() {",
-                "    return InstanceHolder.INSTANCE;",
-                "  }",
-                "",
-                "  public static int proxyGet() {",
-                "    return TestModule.get();",
-                "  }",
-                "}"));
-
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.TestModule_GetFactory"));
     assertThat(compilation)
         .generatedSourceFile("test.TestModule_CreateFactory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.TestModule_CreateFactory",
-                "package test;",
-                "",
-                "@ScopeMetadata",
-                "@QualifierMetadata",
-                GeneratedLines.generatedAnnotations(),
-                "public final class TestModule_CreateFactory implements Factory<Boolean> {",
-                "  @Override",
-                "  public Boolean get() {",
-                "    return proxyCreate();",
-                "  }",
-                "",
-                "  public static TestModule_CreateFactory create() {",
-                "    return InstanceHolder.INSTANCE;",
-                "  }",
-                "",
-                "  public static boolean proxyCreate() {",
-                "    return TestModule.create();",
-                "  }",
-                "}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.TestModule_CreateFactory"));
   }
 
   @Test
-  public void testScopedMetadataOnStaticProvides() {
+  public void testScopedMetadataOnStaticProvides() throws Exception {
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
             "test.ScopedBinding",
@@ -1549,23 +1510,16 @@ public class ModuleFactoryGeneratorTest {
             "package test;",
             "",
             "@interface NonScope {}");
+
     Compilation compilation = daggerCompiler().compile(module, nonScope);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.MyModule_ProvideStringFactory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.MyModule_ProvideStringFactory",
-                "package test;",
-                "",
-                "@ScopeMetadata(\"javax.inject.Singleton\")",
-                "@QualifierMetadata",
-                GeneratedLines.generatedAnnotations(),
-                "public final class MyModule_ProvideStringFactory implements Factory<String> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.MyModule_ProvideStringFactory"));
   }
 
   @Test
-  public void testScopedMetadataOnNonStaticProvides() {
+  public void testScopedMetadataOnNonStaticProvides() throws Exception {
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
             "test.ScopedBinding",
@@ -1590,23 +1544,16 @@ public class ModuleFactoryGeneratorTest {
             "package test;",
             "",
             "@interface NonScope {}");
+
     Compilation compilation = daggerCompiler().compile(module, nonScope);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.MyModule_ProvideStringFactory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.MyModule_ProvideStringFactory",
-                "package test;",
-                "",
-                "@ScopeMetadata(\"javax.inject.Singleton\")",
-                "@QualifierMetadata",
-                GeneratedLines.generatedAnnotations(),
-                "public final class MyModule_ProvideStringFactory implements Factory<String> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.MyModule_ProvideStringFactory"));
   }
 
   @Test
-  public void testScopeMetadataWithCustomScope() {
+  public void testScopeMetadataWithCustomScope() throws Exception {
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
             "test.ScopedBinding",
@@ -1644,23 +1591,16 @@ public class ModuleFactoryGeneratorTest {
             "@interface NonScope {",
             "  String value();",
             "}");
+
     Compilation compilation = daggerCompiler().compile(module, customScope, nonScope);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.MyModule_ProvideStringFactory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.MyModule_ProvideStringFactory",
-                "package test;",
-                "",
-                "@ScopeMetadata(\"test.CustomScope\")",
-                "@QualifierMetadata",
-                GeneratedLines.generatedAnnotations(),
-                "public final class MyModule_ProvideStringFactory implements Factory<String> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.MyModule_ProvideStringFactory"));
   }
 
   @Test
-  public void testQualifierMetadataOnProvides() {
+  public void testQualifierMetadataOnProvides() throws Exception {
     JavaFileObject module =
         JavaFileObjects.forSourceLines(
             "test.ScopedBinding",
@@ -1703,20 +1643,13 @@ public class ModuleFactoryGeneratorTest {
             "package test;",
             "",
             "@interface NonQualifier {}");
+
     Compilation compilation =
         daggerCompiler().compile(module, methodQualifier, paramQualifier, nonQualifier);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.MyModule_ProvideStringFactory")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.MyModule_ProvideStringFactory",
-                "package test;",
-                "",
-                "@ScopeMetadata",
-                "@QualifierMetadata({\"test.MethodQualifier\", \"test.ParamQualifier\"})",
-                GeneratedLines.generatedAnnotations(),
-                "public final class MyModule_ProvideStringFactory implements Factory<String> {}"));
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.MyModule_ProvideStringFactory"));
   }
 
   private static final String BINDS_METHOD = "@Binds abstract Foo bindFoo(FooImpl impl);";

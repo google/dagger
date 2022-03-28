@@ -1,0 +1,38 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class TestModule_GetFactory implements Factory<Integer> {
+  @Override
+  public Integer get() {
+    return proxyGet();
+  }
+
+  public static TestModule_GetFactory create() {
+    return InstanceHolder.INSTANCE;
+  }
+
+  public static int proxyGet() {
+    return TestModule.get();
+  }
+
+  private static final class InstanceHolder {
+    private static final TestModule_GetFactory INSTANCE = new TestModule_GetFactory();
+  }
+}
+

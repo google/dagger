@@ -1,0 +1,52 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class InjectedType_MembersInjector implements MembersInjector<InjectedType> {
+  private final Provider<Integer> primitiveIntProvider;
+
+  private final Provider<Integer> boxedIntProvider;
+
+  public InjectedType_MembersInjector(Provider<Integer> primitiveIntProvider,
+      Provider<Integer> boxedIntProvider) {
+    this.primitiveIntProvider = primitiveIntProvider;
+    this.boxedIntProvider = boxedIntProvider;
+  }
+
+  public static MembersInjector<InjectedType> create(Provider<Integer> primitiveIntProvider,
+      Provider<Integer> boxedIntProvider) {
+    return new InjectedType_MembersInjector(primitiveIntProvider, boxedIntProvider);
+  }
+
+  @Override
+  public void injectMembers(InjectedType instance) {
+    injectPrimitiveInt(instance, primitiveIntProvider.get());
+    injectBoxedInt(instance, boxedIntProvider.get());
+  }
+
+  @InjectedFieldSignature("test.InjectedType.primitiveInt")
+  public static void injectPrimitiveInt(Object instance, int primitiveInt) {
+    ((InjectedType) instance).primitiveInt = primitiveInt;
+  }
+
+  @InjectedFieldSignature("test.InjectedType.boxedInt")
+  public static void injectBoxedInt(Object instance, Integer boxedInt) {
+    ((InjectedType) instance).boxedInt = boxedInt;
+  }
+}
+

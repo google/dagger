@@ -13,12 +13,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-
   }
 
   public static Builder builder() {
@@ -29,23 +25,32 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @Override
-  public Child child() {
-    return injectChild(Child_Factory.newInstance());
-  }
-
-  @CanIgnoreReturnValue
-  private Child injectChild(Child instance) {
-    Parent_MembersInjector.injectDep(instance, new Dep());
-    return instance;
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public Child child() {
+      return injectChild(Child_Factory.newInstance());
+    }
+
+    @CanIgnoreReturnValue
+    private Child injectChild(Child instance) {
+      Parent_MembersInjector.injectDep(instance, new Dep());
+      return instance;
     }
   }
 }

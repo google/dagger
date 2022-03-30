@@ -14,29 +14,12 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerBComponent implements BComponent {
-  private final DaggerBComponent bComponent = this;
-
-  private Provider<Integer> iProvider;
-
-  private DaggerBComponent(IntComponent intComponentParam) {
-
-    initialize(intComponentParam);
-
+final class DaggerBComponent {
+  private DaggerBComponent() {
   }
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final IntComponent intComponentParam) {
-    this.iProvider = new IProvider(intComponentParam);
-  }
-
-  @Override
-  public B b() {
-    return new B(iProvider);
   }
 
   static final class Builder {
@@ -52,20 +35,42 @@ final class DaggerBComponent implements BComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(intComponent, IntComponent.class);
-      return new DaggerBComponent(intComponent);
+      return new BComponentImpl(intComponent);
     }
   }
 
-  private static final class IProvider implements Provider<Integer> {
-    private final IntComponent intComponent;
+  private static final class BComponentImpl implements BComponent {
+    private final BComponentImpl bComponentImpl = this;
 
-    IProvider(IntComponent intComponent) {
-      this.intComponent = intComponent;
+    private Provider<Integer> iProvider;
+
+    private BComponentImpl(IntComponent intComponentParam) {
+
+      initialize(intComponentParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final IntComponent intComponentParam) {
+      this.iProvider = new IProvider(intComponentParam);
     }
 
     @Override
-    public Integer get() {
-      return intComponent.i();
+    public B b() {
+      return new B(iProvider);
+    }
+
+    private static final class IProvider implements Provider<Integer> {
+      private final IntComponent intComponent;
+
+      IProvider(IntComponent intComponent) {
+        this.intComponent = intComponent;
+      }
+
+      @Override
+      public Integer get() {
+        return intComponent.i();
+      }
     }
   }
 }

@@ -16,15 +16,8 @@ import test.sub.TestComponentBase_ProtectedType_Factory;
     "unchecked",
     "rawtypes"
 })
-public final class DaggerTestComponent extends TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<test.sub.TestComponentBase.ProtectedType> protectedTypeProvider;
-
+public final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -35,22 +28,34 @@ public final class DaggerTestComponent extends TestComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.protectedTypeProvider = DoubleCheck.provider(TestComponentBase_ProtectedType_Factory.create(TestComponentBase_Dep_Factory.create()));
-  }
-
-  @Override
-  test.sub.TestComponentBase.ProtectedType provideProtectedType() {
-    return protectedTypeProvider.get();
-  }
-
   public static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl extends TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private Provider<test.sub.TestComponentBase.ProtectedType> protectedTypeProvider;
+
+    private TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.protectedTypeProvider = DoubleCheck.provider(TestComponentBase_ProtectedType_Factory.create(TestComponentBase_Dep_Factory.create()));
+    }
+
+    @Override
+    test.sub.TestComponentBase.ProtectedType provideProtectedType() {
+      return protectedTypeProvider.get();
     }
   }
 }

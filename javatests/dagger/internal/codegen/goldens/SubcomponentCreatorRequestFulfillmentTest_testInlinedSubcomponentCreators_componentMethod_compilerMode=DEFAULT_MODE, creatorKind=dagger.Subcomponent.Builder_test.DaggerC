@@ -12,12 +12,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerC implements C {
-  private final DaggerC c = this;
-
+final class DaggerC {
   private DaggerC() {
-
-
   }
 
   public static Builder builder() {
@@ -28,47 +24,56 @@ final class DaggerC implements C {
     return new Builder().build();
   }
 
-  @Override
-  public Sub.Builder sBuilder() {
-    return new SubBuilder(c);
-  }
-
-  @Override
-  public UsesSubcomponent usesSubcomponent() {
-    return new UsesSubcomponent(new SubBuilder(c));
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public C build() {
-      return new DaggerC();
+      return new CImpl();
     }
   }
 
   private static final class SubBuilder implements Sub.Builder {
-    private final DaggerC c;
+    private final CImpl cImpl;
 
-    private SubBuilder(DaggerC c) {
-      this.c = c;
+    private SubBuilder(CImpl cImpl) {
+      this.cImpl = cImpl;
     }
 
     @Override
     public Sub build() {
-      return new SubImpl(c);
+      return new SubImpl(cImpl);
     }
   }
 
   private static final class SubImpl implements Sub {
-    private final DaggerC c;
+    private final CImpl cImpl;
 
     private final SubImpl subImpl = this;
 
-    private SubImpl(DaggerC c) {
-      this.c = c;
+    private SubImpl(CImpl cImpl) {
+      this.cImpl = cImpl;
 
 
+    }
+  }
+
+  private static final class CImpl implements C {
+    private final CImpl cImpl = this;
+
+    private CImpl() {
+
+
+    }
+
+    @Override
+    public Sub.Builder sBuilder() {
+      return new SubBuilder(cImpl);
+    }
+
+    @Override
+    public UsesSubcomponent usesSubcomponent() {
+      return new UsesSubcomponent(new SubBuilder(cImpl));
     }
   }
 }

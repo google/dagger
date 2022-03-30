@@ -15,14 +15,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerParent implements Parent {
-  private final ParentModule parentModule;
-
-  private final DaggerParent parent = this;
-
-  private DaggerParent(ParentModule parentModuleParam) {
-    this.parentModule = parentModuleParam;
-
+final class DaggerParent {
+  private DaggerParent() {
   }
 
   public static Builder builder() {
@@ -31,11 +25,6 @@ final class DaggerParent implements Parent {
 
   public static Parent create() {
     return new Builder().build();
-  }
-
-  @Override
-  public Child child() {
-    return new ChildImpl(parent);
   }
 
   static final class Builder {
@@ -53,24 +42,40 @@ final class DaggerParent implements Parent {
       if (parentModule == null) {
         this.parentModule = new ParentModule();
       }
-      return new DaggerParent(parentModule);
+      return new ParentImpl(parentModule);
     }
   }
 
   private static final class ChildImpl implements Child {
-    private final DaggerParent parent;
+    private final ParentImpl parentImpl;
 
     private final ChildImpl childImpl = this;
 
-    private ChildImpl(DaggerParent parent) {
-      this.parent = parent;
+    private ChildImpl(ParentImpl parentImpl) {
+      this.parentImpl = parentImpl;
 
 
     }
 
     @Override
     public Map<String, Object> objectMap() {
-      return Collections.<String, Object>singletonMap("parent key", ParentModule_ParentKeyObjectFactory.parentKeyObject(parent.parentModule));
+      return Collections.<String, Object>singletonMap("parent key", ParentModule_ParentKeyObjectFactory.parentKeyObject(parentImpl.parentModule));
+    }
+  }
+
+  private static final class ParentImpl implements Parent {
+    private final ParentModule parentModule;
+
+    private final ParentImpl parentImpl = this;
+
+    private ParentImpl(ParentModule parentModuleParam) {
+      this.parentModule = parentModuleParam;
+
+    }
+
+    @Override
+    public Child child() {
+      return new ChildImpl(parentImpl);
     }
   }
 }

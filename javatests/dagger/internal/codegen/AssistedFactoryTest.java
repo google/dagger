@@ -166,7 +166,7 @@ public class AssistedFactoryTest {
             "",
             "class Foo {",
             "  @AssistedInject",
-            "  Foo(@Assisted String testComponent, Provider<Bar> bar) {}",
+            "  Foo(@Assisted String testComponentImpl, Provider<Bar> bar) {}",
             "}");
     JavaFileObject fooFactory =
         JavaFileObjects.forSourceLines(

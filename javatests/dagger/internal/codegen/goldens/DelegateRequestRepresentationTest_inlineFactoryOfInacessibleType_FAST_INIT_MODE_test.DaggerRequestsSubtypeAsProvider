@@ -15,16 +15,8 @@ import other.Supertype;
     "unchecked",
     "rawtypes"
 })
-final class DaggerRequestsSubtypeAsProvider implements RequestsSubtypeAsProvider {
-  private final DaggerRequestsSubtypeAsProvider requestsSubtypeAsProvider = this;
-
-  @SuppressWarnings("rawtypes")
-  private Provider subtypeProvider;
-
+final class DaggerRequestsSubtypeAsProvider {
   private DaggerRequestsSubtypeAsProvider() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -35,43 +27,56 @@ final class DaggerRequestsSubtypeAsProvider implements RequestsSubtypeAsProvider
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.subtypeProvider = new SwitchingProvider<>(requestsSubtypeAsProvider, 0);
-  }
-
-  @Override
-  public Provider<Supertype> supertypeProvider() {
-    return subtypeProvider;
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public RequestsSubtypeAsProvider build() {
-      return new DaggerRequestsSubtypeAsProvider();
+      return new RequestsSubtypeAsProviderImpl();
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerRequestsSubtypeAsProvider requestsSubtypeAsProvider;
+  private static final class RequestsSubtypeAsProviderImpl implements RequestsSubtypeAsProvider {
+    private final RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl = this;
 
-    private final int id;
+    @SuppressWarnings("rawtypes")
+    private Provider subtypeProvider;
 
-    SwitchingProvider(DaggerRequestsSubtypeAsProvider requestsSubtypeAsProvider, int id) {
-      this.requestsSubtypeAsProvider = requestsSubtypeAsProvider;
-      this.id = id;
+    private RequestsSubtypeAsProviderImpl() {
+
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // other.Subtype 
-        return (T) Subtype_Factory.newInstance();
+    private void initialize() {
+      this.subtypeProvider = new SwitchingProvider<>(requestsSubtypeAsProviderImpl, 0);
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    public Provider<Supertype> supertypeProvider() {
+      return subtypeProvider;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl;
+
+      private final int id;
+
+      SwitchingProvider(RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl, int id) {
+        this.requestsSubtypeAsProviderImpl = requestsSubtypeAsProviderImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // other.Subtype 
+          return (T) Subtype_Factory.newInstance();
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

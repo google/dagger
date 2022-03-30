@@ -14,14 +14,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final MapModule mapModule;
-
-  private final DaggerTestComponent testComponent = this;
-
-  private DaggerTestComponent(MapModule mapModuleParam) {
-    this.mapModule = mapModuleParam;
-
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
   }
 
   public static Builder builder() {
@@ -30,11 +24,6 @@ final class DaggerTestComponent implements TestComponent {
 
   public static TestComponent create() {
     return new Builder().build();
-  }
-
-  @Override
-  public Map<String, String> dispatcher() {
-    return MapModule_ProvideAMapFactory.provideAMap(mapModule);
   }
 
   static final class Builder {
@@ -52,7 +41,23 @@ final class DaggerTestComponent implements TestComponent {
       if (mapModule == null) {
         this.mapModule = new MapModule();
       }
-      return new DaggerTestComponent(mapModule);
+      return new TestComponentImpl(mapModule);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final MapModule mapModule;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl(MapModule mapModuleParam) {
+      this.mapModule = mapModuleParam;
+
+    }
+
+    @Override
+    public Map<String, String> dispatcher() {
+      return MapModule_ProvideAMapFactory.provideAMap(mapModule);
     }
   }
 }

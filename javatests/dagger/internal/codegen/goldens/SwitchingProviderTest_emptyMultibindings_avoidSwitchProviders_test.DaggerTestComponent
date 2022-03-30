@@ -17,12 +17,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-
   }
 
   public static Builder builder() {
@@ -33,22 +29,31 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @Override
-  public Provider<Set<String>> setProvider() {
-    return SetFactory.<String>empty();
-  }
-
-  @Override
-  public Provider<Map<String, String>> mapProvider() {
-    return MapFactory.<String, String>emptyMapProvider();
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public Provider<Set<String>> setProvider() {
+      return SetFactory.<String>empty();
+    }
+
+    @Override
+    public Provider<Map<String, String>> mapProvider() {
+      return MapFactory.<String, String>emptyMapProvider();
     }
   }
 }

@@ -15,19 +15,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<RegularScoped> regularScopedProvider;
-
-  private Provider<ReusableScoped> reusableScopedProvider;
-
-  private Provider<Object> unscopedProvider;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -38,34 +27,50 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.regularScopedProvider = DoubleCheck.provider(RegularScoped_Factory.create());
-    this.reusableScopedProvider = SingleCheck.provider(ReusableScoped_Factory.create());
-    this.unscopedProvider = SingleCheck.provider((Provider) Unscoped_Factory.create());
-  }
-
-  @Override
-  public Object regular() {
-    return regularScopedProvider.get();
-  }
-
-  @Override
-  public Object reusable() {
-    return reusableScopedProvider.get();
-  }
-
-  @Override
-  public Object unscoped() {
-    return unscopedProvider.get();
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private Provider<RegularScoped> regularScopedProvider;
+
+    private Provider<ReusableScoped> reusableScopedProvider;
+
+    private Provider<Object> unscopedProvider;
+
+    private TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.regularScopedProvider = DoubleCheck.provider(RegularScoped_Factory.create());
+      this.reusableScopedProvider = SingleCheck.provider(ReusableScoped_Factory.create());
+      this.unscopedProvider = SingleCheck.provider((Provider) Unscoped_Factory.create());
+    }
+
+    @Override
+    public Object regular() {
+      return regularScopedProvider.get();
+    }
+
+    @Override
+    public Object reusable() {
+      return reusableScopedProvider.get();
+    }
+
+    @Override
+    public Object unscoped() {
+      return unscopedProvider.get();
     }
   }
 }

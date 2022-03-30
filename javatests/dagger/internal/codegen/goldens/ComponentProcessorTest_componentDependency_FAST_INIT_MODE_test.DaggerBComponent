@@ -14,31 +14,12 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerBComponent implements BComponent {
-  private final AComponent aComponent;
-
-  private final DaggerBComponent bComponent = this;
-
-  private Provider<A> aProvider;
-
-  private DaggerBComponent(AComponent aComponentParam) {
-    this.aComponent = aComponentParam;
-    initialize(aComponentParam);
-
+final class DaggerBComponent {
+  private DaggerBComponent() {
   }
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final AComponent aComponentParam) {
-    this.aProvider = new SwitchingProvider<>(bComponent, 0);
-  }
-
-  @Override
-  public B b() {
-    return new B(aProvider);
   }
 
   static final class Builder {
@@ -54,28 +35,52 @@ final class DaggerBComponent implements BComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(aComponent, AComponent.class);
-      return new DaggerBComponent(aComponent);
+      return new BComponentImpl(aComponent);
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerBComponent bComponent;
+  private static final class BComponentImpl implements BComponent {
+    private final AComponent aComponent;
 
-    private final int id;
+    private final BComponentImpl bComponentImpl = this;
 
-    SwitchingProvider(DaggerBComponent bComponent, int id) {
-      this.bComponent = bComponent;
-      this.id = id;
+    private Provider<A> aProvider;
+
+    private BComponentImpl(AComponent aComponentParam) {
+      this.aComponent = aComponentParam;
+      initialize(aComponentParam);
+
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // test.A 
-        return (T) Preconditions.checkNotNullFromComponent(bComponent.aComponent.a());
+    private void initialize(final AComponent aComponentParam) {
+      this.aProvider = new SwitchingProvider<>(bComponentImpl, 0);
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    public B b() {
+      return new B(aProvider);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final BComponentImpl bComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
+        this.bComponentImpl = bComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // test.A 
+          return (T) Preconditions.checkNotNullFromComponent(bComponentImpl.aComponent.a());
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

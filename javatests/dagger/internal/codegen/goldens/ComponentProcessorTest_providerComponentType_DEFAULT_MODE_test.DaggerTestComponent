@@ -13,15 +13,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-public final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<Foo> fooProvider;
-
+public final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -32,26 +25,38 @@ public final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  private Foo foo() {
-    return new Foo(new Bar());
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.fooProvider = Foo_Factory.create(Bar_Factory.create());
-  }
-
-  @Override
-  public SomeEntryPoint someEntryPoint() {
-    return new SomeEntryPoint(foo(), fooProvider);
-  }
-
   public static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private Provider<Foo> fooProvider;
+
+    private TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    private Foo foo() {
+      return new Foo(new Bar());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.fooProvider = Foo_Factory.create(Bar_Factory.create());
+    }
+
+    @Override
+    public SomeEntryPoint someEntryPoint() {
+      return new SomeEntryPoint(foo(), fooProvider);
     }
   }
 }

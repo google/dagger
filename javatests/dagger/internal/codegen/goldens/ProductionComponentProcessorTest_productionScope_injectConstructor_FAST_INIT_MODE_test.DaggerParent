@@ -15,15 +15,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerParent implements Parent, CancellationListener {
-  private final DaggerParent parent = this;
-
-  private Provider<ProductionScoped> productionScopedProvider;
-
+final class DaggerParent {
   private DaggerParent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -34,45 +27,29 @@ final class DaggerParent implements Parent, CancellationListener {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.productionScopedProvider = DoubleCheck.provider(new SwitchingProvider<ProductionScoped>(parent, 0));
-  }
-
-  @Override
-  public Child child() {
-    return new ChildImpl(parent);
-  }
-
-  @Override
-  public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
-
-
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public Parent build() {
-      return new DaggerParent();
+      return new ParentImpl();
     }
   }
 
   private static final class ChildImpl implements Child, CancellationListener {
-    private final DaggerParent parent;
+    private final ParentImpl parentImpl;
 
     private final ChildImpl childImpl = this;
 
-    private ChildImpl(DaggerParent parent) {
-      this.parent = parent;
+    private ChildImpl(ParentImpl parentImpl) {
+      this.parentImpl = parentImpl;
 
 
     }
 
     @Override
     public ProductionScoped productionScoped() {
-      return parent.productionScopedProvider.get();
+      return parentImpl.productionScopedProvider.get();
     }
 
     @Override
@@ -82,24 +59,52 @@ final class DaggerParent implements Parent, CancellationListener {
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerParent parent;
+  private static final class ParentImpl implements Parent, CancellationListener {
+    private final ParentImpl parentImpl = this;
 
-    private final int id;
+    private Provider<ProductionScoped> productionScopedProvider;
 
-    SwitchingProvider(DaggerParent parent, int id) {
-      this.parent = parent;
-      this.id = id;
+    private ParentImpl() {
+
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // test.ProductionScoped 
-        return (T) new ProductionScoped();
+    private void initialize() {
+      this.productionScopedProvider = DoubleCheck.provider(new SwitchingProvider<ProductionScoped>(parentImpl, 0));
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    public Child child() {
+      return new ChildImpl(parentImpl);
+    }
+
+    @Override
+    public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
+
+
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final ParentImpl parentImpl;
+
+      private final int id;
+
+      SwitchingProvider(ParentImpl parentImpl, int id) {
+        this.parentImpl = parentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // test.ProductionScoped 
+          return (T) new ProductionScoped();
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

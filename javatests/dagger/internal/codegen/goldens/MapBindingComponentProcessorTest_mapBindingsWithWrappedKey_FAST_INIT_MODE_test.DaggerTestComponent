@@ -16,24 +16,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final MapModuleOne mapModuleOne;
-
-  private final MapModuleTwo mapModuleTwo;
-
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<Handler> provideAdminHandlerProvider;
-
-  private Provider<Handler> provideLoginHandlerProvider;
-
-  private Provider<Map<WrappedClassKey, Provider<Handler>>> mapOfWrappedClassKeyAndProviderOfHandlerProvider;
-
-  private DaggerTestComponent(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
-    this.mapModuleOne = mapModuleOneParam;
-    this.mapModuleTwo = mapModuleTwoParam;
-    initialize(mapModuleOneParam, mapModuleTwoParam);
-
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
   }
 
   public static Builder builder() {
@@ -42,19 +26,6 @@ final class DaggerTestComponent implements TestComponent {
 
   public static TestComponent create() {
     return new Builder().build();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final MapModuleOne mapModuleOneParam,
-      final MapModuleTwo mapModuleTwoParam) {
-    this.provideAdminHandlerProvider = new SwitchingProvider<>(testComponent, 1);
-    this.provideLoginHandlerProvider = new SwitchingProvider<>(testComponent, 2);
-    this.mapOfWrappedClassKeyAndProviderOfHandlerProvider = new SwitchingProvider<>(testComponent, 0);
-  }
-
-  @Override
-  public Provider<Map<WrappedClassKey, Provider<Handler>>> dispatcher() {
-    return mapOfWrappedClassKeyAndProviderOfHandlerProvider;
   }
 
   static final class Builder {
@@ -82,34 +53,68 @@ final class DaggerTestComponent implements TestComponent {
       if (mapModuleTwo == null) {
         this.mapModuleTwo = new MapModuleTwo();
       }
-      return new DaggerTestComponent(mapModuleOne, mapModuleTwo);
+      return new TestComponentImpl(mapModuleOne, mapModuleTwo);
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerTestComponent testComponent;
+  private static final class TestComponentImpl implements TestComponent {
+    private final MapModuleOne mapModuleOne;
 
-    private final int id;
+    private final MapModuleTwo mapModuleTwo;
 
-    SwitchingProvider(DaggerTestComponent testComponent, int id) {
-      this.testComponent = testComponent;
-      this.id = id;
+    private final TestComponentImpl testComponentImpl = this;
+
+    private Provider<Handler> provideAdminHandlerProvider;
+
+    private Provider<Handler> provideLoginHandlerProvider;
+
+    private Provider<Map<WrappedClassKey, Provider<Handler>>> mapOfWrappedClassKeyAndProviderOfHandlerProvider;
+
+    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+      this.mapModuleOne = mapModuleOneParam;
+      this.mapModuleTwo = mapModuleTwoParam;
+      initialize(mapModuleOneParam, mapModuleTwoParam);
+
     }
 
     @SuppressWarnings("unchecked")
+    private void initialize(final MapModuleOne mapModuleOneParam,
+        final MapModuleTwo mapModuleTwoParam) {
+      this.provideAdminHandlerProvider = new SwitchingProvider<>(testComponentImpl, 1);
+      this.provideLoginHandlerProvider = new SwitchingProvider<>(testComponentImpl, 2);
+      this.mapOfWrappedClassKeyAndProviderOfHandlerProvider = new SwitchingProvider<>(testComponentImpl, 0);
+    }
+
     @Override
-    public T get() {
-      switch (id) {
-        case 0: // java.util.Map<test.WrappedClassKey,javax.inject.Provider<test.Handler>> 
-        return (T) ImmutableMap.<WrappedClassKey, Provider<Handler>>of(WrappedClassKeyCreator.createWrappedClassKey(Integer.class), testComponent.provideAdminHandlerProvider, WrappedClassKeyCreator.createWrappedClassKey(Long.class), testComponent.provideLoginHandlerProvider);
+    public Provider<Map<WrappedClassKey, Provider<Handler>>> dispatcher() {
+      return mapOfWrappedClassKeyAndProviderOfHandlerProvider;
+    }
 
-        case 1: // java.util.Map<test.WrappedClassKey,javax.inject.Provider<test.Handler>> test.MapModuleOne#provideAdminHandler 
-        return (T) MapModuleOne_ProvideAdminHandlerFactory.provideAdminHandler(testComponent.mapModuleOne);
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
 
-        case 2: // java.util.Map<test.WrappedClassKey,javax.inject.Provider<test.Handler>> test.MapModuleTwo#provideLoginHandler 
-        return (T) MapModuleTwo_ProvideLoginHandlerFactory.provideLoginHandler(testComponent.mapModuleTwo);
+      private final int id;
 
-        default: throw new AssertionError(id);
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // java.util.Map<test.WrappedClassKey,javax.inject.Provider<test.Handler>> 
+          return (T) ImmutableMap.<WrappedClassKey, Provider<Handler>>of(WrappedClassKeyCreator.createWrappedClassKey(Integer.class), testComponentImpl.provideAdminHandlerProvider, WrappedClassKeyCreator.createWrappedClassKey(Long.class), testComponentImpl.provideLoginHandlerProvider);
+
+          case 1: // java.util.Map<test.WrappedClassKey,javax.inject.Provider<test.Handler>> test.MapModuleOne#provideAdminHandler 
+          return (T) MapModuleOne_ProvideAdminHandlerFactory.provideAdminHandler(testComponentImpl.mapModuleOne);
+
+          case 2: // java.util.Map<test.WrappedClassKey,javax.inject.Provider<test.Handler>> test.MapModuleTwo#provideLoginHandler 
+          return (T) MapModuleTwo_ProvideLoginHandlerFactory.provideLoginHandler(testComponentImpl.mapModuleTwo);
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

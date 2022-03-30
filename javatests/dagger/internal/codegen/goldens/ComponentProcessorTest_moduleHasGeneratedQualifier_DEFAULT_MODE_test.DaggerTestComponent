@@ -12,12 +12,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-
   }
 
   public static Builder builder() {
@@ -28,17 +24,26 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @Override
-  public String unqualified() {
-    return TestModule_UnqualifiedFactory.unqualified();
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public String unqualified() {
+      return TestModule_UnqualifiedFactory.unqualified();
     }
   }
 }

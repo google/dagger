@@ -14,29 +14,12 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerBComponent implements BComponent {
-  private final DaggerBComponent bComponent = this;
-
-  private Provider<A> aProvider;
-
-  private DaggerBComponent(AComponent aComponentParam) {
-
-    initialize(aComponentParam);
-
+final class DaggerBComponent {
+  private DaggerBComponent() {
   }
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final AComponent aComponentParam) {
-    this.aProvider = new AProvider(aComponentParam);
-  }
-
-  @Override
-  public B b() {
-    return new B(aProvider);
   }
 
   static final class Builder {
@@ -52,20 +35,42 @@ final class DaggerBComponent implements BComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(aComponent, AComponent.class);
-      return new DaggerBComponent(aComponent);
+      return new BComponentImpl(aComponent);
     }
   }
 
-  private static final class AProvider implements Provider<A> {
-    private final AComponent aComponent;
+  private static final class BComponentImpl implements BComponent {
+    private final BComponentImpl bComponentImpl = this;
 
-    AProvider(AComponent aComponent) {
-      this.aComponent = aComponent;
+    private Provider<A> aProvider;
+
+    private BComponentImpl(AComponent aComponentParam) {
+
+      initialize(aComponentParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final AComponent aComponentParam) {
+      this.aProvider = new AProvider(aComponentParam);
     }
 
     @Override
-    public A get() {
-      return Preconditions.checkNotNullFromComponent(aComponent.a());
+    public B b() {
+      return new B(aProvider);
+    }
+
+    private static final class AProvider implements Provider<A> {
+      private final AComponent aComponent;
+
+      AProvider(AComponent aComponent) {
+        this.aComponent = aComponent;
+      }
+
+      @Override
+      public A get() {
+        return Preconditions.checkNotNullFromComponent(aComponent.a());
+      }
     }
   }
 }

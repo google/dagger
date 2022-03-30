@@ -15,15 +15,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerSimpleComponent implements SimpleComponent {
-  private final DaggerSimpleComponent simpleComponent = this;
-
-  private Provider<SomeInjectableType> someInjectableTypeProvider;
-
+final class DaggerSimpleComponent {
   private DaggerSimpleComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -34,32 +27,44 @@ final class DaggerSimpleComponent implements SimpleComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.someInjectableTypeProvider = DoubleCheck.provider(SomeInjectableType_Factory.create());
-  }
-
-  @Override
-  public SomeInjectableType someInjectableType() {
-    return someInjectableTypeProvider.get();
-  }
-
-  @Override
-  public Lazy<SomeInjectableType> lazySomeInjectableType() {
-    return DoubleCheck.lazy(someInjectableTypeProvider);
-  }
-
-  @Override
-  public Provider<SomeInjectableType> someInjectableTypeProvider() {
-    return someInjectableTypeProvider;
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public SimpleComponent build() {
-      return new DaggerSimpleComponent();
+      return new SimpleComponentImpl();
+    }
+  }
+
+  private static final class SimpleComponentImpl implements SimpleComponent {
+    private final SimpleComponentImpl simpleComponentImpl = this;
+
+    private Provider<SomeInjectableType> someInjectableTypeProvider;
+
+    private SimpleComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.someInjectableTypeProvider = DoubleCheck.provider(SomeInjectableType_Factory.create());
+    }
+
+    @Override
+    public SomeInjectableType someInjectableType() {
+      return someInjectableTypeProvider.get();
+    }
+
+    @Override
+    public Lazy<SomeInjectableType> lazySomeInjectableType() {
+      return DoubleCheck.lazy(someInjectableTypeProvider);
+    }
+
+    @Override
+    public Provider<SomeInjectableType> someInjectableTypeProvider() {
+      return someInjectableTypeProvider;
     }
   }
 }

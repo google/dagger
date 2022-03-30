@@ -14,31 +14,12 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerBComponent implements BComponent {
-  private final ArrayComponent arrayComponent;
-
-  private final DaggerBComponent bComponent = this;
-
-  private Provider<String[]> stringsProvider;
-
-  private DaggerBComponent(ArrayComponent arrayComponentParam) {
-    this.arrayComponent = arrayComponentParam;
-    initialize(arrayComponentParam);
-
+final class DaggerBComponent {
+  private DaggerBComponent() {
   }
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final ArrayComponent arrayComponentParam) {
-    this.stringsProvider = new SwitchingProvider<>(bComponent, 0);
-  }
-
-  @Override
-  public B b() {
-    return new B(stringsProvider);
   }
 
   static final class Builder {
@@ -54,28 +35,52 @@ final class DaggerBComponent implements BComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(arrayComponent, ArrayComponent.class);
-      return new DaggerBComponent(arrayComponent);
+      return new BComponentImpl(arrayComponent);
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerBComponent bComponent;
+  private static final class BComponentImpl implements BComponent {
+    private final ArrayComponent arrayComponent;
 
-    private final int id;
+    private final BComponentImpl bComponentImpl = this;
 
-    SwitchingProvider(DaggerBComponent bComponent, int id) {
-      this.bComponent = bComponent;
-      this.id = id;
+    private Provider<String[]> stringsProvider;
+
+    private BComponentImpl(ArrayComponent arrayComponentParam) {
+      this.arrayComponent = arrayComponentParam;
+      initialize(arrayComponentParam);
+
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // java.lang.String[] 
-        return (T) Preconditions.checkNotNullFromComponent(bComponent.arrayComponent.strings());
+    private void initialize(final ArrayComponent arrayComponentParam) {
+      this.stringsProvider = new SwitchingProvider<>(bComponentImpl, 0);
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    public B b() {
+      return new B(stringsProvider);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final BComponentImpl bComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
+        this.bComponentImpl = bComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // java.lang.String[] 
+          return (T) Preconditions.checkNotNullFromComponent(bComponentImpl.arrayComponent.strings());
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

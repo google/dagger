@@ -13,12 +13,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerOuterType_SimpleComponent implements OuterType.SimpleComponent {
-  private final DaggerOuterType_SimpleComponent simpleComponent = this;
-
+final class DaggerOuterType_SimpleComponent {
   private DaggerOuterType_SimpleComponent() {
-
-
   }
 
   public static Builder builder() {
@@ -29,28 +25,37 @@ final class DaggerOuterType_SimpleComponent implements OuterType.SimpleComponent
     return new Builder().build();
   }
 
-  @Override
-  public OuterType.A a() {
-    return new OuterType.A();
-  }
-
-  @Override
-  public void inject(OuterType.B b) {
-    injectB(b);
-  }
-
-  @CanIgnoreReturnValue
-  private OuterType.B injectB(OuterType.B instance) {
-    OuterType_B_MembersInjector.injectA(instance, new OuterType.A());
-    return instance;
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public OuterType.SimpleComponent build() {
-      return new DaggerOuterType_SimpleComponent();
+      return new SimpleComponentImpl();
+    }
+  }
+
+  private static final class SimpleComponentImpl implements OuterType.SimpleComponent {
+    private final SimpleComponentImpl simpleComponentImpl = this;
+
+    private SimpleComponentImpl() {
+
+
+    }
+
+    @Override
+    public OuterType.A a() {
+      return new OuterType.A();
+    }
+
+    @Override
+    public void inject(OuterType.B b) {
+      injectB(b);
+    }
+
+    @CanIgnoreReturnValue
+    private OuterType.B injectB(OuterType.B instance) {
+      OuterType_B_MembersInjector.injectA(instance, new OuterType.A());
+      return instance;
     }
   }
 }

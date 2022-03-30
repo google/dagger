@@ -14,29 +14,12 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerBComponent implements BComponent {
-  private final DaggerBComponent bComponent = this;
-
-  private Provider<String[]> stringsProvider;
-
-  private DaggerBComponent(ArrayComponent arrayComponentParam) {
-
-    initialize(arrayComponentParam);
-
+final class DaggerBComponent {
+  private DaggerBComponent() {
   }
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final ArrayComponent arrayComponentParam) {
-    this.stringsProvider = new StringsProvider(arrayComponentParam);
-  }
-
-  @Override
-  public B b() {
-    return new B(stringsProvider);
   }
 
   static final class Builder {
@@ -52,20 +35,42 @@ final class DaggerBComponent implements BComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(arrayComponent, ArrayComponent.class);
-      return new DaggerBComponent(arrayComponent);
+      return new BComponentImpl(arrayComponent);
     }
   }
 
-  private static final class StringsProvider implements Provider<String[]> {
-    private final ArrayComponent arrayComponent;
+  private static final class BComponentImpl implements BComponent {
+    private final BComponentImpl bComponentImpl = this;
 
-    StringsProvider(ArrayComponent arrayComponent) {
-      this.arrayComponent = arrayComponent;
+    private Provider<String[]> stringsProvider;
+
+    private BComponentImpl(ArrayComponent arrayComponentParam) {
+
+      initialize(arrayComponentParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final ArrayComponent arrayComponentParam) {
+      this.stringsProvider = new StringsProvider(arrayComponentParam);
     }
 
     @Override
-    public String[] get() {
-      return Preconditions.checkNotNullFromComponent(arrayComponent.strings());
+    public B b() {
+      return new B(stringsProvider);
+    }
+
+    private static final class StringsProvider implements Provider<String[]> {
+      private final ArrayComponent arrayComponent;
+
+      StringsProvider(ArrayComponent arrayComponent) {
+        this.arrayComponent = arrayComponent;
+      }
+
+      @Override
+      public String[] get() {
+        return Preconditions.checkNotNullFromComponent(arrayComponent.strings());
+      }
     }
   }
 }

@@ -13,15 +13,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-public final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<Foo> fooProvider;
-
+public final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -32,43 +25,55 @@ public final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.fooProvider = new SwitchingProvider<>(testComponent, 0);
-  }
-
-  @Override
-  public SomeEntryPoint someEntryPoint() {
-    return new SomeEntryPoint(fooProvider.get(), fooProvider);
-  }
-
   public static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerTestComponent testComponent;
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
 
-    private final int id;
+    private Provider<Foo> fooProvider;
 
-    SwitchingProvider(DaggerTestComponent testComponent, int id) {
-      this.testComponent = testComponent;
-      this.id = id;
+    private TestComponentImpl() {
+
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // test.Foo 
-        return (T) new Foo(new Bar());
+    private void initialize() {
+      this.fooProvider = new SwitchingProvider<>(testComponentImpl, 0);
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    public SomeEntryPoint someEntryPoint() {
+      return new SomeEntryPoint(fooProvider.get(), fooProvider);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // test.Foo 
+          return (T) new Foo(new Bar());
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

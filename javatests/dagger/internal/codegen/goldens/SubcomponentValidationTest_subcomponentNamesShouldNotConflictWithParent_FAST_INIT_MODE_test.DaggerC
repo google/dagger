@@ -12,12 +12,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerC implements C {
-  private final DaggerC c = this;
-
+final class DaggerC {
   private DaggerC() {
-
-
   }
 
   public static Builder builder() {
@@ -28,29 +24,38 @@ final class DaggerC implements C {
     return new Builder().build();
   }
 
-  @Override
-  public Foo.C newInstanceC() {
-    return new F_CImpl(c);
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public C build() {
-      return new DaggerC();
+      return new t_CImpl();
     }
   }
 
   private static final class F_CImpl implements Foo.C {
-    private final DaggerC c;
+    private final t_CImpl t_CImpl;
 
     private final F_CImpl f_CImpl = this;
 
-    private F_CImpl(DaggerC c) {
-      this.c = c;
+    private F_CImpl(t_CImpl t_CImpl) {
+      this.t_CImpl = t_CImpl;
 
 
+    }
+  }
+
+  private static final class t_CImpl implements C {
+    private final t_CImpl t_CImpl = this;
+
+    private t_CImpl() {
+
+
+    }
+
+    @Override
+    public Foo.C newInstanceC() {
+      return new F_CImpl(t_CImpl);
     }
   }
 }

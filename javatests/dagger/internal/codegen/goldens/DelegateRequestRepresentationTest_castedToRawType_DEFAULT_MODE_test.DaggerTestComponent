@@ -13,12 +13,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-
   }
 
   public static Builder builder() {
@@ -29,27 +25,36 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @Override
-  public Provider<CharSequence> charSequence() {
-    return ((Provider) TestModule_ProvideStringFactory.create());
-  }
-
-  @Override
-  public CharSequence charSequenceInstance() {
-    return TestModule_ProvideStringFactory.provideString();
-  }
-
-  @Override
-  public Provider<String> namedString() {
-    return TestModule_ProvideStringFactory.create();
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public Provider<CharSequence> charSequence() {
+      return ((Provider) TestModule_ProvideStringFactory.create());
+    }
+
+    @Override
+    public CharSequence charSequenceInstance() {
+      return TestModule_ProvideStringFactory.provideString();
+    }
+
+    @Override
+    public Provider<String> namedString() {
+      return TestModule_ProvideStringFactory.create();
     }
   }
 }

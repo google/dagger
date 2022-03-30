@@ -656,7 +656,7 @@ public class SubcomponentValidationTest {
   }
 
   @Test
-  public void parentComponentNameShouldNotBeDisambiguatedWhenItConflictsWithASubcomponent()
+  public void subcomponentNamesShouldNotConflictWithParent()
       throws Exception {
     JavaFileObject parent =
         JavaFileObjects.forSourceLines(

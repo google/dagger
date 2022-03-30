@@ -13,23 +13,12 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerSimpleComponent implements SimpleComponent {
-  private final Object object;
-
-  private final DaggerSimpleComponent simpleComponent = this;
-
-  private DaggerSimpleComponent(Object objectParam) {
-    this.object = objectParam;
-
+final class DaggerSimpleComponent {
+  private DaggerSimpleComponent() {
   }
 
   public static SimpleComponent.Builder builder() {
     return new Builder();
-  }
-
-  @Override
-  public Object object() {
-    return object;
   }
 
   private static final class Builder implements SimpleComponent.Builder {
@@ -44,7 +33,23 @@ final class DaggerSimpleComponent implements SimpleComponent {
     @Override
     public SimpleComponent build() {
       Preconditions.checkBuilderRequirement(object, Object.class);
-      return new DaggerSimpleComponent(object);
+      return new SimpleComponentImpl(object);
+    }
+  }
+
+  private static final class SimpleComponentImpl implements SimpleComponent {
+    private final Object object;
+
+    private final SimpleComponentImpl simpleComponentImpl = this;
+
+    private SimpleComponentImpl(Object objectParam) {
+      this.object = objectParam;
+
+    }
+
+    @Override
+    public Object object() {
+      return object;
     }
   }
 }

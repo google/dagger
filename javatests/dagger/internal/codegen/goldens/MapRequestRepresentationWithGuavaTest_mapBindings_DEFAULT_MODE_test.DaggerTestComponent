@@ -15,12 +15,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-
   }
 
   public static Builder builder() {
@@ -31,57 +27,22 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @Override
-  public Map<String, String> strings() {
-    return ImmutableMap.<String, String>of();
-  }
-
-  @Override
-  public Map<String, Provider<String>> providerStrings() {
-    return ImmutableMap.<String, Provider<String>>of();
-  }
-
-  @Override
-  public Map<Integer, Integer> ints() {
-    return ImmutableMap.<Integer, Integer>of(0, MapModule.provideInt());
-  }
-
-  @Override
-  public Map<Integer, Provider<Integer>> providerInts() {
-    return ImmutableMap.<Integer, Provider<Integer>>of(0, MapModule_ProvideIntFactory.create());
-  }
-
-  @Override
-  public Map<Long, Long> longs() {
-    return ImmutableMap.<Long, Long>of(0L, MapModule.provideLong0(), 1L, MapModule.provideLong1(), 2L, MapModule.provideLong2());
-  }
-
-  @Override
-  public Map<Long, Provider<Long>> providerLongs() {
-    return ImmutableMap.<Long, Provider<Long>>of(0L, MapModule_ProvideLong0Factory.create(), 1L, MapModule_ProvideLong1Factory.create(), 2L, MapModule_ProvideLong2Factory.create());
-  }
-
-  @Override
-  public Sub sub() {
-    return new SubImpl(testComponent);
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
     }
   }
 
   private static final class SubImpl implements Sub {
-    private final DaggerTestComponent testComponent;
+    private final TestComponentImpl testComponentImpl;
 
     private final SubImpl subImpl = this;
 
-    private SubImpl(DaggerTestComponent testComponent) {
-      this.testComponent = testComponent;
+    private SubImpl(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
 
 
     }
@@ -94,6 +55,50 @@ final class DaggerTestComponent implements TestComponent {
     @Override
     public Map<Long, Provider<Long>> providerLongs() {
       return ImmutableMap.<Long, Provider<Long>>builderWithExpectedSize(6).put(0L, MapModule_ProvideLong0Factory.create()).put(1L, MapModule_ProvideLong1Factory.create()).put(2L, MapModule_ProvideLong2Factory.create()).put(3L, SubcomponentMapModule_ProvideLong3Factory.create()).put(4L, SubcomponentMapModule_ProvideLong4Factory.create()).put(5L, SubcomponentMapModule_ProvideLong5Factory.create()).build();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public Map<String, String> strings() {
+      return ImmutableMap.<String, String>of();
+    }
+
+    @Override
+    public Map<String, Provider<String>> providerStrings() {
+      return ImmutableMap.<String, Provider<String>>of();
+    }
+
+    @Override
+    public Map<Integer, Integer> ints() {
+      return ImmutableMap.<Integer, Integer>of(0, MapModule.provideInt());
+    }
+
+    @Override
+    public Map<Integer, Provider<Integer>> providerInts() {
+      return ImmutableMap.<Integer, Provider<Integer>>of(0, MapModule_ProvideIntFactory.create());
+    }
+
+    @Override
+    public Map<Long, Long> longs() {
+      return ImmutableMap.<Long, Long>of(0L, MapModule.provideLong0(), 1L, MapModule.provideLong1(), 2L, MapModule.provideLong2());
+    }
+
+    @Override
+    public Map<Long, Provider<Long>> providerLongs() {
+      return ImmutableMap.<Long, Provider<Long>>of(0L, MapModule_ProvideLong0Factory.create(), 1L, MapModule_ProvideLong1Factory.create(), 2L, MapModule_ProvideLong2Factory.create());
+    }
+
+    @Override
+    public Sub sub() {
+      return new SubImpl(testComponentImpl);
     }
   }
 }

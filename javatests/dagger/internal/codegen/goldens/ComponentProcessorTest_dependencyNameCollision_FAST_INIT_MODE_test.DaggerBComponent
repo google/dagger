@@ -16,38 +16,12 @@ import pkg1.AComponent;
     "unchecked",
     "rawtypes"
 })
-final class DaggerBComponent implements BComponent {
-  private final AComponent aComponent;
-
-  private final pkg2.AComponent aComponent2;
-
-  private final DaggerBComponent bComponent = this;
-
-  private Provider<A> aProvider;
-
-  private Provider<pkg2.A> aProvider2;
-
-  private DaggerBComponent(AComponent aComponentParam, pkg2.AComponent aComponentParam2) {
-    this.aComponent = aComponentParam;
-    this.aComponent2 = aComponentParam2;
-    initialize(aComponentParam, aComponentParam2);
-
+final class DaggerBComponent {
+  private DaggerBComponent() {
   }
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final AComponent aComponentParam,
-      final pkg2.AComponent aComponentParam2) {
-    this.aProvider = new SwitchingProvider<>(bComponent, 0);
-    this.aProvider2 = new SwitchingProvider<>(bComponent, 1);
-  }
-
-  @Override
-  public B b() {
-    return new B(aProvider, aProvider2);
   }
 
   static final class Builder {
@@ -71,31 +45,62 @@ final class DaggerBComponent implements BComponent {
     public BComponent build() {
       Preconditions.checkBuilderRequirement(aComponent, AComponent.class);
       Preconditions.checkBuilderRequirement(aComponent2, pkg2.AComponent.class);
-      return new DaggerBComponent(aComponent, aComponent2);
+      return new BComponentImpl(aComponent, aComponent2);
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerBComponent bComponent;
+  private static final class BComponentImpl implements BComponent {
+    private final AComponent aComponent;
 
-    private final int id;
+    private final pkg2.AComponent aComponent2;
 
-    SwitchingProvider(DaggerBComponent bComponent, int id) {
-      this.bComponent = bComponent;
-      this.id = id;
+    private final BComponentImpl bComponentImpl = this;
+
+    private Provider<A> aProvider;
+
+    private Provider<pkg2.A> aProvider2;
+
+    private BComponentImpl(AComponent aComponentParam, pkg2.AComponent aComponentParam2) {
+      this.aComponent = aComponentParam;
+      this.aComponent2 = aComponentParam2;
+      initialize(aComponentParam, aComponentParam2);
+
     }
 
     @SuppressWarnings("unchecked")
+    private void initialize(final AComponent aComponentParam,
+        final pkg2.AComponent aComponentParam2) {
+      this.aProvider = new SwitchingProvider<>(bComponentImpl, 0);
+      this.aProvider2 = new SwitchingProvider<>(bComponentImpl, 1);
+    }
+
     @Override
-    public T get() {
-      switch (id) {
-        case 0: // pkg1.A 
-        return (T) Preconditions.checkNotNullFromComponent(bComponent.aComponent.a());
+    public B b() {
+      return new B(aProvider, aProvider2);
+    }
 
-        case 1: // pkg2.A 
-        return (T) Preconditions.checkNotNullFromComponent(bComponent.aComponent2.a());
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final BComponentImpl bComponentImpl;
 
-        default: throw new AssertionError(id);
+      private final int id;
+
+      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
+        this.bComponentImpl = bComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // pkg1.A 
+          return (T) Preconditions.checkNotNullFromComponent(bComponentImpl.aComponent.a());
+
+          case 1: // pkg2.A 
+          return (T) Preconditions.checkNotNullFromComponent(bComponentImpl.aComponent2.a());
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

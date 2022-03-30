@@ -13,12 +13,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerSimpleComponent implements SimpleComponent {
-  private final DaggerSimpleComponent simpleComponent = this;
-
+final class DaggerSimpleComponent {
   private DaggerSimpleComponent() {
-
-
   }
 
   public static Builder builder() {
@@ -29,23 +25,32 @@ final class DaggerSimpleComponent implements SimpleComponent {
     return new Builder().build();
   }
 
-  @Override
-  public SomeInjectedType createAndInject() {
-    return injectSomeInjectedType(SomeInjectedType_Factory.newInstance());
-  }
-
-  @CanIgnoreReturnValue
-  private SomeInjectedType injectSomeInjectedType(SomeInjectedType instance) {
-    SomeInjectedType_MembersInjector.injectInjectedField(instance, new SomeInjectableType());
-    return instance;
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public SimpleComponent build() {
-      return new DaggerSimpleComponent();
+      return new SimpleComponentImpl();
+    }
+  }
+
+  private static final class SimpleComponentImpl implements SimpleComponent {
+    private final SimpleComponentImpl simpleComponentImpl = this;
+
+    private SimpleComponentImpl() {
+
+
+    }
+
+    @Override
+    public SomeInjectedType createAndInject() {
+      return injectSomeInjectedType(SomeInjectedType_Factory.newInstance());
+    }
+
+    @CanIgnoreReturnValue
+    private SomeInjectedType injectSomeInjectedType(SomeInjectedType instance) {
+      SomeInjectedType_MembersInjector.injectInjectedField(instance, new SomeInjectableType());
+      return instance;
     }
   }
 }

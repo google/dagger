@@ -17,16 +17,8 @@ import other.UsesSupertype_Factory;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  @SuppressWarnings("rawtypes")
-  private Provider subtypeProvider;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -37,43 +29,56 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.subtypeProvider = DoubleCheck.provider(new SwitchingProvider<Object>(testComponent, 0));
-  }
-
-  @Override
-  public UsesSupertype usesSupertype() {
-    return UsesSupertype_Factory.newInstance(subtypeProvider.get());
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerTestComponent testComponent;
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
 
-    private final int id;
+    @SuppressWarnings("rawtypes")
+    private Provider subtypeProvider;
 
-    SwitchingProvider(DaggerTestComponent testComponent, int id) {
-      this.testComponent = testComponent;
-      this.id = id;
+    private TestComponentImpl() {
+
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // other.Subtype 
-        return (T) Subtype_Factory.newInstance();
+    private void initialize() {
+      this.subtypeProvider = DoubleCheck.provider(new SwitchingProvider<Object>(testComponentImpl, 0));
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    public UsesSupertype usesSupertype() {
+      return UsesSupertype_Factory.newInstance(subtypeProvider.get());
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // other.Subtype 
+          return (T) Subtype_Factory.newInstance();
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

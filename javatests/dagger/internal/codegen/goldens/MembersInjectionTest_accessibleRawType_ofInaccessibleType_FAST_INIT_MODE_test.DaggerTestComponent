@@ -22,16 +22,8 @@ import other.UsesInaccessibles_MembersInjector;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  @SuppressWarnings("rawtypes")
-  private Provider inaccessiblesProvider;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -40,22 +32,6 @@ final class DaggerTestComponent implements TestComponent {
 
   public static TestComponent create() {
     return new Builder().build();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.inaccessiblesProvider = DoubleCheck.provider(new SwitchingProvider<List>(testComponent, 0));
-  }
-
-  @Override
-  public UsesInaccessibles usesInaccessibles() {
-    return injectUsesInaccessibles(UsesInaccessibles_Factory.newInstance());
-  }
-
-  @CanIgnoreReturnValue
-  private UsesInaccessibles injectUsesInaccessibles(UsesInaccessibles instance) {
-    UsesInaccessibles_MembersInjector.injectInaccessibles(instance, (List) inaccessiblesProvider.get());
-    return instance;
   }
 
   static final class Builder {
@@ -72,28 +48,57 @@ final class DaggerTestComponent implements TestComponent {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerTestComponent testComponent;
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
 
-    private final int id;
+    @SuppressWarnings("rawtypes")
+    private Provider inaccessiblesProvider;
 
-    SwitchingProvider(DaggerTestComponent testComponent, int id) {
-      this.testComponent = testComponent;
-      this.id = id;
+    private TestComponentImpl() {
+
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // java.util.List<other.Inaccessible> 
-        return (T) InaccessiblesModule_InaccessiblesFactory.inaccessibles();
+    private void initialize() {
+      this.inaccessiblesProvider = DoubleCheck.provider(new SwitchingProvider<List>(testComponentImpl, 0));
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    public UsesInaccessibles usesInaccessibles() {
+      return injectUsesInaccessibles(UsesInaccessibles_Factory.newInstance());
+    }
+
+    @CanIgnoreReturnValue
+    private UsesInaccessibles injectUsesInaccessibles(UsesInaccessibles instance) {
+      UsesInaccessibles_MembersInjector.injectInaccessibles(instance, (List) inaccessiblesProvider.get());
+      return instance;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // java.util.List<other.Inaccessible> 
+          return (T) InaccessiblesModule_InaccessiblesFactory.inaccessibles();
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

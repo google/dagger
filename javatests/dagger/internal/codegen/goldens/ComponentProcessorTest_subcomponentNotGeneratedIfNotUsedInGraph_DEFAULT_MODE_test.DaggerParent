@@ -13,12 +13,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerParent implements Parent {
-  private final DaggerParent parent = this;
-
+final class DaggerParent {
   private DaggerParent() {
-
-
   }
 
   public static Builder builder() {
@@ -27,11 +23,6 @@ final class DaggerParent implements Parent {
 
   public static Parent create() {
     return new Builder().build();
-  }
-
-  @Override
-  public String notSubcomponent() {
-    return ParentModule_NotSubcomponentFactory.notSubcomponent();
   }
 
   static final class Builder {
@@ -48,7 +39,21 @@ final class DaggerParent implements Parent {
     }
 
     public Parent build() {
-      return new DaggerParent();
+      return new ParentImpl();
+    }
+  }
+
+  private static final class ParentImpl implements Parent {
+    private final ParentImpl parentImpl = this;
+
+    private ParentImpl() {
+
+
+    }
+
+    @Override
+    public String notSubcomponent() {
+      return ParentModule_NotSubcomponentFactory.notSubcomponent();
     }
   }
 }

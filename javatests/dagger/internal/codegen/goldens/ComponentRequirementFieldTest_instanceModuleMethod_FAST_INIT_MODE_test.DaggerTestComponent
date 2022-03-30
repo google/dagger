@@ -15,18 +15,8 @@ import other.OtherPackageModule_LFactory;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final ParentModule parentModule;
-
-  private final OtherPackageModule otherPackageModule;
-
-  private final DaggerTestComponent testComponent = this;
-
-  private DaggerTestComponent(ParentModule parentModuleParam,
-      OtherPackageModule otherPackageModuleParam) {
-    this.parentModule = parentModuleParam;
-    this.otherPackageModule = otherPackageModuleParam;
-
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
   }
 
   public static Builder builder() {
@@ -35,16 +25,6 @@ final class DaggerTestComponent implements TestComponent {
 
   public static TestComponent create() {
     return new Builder().build();
-  }
-
-  @Override
-  public int i() {
-    return parentModule.i();
-  }
-
-  @Override
-  public long l() {
-    return OtherPackageModule_LFactory.l(otherPackageModule);
   }
 
   static final class Builder {
@@ -72,7 +52,32 @@ final class DaggerTestComponent implements TestComponent {
       if (otherPackageModule == null) {
         this.otherPackageModule = new OtherPackageModule();
       }
-      return new DaggerTestComponent(parentModule, otherPackageModule);
+      return new TestComponentImpl(parentModule, otherPackageModule);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final ParentModule parentModule;
+
+    private final OtherPackageModule otherPackageModule;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl(ParentModule parentModuleParam,
+        OtherPackageModule otherPackageModuleParam) {
+      this.parentModule = parentModuleParam;
+      this.otherPackageModule = otherPackageModuleParam;
+
+    }
+
+    @Override
+    public int i() {
+      return parentModule.i();
+    }
+
+    @Override
+    public long l() {
+      return OtherPackageModule_LFactory.l(otherPackageModule);
     }
   }
 }

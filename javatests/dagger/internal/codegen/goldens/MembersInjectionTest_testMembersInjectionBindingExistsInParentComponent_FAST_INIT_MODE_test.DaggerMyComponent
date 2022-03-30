@@ -15,12 +15,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-public final class DaggerMyComponent implements MyComponent {
-  private final DaggerMyComponent myComponent = this;
-
+public final class DaggerMyComponent {
   private DaggerMyComponent() {
-
-
   }
 
   public static Builder builder() {
@@ -31,42 +27,22 @@ public final class DaggerMyComponent implements MyComponent {
     return new Builder().build();
   }
 
-  private Set<String> setOfString() {
-    return ImmutableSet.<String>of(MyComponentModule_ProvideStringFactory.provideString());
-  }
-
-  @Override
-  public void inject(Bar bar) {
-    injectBar(bar);
-  }
-
-  @Override
-  public MySubcomponent subcomponent() {
-    return new MySubcomponentImpl(myComponent);
-  }
-
-  @CanIgnoreReturnValue
-  private Bar injectBar(Bar instance) {
-    Bar_MembersInjector.injectMultibindingStrings(instance, setOfString());
-    return instance;
-  }
-
   public static final class Builder {
     private Builder() {
     }
 
     public MyComponent build() {
-      return new DaggerMyComponent();
+      return new MyComponentImpl();
     }
   }
 
   private static final class MySubcomponentImpl implements MySubcomponent {
-    private final DaggerMyComponent myComponent;
+    private final MyComponentImpl myComponentImpl;
 
     private final MySubcomponentImpl mySubcomponentImpl = this;
 
-    private MySubcomponentImpl(DaggerMyComponent myComponent) {
-      this.myComponent = myComponent;
+    private MySubcomponentImpl(MyComponentImpl myComponentImpl) {
+      this.myComponentImpl = myComponentImpl;
 
 
     }
@@ -82,6 +58,35 @@ public final class DaggerMyComponent implements MyComponent {
     @Override
     public Foo foo() {
       return new Foo(bar());
+    }
+
+    @CanIgnoreReturnValue
+    private Bar injectBar(Bar instance) {
+      Bar_MembersInjector.injectMultibindingStrings(instance, setOfString());
+      return instance;
+    }
+  }
+
+  private static final class MyComponentImpl implements MyComponent {
+    private final MyComponentImpl myComponentImpl = this;
+
+    private MyComponentImpl() {
+
+
+    }
+
+    private Set<String> setOfString() {
+      return ImmutableSet.<String>of(MyComponentModule_ProvideStringFactory.provideString());
+    }
+
+    @Override
+    public void inject(Bar bar) {
+      injectBar(bar);
+    }
+
+    @Override
+    public MySubcomponent subcomponent() {
+      return new MySubcomponentImpl(myComponentImpl);
     }
 
     @CanIgnoreReturnValue

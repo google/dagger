@@ -15,21 +15,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<RegularScoped> regularScopedProvider;
-
-  private Provider<ReusableScoped> reusableScopedProvider;
-
-  private Provider<Unscoped> unscopedProvider;
-
-  private Provider<Object> unscopedProvider2;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -40,62 +27,80 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.regularScopedProvider = DoubleCheck.provider(new SwitchingProvider<RegularScoped>(testComponent, 0));
-    this.reusableScopedProvider = SingleCheck.provider(new SwitchingProvider<ReusableScoped>(testComponent, 1));
-    this.unscopedProvider = new SwitchingProvider<>(testComponent, 2);
-    this.unscopedProvider2 = SingleCheck.provider((Provider) unscopedProvider);
-  }
-
-  @Override
-  public Object regular() {
-    return regularScopedProvider.get();
-  }
-
-  @Override
-  public Object reusable() {
-    return reusableScopedProvider.get();
-  }
-
-  @Override
-  public Object unscoped() {
-    return unscopedProvider2.get();
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerTestComponent testComponent;
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
 
-    private final int id;
+    private Provider<RegularScoped> regularScopedProvider;
 
-    SwitchingProvider(DaggerTestComponent testComponent, int id) {
-      this.testComponent = testComponent;
-      this.id = id;
+    private Provider<ReusableScoped> reusableScopedProvider;
+
+    private Provider<Unscoped> unscopedProvider;
+
+    private Provider<Object> unscopedProvider2;
+
+    private TestComponentImpl() {
+
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.regularScopedProvider = DoubleCheck.provider(new SwitchingProvider<RegularScoped>(testComponentImpl, 0));
+      this.reusableScopedProvider = SingleCheck.provider(new SwitchingProvider<ReusableScoped>(testComponentImpl, 1));
+      this.unscopedProvider = new SwitchingProvider<>(testComponentImpl, 2);
+      this.unscopedProvider2 = SingleCheck.provider((Provider) unscopedProvider);
+    }
+
     @Override
-    public T get() {
-      switch (id) {
-        case 0: // test.RegularScoped 
-        return (T) new RegularScoped();
+    public Object regular() {
+      return regularScopedProvider.get();
+    }
 
-        case 1: // test.ReusableScoped 
-        return (T) new ReusableScoped();
+    @Override
+    public Object reusable() {
+      return reusableScopedProvider.get();
+    }
 
-        case 2: // test.Unscoped 
-        return (T) new Unscoped();
+    @Override
+    public Object unscoped() {
+      return unscopedProvider2.get();
+    }
 
-        default: throw new AssertionError(id);
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // test.RegularScoped 
+          return (T) new RegularScoped();
+
+          case 1: // test.ReusableScoped 
+          return (T) new ReusableScoped();
+
+          case 2: // test.Unscoped 
+          return (T) new Unscoped();
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

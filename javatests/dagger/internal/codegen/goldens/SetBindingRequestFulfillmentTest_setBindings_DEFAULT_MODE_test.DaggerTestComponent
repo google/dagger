@@ -16,12 +16,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-
   }
 
   public static Builder builder() {
@@ -30,16 +26,6 @@ final class DaggerTestComponent implements TestComponent {
 
   public static TestComponent create() {
     return new Builder().build();
-  }
-
-  @Override
-  public Set<String> strings() {
-    return SetBuilder.<String>newSetBuilder(2).addAll(EmptySetModule_EmptySetFactory.emptySet()).add(SetModule_StringFactory.string()).build();
-  }
-
-  @Override
-  public Set<Object> objects() {
-    return Collections.<Object>emptySet();
   }
 
   static final class Builder {
@@ -56,7 +42,26 @@ final class DaggerTestComponent implements TestComponent {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public Set<String> strings() {
+      return SetBuilder.<String>newSetBuilder(2).addAll(EmptySetModule_EmptySetFactory.emptySet()).add(SetModule_StringFactory.string()).build();
+    }
+
+    @Override
+    public Set<Object> objects() {
+      return Collections.<Object>emptySet();
     }
   }
 }

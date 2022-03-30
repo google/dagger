@@ -22,16 +22,8 @@ import other.UsesInaccessibles_MembersInjector;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  @SuppressWarnings("rawtypes")
-  private Provider inaccessiblesProvider;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -40,22 +32,6 @@ final class DaggerTestComponent implements TestComponent {
 
   public static TestComponent create() {
     return new Builder().build();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.inaccessiblesProvider = DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());
-  }
-
-  @Override
-  public UsesInaccessibles usesInaccessibles() {
-    return injectUsesInaccessibles(UsesInaccessibles_Factory.newInstance());
-  }
-
-  @CanIgnoreReturnValue
-  private UsesInaccessibles injectUsesInaccessibles(UsesInaccessibles instance) {
-    UsesInaccessibles_MembersInjector.injectInaccessibles(instance, (List) inaccessiblesProvider.get());
-    return instance;
   }
 
   static final class Builder {
@@ -72,7 +48,36 @@ final class DaggerTestComponent implements TestComponent {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    @SuppressWarnings("rawtypes")
+    private Provider inaccessiblesProvider;
+
+    private TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.inaccessiblesProvider = DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());
+    }
+
+    @Override
+    public UsesInaccessibles usesInaccessibles() {
+      return injectUsesInaccessibles(UsesInaccessibles_Factory.newInstance());
+    }
+
+    @CanIgnoreReturnValue
+    private UsesInaccessibles injectUsesInaccessibles(UsesInaccessibles instance) {
+      UsesInaccessibles_MembersInjector.injectInaccessibles(instance, (List) inaccessiblesProvider.get());
+      return instance;
     }
   }
 }

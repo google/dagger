@@ -16,16 +16,8 @@ import other.Supertype;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  @SuppressWarnings("rawtypes")
-  private Provider subtypeProvider;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -36,22 +28,35 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.subtypeProvider = DoubleCheck.provider(Subtype_Factory.create());
-  }
-
-  @Override
-  public Supertype supertype() {
-    return (Supertype) subtypeProvider.get();
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    @SuppressWarnings("rawtypes")
+    private Provider subtypeProvider;
+
+    private TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.subtypeProvider = DoubleCheck.provider(Subtype_Factory.create());
+    }
+
+    @Override
+    public Supertype supertype() {
+      return (Supertype) subtypeProvider.get();
     }
   }
 }

@@ -16,15 +16,8 @@ import test.sub.TestComponentBase_ProtectedType_Factory;
     "unchecked",
     "rawtypes"
 })
-public final class DaggerTestComponent extends TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<test.sub.TestComponentBase.ProtectedType> protectedTypeProvider;
-
+public final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -35,43 +28,55 @@ public final class DaggerTestComponent extends TestComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.protectedTypeProvider = DoubleCheck.provider(new SwitchingProvider<test.sub.TestComponentBase.ProtectedType>(testComponent, 0));
-  }
-
-  @Override
-  test.sub.TestComponentBase.ProtectedType provideProtectedType() {
-    return protectedTypeProvider.get();
-  }
-
   public static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerTestComponent testComponent;
+  private static final class TestComponentImpl extends TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
 
-    private final int id;
+    private Provider<test.sub.TestComponentBase.ProtectedType> protectedTypeProvider;
 
-    SwitchingProvider(DaggerTestComponent testComponent, int id) {
-      this.testComponent = testComponent;
-      this.id = id;
+    private TestComponentImpl() {
+
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // test.sub.TestComponentBase.ProtectedType 
-        return (T) TestComponentBase_ProtectedType_Factory.newInstance(TestComponentBase_Dep_Factory.newInstance());
+    private void initialize() {
+      this.protectedTypeProvider = DoubleCheck.provider(new SwitchingProvider<test.sub.TestComponentBase.ProtectedType>(testComponentImpl, 0));
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    test.sub.TestComponentBase.ProtectedType provideProtectedType() {
+      return protectedTypeProvider.get();
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // test.sub.TestComponentBase.ProtectedType 
+          return (T) TestComponentBase_ProtectedType_Factory.newInstance(TestComponentBase_Dep_Factory.newInstance());
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

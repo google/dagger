@@ -14,17 +14,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerSimpleComponent implements SimpleComponent {
-  private final DaggerSimpleComponent simpleComponent = this;
-
-  private Provider<ScopedType> scopedTypeProvider;
-
-  private Provider<DependsOnScoped> dependsOnScopedProvider;
-
+final class DaggerSimpleComponent {
   private DaggerSimpleComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -35,47 +26,61 @@ final class DaggerSimpleComponent implements SimpleComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.scopedTypeProvider = DoubleCheck.provider(new SwitchingProvider<ScopedType>(simpleComponent, 1));
-    this.dependsOnScopedProvider = new SwitchingProvider<>(simpleComponent, 0);
-  }
-
-  @Override
-  public NeedsProvider needsProvider() {
-    return new NeedsProvider(dependsOnScopedProvider);
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public SimpleComponent build() {
-      return new DaggerSimpleComponent();
+      return new SimpleComponentImpl();
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerSimpleComponent simpleComponent;
+  private static final class SimpleComponentImpl implements SimpleComponent {
+    private final SimpleComponentImpl simpleComponentImpl = this;
 
-    private final int id;
+    private Provider<ScopedType> scopedTypeProvider;
 
-    SwitchingProvider(DaggerSimpleComponent simpleComponent, int id) {
-      this.simpleComponent = simpleComponent;
-      this.id = id;
+    private Provider<DependsOnScoped> dependsOnScopedProvider;
+
+    private SimpleComponentImpl() {
+
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.scopedTypeProvider = DoubleCheck.provider(new SwitchingProvider<ScopedType>(simpleComponentImpl, 1));
+      this.dependsOnScopedProvider = new SwitchingProvider<>(simpleComponentImpl, 0);
+    }
+
     @Override
-    public T get() {
-      switch (id) {
-        case 0: // test.DependsOnScoped 
-        return (T) new DependsOnScoped(simpleComponent.scopedTypeProvider.get());
+    public NeedsProvider needsProvider() {
+      return new NeedsProvider(dependsOnScopedProvider);
+    }
 
-        case 1: // test.ScopedType 
-        return (T) new ScopedType();
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final SimpleComponentImpl simpleComponentImpl;
 
-        default: throw new AssertionError(id);
+      private final int id;
+
+      SwitchingProvider(SimpleComponentImpl simpleComponentImpl, int id) {
+        this.simpleComponentImpl = simpleComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // test.DependsOnScoped 
+          return (T) new DependsOnScoped(simpleComponentImpl.scopedTypeProvider.get());
+
+          case 1: // test.ScopedType 
+          return (T) new ScopedType();
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

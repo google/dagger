@@ -15,17 +15,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<String> provideStringProvider;
-
-  private Provider<Object> bindStringProvider;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -36,44 +27,58 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.provideStringProvider = SingleCheck.provider(new SwitchingProvider<String>(testComponent, 0));
-    this.bindStringProvider = DoubleCheck.provider((Provider) provideStringProvider);
-  }
-
-  @Override
-  public Provider<Object> object() {
-    return bindStringProvider;
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerTestComponent testComponent;
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
 
-    private final int id;
+    private Provider<String> provideStringProvider;
 
-    SwitchingProvider(DaggerTestComponent testComponent, int id) {
-      this.testComponent = testComponent;
-      this.id = id;
+    private Provider<Object> bindStringProvider;
+
+    private TestComponentImpl() {
+
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // java.lang.String 
-        return (T) TestModule_ProvideStringFactory.provideString();
+    private void initialize() {
+      this.provideStringProvider = SingleCheck.provider(new SwitchingProvider<String>(testComponentImpl, 0));
+      this.bindStringProvider = DoubleCheck.provider((Provider) provideStringProvider);
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    public Provider<Object> object() {
+      return bindStringProvider;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // java.lang.String 
+          return (T) TestModule_ProvideStringFactory.provideString();
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

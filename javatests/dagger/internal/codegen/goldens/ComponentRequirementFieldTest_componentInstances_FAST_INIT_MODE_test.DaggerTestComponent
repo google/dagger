@@ -13,43 +13,12 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final Dep dep;
-
-  private final DaggerTestComponent testComponent = this;
-
-  private DaggerTestComponent(Dep depParam) {
-    this.dep = depParam;
-
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
   }
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  @Override
-  public TestComponent self() {
-    return this;
-  }
-
-  @Override
-  public Dep dep() {
-    return dep;
-  }
-
-  @Override
-  public String methodOnDep() {
-    return Preconditions.checkNotNullFromComponent(dep.string());
-  }
-
-  @Override
-  public Object otherMethodOnDep() {
-    return Preconditions.checkNotNullFromComponent(dep.object());
-  }
-
-  @Override
-  public TestSubcomponent subcomponent() {
-    return new TestSubcomponentImpl(testComponent);
   }
 
   static final class Builder {
@@ -65,29 +34,65 @@ final class DaggerTestComponent implements TestComponent {
 
     public TestComponent build() {
       Preconditions.checkBuilderRequirement(dep, Dep.class);
-      return new DaggerTestComponent(dep);
+      return new TestComponentImpl(dep);
     }
   }
 
   private static final class TestSubcomponentImpl implements TestSubcomponent {
-    private final DaggerTestComponent testComponent;
+    private final TestComponentImpl testComponentImpl;
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
-    private TestSubcomponentImpl(DaggerTestComponent testComponent) {
-      this.testComponent = testComponent;
+    private TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
 
 
     }
 
     @Override
     public TestComponent parent() {
-      return testComponent;
+      return testComponentImpl;
     }
 
     @Override
     public Dep depFromSubcomponent() {
-      return testComponent.dep;
+      return testComponentImpl.dep;
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final Dep dep;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl(Dep depParam) {
+      this.dep = depParam;
+
+    }
+
+    @Override
+    public TestComponent self() {
+      return this;
+    }
+
+    @Override
+    public Dep dep() {
+      return dep;
+    }
+
+    @Override
+    public String methodOnDep() {
+      return Preconditions.checkNotNullFromComponent(dep.string());
+    }
+
+    @Override
+    public Object otherMethodOnDep() {
+      return Preconditions.checkNotNullFromComponent(dep.object());
+    }
+
+    @Override
+    public TestSubcomponent subcomponent() {
+      return new TestSubcomponentImpl(testComponentImpl);
     }
   }
 }

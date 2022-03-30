@@ -14,15 +14,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<FooFactory> fooFactoryProvider;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -33,52 +26,64 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  private Bar bar() {
-    return new Bar(fooFactoryProvider.get());
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.fooFactoryProvider = SingleCheck.provider(new SwitchingProvider<FooFactory>(testComponent, 0));
-  }
-
-  @Override
-  public FooFactory fooFactory() {
-    return fooFactoryProvider.get();
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerTestComponent testComponent;
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
 
-    private final int id;
+    private Provider<FooFactory> fooFactoryProvider;
 
-    SwitchingProvider(DaggerTestComponent testComponent, int id) {
-      this.testComponent = testComponent;
-      this.id = id;
+    private TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    private Bar bar() {
+      return new Bar(fooFactoryProvider.get());
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // test.FooFactory 
-        return (T) new FooFactory() {
-          @Override
-          public Foo create(String str) {
-            return new Foo(str, testComponent.bar());
-          }
-        };
+    private void initialize() {
+      this.fooFactoryProvider = SingleCheck.provider(new SwitchingProvider<FooFactory>(testComponentImpl, 0));
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    public FooFactory fooFactory() {
+      return fooFactoryProvider.get();
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // test.FooFactory 
+          return (T) new FooFactory() {
+            @Override
+            public Foo create(String str) {
+              return new Foo(str, testComponentImpl.bar());
+            }
+          };
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

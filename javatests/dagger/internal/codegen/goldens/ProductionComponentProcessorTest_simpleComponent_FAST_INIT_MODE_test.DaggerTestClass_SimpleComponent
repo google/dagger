@@ -23,32 +23,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestClass_SimpleComponent implements TestClass.SimpleComponent, CancellationListener {
-  private final TestClass.BModule bModule;
-
-  private final DaggerTestClass_SimpleComponent simpleComponent = this;
-
-  private Producer<TestClass.A> aEntryPoint;
-
-  private Provider<Executor> executorProvider;
-
-  private Provider<Executor> productionImplementationExecutorProvider;
-
-  private Provider<TestClass.SimpleComponent> simpleComponentProvider;
-
-  private Provider<ProductionComponentMonitor> monitorProvider;
-
-  private Provider<TestClass.B> bProvider;
-
-  private Producer<TestClass.B> bProducer;
-
-  private Producer<TestClass.A> aProducer;
-
-  private DaggerTestClass_SimpleComponent(TestClass.AModule aModuleParam,
-      TestClass.BModule bModuleParam) {
-    this.bModule = bModuleParam;
-    initialize(aModuleParam, bModuleParam);
-
+final class DaggerTestClass_SimpleComponent {
+  private DaggerTestClass_SimpleComponent() {
   }
 
   public static Builder builder() {
@@ -57,31 +33,6 @@ final class DaggerTestClass_SimpleComponent implements TestClass.SimpleComponent
 
   public static TestClass.SimpleComponent create() {
     return new Builder().build();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final TestClass.AModule aModuleParam,
-      final TestClass.BModule bModuleParam) {
-    this.executorProvider = new SwitchingProvider<>(simpleComponent, 0);
-    this.productionImplementationExecutorProvider = DoubleCheck.provider((Provider) executorProvider);
-    this.simpleComponentProvider = InstanceFactory.create((TestClass.SimpleComponent) simpleComponent);
-    this.monitorProvider = DoubleCheck.provider(new SwitchingProvider<ProductionComponentMonitor>(simpleComponent, 1));
-    this.bProvider = new SwitchingProvider<>(simpleComponent, 2);
-    this.bProducer = Producers.producerFromProvider(bProvider);
-    this.aProducer = TestClass_AModule_AFactory.create(aModuleParam, productionImplementationExecutorProvider, monitorProvider, bProducer);
-    this.aEntryPoint = Producers.entryPointViewOf(aProducer, this);
-  }
-
-  @Override
-  public ListenableFuture<TestClass.A> a() {
-    return aEntryPoint.get();
-  }
-
-  @Override
-  public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
-
-    Producers.cancel(aProducer, mayInterruptIfRunning);
-    Producers.cancel(bProducer, mayInterruptIfRunning);
   }
 
   static final class Builder {
@@ -109,34 +60,87 @@ final class DaggerTestClass_SimpleComponent implements TestClass.SimpleComponent
       if (bModule == null) {
         this.bModule = new TestClass.BModule();
       }
-      return new DaggerTestClass_SimpleComponent(aModule, bModule);
+      return new SimpleComponentImpl(aModule, bModule);
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerTestClass_SimpleComponent simpleComponent;
+  private static final class SimpleComponentImpl implements TestClass.SimpleComponent, CancellationListener {
+    private final TestClass.BModule bModule;
 
-    private final int id;
+    private final SimpleComponentImpl simpleComponentImpl = this;
 
-    SwitchingProvider(DaggerTestClass_SimpleComponent simpleComponent, int id) {
-      this.simpleComponent = simpleComponent;
-      this.id = id;
+    private Producer<TestClass.A> aEntryPoint;
+
+    private Provider<Executor> executorProvider;
+
+    private Provider<Executor> productionImplementationExecutorProvider;
+
+    private Provider<TestClass.SimpleComponent> simpleComponentProvider;
+
+    private Provider<ProductionComponentMonitor> monitorProvider;
+
+    private Provider<TestClass.B> bProvider;
+
+    private Producer<TestClass.B> bProducer;
+
+    private Producer<TestClass.A> aProducer;
+
+    private SimpleComponentImpl(TestClass.AModule aModuleParam, TestClass.BModule bModuleParam) {
+      this.bModule = bModuleParam;
+      initialize(aModuleParam, bModuleParam);
+
     }
 
     @SuppressWarnings("unchecked")
+    private void initialize(final TestClass.AModule aModuleParam,
+        final TestClass.BModule bModuleParam) {
+      this.executorProvider = new SwitchingProvider<>(simpleComponentImpl, 0);
+      this.productionImplementationExecutorProvider = DoubleCheck.provider((Provider) executorProvider);
+      this.simpleComponentProvider = InstanceFactory.create((TestClass.SimpleComponent) simpleComponentImpl);
+      this.monitorProvider = DoubleCheck.provider(new SwitchingProvider<ProductionComponentMonitor>(simpleComponentImpl, 1));
+      this.bProvider = new SwitchingProvider<>(simpleComponentImpl, 2);
+      this.bProducer = Producers.producerFromProvider(bProvider);
+      this.aProducer = TestClass_AModule_AFactory.create(aModuleParam, productionImplementationExecutorProvider, monitorProvider, bProducer);
+      this.aEntryPoint = Producers.entryPointViewOf(aProducer, this);
+    }
+
     @Override
-    public T get() {
-      switch (id) {
-        case 0: // @dagger.producers.Production java.util.concurrent.Executor 
-        return (T) TestClass_BModule_ExecutorFactory.executor(simpleComponent.bModule);
+    public ListenableFuture<TestClass.A> a() {
+      return aEntryPoint.get();
+    }
 
-        case 1: // dagger.producers.monitoring.ProductionComponentMonitor 
-        return (T) TestClass_SimpleComponent_MonitoringModule_MonitorFactory.monitor(simpleComponent.simpleComponentProvider, SetFactory.<ProductionComponentMonitor.Factory>empty());
+    @Override
+    public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
 
-        case 2: // test.TestClass.B 
-        return (T) TestClass_BModule_BFactory.b(simpleComponent.bModule, new TestClass.C());
+      Producers.cancel(aProducer, mayInterruptIfRunning);
+      Producers.cancel(bProducer, mayInterruptIfRunning);
+    }
 
-        default: throw new AssertionError(id);
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final SimpleComponentImpl simpleComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(SimpleComponentImpl simpleComponentImpl, int id) {
+        this.simpleComponentImpl = simpleComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // @dagger.producers.Production java.util.concurrent.Executor 
+          return (T) TestClass_BModule_ExecutorFactory.executor(simpleComponentImpl.bModule);
+
+          case 1: // dagger.producers.monitoring.ProductionComponentMonitor 
+          return (T) TestClass_SimpleComponent_MonitoringModule_MonitorFactory.monitor(simpleComponentImpl.simpleComponentProvider, SetFactory.<ProductionComponentMonitor.Factory>empty());
+
+          case 2: // test.TestClass.B 
+          return (T) TestClass_BModule_BFactory.b(simpleComponentImpl.bModule, new TestClass.C());
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

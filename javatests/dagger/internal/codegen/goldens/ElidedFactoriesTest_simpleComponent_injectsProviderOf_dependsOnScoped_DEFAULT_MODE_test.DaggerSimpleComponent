@@ -14,17 +14,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerSimpleComponent implements SimpleComponent {
-  private final DaggerSimpleComponent simpleComponent = this;
-
-  private Provider<ScopedType> scopedTypeProvider;
-
-  private Provider<DependsOnScoped> dependsOnScopedProvider;
-
+final class DaggerSimpleComponent {
   private DaggerSimpleComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -35,23 +26,37 @@ final class DaggerSimpleComponent implements SimpleComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());
-    this.dependsOnScopedProvider = DependsOnScoped_Factory.create(scopedTypeProvider);
-  }
-
-  @Override
-  public NeedsProvider needsProvider() {
-    return new NeedsProvider(dependsOnScopedProvider);
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public SimpleComponent build() {
-      return new DaggerSimpleComponent();
+      return new SimpleComponentImpl();
+    }
+  }
+
+  private static final class SimpleComponentImpl implements SimpleComponent {
+    private final SimpleComponentImpl simpleComponentImpl = this;
+
+    private Provider<ScopedType> scopedTypeProvider;
+
+    private Provider<DependsOnScoped> dependsOnScopedProvider;
+
+    private SimpleComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());
+      this.dependsOnScopedProvider = DependsOnScoped_Factory.create(scopedTypeProvider);
+    }
+
+    @Override
+    public NeedsProvider needsProvider() {
+      return new NeedsProvider(dependsOnScopedProvider);
     }
   }
 }

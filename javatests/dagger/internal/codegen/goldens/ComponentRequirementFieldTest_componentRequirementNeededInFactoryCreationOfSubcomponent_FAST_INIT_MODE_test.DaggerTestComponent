@@ -16,17 +16,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final ParentModule parentModule;
-
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<Object> reliesOnMultibindingProvider;
-
-  private DaggerTestComponent(ParentModule parentModuleParam) {
-    this.parentModule = parentModuleParam;
-    initialize(parentModuleParam);
-
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
   }
 
   public static Builder builder() {
@@ -35,25 +26,6 @@ final class DaggerTestComponent implements TestComponent {
 
   public static TestComponent create() {
     return new Builder().build();
-  }
-
-  private Set<Object> setOfObject() {
-    return ImmutableSet.<Object>of(ParentModule_ContributionFactory.contribution());
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final ParentModule parentModuleParam) {
-    this.reliesOnMultibindingProvider = new SwitchingProvider<>(testComponent, 0);
-  }
-
-  @Override
-  public Provider<Object> dependsOnMultibinding() {
-    return reliesOnMultibindingProvider;
-  }
-
-  @Override
-  public TestSubcomponent subcomponent() {
-    return new TestSubcomponentImpl(testComponent);
   }
 
   static final class Builder {
@@ -71,19 +43,19 @@ final class DaggerTestComponent implements TestComponent {
       if (parentModule == null) {
         this.parentModule = new ParentModule();
       }
-      return new DaggerTestComponent(parentModule);
+      return new TestComponentImpl(parentModule);
     }
   }
 
   private static final class TestSubcomponentImpl implements TestSubcomponent {
-    private final DaggerTestComponent testComponent;
+    private final TestComponentImpl testComponentImpl;
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
     private Provider<Object> reliesOnMultibindingProvider;
 
-    private TestSubcomponentImpl(DaggerTestComponent testComponent) {
-      this.testComponent = testComponent;
+    private TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
 
       initialize();
 
@@ -95,7 +67,7 @@ final class DaggerTestComponent implements TestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.reliesOnMultibindingProvider = new SwitchingProvider<>(testComponent, testSubcomponentImpl, 0);
+      this.reliesOnMultibindingProvider = new SwitchingProvider<>(testComponentImpl, testSubcomponentImpl, 0);
     }
 
     @Override
@@ -104,15 +76,15 @@ final class DaggerTestComponent implements TestComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final DaggerTestComponent testComponent;
+      private final TestComponentImpl testComponentImpl;
 
       private final TestSubcomponentImpl testSubcomponentImpl;
 
       private final int id;
 
-      SwitchingProvider(DaggerTestComponent testComponent,
+      SwitchingProvider(TestComponentImpl testComponentImpl,
           TestSubcomponentImpl testSubcomponentImpl, int id) {
-        this.testComponent = testComponent;
+        this.testComponentImpl = testComponentImpl;
         this.testSubcomponentImpl = testSubcomponentImpl;
         this.id = id;
       }
@@ -122,7 +94,7 @@ final class DaggerTestComponent implements TestComponent {
       public T get() {
         switch (id) {
           case 0: // java.lang.Object 
-          return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(testComponent.parentModule, testSubcomponentImpl.setOfObject());
+          return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(testComponentImpl.parentModule, testSubcomponentImpl.setOfObject());
 
           default: throw new AssertionError(id);
         }
@@ -130,24 +102,57 @@ final class DaggerTestComponent implements TestComponent {
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerTestComponent testComponent;
+  private static final class TestComponentImpl implements TestComponent {
+    private final ParentModule parentModule;
 
-    private final int id;
+    private final TestComponentImpl testComponentImpl = this;
 
-    SwitchingProvider(DaggerTestComponent testComponent, int id) {
-      this.testComponent = testComponent;
-      this.id = id;
+    private Provider<Object> reliesOnMultibindingProvider;
+
+    private TestComponentImpl(ParentModule parentModuleParam) {
+      this.parentModule = parentModuleParam;
+      initialize(parentModuleParam);
+
+    }
+
+    private Set<Object> setOfObject() {
+      return ImmutableSet.<Object>of(ParentModule_ContributionFactory.contribution());
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // java.lang.Object 
-        return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(testComponent.parentModule, testComponent.setOfObject());
+    private void initialize(final ParentModule parentModuleParam) {
+      this.reliesOnMultibindingProvider = new SwitchingProvider<>(testComponentImpl, 0);
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    public Provider<Object> dependsOnMultibinding() {
+      return reliesOnMultibindingProvider;
+    }
+
+    @Override
+    public TestSubcomponent subcomponent() {
+      return new TestSubcomponentImpl(testComponentImpl);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // java.lang.Object 
+          return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(testComponentImpl.parentModule, testComponentImpl.setOfObject());
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

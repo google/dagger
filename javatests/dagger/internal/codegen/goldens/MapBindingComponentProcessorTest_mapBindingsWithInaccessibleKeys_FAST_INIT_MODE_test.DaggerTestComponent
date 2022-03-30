@@ -28,20 +28,8 @@ import mapkeys.MapModule_EnumKeyMapKey;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<Map<Class<?>, Integer>> mapOfClassOfAndIntegerProvider;
-
-  @SuppressWarnings("rawtypes")
-  private Provider mapOfPackagePrivateEnumAndIntegerProvider;
-
-  private Provider<Map<MapKeys.ComplexKey, Integer>> mapOfComplexKeyAndIntegerProvider;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -52,53 +40,70 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  private Map mapOfPackagePrivateEnumAndInteger() {
-    return ImmutableMap.of(MapModule_EnumKeyMapKey.create(), MapModule.enumKey());
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.mapOfClassOfAndIntegerProvider = MapFactory.<Class<?>, Integer>builder(1).put(MapModule_ClassKeyMapKey.create(), MapModule_ClassKeyFactory.create()).build();
-    this.mapOfPackagePrivateEnumAndIntegerProvider = MapFactory.builder(1).put(MapModule_EnumKeyMapKey.create(), (Provider) MapModule_EnumKeyFactory.create()).build();
-    this.mapOfComplexKeyAndIntegerProvider = MapFactory.<MapKeys.ComplexKey, Integer>builder(3).put(MapModule_ComplexKeyWithInaccessibleValueMapKey.create(), MapModule_ComplexKeyWithInaccessibleValueFactory.create()).put(MapModule_ComplexKeyWithInaccessibleArrayValueMapKey.create(), MapModule_ComplexKeyWithInaccessibleArrayValueFactory.create()).put(MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey.create(), MapModule_ComplexKeyWithInaccessibleAnnotationValueFactory.create()).build();
-  }
-
-  @Override
-  public Map<Class<?>, Integer> classKey() {
-    return ImmutableMap.<Class<?>, Integer>of(MapModule_ClassKeyMapKey.create(), MapModule.classKey());
-  }
-
-  @Override
-  public Provider<Map<Class<?>, Integer>> classKeyProvider() {
-    return mapOfClassOfAndIntegerProvider;
-  }
-
-  @Override
-  public Object inaccessibleEnum() {
-    return mapOfPackagePrivateEnumAndInteger();
-  }
-
-  @Override
-  public Provider<Object> inaccessibleEnumProvider() {
-    return mapOfPackagePrivateEnumAndIntegerProvider;
-  }
-
-  @Override
-  public Map<MapKeys.ComplexKey, Integer> complexKey() {
-    return ImmutableMap.<MapKeys.ComplexKey, Integer>of(MapModule_ComplexKeyWithInaccessibleValueMapKey.create(), MapModule.complexKeyWithInaccessibleValue(), MapModule_ComplexKeyWithInaccessibleArrayValueMapKey.create(), MapModule.complexKeyWithInaccessibleArrayValue(), MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey.create(), MapModule.complexKeyWithInaccessibleAnnotationValue());
-  }
-
-  @Override
-  public Provider<Map<MapKeys.ComplexKey, Integer>> complexKeyProvider() {
-    return mapOfComplexKeyAndIntegerProvider;
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private Provider<Map<Class<?>, Integer>> mapOfClassOfAndIntegerProvider;
+
+    @SuppressWarnings("rawtypes")
+    private Provider mapOfPackagePrivateEnumAndIntegerProvider;
+
+    private Provider<Map<MapKeys.ComplexKey, Integer>> mapOfComplexKeyAndIntegerProvider;
+
+    private TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    private Map mapOfPackagePrivateEnumAndInteger() {
+      return ImmutableMap.of(MapModule_EnumKeyMapKey.create(), MapModule.enumKey());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.mapOfClassOfAndIntegerProvider = MapFactory.<Class<?>, Integer>builder(1).put(MapModule_ClassKeyMapKey.create(), MapModule_ClassKeyFactory.create()).build();
+      this.mapOfPackagePrivateEnumAndIntegerProvider = MapFactory.builder(1).put(MapModule_EnumKeyMapKey.create(), (Provider) MapModule_EnumKeyFactory.create()).build();
+      this.mapOfComplexKeyAndIntegerProvider = MapFactory.<MapKeys.ComplexKey, Integer>builder(3).put(MapModule_ComplexKeyWithInaccessibleValueMapKey.create(), MapModule_ComplexKeyWithInaccessibleValueFactory.create()).put(MapModule_ComplexKeyWithInaccessibleArrayValueMapKey.create(), MapModule_ComplexKeyWithInaccessibleArrayValueFactory.create()).put(MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey.create(), MapModule_ComplexKeyWithInaccessibleAnnotationValueFactory.create()).build();
+    }
+
+    @Override
+    public Map<Class<?>, Integer> classKey() {
+      return ImmutableMap.<Class<?>, Integer>of(MapModule_ClassKeyMapKey.create(), MapModule.classKey());
+    }
+
+    @Override
+    public Provider<Map<Class<?>, Integer>> classKeyProvider() {
+      return mapOfClassOfAndIntegerProvider;
+    }
+
+    @Override
+    public Object inaccessibleEnum() {
+      return mapOfPackagePrivateEnumAndInteger();
+    }
+
+    @Override
+    public Provider<Object> inaccessibleEnumProvider() {
+      return mapOfPackagePrivateEnumAndIntegerProvider;
+    }
+
+    @Override
+    public Map<MapKeys.ComplexKey, Integer> complexKey() {
+      return ImmutableMap.<MapKeys.ComplexKey, Integer>of(MapModule_ComplexKeyWithInaccessibleValueMapKey.create(), MapModule.complexKeyWithInaccessibleValue(), MapModule_ComplexKeyWithInaccessibleArrayValueMapKey.create(), MapModule.complexKeyWithInaccessibleArrayValue(), MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey.create(), MapModule.complexKeyWithInaccessibleAnnotationValue());
+    }
+
+    @Override
+    public Provider<Map<MapKeys.ComplexKey, Integer>> complexKeyProvider() {
+      return mapOfComplexKeyAndIntegerProvider;
     }
   }
 }

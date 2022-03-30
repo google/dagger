@@ -16,20 +16,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final MapModuleOne mapModuleOne;
-
-  private final MapModuleTwo mapModuleTwo;
-
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<Map<PathEnum, Handler>> mapOfPathEnumAndHandlerProvider;
-
-  private DaggerTestComponent(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
-    this.mapModuleOne = mapModuleOneParam;
-    this.mapModuleTwo = mapModuleTwoParam;
-    initialize(mapModuleOneParam, mapModuleTwoParam);
-
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
   }
 
   public static Builder builder() {
@@ -38,17 +26,6 @@ final class DaggerTestComponent implements TestComponent {
 
   public static TestComponent create() {
     return new Builder().build();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final MapModuleOne mapModuleOneParam,
-      final MapModuleTwo mapModuleTwoParam) {
-    this.mapOfPathEnumAndHandlerProvider = new SwitchingProvider<>(testComponent, 0);
-  }
-
-  @Override
-  public Provider<Map<PathEnum, Handler>> dispatcher() {
-    return mapOfPathEnumAndHandlerProvider;
   }
 
   static final class Builder {
@@ -76,28 +53,56 @@ final class DaggerTestComponent implements TestComponent {
       if (mapModuleTwo == null) {
         this.mapModuleTwo = new MapModuleTwo();
       }
-      return new DaggerTestComponent(mapModuleOne, mapModuleTwo);
+      return new TestComponentImpl(mapModuleOne, mapModuleTwo);
     }
   }
 
-  private static final class SwitchingProvider<T> implements Provider<T> {
-    private final DaggerTestComponent testComponent;
+  private static final class TestComponentImpl implements TestComponent {
+    private final MapModuleOne mapModuleOne;
 
-    private final int id;
+    private final MapModuleTwo mapModuleTwo;
 
-    SwitchingProvider(DaggerTestComponent testComponent, int id) {
-      this.testComponent = testComponent;
-      this.id = id;
+    private final TestComponentImpl testComponentImpl = this;
+
+    private Provider<Map<PathEnum, Handler>> mapOfPathEnumAndHandlerProvider;
+
+    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+      this.mapModuleOne = mapModuleOneParam;
+      this.mapModuleTwo = mapModuleTwoParam;
+      initialize(mapModuleOneParam, mapModuleTwoParam);
+
     }
 
     @SuppressWarnings("unchecked")
-    @Override
-    public T get() {
-      switch (id) {
-        case 0: // java.util.Map<test.PathEnum,test.Handler> 
-        return (T) ImmutableMap.<PathEnum, Handler>of(PathEnum.ADMIN, MapModuleOne_ProvideAdminHandlerFactory.provideAdminHandler(testComponent.mapModuleOne), PathEnum.LOGIN, MapModuleTwo_ProvideLoginHandlerFactory.provideLoginHandler(testComponent.mapModuleTwo));
+    private void initialize(final MapModuleOne mapModuleOneParam,
+        final MapModuleTwo mapModuleTwoParam) {
+      this.mapOfPathEnumAndHandlerProvider = new SwitchingProvider<>(testComponentImpl, 0);
+    }
 
-        default: throw new AssertionError(id);
+    @Override
+    public Provider<Map<PathEnum, Handler>> dispatcher() {
+      return mapOfPathEnumAndHandlerProvider;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // java.util.Map<test.PathEnum,test.Handler> 
+          return (T) ImmutableMap.<PathEnum, Handler>of(PathEnum.ADMIN, MapModuleOne_ProvideAdminHandlerFactory.provideAdminHandler(testComponentImpl.mapModuleOne), PathEnum.LOGIN, MapModuleTwo_ProvideLoginHandlerFactory.provideLoginHandler(testComponentImpl.mapModuleTwo));
+
+          default: throw new AssertionError(id);
+        }
       }
     }
   }

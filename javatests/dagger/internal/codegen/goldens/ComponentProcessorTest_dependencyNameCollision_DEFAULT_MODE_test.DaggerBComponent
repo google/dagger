@@ -16,33 +16,12 @@ import pkg1.AComponent;
     "unchecked",
     "rawtypes"
 })
-final class DaggerBComponent implements BComponent {
-  private final DaggerBComponent bComponent = this;
-
-  private Provider<A> aProvider;
-
-  private Provider<pkg2.A> aProvider2;
-
-  private DaggerBComponent(AComponent aComponentParam, pkg2.AComponent aComponentParam2) {
-
-    initialize(aComponentParam, aComponentParam2);
-
+final class DaggerBComponent {
+  private DaggerBComponent() {
   }
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final AComponent aComponentParam,
-      final pkg2.AComponent aComponentParam2) {
-    this.aProvider = new AProvider(aComponentParam);
-    this.aProvider2 = new AProvider2(aComponentParam2);
-  }
-
-  @Override
-  public B b() {
-    return new B(aProvider, aProvider2);
   }
 
   static final class Builder {
@@ -66,33 +45,59 @@ final class DaggerBComponent implements BComponent {
     public BComponent build() {
       Preconditions.checkBuilderRequirement(aComponent, AComponent.class);
       Preconditions.checkBuilderRequirement(aComponent2, pkg2.AComponent.class);
-      return new DaggerBComponent(aComponent, aComponent2);
+      return new BComponentImpl(aComponent, aComponent2);
     }
   }
 
-  private static final class AProvider implements Provider<A> {
-    private final AComponent aComponent;
+  private static final class BComponentImpl implements BComponent {
+    private final BComponentImpl bComponentImpl = this;
 
-    AProvider(AComponent aComponent) {
-      this.aComponent = aComponent;
+    private Provider<A> aProvider;
+
+    private Provider<pkg2.A> aProvider2;
+
+    private BComponentImpl(AComponent aComponentParam, pkg2.AComponent aComponentParam2) {
+
+      initialize(aComponentParam, aComponentParam2);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final AComponent aComponentParam,
+        final pkg2.AComponent aComponentParam2) {
+      this.aProvider = new AProvider(aComponentParam);
+      this.aProvider2 = new AProvider2(aComponentParam2);
     }
 
     @Override
-    public A get() {
-      return Preconditions.checkNotNullFromComponent(aComponent.a());
-    }
-  }
-
-  private static final class AProvider2 implements Provider<pkg2.A> {
-    private final pkg2.AComponent aComponent;
-
-    AProvider2(pkg2.AComponent aComponent) {
-      this.aComponent = aComponent;
+    public B b() {
+      return new B(aProvider, aProvider2);
     }
 
-    @Override
-    public pkg2.A get() {
-      return Preconditions.checkNotNullFromComponent(aComponent.a());
+    private static final class AProvider implements Provider<A> {
+      private final AComponent aComponent;
+
+      AProvider(AComponent aComponent) {
+        this.aComponent = aComponent;
+      }
+
+      @Override
+      public A get() {
+        return Preconditions.checkNotNullFromComponent(aComponent.a());
+      }
+    }
+
+    private static final class AProvider2 implements Provider<pkg2.A> {
+      private final pkg2.AComponent aComponent;
+
+      AProvider2(pkg2.AComponent aComponent) {
+        this.aComponent = aComponent;
+      }
+
+      @Override
+      public pkg2.A get() {
+        return Preconditions.checkNotNullFromComponent(aComponent.a());
+      }
     }
   }
 }

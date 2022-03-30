@@ -16,15 +16,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<MembersInjector<Foo>> fooMembersInjectorProvider;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -35,22 +28,34 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.fooMembersInjectorProvider = InstanceFactory.create(MembersInjectors.<Foo>noOp());
-  }
-
-  @Override
-  public Provider<MembersInjector<Foo>> providerOfMembersInjector() {
-    return fooMembersInjectorProvider;
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private Provider<MembersInjector<Foo>> fooMembersInjectorProvider;
+
+    private TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.fooMembersInjectorProvider = InstanceFactory.create(MembersInjectors.<Foo>noOp());
+    }
+
+    @Override
+    public Provider<MembersInjector<Foo>> providerOfMembersInjector() {
+      return fooMembersInjectorProvider;
     }
   }
 }

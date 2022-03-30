@@ -14,31 +14,12 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final Integer i;
-
-  private final List<String> list;
-
-  private final DaggerTestComponent testComponent = this;
-
-  private DaggerTestComponent(Integer iParam, List<String> listParam) {
-    this.i = iParam;
-    this.list = listParam;
-
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
   }
 
   public static TestComponent.Builder builder() {
     return new Builder();
-  }
-
-  @Override
-  public int i() {
-    return i;
-  }
-
-  @Override
-  public List<String> list() {
-    return list;
   }
 
   private static final class Builder implements TestComponent.Builder {
@@ -62,7 +43,31 @@ final class DaggerTestComponent implements TestComponent {
     public TestComponent build() {
       Preconditions.checkBuilderRequirement(i, Integer.class);
       Preconditions.checkBuilderRequirement(list, List.class);
-      return new DaggerTestComponent(i, list);
+      return new TestComponentImpl(i, list);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final Integer i;
+
+    private final List<String> list;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl(Integer iParam, List<String> listParam) {
+      this.i = iParam;
+      this.list = listParam;
+
+    }
+
+    @Override
+    public int i() {
+      return i;
+    }
+
+    @Override
+    public List<String> list() {
+      return list;
     }
   }
 }

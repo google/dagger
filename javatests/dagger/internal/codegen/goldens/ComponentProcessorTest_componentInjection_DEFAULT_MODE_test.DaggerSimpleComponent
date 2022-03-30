@@ -14,15 +14,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerSimpleComponent implements SimpleComponent {
-  private final DaggerSimpleComponent simpleComponent = this;
-
-  private Provider<SimpleComponent> simpleComponentProvider;
-
+final class DaggerSimpleComponent {
   private DaggerSimpleComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -33,27 +26,39 @@ final class DaggerSimpleComponent implements SimpleComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.simpleComponentProvider = InstanceFactory.create((SimpleComponent) simpleComponent);
-  }
-
-  @Override
-  public SomeInjectableType someInjectableType() {
-    return new SomeInjectableType(this);
-  }
-
-  @Override
-  public Provider<SimpleComponent> selfProvider() {
-    return simpleComponentProvider;
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public SimpleComponent build() {
-      return new DaggerSimpleComponent();
+      return new SimpleComponentImpl();
+    }
+  }
+
+  private static final class SimpleComponentImpl implements SimpleComponent {
+    private final SimpleComponentImpl simpleComponentImpl = this;
+
+    private Provider<SimpleComponent> simpleComponentProvider;
+
+    private SimpleComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.simpleComponentProvider = InstanceFactory.create((SimpleComponent) simpleComponentImpl);
+    }
+
+    @Override
+    public SomeInjectableType someInjectableType() {
+      return new SomeInjectableType(this);
+    }
+
+    @Override
+    public Provider<SimpleComponent> selfProvider() {
+      return simpleComponentProvider;
     }
   }
 }

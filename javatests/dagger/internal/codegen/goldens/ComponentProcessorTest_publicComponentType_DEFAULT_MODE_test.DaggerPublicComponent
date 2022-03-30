@@ -12,12 +12,8 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-public final class DaggerPublicComponent implements PublicComponent {
-  private final DaggerPublicComponent publicComponent = this;
-
+public final class DaggerPublicComponent {
   private DaggerPublicComponent() {
-
-
   }
 
   public static Builder builder() {
@@ -33,7 +29,16 @@ public final class DaggerPublicComponent implements PublicComponent {
     }
 
     public PublicComponent build() {
-      return new DaggerPublicComponent();
+      return new PublicComponentImpl();
+    }
+  }
+
+  private static final class PublicComponentImpl implements PublicComponent {
+    private final PublicComponentImpl publicComponentImpl = this;
+
+    private PublicComponentImpl() {
+
+
     }
   }
 }

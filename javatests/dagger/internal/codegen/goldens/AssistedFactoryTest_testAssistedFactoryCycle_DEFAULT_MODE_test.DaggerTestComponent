@@ -14,19 +14,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<FooFactory> fooFactoryProvider;
-
-  private Provider<Bar> barProvider;
-
-  private Foo_Factory fooProvider;
-
+final class DaggerTestComponent {
   private DaggerTestComponent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -37,25 +26,41 @@ final class DaggerTestComponent implements TestComponent {
     return new Builder().build();
   }
 
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.fooFactoryProvider = new DelegateFactory<>();
-    this.barProvider = Bar_Factory.create(fooFactoryProvider);
-    this.fooProvider = Foo_Factory.create(barProvider);
-    DelegateFactory.setDelegate(fooFactoryProvider, FooFactory_Impl.create(fooProvider));
-  }
-
-  @Override
-  public FooFactory fooFactory() {
-    return fooFactoryProvider.get();
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public TestComponent build() {
-      return new DaggerTestComponent();
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private Provider<FooFactory> fooFactoryProvider;
+
+    private Provider<Bar> barProvider;
+
+    private Foo_Factory fooProvider;
+
+    private TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.fooFactoryProvider = new DelegateFactory<>();
+      this.barProvider = Bar_Factory.create(fooFactoryProvider);
+      this.fooProvider = Foo_Factory.create(barProvider);
+      DelegateFactory.setDelegate(fooFactoryProvider, FooFactory_Impl.create(fooProvider));
+    }
+
+    @Override
+    public FooFactory fooFactory() {
+      return fooFactoryProvider.get();
     }
   }
 }

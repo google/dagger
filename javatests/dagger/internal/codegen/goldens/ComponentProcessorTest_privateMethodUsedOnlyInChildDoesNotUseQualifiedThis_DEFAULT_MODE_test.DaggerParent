@@ -14,15 +14,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerParent implements Parent {
-  private final DaggerParent parent = this;
-
-  private Provider<Number> numberProvider;
-
+final class DaggerParent {
   private DaggerParent() {
-
-    initialize();
-
   }
 
   public static Builder builder() {
@@ -33,43 +26,55 @@ final class DaggerParent implements Parent {
     return new Builder().build();
   }
 
-  private String string() {
-    return TestModule_StringFactory.string(numberProvider.get());
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize() {
-    this.numberProvider = DoubleCheck.provider(TestModule_NumberFactory.create());
-  }
-
-  @Override
-  public Child child() {
-    return new ChildImpl(parent);
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public Parent build() {
-      return new DaggerParent();
+      return new ParentImpl();
     }
   }
 
   private static final class ChildImpl implements Child {
-    private final DaggerParent parent;
+    private final ParentImpl parentImpl;
 
     private final ChildImpl childImpl = this;
 
-    private ChildImpl(DaggerParent parent) {
-      this.parent = parent;
+    private ChildImpl(ParentImpl parentImpl) {
+      this.parentImpl = parentImpl;
 
 
     }
 
     @Override
     public String string() {
-      return parent.string();
+      return parentImpl.string();
+    }
+  }
+
+  private static final class ParentImpl implements Parent {
+    private final ParentImpl parentImpl = this;
+
+    private Provider<Number> numberProvider;
+
+    private ParentImpl() {
+
+      initialize();
+
+    }
+
+    private String string() {
+      return TestModule_StringFactory.string(numberProvider.get());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.numberProvider = DoubleCheck.provider(TestModule_NumberFactory.create());
+    }
+
+    @Override
+    public Child child() {
+      return new ChildImpl(parentImpl);
     }
   }
 }

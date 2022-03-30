@@ -16,19 +16,8 @@ import javax.inject.Provider;
     "unchecked",
     "rawtypes"
 })
-final class DaggerTestComponent implements TestComponent {
-  private final DaggerTestComponent testComponent = this;
-
-  private Provider<Handler> provideAdminHandlerProvider;
-
-  private Provider<Handler> provideLoginHandlerProvider;
-
-  private Provider<Map<PathEnum, Provider<Handler>>> mapOfPathEnumAndProviderOfHandlerProvider;
-
-  private DaggerTestComponent(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
-
-    initialize(mapModuleOneParam, mapModuleTwoParam);
-
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
   }
 
   public static Builder builder() {
@@ -37,19 +26,6 @@ final class DaggerTestComponent implements TestComponent {
 
   public static TestComponent create() {
     return new Builder().build();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void initialize(final MapModuleOne mapModuleOneParam,
-      final MapModuleTwo mapModuleTwoParam) {
-    this.provideAdminHandlerProvider = MapModuleOne_ProvideAdminHandlerFactory.create(mapModuleOneParam);
-    this.provideLoginHandlerProvider = MapModuleTwo_ProvideLoginHandlerFactory.create(mapModuleTwoParam);
-    this.mapOfPathEnumAndProviderOfHandlerProvider = MapProviderFactory.<PathEnum, Handler>builder(2).put(PathEnum.ADMIN, provideAdminHandlerProvider).put(PathEnum.LOGIN, provideLoginHandlerProvider).build();
-  }
-
-  @Override
-  public Provider<Map<PathEnum, Provider<Handler>>> dispatcher() {
-    return mapOfPathEnumAndProviderOfHandlerProvider;
   }
 
   static final class Builder {
@@ -77,7 +53,36 @@ final class DaggerTestComponent implements TestComponent {
       if (mapModuleTwo == null) {
         this.mapModuleTwo = new MapModuleTwo();
       }
-      return new DaggerTestComponent(mapModuleOne, mapModuleTwo);
+      return new TestComponentImpl(mapModuleOne, mapModuleTwo);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private Provider<Handler> provideAdminHandlerProvider;
+
+    private Provider<Handler> provideLoginHandlerProvider;
+
+    private Provider<Map<PathEnum, Provider<Handler>>> mapOfPathEnumAndProviderOfHandlerProvider;
+
+    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+
+      initialize(mapModuleOneParam, mapModuleTwoParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final MapModuleOne mapModuleOneParam,
+        final MapModuleTwo mapModuleTwoParam) {
+      this.provideAdminHandlerProvider = MapModuleOne_ProvideAdminHandlerFactory.create(mapModuleOneParam);
+      this.provideLoginHandlerProvider = MapModuleTwo_ProvideLoginHandlerFactory.create(mapModuleTwoParam);
+      this.mapOfPathEnumAndProviderOfHandlerProvider = MapProviderFactory.<PathEnum, Handler>builder(2).put(PathEnum.ADMIN, provideAdminHandlerProvider).put(PathEnum.LOGIN, provideLoginHandlerProvider).build();
+    }
+
+    @Override
+    public Provider<Map<PathEnum, Provider<Handler>>> dispatcher() {
+      return mapOfPathEnumAndProviderOfHandlerProvider;
     }
   }
 }

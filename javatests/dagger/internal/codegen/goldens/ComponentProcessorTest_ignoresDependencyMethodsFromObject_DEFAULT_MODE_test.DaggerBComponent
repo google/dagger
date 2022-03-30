@@ -13,23 +13,12 @@ import javax.annotation.processing.Generated;
     "unchecked",
     "rawtypes"
 })
-final class DaggerBComponent implements BComponent {
-  private final AComponent aComponent;
-
-  private final DaggerBComponent bComponent = this;
-
-  private DaggerBComponent(AComponent aComponentParam) {
-    this.aComponent = aComponentParam;
-
+final class DaggerBComponent {
+  private DaggerBComponent() {
   }
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  @Override
-  public InjectedType injectedType() {
-    return new InjectedType(Preconditions.checkNotNullFromComponent(aComponent.someStringInjection()), aComponent.someIntInjection(), aComponent, Preconditions.checkNotNullFromComponent(aComponent.someClassInjection()));
   }
 
   static final class Builder {
@@ -45,7 +34,23 @@ final class DaggerBComponent implements BComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(aComponent, AComponent.class);
-      return new DaggerBComponent(aComponent);
+      return new BComponentImpl(aComponent);
+    }
+  }
+
+  private static final class BComponentImpl implements BComponent {
+    private final AComponent aComponent;
+
+    private final BComponentImpl bComponentImpl = this;
+
+    private BComponentImpl(AComponent aComponentParam) {
+      this.aComponent = aComponentParam;
+
+    }
+
+    @Override
+    public InjectedType injectedType() {
+      return new InjectedType(Preconditions.checkNotNullFromComponent(aComponent.someStringInjection()), aComponent.someIntInjection(), aComponent, Preconditions.checkNotNullFromComponent(aComponent.someClassInjection()));
     }
   }
 }

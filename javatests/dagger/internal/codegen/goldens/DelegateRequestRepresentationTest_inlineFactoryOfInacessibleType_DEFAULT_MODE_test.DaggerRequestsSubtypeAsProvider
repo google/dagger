@@ -15,12 +15,8 @@ import other.Supertype;
     "unchecked",
     "rawtypes"
 })
-final class DaggerRequestsSubtypeAsProvider implements RequestsSubtypeAsProvider {
-  private final DaggerRequestsSubtypeAsProvider requestsSubtypeAsProvider = this;
-
+final class DaggerRequestsSubtypeAsProvider {
   private DaggerRequestsSubtypeAsProvider() {
-
-
   }
 
   public static Builder builder() {
@@ -31,17 +27,26 @@ final class DaggerRequestsSubtypeAsProvider implements RequestsSubtypeAsProvider
     return new Builder().build();
   }
 
-  @Override
-  public Provider<Supertype> supertypeProvider() {
-    return ((Provider) Subtype_Factory.create());
-  }
-
   static final class Builder {
     private Builder() {
     }
 
     public RequestsSubtypeAsProvider build() {
-      return new DaggerRequestsSubtypeAsProvider();
+      return new RequestsSubtypeAsProviderImpl();
+    }
+  }
+
+  private static final class RequestsSubtypeAsProviderImpl implements RequestsSubtypeAsProvider {
+    private final RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl = this;
+
+    private RequestsSubtypeAsProviderImpl() {
+
+
+    }
+
+    @Override
+    public Provider<Supertype> supertypeProvider() {
+      return ((Provider) Subtype_Factory.create());
     }
   }
 }

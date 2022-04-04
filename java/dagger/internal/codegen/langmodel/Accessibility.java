@@ -21,12 +21,10 @@ import static com.google.auto.common.MoreElements.getPackage;
 import static com.google.auto.common.MoreTypes.asElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XType;
-import androidx.room.compiler.processing.XTypeElement;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -81,30 +79,6 @@ public final class Accessibility {
   /** Returns true if the given type can be referenced from code in the given package. */
   public static boolean isTypeAccessibleFrom(TypeMirror type, String packageName) {
     return type.accept(new TypeAccessibilityVisitor(Optional.of(packageName)), null);
-  }
-
-  /**
-   * Returns true if the given type is protected and can be referenced from the given requesting
-   * element.
-   */
-  public static boolean isProtectedMemberOf(DeclaredType type, XTypeElement requestingElement) {
-    return isProtectedAccessibleFromElement(type.asElement(), requestingElement);
-  }
-
-  private static Boolean isProtectedAccessibleFromElement(
-      Element element, XTypeElement requestingElement) {
-    if (!element.getModifiers().contains(PROTECTED)) {
-      return false;
-    }
-    if (element.getEnclosingElement().equals(toJavac(requestingElement))) {
-      return true;
-    }
-    // Check if the element is protected member of the requesting element's super class.
-    if (requestingElement.getSuperType() != null) {
-      return isProtectedAccessibleFromElement(
-          element, requestingElement.getSuperType().getTypeElement());
-    }
-    return false;
   }
 
   private static final class TypeAccessibilityVisitor extends SimpleTypeVisitor8<Boolean, Void> {

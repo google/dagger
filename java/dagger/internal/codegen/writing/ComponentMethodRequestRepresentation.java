@@ -26,6 +26,7 @@ import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.lang.model.type.TypeMirror;
 
@@ -55,7 +56,7 @@ final class ComponentMethodRequestRepresentation extends MethodRequestRepresenta
   }
 
   @Override
-  protected CodeBlock getComponentMethodImplementation(
+  protected Expression getDependencyExpressionForComponentMethod(
       ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
     // There could be several methods on the component for the same request key and kind.
     // Only one should use the BindingMethodImplementation; the others can delegate that one.
@@ -65,12 +66,9 @@ final class ComponentMethodRequestRepresentation extends MethodRequestRepresenta
     // the child's can delegate to the parent. So use methodImplementation.body() only if
     // componentName equals the component for this instance.
     return componentMethod.equals(this.componentMethod) && component.equals(componentImplementation)
-        ? CodeBlock.of(
-            "return $L;",
-            wrappedRequestRepresentation
-                .getDependencyExpressionForComponentMethod(componentMethod, componentImplementation)
-                .codeBlock())
-        : super.getComponentMethodImplementation(componentMethod, component);
+        ? wrappedRequestRepresentation.getDependencyExpressionForComponentMethod(
+            componentMethod, componentImplementation)
+        : super.getDependencyExpressionForComponentMethod(componentMethod, component);
   }
 
   @Override

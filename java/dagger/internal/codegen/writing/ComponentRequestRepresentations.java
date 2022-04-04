@@ -16,15 +16,21 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.XTypeKt.isVoid;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -194,9 +200,54 @@ public final class ComponentRequestRepresentations {
     return MethodSpecs.overriding(
             componentMethod.methodElement(), graph.componentTypeElement().getType())
         .addCode(
-            getRequestRepresentation(request)
-                .getComponentMethodImplementation(componentMethod, componentImplementation))
+            request.isRequestKind(RequestKind.MEMBERS_INJECTION)
+                ? getMembersInjectionComponentMethodImplementation(request, componentMethod)
+                : getContributionComponentMethodImplementation(request, componentMethod))
         .build();
+  }
+
+  private CodeBlock getMembersInjectionComponentMethodImplementation(
+      BindingRequest request, ComponentMethodDescriptor componentMethod) {
+    checkArgument(request.isRequestKind(RequestKind.MEMBERS_INJECTION));
+    XMethodElement methodElement = componentMethod.methodElement();
+    RequestRepresentation requestRepresentation = getRequestRepresentation(request);
+    MembersInjectionBinding binding =
+        ((MembersInjectionRequestRepresentation) requestRepresentation).binding();
+    if (binding.injectionSites().isEmpty()) {
+      // If there are no injection sites either do nothing (if the return type is void) or return
+      // the input instance as-is.
+      return isVoid(methodElement.getReturnType())
+          ? CodeBlock.of("")
+          : CodeBlock.of(
+              "return $L;", getSimpleName(getOnlyElement(methodElement.getParameters())));
+    }
+    Expression expression = getComponentMethodExpression(requestRepresentation, componentMethod);
+    return isVoid(methodElement.getReturnType())
+        ? CodeBlock.of("$L;", expression.codeBlock())
+        : CodeBlock.of("return $L;", expression.codeBlock());
+  }
+
+  private CodeBlock getContributionComponentMethodImplementation(
+      BindingRequest request, ComponentMethodDescriptor componentMethod) {
+    checkArgument(!request.isRequestKind(RequestKind.MEMBERS_INJECTION));
+    Expression expression =
+        getComponentMethodExpression(getRequestRepresentation(request), componentMethod);
+    return CodeBlock.of("return $L;", expression.codeBlock());
+  }
+
+  private Expression getComponentMethodExpression(
+      RequestRepresentation requestRepresentation, ComponentMethodDescriptor componentMethod) {
+    Expression expression =
+        requestRepresentation.getDependencyExpressionForComponentMethod(
+            componentMethod, componentImplementation);
+
+    // Cast if the expression type does not match the component method's return type. This is useful
+    // for types that have protected accessibility to the component but are not accessible to other
+    // classes, e.g. shards, that may need to handle the implementation of the binding.
+    XType returnType = componentMethod.methodElement().getReturnType();
+    return !isVoid(returnType) && !types.isAssignable(expression.type(), toJavac(returnType))
+        ? expression.castTo(returnType)
+        : expression;
   }
 
   /** Returns the {@link RequestRepresentation} for the given {@link BindingRequest}. */

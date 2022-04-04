@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
@@ -71,11 +70,11 @@ final class MembersInjectionMethods {
       DaggerElements elements,
       DaggerTypes types,
       KotlinMetadataUtil metadataUtil) {
-    this.componentImplementation = checkNotNull(componentImplementation);
-    this.bindingExpressions = checkNotNull(bindingExpressions);
-    this.graph = checkNotNull(graph);
-    this.elements = checkNotNull(elements);
-    this.types = checkNotNull(types);
+    this.componentImplementation = componentImplementation;
+    this.bindingExpressions = bindingExpressions;
+    this.graph = graph;
+    this.elements = elements;
+    this.types = types;
     this.metadataUtil = metadataUtil;
   }
 

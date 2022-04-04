@@ -32,7 +32,6 @@ final class ProviderInstanceSupplier implements FrameworkInstanceSupplier {
   ProviderInstanceSupplier(
       @Assisted ProvisionBinding binding,
       ComponentImplementation componentImplementation,
-      FrameworkInstanceBindingRepresentation.Factory frameworkInstanceBindingRepresentationFactory,
       UnscopedFrameworkInstanceCreationExpressionFactory
           unscopedFrameworkInstanceCreationExpressionFactory) {
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =

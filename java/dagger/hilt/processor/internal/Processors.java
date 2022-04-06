@@ -602,11 +602,6 @@ public final class Processors {
     return getAnnotationMirror(element, ClassName.get(annotationClass));
   }
 
-  /** @see #getAnnotationMirror(Element, ClassName) */
-  public static AnnotationMirror getAnnotationMirror(Element element, String annotationClassName) {
-    return getAnnotationMirror(element, ClassName.bestGuess(annotationClassName));
-  }
-
   /**
    * Returns the annotation mirror from the given element that corresponds to the given class.
    *

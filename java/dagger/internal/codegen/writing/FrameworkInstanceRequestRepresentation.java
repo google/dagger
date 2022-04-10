@@ -18,32 +18,28 @@ package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.wrapType;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 
 /** A binding expression that uses a {@link FrameworkType} field. */
 abstract class FrameworkInstanceRequestRepresentation extends RequestRepresentation {
   private final ContributionBinding binding;
   private final FrameworkInstanceSupplier frameworkInstanceSupplier;
-  private final DaggerTypes types;
-  private final DaggerElements elements;
+  private final XProcessingEnv processingEnv;
 
   FrameworkInstanceRequestRepresentation(
       ContributionBinding binding,
       FrameworkInstanceSupplier frameworkInstanceSupplier,
-      DaggerTypes types,
-      DaggerElements elements) {
+      XProcessingEnv processingEnv) {
     this.binding = checkNotNull(binding);
     this.frameworkInstanceSupplier = checkNotNull(frameworkInstanceSupplier);
-    this.types = checkNotNull(types);
-    this.elements = checkNotNull(elements);
+    this.processingEnv = checkNotNull(processingEnv);
   }
 
   /**
@@ -53,10 +49,11 @@ abstract class FrameworkInstanceRequestRepresentation extends RequestRepresentat
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     MemberSelect memberSelect = frameworkInstanceSupplier.memberSelect();
-    TypeMirror expressionType =
+    XType expressionType =
         isTypeAccessibleFrom(binding.contributedType(), requestingClass.packageName())
                 || isInlinedFactoryCreation(memberSelect)
-            ? types.wrapType(binding.contributedType(), frameworkType().frameworkClassName())
+            ? wrapType(
+                frameworkType().frameworkClassName(), binding.contributedType(), processingEnv)
             : rawFrameworkType();
     return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));
   }
@@ -79,7 +76,8 @@ abstract class FrameworkInstanceRequestRepresentation extends RequestRepresentat
     return memberSelect.staticMember();
   }
 
-  private DeclaredType rawFrameworkType() {
-    return types.getDeclaredType(elements.getTypeElement(frameworkType().frameworkClassName()));
+  private XType rawFrameworkType() {
+    return processingEnv.getDeclaredType(
+        processingEnv.requireTypeElement(frameworkType().frameworkClassName()));
   }
 }

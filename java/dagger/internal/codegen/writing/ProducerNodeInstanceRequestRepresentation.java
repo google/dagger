@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
@@ -25,8 +26,6 @@ import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescri
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.producers.internal.Producers;
 import dagger.spi.model.Key;
@@ -42,13 +41,12 @@ final class ProducerNodeInstanceRequestRepresentation
   ProducerNodeInstanceRequestRepresentation(
       @Assisted ContributionBinding binding,
       @Assisted FrameworkInstanceSupplier frameworkInstanceSupplier,
-      DaggerTypes types,
-      DaggerElements elements,
+      XProcessingEnv processingEnv,
       ComponentImplementation componentImplementation) {
-    super(binding, frameworkInstanceSupplier, types, elements);
+    super(binding, frameworkInstanceSupplier, processingEnv);
     this.shardImplementation = componentImplementation.shardImplementation(binding);
     this.key = binding.key();
-    this.producerEntryPointView = new ProducerEntryPointView(shardImplementation, types);
+    this.producerEntryPointView = new ProducerEntryPointView(shardImplementation, processingEnv);
   }
 
   @Override

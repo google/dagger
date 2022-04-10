@@ -16,19 +16,16 @@
 
 package dagger.internal.codegen.javapoet;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 
 import androidx.room.compiler.processing.XType;
-import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.CodeBlock;
-import dagger.internal.codegen.langmodel.DaggerTypes;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * Encapsulates a {@link CodeBlock} for an <a
  * href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html">expression</a> and the
- * {@link TypeMirror} that it represents from the perspective of the compiler. Consider the
- * following example:
+ * {@link XType} that it represents from the perspective of the compiler. Consider the following
+ * example:
  *
  * <pre><code>
  *   {@literal @SuppressWarnings("rawtypes")}
@@ -39,66 +36,42 @@ import javax.lang.model.type.TypeMirror;
  * java.lang.Object} and not {@code FooImpl}.
  */
 public final class Expression {
-  private final TypeMirror type;
+  private final XType type;
   private final CodeBlock codeBlock;
 
-  private Expression(TypeMirror type, CodeBlock codeBlock) {
+  private Expression(XType type, CodeBlock codeBlock) {
     this.type = type;
     this.codeBlock = codeBlock;
   }
 
-  /** Creates a new {@link Expression} with a {@link TypeMirror} and {@link CodeBlock}. */
+  /** Creates a new {@link Expression} with a {@link XType} and {@link CodeBlock}. */
   public static Expression create(XType type, CodeBlock expression) {
-    return create(toJavac(type), expression);
-  }
-
-  /** Creates a new {@link Expression} with a {@link TypeMirror} and {@link CodeBlock}. */
-  public static Expression create(TypeMirror type, CodeBlock expression) {
     return new Expression(type, expression);
   }
 
   /**
-   * Creates a new {@link Expression} with a {@link TypeMirror}, {@linkplain CodeBlock#of(String,
+   * Creates a new {@link Expression} with a {@link XType}, {@linkplain CodeBlock#of(String,
    * Object[]) format, and arguments}.
    */
   public static Expression create(XType type, String format, Object... args) {
-    return create(toJavac(type), format, args);
-  }
-
-  /**
-   * Creates a new {@link Expression} with a {@link TypeMirror}, {@linkplain CodeBlock#of(String,
-   * Object[]) format, and arguments}.
-   */
-  public static Expression create(TypeMirror type, String format, Object... args) {
-    return create(type, CodeBlock.of(format, args));
+    return new Expression(type, CodeBlock.of(format, args));
   }
 
   /** Returns a new expression that casts the current expression to {@code newType}. */
-  // TODO(ronshapiro): consider overloads that take a Types and Elements and only cast if necessary,
-  // or just embedding a Types/Elements instance in an Expression.
   public Expression castTo(XType newType) {
-    return castTo(toJavac(newType));
-  }
-
-  /** Returns a new expression that casts the current expression to {@code newType}. */
-  // TODO(ronshapiro): consider overloads that take a Types and Elements and only cast if necessary,
-  // or just embedding a Types/Elements instance in an Expression.
-  public Expression castTo(TypeMirror newType) {
-    return create(newType, "($T) $L", newType, codeBlock);
+    return create(newType, CodeBlock.of("($T) $L", newType.getTypeName(), codeBlock));
   }
 
   /**
-   * Returns a new expression that {@link #castTo(TypeMirror)} casts the current expression to its
-   * boxed type if this expression has a primitive type.
+   * Returns a new expression that {@link #castTo(XType)} casts the current expression to its boxed
+   * type if this expression has a primitive type.
    */
-  public Expression box(DaggerTypes types) {
-    return type.getKind().isPrimitive()
-        ? castTo(types.boxedClass(MoreTypes.asPrimitiveType(type)).asType())
-        : this;
+  public Expression box() {
+    return isPrimitive(type) ? castTo(type.boxed()) : this;
   }
 
-  /** The {@link TypeMirror type} to which the expression evaluates. */
-  public TypeMirror type() {
+  /** The {@link XType type} to which the expression evaluates. */
+  public XType type() {
     return type;
   }
 
@@ -109,6 +82,6 @@ public final class Expression {
 
   @Override
   public String toString() {
-    return String.format("[%s] %s", type, codeBlock);
+    return String.format("[%s] %s", type.getTypeName(), codeBlock);
   }
 }

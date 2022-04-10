@@ -19,6 +19,7 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.writing.DelegateRequestRepresentation.instanceRequiresCast;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.squareup.javapoet.ClassName;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
@@ -28,8 +29,6 @@ import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescri
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.RequestKind;
 
@@ -39,7 +38,7 @@ final class DerivedFromFrameworkInstanceRequestRepresentation extends RequestRep
   private final RequestRepresentation frameworkRequestRepresentation;
   private final RequestKind requestKind;
   private final FrameworkType frameworkType;
-  private final DaggerTypes types;
+  private final XProcessingEnv processingEnv;
   private final BindsTypeChecker bindsTypeChecker;
 
   @AssistedInject
@@ -48,14 +47,14 @@ final class DerivedFromFrameworkInstanceRequestRepresentation extends RequestRep
       @Assisted RequestRepresentation frameworkRequestRepresentation,
       @Assisted RequestKind requestKind,
       @Assisted FrameworkType frameworkType,
-      DaggerTypes types,
-      DaggerElements elements) {
+      XProcessingEnv processingEnv,
+      BindsTypeChecker bindsTypeChecker) {
     this.binding = binding;
     this.frameworkRequestRepresentation = checkNotNull(frameworkRequestRepresentation);
     this.requestKind = requestKind;
     this.frameworkType = checkNotNull(frameworkType);
-    this.types = types;
-    this.bindsTypeChecker = new BindsTypeChecker(types, elements);
+    this.processingEnv = processingEnv;
+    this.bindsTypeChecker = bindsTypeChecker;
   }
 
   @Override
@@ -64,7 +63,7 @@ final class DerivedFromFrameworkInstanceRequestRepresentation extends RequestRep
         frameworkType.to(
             requestKind,
             frameworkRequestRepresentation.getDependencyExpression(requestingClass),
-            types);
+            processingEnv);
     return requiresTypeCast(expression, requestingClass)
         ? expression.castTo(binding.contributedType())
         : expression;
@@ -78,7 +77,7 @@ final class DerivedFromFrameworkInstanceRequestRepresentation extends RequestRep
             requestKind,
             frameworkRequestRepresentation.getDependencyExpressionForComponentMethod(
                 componentMethod, component),
-            types);
+            processingEnv);
     return requiresTypeCast(expression, component.name())
         ? expression.castTo(binding.contributedType())
         : expression;

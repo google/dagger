@@ -16,21 +16,20 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.extension.DaggerCollectors.onlyElement;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.getUnboundedWildcardType;
+import static kotlin.streams.jdk8.StreamsKt.asStream;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.xprocessing.XProcessingEnvs;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * Checks the assignability of one type to another, given a {@link ContributionType} context. This
@@ -40,14 +39,11 @@ import javax.lang.model.type.TypeMirror;
  * generated code might be an erased type due to accessibility.
  */
 public final class BindsTypeChecker {
-  private final DaggerTypes types;
-  private final DaggerElements elements;
+  private final XProcessingEnv processingEnv;
 
-  // TODO(bcorso): Make this pkg-private. Used by DelegateRequestRepresentation.
   @Inject
-  public BindsTypeChecker(DaggerTypes types, DaggerElements elements) {
-    this.types = types;
-    this.elements = elements;
+  BindsTypeChecker(XProcessingEnv processingEnv) {
+    this.processingEnv = processingEnv;
   }
 
   /**
@@ -56,67 +52,50 @@ public final class BindsTypeChecker {
    */
   public boolean isAssignable(
       XType rightHandSide, XType leftHandSide, ContributionType contributionType) {
-    return isAssignable(toJavac(rightHandSide), toJavac(leftHandSide), contributionType);
+    return XProcessingEnvs.isAssignable(
+        rightHandSide, desiredAssignableType(leftHandSide, contributionType), processingEnv);
   }
 
-  /**
-   * Checks the assignability of {@code rightHandSide} to {@code leftHandSide} given a {@link
-   * ContributionType} context.
-   */
-  public boolean isAssignable(
-      TypeMirror rightHandSide, TypeMirror leftHandSide, ContributionType contributionType) {
-    return types.isAssignable(rightHandSide, desiredAssignableType(leftHandSide, contributionType));
-  }
-
-  private TypeMirror desiredAssignableType(
-      TypeMirror leftHandSide, ContributionType contributionType) {
+  private XType desiredAssignableType(XType leftHandSide, ContributionType contributionType) {
     switch (contributionType) {
       case UNIQUE:
         return leftHandSide;
       case SET:
-        DeclaredType parameterizedSetType = types.getDeclaredType(setElement(), leftHandSide);
+        XType parameterizedSetType = processingEnv.getDeclaredType(setElement(), leftHandSide);
         return methodParameterType(parameterizedSetType, "add");
       case SET_VALUES:
         // TODO(b/211774331): The left hand side type should be limited to Set types.
-        return methodParameterType(MoreTypes.asDeclared(leftHandSide), "addAll");
+        return methodParameterType(leftHandSide, "addAll");
       case MAP:
-        DeclaredType parameterizedMapType =
-            types.getDeclaredType(mapElement(), unboundedWildcard(), leftHandSide);
+        XType parameterizedMapType =
+            processingEnv.getDeclaredType(mapElement(), unboundedWildcard(), leftHandSide);
         return methodParameterTypes(parameterizedMapType, "put").get(1);
     }
     throw new AssertionError("Unknown contribution type: " + contributionType);
   }
 
-  private ImmutableList<TypeMirror> methodParameterTypes(DeclaredType type, String methodName) {
-    ImmutableList.Builder<ExecutableElement> methodsForName = ImmutableList.builder();
-    for (ExecutableElement method :
-        // type.asElement().getEnclosedElements() is not used because some non-standard JDKs (e.g.
-        // J2CL) don't redefine Set.add() (whose only purpose of being redefined in the standard JDK
-        // is documentation, and J2CL's implementation doesn't declare docs for JDK types).
-        // getLocalAndInheritedMethods ensures that the method will always be present.
-        elements.getLocalAndInheritedMethods(MoreTypes.asTypeElement(type))) {
-      if (method.getSimpleName().contentEquals(methodName)) {
-        methodsForName.add(method);
-      }
-    }
-    ExecutableElement method = getOnlyElement(methodsForName.build());
+  private ImmutableList<XType> methodParameterTypes(XType type, String methodName) {
     return ImmutableList.copyOf(
-        MoreTypes.asExecutable(types.asMemberOf(type, method)).getParameterTypes());
+        asStream(type.getTypeElement().getAllMethods())
+            .filter(method -> methodName.contentEquals(getSimpleName(method)))
+            .collect(onlyElement())
+            .asMemberOf(type)
+            .getParameterTypes());
   }
 
-  private TypeMirror methodParameterType(DeclaredType type, String methodName) {
+  private XType methodParameterType(XType type, String methodName) {
     return getOnlyElement(methodParameterTypes(type, methodName));
   }
 
-  private TypeElement setElement() {
-    return elements.getTypeElement(TypeNames.SET);
+  private XTypeElement setElement() {
+    return processingEnv.requireTypeElement(TypeNames.SET);
   }
 
-  private TypeElement mapElement() {
-    return elements.getTypeElement(TypeNames.MAP);
+  private XTypeElement mapElement() {
+    return processingEnv.requireTypeElement(TypeNames.MAP);
   }
 
-  private TypeMirror unboundedWildcard() {
-    return types.getWildcardType(null, null);
+  private XType unboundedWildcard() {
+    return getUnboundedWildcardType(processingEnv);
   }
 }

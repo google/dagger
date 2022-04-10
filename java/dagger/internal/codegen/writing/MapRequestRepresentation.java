@@ -151,7 +151,7 @@ final class MapRequestRepresentation extends RequestRepresentation {
   private Expression collectionsStaticFactoryInvocation(
       ClassName requestingClass, CodeBlock methodInvocation) {
     return Expression.create(
-        binding.key().type().java(),
+        binding.key().type().xprocessing(),
         CodeBlock.builder()
             .add("$T.", Collections.class)
             .add(maybeTypeParameters(requestingClass))

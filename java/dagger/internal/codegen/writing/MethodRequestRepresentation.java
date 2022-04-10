@@ -16,13 +16,13 @@
 
 package dagger.internal.codegen.writing;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
-import javax.lang.model.type.TypeMirror;
 
 /** A binding expression that wraps another in a nullary method on the component. */
 abstract class MethodRequestRepresentation extends RequestRepresentation {
@@ -30,9 +30,9 @@ abstract class MethodRequestRepresentation extends RequestRepresentation {
   private final ProducerEntryPointView producerEntryPointView;
 
   protected MethodRequestRepresentation(
-      ShardImplementation shardImplementation, DaggerTypes types) {
+      ShardImplementation shardImplementation, XProcessingEnv processingEnv) {
     this.shardImplementation = shardImplementation;
-    this.producerEntryPointView = new ProducerEntryPointView(shardImplementation, types);
+    this.producerEntryPointView = new ProducerEntryPointView(shardImplementation, processingEnv);
   }
 
   @Override
@@ -54,7 +54,7 @@ abstract class MethodRequestRepresentation extends RequestRepresentation {
   }
 
   /** Returns the return type for the dependency request. */
-  protected abstract TypeMirror returnType();
+  protected abstract XType returnType();
 
   /** Returns the method call. */
   protected abstract CodeBlock methodCall();

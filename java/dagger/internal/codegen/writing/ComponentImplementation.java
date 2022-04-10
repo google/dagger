@@ -817,9 +817,9 @@ public final class ComponentImplementation implements GeneratedImplementation {
 
     private ShardImplementation(ClassName name) {
       this.name = name;
-      this.switchingProviders = new SwitchingProviders(this, types);
+      this.switchingProviders = new SwitchingProviders(this);
       this.experimentalSwitchingProviders =
-          new ExperimentalSwitchingProviders(this, componentRequestRepresentationsProvider, types);
+          new ExperimentalSwitchingProviders(this, componentRequestRepresentationsProvider);
 
       if (graph.componentDescriptor().isProduction()) {
         claimMethodName(CANCELLATION_LISTENER_METHOD_NAME);

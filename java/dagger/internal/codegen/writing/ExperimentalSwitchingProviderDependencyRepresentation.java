@@ -16,11 +16,13 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
@@ -31,13 +33,10 @@ import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.RequestKind;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * Returns type casted expressions to satisfy dependency requests from experimental switching
@@ -47,42 +46,42 @@ final class ExperimentalSwitchingProviderDependencyRepresentation {
   private final ProvisionBinding binding;
   private final ShardImplementation shardImplementation;
   private final BindsTypeChecker bindsTypeChecker;
-  private final DaggerTypes types;
-  private final DaggerElements elements;
-  private final TypeMirror type;
+  private final XProcessingEnv processingEnv;
+  private final XType type;
 
   @AssistedInject
   ExperimentalSwitchingProviderDependencyRepresentation(
       @Assisted ProvisionBinding binding,
       ComponentImplementation componentImplementation,
-      DaggerTypes types,
-      DaggerElements elements) {
+      BindsTypeChecker bindsTypeChecker,
+      XProcessingEnv processingEnv) {
     this.binding = binding;
     this.shardImplementation = componentImplementation.shardImplementation(binding);
-    this.types = types;
-    this.elements = elements;
-    this.bindsTypeChecker = new BindsTypeChecker(types, elements);
+    this.processingEnv = processingEnv;
+    this.bindsTypeChecker = bindsTypeChecker;
     this.type =
         isDelegateSetValuesBinding()
-            ? types.erasure(elements.getTypeElement(TypeNames.COLLECTION).asType())
-            : toJavac(binding.contributedType());
+            ? erasure(processingEnv.requireType(TypeNames.COLLECTION), processingEnv)
+            : binding.contributedType();
   }
 
   Expression getDependencyExpression(RequestKind requestKind, ProvisionBinding requestingBinding) {
     int index = findIndexOfDependency(requestingBinding);
-    TypeMirror frameworkType =
-        types.getDeclaredType(elements.getTypeElement(FrameworkType.PROVIDER.frameworkClassName()));
+    XType frameworkType =
+        processingEnv.getDeclaredType(
+            processingEnv.requireTypeElement(FrameworkType.PROVIDER.frameworkClassName()));
     Expression expression =
         FrameworkType.PROVIDER.to(
             requestKind,
             Expression.create(
-                frameworkType, CodeBlock.of("(($T) dependencies[$L])", frameworkType, index)),
-            types);
+                frameworkType,
+                CodeBlock.of("(($T) dependencies[$L])", frameworkType.getTypeName(), index)),
+            processingEnv);
     if (usesExplicitTypeCast(expression, requestKind)) {
       return expression.castTo(type);
     }
     if (usesErasedTypeCast(requestKind)) {
-      return expression.castTo(types.erasure(type));
+      return expression.castTo(erasure(type, processingEnv));
     }
     return expression;
   }

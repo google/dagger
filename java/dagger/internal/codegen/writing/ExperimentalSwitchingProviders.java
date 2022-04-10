@@ -41,7 +41,6 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.spi.model.Key;
@@ -80,16 +79,13 @@ final class ExperimentalSwitchingProviders {
 
   private final ShardImplementation shardImplementation;
   private final Provider<ComponentRequestRepresentations> componentRequestRepresentationsProvider;
-  private final DaggerTypes types;
 
   ExperimentalSwitchingProviders(
       ShardImplementation shardImplementation,
-      Provider<ComponentRequestRepresentations> componentRequestRepresentationsProvider,
-      DaggerTypes types) {
+      Provider<ComponentRequestRepresentations> componentRequestRepresentationsProvider) {
     this.shardImplementation = checkNotNull(shardImplementation);
     this.componentRequestRepresentationsProvider =
         checkNotNull(componentRequestRepresentationsProvider);
-    this.types = checkNotNull(types);
   }
 
   /** Returns the framework instance creation expression for an inner switching provider class. */
@@ -192,7 +188,7 @@ final class ExperimentalSwitchingProviders {
       CodeBlock instanceCodeBlock =
           unscopedInstanceRequestRepresentation
               .getDependencyExpression(switchingProviderType)
-              .box(types)
+              .box()
               .codeBlock();
 
       return CodeBlock.builder()

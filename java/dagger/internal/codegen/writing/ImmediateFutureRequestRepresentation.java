@@ -17,7 +17,11 @@
 package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.langmodel.Accessibility.accessibleType;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.wrapType;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import com.google.common.util.concurrent.Futures;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -26,32 +30,30 @@ import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.type.TypeMirror;
 
 final class ImmediateFutureRequestRepresentation extends RequestRepresentation {
   private final RequestRepresentation instanceRequestRepresentation;
-  private final TypeMirror type;
-  private final DaggerTypes types;
+  private final XType type;
+  private final XProcessingEnv processingEnv;
   private final SourceVersion sourceVersion;
 
   @AssistedInject
   ImmediateFutureRequestRepresentation(
       @Assisted RequestRepresentation instanceRequestRepresentation,
-      @Assisted TypeMirror type,
-      DaggerTypes types,
+      @Assisted XType type,
+      XProcessingEnv processingEnv,
       SourceVersion sourceVersion) {
-    this.instanceRequestRepresentation = instanceRequestRepresentation;
-    this.type = type;
-    this.types = checkNotNull(types);
-    this.sourceVersion = checkNotNull(sourceVersion);
+    this.instanceRequestRepresentation = checkNotNull(instanceRequestRepresentation);
+    this.type = checkNotNull(type);
+    this.processingEnv = processingEnv;
+    this.sourceVersion = sourceVersion;
   }
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     return Expression.create(
-        types.wrapType(type, TypeNames.LISTENABLE_FUTURE),
+        wrapType(TypeNames.LISTENABLE_FUTURE, type, processingEnv),
         CodeBlock.of("$T.immediateFuture($L)", Futures.class, instanceExpression(requestingClass)));
   }
 
@@ -63,9 +65,11 @@ final class ImmediateFutureRequestRepresentation extends RequestRepresentation {
       //
       // For example, javac7 cannot detect that Futures.immediateFuture(ImmutableSet.of("T"))
       // can safely be assigned to ListenableFuture<Set<T>>.
-      if (!types.isSameType(expression.type(), type)) {
+      if (!expression.type().isSameType(type)) {
         return CodeBlock.of(
-            "($T) $L", types.accessibleType(type, requestingClass), expression.codeBlock());
+            "($T) $L",
+            accessibleType(type, requestingClass, processingEnv).getTypeName(),
+            expression.codeBlock());
       }
     }
     return expression.codeBlock();
@@ -74,6 +78,6 @@ final class ImmediateFutureRequestRepresentation extends RequestRepresentation {
   @AssistedFactory
   static interface Factory {
     ImmediateFutureRequestRepresentation create(
-        RequestRepresentation instanceRequestRepresentation, TypeMirror type);
+        RequestRepresentation instanceRequestRepresentation, XType type);
   }
 }

@@ -18,7 +18,12 @@ package dagger.internal.codegen.binding;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.rewrapType;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.unwrapTypeOrObject;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.wrapType;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -26,11 +31,9 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.RequestKind;
 import java.util.Optional;
-import javax.lang.model.type.TypeMirror;
 
 /** One of the core types initialized as fields in a generated component. */
 public enum FrameworkType {
@@ -69,26 +72,27 @@ public enum FrameworkType {
     }
 
     @Override
-    public Expression to(RequestKind requestKind, Expression from, DaggerTypes types) {
+    public Expression to(RequestKind requestKind, Expression from, XProcessingEnv processingEnv) {
       CodeBlock codeBlock = to(requestKind, from.codeBlock());
       switch (requestKind) {
         case INSTANCE:
-          return Expression.create(types.unwrapTypeOrObject(from.type()), codeBlock);
+          return Expression.create(unwrapTypeOrObject(from.type(), processingEnv), codeBlock);
 
         case PROVIDER:
           return from;
 
         case PROVIDER_OF_LAZY:
-          TypeMirror lazyType = types.rewrapType(from.type(), TypeNames.LAZY);
-          return Expression.create(types.wrapType(lazyType, TypeNames.PROVIDER), codeBlock);
+          XType lazyType = rewrapType(from.type(), TypeNames.LAZY, processingEnv);
+          return Expression.create(
+              wrapType(TypeNames.PROVIDER, lazyType, processingEnv), codeBlock);
 
         case FUTURE:
           return Expression.create(
-              types.rewrapType(from.type(), TypeNames.LISTENABLE_FUTURE), codeBlock);
+              rewrapType(from.type(), TypeNames.LISTENABLE_FUTURE, processingEnv), codeBlock);
 
         default:
           return Expression.create(
-              types.rewrapType(from.type(), RequestKinds.frameworkClassName(requestKind)),
+              rewrapType(from.type(), RequestKinds.frameworkClassName(requestKind), processingEnv),
               codeBlock);
       }
     }
@@ -112,11 +116,11 @@ public enum FrameworkType {
     }
 
     @Override
-    public Expression to(RequestKind requestKind, Expression from, DaggerTypes types) {
+    public Expression to(RequestKind requestKind, Expression from, XProcessingEnv processingEnv) {
       switch (requestKind) {
         case FUTURE:
           return Expression.create(
-              types.rewrapType(from.type(), TypeNames.LISTENABLE_FUTURE),
+              rewrapType(from.type(), TypeNames.LISTENABLE_FUTURE, processingEnv),
               to(requestKind, from.codeBlock()));
 
         case PRODUCER:
@@ -203,7 +207,8 @@ public enum FrameworkType {
    * @throws IllegalArgumentException if a valid expression cannot be generated for {@code
    *     requestKind}
    */
-  public abstract Expression to(RequestKind requestKind, Expression from, DaggerTypes types);
+  public abstract Expression to(
+      RequestKind requestKind, Expression from, XProcessingEnv processingEnv);
 
   @Override
   public String toString() {

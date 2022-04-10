@@ -19,7 +19,9 @@ package dagger.internal.codegen.writing;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
@@ -29,7 +31,6 @@ import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.base.OptionalType.OptionalKind;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.DependencyRequest;
 import javax.lang.model.SourceVersion;
 
@@ -37,7 +38,7 @@ import javax.lang.model.SourceVersion;
 final class OptionalRequestRepresentation extends RequestRepresentation {
   private final ProvisionBinding binding;
   private final ComponentRequestRepresentations componentRequestRepresentations;
-  private final DaggerTypes types;
+  private final XProcessingEnv processingEnv;
   private final SourceVersion sourceVersion;
   private final boolean isExperimentalMergedMode;
 
@@ -46,11 +47,11 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
       @Assisted ProvisionBinding binding,
       ComponentImplementation componentImplementation,
       ComponentRequestRepresentations componentRequestRepresentations,
-      DaggerTypes types,
+      XProcessingEnv processingEnv,
       SourceVersion sourceVersion) {
     this.binding = binding;
     this.componentRequestRepresentations = componentRequestRepresentations;
-    this.types = types;
+    this.processingEnv = processingEnv;
     this.sourceVersion = sourceVersion;
     this.isExperimentalMergedMode =
         componentImplementation.compilerMode().isExperimentalMergedMode();
@@ -69,11 +70,12 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
         // https://github.com/google/dagger/issues/916)
         if (isTypeAccessibleFrom(binding.key().type().java(), requestingClass.packageName())) {
           return Expression.create(
-              binding.key().type().java(),
+              binding.key().type().xprocessing(),
               optionalKind.parameterizedAbsentValueExpression(optionalType));
         }
       }
-      return Expression.create(binding.key().type().java(), optionalKind.absentValueExpression());
+      return Expression.create(
+          binding.key().type().xprocessing(), optionalKind.absentValueExpression());
     }
     DependencyRequest dependency = getOnlyElement(binding.dependencies());
 
@@ -92,9 +94,10 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
     // we will get "incompatible types: inference variable has incompatible bounds.
     return isTypeAccessibleFrom(dependency.key().type().java(), requestingClass.packageName())
         ? Expression.create(
-            binding.key().type().java(), optionalKind.presentExpression(dependencyExpression))
+            binding.key().type().xprocessing(),
+            optionalKind.presentExpression(dependencyExpression))
         : Expression.create(
-            types.erasure(binding.key().type().java()),
+            erasure(binding.key().type().xprocessing(), processingEnv),
             optionalKind.presentObjectExpression(dependencyExpression));
   }
 

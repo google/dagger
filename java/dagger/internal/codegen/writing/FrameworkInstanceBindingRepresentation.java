@@ -98,7 +98,7 @@ final class FrameworkInstanceBindingRepresentation {
       case FUTURE:
         return immediateFutureRequestRepresentationFactory.create(
             getRequestRepresentation(bindingRequest(binding.key(), RequestKind.INSTANCE)),
-            binding.key().type().java());
+            binding.key().type().xprocessing());
 
       default:
         throw new AssertionError(

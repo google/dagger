@@ -86,10 +86,8 @@ public final class CodeBlocks {
    * javax.inject.Provider#get()} method that returns the given {@code expression}.
    */
   public static CodeBlock anonymousProvider(Expression expression) {
-    // More of a precondition check that the type Provider is parameterized with is a DeclaredType
-    DeclaredType type = MoreTypes.asDeclared(expression.type());
     return anonymousProvider(
-        TypeName.get(type), CodeBlock.of("return $L;", expression.codeBlock()));
+        expression.type().getTypeName(), CodeBlock.of("return $L;", expression.codeBlock()));
   }
 
   /**

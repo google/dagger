@@ -23,6 +23,7 @@ import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static java.util.stream.StreamSupport.stream;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
@@ -33,7 +34,6 @@ import com.squareup.javapoet.TypeName;
 import java.util.stream.Collector;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 
 /** Convenience methods for creating {@link CodeBlock}s. */
 public final class CodeBlocks {
@@ -119,8 +119,8 @@ public final class CodeBlocks {
     return CodeBlock.of("($T) $L", castTo, expression);
   }
 
-  public static CodeBlock type(TypeMirror type) {
-    return CodeBlock.of("$T", type);
+  public static CodeBlock type(XType type) {
+    return CodeBlock.of("$T", type.getTypeName());
   }
 
   public static CodeBlock stringLiteral(String toWrap) {

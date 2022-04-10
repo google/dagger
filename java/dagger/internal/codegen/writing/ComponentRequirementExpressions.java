@@ -31,7 +31,6 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ComponentRequirement;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -53,19 +52,15 @@ public final class ComponentRequirementExpressions {
       componentRequirementExpressions = new HashMap<>();
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
-  private final ModuleProxies moduleProxies;
 
   @Inject
   ComponentRequirementExpressions(
       @ParentComponent Optional<ComponentRequirementExpressions> parent,
       BindingGraph graph,
-      ComponentImplementation componentImplementation,
-      DaggerElements elements,
-      ModuleProxies moduleProxies) {
+      ComponentImplementation componentImplementation) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
-    this.moduleProxies = moduleProxies;
   }
 
   /**
@@ -161,7 +156,7 @@ public final class ComponentRequirementExpressions {
       return CodeBlock.of(
           "this.$N = $L;",
           componentField,
-          moduleProxies.newModuleInstance(moduleElement, componentImplementation.name()));
+          ModuleProxies.newModuleInstance(moduleElement, componentImplementation.name()));
     }
   }
 

@@ -16,15 +16,14 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XElement;
 import com.squareup.javapoet.AnnotationSpec;
 import dagger.internal.codegen.binding.Binding;
+import dagger.internal.codegen.xprocessing.XAnnotations;
 import java.util.Optional;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.Name;
 
 final class GwtCompatibility {
 
@@ -34,14 +33,12 @@ final class GwtCompatibility {
    */
   static Optional<AnnotationSpec> gwtIncompatibleAnnotation(Binding binding) {
     checkArgument(binding.bindingElement().isPresent());
-    Element element = toJavac(binding.bindingElement().get());
+    XElement element = binding.bindingElement().get();
     while (element != null) {
       Optional<AnnotationSpec> gwtIncompatible =
-          element
-              .getAnnotationMirrors()
-              .stream()
-              .filter(annotation -> isGwtIncompatible(annotation))
-              .map(AnnotationSpec::get)
+          element.getAllAnnotations().stream()
+              .filter(GwtCompatibility::isGwtIncompatible)
+              .map(XAnnotations::getAnnotationSpec)
               .findFirst();
       if (gwtIncompatible.isPresent()) {
         return gwtIncompatible;
@@ -51,8 +48,7 @@ final class GwtCompatibility {
     return Optional.empty();
   }
 
-  private static boolean isGwtIncompatible(AnnotationMirror annotation) {
-    Name simpleName = annotation.getAnnotationType().asElement().getSimpleName();
-    return simpleName.contentEquals("GwtIncompatible");
+  private static boolean isGwtIncompatible(XAnnotation annotation) {
+    return XAnnotations.getClassName(annotation).simpleName().contentEquals("GwtIncompatible");
   }
 }

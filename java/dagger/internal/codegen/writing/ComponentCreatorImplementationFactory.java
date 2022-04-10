@@ -62,14 +62,10 @@ import javax.lang.model.element.Modifier;
 final class ComponentCreatorImplementationFactory {
 
   private final ComponentImplementation componentImplementation;
-  private final ModuleProxies moduleProxies;
 
   @Inject
-  ComponentCreatorImplementationFactory(
-      ComponentImplementation componentImplementation,
-      ModuleProxies moduleProxies) {
+  ComponentCreatorImplementationFactory(ComponentImplementation componentImplementation) {
     this.componentImplementation = componentImplementation;
-    this.moduleProxies = moduleProxies;
   }
 
   /** Returns a new creator implementation for the given component, if necessary. */
@@ -353,7 +349,7 @@ final class ComponentCreatorImplementationFactory {
 
     private CodeBlock newModuleInstance(ComponentRequirement requirement) {
       checkArgument(requirement.kind().isModule()); // this should be guaranteed to be true here
-      return moduleProxies.newModuleInstance(
+      return ModuleProxies.newModuleInstance(
           requirement.typeElement(), componentImplementation.getCreatorName());
     }
   }

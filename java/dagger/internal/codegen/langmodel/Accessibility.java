@@ -159,6 +159,11 @@ public final class Accessibility {
   }
 
   /** Returns true if the given element can be referenced from any package. */
+  public static boolean isElementPubliclyAccessible(XElement element) {
+    return isElementPubliclyAccessible(toJavac(element));
+  }
+
+  /** Returns true if the given element can be referenced from any package. */
   public static boolean isElementPubliclyAccessible(Element element) {
     return element.accept(new ElementAccessibilityVisitor(Optional.empty()), null);
   }

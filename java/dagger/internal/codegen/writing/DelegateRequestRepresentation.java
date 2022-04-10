@@ -39,7 +39,6 @@ import dagger.internal.codegen.binding.BindsTypeChecker;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.spi.model.RequestKind;
-import javax.lang.model.type.TypeMirror;
 
 /** A {@link dagger.internal.codegen.writing.RequestRepresentation} for {@code @Binds} methods. */
 final class DelegateRequestRepresentation extends RequestRepresentation {
@@ -113,8 +112,8 @@ final class DelegateRequestRepresentation extends RequestRepresentation {
    * If {@code delegateExpression} can be assigned to {@code desiredType} safely, then {@code
    * delegateExpression} is returned unchanged. If the {@code delegateExpression} is already a raw
    * type, returns {@code delegateExpression} as well, as casting would have no effect. Otherwise,
-   * returns a {@link Expression#castTo(TypeMirror) casted} version of {@code delegateExpression} to
-   * the raw type of {@code desiredType}.
+   * returns a {@link Expression#castTo(XType) casted} version of {@code delegateExpression} to the
+   * raw type of {@code desiredType}.
    */
   // TODO(ronshapiro): this probably can be generalized for usage in InjectionMethods
   private Expression castToRawTypeIfNecessary(Expression delegateExpression, XType desiredType) {

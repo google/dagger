@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
@@ -26,8 +25,8 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
-import static javax.lang.model.util.ElementFilter.constructorsIn;
 
+import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XTypeElement;
@@ -43,16 +42,10 @@ import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.ExecutableElement;
 
 /** Convenience methods for generating and using module constructor proxy methods. */
 public final class ModuleProxies {
-
-  private final DaggerElements elements;
-  @Inject
-  ModuleProxies(DaggerElements elements) {
-    this.elements = elements;
-  }
+  private ModuleProxies() {}
 
   /** Generates a {@code public static} proxy method for constructing module instances. */
   // TODO(dpb): See if this can become a SourceFileGenerator<ModuleDescriptor> instead. Doing so may
@@ -60,16 +53,10 @@ public final class ModuleProxies {
   public static final class ModuleConstructorProxyGenerator
       extends SourceFileGenerator<XTypeElement> {
 
-    private final ModuleProxies moduleProxies;
-
     @Inject
     ModuleConstructorProxyGenerator(
-        XFiler filer,
-        DaggerElements elements,
-        SourceVersion sourceVersion,
-        ModuleProxies moduleProxies) {
+        XFiler filer, DaggerElements elements, SourceVersion sourceVersion) {
       super(filer, elements, sourceVersion);
-      this.moduleProxies = moduleProxies;
     }
 
     @Override
@@ -80,13 +67,13 @@ public final class ModuleProxies {
     @Override
     public ImmutableList<TypeSpec.Builder> topLevelTypes(XTypeElement moduleElement) {
       ModuleKind.checkIsModule(moduleElement);
-      return moduleProxies.nonPublicNullaryConstructor(moduleElement).isPresent()
+      return nonPublicNullaryConstructor(moduleElement).isPresent()
           ? ImmutableList.of(buildProxy(moduleElement))
           : ImmutableList.of();
     }
 
     private TypeSpec.Builder buildProxy(XTypeElement moduleElement) {
-      return classBuilder(moduleProxies.constructorProxyTypeName(moduleElement))
+      return classBuilder(constructorProxyTypeName(moduleElement))
           .addModifiers(PUBLIC, FINAL)
           .addMethod(constructorBuilder().addModifiers(PRIVATE).build())
           .addMethod(
@@ -99,7 +86,7 @@ public final class ModuleProxies {
   }
 
   /** The name of the class that hosts the module constructor proxy method. */
-  private ClassName constructorProxyTypeName(XTypeElement moduleElement) {
+  private static ClassName constructorProxyTypeName(XTypeElement moduleElement) {
     ModuleKind.checkIsModule(moduleElement);
     ClassName moduleClassName = moduleElement.getClassName();
     return moduleClassName
@@ -112,14 +99,15 @@ public final class ModuleProxies {
    * has no arguments. If an implicit reference to the enclosing class exists, or the module is
    * abstract, no proxy method can be generated.
    */
-  private Optional<ExecutableElement> nonPublicNullaryConstructor(XTypeElement moduleElement) {
+  private static Optional<XConstructorElement> nonPublicNullaryConstructor(
+      XTypeElement moduleElement) {
     ModuleKind.checkIsModule(moduleElement);
     if (moduleElement.isAbstract() || (isNested(moduleElement) && !moduleElement.isStatic())) {
       return Optional.empty();
     }
-    return constructorsIn(elements.getAllMembers(toJavac(moduleElement))).stream()
+    return moduleElement.getConstructors().stream()
         .filter(constructor -> !Accessibility.isElementPubliclyAccessible(constructor))
-        .filter(constructor -> !constructor.getModifiers().contains(PRIVATE))
+        .filter(constructor -> !constructor.isPrivate())
         .filter(constructor -> constructor.getParameters().isEmpty())
         .findAny();
   }
@@ -129,7 +117,7 @@ public final class ModuleProxies {
    * constructor if it's accessible from {@code requestingClass} or else by invoking the
    * constructor's generated proxy method.
    */
-  public CodeBlock newModuleInstance(XTypeElement moduleElement, ClassName requestingClass) {
+  public static CodeBlock newModuleInstance(XTypeElement moduleElement, ClassName requestingClass) {
     ModuleKind.checkIsModule(moduleElement);
     String packageName = requestingClass.packageName();
     return nonPublicNullaryConstructor(moduleElement)

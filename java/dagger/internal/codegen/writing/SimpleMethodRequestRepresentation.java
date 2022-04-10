@@ -16,16 +16,17 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreElements.asExecutable;
-import static com.google.auto.common.MoreElements.asType;
+import static androidx.room.compiler.processing.XElementKt.isConstructor;
+import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod.requiresInjectionMethod;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreTypes;
@@ -39,14 +40,11 @@ import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
 import dagger.spi.model.DependencyRequest;
 import java.util.Optional;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.type.DeclaredType;
 
 /**
  * A binding expression that invokes methods or constructors directly (without attempting to scope)
@@ -59,7 +57,6 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
   private final MembersInjectionMethods membersInjectionMethods;
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final SourceVersion sourceVersion;
-  private final KotlinMetadataUtil metadataUtil;
   private final ShardImplementation shardImplementation;
   private final boolean isExperimentalMergedMode;
 
@@ -71,11 +68,9 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
       ComponentRequestRepresentations componentRequestRepresentations,
       ComponentRequirementExpressions componentRequirementExpressions,
       SourceVersion sourceVersion,
-      KotlinMetadataUtil metadataUtil,
       ComponentImplementation componentImplementation) {
     this.compilerOptions = compilerOptions;
     this.provisionBinding = binding;
-    this.metadataUtil = metadataUtil;
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
         "framework deps are not currently supported");
@@ -104,43 +99,37 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
                 provisionBinding,
                 request -> dependencyArgument(request, requestingClass).codeBlock(),
                 shardImplementation::getUniqueFieldNameForAssistedParam));
-    ExecutableElement method = asExecutable(toJavac(provisionBinding.bindingElement().get()));
+    XElement bindingElement = provisionBinding.bindingElement().get();
+    XTypeElement bindingTypeElement = provisionBinding.bindingTypeElement().get();
     CodeBlock invocation;
-    switch (method.getKind()) {
-      case CONSTRUCTOR:
-        invocation = CodeBlock.of("new $T($L)", constructorTypeName(requestingClass), arguments);
-        break;
-      case METHOD:
-        CodeBlock module;
-        Optional<CodeBlock> requiredModuleInstance = moduleReference(requestingClass);
-        if (requiredModuleInstance.isPresent()) {
-          module = requiredModuleInstance.get();
-        } else if (metadataUtil.isObjectClass(asType(method.getEnclosingElement()))) {
-          // Call through the singleton instance.
-          // See: https://kotlinlang.org/docs/reference/java-to-kotlin-interop.html#static-methods
-          module =
-              CodeBlock.of(
-                  "$T.INSTANCE", provisionBinding.bindingTypeElement().get().getClassName());
-        } else {
-          module = CodeBlock.of("$T", provisionBinding.bindingTypeElement().get().getClassName());
-        }
-        invocation = CodeBlock.of("$L.$L($L)", module, method.getSimpleName(), arguments);
-        break;
-      default:
-        throw new IllegalStateException();
+    if (isConstructor(bindingElement)) {
+      invocation = CodeBlock.of("new $T($L)", constructorTypeName(requestingClass), arguments);
+    } else if (isMethod(bindingElement)) {
+      CodeBlock module;
+      Optional<CodeBlock> requiredModuleInstance = moduleReference(requestingClass);
+      if (requiredModuleInstance.isPresent()) {
+        module = requiredModuleInstance.get();
+      } else if (bindingTypeElement.isKotlinObject() && !bindingTypeElement.isCompanionObject()) {
+        // Call through the singleton instance.
+        // See: https://kotlinlang.org/docs/reference/java-to-kotlin-interop.html#static-methods
+        module = CodeBlock.of("$T.INSTANCE", bindingTypeElement.getClassName());
+      } else {
+        module = CodeBlock.of("$T", bindingTypeElement.getClassName());
+      }
+      invocation = CodeBlock.of("$L.$L($L)", module, getSimpleName(bindingElement), arguments);
+    } else {
+      throw new AssertionError("Unexpected binding element: " + bindingElement);
     }
 
     return Expression.create(simpleMethodReturnType(), invocation);
   }
 
   private TypeName constructorTypeName(ClassName requestingClass) {
-    DeclaredType type = MoreTypes.asDeclared(provisionBinding.key().type().java());
-    TypeName typeName = TypeName.get(type);
-    if (type.getTypeArguments().stream()
-        .allMatch(t -> isTypeAccessibleFrom(t, requestingClass.packageName()))) {
-      return typeName;
-    }
-    return rawTypeName(typeName);
+    XType type = provisionBinding.key().type().xprocessing();
+    return type.getTypeArguments().stream()
+            .allMatch(t -> isTypeAccessibleFrom(t, requestingClass.packageName()))
+        ? type.getTypeName()
+        : rawTypeName(type.getTypeName());
   }
 
   private Expression invokeInjectionMethod(ClassName requestingClass) {

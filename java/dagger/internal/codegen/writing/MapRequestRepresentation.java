@@ -44,7 +44,6 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.DependencyRequest;
 import java.util.Collections;
-import javax.lang.model.type.TypeMirror;
 
 /** A {@link RequestRepresentation} for multibound maps. */
 final class MapRequestRepresentation extends RequestRepresentation {
@@ -160,7 +159,7 @@ final class MapRequestRepresentation extends RequestRepresentation {
   }
 
   private CodeBlock maybeTypeParameters(ClassName requestingClass) {
-    TypeMirror bindingKeyType = binding.key().type().java();
+    XType bindingKeyType = binding.key().type().xprocessing();
     MapType mapType = MapType.from(binding.key());
     return isTypeAccessibleFrom(bindingKeyType, requestingClass.packageName())
         ? CodeBlock.of(

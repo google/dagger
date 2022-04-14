@@ -40,40 +40,26 @@ final class DaggerBComponent {
   }
 
   private static final class BComponentImpl implements BComponent {
-    private final BComponentImplShard bComponentImplShard;
-
     private final AComponent aComponent;
 
     private final BComponentImpl bComponentImpl = this;
 
-    private BComponentImpl(AComponent aComponentParam) {
-      this.aComponent = aComponentParam;
-      bComponentImplShard = new BComponentImplShard(bComponentImpl, aComponentParam);
-    }
-
-    @Override
-    public B b() {
-      return bComponentImpl.bComponentImplShard.b();
-    }
-  }
-
-  private static final class BComponentImplShard {
-    private final BComponentImpl bComponentImpl;
-
     private Provider<A> aProvider;
 
-    private BComponentImplShard(BComponentImpl bComponentImpl, AComponent aComponentParam) {
-      this.bComponentImpl = bComponentImpl;
+    private BComponentImpl(AComponent aComponentParam) {
+      this.aComponent = aComponentParam;
       initialize(aComponentParam);
-    }
 
-    private B b() {
-      return new B(aProvider);
     }
 
     @SuppressWarnings("unchecked")
     private void initialize(final AComponent aComponentParam) {
       this.aProvider = new SwitchingProvider<>(bComponentImpl, 0);
+    }
+
+    @Override
+    public B b() {
+      return new B(aProvider);
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

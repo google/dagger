@@ -40,33 +40,19 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
     private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
-    }
 
-    @Override
-    public UsesInaccessible usesInaccessible() {
-      return testComponentImpl.testComponentImplShard.usesInaccessible();
-    }
-  }
-
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
-
-    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
     }
 
     private Set setOfInaccessible2() {
       return SetBuilder.newSetBuilder(1).addAll(TestModule_EmptySetFactory.emptySet()).build();
     }
 
-    private UsesInaccessible usesInaccessible() {
+    @Override
+    public UsesInaccessible usesInaccessible() {
       return UsesInaccessible_Factory.newInstance((Set) Collections.emptySet(), (Set) setOfInaccessible2());
     }
   }

@@ -31,6 +31,7 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ComponentRequirement;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -51,7 +52,7 @@ public final class ComponentRequirementExpressions {
   private final Map<ComponentRequirement, ComponentRequirementExpression>
       componentRequirementExpressions = new HashMap<>();
   private final BindingGraph graph;
-  private final ComponentImplementation componentImplementation;
+  private final ShardImplementation componentShard;
 
   @Inject
   ComponentRequirementExpressions(
@@ -60,7 +61,8 @@ public final class ComponentRequirementExpressions {
       ComponentImplementation componentImplementation) {
     this.parent = parent;
     this.graph = graph;
-    this.componentImplementation = componentImplementation;
+    // All component requirements go in the componentShard.
+    this.componentShard = componentImplementation.getComponentShard();
   }
 
   /**
@@ -99,7 +101,7 @@ public final class ComponentRequirementExpressions {
 
   /** Returns a field for a {@link ComponentRequirement}. */
   private ComponentRequirementExpression createExpression(ComponentRequirement requirement) {
-    if (componentImplementation.componentDescriptor().hasCreator()
+    if (componentShard.componentDescriptor().hasCreator()
         || (graph.factoryMethod().isPresent()
             && graph.factoryMethodParameters().containsKey(requirement))) {
       return new ComponentParameterField(requirement);
@@ -107,7 +109,7 @@ public final class ComponentRequirementExpressions {
       return new InstantiableModuleField(requirement);
     } else {
       throw new AssertionError(
-          String.format("Can't create %s in %s", requirement, componentImplementation.name()));
+          String.format("Can't create %s in %s", requirement, componentShard.name()));
     }
   }
 
@@ -125,13 +127,12 @@ public final class ComponentRequirementExpressions {
     }
 
     private MemberSelect createField() {
-      String fieldName =
-          componentImplementation.getUniqueFieldName(componentRequirement.variableName());
+      String fieldName = componentShard.getUniqueFieldName(componentRequirement.variableName());
       TypeName fieldType = componentRequirement.type().getTypeName();
       FieldSpec field = FieldSpec.builder(fieldType, fieldName, PRIVATE, FINAL).build();
-      componentImplementation.addField(COMPONENT_REQUIREMENT_FIELD, field);
-      componentImplementation.addComponentRequirementInitialization(fieldInitialization(field));
-      return MemberSelect.localField(componentImplementation, fieldName);
+      componentShard.addField(COMPONENT_REQUIREMENT_FIELD, field);
+      componentShard.addComponentRequirementInitialization(fieldInitialization(field));
+      return MemberSelect.localField(componentShard, fieldName);
     }
 
     /** Returns the {@link CodeBlock} that initializes the component field during construction. */
@@ -156,7 +157,7 @@ public final class ComponentRequirementExpressions {
       return CodeBlock.of(
           "this.$N = $L;",
           componentField,
-          ModuleProxies.newModuleInstance(moduleElement, componentImplementation.name()));
+          ModuleProxies.newModuleInstance(moduleElement, componentShard.name()));
     }
   }
 
@@ -169,12 +170,12 @@ public final class ComponentRequirementExpressions {
 
     ComponentParameterField(ComponentRequirement module) {
       super(module);
-      this.parameterName = componentImplementation.getParameterName(componentRequirement);
+      this.parameterName = componentShard.getParameterName(componentRequirement);
     }
 
     @Override
     public CodeBlock getExpressionDuringInitialization(ClassName requestingClass) {
-      if (componentImplementation.name().equals(requestingClass)) {
+      if (componentShard.name().equals(requestingClass)) {
         return CodeBlock.of("$L", parameterName);
       } else {
         // requesting this component requirement during initialization of a child component requires

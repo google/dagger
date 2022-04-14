@@ -48,34 +48,19 @@ final class DaggerParent {
 
     @Override
     public String string() {
-      return parentImpl.parentImplShard.string();
+      return parentImpl.string();
     }
   }
 
   private static final class ParentImpl implements Parent {
-    private final ParentImplShard parentImplShard;
-
     private final ParentImpl parentImpl = this;
-
-    private ParentImpl() {
-
-      parentImplShard = new ParentImplShard(parentImpl);
-    }
-
-    @Override
-    public Child child() {
-      return new ChildImpl(parentImpl);
-    }
-  }
-
-  private static final class ParentImplShard {
-    private final ParentImpl parentImpl;
 
     private Provider<Number> numberProvider;
 
-    private ParentImplShard(ParentImpl parentImpl) {
-      this.parentImpl = parentImpl;
+    private ParentImpl() {
+
       initialize();
+
     }
 
     private String string() {
@@ -85,6 +70,11 @@ final class DaggerParent {
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.numberProvider = DoubleCheck.provider(TestModule_NumberFactory.create());
+    }
+
+    @Override
+    public Child child() {
+      return new ChildImpl(parentImpl);
     }
   }
 }

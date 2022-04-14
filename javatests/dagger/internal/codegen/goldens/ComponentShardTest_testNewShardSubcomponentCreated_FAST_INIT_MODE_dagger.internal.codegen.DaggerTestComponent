@@ -36,86 +36,57 @@ final class DaggerTestComponent {
   }
 
   private static final class TestSubcomponentImpl implements TestSubcomponent {
-    private final TestSubcomponentImplShard testSubcomponentImplShard;
-
-    private final TestSubcomponentImplShard2 testSubcomponentImplShard2;
+    private TestSubcomponentImplShard testSubcomponentImplShard;
 
     private final TestComponentImpl testComponentImpl;
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
-    private TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
-
-      testSubcomponentImplShard = new TestSubcomponentImplShard(testComponentImpl, testSubcomponentImpl);
-      testSubcomponentImplShard2 = new TestSubcomponentImplShard2(testComponentImpl, testSubcomponentImpl);
-    }
-
-    @Override
-    public Binding1 binding1() {
-      return testSubcomponentImpl.testSubcomponentImplShard.binding1Provider.get();
-    }
-
-    @Override
-    public Binding2 binding2() {
-      return testSubcomponentImpl.testSubcomponentImplShard.binding2Provider.get();
-    }
-
-    @Override
-    public Binding3 binding3() {
-      return testSubcomponentImpl.testSubcomponentImplShard2.binding3Provider.get();
-    }
-
-    @Override
-    public Provider<Binding1> providerBinding1() {
-      return testSubcomponentImpl.testSubcomponentImplShard.binding1Provider;
-    }
-
-    @Override
-    public Provider<Binding2> providerBinding2() {
-      return testSubcomponentImpl.testSubcomponentImplShard.binding2Provider;
-    }
-
-    @Override
-    public Provider<Binding3> providerBinding3() {
-      return testSubcomponentImpl.testSubcomponentImplShard2.binding3Provider;
-    }
-  }
-
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
-
-    private TestComponentImpl() {
-
-
-    }
-
-    @Override
-    public TestSubcomponent subcomponent() {
-      return new TestSubcomponentImpl(testComponentImpl);
-    }
-  }
-
-  private static final class TestSubcomponentImplShard {
-    private final TestComponentImpl testComponentImpl;
-
-    private final TestSubcomponentImpl testSubcomponentImpl;
-
     private Provider<Binding1> binding1Provider;
 
     private Provider<Binding2> binding2Provider;
 
-    private TestSubcomponentImplShard(TestComponentImpl testComponentImpl,
-        TestSubcomponentImpl testSubcomponentImpl) {
+    private TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
       this.testComponentImpl = testComponentImpl;
-      this.testSubcomponentImpl = testSubcomponentImpl;
+
       initialize();
+      testSubcomponentImplShard = new TestSubcomponentImplShard(testComponentImpl, testSubcomponentImpl);
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.binding1Provider = DoubleCheck.provider(new SwitchingProvider<Binding1>(testComponentImpl, testSubcomponentImpl, 0));
       this.binding2Provider = DoubleCheck.provider(new SwitchingProvider<Binding2>(testComponentImpl, testSubcomponentImpl, 1));
+    }
+
+    @Override
+    public Binding1 binding1() {
+      return binding1Provider.get();
+    }
+
+    @Override
+    public Binding2 binding2() {
+      return binding2Provider.get();
+    }
+
+    @Override
+    public Binding3 binding3() {
+      return testSubcomponentImpl.testSubcomponentImplShard.binding3Provider.get();
+    }
+
+    @Override
+    public Provider<Binding1> providerBinding1() {
+      return binding1Provider;
+    }
+
+    @Override
+    public Provider<Binding2> providerBinding2() {
+      return binding2Provider;
+    }
+
+    @Override
+    public Provider<Binding3> providerBinding3() {
+      return testSubcomponentImpl.testSubcomponentImplShard.binding3Provider;
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -148,14 +119,28 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestSubcomponentImplShard2 {
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public TestSubcomponent subcomponent() {
+      return new TestSubcomponentImpl(testComponentImpl);
+    }
+  }
+
+  private static final class TestSubcomponentImplShard {
     private final TestComponentImpl testComponentImpl;
 
     private final TestSubcomponentImpl testSubcomponentImpl;
 
     private Provider<Binding3> binding3Provider;
 
-    private TestSubcomponentImplShard2(TestComponentImpl testComponentImpl,
+    private TestSubcomponentImplShard(TestComponentImpl testComponentImpl,
         TestSubcomponentImpl testSubcomponentImpl) {
       this.testComponentImpl = testComponentImpl;
       this.testSubcomponentImpl = testSubcomponentImpl;

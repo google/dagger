@@ -55,6 +55,7 @@ import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstan
 // TODO(dpb): Resolve with DependencyMethodProducerCreationExpression.
 final class DependencyMethodProviderCreationExpression
     implements FrameworkInstanceCreationExpression {
+
   private final ShardImplementation shardImplementation;
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final CompilerOptions compilerOptions;
@@ -105,13 +106,17 @@ final class DependencyMethodProviderCreationExpression
       getMethod.addAnnotation(binding.nullableType().get().getTypeElement().getClassName());
     }
 
+    // We need to use the componentShard here since the generated type is static and shards are
+    // not static classes so it can't be nested inside the shard.
+    ShardImplementation componentShard =
+        shardImplementation.getComponentImplementation().getComponentShard();
     ClassName factoryClassName =
-        shardImplementation
+        componentShard
             .name()
             .nestedClass(
-                shardImplementation.getUniqueClassName(
+                componentShard.getUniqueClassName(
                     LOWER_CAMEL.to(UPPER_CAMEL, getSimpleName(provisionMethod) + "Provider")));
-    shardImplementation.addType(
+    componentShard.addType(
         COMPONENT_PROVISION_FACTORY,
         classBuilder(factoryClassName)
             .addSuperinterface(providerOf(keyType))

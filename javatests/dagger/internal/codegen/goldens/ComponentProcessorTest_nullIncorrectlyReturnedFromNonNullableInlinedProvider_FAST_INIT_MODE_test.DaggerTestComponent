@@ -35,13 +35,11 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
     private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+
     }
 
     @Override
@@ -51,15 +49,7 @@ final class DaggerTestComponent {
 
     @Override
     public void inject(InjectsMember member) {
-      testComponentImpl.testComponentImplShard.injectInjectsMember(member);
-    }
-  }
-
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
-
-    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+      injectInjectsMember(member);
     }
 
     @CanIgnoreReturnValue

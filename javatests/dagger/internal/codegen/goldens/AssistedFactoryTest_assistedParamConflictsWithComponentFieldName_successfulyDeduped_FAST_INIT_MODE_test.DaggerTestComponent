@@ -36,37 +36,27 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
     private final TestComponentImpl testComponentImpl = this;
-
-    private TestComponentImpl() {
-
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
-    }
-
-    @Override
-    public FooFactory fooFactory() {
-      return testComponentImpl.testComponentImplShard.fooFactoryProvider.get();
-    }
-  }
-
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
 
     private Provider<Bar> barProvider;
 
     private Provider<FooFactory> fooFactoryProvider;
 
-    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    private TestComponentImpl() {
+
       initialize();
+
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.barProvider = new SwitchingProvider<>(testComponentImpl, 1);
       this.fooFactoryProvider = SingleCheck.provider(new SwitchingProvider<FooFactory>(testComponentImpl, 0));
+    }
+
+    @Override
+    public FooFactory fooFactory() {
+      return fooFactoryProvider.get();
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -87,7 +77,7 @@ final class DaggerTestComponent {
           return (T) new FooFactory() {
             @Override
             public Foo create(String testComponentImpl2) {
-              return new Foo(testComponentImpl2, testComponentImpl.testComponentImplShard.barProvider);
+              return new Foo(testComponentImpl2, testComponentImpl.barProvider);
             }
           };
 

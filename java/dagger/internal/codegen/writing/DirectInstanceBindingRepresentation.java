@@ -22,15 +22,23 @@ import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
+import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingRequest;
+import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.ProvisionBinding;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.spi.model.RequestKind;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /** Returns request representation based on a direct instance expression. */
 final class DirectInstanceBindingRepresentation {
   private final ProvisionBinding binding;
+  private final BindingGraph graph;
+  private final ComponentImplementation componentImplementation;
+  private final ComponentMethodRequestRepresentation.Factory
+      componentMethodRequestRepresentationFactory;
   private final ImmediateFutureRequestRepresentation.Factory
       immediateFutureRequestRepresentationFactory;
   private final PrivateMethodRequestRepresentation.Factory
@@ -42,11 +50,17 @@ final class DirectInstanceBindingRepresentation {
   @AssistedInject
   DirectInstanceBindingRepresentation(
       @Assisted ProvisionBinding binding,
+      BindingGraph graph,
+      ComponentImplementation componentImplementation,
+      ComponentMethodRequestRepresentation.Factory componentMethodRequestRepresentationFactory,
       ImmediateFutureRequestRepresentation.Factory immediateFutureRequestRepresentationFactory,
       PrivateMethodRequestRepresentation.Factory privateMethodRequestRepresentationFactory,
       UnscopedDirectInstanceRequestRepresentationFactory
           unscopedDirectInstanceRequestRepresentationFactory) {
     this.binding = binding;
+    this.graph = graph;
+    this.componentImplementation = componentImplementation;
+    this.componentMethodRequestRepresentationFactory = componentMethodRequestRepresentationFactory;
     this.immediateFutureRequestRepresentationFactory = immediateFutureRequestRepresentationFactory;
     this.privateMethodRequestRepresentationFactory = privateMethodRequestRepresentationFactory;
     this.unscopedDirectInstanceRequestRepresentationFactory =
@@ -62,8 +76,7 @@ final class DirectInstanceBindingRepresentation {
     switch (request.requestKind()) {
       case INSTANCE:
         return requiresMethodEncapsulation(binding)
-            ? wrapInPrivateMethod(
-                unscopedDirectInstanceRequestRepresentationFactory.create(binding))
+            ? wrapInMethod(unscopedDirectInstanceRequestRepresentationFactory.create(binding))
             : unscopedDirectInstanceRequestRepresentationFactory.create(binding);
 
       case FUTURE:
@@ -77,13 +90,47 @@ final class DirectInstanceBindingRepresentation {
     }
   }
 
-  /** Wraps the expression for a given binding in a no-arg private method. */
-  RequestRepresentation wrapInPrivateMethod(RequestRepresentation bindingExpression) {
-    return bindingExpression instanceof PrivateMethodRequestRepresentation
-        // If we've already wrapped the expression then just return it as is.
-        ? bindingExpression
-        : privateMethodRequestRepresentationFactory.create(
-            bindingRequest(binding.key(), RequestKind.INSTANCE), binding, bindingExpression);
+  /**
+   * Returns a binding expression that uses a given one as the body of a method that users call. If
+   * a component provision method matches it, it will be the method implemented. If it does not
+   * match a component provision method and the binding is modifiable, then a new public modifiable
+   * binding method will be written. If the binding doesn't match a component method and is not
+   * modifiable, then a new private method will be written.
+   */
+  RequestRepresentation wrapInMethod(RequestRepresentation bindingExpression) {
+    // If we've already wrapped the expression, then use the delegate.
+    if (bindingExpression instanceof MethodRequestRepresentation) {
+      return bindingExpression;
+    }
+
+    BindingRequest request = bindingRequest(binding.key(), RequestKind.INSTANCE);
+    Optional<ComponentMethodDescriptor> matchingComponentMethod =
+        graph.componentDescriptor().firstMatchingComponentMethod(request);
+
+    ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
+
+    // Consider the case of a request from a component method like:
+    //
+    //   DaggerMyComponent extends MyComponent {
+    //     @Overrides
+    //     Foo getFoo() {
+    //       <FOO_BINDING_REQUEST>
+    //     }
+    //   }
+    //
+    // Normally, in this case we would return a ComponentMethodRequestRepresentation rather than a
+    // PrivateMethodRequestRepresentation so that #getFoo() can inline the implementation rather
+    // than
+    // create an unnecessary private method and return that. However, with sharding we don't want to
+    // inline the implementation because that would defeat some of the class pool savings if those
+    // fields had to communicate across shards. Thus, when a key belongs to a separate shard use a
+    // PrivateMethodRequestRepresentation and put the private method in the shard.
+    if (matchingComponentMethod.isPresent() && shardImplementation.isComponentShard()) {
+      ComponentMethodDescriptor componentMethod = matchingComponentMethod.get();
+      return componentMethodRequestRepresentationFactory.create(bindingExpression, componentMethod);
+    } else {
+      return privateMethodRequestRepresentationFactory.create(request, binding, bindingExpression);
+    }
   }
 
   private static boolean requiresMethodEncapsulation(ProvisionBinding binding) {

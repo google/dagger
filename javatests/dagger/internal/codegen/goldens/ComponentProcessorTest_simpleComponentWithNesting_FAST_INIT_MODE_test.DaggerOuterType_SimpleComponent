@@ -35,13 +35,11 @@ final class DaggerOuterType_SimpleComponent {
   }
 
   private static final class SimpleComponentImpl implements OuterType.SimpleComponent {
-    private final SimpleComponentImplShard simpleComponentImplShard;
-
     private final SimpleComponentImpl simpleComponentImpl = this;
 
     private SimpleComponentImpl() {
 
-      simpleComponentImplShard = new SimpleComponentImplShard(simpleComponentImpl);
+
     }
 
     @Override
@@ -51,15 +49,7 @@ final class DaggerOuterType_SimpleComponent {
 
     @Override
     public void inject(OuterType.B b) {
-      simpleComponentImpl.simpleComponentImplShard.injectB(b);
-    }
-  }
-
-  private static final class SimpleComponentImplShard {
-    private final SimpleComponentImpl simpleComponentImpl;
-
-    private SimpleComponentImplShard(SimpleComponentImpl simpleComponentImpl) {
-      this.simpleComponentImpl = simpleComponentImpl;
+      injectB(b);
     }
 
     @CanIgnoreReturnValue

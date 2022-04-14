@@ -35,35 +35,21 @@ public final class DaggerMyComponent {
   }
 
   private static final class MyComponentImpl implements MyComponent {
-    private final MyComponentImplShard myComponentImplShard;
-
     private final MyComponentImpl myComponentImpl = this;
 
     private MyComponentImpl() {
 
-      myComponentImplShard = new MyComponentImplShard(myComponentImpl);
+
     }
 
     @Override
     public Foo foo() {
-      return myComponentImpl.myComponentImplShard.foo();
+      return injectFoo(Foo_Factory.newInstance());
     }
 
     @Override
     public void inject(Foo foo) {
-      myComponentImpl.myComponentImplShard.injectFoo(foo);
-    }
-  }
-
-  private static final class MyComponentImplShard {
-    private final MyComponentImpl myComponentImpl;
-
-    private MyComponentImplShard(MyComponentImpl myComponentImpl) {
-      this.myComponentImpl = myComponentImpl;
-    }
-
-    private Foo foo() {
-      return injectFoo(Foo_Factory.newInstance());
+      injectFoo(foo);
     }
 
     @CanIgnoreReturnValue

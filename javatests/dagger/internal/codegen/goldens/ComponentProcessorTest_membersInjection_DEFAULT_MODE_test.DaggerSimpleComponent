@@ -35,31 +35,21 @@ final class DaggerSimpleComponent {
   }
 
   private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImplShard simpleComponentImplShard;
-
     private final SimpleComponentImpl simpleComponentImpl = this;
 
     private SimpleComponentImpl() {
 
-      simpleComponentImplShard = new SimpleComponentImplShard(simpleComponentImpl);
+
     }
 
     @Override
     public void inject(SomeInjectedType instance) {
-      simpleComponentImpl.simpleComponentImplShard.injectSomeInjectedType(instance);
+      injectSomeInjectedType(instance);
     }
 
     @Override
     public SomeInjectedType injectAndReturn(SomeInjectedType instance) {
-      return simpleComponentImpl.simpleComponentImplShard.injectSomeInjectedType(instance);
-    }
-  }
-
-  private static final class SimpleComponentImplShard {
-    private final SimpleComponentImpl simpleComponentImpl;
-
-    private SimpleComponentImplShard(SimpleComponentImpl simpleComponentImpl) {
-      this.simpleComponentImpl = simpleComponentImpl;
+      return injectSomeInjectedType(instance);
     }
 
     @CanIgnoreReturnValue

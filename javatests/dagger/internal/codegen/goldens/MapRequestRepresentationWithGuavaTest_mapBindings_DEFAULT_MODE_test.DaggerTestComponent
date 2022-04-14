@@ -37,8 +37,6 @@ final class DaggerTestComponent {
   }
 
   private static final class SubImpl implements Sub {
-    private final SubImplShard subImplShard;
-
     private final TestComponentImpl testComponentImpl;
 
     private final SubImpl subImpl = this;
@@ -46,28 +44,26 @@ final class DaggerTestComponent {
     private SubImpl(TestComponentImpl testComponentImpl) {
       this.testComponentImpl = testComponentImpl;
 
-      subImplShard = new SubImplShard(testComponentImpl, subImpl);
+
     }
 
     @Override
     public Map<Long, Long> longs() {
-      return subImpl.subImplShard.mapOfLongAndLong();
+      return ImmutableMap.<Long, Long>builderWithExpectedSize(6).put(0L, MapModule.provideLong0()).put(1L, MapModule.provideLong1()).put(2L, MapModule.provideLong2()).put(3L, SubcomponentMapModule.provideLong3()).put(4L, SubcomponentMapModule.provideLong4()).put(5L, SubcomponentMapModule.provideLong5()).build();
     }
 
     @Override
     public Map<Long, Provider<Long>> providerLongs() {
-      return subImpl.subImplShard.mapOfLongAndProviderOfLong();
+      return ImmutableMap.<Long, Provider<Long>>builderWithExpectedSize(6).put(0L, MapModule_ProvideLong0Factory.create()).put(1L, MapModule_ProvideLong1Factory.create()).put(2L, MapModule_ProvideLong2Factory.create()).put(3L, SubcomponentMapModule_ProvideLong3Factory.create()).put(4L, SubcomponentMapModule_ProvideLong4Factory.create()).put(5L, SubcomponentMapModule_ProvideLong5Factory.create()).build();
     }
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
     private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+
     }
 
     @Override
@@ -82,70 +78,27 @@ final class DaggerTestComponent {
 
     @Override
     public Map<Integer, Integer> ints() {
-      return testComponentImpl.testComponentImplShard.mapOfIntegerAndInteger();
+      return ImmutableMap.<Integer, Integer>of(0, MapModule.provideInt());
     }
 
     @Override
     public Map<Integer, Provider<Integer>> providerInts() {
-      return testComponentImpl.testComponentImplShard.mapOfIntegerAndProviderOfInteger();
+      return ImmutableMap.<Integer, Provider<Integer>>of(0, MapModule_ProvideIntFactory.create());
     }
 
     @Override
     public Map<Long, Long> longs() {
-      return testComponentImpl.testComponentImplShard.mapOfLongAndLong();
+      return ImmutableMap.<Long, Long>of(0L, MapModule.provideLong0(), 1L, MapModule.provideLong1(), 2L, MapModule.provideLong2());
     }
 
     @Override
     public Map<Long, Provider<Long>> providerLongs() {
-      return testComponentImpl.testComponentImplShard.mapOfLongAndProviderOfLong();
+      return ImmutableMap.<Long, Provider<Long>>of(0L, MapModule_ProvideLong0Factory.create(), 1L, MapModule_ProvideLong1Factory.create(), 2L, MapModule_ProvideLong2Factory.create());
     }
 
     @Override
     public Sub sub() {
       return new SubImpl(testComponentImpl);
-    }
-  }
-
-  private static final class SubImplShard {
-    private final TestComponentImpl testComponentImpl;
-
-    private final SubImpl subImpl;
-
-    private SubImplShard(TestComponentImpl testComponentImpl, SubImpl subImpl) {
-      this.testComponentImpl = testComponentImpl;
-      this.subImpl = subImpl;
-    }
-
-    private Map<Long, Long> mapOfLongAndLong() {
-      return ImmutableMap.<Long, Long>builderWithExpectedSize(6).put(0L, MapModule.provideLong0()).put(1L, MapModule.provideLong1()).put(2L, MapModule.provideLong2()).put(3L, SubcomponentMapModule.provideLong3()).put(4L, SubcomponentMapModule.provideLong4()).put(5L, SubcomponentMapModule.provideLong5()).build();
-    }
-
-    private Map<Long, Provider<Long>> mapOfLongAndProviderOfLong() {
-      return ImmutableMap.<Long, Provider<Long>>builderWithExpectedSize(6).put(0L, MapModule_ProvideLong0Factory.create()).put(1L, MapModule_ProvideLong1Factory.create()).put(2L, MapModule_ProvideLong2Factory.create()).put(3L, SubcomponentMapModule_ProvideLong3Factory.create()).put(4L, SubcomponentMapModule_ProvideLong4Factory.create()).put(5L, SubcomponentMapModule_ProvideLong5Factory.create()).build();
-    }
-  }
-
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
-
-    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
-    }
-
-    private Map<Integer, Integer> mapOfIntegerAndInteger() {
-      return ImmutableMap.<Integer, Integer>of(0, MapModule.provideInt());
-    }
-
-    private Map<Integer, Provider<Integer>> mapOfIntegerAndProviderOfInteger() {
-      return ImmutableMap.<Integer, Provider<Integer>>of(0, MapModule_ProvideIntFactory.create());
-    }
-
-    private Map<Long, Long> mapOfLongAndLong() {
-      return ImmutableMap.<Long, Long>of(0L, MapModule.provideLong0(), 1L, MapModule.provideLong1(), 2L, MapModule.provideLong2());
-    }
-
-    private Map<Long, Provider<Long>> mapOfLongAndProviderOfLong() {
-      return ImmutableMap.<Long, Provider<Long>>of(0L, MapModule_ProvideLong0Factory.create(), 1L, MapModule_ProvideLong1Factory.create(), 2L, MapModule_ProvideLong2Factory.create());
     }
   }
 }

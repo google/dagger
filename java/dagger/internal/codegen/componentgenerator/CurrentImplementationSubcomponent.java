@@ -72,7 +72,7 @@ public interface CurrentImplementationSubcomponent {
         ComponentWrapperImplementation componentWrapperImplementation,
         CompilerOptions compilerOptions) {
       return compilerOptions.generatedClassExtendsComponent()
-          ? componentImplementation.rootComponentImplementation()
+          ? componentImplementation.rootComponentImplementation().getComponentShard()
           : componentWrapperImplementation;
     }
   }

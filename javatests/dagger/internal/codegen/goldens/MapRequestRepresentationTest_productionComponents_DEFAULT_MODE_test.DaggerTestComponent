@@ -39,35 +39,26 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent, CancellationListener {
-    private final TestComponentImplShard testComponentImplShard;
-
     private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+
+    }
+
+    private Map<Integer, String> mapOfIntegerAndString() {
+      return Collections.<Integer, String>singletonMap(1, TestModule_Value1Factory.value1());
     }
 
     @Override
     public ListenableFuture<Map<Integer, String>> map() {
-      return Futures.immediateFuture(testComponentImpl.testComponentImplShard.mapOfIntegerAndString());
+      return Futures.immediateFuture(mapOfIntegerAndString());
     }
 
     @Override
     public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
 
-    }
-  }
 
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
-
-    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
-    }
-
-    private Map<Integer, String> mapOfIntegerAndString() {
-      return Collections.<Integer, String>singletonMap(1, TestModule_Value1Factory.value1());
     }
   }
 }

@@ -34,18 +34,20 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
     private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+
+    }
+
+    private B b() {
+      return new B(new C());
     }
 
     @Override
     public A a() {
-      return testComponentImpl.testComponentImplShard.a();
+      return new A(b());
     }
 
     @Override
@@ -55,26 +57,6 @@ final class DaggerTestComponent {
 
     @Override
     public X x() {
-      return testComponentImpl.testComponentImplShard.x();
-    }
-  }
-
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
-
-    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
-    }
-
-    private B b() {
-      return new B(new C());
-    }
-
-    private A a() {
-      return new A(b());
-    }
-
-    private X x() {
       return new X(new C());
     }
   }

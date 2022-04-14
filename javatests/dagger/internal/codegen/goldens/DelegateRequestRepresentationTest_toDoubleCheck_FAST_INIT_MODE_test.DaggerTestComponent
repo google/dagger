@@ -37,33 +37,7 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
     private final TestComponentImpl testComponentImpl = this;
-
-    private TestComponentImpl() {
-
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
-    }
-
-    @Override
-    public Object regular() {
-      return testComponentImpl.testComponentImplShard.regularScopedProvider.get();
-    }
-
-    @Override
-    public Object reusable() {
-      return testComponentImpl.testComponentImplShard.reusableProvider.get();
-    }
-
-    @Override
-    public Object unscoped() {
-      return testComponentImpl.testComponentImplShard.unscopedProvider2.get();
-    }
-  }
-
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
 
     private Provider<RegularScoped> regularScopedProvider;
 
@@ -75,9 +49,10 @@ final class DaggerTestComponent {
 
     private Provider<Object> unscopedProvider2;
 
-    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    private TestComponentImpl() {
+
       initialize();
+
     }
 
     @SuppressWarnings("unchecked")
@@ -87,6 +62,21 @@ final class DaggerTestComponent {
       this.reusableProvider = DoubleCheck.provider((Provider) reusableScopedProvider);
       this.unscopedProvider = new SwitchingProvider<>(testComponentImpl, 2);
       this.unscopedProvider2 = DoubleCheck.provider((Provider) unscopedProvider);
+    }
+
+    @Override
+    public Object regular() {
+      return regularScopedProvider.get();
+    }
+
+    @Override
+    public Object reusable() {
+      return reusableProvider.get();
+    }
+
+    @Override
+    public Object unscoped() {
+      return unscopedProvider2.get();
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

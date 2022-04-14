@@ -113,7 +113,13 @@ final class MembersInjectionMethods {
   }
 
   private Expression injectMethodExpression(Binding binding, boolean useStaticInjectionMethod) {
-    ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
+    // TODO(wanyingd): move Switching Providers and injection methods to Shard classes to avoid
+    // exceeding component class constant pool limit.
+    // Add to Component Shard so that is can be accessible from Switching Providers.
+    ShardImplementation shardImplementation =
+        useStaticInjectionMethod
+            ? componentImplementation.getComponentShard()
+            : componentImplementation.shardImplementation(binding);
     XType keyType = binding.key().type().xprocessing();
     XType membersInjectedType =
         isTypeAccessibleFrom(keyType, shardImplementation.name().packageName())

@@ -36,43 +36,29 @@ final class DaggerSimpleComponent {
   }
 
   private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImplShard simpleComponentImplShard;
-
     private final SimpleComponentImpl simpleComponentImpl = this;
-
-    private SimpleComponentImpl() {
-
-      simpleComponentImplShard = new SimpleComponentImplShard(simpleComponentImpl);
-    }
-
-    @Override
-    public SomeInjectableType someInjectableType() {
-      return simpleComponentImpl.simpleComponentImplShard.someInjectableType();
-    }
-
-    @Override
-    public Provider<SimpleComponent> selfProvider() {
-      return simpleComponentImpl.simpleComponentImplShard.simpleComponentProvider;
-    }
-  }
-
-  private static final class SimpleComponentImplShard {
-    private final SimpleComponentImpl simpleComponentImpl;
 
     private Provider<SimpleComponent> simpleComponentProvider;
 
-    private SimpleComponentImplShard(SimpleComponentImpl simpleComponentImpl) {
-      this.simpleComponentImpl = simpleComponentImpl;
-      initialize();
-    }
+    private SimpleComponentImpl() {
 
-    private SomeInjectableType someInjectableType() {
-      return new SomeInjectableType(simpleComponentProvider.get());
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.simpleComponentProvider = InstanceFactory.create((SimpleComponent) simpleComponentImpl);
+    }
+
+    @Override
+    public SomeInjectableType someInjectableType() {
+      return new SomeInjectableType(simpleComponentProvider.get());
+    }
+
+    @Override
+    public Provider<SimpleComponent> selfProvider() {
+      return simpleComponentProvider;
     }
   }
 }

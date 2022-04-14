@@ -35,523 +35,7 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
     private final TestComponentImpl testComponentImpl = this;
-
-    private TestComponentImpl() {
-
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
-    }
-
-    @Override
-    public Provider<Binding0> getBinding0Provider() {
-      return testComponentImpl.testComponentImplShard.binding0Provider;
-    }
-
-    @Override
-    public Provider<Binding1> getBinding1Provider() {
-      return testComponentImpl.testComponentImplShard.binding1Provider;
-    }
-
-    @Override
-    public Provider<Binding2> getBinding2Provider() {
-      return testComponentImpl.testComponentImplShard.binding2Provider;
-    }
-
-    @Override
-    public Provider<Binding3> getBinding3Provider() {
-      return testComponentImpl.testComponentImplShard.binding3Provider;
-    }
-
-    @Override
-    public Provider<Binding4> getBinding4Provider() {
-      return testComponentImpl.testComponentImplShard.binding4Provider;
-    }
-
-    @Override
-    public Provider<Binding5> getBinding5Provider() {
-      return testComponentImpl.testComponentImplShard.binding5Provider;
-    }
-
-    @Override
-    public Provider<Binding6> getBinding6Provider() {
-      return testComponentImpl.testComponentImplShard.binding6Provider;
-    }
-
-    @Override
-    public Provider<Binding7> getBinding7Provider() {
-      return testComponentImpl.testComponentImplShard.binding7Provider;
-    }
-
-    @Override
-    public Provider<Binding8> getBinding8Provider() {
-      return testComponentImpl.testComponentImplShard.binding8Provider;
-    }
-
-    @Override
-    public Provider<Binding9> getBinding9Provider() {
-      return testComponentImpl.testComponentImplShard.binding9Provider;
-    }
-
-    @Override
-    public Provider<Binding10> getBinding10Provider() {
-      return testComponentImpl.testComponentImplShard.binding10Provider;
-    }
-
-    @Override
-    public Provider<Binding11> getBinding11Provider() {
-      return testComponentImpl.testComponentImplShard.binding11Provider;
-    }
-
-    @Override
-    public Provider<Binding12> getBinding12Provider() {
-      return testComponentImpl.testComponentImplShard.binding12Provider;
-    }
-
-    @Override
-    public Provider<Binding13> getBinding13Provider() {
-      return testComponentImpl.testComponentImplShard.binding13Provider;
-    }
-
-    @Override
-    public Provider<Binding14> getBinding14Provider() {
-      return testComponentImpl.testComponentImplShard.binding14Provider;
-    }
-
-    @Override
-    public Provider<Binding15> getBinding15Provider() {
-      return testComponentImpl.testComponentImplShard.binding15Provider;
-    }
-
-    @Override
-    public Provider<Binding16> getBinding16Provider() {
-      return testComponentImpl.testComponentImplShard.binding16Provider;
-    }
-
-    @Override
-    public Provider<Binding17> getBinding17Provider() {
-      return testComponentImpl.testComponentImplShard.binding17Provider;
-    }
-
-    @Override
-    public Provider<Binding18> getBinding18Provider() {
-      return testComponentImpl.testComponentImplShard.binding18Provider;
-    }
-
-    @Override
-    public Provider<Binding19> getBinding19Provider() {
-      return testComponentImpl.testComponentImplShard.binding19Provider;
-    }
-
-    @Override
-    public Provider<Binding20> getBinding20Provider() {
-      return testComponentImpl.testComponentImplShard.binding20Provider;
-    }
-
-    @Override
-    public Provider<Binding21> getBinding21Provider() {
-      return testComponentImpl.testComponentImplShard.binding21Provider;
-    }
-
-    @Override
-    public Provider<Binding22> getBinding22Provider() {
-      return testComponentImpl.testComponentImplShard.binding22Provider;
-    }
-
-    @Override
-    public Provider<Binding23> getBinding23Provider() {
-      return testComponentImpl.testComponentImplShard.binding23Provider;
-    }
-
-    @Override
-    public Provider<Binding24> getBinding24Provider() {
-      return testComponentImpl.testComponentImplShard.binding24Provider;
-    }
-
-    @Override
-    public Provider<Binding25> getBinding25Provider() {
-      return testComponentImpl.testComponentImplShard.binding25Provider;
-    }
-
-    @Override
-    public Provider<Binding26> getBinding26Provider() {
-      return testComponentImpl.testComponentImplShard.binding26Provider;
-    }
-
-    @Override
-    public Provider<Binding27> getBinding27Provider() {
-      return testComponentImpl.testComponentImplShard.binding27Provider;
-    }
-
-    @Override
-    public Provider<Binding28> getBinding28Provider() {
-      return testComponentImpl.testComponentImplShard.binding28Provider;
-    }
-
-    @Override
-    public Provider<Binding29> getBinding29Provider() {
-      return testComponentImpl.testComponentImplShard.binding29Provider;
-    }
-
-    @Override
-    public Provider<Binding30> getBinding30Provider() {
-      return testComponentImpl.testComponentImplShard.binding30Provider;
-    }
-
-    @Override
-    public Provider<Binding31> getBinding31Provider() {
-      return testComponentImpl.testComponentImplShard.binding31Provider;
-    }
-
-    @Override
-    public Provider<Binding32> getBinding32Provider() {
-      return testComponentImpl.testComponentImplShard.binding32Provider;
-    }
-
-    @Override
-    public Provider<Binding33> getBinding33Provider() {
-      return testComponentImpl.testComponentImplShard.binding33Provider;
-    }
-
-    @Override
-    public Provider<Binding34> getBinding34Provider() {
-      return testComponentImpl.testComponentImplShard.binding34Provider;
-    }
-
-    @Override
-    public Provider<Binding35> getBinding35Provider() {
-      return testComponentImpl.testComponentImplShard.binding35Provider;
-    }
-
-    @Override
-    public Provider<Binding36> getBinding36Provider() {
-      return testComponentImpl.testComponentImplShard.binding36Provider;
-    }
-
-    @Override
-    public Provider<Binding37> getBinding37Provider() {
-      return testComponentImpl.testComponentImplShard.binding37Provider;
-    }
-
-    @Override
-    public Provider<Binding38> getBinding38Provider() {
-      return testComponentImpl.testComponentImplShard.binding38Provider;
-    }
-
-    @Override
-    public Provider<Binding39> getBinding39Provider() {
-      return testComponentImpl.testComponentImplShard.binding39Provider;
-    }
-
-    @Override
-    public Provider<Binding40> getBinding40Provider() {
-      return testComponentImpl.testComponentImplShard.binding40Provider;
-    }
-
-    @Override
-    public Provider<Binding41> getBinding41Provider() {
-      return testComponentImpl.testComponentImplShard.binding41Provider;
-    }
-
-    @Override
-    public Provider<Binding42> getBinding42Provider() {
-      return testComponentImpl.testComponentImplShard.binding42Provider;
-    }
-
-    @Override
-    public Provider<Binding43> getBinding43Provider() {
-      return testComponentImpl.testComponentImplShard.binding43Provider;
-    }
-
-    @Override
-    public Provider<Binding44> getBinding44Provider() {
-      return testComponentImpl.testComponentImplShard.binding44Provider;
-    }
-
-    @Override
-    public Provider<Binding45> getBinding45Provider() {
-      return testComponentImpl.testComponentImplShard.binding45Provider;
-    }
-
-    @Override
-    public Provider<Binding46> getBinding46Provider() {
-      return testComponentImpl.testComponentImplShard.binding46Provider;
-    }
-
-    @Override
-    public Provider<Binding47> getBinding47Provider() {
-      return testComponentImpl.testComponentImplShard.binding47Provider;
-    }
-
-    @Override
-    public Provider<Binding48> getBinding48Provider() {
-      return testComponentImpl.testComponentImplShard.binding48Provider;
-    }
-
-    @Override
-    public Provider<Binding49> getBinding49Provider() {
-      return testComponentImpl.testComponentImplShard.binding49Provider;
-    }
-
-    @Override
-    public Provider<Binding50> getBinding50Provider() {
-      return testComponentImpl.testComponentImplShard.binding50Provider;
-    }
-
-    @Override
-    public Provider<Binding51> getBinding51Provider() {
-      return testComponentImpl.testComponentImplShard.binding51Provider;
-    }
-
-    @Override
-    public Provider<Binding52> getBinding52Provider() {
-      return testComponentImpl.testComponentImplShard.binding52Provider;
-    }
-
-    @Override
-    public Provider<Binding53> getBinding53Provider() {
-      return testComponentImpl.testComponentImplShard.binding53Provider;
-    }
-
-    @Override
-    public Provider<Binding54> getBinding54Provider() {
-      return testComponentImpl.testComponentImplShard.binding54Provider;
-    }
-
-    @Override
-    public Provider<Binding55> getBinding55Provider() {
-      return testComponentImpl.testComponentImplShard.binding55Provider;
-    }
-
-    @Override
-    public Provider<Binding56> getBinding56Provider() {
-      return testComponentImpl.testComponentImplShard.binding56Provider;
-    }
-
-    @Override
-    public Provider<Binding57> getBinding57Provider() {
-      return testComponentImpl.testComponentImplShard.binding57Provider;
-    }
-
-    @Override
-    public Provider<Binding58> getBinding58Provider() {
-      return testComponentImpl.testComponentImplShard.binding58Provider;
-    }
-
-    @Override
-    public Provider<Binding59> getBinding59Provider() {
-      return testComponentImpl.testComponentImplShard.binding59Provider;
-    }
-
-    @Override
-    public Provider<Binding60> getBinding60Provider() {
-      return testComponentImpl.testComponentImplShard.binding60Provider;
-    }
-
-    @Override
-    public Provider<Binding61> getBinding61Provider() {
-      return testComponentImpl.testComponentImplShard.binding61Provider;
-    }
-
-    @Override
-    public Provider<Binding62> getBinding62Provider() {
-      return testComponentImpl.testComponentImplShard.binding62Provider;
-    }
-
-    @Override
-    public Provider<Binding63> getBinding63Provider() {
-      return testComponentImpl.testComponentImplShard.binding63Provider;
-    }
-
-    @Override
-    public Provider<Binding64> getBinding64Provider() {
-      return testComponentImpl.testComponentImplShard.binding64Provider;
-    }
-
-    @Override
-    public Provider<Binding65> getBinding65Provider() {
-      return testComponentImpl.testComponentImplShard.binding65Provider;
-    }
-
-    @Override
-    public Provider<Binding66> getBinding66Provider() {
-      return testComponentImpl.testComponentImplShard.binding66Provider;
-    }
-
-    @Override
-    public Provider<Binding67> getBinding67Provider() {
-      return testComponentImpl.testComponentImplShard.binding67Provider;
-    }
-
-    @Override
-    public Provider<Binding68> getBinding68Provider() {
-      return testComponentImpl.testComponentImplShard.binding68Provider;
-    }
-
-    @Override
-    public Provider<Binding69> getBinding69Provider() {
-      return testComponentImpl.testComponentImplShard.binding69Provider;
-    }
-
-    @Override
-    public Provider<Binding70> getBinding70Provider() {
-      return testComponentImpl.testComponentImplShard.binding70Provider;
-    }
-
-    @Override
-    public Provider<Binding71> getBinding71Provider() {
-      return testComponentImpl.testComponentImplShard.binding71Provider;
-    }
-
-    @Override
-    public Provider<Binding72> getBinding72Provider() {
-      return testComponentImpl.testComponentImplShard.binding72Provider;
-    }
-
-    @Override
-    public Provider<Binding73> getBinding73Provider() {
-      return testComponentImpl.testComponentImplShard.binding73Provider;
-    }
-
-    @Override
-    public Provider<Binding74> getBinding74Provider() {
-      return testComponentImpl.testComponentImplShard.binding74Provider;
-    }
-
-    @Override
-    public Provider<Binding75> getBinding75Provider() {
-      return testComponentImpl.testComponentImplShard.binding75Provider;
-    }
-
-    @Override
-    public Provider<Binding76> getBinding76Provider() {
-      return testComponentImpl.testComponentImplShard.binding76Provider;
-    }
-
-    @Override
-    public Provider<Binding77> getBinding77Provider() {
-      return testComponentImpl.testComponentImplShard.binding77Provider;
-    }
-
-    @Override
-    public Provider<Binding78> getBinding78Provider() {
-      return testComponentImpl.testComponentImplShard.binding78Provider;
-    }
-
-    @Override
-    public Provider<Binding79> getBinding79Provider() {
-      return testComponentImpl.testComponentImplShard.binding79Provider;
-    }
-
-    @Override
-    public Provider<Binding80> getBinding80Provider() {
-      return testComponentImpl.testComponentImplShard.binding80Provider;
-    }
-
-    @Override
-    public Provider<Binding81> getBinding81Provider() {
-      return testComponentImpl.testComponentImplShard.binding81Provider;
-    }
-
-    @Override
-    public Provider<Binding82> getBinding82Provider() {
-      return testComponentImpl.testComponentImplShard.binding82Provider;
-    }
-
-    @Override
-    public Provider<Binding83> getBinding83Provider() {
-      return testComponentImpl.testComponentImplShard.binding83Provider;
-    }
-
-    @Override
-    public Provider<Binding84> getBinding84Provider() {
-      return testComponentImpl.testComponentImplShard.binding84Provider;
-    }
-
-    @Override
-    public Provider<Binding85> getBinding85Provider() {
-      return testComponentImpl.testComponentImplShard.binding85Provider;
-    }
-
-    @Override
-    public Provider<Binding86> getBinding86Provider() {
-      return testComponentImpl.testComponentImplShard.binding86Provider;
-    }
-
-    @Override
-    public Provider<Binding87> getBinding87Provider() {
-      return testComponentImpl.testComponentImplShard.binding87Provider;
-    }
-
-    @Override
-    public Provider<Binding88> getBinding88Provider() {
-      return testComponentImpl.testComponentImplShard.binding88Provider;
-    }
-
-    @Override
-    public Provider<Binding89> getBinding89Provider() {
-      return testComponentImpl.testComponentImplShard.binding89Provider;
-    }
-
-    @Override
-    public Provider<Binding90> getBinding90Provider() {
-      return testComponentImpl.testComponentImplShard.binding90Provider;
-    }
-
-    @Override
-    public Provider<Binding91> getBinding91Provider() {
-      return testComponentImpl.testComponentImplShard.binding91Provider;
-    }
-
-    @Override
-    public Provider<Binding92> getBinding92Provider() {
-      return testComponentImpl.testComponentImplShard.binding92Provider;
-    }
-
-    @Override
-    public Provider<Binding93> getBinding93Provider() {
-      return testComponentImpl.testComponentImplShard.binding93Provider;
-    }
-
-    @Override
-    public Provider<Binding94> getBinding94Provider() {
-      return testComponentImpl.testComponentImplShard.binding94Provider;
-    }
-
-    @Override
-    public Provider<Binding95> getBinding95Provider() {
-      return testComponentImpl.testComponentImplShard.binding95Provider;
-    }
-
-    @Override
-    public Provider<Binding96> getBinding96Provider() {
-      return testComponentImpl.testComponentImplShard.binding96Provider;
-    }
-
-    @Override
-    public Provider<Binding97> getBinding97Provider() {
-      return testComponentImpl.testComponentImplShard.binding97Provider;
-    }
-
-    @Override
-    public Provider<Binding98> getBinding98Provider() {
-      return testComponentImpl.testComponentImplShard.binding98Provider;
-    }
-
-    @Override
-    public Provider<Binding99> getBinding99Provider() {
-      return testComponentImpl.testComponentImplShard.binding99Provider;
-    }
-
-    @Override
-    public Provider<Binding100> getBinding100Provider() {
-      return testComponentImpl.testComponentImplShard.binding100Provider;
-    }
-  }
-
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
 
     private Provider<Binding0> binding0Provider;
 
@@ -755,10 +239,11 @@ final class DaggerTestComponent {
 
     private Provider<Binding100> binding100Provider;
 
-    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    private TestComponentImpl() {
+
       initialize();
       initialize2();
+
     }
 
     @SuppressWarnings("unchecked")
@@ -868,6 +353,511 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize2() {
       this.binding100Provider = new SwitchingProvider<>(testComponentImpl, 100);
+    }
+
+    @Override
+    public Provider<Binding0> getBinding0Provider() {
+      return binding0Provider;
+    }
+
+    @Override
+    public Provider<Binding1> getBinding1Provider() {
+      return binding1Provider;
+    }
+
+    @Override
+    public Provider<Binding2> getBinding2Provider() {
+      return binding2Provider;
+    }
+
+    @Override
+    public Provider<Binding3> getBinding3Provider() {
+      return binding3Provider;
+    }
+
+    @Override
+    public Provider<Binding4> getBinding4Provider() {
+      return binding4Provider;
+    }
+
+    @Override
+    public Provider<Binding5> getBinding5Provider() {
+      return binding5Provider;
+    }
+
+    @Override
+    public Provider<Binding6> getBinding6Provider() {
+      return binding6Provider;
+    }
+
+    @Override
+    public Provider<Binding7> getBinding7Provider() {
+      return binding7Provider;
+    }
+
+    @Override
+    public Provider<Binding8> getBinding8Provider() {
+      return binding8Provider;
+    }
+
+    @Override
+    public Provider<Binding9> getBinding9Provider() {
+      return binding9Provider;
+    }
+
+    @Override
+    public Provider<Binding10> getBinding10Provider() {
+      return binding10Provider;
+    }
+
+    @Override
+    public Provider<Binding11> getBinding11Provider() {
+      return binding11Provider;
+    }
+
+    @Override
+    public Provider<Binding12> getBinding12Provider() {
+      return binding12Provider;
+    }
+
+    @Override
+    public Provider<Binding13> getBinding13Provider() {
+      return binding13Provider;
+    }
+
+    @Override
+    public Provider<Binding14> getBinding14Provider() {
+      return binding14Provider;
+    }
+
+    @Override
+    public Provider<Binding15> getBinding15Provider() {
+      return binding15Provider;
+    }
+
+    @Override
+    public Provider<Binding16> getBinding16Provider() {
+      return binding16Provider;
+    }
+
+    @Override
+    public Provider<Binding17> getBinding17Provider() {
+      return binding17Provider;
+    }
+
+    @Override
+    public Provider<Binding18> getBinding18Provider() {
+      return binding18Provider;
+    }
+
+    @Override
+    public Provider<Binding19> getBinding19Provider() {
+      return binding19Provider;
+    }
+
+    @Override
+    public Provider<Binding20> getBinding20Provider() {
+      return binding20Provider;
+    }
+
+    @Override
+    public Provider<Binding21> getBinding21Provider() {
+      return binding21Provider;
+    }
+
+    @Override
+    public Provider<Binding22> getBinding22Provider() {
+      return binding22Provider;
+    }
+
+    @Override
+    public Provider<Binding23> getBinding23Provider() {
+      return binding23Provider;
+    }
+
+    @Override
+    public Provider<Binding24> getBinding24Provider() {
+      return binding24Provider;
+    }
+
+    @Override
+    public Provider<Binding25> getBinding25Provider() {
+      return binding25Provider;
+    }
+
+    @Override
+    public Provider<Binding26> getBinding26Provider() {
+      return binding26Provider;
+    }
+
+    @Override
+    public Provider<Binding27> getBinding27Provider() {
+      return binding27Provider;
+    }
+
+    @Override
+    public Provider<Binding28> getBinding28Provider() {
+      return binding28Provider;
+    }
+
+    @Override
+    public Provider<Binding29> getBinding29Provider() {
+      return binding29Provider;
+    }
+
+    @Override
+    public Provider<Binding30> getBinding30Provider() {
+      return binding30Provider;
+    }
+
+    @Override
+    public Provider<Binding31> getBinding31Provider() {
+      return binding31Provider;
+    }
+
+    @Override
+    public Provider<Binding32> getBinding32Provider() {
+      return binding32Provider;
+    }
+
+    @Override
+    public Provider<Binding33> getBinding33Provider() {
+      return binding33Provider;
+    }
+
+    @Override
+    public Provider<Binding34> getBinding34Provider() {
+      return binding34Provider;
+    }
+
+    @Override
+    public Provider<Binding35> getBinding35Provider() {
+      return binding35Provider;
+    }
+
+    @Override
+    public Provider<Binding36> getBinding36Provider() {
+      return binding36Provider;
+    }
+
+    @Override
+    public Provider<Binding37> getBinding37Provider() {
+      return binding37Provider;
+    }
+
+    @Override
+    public Provider<Binding38> getBinding38Provider() {
+      return binding38Provider;
+    }
+
+    @Override
+    public Provider<Binding39> getBinding39Provider() {
+      return binding39Provider;
+    }
+
+    @Override
+    public Provider<Binding40> getBinding40Provider() {
+      return binding40Provider;
+    }
+
+    @Override
+    public Provider<Binding41> getBinding41Provider() {
+      return binding41Provider;
+    }
+
+    @Override
+    public Provider<Binding42> getBinding42Provider() {
+      return binding42Provider;
+    }
+
+    @Override
+    public Provider<Binding43> getBinding43Provider() {
+      return binding43Provider;
+    }
+
+    @Override
+    public Provider<Binding44> getBinding44Provider() {
+      return binding44Provider;
+    }
+
+    @Override
+    public Provider<Binding45> getBinding45Provider() {
+      return binding45Provider;
+    }
+
+    @Override
+    public Provider<Binding46> getBinding46Provider() {
+      return binding46Provider;
+    }
+
+    @Override
+    public Provider<Binding47> getBinding47Provider() {
+      return binding47Provider;
+    }
+
+    @Override
+    public Provider<Binding48> getBinding48Provider() {
+      return binding48Provider;
+    }
+
+    @Override
+    public Provider<Binding49> getBinding49Provider() {
+      return binding49Provider;
+    }
+
+    @Override
+    public Provider<Binding50> getBinding50Provider() {
+      return binding50Provider;
+    }
+
+    @Override
+    public Provider<Binding51> getBinding51Provider() {
+      return binding51Provider;
+    }
+
+    @Override
+    public Provider<Binding52> getBinding52Provider() {
+      return binding52Provider;
+    }
+
+    @Override
+    public Provider<Binding53> getBinding53Provider() {
+      return binding53Provider;
+    }
+
+    @Override
+    public Provider<Binding54> getBinding54Provider() {
+      return binding54Provider;
+    }
+
+    @Override
+    public Provider<Binding55> getBinding55Provider() {
+      return binding55Provider;
+    }
+
+    @Override
+    public Provider<Binding56> getBinding56Provider() {
+      return binding56Provider;
+    }
+
+    @Override
+    public Provider<Binding57> getBinding57Provider() {
+      return binding57Provider;
+    }
+
+    @Override
+    public Provider<Binding58> getBinding58Provider() {
+      return binding58Provider;
+    }
+
+    @Override
+    public Provider<Binding59> getBinding59Provider() {
+      return binding59Provider;
+    }
+
+    @Override
+    public Provider<Binding60> getBinding60Provider() {
+      return binding60Provider;
+    }
+
+    @Override
+    public Provider<Binding61> getBinding61Provider() {
+      return binding61Provider;
+    }
+
+    @Override
+    public Provider<Binding62> getBinding62Provider() {
+      return binding62Provider;
+    }
+
+    @Override
+    public Provider<Binding63> getBinding63Provider() {
+      return binding63Provider;
+    }
+
+    @Override
+    public Provider<Binding64> getBinding64Provider() {
+      return binding64Provider;
+    }
+
+    @Override
+    public Provider<Binding65> getBinding65Provider() {
+      return binding65Provider;
+    }
+
+    @Override
+    public Provider<Binding66> getBinding66Provider() {
+      return binding66Provider;
+    }
+
+    @Override
+    public Provider<Binding67> getBinding67Provider() {
+      return binding67Provider;
+    }
+
+    @Override
+    public Provider<Binding68> getBinding68Provider() {
+      return binding68Provider;
+    }
+
+    @Override
+    public Provider<Binding69> getBinding69Provider() {
+      return binding69Provider;
+    }
+
+    @Override
+    public Provider<Binding70> getBinding70Provider() {
+      return binding70Provider;
+    }
+
+    @Override
+    public Provider<Binding71> getBinding71Provider() {
+      return binding71Provider;
+    }
+
+    @Override
+    public Provider<Binding72> getBinding72Provider() {
+      return binding72Provider;
+    }
+
+    @Override
+    public Provider<Binding73> getBinding73Provider() {
+      return binding73Provider;
+    }
+
+    @Override
+    public Provider<Binding74> getBinding74Provider() {
+      return binding74Provider;
+    }
+
+    @Override
+    public Provider<Binding75> getBinding75Provider() {
+      return binding75Provider;
+    }
+
+    @Override
+    public Provider<Binding76> getBinding76Provider() {
+      return binding76Provider;
+    }
+
+    @Override
+    public Provider<Binding77> getBinding77Provider() {
+      return binding77Provider;
+    }
+
+    @Override
+    public Provider<Binding78> getBinding78Provider() {
+      return binding78Provider;
+    }
+
+    @Override
+    public Provider<Binding79> getBinding79Provider() {
+      return binding79Provider;
+    }
+
+    @Override
+    public Provider<Binding80> getBinding80Provider() {
+      return binding80Provider;
+    }
+
+    @Override
+    public Provider<Binding81> getBinding81Provider() {
+      return binding81Provider;
+    }
+
+    @Override
+    public Provider<Binding82> getBinding82Provider() {
+      return binding82Provider;
+    }
+
+    @Override
+    public Provider<Binding83> getBinding83Provider() {
+      return binding83Provider;
+    }
+
+    @Override
+    public Provider<Binding84> getBinding84Provider() {
+      return binding84Provider;
+    }
+
+    @Override
+    public Provider<Binding85> getBinding85Provider() {
+      return binding85Provider;
+    }
+
+    @Override
+    public Provider<Binding86> getBinding86Provider() {
+      return binding86Provider;
+    }
+
+    @Override
+    public Provider<Binding87> getBinding87Provider() {
+      return binding87Provider;
+    }
+
+    @Override
+    public Provider<Binding88> getBinding88Provider() {
+      return binding88Provider;
+    }
+
+    @Override
+    public Provider<Binding89> getBinding89Provider() {
+      return binding89Provider;
+    }
+
+    @Override
+    public Provider<Binding90> getBinding90Provider() {
+      return binding90Provider;
+    }
+
+    @Override
+    public Provider<Binding91> getBinding91Provider() {
+      return binding91Provider;
+    }
+
+    @Override
+    public Provider<Binding92> getBinding92Provider() {
+      return binding92Provider;
+    }
+
+    @Override
+    public Provider<Binding93> getBinding93Provider() {
+      return binding93Provider;
+    }
+
+    @Override
+    public Provider<Binding94> getBinding94Provider() {
+      return binding94Provider;
+    }
+
+    @Override
+    public Provider<Binding95> getBinding95Provider() {
+      return binding95Provider;
+    }
+
+    @Override
+    public Provider<Binding96> getBinding96Provider() {
+      return binding96Provider;
+    }
+
+    @Override
+    public Provider<Binding97> getBinding97Provider() {
+      return binding97Provider;
+    }
+
+    @Override
+    public Provider<Binding98> getBinding98Provider() {
+      return binding98Provider;
+    }
+
+    @Override
+    public Provider<Binding99> getBinding99Provider() {
+      return binding99Provider;
+    }
+
+    @Override
+    public Provider<Binding100> getBinding100Provider() {
+      return binding100Provider;
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

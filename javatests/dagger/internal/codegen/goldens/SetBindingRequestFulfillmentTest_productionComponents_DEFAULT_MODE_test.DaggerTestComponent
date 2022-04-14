@@ -39,35 +39,26 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent, CancellationListener {
-    private final TestComponentImplShard testComponentImplShard;
-
     private final TestComponentImpl testComponentImpl = this;
 
     private TestComponentImpl() {
 
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+
+    }
+
+    private Set<String> setOfString() {
+      return SetBuilder.<String>newSetBuilder(1).addAll(EmptySetModule_EmptySetFactory.emptySet()).build();
     }
 
     @Override
     public ListenableFuture<Set<String>> strings() {
-      return Futures.immediateFuture(testComponentImpl.testComponentImplShard.setOfString());
+      return Futures.immediateFuture(setOfString());
     }
 
     @Override
     public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
 
-    }
-  }
 
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
-
-    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
-    }
-
-    private Set<String> setOfString() {
-      return SetBuilder.<String>newSetBuilder(1).addAll(EmptySetModule_EmptySetFactory.emptySet()).build();
     }
   }
 }

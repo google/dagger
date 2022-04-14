@@ -41,68 +41,56 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
-    private final TestComponentImplShard2 testComponentImplShard2;
+    private TestComponentImplShard testComponentImplShard;
 
     private final Dependency dependency;
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl(Dependency dependencyParam) {
-      this.dependency = dependencyParam;
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl, dependencyParam);
-      testComponentImplShard2 = new TestComponentImplShard2(testComponentImpl, dependencyParam);
-    }
-
-    @Override
-    public Binding1 binding1() {
-      return testComponentImpl.testComponentImplShard.binding1Provider.get();
-    }
-
-    @Override
-    public Binding2 binding2() {
-      return testComponentImpl.testComponentImplShard.binding2Provider.get();
-    }
-
-    @Override
-    public Binding3 binding3() {
-      return testComponentImpl.testComponentImplShard2.binding3Provider.get();
-    }
-
-    @Override
-    public Provider<Binding1> providerBinding1() {
-      return testComponentImpl.testComponentImplShard.binding1Provider;
-    }
-
-    @Override
-    public Provider<Binding2> providerBinding2() {
-      return testComponentImpl.testComponentImplShard.binding2Provider;
-    }
-
-    @Override
-    public Provider<Binding3> providerBinding3() {
-      return testComponentImpl.testComponentImplShard2.binding3Provider;
-    }
-  }
-
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
-
     private Provider<Binding1> binding1Provider;
 
     private Provider<Binding2> binding2Provider;
 
-    private TestComponentImplShard(TestComponentImpl testComponentImpl,
-        Dependency dependencyParam) {
-      this.testComponentImpl = testComponentImpl;
+    private TestComponentImpl(Dependency dependencyParam) {
+      this.dependency = dependencyParam;
       initialize(dependencyParam);
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl, dependencyParam);
     }
 
     @SuppressWarnings("unchecked")
     private void initialize(final Dependency dependencyParam) {
       this.binding1Provider = DoubleCheck.provider(new SwitchingProvider<Binding1>(testComponentImpl, 0));
       this.binding2Provider = DoubleCheck.provider(new SwitchingProvider<Binding2>(testComponentImpl, 1));
+    }
+
+    @Override
+    public Binding1 binding1() {
+      return binding1Provider.get();
+    }
+
+    @Override
+    public Binding2 binding2() {
+      return binding2Provider.get();
+    }
+
+    @Override
+    public Binding3 binding3() {
+      return testComponentImpl.testComponentImplShard.binding3Provider.get();
+    }
+
+    @Override
+    public Provider<Binding1> providerBinding1() {
+      return binding1Provider;
+    }
+
+    @Override
+    public Provider<Binding2> providerBinding2() {
+      return binding2Provider;
+    }
+
+    @Override
+    public Provider<Binding3> providerBinding3() {
+      return testComponentImpl.testComponentImplShard.binding3Provider;
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -131,12 +119,12 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImplShard2 {
+  private static final class TestComponentImplShard {
     private final TestComponentImpl testComponentImpl;
 
     private Provider<Binding3> binding3Provider;
 
-    private TestComponentImplShard2(TestComponentImpl testComponentImpl,
+    private TestComponentImplShard(TestComponentImpl testComponentImpl,
         Dependency dependencyParam) {
       this.testComponentImpl = testComponentImpl;
       initialize(dependencyParam);

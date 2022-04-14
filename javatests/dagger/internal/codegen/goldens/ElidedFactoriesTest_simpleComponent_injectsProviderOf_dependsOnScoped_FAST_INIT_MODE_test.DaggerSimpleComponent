@@ -36,41 +36,27 @@ final class DaggerSimpleComponent {
   }
 
   private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImplShard simpleComponentImplShard;
-
     private final SimpleComponentImpl simpleComponentImpl = this;
-
-    private SimpleComponentImpl() {
-
-      simpleComponentImplShard = new SimpleComponentImplShard(simpleComponentImpl);
-    }
-
-    @Override
-    public NeedsProvider needsProvider() {
-      return simpleComponentImpl.simpleComponentImplShard.needsProvider();
-    }
-  }
-
-  private static final class SimpleComponentImplShard {
-    private final SimpleComponentImpl simpleComponentImpl;
 
     private Provider<ScopedType> scopedTypeProvider;
 
     private Provider<DependsOnScoped> dependsOnScopedProvider;
 
-    private SimpleComponentImplShard(SimpleComponentImpl simpleComponentImpl) {
-      this.simpleComponentImpl = simpleComponentImpl;
-      initialize();
-    }
+    private SimpleComponentImpl() {
 
-    private NeedsProvider needsProvider() {
-      return new NeedsProvider(dependsOnScopedProvider);
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.scopedTypeProvider = DoubleCheck.provider(new SwitchingProvider<ScopedType>(simpleComponentImpl, 1));
       this.dependsOnScopedProvider = new SwitchingProvider<>(simpleComponentImpl, 0);
+    }
+
+    @Override
+    public NeedsProvider needsProvider() {
+      return new NeedsProvider(dependsOnScopedProvider);
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -88,7 +74,7 @@ final class DaggerSimpleComponent {
       public T get() {
         switch (id) {
           case 0: // test.DependsOnScoped 
-          return (T) new DependsOnScoped(simpleComponentImpl.simpleComponentImplShard.scopedTypeProvider.get());
+          return (T) new DependsOnScoped(simpleComponentImpl.scopedTypeProvider.get());
 
           case 1: // test.ScopedType 
           return (T) new ScopedType();

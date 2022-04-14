@@ -47,8 +47,6 @@ final class DaggerParent {
   }
 
   private static final class ChildImpl implements Child {
-    private final ChildImplShard childImplShard;
-
     private final ParentImpl parentImpl;
 
     private final ChildImpl childImpl = this;
@@ -56,12 +54,12 @@ final class DaggerParent {
     private ChildImpl(ParentImpl parentImpl) {
       this.parentImpl = parentImpl;
 
-      childImplShard = new ChildImplShard(parentImpl, childImpl);
+
     }
 
     @Override
     public Map<String, Object> objectMap() {
-      return childImpl.childImplShard.mapOfStringAndObject();
+      return ImmutableMap.<String, Object>of("parent key", ParentModule_ParentKeyObjectFactory.parentKeyObject(parentImpl.parentModule));
     }
   }
 
@@ -78,21 +76,6 @@ final class DaggerParent {
     @Override
     public Child child() {
       return new ChildImpl(parentImpl);
-    }
-  }
-
-  private static final class ChildImplShard {
-    private final ParentImpl parentImpl;
-
-    private final ChildImpl childImpl;
-
-    private ChildImplShard(ParentImpl parentImpl, ChildImpl childImpl) {
-      this.parentImpl = parentImpl;
-      this.childImpl = childImpl;
-    }
-
-    private Map<String, Object> mapOfStringAndObject() {
-      return ImmutableMap.<String, Object>of("parent key", ParentModule_ParentKeyObjectFactory.parentKeyObject(parentImpl.parentModule));
     }
   }
 }

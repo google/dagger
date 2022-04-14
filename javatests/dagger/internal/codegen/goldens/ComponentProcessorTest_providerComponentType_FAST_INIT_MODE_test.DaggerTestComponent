@@ -35,38 +35,24 @@ public final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
     private final TestComponentImpl testComponentImpl = this;
-
-    private TestComponentImpl() {
-
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
-    }
-
-    @Override
-    public SomeEntryPoint someEntryPoint() {
-      return testComponentImpl.testComponentImplShard.someEntryPoint();
-    }
-  }
-
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
 
     private Provider<Foo> fooProvider;
 
-    private TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
-      initialize();
-    }
+    private TestComponentImpl() {
 
-    private SomeEntryPoint someEntryPoint() {
-      return new SomeEntryPoint(fooProvider.get(), fooProvider);
+      initialize();
+
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.fooProvider = new SwitchingProvider<>(testComponentImpl, 0);
+    }
+
+    @Override
+    public SomeEntryPoint someEntryPoint() {
+      return new SomeEntryPoint(fooProvider.get(), fooProvider);
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

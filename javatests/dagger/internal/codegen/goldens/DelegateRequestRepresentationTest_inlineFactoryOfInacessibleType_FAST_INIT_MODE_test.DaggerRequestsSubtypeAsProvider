@@ -37,36 +37,25 @@ final class DaggerRequestsSubtypeAsProvider {
   }
 
   private static final class RequestsSubtypeAsProviderImpl implements RequestsSubtypeAsProvider {
-    private final RequestsSubtypeAsProviderImplShard requestsSubtypeAsProviderImplShard;
-
     private final RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl = this;
-
-    private RequestsSubtypeAsProviderImpl() {
-
-      requestsSubtypeAsProviderImplShard = new RequestsSubtypeAsProviderImplShard(requestsSubtypeAsProviderImpl);
-    }
-
-    @Override
-    public Provider<Supertype> supertypeProvider() {
-      return requestsSubtypeAsProviderImpl.requestsSubtypeAsProviderImplShard.subtypeProvider;
-    }
-  }
-
-  private static final class RequestsSubtypeAsProviderImplShard {
-    private final RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl;
 
     @SuppressWarnings("rawtypes")
     private Provider subtypeProvider;
 
-    private RequestsSubtypeAsProviderImplShard(
-        RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl) {
-      this.requestsSubtypeAsProviderImpl = requestsSubtypeAsProviderImpl;
+    private RequestsSubtypeAsProviderImpl() {
+
       initialize();
+
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.subtypeProvider = new SwitchingProvider<>(requestsSubtypeAsProviderImpl, 0);
+    }
+
+    @Override
+    public Provider<Supertype> supertypeProvider() {
+      return subtypeProvider;
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

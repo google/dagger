@@ -58,28 +58,11 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
     private final MapModuleOne mapModuleOne;
 
     private final MapModuleTwo mapModuleTwo;
 
     private final TestComponentImpl testComponentImpl = this;
-
-    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
-      this.mapModuleOne = mapModuleOneParam;
-      this.mapModuleTwo = mapModuleTwoParam;
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl, mapModuleOneParam, mapModuleTwoParam);
-    }
-
-    @Override
-    public Provider<Map<String, Provider<Handler>>> dispatcher() {
-      return testComponentImpl.testComponentImplShard.mapOfStringAndProviderOfHandlerProvider;
-    }
-  }
-
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
 
     private Provider<Handler> provideAdminHandlerProvider;
 
@@ -87,10 +70,11 @@ final class DaggerTestComponent {
 
     private Provider<Map<String, Provider<Handler>>> mapOfStringAndProviderOfHandlerProvider;
 
-    private TestComponentImplShard(TestComponentImpl testComponentImpl,
-        MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
-      this.testComponentImpl = testComponentImpl;
+    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+      this.mapModuleOne = mapModuleOneParam;
+      this.mapModuleTwo = mapModuleTwoParam;
       initialize(mapModuleOneParam, mapModuleTwoParam);
+
     }
 
     @SuppressWarnings("unchecked")
@@ -99,6 +83,11 @@ final class DaggerTestComponent {
       this.provideAdminHandlerProvider = new SwitchingProvider<>(testComponentImpl, 1);
       this.provideLoginHandlerProvider = new SwitchingProvider<>(testComponentImpl, 2);
       this.mapOfStringAndProviderOfHandlerProvider = new SwitchingProvider<>(testComponentImpl, 0);
+    }
+
+    @Override
+    public Provider<Map<String, Provider<Handler>>> dispatcher() {
+      return mapOfStringAndProviderOfHandlerProvider;
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -116,7 +105,7 @@ final class DaggerTestComponent {
       public T get() {
         switch (id) {
           case 0: // java.util.Map<java.lang.String,javax.inject.Provider<test.Handler>> 
-          return (T) ImmutableMap.<String, Provider<Handler>>of("Admin", testComponentImpl.testComponentImplShard.provideAdminHandlerProvider, "Login", testComponentImpl.testComponentImplShard.provideLoginHandlerProvider);
+          return (T) ImmutableMap.<String, Provider<Handler>>of("Admin", testComponentImpl.provideAdminHandlerProvider, "Login", testComponentImpl.provideLoginHandlerProvider);
 
           case 1: // java.util.Map<java.lang.String,javax.inject.Provider<test.Handler>> test.MapModuleOne#provideAdminHandler 
           return (T) MapModuleOne_ProvideAdminHandlerFactory.provideAdminHandler(testComponentImpl.mapModuleOne);

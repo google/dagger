@@ -48,59 +48,17 @@ final class DaggerTestComponent {
   }
 
   private static final class TestSubcomponentImpl implements TestSubcomponent {
-    private final TestSubcomponentImplShard testSubcomponentImplShard;
-
     private final TestComponentImpl testComponentImpl;
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
+    private Provider<Object> reliesOnMultibindingProvider;
+
     private TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
       this.testComponentImpl = testComponentImpl;
 
-      testSubcomponentImplShard = new TestSubcomponentImplShard(testComponentImpl, testSubcomponentImpl);
-    }
-
-    @Override
-    public Provider<Object> dependsOnMultibinding() {
-      return testSubcomponentImpl.testSubcomponentImplShard.reliesOnMultibindingProvider;
-    }
-  }
-
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
-    private final ParentModule parentModule;
-
-    private final TestComponentImpl testComponentImpl = this;
-
-    private TestComponentImpl(ParentModule parentModuleParam) {
-      this.parentModule = parentModuleParam;
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl, parentModuleParam);
-    }
-
-    @Override
-    public Provider<Object> dependsOnMultibinding() {
-      return testComponentImpl.testComponentImplShard.reliesOnMultibindingProvider;
-    }
-
-    @Override
-    public TestSubcomponent subcomponent() {
-      return new TestSubcomponentImpl(testComponentImpl);
-    }
-  }
-
-  private static final class TestSubcomponentImplShard {
-    private final TestComponentImpl testComponentImpl;
-
-    private final TestSubcomponentImpl testSubcomponentImpl;
-
-    private Provider<Object> reliesOnMultibindingProvider;
-
-    private TestSubcomponentImplShard(TestComponentImpl testComponentImpl,
-        TestSubcomponentImpl testSubcomponentImpl) {
-      this.testComponentImpl = testComponentImpl;
-      this.testSubcomponentImpl = testSubcomponentImpl;
       initialize();
+
     }
 
     private Set<Object> setOfObject() {
@@ -110,6 +68,11 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.reliesOnMultibindingProvider = new SwitchingProvider<>(testComponentImpl, testSubcomponentImpl, 0);
+    }
+
+    @Override
+    public Provider<Object> dependsOnMultibinding() {
+      return reliesOnMultibindingProvider;
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -131,7 +94,7 @@ final class DaggerTestComponent {
       public T get() {
         switch (id) {
           case 0: // java.lang.Object 
-          return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(testComponentImpl.parentModule, testSubcomponentImpl.testSubcomponentImplShard.setOfObject());
+          return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(testComponentImpl.parentModule, testSubcomponentImpl.setOfObject());
 
           default: throw new AssertionError(id);
         }
@@ -139,15 +102,17 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
+  private static final class TestComponentImpl implements TestComponent {
+    private final ParentModule parentModule;
+
+    private final TestComponentImpl testComponentImpl = this;
 
     private Provider<Object> reliesOnMultibindingProvider;
 
-    private TestComponentImplShard(TestComponentImpl testComponentImpl,
-        ParentModule parentModuleParam) {
-      this.testComponentImpl = testComponentImpl;
+    private TestComponentImpl(ParentModule parentModuleParam) {
+      this.parentModule = parentModuleParam;
       initialize(parentModuleParam);
+
     }
 
     private Set<Object> setOfObject() {
@@ -157,6 +122,16 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize(final ParentModule parentModuleParam) {
       this.reliesOnMultibindingProvider = new SwitchingProvider<>(testComponentImpl, 0);
+    }
+
+    @Override
+    public Provider<Object> dependsOnMultibinding() {
+      return reliesOnMultibindingProvider;
+    }
+
+    @Override
+    public TestSubcomponent subcomponent() {
+      return new TestSubcomponentImpl(testComponentImpl);
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -174,7 +149,7 @@ final class DaggerTestComponent {
       public T get() {
         switch (id) {
           case 0: // java.lang.Object 
-          return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(testComponentImpl.parentModule, testComponentImpl.testComponentImplShard.setOfObject());
+          return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(testComponentImpl.parentModule, testComponentImpl.setOfObject());
 
           default: throw new AssertionError(id);
         }

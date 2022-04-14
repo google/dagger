@@ -58,28 +58,7 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImplShard testComponentImplShard;
-
-    private final MapModuleOne mapModuleOne;
-
-    private final MapModuleTwo mapModuleTwo;
-
     private final TestComponentImpl testComponentImpl = this;
-
-    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
-      this.mapModuleOne = mapModuleOneParam;
-      this.mapModuleTwo = mapModuleTwoParam;
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl, mapModuleOneParam, mapModuleTwoParam);
-    }
-
-    @Override
-    public Provider<Map<PathEnum, Handler>> dispatcher() {
-      return testComponentImpl.testComponentImplShard.mapOfPathEnumAndHandlerProvider;
-    }
-  }
-
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
 
     private Provider<Handler> provideAdminHandlerProvider;
 
@@ -87,18 +66,23 @@ final class DaggerTestComponent {
 
     private Provider<Map<PathEnum, Handler>> mapOfPathEnumAndHandlerProvider;
 
-    private TestComponentImplShard(TestComponentImpl testComponentImpl,
-        MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
-      this.testComponentImpl = testComponentImpl;
+    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+
       initialize(mapModuleOneParam, mapModuleTwoParam);
+
     }
 
     @SuppressWarnings("unchecked")
     private void initialize(final MapModuleOne mapModuleOneParam,
         final MapModuleTwo mapModuleTwoParam) {
-      this.provideAdminHandlerProvider = MapModuleOne_ProvideAdminHandlerFactory.create(testComponentImpl.mapModuleOne);
-      this.provideLoginHandlerProvider = MapModuleTwo_ProvideLoginHandlerFactory.create(testComponentImpl.mapModuleTwo);
+      this.provideAdminHandlerProvider = MapModuleOne_ProvideAdminHandlerFactory.create(mapModuleOneParam);
+      this.provideLoginHandlerProvider = MapModuleTwo_ProvideLoginHandlerFactory.create(mapModuleTwoParam);
       this.mapOfPathEnumAndHandlerProvider = MapFactory.<PathEnum, Handler>builder(2).put(PathEnum.ADMIN, provideAdminHandlerProvider).put(PathEnum.LOGIN, provideLoginHandlerProvider).build();
+    }
+
+    @Override
+    public Provider<Map<PathEnum, Handler>> dispatcher() {
+      return mapOfPathEnumAndHandlerProvider;
     }
   }
 }

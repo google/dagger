@@ -16,18 +16,19 @@
 
 package dagger.internal.codegen.base;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreElements.asExecutable;
+import static androidx.room.compiler.processing.XElementKt.isField;
+import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
+import static dagger.internal.codegen.xprocessing.XElements.asMethodParameter;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XElements.isExecutable;
 import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XExecutableElement;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementVisitor;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.ElementKindVisitor8;
 
 /**
  * Formats elements into a useful string representation.
@@ -36,12 +37,12 @@ import javax.lang.model.util.ElementKindVisitor8;
  *
  * <p>Parameters are given with their enclosing executable, with other parameters elided.
  */
-public final class ElementFormatter extends Formatter<Element> {
+public final class ElementFormatter extends Formatter<XElement> {
   @Inject
   ElementFormatter() {}
 
   @Override
-  public String format(Element element) {
+  public String format(XElement element) {
     return elementToString(element);
   }
 
@@ -53,68 +54,37 @@ public final class ElementFormatter extends Formatter<Element> {
    * <p>Parameters are given with their enclosing executable, with other parameters elided.
    */
   public static String elementToString(XElement element) {
-    return elementToString(toJavac(element));
+    if (isExecutable(element)) {
+      return enclosingTypeAndMemberName(element)
+          .append(
+              asExecutable(element).getParameters().stream()
+                  .map(parameter -> parameter.getType().getTypeName().toString())
+                  .collect(joining(", ", "(", ")")))
+          .toString();
+    } else if (isMethodParameter(element)) {
+      XExecutableElement methodOrConstructor = asMethodParameter(element).getEnclosingElement();
+      return enclosingTypeAndMemberName(methodOrConstructor)
+          .append('(')
+          .append(
+              formatArgumentInList(
+                  methodOrConstructor.getParameters().indexOf(element),
+                  methodOrConstructor.getParameters().size(),
+                  getSimpleName(element)))
+          .append(')')
+          .toString();
+    } else if (isField(element)) {
+      return enclosingTypeAndMemberName(element).toString();
+    } else if (isTypeElement(element)) {
+      return asTypeElement(element).getQualifiedName();
+    }
+    throw new UnsupportedOperationException("Can't determine string for element " + element);
   }
 
-  /**
-   * Returns a useful string form for an element.
-   *
-   * <p>Elements directly enclosed by a type are preceded by the enclosing type's qualified name.
-   *
-   * <p>Parameters are given with their enclosing executable, with other parameters elided.
-   */
-  public static String elementToString(Element element) {
-    return element.accept(ELEMENT_TO_STRING, null);
+  private static StringBuilder enclosingTypeAndMemberName(XElement element) {
+    StringBuilder name = new StringBuilder(elementToString(element.getEnclosingElement()));
+    if (!getSimpleName(element).contentEquals("<init>")) {
+      name.append('.').append(getSimpleName(element));
+    }
+    return name;
   }
-
-  private static final ElementVisitor<String, Void> ELEMENT_TO_STRING =
-      new ElementKindVisitor8<String, Void>() {
-        @Override
-        public String visitExecutable(ExecutableElement executableElement, Void aVoid) {
-          return enclosingTypeAndMemberName(executableElement)
-              .append(
-                  executableElement.getParameters().stream()
-                      .map(parameter -> parameter.asType().toString())
-                      .collect(joining(", ", "(", ")")))
-              .toString();
-        }
-
-        @Override
-        public String visitVariableAsParameter(VariableElement parameter, Void aVoid) {
-          ExecutableElement methodOrConstructor = asExecutable(parameter.getEnclosingElement());
-          return enclosingTypeAndMemberName(methodOrConstructor)
-              .append('(')
-              .append(
-                  formatArgumentInList(
-                      methodOrConstructor.getParameters().indexOf(parameter),
-                      methodOrConstructor.getParameters().size(),
-                      parameter.getSimpleName()))
-              .append(')')
-              .toString();
-        }
-
-        @Override
-        public String visitVariableAsField(VariableElement field, Void aVoid) {
-          return enclosingTypeAndMemberName(field).toString();
-        }
-
-        @Override
-        public String visitType(TypeElement type, Void aVoid) {
-          return type.getQualifiedName().toString();
-        }
-
-        @Override
-        protected String defaultAction(Element element, Void aVoid) {
-          throw new UnsupportedOperationException(
-              "Can't determine string for " + element.getKind() + " element " + element);
-        }
-
-        private StringBuilder enclosingTypeAndMemberName(Element element) {
-          StringBuilder name = new StringBuilder(element.getEnclosingElement().accept(this, null));
-          if (!element.getSimpleName().contentEquals("<init>")) {
-            name.append('.').append(element.getSimpleName());
-          }
-          return name;
-        }
-      };
 }

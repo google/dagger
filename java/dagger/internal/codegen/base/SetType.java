@@ -16,9 +16,7 @@
 
 package dagger.internal.codegen.base;
 
-import static com.google.auto.common.MoreTypes.isType;
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
 
@@ -28,9 +26,8 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.Key;
-import javax.lang.model.type.TypeMirror;
 
-/** Information about a {@link java.util.Set} {@link TypeMirror}. */
+/** Information about a {@link java.util.Set} type. */
 @AutoValue
 public abstract class SetType {
   private XType type;
@@ -76,11 +73,6 @@ public abstract class SetType {
   /** {@code true} if {@code type} is a {@link java.util.Set} type. */
   public static boolean isSet(XType type) {
     return isTypeOf(type, TypeNames.SET);
-  }
-
-  /** {@code true} if {@code type} is a {@link java.util.Set} type. */
-  public static boolean isSet(TypeMirror type) {
-    return isType(type) && isTypeOf(TypeNames.SET, type);
   }
 
   /** {@code true} if {@code key.type()} is a {@link java.util.Set} type. */

@@ -27,9 +27,8 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.Key;
-import javax.lang.model.type.TypeMirror;
 
-/** Information about a {@link java.util.Map} {@link TypeMirror}. */
+/** Information about a {@link java.util.Map} type. */
 @AutoValue
 public abstract class MapType {
   private XType type;

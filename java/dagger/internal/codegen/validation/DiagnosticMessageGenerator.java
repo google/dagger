@@ -34,6 +34,7 @@ import static java.util.Collections.min;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
 
+import androidx.room.compiler.processing.XElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.cache.CacheBuilder;
@@ -60,7 +61,6 @@ import java.util.Comparator;
 import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 /** Helper class for generating diagnostic messages. */
@@ -190,7 +190,7 @@ public final class DiagnosticMessageGenerator {
       ImmutableSet<DependencyEdge> entryPoints) {
     StringBuilder message = new StringBuilder();
     // Print any dependency requests that aren't shown as part of the dependency trace.
-    ImmutableSet<Element> requestsToPrint =
+    ImmutableSet<XElement> requestsToPrint =
         requests.stream()
             // if printing entry points, skip entry points and the traced request
             .filter(
@@ -199,7 +199,7 @@ public final class DiagnosticMessageGenerator {
                         || (!request.isEntryPoint() && !isTracedRequest(dependencyTrace, request)))
             .map(request -> request.dependencyRequest().requestElement())
             .flatMap(presentValues())
-            .map(DaggerElement::java)
+            .map(DaggerElement::xprocessing)
             .collect(toImmutableSet());
     if (!requestsToPrint.isEmpty()) {
       message
@@ -240,17 +240,19 @@ public final class DiagnosticMessageGenerator {
       new Formatter<DependencyEdge>() {
         @Override
         public String format(DependencyEdge object) {
-          Element requestElement = object.dependencyRequest().requestElement().get().java();
-          StringBuilder element = new StringBuilder(elementToString(requestElement));
+          XElement requestElement = object.dependencyRequest().requestElement().get().xprocessing();
+          StringBuilder builder = new StringBuilder(elementToString(requestElement));
 
           // For entry points declared in subcomponents or supertypes of the root component,
           // append the component path to make clear to the user which component it's in.
           ComponentPath componentPath = source(object).componentPath();
           if (!componentPath.atRoot()
-              || !requestElement.getEnclosingElement().equals(componentPath.rootComponent().java())) {
-            element.append(String.format(" [%s]", componentPath));
+              || !requestElement
+                  .getEnclosingElement()
+                  .equals(componentPath.rootComponent().xprocessing())) {
+            builder.append(String.format(" [%s]", componentPath));
           }
-          return element.toString();
+          return builder.toString();
         }
       };
 

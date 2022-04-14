@@ -31,10 +31,9 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.Key;
-import javax.lang.model.type.TypeMirror;
 
 /**
- * Information about an {@code Optional} {@link TypeMirror}.
+ * Information about an {@code Optional} type.
  *
  * <p>{@link com.google.common.base.Optional} and {@link java.util.Optional} are supported.
  */

@@ -47,7 +47,7 @@ final class DependencyEdgeImpl implements DependencyEdge {
     String string =
         dependencyRequest
             .requestElement()
-            .map(DaggerElement::java)
+            .map(DaggerElement::xprocessing)
             .map(ElementFormatter::elementToString)
             .orElseGet(
                 () ->

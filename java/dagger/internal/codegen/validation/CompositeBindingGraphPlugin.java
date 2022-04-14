@@ -217,8 +217,8 @@ public final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
       // TODO(erichang): This repeats some of the logic in DiagnosticReporterImpl. Remove when
       // merged.
       if (transitivelyEncloses(
-          graph.rootComponentNode().componentPath().currentComponent().java(),
-          childFactoryMethodEdge.factoryMethod().java())) {
+          graph.rootComponentNode().componentPath().currentComponent().xprocessing(),
+          childFactoryMethodEdge.factoryMethod().xprocessing())) {
         // Let this pass through since it is not an error reported on the root component
         delegate.reportSubcomponentFactoryMethod(diagnosticKind, childFactoryMethodEdge, message);
       } else {
@@ -226,8 +226,7 @@ public final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
             diagnosticKind,
             String.format(
                 "[%s] %s",
-                elementToString(childFactoryMethodEdge.factoryMethod().java()),
-                message));
+                elementToString(childFactoryMethodEdge.factoryMethod().xprocessing()), message));
       }
     }
 

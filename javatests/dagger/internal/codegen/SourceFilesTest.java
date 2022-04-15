@@ -19,11 +19,9 @@ package dagger.internal.codegen;
 import static com.google.common.truth.Truth.assertThat;
 import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
 
-import com.google.testing.compile.CompilationRule;
+import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.SourceFiles;
 import java.util.List;
-import javax.lang.model.element.TypeElement;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -31,26 +29,20 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link SourceFiles}. */
 @RunWith(JUnit4.class)
 public final class SourceFilesTest {
-  @Rule public CompilationRule compilation = new CompilationRule();
-
-  private TypeElement typeElementFor(Class<?> clazz) {
-    return compilation.getElements().getTypeElement(clazz.getCanonicalName());
-  }
-
   private static final class Int {}
 
   @Test
   public void testSimpleVariableName_typeCollisions() {
     // a handful of boxed types
-    assertThat(simpleVariableName(typeElementFor(Long.class))).isEqualTo("l");
-    assertThat(simpleVariableName(typeElementFor(Double.class))).isEqualTo("d");
+    assertThat(simpleVariableName(ClassName.get(Long.class))).isEqualTo("l");
+    assertThat(simpleVariableName(ClassName.get(Double.class))).isEqualTo("d");
     // not a boxed type type, but a custom type might collide
-    assertThat(simpleVariableName(typeElementFor(Int.class))).isEqualTo("i");
+    assertThat(simpleVariableName(ClassName.get(Int.class))).isEqualTo("i");
     // void is the weird pseudo-boxed type
-    assertThat(simpleVariableName(typeElementFor(Void.class))).isEqualTo("v");
+    assertThat(simpleVariableName(ClassName.get(Void.class))).isEqualTo("v");
     // reflective types
-    assertThat(simpleVariableName(typeElementFor(Class.class))).isEqualTo("clazz");
-    assertThat(simpleVariableName(typeElementFor(Package.class))).isEqualTo("pkg");
+    assertThat(simpleVariableName(ClassName.get(Class.class))).isEqualTo("clazz");
+    assertThat(simpleVariableName(ClassName.get(Package.class))).isEqualTo("pkg");
   }
 
   private static final class For {}
@@ -59,13 +51,13 @@ public final class SourceFilesTest {
 
   @Test
   public void testSimpleVariableName_randomKeywords() {
-    assertThat(simpleVariableName(typeElementFor(For.class))).isEqualTo("for_");
-    assertThat(simpleVariableName(typeElementFor(Goto.class))).isEqualTo("goto_");
+    assertThat(simpleVariableName(ClassName.get(For.class))).isEqualTo("for_");
+    assertThat(simpleVariableName(ClassName.get(Goto.class))).isEqualTo("goto_");
   }
 
   @Test
   public void testSimpleVariableName() {
-    assertThat(simpleVariableName(typeElementFor(Object.class))).isEqualTo("object");
-    assertThat(simpleVariableName(typeElementFor(List.class))).isEqualTo("list");
+    assertThat(simpleVariableName(ClassName.get(Object.class))).isEqualTo("object");
+    assertThat(simpleVariableName(ClassName.get(List.class))).isEqualTo("list");
   }
 }

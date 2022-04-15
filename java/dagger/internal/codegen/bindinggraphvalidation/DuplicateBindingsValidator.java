@@ -26,6 +26,8 @@ import static dagger.spi.model.BindingKind.MEMBERS_INJECTION;
 import static java.util.Comparator.comparing;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -58,8 +60,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
 
 /** Reports errors for conflicting bindings with the same key. */
@@ -331,9 +331,9 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
 
     abstract BindingKind bindingKind();
 
-    abstract Optional<Element> bindingElement();
+    abstract Optional<XElement> bindingElement();
 
-    abstract Optional<TypeElement> contributingModule();
+    abstract Optional<XTypeElement> contributingModule();
 
     static ImmutableSetMultimap<BindingElement, Binding> index(Set<Binding> bindings) {
       return bindings.stream().collect(toImmutableSetMultimap(BindingElement::forBinding, b -> b));
@@ -342,8 +342,8 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
     private static BindingElement forBinding(Binding binding) {
       return new AutoValue_DuplicateBindingsValidator_BindingElement(
           binding.kind(),
-          binding.bindingElement().map(DaggerElement::java),
-          binding.contributingModule().map(DaggerTypeElement::java));
+          binding.bindingElement().map(DaggerElement::xprocessing),
+          binding.contributingModule().map(DaggerTypeElement::xprocessing));
     }
   }
 }

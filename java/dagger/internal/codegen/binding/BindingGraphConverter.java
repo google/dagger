@@ -16,9 +16,6 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.extension.DaggerGraphs.unreachableNodes;
@@ -26,7 +23,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.spi.model.BindingKind.SUBCOMPONENT_CREATOR;
 
 import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -57,19 +54,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 
 /** Converts {@link BindingGraph}s to {@link dagger.spi.model.BindingGraph}s. */
 final class BindingGraphConverter {
-  private final XProcessingEnv processingEnv;
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
 
   @Inject
-  BindingGraphConverter(
-      XProcessingEnv processingEnv, BindingDeclarationFormatter bindingDeclarationFormatter) {
-    this.processingEnv = processingEnv;
+  BindingGraphConverter(BindingDeclarationFormatter bindingDeclarationFormatter) {
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
   }
 
@@ -151,8 +142,7 @@ final class BindingGraphConverter {
      *
      * <ol>
      *   <li>If this component is installed in its parent by a subcomponent factory method, calls
-     *       {@link #visitSubcomponentFactoryMethod(ComponentNode, ComponentNode,
-     *       ExecutableElement)}.
+     *       {@link #visitSubcomponentFactoryMethod(ComponentNode, ComponentNode, XMethodElement)}.
      *   <li>For each entry point in the component, calls {@link #visitEntryPoint(ComponentNode,
      *       DependencyRequest)}.
      *   <li>For each child component, calls {@link #visitComponent(LegacyBindingGraph,
@@ -193,7 +183,7 @@ final class BindingGraphConverter {
               && binding.componentPath().equals(currentComponent.componentPath())) {
             network.addEdge(
                 binding,
-                subcomponentNode(binding.key().type().java(), graph),
+                subcomponentNode(binding.key().type().xprocessing(), graph),
                 new SubcomponentCreatorBindingEdgeImpl(
                     resolvedBindings.subcomponentDeclarations()));
           }
@@ -274,9 +264,9 @@ final class BindingGraphConverter {
      * Returns the LegacyBindingGraph for {@code ancestor}, where {@code ancestor} is in the
      * component path of the current traversal.
      */
-    private LegacyBindingGraph graphForAncestor(TypeElement ancestor) {
+    private LegacyBindingGraph graphForAncestor(XTypeElement ancestor) {
       for (LegacyBindingGraph graph : bindingGraphPath) {
-        if (toJavac(graph.componentDescriptor().typeElement()).equals(ancestor)) {
+        if (graph.componentDescriptor().typeElement().equals(ancestor)) {
           return graph;
         }
       }
@@ -330,7 +320,7 @@ final class BindingGraphConverter {
 
     private ResolvedBindings resolvedDependencies(
         Node source, DependencyRequest dependencyRequest) {
-      return graphForAncestor(source.componentPath().currentComponent().java())
+      return graphForAncestor(source.componentPath().currentComponent().xprocessing())
           .resolvedBindings(bindingRequest(dependencyRequest));
     }
 
@@ -377,9 +367,8 @@ final class BindingGraphConverter {
     }
 
     private ComponentNode subcomponentNode(
-        TypeMirror subcomponentBuilderType, LegacyBindingGraph graph) {
-      XTypeElement subcomponentBuilderElement =
-          toXProcessing(asTypeElement(subcomponentBuilderType), processingEnv);
+        XType subcomponentBuilderType, LegacyBindingGraph graph) {
+      XTypeElement subcomponentBuilderElement = subcomponentBuilderType.getTypeElement();
       ComponentDescriptor subcomponent =
           graph.componentDescriptor().getChildComponentWithBuilderType(subcomponentBuilderElement);
       return ComponentNodeImpl.create(

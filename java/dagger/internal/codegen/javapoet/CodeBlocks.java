@@ -19,21 +19,15 @@ package dagger.internal.codegen.javapoet;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
-import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static java.util.stream.StreamSupport.stream;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import androidx.room.compiler.processing.XType;
-import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import java.util.stream.Collector;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.type.DeclaredType;
 
 /** Convenience methods for creating {@link CodeBlock}s. */
 public final class CodeBlocks {
@@ -74,11 +68,6 @@ public final class CodeBlocks {
    */
   public static CodeBlock concat(Iterable<CodeBlock> codeBlocks) {
     return stream(codeBlocks.spliterator(), false).collect(toConcatenatedCodeBlock());
-  }
-
-  /** Adds an annotation to a method. */
-  public static void addAnnotation(MethodSpec.Builder method, DeclaredType nullableType) {
-    method.addAnnotation(ClassName.get(MoreTypes.asTypeElement(nullableType)));
   }
 
   /**
@@ -125,36 +114,6 @@ public final class CodeBlocks {
 
   public static CodeBlock stringLiteral(String toWrap) {
     return CodeBlock.of("$S", toWrap);
-  }
-
-  /** Returns a javadoc {@literal @link} tag that poins to the given {@link ExecutableElement}. */
-  public static CodeBlock javadocLinkTo(ExecutableElement executableElement) {
-    CodeBlock.Builder builder =
-        CodeBlock.builder()
-            .add(
-                "{@link $T#",
-                rawTypeName(
-                    ClassName.get(MoreElements.asType(executableElement.getEnclosingElement()))));
-    switch (executableElement.getKind()) {
-      case METHOD:
-        builder.add("$L", executableElement.getSimpleName());
-        break;
-      case CONSTRUCTOR:
-        builder.add("$L", executableElement.getEnclosingElement().getSimpleName());
-        break;
-      case STATIC_INIT:
-      case INSTANCE_INIT:
-        throw new IllegalArgumentException(
-            "cannot create a javadoc link to an initializer: " + executableElement);
-      default:
-        throw new AssertionError(executableElement.toString());
-    }
-    builder.add("(");
-    builder.add(
-        executableElement.getParameters().stream()
-            .map(parameter -> CodeBlock.of("$T", rawTypeName(TypeName.get(parameter.asType()))))
-            .collect(toParametersCodeBlock()));
-    return builder.add(")}").build();
   }
 
   private CodeBlocks() {}

@@ -86,7 +86,6 @@ import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.javapoet.TypeSpecs;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.spi.model.BindingGraph.Node;
@@ -270,7 +269,6 @@ public final class ComponentImplementation {
   private final BindingGraph graph;
   private final ComponentNames componentNames;
   private final CompilerOptions compilerOptions;
-  private final DaggerElements elements;
   private final DaggerTypes types;
   private final ImmutableMap<ComponentImplementation, FieldSpec> componentFieldsByImplementation;
   private final XMessager messager;
@@ -288,7 +286,6 @@ public final class ComponentImplementation {
       BindingGraph graph,
       ComponentNames componentNames,
       CompilerOptions compilerOptions,
-      DaggerElements elements,
       DaggerTypes types,
       XMessager messager,
       XProcessingEnv processingEnv) {
@@ -301,7 +298,6 @@ public final class ComponentImplementation {
     this.graph = graph;
     this.componentNames = componentNames;
     this.compilerOptions = compilerOptions;
-    this.elements = elements;
     this.types = types;
     this.processingEnv = processingEnv;
 
@@ -309,9 +305,8 @@ public final class ComponentImplementation {
     this.componentShard = new ShardImplementation(componentNames.get(graph.componentPath()));
 
     // Claim the method names for all local and inherited methods on the component type.
-    elements
-        .getLocalAndInheritedMethods(toJavac(graph.componentTypeElement()))
-        .forEach(method -> componentShard.componentMethodNames.claim(method.getSimpleName()));
+    XTypeElements.getAllNonPrivateInstanceMethods(graph.componentTypeElement()).stream()
+        .forEach(method -> componentShard.componentMethodNames.claim(getSimpleName(method)));
 
     // Create the shards for this component, indexed by binding.
     this.shardsByBinding =
@@ -733,7 +728,7 @@ public final class ComponentImplementation {
       if (graph.componentDescriptor().isProduction()) {
         if (isComponentShard() || !cancellations.isEmpty()) {
           TypeSpecs.addSupertype(
-              builder, elements.getTypeElement(TypeNames.CANCELLATION_LISTENER.canonicalName()));
+              builder, processingEnv.requireTypeElement(TypeNames.CANCELLATION_LISTENER));
           addCancellationListenerImplementation();
         }
       }

@@ -17,14 +17,13 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.XTypeKt.isArray;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.base.MapKeyAccessibility.isMapKeyPubliclyAccessible;
 import static dagger.internal.codegen.binding.SourceFiles.elementBasedClassName;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
+import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
@@ -46,8 +45,6 @@ import dagger.MapKey;
 import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.MapKeyAccessibility;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.xprocessing.XElements;
 import dagger.spi.model.DaggerAnnotation;
 import java.util.NoSuchElementException;
@@ -144,7 +141,7 @@ public final class MapKeys {
    *
    * <p>This method assumes the map key will be accessible in the context that the returned {@link
    * CodeBlock} is used. Use {@link #getMapKeyExpression(ContributionBinding, ClassName,
-   * DaggerElements)} when that assumption is not guaranteed.
+   * XProcessingEnv)} when that assumption is not guaranteed.
    *
    * @throws IllegalArgumentException if the element is annotated with more than one {@code MapKey}
    *     annotation
@@ -176,10 +173,10 @@ public final class MapKeys {
 
   /**
    * Returns the {@link ClassName} in which {@link #mapKeyFactoryMethod(ContributionBinding,
-   * DaggerTypes, DaggerElements)} is generated.
+   * XProcessingEnv)} is generated.
    */
   public static ClassName mapKeyProxyClassName(ContributionBinding binding) {
-    return elementBasedClassName(asExecutable(toJavac(binding.bindingElement().get())), "MapKey");
+    return elementBasedClassName(asExecutable(binding.bindingElement().get()), "MapKey");
   }
 
   /**

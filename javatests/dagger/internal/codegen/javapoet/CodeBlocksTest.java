@@ -17,17 +17,10 @@
 package dagger.internal.codegen.javapoet;
 
 import static com.google.common.truth.Truth.assertThat;
-import static dagger.internal.codegen.javapoet.CodeBlocks.javadocLinkTo;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
-import static javax.lang.model.element.ElementKind.METHOD;
 
-import com.google.testing.compile.CompilationRule;
 import com.squareup.javapoet.CodeBlock;
 import java.util.stream.Stream;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.util.Elements;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -38,14 +31,6 @@ public final class CodeBlocksTest {
   private static final CodeBlock objectO = CodeBlock.of("$T o", Object.class);
   private static final CodeBlock stringS = CodeBlock.of("$T s", String.class);
   private static final CodeBlock intI = CodeBlock.of("$T i", int.class);
-
-  @Rule public CompilationRule compilationRule = new CompilationRule();
-  private Elements elements;
-
-  @Before
-  public void setUp() {
-    this.elements = compilationRule.getElements();
-  }
 
   @Test
   public void testToParametersCodeBlock() {
@@ -61,21 +46,5 @@ public final class CodeBlocksTest {
   @Test
   public void testToParametersCodeBlock_oneElement() {
     assertThat(Stream.of(objectO).collect(toParametersCodeBlock())).isEqualTo(objectO);
-  }
-
-  @Test
-  public void testJavadocLinkTo() {
-    ExecutableElement equals =
-        elements
-            .getTypeElement(Object.class.getCanonicalName())
-            .getEnclosedElements()
-            .stream()
-            .filter(element -> element.getKind().equals(METHOD))
-            .map(ExecutableElement.class::cast)
-            .filter(method -> method.getSimpleName().contentEquals("equals"))
-            .findFirst()
-            .get();
-    assertThat(javadocLinkTo(equals))
-        .isEqualTo(CodeBlock.of("{@link $T#equals($T)}", Object.class, Object.class));
   }
 }

@@ -54,7 +54,6 @@ import java.util.Optional;
 import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.lang.model.element.Element;
 
 /**
  * A plugin which emits nodes and edges for <a href="https://github.com/google/dagger">Dagger</a>
@@ -133,8 +132,8 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
 
   private void addDependencyEdge(
       DependencyRequest dependency, BindingDeclaration bindingDeclaration) {
-    Element requestElement = dependency.requestElement().get().java();
-    Element bindingElement = toJavac(bindingDeclaration.bindingElement().get());
+    XElement requestElement = dependency.requestElement().get().xprocessing();
+    XElement bindingElement = bindingDeclaration.bindingElement().get();
     Optional<VName> requestElementNode = jvmNode(requestElement, "request element");
     Optional<VName> bindingElementNode = jvmNode(bindingElement, "binding element");
     emitEdge(requestElementNode, "/inject/satisfiedby", bindingElementNode);
@@ -161,11 +160,8 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   }
 
   private Optional<VName> jvmNode(XElement element, String name) {
-    return jvmNode(toJavac(element), name);
-  }
-
-  private Optional<VName> jvmNode(Element element, String name) {
-    Optional<VName> jvmNode = kytheGraph.getJvmNode((Symbol) element).map(KytheNode::getVName);
+    Optional<VName> jvmNode =
+        kytheGraph.getJvmNode((Symbol) toJavac(element)).map(KytheNode::getVName);
     if (!jvmNode.isPresent()) {
       logger.warning(String.format("Missing JVM node for %s: %s", name, element));
     }

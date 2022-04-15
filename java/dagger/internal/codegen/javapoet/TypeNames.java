@@ -20,7 +20,6 @@ package dagger.internal.codegen.javapoet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
-import javax.lang.model.type.TypeMirror;
 
 /** Common names and convenience methods for JavaPoet {@link TypeName} usage. */
 public final class TypeNames {
@@ -221,14 +220,6 @@ public final class TypeNames {
     return (typeName instanceof ParameterizedTypeName)
         ? ((ParameterizedTypeName) typeName).rawType
         : typeName;
-  }
-
-  /**
-   * Returns the {@link TypeName} for the raw type of the given {@link TypeMirror}. If the argument
-   * isn't a parameterized type, it returns the argument unchanged.
-   */
-  public static TypeName rawTypeName(TypeMirror type) {
-    return rawTypeName(TypeName.get(type));
   }
 
   private TypeNames() {}

@@ -65,7 +65,8 @@ public final class ApplicationGenerator {
         TypeSpec.classBuilder(wrapperClassName.simpleName())
             .addOriginatingElement(metadata.element())
             .superclass(metadata.baseClassName())
-            .addModifiers(metadata.generatedClassModifiers());
+            .addModifiers(metadata.generatedClassModifiers())
+            .addField(injectedField());
 
     typeSpecBuilder
         .addField(componentManagerField())
@@ -84,9 +85,9 @@ public final class ApplicationGenerator {
 
     if (hasCustomInject()) {
       typeSpecBuilder.addSuperinterface(AndroidClassNames.HAS_CUSTOM_INJECT);
-      typeSpecBuilder.addMethod(customInjectMethod());
+      typeSpecBuilder.addMethod(customInjectMethod()).addMethod(injectionMethod());
     } else {
-      typeSpecBuilder.addMethod(onCreateMethod());
+        typeSpecBuilder.addMethod(onCreateMethod()).addMethod(injectionMethod());
     }
 
     JavaFile.builder(metadata.elementClassName().packageName(), typeSpecBuilder.build())
@@ -184,9 +185,7 @@ public final class ApplicationGenerator {
   // @CallSuper
   // @Override
   // public void onCreate() {
-  //   // This is a known unsafe cast but should be fine if the only use is
-  //   // $APP extends Hilt_$APP
-  //   generatedComponent().inject(($APP) this);
+  //   injectApplication();
   //   super.onCreate();
   // }
   private MethodSpec onCreateMethod() {
@@ -194,22 +193,45 @@ public final class ApplicationGenerator {
         .addAnnotation(AndroidClassNames.CALL_SUPER)
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC)
-        .addCode(injectCodeBlock())
+        .addStatement("injectApplication()")
         .addStatement("super.onCreate()")
+        .build();
+  }
+
+  // public void injectApplication() {
+  //   if (!injected) {
+  //     injected = true;
+  //     // This is a known unsafe cast but should be fine if the only use is
+  //     // $APP extends Hilt_$APP
+  //     generatedComponent().inject(($APP) this);
+  //   }
+  // }
+  private MethodSpec injectionMethod() {
+    return MethodSpec.methodBuilder("injectApplication")
+        .beginControlFlow("if (!injected)")
+        .addStatement("injected = true")
+        .addCode(injectCodeBlock())
+        .endControlFlow()
+        .build();
+  }
+
+  // private boolean injected = false;
+  private static FieldSpec injectedField() {
+    return FieldSpec.builder(TypeName.BOOLEAN, "injected")
+        .addModifiers(Modifier.PRIVATE)
+        .initializer("false")
         .build();
   }
 
   // @Override
   // public final void customInject() {
-  //   // This is a known unsafe cast but is safe in the only correct use case:
-  //   // $APP extends Hilt_$APP
-  //   generatedComponent().inject(($APP) this);
+  //   injectApplication();
   // }
   private MethodSpec customInjectMethod() {
     return MethodSpec.methodBuilder("customInject")
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .addCode(injectCodeBlock())
+        .addStatement("injectApplication()")
         .build();
   }
 

@@ -24,6 +24,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.Comparator.comparing;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMethodElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableMap;
@@ -196,6 +197,19 @@ public final class DaggerElements implements Elements, ClearableCache {
     return element.getAnnotationMirrors().stream()
         .filter(input -> isAnnotationPresent(input.getAnnotationType().asElement(), annotationName))
         .collect(toImmutableSet());
+  }
+
+  /**
+   * Returns the field descriptor of the given {@code element}.
+   *
+   * <p>This is useful for matching Kotlin Metadata JVM Signatures with elements from the AST.
+   *
+   * <p>For reference, see the <a
+   * href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3.2">JVM
+   * specification, section 4.3.2</a>.
+   */
+  public static String getFieldDescriptor(XFieldElement element) {
+    return getFieldDescriptor(toJavac(element));
   }
 
   /**

@@ -137,6 +137,7 @@ public final class TypeNames {
   public static final ClassName EXCEPTION = ClassName.get("java.lang", "Exception");
   public static final ClassName RUNTIME_EXCEPTION = ClassName.get("java.lang", "RuntimeException");
   public static final ClassName MAP = ClassName.get("java.util", "Map");
+  public static final ClassName KOTLIN_METADATA = ClassName.get("kotlin", "Metadata");
   public static final ClassName IMMUTABLE_MAP =
       ClassName.get("com.google.common.collect", "ImmutableMap");
   public static final ClassName SINGLETON = ClassName.get("jakarta.inject", "Singleton");

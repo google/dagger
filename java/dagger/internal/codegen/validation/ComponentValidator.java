@@ -236,9 +236,9 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private void validateClassMethodName() {
-      if (metadataUtil.hasMetadata(toJavac(component))) {
+      if (metadataUtil.hasMetadata(component)) {
         metadataUtil
-            .getAllMethodNamesBySignature(toJavac(component))
+            .getAllMethodNamesBySignature(component)
             .forEach(
                 (signature, name) -> {
                   if (SourceVersion.isKeyword(name)) {

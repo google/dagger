@@ -21,7 +21,6 @@ import static androidx.room.compiler.processing.XElementKt.isField;
 import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.SourceFiles.factoryNameForElement;
@@ -394,7 +393,6 @@ public final class InjectionAnnotations {
               kotlinMetadataUtil
                   .getSyntheticPropertyAnnotations(field, TypeNames.QUALIFIER_JAVAX)
                   .stream())
-          .map(annotation -> toXProcessing(annotation, processingEnv))
           .collect(toImmutableSet());
     }
   }

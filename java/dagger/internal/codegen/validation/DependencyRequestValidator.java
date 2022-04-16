@@ -18,7 +18,6 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XElementKt.isField;
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedInjectionType;
@@ -98,8 +97,8 @@ final class DependencyRequestValidator {
       // so no need to get qualifier from kotlin metadata
       if (!fieldElement.isStatic()
           && isTypeElement(fieldElement.getEnclosingElement())
-          && metadataUtil.hasMetadata(toJavac(fieldElement))
-          && metadataUtil.isMissingSyntheticPropertyForAnnotations(toJavac(fieldElement))) {
+          && metadataUtil.hasMetadata(fieldElement)
+          && metadataUtil.isMissingSyntheticPropertyForAnnotations(fieldElement)) {
         Optional<XTypeElement> membersInjector =
             Optional.ofNullable(
                 processingEnv.findTypeElement(

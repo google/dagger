@@ -185,7 +185,7 @@ public final class ApplicationGenerator {
   // @CallSuper
   // @Override
   // public void onCreate() {
-  //   injectApplication();
+  //   hiltInternalInject();
   //   super.onCreate();
   // }
   private MethodSpec onCreateMethod() {
@@ -193,12 +193,12 @@ public final class ApplicationGenerator {
         .addAnnotation(AndroidClassNames.CALL_SUPER)
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC)
-        .addStatement("injectApplication()")
+        .addStatement("hiltInternalInject()")
         .addStatement("super.onCreate()")
         .build();
   }
 
-  // public void injectApplication() {
+  // public void hiltInternalInject() {
   //   if (!injected) {
   //     injected = true;
   //     // This is a known unsafe cast but should be fine if the only use is
@@ -207,7 +207,8 @@ public final class ApplicationGenerator {
   //   }
   // }
   private MethodSpec injectionMethod() {
-    return MethodSpec.methodBuilder("injectApplication")
+    return MethodSpec.methodBuilder("hiltInternalInject")
+        .addModifiers(Modifier.PROTECTED)
         .beginControlFlow("if (!injected)")
         .addStatement("injected = true")
         .addCode(injectCodeBlock())
@@ -225,13 +226,13 @@ public final class ApplicationGenerator {
 
   // @Override
   // public final void customInject() {
-  //   injectApplication();
+  //   hiltInternalInject();
   // }
   private MethodSpec customInjectMethod() {
     return MethodSpec.methodBuilder("customInject")
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-        .addStatement("injectApplication()")
+        .addStatement("hiltInternalInject()")
         .build();
   }
 

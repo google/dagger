@@ -122,24 +122,55 @@ private constructor(
         AggregatedAnnotation.AGGREGATED_ROOT -> {
           return object : AnnotationVisitor(asmApiVersion, nextAnnotationVisitor) {
             lateinit var rootClass: String
+            var rootPackage: String? = null
+            val rootSimpleNames: MutableList<String> = mutableListOf<String>()
             lateinit var originatingRootClass: String
+            var originatingRootPackage: String? = null
+            val originatingRootSimpleNames: MutableList<String> = mutableListOf<String>()
             lateinit var rootAnnotationClassName: Type
 
             override fun visit(name: String, value: Any?) {
               when (name) {
                 "root" -> rootClass = value as String
+                "rootPackage" -> rootPackage = value as String
                 "originatingRoot" -> originatingRootClass = value as String
+                "originatingRootPackage" -> originatingRootPackage = value as String
                 "rootAnnotation" -> rootAnnotationClassName = (value as Type)
+                else -> throw IllegalStateException("Unexpected annotation value: " + name)
               }
               super.visit(name, value)
             }
 
+            override fun visitArray(name: String): AnnotationVisitor? {
+              return object : AnnotationVisitor(asmApiVersion, super.visitArray(name)) {
+                @Suppress("UNCHECKED_CAST")
+                override fun visit(passThroughValueName: String?, value: Any?) {
+                  // Note that passThroughValueName should usually be null since the real name
+                  // is the name passed to visitArray.
+                  when (name) {
+                    "rootSimpleNames" -> rootSimpleNames.add(value as String)
+                    "originatingRootSimpleNames" -> originatingRootSimpleNames.add(value as String)
+                    else -> error("Unexpected annotation value: $name")
+                  }
+                  super.visit(passThroughValueName, value)
+                }
+              }
+            }
+
             override fun visitEnd() {
+              val rootClassName = parseClassName(rootPackage, rootSimpleNames, rootClass)
+              val originatingRootClassName =
+                parseClassName(
+                  originatingRootPackage,
+                  originatingRootSimpleNames,
+                  originatingRootClass
+                )
+
               aggregatedRoots.add(
                 AggregatedRootIr(
                   fqName = annotatedClassName,
-                  root = ClassName.bestGuess(rootClass),
-                  originatingRoot = ClassName.bestGuess(originatingRootClass),
+                  root = rootClassName,
+                  originatingRoot = originatingRootClassName,
                   rootAnnotation = rootAnnotationClassName.toClassName()
                 )
               )
@@ -400,6 +431,26 @@ private constructor(
         }
       val shortNames = binaryName.substring(packageNameEndIndex + 1).split('$')
       return ClassName.get(packageName, shortNames.first(), *shortNames.drop(1).toTypedArray())
+    }
+
+    fun parseClassName(
+      packageName: String?,
+      simpleNames: List<String>,
+      fallbackCanonicalName: String
+    ): ClassName {
+      if (packageName != null) {
+        check(simpleNames.size > 0)
+        return ClassName.get(
+          packageName,
+          simpleNames.first(),
+          *simpleNames.subList(1, simpleNames.size).toTypedArray()
+        )
+      } else {
+        // This is very unlikely, but if somehow an aggregated root is coming from a jar build with
+        // a previous Dagger version before the package name attribute was introduced, we should
+        // fallback to the old behavior of trying to guess at the name.
+        return ClassName.bestGuess(fallbackCanonicalName)
+      }
     }
   }
 }

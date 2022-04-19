@@ -17,6 +17,7 @@
 package dagger.hilt.processor.internal.root;
 
 import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
@@ -42,13 +43,21 @@ final class AggregatedRootGenerator {
   }
 
   void generate() throws IOException {
+    AnnotationSpec.Builder aggregatedRootAnnotation = AnnotationSpec.builder(
+        ClassNames.AGGREGATED_ROOT)
+            .addMember("root", "$S", rootElement.getQualifiedName())
+            .addMember("rootPackage", "$S", ClassName.get(rootElement).packageName())
+            .addMember("originatingRoot", "$S", originatingRootElement.getQualifiedName())
+            .addMember("originatingRootPackage", "$S",
+                ClassName.get(originatingRootElement).packageName())
+            .addMember("rootAnnotation", "$T.class", rootAnnotation);
+    ClassName.get(rootElement).simpleNames().forEach(
+        name -> aggregatedRootAnnotation.addMember("rootSimpleNames", "$S", name));
+    ClassName.get(originatingRootElement).simpleNames().forEach(
+        name -> aggregatedRootAnnotation.addMember("originatingRootSimpleNames", "$S", name));
     Processors.generateAggregatingClass(
         ClassNames.AGGREGATED_ROOT_PACKAGE,
-        AnnotationSpec.builder(ClassNames.AGGREGATED_ROOT)
-            .addMember("root", "$S", rootElement.getQualifiedName())
-            .addMember("originatingRoot", "$S", originatingRootElement.getQualifiedName())
-            .addMember("rootAnnotation", "$T.class", rootAnnotation)
-            .build(),
+        aggregatedRootAnnotation.build(),
         rootElement,
         getClass(),
         processingEnv);

@@ -28,9 +28,36 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
 public @interface AggregatedRoot {
+  /** Canonical name of the root class. Only used if the below package/simple names aren't set. */
   String root();
 
+  /**
+   * Package of the root class, separated because this isn't guaranteed to be distinguishable from
+   * the canonical name.
+   */
+  String rootPackage();
+
+  /**
+   * The root class's simple names, in order of outer to inner.
+   */
+  String[] rootSimpleNames();
+
+  /**
+   * Deprecated. Canonical name of the originating root class. Only used if the below package/simple
+   * names aren't set.
+   */
   String originatingRoot();
+
+  /**
+   * Package of the originating root class, separated because this isn't guaranteed to be
+   * distinguishable from the canonical name.
+   */
+  String originatingRootPackage();
+
+  /**
+   * The originating root class's simple names, in order of outer to inner.
+   */
+  String[] originatingRootSimpleNames();
 
   Class<?> rootAnnotation();
 }

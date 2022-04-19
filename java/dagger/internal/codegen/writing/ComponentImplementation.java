@@ -45,7 +45,6 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.tools.Diagnostic.Kind.ERROR;
-import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XMethodElement;
@@ -89,6 +88,7 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.javapoet.TypeSpecs;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.spi.model.BindingGraph.Node;
 import dagger.spi.model.Key;
 import dagger.spi.model.RequestKind;
@@ -834,7 +834,7 @@ public final class ComponentImplementation {
     // TODO(bcorso): This can be removed once we delete generatedClassExtendsComponent flag.
     private void validateMethodNameDoesNotOverrideGeneratedCreator(String creatorName) {
       // Check if there is any client added method has the same signature as generated creatorName.
-      asStream(graph.componentTypeElement().getAllMethods())
+      XTypeElements.getAllMethods(graph.componentTypeElement()).stream()
           .filter(method -> getSimpleName(method).contentEquals(creatorName))
           .filter(method -> method.getParameters().isEmpty())
           .filter(method -> !method.isStatic())

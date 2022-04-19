@@ -42,7 +42,6 @@ import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static java.util.Comparator.comparing;
-import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XExecutableParameterElement;
@@ -71,6 +70,7 @@ import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.ArrayDeque;
@@ -445,7 +445,7 @@ public final class ComponentValidator implements ClearableCache {
       // Collect entry point methods that are not overridden by others. If the "same" method is
       // inherited from more than one supertype, each will be in the multimap.
       SetMultimap<String, XMethodElement> entryPoints = HashMultimap.create();
-      asStream(component.getAllMethods())
+      XTypeElements.getAllMethods(component).stream()
           .filter(method -> isEntryPoint(method, method.asMemberOf(component.getType())))
           .forEach(
               method -> addMethodUnlessOverridden(method, entryPoints.get(getSimpleName(method))));

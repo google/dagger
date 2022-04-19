@@ -72,9 +72,39 @@ public final class XTypeElements {
 
   /** Returns all non-private, non-static, abstract methods in {@code type}. */
   public static ImmutableList<XMethodElement> getAllUnimplementedMethods(XTypeElement type) {
-    return asStream(type.getAllNonPrivateInstanceMethods())
+    return getAllNonPrivateInstanceMethods(type).stream()
         .filter(XHasModifiers::isAbstract)
         .collect(toImmutableList());
+  }
+
+  /** Returns all non-private, non-static methods in {@code type}. */
+  public static ImmutableList<XMethodElement> getAllNonPrivateInstanceMethods(XTypeElement type) {
+    return getAllMethods(type).stream()
+        .filter(method -> !method.isPrivate() && !method.isStatic())
+        .collect(toImmutableList());
+  }
+
+  // TODO(b/229784604): This is needed until the XProcessing getAllMethods fix is upstreamed. Due
+  // to the existing bug, XTypeElement#getAllMethods() will currently contain some inaccessible
+  // package-private methods from base classes, so we filter them manually here.
+  public static ImmutableList<XMethodElement> getAllMethods(XTypeElement type) {
+    return asStream(type.getAllMethods())
+        .filter(method -> isAccessibleFrom(method, type))
+        .collect(toImmutableList());
+  }
+
+  private static boolean isAccessibleFrom(XMethodElement method, XTypeElement type) {
+    if (method.isPublic() || method.isProtected()) {
+      return true;
+    }
+    if (method.isPrivate()) {
+      return false;
+    }
+    return method
+        .getClosestMemberContainer()
+        .getClassName()
+        .packageName()
+        .equals(type.getClassName().packageName());
   }
 
   public static boolean isEffectivelyPublic(XTypeElement element) {

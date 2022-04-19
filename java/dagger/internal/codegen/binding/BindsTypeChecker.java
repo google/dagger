@@ -20,7 +20,6 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.onlyElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.getUnboundedWildcardType;
-import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
@@ -29,6 +28,7 @@ import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.xprocessing.XProcessingEnvs;
+import dagger.internal.codegen.xprocessing.XTypeElements;
 import javax.inject.Inject;
 
 /**
@@ -76,7 +76,7 @@ public final class BindsTypeChecker {
 
   private ImmutableList<XType> methodParameterTypes(XType type, String methodName) {
     return ImmutableList.copyOf(
-        asStream(type.getTypeElement().getAllMethods())
+        XTypeElements.getAllMethods(type.getTypeElement()).stream()
             .filter(method -> methodName.contentEquals(getSimpleName(method)))
             .collect(onlyElement())
             .asMemberOf(type)

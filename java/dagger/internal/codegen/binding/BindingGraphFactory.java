@@ -33,7 +33,6 @@ import static dagger.spi.model.BindingKind.OPTIONAL;
 import static dagger.spi.model.BindingKind.SUBCOMPONENT_CREATOR;
 import static dagger.spi.model.RequestKind.MEMBERS_INJECTION;
 import static java.util.function.Predicate.isEqual;
-import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
@@ -54,6 +53,7 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.producers.internal.ProductionExecutorModule;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
@@ -138,7 +138,7 @@ public final class BindingGraphFactory implements ClearableCache {
       // we've already added with the binding element removed since that is the only thing
       // allowed to differ.
       HashMultimap<String, ContributionBinding> dedupeBindings = HashMultimap.create();
-      asStream(dependency.typeElement().getAllMethods())
+      XTypeElements.getAllMethods(dependency.typeElement()).stream()
           // MembersInjection methods aren't "provided" explicitly, so ignore them.
           .filter(ComponentDescriptor::isComponentContributionMethod)
           .forEach(

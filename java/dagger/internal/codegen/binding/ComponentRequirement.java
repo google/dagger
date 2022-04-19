@@ -26,7 +26,6 @@ import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isNested;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
-import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
@@ -36,6 +35,7 @@ import com.google.auto.value.AutoValue;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.Key;
 import java.util.Optional;
@@ -152,7 +152,7 @@ public abstract class ComponentRequirement {
     if (typeElement().isKotlinObject() || typeElement().isCompanionObject()) {
       return false;
     }
-    return asStream(typeElement().getAllNonPrivateInstanceMethods())
+    return XTypeElements.getAllNonPrivateInstanceMethods(typeElement()).stream()
         .filter(this::isBindingMethod)
         .anyMatch(method -> !method.isAbstract() && !method.isStatic());
   }

@@ -34,7 +34,6 @@ import static dagger.internal.codegen.xprocessing.XTypeElements.isEffectivelyPub
 import static dagger.internal.codegen.xprocessing.XTypes.areEquivalentTypes;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static java.util.stream.Collectors.joining;
-import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XAnnotationValue;
@@ -61,6 +60,7 @@ import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.xprocessing.XElements;
+import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.Scope;
 import java.util.ArrayList;
@@ -546,13 +546,13 @@ public final class ModuleValidator {
    * binding methods are considered {@code static}, requiring no module instance.
    */
   private boolean requiresModuleInstance(XTypeElement module) {
-    // Note: We use XTypeElement#getAllMethods() rather than XTypeElement#getDeclaredMethods() here
+    // Note: We use XTypeElements#getAllMethods() rather than XTypeElement#getDeclaredMethods() here
     // because we need to include binding methods declared in supertypes because unlike most other
     // validations being done in this class, which assume that supertype binding methods will be
     // validated in a separate call to the validator since the supertype itself must be a @Module,
     // we need to look at all the binding methods in the module's type hierarchy here.
     return !(module.isKotlinObject() || module.isCompanionObject())
-        && !asStream(module.getAllMethods())
+        && !XTypeElements.getAllMethods(module).stream()
             .filter(anyBindingMethodValidator::isBindingMethod)
             .allMatch(method -> method.isAbstract() || method.isStatic());
   }

@@ -24,7 +24,6 @@ import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPrese
 import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
-import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XConstructorType;
@@ -46,6 +45,7 @@ import com.squareup.javapoet.TypeName;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.spi.model.BindingKind;
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +60,7 @@ public final class AssistedInjectionAnnotations {
 
   /** Returns the list of abstract factory methods for the given factory {@link XTypeElement}. */
   public static ImmutableSet<XMethodElement> assistedFactoryMethods(XTypeElement factory) {
-    return asStream(factory.getAllNonPrivateInstanceMethods())
+    return XTypeElements.getAllNonPrivateInstanceMethods(factory).stream()
         .filter(XHasModifiers::isAbstract)
         .filter(method -> !method.isJavaDefault())
         .collect(toImmutableSet());

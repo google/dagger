@@ -30,7 +30,6 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.isSubcomp
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
-import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
@@ -45,6 +44,7 @@ import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ModuleAnnotation;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.spi.model.Scope;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -110,7 +110,7 @@ public final class ComponentDescriptorFactory {
     ImmutableMap.Builder<XMethodElement, ComponentRequirement> dependenciesByDependencyMethod =
         ImmutableMap.builder();
     for (ComponentRequirement componentDependency : componentDependencies) {
-      asStream(componentDependency.typeElement().getAllMethods())
+      XTypeElements.getAllMethods(componentDependency.typeElement()).stream()
           .filter(ComponentDescriptor::isComponentContributionMethod)
           .forEach(method -> dependenciesByDependencyMethod.put(method, componentDependency));
     }

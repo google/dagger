@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.definecomponent.DefineComponents;
+import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;

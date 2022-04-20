@@ -37,11 +37,10 @@ java_library(
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:components",
-        "//java/dagger/hilt/processor/internal:kotlin",
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/hilt/processor/internal/kotlin",
         "//java/dagger/internal/codegen/extension",
-        "//java/dagger/internal/codegen/kotlin",
         "//third_party/java/auto:common",
         "//third_party/java/auto:service",
         "//third_party/java/auto:value",
@@ -50,7 +49,6 @@ java_library(
         "//third_party/java/incap",
         "//third_party/java/javapoet",
         "//third_party/java/jsr250_annotations",
-        "//third_party/java/jsr330_inject",
     ],
 )
 

@@ -59,15 +59,13 @@ java_library(
     ],
     deps = [
         ":classnames",
-        ":kotlin",
         ":processor_errors",
+        "//java/dagger/hilt/processor/internal/kotlin",
         "//java/dagger/internal/codegen/extension",
-        "//java/dagger/internal/codegen/kotlin",
         "//third_party/java/auto:common",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
-        "//third_party/java/jsr330_inject",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
         "@maven//:org_jetbrains_kotlinx_kotlinx_metadata_jvm",
     ],
@@ -130,24 +128,15 @@ java_library(
     deps = [
         ":classnames",
         ":component_descriptor",
-        ":kotlin",
         ":processor_errors",
         ":processors",
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
+        "//java/dagger/hilt/processor/internal/kotlin",
         "//java/dagger/internal/codegen/extension",
         "//third_party/java/auto:common",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
-    ],
-)
-
-java_library(
-    name = "kotlin",
-    srcs = ["KotlinMetadataUtils.java"],
-    deps = [
-        "//:dagger_with_compiler",
-        "//java/dagger/internal/codegen/kotlin",
     ],
 )
 

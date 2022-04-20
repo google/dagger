@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package dagger.hilt.processor.internal;
+package dagger.hilt.processor.internal.kotlin;
 
 import dagger.Component;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import javax.inject.Singleton;
 
 /**

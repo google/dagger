@@ -24,7 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
+import static dagger.internal.codegen.javapoet.TypeNames.isFutureType;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 

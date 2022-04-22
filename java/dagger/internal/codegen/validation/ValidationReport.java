@@ -18,7 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerElements.transitivelyEncloses;
+import static dagger.internal.codegen.xprocessing.XElements.transitivelyEncloses;
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 import static javax.tools.Diagnostic.Kind.WARNING;

@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerElements.transitivelyEncloses;
+import static dagger.internal.codegen.xprocessing.XElements.transitivelyEncloses;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;

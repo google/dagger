@@ -19,10 +19,12 @@ package dagger.internal.codegen.validation;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XMethodElements.getEnclosingTypeElement;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isSubtype;
 import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
@@ -31,18 +33,16 @@ import com.google.errorprone.annotations.FormatMethod;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Optional;
 
 /** A validator for methods that represent binding declarations. */
 abstract class BindingMethodValidator extends BindingElementValidator<XMethodElement> {
-
-  private final DaggerTypes types;
-  private final DependencyRequestValidator dependencyRequestValidator;
   private final ClassName methodAnnotation;
   private final ImmutableSet<ClassName> enclosingElementAnnotations;
   private final Abstractness abstractness;
   private final ExceptionSuperclass exceptionSuperclass;
+  private final XProcessingEnv processingEnv;
+  private final DependencyRequestValidator dependencyRequestValidator;
 
   /**
    * Creates a validator object.
@@ -52,24 +52,24 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
    *     with this annotation
    */
   protected BindingMethodValidator(
-      DaggerTypes types,
-      DependencyRequestValidator dependencyRequestValidator,
       ClassName methodAnnotation,
       ClassName enclosingElementAnnotation,
       Abstractness abstractness,
       ExceptionSuperclass exceptionSuperclass,
       AllowsMultibindings allowsMultibindings,
       AllowsScoping allowsScoping,
+      XProcessingEnv processingEnv,
+      DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     this(
-        types,
         methodAnnotation,
         ImmutableSet.of(enclosingElementAnnotation),
-        dependencyRequestValidator,
         abstractness,
         exceptionSuperclass,
         allowsMultibindings,
         allowsScoping,
+        processingEnv,
+        dependencyRequestValidator,
         injectionAnnotations);
   }
 
@@ -81,22 +81,22 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
    *     annotated with one of these annotations
    */
   protected BindingMethodValidator(
-      DaggerTypes types,
       ClassName methodAnnotation,
       Iterable<ClassName> enclosingElementAnnotations,
-      DependencyRequestValidator dependencyRequestValidator,
       Abstractness abstractness,
       ExceptionSuperclass exceptionSuperclass,
       AllowsMultibindings allowsMultibindings,
       AllowsScoping allowsScoping,
+      XProcessingEnv processingEnv,
+      DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(allowsMultibindings, allowsScoping, injectionAnnotations);
-    this.types = types;
     this.methodAnnotation = methodAnnotation;
     this.enclosingElementAnnotations = ImmutableSet.copyOf(enclosingElementAnnotations);
-    this.dependencyRequestValidator = dependencyRequestValidator;
     this.abstractness = abstractness;
     this.exceptionSuperclass = exceptionSuperclass;
+    this.processingEnv = processingEnv;
+    this.dependencyRequestValidator = dependencyRequestValidator;
   }
 
   /** The annotation that identifies binding methods validated by this object. */
@@ -299,8 +299,8 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
       XType exceptionSupertype = validator.processingEnv.findType(superclass);
       XType errorType = validator.processingEnv.findType(TypeNames.ERROR);
       for (XType thrownType : element.getThrownTypes()) {
-        if (!validator.types.isSubtype(thrownType, exceptionSupertype)
-            && !validator.types.isSubtype(thrownType, errorType)) {
+        if (!isSubtype(thrownType, exceptionSupertype, validator.processingEnv)
+            && !isSubtype(thrownType, errorType, validator.processingEnv)) {
           report.addError(errorMessage(validator));
           break;
         }

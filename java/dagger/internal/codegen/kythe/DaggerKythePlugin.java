@@ -20,11 +20,11 @@
 package dagger.internal.codegen.kythe;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.compat.XConverters;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.Iterables;
 import com.google.devtools.kythe.analyzers.base.EntrySet;
@@ -70,13 +70,13 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
 
   @Override
   public Void visitClassDef(JCClassDecl tree, Void p) {
-    if (tree.sym != null
-        && isAnyAnnotationPresent(tree.sym, TypeNames.COMPONENT, TypeNames.PRODUCTION_COMPONENT)) {
-      addNodesForGraph(
-          bindingGraphFactory.create(
-              componentDescriptorFactory.rootComponentDescriptor(
-                  XConverters.toXProcessing(tree.sym, xProcessingEnv)),
-              false));
+    if (tree.sym != null) {
+      XTypeElement type = toXProcessing(tree.sym, xProcessingEnv);
+      if (type.hasAnyAnnotation(TypeNames.COMPONENT, TypeNames.PRODUCTION_COMPONENT)) {
+        addNodesForGraph(
+            bindingGraphFactory.create(
+                componentDescriptorFactory.rootComponentDescriptor(type), false));
+      }
     }
     return super.visitClassDef(tree, p);
   }

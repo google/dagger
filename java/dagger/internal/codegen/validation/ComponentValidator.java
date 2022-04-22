@@ -17,7 +17,6 @@
 package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XTypeKt.isVoid;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.consumingIterable;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -39,6 +38,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.javacOverrides;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static java.util.Comparator.comparing;
@@ -47,6 +47,7 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.HashMultimap;
@@ -69,7 +70,6 @@ import dagger.internal.codegen.binding.ErrorMessages;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
@@ -92,7 +92,7 @@ import javax.lang.model.SourceVersion;
  */
 @Singleton
 public final class ComponentValidator implements ClearableCache {
-  private final DaggerElements elements;
+  private final XProcessingEnv processingEnv;
   private final ModuleValidator moduleValidator;
   private final ComponentCreatorValidator creatorValidator;
   private final DependencyRequestValidator dependencyRequestValidator;
@@ -105,7 +105,7 @@ public final class ComponentValidator implements ClearableCache {
 
   @Inject
   ComponentValidator(
-      DaggerElements elements,
+      XProcessingEnv processingEnv,
       ModuleValidator moduleValidator,
       ComponentCreatorValidator creatorValidator,
       DependencyRequestValidator dependencyRequestValidator,
@@ -114,7 +114,7 @@ public final class ComponentValidator implements ClearableCache {
       DependencyRequestFactory dependencyRequestFactory,
       DaggerSuperficialValidation superficialValidation,
       KotlinMetadataUtil metadataUtil) {
-    this.elements = elements;
+    this.processingEnv = processingEnv;
     this.moduleValidator = moduleValidator;
     this.creatorValidator = creatorValidator;
     this.dependencyRequestValidator = dependencyRequestValidator;
@@ -543,10 +543,8 @@ public final class ComponentValidator implements ClearableCache {
    */
   // TODO(dpb): Does this break for ECJ?
   private boolean overridesAsDeclared(XMethodElement overrider, XMethodElement overridden) {
-    return elements.overrides(
-        toJavac(overrider),
-        toJavac(overridden),
-        toJavac(asTypeElement(overrider.getEnclosingElement())));
+    return javacOverrides(
+        overrider, overridden, asTypeElement(overrider.getEnclosingElement()), processingEnv);
   }
 
   private static Optional<XAnnotation> checkForAnnotations(XType type, Set<ClassName> annotations) {

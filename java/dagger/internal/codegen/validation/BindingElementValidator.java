@@ -30,7 +30,6 @@ import static dagger.internal.codegen.xprocessing.XTypes.isTypeVariable;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
@@ -48,16 +47,12 @@ import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
 import javax.inject.Qualifier;
 
 /** A validator for elements that represent binding declarations. */
 public abstract class BindingElementValidator<E extends XElement> {
   private static final ImmutableSet<ClassName> MULTIBINDING_ANNOTATIONS =
       ImmutableSet.of(TypeNames.INTO_SET, TypeNames.ELEMENTS_INTO_SET, TypeNames.INTO_MAP);
-
-  // TODO(bcorso): Inject this directly into InjectionAnnotations instead of using field injection.
-  @Inject XProcessingEnv processingEnv;
 
   private final AllowsMultibindings allowsMultibindings;
   private final AllowsScoping allowsScoping;

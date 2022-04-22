@@ -22,11 +22,11 @@ import static dagger.internal.codegen.validation.BindingMethodValidator.Abstract
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.RUNTIME_EXCEPTION;
 
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
 
 /** A validator for {@link dagger.Provides} methods. */
@@ -36,18 +36,18 @@ final class ProvidesMethodValidator extends BindingMethodValidator {
 
   @Inject
   ProvidesMethodValidator(
-      DaggerTypes types,
+      XProcessingEnv processingEnv,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
-        types,
         TypeNames.PROVIDES,
         ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
-        dependencyRequestValidator,
         MUST_BE_CONCRETE,
         RUNTIME_EXCEPTION,
         ALLOWS_MULTIBINDINGS,
         ALLOWS_SCOPING,
+        processingEnv,
+        dependencyRequestValidator,
         injectionAnnotations);
     this.dependencyRequestValidator = dependencyRequestValidator;
   }

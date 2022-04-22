@@ -27,6 +27,7 @@ import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConst
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.nonObjectSuperclass;
 import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
@@ -35,6 +36,7 @@ import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.Maps;
@@ -53,8 +55,6 @@ import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.Key;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -74,8 +74,7 @@ import javax.tools.Diagnostic.Kind;
  */
 @Singleton
 final class InjectBindingRegistryImpl implements InjectBindingRegistry {
-  private final DaggerElements elements;
-  private final DaggerTypes types;
+  private final XProcessingEnv processingEnv;
   private final XMessager messager;
   private final InjectValidator injectValidator;
   private final InjectValidator injectValidatorWhenGeneratingCode;
@@ -140,7 +139,8 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
                   "Generating a %s for %s. "
                       + "Prefer to run the dagger processor over that class instead.",
                   factoryClass.simpleName(),
-                  types.erasure(binding.key().type().java()))); // erasure to strip <T> from msgs.
+                  // erasure to strip <T> from msgs.
+                  erasure(binding.key().type().xprocessing(), processingEnv)));
         }
       }
     }
@@ -150,7 +150,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
       return !binding.unresolved().isPresent()
           && !materializedBindingKeys.contains(binding.key())
           && !bindingsRequiringGeneration.contains(binding)
-          && elements.getTypeElement(generatedClassNameForBinding(binding)) == null;
+          && processingEnv.findTypeElement(generatedClassNameForBinding(binding)) == null;
     }
 
     /** Caches the binding for future lookups by key. */
@@ -175,15 +175,13 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
 
   @Inject
   InjectBindingRegistryImpl(
-      DaggerElements elements,
-      DaggerTypes types,
+      XProcessingEnv processingEnv,
       XMessager messager,
       InjectValidator injectValidator,
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
       CompilerOptions compilerOptions) {
-    this.elements = elements;
-    this.types = types;
+    this.processingEnv = processingEnv;
     this.messager = messager;
     this.injectValidator = injectValidator;
     this.injectValidatorWhenGeneratingCode = injectValidator.whenGeneratingCode();

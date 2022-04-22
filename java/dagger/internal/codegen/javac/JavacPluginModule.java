@@ -18,7 +18,6 @@ package dagger.internal.codegen.javac;
 
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.sun.tools.javac.model.JavacElements;
 import com.sun.tools.javac.model.JavacTypes;
 import com.sun.tools.javac.util.Context;
@@ -28,9 +27,6 @@ import dagger.Provides;
 import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.compileroption.CompilerOptions;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.util.Elements; // ALLOW_TYPES_ELEMENTS
 import javax.lang.model.util.Types; // ALLOW_TYPES_ELEMENTS
 
@@ -60,18 +56,6 @@ public final class JavacPluginModule {
   @Provides
   XMessager messager() {
     return processingEnv.getMessager();
-  }
-
-  @Provides
-  DaggerElements daggerElements() {
-    ProcessingEnvironment env = XConverters.toJavac(processingEnv);
-    return new DaggerElements(env.getElementUtils(), env.getTypeUtils()); // ALLOW_TYPES_ELEMENTS
-  }
-
-  @Provides
-  DaggerTypes daggerTypes(DaggerElements elements) {
-    ProcessingEnvironment env = XConverters.toJavac(processingEnv);
-    return new DaggerTypes(env.getTypeUtils(), elements); // ALLOW_TYPES_ELEMENTS
   }
 
   @Provides

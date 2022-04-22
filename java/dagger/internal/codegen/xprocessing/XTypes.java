@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static androidx.room.compiler.processing.XTypeKt.isArray;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -34,6 +35,20 @@ import javax.lang.model.type.TypeKind;
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XType} helper methods. */
 public final class XTypes {
+
+  /**
+   * Throws {@link TypeNotPresentException} if {@code type} is an {@link
+   * javax.lang.model.type.ErrorType}.
+   */
+  public static void checkTypePresent(XType type) {
+    if (isArray(type)) {
+      checkTypePresent(asArray(type).getComponentType());
+    } else if (isDeclared(type)) {
+      type.getTypeArguments().forEach(XTypes::checkTypePresent);
+    } else if (type.isError()) {
+      throw new TypeNotPresentException(type.toString(), null);
+    }
+  }
 
   /** Returns {@code true} if the given type is a raw type of a parameterized type. */
   public static boolean isRawParameterizedType(XType type) {

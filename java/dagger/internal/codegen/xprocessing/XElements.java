@@ -25,6 +25,9 @@ import static androidx.room.compiler.processing.XElementKt.isVariableElement;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static java.util.stream.Collectors.joining;
+import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XAnnotated;
 import androidx.room.compiler.processing.XAnnotation;
@@ -43,7 +46,6 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -87,6 +89,20 @@ public final class XElements {
         .orElseThrow(() -> new IllegalStateException("No enclosing TypeElement for: " + element));
   }
 
+  /**
+   * Returns {@code true} if {@code encloser} is equal to or transitively encloses {@code enclosed}.
+   */
+  public static boolean transitivelyEncloses(XElement encloser, XElement enclosed) {
+    XElement current = enclosed;
+    while (current != null) {
+      if (current.equals(encloser)) {
+        return true;
+      }
+      current = current.getEnclosingElement();
+    }
+    return false;
+  }
+
   private static Optional<XTypeElement> optionalClosestEnclosingTypeElement(XElement element) {
     if (isTypeElement(element)) {
       return Optional.of(asTypeElement(element));
@@ -100,6 +116,14 @@ public final class XElements {
       return optionalClosestEnclosingTypeElement(asMethodParameter(element).getEnclosingElement());
     }
     return Optional.empty();
+  }
+
+  public static boolean isPrivate(XElement element) {
+    return toJavac(element).getModifiers().contains(PRIVATE);
+  }
+
+  public static boolean isStatic(XElement element) {
+    return toJavac(element).getModifiers().contains(STATIC);
   }
 
   public static boolean isPackage(XElement element) {
@@ -283,7 +307,7 @@ public final class XElements {
           String parameterDescriptors =
               executableType.getParameterTypes().stream()
                   .map(XElements::getDescriptor)
-                  .collect(Collectors.joining());
+                  .collect(joining());
           String returnDescriptor = getDescriptor(executableType.getReturnType());
           return "(" + parameterDescriptors + ")" + returnDescriptor;
         }

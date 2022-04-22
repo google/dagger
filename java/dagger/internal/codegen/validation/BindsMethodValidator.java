@@ -23,6 +23,7 @@ import static dagger.internal.codegen.validation.BindingMethodValidator.Exceptio
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
@@ -32,7 +33,6 @@ import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.BindsTypeChecker;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
 
 /** A validator for {@link dagger.Binds} methods. */
@@ -42,20 +42,21 @@ final class BindsMethodValidator extends BindingMethodValidator {
 
   @Inject
   BindsMethodValidator(
-      DaggerTypes types,
       BindsTypeChecker bindsTypeChecker,
-      DependencyRequestValidator dependencyRequestValidator,
       DaggerSuperficialValidation superficialValidation,
+      XProcessingEnv processingEnv,
+
+      DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
-        types,
         TypeNames.BINDS,
         ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
-        dependencyRequestValidator,
         MUST_BE_ABSTRACT,
         NO_EXCEPTIONS,
         ALLOWS_MULTIBINDINGS,
         ALLOWS_SCOPING,
+        processingEnv,
+        dependencyRequestValidator,
         injectionAnnotations);
     this.bindsTypeChecker = bindsTypeChecker;
     this.superficialValidation = superficialValidation;

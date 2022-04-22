@@ -27,7 +27,6 @@ import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.ProductionBinding;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -52,8 +51,7 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
       ProducerNodeInstanceRequestRepresentation.Factory
           producerNodeInstanceRequestRepresentationFactory,
       UnscopedFrameworkInstanceCreationExpressionFactory
-          unscopedFrameworkInstanceCreationExpressionFactory,
-      DaggerTypes types) {
+          unscopedFrameworkInstanceCreationExpressionFactory) {
     this.binding = binding;
     this.derivedFromFrameworkInstanceRequestRepresentationFactory =
         derivedFromFrameworkInstanceRequestRepresentationFactory;

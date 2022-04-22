@@ -16,18 +16,17 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room.compiler.processing.XFiler;
-import androidx.room.compiler.processing.compat.XConverters;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ProcessingOptions;
 import dagger.internal.codegen.compileroption.ValidationType;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.validation.DiagnosticReporterFactory.DiagnosticReporterImpl;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraphPlugin;
@@ -40,8 +39,7 @@ public final class ValidationBindingGraphPlugins {
   private final ImmutableSet<BindingGraphPlugin> plugins;
   private final DiagnosticReporterFactory diagnosticReporterFactory;
   private final XFiler filer;
-  private final DaggerTypes types;
-  private final DaggerElements elements;
+  private final XProcessingEnv processingEnv;
   private final CompilerOptions compilerOptions;
   private final Map<String, String> processingOptions;
 
@@ -50,15 +48,13 @@ public final class ValidationBindingGraphPlugins {
       @Validation ImmutableSet<BindingGraphPlugin> plugins,
       DiagnosticReporterFactory diagnosticReporterFactory,
       XFiler filer,
-      DaggerTypes types,
-      DaggerElements elements,
+      XProcessingEnv processingEnv,
       CompilerOptions compilerOptions,
       @ProcessingOptions Map<String, String> processingOptions) {
     this.plugins = plugins;
     this.diagnosticReporterFactory = diagnosticReporterFactory;
     this.filer = filer;
-    this.types = types;
-    this.elements = elements;
+    this.processingEnv = processingEnv;
     this.compilerOptions = compilerOptions;
     this.processingOptions = processingOptions;
   }
@@ -77,9 +73,9 @@ public final class ValidationBindingGraphPlugins {
   }
 
   private void initializePlugin(BindingGraphPlugin plugin) {
-    plugin.initFiler(XConverters.toJavac(filer));
-    plugin.initTypes(types);
-    plugin.initElements(elements);
+    plugin.initFiler(toJavac(filer));
+    plugin.initTypes(toJavac(processingEnv).getTypeUtils()); // ALLOW_TYPES_ELEMENTS
+    plugin.initElements(toJavac(processingEnv).getElementUtils()); // ALLOW_TYPES_ELEMENTS
     Set<String> supportedOptions = plugin.supportedOptions();
     if (!supportedOptions.isEmpty()) {
       plugin.initOptions(Maps.filterKeys(processingOptions, supportedOptions::contains));

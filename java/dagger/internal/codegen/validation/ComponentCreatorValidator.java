@@ -21,6 +21,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.getCreatorAnnotations;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isSubtype;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
 import static dagger.internal.codegen.xprocessing.XTypeElements.hasTypeParameters;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
@@ -29,6 +30,7 @@ import static javax.lang.model.SourceVersion.isKeyword;
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
@@ -40,7 +42,6 @@ import dagger.internal.codegen.binding.ErrorMessages;
 import dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,12 +53,12 @@ import javax.inject.Singleton;
 public final class ComponentCreatorValidator implements ClearableCache {
 
   private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
-  private final DaggerTypes types;
+  private final XProcessingEnv processingEnv;
   private final KotlinMetadataUtil metadataUtil;
 
   @Inject
-  ComponentCreatorValidator(DaggerTypes types, KotlinMetadataUtil metadataUtil) {
-    this.types = types;
+  ComponentCreatorValidator(XProcessingEnv processingEnv, KotlinMetadataUtil metadataUtil) {
+    this.processingEnv = processingEnv;
     this.metadataUtil = metadataUtil;
   }
 
@@ -253,7 +254,7 @@ public final class ComponentCreatorValidator implements ClearableCache {
 
     private void validateSetterMethod(XMethodElement method) {
       XType returnType = method.asMemberOf(creator.getType()).getReturnType();
-      if (!isVoid(returnType) && !types.isSubtype(creator.getType(), returnType)) {
+      if (!isVoid(returnType) && !isSubtype(creator.getType(), returnType, processingEnv)) {
         error(
             method,
             messages.setterMethodsMustReturnVoidOrBuilder(),
@@ -331,7 +332,7 @@ public final class ComponentCreatorValidator implements ClearableCache {
     private boolean validateFactoryMethodReturnType(XMethodElement method) {
       XTypeElement component = creator.getEnclosingTypeElement();
       XType returnType = method.asMemberOf(creator.getType()).getReturnType();
-      if (!types.isSubtype(component.getType(), returnType)) {
+      if (!isSubtype(component.getType(), returnType, processingEnv)) {
         error(
             method,
             messages.factoryMethodMustReturnComponentType(),

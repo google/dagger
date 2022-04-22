@@ -16,7 +16,8 @@
 
 package dagger.internal.codegen.javapoet;
 
-
+import androidx.room.compiler.processing.XType;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
@@ -157,6 +158,8 @@ public final class TypeNames {
       ClassName.get("com.google.common.util.concurrent", "Futures");
   public static final ClassName LISTENABLE_FUTURE =
       ClassName.get("com.google.common.util.concurrent", "ListenableFuture");
+  public static final ClassName FLUENT_FUTURE =
+      ClassName.get("com.google.common.util.concurrent", "FluentFuture");
   public static final ClassName GUAVA_OPTIONAL =
       ClassName.get("com.google.common.base", "Optional");
   public static final ClassName JDK_OPTIONAL = ClassName.get("java.util", "Optional");
@@ -211,6 +214,17 @@ public final class TypeNames {
 
   public static ParameterizedTypeName setOf(TypeName elementType) {
     return ParameterizedTypeName.get(SET, elementType);
+  }
+
+  private static final ImmutableSet<ClassName> FUTURE_TYPES =
+      ImmutableSet.of(LISTENABLE_FUTURE, FLUENT_FUTURE);
+
+  public static boolean isFutureType(XType type) {
+    return isFutureType(type.getTypeName());
+  }
+
+  public static boolean isFutureType(TypeName typeName) {
+    return FUTURE_TYPES.contains(rawTypeName(typeName));
   }
 
   /**

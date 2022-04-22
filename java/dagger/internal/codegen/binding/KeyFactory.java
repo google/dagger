@@ -28,7 +28,7 @@ import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.Optionals.firstPresent;
-import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
+import static dagger.internal.codegen.javapoet.TypeNames.isFutureType;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
 import static java.util.Arrays.asList;

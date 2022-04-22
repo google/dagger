@@ -17,8 +17,8 @@
 package dagger.internal.codegen;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.truth.Truth.assertThat;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.getPrimitiveIntType;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
@@ -27,10 +27,8 @@ import com.squareup.javapoet.ClassName;
 import dagger.Component;
 import dagger.internal.codegen.javac.JavacPluginModule;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.lang.model.type.TypeKind;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,7 +40,6 @@ public class ExpressionTest {
   @Rule public CompilationRule compilationRule = new CompilationRule();
 
   @Inject XProcessingEnv processingEnv;
-  @Inject DaggerTypes types;
 
   interface Supertype {}
 
@@ -74,7 +71,7 @@ public class ExpressionTest {
 
   @Test
   public void box() {
-    XType primitiveInt = toXProcessing(types.getPrimitiveType(TypeKind.INT), processingEnv);
+    XType primitiveInt = getPrimitiveIntType(processingEnv);
 
     Expression primitiveExpression = Expression.create(primitiveInt, "5");
     Expression boxedExpression = primitiveExpression.box();

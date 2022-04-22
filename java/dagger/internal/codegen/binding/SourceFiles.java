@@ -17,6 +17,7 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.XElementKt.isConstructor;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -37,13 +38,16 @@ import static dagger.internal.codegen.javapoet.TypeNames.SET_PRODUCER;
 import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XElements.isExecutable;
 import static dagger.internal.codegen.xprocessing.XTypeElements.typeVariableNames;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
 import static dagger.spi.model.BindingKind.INJECTION;
 import static dagger.spi.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.spi.model.BindingKind.MULTIBOUND_SET;
+import static java.util.Comparator.comparing;
 import static javax.lang.model.SourceVersion.isName;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XTypeElement;
@@ -64,12 +68,34 @@ import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.RequestKind;
+import java.util.Comparator;
+import java.util.List;
 import javax.lang.model.SourceVersion;
 
 /** Utilities for generating files. */
 public class SourceFiles {
 
   private static final Joiner CLASS_FILE_NAME_JOINER = Joiner.on('_');
+
+  /**
+   * Compares elements according to their declaration order among siblings. Only valid to compare
+   * elements enclosed by the same parent.
+   */
+  // TODO(bcorso): Look into replacing DECLARATION_ORDER with something more efficient that doesn't
+  // have to re-iterate over all fields to find the index.
+  public static final Comparator<XElement> DECLARATION_ORDER =
+      comparing(element -> siblings(element).indexOf(element));
+
+  private static List<? extends XElement> siblings(XElement element) {
+    if (isTypeElement(element.getEnclosingElement())) {
+      return asTypeElement(element.getEnclosingElement()).getEnclosedElements();
+    } else if (isExecutable(element.getEnclosingElement())) {
+      // For parameter elements, element.getEnclosingElement().getEnclosedElements() is empty. So
+      // instead look at the parameter list of the enclosing executable.
+      return asExecutable(element.getEnclosingElement()).getParameters();
+    }
+    throw new AssertionError("Unexpected element type: " + element);
+  }
 
   /**
    * Generates names and keys for the factory class fields needed to hold the framework classes for

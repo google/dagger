@@ -24,11 +24,11 @@ import static dagger.internal.codegen.validation.BindingMethodValidator.Abstract
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
 
 /** A validator for {@link dagger.BindsOptionalOf} methods. */
@@ -37,18 +37,18 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
 
   @Inject
   BindsOptionalOfMethodValidator(
-      DaggerTypes types,
+      XProcessingEnv processingEnv,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
-        types,
         TypeNames.BINDS_OPTIONAL_OF,
         ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
-        dependencyRequestValidator,
         MUST_BE_ABSTRACT,
         NO_EXCEPTIONS,
         NO_MULTIBINDINGS,
         NO_SCOPING,
+        processingEnv,
+        dependencyRequestValidator,
         injectionAnnotations);
     this.injectionAnnotations = injectionAnnotations;
   }

@@ -25,6 +25,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
+import static dagger.internal.codegen.langmodel.Accessibility.accessibleType;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
@@ -62,7 +63,6 @@ import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedPara
 import dagger.internal.codegen.binding.BindingFactory;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.validation.SuperficialValidator;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
@@ -77,7 +77,6 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
   private final XProcessingEnv processingEnv;
   private final XMessager messager;
   private final XFiler filer;
-  private final DaggerTypes types;
   private final BindingFactory bindingFactory;
   private final SuperficialValidator superficialValidator;
 
@@ -86,13 +85,11 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
       XProcessingEnv processingEnv,
       XMessager messager,
       XFiler filer,
-      DaggerTypes types,
       BindingFactory bindingFactory,
       SuperficialValidator superficialValidator) {
     this.processingEnv = processingEnv;
     this.messager = messager;
     this.filer = filer;
-    this.types = types;
     this.bindingFactory = bindingFactory;
     this.superficialValidator = superficialValidator;
   }
@@ -323,7 +320,10 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
                       INSTANCE_FACTORY,
                       // Java 7 type inference requires the method call provide the exact type here.
                       isPreJava8SourceVersion(processingEnv)
-                          ? CodeBlock.of("<$T>", types.accessibleType(metadata.factoryType(), name))
+                          ? CodeBlock.of(
+                              "<$T>",
+                              accessibleType(metadata.factoryType(), name, processingEnv)
+                                  .getTypeName())
                           : CodeBlock.of(""),
                       name,
                       delegateFactoryParam)

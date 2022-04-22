@@ -24,13 +24,13 @@ import static dagger.internal.codegen.validation.BindingMethodValidator.Exceptio
 import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
 
 /** A validator for {@link dagger.multibindings.Multibinds} methods. */
@@ -39,18 +39,18 @@ class MultibindsMethodValidator extends BindingMethodValidator {
   /** Creates a validator for {@link dagger.multibindings.Multibinds @Multibinds} methods. */
   @Inject
   MultibindsMethodValidator(
-      DaggerTypes types,
+      XProcessingEnv processingEnv,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
-        types,
         TypeNames.MULTIBINDS,
         ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
-        dependencyRequestValidator,
         MUST_BE_ABSTRACT,
         NO_EXCEPTIONS,
         NO_MULTIBINDINGS,
         NO_SCOPING,
+        processingEnv,
+        dependencyRequestValidator,
         injectionAnnotations);
   }
 

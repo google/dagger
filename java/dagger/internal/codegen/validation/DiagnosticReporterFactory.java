@@ -18,7 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
-import static dagger.internal.codegen.langmodel.DaggerElements.transitivelyEncloses;
+import static dagger.internal.codegen.xprocessing.XElements.transitivelyEncloses;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room.compiler.processing.XElement;

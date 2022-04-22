@@ -23,12 +23,12 @@ import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.indexOf;
 import static com.google.common.collect.Iterables.transform;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
+import static dagger.internal.codegen.binding.SourceFiles.DECLARATION_ORDER;
 import static dagger.internal.codegen.extension.DaggerGraphs.shortestPath;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.extension.DaggerStreams.presentValues;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerElements.DECLARATION_ORDER;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 import static java.util.Collections.min;
@@ -388,7 +388,7 @@ public final class DiagnosticMessageGenerator {
    */
   private Comparator<DependencyEdge> requestElementDeclarationOrder() {
     return comparing(
-        edge -> edge.dependencyRequest().requestElement().get().java(), DECLARATION_ORDER);
+        edge -> edge.dependencyRequest().requestElement().get().xprocessing(), DECLARATION_ORDER);
   }
 
   private Node source(Edge edge) {

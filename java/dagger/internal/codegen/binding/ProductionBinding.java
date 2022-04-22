@@ -17,7 +17,7 @@
 package dagger.internal.codegen.binding;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
+import static dagger.internal.codegen.javapoet.TypeNames.isFutureType;
 
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;

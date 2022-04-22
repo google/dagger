@@ -82,6 +82,16 @@ java_library(
 )
 
 java_library(
+    name = "element_descriptors",
+    srcs = [
+        "ElementDescriptors.java",
+    ],
+    deps = [
+        "//third_party/java/auto:common",
+    ],
+)
+
+java_library(
     name = "component_names",
     srcs = [
         "ComponentNames.java",

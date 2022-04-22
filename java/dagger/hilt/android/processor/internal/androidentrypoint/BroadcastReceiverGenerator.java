@@ -16,7 +16,7 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import static dagger.internal.codegen.langmodel.DaggerElements.getMethodDescriptor;
+import static dagger.hilt.processor.internal.ElementDescriptors.getMethodDescriptor;
 
 import com.google.common.collect.Iterables;
 import com.squareup.javapoet.ClassName;

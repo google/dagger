@@ -18,6 +18,7 @@ package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.langmodel.Accessibility.accessibleType;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isPreJava8SourceVersion;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.wrapType;
 
 import androidx.room.compiler.processing.XProcessingEnv;
@@ -30,24 +31,20 @@ import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.javapoet.TypeNames;
-import javax.lang.model.SourceVersion;
 
 final class ImmediateFutureRequestRepresentation extends RequestRepresentation {
   private final RequestRepresentation instanceRequestRepresentation;
   private final XType type;
   private final XProcessingEnv processingEnv;
-  private final SourceVersion sourceVersion;
 
   @AssistedInject
   ImmediateFutureRequestRepresentation(
       @Assisted RequestRepresentation instanceRequestRepresentation,
       @Assisted XType type,
-      XProcessingEnv processingEnv,
-      SourceVersion sourceVersion) {
+      XProcessingEnv processingEnv) {
     this.instanceRequestRepresentation = checkNotNull(instanceRequestRepresentation);
     this.type = checkNotNull(type);
     this.processingEnv = processingEnv;
-    this.sourceVersion = sourceVersion;
   }
 
   @Override
@@ -59,7 +56,7 @@ final class ImmediateFutureRequestRepresentation extends RequestRepresentation {
 
   private CodeBlock instanceExpression(ClassName requestingClass) {
     Expression expression = instanceRequestRepresentation.getDependencyExpression(requestingClass);
-    if (sourceVersion.compareTo(SourceVersion.RELEASE_7) <= 0) {
+    if (isPreJava8SourceVersion(processingEnv)) {
       // Java 7 type inference is not as strong as in Java 8, and therefore some generated code must
       // cast.
       //

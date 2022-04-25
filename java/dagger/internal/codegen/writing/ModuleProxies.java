@@ -29,6 +29,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
@@ -38,10 +39,8 @@ import dagger.internal.codegen.base.ModuleKind;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.SourceFiles;
 import dagger.internal.codegen.langmodel.Accessibility;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.SourceVersion;
 
 /** Convenience methods for generating and using module constructor proxy methods. */
 public final class ModuleProxies {
@@ -54,9 +53,8 @@ public final class ModuleProxies {
       extends SourceFileGenerator<XTypeElement> {
 
     @Inject
-    ModuleConstructorProxyGenerator(
-        XFiler filer, DaggerElements elements, SourceVersion sourceVersion) {
-      super(filer, elements, sourceVersion);
+    ModuleConstructorProxyGenerator(XFiler filer, XProcessingEnv processingEnv) {
+      super(filer, processingEnv);
     }
 
     @Override

@@ -26,10 +26,32 @@ import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
+import java.util.Optional;
+import javax.lang.model.SourceVersion;
 
-// TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XProcessingEnvs} helper methods. */
+// TODO(bcorso): Consider moving these methods into XProcessing library.
 public final class XProcessingEnvs {
+  /** Returns {@code true} if the sources are being compiled on a javac and the version is <= 8. */
+  public static boolean isPreJava8SourceVersion(XProcessingEnv processingEnv) {
+    Optional<SourceVersion> javaSourceVersion = javaSourceVersion(processingEnv);
+    return javaSourceVersion.isPresent()
+        && javaSourceVersion.get().compareTo(SourceVersion.RELEASE_8) < 0;
+  }
+
+  /**
+   * Returns an optional containing the java source version if the current sources are being
+   * compiled with javac, or else returns an empty optional.
+   */
+  private static Optional<SourceVersion> javaSourceVersion(XProcessingEnv processingEnv) {
+    switch (processingEnv.getBackend()) {
+      case JAVAC:
+        return Optional.of(toJavac(processingEnv).getSourceVersion());
+      case KSP:
+        return Optional.empty();
+    }
+    throw new AssertionError("Unexpected backend: " + processingEnv.getBackend());
+  }
 
   /** Returns a new unbounded wildcard type argument, i.e. {@code <?>}. */
   public static XType getUnboundedWildcardType(XProcessingEnv processingEnv) {

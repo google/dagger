@@ -28,6 +28,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.MethodSpec;
@@ -36,17 +37,15 @@ import dagger.Module;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.SourceFiles;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.multibindings.Multibinds;
 import javax.inject.Inject;
-import javax.lang.model.SourceVersion;
 
 /** Generates a monitoring module for use with production components. */
 final class MonitoringModuleGenerator extends SourceFileGenerator<XTypeElement> {
 
   @Inject
-  MonitoringModuleGenerator(XFiler filer, DaggerElements elements, SourceVersion sourceVersion) {
-    super(filer, elements, sourceVersion);
+  MonitoringModuleGenerator(XFiler filer, XProcessingEnv processingEnv) {
+    super(filer, processingEnv);
   }
 
   @Override

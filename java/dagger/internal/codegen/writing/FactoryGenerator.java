@@ -67,7 +67,6 @@ import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
 import dagger.spi.model.BindingKind;
@@ -79,7 +78,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.lang.model.SourceVersion;
 
 /**
  * Generates {@link Factory} implementations from {@link ProvisionBinding} instances for {@link
@@ -92,11 +90,9 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
   @Inject
   FactoryGenerator(
       XFiler filer,
-      SourceVersion sourceVersion,
-      DaggerElements elements,
       CompilerOptions compilerOptions,
       XProcessingEnv processingEnv) {
-    super(filer, elements, sourceVersion);
+    super(filer, processingEnv);
     this.compilerOptions = compilerOptions;
     this.processingEnv = processingEnv;
   }

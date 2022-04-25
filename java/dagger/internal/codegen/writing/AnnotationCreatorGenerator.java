@@ -31,6 +31,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -40,11 +41,9 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.base.SourceFileGenerator;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.lang.model.SourceVersion;
 
 /**
  * Generates classes that create annotation instances for an annotation type. The generated class
@@ -78,8 +77,8 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement
       ClassName.get("com.google.auto.value", "AutoAnnotation");
 
   @Inject
-  AnnotationCreatorGenerator(XFiler filer, DaggerElements elements, SourceVersion sourceVersion) {
-    super(filer, elements, sourceVersion);
+  AnnotationCreatorGenerator(XFiler filer, XProcessingEnv processingEnv) {
+    super(filer, processingEnv);
   }
 
   @Override

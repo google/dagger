@@ -20,6 +20,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isPreJava8SourceVersion;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import com.squareup.javapoet.ClassName;
@@ -32,14 +33,12 @@ import dagger.internal.codegen.base.OptionalType.OptionalKind;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.spi.model.DependencyRequest;
-import javax.lang.model.SourceVersion;
 
 /** A binding expression for optional bindings. */
 final class OptionalRequestRepresentation extends RequestRepresentation {
   private final ProvisionBinding binding;
   private final ComponentRequestRepresentations componentRequestRepresentations;
   private final XProcessingEnv processingEnv;
-  private final SourceVersion sourceVersion;
   private final boolean isExperimentalMergedMode;
 
   @AssistedInject
@@ -47,12 +46,10 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
       @Assisted ProvisionBinding binding,
       ComponentImplementation componentImplementation,
       ComponentRequestRepresentations componentRequestRepresentations,
-      XProcessingEnv processingEnv,
-      SourceVersion sourceVersion) {
+      XProcessingEnv processingEnv) {
     this.binding = binding;
     this.componentRequestRepresentations = componentRequestRepresentations;
     this.processingEnv = processingEnv;
-    this.sourceVersion = sourceVersion;
     this.isExperimentalMergedMode =
         componentImplementation.compilerMode().isExperimentalMergedMode();
   }
@@ -62,7 +59,7 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
     OptionalType optionalType = OptionalType.from(binding.key());
     OptionalKind optionalKind = optionalType.kind();
     if (binding.dependencies().isEmpty()) {
-      if (sourceVersion.compareTo(SourceVersion.RELEASE_7) <= 0) {
+      if (isPreJava8SourceVersion(processingEnv)) {
         // When compiling with -source 7, javac's type inference isn't strong enough to detect
         // Futures.immediateFuture(Optional.absent()) for keys that aren't Object. It also has
         // issues

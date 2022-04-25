@@ -50,6 +50,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -73,7 +74,6 @@ import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.producers.Producer;
 import dagger.producers.internal.AbstractProducesMethodProducer;
 import dagger.producers.internal.Producers;
@@ -85,7 +85,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.SourceVersion;
 
 /** Generates {@link Producer} implementations from {@link ProductionBinding} instances. */
 public final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBinding> {
@@ -95,11 +94,10 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
   @Inject
   ProducerFactoryGenerator(
       XFiler filer,
-      DaggerElements elements,
-      SourceVersion sourceVersion,
+      XProcessingEnv processingEnv,
       CompilerOptions compilerOptions,
       KeyFactory keyFactory) {
-    super(filer, elements, sourceVersion);
+    super(filer, processingEnv);
     this.compilerOptions = compilerOptions;
     this.keyFactory = keyFactory;
   }

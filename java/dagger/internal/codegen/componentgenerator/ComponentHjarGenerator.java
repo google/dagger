@@ -35,6 +35,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Ascii;
@@ -52,12 +53,10 @@ import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.MethodSignature;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.xprocessing.MethodSpecs;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.lang.model.SourceVersion;
 
 /**
  * A component generator that emits only API, without any actual implementation.
@@ -77,11 +76,8 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
 
   @Inject
   ComponentHjarGenerator(
-      XFiler filer,
-      DaggerElements elements,
-      SourceVersion sourceVersion,
-      CompilerOptions compilerOptions) {
-    super(filer, elements, sourceVersion);
+      XFiler filer, XProcessingEnv processingEnv, CompilerOptions compilerOptions) {
+    super(filer, processingEnv);
     this.compilerOptions = compilerOptions;
   }
 

@@ -30,9 +30,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.MapKeys;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import javax.inject.Inject;
-import javax.lang.model.SourceVersion;
 
 /**
  * Generates a class that exposes a non-{@code public} {@link
@@ -43,12 +41,8 @@ public final class InaccessibleMapKeyProxyGenerator
   private final XProcessingEnv processingEnv;
 
   @Inject
-  InaccessibleMapKeyProxyGenerator(
-      XProcessingEnv processingEnv,
-      XFiler filer,
-      DaggerElements elements,
-      SourceVersion sourceVersion) {
-    super(filer, elements, sourceVersion);
+  InaccessibleMapKeyProxyGenerator(XProcessingEnv processingEnv, XFiler filer) {
+    super(filer, processingEnv);
     this.processingEnv = processingEnv;
   }
 

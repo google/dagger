@@ -25,8 +25,10 @@ import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod.requiresInjectionMethod;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isPreJava8SourceVersion;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreTypes;
@@ -44,7 +46,6 @@ import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementati
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
 import dagger.spi.model.DependencyRequest;
 import java.util.Optional;
-import javax.lang.model.SourceVersion;
 
 /**
  * A binding expression that invokes methods or constructors directly (without attempting to scope)
@@ -52,11 +53,11 @@ import javax.lang.model.SourceVersion;
  */
 final class SimpleMethodRequestRepresentation extends RequestRepresentation {
   private final CompilerOptions compilerOptions;
+  private final XProcessingEnv processingEnv;
   private final ProvisionBinding provisionBinding;
   private final ComponentRequestRepresentations componentRequestRepresentations;
   private final MembersInjectionMethods membersInjectionMethods;
   private final ComponentRequirementExpressions componentRequirementExpressions;
-  private final SourceVersion sourceVersion;
   private final ShardImplementation shardImplementation;
   private final boolean isExperimentalMergedMode;
 
@@ -65,11 +66,12 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
       @Assisted ProvisionBinding binding,
       MembersInjectionMethods membersInjectionMethods,
       CompilerOptions compilerOptions,
+      XProcessingEnv processingEnv,
       ComponentRequestRepresentations componentRequestRepresentations,
       ComponentRequirementExpressions componentRequirementExpressions,
-      SourceVersion sourceVersion,
       ComponentImplementation componentImplementation) {
     this.compilerOptions = compilerOptions;
+    this.processingEnv = processingEnv;
     this.provisionBinding = binding;
     checkArgument(
         provisionBinding.implicitDependencies().isEmpty(),
@@ -78,7 +80,6 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
     this.componentRequestRepresentations = componentRequestRepresentations;
     this.membersInjectionMethods = membersInjectionMethods;
     this.componentRequirementExpressions = componentRequirementExpressions;
-    this.sourceVersion = sourceVersion;
     this.shardImplementation = componentImplementation.shardImplementation(binding);
     this.isExperimentalMergedMode =
         componentImplementation.compilerMode().isExperimentalMergedMode();
@@ -157,7 +158,7 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
     if (provisionBinding.injectionSites().isEmpty()) {
       return Expression.create(simpleMethodReturnType(), instance);
     }
-    if (sourceVersion.compareTo(SourceVersion.RELEASE_7) <= 0) {
+    if (isPreJava8SourceVersion(processingEnv)) {
       // Java 7 type inference can't figure out that instance in
       // injectParameterized(Parameterized_Factory.newParameterized()) is Parameterized<T> and not
       // Parameterized<Object>

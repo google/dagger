@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.validation;
+package dagger.internal.codegen.bindinggraphvalidation;
 
 import static java.util.Comparator.comparing;
 

@@ -16,7 +16,10 @@
 
 package dagger.android.processor;
 
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+
 import com.google.auto.common.MoreElements;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
@@ -55,6 +58,13 @@ final class MoreDaggerElements {
       }
     }
     return Optional.empty();
+  }
+
+  public static ImmutableSet<AnnotationMirror> getAnnotatedAnnotations(
+      Element element, ClassName annotationName) {
+    return element.getAnnotationMirrors().stream()
+        .filter(input -> isAnnotationPresent(input.getAnnotationType().asElement(), annotationName))
+        .collect(toImmutableSet());
   }
 
   private MoreDaggerElements() {}

@@ -19,7 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.testing.compile.CompilationRule;
-import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -214,14 +214,14 @@ public class ElementDescriptorsTest {
   private Set<String> getFieldDescriptors(String className) {
     TypeElement testElement = compilation.getElements().getTypeElement(className);
     return ElementFilter.fieldsIn(testElement.getEnclosedElements()).stream()
-        .map(DaggerElements::getFieldDescriptor)
+        .map(XElements::getFieldDescriptor)
         .collect(Collectors.toSet());
   }
 
   private Set<String> getMethodDescriptors(String className) {
     TypeElement testElement = compilation.getElements().getTypeElement(className);
     return ElementFilter.methodsIn(testElement.getEnclosedElements()).stream()
-        .map(DaggerElements::getMethodDescriptor)
+        .map(XElements::getMethodDescriptor)
         .collect(Collectors.toSet());
   }
 }

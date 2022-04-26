@@ -17,7 +17,7 @@
 package dagger.android.processor;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotatedAnnotations;
+import static dagger.android.processor.MoreDaggerElements.getAnnotatedAnnotations;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 

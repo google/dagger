@@ -29,7 +29,6 @@ java_library(
         "//java/dagger/internal/codegen/base:shared",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/javapoet",
-        "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:value",
         "//third_party/java/guava/base",

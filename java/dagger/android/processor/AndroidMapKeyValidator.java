@@ -19,7 +19,7 @@ package dagger.android.processor;
 import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.android.processor.AndroidMapKeys.injectedTypeFromMapKey;
-import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotatedAnnotations;
+import static dagger.android.processor.MoreDaggerElements.getAnnotatedAnnotations;
 
 import com.google.auto.common.BasicAnnotationProcessor.Step;
 import com.google.auto.common.MoreElements;

@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.filter;
@@ -23,14 +25,15 @@ import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.indexOf;
 import static com.google.common.collect.Iterables.transform;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
-import static dagger.internal.codegen.binding.SourceFiles.DECLARATION_ORDER;
 import static dagger.internal.codegen.extension.DaggerGraphs.shortestPath;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.extension.DaggerStreams.presentValues;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.isExecutable;
 import static java.util.Collections.min;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
@@ -58,6 +61,7 @@ import dagger.spi.model.BindingGraph.Node;
 import dagger.spi.model.ComponentPath;
 import dagger.spi.model.DaggerElement;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Inject;
@@ -388,7 +392,23 @@ public final class DiagnosticMessageGenerator {
    */
   private Comparator<DependencyEdge> requestElementDeclarationOrder() {
     return comparing(
-        edge -> edge.dependencyRequest().requestElement().get().xprocessing(), DECLARATION_ORDER);
+        edge -> edge.dependencyRequest().requestElement().get().xprocessing(),
+        // TODO(bcorso): This is inefficient as it requires each element to iterate through all of
+        // its siblings to find its order. Ideally, the order of all elements would be calculated in
+        // a single pass and cached, but the organization of the current code makes that a bit
+        // difficult. I'm leaving this for now since this is only called on failures.
+        comparing(
+            element -> {
+              XElement enclosingElement = element.getEnclosingElement();
+              checkState(isTypeElement(enclosingElement) || isExecutable(enclosingElement));
+              List<? extends XElement> siblings =
+                  isTypeElement(enclosingElement)
+                      ? asTypeElement(enclosingElement).getEnclosedElements()
+                      // For parameter elements, element.getEnclosingElement().getEnclosedElements()
+                      // is empty, so instead look at the parameter list of the enclosing executable
+                      : asExecutable(enclosingElement).getParameters();
+              return siblings.indexOf(element);
+            }));
   }
 
   private Node source(Edge edge) {

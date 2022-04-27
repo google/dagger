@@ -17,7 +17,11 @@
 package dagger.internal.codegen.xprocessing;
 
 import static androidx.room.compiler.processing.XTypeKt.isArray;
+import static androidx.room.compiler.processing.XTypeKt.isVoid;
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
+import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
@@ -65,6 +69,11 @@ public final class XTypes {
     return XTYPE_EQUIVALENCE;
   }
 
+  public static XType getEnclosingType(XType type) {
+    checkArgument(isDeclared(type));
+    return toXProcessing(asDeclared(toJavac(type)).getEnclosingType(), getProcessingEnv(type));
+  }
+
   /** Returns {@code true} if and only if the {@code type1} is assignable to {@code type2}. */
   public static boolean isAssignableTo(XType type1, XType type2) {
     return type2.isAssignableFrom(type1);
@@ -99,6 +108,16 @@ public final class XTypes {
   /** Returns {@code true} if the raw type of {@code type} is equal to {@code className}. */
   public static boolean isTypeOf(XType type, ClassName className) {
     return isDeclared(type) && type.getTypeElement().getClassName().equals(className);
+  }
+
+  /** Returns {@code true} if the given type represents the {@code null} type. */
+  public static boolean isNullType(XType type) {
+    return toJavac(type).getKind().equals(TypeKind.NULL);
+  }
+
+  /** Returns {@code true} if the given type has no actual type. */
+  public static boolean isNoType(XType type) {
+    return type.isNone() || isVoid(type);
   }
 
   /** Returns {@code true} if the given type is a declared type. */

@@ -122,6 +122,10 @@ public final class XElements {
     return asHasModifiers(element).isAbstract();
   }
 
+  public static boolean isPublic(XElement element) {
+    return asHasModifiers(element).isPublic();
+  }
+
   public static boolean isPrivate(XElement element) {
     return asHasModifiers(element).isPrivate();
   }

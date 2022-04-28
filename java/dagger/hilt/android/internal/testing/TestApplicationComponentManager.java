@@ -83,7 +83,7 @@ public final class TestApplicationComponentManager
     if (earlyComponent == null) {
       synchronized (earlyComponentLock) {
         if (earlyComponent == null) {
-          earlyComponent = EarlySingletonComponentCreator.createComponent();
+          earlyComponent = EarlySingletonComponentCreator.createComponent(application);
         }
       }
     }

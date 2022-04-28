@@ -20,6 +20,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Application;
+import android.content.Context;
 import android.os.Build;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.hilt.EntryPoint;
@@ -55,11 +56,16 @@ public final class EarlyEntryPointCustomApplicationTest {
     IllegalStateException entryPointsException = null;
 
     @Override
+    protected final void attachBaseContext(Context base) {
+      // This is a regression test for https://github.com/google/dagger/issues/3356.
+      // Test that EarlyEntryPoints works even before the base context is attached.
+      earlyFoo = EarlyEntryPoints.get(this, EarlyFooEntryPoint.class).foo();
+      super.attachBaseContext(base);
+    }
+
+    @Override
     public void onCreate() {
       super.onCreate();
-
-      // Test that calling EarlyEntryPoints works before the test instance is created.
-      earlyFoo = EarlyEntryPoints.get(this, EarlyFooEntryPoint.class).foo();
 
       // Test that calling EntryPoints fails if called before the test instance is created.
       try {

@@ -45,7 +45,7 @@ public final class EarlyEntryPoints {
   // this method easier to use, since most code will use this with an Application or Context type.
   @Nonnull
   public static <T> T get(Context applicationContext, Class<T> entryPoint) {
-    Application application = Contexts.getApplication(applicationContext.getApplicationContext());
+    Application application = Contexts.getApplication(applicationContext);
     Preconditions.checkState(
         application instanceof GeneratedComponentManagerHolder,
         "Expected application context to implement GeneratedComponentManagerHolder. "

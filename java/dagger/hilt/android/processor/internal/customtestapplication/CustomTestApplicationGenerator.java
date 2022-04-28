@@ -16,6 +16,11 @@
 
 package dagger.hilt.android.processor.internal.customtestapplication;
 
+import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.VOLATILE;
+
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -29,9 +34,7 @@ import java.io.IOException;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 
-/**
- * Generates an Android Application that holds the Singleton component.
- */
+/** Generates an Android Application that holds the Singleton component. */
 final class CustomTestApplicationGenerator {
   private static final ParameterSpec COMPONENT_MANAGER =
       ParameterSpec.builder(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER, "componentManager")
@@ -55,8 +58,11 @@ final class CustomTestApplicationGenerator {
             .addSuperinterface(
                 ParameterizedTypeName.get(ClassNames.GENERATED_COMPONENT_MANAGER, TypeName.OBJECT))
             .addSuperinterface(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER_HOLDER)
+            .addField(
+                FieldSpec.builder(ClassName.OBJECT, "componentManagerLock", PRIVATE, FINAL)
+                    .initializer("new $T()", ClassName.OBJECT)
+                    .build())
             .addField(getComponentManagerField())
-            .addMethod(getAttachBaseContextMethod())
             .addMethod(getComponentManagerMethod())
             .addMethod(getComponentMethod());
 
@@ -71,37 +77,15 @@ final class CustomTestApplicationGenerator {
   // Initialize this in attachBaseContext to not pull it into the main dex.
   /** private TestApplicationComponentManager componentManager; */
   private static FieldSpec getComponentManagerField() {
-    return FieldSpec.builder(COMPONENT_MANAGER.type, COMPONENT_MANAGER.name, Modifier.PRIVATE)
+    return FieldSpec.builder(COMPONENT_MANAGER.type, COMPONENT_MANAGER.name, PRIVATE, VOLATILE)
         .build();
   }
-
-  /**
-   * Initializes application fields. These fields are initialized in attachBaseContext to avoid
-   * potential multidexing issues.
-   *
-   * <pre><code>
-   * {@literal @Override} protected void attachBaseContext(Context base) {
-   *   super.attachBaseContext(base);
-   *   componentManager = new TestApplicationComponentManager(this);
-   * }
-   * </code></pre>
-   */
-  private static MethodSpec getAttachBaseContextMethod() {
-    return MethodSpec.methodBuilder("attachBaseContext")
-        .addAnnotation(Override.class)
-        .addModifiers(Modifier.PROTECTED, Modifier.FINAL)
-        .addParameter(ClassNames.CONTEXT, "base")
-        .addStatement("super.attachBaseContext(base)")
-        .addStatement("$N = new $T(this)", COMPONENT_MANAGER, COMPONENT_MANAGER.type)
-        .build();
-  }
-
   private static MethodSpec getComponentMethod() {
     return MethodSpec.methodBuilder("generatedComponent")
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .returns(TypeName.OBJECT)
-        .addStatement("return $N.generatedComponent()", COMPONENT_MANAGER)
+        .addStatement("return $N().generatedComponent()", COMPONENT_MANAGER)
         .build();
   }
 
@@ -110,6 +94,16 @@ final class CustomTestApplicationGenerator {
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
         .returns(ParameterizedTypeName.get(ClassNames.GENERATED_COMPONENT_MANAGER, TypeName.OBJECT))
+        // This field is initialized lazily to avoid pulling the generated component into the main
+        // dex. We could possibly avoid this by class loading TestComponentDataSupplier lazily
+        // rather than in the TestApplicationComponentManager constructor.
+        .beginControlFlow("if ($N == null)", COMPONENT_MANAGER)
+        .beginControlFlow("synchronized (componentManagerLock)")
+        .beginControlFlow("if ($N == null)", COMPONENT_MANAGER)
+        .addStatement("$N = new $T(this)", COMPONENT_MANAGER, COMPONENT_MANAGER.type)
+        .endControlFlow()
+        .endControlFlow()
+        .endControlFlow()
         .addStatement("return $N", COMPONENT_MANAGER)
         .build();
   }

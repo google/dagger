@@ -42,16 +42,14 @@ final class EarlySingletonComponentCreatorGenerator {
             .superclass(EARLY_SINGLETON_COMPONENT_CREATOR)
             .addMethod(
                 MethodSpec.methodBuilder("create")
+                    .addParameter(ClassNames.APPLICATION, "application")
                     .returns(ClassName.OBJECT)
                     .addStatement(
                         "return $T.builder()\n"
-                            + ".applicationContextModule(\n"
-                            + "    new $T($T.getApplication($T.getApplicationContext())))\n"
+                            + ".applicationContextModule(new $T(application))\n"
                             + ".build()",
                         DEFAULT_COMPONENT_IMPL,
-                        ClassNames.APPLICATION_CONTEXT_MODULE,
-                        ClassNames.CONTEXTS,
-                        ClassNames.APPLICATION_PROVIDER)
+                        ClassNames.APPLICATION_CONTEXT_MODULE)
                     .build());
 
     Processors.addGeneratedAnnotation(builder, env, ClassNames.ROOT_PROCESSOR.toString());

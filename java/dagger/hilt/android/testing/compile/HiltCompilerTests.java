@@ -18,7 +18,12 @@ package dagger.hilt.android.testing.compile;
 
 import static java.util.stream.Collectors.toMap;
 
+import androidx.room.compiler.processing.util.Source;
+import androidx.room.compiler.processing.util.compiler.TestCompilationArguments;
+import androidx.room.compiler.processing.util.compiler.TestCompilationResult;
+import androidx.room.compiler.processing.util.compiler.TestKotlinCompilerKt;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.testing.compile.Compiler;
 import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPointProcessor;
 import dagger.hilt.android.processor.internal.customtestapplication.CustomTestApplicationProcessor;
@@ -35,9 +40,11 @@ import dagger.internal.codegen.ComponentProcessor;
 import dagger.testing.compile.CompilerTests;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import javax.annotation.processing.Processor;
-import com.tschuchort.compiletesting.KotlinCompilation;
+import org.junit.rules.TemporaryFolder;
 
 /** {@link Compiler} instances for testing Android Hilt. */
 public final class HiltCompilerTests {
@@ -57,19 +64,33 @@ public final class HiltCompilerTests {
     return CompilerTests.compiler().withProcessors(processors.values());
   }
 
-  public static KotlinCompilation kotlinCompiler() {
-    KotlinCompilation compilation = new KotlinCompilation();
-    compilation.setAnnotationProcessors(defaultProcessors());
-    compilation.setClasspaths(
-        ImmutableList.<java.io.File>builder()
-            .addAll(compilation.getClasspaths())
-            .add(CompilerTests.compilerDepsJar())
-            .build()
-    );
-    return compilation;
+  public static void compileWithKapt(
+      List<Source> sources,
+      TemporaryFolder tempFolder,
+      Consumer<TestCompilationResult> onCompilationResult) {
+    compileWithKapt(sources, ImmutableMap.of(), tempFolder, onCompilationResult);
   }
 
-  private static ImmutableList<Processor> defaultProcessors() {
+  public static void compileWithKapt(
+      List<Source> sources,
+      Map<String, String> processorOptions,
+      TemporaryFolder tempFolder,
+      Consumer<TestCompilationResult> onCompilationResult) {
+    TestCompilationResult result = TestKotlinCompilerKt.compile(
+        tempFolder.getRoot(),
+        new TestCompilationArguments(
+            sources,
+            /*classpath=*/ ImmutableList.of(CompilerTests.compilerDepsJar()),
+            /*inheritClasspath=*/ false,
+            /*javacArguments=*/ ImmutableList.of(),
+            /*kotlincArguments=*/ ImmutableList.of(),
+            /*kaptProcessors=*/ defaultProcessors(),
+            /*symbolProcessorProviders=*/ ImmutableList.of(),
+            /*processorOptions=*/ processorOptions));
+    onCompilationResult.accept(result);
+  }
+
+  static ImmutableList<Processor> defaultProcessors() {
     return ImmutableList.of(
         new AggregatedDepsProcessor(),
         new AliasOfProcessor(),

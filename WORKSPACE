@@ -141,9 +141,10 @@ archive_repository(
 
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
 
-KOTLIN_VERSION = "1.5.32"
+KOTLIN_VERSION = "1.6.20"
 
-KOTLINC_RELEASE_SHA = "2e728c43ee0bf819eae06630a4cbbc28ba2ed5b19a55ee0af96d2c0ab6b6c2a5"
+# Get from https://github.com/JetBrains/kotlin/releases/
+KOTLINC_RELEASE_SHA = "daf17db1c194f4205f3af67129367a69b388f819177963dc53a7b4b2c4d8ce22"
 
 kotlin_repositories(
     compiler_release = kotlinc_version(
@@ -217,7 +218,6 @@ maven_install(
         "com.android.tools.lint:lint-checks:%s" % ANDROID_LINT_VERSION,
         "com.android.tools.lint:lint-tests:%s" % ANDROID_LINT_VERSION,
         "com.android.tools:testutils:%s" % ANDROID_LINT_VERSION,
-        "com.github.tschuchortdev:kotlin-compile-testing:1.2.8",
         "com.google.auto:auto-common:%s" % AUTO_COMMON_VERSION,
         "com.google.auto.factory:auto-factory:1.0",
         "com.google.auto.service:auto-service:1.0",
@@ -255,6 +255,9 @@ maven_install(
         "org.checkerframework:dataflow:%s" % CHECKER_FRAMEWORK_VERSION,
         "org.checkerframework:javacutil:%s" % CHECKER_FRAMEWORK_VERSION,
         "org.hamcrest:hamcrest-core:1.3",
+        "org.jetbrains.kotlin:kotlin-annotation-processing-embeddable:%s" % KOTLIN_VERSION,
+        "org.jetbrains.kotlin:kotlin-compiler-embeddable:%s" % KOTLIN_VERSION,
+        "org.jetbrains.kotlin:kotlin-daemon-embeddable:%s" % KOTLIN_VERSION,
         "org.jetbrains.kotlin:kotlin-stdlib:%s" % KOTLIN_VERSION,
         "org.jetbrains.kotlin:kotlin-stdlib-jdk8:%s" % KOTLIN_VERSION,
         "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.4.2",

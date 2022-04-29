@@ -18,7 +18,7 @@
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenJavaTests")
-load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
+load("//java/dagger/testing/compile:macros.bzl", "kt_compiler_test")
 
 package(default_visibility = ["//:src"])
 
@@ -112,7 +112,7 @@ GenJavaTests(
     ],
 )
 
-compiler_test(
+kt_compiler_test(
     name = "ComponentValidationKtTest",
     srcs = ["ComponentValidationKtTest.java"],
     compiler_deps = [
@@ -132,9 +132,9 @@ compiler_test(
         "//java/dagger/spi",
     ],
     deps = [
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
-        "@maven//:com_github_tschuchortdev_kotlin_compile_testing",
     ],
 )

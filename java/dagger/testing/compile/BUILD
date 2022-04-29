@@ -22,13 +22,16 @@ package(default_visibility = ["//:src"])
 java_library(
     name = "compile",
     testonly = 1,
-    srcs = ["CompilerTests.java"],
+    srcs = [
+        "CompilerTests.java",
+    ],
     deps = [
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/guava/io",
         "//third_party/java/compile_testing",
+        "//third_party/java/junit",
         "//java/dagger/internal/codegen:processor",
-        "@maven//:com_github_tschuchortdev_kotlin_compile_testing",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
     ],
 )

@@ -16,23 +16,30 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import static dagger.hilt.android.testing.compile.HiltCompilerTests.kotlinCompiler;
+import static com.google.common.truth.Truth.assertThat;
+import static dagger.hilt.android.testing.compile.HiltCompilerTests.compileWithKapt;
 
+import androidx.room.compiler.processing.util.DiagnosticMessage;
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.truth.Truth;
-import com.tschuchort.compiletesting.KotlinCompilation;
-import com.tschuchort.compiletesting.KotlinCompilation.ExitCode;
-import com.tschuchort.compiletesting.SourceFile;
+import java.util.List;
+import javax.tools.Diagnostic.Kind;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class KotlinAndroidEntryPointProcessorTest {
+
+  @Rule
+  public TemporaryFolder tempFolderRule = new TemporaryFolder();
+
   @Test
   public void checkBaseClassConstructorHasNotDefaultParameters() {
-    SourceFile fragmentSrc = SourceFile.Companion.kotlin("MyFragment.kt",
+    Source fragmentSrc = Source.Companion.kotlin("MyFragment.kt",
         String.join("\n",
             "package test",
             "",
@@ -40,27 +47,28 @@ public class KotlinAndroidEntryPointProcessorTest {
             "",
             "@AndroidEntryPoint",
             "class MyFragment : BaseFragment()"
-        ),
-        false);
-    SourceFile baseFragmentSrc = SourceFile.Companion.kotlin("BaseFragment.kt",
+        ));
+    Source baseFragmentSrc = Source.Companion.kotlin("BaseFragment.kt",
         String.join("\n",
             "package test",
             "",
             "import androidx.fragment.app.Fragment",
             "",
             "abstract class BaseFragment(layoutId: Int = 0) : Fragment()"
-        ),
-        false);
-    KotlinCompilation compilation = kotlinCompiler();
-    compilation.setSources(ImmutableList.of(fragmentSrc, baseFragmentSrc));
-    compilation.setKaptArgs(ImmutableMap.of(
-        "dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true"));
-    KotlinCompilation.Result result = compilation.compile();
-    Truth.assertThat(result.getExitCode()).isEqualTo(ExitCode.COMPILATION_ERROR);
-    Truth.assertThat(result.getMessages()).contains("The base class, 'test.BaseFragment', of the "
-        + "@AndroidEntryPoint, 'test.MyFragment', contains a constructor with default parameters. "
-        + "This is currently not supported by the Gradle plugin. Either specify the base class as "
-        + "described at https://dagger.dev/hilt/gradle-setup#why-use-the-plugin or remove the "
-        + "default value declaration.");
+        ));
+    compileWithKapt(
+        ImmutableList.of(fragmentSrc, baseFragmentSrc),
+        ImmutableMap.of(
+            "dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true"),
+        tempFolderRule,
+        result -> {
+          assertThat(result.getSuccess()).isFalse();
+          List<DiagnosticMessage> errors = result.getDiagnostics().get(Kind.ERROR);
+          assertThat(errors).hasSize(1);
+          assertThat(errors.get(0).getMsg())
+              .contains("The base class, 'test.BaseFragment', of the "
+                  + "@AndroidEntryPoint, 'test.MyFragment', contains a constructor with default "
+                  + "parameters. This is currently not supported by the Gradle plugin.");
+        });
   }
 }

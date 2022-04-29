@@ -14,7 +14,7 @@
 # Description:
 #   Tests for internal code for implementing Hilt processors.
 
-load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
+load("//java/dagger/testing/compile:macros.bzl", "compiler_test", "kt_compiler_test")
 
 package(default_visibility = ["//:src"])
 
@@ -49,7 +49,7 @@ compiler_test(
     ],
 )
 
-compiler_test(
+kt_compiler_test(
     name = "KotlinAndroidEntryPointProcessorTest",
     srcs = ["KotlinAndroidEntryPointProcessorTest.java"],
     compiler_deps = [
@@ -62,6 +62,6 @@ compiler_test(
         "//third_party/java/junit",
         "//third_party/java/truth",
         "//java/dagger/hilt/android/testing/compile",
-        "@maven//:com_github_tschuchortdev_kotlin_compile_testing",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
     ],
 )

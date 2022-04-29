@@ -50,6 +50,17 @@ java_import(
     jars = ["xprocessing.jar"],
 )
 
+java_library(
+    name = "xprocessing-testing",
+    testonly = 1,
+    exports = [
+        ":xprocessing-testing-lib",
+        "@maven//:org_jetbrains_kotlin_kotlin_annotation_processing_embeddable",
+        "@maven//:org_jetbrains_kotlin_kotlin_compiler_embeddable",
+        "@maven//:org_jetbrains_kotlin_kotlin_daemon_embeddable",
+    ],
+)
+
 alias(
     name = "xprocessing-testing-lib",
     actual = ":xprocessing-testing-jar",

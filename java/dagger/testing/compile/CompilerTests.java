@@ -21,16 +21,23 @@ import static com.google.common.collect.MoreCollectors.onlyElement;
 import static com.google.common.collect.Streams.stream;
 import static com.google.testing.compile.Compiler.javac;
 
+import androidx.room.compiler.processing.util.Source;
+import androidx.room.compiler.processing.util.compiler.TestCompilationArguments;
+import androidx.room.compiler.processing.util.compiler.TestCompilationResult;
+import androidx.room.compiler.processing.util.compiler.TestKotlinCompilerKt;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import com.google.testing.compile.Compiler;
+import dagger.internal.codegen.ComponentProcessor;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import com.tschuchort.compiletesting.KotlinCompilation;
-import dagger.internal.codegen.ComponentProcessor;
+import java.util.function.Consumer;
+import org.junit.rules.TemporaryFolder;
 
 /** A helper class for working with java compiler tests. */
 public final class CompilerTests {
@@ -53,16 +60,30 @@ public final class CompilerTests {
     return javac().withClasspath(ImmutableList.of(compilerDepsJar()));
   }
 
-  public static KotlinCompilation kotlinCompiler() {
-    KotlinCompilation compilation = new KotlinCompilation();
-    compilation.setAnnotationProcessors(ImmutableList.of(new ComponentProcessor()));
-    compilation.setClasspaths(
-        ImmutableList.<java.io.File>builder()
-            .addAll(compilation.getClasspaths())
-            .add(compilerDepsJar())
-            .build()
-    );
-    return compilation;
+  public static void compileWithKapt(
+      List<Source> sources,
+      TemporaryFolder tempFolder,
+      Consumer<TestCompilationResult> onCompilationResult) {
+    compileWithKapt(sources, ImmutableMap.of(), tempFolder, onCompilationResult);
+  }
+
+  public static void compileWithKapt(
+      List<Source> sources,
+      Map<String, String> processorOptions,
+      TemporaryFolder tempFolder,
+      Consumer<TestCompilationResult> onCompilationResult) {
+    TestCompilationResult result = TestKotlinCompilerKt.compile(
+        tempFolder.getRoot(),
+        new TestCompilationArguments(
+            sources,
+            /*classpath=*/ ImmutableList.of(compilerDepsJar()),
+            /*inheritClasspath=*/ false,
+            /*javacArguments=*/ ImmutableList.of(),
+            /*kotlincArguments=*/ ImmutableList.of(),
+            /*kaptProcessors=*/ ImmutableList.of(new ComponentProcessor()),
+            /*symbolProcessorProviders=*/ ImmutableList.of(),
+            /*processorOptions=*/ processorOptions));
+    onCompilationResult.accept(result);
   }
 
   private static File getRunfilesDir() {

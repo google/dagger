@@ -136,13 +136,6 @@ public final class XProcessingEnvs {
     }
   }
 
-  /** Returns {@code true} if and only if the {@code type1} is assignable to {@code type2}. */
-  public static boolean isAssignable(XType type1, XType type2, XProcessingEnv processingEnv) {
-    return toJavac(processingEnv)
-        .getTypeUtils() // ALLOW_TYPES_ELEMENTS
-        .isAssignable(toJavac(type1), toJavac(type2));
-  }
-
   /** Returns the erasure of the given type. */
   public static XType erasure(XType type, XProcessingEnv processingEnv) {
     return toXProcessing(

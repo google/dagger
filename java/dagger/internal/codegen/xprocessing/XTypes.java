@@ -36,6 +36,11 @@ import javax.lang.model.type.TypeKind;
 /** A utility class for {@link XType} helper methods. */
 public final class XTypes {
 
+  /** Returns {@code true} if and only if the {@code type1} is assignable to {@code type2}. */
+  public static boolean isAssignableTo(XType type1, XType type2) {
+    return type2.isAssignableFrom(type1);
+  }
+
   /**
    * Throws {@link TypeNotPresentException} if {@code type} is an {@link
    * javax.lang.model.type.ErrorType}.

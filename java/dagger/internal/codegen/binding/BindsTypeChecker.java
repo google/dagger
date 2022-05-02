@@ -20,6 +20,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.onlyElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.getUnboundedWildcardType;
+import static dagger.internal.codegen.xprocessing.XTypes.isAssignableTo;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
@@ -27,7 +28,6 @@ import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.xprocessing.XProcessingEnvs;
 import dagger.internal.codegen.xprocessing.XTypeElements;
 import javax.inject.Inject;
 
@@ -52,8 +52,7 @@ public final class BindsTypeChecker {
    */
   public boolean isAssignable(
       XType rightHandSide, XType leftHandSide, ContributionType contributionType) {
-    return XProcessingEnvs.isAssignable(
-        rightHandSide, desiredAssignableType(leftHandSide, contributionType), processingEnv);
+    return isAssignableTo(rightHandSide, desiredAssignableType(leftHandSide, contributionType));
   }
 
   private XType desiredAssignableType(XType leftHandSide, ContributionType contributionType) {

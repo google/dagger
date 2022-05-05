@@ -30,8 +30,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.BindsInstance;
 import dagger.Component;
-import dagger.Module;
-import dagger.Provides;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.SourceFileGenerationException;
 import dagger.internal.codegen.base.SourceFileGenerator;
@@ -39,16 +37,12 @@ import dagger.internal.codegen.binding.InjectBindingRegistry;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.bindinggraphvalidation.BindingGraphValidationModule;
-import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions;
 import dagger.internal.codegen.componentgenerator.ComponentGeneratorModule;
-import dagger.internal.codegen.validation.BindingMethodProcessingStep;
+import dagger.internal.codegen.processingstep.ProcessingStepsModule;
 import dagger.internal.codegen.validation.BindingMethodValidatorsModule;
-import dagger.internal.codegen.validation.BindsInstanceProcessingStep;
 import dagger.internal.codegen.validation.ExternalBindingGraphPlugins;
 import dagger.internal.codegen.validation.InjectBindingRegistryModule;
-import dagger.internal.codegen.validation.MonitoringModuleProcessingStep;
-import dagger.internal.codegen.validation.MultibindingAnnotationsProcessingStep;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugins;
 import dagger.spi.BindingGraphPlugin;
 import java.util.Arrays;
@@ -170,40 +164,6 @@ public class ComponentProcessor extends JavacBasicAnnotationProcessor {
       ProcessorComponent create(
           @BindsInstance XProcessingEnv xProcessingEnv,
           @BindsInstance ImmutableSet<BindingGraphPlugin> externalPlugins);
-    }
-  }
-
-  @Module
-  interface ProcessingStepsModule {
-    @Provides
-    static ImmutableList<XProcessingStep> processingSteps(
-        MapKeyProcessingStep mapKeyProcessingStep,
-        InjectProcessingStep injectProcessingStep,
-        AssistedInjectProcessingStep assistedInjectProcessingStep,
-        AssistedFactoryProcessingStep assistedFactoryProcessingStep,
-        AssistedProcessingStep assistedProcessingStep,
-        MonitoringModuleProcessingStep monitoringModuleProcessingStep,
-        MultibindingAnnotationsProcessingStep multibindingAnnotationsProcessingStep,
-        BindsInstanceProcessingStep bindsInstanceProcessingStep,
-        ModuleProcessingStep moduleProcessingStep,
-        ComponentProcessingStep componentProcessingStep,
-        ComponentHjarProcessingStep componentHjarProcessingStep,
-        BindingMethodProcessingStep bindingMethodProcessingStep,
-        CompilerOptions compilerOptions) {
-      return ImmutableList.of(
-          mapKeyProcessingStep,
-          injectProcessingStep,
-          assistedInjectProcessingStep,
-          assistedFactoryProcessingStep,
-          assistedProcessingStep,
-          monitoringModuleProcessingStep,
-          multibindingAnnotationsProcessingStep,
-          bindsInstanceProcessingStep,
-          moduleProcessingStep,
-          compilerOptions.headerCompilation()
-              ? componentHjarProcessingStep
-              : componentProcessingStep,
-          bindingMethodProcessingStep);
     }
   }
 

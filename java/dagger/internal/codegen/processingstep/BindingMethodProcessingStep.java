@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.validation;
+package dagger.internal.codegen.processingstep;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -22,10 +22,11 @@ import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XMethodElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.validation.AnyBindingMethodValidator;
 import javax.inject.Inject;
 
 /** A step that validates all binding methods that were not validated while processing modules. */
-public final class BindingMethodProcessingStep extends TypeCheckingProcessingStep<XMethodElement> {
+final class BindingMethodProcessingStep extends TypeCheckingProcessingStep<XMethodElement> {
 
   private final XMessager messager;
   private final AnyBindingMethodValidator anyBindingMethodValidator;

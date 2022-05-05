@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.processingstep;
 
 import static androidx.room.compiler.processing.XElementKt.isConstructor;
 import static androidx.room.compiler.processing.XElementKt.isField;
@@ -29,7 +29,6 @@ import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.InjectBindingRegistry;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import java.util.Set;
 import javax.inject.Inject;
 

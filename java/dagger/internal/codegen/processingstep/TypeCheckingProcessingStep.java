@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.validation;
+package dagger.internal.codegen.processingstep;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Throwables.getStackTraceAsString;
@@ -44,7 +44,7 @@ import javax.inject.Inject;
  * A {@link XProcessingStep} that processes one element at a time and defers any for which {@link
  * TypeNotPresentException} is thrown.
  */
-public abstract class TypeCheckingProcessingStep<E extends XElement> implements XProcessingStep {
+abstract class TypeCheckingProcessingStep<E extends XElement> implements XProcessingStep {
 
   private final List<String> lastDeferredErrorMessages = new ArrayList<>();
   @Inject XMessager messager;

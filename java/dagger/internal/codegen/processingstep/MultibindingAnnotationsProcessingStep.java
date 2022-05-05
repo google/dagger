@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.validation;
+package dagger.internal.codegen.processingstep;
 
 import static javax.tools.Diagnostic.Kind.ERROR;
 
@@ -23,6 +23,7 @@ import androidx.room.compiler.processing.XMessager;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.validation.AnyBindingMethodValidator;
 import javax.inject.Inject;
 
 /**
@@ -30,7 +31,7 @@ import javax.inject.Inject;
  * dagger.multibindings.ElementsIntoSet} and {@link dagger.multibindings.IntoMap} are not present on
  * non-binding methods.
  */
-public final class MultibindingAnnotationsProcessingStep
+final class MultibindingAnnotationsProcessingStep
     extends TypeCheckingProcessingStep<XExecutableElement> {
   private final AnyBindingMethodValidator anyBindingMethodValidator;
   private final XMessager messager;

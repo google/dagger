@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.validation;
+package dagger.internal.codegen.processingstep;
 
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 
@@ -31,7 +31,7 @@ import javax.inject.Singleton;
 
 /** Validates enclosing type elements in a round. */
 @Singleton
-public final class SuperficialValidator implements ClearableCache {
+final class SuperficialValidator implements ClearableCache {
 
   private final DaggerSuperficialValidation superficialValidation;
   private final Map<XTypeElement, Optional<ValidationException>> validationExceptions =
@@ -42,7 +42,7 @@ public final class SuperficialValidator implements ClearableCache {
     this.superficialValidation = superficialValidation;
   }
 
-  public void throwIfNearestEnclosingTypeNotValid(XElement element) {
+  void throwIfNearestEnclosingTypeNotValid(XElement element) {
     Optional<ValidationException> validationException =
         validationExceptions.computeIfAbsent(
             closestEnclosingTypeElement(element),

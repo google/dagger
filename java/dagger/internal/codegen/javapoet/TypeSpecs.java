@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen.javapoet;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static dagger.internal.codegen.xprocessing.JavaPoetExt.avoidClashesWithNestedClasses;
 
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -35,13 +35,11 @@ public final class TypeSpecs {
   public static TypeSpec.Builder addSupertype(
       TypeSpec.Builder typeBuilder, XTypeElement supertype) {
     if (supertype.isClass()) {
-      return typeBuilder
-          .superclass(supertype.getClassName())
-          .avoidClashesWithNestedClasses(toJavac(supertype));
+      return avoidClashesWithNestedClasses(
+          typeBuilder.superclass(supertype.getClassName()), supertype);
     } else if (supertype.isInterface()) {
-      return typeBuilder
-          .addSuperinterface(supertype.getClassName())
-          .avoidClashesWithNestedClasses(toJavac(supertype));
+      return avoidClashesWithNestedClasses(
+          typeBuilder.addSuperinterface(supertype.getClassName()), supertype);
     }
     throw new AssertionError(supertype + " is neither a class nor an interface.");
   }

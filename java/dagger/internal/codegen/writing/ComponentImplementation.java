@@ -16,8 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.MethodSpecHelper.overriding;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
@@ -36,6 +34,7 @@ import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHE
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.javapoet.CodeBlocks.parameterNames;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.COMPONENT_METHOD;
+import static dagger.internal.codegen.xprocessing.MethodSpecs.overriding;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.producers.CancellationPolicy.Propagation.PROPAGATE;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -85,6 +84,7 @@ import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.javapoet.TypeSpecs;
 import dagger.internal.codegen.langmodel.Accessibility;
+import dagger.internal.codegen.xprocessing.JavaPoetExt;
 import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.spi.model.BindingGraph.Node;
 import dagger.spi.model.Key;
@@ -846,9 +846,7 @@ public final class ComponentImplementation {
     private void createSubcomponentFactoryMethod(XMethodElement factoryMethod) {
       checkState(parent.isPresent());
       Collection<ParameterSpec> params =
-          Maps.transformValues(
-                  graph.factoryMethodParameters(),
-                  parameter -> ParameterSpec.get(toJavac(parameter)))
+          Maps.transformValues(graph.factoryMethodParameters(), JavaPoetExt::getParameterSpec)
               .values();
       XType parentType = parent.get().graph().componentTypeElement().getType();
       MethodSpec.Builder method = overriding(factoryMethod, parentType);
@@ -875,7 +873,8 @@ public final class ComponentImplementation {
       XType componentType = graph.componentTypeElement().getType();
       Set<MethodSignature> signatures = Sets.newHashSet();
       for (ComponentMethodDescriptor method : graph.componentDescriptor().entryPointMethods()) {
-        if (signatures.add(MethodSignature.forComponentMethod(method, componentType))) {
+        if (signatures.add(
+            MethodSignature.forComponentMethod(method, componentType, processingEnv))) {
           addMethod(
               COMPONENT_METHOD,
               componentRequestRepresentationsProvider.get().getComponentMethod(method));

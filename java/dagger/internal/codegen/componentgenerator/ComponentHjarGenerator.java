@@ -72,12 +72,14 @@ import javax.inject.Inject;
  * normal step. Method bodies are omitted as Turbine ignores them entirely.
  */
 final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescriptor> {
+  private final XProcessingEnv processingEnv;
   private final CompilerOptions compilerOptions;
 
   @Inject
   ComponentHjarGenerator(
       XFiler filer, XProcessingEnv processingEnv, CompilerOptions compilerOptions) {
     super(filer, processingEnv);
+    this.processingEnv = processingEnv;
     this.compilerOptions = compilerOptions;
   }
 
@@ -147,7 +149,8 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
       componentDescriptor.componentMethods().stream()
           .filter(
               method ->
-                  methodSignatures.add(MethodSignature.forComponentMethod(method, componentType)))
+                  methodSignatures.add(
+                      MethodSignature.forComponentMethod(method, componentType, processingEnv)))
           .forEach(
               method ->
                   generatedComponent.addMethod(

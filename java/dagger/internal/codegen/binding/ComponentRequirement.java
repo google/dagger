@@ -16,12 +16,9 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.XElementKt.isConstructor;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
-import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isNested;
@@ -236,42 +233,19 @@ public abstract class ComponentRequirement {
    */
   // TODO(bcorso): Should this method throw if its called knowing that an instance is not needed?
   public static boolean componentCanMakeNewInstances(XTypeElement typeElement) {
-    // TODO(bcorso): Investigate how we should replace this in XProcessing. It's not clear what the
-    // complete set of kinds are in XProcessing and if they're mutually exclusive. For example,
-    // does XTypeElement#isClass() cover XTypeElement#isDataClass(), etc?
-    switch (toJavac(typeElement).getKind()) {
-      case CLASS:
-        break;
-      case ENUM:
-      case ANNOTATION_TYPE:
-      case INTERFACE:
-        return false;
-      default:
-        throw new AssertionError("TypeElement cannot have kind: " + toJavac(typeElement).getKind());
-    }
-
-    if (typeElement.isAbstract()) {
-      return false;
-    }
-
-    if (requiresEnclosingInstance(typeElement)) {
-      return false;
-    }
-
-    for (XElement enclosed : typeElement.getEnclosedElements()) {
-      if (isConstructor(enclosed)
-          && asConstructor(enclosed).getParameters().isEmpty()
-          && !asConstructor(enclosed).isPrivate()) {
-        return true;
-      }
-    }
-
     // TODO(gak): still need checks for visibility
-
-    return false;
+    return typeElement.isClass()
+        && !typeElement.isAbstract()
+        && !requiresEnclosingInstance(typeElement)
+        && hasVisibleDefaultConstructor(typeElement);
   }
 
   private static boolean requiresEnclosingInstance(XTypeElement typeElement) {
     return isNested(typeElement) && !typeElement.isStatic();
+  }
+
+  private static boolean hasVisibleDefaultConstructor(XTypeElement typeElement) {
+    return typeElement.getConstructors().stream()
+        .anyMatch(constructor -> !constructor.isPrivate() && constructor.getParameters().isEmpty());
   }
 }

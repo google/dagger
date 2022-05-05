@@ -31,7 +31,6 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
@@ -162,10 +161,8 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
       // Java 7 type inference can't figure out that instance in
       // injectParameterized(Parameterized_Factory.newParameterized()) is Parameterized<T> and not
       // Parameterized<Object>
-      if (!MoreTypes.asDeclared(provisionBinding.key().type().java())
-          .getTypeArguments()
-          .isEmpty()) {
-        TypeName keyType = TypeName.get(provisionBinding.key().type().java());
+      if (!provisionBinding.key().type().xprocessing().getTypeArguments().isEmpty()) {
+        TypeName keyType = provisionBinding.key().type().xprocessing().getTypeName();
         instance = CodeBlock.of("($T) ($T) $L", keyType, rawTypeName(keyType), instance);
       }
     }

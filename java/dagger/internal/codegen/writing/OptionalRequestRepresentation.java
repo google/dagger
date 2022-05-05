@@ -65,7 +65,8 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
         // issues
         // when used as an argument to some members injection proxy methods (see
         // https://github.com/google/dagger/issues/916)
-        if (isTypeAccessibleFrom(binding.key().type().java(), requestingClass.packageName())) {
+        if (isTypeAccessibleFrom(
+            binding.key().type().xprocessing(), requestingClass.packageName())) {
           return Expression.create(
               binding.key().type().xprocessing(),
               optionalKind.parameterizedAbsentValueExpression(optionalType));
@@ -89,7 +90,8 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
 
     // If the dependency type is inaccessible, then we have to use Optional.<Object>of(...), or else
     // we will get "incompatible types: inference variable has incompatible bounds.
-    return isTypeAccessibleFrom(dependency.key().type().java(), requestingClass.packageName())
+    return isTypeAccessibleFrom(
+            dependency.key().type().xprocessing(), requestingClass.packageName())
         ? Expression.create(
             binding.key().type().xprocessing(),
             optionalKind.presentExpression(dependencyExpression))

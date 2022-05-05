@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verifyNotNull;
 import static com.squareup.javapoet.ClassName.OBJECT;
@@ -40,6 +39,7 @@ import static dagger.internal.codegen.javapoet.TypeNames.listOf;
 import static dagger.internal.codegen.javapoet.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.javapoet.TypeNames.producedOf;
 import static dagger.internal.codegen.writing.GwtCompatibility.gwtIncompatibleAnnotation;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -294,14 +294,14 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
                 String.format(
                     "%s#%s",
                     binding.bindingTypeElement().get().getClassName(),
-                    toJavac(binding.bindingElement().get()).getSimpleName()))
+                    getSimpleName(binding.bindingElement().get())))
             : CodeBlock.of("$T.class", generatedTypeName);
     return CodeBlock.of("$T.create($L)", PRODUCER_TOKEN, producerTokenArgs);
   }
 
   /** Returns a name of the variable representing this dependency's future. */
   private static String dependencyFutureName(DependencyRequest dependency) {
-    return dependency.requestElement().get().java().getSimpleName() + "Future";
+    return getSimpleName(dependency.requestElement().get().xprocessing()) + "Future";
   }
 
   /** Represents the transformation of an input future by a producer method. */
@@ -403,7 +403,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
 
     @Override
     String applyArgName() {
-      String argName = asyncDependency.requestElement().get().java().getSimpleName().toString();
+      String argName = getSimpleName(asyncDependency.requestElement().get().xprocessing());
       if (argName.equals("module")) {
         return "moduleArg";
       }
@@ -493,7 +493,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
   }
 
   private static TypeName asyncDependencyType(DependencyRequest dependency) {
-    TypeName keyName = TypeName.get(dependency.key().type().java());
+    TypeName keyName = dependency.key().type().xprocessing().getTypeName();
     switch (dependency.kind()) {
       case INSTANCE:
         return keyName;
@@ -522,7 +522,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
             binding.requiresModuleInstance()
                 ? "module"
                 : CodeBlock.of("$T", binding.bindingTypeElement().get().getClassName()),
-            toJavac(binding.bindingElement().get()).getSimpleName(),
+            getSimpleName(binding.bindingElement().get()),
             makeParametersCodeBlock(parameterCodeBlocks));
 
     final CodeBlock returnCodeBlock;

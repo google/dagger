@@ -16,10 +16,9 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Suppliers.memoize;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.STATIC;
+import static dagger.internal.codegen.xprocessing.XElements.isAbstract;
+import static dagger.internal.codegen.xprocessing.XElements.isStatic;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSet;
@@ -28,8 +27,6 @@ import dagger.spi.model.BindingKind;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Scope;
 import java.util.Optional;
-import java.util.Set;
-import javax.lang.model.element.Modifier;
 
 /**
  * An abstract type for classes representing a Dagger binding. Particularly, contains the element
@@ -44,11 +41,10 @@ public abstract class Binding extends BindingDeclaration {
    * #contributingModule()}.
    */
   public boolean requiresModuleInstance() {
-    if (!bindingElement().isPresent() || !contributingModule().isPresent()) {
-      return false;
-    }
-    Set<Modifier> modifiers = toJavac(bindingElement().get()).getModifiers();
-    return !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC);
+    return contributingModule().isPresent()
+        && bindingElement().isPresent()
+        && !isAbstract(bindingElement().get())
+        && !isStatic(bindingElement().get());
   }
 
   /**

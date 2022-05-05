@@ -16,12 +16,12 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static dagger.internal.codegen.javapoet.TypeNames.dependencyMethodProducerOf;
 import static dagger.internal.codegen.javapoet.TypeNames.listenableFutureOf;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -83,7 +83,7 @@ final class DependencyMethodProducerCreationExpression
                     componentImplementation.name().nestedClass("Anonymous")))
             .build();
     // TODO(b/70395982): Explore using a private static type instead of an anonymous class.
-    TypeName keyType = TypeName.get(binding.key().type().java());
+    TypeName keyType = binding.key().type().xprocessing().getTypeName();
     return CodeBlock.of(
         "$L",
         anonymousClassBuilder("")
@@ -97,7 +97,7 @@ final class DependencyMethodProducerCreationExpression
                     .addStatement(
                         "return $N.$L()",
                         dependencyField,
-                        toJavac(binding.bindingElement().get()).getSimpleName())
+                        getSimpleName(binding.bindingElement().get()))
                     .build())
             .build());
   }

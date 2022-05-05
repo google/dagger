@@ -16,10 +16,10 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XElements.isPrivate;
 import static java.util.stream.Collectors.toList;
 
 import androidx.room.compiler.processing.XElement;
@@ -34,7 +34,6 @@ import dagger.spi.model.BindingKind;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.Optional;
-import javax.lang.model.element.Modifier;
 
 /** Represents the full members injection of a particular type. */
 @AutoValue
@@ -130,7 +129,7 @@ public abstract class MembersInjectionBinding extends Binding {
     public int indexAmongAtInjectMembersWithSameSimpleName() {
       return enclosingTypeElement().getEnclosedElements().stream()
           .filter(InjectionAnnotations::hasInjectAnnotation)
-          .filter(element -> !toJavac(element).getModifiers().contains(Modifier.PRIVATE))
+          .filter(element -> !isPrivate(element))
           .filter(element -> getSimpleName(element).equals(getSimpleName(this.element())))
           .collect(toList())
           .indexOf(element());

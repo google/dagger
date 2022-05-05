@@ -16,8 +16,6 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreTypes.isType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -140,10 +138,8 @@ public final class KeyFactory {
     XMethodType methodType = method.asMemberOf(contributingModule.getType());
     ContributionType contributionType = ContributionType.fromBindingElement(method);
     XType returnType = methodType.getReturnType();
-    if (frameworkClassName.isPresent()
-        && frameworkClassName.get().equals(TypeNames.PRODUCER)
-        && isType(toJavac(returnType))) {
-      if (isFutureType(methodType.getReturnType())) {
+    if (frameworkClassName.isPresent() && frameworkClassName.get().equals(TypeNames.PRODUCER)) {
+      if (isFutureType(returnType)) {
         returnType = getOnlyElement(returnType.getTypeArguments());
       } else if (contributionType.equals(ContributionType.SET_VALUES)
           && SetType.isSet(returnType)) {

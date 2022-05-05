@@ -22,7 +22,7 @@ import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.RAWTY
 import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.FRAMEWORK_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -151,8 +151,8 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       // An assisted injection factory doesn't extend Provider, so we reference the generated
       // factory type directly (i.e. Foo_Factory<T> instead of Provider<Foo<T>>).
       TypeName[] typeParameters =
-          MoreTypes.asDeclared(binding.key().type().java()).getTypeArguments().stream()
-              .map(TypeName::get)
+          binding.key().type().xprocessing().getTypeArguments().stream()
+              .map(XType::getTypeName)
               .toArray(TypeName[]::new);
       fieldType =
           typeParameters.length == 0

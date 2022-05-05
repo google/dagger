@@ -26,6 +26,7 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
+import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -116,6 +117,10 @@ public final class XElements {
       return optionalClosestEnclosingTypeElement(asMethodParameter(element).getEnclosingElement());
     }
     return Optional.empty();
+  }
+
+  public static boolean isAbstract(XElement element) {
+    return toJavac(element).getModifiers().contains(ABSTRACT);
   }
 
   public static boolean isPrivate(XElement element) {

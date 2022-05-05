@@ -26,6 +26,7 @@ import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeSpecs.addSupertype;
 import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibleFrom;
+import static dagger.internal.codegen.xprocessing.MethodSpecs.overriding;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -50,7 +51,6 @@ import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.xprocessing.MethodSpecs;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Optional;
 import java.util.Set;
@@ -401,7 +401,7 @@ final class ComponentCreatorImplementationFactory {
 
     @Override
     protected MethodSpec.Builder factoryMethodBuilder() {
-      return MethodSpecs.overriding(creatorDescriptor.factoryMethod(), creatorType());
+      return overriding(creatorDescriptor.factoryMethod(), creatorType());
     }
 
     private RequirementStatus requirementStatus(ComponentRequirement requirement) {
@@ -433,7 +433,7 @@ final class ComponentCreatorImplementationFactory {
     @Override
     protected MethodSpec.Builder setterMethodBuilder(ComponentRequirement requirement) {
       XMethodElement supertypeMethod = creatorDescriptor.setterMethods().get(requirement);
-      MethodSpec.Builder method = MethodSpecs.overriding(supertypeMethod, creatorType());
+      MethodSpec.Builder method = overriding(supertypeMethod, creatorType());
       if (!isVoid(supertypeMethod.getReturnType())) {
         // Take advantage of covariant returns so that we don't have to worry about type variables
         method.returns(componentImplementation.getCreatorName());

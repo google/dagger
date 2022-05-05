@@ -71,7 +71,7 @@ public final class Accessibility {
   }
 
   /** Returns true if the given type can be referenced from any package. */
-  public static boolean isTypePubliclyAccessible(TypeMirror type) {
+  private static boolean isTypePubliclyAccessible(TypeMirror type) {
     return type.accept(new TypeAccessibilityVisitor(Optional.empty()), null);
   }
 
@@ -81,7 +81,7 @@ public final class Accessibility {
   }
 
   /** Returns true if the given type can be referenced from code in the given package. */
-  public static boolean isTypeAccessibleFrom(TypeMirror type, String packageName) {
+  private static boolean isTypeAccessibleFrom(TypeMirror type, String packageName) {
     return type.accept(new TypeAccessibilityVisitor(Optional.of(packageName)), null);
   }
 
@@ -164,7 +164,7 @@ public final class Accessibility {
   }
 
   /** Returns true if the given element can be referenced from any package. */
-  public static boolean isElementPubliclyAccessible(Element element) {
+  private static boolean isElementPubliclyAccessible(Element element) {
     return element.accept(new ElementAccessibilityVisitor(Optional.empty()), null);
   }
 
@@ -177,7 +177,7 @@ public final class Accessibility {
 
   /** Returns true if the given element can be referenced from code in the given package. */
   // TODO(gak): account for protected
-  public static boolean isElementAccessibleFrom(Element element, String packageName) {
+  private static boolean isElementAccessibleFrom(Element element, String packageName) {
     return element.accept(new ElementAccessibilityVisitor(Optional.of(packageName)), null);
   }
 
@@ -187,7 +187,7 @@ public final class Accessibility {
   }
 
   /** Returns true if the given element can be referenced from other code in its own package. */
-  public static boolean isElementAccessibleFromOwnPackage(Element element) {
+  private static boolean isElementAccessibleFromOwnPackage(Element element) {
     return isElementAccessibleFrom(element, getPackage(element).getQualifiedName().toString());
   }
 
@@ -257,7 +257,7 @@ public final class Accessibility {
   }
 
   /** Returns true if the raw type of {@code type} is accessible from the given package. */
-  public static boolean isRawTypeAccessible(TypeMirror type, String requestingPackage) {
+  private static boolean isRawTypeAccessible(TypeMirror type, String requestingPackage) {
     return type.getKind() == TypeKind.DECLARED
         ? isElementAccessibleFrom(asElement(type), requestingPackage)
         : isTypeAccessibleFrom(type, requestingPackage);
@@ -269,7 +269,7 @@ public final class Accessibility {
   }
 
   /** Returns true if the raw type of {@code type} is accessible from any package. */
-  public static boolean isRawTypePubliclyAccessible(TypeMirror type) {
+  private static boolean isRawTypePubliclyAccessible(TypeMirror type) {
     return type.getKind() == TypeKind.DECLARED
         ? isElementPubliclyAccessible(asElement(type))
         : isTypePubliclyAccessible(type);

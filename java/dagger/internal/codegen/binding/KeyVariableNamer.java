@@ -57,7 +57,7 @@ public final class KeyVariableNamer {
 
     if (key.qualifier().isPresent()) {
       // TODO(gak): Use a better name for fields with qualifiers with members.
-      builder.append(key.qualifier().get().java().getAnnotationType().asElement().getSimpleName());
+      builder.append(getSimpleName(key.qualifier().get().xprocessing().getType().getTypeElement()));
     }
 
     typeNamer(key.type().xprocessing(), builder);

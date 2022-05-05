@@ -16,8 +16,6 @@
 
 package dagger.internal.codegen.binding;
 
-import static com.google.auto.common.MoreTypes.isType;
-import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
@@ -26,6 +24,7 @@ import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAss
 import static dagger.internal.codegen.binding.SourceFiles.generatedMonitoringModuleName;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
 import static dagger.spi.model.BindingKind.DELEGATE;
 import static dagger.spi.model.BindingKind.INJECTION;
@@ -43,7 +42,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimaps;
-import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.ContributionType;
@@ -406,16 +404,14 @@ public final class BindingGraphFactory implements ClearableCache {
       }
 
       // Add members injector binding
-      if (isType(requestKey.type().java())
-          && isTypeOf(MembersInjector.class, requestKey.type().java())) {
+      if (isTypeOf(requestKey.type().xprocessing(), TypeNames.MEMBERS_INJECTOR)) {
         injectBindingRegistry
             .getOrFindMembersInjectorProvisionBinding(requestKey)
             .ifPresent(bindings::add);
       }
 
       // Add Assisted Factory binding
-      if (isType(requestKey.type().java())
-          && isDeclared(requestKey.type().xprocessing())
+      if (isDeclared(requestKey.type().xprocessing())
           && isAssistedFactoryType(requestKey.type().xprocessing().getTypeElement())) {
         bindings.add(
             bindingFactory.assistedFactoryBinding(

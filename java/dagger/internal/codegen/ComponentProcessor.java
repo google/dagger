@@ -22,7 +22,6 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingEnvConfig;
 import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.XRoundEnv;
-import androidx.room.compiler.processing.compat.XConverters;
 import androidx.room.compiler.processing.javac.JavacBasicAnnotationProcessor;
 import com.google.auto.service.AutoService;
 import com.google.common.annotations.VisibleForTesting;
@@ -210,8 +209,7 @@ public class ComponentProcessor extends JavacBasicAnnotationProcessor {
 
   @Override
   public void postRound(XProcessingEnv env, XRoundEnv roundEnv) {
-    // TODO(bcorso): Add a way to determine if processing is over without converting to Javac here.
-    if (!XConverters.toJavac(roundEnv).processingOver()) {
+    if (!roundEnv.isProcessingOver()) {
       try {
         injectBindingRegistry.generateSourcesForRequiredBindings(
             factoryGenerator, membersInjectorGenerator);

@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedFactoryMethods;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
@@ -26,10 +25,12 @@ import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 import static dagger.internal.codegen.langmodel.Accessibility.accessibleType;
+import static dagger.internal.codegen.xprocessing.MethodSpecs.overriding;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isPreJava8SourceVersion;
+import static dagger.internal.codegen.xprocessing.XTypeElements.typeVariableNames;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -54,7 +55,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.codegen.base.SourceFileGenerationException;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
@@ -66,7 +66,6 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.validation.SuperficialValidator;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
-import dagger.internal.codegen.xprocessing.MethodSpecs;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -268,10 +267,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
       TypeSpec.Builder builder =
           TypeSpec.classBuilder(name)
               .addModifiers(PUBLIC, FINAL)
-              .addTypeVariables(
-                  toJavac(factory).getTypeParameters().stream()
-                      .map(TypeVariableName::get)
-                      .collect(toImmutableList()));
+              .addTypeVariables(typeVariableNames(factory));
 
       if (factory.isInterface()) {
         builder.addSuperinterface(factory.getType().getTypeName());
@@ -295,7 +291,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
                   .addStatement("this.$1N = $1N", delegateFactoryParam)
                   .build())
           .addMethod(
-              MethodSpecs.overriding(metadata.factoryMethod(), metadata.factoryType())
+              overriding(metadata.factoryMethod(), metadata.factoryType())
                   .addStatement(
                       "return $N.get($L)",
                       delegateFactoryParam,
@@ -310,10 +306,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
               MethodSpec.methodBuilder("create")
                   .addModifiers(PUBLIC, STATIC)
                   .addParameter(delegateFactoryParam)
-                  .addTypeVariables(
-                      toJavac(metadata.assistedInjectElement()).getTypeParameters().stream()
-                          .map(TypeVariableName::get)
-                          .collect(toImmutableList()))
+                  .addTypeVariables(typeVariableNames(metadata.assistedInjectElement()))
                   .returns(providerOf(factory.getType().getTypeName()))
                   .addStatement(
                       "return $T.$Lcreate(new $T($N))",

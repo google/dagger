@@ -26,6 +26,7 @@ import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.xprocessing.MethodSpecs.overriding;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
 import static dagger.internal.codegen.xprocessing.XTypes.isAssignableTo;
@@ -49,7 +50,6 @@ import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.binding.ProductionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.internal.codegen.xprocessing.MethodSpecs;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.RequestKind;
 import java.util.HashMap;
@@ -197,8 +197,7 @@ public final class ComponentRequestRepresentations {
   public MethodSpec getComponentMethod(ComponentMethodDescriptor componentMethod) {
     checkArgument(componentMethod.dependencyRequest().isPresent());
     BindingRequest request = bindingRequest(componentMethod.dependencyRequest().get());
-    return MethodSpecs.overriding(
-            componentMethod.methodElement(), graph.componentTypeElement().getType())
+    return overriding(componentMethod.methodElement(), graph.componentTypeElement().getType())
         .addCode(
             request.isRequestKind(RequestKind.MEMBERS_INJECTION)
                 ? getMembersInjectionComponentMethodImplementation(request, componentMethod)

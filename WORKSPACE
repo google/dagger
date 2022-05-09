@@ -257,7 +257,7 @@ maven_install(
         "org.hamcrest:hamcrest-core:1.3",
         "org.jetbrains.kotlin:kotlin-stdlib:%s" % KOTLIN_VERSION,
         "org.jetbrains.kotlin:kotlin-stdlib-jdk8:%s" % KOTLIN_VERSION,
-        "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.3.0",
+        "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.4.2",
         "org.mockito:mockito-core:2.28.2",
         "org.objenesis:objenesis:1.0",
         "org.robolectric:robolectric:4.4",

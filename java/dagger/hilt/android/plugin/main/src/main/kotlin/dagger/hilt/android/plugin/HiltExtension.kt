@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package dagger.hilt.android.plugin
 
 /** Configuration options for the Hilt Gradle Plugin */

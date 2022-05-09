@@ -12,8 +12,8 @@ _deploy_plugin() {
   local plugindir=java/dagger/hilt/android/plugin
   ./$plugindir/gradlew -p $plugindir --no-daemon clean \
     publishAllPublicationsToMavenRepository -PPublishVersion="$VERSION_NAME"
-  local outdir=$plugindir/build/repo/com/google/dagger/hilt-android-gradle-plugin/$VERSION_NAME
-  local markerOutDir=$plugindir/build/repo/com/google/dagger/hilt/android/com.google.dagger.hilt.android.gradle.plugin/$VERSION_NAME
+  local outdir=$plugindir/main/build/repo/com/google/dagger/hilt-android-gradle-plugin/$VERSION_NAME
+  local markerOutDir=$plugindir/main/build/repo/com/google/dagger/hilt/android/com.google.dagger.hilt.android.gradle.plugin/$VERSION_NAME
   # When building '-SNAPSHOT' versions in gradle, the filenames replaces
   # '-SNAPSHOT' with timestamps, so we need to disambiguate by finding each file
   # to deploy. See: https://stackoverflow.com/questions/54182823/

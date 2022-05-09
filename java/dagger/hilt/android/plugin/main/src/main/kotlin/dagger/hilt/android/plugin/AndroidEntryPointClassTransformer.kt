@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package dagger.hilt.android.plugin
 
 import dagger.hilt.android.plugin.util.isClassFile

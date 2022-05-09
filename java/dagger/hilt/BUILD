@@ -144,7 +144,7 @@ filegroup(
         "//java/dagger/hilt/android/internal/modules:srcs_filegroup",
         "//java/dagger/hilt/android/lifecycle:srcs_filegroup",
         "//java/dagger/hilt/android/migration:srcs_filegroup",
-        "//java/dagger/hilt/android/plugin:srcs_filegroup",
+        "//java/dagger/hilt/android/plugin/main:srcs_filegroup",
         "//java/dagger/hilt/android/qualifiers:srcs_filegroup",
         "//java/dagger/hilt/android/scopes:srcs_filegroup",
     ],

@@ -23,12 +23,10 @@ import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static androidx.room.compiler.processing.XElementKt.isVariableElement;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XAnnotated;
 import androidx.room.compiler.processing.XAnnotation;
@@ -38,6 +36,7 @@ import androidx.room.compiler.processing.XEnumEntry;
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XFieldElement;
+import androidx.room.compiler.processing.XHasModifiers;
 import androidx.room.compiler.processing.XMemberContainer;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
@@ -120,15 +119,28 @@ public final class XElements {
   }
 
   public static boolean isAbstract(XElement element) {
-    return toJavac(element).getModifiers().contains(ABSTRACT);
+    return asHasModifiers(element).isAbstract();
   }
 
   public static boolean isPrivate(XElement element) {
-    return toJavac(element).getModifiers().contains(PRIVATE);
+    return asHasModifiers(element).isPrivate();
   }
 
   public static boolean isStatic(XElement element) {
-    return toJavac(element).getModifiers().contains(STATIC);
+    return asHasModifiers(element).isStatic();
+  }
+
+  // TODO(bcorso): Ideally we would modify XElement to extend XHasModifiers to prevent possible
+  // runtime exceptions if the element does not extend XHasModifiers. However, for Dagger's purpose
+  // all usages should be on elements that do extend XHasModifiers, so generalizing this for
+  // XProcessing is probably overkill for now.
+  private static XHasModifiers asHasModifiers(XElement element) {
+    // In javac, Element implements HasModifiers but in XProcessing XElement does not.
+    // Currently, the elements that do not extend XHasModifiers are XMemberContainer, XEnumEntry,
+    // XVariableElement. Though most instances of XMemberContainer will extend XHasModifiers through
+    // XTypeElement instead.
+    checkArgument(element instanceof XHasModifiers, "Element %s does not have modifiers", element);
+    return (XHasModifiers) element;
   }
 
   public static boolean isPackage(XElement element) {

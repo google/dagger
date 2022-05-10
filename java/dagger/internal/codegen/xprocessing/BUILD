@@ -49,3 +49,15 @@ java_import(
     name = "xprocessing-jar",
     jars = ["xprocessing.jar"],
 )
+
+alias(
+    name = "xprocessing-testing-lib",
+    actual = ":xprocessing-testing-jar",
+    visibility = ["//visibility:private"],
+)
+
+java_import(
+    name = "xprocessing-testing-jar",
+    jars = ["xprocessing-testing.jar"],
+    visibility = ["//visibility:private"],
+)

@@ -18,7 +18,6 @@ package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XTypeKt.isVoid;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -28,6 +27,7 @@ import static dagger.internal.codegen.javapoet.TypeNames.isFutureType;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
@@ -48,7 +48,8 @@ import dagger.Component;
 import dagger.Module;
 import dagger.Subcomponent;
 import dagger.internal.codegen.base.ComponentAnnotation;
-import dagger.producers.CancellationPolicy;
+import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Scope;
 import java.util.HashMap;
@@ -69,6 +70,21 @@ import java.util.stream.Stream;
  */
 @AutoValue
 public abstract class ComponentDescriptor {
+  /**
+   * The cancellation policy for a {@link dagger.producers.ProductionComponent}.
+   *
+   * <p>@see dagger.producers.CancellationPolicy
+   */
+  public enum CancellationPolicy {
+    PROPAGATE,
+    IGNORE;
+
+    private static CancellationPolicy from(XAnnotation annotation) {
+      checkArgument(XAnnotations.getClassName(annotation).equals(TypeNames.CANCELLATION_POLICY));
+      return valueOf(getSimpleName(annotation.getAsEnum("fromSubcomponents")));
+    }
+  }
+
   /** Creates a {@link ComponentDescriptor}. */
   static ComponentDescriptor create(
       ComponentAnnotation componentAnnotation,
@@ -279,8 +295,7 @@ public abstract class ComponentDescriptor {
   }
 
   @Memoized
-  ImmutableMap<BindingRequest, ComponentMethodDescriptor>
-      firstMatchingComponentMethods() {
+  ImmutableMap<BindingRequest, ComponentMethodDescriptor> firstMatchingComponentMethods() {
     Map<BindingRequest, ComponentMethodDescriptor> methods = new HashMap<>();
     for (ComponentMethodDescriptor method : entryPointMethods()) {
       methods.putIfAbsent(BindingRequest.bindingRequest(method.dependencyRequest().get()), method);
@@ -290,8 +305,7 @@ public abstract class ComponentDescriptor {
 
   /** The entry point methods on the component type. Each has a {@link DependencyRequest}. */
   public final ImmutableSet<ComponentMethodDescriptor> entryPointMethods() {
-    return componentMethods()
-        .stream()
+    return componentMethods().stream()
         .filter(method -> method.dependencyRequest().isPresent())
         .collect(toImmutableSet());
   }
@@ -317,7 +331,8 @@ public abstract class ComponentDescriptor {
   public final Optional<CancellationPolicy> cancellationPolicy() {
     return isProduction()
         // TODO(bcorso): Get values from XAnnotation instead of using CancellationPolicy directly.
-        ? Optional.ofNullable(toJavac(typeElement()).getAnnotation(CancellationPolicy.class))
+        ? Optional.ofNullable(typeElement().getAnnotation(TypeNames.CANCELLATION_POLICY))
+            .map(CancellationPolicy::from)
         : Optional.empty();
   }
 

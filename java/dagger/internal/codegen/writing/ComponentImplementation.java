@@ -36,7 +36,6 @@ import static dagger.internal.codegen.javapoet.CodeBlocks.parameterNames;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.COMPONENT_METHOD;
 import static dagger.internal.codegen.xprocessing.MethodSpecs.overriding;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
-import static dagger.producers.CancellationPolicy.Propagation.PROPAGATE;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -75,6 +74,7 @@ import dagger.internal.codegen.binding.BindingNode;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor;
+import dagger.internal.codegen.binding.ComponentDescriptor.CancellationPolicy;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.KeyVariableNamer;
@@ -1060,7 +1060,7 @@ public final class ComponentImplementation {
               .get()
               .componentDescriptor()
               .cancellationPolicy()
-              .map(policy -> policy.fromSubcomponents().equals(PROPAGATE))
+              .map(policy -> policy.equals(CancellationPolicy.PROPAGATE))
               .orElse(false);
     }
 

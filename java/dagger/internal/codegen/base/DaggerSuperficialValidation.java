@@ -97,10 +97,12 @@ public final class DaggerSuperficialValidation {
   }
 
   private final boolean isStrictValidationEnabled;
+  private final boolean isKSP;
 
   @Inject
-  DaggerSuperficialValidation(CompilerOptions compilerOptions) {
+  DaggerSuperficialValidation(XProcessingEnv processingEnv, CompilerOptions compilerOptions) {
     this.isStrictValidationEnabled = compilerOptions.strictSuperficialValidation();
+    this.isKSP = processingEnv.getBackend() == XProcessingEnv.Backend.KSP;
   }
 
   /**
@@ -112,6 +114,9 @@ public final class DaggerSuperficialValidation {
    * parameters.
    */
   public void validateTypeOf(XElement element) {
+    if (isKSP) {
+      return; // TODO(bcorso): Add support for KSP.
+    }
     validateTypeOf(toJavac(element));
   }
 
@@ -130,6 +135,9 @@ public final class DaggerSuperficialValidation {
    * type bounds.
    */
   public void validateSuperTypeOf(XTypeElement element) {
+    if (isKSP) {
+      return; // TODO(bcorso): Add support for KSP.
+    }
     validateSuperTypeOf(toJavac(element));
   }
 
@@ -148,6 +156,9 @@ public final class DaggerSuperficialValidation {
    * type bounds.
    */
   public void validateThrownTypesOf(XExecutableElement element) {
+    if (isKSP) {
+      return; // TODO(bcorso): Add support for KSP.
+    }
     validateThrownTypesOf(toJavac(element));
   }
 
@@ -167,6 +178,9 @@ public final class DaggerSuperficialValidation {
    * such cases, we just need to validate the annotation's type.
    */
   public void validateAnnotationTypesOf(XElement element) {
+    if (isKSP) {
+      return; // TODO(bcorso): Add support for KSP.
+    }
     validateAnnotationTypesOf(toJavac(element));
   }
 
@@ -177,7 +191,7 @@ public final class DaggerSuperficialValidation {
    * about the annotation's annotations (e.g. to check for {@code Scope} or {@code Qualifier}). In
    * such cases, we just need to validate the annotation's type.
    */
-  public void validateAnnotationTypesOf(Element element) {
+  private void validateAnnotationTypesOf(Element element) {
     element
         .getAnnotationMirrors()
         .forEach(annotation -> validateAnnotationTypeOf(element, annotation));
@@ -195,6 +209,9 @@ public final class DaggerSuperficialValidation {
    */
   // TODO(bcorso): See CL/427767370 for suggestions to make this API clearer.
   public void validateAnnotationTypeOf(XElement element, XAnnotation annotation) {
+    if (isKSP) {
+      return; // TODO(bcorso): Add support for KSP.
+    }
     validateAnnotationTypeOf(toJavac(element), toJavac(annotation));
   }
 
@@ -208,7 +225,7 @@ public final class DaggerSuperficialValidation {
    * about the annotation's annotations (e.g. to check for {@code Scope} or {@code Qualifier}). In
    * such cases, we just need to validate the annotation's type.
    */
-  public void validateAnnotationTypeOf(Element element, AnnotationMirror annotation) {
+  private void validateAnnotationTypeOf(Element element, AnnotationMirror annotation) {
     try {
       validateType("annotation type", annotation.getAnnotationType());
     } catch (RuntimeException exception) {
@@ -218,10 +235,13 @@ public final class DaggerSuperficialValidation {
 
   /** Validate the annotations of the given element. */
   public void validateAnnotationsOf(XElement element) {
+    if (isKSP) {
+      return; // TODO(bcorso): Add support for KSP.
+    }
     validateAnnotationsOf(toJavac(element));
   }
 
-  public void validateAnnotationsOf(Element element) {
+  private void validateAnnotationsOf(Element element) {
     try {
       validateAnnotations(element.getAnnotationMirrors());
     } catch (RuntimeException exception) {
@@ -230,10 +250,13 @@ public final class DaggerSuperficialValidation {
   }
 
   public void validateAnnotationOf(XElement element, XAnnotation annotation) {
+    if (isKSP) {
+      return; // TODO(bcorso): Add support for KSP.
+    }
     validateAnnotationOf(toJavac(element), toJavac(annotation));
   }
 
-  public void validateAnnotationOf(Element element, AnnotationMirror annotation) {
+  private void validateAnnotationOf(Element element, AnnotationMirror annotation) {
     try {
       validateAnnotation(annotation);
     } catch (RuntimeException exception) {
@@ -248,6 +271,9 @@ public final class DaggerSuperficialValidation {
    * <p>Validation includes all superclasses, interfaces, and type parameters of those types.
    */
   public void validateTypeHierarchyOf(String typeDescription, XElement element, XType type) {
+    if (isKSP) {
+      return; // TODO(bcorso): Add support for KSP.
+    }
     try {
       validateTypeHierarchy(typeDescription, type);
     } catch (RuntimeException exception) {
@@ -267,7 +293,7 @@ public final class DaggerSuperficialValidation {
   /**
    * Returns true if all of the given elements return true from {@link #validateElement(Element)}.
    */
-  public void validateElements(Iterable<? extends Element> elements) {
+  private void validateElements(Iterable<? extends Element> elements) {
     for (Element element : elements) {
       validateElement(element);
     }
@@ -332,6 +358,9 @@ public final class DaggerSuperficialValidation {
    * anything it contains, and any of its annotations element are all defined.
    */
   public void validateElement(XElement element) {
+    if (isKSP) {
+      return; // TODO(bcorso): Add support for KSP.
+    }
     validateElement(toJavac(element));
   }
 
@@ -341,7 +370,7 @@ public final class DaggerSuperficialValidation {
    * are fully defined. For other element kinds, it means that types referenced by the element,
    * anything it contains, and any of its annotations element are all defined.
    */
-  public void validateElement(Element element) {
+  private void validateElement(Element element) {
     try {
       element.accept(elementValidatingVisitor, null);
     } catch (RuntimeException exception) {
@@ -434,6 +463,9 @@ public final class DaggerSuperficialValidation {
    * in a {@code throws} clause or in the bounds of any type parameters.
    */
   private void validateType(String desc, TypeMirror type) {
+    if (isKSP) {
+      return; // TODO(bcorso): Add support for KSP.
+    }
     try {
       type.accept(typeValidatingVisitor, null);
       if (isStrictValidationEnabled) {
@@ -459,6 +491,9 @@ public final class DaggerSuperficialValidation {
   }
 
   private void validateAnnotation(AnnotationMirror annotationMirror) {
+    if (isKSP) {
+      return; // TODO(bcorso): Add support for KSP.
+    }
     try {
       validateType("annotation type", annotationMirror.getAnnotationType());
       validateAnnotationValues(annotationMirror.getElementValues());

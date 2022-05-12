@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import com.google.testing.compile.Compiler;
 import dagger.internal.codegen.ComponentProcessor;
+import dagger.internal.codegen.KspComponentProcessor;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -82,6 +83,32 @@ public final class CompilerTests {
             /*kotlincArguments=*/ ImmutableList.of(),
             /*kaptProcessors=*/ ImmutableList.of(new ComponentProcessor()),
             /*symbolProcessorProviders=*/ ImmutableList.of(),
+            /*processorOptions=*/ processorOptions));
+    onCompilationResult.accept(result);
+  }
+
+  public static void compileWithKsp(
+      List<Source> sources,
+      TemporaryFolder tempFolder,
+      Consumer<TestCompilationResult> onCompilationResult) {
+    compileWithKsp(sources, ImmutableMap.of(), tempFolder, onCompilationResult);
+  }
+
+  public static void compileWithKsp(
+      List<Source> sources,
+      Map<String, String> processorOptions,
+      TemporaryFolder tempFolder,
+      Consumer<TestCompilationResult> onCompilationResult) {
+    TestCompilationResult result = TestKotlinCompilerKt.compile(
+        tempFolder.getRoot(),
+        new TestCompilationArguments(
+            sources,
+            /*classpath=*/ ImmutableList.of(compilerDepsJar()),
+            /*inheritClasspath=*/ false,
+            /*javacArguments=*/ ImmutableList.of(),
+            /*kotlincArguments=*/ ImmutableList.of(),
+            /*kaptProcessors=*/ ImmutableList.of(),
+            /*symbolProcessorProviders=*/ ImmutableList.of(new KspComponentProcessor.Provider()),
             /*processorOptions=*/ processorOptions));
     onCompilationResult.accept(result);
   }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen;
+package dagger.internal.codegen.kotlin;
 
 import static com.google.common.truth.Truth.assertThat;
 import static dagger.testing.compile.CompilerTests.compileWithKapt;

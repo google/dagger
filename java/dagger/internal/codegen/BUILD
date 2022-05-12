@@ -52,10 +52,12 @@ java_library(
         "//third_party/java/auto:value",
         "//third_party/java/error_prone:annotations",
         "//third_party/java/google_java_format",
+        "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
         "//third_party/java/jsr330_inject",
         "@bazel_tools//tools/jdk:langtools-neverlink",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )
 
@@ -92,6 +94,7 @@ gen_maven_artifact(
         "com.google.dagger:dagger-producers",
         "com.google.dagger:dagger-spi",
         "com.google.dagger:dagger",
+        "com.google.devtools.ksp:symbol-processing-api",
         "com.google.googlejavaformat:google-java-format",
         "com.google.guava:failureaccess",
         "com.google.guava:guava",

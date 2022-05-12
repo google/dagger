@@ -18,7 +18,6 @@
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenJavaTests")
-load("//java/dagger/testing/compile:macros.bzl", "kt_compiler_test")
 
 package(default_visibility = ["//:src"])
 
@@ -67,9 +66,8 @@ GenJavaTests(
         exclude = [
             "CompilerMode.java",
             "Compilers.java",
-            "JavaFileBuilder.java",
-            "ComponentValidationKtTest.java",
             "InvalidInjectConstructor.java",
+            "JavaFileBuilder.java",
         ],
     ),
     functional = False,
@@ -109,32 +107,5 @@ GenJavaTests(
         "//third_party/java/mockito",
         "//third_party/java/truth",
         "@com_google_auto_value_auto_value//jar",
-    ],
-)
-
-kt_compiler_test(
-    name = "ComponentValidationKtTest",
-    srcs = ["ComponentValidationKtTest.java"],
-    compiler_deps = [
-        "//java/dagger:core",
-        "//java/dagger/internal/codegen:package_info",
-        "//java/dagger/internal/codegen:processor",
-        "//java/dagger/internal/codegen/base",
-        "//java/dagger/internal/codegen/binding",
-        "//java/dagger/internal/codegen/bindinggraphvalidation",
-        "//java/dagger/internal/codegen/compileroption",
-        "//java/dagger/internal/codegen/javapoet",
-        "//java/dagger/internal/codegen/langmodel",
-        "//java/dagger/internal/codegen/validation",
-        "//java/dagger/internal/codegen/writing",
-        "//java/dagger/model/testing",
-        "//java/dagger/producers",
-        "//java/dagger/spi",
-    ],
-    deps = [
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
-        "//third_party/java/guava/collect",
-        "//third_party/java/junit",
-        "//third_party/java/truth",
     ],
 )

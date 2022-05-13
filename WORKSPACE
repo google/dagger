@@ -141,10 +141,10 @@ archive_repository(
 
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
 
-KOTLIN_VERSION = "1.6.20"
+KOTLIN_VERSION = "1.6.21"
 
 # Get from https://github.com/JetBrains/kotlin/releases/
-KOTLINC_RELEASE_SHA = "daf17db1c194f4205f3af67129367a69b388f819177963dc53a7b4b2c4d8ce22"
+KOTLINC_RELEASE_SHA = "632166fed89f3f430482f5aa07f2e20b923b72ef688c8f5a7df3aa1502c6d8ba"
 
 kotlin_repositories(
     compiler_release = kotlinc_version(

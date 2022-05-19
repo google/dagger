@@ -20,8 +20,10 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 
 import androidx.room.compiler.processing.XAnnotation;
 import com.google.auto.common.AnnotationMirrors;
+import com.google.common.base.Equivalence;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
+import java.util.Arrays;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XAnnotation} helper methods. */
@@ -40,6 +42,40 @@ public final class XAnnotations {
   /** Returns the class name of the given annotation */
   public static ClassName getClassName(XAnnotation annotation) {
     return annotation.getType().getTypeElement().getClassName();
+  }
+
+  private static final Equivalence<XAnnotation> XANNOTATION_EQUIVALENCE =
+      new Equivalence<XAnnotation>() {
+        @Override
+        protected boolean doEquivalent(XAnnotation left, XAnnotation right) {
+          return XTypes.equivalence().equivalent(left.getType(), right.getType())
+              && XAnnotationValues.equivalence()
+                  .pairwise()
+                  .equivalent(left.getAnnotationValues(), right.getAnnotationValues());
+        }
+
+        @Override
+        protected int doHash(XAnnotation annotation) {
+          return Arrays.hashCode(
+              new int[] {
+                XTypes.equivalence().hash(annotation.getType()),
+                XAnnotationValues.equivalence().pairwise().hash(annotation.getAnnotationValues())
+              });
+        }
+
+        @Override
+        public String toString() {
+          return "XAnnotation.equivalence()";
+        }
+      };
+
+  /**
+   * Returns an {@link Equivalence} for {@link XAnnotation}.
+   *
+   * <p>This equivalence takes into account the order of annotation values.
+   */
+  public static Equivalence<XAnnotation> equivalence() {
+    return XANNOTATION_EQUIVALENCE;
   }
 
   private XAnnotations() {}

@@ -27,6 +27,7 @@ import androidx.room.compiler.processing.XArrayType;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
+import com.google.common.base.Equivalence;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import java.util.Optional;
@@ -35,6 +36,34 @@ import javax.lang.model.type.TypeKind;
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XType} helper methods. */
 public final class XTypes {
+  private static final Equivalence<XType> XTYPE_EQUIVALENCE =
+      new Equivalence<XType>() {
+        @Override
+        protected boolean doEquivalent(XType left, XType right) {
+          return left.getTypeName().equals(right.getTypeName());
+        }
+
+        @Override
+        protected int doHash(XType type) {
+          return type.getTypeName().hashCode();
+        }
+
+        @Override
+        public String toString() {
+          return "XTypes.equivalence()";
+        }
+      };
+
+  /**
+   * Returns an {@link Equivalence} for {@link XType}.
+   *
+   * <p>Currently, this equivalence does not take into account nullability, as it just relies on
+   * JavaPoet's {@link TypeName}. Thus, two types with the same type name but different nullability
+   * are equal with this equivalence.
+   */
+  public static Equivalence<XType> equivalence() {
+    return XTYPE_EQUIVALENCE;
+  }
 
   /** Returns {@code true} if and only if the {@code type1} is assignable to {@code type2}. */
   public static boolean isAssignableTo(XType type1, XType type2) {
@@ -87,9 +116,7 @@ public final class XTypes {
     return XConverters.toJavac(type).getKind() == TypeKind.TYPEVAR;
   }
 
-  /**
-   * Returns {@code true} if {@code type1} is equivalent to {@code type2}.
-   */
+  /** Returns {@code true} if {@code type1} is equivalent to {@code type2}. */
   public static boolean areEquivalentTypes(XType type1, XType type2) {
     return type1.getTypeName().equals(type2.getTypeName());
   }

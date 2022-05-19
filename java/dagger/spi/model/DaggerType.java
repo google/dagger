@@ -19,36 +19,32 @@ package dagger.spi.model;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 
 import androidx.room.compiler.processing.XType;
-import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Preconditions;
+import dagger.internal.codegen.xprocessing.XTypes;
 import javax.lang.model.type.TypeMirror;
 
 /** Wrapper type for a type. */
 @AutoValue
 public abstract class DaggerType {
-  private XType type;
-
   public static DaggerType from(XType type) {
     Preconditions.checkNotNull(type);
-    DaggerType daggerType = new AutoValue_DaggerType(MoreTypes.equivalence().wrap(toJavac(type)));
-    daggerType.type = type;
-    return daggerType;
+    return new AutoValue_DaggerType(XTypes.equivalence().wrap(type));
   }
 
-  abstract Equivalence.Wrapper<TypeMirror> typeMirror();
+  abstract Equivalence.Wrapper<XType> equivalenceWrapper();
 
   public XType xprocessing() {
-    return type;
+    return equivalenceWrapper().get();
   }
 
   public TypeMirror java() {
-    return toJavac(type);
+    return toJavac(xprocessing());
   }
 
   @Override
   public final String toString() {
-    return type.toString();
+    return xprocessing().toString();
   }
 }

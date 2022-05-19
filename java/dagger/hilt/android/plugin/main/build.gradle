@@ -65,7 +65,7 @@ dependencies {
   testImplementation gradleTestKit()
   testImplementation 'junit:junit:4.12'
   testImplementation 'com.google.truth:truth:1.0.1'
-  testPluginCompile 'com.android.tools.build:gradle:4.2.0'
+  testPluginCompile 'com.android.tools.build:gradle:7.1.2'
 }
 
 // Configure the generating task of plugin-under-test-metadata.properties to
@@ -78,14 +78,14 @@ tasks.withType(PluginUnderTestMetadata.class).named("pluginUnderTestMetadata").c
 
 compileKotlin {
   kotlinOptions {
-    jvmTarget = "1.8"
+    jvmTarget = '11'
     allWarningsAsErrors = true
   }
 }
 
 java {
-  sourceCompatibility = "1.8"
-  targetCompatibility = "1.8"
+  sourceCompatibility JavaVersion.VERSION_11
+  targetCompatibility JavaVersion.VERSION_11
 }
 
 // Imports a shared library from the main project. The library and its classes

@@ -18,6 +18,17 @@ load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
 
 package(default_visibility = ["//:src"])
 
+android_library(
+    name = "resources",
+    manifest = "AndroidManifest.xml",
+    resource_files = glob(["res/**"]),
+    deps = [
+        "@maven//:androidx_navigation_navigation_common",
+        "@maven//:androidx_navigation_navigation_fragment",
+        "@maven//:androidx_navigation_navigation_runtime",
+    ],
+)
+
 # Checks that multiple test roots can be compiled together. This library
 # only compiles the sources. they are tested in the android_local_tests.
 android_library(
@@ -572,6 +583,37 @@ android_local_test(
         "@maven//:androidx_lifecycle_lifecycle_common",
         "@maven//:androidx_lifecycle_lifecycle_viewmodel",
         "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
+        "@maven//:junit_junit",
+    ],
+)
+
+android_local_test(
+    name = "ViewModelSavedStateOwnerTest",
+    srcs = ["ViewModelSavedStateOwnerTest.java"],
+    manifest = "AndroidManifest.xml",
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
+    deps = [
+        ":resources",
+        "//:android_local_test_exports",
+        "//:dagger_with_compiler",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/android:android_entry_point",
+        "//java/dagger/hilt/android:package_info",
+        "//java/dagger/hilt/android/lifecycle",
+        "//java/dagger/hilt/android/scopes",
+        "//java/dagger/hilt/android/testing:hilt_android_test",
+        "//third_party/java/jsr330_inject",
+        "//third_party/java/truth",
+        "@maven//:androidx_activity_activity",
+        "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_common",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
+        "@maven//:androidx_navigation_navigation_common",
+        "@maven//:androidx_navigation_navigation_fragment",
+        "@maven//:androidx_navigation_navigation_runtime",
         "@maven//:junit_junit",
     ],
 )

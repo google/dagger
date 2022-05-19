@@ -41,8 +41,10 @@ load(
 
 android_sdk_repository(
     name = "androidsdk",
-    api_level = 30,
-    build_tools_version = "30.0.2",
+    api_level = 32,
+    # Need to upgrade Bazel before upgrading tools
+    # https://github.com/bazelbuild/bazel/issues/13989
+    build_tools_version = "30.0.3",
 )
 
 #############################
@@ -65,9 +67,9 @@ robolectric_repositories()
 # Load Maven repositories
 #########################
 
-RULES_JVM_EXTERNAL_TAG = "2.7"
+RULES_JVM_EXTERNAL_TAG = "4.2"
 
-RULES_JVM_EXTERNAL_SHA = "f04b1466a00a2845106801e0c5cec96841f49ea4e7d1df88dc8e4bf31523df74"
+RULES_JVM_EXTERNAL_SHA = "cd1a77b7b02e8e008439ca76fd34f5b07aecb8c752961f9640dea15e9e5ba1ca"
 
 http_archive(
     name = "rules_jvm_external",

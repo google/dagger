@@ -20,7 +20,7 @@ plugins {
 }
 
 java {
-    // Make sure the generated source is compatible with Java 8.
+    // Make sure the generated source is compatible with Java 8. Test
     sourceCompatibility = JavaVersion.VERSION_1_8
 }
 

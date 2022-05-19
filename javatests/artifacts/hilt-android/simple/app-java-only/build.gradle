@@ -18,20 +18,20 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.dagger.hilt.android'
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.2"
+    compileSdkVersion 32
+    buildToolsVersion "32.0.0"
 
     defaultConfig {
         applicationId "dagger.hilt.android.simple"
         minSdkVersion 15
-        targetSdkVersion 30
+        targetSdkVersion 32
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     testOptions {
         unitTests.includeAndroidResources = true
@@ -63,7 +63,7 @@ dependencies {
   testImplementation 'junit:junit:4.13'
   testImplementation 'org.robolectric:robolectric:4.5-alpha-3'
   testImplementation 'androidx.core:core:1.3.2'
-  testImplementation 'androidx.test.ext:junit:1.1.2'
-  testImplementation 'androidx.test:runner:1.3.0'
-  testImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+  testImplementation 'androidx.test.ext:junit:1.1.3'
+  testImplementation 'androidx.test:runner:1.4.0'
+  testImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }

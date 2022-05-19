@@ -53,7 +53,13 @@ public class ViewModelScopedTest {
           activity -> {
             TestFragment fragment =
                 (TestFragment) activity.getSupportFragmentManager().findFragmentByTag("tag");
-            assertThat(fragment.vm.one.bar).isEqualTo(fragment.vm.two.bar);
+            // Check that the scoped bar is the same instance within the same view model.
+            assertThat(fragment.vm1.one.bar).isEqualTo(fragment.vm1.two.bar);
+            assertThat(fragment.vm2.one.bar).isEqualTo(fragment.vm2.two.bar);
+
+            // Check that the keyed viewmodels are separate by checking that the bar instances
+            // are different, and hence have different components.
+            assertThat(fragment.vm1.one.bar).isNotEqualTo(fragment.vm2.one.bar);
           });
     }
   }
@@ -76,12 +82,14 @@ public class ViewModelScopedTest {
 
   @AndroidEntryPoint(Fragment.class)
   public static class TestFragment extends Hilt_ViewModelScopedTest_TestFragment {
-    MyViewModel vm;
+    MyViewModel vm1;
+    MyViewModel vm2;
 
     @Override
     public void onCreate(@Nullable Bundle bundle) {
       super.onCreate(bundle);
-      vm = new ViewModelProvider(this).get(MyViewModel.class);
+      vm1 = new ViewModelProvider(this).get("foo", MyViewModel.class);
+      vm2 = new ViewModelProvider(this).get("bar", MyViewModel.class);
     }
   }
 

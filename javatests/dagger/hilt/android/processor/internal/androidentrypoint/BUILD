@@ -23,7 +23,7 @@ compiler_test(
     srcs = ["ActivityGeneratorTest.java"],
     compiler_deps = [
         "//java/dagger/hilt/android:android_entry_point",
-        "@androidsdk//:platforms/android-30/android.jar",
+        "@androidsdk//:platforms/android-32/android.jar",
     ],
     deps = [
         "//third_party/java/compile_testing",
@@ -39,7 +39,7 @@ compiler_test(
     compiler_deps = [
         "//java/dagger/hilt/android:hilt_android_app",
         "//java/dagger/hilt/android:android_entry_point",
-        "@androidsdk//:platforms/android-30/android.jar",
+        "@androidsdk//:platforms/android-32/android.jar",
     ],
     deps = [
         "//third_party/java/compile_testing",
@@ -55,7 +55,7 @@ kt_compiler_test(
     compiler_deps = [
         "//java/dagger/hilt/android:hilt_android_app",
         "//java/dagger/hilt/android:android_entry_point",
-        "@androidsdk//:platforms/android-30/android.jar",
+        "@androidsdk//:platforms/android-32/android.jar",
     ],
     deps = [
         "//third_party/java/guava/collect",

@@ -47,7 +47,7 @@ class BuildCacheTest(private val enableAggregatingTask: Boolean) {
   private fun createGradleRunner(folder: TemporaryFolder): GradleTestRunner {
     val gradleRunner = GradleTestRunner(folder)
     gradleRunner.addDependencies(
-      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'androidx.appcompat:appcompat:1.3.1'",
       "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
       "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'",
     )
@@ -80,35 +80,35 @@ class BuildCacheTest(private val enableAggregatingTask: Boolean) {
     assertEquals(firstResult.getTask(":transformDebugClassesWithAsm").outcome, SUCCESS)
 
     val secondResult = secondGradleRunner.build()
-    val cacheableTasks: List<String> = mutableListOf<String>().apply {
-      add(":checkDebugAarMetadata")
-      add(":checkDebugDuplicateClasses")
-      add(":compileDebugJavaWithJavac")
-      add(":compressDebugAssets")
-      add(":extractDeepLinksDebug")
-      add(":generateDebugBuildConfig")
-      add(":generateDebugResValues")
-      // When aggregating task is enabled, the plugin adds two more tasks that should be
-      // cacheable.
-      if (enableAggregatingTask) {
-        add(":hiltAggregateDepsDebug")
-        add(":hiltJavaCompileDebug")
+    val cacheableTasks: List<String> =
+      mutableListOf<String>().apply {
+        add(":checkDebugAarMetadata")
+        add(":checkDebugDuplicateClasses")
+        add(":compileDebugJavaWithJavac")
+        add(":compressDebugAssets")
+        add(":desugarDebugFileDependencies")
+        add(":extractDeepLinksDebug")
+        add(":generateDebugBuildConfig")
+        add(":generateDebugResValues")
+        // When aggregating task is enabled, the plugin adds two more tasks that should be
+        // cacheable.
+        if (enableAggregatingTask) {
+          add(":hiltAggregateDepsDebug")
+          add(":hiltJavaCompileDebug")
+        }
+        add(":javaPreCompileDebug")
+        add(":mergeDebugAssets")
+        add(":mergeDebugJniLibFolders")
+        add(":mergeDebugShaders")
+        add(":mergeExtDexDebug")
+        add(":mergeLibDexDebug")
+        add(":mergeProjectDexDebug")
+        add(":processDebugManifestForPackage")
+        add(":transformDebugClassesWithAsm")
+        add(":validateSigningDebug")
+        add(":writeDebugAppMetadata")
+        add(":writeDebugSigningConfigVersions")
       }
-      add(":javaPreCompileDebug")
-      add(":mergeDebugAssets")
-      add(":mergeDebugJavaResource")
-      add(":mergeDebugJniLibFolders")
-      add(":mergeDebugNativeLibs")
-      add(":mergeDebugShaders")
-      add(":mergeExtDexDebug")
-      add(":mergeLibDexDebug")
-      add(":mergeProjectDexDebug")
-      add(":processDebugManifestForPackage")
-      add(":transformDebugClassesWithAsm")
-      add(":validateSigningDebug")
-      add(":writeDebugAppMetadata")
-      add(":writeDebugSigningConfigVersions")
-    }
 
     val tasksFromCache =
       secondResult.tasks.filter { it.outcome == FROM_CACHE }.map { it.path }.sorted()

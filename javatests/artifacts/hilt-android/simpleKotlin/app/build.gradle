@@ -20,13 +20,13 @@ apply plugin: 'com.google.dagger.hilt.android'
 apply plugin: 'kotlin-kapt'
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.2"
+    compileSdkVersion 32
+    buildToolsVersion "32.0.0"
 
     defaultConfig {
         applicationId "dagger.hilt.android.simpleKotlin"
         minSdkVersion 15
-        targetSdkVersion 30
+        targetSdkVersion 32
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "dagger.hilt.android.example.gradle.simpleKotlin.TestRunner"
@@ -48,11 +48,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
     testOptions {
         unitTests.includeAndroidResources = true
@@ -81,13 +81,13 @@ dependencies {
     implementation project(':kotlin-library')
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.activity:activity-ktx:1.1.0'
+    implementation 'androidx.activity:activity-ktx:1.5.0'
 
     implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'
     kapt 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
 
-    testImplementation 'androidx.test.ext:junit:1.1.2'
-    testImplementation 'androidx.test:runner:1.3.0'
+    testImplementation 'androidx.test.ext:junit:1.1.3'
+    testImplementation 'androidx.test:runner:1.4.0'
     testImplementation 'com.google.truth:truth:1.0.1'
     testImplementation 'junit:junit:4.13'
     testImplementation 'org.robolectric:robolectric:4.5-alpha-3'
@@ -97,9 +97,9 @@ dependencies {
     testImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
     kaptTest 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
 
-    androidTestImplementation 'androidx.fragment:fragment-ktx:1.2.5'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test:runner:1.3.0'
+    androidTestImplementation 'androidx.fragment:fragment-ktx:1.5.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test:runner:1.4.0'
     androidTestImplementation 'com.google.truth:truth:1.0.1'
     androidTestImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
     kaptAndroidTest 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'

@@ -24,6 +24,7 @@ import androidx.lifecycle.AbstractSavedStateViewModelFactory;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.viewmodel.CreationExtras;
 import androidx.savedstate.SavedStateRegistryOwner;
 import dagger.Module;
 import dagger.hilt.EntryPoint;
@@ -78,7 +79,7 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
     this.hiltViewModelKeys = hiltViewModelKeys;
     this.delegateFactory = delegateFactory;
     this.hiltViewModelFactory =
-        new AbstractSavedStateViewModelFactory(owner, defaultArgs) {
+        new AbstractSavedStateViewModelFactory() {
           @NonNull
           @Override
           @SuppressWarnings("unchecked")
@@ -100,6 +101,17 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
             return (T) provider.get();
           }
         };
+  }
+
+  @NonNull
+  @Override
+  public <T extends ViewModel> T create(
+      @NonNull Class<T> modelClass, @NonNull CreationExtras extras) {
+    if (hiltViewModelKeys.contains(modelClass.getName())) {
+      return hiltViewModelFactory.create(modelClass, extras);
+    } else {
+      return delegateFactory.create(modelClass, extras);
+    }
   }
 
   @NonNull

@@ -136,7 +136,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           mavenCentral()
         }
         dependencies {
-          classpath 'com.android.tools.build:gradle:4.2.0'
+          classpath 'com.android.tools.build:gradle:7.1.2'
         }
       }
 
@@ -146,13 +146,13 @@ class IncrementalProcessorTest(private val incapMode: String) {
       }
 
       android {
-        compileSdkVersion 30
-        buildToolsVersion "30.0.2"
+        compileSdkVersion 32
+        buildToolsVersion "32.0.0"
 
         defaultConfig {
           applicationId "hilt.simple"
           minSdkVersion 21
-          targetSdkVersion 30
+          targetSdkVersion 32
           javaCompileOptions {
             annotationProcessorOptions {
                 arguments += ["dagger.hilt.shareTestComponents" : "true"]
@@ -161,8 +161,8 @@ class IncrementalProcessorTest(private val incapMode: String) {
         }
 
         compileOptions {
-            sourceCompatibility 1.8
-            targetCompatibility 1.8
+            sourceCompatibility JavaVersion.VERSION_11
+            targetCompatibility JavaVersion.VERSION_11
         }
       }
 
@@ -180,8 +180,8 @@ class IncrementalProcessorTest(private val incapMode: String) {
         annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
 
         testImplementation 'junit:junit:4.12'
-        testImplementation 'androidx.test.ext:junit:1.1.2'
-        testImplementation 'androidx.test:runner:1.3.0'
+        testImplementation 'androidx.test.ext:junit:1.1.3'
+        testImplementation 'androidx.test:runner:1.4.0'
         testImplementation 'org.robolectric:robolectric:4.4'
         testImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
         testAnnotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'

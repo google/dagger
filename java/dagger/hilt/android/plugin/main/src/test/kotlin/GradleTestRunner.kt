@@ -20,9 +20,7 @@ import org.gradle.testkit.runner.BuildTask
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.rules.TemporaryFolder
 
-/**
- * Testing utility class that sets up a simple Android project that applies the Hilt plugin.
- */
+/** Testing utility class that sets up a simple Android project that applies the Hilt plugin. */
 class GradleTestRunner(val tempFolder: TemporaryFolder) {
   private val dependencies = mutableListOf<String>()
   private val activities = mutableListOf<String>()
@@ -50,12 +48,14 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
     activities.addAll(activityElements)
   }
 
-  // Adds 'android' options to the project's build.gradle, e.g. "lintOptions.checkReleaseBuilds = false"
+  // Adds 'android' options to the project's build.gradle, e.g. "lintOptions.checkReleaseBuilds =
+  // false"
   fun addAndroidOption(vararg options: String) {
     additionalAndroidOptions.addAll(options)
   }
 
-  // Adds 'hilt' options to the project's build.gradle, e.g. "enableExperimentalClasspathAggregation = true"
+  // Adds 'hilt' options to the project's build.gradle, e.g. "enableExperimentalClasspathAggregation
+  // = true"
   fun addHiltOption(vararg options: String) {
     hiltOptions.addAll(options)
   }
@@ -111,16 +111,17 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
 
   private fun writeBuildFile() {
     buildFile?.delete()
-    buildFile = tempFolder.newFile("build.gradle").apply {
-      writeText(
-        """
+    buildFile =
+      tempFolder.newFile("build.gradle").apply {
+        writeText(
+          """
         buildscript {
           repositories {
             google()
             mavenCentral()
           }
           dependencies {
-            classpath 'com.android.tools.build:gradle:4.2.0'
+            classpath 'com.android.tools.build:gradle:7.1.2'
           }
         }
 
@@ -130,18 +131,18 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
         }
 
         android {
-          compileSdkVersion 30
-          buildToolsVersion "30.0.2"
+          compileSdkVersion 32
+          buildToolsVersion "32.0.0"
 
           defaultConfig {
             applicationId "plugin.test"
             minSdkVersion 21
-            targetSdkVersion 30
+            targetSdkVersion 32
           }
 
           compileOptions {
-              sourceCompatibility 1.8
-              targetCompatibility 1.8
+              sourceCompatibility JavaVersion.VERSION_11
+              targetCompatibility JavaVersion.VERSION_11
           }
           ${additionalAndroidOptions.joinToString(separator = "\n")}
         }
@@ -162,26 +163,26 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
           ${hiltOptions.joinToString(separator = "\n")}
         }
         """.trimIndent()
-      )
-    }
+        )
+      }
   }
 
   private fun writeGradleProperties() {
     gradlePropertiesFile?.delete()
-    gradlePropertiesFile = tempFolder.newFile("gradle.properties").apply {
-      writeText(
-        """
+    gradlePropertiesFile =
+      tempFolder.newFile("gradle.properties").apply {
+        writeText("""
         android.useAndroidX=true
-        """.trimIndent()
-      )
-    }
+        """.trimIndent())
+      }
   }
 
   private fun writeAndroidManifest() {
     manifestFile?.delete()
-    manifestFile = tempFolder.newFile("/src/main/AndroidManifest.xml").apply {
-      writeText(
-        """
+    manifestFile =
+      tempFolder.newFile("/src/main/AndroidManifest.xml").apply {
+        writeText(
+          """
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="minimal">
             <application
@@ -191,24 +192,24 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
             </application>
         </manifest>
         """.trimIndent()
-      )
-    }
+        )
+      }
   }
 
-  private fun createRunner() = GradleRunner.create()
-    .withProjectDir(tempFolder.root)
-    .withArguments(listOf("--stacktrace", "assembleDebug") + additionalTasks)
-    .withPluginClasspath()
-//    .withDebug(true) // Add this line to enable attaching a debugger to the gradle test invocation
-    .forwardOutput()
+  private fun createRunner() =
+    GradleRunner.create()
+      .withProjectDir(tempFolder.root)
+      .withArguments(listOf("--stacktrace", "assembleDebug") + additionalTasks)
+      .withPluginClasspath()
+      //    .withDebug(true) // Add this line to enable attaching a debugger to the gradle test
+      // invocation
+      .forwardOutput()
 
   // Data class representing a Gradle Test run result.
-  data class Result(
-    private val projectRoot: File,
-    private val buildResult: BuildResult
-  ) {
+  data class Result(private val projectRoot: File, private val buildResult: BuildResult) {
 
-    val tasks: List<BuildTask> get() = buildResult.tasks
+    val tasks: List<BuildTask>
+      get() = buildResult.tasks
 
     // Finds a task by name.
     fun getTask(name: String) = buildResult.task(name) ?: error("Task '$name' not found.")

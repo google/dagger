@@ -20,8 +20,8 @@ plugins {
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.2"
+    compileSdkVersion 32
+    buildToolsVersion "32.0.0"
 
     flavorDimensions 'api', 'version'
     productFlavors {
@@ -46,12 +46,12 @@ android {
     defaultConfig {
         applicationId "simple.app"
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 32
     }
 
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 }
 

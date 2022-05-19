@@ -89,7 +89,7 @@ pom_file(
 javadoc_library(
     name = "support-javadoc",
     srcs = [":support-srcs"],
-    android_api_level = 30,
+    android_api_level = 32,
     root_packages = ["dagger.android.support"],
     deps = [":support"],
 )

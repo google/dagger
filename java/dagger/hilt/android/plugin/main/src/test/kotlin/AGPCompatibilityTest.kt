@@ -87,7 +87,6 @@ class AGPCompatibilityTest(
         arrayOf("7.2.0"),
         arrayOf("7.1.0"),
         arrayOf("7.0.0"),
-        arrayOf("4.2.0"),
       )
   }
 }

@@ -35,7 +35,7 @@ GenJavaTests(
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
-        "@androidsdk//:platforms/android-30/android.jar",
+        "@androidsdk//:platforms/android-32/android.jar",
         "@maven//:androidx_activity_activity",
         "@maven//:androidx_fragment_fragment",
         "@maven//:androidx_lifecycle_lifecycle_common",

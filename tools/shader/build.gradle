@@ -33,6 +33,8 @@ repositories {
 }
 
 java {
+    // This can be Java 8 because this is non-Android and so isn't required to
+    // be Java 11 by AGP.
     sourceCompatibility = JavaVersion.VERSION_1_8
 }
 

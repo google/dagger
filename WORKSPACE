@@ -64,9 +64,9 @@ local_repository(
 
 http_archive(
     name = "google_bazel_common",
-    sha256 = "8b6aebdc095c8448b2f6a72bb8eae4a563891467e2d20c943f21940b1c444e38",
-    strip_prefix = "bazel-common-3d0e5005cfcbee836e31695d4ab91b5328ccc506",
-    urls = ["https://github.com/google/bazel-common/archive/3d0e5005cfcbee836e31695d4ab91b5328ccc506.zip"],
+    sha256 = "60a9aebe25f476646f61c041d1679a9b21076deffbd51526838c7f24d6468ac0",
+    strip_prefix = "bazel-common-227a23a508a2fab0fa67ffe2d9332ae536a40edc",
+    urls = ["https://github.com/google/bazel-common/archive/227a23a508a2fab0fa67ffe2d9332ae536a40edc.zip"],
 )
 
 load("@google_bazel_common//:workspace_defs.bzl", "google_common_workspace_rules")
@@ -161,9 +161,9 @@ kt_register_toolchains()
 # Load Maven dependencies
 #############################
 
-RULES_JVM_EXTERNAL_TAG = "2.7"
+RULES_JVM_EXTERNAL_TAG = "4.2"
 
-RULES_JVM_EXTERNAL_SHA = "f04b1466a00a2845106801e0c5cec96841f49ea4e7d1df88dc8e4bf31523df74"
+RULES_JVM_EXTERNAL_SHA = "cd1a77b7b02e8e008439ca76fd34f5b07aecb8c752961f9640dea15e9e5ba1ca"
 
 http_archive(
     name = "rules_jvm_external",
@@ -199,13 +199,16 @@ maven_install(
     artifacts = [
         "androidx.annotation:annotation:1.1.0",
         "androidx.appcompat:appcompat:1.3.1",
-        "androidx.activity:activity:1.3.1",
-        "androidx.fragment:fragment:1.3.6",
-        "androidx.lifecycle:lifecycle-common:2.3.1",
-        "androidx.lifecycle:lifecycle-viewmodel:2.3.1",
-        "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.1",
+        "androidx.activity:activity:1.5.0",
+        "androidx.fragment:fragment:1.5.0",
+        "androidx.lifecycle:lifecycle-common:2.5.0",
+        "androidx.lifecycle:lifecycle-viewmodel:2.5.0",
+        "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.5.0",
         "androidx.multidex:multidex:2.0.1",
-        "androidx.savedstate:savedstate:1.0.0",
+        "androidx.navigation:navigation-common:2.5.0",
+        "androidx.navigation:navigation-fragment:2.5.0",
+        "androidx.navigation:navigation-runtime:2.5.0",
+        "androidx.savedstate:savedstate:1.2.0",
         "androidx.test:monitor:1.4.0",
         "androidx.test:core:1.4.0",
         "androidx.test.ext:junit:1.1.3",

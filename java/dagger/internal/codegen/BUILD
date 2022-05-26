@@ -96,6 +96,7 @@ gen_maven_artifact(
         "com.google.guava:failureaccess",
         "com.google.guava:guava",
         "com.squareup:javapoet",
+        "com.squareup:kotlinpoet",
         "javax.inject:javax.inject",
         "net.ltgt.gradle.incap:incap",
         "org.checkerframework:checker-compat-qual",

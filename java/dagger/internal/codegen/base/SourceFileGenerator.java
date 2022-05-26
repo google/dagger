@@ -26,7 +26,6 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -76,7 +75,7 @@ public abstract class SourceFileGenerator<T> {
   public void generate(T input) throws SourceFileGenerationException {
     for (TypeSpec.Builder type : topLevelTypes(input)) {
       try {
-        buildJavaFile(input, type).writeTo(XConverters.toJavac(filer));
+        filer.write(buildJavaFile(input, type), XFiler.Mode.Isolating);
       } catch (Exception e) {
         // if the code above threw a SFGE, use that
         Throwables.propagateIfPossible(e, SourceFileGenerationException.class);

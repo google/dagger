@@ -238,6 +238,7 @@ maven_install(
         "com.google.testing.compile:compile-testing:0.18",
         "com.google.truth:truth:1.1",
         "com.squareup:javapoet:1.13.0",
+        "com.squareup:kotlinpoet:1.11.0",
         "io.grpc:grpc-context:%s" % GRPC_VERSION,
         "io.grpc:grpc-core:%s" % GRPC_VERSION,
         "io.grpc:grpc-netty:%s" % GRPC_VERSION,

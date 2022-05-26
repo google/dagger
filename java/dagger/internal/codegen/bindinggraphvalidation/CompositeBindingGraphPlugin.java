@@ -36,13 +36,11 @@ import dagger.spi.model.BindingGraph.ComponentNode;
 import dagger.spi.model.BindingGraph.DependencyEdge;
 import dagger.spi.model.BindingGraph.MaybeBinding;
 import dagger.spi.model.BindingGraphPlugin;
+import dagger.spi.model.DaggerProcessingEnv;
 import dagger.spi.model.DiagnosticReporter;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.processing.Filer;
-import javax.lang.model.util.Elements;  // ALLOW_TYPES_ELEMENTS because of interface dependencies
-import javax.lang.model.util.Types;  // ALLOW_TYPES_ELEMENTS because of interface dependencies
 import javax.tools.Diagnostic;
 
 /**
@@ -78,29 +76,15 @@ final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
   }
 
   @Override
-  public void initFiler(Filer filer) {
-    plugins.forEach(plugin -> plugin.initFiler(filer));
-  }
-
-  @Override
-  public void initTypes(Types types) {
-    plugins.forEach(plugin -> plugin.initTypes(types));
-  }
-
-  @Override
-  public void initElements(Elements elements) {
-    plugins.forEach(plugin -> plugin.initElements(elements));
-  }
-
-  @Override
-  public void initOptions(Map<String, String> options) {
-    plugins.forEach(plugin -> plugin.initOptions(options));
+  public void init(DaggerProcessingEnv processingEnv, Map<String, String> options) {
+    plugins.forEach(plugin -> plugin.init(processingEnv, options));
   }
 
   @Override
   public Set<String> supportedOptions() {
-    return plugins.stream().flatMap(
-        plugin -> plugin.supportedOptions().stream()).collect(toImmutableSet());
+    return plugins.stream()
+        .flatMap(plugin -> plugin.supportedOptions().stream())
+        .collect(toImmutableSet());
   }
 
   @Override

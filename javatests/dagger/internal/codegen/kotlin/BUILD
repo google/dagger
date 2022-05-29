@@ -20,6 +20,34 @@ load("//java/dagger/testing/compile:macros.bzl", "kt_compiler_test")
 package(default_visibility = ["//:src"])
 
 kt_compiler_test(
+    name = "KspComponentProcessorTest",
+    srcs = ["KspComponentProcessorTest.java"],
+    compiler_deps = [
+        "//java/dagger:core",
+        "//java/dagger/internal/codegen:package_info",
+        "//java/dagger/internal/codegen:processor",
+        "//java/dagger/internal/codegen/base",
+        "//java/dagger/internal/codegen/binding",
+        "//java/dagger/internal/codegen/bindinggraphvalidation",
+        "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/javapoet",
+        "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/validation",
+        "//java/dagger/internal/codegen/writing",
+        "//java/dagger/model/testing",
+        "//java/dagger/producers",
+        "//java/dagger/spi",
+    ],
+    deps = [
+        "//third_party/java/guava/collect",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+        "//java/dagger/internal/codegen:package_info",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+    ],
+)
+
+kt_compiler_test(
     name = "ComponentValidationKtTest",
     srcs = ["ComponentValidationKtTest.java"],
     compiler_deps = [

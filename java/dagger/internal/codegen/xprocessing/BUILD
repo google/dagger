@@ -56,6 +56,7 @@ java_library(
     testonly = 1,
     exports = [
         ":xprocessing-testing-lib",
+        "@maven//:com_google_devtools_ksp_symbol_processing",
         "@maven//:org_jetbrains_kotlin_kotlin_annotation_processing_embeddable",
         "@maven//:org_jetbrains_kotlin_kotlin_compiler_embeddable",
         "@maven//:org_jetbrains_kotlin_kotlin_daemon_embeddable",

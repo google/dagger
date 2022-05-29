@@ -193,6 +193,8 @@ CHECKER_FRAMEWORK_VERSION = "2.5.3"
 
 ERROR_PRONE_VERSION = "2.3.2"
 
+KSP_VERSION = "1.6.21-1.0.5"
+
 maven_install(
     artifacts = [
         "androidx.annotation:annotation:1.1.0",
@@ -225,7 +227,8 @@ maven_install(
         "com.google.auto.value:auto-value:1.6",
         "com.google.auto.value:auto-value-annotations:1.6",
         "com.google.code.findbugs:jsr305:3.0.1",
-        "com.google.devtools.ksp:symbol-processing-api:1.5.30-1.0.0",
+        "com.google.devtools.ksp:symbol-processing:%s" % KSP_VERSION,
+        "com.google.devtools.ksp:symbol-processing-api:%s" % KSP_VERSION,
         "com.google.errorprone:error_prone_annotation:%s" % ERROR_PRONE_VERSION,
         "com.google.errorprone:error_prone_annotations:%s" % ERROR_PRONE_VERSION,
         "com.google.errorprone:error_prone_check_api:%s" % ERROR_PRONE_VERSION,

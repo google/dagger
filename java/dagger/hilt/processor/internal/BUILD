@@ -155,6 +155,8 @@ java_library(
     srcs = ["HiltCompilerOptions.java"],
     deps = [
         ":processor_errors",
+        "//java/dagger/hilt/processor/internal/optionvalues",
+        "//java/dagger/internal/codegen/extension",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",

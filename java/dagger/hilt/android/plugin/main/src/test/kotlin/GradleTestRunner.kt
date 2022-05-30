@@ -31,6 +31,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
   private var gradlePropertiesFile: File? = null
   private var manifestFile: File? = null
   private var additionalTasks = mutableListOf<String>()
+  private var isAppProject: Boolean = true
 
   init {
     tempFolder.newFolder("src", "main", "java", "minimal")
@@ -87,6 +88,10 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
     appClassName = name
   }
 
+  fun setIsAppProject(flag: Boolean) {
+    isAppProject = flag
+  }
+
   fun runAdditionalTasks(taskName: String) {
     additionalTasks.add(taskName)
   }
@@ -126,7 +131,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
         }
 
         plugins {
-          id 'com.android.application'
+          id '${ if (isAppProject) "com.android.application" else "com.android.library" }'
           id 'com.google.dagger.hilt.android'
         }
 
@@ -135,7 +140,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
           buildToolsVersion "32.0.0"
 
           defaultConfig {
-            applicationId "plugin.test"
+            ${ if (isAppProject) "applicationId \"plugin.test\"" else "" }
             minSdkVersion 21
             targetSdkVersion 32
           }

@@ -174,6 +174,7 @@ filegroup(
         "//java/dagger/hilt/processor/internal/definecomponent:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/disableinstallincheck:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/generatesrootinput:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal/optionvalues:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/originatingelement:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/root:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/root/ir:srcs_filegroup",

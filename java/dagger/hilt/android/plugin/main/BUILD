@@ -19,9 +19,17 @@ package(default_visibility = ["//:src"])
 
 genrule(
     name = "import-shared-lib",
-    srcs = ["//java/dagger/hilt/processor/internal/root/ir"],
+    srcs = [
+        "//java/dagger/hilt/processor/internal/root/ir",
+        "//java/dagger/hilt/processor/internal/optionvalues",
+    ],
     outs = ["processor-shared-lib.jar"],
-    cmd = "find $(SRCS)  -type f -name '*.jar' -exec cp {} $@ \\;",
+    # Combine all the jar files by extracting them to the same dir and package them again.
+    cmd = " && ".join([
+        "mkdir tmp",
+        "find $(SRCS) -type f -name '*.jar' -exec unzip -o {} -d tmp \\;",
+        "jar -cvf $@ -C tmp .",
+    ]),
     local = True,
 )
 

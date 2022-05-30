@@ -16,11 +16,16 @@
 
 package dagger.hilt.processor.internal;
 
-import com.google.common.base.Ascii;
+import static com.google.common.base.Ascii.toUpperCase;
+
 import com.google.common.collect.ImmutableSet;
+import dagger.hilt.processor.internal.optionvalues.BooleanValue;
+import dagger.hilt.processor.internal.optionvalues.GradleProjectType;
+import dagger.internal.codegen.extension.DaggerStreams;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
@@ -30,39 +35,39 @@ import javax.tools.Diagnostic.Kind;
 public final class HiltCompilerOptions {
 
   /**
-   * Returns {@code true} if the superclass validation is disabled for
-   * {@link dagger.hilt.android.AndroidEntryPoint}-annotated classes.
+   * Returns {@code true} if the superclass validation is disabled for {@link
+   * dagger.hilt.android.AndroidEntryPoint}-annotated classes.
    *
-   * This flag is for internal use only! The superclass validation checks that the super class is a
-   * generated {@code Hilt_} class. This flag is disabled by the Hilt Gradle plugin to enable
+   * <p>This flag is for internal use only! The superclass validation checks that the super class is
+   * a generated {@code Hilt_} class. This flag is disabled by the Hilt Gradle plugin to enable
    * bytecode transformation to change the superclass.
    */
   public static boolean isAndroidSuperclassValidationDisabled(
       TypeElement element, ProcessingEnvironment env) {
-    BooleanOption option = BooleanOption.DISABLE_ANDROID_SUPERCLASS_VALIDATION;
-    return option.get(env);
+    EnumOption<BooleanValue> option = DISABLE_ANDROID_SUPERCLASS_VALIDATION;
+    return option.get(env) == BooleanValue.TRUE;
   }
 
   /**
    * Returns {@code true} if cross-compilation root validation is disabled.
    *
-   * <p>This flag should rarely be needed, but may be used for legacy/migration purposes if
-   * tests require the use of {@link dagger.hilt.android.HiltAndroidApp} rather than
-   * {@link dagger.hilt.android.testing.HiltAndroidTest}.
+   * <p>This flag should rarely be needed, but may be used for legacy/migration purposes if tests
+   * require the use of {@link dagger.hilt.android.HiltAndroidApp} rather than {@link
+   * dagger.hilt.android.testing.HiltAndroidTest}.
    *
-   * <p>Note that Hilt still does validation within a single compilation unit. In particular,
-   * a compilation unit that contains a {@code HiltAndroidApp} usage cannot have other
-   * {@code HiltAndroidApp} or {@code HiltAndroidTest} usages in the same compilation unit.
+   * <p>Note that Hilt still does validation within a single compilation unit. In particular, a
+   * compilation unit that contains a {@code HiltAndroidApp} usage cannot have other {@code
+   * HiltAndroidApp} or {@code HiltAndroidTest} usages in the same compilation unit.
    */
   public static boolean isCrossCompilationRootValidationDisabled(
       ImmutableSet<TypeElement> rootElements, ProcessingEnvironment env) {
-    BooleanOption option = BooleanOption.DISABLE_CROSS_COMPILATION_ROOT_VALIDATION;
-    return option.get(env);
+    EnumOption<BooleanValue> option = DISABLE_CROSS_COMPILATION_ROOT_VALIDATION;
+    return option.get(env) == BooleanValue.TRUE;
   }
 
   /** Returns {@code true} if the check for {@link dagger.hilt.InstallIn} is disabled. */
   public static boolean isModuleInstallInCheckDisabled(ProcessingEnvironment env) {
-    return BooleanOption.DISABLE_MODULES_HAVE_INSTALL_IN_CHECK.get(env);
+    return DISABLE_MODULES_HAVE_INSTALL_IN_CHECK.get(env) == BooleanValue.TRUE;
   }
 
   /**
@@ -74,7 +79,7 @@ public final class HiltCompilerOptions {
    * component. In these cases, a component will be generated for the test.
    */
   public static boolean isSharedTestComponentsEnabled(ProcessingEnvironment env) {
-    return BooleanOption.SHARE_TEST_COMPONENTS.get(env);
+    return SHARE_TEST_COMPONENTS.get(env) == BooleanValue.TRUE;
   }
 
   /**
@@ -83,63 +88,43 @@ public final class HiltCompilerOptions {
    * <p>Note:This is for internal use only!
    */
   public static boolean useAggregatingRootProcessor(ProcessingEnvironment env) {
-    return BooleanOption.USE_AGGREGATING_ROOT_PROCESSOR.get(env);
+    return USE_AGGREGATING_ROOT_PROCESSOR.get(env) == BooleanValue.TRUE;
   }
 
-  /** Processor options which can have true or false values. */
-  private enum BooleanOption {
-    /** Do not use! This is for internal use only. */
-    DISABLE_ANDROID_SUPERCLASS_VALIDATION(
-        "android.internal.disableAndroidSuperclassValidation", false),
-
-    /** Do not use! This is for internal use only. */
-    USE_AGGREGATING_ROOT_PROCESSOR("internal.useAggregatingRootProcessor", true),
-
-    DISABLE_CROSS_COMPILATION_ROOT_VALIDATION("disableCrossCompilationRootValidation", false),
-
-    DISABLE_MODULES_HAVE_INSTALL_IN_CHECK("disableModulesHaveInstallInCheck", false),
-
-    SHARE_TEST_COMPONENTS(
-        "shareTestComponents", true);
-
-    private final String name;
-    private final boolean defaultValue;
-
-    BooleanOption(String name, boolean defaultValue) {
-      this.name = name;
-      this.defaultValue = defaultValue;
-    }
-
-    boolean get(ProcessingEnvironment env) {
-      String value = env.getOptions().get(getQualifiedName());
-      if (value == null) {
-        return defaultValue;
-      }
-
-      // Using Boolean.parseBoolean will turn any non-"true" value into false. Strictly verify the
-      // inputs to reduce user errors.
-      String lowercaseValue = Ascii.toLowerCase(value);
-      switch (lowercaseValue) {
-        case "true":
-          return true;
-        case "false":
-          return false;
-        default:
-          throw new IllegalStateException(
-              "Expected a value of true/false for the flag \""
-                  + name
-                  + "\". Got instead: "
-                  + value);
-      }
-    }
-
-    String getQualifiedName() {
-      return "dagger.hilt." + name;
-    }
+  /**
+   * Returns project type or null if Hilt Gradle Plugin is not applied.
+   *
+   * <p>Note:This is for internal use only!
+   */
+  public static GradleProjectType getGradleProjectType(ProcessingEnvironment env) {
+    return GRADLE_PROJECT_TYPE.get(env);
   }
 
-  private static final ImmutableSet<String> DEPRECATED_OPTIONS = ImmutableSet.of(
-      "dagger.hilt.android.useFragmentGetContextFix");
+  /** Do not use! This is for internal use only. */
+  private static final EnumOption<BooleanValue> DISABLE_ANDROID_SUPERCLASS_VALIDATION =
+      new EnumOption<>("android.internal.disableAndroidSuperclassValidation", BooleanValue.FALSE);
+
+  /** Do not use! This is for internal use only. */
+  private static final EnumOption<BooleanValue> USE_AGGREGATING_ROOT_PROCESSOR =
+      new EnumOption<>("internal.useAggregatingRootProcessor", BooleanValue.TRUE);
+
+  private static final EnumOption<BooleanValue> DISABLE_CROSS_COMPILATION_ROOT_VALIDATION =
+      new EnumOption<>("disableCrossCompilationRootValidation", BooleanValue.FALSE);
+
+  private static final EnumOption<BooleanValue> DISABLE_MODULES_HAVE_INSTALL_IN_CHECK =
+      new EnumOption<>("disableModulesHaveInstallInCheck", BooleanValue.FALSE);
+
+  private static final EnumOption<BooleanValue> SHARE_TEST_COMPONENTS =
+      new EnumOption<>(
+          "shareTestComponents",
+          BooleanValue.TRUE);
+
+  /** Do not use! This is for internal use only. */
+  private static final EnumOption<GradleProjectType> GRADLE_PROJECT_TYPE =
+      new EnumOption<>("android.internal.projectType", GradleProjectType.UNSET);
+
+  private static final ImmutableSet<String> DEPRECATED_OPTIONS =
+      ImmutableSet.of("dagger.hilt.android.useFragmentGetContextFix");
 
   public static void checkWrongAndDeprecatedOptions(ProcessingEnvironment env) {
     Set<String> knownOptions = getProcessorOptions();
@@ -149,24 +134,77 @@ public final class HiltCompilerOptions {
       }
 
       if (DEPRECATED_OPTIONS.contains(option)) {
-        env.getMessager().printMessage(
-            Kind.ERROR,
-            "The compiler option " + option + " is deprecated and no longer does anything. "
-            + "Please do not set this option.");
+        env.getMessager()
+            .printMessage(
+                Kind.ERROR,
+                "The compiler option "
+                    + option
+                    + " is deprecated and no longer does anything. "
+                    + "Please do not set this option.");
         continue;
       }
 
       if (option.startsWith("dagger.hilt.")) {
-        env.getMessager().printMessage(
-            Kind.ERROR,
-            "The compiler option " + option + " is not a recognized Hilt option. Is there a typo?");
+        env.getMessager()
+            .printMessage(
+                Kind.ERROR,
+                "The compiler option "
+                    + option
+                    + " is not a recognized Hilt option. Is there a typo?");
       }
     }
   }
 
+  /** A processor option that can be set on the command line. */
+  private static final class EnumOption<E extends Enum<E>> {
+    private final String name;
+
+    private final E defaultValue;
+
+    private static final Set<EnumOption<?>> options = new HashSet<>();
+
+    EnumOption(String name, E defaultValue) {
+      this.name = name;
+      this.defaultValue = defaultValue;
+      options.add(this);
+    }
+
+    String getQualifiedName() {
+      return "dagger.hilt." + name;
+    }
+
+    E get(ProcessingEnvironment env) {
+      String value = env.getOptions().get(getQualifiedName());
+      if (value == null) {
+        return defaultValue;
+      }
+
+      ImmutableSet<String> validOptionNames =
+          Arrays.stream(defaultValue.getDeclaringClass().getEnumConstants())
+              .map(Enum::name)
+              .collect(DaggerStreams.toImmutableSet());
+      String uppercaseValue = toUpperCase(value);
+      if (validOptionNames.contains(uppercaseValue)) {
+        return Enum.valueOf(defaultValue.getDeclaringClass(), uppercaseValue);
+      } else {
+        throw new IllegalStateException(
+            String.format(
+                Locale.ROOT,
+                "Expected a value of %s  for the flag \"%s\". Got instead: %s",
+                String.join("/", validOptionNames),
+                name,
+                value));
+      }
+    }
+
+    static Set<EnumOption<?>> getAllOptions() {
+      return options;
+    }
+  }
+
   public static Set<String> getProcessorOptions() {
-    return Arrays.stream(BooleanOption.values())
-        .map(BooleanOption::getQualifiedName)
-        .collect(Collectors.toSet());
+    return EnumOption.getAllOptions().stream()
+        .map(EnumOption::getQualifiedName)
+        .collect(DaggerStreams.toImmutableSet());
   }
 }

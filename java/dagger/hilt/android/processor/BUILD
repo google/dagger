@@ -66,6 +66,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/processor/internal/generatesrootinput:generates_root_inputs",
         "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",
         "//java/dagger/hilt/processor/internal/kotlin",
+        "//java/dagger/hilt/processor/internal/optionvalues:optionvalues",
         "//java/dagger/hilt/processor/internal/originatingelement:processor_lib",
         "//java/dagger/hilt/processor/internal/root:component_tree_deps_processor_lib",
         "//java/dagger/hilt/processor/internal/root:root_processor_lib",

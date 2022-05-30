@@ -65,4 +65,36 @@ class HiltGradlePluginTest {
         "com.google.dagger:hilt-compiler dependency was found."
     )
   }
+
+  @Test
+  fun test_non_application_project() {
+    gradleRunner.addHiltOption(
+      "enableAggregatingTask = true"
+    )
+    gradleRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'",
+    )
+    gradleRunner.addSrc(
+      srcPath = "minimal/MyApp.java",
+      srcContent =
+          """
+          package minimal;
+
+          import android.app.Application;
+
+          @dagger.hilt.android.HiltAndroidApp
+          public class MyApp extends Application { }
+          """.trimIndent()
+    )
+    gradleRunner.setAppClassName(".MyApp")
+    gradleRunner.setIsAppProject(false)
+
+    val result = gradleRunner.buildAndFail()
+    assertThat(result.getOutput()).contains(
+      "Application class annotated with @HiltAndroidApp has to be defined in an android " +
+          "application project"
+    )
+  }
 }

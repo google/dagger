@@ -85,7 +85,7 @@ public final class ApplicationGenerator {
 
     if (hasCustomInject()) {
       typeSpecBuilder.addSuperinterface(AndroidClassNames.HAS_CUSTOM_INJECT);
-      typeSpecBuilder.addMethod(customInjectMethod()).addMethod(injectionMethod());
+        typeSpecBuilder.addMethod(customInjectMethod()).addMethod(injectionMethod());
     } else {
         typeSpecBuilder.addMethod(onCreateMethod()).addMethod(injectionMethod());
     }

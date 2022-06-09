@@ -25,13 +25,10 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.javapoet.TypeNames.isFutureType;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
-import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -361,22 +358,6 @@ public abstract class ComponentDescriptor {
 
     /** The subcomponent for subcomponent factory methods and subcomponent creator methods. */
     public abstract Optional<ComponentDescriptor> subcomponent();
-
-    /**
-     * Returns the return type of {@link #methodElement()} as resolved in the {@link
-     * ComponentDescriptor#typeElement() component type}. If there are no type variables in the
-     * return type, this is the equivalent of {@code methodElement().getReturnType()}.
-     */
-    public XType resolvedReturnType(XProcessingEnv processingEnv) {
-      checkState(dependencyRequest().isPresent());
-
-      XType returnType = methodElement().getReturnType();
-      if (isPrimitive(returnType) || isVoid(returnType)) {
-        return returnType;
-      }
-      return BindingRequest.bindingRequest(dependencyRequest().get())
-          .requestedType(dependencyRequest().get().key().type().xprocessing(), processingEnv);
-    }
 
     /** A {@link ComponentMethodDescriptor}builder for a method. */
     public static Builder builder(XMethodElement method) {

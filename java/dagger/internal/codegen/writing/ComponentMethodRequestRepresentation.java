@@ -75,7 +75,7 @@ final class ComponentMethodRequestRepresentation extends MethodRequestRepresenta
 
   @Override
   protected XType returnType() {
-    return componentMethod.resolvedReturnType(processingEnv);
+    return componentMethod.methodElement().getReturnType();
   }
 
   @AssistedFactory

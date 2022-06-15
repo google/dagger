@@ -44,6 +44,7 @@ import org.gradle.api.attributes.Attribute
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.process.CommandLineArgumentProvider
+import org.objectweb.asm.Opcodes
 
 /**
  * A Gradle plugin that checks if the project is an Android project and if so, registers a
@@ -348,6 +349,9 @@ class HiltGradlePlugin @Inject constructor(
       it.crossCompilationRootValidationDisabled.set(
         hiltExtension.disableCrossCompilationRootValidation
       )
+      if (SimpleAGPVersion.ANDROID_GRADLE_PLUGIN_VERSION >= SimpleAGPVersion(7, 1)) {
+        it.asmApiVersion.set(Opcodes.ASM9)
+      }
     }
 
     val componentClasses = project.files(

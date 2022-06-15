@@ -18,7 +18,6 @@ package dagger.model;
 
 import com.google.auto.value.AutoValue;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.Provides;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -60,18 +59,17 @@ public abstract class DependencyRequest {
   }
 
   /** A builder of {@link DependencyRequest}s. */
-  @CanIgnoreReturnValue
   @AutoValue.Builder
   public abstract static class Builder {
     public abstract Builder kind(RequestKind kind);
 
     public abstract Builder key(Key key);
 
+    @CanIgnoreReturnValue // TODO(kak): remove this once open-source checkers understand AutoValue
     public abstract Builder requestElement(Element element);
 
     public abstract Builder isNullable(boolean isNullable);
 
-    @CheckReturnValue
     public abstract DependencyRequest build();
   }
 }

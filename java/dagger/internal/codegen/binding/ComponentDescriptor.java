@@ -65,6 +65,7 @@ import java.util.stream.Stream;
  * represent a synthetic component for the module, where there is an entry point for each binding in
  * the module.
  */
+@CheckReturnValue
 @AutoValue
 public abstract class ComponentDescriptor {
   /**
@@ -367,19 +368,23 @@ public abstract class ComponentDescriptor {
 
     /** A builder of {@link ComponentMethodDescriptor}s. */
     @AutoValue.Builder
-    @CanIgnoreReturnValue
     public interface Builder {
       /** @see ComponentMethodDescriptor#methodElement() */
       Builder methodElement(XMethodElement methodElement);
 
-      /** @see ComponentMethodDescriptor#dependencyRequest() */
+      /**
+       * @see ComponentMethodDescriptor#dependencyRequest()
+       */
+      @CanIgnoreReturnValue // TODO(kak): remove this once open-source checkers understand AutoValue
       Builder dependencyRequest(DependencyRequest dependencyRequest);
 
-      /** @see ComponentMethodDescriptor#subcomponent() */
+      /**
+       * @see ComponentMethodDescriptor#subcomponent()
+       */
+      @CanIgnoreReturnValue // TODO(kak): remove this once open-source checkers understand AutoValue
       Builder subcomponent(ComponentDescriptor subcomponent);
 
       /** Builds the descriptor. */
-      @CheckReturnValue
       ComponentMethodDescriptor build();
     }
   }

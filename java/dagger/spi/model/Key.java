@@ -23,8 +23,6 @@ import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Joiner;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.errorprone.annotations.CheckReturnValue;
 import java.util.Objects;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
@@ -85,7 +83,6 @@ public abstract class Key {
   }
 
   /** A builder for {@link Key}s. */
-  @CanIgnoreReturnValue
   @AutoValue.Builder
   public abstract static class Builder {
     public abstract Builder type(DaggerType type);
@@ -100,7 +97,6 @@ public abstract class Key {
     public abstract Builder multibindingContributionIdentifier(
         MultibindingContributionIdentifier identifier);
 
-    @CheckReturnValue
     public abstract Key build();
   }
 

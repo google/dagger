@@ -18,5 +18,5 @@ package(default_visibility = ["//:src"])
 
 alias(
     name = "diffutils",
-    actual = "@maven//:com_googlecode_java_diff_utils_diffutils",
+    actual = "@maven//:io_github_java_diff_utils_java_diff_utils",
 )

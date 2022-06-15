@@ -191,7 +191,7 @@ BYTE_BUDDY_VERSION = "1.9.10"
 
 CHECKER_FRAMEWORK_VERSION = "2.5.3"
 
-ERROR_PRONE_VERSION = "2.3.2"
+ERROR_PRONE_VERSION = "2.14.0"
 
 KSP_VERSION = "1.6.21-1.0.5"
 
@@ -242,6 +242,7 @@ maven_install(
         "com.google.truth:truth:1.1",
         "com.squareup:javapoet:1.13.0",
         "com.squareup:kotlinpoet:1.11.0",
+        "io.github.java-diff-utils:java-diff-utils:4.11",
         "io.grpc:grpc-context:%s" % GRPC_VERSION,
         "io.grpc:grpc-core:%s" % GRPC_VERSION,
         "io.grpc:grpc-netty:%s" % GRPC_VERSION,

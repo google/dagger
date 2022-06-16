@@ -26,6 +26,8 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
+const val TASK = ":app:assembleDebug"
+
 @RunWith(Parameterized::class)
 class AGPCompatibilityTest(
   private val agpVersion: String,
@@ -64,9 +66,10 @@ class AGPCompatibilityTest(
 
   @Test
   fun test() {
-    val result = runGradleTasks(":app:assembleDebug")
+    val result = runGradleTasks(TASK)
     if (expectSuccess) {
-      expect.that(result.task(":app:assembleDebug")!!.outcome).isEqualTo(TaskOutcome.SUCCESS)
+      expect.that(result.task(TASK)!!.outcome)
+          .isEqualTo(TaskOutcome.SUCCESS)
     }
   }
 
@@ -87,9 +90,7 @@ class AGPCompatibilityTest(
     fun parameters() =
       listOf(
         arrayOf("7.2.0", "7.4.2", true),
-        arrayOf("7.2.0", "7.3.3", true),
         arrayOf("7.1.0", "7.2", true),
-        arrayOf("7.0.0", "7.0.1", false),
         arrayOf("7.0.0", "7.0.2", true),
         arrayOf("4.2.0", "6.7.1", true),
       )

@@ -485,7 +485,6 @@ class IncrementalProcessorTest(private val incapMode: String) {
         classGenHiltActivity1,
         classGenActivityInjector1,
         classGenActivityInjectorDeps1,
-        classGenComponentTreeDeps, // Re-compiled because reference to activity injector
         classGenHiltComponents,
         classGenDaggerHiltApplicationComponent,
       )
@@ -499,8 +498,8 @@ class IncrementalProcessorTest(private val incapMode: String) {
         classGenActivityInjector1,
         classGenAppInjectorDeps,
         classGenActivityInjectorDeps1,
-        classGenComponentTreeDeps,
         classGenHiltComponents,
+        classGenComponentTreeDeps,
         classGenDaggerHiltApplicationComponent
       )
     }
@@ -644,7 +643,6 @@ class IncrementalProcessorTest(private val incapMode: String) {
         classSrcModule1,
         classGenHiltApp,
         classGenModuleDeps1,
-        classGenComponentTreeDeps,
         classGenHiltComponents,
         classGenDaggerHiltApplicationComponent
       )
@@ -721,7 +719,6 @@ class IncrementalProcessorTest(private val incapMode: String) {
         classGenHiltApp,
         classGenAppInjector,
         classGenAppInjectorDeps,
-        classGenComponentTreeDeps,
         classGenHiltComponents,
         classGenDaggerHiltApplicationComponent
       )
@@ -914,6 +911,9 @@ class IncrementalProcessorTest(private val incapMode: String) {
         genHiltApp,
         genAppInjector,
         genAppInjectorDeps,
+        genComponentTreeDeps,
+        genHiltComponents,
+        genDaggerHiltApplicationComponent
       )
     }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
@@ -925,6 +925,9 @@ class IncrementalProcessorTest(private val incapMode: String) {
         classGenHiltApp,
         classGenAppInjector,
         classGenAppInjectorDeps,
+        classGenComponentTreeDeps,
+        classGenHiltComponents,
+        classGenDaggerHiltApplicationComponent
       )
     }
     assertChangedFiles(FileType.CLASS, recompiledClassFiles)
@@ -1010,7 +1013,6 @@ class IncrementalProcessorTest(private val incapMode: String) {
     val recompiledClassFiles = if (incapMode == ISOLATING_MODE) {
       listOf(
         classSrcTest1,
-        classGenTest1ComponentTreeDeps,
         classGenTest1HiltComponents,
         classGenTest1DaggerHiltApplicationComponent,
       )

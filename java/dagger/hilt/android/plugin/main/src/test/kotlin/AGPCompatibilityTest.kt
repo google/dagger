@@ -26,13 +26,11 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
-const val TASK = ":app:assembleDebug"
+const val TASK = ":app:hiltJavaCompileDebug"
 
 @RunWith(Parameterized::class)
 class AGPCompatibilityTest(
-  private val agpVersion: String,
-  private val gradleVersion: String,
-  private val expectSuccess: Boolean
+  private val agpVersion: String
 ) {
   @get:Rule val testProjectDir = TemporaryFolder()
 
@@ -67,10 +65,8 @@ class AGPCompatibilityTest(
   @Test
   fun test() {
     val result = runGradleTasks(TASK)
-    if (expectSuccess) {
-      expect.that(result.task(TASK)!!.outcome)
-          .isEqualTo(TaskOutcome.SUCCESS)
-    }
+    expect.that(result.task(TASK)!!.outcome)
+        .isEqualTo(TaskOutcome.SUCCESS)
   }
 
   private fun runGradleTasks(vararg args: String): BuildResult {
@@ -79,20 +75,19 @@ class AGPCompatibilityTest(
       GradleRunner.create()
         .withProjectDir(testProjectDir.root)
         .withArguments(*args)
-        .withGradleVersion(gradleVersion)
         .forwardOutput()
-    return if (expectSuccess) gradleRunner.build() else gradleRunner.buildAndFail()
+    return gradleRunner.build()
   }
 
   companion object {
     @JvmStatic
-    @Parameterized.Parameters(name = "agpVersion = {0}, gradleVersion = {1}, expectSuccess = {2}")
+    @Parameterized.Parameters(name = "agpVersion = {0}")
     fun parameters() =
       listOf(
-        arrayOf("7.2.0", "7.4.2", true),
-        arrayOf("7.1.0", "7.2", true),
-        arrayOf("7.0.0", "7.0.2", true),
-        arrayOf("4.2.0", "6.7.1", true),
+        arrayOf("7.2.0"),
+        arrayOf("7.1.0"),
+        arrayOf("7.0.0"),
+        arrayOf("4.2.0"),
       )
   }
 }

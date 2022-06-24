@@ -44,6 +44,7 @@ import org.gradle.api.attributes.Attribute
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.process.CommandLineArgumentProvider
+import org.gradle.util.GradleVersion
 import org.objectweb.asm.Opcodes
 
 /**
@@ -183,7 +184,14 @@ class HiltGradlePlugin @Inject constructor(
         "android.injected.build.model.feature.full.dependencies", // Sent by AS 2.4+
         "android.injected.build.model.v2", // Sent by AS 4.2+
       ).any {
-        providers.gradleProperty(it).forUseAtConfigurationTime().isPresent
+        // forUseAtConfigurationTime() is deprecated in 7.4 and later:
+        // https://docs.gradle.org/current/userguide/upgrading_version_7.html#changes_7.4
+        if (GradleVersion.version(project.gradle.gradleVersion) < GradleVersion.version("7.4.0")) {
+          @Suppress("DEPRECATION")
+          providers.gradleProperty(it).forUseAtConfigurationTime().isPresent
+        } else {
+          providers.gradleProperty(it).isPresent
+        }
       }
     ) {
       // Do not configure compile classpath when AndroidStudio is building the model (syncing)

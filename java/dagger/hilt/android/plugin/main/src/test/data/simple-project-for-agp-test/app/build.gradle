@@ -23,26 +23,6 @@ android {
     compileSdkVersion 30
     buildToolsVersion "30.0.2"
 
-    flavorDimensions 'api', 'version'
-    productFlavors {
-        demo {
-            dimension 'version'
-        }
-        full {
-            dimension 'version'
-        }
-        minApi24 {
-            dimension 'api'
-            minSdkVersion '24'
-            versionNameSuffix "-minApi24"
-        }
-        minApi21 {
-            dimension "api"
-            minSdkVersion '21'
-            versionNameSuffix "-minApi21"
-        }
-    }
-
     defaultConfig {
         applicationId "simple.app"
         minSdkVersion 21

@@ -68,3 +68,6 @@ private object NonPublicObjectModule {
   @Provides
   fun provideInt() = 42
 }
+
+data class TestDataA(val data: String)
+data class TestDataB(val data: String)

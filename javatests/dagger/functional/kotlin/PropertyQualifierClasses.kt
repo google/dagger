@@ -21,6 +21,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.functional.kotlin.processor.TriggerGeneratedTypeProcessor
 import javax.inject.Inject
+import javax.inject.Qualifier
 
 @Component(modules = [TestKotlinModuleWithQualifier::class])
 interface TestKotlinComponentWithQualifier {
@@ -85,3 +86,10 @@ class TestMemberInjectedClassWithQualifier {
 
   val generatedTypeDelegatedProperty by lazy { dagger.functional.kotlin.GeneratedType() }
 }
+
+data class TestDataA(val data: String)
+data class TestDataB(val data: String)
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class KotlinTestQualifier

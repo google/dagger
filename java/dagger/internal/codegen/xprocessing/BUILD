@@ -34,7 +34,6 @@ java_library(
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
-        "//third_party/kotlin/kotlinpoet",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8",
     ],
@@ -49,6 +48,10 @@ alias(
 java_import(
     name = "xprocessing-jar",
     jars = ["xprocessing.jar"],
+    deps = [
+        "//third_party/kotlin/kotlinpoet",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
+    ],
 )
 
 java_library(

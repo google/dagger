@@ -16,24 +16,18 @@
 
 package dagger.internal.codegen.kotlin;
 
-import static com.google.common.truth.Truth.assertThat;
-import static dagger.testing.compile.CompilerTests.compileWithKsp;
+import static dagger.testing.compile.CompilerTests.compile;
 
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public final class KspComponentProcessorTest {
-
-  @Rule public TemporaryFolder tempFolderRule = new TemporaryFolder();
-
   @Test
-  public void componentTest() throws Exception {
+  public void emptyComponentTest() throws Exception {
     Source componentSrc =
         Source.Companion.kotlin(
             "MyComponent.kt",
@@ -47,9 +41,59 @@ public final class KspComponentProcessorTest {
                 "@Component",
                 "interface MyComponent {}"));
 
-    compileWithKsp(
+    compile(
         ImmutableList.of(componentSrc),
-        tempFolderRule,
-        result -> assertThat(result.getSuccess()).isTrue());
+        subject -> {
+          subject.hasErrorCount(0);
+          subject.generatedSource(
+              Source.Companion.java(
+                  "test/DaggerMyComponent",
+                  String.join(
+                      "\n",
+                      "package test;",
+                      "",
+                      "import dagger.internal.DaggerGenerated;",
+                      "import javax.annotation.processing.Generated;",
+                      "",
+                      "@DaggerGenerated",
+                      "@Generated(",
+                      "    value = \"dagger.internal.codegen.ComponentProcessor\",",
+                      "    comments = \"https://dagger.dev\"",
+                      ")",
+                      "@SuppressWarnings({",
+                      "    \"unchecked\",",
+                      "    \"rawtypes\"",
+                      "})",
+                      "public final class DaggerMyComponent {",
+                      "  private DaggerMyComponent() {",
+                      "  }",
+                      "",
+                      "  public static Builder builder() {",
+                      "    return new Builder();",
+                      "  }",
+                      "",
+                      "  public static MyComponent create() {",
+                      "    return new Builder().build();",
+                      "  }",
+                      "",
+                      "  public static final class Builder {",
+                      "    private Builder() {",
+                      "    }",
+                      "",
+                      "    public MyComponent build() {",
+                      "      return new MyComponentImpl();",
+                      "    }",
+                      "  }",
+                      "",
+                      "  private static final class MyComponentImpl implements MyComponent {",
+                      "    private final MyComponentImpl myComponentImpl = this;",
+                      "",
+                      "    private MyComponentImpl() {",
+                      "",
+                      "",
+                      "    }",
+                      "  }",
+                      "}")));
+        });
   }
 }

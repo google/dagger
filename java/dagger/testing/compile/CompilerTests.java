@@ -21,6 +21,9 @@ import static com.google.common.collect.MoreCollectors.onlyElement;
 import static com.google.common.collect.Streams.stream;
 import static com.google.testing.compile.Compiler.javac;
 
+import androidx.room.compiler.processing.XProcessingEnvConfig;
+import androidx.room.compiler.processing.util.CompilationResultSubject;
+import androidx.room.compiler.processing.util.ProcessorTestExtKt;
 import androidx.room.compiler.processing.util.Source;
 import androidx.room.compiler.processing.util.compiler.TestCompilationArguments;
 import androidx.room.compiler.processing.util.compiler.TestCompilationResult;
@@ -42,7 +45,14 @@ import org.junit.rules.TemporaryFolder;
 
 /** A helper class for working with java compiler tests. */
 public final class CompilerTests {
-  private CompilerTests() {}
+  // TODO(bcorso): Share this with java/dagger/internal/codegen/DelegateComponentProcessor.java
+  private static final XProcessingEnvConfig PROCESSING_ENV_CONFIG =
+      new XProcessingEnvConfig.Builder().disableAnnotatedElementValidation(true).build();
+
+  // TODO(bcorso): Share this with javatests/dagger/internal/codegen/Compilers.java
+  private static final ImmutableMap<String, String> DEFAULT_PROCESSOR_OPTIONS =
+      ImmutableMap.of(
+          "dagger.experimentalDaggerErrorMessages", "enabled");
 
   /** Returns the {@plainlink File jar file} containing the compiler deps. */
   public static File compilerDepsJar() {
@@ -87,30 +97,26 @@ public final class CompilerTests {
     onCompilationResult.accept(result);
   }
 
-  public static void compileWithKsp(
-      List<Source> sources,
-      TemporaryFolder tempFolder,
-      Consumer<TestCompilationResult> onCompilationResult) {
-    compileWithKsp(sources, ImmutableMap.of(), tempFolder, onCompilationResult);
-  }
-
-  public static void compileWithKsp(
-      List<Source> sources,
-      Map<String, String> processorOptions,
-      TemporaryFolder tempFolder,
-      Consumer<TestCompilationResult> onCompilationResult) {
-    TestCompilationResult result = TestKotlinCompilerKt.compile(
-        tempFolder.getRoot(),
-        new TestCompilationArguments(
-            sources,
-            /*classpath=*/ ImmutableList.of(compilerDepsJar()),
-            /*inheritClasspath=*/ false,
-            /*javacArguments=*/ ImmutableList.of(),
-            /*kotlincArguments=*/ ImmutableList.of(),
-            /*kaptProcessors=*/ ImmutableList.of(),
-            /*symbolProcessorProviders=*/ ImmutableList.of(new KspComponentProcessor.Provider()),
-            /*processorOptions=*/ processorOptions));
-    onCompilationResult.accept(result);
+  // TODO(bcorso): For Java users we may want to have a builder, similar to
+  // "com.google.testing.compile.Compiler", so that users can easily add custom options or
+  // processors along with their sources.
+  public static void compile(
+      ImmutableList<Source> sources, Consumer<CompilationResultSubject> onCompilationResult) {
+    ProcessorTestExtKt.runProcessorTest(
+        sources,
+        /*classpath=*/ ImmutableList.of(compilerDepsJar()),
+        /*options=*/ DEFAULT_PROCESSOR_OPTIONS,
+        /*javacArguments=*/ ImmutableList.of(),
+        /*kotlincArguments=*/ ImmutableList.of(),
+        /*config=*/ PROCESSING_ENV_CONFIG,
+        /*javacProcessors=*/ ImmutableList.of(new ComponentProcessor()),
+        /*symbolProcessorProviders=*/ ImmutableList.of(new KspComponentProcessor.Provider()),
+        // TODO(bcorso): Typically, we would return a CompilationResult here and users would wrap
+        // that in an "assertThat" method to get the CompilationResultSubject.
+        result -> {
+          onCompilationResult.accept(result);
+          return null;
+        });
   }
 
   private static File getRunfilesDir() {
@@ -136,4 +142,6 @@ public final class CompilerTests {
     String runfilesPath = (String) map.get("TEST_SRCDIR");
     return isNullOrEmpty(runfilesPath) ? null : Paths.get(runfilesPath);
   }
+
+  private CompilerTests() {}
 }

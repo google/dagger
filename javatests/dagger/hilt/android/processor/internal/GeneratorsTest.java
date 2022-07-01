@@ -116,10 +116,8 @@ public final class GeneratorsTest {
                 "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ViewGenerator\")",
                 "abstract class Hilt_MyView extends View implements",
                 "GeneratedComponentManagerHolder {",
-                // The generated parameter names are copied from the base class. Since we only have
-                // the jar and not the source for these base classes the parameter names are missing
-                "  Hilt_MyView(Context arg0, @Nullable AttributeSet arg1) {",
-                "    super(arg0, arg1);",
+                "  Hilt_MyView(Context context, @Nullable AttributeSet attrs) {",
+                "    super(context, attrs);",
                 "    inject();",
                 "  }",
                 "}"));

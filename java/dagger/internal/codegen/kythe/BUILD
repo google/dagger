@@ -26,14 +26,17 @@ java_library(
     deps = [
         ":kythe_plugin",
         "//java/dagger:core",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/javac",
         "//java/dagger/internal/codegen/javapoet",
+        "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/spi",
         "//third_party/java/auto:service",
+        "//third_party/java/error_prone:annotations",
         "//third_party/java/guava/collect",
     ],
 )

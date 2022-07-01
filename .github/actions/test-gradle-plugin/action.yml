@@ -4,11 +4,11 @@ description: 'Tests the Hilt Gradle plugin.'
 runs:
   using: "composite"
   steps:
-    - name: 'Install Java 11'
+    - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
       uses: actions/setup-java@v2
       with:
-          distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
-          java-version: '11'
+        distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
+        java-version: '${{ env.USE_JAVA_VERSION }}'
     - name: 'Check out repository'
       uses: actions/checkout@v2
     - name: 'Cache local Maven repository'

@@ -268,7 +268,6 @@ public class MapRequestRepresentationWithGuavaTest {
     Compilation compilation =
         compilerWithOptions(
                 ImmutableList.<String>builder()
-                    .add("-source", "7", "-target", "7")
                     .addAll(compilerMode.javacopts())
                     .build())
             .compile(mapModuleFile, componentFile);
@@ -278,11 +277,6 @@ public class MapRequestRepresentationWithGuavaTest {
         .hasSourceEquivalentTo(
             JavaFileObjects.forSourceString(
                 "test.DaggerTestComponent",
-                goldenFileRule.goldenFileContent("test.DaggerTestComponent")
-                // The golden files were generated with jdk 11, and we expect an extra cast in jdk 7
-                .replace(
-                    "return Futures.immediateFuture(ImmutableMap.<String, String>of());",
-                    "return Futures.immediateFuture("
-                        + "(Map<String, String>) ImmutableMap.<String, String>of());")));
+                goldenFileRule.goldenFileContent("test.DaggerTestComponent")));
   }
 }

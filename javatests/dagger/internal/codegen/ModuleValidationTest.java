@@ -411,6 +411,7 @@ public final class ModuleValidationTest {
     Compilation compilation = daggerCompiler().compile(module, otherModule);
     assertThat(compilation).failed();
     String error = String.format("@%s cannot include themselves", moduleType.simpleName());
-    assertThat(compilation).hadErrorContaining(error).inFile(module).onLineContaining("Module(");
+    assertThat(compilation).hadErrorContaining(error).inFile(module).onLineContaining("// first");
+    assertThat(compilation).hadErrorContaining(error).inFile(module).onLineContaining("// second");
   }
 }

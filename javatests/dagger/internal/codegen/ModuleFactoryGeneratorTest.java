@@ -210,14 +210,17 @@ public class ModuleFactoryGeneratorTest {
 
     Compilation compilation = daggerCompiler().compile(module);
     assertThat(compilation).failed();
-    // In java 11, errors reported on individual items in an annotation value's list will show up
-    // as separate errors to the user on the associated lines reported. However, in java 8, errors
-    // reported on individual items in an annotation value's list will show up as a single error
-    // (which ever is reported first) on the list itself, rather than on the items reported.
-    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation).hadErrorCount(2);
     assertThat(compilation)
         .hadErrorContaining(
-            "java.lang.Void is listed as a module, but is not annotated with @Module");
+            "java.lang.Void is listed as a module, but is not annotated with @Module")
+        .inFile(module)
+        .onLine(7);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "java.lang.String is listed as a module, but is not annotated with @Module")
+        .inFile(module)
+        .onLine(8);
   }
 
   @Test public void singleProvidesMethodNoArgs() {

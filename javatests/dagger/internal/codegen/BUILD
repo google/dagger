@@ -102,6 +102,7 @@ GenJavaTests(
         "//third_party/java/guava/collect",
         "//third_party/java/guava/util/concurrent",
         "//third_party/java/javapoet",
+        "//third_party/java/jsr250_annotations",  # Include @Generated in generated files.
         "//third_party/java/jsr330_inject",
         "//third_party/java/junit",
         "//third_party/java/mockito",

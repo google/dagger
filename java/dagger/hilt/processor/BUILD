@@ -114,8 +114,9 @@ gen_maven_artifact(
     ],
     javadoc_android_api_level = 30,
     javadoc_root_packages = [
-        "dagger.hilt.processor",
-        "dagger.hilt.android.processor",
+        # Java 11 javadocs requires non-empty root package so use ".internal" as the root package.
+        "dagger.hilt.processor.internal",
+        "dagger.hilt.android.processor.internal",
     ],
     javadoc_srcs = [
         "//java/dagger/hilt:hilt_processing_filegroup",

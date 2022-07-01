@@ -29,6 +29,5 @@ java_library(
         "//third_party/java/jsr305_annotations",
         "//third_party/java/junit",
         "//third_party/java/truth",
-        "@local_jdk//:lib/tools.jar",
     ],
 )

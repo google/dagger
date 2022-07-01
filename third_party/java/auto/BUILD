@@ -68,6 +68,7 @@ java_library(
     ],
     tags = ["maven:compile_only"],
     exports = [
+        "//third_party/java/error_prone:annotations",
         "@maven//:com_google_auto_value_auto_value_annotations",
     ],
 )

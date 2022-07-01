@@ -18,11 +18,11 @@ runs:
       with:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
-    - name: 'Setup JDK'
+    - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
       uses: actions/setup-java@v2
       with:
-        distribution: 'temurin'
-        java-version: '11'
+        distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
+        java-version: '${{ env.USE_JAVA_VERSION }}'
     - name: 'Gradle Android local tests (AGP ${{ inputs.agp }})'
       run: ./util/run-local-gradle-android-tests.sh "${{ inputs.agp }}"
       shell: bash

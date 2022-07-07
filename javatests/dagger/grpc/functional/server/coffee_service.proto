@@ -16,6 +16,8 @@ syntax = "proto3";
 
 package test;
 
+option use_java_stubby_library = true;
+
 enum CoffeeType {
   UNKNOWN = 0;
   DRIP = 1;

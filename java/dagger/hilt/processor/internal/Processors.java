@@ -755,7 +755,31 @@ public final class Processors {
 
   /** Returns MapKey annotated annotations found on an element. */
   public static ImmutableList<AnnotationMirror> getMapKeyAnnotations(Element element) {
-    return getAnnotationsAnnotatedWith(element, ClassName.get("dagger", "MapKey"));
+    ImmutableSet<? extends AnnotationMirror> mapKeys =
+        AnnotationMirrors.getAnnotatedAnnotations(element, ClassNames.MAP_KEY.canonicalName());
+    // Normally, we wouldn't need to handle Kotlin metadata because map keys are typically used
+    // only on methods. However, with @BindValueIntoMap, this can be used on fields so we need
+    // to check annotations on the property as well, just like with qualifiers.
+    KotlinMetadataUtil metadataUtil = KotlinMetadataUtils.getMetadataUtil();
+    if (element.getKind() == ElementKind.FIELD
+        // static fields are generally not supported, no need to get map keys from Kotlin metadata
+        && !element.getModifiers().contains(STATIC)
+        && metadataUtil.hasMetadata(element)) {
+      VariableElement fieldElement = asVariable(element);
+      return Stream.concat(
+              mapKeys.stream(),
+              metadataUtil.isMissingSyntheticPropertyForAnnotations(fieldElement)
+                  ? Stream.empty()
+                  : metadataUtil
+                      .getSyntheticPropertyAnnotations(fieldElement, ClassNames.MAP_KEY)
+                      .stream())
+          .map(AnnotationMirrors.equivalence()::wrap)
+          .distinct()
+          .map(Wrapper::get)
+          .collect(DaggerStreams.toImmutableList());
+    } else {
+      return ImmutableList.copyOf(mapKeys);
+    }
   }
 
   /** Returns Qualifier annotated annotations found on an element. */

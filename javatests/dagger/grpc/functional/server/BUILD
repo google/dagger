@@ -15,4 +15,5 @@ java_proto_library(
 proto_library(
     name = "protos",
     srcs = glob(["*.proto"]),
+    use_java_stubby_library = True,
 )

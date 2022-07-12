@@ -141,10 +141,10 @@ archive_repository(
 
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
 
-KOTLIN_VERSION = "1.6.21"
+KOTLIN_VERSION = "1.7.0"
 
 # Get from https://github.com/JetBrains/kotlin/releases/
-KOTLINC_RELEASE_SHA = "632166fed89f3f430482f5aa07f2e20b923b72ef688c8f5a7df3aa1502c6d8ba"
+KOTLINC_RELEASE_SHA = "f5216644ad81571e5db62ec2322fe07468927bda40f51147ed626a2884b55f9a"
 
 kotlin_repositories(
     compiler_release = kotlinc_version(
@@ -193,7 +193,7 @@ CHECKER_FRAMEWORK_VERSION = "2.5.3"
 
 ERROR_PRONE_VERSION = "2.14.0"
 
-KSP_VERSION = "1.6.21-1.0.5"
+KSP_VERSION = "1.7.0-1.0.6"
 
 maven_install(
     artifacts = [

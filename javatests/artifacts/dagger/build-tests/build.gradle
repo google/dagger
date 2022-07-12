@@ -22,6 +22,7 @@ plugins {
 // Set the versions in a system property so that tests can access it.
 test {
     systemProperty 'dagger_version', "$dagger_version"
+    systemProperty 'kotlin_version', "$kotlin_version"
 }
 
 dependencies {

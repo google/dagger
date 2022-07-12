@@ -56,7 +56,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
@@ -84,13 +83,11 @@ import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.javapoet.TypeSpecs;
 import dagger.internal.codegen.langmodel.Accessibility;
-import dagger.internal.codegen.xprocessing.JavaPoetExt;
 import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.spi.model.BindingGraph.Node;
 import dagger.spi.model.Key;
 import dagger.spi.model.RequestKind;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -845,12 +842,12 @@ public final class ComponentImplementation {
 
     private void createSubcomponentFactoryMethod(XMethodElement factoryMethod) {
       checkState(parent.isPresent());
-      Collection<ParameterSpec> params =
-          Maps.transformValues(graph.factoryMethodParameters(), JavaPoetExt::getParameterSpec)
-              .values();
       XType parentType = parent.get().graph().componentTypeElement().getType();
       MethodSpec.Builder method = overriding(factoryMethod, parentType);
-      params.forEach(
+      // Use the parameter names from the overriding method, which may be different from the
+      // parameter names at the declaration site if it is pulled in as a class dependency from a
+      // separate build unit (see https://github.com/google/dagger/issues/3401).
+      method.parameters.forEach(
           param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
       method.addStatement(
           "return new $T($L)",
@@ -861,7 +858,7 @@ public final class ComponentImplementation {
                       creatorComponentFields().stream()
                           .map(field -> ParameterSpec.builder(field.type, field.name).build())
                           .collect(toImmutableList()))
-                  .addAll(params)
+                  .addAll(method.parameters)
                   .build()));
 
       parent.get().getComponentShard().addMethod(COMPONENT_METHOD, method.build());

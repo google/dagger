@@ -16,7 +16,7 @@
 import org.gradle.util.VersionNumber
 
 apply plugin: 'com.android.application'
-apply plugin: 'dagger.hilt.android.plugin'
+apply plugin: 'com.google.dagger.hilt.android'
 
 // Gets additional test directories to be added to test and androidTest source
 // sets. If the directory name is appended with '-agp-x.x.x' then the directory

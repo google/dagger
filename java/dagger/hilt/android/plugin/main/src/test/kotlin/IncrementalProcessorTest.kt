@@ -142,7 +142,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
 
       plugins {
         id 'com.android.application'
-        id 'dagger.hilt.android.plugin'
+        id 'com.google.dagger.hilt.android'
       }
 
       android {

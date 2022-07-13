@@ -270,7 +270,7 @@ public abstract class AndroidEntryPointMetadata {
           !MoreTypes.isTypeOf(Void.class, baseElement.asType()),
           androidEntryPointElement,
           "Expected @%s to have a value."
-          + " Did you forget to apply the Gradle Plugin? (dagger.hilt.android.plugin)\n"
+          + " Did you forget to apply the Gradle Plugin? (com.google.dagger.hilt.android)\n"
           + "See https://dagger.dev/hilt/gradle-setup.html" ,
           annotationClassName.simpleName());
 

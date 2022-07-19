@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.xprocessing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static kotlin.streams.jdk8.StreamsKt.asStream;
@@ -24,6 +23,7 @@ import static kotlin.streams.jdk8.StreamsKt.asStream;
 import androidx.room.compiler.processing.XHasModifiers;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.XTypeParameterElement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.TypeVariableName;
@@ -52,8 +52,8 @@ public final class XTypeElements {
   // TODO(bcorso): Consider XParameterizable interface to handle both methods and types.
   /** Returns the type arguments for the given type as a list of {@link TypeVariableName}. */
   public static ImmutableList<TypeVariableName> typeVariableNames(XTypeElement typeElement) {
-    return toJavac(typeElement).getTypeParameters().stream()
-        .map(TypeVariableName::get)
+    return typeElement.getTypeParameters().stream()
+        .map(XTypeParameterElement::getTypeVariableName)
         .collect(toImmutableList());
   }
 
@@ -63,11 +63,8 @@ public final class XTypeElements {
   }
 
   /** Returns {@code true} if the given {@code type} has type parameters. */
-  public static boolean hasTypeParameters(XTypeElement type) {
-    // TODO(bcorso): Add support for XTypeElement#getTypeParameters() or at least
-    // XTypeElement#hasTypeParameters() in XProcessing. XTypes#getTypeArguments() isn't quite the
-    // same -- it tells you if the declared type has parameters rather than the element itself.
-    return !toJavac(type).getTypeParameters().isEmpty();
+  public static boolean hasTypeParameters(XTypeElement typeElement) {
+    return !typeElement.getTypeParameters().isEmpty();
   }
 
   /** Returns all non-private, non-static, abstract methods in {@code type}. */

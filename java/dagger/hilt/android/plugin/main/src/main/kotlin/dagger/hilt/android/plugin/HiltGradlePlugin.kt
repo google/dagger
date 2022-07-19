@@ -32,6 +32,7 @@ import dagger.hilt.android.plugin.util.CopyTransform
 import dagger.hilt.android.plugin.util.SimpleAGPVersion
 import dagger.hilt.android.plugin.util.capitalize
 import dagger.hilt.android.plugin.util.getAndroidComponentsExtension
+import dagger.hilt.android.plugin.util.getKaptConfigName
 import dagger.hilt.android.plugin.util.getSdkPath
 import java.io.File
 import javax.inject.Inject
@@ -397,7 +398,16 @@ class HiltGradlePlugin @Inject constructor(
         annotationProcessorPath = project.configurations.create(
           "hiltAnnotationProcessor${variant.name.capitalize()}"
         ).also { config ->
-          // TODO: Consider finding the hilt-compiler dep from the user config and using it here.
+          config.isCanBeConsumed = false
+          config.isCanBeResolved = true
+          // Add user annotation processor configuration, so that SPI plugins and other processors
+          // are discoverable.
+          val apConfigurations: List<Configuration> = mutableListOf<Configuration>().apply {
+            add(variant.annotationProcessorConfiguration)
+            project.configurations.findByName(getKaptConfigName(variant))?.let { add(it) }
+          }
+          config.extendsFrom(*apConfigurations.toTypedArray())
+          // Add hilt-compiler even though it might be in the AP configurations already.
           project.dependencies.add(config.name, "com.google.dagger:hilt-compiler:$HILT_VERSION")
         }
         generatedSourceOutputDirectory.set(

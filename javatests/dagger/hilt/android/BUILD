@@ -129,6 +129,7 @@ android_library(
     name = "custom_inject_classes",
     srcs = ["CustomInjectClasses.java"],
     deps = [
+        "//:android_local_test_exports",
         "//:dagger_with_compiler",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:hilt_android_app",
@@ -175,6 +176,7 @@ android_library(
     name = "EarlyEntryPointHiltAndroidAppRuntimeClasses",
     srcs = ["EarlyEntryPointHiltAndroidAppRuntimeClasses.java"],
     deps = [
+        "//:android_local_test_exports",
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt/android:early_entry_point",
         "//java/dagger/hilt/android:hilt_android_app",
@@ -327,55 +329,8 @@ android_local_test(
     ],
 )
 
-android_local_test(
-    name = "InstallInObjectModuleTest",
-    srcs = ["InstallInObjectModuleTest.java"],
-    manifest_values = {
-        "minSdkVersion": "14",
-    },
-    deps = [
-        ":InstallInObjectModuleClasses",
-        "//:android_local_test_exports",
-        "//:dagger_with_compiler",
-        "//java/dagger/hilt:entry_point",
-        "//java/dagger/hilt/android:android_entry_point",
-        "//java/dagger/hilt/android:package_info",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-        "//third_party/java/junit",
-        "//third_party/java/truth",
-    ],
-)
-
-kt_android_library(
-    name = "InstallInObjectModuleClasses",
-    testonly = True,
-    srcs = ["InstallInObjectModule.kt"],
-    deps = [
-        "//:dagger_with_compiler",
-        "//java/dagger/hilt:entry_point",
-        "//java/dagger/hilt:install_in",
-        "//java/dagger/hilt/components",
-    ],
-)
-
-android_local_test(
-    name = "InternalKtModuleTest",
-    size = "small",
-    srcs = ["InternalKtModuleTest.java"],
-    manifest_values = {
-        "minSdkVersion": "14",
-    },
-    deps = [
-        "//:android_local_test_exports",
-        "//:dagger_with_compiler",
-        "//java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android:package_info",
-        "//java/dagger/hilt/android/internal/lifecycle",  # b/247145646
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-        "//javatests/dagger/hilt/testmodules",
-        "//third_party/java/truth",
-    ],
-)
+# InstallInObjectModuleTest and InternalKtModuleTest are excluded because they don't build
+# due to https://github.com/bazelbuild/bazel/issues/16087
 
 android_local_test(
     name = "DefaultViewModelFactoryTest",

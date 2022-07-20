@@ -13,8 +13,8 @@ shift 2
 $(dirname $0)/validate-dagger-version.sh "$VERSION_NAME"
 
 BAZEL_VERSION=$(bazel --version)
-if [[ $BAZEL_VERSION != *"4.2.1"* ]]; then
-  echo "Must use Bazel version 4.2.1"
+if [[ $BAZEL_VERSION != *"5.3.2"* ]]; then
+  echo "Must use Bazel version 5.3.2"
   exit 4
 fi
 

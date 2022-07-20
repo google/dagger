@@ -12,6 +12,5 @@ java_library(
         "//java/dagger:core",
         "//third_party/java/error_prone:check_api",
         "//third_party/java/guava/collect",
-        "@bazel_tools//tools/jdk:langtools-neverlink",
     ],
 )

@@ -83,6 +83,7 @@ android_library(
     srcs = ["TestInstallInApp.java"],
     deps = [
         ":TestInstallInModules",
+        "//:android_local_test_exports",
         "//:dagger_with_compiler",
         "//java/dagger/hilt/android:hilt_android_app",
     ],

@@ -56,7 +56,6 @@ java_library(
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
         "//third_party/java/jsr330_inject",
-        "@bazel_tools//tools/jdk:langtools-neverlink",
         "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )

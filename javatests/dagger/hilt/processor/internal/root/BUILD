@@ -22,6 +22,7 @@ android_library(
     name = "MyAppPreviousCompilation",
     srcs = ["MyAppPreviousCompilation.java"],
     deps = [
+        "//:android_local_test_exports",
         "//java/dagger/hilt/android:hilt_android_app",
     ],
 )

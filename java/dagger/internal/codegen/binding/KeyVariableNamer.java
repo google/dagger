@@ -50,7 +50,7 @@ public final class KeyVariableNamer {
 
   public static String name(Key key) {
     if (key.multibindingContributionIdentifier().isPresent()) {
-      return key.multibindingContributionIdentifier().get().bindingElement();
+      return key.multibindingContributionIdentifier().get().bindingMethod();
     }
 
     StringBuilder builder = new StringBuilder();

@@ -51,9 +51,10 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.multibindings.Multibinds;
 import dagger.spi.model.DaggerAnnotation;
+import dagger.spi.model.DaggerExecutableElement;
 import dagger.spi.model.DaggerType;
+import dagger.spi.model.DaggerTypeElement;
 import dagger.spi.model.Key;
-import dagger.spi.model.Key.MultibindingContributionIdentifier;
 import dagger.spi.model.RequestKind;
 import java.util.Map;
 import java.util.Optional;
@@ -153,10 +154,8 @@ public final class KeyFactory {
     Key key = forMethod(method, keyType);
     return contributionType.equals(ContributionType.UNIQUE)
         ? key
-        : key.toBuilder()
-            .multibindingContributionIdentifier(
-                new MultibindingContributionIdentifier(method, contributingModule))
-            .build();
+        : key.withMultibindingContributionIdentifier(
+            DaggerTypeElement.from(contributingModule), DaggerExecutableElement.from(method));
   }
 
   /**
@@ -319,11 +318,9 @@ public final class KeyFactory {
         for (ClassName frameworkClass :
             asList(TypeNames.PROVIDER, TypeNames.PRODUCER, TypeNames.PRODUCED)) {
           if (mapType.valuesAreTypeOf(frameworkClass)) {
-            return key.toBuilder()
-                .type(
-                    DaggerType.from(
-                        mapOf(mapType.keyType(), mapType.unwrappedValueType(frameworkClass))))
-                .build();
+            return key.withType(
+                DaggerType.from(
+                    mapOf(mapType.keyType(), mapType.unwrappedValueType(frameworkClass))));
           }
         }
       }
@@ -363,9 +360,7 @@ public final class KeyFactory {
             processingEnv.getDeclaredType(
                 wrappingElement, mapType.unwrappedValueType(currentWrappingClassName));
         return Optional.of(
-            possibleMapKey.toBuilder()
-                .type(DaggerType.from(mapOf(mapType.keyType(), wrappedValueType)))
-                .build());
+            possibleMapKey.withType(DaggerType.from(mapOf(mapType.keyType(), wrappedValueType))));
       }
     }
     return Optional.empty();
@@ -391,9 +386,7 @@ public final class KeyFactory {
         XType wrappedValueType =
             processingEnv.getDeclaredType(wrappingElement, mapType.valueType());
         return Optional.of(
-            possibleMapKey.toBuilder()
-                .type(DaggerType.from(mapOf(mapType.keyType(), wrappedValueType)))
-                .build());
+            possibleMapKey.withType(DaggerType.from(mapOf(mapType.keyType(), wrappedValueType))));
       }
     }
     return Optional.empty();
@@ -408,9 +401,7 @@ public final class KeyFactory {
       SetType setType = SetType.from(key);
       if (!setType.isRawType() && setType.elementsAreTypeOf(wrappingClassName)) {
         return Optional.of(
-            key.toBuilder()
-                .type(DaggerType.from(setOf(setType.unwrappedElementType(wrappingClassName))))
-                .build());
+            key.withType(DaggerType.from(setOf(setType.unwrappedElementType(wrappingClassName)))));
       }
     }
     return Optional.empty();
@@ -427,7 +418,6 @@ public final class KeyFactory {
     }
 
     XType optionalValueType = OptionalType.from(key).valueType();
-    return Optional.of(
-        key.toBuilder().type(DaggerType.from(extractKeyType(optionalValueType))).build());
+    return Optional.of(key.withType(DaggerType.from(extractKeyType(optionalValueType))));
   }
 }

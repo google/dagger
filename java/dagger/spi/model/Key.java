@@ -16,17 +16,12 @@
 
 package dagger.spi.model;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
-import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Joiner;
-import java.util.Objects;
 import java.util.Optional;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
 /**
  * A {@linkplain DaggerType type} and an optional {@linkplain javax.inject.Qualifier qualifier} that
@@ -55,7 +50,28 @@ public abstract class Key {
   public abstract Optional<MultibindingContributionIdentifier> multibindingContributionIdentifier();
 
   /** Returns a {@link Builder} that inherits the properties of this key. */
-  public abstract Builder toBuilder();
+  abstract Builder toBuilder();
+
+  /** Returns a copy of this key with the type replaced with the given type. */
+  public Key withType(DaggerType newType) {
+    return toBuilder().type(newType).build();
+  }
+
+  /**
+   * Returns a copy of this key with the multibinding contribution identifier replaced with the
+   * given multibinding contribution identifier.
+   */
+  public Key withMultibindingContributionIdentifier(
+      DaggerTypeElement contributingModule, DaggerExecutableElement bindingMethod) {
+    return toBuilder()
+        .multibindingContributionIdentifier(contributingModule, bindingMethod)
+        .build();
+  }
+
+  /** Returns a copy of this key with the multibinding contribution identifier, if any, removed. */
+  public Key withoutMultibindingContributionIdentifier() {
+    return toBuilder().multibindingContributionIdentifier(Optional.empty()).build();
+  }
 
   // The main hashCode/equality bottleneck is in MoreTypes.equivalence(). It's possible that we can
   // avoid this by tuning that method. Perhaps we can also avoid the issue entirely by interning all
@@ -91,11 +107,15 @@ public abstract class Key {
 
     public abstract Builder qualifier(DaggerAnnotation qualifier);
 
-    public abstract Builder multibindingContributionIdentifier(
-        Optional<MultibindingContributionIdentifier> identifier);
+    public final Builder multibindingContributionIdentifier(
+        DaggerTypeElement contributingModule, DaggerExecutableElement bindingMethod) {
+      return multibindingContributionIdentifier(
+          Optional.of(
+              MultibindingContributionIdentifier.create(contributingModule, bindingMethod)));
+    }
 
-    public abstract Builder multibindingContributionIdentifier(
-        MultibindingContributionIdentifier identifier);
+    abstract Builder multibindingContributionIdentifier(
+        Optional<MultibindingContributionIdentifier> identifier);
 
     public abstract Key build();
   }
@@ -106,58 +126,20 @@ public abstract class Key {
    *
    * @see #multibindingContributionIdentifier()
    */
-  public static final class MultibindingContributionIdentifier {
-    private final String module;
-    private final String bindingElement;
-
-    /**
-     * @deprecated This is only meant to be called from code in {@code dagger.internal.codegen}. It
-     *     is not part of a specified API and may change at any point.
-     */
-    @Deprecated
-    public MultibindingContributionIdentifier(
-        // TODO(ronshapiro): reverse the order of these parameters
-        XMethodElement bindingMethod, XTypeElement contributingModule) {
-      this(toJavac(bindingMethod), toJavac(contributingModule));
+  @AutoValue
+  public abstract static class MultibindingContributionIdentifier {
+    private static MultibindingContributionIdentifier create(
+        DaggerTypeElement contributingModule, DaggerExecutableElement bindingMethod) {
+      return new AutoValue_Key_MultibindingContributionIdentifier(
+          contributingModule.xprocessing().getQualifiedName(),
+          getSimpleName(bindingMethod.xprocessing()));
     }
 
-    /**
-     * @deprecated This is only meant to be called from code in {@code dagger.internal.codegen}.
-     * It is not part of a specified API and may change at any point.
-     */
-    @Deprecated
-    public MultibindingContributionIdentifier(
-        // TODO(ronshapiro): reverse the order of these parameters
-        ExecutableElement bindingMethod, TypeElement contributingModule) {
-      this(
-          bindingMethod.getSimpleName().toString(),
-          contributingModule.getQualifiedName().toString());
-    }
+    /** Returns the module containing the multibinding method. */
+    public abstract String contributingModule();
 
-    // TODO(ronshapiro,dpb): create KeyProxies so that these constructors don't need to be public.
-    @Deprecated
-    public MultibindingContributionIdentifier(String bindingElement, String module) {
-      this.module = module;
-      this.bindingElement = bindingElement;
-    }
-
-    /**
-     * @deprecated This is only meant to be called from code in {@code dagger.internal.codegen}.
-     * It is not part of a specified API and may change at any point.
-     */
-    @Deprecated
-    public String module() {
-      return module;
-    }
-
-    /**
-     * @deprecated This is only meant to be called from code in {@code dagger.internal.codegen}.
-     * It is not part of a specified API and may change at any point.
-     */
-    @Deprecated
-    public String bindingElement() {
-      return bindingElement;
-    }
+    /** Returns the multibinding method that defines teh multibinding contribution. */
+    public abstract String bindingMethod();
 
     /**
      * {@inheritDoc}
@@ -167,21 +149,7 @@ public abstract class Key {
      */
     @Override
     public String toString() {
-      return String.format("%s#%s", module, bindingElement);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj instanceof MultibindingContributionIdentifier) {
-        MultibindingContributionIdentifier other = (MultibindingContributionIdentifier) obj;
-        return module.equals(other.module) && bindingElement.equals(other.bindingElement);
-      }
-      return false;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(module, bindingElement);
+      return String.format("%s#%s", contributingModule(), bindingMethod());
     }
   }
 }

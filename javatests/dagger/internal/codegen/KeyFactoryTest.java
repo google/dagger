@@ -42,9 +42,10 @@ import dagger.multibindings.IntoSet;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
 import dagger.spi.model.DaggerAnnotation;
+import dagger.spi.model.DaggerExecutableElement;
 import dagger.spi.model.DaggerType;
+import dagger.spi.model.DaggerTypeElement;
 import dagger.spi.model.Key;
-import dagger.spi.model.Key.MultibindingContributionIdentifier;
 import java.lang.annotation.Retention;
 import java.util.Set;
 import javax.inject.Inject;
@@ -209,7 +210,8 @@ public class KeyFactoryTest {
           .isEqualTo(
               Key.builder(DaggerType.from(setOfStringsType))
                   .multibindingContributionIdentifier(
-                      new MultibindingContributionIdentifier(providesMethod, moduleElement))
+                      DaggerTypeElement.from(moduleElement),
+                      DaggerExecutableElement.from(providesMethod))
                   .build());
       assertThat(key.toString())
           .isEqualTo(
@@ -300,7 +302,8 @@ public class KeyFactoryTest {
           .isEqualTo(
               Key.builder(DaggerType.from(setOfStringsType))
                   .multibindingContributionIdentifier(
-                      new MultibindingContributionIdentifier(producesMethod, moduleElement))
+                      DaggerTypeElement.from(moduleElement),
+                      DaggerExecutableElement.from(producesMethod))
                   .build());
       assertThat(key.toString())
           .isEqualTo(

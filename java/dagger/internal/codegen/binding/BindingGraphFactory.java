@@ -216,7 +216,7 @@ public final class BindingGraphFactory implements ClearableCache {
       // identifier so that the multibinding itself is resolved.
       modules(componentDescriptor, parentResolver).stream()
           .flatMap(module -> module.allBindingKeys().stream())
-          .map(key -> key.toBuilder().multibindingContributionIdentifier(Optional.empty()).build())
+          .map(Key::withoutMultibindingContributionIdentifier)
           .forEach(requestResolver::resolve);
     }
 
@@ -965,13 +965,7 @@ public final class BindingGraphFactory implements ClearableCache {
     ImmutableSetMultimap.Builder<Key, T> builder = ImmutableSetMultimap.builder();
     for (T declaration : declarations) {
       if (declaration.key().multibindingContributionIdentifier().isPresent()) {
-        builder.put(
-            declaration
-                .key()
-                .toBuilder()
-                .multibindingContributionIdentifier(Optional.empty())
-                .build(),
-            declaration);
+        builder.put(declaration.key().withoutMultibindingContributionIdentifier(), declaration);
       }
     }
     return builder.build();

@@ -350,7 +350,8 @@ class HiltGradlePlugin @Inject constructor(
       @Suppress("DEPRECATION") // Older variant API is deprecated
       it.testEnvironment.set(
         variant is com.android.build.gradle.api.TestVariant ||
-          variant is com.android.build.gradle.api.UnitTestVariant
+          variant is com.android.build.gradle.api.UnitTestVariant ||
+          androidExtension is com.android.build.gradle.TestExtension
       )
       it.crossCompilationRootValidationDisabled.set(
         hiltExtension.disableCrossCompilationRootValidation

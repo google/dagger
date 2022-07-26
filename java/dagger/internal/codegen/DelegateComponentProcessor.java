@@ -80,6 +80,9 @@ final class DelegateComponentProcessor {
       } catch (SourceFileGenerationException e) {
         e.printMessageTo(env.getMessager());
       }
+    } else {
+      validationBindingGraphPlugins.endPlugins();
+      externalBindingGraphPlugins.endPlugins();
     }
     clearableCaches.forEach(ClearableCache::clearCache);
   }

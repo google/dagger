@@ -99,4 +99,8 @@ public final class ExternalBindingGraphPlugins {
     }
     return isClean;
   }
+
+  public void endPlugins() {
+    plugins.forEach(BindingGraphPlugin::onPluginEnd);
+  }
 }

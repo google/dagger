@@ -81,6 +81,11 @@ final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
   }
 
   @Override
+  public void onPluginEnd() {
+    plugins.forEach(BindingGraphPlugin::onPluginEnd);
+  }
+
+  @Override
   public Set<String> supportedOptions() {
     return plugins.stream()
         .flatMap(plugin -> plugin.supportedOptions().stream())

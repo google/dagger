@@ -95,4 +95,8 @@ public final class ValidationBindingGraphPlugins {
     }
     return isClean;
   }
+
+  public void endPlugins() {
+    plugins.forEach(BindingGraphPlugin::onPluginEnd);
+  }
 }

@@ -21,12 +21,17 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
 import dagger.model.BindingGraph;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.processing.Filer;
+import javax.tools.StandardLocation;
 
 @AutoService(BindingGraphPlugin.class)
 public final class FailingPlugin implements BindingGraphPlugin {
   private Map<String, String> options;
+  private Filer filer;
 
   @Override
   public Set<String> supportedOptions() {
@@ -35,6 +40,11 @@ public final class FailingPlugin implements BindingGraphPlugin {
         "error_on_dependency",
         "error_on_component",
         "error_on_subcomponents");
+  }
+
+  @Override
+  public void initFiler(Filer filer) {
+    this.filer = filer;
   }
 
   @Override
@@ -88,5 +98,14 @@ public final class FailingPlugin implements BindingGraphPlugin {
   @Override
   public String pluginName() {
     return "FailingPlugin";
+  }
+
+  @Override
+  public void onPluginEnd() {
+    try {
+      filer.createResource(StandardLocation.SOURCE_OUTPUT, "", "onPluginEndTest.txt");
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to create txt file", e);
+    }
   }
 }

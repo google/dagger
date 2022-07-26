@@ -25,6 +25,7 @@ import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.internal.codegen.ComponentProcessor;
 import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -481,6 +482,22 @@ public final class SpiPluginTest {
                     + "[test.TestComponent → test.TestSubcomponent]"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
+  }
+
+  @Test
+  public void onPluginEnd() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {}");
+    Compilation compilation = javac().withProcessors(new ComponentProcessor()).compile(component);
+    assertThat(compilation)
+        .generatedFile(StandardLocation.SOURCE_OUTPUT, "", "onPluginEndTest.txt");
   }
 
   // This works around an issue in the opensource compile testing where only one diagnostic is

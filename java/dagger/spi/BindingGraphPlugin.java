@@ -91,4 +91,11 @@ public interface BindingGraphPlugin {
   default String pluginName() {
     return getClass().getCanonicalName();
   }
+
+  /**
+   * Perform any extra work after the plugin finished all its visiting. This will be called once per
+   * instance of this plugin, after all graphs were {@linkplain #visitGraph(BindingGraph,
+   * DiagnosticReporter) visited}
+   */
+  default void onPluginEnd() {}
 }

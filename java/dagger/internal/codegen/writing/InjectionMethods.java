@@ -52,6 +52,7 @@ import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XExecutableElement;
@@ -78,7 +79,6 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.extension.DaggerCollectors;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.DependencyRequest;
 import java.util.List;
@@ -434,7 +434,7 @@ final class InjectionMethods {
                     .build())
             .addTypeVariables(typeVariableNames(enclosingType));
 
-    qualifier.map(XAnnotations::getAnnotationSpec).ifPresent(builder::addAnnotation);
+    qualifier.map(JavaPoetExtKt::toAnnotationSpec).ifPresent(builder::addAnnotation);
 
     boolean useObject = !isRawTypePubliclyAccessible(enclosingType.getType());
     UniqueNameSet parameterNameSet = new UniqueNameSet();

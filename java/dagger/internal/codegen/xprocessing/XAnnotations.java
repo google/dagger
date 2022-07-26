@@ -21,18 +21,12 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import androidx.room.compiler.processing.XAnnotation;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.common.base.Equivalence;
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import java.util.Arrays;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XAnnotation} helper methods. */
 public final class XAnnotations {
-
-  /** Returns the {@link AnnotationSpec} for the given annotation */
-  public static AnnotationSpec getAnnotationSpec(XAnnotation annotation) {
-    return AnnotationSpec.get(toJavac(annotation));
-  }
 
   /** Returns the string representation of the given annotation. */
   public static String toString(XAnnotation annotation) {

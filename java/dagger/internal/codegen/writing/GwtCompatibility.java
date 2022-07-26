@@ -18,6 +18,7 @@ package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import com.squareup.javapoet.AnnotationSpec;
@@ -38,7 +39,7 @@ final class GwtCompatibility {
       Optional<AnnotationSpec> gwtIncompatible =
           element.getAllAnnotations().stream()
               .filter(GwtCompatibility::isGwtIncompatible)
-              .map(XAnnotations::getAnnotationSpec)
+              .map(JavaPoetExtKt::toAnnotationSpec)
               .findFirst();
       if (gwtIncompatible.isPresent()) {
         return gwtIncompatible;

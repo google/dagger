@@ -520,7 +520,7 @@ possible for the Activity to inject the binding in its unitialized state. To
 avoid this, try initializing the `@BindValue` field in the field's initializer.
 {: .c-callouts__warning }
 
-## Custom test application
+## Custom test application {#custom-test-application}
 
 Every Hilt test must use a Hilt test application as the Android application
 class. Hilt comes with a default test application, [`HiltTestApplication`],

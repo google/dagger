@@ -8,7 +8,7 @@ components, modules, scopes, and bindings. (For a refresher, see
 [Dagger users guide](https://dagger.dev/dev-guide).)
 {: .c-callouts__note }
 
-## Component hierarchy
+## Component hierarchy {#component-hierarchy}
 
 Unlike traditional Dagger, Hilt users never define or instantiate Dagger
 components directly. Instead, Hilt offers predefined components that are
@@ -30,7 +30,7 @@ only be scoped with `@ActivityScoped`.
 
 ![Hilt Component Hierarchy](component-hierarchy.svg)
 
-## Components used for injection
+## Components used for injection {#components-used-for-injection}
 
 When using Hilt APIs like [`@AndroidEntryPoint`](android-entry-point.md) to inject your Android classes, the standard Hilt components are used as the injectors.
 The component used as the injector will determine which bindings are visible to that Android class. The components used
@@ -46,7 +46,7 @@ Component                       | Injector for
 **`ViewWithFragmentComponent`** | `View` with `@WithFragmentBindings`
 **`ServiceComponent`**          | `Service`
 
-## Component lifetimes
+## Component lifetimes {#component-lifetimes}
 
 The lifetime of a component is important because it relates to the lifetime of
 your bindings in two important ways:

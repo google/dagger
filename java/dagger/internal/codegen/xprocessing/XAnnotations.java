@@ -99,6 +99,11 @@ public final class XAnnotations {
    * messages.
    */
   public static String toStableString(XAnnotation annotation) {
+    // TODO(b/249283155): Due to a bug in XProcessing, calling various methods on an annotation that
+    // is an error type may throw an unexpected exception, so we just output the qualified name.
+    if (annotation.getType().isError()) {
+      return "@" + annotation.getQualifiedName();
+    }
     return annotation.getAnnotationValues().isEmpty()
         // If the annotation doesn't have values then skip the empty parenthesis.
         ? String.format("@%s", getClassName(annotation).canonicalName())

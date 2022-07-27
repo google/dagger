@@ -34,6 +34,7 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XEnumEntry;
+import androidx.room.compiler.processing.XEnumTypeElement;
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XFieldElement;
@@ -42,6 +43,7 @@ import androidx.room.compiler.processing.XMemberContainer;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.XTypeParameterElement;
 import androidx.room.compiler.processing.XVariableElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
@@ -173,12 +175,20 @@ public final class XElements {
     return false;
   }
 
+  public static boolean isTypeParameter(XElement element) {
+    return element instanceof XTypeParameterElement;
+  }
+
+  public static XTypeParameterElement asTypeParameter(XElement element) {
+    return (XTypeParameterElement) element;
+  }
+
   public static boolean isEnumEntry(XElement element) {
     return element instanceof XEnumEntry;
   }
 
   public static boolean isEnum(XElement element) {
-    return toJavac(element).getKind() == ElementKind.ENUM;
+    return element instanceof XEnumTypeElement;
   }
 
   public static boolean isExecutable(XElement element) {

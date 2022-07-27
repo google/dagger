@@ -22,18 +22,22 @@ import static androidx.room.compiler.processing.compat.XConverters.getProcessing
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreTypes.asDeclared;
+import static com.google.common.base.CaseFormat.LOWER_CAMEL;
+import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.xprocessing.XTypes.asArray;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static dagger.internal.codegen.xprocessing.XTypes.isNoType;
 import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XArrayType;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
+import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
 import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
@@ -41,8 +45,17 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import javax.lang.model.element.Element;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.WildcardType;
+import javax.lang.model.util.SimpleTypeVisitor8;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XType} helper methods. */
@@ -349,6 +362,91 @@ public final class XTypes {
     } else {
       // For all other types (e.g. primitive types) just use the TypeName's toString()
       return typeName.toString();
+    }
+  }
+
+  public static String getKindName(XType type) {
+    if (isArray(type)) {
+      return "ARRAY";
+    } else if (type.isError()) {
+      // Note: Most of these types are disjoint, so ordering doesn't matter. However, error type is
+      // a subtype of declared type so make sure we check isError() before isDeclared() so that
+      // error types are reported as ERROR rather than DECLARED.
+      return "ERROR";
+    } else if (isDeclared(type)) {
+      return "DECLARED";
+    } else if (isWildcard(type)) {
+      return "WILDCARD";
+    } else if (isTypeVariable(type)) {
+      return "TYPEVAR";
+    } else if (isVoid(type)) {
+      return "VOID";
+    } else if (isNullType(type)) {
+      return "NULL";
+    } else if (isNoType(type)) {
+      return "NONE";
+    } else if (isPrimitive(type)) {
+      return LOWER_CAMEL.to(UPPER_UNDERSCORE, type.getTypeName().toString());
+    } else {
+      return "UNKNOWN";
+    }
+  }
+
+  /**
+   * Iterates through the the various types referenced within the given {@code type} and resolves it
+   * if needed.
+   */
+  public static void resolveIfNeeded(XType type) {
+    if (getProcessingEnv(type).getBackend() == XProcessingEnv.Backend.JAVAC) {
+      // TODO(b/242569252): Due to a bug in javac, a TypeName may incorrectly contain a "$" instead
+      // of "." if the TypeName is requested before the type has been resolved. Thus, we try to
+      // resolve the type by calling Element#getKind() to force the correct TypeName.
+      toJavac(type).accept(TypeResolutionVisitor.INSTANCE, new HashSet<>());
+    }
+  }
+
+  private static final class TypeResolutionVisitor extends SimpleTypeVisitor8<Void, Set<Element>> {
+    static final TypeResolutionVisitor INSTANCE = new TypeResolutionVisitor();
+
+    @Override
+    public Void visitDeclared(DeclaredType t, Set<Element> visited) {
+      if (!visited.add(t.asElement())) {
+        return null;
+      }
+      if (MoreElements.asType(t.asElement()).getQualifiedName().toString().contains("$")) {
+        // Force symbol completion/resolution on the type by calling Element#getKind().
+        t.asElement().getKind();
+      }
+      t.getTypeArguments().forEach(arg -> arg.accept(this, visited));
+      return null;
+    }
+
+    @Override
+    public Void visitError(ErrorType t, Set<Element> visited) {
+      visitDeclared(t, visited);
+      return null;
+    }
+
+    @Override
+    public Void visitArray(ArrayType t, Set<Element> visited) {
+      t.getComponentType().accept(this, visited);
+      return null;
+    }
+
+    @Override
+    public Void visitWildcard(WildcardType t, Set<Element> visited) {
+      if (t.getExtendsBound() != null) {
+        t.getExtendsBound().accept(this, visited);
+      }
+      if (t.getSuperBound() != null) {
+        t.getSuperBound().accept(this, visited);
+      }
+      return null;
+    }
+
+    @Override
+    protected Void defaultAction(TypeMirror e, Set<Element> visited) {
+      return null;
     }
   }
 

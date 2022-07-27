@@ -64,5 +64,59 @@ public final class XAnnotationValues {
     return XANNOTATION_VALUE_EQUIVALENCE;
   }
 
+  public static String getKindName(XAnnotationValue value) {
+    if (value.hasAnnotationListValue()) {
+      return "ANNOTATION_ARRAY";
+    } else if (value.hasAnnotationValue()) {
+      return "ANNOTATION";
+    } else if (value.hasEnumListValue()) {
+      return "ENUM_ARRAY";
+    } else if (value.hasEnumValue()) {
+      return "ENUM";
+    } else if (value.hasTypeListValue()) {
+      return "TYPE_ARRAY";
+    } else if (value.hasTypeValue()) {
+      return "TYPE";
+    } else if (value.hasBooleanListValue()) {
+      return "BOOLEAN_ARRAY";
+    } else if (value.hasBooleanValue()) {
+      return "BOOLEAN";
+    } else if (value.hasByteListValue()) {
+      return "BYTE_ARRAY";
+    } else if (value.hasByteValue()) {
+      return "BYTE";
+    } else if (value.hasCharListValue()) {
+      return "CHAR_ARRAY";
+    } else if (value.hasCharValue()) {
+      return "CHAR";
+    } else if (value.hasDoubleListValue()) {
+      return "DOUBLE_ARRAY";
+    } else if (value.hasDoubleValue()) {
+      return "DOUBLE";
+    } else if (value.hasFloatListValue()) {
+      return "FLOAT_ARRAY";
+    } else if (value.hasFloatValue()) {
+      return "FLOAT";
+    } else if (value.hasIntListValue()) {
+      return "INT_ARRAY";
+    } else if (value.hasIntValue()) {
+      return "INT";
+    } else if (value.hasLongListValue()) {
+      return "LONG_ARRAY";
+    } else if (value.hasLongValue()) {
+      return "LONG";
+    } else if (value.hasShortListValue()) {
+      return "SHORT_ARRAY";
+    } else if (value.hasShortValue()) {
+      return "SHORT";
+    } else if (value.hasStringListValue()) {
+      return "STRING_ARRAY";
+    } else if (value.hasStringValue()) {
+      return "STRING";
+    } else {
+      return value.hasListValue() ? "UNKNOWN_ARRAY" : "UNKNOWN";
+    }
+  }
+
   private XAnnotationValues() {}
 }

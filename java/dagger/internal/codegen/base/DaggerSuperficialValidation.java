@@ -16,51 +16,59 @@
 
 package dagger.internal.codegen.base;
 
+import static androidx.room.compiler.processing.XElementKt.isMethod;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
+import static androidx.room.compiler.processing.XElementKt.isVariableElement;
+import static androidx.room.compiler.processing.XTypeKt.isArray;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreElements.asType;
-import static com.google.auto.common.MoreElements.isType;
-import static com.google.auto.common.MoreTypes.asDeclared;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.xprocessing.XAnnotationValues.getKindName;
+import static dagger.internal.codegen.xprocessing.XElements.asEnumEntry;
+import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
+import static dagger.internal.codegen.xprocessing.XElements.asMethod;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeParameter;
+import static dagger.internal.codegen.xprocessing.XElements.asVariable;
+import static dagger.internal.codegen.xprocessing.XElements.isEnumEntry;
+import static dagger.internal.codegen.xprocessing.XElements.isExecutable;
+import static dagger.internal.codegen.xprocessing.XElements.isTypeParameter;
+import static dagger.internal.codegen.xprocessing.XExecutableTypes.asMethodType;
+import static dagger.internal.codegen.xprocessing.XExecutableTypes.getKindName;
+import static dagger.internal.codegen.xprocessing.XExecutableTypes.isMethodType;
+import static dagger.internal.codegen.xprocessing.XTypes.asArray;
+import static dagger.internal.codegen.xprocessing.XTypes.getKindName;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
+import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 
 import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XAnnotationValue;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XExecutableType;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XProcessingEnv.Backend;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.AnnotationMirrors;
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
+import com.google.devtools.ksp.symbol.ClassKind;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
 import dagger.Reusable;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.xprocessing.XAnnotations;
+import dagger.internal.codegen.xprocessing.XTypes;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.AnnotationValueVisitor;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ElementVisitor;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ErrorType;
-import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVisitor;
-import javax.lang.model.type.WildcardType;
-import javax.lang.model.util.AbstractElementVisitor8;
-import javax.lang.model.util.SimpleAnnotationValueVisitor8;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * A fork of {@link com.google.auto.common.SuperficialValidation}.
@@ -97,32 +105,44 @@ public final class DaggerSuperficialValidation {
   }
 
   private final boolean isStrictValidationEnabled;
-  private final boolean isKSP;
+  private final XProcessingEnv processingEnv;
 
   @Inject
   DaggerSuperficialValidation(XProcessingEnv processingEnv, CompilerOptions compilerOptions) {
+    this.processingEnv = processingEnv;
     this.isStrictValidationEnabled = compilerOptions.strictSuperficialValidation();
-    this.isKSP = processingEnv.getBackend() == XProcessingEnv.Backend.KSP;
   }
 
   /**
    * Validates the {@link XElement#getType()} type of the given element.
    *
    * <p>Validating the type also validates any types it references, such as any type arguments or
-   * type bounds. For an {@link ExecutableType}, the parameter and return types must be fully
+   * type bounds. For an {@link XExecutableType}, the parameter and return types must be fully
    * defined, as must types declared in a {@code throws} clause or in the bounds of any type
    * parameters.
    */
   public void validateTypeOf(XElement element) {
-    if (isKSP) {
-      return; // TODO(bcorso): Add support for KSP.
-    }
-    validateTypeOf(toJavac(element));
-  }
-
-  private void validateTypeOf(Element element) {
     try {
-      validateType(Ascii.toLowerCase(element.getKind().name()), element.asType());
+      // In XProcessing, there is no generic way to get an element "asType" so we break this down
+      // differently for different element kinds.
+      if (isTypeElement(element)) {
+        XTypeElement typeElement = asTypeElement(element);
+        // TODO(b/247828057): Due to a bug in XProcessing, enum entry types are sometimes
+        // represented by XTypeElement rather than XEnumEntry in KSP which leads to failures later
+        // on. Thus, skip validation in these cases until this bug is fixed.
+        if (!(processingEnv.getBackend() == Backend.KSP
+                && XConverters.toKS(typeElement).getClassKind() == ClassKind.ENUM_ENTRY)) {
+          validateType(Ascii.toLowerCase(element.kindName()), typeElement.getType());
+        }
+      } else if (isVariableElement(element)) {
+        validateType(Ascii.toLowerCase(element.kindName()), asVariable(element).getType());
+      } else if (isExecutable(element)) {
+        validateExecutableType(asExecutable(element).getExecutableType());
+      } else if (isEnumEntry(element)) {
+        validateType(
+            Ascii.toLowerCase(element.kindName()),
+            asEnumEntry(element).getEnumTypeElement().getType());
+      }
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception).append(element);
     }
@@ -135,15 +155,8 @@ public final class DaggerSuperficialValidation {
    * type bounds.
    */
   public void validateSuperTypeOf(XTypeElement element) {
-    if (isKSP) {
-      return; // TODO(bcorso): Add support for KSP.
-    }
-    validateSuperTypeOf(toJavac(element));
-  }
-
-  private void validateSuperTypeOf(TypeElement element) {
     try {
-      validateType("superclass", element.getSuperclass());
+      validateType("superclass", element.getSuperType());
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception).append(element);
     }
@@ -156,13 +169,6 @@ public final class DaggerSuperficialValidation {
    * type bounds.
    */
   public void validateThrownTypesOf(XExecutableElement element) {
-    if (isKSP) {
-      return; // TODO(bcorso): Add support for KSP.
-    }
-    validateThrownTypesOf(toJavac(element));
-  }
-
-  private void validateThrownTypesOf(ExecutableElement element) {
     try {
       validateTypes("thrown type", element.getThrownTypes());
     } catch (RuntimeException exception) {
@@ -178,22 +184,8 @@ public final class DaggerSuperficialValidation {
    * such cases, we just need to validate the annotation's type.
    */
   public void validateAnnotationTypesOf(XElement element) {
-    if (isKSP) {
-      return; // TODO(bcorso): Add support for KSP.
-    }
-    validateAnnotationTypesOf(toJavac(element));
-  }
-
-  /**
-   * Validates the annotation types of the given element.
-   *
-   * <p>Note: this method does not validate annotation values. This method is useful if you care
-   * about the annotation's annotations (e.g. to check for {@code Scope} or {@code Qualifier}). In
-   * such cases, we just need to validate the annotation's type.
-   */
-  private void validateAnnotationTypesOf(Element element) {
     element
-        .getAnnotationMirrors()
+        .getAllAnnotations()
         .forEach(annotation -> validateAnnotationTypeOf(element, annotation));
   }
 
@@ -209,25 +201,8 @@ public final class DaggerSuperficialValidation {
    */
   // TODO(bcorso): See CL/427767370 for suggestions to make this API clearer.
   public void validateAnnotationTypeOf(XElement element, XAnnotation annotation) {
-    if (isKSP) {
-      return; // TODO(bcorso): Add support for KSP.
-    }
-    validateAnnotationTypeOf(toJavac(element), toJavac(annotation));
-  }
-
-  /**
-   * Validates the type of the given annotation.
-   *
-   * <p>The annotation is assumed to be annotating the given element, but this is not checked. The
-   * element is only in the error message if a {@link ValidatationException} is thrown.
-   *
-   * <p>Note: this method does not validate annotation values. This method is useful if you care
-   * about the annotation's annotations (e.g. to check for {@code Scope} or {@code Qualifier}). In
-   * such cases, we just need to validate the annotation's type.
-   */
-  private void validateAnnotationTypeOf(Element element, AnnotationMirror annotation) {
     try {
-      validateType("annotation type", annotation.getAnnotationType());
+      validateType("annotation type", annotation.getType());
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception).append(annotation).append(element);
     }
@@ -235,28 +210,14 @@ public final class DaggerSuperficialValidation {
 
   /** Validate the annotations of the given element. */
   public void validateAnnotationsOf(XElement element) {
-    if (isKSP) {
-      return; // TODO(bcorso): Add support for KSP.
-    }
-    validateAnnotationsOf(toJavac(element));
-  }
-
-  private void validateAnnotationsOf(Element element) {
     try {
-      validateAnnotations(element.getAnnotationMirrors());
+      validateAnnotations(element.getAllAnnotations());
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception).append(element);
     }
   }
 
   public void validateAnnotationOf(XElement element, XAnnotation annotation) {
-    if (isKSP) {
-      return; // TODO(bcorso): Add support for KSP.
-    }
-    validateAnnotationOf(toJavac(element), toJavac(annotation));
-  }
-
-  private void validateAnnotationOf(Element element, AnnotationMirror annotation) {
     try {
       validateAnnotation(annotation);
     } catch (RuntimeException exception) {
@@ -271,85 +232,28 @@ public final class DaggerSuperficialValidation {
    * <p>Validation includes all superclasses, interfaces, and type parameters of those types.
    */
   public void validateTypeHierarchyOf(String typeDescription, XElement element, XType type) {
-    if (isKSP) {
-      return; // TODO(bcorso): Add support for KSP.
-    }
     try {
       validateTypeHierarchy(typeDescription, type);
     } catch (RuntimeException exception) {
-      throw ValidationException.from(exception).append(toJavac(element));
+      throw ValidationException.from(exception).append(element);
     }
   }
 
   private void validateTypeHierarchy(String desc, XType type) {
-    validateType(desc, toJavac(type));
+    validateType(desc, type);
     try {
       type.getSuperTypes().forEach(supertype -> validateTypeHierarchy("supertype", supertype));
     } catch (RuntimeException exception) {
-      throw ValidationException.from(exception).append(desc, toJavac(type));
+      throw ValidationException.from(exception).append(desc, type);
     }
   }
 
   /**
-   * Returns true if all of the given elements return true from {@link #validateElement(Element)}.
+   * Returns true if all of the given elements return true from {@link #validateElement(XElement)}.
    */
-  private void validateElements(Iterable<? extends Element> elements) {
-    for (Element element : elements) {
-      validateElement(element);
-    }
+  private void validateElements(Collection<? extends XElement> elements) {
+    elements.forEach(this::validateElement);
   }
-
-  private final ElementVisitor<Void, Void> elementValidatingVisitor =
-      new AbstractElementVisitor8<Void, Void>() {
-        @Override
-        public Void visitPackage(PackageElement e, Void p) {
-          // don't validate enclosed elements because it will return types in the package
-          validateAnnotations(e.getAnnotationMirrors());
-          return null;
-        }
-
-        @Override
-        public Void visitType(TypeElement e, Void p) {
-          validateBaseElement(e);
-          validateElements(e.getTypeParameters());
-          validateTypes("interface", e.getInterfaces());
-          validateType("superclass", e.getSuperclass());
-          return null;
-        }
-
-        @Override
-        public Void visitVariable(VariableElement e, Void p) {
-          validateBaseElement(e);
-          return null;
-        }
-
-        @Override
-        public Void visitExecutable(ExecutableElement e, Void p) {
-          AnnotationValue defaultValue = e.getDefaultValue();
-          validateBaseElement(e);
-          if (defaultValue != null) {
-            validateAnnotationValue(defaultValue, e.getReturnType());
-          }
-          validateType("return type", e.getReturnType());
-          validateTypes("thrown type", e.getThrownTypes());
-          validateElements(e.getTypeParameters());
-          validateElements(e.getParameters());
-          return null;
-        }
-
-        @Override
-        public Void visitTypeParameter(TypeParameterElement e, Void p) {
-          validateBaseElement(e);
-          validateTypes("bound type", e.getBounds());
-          return null;
-        }
-
-        @Override
-        public Void visitUnknown(Element e, Void p) {
-          // just assume that unknown elements are OK
-          return null;
-        }
-      };
 
   /**
    * Returns true if all types referenced by the given element are defined. The exact meaning of
@@ -358,367 +262,209 @@ public final class DaggerSuperficialValidation {
    * anything it contains, and any of its annotations element are all defined.
    */
   public void validateElement(XElement element) {
-    if (isKSP) {
-      return; // TODO(bcorso): Add support for KSP.
-    }
-    validateElement(toJavac(element));
-  }
+    checkNotNull(element);
 
-  /**
-   * Returns true if all types referenced by the given element are defined. The exact meaning of
-   * this depends on the kind of element. For packages, it means that all annotations on the package
-   * are fully defined. For other element kinds, it means that types referenced by the element,
-   * anything it contains, and any of its annotations element are all defined.
-   */
-  private void validateElement(Element element) {
+    // Validate the type and annotations first since these are common to all element kinds. We don't
+    // need to wrap these in try-catch because the *Of() methods are already wrapped.
+    validateTypeOf(element);
+    validateAnnotationsOf(element);
+
+    // Validate enclosed elements based on the given element's kind.
     try {
-      element.accept(elementValidatingVisitor, null);
+      if (isTypeElement(element)) {
+        XTypeElement typeElement = asTypeElement(element);
+        validateElements(typeElement.getTypeParameters());
+        validateTypes("interface", typeElement.getSuperInterfaces());
+        if (typeElement.getSuperType() != null) {
+          validateType("superclass", typeElement.getSuperType());
+        }
+        validateElements(typeElement.getEnclosedElements());
+      } else if (isExecutable(element)) {
+        if (isMethod(element)) {
+          validateType("return type", asMethod(element).getReturnType());
+        }
+        XExecutableElement executableElement = asExecutable(element);
+        validateTypes("thrown type", executableElement.getThrownTypes());
+        validateElements(executableElement.getTypeParameters());
+        validateElements(executableElement.getParameters());
+      } else if (isTypeParameter(element)) {
+        validateTypes("bound type", asTypeParameter(element).getBounds());
+      }
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception).append(element);
     }
   }
 
-  private void validateBaseElement(Element e) {
-    validateType(Ascii.toLowerCase(e.getKind().name()), e.asType());
-    validateAnnotations(e.getAnnotationMirrors());
-    validateElements(e.getEnclosedElements());
+  private void validateTypes(String desc, Collection<? extends XType> types) {
+    types.forEach(type -> validateType(desc, type));
   }
-
-  private void validateTypes(String desc, Iterable<? extends TypeMirror> types) {
-    for (TypeMirror type : types) {
-      validateType(desc, type);
-    }
-  }
-
-  /*
-   * This visitor does not test type variables specifically, but it seems that that is not actually
-   * an issue.  Javac turns the whole type parameter into an error type if it can't figure out the
-   * bounds.
-   */
-  private final TypeVisitor<Void, Void> typeValidatingVisitor =
-      new SimpleTypeVisitor8<Void, Void>() {
-        @Override
-        protected Void defaultAction(TypeMirror t, Void p) {
-          return null;
-        }
-
-        @Override
-        public Void visitArray(ArrayType t, Void p) {
-          validateType("array component type", t.getComponentType());
-          return null;
-        }
-
-        @Override
-        public Void visitDeclared(DeclaredType t, Void p) {
-          if (isStrictValidationEnabled) {
-            // There's a bug in TypeVisitor which will visit the visitDeclared() method rather than
-            // visitError() even when it's an ERROR kind. Thus, we check the kind directly here and
-            // fail validation if it's an ERROR kind (see b/213880825).
-            if (t.getKind() == TypeKind.ERROR) {
-              throw new ValidationException.KnownErrorType(t);
-            }
-          }
-          validateTypes("type argument", t.getTypeArguments());
-          return null;
-        }
-
-        @Override
-        public Void visitError(ErrorType t, Void p) {
-          throw new ValidationException.KnownErrorType(t);
-        }
-
-        @Override
-        public Void visitUnknown(TypeMirror t, Void p) {
-          // just make the default choice for unknown types
-          return defaultAction(t, p);
-        }
-
-        @Override
-        public Void visitWildcard(WildcardType t, Void p) {
-          TypeMirror extendsBound = t.getExtendsBound();
-          TypeMirror superBound = t.getSuperBound();
-          if (extendsBound != null) {
-            validateType("extends bound type", extendsBound);
-          }
-          if (superBound != null) {
-            validateType("super bound type", superBound);
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitExecutable(ExecutableType t, Void p) {
-          validateTypes("parameter type", t.getParameterTypes());
-          validateType("return type", t.getReturnType());
-          validateTypes("thrown type", t.getThrownTypes());
-          validateTypes("type variable", t.getTypeVariables());
-          return null;
-        }
-      };
 
   /**
    * Returns true if the given type is fully defined. This means that the type itself is defined, as
-   * are any types it references, such as any type arguments or type bounds. For an {@link
-   * ExecutableType}, the parameter and return types must be fully defined, as must types declared
-   * in a {@code throws} clause or in the bounds of any type parameters.
+   * are any types it references, such as any type arguments or type bounds.
    */
-  private void validateType(String desc, TypeMirror type) {
-    if (isKSP) {
-      return; // TODO(bcorso): Add support for KSP.
-    }
+  private void validateType(String desc, XType type) {
+    checkNotNull(type);
+    // TODO(b/242569252): Due to a bug in kotlinc, a TypeName may incorrectly contain a "$" instead
+    // of "." if the TypeName is requested before the type has been resolved. Furthermore,
+    // XProcessing will cache the incorrect TypeName so that further calls will still contain the
+    // "$" even after the type has been resolved. Thus, we try to resolve the type as early as
+    // possible to prevent using/caching the incorrect TypeName.
+    XTypes.resolveIfNeeded(type);
+    validateTypeInternal(desc, type, new HashSet<>());
+  }
+
+  private void validateTypeInternal(String desc, XType type, Set<TypeName> visitedTypeNames) {
+    checkNotNull(type);
     try {
-      type.accept(typeValidatingVisitor, null);
-      if (isStrictValidationEnabled) {
-        // Note: We don't actually expect to get an ERROR type here as it should have been caught
-        // by the visitError() or visitDeclared()  methods above. However, we check here as a last
-        // resort.
-        if (type.getKind() == TypeKind.ERROR) {
-          // In this case, the type is not guaranteed to be a DeclaredType, so we report the
-          // toString() of the type. We could report using UnknownErrorType but the type's toString
-          // may actually contain useful information.
-          throw new ValidationException.KnownErrorType(type.toString());
+      // TODO(b/247846778): Due to a bug in XProcessing, KSP typenames sometimes incorrectly have
+      // recursive types, e.g. a wildcard type of `? extends Foo` will have a bounds of
+      // `? extends Foo` instead of `Foo`, leading to infinite loops. Thus, we skip validation if
+      // the type name has already been validated for the given type. This condition can be removed
+      // once the corresponding bug is fixed.
+      if (processingEnv.getBackend() == Backend.KSP && !visitedTypeNames.add(type.getTypeName())) {
+        return;
+      }
+      if (isArray(type)) {
+        validateTypeInternal(
+            "array component type", asArray(type).getComponentType(), visitedTypeNames);
+      } else if (isDeclared(type)) {
+        if (isStrictValidationEnabled) {
+          // There's a bug in TypeVisitor which will visit the visitDeclared() method rather than
+          // visitError() even when it's an ERROR kind. Thus, we check the kind directly here and
+          // fail validation if it's an ERROR kind (see b/213880825).
+          if (isErrorKind(type)) {
+            throw new ValidationException.KnownErrorType(type);
+          }
         }
+        type.getTypeArguments()
+            .forEach(typeArg -> validateTypeInternal("type argument", typeArg, visitedTypeNames));
+      } else if (isWildcard(type)) {
+        if (type.extendsBound() != null) {
+          validateTypeInternal("extends bound type", type.extendsBound(), visitedTypeNames);
+        }
+      } else if (isErrorKind(type)) {
+        throw new ValidationException.KnownErrorType(type);
       }
     } catch (RuntimeException e) {
       throw ValidationException.from(e).append(desc, type);
     }
   }
 
-  private void validateAnnotations(Iterable<? extends AnnotationMirror> annotationMirrors) {
-    for (AnnotationMirror annotationMirror : annotationMirrors) {
-      validateAnnotation(annotationMirror);
-    }
+  // TODO(bcorso): Consider moving this over to XProcessing. There's some complication due to
+  // b/248552462 and the fact that XProcessing also uses the error.NonExistentClass type for invalid
+  // types in KSP, which we may want to keep as error kinds in KSP.
+  private boolean isErrorKind(XType type) {
+    // https://youtrack.jetbrains.com/issue/KT-34193/Kapt-CorrectErrorTypes-doesnt-work-for-generics
+    // XProcessing treats 'error.NonExistentClass' as an error type. However, due to the bug in KAPT
+    // (linked above), 'error.NonExistentClass' can still be referenced in the stub classes even
+    // when 'correctErrorTypes=true' is enabled. Thus, we can't treat 'error.NonExistentClass' as an
+    // actual error type, as that would completely prevent processing of stubs that exhibit this
+    // bug. This behavior also matches how things work in Javac, as 'error.NonExistentClass' is
+    // treated as a TypeKind.DECLARED rather than a TypeKind.ERROR since the type is a real class
+    // that exists on the classpath.
+    return type.isError()
+        && !(processingEnv.getBackend() == Backend.JAVAC
+            && type.getTypeName().toString().contentEquals("error.NonExistentClass"));
   }
 
-  private void validateAnnotation(AnnotationMirror annotationMirror) {
-    if (isKSP) {
-      return; // TODO(bcorso): Add support for KSP.
-    }
+  /**
+   * Returns true if the given type is fully defined. This means that the parameter and return types
+   * must be fully defined, as must types declared in a {@code throws} clause or in the bounds of
+   * any type parameters.
+   */
+  private void validateExecutableType(XExecutableType type) {
     try {
-      validateType("annotation type", annotationMirror.getAnnotationType());
-      validateAnnotationValues(annotationMirror.getElementValues());
-    } catch (RuntimeException exception) {
-      throw ValidationException.from(exception).append(annotationMirror);
+      validateTypes("parameter type", type.getParameterTypes());
+      validateTypes("thrown type", type.getThrownTypes());
+      validateTypes("type variable", getTypeVariables(type));
+      if (isMethodType(type)) {
+        validateType("return type", asMethodType(type).getReturnType());
+      }
+    } catch (RuntimeException e) {
+      throw ValidationException.from(e).append(type);
     }
   }
 
-  private void validateAnnotationValues(
-      Map<? extends ExecutableElement, ? extends AnnotationValue> valueMap) {
-    valueMap.forEach(
-        (method, annotationValue) -> {
-          try {
-            TypeMirror expectedType = method.getReturnType();
-            validateAnnotationValue(annotationValue, expectedType);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(String.format("annotation method: %s %s", method.getReturnType(), method));
-          }
-        });
+  private ImmutableList<XType> getTypeVariables(XExecutableType executableType) {
+    switch (processingEnv.getBackend()) {
+      case JAVAC:
+        return toJavac(executableType).getTypeVariables().stream()
+            .map(typeVariable -> toXProcessing(typeVariable, processingEnv))
+            .collect(toImmutableList());
+      case KSP:
+        // TODO(b/247851395): Add a way to get type variables as XTypes from XExecutableType --
+        // currently, we can only get TypeVariableNames from XMethodType. For now, just skip
+        // validating type variables of methods in KSP.
+        return ImmutableList.of();
+    }
+    throw new AssertionError("Unexpected backend: " + processingEnv.getBackend());
   }
 
-  private void validateAnnotationValue(AnnotationValue annotationValue, TypeMirror expectedType) {
-    annotationValue.accept(valueValidatingVisitor, expectedType);
+  private void validateAnnotations(Collection<XAnnotation> annotations) {
+    annotations.forEach(this::validateAnnotation);
   }
 
-  private final AnnotationValueVisitor<Void, TypeMirror> valueValidatingVisitor =
-      new SimpleAnnotationValueVisitor8<Void, TypeMirror>() {
-        @Override
-        protected Void defaultAction(Object o, TypeMirror expectedType) {
-          try {
-            validateIsTypeOf(o.getClass(), expectedType);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("DEFAULT", o, expectedType));
-          }
-          return null;
-        }
+  private void validateAnnotation(XAnnotation annotation) {
+    try {
+      validateType("annotation type", annotation.getType());
+      validateAnnotationValues(getDefaultValues(annotation));
+      validateAnnotationValues(annotation.getAnnotationValues());
+    } catch (RuntimeException exception) {
+      throw ValidationException.from(exception).append(annotation);
+    }
+  }
 
-        @Override
-        public Void visitString(String str, TypeMirror expectedType) {
-          try {
-            if (!MoreTypes.isTypeOf(String.class, expectedType)) {
-              if (str.contentEquals("<error>")) {
-                // Invalid annotation value types will visit visitString() with a value of "<error>"
-                // Technically, we don't know the error type in this case, but it will be referred
-                // to as "<error>" in the dependency trace, so we use that.
-                throw new ValidationException.KnownErrorType("<error>");
-              } else {
-                throw new ValidationException.UnknownErrorType();
-              }
-            }
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("STRING", str, expectedType));
-          }
-          return null;
-        }
+  private ImmutableList<XAnnotationValue> getDefaultValues(XAnnotation annotation) {
+    switch (processingEnv.getBackend()) {
+      case JAVAC:
+        return annotation.getTypeElement().getDeclaredMethods().stream()
+            .map(XConverters::toJavac)
+            .filter(method -> method.getDefaultValue() != null)
+            .map(method -> toXProcessing(method.getDefaultValue(), method, processingEnv))
+            .collect(toImmutableList());
+      case KSP:
+        // TODO(b/231170716): Add a generic way to retrieve default values from XAnnotation
+        // For now, just ignore them in KSP when doing validation.
+        return ImmutableList.of();
+    }
+    throw new AssertionError("Unexpected backend: " + processingEnv.getBackend());
+  }
 
-        @Override
-        public Void visitUnknown(AnnotationValue av, TypeMirror expectedType) {
-          // just take the default action for the unknown
-          defaultAction(av, expectedType);
-          return null;
-        }
+  private void validateAnnotationValues(Collection<XAnnotationValue> values) {
+    values.forEach(this::validateAnnotationValue);
+  }
 
-        @Override
-        public Void visitAnnotation(AnnotationMirror a, TypeMirror expectedType) {
-          try {
-            validateIsEquivalentType(a.getAnnotationType(), expectedType);
-            validateAnnotation(a);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("ANNOTATION", a, expectedType));
-          }
-          return null;
-        }
+  private void validateAnnotationValue(XAnnotationValue value) {
+    try {
+      XType expectedType = value.getValueType();
+      if (value.hasListValue()) {
+        validateAnnotationValues(value.asAnnotationValueList());
+      } else if (value.hasAnnotationValue()) {
+        validateIsEquivalentType(value.asAnnotation().getType(), expectedType);
+        validateAnnotation(value.asAnnotation());
+      } else if (value.hasEnumValue()) {
+        validateIsEquivalentType(value.asEnum().getEnumTypeElement().getType(), expectedType);
+        validateElement(value.asEnum());
+      } else if (value.hasTypeValue()) {
+        validateType("annotation value type", value.asType());
+      } else {
+        // Validates all other types, e.g. primitives and String values.
+        validateIsTypeOf(expectedType, ClassName.get(value.getValue().getClass()));
+      }
+    } catch (RuntimeException e) {
+      throw ValidationException.from(e).append(value);
+    }
+  }
 
-        @Override
-        public Void visitArray(List<? extends AnnotationValue> values, TypeMirror expectedType) {
-          try {
-            if (!expectedType.getKind().equals(TypeKind.ARRAY)) {
-              throw new ValidationException.UnknownErrorType();
-            }
-            TypeMirror componentType = MoreTypes.asArray(expectedType).getComponentType();
-            for (AnnotationValue value : values) {
-              value.accept(this, componentType);
-            }
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("ARRAY", values, expectedType));
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitEnumConstant(VariableElement enumConstant, TypeMirror expectedType) {
-          try {
-            validateIsEquivalentType(asDeclared(enumConstant.asType()), expectedType);
-            validateElement(enumConstant);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("ENUM_CONSTANT", enumConstant, expectedType));
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitType(TypeMirror type, TypeMirror expectedType) {
-          try {
-            // We could check assignability here, but would require a Types instance. Since this
-            // isn't really the sort of thing that shows up in a bad AST from upstream compilation
-            // we ignore the expected type and just validate the type.  It might be wrong, but
-            // it's valid.
-            validateType("annotation value type", type);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("TYPE", type, expectedType));
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitBoolean(boolean b, TypeMirror expectedType) {
-          try {
-            validateIsTypeOf(Boolean.TYPE, expectedType);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("BOOLEAN", b, expectedType));
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitByte(byte b, TypeMirror expectedType) {
-          try {
-            validateIsTypeOf(Byte.TYPE, expectedType);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("BYTE", b, expectedType));
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitChar(char c, TypeMirror expectedType) {
-          try {
-            validateIsTypeOf(Character.TYPE, expectedType);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("CHAR", c, expectedType));
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitDouble(double d, TypeMirror expectedType) {
-          try {
-            validateIsTypeOf(Double.TYPE, expectedType);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("DOUBLE", d, expectedType));
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitFloat(float f, TypeMirror expectedType) {
-          try {
-            validateIsTypeOf(Float.TYPE, expectedType);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("FLOAT", f, expectedType));
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitInt(int i, TypeMirror expectedType) {
-          try {
-            validateIsTypeOf(Integer.TYPE, expectedType);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("INT", i, expectedType));
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitLong(long l, TypeMirror expectedType) {
-          try {
-            validateIsTypeOf(Long.TYPE, expectedType);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("LONG", l, expectedType));
-          }
-          return null;
-        }
-
-        @Override
-        public Void visitShort(short s, TypeMirror expectedType) {
-          try {
-            validateIsTypeOf(Short.TYPE, expectedType);
-          } catch (RuntimeException exception) {
-            throw ValidationException.from(exception)
-                .append(exceptionMessage("SHORT", s, expectedType));
-          }
-          return null;
-        }
-
-        private <T> String exceptionMessage(String valueType, T value, TypeMirror expectedType) {
-          return String.format(
-              "annotation value (%s): value '%s' with expected type %s",
-              valueType, value, expectedType);
-        }
-      };
-
-  private void validateIsTypeOf(Class<?> clazz, TypeMirror expectedType) {
-    if (!MoreTypes.isTypeOf(clazz, expectedType)) {
+  private void validateIsTypeOf(XType expectedType, ClassName className) {
+    if (!isTypeOf(expectedType.boxed(), className)) {
       throw new ValidationException.UnknownErrorType();
     }
   }
 
-  private void validateIsEquivalentType(DeclaredType type, TypeMirror expectedType) {
-    if (!MoreTypes.equivalence().equivalent(type, expectedType)) {
+  private void validateIsEquivalentType(XType type, XType expectedType) {
+    if (!XTypes.equivalence().equivalent(type, expectedType)) {
       throw new ValidationException.KnownErrorType(type);
     }
   }
@@ -739,13 +485,8 @@ public final class DaggerSuperficialValidation {
     public static final class KnownErrorType extends ValidationException {
       private final String errorTypeName;
 
-      private KnownErrorType(DeclaredType errorType) {
-        Element errorElement = errorType.asElement();
-        this.errorTypeName =
-            isType(errorElement)
-                ? asType(errorElement).getQualifiedName().toString()
-                // Maybe this case should be handled by UnknownErrorType?
-                : errorElement.getSimpleName().toString();
+      private KnownErrorType(XType errorType) {
+        this.errorTypeName = errorType.getTypeElement().getQualifiedName();
       }
 
       private KnownErrorType(String errorTypeName) {
@@ -761,13 +502,17 @@ public final class DaggerSuperficialValidation {
     public static final class UnknownErrorType extends ValidationException {}
 
     private static ValidationException from(Throwable throwable) {
-      // We only ever create one instance of the ValidationException.
-      return throwable instanceof ValidationException
-          ? ((ValidationException) throwable)
-          : new UnexpectedException(throwable);
+      if (throwable instanceof ValidationException) {
+        // We only ever create one instance of the ValidationException.
+        return (ValidationException) throwable;
+      } else if (throwable instanceof TypeNotPresentException) {
+        // XProcessing can throw TypeNotPresentException, so grab the error type from there if so.
+        return new KnownErrorType(((TypeNotPresentException) throwable).typeName());
+      }
+      return new UnexpectedException(throwable);
     }
 
-    private Optional<Element> lastReportedElement = Optional.empty();
+    private Optional<XElement> lastReportedElement = Optional.empty();
     private final List<String> messages = new ArrayList<>();
 
     private ValidationException() {
@@ -782,32 +527,66 @@ public final class DaggerSuperficialValidation {
      * Appends a message for the given element and returns this instance of {@link
      * ValidationException}
      */
-    private ValidationException append(Element element) {
+    private ValidationException append(XElement element) {
       lastReportedElement = Optional.of(element);
       return append(getMessageForElement(element));
     }
 
     /**
-     * Appends a message for the given type mirror and returns this instance of {@link
-     * ValidationException}
+     * Appends a message for the given type and returns this instance of {@link ValidationException}
      */
-    private ValidationException append(String desc, TypeMirror type) {
-      return append(String.format("type (%s %s): %s", type.getKind().name(), desc, type));
+    private ValidationException append(String desc, XType type) {
+      return append(String.format("type (%s %s): %s", getKindName(type), desc, type));
     }
 
     /**
-     * Appends a message for the given annotation mirror and returns this instance of {@link
+     * Appends a message for the given executable type and returns this instance of {@link
      * ValidationException}
      */
-    private ValidationException append(AnnotationMirror annotationMirror) {
+    private ValidationException append(XExecutableType type) {
+      return append(
+          String.format("type (EXECUTABLE %s): %s", Ascii.toLowerCase(getKindName(type)), type));
+    }
+
+    /**
+     * Appends a message for the given annotation and returns this instance of {@link
+     * ValidationException}
+     */
+    private ValidationException append(XAnnotation annotation) {
       // Note: Calling #toString() directly on the annotation throws NPE (b/216180336).
-      return append(String.format("annotation: %s", AnnotationMirrors.toString(annotationMirror)));
+      return append(String.format("annotation: %s", XAnnotations.toString(annotation)));
     }
 
     /** Appends the given message and returns this instance of {@link ValidationException} */
     private ValidationException append(String message) {
       messages.add(message);
       return this;
+    }
+
+    /**
+     * Appends a message for the given annotation value and returns this instance of {@link
+     * ValidationException}
+     */
+    private ValidationException append(XAnnotationValue value) {
+      return append(
+          String.format(
+              "annotation value (%s): %s=%s",
+              getKindName(value),
+              value.getName(),  // SUPPRESS_GET_NAME_CHECK
+              unnestedValue(value)));
+    }
+
+    private Object unnestedValue(XAnnotationValue value) {
+      try {
+        return value.hasListValue()
+            ? value.asAnnotationValueList().stream()
+                .map(this::unnestedValue)
+                .collect(toImmutableList())
+            : value.getValue();
+      } catch (TypeNotPresentException e) {
+        // If an annotation value is invalid, return the invalid type instead.
+        return e.typeName();
+      }
     }
 
     @Override
@@ -825,7 +604,7 @@ public final class DaggerSuperficialValidation {
       }
       // Append any enclosing element information if needed.
       List<String> newMessages = new ArrayList<>(messages);
-      Element element = lastReportedElement.get();
+      XElement element = lastReportedElement.get();
       while (shouldAppendEnclosingElement(element)) {
         element = element.getEnclosingElement();
         newMessages.add(getMessageForElement(element));
@@ -833,21 +612,17 @@ public final class DaggerSuperficialValidation {
       return ImmutableList.copyOf(newMessages);
     }
 
-    private static boolean shouldAppendEnclosingElement(Element element) {
+    private static boolean shouldAppendEnclosingElement(XElement element) {
       return element.getEnclosingElement() != null
           // We don't report enclosing elements for types because the type name should contain any
           // enclosing type and package information we need.
-          && !isType(element)
-          && (isExecutable(element.getEnclosingElement()) || isType(element.getEnclosingElement()));
+          && !isTypeElement(element)
+          && (isExecutable(element.getEnclosingElement())
+              || isTypeElement(element.getEnclosingElement()));
     }
 
-    private static boolean isExecutable(Element element) {
-      return element.getKind() == ElementKind.METHOD
-          || element.getKind() == ElementKind.CONSTRUCTOR;
-    }
-
-    private String getMessageForElement(Element element) {
-      return String.format("element (%s): %s", element.getKind().name(), element);
+    private String getMessageForElement(XElement element) {
+      return String.format("element (%s): %s", Ascii.toUpperCase(element.kindName()), element);
     }
   }
 }

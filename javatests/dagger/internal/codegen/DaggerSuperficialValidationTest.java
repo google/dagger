@@ -425,11 +425,8 @@ public class DaggerSuperficialValidationTest {
                             "Validation trace:",
                             "  => element (CLASS): test.Outer.TestClass",
                             "  => annotation: @test.Outer.TestAnnotation(classes = \"<error>\")",
-                            "  => annotation method: java.lang.Class[] classes()",
-                            "  => annotation value (ARRAY): value '<error>' with expected type"
-                                + " java.lang.Class[]",
-                            "  => annotation value (STRING): value '<error>' with expected type"
-                                + " java.lang.Class"));
+                            "  => annotation value (TYPE_ARRAY): classes=[<error>]",
+                            "  => annotation value (TYPE): classes=<error>"));
               }
             })
         .failsToCompile();
@@ -475,11 +472,8 @@ public class DaggerSuperficialValidationTest {
                             "  => element (CONSTRUCTOR): TestClass(java.lang.String)",
                             "  => element (PARAMETER): strParam",
                             "  => annotation: @test.Outer.TestAnnotation(classes = \"<error>\")",
-                            "  => annotation method: java.lang.Class[] classes()",
-                            "  => annotation value (ARRAY): value '<error>' with expected type"
-                                + " java.lang.Class[]",
-                            "  => annotation value (STRING): value '<error>' with expected type"
-                                + " java.lang.Class"));
+                            "  => annotation value (TYPE_ARRAY): classes=[<error>]",
+                            "  => annotation value (TYPE): classes=<error>"));
               }
             })
         .failsToCompile();

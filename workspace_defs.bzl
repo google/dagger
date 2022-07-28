@@ -39,7 +39,7 @@ DAGGER_ANDROID_ARTIFACTS = [
 
 HILT_ANDROID_ARTIFACTS = [
     "androidx.test:core:1.1.0",  # Export for ApplicationProvider
-    "javax.annotation:jsr250-api:1.0",  # Export for @Generated
+    "javax.annotation:javax.annotation-api:1.3.2",  # Export for @Generated
     "androidx.annotation:annotation:1.1.0",  # Export for @CallSuper/@Nullable
     "com.google.dagger:dagger:" + _VERSION,
     "com.google.dagger:dagger-compiler:" + _VERSION,
@@ -183,7 +183,7 @@ def hilt_android_rules(repo_name = "@maven"):
             "%s//:androidx_annotation_annotation" % repo_name,  # For @CallSuper
             "%s//:com_google_dagger_hilt_android" % repo_name,
             "%s//:com_google_dagger_hilt_core" % repo_name,
-            "%s//:javax_annotation_jsr250_api" % repo_name,  # For @Generated
+            "%s//:javax_annotation_javax_annotation_api" % repo_name,  # For @Generated
         ],
     )
 

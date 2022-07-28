@@ -106,7 +106,7 @@ gen_maven_artifact(
         "com.google.guava:failureaccess",
         "com.google.guava:guava",
         "com.squareup:javapoet",
-        "javax.annotation:jsr250-api",
+        "javax.annotation:javax.annotation-api",
         "javax.inject:javax.inject",
         "net.ltgt.gradle.incap:incap",
         "org.jetbrains.kotlin:kotlin-stdlib",

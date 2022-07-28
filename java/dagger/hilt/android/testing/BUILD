@@ -235,7 +235,7 @@ gen_maven_artifact(
     ],
     artifact_target_maven_deps_banned = [
         "com.google.guava:guava",
-        "javax.annotation:jsr250-api",
+        "javax.annotation:javax.annotation-api",
     ],
     javadoc_android_api_level = 32,
     javadoc_exclude_packages = [

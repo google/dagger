@@ -232,7 +232,7 @@ gen_maven_artifact(
     ],
     artifact_target_maven_deps_banned = [
         "com.google.guava:guava",
-        "javax.annotation:jsr250-api",
+        "javax.annotation:javax.annotation-api",
     ],
     javadoc_exclude_packages = [
         "dagger.hilt.internal",

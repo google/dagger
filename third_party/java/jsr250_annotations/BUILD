@@ -18,5 +18,5 @@ package(default_visibility = ["//:src"])
 
 alias(
     name = "jsr250_annotations",
-    actual = "@maven//:javax_annotation_jsr250_api",
+    actual = "@maven//:javax_annotation_javax_annotation_api",
 )

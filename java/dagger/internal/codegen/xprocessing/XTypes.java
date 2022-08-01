@@ -23,16 +23,20 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XArrayType;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Equivalence;
+import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
@@ -212,6 +216,62 @@ public final class XTypes {
         typeElement.getQualifiedName(),
         typeElement.getType().getTypeArguments());
     return getOnlyElement(type.getTypeArguments(), defaultType);
+  }
+
+  public static String toStableString(XType type) {
+    return toStableString(type.getTypeName());
+  }
+
+  // TODO(b/241141586): Replace this with TypeName.toString() once we've fixed breakages.
+  private static String toStableString(TypeName typeName) {
+    if (typeName instanceof ClassName) {
+      return ((ClassName) typeName).canonicalName();
+    } else if (typeName instanceof ArrayTypeName) {
+      return String.format("%s[]", toStableString(((ArrayTypeName) typeName).componentType));
+    } else if (typeName instanceof ParameterizedTypeName) {
+      ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) typeName;
+      return String.format(
+          "%s<%s>",
+          parameterizedTypeName.rawType,
+          parameterizedTypeName.typeArguments.stream()
+              .map(XTypes::toStableString)
+              // We purposely don't use a space after the comma to for backwards compatibility with
+              // usages that depended on the previous TypeMirror#toString() implementation.
+              .collect(joining(",")));
+    } else if (typeName instanceof WildcardTypeName) {
+      WildcardTypeName wildcardTypeName = (WildcardTypeName) typeName;
+      // Wildcard types have exactly 1 upper bound.
+      TypeName upperBound = getOnlyElement(wildcardTypeName.upperBounds);
+      if (!upperBound.equals(TypeName.OBJECT)) {
+        // Wildcards with non-Object upper bounds can't have lower bounds.
+        checkState(wildcardTypeName.lowerBounds.isEmpty());
+        return String.format("? extends %s", toStableString(upperBound));
+      }
+      if (!wildcardTypeName.lowerBounds.isEmpty()) {
+        // Wildcard types can have at most 1 lower bound.
+        TypeName lowerBound = getOnlyElement(wildcardTypeName.lowerBounds);
+        return String.format("? super %s", toStableString(lowerBound));
+      }
+      // If the upper bound is Object and there is no lower bound then just use "?".
+      return "?";
+    } else if (typeName instanceof TypeVariableName) {
+      TypeVariableName typeVariableName = (TypeVariableName) typeName;
+      if (typeVariableName.bounds.isEmpty()) {
+        return typeVariableName.name;
+      } else {
+        return String.format(
+            // Type variables can only have "extends" bounds (no "super" bounds).
+            "%s extends %s",
+            typeVariableName.name,
+            // Multiple bounds must be an intersection type (using "&"), union type is not allowed.
+            typeVariableName.bounds.stream()
+                .map(XTypes::toStableString)
+                .collect(joining(" & ")));
+      }
+    } else {
+      // For all other types (e.g. primitive types) just use the TypeName's toString()
+      return typeName.toString();
+    }
   }
 
   private XTypes() {}

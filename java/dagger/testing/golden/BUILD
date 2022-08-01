@@ -27,5 +27,6 @@ java_library(
         "//third_party/java/guava/io",
         "//third_party/java/compile_testing",
         "//third_party/java/junit",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
     ],
 )

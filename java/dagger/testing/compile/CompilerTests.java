@@ -28,6 +28,7 @@ import androidx.room.compiler.processing.util.Source;
 import androidx.room.compiler.processing.util.compiler.TestCompilationArguments;
 import androidx.room.compiler.processing.util.compiler.TestCompilationResult;
 import androidx.room.compiler.processing.util.compiler.TestKotlinCompilerKt;
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
@@ -37,6 +38,7 @@ import dagger.internal.codegen.KspComponentProcessor;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -53,6 +55,77 @@ public final class CompilerTests {
   private static final ImmutableMap<String, String> DEFAULT_PROCESSOR_OPTIONS =
       ImmutableMap.of(
           "dagger.experimentalDaggerErrorMessages", "enabled");
+
+  /** Returns a {@link Source.KotlinSource} with the given file name and content. */
+  public static Source kotlinSource(String fileName, String... srcLines) {
+    return Source.Companion.kotlin(fileName, String.join("\n", srcLines));
+  }
+
+  /** Returns a {@link Source.JavaSource} with the given file name and content. */
+  public static Source javaSource(String fileName, String... srcLines) {
+    return Source.Companion.java(fileName, String.join("\n", srcLines));
+  }
+
+  /** Returns a {@link Compiler} instance with the given sources. */
+  public static DaggerCompiler daggerCompiler(Source... sources) {
+    return DaggerCompiler.builder().sources(ImmutableList.copyOf(sources)).build();
+  }
+
+  /** Used to compile Dagger sources and inspect the compiled results. */
+  @AutoValue
+  public abstract static class DaggerCompiler {
+    static Builder builder() {
+      Builder builder = new AutoValue_CompilerTests_DaggerCompiler.Builder();
+      // Set default values
+      return builder.processorOptions(DEFAULT_PROCESSOR_OPTIONS);
+    }
+
+    /** Returns the sources being compiled */
+    abstract ImmutableList<Source> sources();
+
+    /** Returns the annotation processor options */
+    abstract ImmutableMap<String, String> processorOptions();
+
+    /** Returns a builder with the current values of this {@link Compiler} as default. */
+    abstract Builder toBuilder();
+
+    /**
+     * Returns a new {@link Compiler} instance with the given processor options.
+     *
+     * <p>Note that the default processor options are still applied unless they are explicitly
+     * overridden by the given processing options.
+     */
+    public DaggerCompiler withProcessingOptions(Map<String, String> processorOptions) {
+      // Add default processor options first to allow overridding with new key-value pairs.
+      Map<String, String> newProcessorOptions = new HashMap<>(DEFAULT_PROCESSOR_OPTIONS);
+      newProcessorOptions.putAll(processorOptions);
+      return toBuilder().processorOptions(newProcessorOptions).build();
+    }
+
+    public void compile(Consumer<CompilationResultSubject> onCompilationResult) {
+      ProcessorTestExtKt.runProcessorTest(
+          sources(),
+          /* classpath= */ ImmutableList.of(),
+          processorOptions(),
+          /* javacArguments= */ ImmutableList.of(),
+          /* kotlincArguments= */ ImmutableList.of(),
+          /* config= */ PROCESSING_ENV_CONFIG,
+          /* javacProcessors= */ ImmutableList.of(new ComponentProcessor()),
+          /* symbolProcessorProviders= */ ImmutableList.of(new KspComponentProcessor.Provider()),
+          result -> {
+            onCompilationResult.accept(result);
+            return null;
+          });
+    }
+
+    /** Used to build a {@link DaggerCompiler}. */
+    @AutoValue.Builder
+    public abstract static class Builder {
+      abstract Builder sources(ImmutableList<Source> sources);
+      abstract Builder processorOptions(Map<String, String> processorOptions);
+      abstract DaggerCompiler build();
+    }
+  }
 
   /** Returns the {@plainlink File jar file} containing the compiler deps. */
   public static File compilerDepsJar() {
@@ -95,28 +168,6 @@ public final class CompilerTests {
             /*symbolProcessorProviders=*/ ImmutableList.of(),
             /*processorOptions=*/ processorOptions));
     onCompilationResult.accept(result);
-  }
-
-  // TODO(bcorso): For Java users we may want to have a builder, similar to
-  // "com.google.testing.compile.Compiler", so that users can easily add custom options or
-  // processors along with their sources.
-  public static void compile(
-      ImmutableList<Source> sources, Consumer<CompilationResultSubject> onCompilationResult) {
-    ProcessorTestExtKt.runProcessorTest(
-        sources,
-        /*classpath=*/ ImmutableList.of(compilerDepsJar()),
-        /*options=*/ DEFAULT_PROCESSOR_OPTIONS,
-        /*javacArguments=*/ ImmutableList.of(),
-        /*kotlincArguments=*/ ImmutableList.of(),
-        /*config=*/ PROCESSING_ENV_CONFIG,
-        /*javacProcessors=*/ ImmutableList.of(new ComponentProcessor()),
-        /*symbolProcessorProviders=*/ ImmutableList.of(new KspComponentProcessor.Provider()),
-        // TODO(bcorso): Typically, we would return a CompilationResult here and users would wrap
-        // that in an "assertThat" method to get the CompilationResultSubject.
-        result -> {
-          onCompilationResult.accept(result);
-          return null;
-        });
   }
 
   private static File getRunfilesDir() {

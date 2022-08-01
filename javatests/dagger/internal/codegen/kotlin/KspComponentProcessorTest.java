@@ -16,10 +16,8 @@
 
 package dagger.internal.codegen.kotlin;
 
-import static dagger.testing.compile.CompilerTests.compile;
-
 import androidx.room.compiler.processing.util.Source;
-import com.google.common.collect.ImmutableList;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -29,245 +27,233 @@ public final class KspComponentProcessorTest {
   @Test
   public void emptyComponentTest() throws Exception {
     Source componentSrc =
-        Source.Companion.kotlin(
+        CompilerTests.kotlinSource(
             "MyComponent.kt",
-            String.join(
-                "\n",
-                "package test",
-                "",
-                "import dagger.Component",
-                "",
-                "@Component",
-                "interface MyComponent {}"));
+            "package test",
+            "",
+            "import dagger.Component",
+            "",
+            "@Component",
+            "interface MyComponent {}");
 
-    compile(
-        ImmutableList.of(componentSrc),
-        subject -> {
-          subject.hasErrorCount(0);
-          subject.generatedSource(
-              Source.Companion.java(
-                  "test/DaggerMyComponent",
-                  String.join(
-                      "\n",
-                      "package test;",
-                      "",
-                      "import dagger.internal.DaggerGenerated;",
-                      "import javax.annotation.processing.Generated;",
-                      "",
-                      "@DaggerGenerated",
-                      "@Generated(",
-                      "    value = \"dagger.internal.codegen.ComponentProcessor\",",
-                      "    comments = \"https://dagger.dev\"",
-                      ")",
-                      "@SuppressWarnings({",
-                      "    \"unchecked\",",
-                      "    \"rawtypes\"",
-                      "})",
-                      "public final class DaggerMyComponent {",
-                      "  private DaggerMyComponent() {",
-                      "  }",
-                      "",
-                      "  public static Builder builder() {",
-                      "    return new Builder();",
-                      "  }",
-                      "",
-                      "  public static MyComponent create() {",
-                      "    return new Builder().build();",
-                      "  }",
-                      "",
-                      "  public static final class Builder {",
-                      "    private Builder() {",
-                      "    }",
-                      "",
-                      "    public MyComponent build() {",
-                      "      return new MyComponentImpl();",
-                      "    }",
-                      "  }",
-                      "",
-                      "  private static final class MyComponentImpl implements MyComponent {",
-                      "    private final MyComponentImpl myComponentImpl = this;",
-                      "",
-                      "    private MyComponentImpl() {",
-                      "",
-                      "",
-                      "    }",
-                      "  }",
-                      "}")));
-        });
+    CompilerTests.daggerCompiler(componentSrc)
+        .compile(
+            subject -> {
+                subject.hasErrorCount(0);
+                subject.generatedSource(
+                    CompilerTests.javaSource(
+                        "test/DaggerMyComponent",
+                        "package test;",
+                        "",
+                        "import dagger.internal.DaggerGenerated;",
+                        "import javax.annotation.processing.Generated;",
+                        "",
+                        "@DaggerGenerated",
+                        "@Generated(",
+                        "    value = \"dagger.internal.codegen.ComponentProcessor\",",
+                        "    comments = \"https://dagger.dev\"",
+                        ")",
+                        "@SuppressWarnings({",
+                        "    \"unchecked\",",
+                        "    \"rawtypes\"",
+                        "})",
+                        "public final class DaggerMyComponent {",
+                        "  private DaggerMyComponent() {",
+                        "  }",
+                        "",
+                        "  public static Builder builder() {",
+                        "    return new Builder();",
+                        "  }",
+                        "",
+                        "  public static MyComponent create() {",
+                        "    return new Builder().build();",
+                        "  }",
+                        "",
+                        "  public static final class Builder {",
+                        "    private Builder() {",
+                        "    }",
+                        "",
+                        "    public MyComponent build() {",
+                        "      return new MyComponentImpl();",
+                        "    }",
+                        "  }",
+                        "",
+                        "  private static final class MyComponentImpl implements MyComponent {",
+                        "    private final MyComponentImpl myComponentImpl = this;",
+                        "",
+                        "    private MyComponentImpl() {",
+                        "",
+                        "",
+                        "    }",
+                        "  }",
+                        "}"));
+              });
   }
 
   @Test
   public void injectBindingComponentTest() throws Exception {
     Source componentSrc =
-        Source.Companion.kotlin(
+        CompilerTests.kotlinSource(
             "MyComponent.kt",
-            String.join(
-                "\n",
-                "package test",
-                "",
-                "import dagger.Component",
-                "import javax.inject.Inject",
-                "",
-                "@Component",
-                "interface MyComponent {",
-                "  fun foo(): Foo",
-                "}",
-                "",
-                "class Foo @Inject constructor(bar: Bar)",
-                "",
-                "class Bar @Inject constructor()"));
+            "package test",
+            "",
+            "import dagger.Component",
+            "import javax.inject.Inject",
+            "",
+            "@Component",
+            "interface MyComponent {",
+            "  fun foo(): Foo",
+            "}",
+            "",
+            "class Foo @Inject constructor(bar: Bar)",
+            "",
+            "class Bar @Inject constructor()");
 
-    compile(
-        ImmutableList.of(componentSrc),
-        subject -> {
-          subject.hasErrorCount(0);
-          subject.generatedSource(
-              Source.Companion.java(
-                  "test/DaggerMyComponent",
-                  String.join(
-                      "\n",
-                      "package test;",
-                      "",
-                      "import dagger.internal.DaggerGenerated;",
-                      "import javax.annotation.processing.Generated;",
-                      "",
-                      "@DaggerGenerated",
-                      "@Generated(",
-                      "    value = \"dagger.internal.codegen.ComponentProcessor\",",
-                      "    comments = \"https://dagger.dev\"",
-                      ")",
-                      "@SuppressWarnings({",
-                      "    \"unchecked\",",
-                      "    \"rawtypes\"",
-                      "})",
-                      "public final class DaggerMyComponent {",
-                      "  private DaggerMyComponent() {",
-                      "  }",
-                      "",
-                      "  public static Builder builder() {",
-                      "    return new Builder();",
-                      "  }",
-                      "",
-                      "  public static MyComponent create() {",
-                      "    return new Builder().build();",
-                      "  }",
-                      "",
-                      "  public static final class Builder {",
-                      "    private Builder() {",
-                      "    }",
-                      "",
-                      "    public MyComponent build() {",
-                      "      return new MyComponentImpl();",
-                      "    }",
-                      "  }",
-                      "",
-                      "  private static final class MyComponentImpl implements MyComponent {",
-                      "    private final MyComponentImpl myComponentImpl = this;",
-                      "",
-                      "    private MyComponentImpl() {",
-                      "",
-                      "",
-                      "    }",
-                      "",
-                      "    @Override",
-                      "    public Foo foo() {",
-                      "      return new Foo(new Bar());",
-                      "    }",
-                      "  }",
-                      "}")));
-        });
+    CompilerTests.daggerCompiler(componentSrc)
+        .compile(
+            subject -> {
+                subject.hasErrorCount(0);
+                subject.generatedSource(
+                    CompilerTests.javaSource(
+                        "test/DaggerMyComponent",
+                        "package test;",
+                        "",
+                        "import dagger.internal.DaggerGenerated;",
+                        "import javax.annotation.processing.Generated;",
+                        "",
+                        "@DaggerGenerated",
+                        "@Generated(",
+                        "    value = \"dagger.internal.codegen.ComponentProcessor\",",
+                        "    comments = \"https://dagger.dev\"",
+                        ")",
+                        "@SuppressWarnings({",
+                        "    \"unchecked\",",
+                        "    \"rawtypes\"",
+                        "})",
+                        "public final class DaggerMyComponent {",
+                        "  private DaggerMyComponent() {",
+                        "  }",
+                        "",
+                        "  public static Builder builder() {",
+                        "    return new Builder();",
+                        "  }",
+                        "",
+                        "  public static MyComponent create() {",
+                        "    return new Builder().build();",
+                        "  }",
+                        "",
+                        "  public static final class Builder {",
+                        "    private Builder() {",
+                        "    }",
+                        "",
+                        "    public MyComponent build() {",
+                        "      return new MyComponentImpl();",
+                        "    }",
+                        "  }",
+                        "",
+                        "  private static final class MyComponentImpl implements MyComponent {",
+                        "    private final MyComponentImpl myComponentImpl = this;",
+                        "",
+                        "    private MyComponentImpl() {",
+                        "",
+                        "",
+                        "    }",
+                        "",
+                        "    @Override",
+                        "    public Foo foo() {",
+                        "      return new Foo(new Bar());",
+                        "    }",
+                        "  }",
+                        "}"));
+              });
   }
 
   @Test
   public void injectBindingWithProvidersComponentTest() throws Exception {
     Source componentSrc =
-        Source.Companion.kotlin(
+        CompilerTests.kotlinSource(
             "MyComponent.kt",
-            String.join(
-                "\n",
-                "package test",
-                "",
-                "import dagger.Component",
-                "import javax.inject.Inject",
-                "import javax.inject.Provider",
-                "",
-                "@Component",
-                "interface MyComponent {",
-                "  fun foo(): Provider<Foo>",
-                "}",
-                "",
-                "class Foo @Inject constructor(bar: Bar, barProvider: Provider<Bar>)",
-                "",
-                "class Bar @Inject constructor()"));
+            "package test",
+            "",
+            "import dagger.Component",
+            "import javax.inject.Inject",
+            "import javax.inject.Provider",
+            "",
+            "@Component",
+            "interface MyComponent {",
+            "  fun foo(): Provider<Foo>",
+            "}",
+            "",
+            "class Foo @Inject constructor(bar: Bar, barProvider: Provider<Bar>)",
+            "",
+            "class Bar @Inject constructor()");
 
-    compile(
-        ImmutableList.of(componentSrc),
-        subject -> {
-          subject.hasErrorCount(0);
-          subject.generatedSource(
-              Source.Companion.java(
-                  "test/DaggerMyComponent",
-                  String.join(
-                      "\n",
-                      "package test;",
-                      "",
-                      "import dagger.internal.DaggerGenerated;",
-                      "import javax.annotation.processing.Generated;",
-                      "import javax.inject.Provider;",
-                      "",
-                      "@DaggerGenerated",
-                      "@Generated(",
-                      "    value = \"dagger.internal.codegen.ComponentProcessor\",",
-                      "    comments = \"https://dagger.dev\"",
-                      ")",
-                      "@SuppressWarnings({",
-                      "    \"unchecked\",",
-                      "    \"rawtypes\"",
-                      "})",
-                      "public final class DaggerMyComponent {",
-                      "  private DaggerMyComponent() {",
-                      "  }",
-                      "",
-                      "  public static Builder builder() {",
-                      "    return new Builder();",
-                      "  }",
-                      "",
-                      "  public static MyComponent create() {",
-                      "    return new Builder().build();",
-                      "  }",
-                      "",
-                      "  public static final class Builder {",
-                      "    private Builder() {",
-                      "    }",
-                      "",
-                      "    public MyComponent build() {",
-                      "      return new MyComponentImpl();",
-                      "    }",
-                      "  }",
-                      "",
-                      "  private static final class MyComponentImpl implements MyComponent {",
-                      "    private final MyComponentImpl myComponentImpl = this;",
-                      "",
-                      "    private Provider<Foo> fooProvider;",
-                      "",
-                      "    private MyComponentImpl() {",
-                      "",
-                      "      initialize();",
-                      "",
-                      "    }",
-                      "",
-                      "    @SuppressWarnings(\"unchecked\")",
-                      "    private void initialize() {",
-                      "      this.fooProvider = "
-                          + "Foo_Factory.create(Bar_Factory.create(), Bar_Factory.create());",
-                      "    }",
-                      "",
-                      "    @Override",
-                      "    public Provider<Foo> foo() {",
-                      "      return fooProvider;",
-                      "    }",
-                      "  }",
-                      "}")));
-        });
+    CompilerTests.daggerCompiler(componentSrc)
+        .compile(
+            subject -> {
+                subject.hasErrorCount(0);
+                subject.generatedSource(
+                    CompilerTests.javaSource(
+                        "test/DaggerMyComponent",
+                        "package test;",
+                        "",
+                        "import dagger.internal.DaggerGenerated;",
+                        "import javax.annotation.processing.Generated;",
+                        "import javax.inject.Provider;",
+                        "",
+                        "@DaggerGenerated",
+                        "@Generated(",
+                        "    value = \"dagger.internal.codegen.ComponentProcessor\",",
+                        "    comments = \"https://dagger.dev\"",
+                        ")",
+                        "@SuppressWarnings({",
+                        "    \"unchecked\",",
+                        "    \"rawtypes\"",
+                        "})",
+                        "public final class DaggerMyComponent {",
+                        "  private DaggerMyComponent() {",
+                        "  }",
+                        "",
+                        "  public static Builder builder() {",
+                        "    return new Builder();",
+                        "  }",
+                        "",
+                        "  public static MyComponent create() {",
+                        "    return new Builder().build();",
+                        "  }",
+                        "",
+                        "  public static final class Builder {",
+                        "    private Builder() {",
+                        "    }",
+                        "",
+                        "    public MyComponent build() {",
+                        "      return new MyComponentImpl();",
+                        "    }",
+                        "  }",
+                        "",
+                        "  private static final class MyComponentImpl implements MyComponent {",
+                        "    private final MyComponentImpl myComponentImpl = this;",
+                        "",
+                        "    private Provider<Foo> fooProvider;",
+                        "",
+                        "    private MyComponentImpl() {",
+                        "",
+                        "      initialize();",
+                        "",
+                        "    }",
+                        "",
+                        "    @SuppressWarnings(\"unchecked\")",
+                        "    private void initialize() {",
+                        "      this.fooProvider = "
+                            + "Foo_Factory.create(Bar_Factory.create(), Bar_Factory.create());",
+                        "    }",
+                        "",
+                        "    @Override",
+                        "    public Provider<Foo> foo() {",
+                        "      return fooProvider;",
+                        "    }",
+                        "  }",
+                        "}"));
+              });
   }
 }

@@ -16,8 +16,13 @@
 
 package dagger.internal.codegen;
 
+import static com.google.common.base.Preconditions.checkState;
+
+import com.google.common.base.Splitter;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.util.List;
 
 /** The configuration options for compiler modes. */
 // TODO(bcorso): Consider moving the java version into its own separate enum.
@@ -37,6 +42,23 @@ enum CompilerMode {
 
   private CompilerMode(String... javacopts) {
     this.javacopts = ImmutableList.copyOf(javacopts);
+  }
+
+  /**
+   * Returns the javacopts as a map of key-value pairs.
+   *
+   * @throws IllegalStateException if the javacopts are not of the form "-Akey=value".
+   */
+  ImmutableMap<String, String> processorOptions() {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    for (String javacopt : javacopts) {
+      // Throw if there's a javacopt in this mode that is not an annotation processor option.
+      checkState(javacopt.startsWith("-A"));
+      List<String> splits = Splitter.on('=').splitToList(javacopt.substring(2));
+      checkState(splits.size() == 2);
+      builder.put(splits.get(0), splits.get(1));
+    }
+    return builder.buildOrThrow();
   }
 
   /** Returns the javacopts for this compiler mode. */

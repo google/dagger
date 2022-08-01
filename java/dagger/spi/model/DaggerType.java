@@ -45,6 +45,10 @@ public abstract class DaggerType {
 
   @Override
   public final String toString() {
-    return xprocessing().toString();
+    // We define our own stable string rather than use XType#toString() here because
+    // XType#toString() is currently not stable across backends. In particular, in javac it returns
+    // the qualified type but in ksp it returns the simple name.
+    // TODO(bcorso): Consider changing XProcessing so that #toString() is stable across backends.
+    return XTypes.toStableString(xprocessing());
   }
 }

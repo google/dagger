@@ -29,10 +29,12 @@ java_library(
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/guava/io",
+        "//third_party/java/auto:value",
         "//third_party/java/compile_testing",
         "//third_party/java/junit",
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )

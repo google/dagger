@@ -16,6 +16,7 @@
 
 package dagger.testing.golden;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.io.Resources;
 import com.google.testing.compile.JavaFileObjects;
 import java.io.IOException;
@@ -61,6 +62,25 @@ public final class GoldenFileRule implements TestRule {
   public Statement apply(Statement base, Description description) {
     this.description = description;
     return base;
+  }
+
+  /**
+   * Returns the golden file as a {@link Source} containing the file's content.
+   *
+   * <p>If the golden file does not exist, the returned file object contains an error message
+   * pointing to the location of the missing golden file. This can be used with scripting tools to
+   * output the correct golden file in the proper location.
+   */
+  public Source goldenSource(String generatedFilePath) {
+    // Note: we wrap the IOException in a RuntimeException so that this can be called from within
+    // the lambda required by XProcessing's testing APIs. We could avoid this by calling this method
+    // outside of the lambda, but that seems like an non-worthwile hit to readability.
+    try {
+      return Source.Companion.java(
+          generatedFilePath, goldenFileContent(generatedFilePath.replace('/', '.')));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**

@@ -34,6 +34,7 @@ import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
 import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.xprocessing.XAnnotations;
+import dagger.internal.codegen.xprocessing.XTypes;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -125,7 +126,7 @@ public final class MethodSignatureFormatter extends Formatter<XExecutableElement
   }
 
   private static String nameOfType(XType type) {
-    return stripCommonTypePrefixes(type.toString());
+    return stripCommonTypePrefixes(XTypes.toStableString(type));
   }
 
   private static String formatAnnotation(XAnnotation annotation) {

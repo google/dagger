@@ -19,16 +19,18 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.MembersInjector;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -63,7 +65,7 @@ public class ComponentProcessorTest {
   }
 
   @Test public void doubleBindingFromResolvedModules() {
-    JavaFileObject parent = JavaFileObjects.forSourceLines("test.ParentModule",
+    Source parent = CompilerTests.javaSource("test.ParentModule",
         "package test;",
         "",
         "import dagger.Module;",
@@ -74,7 +76,7 @@ public class ComponentProcessorTest {
         "abstract class ParentModule<A> {",
         "  @Provides List<A> provideListB(A a) { return null; }",
         "}");
-    JavaFileObject child = JavaFileObjects.forSourceLines("test.ChildModule",
+    Source child = CompilerTests.javaSource("test.ChildNumberModule",
         "package test;",
         "",
         "import dagger.Module;",
@@ -84,7 +86,7 @@ public class ComponentProcessorTest {
         "class ChildNumberModule extends ParentModule<Integer> {",
         "  @Provides Integer provideInteger() { return null; }",
         "}");
-    JavaFileObject another = JavaFileObjects.forSourceLines("test.AnotherModule",
+    Source another = CompilerTests.javaSource("test.AnotherModule",
         "package test;",
         "",
         "import dagger.Module;",
@@ -95,7 +97,7 @@ public class ComponentProcessorTest {
         "class AnotherModule {",
         "  @Provides List<Integer> provideListOfInteger() { return null; }",
         "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.BadComponent",
+    Source componentFile = CompilerTests.javaSource("test.BadComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -106,20 +108,21 @@ public class ComponentProcessorTest {
         "  List<Integer> listOfInteger();",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(parent, child, another, componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("List<Integer> is bound multiple times");
-    assertThat(compilation)
-        .hadErrorContaining("@Provides List<Integer> ChildNumberModule.provideListB(Integer)");
-    assertThat(compilation)
-        .hadErrorContaining("@Provides List<Integer> AnotherModule.provideListOfInteger()");
+    CompilerTests.daggerCompiler(parent, child, another, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("List<Integer> is bound multiple times");
+              subject.hasErrorContaining(
+                  "@Provides List<Integer> ChildNumberModule.provideListB(Integer)");
+              subject.hasErrorContaining(
+                  "@Provides List<Integer> AnotherModule.provideListOfInteger()");
+            });
   }
 
   @Test public void privateNestedClassWithWarningThatIsAnErrorInComponent() {
-    JavaFileObject outerClass = JavaFileObjects.forSourceLines("test.OuterClass",
+    Source outerClass = CompilerTests.javaSource("test.OuterClass",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -131,7 +134,7 @@ public class ComponentProcessorTest {
         "    @Inject InnerClass() {}",
         "  }",
         "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.BadComponent",
+    Source componentFile = CompilerTests.javaSource("test.BadComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -140,17 +143,21 @@ public class ComponentProcessorTest {
         "interface BadComponent {",
         "  OuterClass outerClass();",
         "}");
-    Compilation compilation =
-        compilerWithOptions(
-                compilerMode.javacopts().append("-Adagger.privateMemberValidation=WARNING"))
-            .compile(outerClass, componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Dagger does not support injection into private classes");
+    CompilerTests.daggerCompiler(outerClass, componentFile)
+        .withProcessingOptions(
+            ImmutableMap.<String, String>builder()
+                .putAll(compilerMode.processorOptions())
+                .put("dagger.privateMemberValidation", "WARNING")
+                .buildOrThrow())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("Dagger does not support injection into private classes");
+            });
   }
 
   @Test public void simpleComponent() throws Exception {
-    JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",
+    Source injectableTypeFile = CompilerTests.javaSource("test/SomeInjectableType",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -158,7 +165,7 @@ public class ComponentProcessorTest {
         "final class SomeInjectableType {",
         "  @Inject SomeInjectableType() {}",
         "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.SimpleComponent",
+    Source componentFile = CompilerTests.javaSource("test/SimpleComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -172,17 +179,17 @@ public class ComponentProcessorTest {
         "  Provider<SomeInjectableType> someInjectableTypeProvider();",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(injectableTypeFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerSimpleComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerSimpleComponent"));
+    CompilerTests.daggerCompiler(injectableTypeFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerSimpleComponent"));
+            });
   }
 
   @Test public void componentWithScope() throws Exception {
-    JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",
+    Source injectableTypeFile = CompilerTests.javaSource("test.SomeInjectableType",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -192,7 +199,7 @@ public class ComponentProcessorTest {
         "final class SomeInjectableType {",
         "  @Inject SomeInjectableType() {}",
         "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.SimpleComponent",
+    Source componentFile = CompilerTests.javaSource("test.SimpleComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -208,15 +215,16 @@ public class ComponentProcessorTest {
         "  Provider<SomeInjectableType> someInjectableTypeProvider();",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(injectableTypeFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerSimpleComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerSimpleComponent"));
+    CompilerTests.daggerCompiler(injectableTypeFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerSimpleComponent"));
+            });
   }
 
+  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
   @Test public void simpleComponentWithNesting() throws Exception {
     JavaFileObject nestedTypesFile = JavaFileObjects.forSourceLines("test.OuterType",
         "package test;",
@@ -246,7 +254,7 @@ public class ComponentProcessorTest {
   }
 
   @Test public void componentWithModule() throws Exception {
-    JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
+    Source aFile = CompilerTests.javaSource("test.A",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -254,11 +262,11 @@ public class ComponentProcessorTest {
         "final class A {",
         "  @Inject A(B b) {}",
         "}");
-    JavaFileObject bFile = JavaFileObjects.forSourceLines("test.B",
+    Source bFile = CompilerTests.javaSource("test.B",
         "package test;",
         "",
         "interface B {}");
-    JavaFileObject cFile = JavaFileObjects.forSourceLines("test.C",
+    Source cFile = CompilerTests.javaSource("test.C",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -267,7 +275,7 @@ public class ComponentProcessorTest {
         "  @Inject C() {}",
         "}");
 
-    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
+    Source moduleFile = CompilerTests.javaSource("test.TestModule",
         "package test;",
         "",
         "import dagger.Module;",
@@ -278,7 +286,7 @@ public class ComponentProcessorTest {
         "  @Provides B b(C c) { return null; }",
         "}");
 
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
+    Source componentFile = CompilerTests.javaSource("test.TestComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -289,19 +297,18 @@ public class ComponentProcessorTest {
         "  A a();",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(aFile, bFile, cFile, moduleFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(aFile, bFile, cFile, moduleFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void componentWithAbstractModule() throws Exception {
-    JavaFileObject aFile =
-        JavaFileObjects.forSourceLines(
+    Source aFile = CompilerTests.javaSource(
             "test.A",
             "package test;",
             "",
@@ -310,13 +317,11 @@ public class ComponentProcessorTest {
             "final class A {",
             "  @Inject A(B b) {}",
             "}");
-    JavaFileObject bFile =
-        JavaFileObjects.forSourceLines("test.B",
+    Source bFile = CompilerTests.javaSource("test.B",
             "package test;",
             "",
             "interface B {}");
-    JavaFileObject cFile =
-        JavaFileObjects.forSourceLines(
+    Source cFile = CompilerTests.javaSource(
             "test.C",
             "package test;",
             "",
@@ -326,8 +331,7 @@ public class ComponentProcessorTest {
             "  @Inject C() {}",
             "}");
 
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
+    Source moduleFile = CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -339,8 +343,7 @@ public class ComponentProcessorTest {
             "  @Provides static B b(C c) { return null; }",
             "}");
 
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile = CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -351,66 +354,66 @@ public class ComponentProcessorTest {
             "  A a();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(aFile, bFile, cFile, moduleFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(aFile, bFile, cFile, moduleFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test public void transitiveModuleDeps() throws Exception {
-    JavaFileObject always = JavaFileObjects.forSourceLines("test.AlwaysIncluded",
+    Source always = CompilerTests.javaSource("test.AlwaysIncluded",
         "package test;",
         "",
         "import dagger.Module;",
         "",
         "@Module",
         "final class AlwaysIncluded {}");
-    JavaFileObject testModule = JavaFileObjects.forSourceLines("test.TestModule",
+    Source testModule = CompilerTests.javaSource("test.TestModule",
         "package test;",
         "",
         "import dagger.Module;",
         "",
         "@Module(includes = {DepModule.class, AlwaysIncluded.class})",
         "final class TestModule extends ParentTestModule {}");
-    JavaFileObject parentTest = JavaFileObjects.forSourceLines("test.ParentTestModule",
+    Source parentTest = CompilerTests.javaSource("test.ParentTestModule",
         "package test;",
         "",
         "import dagger.Module;",
         "",
         "@Module(includes = {ParentTestIncluded.class, AlwaysIncluded.class})",
         "class ParentTestModule {}");
-    JavaFileObject parentTestIncluded = JavaFileObjects.forSourceLines("test.ParentTestIncluded",
+    Source parentTestIncluded = CompilerTests.javaSource("test.ParentTestIncluded",
         "package test;",
         "",
         "import dagger.Module;",
         "",
         "@Module(includes = AlwaysIncluded.class)",
         "final class ParentTestIncluded {}");
-    JavaFileObject depModule = JavaFileObjects.forSourceLines("test.TestModule",
+    Source depModule = CompilerTests.javaSource("test.DepModule",
         "package test;",
         "",
         "import dagger.Module;",
         "",
         "@Module(includes = {RefByDep.class, AlwaysIncluded.class})",
         "final class DepModule extends ParentDepModule {}");
-    JavaFileObject refByDep = JavaFileObjects.forSourceLines("test.RefByDep",
+    Source refByDep = CompilerTests.javaSource("test.RefByDep",
         "package test;",
         "",
         "import dagger.Module;",
         "",
         "@Module(includes = AlwaysIncluded.class)",
         "final class RefByDep extends ParentDepModule {}");
-    JavaFileObject parentDep = JavaFileObjects.forSourceLines("test.ParentDepModule",
+    Source parentDep = CompilerTests.javaSource("test.ParentDepModule",
         "package test;",
         "",
         "import dagger.Module;",
         "",
         "@Module(includes = {ParentDepIncluded.class, AlwaysIncluded.class})",
         "class ParentDepModule {}");
-    JavaFileObject parentDepIncluded = JavaFileObjects.forSourceLines("test.ParentDepIncluded",
+    Source parentDepIncluded = CompilerTests.javaSource("test.ParentDepIncluded",
         "package test;",
         "",
         "import dagger.Module;",
@@ -418,7 +421,7 @@ public class ComponentProcessorTest {
         "@Module(includes = AlwaysIncluded.class)",
         "final class ParentDepIncluded {}");
 
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
+    Source componentFile = CompilerTests.javaSource("test.TestComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -427,9 +430,7 @@ public class ComponentProcessorTest {
         "interface TestComponent {",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(
+    CompilerTests.daggerCompiler(
                 always,
                 testModule,
                 parentTest,
@@ -438,13 +439,16 @@ public class ComponentProcessorTest {
                 refByDep,
                 parentDep,
                 parentDepIncluded,
-                componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+                componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
+  // TODO(b/241158653): Requires allowing extra processors with CompilerTests.daggerCompiler().
   @Test
   public void generatedTransitiveModule() {
     JavaFileObject rootModule = JavaFileObjects.forSourceLines("test.RootModule",
@@ -465,7 +469,7 @@ public class ComponentProcessorTest {
             compilerWithOptions(compilerMode.javacopts()).compile(rootModule, component))
         .failed();
     assertThat(
-            daggerCompiler(
+            Compilers.daggerCompiler(
                     new GeneratingProcessor(
                         "test.GeneratedModule",
                         "package test;",
@@ -483,6 +487,7 @@ public class ComponentProcessorTest {
         .succeeded();
   }
 
+  // TODO(b/241158653): Requires allowing extra processors with CompilerTests.daggerCompiler().
   @Test
   public void generatedModuleInSubcomponent() {
     JavaFileObject subcomponent =
@@ -509,7 +514,7 @@ public class ComponentProcessorTest {
             compilerWithOptions(compilerMode.javacopts()).compile(subcomponent, component))
         .failed();
     assertThat(
-            daggerCompiler(
+            Compilers.daggerCompiler(
                     new GeneratingProcessor(
                         "test.GeneratedModule",
                         "package test;",
@@ -527,6 +532,7 @@ public class ComponentProcessorTest {
         .succeeded();
   }
 
+  // TODO(b/241158653): Requires adding XProcessing implementation of isSubtype (b/231189791).
   @Test
   public void subcomponentNotGeneratedIfNotUsedInGraph() throws Exception {
     JavaFileObject component =
@@ -579,14 +585,14 @@ public class ComponentProcessorTest {
 
   @Test
   public void testDefaultPackage() {
-    JavaFileObject aClass = JavaFileObjects.forSourceLines("AClass", "class AClass {}");
-    JavaFileObject bClass = JavaFileObjects.forSourceLines("BClass",
+    Source aClass = CompilerTests.javaSource("AClass", "class AClass {}");
+    Source bClass = CompilerTests.javaSource("BClass",
         "import javax.inject.Inject;",
         "",
         "class BClass {",
         "  @Inject BClass(AClass a) {}",
         "}");
-    JavaFileObject aModule = JavaFileObjects.forSourceLines("AModule",
+    Source aModule = CompilerTests.javaSource("AModule",
         "import dagger.Module;",
         "import dagger.Provides;",
         "",
@@ -595,19 +601,20 @@ public class ComponentProcessorTest {
         "    return new AClass();",
         "  }",
         "}");
-    JavaFileObject component = JavaFileObjects.forSourceLines("SomeComponent",
+    Source component = CompilerTests.javaSource("SomeComponent",
         "import dagger.Component;",
         "",
         "@Component(modules = AModule.class)",
         "interface SomeComponent {",
         "  BClass bClass();",
         "}");
-    assertThat(
-            compilerWithOptions(compilerMode.javacopts())
-                .compile(aModule, aClass, bClass, component))
-        .succeeded();
+
+    CompilerTests.daggerCompiler(aModule, aClass, bClass, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
+  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
   @Test public void membersInjection() throws Exception {
     JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",
         "package test;",
@@ -649,7 +656,7 @@ public class ComponentProcessorTest {
   }
 
   @Test public void componentInjection() throws Exception {
-    JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",
+    Source injectableTypeFile = CompilerTests.javaSource("test.SomeInjectableType",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -657,7 +664,7 @@ public class ComponentProcessorTest {
         "final class SomeInjectableType {",
         "  @Inject SomeInjectableType(SimpleComponent component) {}",
         "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.SimpleComponent",
+    Source componentFile = CompilerTests.javaSource("test.SimpleComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -670,13 +677,13 @@ public class ComponentProcessorTest {
         "  Provider<SimpleComponent> selfProvider();",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(injectableTypeFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerSimpleComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerSimpleComponent"));
+    CompilerTests.daggerCompiler(injectableTypeFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerSimpleComponent"));
+            });
   }
 
   @Test public void membersInjectionInsideProvision() throws Exception {
@@ -717,7 +724,7 @@ public class ComponentProcessorTest {
   }
 
   @Test public void componentDependency() throws Exception {
-    JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
+    Source aFile = CompilerTests.javaSource("test.A",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -725,7 +732,7 @@ public class ComponentProcessorTest {
         "final class A {",
         "  @Inject A() {}",
         "}");
-    JavaFileObject bFile = JavaFileObjects.forSourceLines("test.B",
+    Source bFile = CompilerTests.javaSource("test.B",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -734,7 +741,7 @@ public class ComponentProcessorTest {
         "final class B {",
         "  @Inject B(Provider<A> a) {}",
         "}");
-    JavaFileObject aComponentFile = JavaFileObjects.forSourceLines("test.AComponent",
+    Source aComponentFile = CompilerTests.javaSource("test.AComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -743,7 +750,7 @@ public class ComponentProcessorTest {
         "interface AComponent {",
         "  A a();",
         "}");
-    JavaFileObject bComponentFile = JavaFileObjects.forSourceLines("test.BComponent",
+    Source bComponentFile = CompilerTests.javaSource("test.BComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -753,17 +760,17 @@ public class ComponentProcessorTest {
         "  B b();",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(aFile, bFile, aComponentFile, bComponentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerBComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerBComponent"));
+    CompilerTests.daggerCompiler(aFile, bFile, aComponentFile, bComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerBComponent"));
+            });
   }
 
   @Test public void primitiveComponentDependency() throws Exception {
-    JavaFileObject bFile = JavaFileObjects.forSourceLines("test.B",
+    Source bFile = CompilerTests.javaSource("test.B",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -772,13 +779,13 @@ public class ComponentProcessorTest {
         "final class B {",
         "  @Inject B(Provider<Integer> i) {}",
         "}");
-    JavaFileObject intComponentFile = JavaFileObjects.forSourceLines("test.IntComponent",
+    Source intComponentFile = CompilerTests.javaSource("test.IntComponent",
         "package test;",
         "",
         "interface IntComponent {",
         "  int i();",
         "}");
-    JavaFileObject bComponentFile = JavaFileObjects.forSourceLines("test.BComponent",
+    Source bComponentFile = CompilerTests.javaSource("test.BComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -788,16 +795,16 @@ public class ComponentProcessorTest {
         "  B b();",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(bFile, intComponentFile, bComponentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerBComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerBComponent"));
+    CompilerTests.daggerCompiler(bFile, intComponentFile, bComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerBComponent"));
+            });
   }
 
-
+  // TODO(b/241158653): Requires fix in KspTypeElement.className
   @Test public void arrayComponentDependency() throws Exception {
     JavaFileObject bFile = JavaFileObjects.forSourceLines("test.B",
         "package test;",
@@ -834,7 +841,7 @@ public class ComponentProcessorTest {
   }
 
   @Test public void dependencyNameCollision() throws Exception {
-    JavaFileObject a1 = JavaFileObjects.forSourceLines("pkg1.A",
+    Source a1 = CompilerTests.javaSource("pkg1.A",
         "package pkg1;",
         "",
         "import javax.inject.Inject;",
@@ -842,7 +849,7 @@ public class ComponentProcessorTest {
         "public final class A {",
         "  @Inject A() {}",
         "}");
-    JavaFileObject a2 = JavaFileObjects.forSourceLines("pkg2.A",
+    Source a2 = CompilerTests.javaSource("pkg2.A",
         "package pkg2;",
         "",
         "import javax.inject.Inject;",
@@ -850,7 +857,7 @@ public class ComponentProcessorTest {
         "public final class A {",
         "  @Inject A() {}",
         "}");
-    JavaFileObject a1Component = JavaFileObjects.forSourceLines("pkg1.AComponent",
+    Source a1Component = CompilerTests.javaSource("pkg1.AComponent",
         "package pkg1;",
         "",
         "import dagger.Component;",
@@ -859,7 +866,7 @@ public class ComponentProcessorTest {
         "public interface AComponent {",
         "  A a();",
         "}");
-    JavaFileObject a2Component = JavaFileObjects.forSourceLines("pkg2.AComponent",
+    Source a2Component = CompilerTests.javaSource("pkg2.AComponent",
         "package pkg2;",
         "",
         "import dagger.Component;",
@@ -868,7 +875,7 @@ public class ComponentProcessorTest {
         "public interface AComponent {",
         "  A a();",
         "}");
-    JavaFileObject bComponent = JavaFileObjects.forSourceLines("test.BComponent",
+    Source bComponent = CompilerTests.javaSource("test.BComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -877,7 +884,7 @@ public class ComponentProcessorTest {
         "interface BComponent {",
         "  B b();",
         "}");
-    JavaFileObject b = JavaFileObjects.forSourceLines("test.B",
+    Source b = CompilerTests.javaSource("test.B",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -887,13 +894,13 @@ public class ComponentProcessorTest {
         "  @Inject B(Provider<pkg1.A> a1, Provider<pkg2.A> a2) {}",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(a1, a2, b, a1Component, a2Component, bComponent);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerBComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerBComponent"));
+    CompilerTests.daggerCompiler(a1, a2, b, a1Component, a2Component, bComponent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerBComponent"));
+            });
   }
 
   @Test public void moduleNameCollision() throws Exception {
@@ -949,8 +956,8 @@ public class ComponentProcessorTest {
   }
 
   @Test public void ignoresDependencyMethodsFromObject() throws Exception {
-    JavaFileObject injectedTypeFile =
-        JavaFileObjects.forSourceLines(
+    Source injectedTypeFile =
+        CompilerTests.javaSource(
             "test.InjectedType",
             "package test;",
             "",
@@ -964,8 +971,8 @@ public class ComponentProcessorTest {
             "      AComponent aComponent,",
             "      Class<AComponent> aClass) {}",
             "}");
-    JavaFileObject aComponentFile =
-        JavaFileObjects.forSourceLines(
+    Source aComponentFile =
+        CompilerTests.javaSource(
             "test.AComponent",
             "package test;",
             "",
@@ -997,8 +1004,8 @@ public class ComponentProcessorTest {
             "    return null;",
             "  }",
             "}");
-    JavaFileObject bComponentFile =
-        JavaFileObjects.forSourceLines(
+    Source bComponentFile =
+        CompilerTests.javaSource(
             "test.BComponent",
             "package test;",
             "",
@@ -1009,17 +1016,17 @@ public class ComponentProcessorTest {
             "  InjectedType injectedType();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(injectedTypeFile, aComponentFile, bComponentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerBComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerBComponent"));
+    CompilerTests.daggerCompiler(injectedTypeFile, aComponentFile, bComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerBComponent"));
+            });
   }
 
   @Test public void resolutionOrder() throws Exception {
-    JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
+    Source aFile = CompilerTests.javaSource("test.A",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -1027,7 +1034,7 @@ public class ComponentProcessorTest {
         "final class A {",
         "  @Inject A(B b) {}",
         "}");
-    JavaFileObject bFile = JavaFileObjects.forSourceLines("test.B",
+    Source bFile = CompilerTests.javaSource("test.B",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -1035,7 +1042,7 @@ public class ComponentProcessorTest {
         "final class B {",
         "  @Inject B(C c) {}",
         "}");
-    JavaFileObject cFile = JavaFileObjects.forSourceLines("test.C",
+    Source cFile = CompilerTests.javaSource("test.C",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -1043,7 +1050,7 @@ public class ComponentProcessorTest {
         "final class C {",
         "  @Inject C() {}",
         "}");
-    JavaFileObject xFile = JavaFileObjects.forSourceLines("test.X",
+    Source xFile = CompilerTests.javaSource("test.X",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -1052,7 +1059,7 @@ public class ComponentProcessorTest {
         "  @Inject X(C c) {}",
         "}");
 
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
+    Source componentFile = CompilerTests.javaSource("test.TestComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -1065,15 +1072,16 @@ public class ComponentProcessorTest {
         "  X x();",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(aFile, bFile, cFile, xFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(aFile, bFile, cFile, xFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
+  // TODO(b/241158653): Requires adding XProcessing implementation of javacOverrides (b/231172867).
   @Test public void simpleComponent_redundantComponentMethod() throws Exception {
     JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",
         "package test;",
@@ -1130,7 +1138,7 @@ public class ComponentProcessorTest {
   }
 
   @Test public void simpleComponent_inheritedComponentMethodDep() throws Exception {
-    JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",
+    Source injectableTypeFile = CompilerTests.javaSource("test.SomeInjectableType",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -1138,7 +1146,7 @@ public class ComponentProcessorTest {
         "final class SomeInjectableType {",
         "  @Inject SomeInjectableType() {}",
         "}");
-    JavaFileObject componentSupertype = JavaFileObjects.forSourceLines("test.Supertype",
+    Source componentSupertype = CompilerTests.javaSource("test.Supertype",
         "package test;",
         "",
         "import dagger.Component;",
@@ -1147,7 +1155,7 @@ public class ComponentProcessorTest {
         "interface Supertype {",
         "  SomeInjectableType someInjectableType();",
         "}");
-    JavaFileObject depComponentFile = JavaFileObjects.forSourceLines("test.SimpleComponent",
+    Source depComponentFile = CompilerTests.javaSource("test.SimpleComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -1156,15 +1164,16 @@ public class ComponentProcessorTest {
         "interface SimpleComponent extends Supertype {",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(injectableTypeFile, componentSupertype, depComponentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerSimpleComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerSimpleComponent"));
+    CompilerTests.daggerCompiler(injectableTypeFile, componentSupertype, depComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerSimpleComponent"));
+            });
   }
 
+  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
   @Test public void wildcardGenericsRequiresAtProvides() {
     JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
         "package test;",
@@ -1212,6 +1221,7 @@ public class ComponentProcessorTest {
             "test.B<? extends test.A> cannot be provided without an @Provides-annotated method");
   }
 
+  // TODO(b/241158653): Requires fix in KspTypeElement.className
   // https://github.com/google/dagger/issues/630
   @Test
   public void arrayKeyRequiresAtProvides() {
@@ -1233,6 +1243,7 @@ public class ComponentProcessorTest {
         .hadErrorContaining("String[] cannot be provided without an @Provides-annotated method");
   }
 
+  // TODO(b/241158653): Requires allowing extra processors with CompilerTests.daggerCompiler().
   @Test
   public void componentImplicitlyDependsOnGeneratedType() {
     JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",
@@ -1253,7 +1264,7 @@ public class ComponentProcessorTest {
         "  SomeInjectableType someInjectableType();",
         "}");
     Compilation compilation =
-        daggerCompiler(
+        Compilers.daggerCompiler(
                 new GeneratingProcessor(
                     "test.GeneratedType",
                     "package test;",
@@ -1273,6 +1284,7 @@ public class ComponentProcessorTest {
     assertThat(compilation).generatedSourceFile("test.DaggerSimpleComponent");
   }
 
+  // TODO(b/241158653): Requires allowing extra processors with CompilerTests.daggerCompiler().
   @Test
   public void componentSupertypeDependsOnGeneratedType() {
     JavaFileObject componentFile =
@@ -1293,7 +1305,7 @@ public class ComponentProcessorTest {
             "  GeneratedType generatedType();",
             "}");
     Compilation compilation =
-        daggerCompiler(
+        Compilers.daggerCompiler(
                 new GeneratingProcessor(
                     "test.GeneratedType",
                     "package test;",
@@ -1313,6 +1325,7 @@ public class ComponentProcessorTest {
     assertThat(compilation).generatedSourceFile("test.DaggerSimpleComponent");
   }
 
+  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
   /**
    * We warn when generating a {@link MembersInjector} for a type post-hoc (i.e., if Dagger wasn't
    * invoked when compiling the type). But Dagger only generates {@link MembersInjector}s for types
@@ -1441,8 +1454,8 @@ public class ComponentProcessorTest {
 
   @Test
   public void scopeAnnotationOnInjectConstructorNotValid() {
-    JavaFileObject aScope =
-        JavaFileObjects.forSourceLines(
+    Source aScope =
+        CompilerTests.javaSource(
             "test.AScope",
             "package test;",
             "",
@@ -1450,8 +1463,8 @@ public class ComponentProcessorTest {
             "",
             "@Scope",
             "@interface AScope {}");
-    JavaFileObject aClass =
-        JavaFileObjects.forSourceLines(
+    Source aClass =
+        CompilerTests.javaSource(
             "test.AClass",
             "package test;",
             "",
@@ -1460,15 +1473,19 @@ public class ComponentProcessorTest {
             "final class AClass {",
             "  @Inject @AScope AClass() {}",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(aScope, aClass);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("@Scope annotations are not allowed on @Inject constructors")
-        .inFile(aClass)
-        .onLine(6);
+    CompilerTests.daggerCompiler(aScope, aClass)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining("@Scope annotations are not allowed on @Inject constructors")
+                  .onSource(aClass)
+                  .onLine(6);
+            });
   }
 
+  // TODO(b/241158653): Requires adding XProcessing implementation of isSubtype (b/231189791).
   @Test
   public void unusedSubcomponents_dontResolveExtraBindingsInParentComponents() throws Exception {
     JavaFileObject foo =
@@ -1534,8 +1551,8 @@ public class ComponentProcessorTest {
 
   @Test
   public void bindsToDuplicateBinding_bindsKeyIsNotDuplicated() {
-    JavaFileObject firstModule =
-        JavaFileObjects.forSourceLines(
+    Source firstModule =
+        CompilerTests.javaSource(
             "test.FirstModule",
             "package test;",
             "",
@@ -1546,8 +1563,8 @@ public class ComponentProcessorTest {
             "abstract class FirstModule {",
             "  @Provides static String first() { return \"first\"; }",
             "}");
-    JavaFileObject secondModule =
-        JavaFileObjects.forSourceLines(
+    Source secondModule =
+        CompilerTests.javaSource(
             "test.SecondModule",
             "package test;",
             "",
@@ -1558,8 +1575,8 @@ public class ComponentProcessorTest {
             "abstract class SecondModule {",
             "  @Provides static String second() { return \"second\"; }",
             "}");
-    JavaFileObject bindsModule =
-        JavaFileObjects.forSourceLines(
+    Source bindsModule =
+        CompilerTests.javaSource(
             "test.BindsModule",
             "package test;",
             "",
@@ -1570,8 +1587,8 @@ public class ComponentProcessorTest {
             "abstract class BindsModule {",
             "  @Binds abstract Object bindToDuplicateBinding(String duplicate);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -1582,17 +1599,18 @@ public class ComponentProcessorTest {
             "  Object notDuplicated();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(firstModule, secondModule, bindsModule, component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining("String is bound multiple times")
-        .inFile(component)
-        .onLineContaining("interface TestComponent");
+    CompilerTests.daggerCompiler(firstModule, secondModule, bindsModule, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("String is bound multiple times")
+                  .onSource(component)
+                  .onLineContaining("interface TestComponent");
+            });
   }
 
+  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
   @Test
   public void nullIncorrectlyReturnedFromNonNullableInlinedProvider() throws Exception {
     Compilation compilation =
@@ -1639,6 +1657,7 @@ public class ComponentProcessorTest {
         .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
   }
 
+  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
   @Test
   public void nullCheckingIgnoredWhenProviderReturnsPrimitive() throws Exception {
     Compilation compilation =
@@ -1687,8 +1706,8 @@ public class ComponentProcessorTest {
 
   @Test
   public void privateMethodUsedOnlyInChildDoesNotUseQualifiedThis() throws Exception {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.Parent",
             "package test;",
             "",
@@ -1700,8 +1719,8 @@ public class ComponentProcessorTest {
             "interface Parent {",
             "  Child child();",
             "}");
-    JavaFileObject testModule =
-        JavaFileObjects.forSourceLines(
+    Source testModule =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -1719,8 +1738,8 @@ public class ComponentProcessorTest {
             "    return number.toString();",
             "  }",
             "}");
-    JavaFileObject child =
-        JavaFileObjects.forSourceLines(
+    Source child =
+        CompilerTests.javaSource(
             "test.Child",
             "package test;",
             "",
@@ -1731,26 +1750,29 @@ public class ComponentProcessorTest {
             "  String string();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(parent, testModule, child);
-    assertThat(compilation).succeededWithoutWarnings();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerParent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParent"));
+    CompilerTests.daggerCompiler(parent, testModule, child)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              // TODO(bcorso): Replace with subject.succeededWithoutWarnings()
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerParent"));
+            });
   }
 
   @Test
   public void componentMethodInChildCallsComponentMethodInParent() throws Exception {
-    JavaFileObject supertype =
-        JavaFileObjects.forSourceLines(
+    Source supertype =
+        CompilerTests.javaSource(
             "test.Supertype",
             "package test;",
             "",
             "interface Supertype {",
             "  String string();",
             "}");
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.Parent",
             "package test;",
             "",
@@ -1762,8 +1784,8 @@ public class ComponentProcessorTest {
             "interface Parent extends Supertype {",
             "  Child child();",
             "}");
-    JavaFileObject testModule =
-        JavaFileObjects.forSourceLines(
+    Source testModule =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -1781,8 +1803,8 @@ public class ComponentProcessorTest {
             "    return number.toString();",
             "  }",
             "}");
-    JavaFileObject child =
-        JavaFileObjects.forSourceLines(
+    Source child =
+        CompilerTests.javaSource(
             "test.Child",
             "package test;",
             "",
@@ -1791,14 +1813,18 @@ public class ComponentProcessorTest {
             "@Subcomponent",
             "interface Child extends Supertype {}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(supertype, parent, testModule, child);
-    assertThat(compilation).succeededWithoutWarnings();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerParent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParent"));
+    CompilerTests.daggerCompiler(supertype, parent, testModule, child)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              // TODO(bcorso): Replace with subject.succeededWithoutWarnings()
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerParent"));
+            });
   }
 
+  // TODO(b/241158653): Requires allowing extra processors with CompilerTests.daggerCompiler().
   @Test
   public void justInTimeAtInjectConstructor_hasGeneratedQualifier() throws Exception {
     JavaFileObject injected =
@@ -1845,7 +1871,7 @@ public class ComponentProcessorTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler(
+        Compilers.daggerCompiler(
                 new GeneratingProcessor(
                     "test.GeneratedQualifier",
                     "package test;",
@@ -1870,6 +1896,7 @@ public class ComponentProcessorTest {
         .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
   }
 
+  // TODO(b/241158653): Requires allowing extra processors with CompilerTests.daggerCompiler().
   @Test
   public void moduleHasGeneratedQualifier() throws Exception {
     JavaFileObject module =
@@ -1906,7 +1933,7 @@ public class ComponentProcessorTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler(
+        Compilers.daggerCompiler(
             new GeneratingProcessor(
                 "test.GeneratedQualifier",
                 "package test;",
@@ -1933,8 +1960,8 @@ public class ComponentProcessorTest {
 
   @Test
   public void publicComponentType() throws Exception {
-    JavaFileObject publicComponent =
-        JavaFileObjects.forSourceLines(
+    Source publicComponent =
+        CompilerTests.javaSource(
             "test.PublicComponent",
             "package test;",
             "",
@@ -1942,25 +1969,26 @@ public class ComponentProcessorTest {
             "",
             "@Component",
             "public interface PublicComponent {}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(publicComponent);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerPublicComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerPublicComponent"));
+    CompilerTests.daggerCompiler(publicComponent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerPublicComponent"));
+            });
   }
 
   @Test
   public void componentFactoryInterfaceTest() {
-    JavaFileObject parentInterface =
-        JavaFileObjects.forSourceLines(
+    Source parentInterface =
+        CompilerTests.javaSource(
             "test.ParentInterface",
             "package test;",
             "",
             "interface ParentInterface extends ChildInterface.Factory {}");
 
-    JavaFileObject childInterface =
-        JavaFileObjects.forSourceLines(
+    Source childInterface =
+        CompilerTests.javaSource(
             "test.ChildInterface",
             "package test;",
             "",
@@ -1970,8 +1998,8 @@ public class ComponentProcessorTest {
             "  }",
             "}");
 
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.Parent",
             "package test;",
             "",
@@ -1980,8 +2008,8 @@ public class ComponentProcessorTest {
             "@Component",
             "interface Parent extends ParentInterface, Child.Factory {}");
 
-    JavaFileObject child =
-        JavaFileObjects.forSourceLines(
+    Source child =
+        CompilerTests.javaSource(
             "test.Child",
             "package test;",
             "",
@@ -1994,8 +2022,8 @@ public class ComponentProcessorTest {
             "  }",
             "}");
 
-    JavaFileObject childModule =
-        JavaFileObjects.forSourceLines(
+    Source childModule =
+        CompilerTests.javaSource(
             "test.ChildModule",
             "package test;",
             "",
@@ -2010,16 +2038,15 @@ public class ComponentProcessorTest {
             "  }",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(parentInterface, childInterface, parent, child, childModule);
-    assertThat(compilation).succeeded();
+    CompilerTests.daggerCompiler(parentInterface, childInterface, parent, child, childModule)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void providerComponentType() throws Exception {
-    JavaFileObject entryPoint =
-        JavaFileObjects.forSourceLines(
+    Source entryPoint =
+        CompilerTests.javaSource(
             "test.SomeEntryPoint",
             "package test;",
             "",
@@ -2029,8 +2056,8 @@ public class ComponentProcessorTest {
             "public class SomeEntryPoint {",
             "  @Inject SomeEntryPoint(Foo foo, Provider<Foo> fooProvider) {}",
             "}");
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -2039,8 +2066,8 @@ public class ComponentProcessorTest {
             "public class Foo {",
             "  @Inject Foo(Bar bar) {}",
             "}");
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -2049,8 +2076,8 @@ public class ComponentProcessorTest {
             "public class Bar {",
             "  @Inject Bar() {}",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -2061,14 +2088,16 @@ public class ComponentProcessorTest {
             "public interface TestComponent {",
             "  SomeEntryPoint someEntryPoint();",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(component, foo, bar, entryPoint);
-
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(component, foo, bar, entryPoint)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
+  // TODO(b/241158653): Requires allowing extra processors with CompilerTests.daggerCompiler().
   @Test
   public void injectedTypeHasGeneratedParam() {
     JavaFileObject foo =
@@ -2100,7 +2129,7 @@ public class ComponentProcessorTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler(
+        Compilers.daggerCompiler(
                 new GeneratingProcessor(
                     "test.GeneratedParam",
                     "package test;",

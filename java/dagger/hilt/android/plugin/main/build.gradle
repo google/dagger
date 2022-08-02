@@ -16,7 +16,7 @@
 
 buildscript {
   ext {
-    agp_version = System.getenv('AGP_VERSION') ?: "7.2.0-alpha06"
+    agp_version = System.getenv('AGP_VERSION') ?: "7.2.0"
   }
 }
 

@@ -243,7 +243,10 @@ public final class ComponentRequestRepresentations {
     // Cast if the expression type does not match the component method's return type. This is useful
     // for types that have protected accessibility to the component but are not accessible to other
     // classes, e.g. shards, that may need to handle the implementation of the binding.
-    XType returnType = componentMethod.methodElement().getReturnType();
+    XType returnType =
+        componentMethod.methodElement()
+            .asMemberOf(componentImplementation.graph().componentTypeElement().getType())
+            .getReturnType();
     return !isVoid(returnType) && !isAssignableTo(expression.type(), returnType)
         ? expression.castTo(returnType)
         : expression;

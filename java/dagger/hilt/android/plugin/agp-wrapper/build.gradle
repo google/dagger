@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-  implementation gradleApi()
+  compileOnly gradleApi()
   compileOnly "com.android.tools.build:gradle:$agp_version"
 }

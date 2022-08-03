@@ -50,6 +50,11 @@ jar {
 shadowJar {
   archiveClassifier = ""
   configurations = [project.configurations.shadowed]
+  dependencies {
+    // Don't jarjar stdlib deps that are automatically added by Kotlin plugin
+    exclude(dependency("org.jetbrains.kotlin::"))
+    exclude(dependency("org.jetbrains:annotations:"))
+  }
 }
 
 dependencies {

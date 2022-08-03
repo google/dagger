@@ -8,7 +8,7 @@ dependencies {
   implementation project(':agp-wrapper-7-0')
   implementation project(':agp-wrapper-7-1')
   implementation project(':agp-wrapper-7-2')
-  implementation gradleApi()
+  compileOnly gradleApi()
   compileOnly "com.android.tools.build:gradle:$agp_version"
 
   testImplementation 'junit:junit:4.12'

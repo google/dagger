@@ -741,7 +741,8 @@ public class AssistedFactoryErrorsTest {
     // Note: this isn't actually a Dagger error, it's a javac error since @AssistedInject only
     // targets constructors. However, it's good to have this test in case that ever changes.
     assertThat(compilation)
-        .hadErrorContaining("annotation type not applicable to this kind of declaration")
+        .hadErrorContainingMatch(
+            "annotation (type|interface) not applicable to this kind of declaration")
         .inFile(foo)
         .onLine(6);
   }

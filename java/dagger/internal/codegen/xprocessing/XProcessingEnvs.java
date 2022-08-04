@@ -22,7 +22,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 
 import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
@@ -150,15 +149,6 @@ public final class XProcessingEnvs {
             .getTypeUtils() // ALLOW_TYPES_ELEMENTS
             .getPrimitiveType(TypeKind.INT),
         processingEnv);
-  }
-
-  // TODO(bcorso): XProcessing currently only supports XType#isSameType().
-  /** Returns {@code true} if {@code type1} is a subtype of {@code type2}. */
-  public static boolean isSameType(
-      XMethodType type1, XMethodType type2, XProcessingEnv processingEnv) {
-    return toJavac(processingEnv)
-        .getTypeUtils() // ALLOW_TYPES_ELEMENTS
-        .isSameType(toJavac(type1), toJavac(type2));
   }
 
   /** Returns {@code true} if {@code type1} is a subtype of {@code type2}. */

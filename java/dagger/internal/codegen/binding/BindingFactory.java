@@ -31,7 +31,6 @@ import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.asVariable;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isSameType;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.spi.model.BindingKind.ASSISTED_FACTORY;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
@@ -232,7 +231,7 @@ public final class BindingFactory {
           Key key,
           BiFunction<XMethodElement, XTypeElement, C> create) {
     XMethodType methodType = method.asMemberOf(contributedBy.getType());
-    if (!isSameType(methodType, method.getExecutableType(), processingEnv)) {
+    if (!methodType.isSameType(method.getExecutableType())) {
       checkState(isTypeElement(method.getEnclosingElement()));
       builder.unresolved(create.apply(method, asTypeElement(method.getEnclosingElement())));
     }

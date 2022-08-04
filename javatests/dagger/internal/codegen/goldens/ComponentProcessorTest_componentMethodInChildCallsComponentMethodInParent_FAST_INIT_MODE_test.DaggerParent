@@ -65,7 +65,7 @@ final class DaggerParent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.numberProvider = DoubleCheck.provider(TestModule_NumberFactory.create());
+      this.numberProvider = DoubleCheck.provider(new SwitchingProvider<Number>(parentImpl, 0));
     }
 
     @Override
@@ -76,6 +76,28 @@ final class DaggerParent {
     @Override
     public Child child() {
       return new ChildImpl(parentImpl);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final ParentImpl parentImpl;
+
+      private final int id;
+
+      SwitchingProvider(ParentImpl parentImpl, int id) {
+        this.parentImpl = parentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // java.lang.Number 
+          return (T) TestModule_NumberFactory.number();
+
+          default: throw new AssertionError(id);
+        }
+      }
     }
   }
 }

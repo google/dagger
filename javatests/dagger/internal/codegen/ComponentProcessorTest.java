@@ -24,6 +24,7 @@ import static dagger.internal.codegen.Compilers.daggerCompiler;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -473,6 +474,11 @@ public class ComponentProcessorTest {
                         "",
                         "@Module",
                         "final class GeneratedModule {}"))
+                .withOptions(
+                    ImmutableList.builder()
+                        .addAll(Compilers.DEFAULT_JAVACOPTS)
+                        .addAll(compilerMode.javacopts())
+                        .build())
                 .compile(rootModule, component))
         .succeeded();
   }
@@ -512,6 +518,11 @@ public class ComponentProcessorTest {
                         "",
                         "@Module",
                         "final class GeneratedModule {}"))
+                .withOptions(
+                    ImmutableList.builder()
+                        .addAll(Compilers.DEFAULT_JAVACOPTS)
+                        .addAll(compilerMode.javacopts())
+                        .build())
                 .compile(subcomponent, component))
         .succeeded();
   }
@@ -1252,7 +1263,11 @@ public class ComponentProcessorTest {
                     "final class GeneratedType {",
                     "  @Inject GeneratedType() {}",
                     "}"))
-            .withOptions(compilerMode.javacopts())
+            .withOptions(
+                ImmutableList.builder()
+                    .addAll(Compilers.DEFAULT_JAVACOPTS)
+                    .addAll(compilerMode.javacopts())
+                    .build())
             .compile(injectableTypeFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation).generatedSourceFile("test.DaggerSimpleComponent");
@@ -1288,7 +1303,11 @@ public class ComponentProcessorTest {
                     "final class GeneratedType {",
                     "  @Inject GeneratedType() {}",
                     "}"))
-            .withOptions(compilerMode.javacopts())
+            .withOptions(
+                ImmutableList.builder()
+                    .addAll(Compilers.DEFAULT_JAVACOPTS)
+                    .addAll(compilerMode.javacopts())
+                    .build())
             .compile(componentFile, interfaceFile);
     assertThat(compilation).succeeded();
     assertThat(compilation).generatedSourceFile("test.DaggerSimpleComponent");
@@ -1564,7 +1583,8 @@ public class ComponentProcessorTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().compile(firstModule, secondModule, bindsModule, component);
+        compilerWithOptions(compilerMode.javacopts())
+            .compile(firstModule, secondModule, bindsModule, component);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
@@ -1711,7 +1731,8 @@ public class ComponentProcessorTest {
             "  String string();",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(parent, testModule, child);
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts()).compile(parent, testModule, child);
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParent")
@@ -1770,7 +1791,8 @@ public class ComponentProcessorTest {
             "@Subcomponent",
             "interface Child extends Supertype {}");
 
-    Compilation compilation = daggerCompiler().compile(supertype, parent, testModule, child);
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts()).compile(supertype, parent, testModule, child);
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParent")
@@ -1836,6 +1858,11 @@ public class ComponentProcessorTest {
                     "@Retention(RUNTIME)",
                     "@Qualifier",
                     "@interface GeneratedQualifier {}"))
+            .withOptions(
+                ImmutableList.builder()
+                    .addAll(Compilers.DEFAULT_JAVACOPTS)
+                    .addAll(compilerMode.javacopts())
+                    .build())
             .compile(injected, module, component);
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
@@ -1892,6 +1919,11 @@ public class ComponentProcessorTest {
                 "@Retention(RUNTIME)",
                 "@Qualifier",
                 "@interface GeneratedQualifier {}"))
+            .withOptions(
+                ImmutableList.builder()
+                    .addAll(Compilers.DEFAULT_JAVACOPTS)
+                    .addAll(compilerMode.javacopts())
+                    .build())
             .compile(module, component);
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
@@ -1910,7 +1942,8 @@ public class ComponentProcessorTest {
             "",
             "@Component",
             "public interface PublicComponent {}");
-    Compilation compilation = daggerCompiler().compile(publicComponent);
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts()).compile(publicComponent);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerPublicComponent")
@@ -1978,7 +2011,8 @@ public class ComponentProcessorTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().compile(parentInterface, childInterface, parent, child, childModule);
+        compilerWithOptions(compilerMode.javacopts())
+            .compile(parentInterface, childInterface, parent, child, childModule);
     assertThat(compilation).succeeded();
   }
 
@@ -2078,6 +2112,11 @@ public class ComponentProcessorTest {
                     "  @Inject",
                     "  public GeneratedParam() {}",
                     "}"))
+            .withOptions(
+                ImmutableList.builder()
+                    .addAll(Compilers.DEFAULT_JAVACOPTS)
+                    .addAll(compilerMode.javacopts())
+                    .build())
             .compile(foo, component);
     assertThat(compilation).succeededWithoutWarnings();
   }

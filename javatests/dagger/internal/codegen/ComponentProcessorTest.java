@@ -804,9 +804,8 @@ public class ComponentProcessorTest {
             });
   }
 
-  // TODO(b/241158653): Requires fix in KspTypeElement.className
   @Test public void arrayComponentDependency() throws Exception {
-    JavaFileObject bFile = JavaFileObjects.forSourceLines("test.B",
+    Source bFile = CompilerTests.javaSource("test.B",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -815,13 +814,13 @@ public class ComponentProcessorTest {
         "final class B {",
         "  @Inject B(Provider<String[]> i) {}",
         "}");
-    JavaFileObject arrayComponentFile = JavaFileObjects.forSourceLines("test.ArrayComponent",
+    Source arrayComponentFile = CompilerTests.javaSource("test.ArrayComponent",
         "package test;",
         "",
         "interface ArrayComponent {",
         "  String[] strings();",
         "}");
-    JavaFileObject bComponentFile = JavaFileObjects.forSourceLines("test.BComponent",
+    Source bComponentFile = CompilerTests.javaSource("test.BComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -831,13 +830,13 @@ public class ComponentProcessorTest {
         "  B b();",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(bFile, arrayComponentFile, bComponentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerBComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerBComponent"));
+    CompilerTests.daggerCompiler(bFile, arrayComponentFile, bComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerBComponent"));
+            });
   }
 
   @Test public void dependencyNameCollision() throws Exception {
@@ -1221,12 +1220,11 @@ public class ComponentProcessorTest {
             "test.B<? extends test.A> cannot be provided without an @Provides-annotated method");
   }
 
-  // TODO(b/241158653): Requires fix in KspTypeElement.className
   // https://github.com/google/dagger/issues/630
   @Test
   public void arrayKeyRequiresAtProvides() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -1236,11 +1234,15 @@ public class ComponentProcessorTest {
             "interface TestComponent {",
             "  String[] array();",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("String[] cannot be provided without an @Provides-annotated method");
+
+    CompilerTests.daggerCompiler(component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "String[] cannot be provided without an @Provides-annotated method");
+            });
   }
 
   // TODO(b/241158653): Requires allowing extra processors with CompilerTests.daggerCompiler().

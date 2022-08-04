@@ -154,7 +154,9 @@ public final class XTypes {
 
   /** Returns {@code true} if the given type is a declared type. */
   public static boolean isDeclared(XType type) {
-    return type.getTypeElement() != null;
+    // TODO(b/241477426): Due to a bug in XProcessing, array types accidentally get assigned an
+    // invalid XTypeElement, so we check explicitly until this is fixed.
+    return !isArray(type) && type.getTypeElement() != null;
   }
 
   /** Returns {@code true} if the given type is a type variable. */

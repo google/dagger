@@ -221,7 +221,14 @@ public final class XTypes {
   }
 
   public static String toStableString(XType type) {
-    return toStableString(type.getTypeName());
+    XProcessingEnv.Backend backend = getProcessingEnv(type).getBackend();
+    switch (backend) {
+      case JAVAC:
+        return type.toString();
+      case KSP:
+        return toStableString(type.getTypeName());
+    }
+    throw new AssertionError("Unexpected backend: " + backend);
   }
 
   // TODO(b/241141586): Replace this with TypeName.toString() once we've fixed breakages.

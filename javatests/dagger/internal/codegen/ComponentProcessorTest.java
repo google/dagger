@@ -65,7 +65,7 @@ public class ComponentProcessorTest {
   }
 
   @Test public void doubleBindingFromResolvedModules() {
-    Source parent = CompilerTests.javaSource("test.ParentModule",
+    JavaFileObject parent = JavaFileObjects.forSourceLines("test.ParentModule",
         "package test;",
         "",
         "import dagger.Module;",
@@ -76,7 +76,7 @@ public class ComponentProcessorTest {
         "abstract class ParentModule<A> {",
         "  @Provides List<A> provideListB(A a) { return null; }",
         "}");
-    Source child = CompilerTests.javaSource("test.ChildNumberModule",
+    JavaFileObject child = JavaFileObjects.forSourceLines("test.ChildModule",
         "package test;",
         "",
         "import dagger.Module;",
@@ -86,7 +86,7 @@ public class ComponentProcessorTest {
         "class ChildNumberModule extends ParentModule<Integer> {",
         "  @Provides Integer provideInteger() { return null; }",
         "}");
-    Source another = CompilerTests.javaSource("test.AnotherModule",
+    JavaFileObject another = JavaFileObjects.forSourceLines("test.AnotherModule",
         "package test;",
         "",
         "import dagger.Module;",
@@ -97,7 +97,7 @@ public class ComponentProcessorTest {
         "class AnotherModule {",
         "  @Provides List<Integer> provideListOfInteger() { return null; }",
         "}");
-    Source componentFile = CompilerTests.javaSource("test.BadComponent",
+    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.BadComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -108,17 +108,16 @@ public class ComponentProcessorTest {
         "  List<Integer> listOfInteger();",
         "}");
 
-    CompilerTests.daggerCompiler(parent, child, another, componentFile)
-        .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(1);
-              subject.hasErrorContaining("List<Integer> is bound multiple times");
-              subject.hasErrorContaining(
-                  "@Provides List<Integer> ChildNumberModule.provideListB(Integer)");
-              subject.hasErrorContaining(
-                  "@Provides List<Integer> AnotherModule.provideListOfInteger()");
-            });
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts())
+            .compile(parent, child, another, componentFile);
+    assertThat(compilation).failed();
+    assertThat(compilation)
+        .hadErrorContaining("List<Integer> is bound multiple times");
+    assertThat(compilation)
+        .hadErrorContaining("@Provides List<Integer> ChildNumberModule.provideListB(Integer)");
+    assertThat(compilation)
+        .hadErrorContaining("@Provides List<Integer> AnotherModule.provideListOfInteger()");
   }
 
   @Test public void privateNestedClassWithWarningThatIsAnErrorInComponent() {
@@ -1553,8 +1552,8 @@ public class ComponentProcessorTest {
 
   @Test
   public void bindsToDuplicateBinding_bindsKeyIsNotDuplicated() {
-    Source firstModule =
-        CompilerTests.javaSource(
+    JavaFileObject firstModule =
+        JavaFileObjects.forSourceLines(
             "test.FirstModule",
             "package test;",
             "",
@@ -1565,8 +1564,8 @@ public class ComponentProcessorTest {
             "abstract class FirstModule {",
             "  @Provides static String first() { return \"first\"; }",
             "}");
-    Source secondModule =
-        CompilerTests.javaSource(
+    JavaFileObject secondModule =
+        JavaFileObjects.forSourceLines(
             "test.SecondModule",
             "package test;",
             "",
@@ -1577,8 +1576,8 @@ public class ComponentProcessorTest {
             "abstract class SecondModule {",
             "  @Provides static String second() { return \"second\"; }",
             "}");
-    Source bindsModule =
-        CompilerTests.javaSource(
+    JavaFileObject bindsModule =
+        JavaFileObjects.forSourceLines(
             "test.BindsModule",
             "package test;",
             "",
@@ -1589,8 +1588,8 @@ public class ComponentProcessorTest {
             "abstract class BindsModule {",
             "  @Binds abstract Object bindToDuplicateBinding(String duplicate);",
             "}");
-    Source component =
-        CompilerTests.javaSource(
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
             "test.TestComponent",
             "package test;",
             "",
@@ -1601,15 +1600,15 @@ public class ComponentProcessorTest {
             "  Object notDuplicated();",
             "}");
 
-    CompilerTests.daggerCompiler(firstModule, secondModule, bindsModule, component)
-        .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(1);
-              subject.hasErrorContaining("String is bound multiple times")
-                  .onSource(component)
-                  .onLineContaining("interface TestComponent");
-            });
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts())
+            .compile(firstModule, secondModule, bindsModule, component);
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining("String is bound multiple times")
+        .inFile(component)
+        .onLineContaining("interface TestComponent");
   }
 
   // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).

@@ -40,7 +40,9 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import javax.lang.model.type.TypeKind;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
@@ -220,30 +222,34 @@ public final class XTypes {
     return getOnlyElement(type.getTypeArguments(), defaultType);
   }
 
+  /**
+   * Returns a string representation of {@link XType} that is independent of the backend
+   * (javac/ksp).
+   */
+  // TODO(b/241141586): Replace this with TypeName.toString(). Technically, TypeName.toString()
+  // should already be independent of the backend but we supply our own custom implementation to
+  // remain backwards compatible with the previous implementation, which used TypeMirror#toString().
   public static String toStableString(XType type) {
-    XProcessingEnv.Backend backend = getProcessingEnv(type).getBackend();
-    switch (backend) {
-      case JAVAC:
-        return type.toString();
-      case KSP:
-        return toStableString(type.getTypeName());
-    }
-    throw new AssertionError("Unexpected backend: " + backend);
+    return toStableString(type.getTypeName(), /* visitedTypeVariables= */ new HashSet<>());
   }
 
-  // TODO(b/241141586): Replace this with TypeName.toString() once we've fixed breakages.
-  private static String toStableString(TypeName typeName) {
+  // Note: This method keeps track of the already visited type variables to avoid infinite recursion
+  // for types like Enum<E extends Enum<E>>. We avoid the recursion by only outputting the type
+  // variable's name (without any bounds) on subsequent visits.
+  private static String toStableString(
+      TypeName typeName, Set<TypeVariableName> visitedTypeVariables) {
     if (typeName instanceof ClassName) {
       return ((ClassName) typeName).canonicalName();
     } else if (typeName instanceof ArrayTypeName) {
-      return String.format("%s[]", toStableString(((ArrayTypeName) typeName).componentType));
+      return String.format(
+          "%s[]", toStableString(((ArrayTypeName) typeName).componentType, visitedTypeVariables));
     } else if (typeName instanceof ParameterizedTypeName) {
       ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) typeName;
       return String.format(
           "%s<%s>",
           parameterizedTypeName.rawType,
           parameterizedTypeName.typeArguments.stream()
-              .map(XTypes::toStableString)
+              .map(typeArg -> toStableString(typeArg, visitedTypeVariables))
               // We purposely don't use a space after the comma to for backwards compatibility with
               // usages that depended on the previous TypeMirror#toString() implementation.
               .collect(joining(",")));
@@ -254,27 +260,28 @@ public final class XTypes {
       if (!upperBound.equals(TypeName.OBJECT)) {
         // Wildcards with non-Object upper bounds can't have lower bounds.
         checkState(wildcardTypeName.lowerBounds.isEmpty());
-        return String.format("? extends %s", toStableString(upperBound));
+        return String.format("? extends %s", toStableString(upperBound, visitedTypeVariables));
       }
       if (!wildcardTypeName.lowerBounds.isEmpty()) {
         // Wildcard types can have at most 1 lower bound.
         TypeName lowerBound = getOnlyElement(wildcardTypeName.lowerBounds);
-        return String.format("? super %s", toStableString(lowerBound));
+        return String.format("? super %s", toStableString(lowerBound, visitedTypeVariables));
       }
       // If the upper bound is Object and there is no lower bound then just use "?".
       return "?";
     } else if (typeName instanceof TypeVariableName) {
       TypeVariableName typeVariableName = (TypeVariableName) typeName;
-      if (typeVariableName.bounds.isEmpty()) {
+      if (typeVariableName.bounds.isEmpty() || !visitedTypeVariables.add(typeVariableName)) {
         return typeVariableName.name;
       } else {
         return String.format(
             // Type variables can only have "extends" bounds (no "super" bounds).
             "%s extends %s",
             typeVariableName.name,
-            // Multiple bounds must be an intersection type (using "&"), union type is not allowed.
+            // Multiple bounds must be an intersection type (using "&").
+            // A union type (using "|") is not allowed here.
             typeVariableName.bounds.stream()
-                .map(XTypes::toStableString)
+                .map(bound -> toStableString(bound, visitedTypeVariables))
                 .collect(joining(" & ")));
       }
     } else {

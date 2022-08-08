@@ -21,6 +21,7 @@ import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Joiner;
+import dagger.internal.codegen.xprocessing.XAnnotations;
 import java.util.Optional;
 
 /**
@@ -88,7 +89,10 @@ public abstract class Key {
     return Joiner.on(' ')
         .skipNulls()
         .join(
-            qualifier().map(MoreAnnotationMirrors::toStableString).orElse(null),
+            qualifier()
+                .map(DaggerAnnotation::xprocessing)
+                .map(XAnnotations::toStableString)
+                .orElse(null),
             type(),
             multibindingContributionIdentifier().orElse(null));
   }

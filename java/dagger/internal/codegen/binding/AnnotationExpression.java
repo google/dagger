@@ -17,12 +17,12 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.XTypeKt.isArray;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
+import static dagger.internal.codegen.xprocessing.XAnnotations.characterLiteralWithSingleQuotes;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.asArray;
 
@@ -127,9 +127,8 @@ public final class AnnotationExpression {
     } else if (value.hasByteValue()) {
       return CodeBlock.of("(byte) $L", value.asByte());
     } else if (value.hasCharValue()) {
-      // TODO(bcorso): This relies on AnnotationValue.toString() to properly output escaped
-      // characters like '\n'. See https://github.com/square/javapoet/issues/698.
-      return CodeBlock.of("$L", toJavac(value));
+      // TODO(bcorso): Replace when https://github.com/square/javapoet/issues/698 is fixed.
+      return CodeBlock.of("$L", characterLiteralWithSingleQuotes(value.asChar()));
     } else if (value.hasDoubleValue()) {
       return CodeBlock.of("$LD", value.asDouble());
     } else if (value.hasFloatValue()) {

@@ -50,6 +50,7 @@ import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ComponentRequirement.NullPolicy;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Optional;
@@ -61,10 +62,13 @@ import javax.lang.model.element.Modifier;
 /** Factory for creating {@link ComponentCreatorImplementation} instances. */
 final class ComponentCreatorImplementationFactory {
 
+  private final CompilerOptions compilerOptions;
   private final ComponentImplementation componentImplementation;
 
   @Inject
-  ComponentCreatorImplementationFactory(ComponentImplementation componentImplementation) {
+  ComponentCreatorImplementationFactory(
+      CompilerOptions compilerOptions, ComponentImplementation componentImplementation) {
+    this.compilerOptions = compilerOptions;
     this.componentImplementation = componentImplementation;
   }
 
@@ -256,9 +260,10 @@ final class ComponentCreatorImplementationFactory {
 
     private MethodSpec maybeReturnThis(MethodSpec.Builder method) {
       MethodSpec built = method.build();
-      return built.returnType.equals(TypeName.VOID)
-          ? built
-          : method.addStatement("return this").build();
+      if (built.returnType.equals(TypeName.VOID)) {
+        return built;
+      }
+      return method.addStatement("return this").build();
     }
 
     private void addFactoryMethod() {

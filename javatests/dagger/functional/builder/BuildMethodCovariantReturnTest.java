@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Dagger Authors.
+ * Copyright (C) 2017 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,26 @@
 
 package dagger.functional.builder;
 
-import dagger.Module;
-import dagger.Provides;
+import static com.google.common.truth.Truth.assertThat;
 
-@Module(includes = { DoubleModule.class, FloatModule.class })
-class IntModuleIncludingDoubleAndFloat {
-  final int integer;
+import dagger.Component;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-  IntModuleIncludingDoubleAndFloat(int integer) {
-    this.integer = integer;
+@RunWith(JUnit4.class)
+public final class BuildMethodCovariantReturnTest {
+  @Component
+  interface C {
+    @Component.Builder
+    interface Builder {
+      Object build();
+    }
   }
-  
-  @Provides
-  int integer() {
-    return integer;
+
+  @Test
+  public void componentTest() {
+    Object component = DaggerBuildMethodCovariantReturnTest_C.builder().build();
+    assertThat(component).isInstanceOf(C.class);
   }
 }

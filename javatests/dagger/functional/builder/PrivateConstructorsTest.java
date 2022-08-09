@@ -16,11 +16,17 @@
 
 package dagger.functional.builder;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-final class PrivateConstructors {
+@RunWith(JUnit4.class)
+public final class PrivateConstructorsTest {
   @Module
   static final class M {
     @Provides
@@ -40,5 +46,11 @@ final class PrivateConstructors {
       // M should not be required, even though the constructor is inaccessible
       C build();
     }
+  }
+
+  @Test
+  public void componentTest() {
+    C component = DaggerPrivateConstructorsTest_C.builder().build();
+    assertThat(component.string()).isEqualTo("str");
   }
 }

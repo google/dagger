@@ -75,7 +75,9 @@ abstract class TypeCheckingProcessingStep<E extends XElement> implements XProces
                 // TODO(b/201479062): It's inefficient to require validation of the entire enclosing
                 //  type, we should try to remove this and handle any additional validation into the
                 //  steps that need it.
-                superficialValidator.throwIfNearestEnclosingTypeNotValid(element);
+                if (requiresPreValidation()) {
+                  superficialValidator.throwIfNearestEnclosingTypeNotValid(element);
+                }
                 process((E) element, annotations);
               } catch (TypeNotPresentException e) {
                 // TODO(bcorso): We should be able to remove this once we replace all calls to
@@ -95,6 +97,15 @@ abstract class TypeCheckingProcessingStep<E extends XElement> implements XProces
               }
             });
     return deferredElements.build();
+  }
+
+  /**
+   * Returns {@code true} if this processing step requires pre-validation of the annotated element's
+   * nearest enclosing type element.
+   */
+  // TODO(bcorso): Once all processing steps handle their own validation we can remove this.
+  protected boolean requiresPreValidation() {
+    return true;
   }
 
   @Override

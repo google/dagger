@@ -53,6 +53,14 @@ final class InjectProcessingStep extends TypeCheckingProcessingStep<XElement> {
     return ImmutableSet.of(TypeNames.INJECT, TypeNames.INJECT_JAVAX, TypeNames.ASSISTED_INJECT);
   }
 
+  // Override to avoid prevalidation. The InjectProcessingStep does all of the required validation
+  // within InjectValidator so there's no need to prevalidate the nearest enclosing type element.
+  // TODO(bcorso): Once all processing steps handle their own validation we can remove this.
+  @Override
+  protected boolean requiresPreValidation() {
+    return false;
+  }
+
   @Override
   protected void process(XElement injectElement, ImmutableSet<ClassName> annotations) {
     // Only process an element once to avoid getting duplicate errors when an element is annotated

@@ -53,10 +53,17 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 public final class AndroidProcessor extends BasicAnnotationProcessor {
   private static final String FLAG_EXPERIMENTAL_USE_STRING_KEYS =
       "dagger.android.experimentalUseStringKeys";
+  private static final String FLAG_FORMAT_GENERATED_SOURCES =
+      "dagger.formatGeneratedSource";
 
   @Override
   protected Iterable<? extends Step> steps() {
-    Filer filer = new FormattingFiler(processingEnv.getFiler());
+    Filer filer;
+    if (formatGeneratedSources()) {
+      filer = new FormattingFiler(processingEnv.getFiler());
+    } else {
+      filer = processingEnv.getFiler();
+    }
     Messager messager = processingEnv.getMessager();
     Elements elements = processingEnv.getElementUtils();
     Types types = processingEnv.getTypeUtils();
@@ -88,6 +95,27 @@ public final class AndroidProcessor extends BasicAnnotationProcessor {
               String.format(
                   "Unknown flag value: %s. %s must be set to either 'true' or 'false'.",
                   flagValue, FLAG_EXPERIMENTAL_USE_STRING_KEYS));
+      return false;
+    }
+  }
+
+  private boolean formatGeneratedSources() {
+    if (!processingEnv.getOptions().containsKey(FLAG_FORMAT_GENERATED_SOURCES)) {
+      return false;
+    }
+    String flagValue = processingEnv.getOptions().get(FLAG_FORMAT_GENERATED_SOURCES);
+    if (Ascii.equalsIgnoreCase(flagValue, "enabled")) {
+      return true;
+    } else if (flagValue == null || Ascii.equalsIgnoreCase(flagValue, "disabled")) {
+      return false;
+    } else {
+      processingEnv
+          .getMessager()
+          .printMessage(
+              ERROR,
+              String.format(
+                  "Unknown flag value: %s. %s must be set to either 'enabled' or 'disabled'.",
+                  flagValue, FLAG_FORMAT_GENERATED_SOURCES));
       return false;
     }
   }

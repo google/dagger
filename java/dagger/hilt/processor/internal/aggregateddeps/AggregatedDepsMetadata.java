@@ -189,14 +189,17 @@ public abstract class AggregatedDepsMetadata {
     checkNotNull(entryPointsValue);
     checkNotNull(componentEntryPointsValue);
 
-    return elements.getTypeElement(
+    String dependencyName =
         AnnotationValues.getString(
             getOnlyElement(
                 ImmutableSet.<AnnotationValue>builder()
                     .addAll(AnnotationValues.getAnnotationValues(modulesValue))
                     .addAll(AnnotationValues.getAnnotationValues(entryPointsValue))
                     .addAll(AnnotationValues.getAnnotationValues(componentEntryPointsValue))
-                    .build())));
+                    .build()));
+    TypeElement dependency = elements.getTypeElement(dependencyName);
+    checkNotNull(dependency, "Could not get element for %s", dependencyName);
+    return dependency;
   }
 
   private static ImmutableSet<TypeElement> getReplacedDependencies(

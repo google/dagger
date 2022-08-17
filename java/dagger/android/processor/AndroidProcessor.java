@@ -24,7 +24,6 @@ import com.google.auto.service.AutoService;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.googlejavaformat.java.filer.FormattingFiler;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
@@ -56,7 +55,7 @@ public final class AndroidProcessor extends BasicAnnotationProcessor {
 
   @Override
   protected Iterable<? extends Step> steps() {
-    Filer filer = new FormattingFiler(processingEnv.getFiler());
+    Filer filer = processingEnv.getFiler();
     Messager messager = processingEnv.getMessager();
     Elements elements = processingEnv.getElementUtils();
     Types types = processingEnv.getTypeUtils();

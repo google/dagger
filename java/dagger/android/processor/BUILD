@@ -44,7 +44,6 @@ java_library(
         "//third_party/java/auto:common",
         "//third_party/java/auto:service",
         "//third_party/java/auto:value",
-        "//third_party/java/google_java_format",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/incap",

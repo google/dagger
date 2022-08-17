@@ -18,8 +18,10 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.compile.CompilerTests;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -90,5 +92,10 @@ final class JavaFileBuilder {
   /** Builds the {@link JavaFileObject}. */
   JavaFileObject build() {
     return JavaFileObjects.forSourceLines(qualifiedName, sourceLines.build());
+  }
+
+  /** Builds the {@link Source}. */
+  Source buildSource() {
+    return CompilerTests.javaSource(qualifiedName, sourceLines.build().toArray(new String[] {}));
   }
 }

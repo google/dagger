@@ -21,11 +21,13 @@ import static dagger.internal.codegen.base.ComponentCreatorKind.FACTORY;
 import static dagger.internal.codegen.binding.ErrorMessages.creatorMessagesFor;
 import static java.util.stream.Collectors.joining;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
 import dagger.internal.codegen.base.ComponentCreatorKind;
 import dagger.internal.codegen.binding.ErrorMessages;
+import dagger.testing.compile.CompilerTests;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import javax.tools.JavaFileObject;
@@ -70,6 +72,14 @@ abstract class ComponentCreatorTestHelper {
                       .replace("build", "createComponent"));
     }
     return stream.collect(joining("\n"));
+  }
+
+  /**
+   * Returns a Java source with the {@linkplain #process(String...)} processed} versions of the
+   * given lines.
+   */
+  Source preprocessedJavaSource(String fullyQualifiedName, String... lines) {
+    return CompilerTests.javaSource(fullyQualifiedName, process(lines));
   }
 
   /**

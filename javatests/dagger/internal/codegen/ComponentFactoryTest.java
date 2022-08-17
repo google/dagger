@@ -114,7 +114,10 @@ public class ComponentFactoryTest {
         compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(String.format(MSGS.twoFactoryMethods(), "create()"))
+        .hadErrorContaining(
+            String.format(
+                MSGS.twoFactoryMethods(),
+                "test.SimpleComponent test.SimpleComponent.Factory.create()"))
         .inFile(componentFile)
         .onLineContaining("Factory set(String s);");
   }
@@ -143,7 +146,10 @@ public class ComponentFactoryTest {
         compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(String.format(MSGS.twoFactoryMethods(), "create()"))
+        .hadErrorContaining(
+            String.format(
+                MSGS.twoFactoryMethods(),
+                "test.SimpleComponent test.SimpleComponent.Parent.create()"))
         .inFile(componentFile)
         .onLineContaining("interface Factory");
   }

@@ -214,7 +214,8 @@ public final class ComponentValidator implements ClearableCache {
       if (creators.size() > 1) {
         report.addError(
             String.format(
-                ErrorMessages.componentMessagesFor(componentKind()).moreThanOne(), creators),
+                ErrorMessages.componentMessagesFor(componentKind()).moreThanOne(),
+                creators.stream().map(XTypeElement::getQualifiedName).collect(toImmutableSet())),
             component);
       }
     }

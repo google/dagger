@@ -16,29 +16,42 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.SUBCOMPONENT_BUILDER;
 import static dagger.internal.codegen.binding.ErrorMessages.creatorMessagesFor;
 
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import androidx.room.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.binding.ErrorMessages;
-import javax.tools.JavaFileObject;
+import dagger.testing.compile.CompilerTests;
+import dagger.testing.golden.GoldenFileRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /** Tests for {@link dagger.Subcomponent.Builder} validation. */
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class SubcomponentBuilderValidationTest {
+  @Parameters(name = "{0}")
+  public static ImmutableList<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
+
+  private final CompilerMode compilerMode;
+
+  public SubcomponentBuilderValidationTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
 
   private static final ErrorMessages.ComponentCreatorMessages MSGS =
       creatorMessagesFor(SUBCOMPONENT_BUILDER);
 
   @Test
   public void testMoreThanOneArgFails() {
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
+    Source childComponentFile = CompilerTests.javaSource("test.ChildComponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
@@ -52,21 +65,26 @@ public class SubcomponentBuilderValidationTest {
         "    Builder set(Number n, Double d);",
         "  }",
         "}");
-    Compilation compilation = daggerCompiler().compile(childComponentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(MSGS.setterMethodsMustTakeOneArg())
-        .inFile(childComponentFile)
-        .onLine(10);
-    assertThat(compilation)
-        .hadErrorContaining(MSGS.setterMethodsMustTakeOneArg())
-        .inFile(childComponentFile)
-        .onLine(11);
+
+    CompilerTests.daggerCompiler(childComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject
+                  .hasErrorContaining(MSGS.setterMethodsMustTakeOneArg())
+                  .onSource(childComponentFile)
+                  .onLine(10);
+              subject
+                  .hasErrorContaining(MSGS.setterMethodsMustTakeOneArg())
+                  .onSource(childComponentFile)
+                  .onLine(11);
+            });
   }
 
   @Test
   public void testInheritedMoreThanOneArgFails() {
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
+     Source childComponentFile = CompilerTests.javaSource("test.ChildComponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
@@ -81,20 +99,26 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  interface Builder extends Parent {}",
         "}");
-    Compilation compilation = daggerCompiler().compile(childComponentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            String.format(
-                MSGS.inheritedSetterMethodsMustTakeOneArg(),
-                "set1(java.lang.String,java.lang.Integer)"))
-        .inFile(childComponentFile)
-        .onLine(13);
+
+    String expectedErrorMsg =
+        String.format(
+            MSGS.inheritedSetterMethodsMustTakeOneArg(),
+            "test.ChildComponent.Builder test.ChildComponent.Parent.set1(String, Integer)");
+    CompilerTests.daggerCompiler(childComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(expectedErrorMsg)
+                  .onSource(childComponentFile)
+                  .onLine(13);
+            });
   }
 
   @Test
   public void testSetterReturningNonVoidOrBuilderFails() {
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
+     Source childComponentFile = CompilerTests.javaSource("test.ChildComponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
@@ -107,17 +131,22 @@ public class SubcomponentBuilderValidationTest {
         "    String set(Integer i);",
         "  }",
         "}");
-    Compilation compilation = daggerCompiler().compile(childComponentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(MSGS.setterMethodsMustReturnVoidOrBuilder())
-        .inFile(childComponentFile)
-        .onLine(10);
+
+    CompilerTests.daggerCompiler(childComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(MSGS.setterMethodsMustReturnVoidOrBuilder())
+                  .onSource(childComponentFile)
+                  .onLine(10);
+            });
   }
 
   @Test
   public void testInheritedSetterReturningNonVoidOrBuilderFails() {
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
+     Source childComponentFile = CompilerTests.javaSource("test.ChildComponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
@@ -132,19 +161,25 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  interface Builder extends Parent {}",
         "}");
-    Compilation compilation = daggerCompiler().compile(childComponentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            String.format(
-                MSGS.inheritedSetterMethodsMustReturnVoidOrBuilder(), "set(java.lang.Integer)"))
-        .inFile(childComponentFile)
-        .onLine(13);
+
+    CompilerTests.daggerCompiler(childComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      String.format(
+                          MSGS.inheritedSetterMethodsMustReturnVoidOrBuilder(),
+                          "String test.ChildComponent.Parent.set(Integer)"))
+                  .onSource(childComponentFile)
+                  .onLine(13);
+            });
   }
 
   @Test
   public void testGenericsOnSetterMethodFails() {
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
+     Source childComponentFile = CompilerTests.javaSource("test.ChildComponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
@@ -157,17 +192,22 @@ public class SubcomponentBuilderValidationTest {
         "    <T> Builder set(T t);",
         "  }",
         "}");
-    Compilation compilation = daggerCompiler().compile(childComponentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
-        .inFile(childComponentFile)
-        .onLine(10);
+
+    CompilerTests.daggerCompiler(childComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
+                  .onSource(childComponentFile)
+                  .onLine(10);
+            });
   }
 
   @Test
   public void testGenericsOnInheritedSetterMethodFails() {
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
+     Source childComponentFile = CompilerTests.javaSource("test.ChildComponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
@@ -182,12 +222,19 @@ public class SubcomponentBuilderValidationTest {
         "  @Subcomponent.Builder",
         "  interface Builder extends Parent {}",
         "}");
-    Compilation compilation = daggerCompiler().compile(childComponentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            String.format(MSGS.inheritedMethodsMayNotHaveTypeParameters(), "<T>set(T)"))
-        .inFile(childComponentFile)
-        .onLine(13);
+
+    CompilerTests.daggerCompiler(childComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      String.format(
+                          MSGS.inheritedMethodsMayNotHaveTypeParameters(),
+                          "test.ChildComponent.Builder test.ChildComponent.Parent.set(T)"))
+                  .onSource(childComponentFile)
+                  .onLine(13);
+            });
   }
 }

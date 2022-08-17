@@ -43,6 +43,8 @@ java_library(
     deps = [
         "//java/dagger/internal/codegen:package_info",
         "//java/dagger/internal/codegen:processor",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//java/dagger/testing/compile",
         "//third_party/java/compile_testing",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",

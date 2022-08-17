@@ -16,17 +16,14 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.COMPONENT_BUILDER;
 import static dagger.internal.codegen.binding.ErrorMessages.creatorMessagesFor;
 
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import androidx.room.compiler.processing.util.Source;
 import dagger.internal.codegen.binding.ErrorMessages;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,8 +51,8 @@ public class ComponentBuilderTest {
 
   @Test
   public void testUsesBuildAndSetterNames() throws Exception {
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
+    Source moduleFile =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -67,8 +64,8 @@ public class ComponentBuilderTest {
             "  @Provides String string() { return null; }",
             "}");
 
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -84,18 +81,20 @@ public class ComponentBuilderTest {
             "    TestComponent create();",
             "  }",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(moduleFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+
+    CompilerTests.daggerCompiler(moduleFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void testSetterMethodWithMoreThanOneArgFails() {
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -111,23 +110,27 @@ public class ComponentBuilderTest {
             "    Builder set(Number n, Double d);",
             "  }",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(MSGS.setterMethodsMustTakeOneArg())
-        .inFile(componentFile)
-        .onLineContaining("Builder set(String s, Integer i);");
-    assertThat(compilation)
-        .hadErrorContaining(MSGS.setterMethodsMustTakeOneArg())
-        .inFile(componentFile)
-        .onLineContaining("Builder set(Number n, Double d);");
+
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject
+                  .hasErrorContaining(MSGS.setterMethodsMustTakeOneArg())
+                  .onSource(componentFile)
+                  .onLineContaining("Builder set(String s, Integer i);");
+              subject
+                  .hasErrorContaining(MSGS.setterMethodsMustTakeOneArg())
+                  .onSource(componentFile)
+                  .onLineContaining("Builder set(Number n, Double d);");
+            });
   }
 
   @Test
   public void testInheritedSetterMethodWithMoreThanOneArgFails() {
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -144,22 +147,27 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            String.format(
-                MSGS.inheritedSetterMethodsMustTakeOneArg(),
-                "set1(java.lang.String,java.lang.Integer)"))
-        .inFile(componentFile)
-        .onLineContaining("interface Builder");
+
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      String.format(
+                          MSGS.inheritedSetterMethodsMustTakeOneArg(),
+                          "test.SimpleComponent.Builder test.SimpleComponent.Parent.set1("
+                              + "String, Integer)"))
+                  .onSource(componentFile)
+                  .onLineContaining("interface Builder");
+            });
   }
 
   @Test
   public void testSetterReturningNonVoidOrBuilderFails() {
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -174,19 +182,23 @@ public class ComponentBuilderTest {
             "    String set(Integer i);",
             "  }",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(MSGS.setterMethodsMustReturnVoidOrBuilder())
-        .inFile(componentFile)
-        .onLineContaining("String set(Integer i);");
+
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(MSGS.setterMethodsMustReturnVoidOrBuilder())
+                  .onSource(componentFile)
+                  .onLineContaining("String set(Integer i);");
+            });
   }
 
   @Test
   public void testInheritedSetterReturningNonVoidOrBuilderFails() {
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -203,21 +215,26 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            String.format(
-                MSGS.inheritedSetterMethodsMustReturnVoidOrBuilder(), "set(java.lang.Integer)"))
-        .inFile(componentFile)
-        .onLineContaining("interface Builder");
+
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      String.format(
+                          MSGS.inheritedSetterMethodsMustReturnVoidOrBuilder(),
+                          "String test.SimpleComponent.Parent.set(Integer)"))
+                  .onSource(componentFile)
+                  .onLineContaining("interface Builder");
+            });
   }
 
   @Test
   public void testGenericsOnSetterMethodFails() {
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -232,19 +249,23 @@ public class ComponentBuilderTest {
             "    <T> Builder set(T t);",
             "  }",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
-        .inFile(componentFile)
-        .onLineContaining("<T> Builder set(T t);");
+
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(MSGS.methodsMayNotHaveTypeParameters())
+                  .onSource(componentFile)
+                  .onLineContaining("<T> Builder set(T t);");
+            });
   }
 
   @Test
   public void testGenericsOnInheritedSetterMethodFails() {
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -261,20 +282,26 @@ public class ComponentBuilderTest {
             "  @Component.Builder",
             "  interface Builder extends Parent {}",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            String.format(MSGS.inheritedMethodsMayNotHaveTypeParameters(), "<T>set(T)"))
-        .inFile(componentFile)
-        .onLineContaining("interface Builder");
+
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      String.format(
+                          MSGS.inheritedMethodsMayNotHaveTypeParameters(),
+                          "test.SimpleComponent.Builder test.SimpleComponent.Parent.set(T)"))
+                  .onSource(componentFile)
+                  .onLineContaining("interface Builder");
+            });
   }
 
   @Test
   public void testBindsInstanceNotAllowedOnBothSetterAndParameter() {
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -294,19 +321,22 @@ public class ComponentBuilderTest {
             "  }",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(MSGS.bindsInstanceNotAllowedOnBothSetterMethodAndParameter())
-        .inFile(componentFile)
-        .onLineContaining("Builder s(");
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(MSGS.bindsInstanceNotAllowedOnBothSetterMethodAndParameter())
+                  .onSource(componentFile)
+                  .onLineContaining("Builder s(");
+            });
   }
 
   @Test
   public void testBindsInstanceNotAllowedOnBothSetterAndParameter_inherited() {
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -328,15 +358,18 @@ public class ComponentBuilderTest {
             "  }",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            String.format(
-                MSGS.inheritedBindsInstanceNotAllowedOnBothSetterMethodAndParameter(),
-                "s(java.lang.String)"))
-        .inFile(componentFile)
-        .onLineContaining("Builder extends BuilderParent<Builder>");
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      String.format(
+                          MSGS.inheritedBindsInstanceNotAllowedOnBothSetterMethodAndParameter(),
+                          "@BindsInstance B test.SimpleComponent.BuilderParent.s(String)"))
+                  .onSource(componentFile)
+                  .onLineContaining("Builder extends BuilderParent<Builder>");
+            });
   }
 }

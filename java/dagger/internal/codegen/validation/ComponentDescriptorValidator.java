@@ -27,13 +27,13 @@ import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypeP
 import static dagger.internal.codegen.base.Formatter.INDENT;
 import static dagger.internal.codegen.base.Scopes.getReadableSource;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSetMultimap;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asMethodParameter;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room.compiler.processing.XAnnotation;
@@ -63,6 +63,7 @@ import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ValidationType;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.xprocessing.XTypes;
 import dagger.spi.model.Scope;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -323,7 +324,10 @@ public final class ComponentDescriptorValidator {
             .addError(
                 String.format(
                     messages.missingSetters(),
-                    missingRequirements.stream().map(ComponentRequirement::type).collect(toList())),
+                    missingRequirements.stream()
+                        .map(ComponentRequirement::type)
+                        .map(XTypes::toStableString)
+                        .collect(toImmutableList())),
                 creator.typeElement());
       }
 

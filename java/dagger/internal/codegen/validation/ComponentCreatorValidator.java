@@ -39,6 +39,7 @@ import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
 import dagger.internal.codegen.binding.ErrorMessages;
 import dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages;
+import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import java.util.HashMap;
@@ -52,10 +53,13 @@ import javax.inject.Singleton;
 public final class ComponentCreatorValidator implements ClearableCache {
 
   private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
+  private final MethodSignatureFormatter methodSignatureFormatter;
   private final KotlinMetadataUtil metadataUtil;
 
   @Inject
-  ComponentCreatorValidator(KotlinMetadataUtil metadataUtil) {
+  ComponentCreatorValidator(
+      MethodSignatureFormatter methodSignatureFormatter, KotlinMetadataUtil metadataUtil) {
+    this.methodSignatureFormatter = methodSignatureFormatter;
     this.metadataUtil = metadataUtil;
   }
 
@@ -207,7 +211,7 @@ public final class ComponentCreatorValidator implements ClearableCache {
                     method,
                     messages.twoFactoryMethods(),
                     messages.inheritedTwoFactoryMethods(),
-                    buildMethod);
+                    methodSignatureFormatter.format(buildMethod));
               }
             }
             // We set the buildMethod regardless of the return type to reduce error spam.
@@ -294,7 +298,7 @@ public final class ComponentCreatorValidator implements ClearableCache {
               abstractMethods.get(1),
               messages.twoFactoryMethods(),
               messages.inheritedTwoFactoryMethods(),
-              abstractMethods.get(0));
+              methodSignatureFormatter.format(abstractMethods.get(0)));
           return;
       }
 
@@ -384,7 +388,10 @@ public final class ComponentCreatorValidator implements ClearableCache {
       if (method.getEnclosingElement().equals(creator)) {
         report.addError(String.format(enclosedError, extraArgs), method);
       } else {
-        report.addError(String.format(inheritedError, ObjectArrays.concat(extraArgs, method)));
+        report.addError(
+            String.format(
+                inheritedError,
+                ObjectArrays.concat(extraArgs, methodSignatureFormatter.format(method))));
       }
     }
 

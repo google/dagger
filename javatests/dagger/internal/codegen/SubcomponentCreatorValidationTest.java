@@ -433,7 +433,8 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
-                messages.inheritedFactoryMethodMustReturnComponentType(), process("build")))
+                messages.inheritedFactoryMethodMustReturnComponentType(),
+                process("String test.ChildComponent.Parent.build()")))
         .inFile(childComponentFile)
         .onLine(12);
   }
@@ -456,7 +457,10 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
     Compilation compilation = compile(childComponentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining(String.format(messages.twoFactoryMethods(), process("build()")))
+        .hadErrorContaining(
+            String.format(
+                messages.twoFactoryMethods(),
+                process("test.ChildComponent test.ChildComponent.Builder.build()")))
         .inFile(childComponentFile)
         .onLine(10);
   }
@@ -483,7 +487,9 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
     assertThat(compilation)
         .hadErrorContaining(
             String.format(
-                messages.inheritedTwoFactoryMethods(), process("build()"), process("build1()")))
+                messages.inheritedTwoFactoryMethods(),
+                process("test.ChildComponent test.ChildComponent.Parent.build()"),
+                process("test.ChildComponent test.ChildComponent.Parent.build1()")))
         .inFile(childComponentFile)
         .onLine(13);
   }

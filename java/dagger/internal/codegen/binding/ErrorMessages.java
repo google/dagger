@@ -17,16 +17,16 @@
 package dagger.internal.codegen.binding;
 
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import dagger.internal.codegen.base.ComponentAnnotation;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
 import dagger.internal.codegen.base.ComponentKind;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -207,7 +207,7 @@ public final class ErrorMessages {
         XTypeElement componentBuilder,
         XType returnType,
         XMethodElement buildMethod,
-        Set<XMethodElement> additionalMethods) {
+        ImmutableCollection<XMethodElement> additionalMethods) {
       return String.format(
           "%1$s.%2$s() returns %3$s, but %4$s declares additional component method(s): %5$s. In "
               + "order to provide type-safe access to these methods, override %2$s() to return "
@@ -216,7 +216,9 @@ public final class ErrorMessages {
           getSimpleName(buildMethod),
           returnType.getTypeName(),
           component.getQualifiedName(),
-          Joiner.on(", ").join(additionalMethods));
+          additionalMethods.stream()
+              .map(method -> getSimpleName(method) + "()")
+              .collect(joining(", ")));
     }
 
     public final String bindsInstanceNotAllowedOnBothSetterMethodAndParameter() {

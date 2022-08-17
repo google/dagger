@@ -151,13 +151,6 @@ public final class XProcessingEnvs {
         processingEnv);
   }
 
-  /** Returns {@code true} if {@code type1} is a subtype of {@code type2}. */
-  public static boolean isSubtype(XType type1, XType type2, XProcessingEnv processingEnv) {
-    return toJavac(processingEnv)
-        .getTypeUtils() // ALLOW_TYPES_ELEMENTS
-        .isSubtype(toJavac(type1), toJavac(type2));
-  }
-
   /** Returns the type this method is enclosed in. */
   public static XType wrapType(ClassName wrapper, XType type, XProcessingEnv processingEnv) {
     return processingEnv.getDeclaredType(processingEnv.requireTypeElement(wrapper), type);

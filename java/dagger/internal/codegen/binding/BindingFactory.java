@@ -30,7 +30,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.asVariable;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
+import static dagger.internal.codegen.xprocessing.XTypes.erasedTypeName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.spi.model.BindingKind.ASSISTED_FACTORY;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
@@ -81,7 +81,6 @@ import javax.inject.Inject;
 
 /** A factory for {@link Binding} objects. */
 public final class BindingFactory {
-  private final XProcessingEnv processingEnv;
   private final KeyFactory keyFactory;
   private final DependencyRequestFactory dependencyRequestFactory;
   private final InjectionSiteFactory injectionSiteFactory;
@@ -94,7 +93,6 @@ public final class BindingFactory {
       DependencyRequestFactory dependencyRequestFactory,
       InjectionSiteFactory injectionSiteFactory,
       InjectionAnnotations injectionAnnotations) {
-    this.processingEnv = processingEnv;
     this.keyFactory = keyFactory;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.injectionSiteFactory = injectionSiteFactory;
@@ -536,10 +534,10 @@ public final class BindingFactory {
 
   private void checkIsSameErasedType(XType type1, XType type2) {
     checkState(
-        erasure(type1, processingEnv).isSameType(erasure(type2, processingEnv)),
+        erasedTypeName(type1).equals(erasedTypeName(type2)),
         "erased expected type: %s, erased actual type: %s",
-        erasure(type1, processingEnv),
-        erasure(type2, processingEnv));
+        erasedTypeName(type1),
+        erasedTypeName(type2));
   }
 
   private static boolean hasNonDefaultTypeParameters(XType type) {

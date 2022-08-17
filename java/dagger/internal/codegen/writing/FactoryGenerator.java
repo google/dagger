@@ -85,7 +85,6 @@ import javax.inject.Inject;
  */
 public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   private final CompilerOptions compilerOptions;
-  private final XProcessingEnv processingEnv;
 
   @Inject
   FactoryGenerator(
@@ -94,7 +93,6 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
       XProcessingEnv processingEnv) {
     super(filer, processingEnv);
     this.compilerOptions = compilerOptions;
-    this.processingEnv = processingEnv;
   }
 
   @Override
@@ -285,8 +283,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
                   generatedClassNameForBinding(binding),
                   instance,
                   binding.key().type().xprocessing(),
-                  frameworkFieldUsages(binding.dependencies(), frameworkFields)::get,
-                  processingEnv))
+                  frameworkFieldUsages(binding.dependencies(), frameworkFields)::get))
           .addStatement("return $L", instance);
     } else {
       getMethod.addStatement("return $L", invokeNewInstance);

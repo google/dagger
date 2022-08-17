@@ -25,7 +25,7 @@ import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameFor
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isSubtype;
+import static dagger.internal.codegen.xprocessing.XTypes.isSubtype;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XConstructorElement;
@@ -401,10 +401,7 @@ public final class InjectValidator implements ClearableCache {
     XType error = processingEnv.findType(TypeNames.ERROR);
     superficialValidation.validateThrownTypesOf(constructorElement);
     return !constructorElement.getThrownTypes().stream()
-        .allMatch(
-            type ->
-                isSubtype(type, runtimeException, processingEnv)
-                    || isSubtype(type, error, processingEnv));
+        .allMatch(type -> isSubtype(type, runtimeException) || isSubtype(type, error));
   }
 
   private void checkInjectIntoPrivateClass(XElement element, ValidationReport.Builder builder) {

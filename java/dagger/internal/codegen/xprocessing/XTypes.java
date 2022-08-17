@@ -26,6 +26,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
+import static dagger.internal.codegen.xprocessing.XTypes.asArray;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static java.util.stream.Collectors.joining;
 
@@ -100,6 +101,61 @@ public final class XTypes {
     return type2.isAssignableFrom(type1);
   }
 
+  /** Returns {@code true} if {@code type1} is a subtype of {@code type2}. */
+  public static boolean isSubtype(XType type1, XType type2) {
+    XProcessingEnv processingEnv = getProcessingEnv(type1);
+    switch (processingEnv.getBackend()) {
+      case JAVAC:
+        // The implementation used for KSP should technically also work in Javac but we avoid it to
+        // avoid any possible regressions in Javac.
+        return toJavac(processingEnv)
+            .getTypeUtils() // ALLOW_TYPES_ELEMENTS
+            .isSubtype(toJavac(type1), toJavac(type2));
+      case KSP:
+        if (isPrimitive(type1) || isPrimitive(type2)) {
+            // For primitive types we can't just check isAssignableTo since auto-boxing means boxed
+            // types are assignable to primitive (and vice versa) though neither are subtypes.
+            return type1.isSameType(type2);
+        }
+        return isAssignableTo(type1, type2);
+    }
+    throw new AssertionError("Unexpected backend: " + processingEnv.getBackend());
+  }
+
+  /** Returns the erasure of the given {@link TypeName}. */
+  public static TypeName erasedTypeName(XType type) {
+    XProcessingEnv processingEnv = getProcessingEnv(type);
+    switch (processingEnv.getBackend()) {
+      case JAVAC:
+        // The implementation used for KSP should technically also work in Javac but we avoid it to
+        // avoid any possible regressions in Javac.
+        return XProcessingEnvs.erasure(type, processingEnv).getTypeName();
+      case KSP:
+        // In KSP, we have to derive the erased TypeName ourselves.
+        return erasedTypeName(type.getTypeName());
+    }
+    throw new AssertionError("Unexpected backend: " + processingEnv.getBackend());
+  }
+
+  private static TypeName erasedTypeName(TypeName typeName) {
+    // See https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.6
+    if (typeName instanceof ArrayTypeName) {
+      // Erasure of 'C[]' is '|C|[]'
+      return ArrayTypeName.of(erasedTypeName(((ArrayTypeName) typeName).componentType));
+    } else if (typeName instanceof ParameterizedTypeName) {
+      // Erasure of 'C<T1, T2, ...>' is '|C|'
+      // Erasure of nested type T.C is |T|.C
+      // Nested types, e.g. Foo<String>.Bar, are also represented as ParameterizedTypeName and
+      // calling ParameterizedTypeName.rawType gives the correct result, e.g. Foo.Bar.
+      return ((ParameterizedTypeName) typeName).rawType;
+    } else if (typeName instanceof TypeVariableName) {
+      // Erasure of type variable is the erasure of its left-most bound
+      return erasedTypeName(((TypeVariableName) typeName).bounds.get(0));
+    }
+    // For every other type, the erasure is the type itself.
+    return typeName;
+  }
+
   /**
    * Throws {@link TypeNotPresentException} if {@code type} is an {@link
    * javax.lang.model.type.ErrorType}.
@@ -150,15 +206,26 @@ public final class XTypes {
 
   /** Returns {@code true} if the given type is a declared type. */
   public static boolean isWildcard(XType type) {
-    // TODO(bcorso): Consider representing this as an actual type in XProcessing.
-    return type.getTypeName() instanceof WildcardTypeName;
+    XProcessingEnv.Backend backend = getProcessingEnv(type).getBackend();
+    switch (backend) {
+      case JAVAC:
+        // In Javac, check the TypeKind directly. This also avoids a Javac bug (b/242569252) where
+        // calling XType.getTypeName() too early caches an incorrect type name.
+        return toJavac(type).getKind().equals(TypeKind.WILDCARD);
+      case KSP:
+        // TODO(bcorso): Consider representing this as an actual type in XProcessing.
+        return type.getTypeName() instanceof WildcardTypeName;
+    }
+    throw new AssertionError("Unexpected backend: " + backend);
   }
 
   /** Returns {@code true} if the given type is a declared type. */
   public static boolean isDeclared(XType type) {
     // TODO(b/241477426): Due to a bug in XProcessing, array types accidentally get assigned an
     // invalid XTypeElement, so we check explicitly until this is fixed.
-    return !isArray(type) && type.getTypeElement() != null;
+    // TODO(b/242918001): Due to a bug in XProcessing, wildcard types accidentally get assigned an
+    // invalid XTypeElement, so we check explicitly until this is fixed.
+    return !isWildcard(type) && !isArray(type) && type.getTypeElement() != null;
   }
 
   /** Returns {@code true} if the given type is a type variable. */

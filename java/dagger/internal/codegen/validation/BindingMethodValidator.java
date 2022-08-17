@@ -19,7 +19,7 @@ package dagger.internal.codegen.validation;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XMethodElements.getEnclosingTypeElement;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isSubtype;
+import static dagger.internal.codegen.xprocessing.XTypes.isSubtype;
 import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XExecutableElement;
@@ -299,8 +299,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
       XType exceptionSupertype = validator.processingEnv.findType(superclass);
       XType errorType = validator.processingEnv.findType(TypeNames.ERROR);
       for (XType thrownType : element.getThrownTypes()) {
-        if (!isSubtype(thrownType, exceptionSupertype, validator.processingEnv)
-            && !isSubtype(thrownType, errorType, validator.processingEnv)) {
+        if (!isSubtype(thrownType, exceptionSupertype) && !isSubtype(thrownType, errorType)) {
           report.addError(errorMessage(validator));
           break;
         }

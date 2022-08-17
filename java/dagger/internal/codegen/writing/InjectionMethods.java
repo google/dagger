@@ -37,7 +37,6 @@ import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibleFrom;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypePubliclyAccessible;
-import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
 import static dagger.internal.codegen.xprocessing.XElements.asField;
@@ -45,9 +44,8 @@ import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asMethodParameter;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isSubtype;
 import static dagger.internal.codegen.xprocessing.XTypeElements.typeVariableNames;
+import static dagger.internal.codegen.xprocessing.XTypes.erasedTypeName;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -58,7 +56,6 @@ import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
@@ -282,13 +279,11 @@ final class InjectionMethods {
         ClassName generatedTypeName,
         CodeBlock instanceCodeBlock,
         XType instanceType,
-        Function<DependencyRequest, CodeBlock> dependencyUsage,
-        XProcessingEnv processingEnv) {
+        Function<DependencyRequest, CodeBlock> dependencyUsage) {
       return injectionSites.stream()
           .map(
               injectionSite -> {
-                XType injectSiteType =
-                    erasure(injectionSite.enclosingTypeElement().getType(), processingEnv);
+                XType injectSiteType = injectionSite.enclosingTypeElement().getType();
 
                 // If instance has been declared as Object because it is not accessible from the
                 // component, but the injectionSite is in a supertype of instanceType that is
@@ -296,9 +291,9 @@ final class InjectionMethods {
                 // Object as the first parameter. If so, cast to the supertype which is accessible
                 // from within generatedTypeName
                 CodeBlock maybeCastedInstance =
-                    !isSubtype(instanceType, injectSiteType, processingEnv)
-                            && isTypeAccessibleFrom(injectSiteType, generatedTypeName.packageName())
-                        ? CodeBlock.of("($T) $L", injectSiteType.getTypeName(), instanceCodeBlock)
+                    instanceType.getTypeName().equals(TypeName.OBJECT)
+                            && isRawTypeAccessible(injectSiteType, generatedTypeName.packageName())
+                        ? CodeBlock.of("($T) $L", erasedTypeName(injectSiteType), instanceCodeBlock)
                         : instanceCodeBlock;
                 return CodeBlock.of(
                     "$L;",

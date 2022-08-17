@@ -162,8 +162,7 @@ final class MembersInjectionMethods {
                             .getDependencyExpression(request.kind(), (ProvisionBinding) binding)
                         : bindingExpressions.getDependencyArgumentExpression(
                             request, shardImplementation.name()))
-                    .codeBlock(),
-            processingEnv));
+                    .codeBlock()));
     methodBuilder.addStatement("return $L", instance);
 
     MethodSpec method = methodBuilder.build();

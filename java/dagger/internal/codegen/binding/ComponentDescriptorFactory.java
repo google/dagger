@@ -162,7 +162,7 @@ public final class ComponentDescriptorFactory {
             ? Optional.empty()
             : Optional.of(
                 ComponentCreatorDescriptor.create(
-                    getOnlyElement(enclosedCreators), processingEnv, dependencyRequestFactory));
+                    getOnlyElement(enclosedCreators), dependencyRequestFactory));
 
     ImmutableSet<Scope> scopes = injectionAnnotations.getScopes(typeElement);
     if (componentAnnotation.isProduction()) {

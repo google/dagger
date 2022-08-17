@@ -224,9 +224,8 @@ public class ComponentProcessorTest {
             });
   }
 
-  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
   @Test public void simpleComponentWithNesting() throws Exception {
-    JavaFileObject nestedTypesFile = JavaFileObjects.forSourceLines("test.OuterType",
+    Source nestedTypesFile = CompilerTests.javaSource("test.OuterType",
         "package test;",
         "",
         "import dagger.Component;",
@@ -245,12 +244,13 @@ public class ComponentProcessorTest {
         "  }",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(nestedTypesFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerOuterType_SimpleComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerOuterType_SimpleComponent"));
+    CompilerTests.daggerCompiler(nestedTypesFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerOuterType_SimpleComponent"));
+            });
   }
 
   @Test public void componentWithModule() throws Exception {
@@ -532,11 +532,10 @@ public class ComponentProcessorTest {
         .succeeded();
   }
 
-  // TODO(b/241158653): Requires adding XProcessing implementation of isSubtype (b/231189791).
   @Test
   public void subcomponentNotGeneratedIfNotUsedInGraph() throws Exception {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.Parent",
             "package test;",
             "",
@@ -546,9 +545,9 @@ public class ComponentProcessorTest {
             "interface Parent {",
             "  String notSubcomponent();",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
-            "test.Parent",
+    Source module =
+        CompilerTests.javaSource(
+            "test.ParentModule",
             "package test;",
             "",
             "import dagger.Module;",
@@ -559,8 +558,8 @@ public class ComponentProcessorTest {
             "  @Provides static String notSubcomponent() { return new String(); }",
             "}");
 
-    JavaFileObject subcomponent =
-        JavaFileObjects.forSourceLines(
+    Source subcomponent =
+        CompilerTests.javaSource(
             "test.Child",
             "package test;",
             "",
@@ -574,13 +573,13 @@ public class ComponentProcessorTest {
             "  }",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(component, module, subcomponent);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerParent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParent"));
+    CompilerTests.daggerCompiler(component, module, subcomponent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerParent"));
+            });
   }
 
   @Test
@@ -614,9 +613,8 @@ public class ComponentProcessorTest {
         .compile(subject -> subject.hasErrorCount(0));
   }
 
-  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
   @Test public void membersInjection() throws Exception {
-    JavaFileObject injectableTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectableType",
+    Source injectableTypeFile = CompilerTests.javaSource("test.SomeInjectableType",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -624,7 +622,7 @@ public class ComponentProcessorTest {
         "final class SomeInjectableType {",
         "  @Inject SomeInjectableType() {}",
         "}");
-    JavaFileObject injectedTypeFile = JavaFileObjects.forSourceLines("test.SomeInjectedType",
+    Source injectedTypeFile = CompilerTests.javaSource("test.SomeInjectedType",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -633,7 +631,7 @@ public class ComponentProcessorTest {
         "  @Inject SomeInjectableType injectedField;",
         "  SomeInjectedType() {}",
         "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.SimpleComponent",
+    Source componentFile = CompilerTests.javaSource("test.SimpleComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -646,13 +644,13 @@ public class ComponentProcessorTest {
         "  SomeInjectedType injectAndReturn(SomeInjectedType instance);",
         "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(injectableTypeFile, injectedTypeFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerSimpleComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerSimpleComponent"));
+    CompilerTests.daggerCompiler(injectableTypeFile, injectedTypeFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerSimpleComponent"));
+            });
   }
 
   @Test public void componentInjection() throws Exception {
@@ -1172,9 +1170,8 @@ public class ComponentProcessorTest {
             });
   }
 
-  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
   @Test public void wildcardGenericsRequiresAtProvides() {
-    JavaFileObject aFile = JavaFileObjects.forSourceLines("test.A",
+    Source aFile = CompilerTests.javaSource("test.A",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -1182,7 +1179,7 @@ public class ComponentProcessorTest {
         "final class A {",
         "  @Inject A() {}",
         "}");
-    JavaFileObject bFile = JavaFileObjects.forSourceLines("test.B",
+    Source bFile = CompilerTests.javaSource("test.B",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -1191,7 +1188,7 @@ public class ComponentProcessorTest {
         "final class B<T> {",
         "  @Inject B(T t) {}",
         "}");
-    JavaFileObject cFile = JavaFileObjects.forSourceLines("test.C",
+    Source cFile = CompilerTests.javaSource("test.C",
         "package test;",
         "",
         "import javax.inject.Inject;",
@@ -1200,7 +1197,7 @@ public class ComponentProcessorTest {
         "final class C {",
         "  @Inject C(B<? extends A> bA) {}",
         "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.SimpleComponent",
+    Source componentFile = CompilerTests.javaSource("test.SimpleComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -1211,13 +1208,17 @@ public class ComponentProcessorTest {
         "interface SimpleComponent {",
         "  C c();",
         "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(aFile, bFile, cFile, componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "test.B<? extends test.A> cannot be provided without an @Provides-annotated method");
+
+
+    CompilerTests.daggerCompiler(aFile, bFile, cFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "test.B<? extends test.A> cannot be provided without an @Provides-annotated "
+                      + "method");
+            });
   }
 
   // https://github.com/google/dagger/issues/630
@@ -1327,7 +1328,7 @@ public class ComponentProcessorTest {
     assertThat(compilation).generatedSourceFile("test.DaggerSimpleComponent");
   }
 
-  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
+  // TODO(b/241158653): Requires allowing extra processors with CompilerTests.daggerCompiler().
   /**
    * We warn when generating a {@link MembersInjector} for a type post-hoc (i.e., if Dagger wasn't
    * invoked when compiling the type). But Dagger only generates {@link MembersInjector}s for types
@@ -1487,11 +1488,10 @@ public class ComponentProcessorTest {
             });
   }
 
-  // TODO(b/241158653): Requires adding XProcessing implementation of isSubtype (b/231189791).
   @Test
   public void unusedSubcomponents_dontResolveExtraBindingsInParentComponents() throws Exception {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -1503,8 +1503,8 @@ public class ComponentProcessorTest {
             "  @Inject Foo() {}",
             "}");
 
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -1513,8 +1513,8 @@ public class ComponentProcessorTest {
             "@Module(subcomponents = Pruned.class)",
             "class TestModule {}");
 
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.Parent",
             "package test;",
             "",
@@ -1525,8 +1525,8 @@ public class ComponentProcessorTest {
             "@Component(modules = TestModule.class)",
             "interface Parent {}");
 
-    JavaFileObject prunedSubcomponent =
-        JavaFileObjects.forSourceLines(
+    Source prunedSubcomponent =
+        CompilerTests.javaSource(
             "test.Pruned",
             "package test;",
             "",
@@ -1542,13 +1542,13 @@ public class ComponentProcessorTest {
             "  Foo foo();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(foo, module, component, prunedSubcomponent);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerParent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParent"));
+    CompilerTests.daggerCompiler(foo, module, component, prunedSubcomponent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerParent"));
+            });
   }
 
   @Test
@@ -1612,98 +1612,98 @@ public class ComponentProcessorTest {
             });
   }
 
-  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
   @Test
   public void nullIncorrectlyReturnedFromNonNullableInlinedProvider() throws Exception {
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(
-                JavaFileObjects.forSourceLines(
-                    "test.TestModule",
-                    "package test;",
-                    "",
-                    "import dagger.Module;",
-                    "import dagger.Provides;",
-                    "",
-                    "@Module",
-                    "public abstract class TestModule {",
-                    "  @Provides static String nonNullableString() { return \"string\"; }",
-                    "}"),
-                JavaFileObjects.forSourceLines(
-                    "test.InjectsMember",
-                    "package test;",
-                    "",
-                    "import javax.inject.Inject;",
-                    "",
-                    "public class InjectsMember {",
-                    "  @Inject String member;",
-                    "}"),
-                JavaFileObjects.forSourceLines(
-                    "test.TestComponent",
-                    "package test;",
-                    "",
-                    "import dagger.Component;",
-                    "",
-                    "@Component(modules = TestModule.class)",
-                    "interface TestComponent {",
-                    "  String nonNullableString();",
-                    "  void inject(InjectsMember member);",
-                    "}"));
-    assertThat(compilation).succeededWithoutWarnings();
-    assertThat(compilation)
-        .generatedSourceFile("test.TestModule_NonNullableStringFactory")
-        .hasSourceEquivalentTo(
-            goldenFileRule.goldenFile("test.TestModule_NonNullableStringFactory"));
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+     CompilerTests.daggerCompiler(
+             CompilerTests.javaSource(
+                "test.TestModule",
+                "package test;",
+                "",
+                "import dagger.Module;",
+                "import dagger.Provides;",
+                "",
+                "@Module",
+                "public abstract class TestModule {",
+                "  @Provides static String nonNullableString() { return \"string\"; }",
+                "}"),
+            CompilerTests.javaSource(
+                "test.InjectsMember",
+                "package test;",
+                "",
+                "import javax.inject.Inject;",
+                "",
+                "public class InjectsMember {",
+                "  @Inject String member;",
+                "}"),
+            CompilerTests.javaSource(
+                "test.TestComponent",
+                "package test;",
+                "",
+                "import dagger.Component;",
+                "",
+                "@Component(modules = TestModule.class)",
+                "interface TestComponent {",
+                "  String nonNullableString();",
+                "  void inject(InjectsMember member);",
+                "}"))
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              // TODO(bcorso): Replace with subject.succeededWithoutWarnings()
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/TestModule_NonNullableStringFactory"));
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
-  // TODO(b/241158653): Requires adding XProcessing implementation of erasure (b/231189307).
   @Test
   public void nullCheckingIgnoredWhenProviderReturnsPrimitive() throws Exception {
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(
-                JavaFileObjects.forSourceLines(
-                    "test.TestModule",
-                    "package test;",
-                    "",
-                    "import dagger.Module;",
-                    "import dagger.Provides;",
-                    "",
-                    "@Module",
-                    "public abstract class TestModule {",
-                    "  @Provides static int primitiveInteger() { return 1; }",
-                    "}"),
-                JavaFileObjects.forSourceLines(
-                    "test.InjectsMember",
-                    "package test;",
-                    "",
-                    "import javax.inject.Inject;",
-                    "",
-                    "public class InjectsMember {",
-                    "  @Inject Integer member;",
-                    "}"),
-                JavaFileObjects.forSourceLines(
-                    "test.TestComponent",
-                    "package test;",
-                    "",
-                    "import dagger.Component;",
-                    "",
-                    "@Component(modules = TestModule.class)",
-                    "interface TestComponent {",
-                    "  Integer nonNullableInteger();",
-                    "  void inject(InjectsMember member);",
-                    "}"));
-    assertThat(compilation).succeededWithoutWarnings();
-    assertThat(compilation)
-        .generatedSourceFile("test.TestModule_PrimitiveIntegerFactory")
-        .hasSourceEquivalentTo(
-            goldenFileRule.goldenFile("test.TestModule_PrimitiveIntegerFactory"));
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(
+            CompilerTests.javaSource(
+                "test.TestModule",
+                "package test;",
+                "",
+                "import dagger.Module;",
+                "import dagger.Provides;",
+                "",
+                "@Module",
+                "public abstract class TestModule {",
+                "  @Provides static int primitiveInteger() { return 1; }",
+                "}"),
+            CompilerTests.javaSource(
+                "test.InjectsMember",
+                "package test;",
+                "",
+                "import javax.inject.Inject;",
+                "",
+                "public class InjectsMember {",
+                "  @Inject Integer member;",
+                "}"),
+            CompilerTests.javaSource(
+                "test.TestComponent",
+                "package test;",
+                "",
+                "import dagger.Component;",
+                "",
+                "@Component(modules = TestModule.class)",
+                "interface TestComponent {",
+                "  Integer nonNullableInteger();",
+                "  void inject(InjectsMember member);",
+                "}"))
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              // TODO(bcorso): Replace with subject.succeededWithoutWarnings()
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/TestModule_PrimitiveIntegerFactory"));
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test

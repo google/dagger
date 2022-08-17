@@ -72,14 +72,12 @@ import javax.inject.Inject;
  * Generates {@link MembersInjector} implementations from {@link MembersInjectionBinding} instances.
  */
 public final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectionBinding> {
-  private final XProcessingEnv processingEnv;
 
   @Inject
   MembersInjectorGenerator(
       XFiler filer,
       XProcessingEnv processingEnv) {
     super(filer, processingEnv);
-    this.processingEnv = processingEnv;
   }
 
   @Override
@@ -198,8 +196,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
             generatedTypeName,
             CodeBlock.of("instance"),
             binding.key().type().xprocessing(),
-            frameworkFieldUsages(binding.dependencies(), dependencyFields)::get,
-            processingEnv));
+            frameworkFieldUsages(binding.dependencies(), dependencyFields)::get));
 
     if (usesRawFrameworkTypes) {
       injectMembersBuilder.addAnnotation(suppressWarnings(UNCHECKED));

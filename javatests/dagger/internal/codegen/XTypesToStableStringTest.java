@@ -99,7 +99,7 @@ public class XTypesToStableStringTest {
     XTypeElement typeElement = processingEnv.requireTypeElement(Usage.class.getCanonicalName());
     XMethodElement method = getDeclaredMethod(typeElement, "parameterizedTypeWithTypeVariable");
     assertThat(XTypes.toStableString(method.getReturnType()))
-        .isEqualTo(String.format("%1$s.ParameterizedType<T extends %1$s.Foo>", testName));
+        .isEqualTo(String.format("%1$s.ParameterizedType<T>", testName));
   }
 
   @Test
@@ -107,8 +107,7 @@ public class XTypesToStableStringTest {
     XTypeElement typeElement = processingEnv.requireTypeElement(Usage.class.getCanonicalName());
     XMethodElement method = getDeclaredMethod(typeElement, "parameterizedTypeWithSelfReference");
     assertThat(XTypes.toStableString(method.getReturnType()))
-        .isEqualTo(
-            String.format("%1$s.ParameterizedType<T extends %1$s.ParameterizedType<T>>", testName));
+        .isEqualTo(String.format("%1$s.ParameterizedType<T>", testName));
   }
 
   @Test

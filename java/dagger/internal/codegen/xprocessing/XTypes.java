@@ -41,9 +41,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import javax.lang.model.type.TypeKind;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
@@ -297,26 +295,22 @@ public final class XTypes {
   // should already be independent of the backend but we supply our own custom implementation to
   // remain backwards compatible with the previous implementation, which used TypeMirror#toString().
   public static String toStableString(XType type) {
-    return toStableString(type.getTypeName(), /* visitedTypeVariables= */ new HashSet<>());
+    return toStableString(type.getTypeName());
   }
 
-  // Note: This method keeps track of the already visited type variables to avoid infinite recursion
-  // for types like Enum<E extends Enum<E>>. We avoid the recursion by only outputting the type
-  // variable's name (without any bounds) on subsequent visits.
-  private static String toStableString(
-      TypeName typeName, Set<TypeVariableName> visitedTypeVariables) {
+  private static String toStableString(TypeName typeName) {
     if (typeName instanceof ClassName) {
       return ((ClassName) typeName).canonicalName();
     } else if (typeName instanceof ArrayTypeName) {
       return String.format(
-          "%s[]", toStableString(((ArrayTypeName) typeName).componentType, visitedTypeVariables));
+          "%s[]", toStableString(((ArrayTypeName) typeName).componentType));
     } else if (typeName instanceof ParameterizedTypeName) {
       ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) typeName;
       return String.format(
           "%s<%s>",
           parameterizedTypeName.rawType,
           parameterizedTypeName.typeArguments.stream()
-              .map(typeArg -> toStableString(typeArg, visitedTypeVariables))
+              .map(XTypes::toStableString)
               // We purposely don't use a space after the comma to for backwards compatibility with
               // usages that depended on the previous TypeMirror#toString() implementation.
               .collect(joining(",")));
@@ -327,30 +321,17 @@ public final class XTypes {
       if (!upperBound.equals(TypeName.OBJECT)) {
         // Wildcards with non-Object upper bounds can't have lower bounds.
         checkState(wildcardTypeName.lowerBounds.isEmpty());
-        return String.format("? extends %s", toStableString(upperBound, visitedTypeVariables));
+        return String.format("? extends %s", toStableString(upperBound));
       }
       if (!wildcardTypeName.lowerBounds.isEmpty()) {
         // Wildcard types can have at most 1 lower bound.
         TypeName lowerBound = getOnlyElement(wildcardTypeName.lowerBounds);
-        return String.format("? super %s", toStableString(lowerBound, visitedTypeVariables));
+        return String.format("? super %s", toStableString(lowerBound));
       }
       // If the upper bound is Object and there is no lower bound then just use "?".
       return "?";
     } else if (typeName instanceof TypeVariableName) {
-      TypeVariableName typeVariableName = (TypeVariableName) typeName;
-      if (typeVariableName.bounds.isEmpty() || !visitedTypeVariables.add(typeVariableName)) {
-        return typeVariableName.name;
-      } else {
-        return String.format(
-            // Type variables can only have "extends" bounds (no "super" bounds).
-            "%s extends %s",
-            typeVariableName.name,
-            // Multiple bounds must be an intersection type (using "&").
-            // A union type (using "|") is not allowed here.
-            typeVariableName.bounds.stream()
-                .map(bound -> toStableString(bound, visitedTypeVariables))
-                .collect(joining(" & ")));
-      }
+      return ((TypeVariableName) typeName).name;
     } else {
       // For all other types (e.g. primitive types) just use the TypeName's toString()
       return typeName.toString();

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
 
 buildscript {
   ext {
@@ -54,6 +56,11 @@ shadowJar {
     // Don't jarjar stdlib deps that are automatically added by Kotlin plugin
     exclude(dependency("org.jetbrains.kotlin::"))
     exclude(dependency("org.jetbrains:annotations:"))
+  }
+  doLast {
+    outputs.files.each { jarFile ->
+      checkJarFile(jarFile,  'dagger',  'META-INF')
+    }
   }
 }
 
@@ -268,4 +275,21 @@ def addPomTemplate(pom) {
 def getPublishVersion() {
   def publishVersion = findProperty("PublishVersion")
   return (publishVersion != null) ? publishVersion : "LOCAL-SNAPSHOT"
+}
+
+def checkJarFile(File jarFile, String... allowedPrefixes) {
+  def zip = new ZipFile(jarFile)
+  try {
+    Enumeration<ZipEntry> list = zip.entries()
+    while (list.hasMoreElements()) {
+      String entry = list.nextElement().name
+      if (!allowedPrefixes.any { entry.startsWith(it) }) {
+        throw new GradleException(
+          "Found a file that is not in " +
+          "${ allowedPrefixes.collect { "'$it'" }.join('/') }: $entry")
+      }
+    }
+  } finally {
+      zip.close()
+  }
 }

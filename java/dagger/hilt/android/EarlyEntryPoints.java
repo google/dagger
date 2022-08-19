@@ -48,8 +48,9 @@ public final class EarlyEntryPoints {
     Application application = Contexts.getApplication(applicationContext);
     Preconditions.checkState(
         application instanceof GeneratedComponentManagerHolder,
-        "Expected application context to implement GeneratedComponentManagerHolder. "
-            + "Check that you're passing in an application context that uses Hilt.");
+        "Expected application to implement GeneratedComponentManagerHolder. "
+            + "Check that you're passing in an application context that uses Hilt. "
+            + "Application class found: %s", application.getClass());
     Object componentManager =
         ((GeneratedComponentManagerHolder) application).componentManager();
     if (componentManager instanceof TestSingletonComponentManager) {

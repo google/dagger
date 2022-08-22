@@ -286,7 +286,7 @@ public class SourceFiles {
   public static String simpleVariableName(ClassName className) {
     String candidateName = UPPER_CAMEL.to(LOWER_CAMEL, className.simpleName());
     String variableName = protectAgainstKeywords(candidateName);
-    verify(isName(variableName), "'%s' was expected to be a valid variable name");
+    verify(isName(variableName), "'%s' was expected to be a valid variable name", variableName);
     return variableName;
   }
 

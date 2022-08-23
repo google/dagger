@@ -16,14 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableCollection;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,8 +43,8 @@ public class AssistedFactoryTest {
 
   @Test
   public void testAssistedFactory() throws Exception {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -59,8 +55,9 @@ public class AssistedFactoryTest {
             "  @AssistedInject",
             "  Foo(@Assisted String str, Bar bar) {}",
             "}");
-    JavaFileObject fooFactory =
-        JavaFileObjects.forSourceLines(
+
+    Source fooFactory =
+        CompilerTests.javaSource(
             "test.FooFactory",
             "package test;",
             "",
@@ -70,8 +67,9 @@ public class AssistedFactoryTest {
             "interface FooFactory {",
             "  Foo create(String factoryStr);",
             "}");
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -80,8 +78,9 @@ public class AssistedFactoryTest {
             "class Bar {",
             "  @Inject Bar() {}",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -91,18 +90,20 @@ public class AssistedFactoryTest {
             "interface TestComponent {",
             "  FooFactory fooFactory();",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(foo, bar, fooFactory, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+
+    CompilerTests.daggerCompiler(foo, bar, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void testAssistedFactoryCycle() throws Exception {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -113,8 +114,9 @@ public class AssistedFactoryTest {
             "  @AssistedInject",
             "  Foo(@Assisted String str, Bar bar) {}",
             "}");
-    JavaFileObject fooFactory =
-        JavaFileObjects.forSourceLines(
+
+    Source fooFactory =
+        CompilerTests.javaSource(
             "test.FooFactory",
             "package test;",
             "",
@@ -124,8 +126,9 @@ public class AssistedFactoryTest {
             "interface FooFactory {",
             "  Foo create(String factoryStr);",
             "}");
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -134,8 +137,9 @@ public class AssistedFactoryTest {
             "class Bar {",
             "  @Inject Bar(FooFactory fooFactory) {}",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -145,18 +149,20 @@ public class AssistedFactoryTest {
             "interface TestComponent {",
             "  FooFactory fooFactory();",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(foo, bar, fooFactory, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+
+    CompilerTests.daggerCompiler(foo, bar, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void assistedParamConflictsWithComponentFieldName_successfulyDeduped() throws Exception {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -168,8 +174,9 @@ public class AssistedFactoryTest {
             "  @AssistedInject",
             "  Foo(@Assisted String testComponentImpl, Provider<Bar> bar) {}",
             "}");
-    JavaFileObject fooFactory =
-        JavaFileObjects.forSourceLines(
+
+    Source fooFactory =
+        CompilerTests.javaSource(
             "test.FooFactory",
             "package test;",
             "",
@@ -179,8 +186,9 @@ public class AssistedFactoryTest {
             "interface FooFactory {",
             "  Foo create(String factoryStr);",
             "}");
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -189,8 +197,9 @@ public class AssistedFactoryTest {
             "class Bar {",
             "  @Inject Bar() {}",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -201,18 +210,19 @@ public class AssistedFactoryTest {
             "  FooFactory fooFactory();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(foo, bar, fooFactory, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(foo, bar, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void testFactoryGeneratorDuplicatedParamNames() throws Exception {
-    JavaFileObject componentSrc =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -227,8 +237,9 @@ public class AssistedFactoryTest {
             "}",
             "  FooFactory getFooFactory();",
             "}");
-    JavaFileObject factorySrc =
-        JavaFileObjects.forSourceLines(
+
+    Source fooFactory =
+        CompilerTests.javaSource(
             "test.FooFactory",
             "package test;",
             "",
@@ -238,10 +249,16 @@ public class AssistedFactoryTest {
             "public interface FooFactory {",
             "  Foo create(Integer arg);",
             "}");
-    JavaFileObject barSrc =
-        JavaFileObjects.forSourceLines("test.Bar", "package test;", "", "interface Bar {}");
-    JavaFileObject injectSrc =
-        JavaFileObjects.forSourceLines(
+
+    Source bar =
+        CompilerTests.javaSource(
+            "test.Bar",
+            "package test;",
+            "",
+            "interface Bar {}");
+
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -252,19 +269,20 @@ public class AssistedFactoryTest {
             "  @AssistedInject",
             "  Foo(Bar arg, @Assisted Integer argProvider) {}",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(componentSrc, factorySrc, barSrc, injectSrc);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.Foo_Factory")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.Foo_Factory"));
+
+    CompilerTests.daggerCompiler(component, fooFactory, foo, bar)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/Foo_Factory"));
+            });
   }
 
   @Test
   public void testParameterizedAssistParam() throws Exception {
-    JavaFileObject componentSrc =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -274,8 +292,9 @@ public class AssistedFactoryTest {
             "interface TestComponent {",
             "  FooFactory<String> getFooFactory();",
             "}");
-    JavaFileObject factorySrc =
-        JavaFileObjects.forSourceLines(
+
+    Source fooFactory =
+        CompilerTests.javaSource(
             "test.FooFactory",
             "package test;",
             "",
@@ -285,8 +304,9 @@ public class AssistedFactoryTest {
             "public interface FooFactory<T> {",
             "  Foo<T> create(T arg);",
             "}");
-    JavaFileObject injectSrc =
-        JavaFileObjects.forSourceLines(
+
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -297,11 +317,13 @@ public class AssistedFactoryTest {
             "  @AssistedInject",
             "  Foo(@Assisted T arg) {}",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentSrc, factorySrc, injectSrc);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+
+    CompilerTests.daggerCompiler(component, fooFactory, foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 }

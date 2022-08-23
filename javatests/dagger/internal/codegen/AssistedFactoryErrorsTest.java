@@ -16,13 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableCollection;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -43,26 +39,30 @@ public class AssistedFactoryErrorsTest {
 
   @Test
   public void testFactoryNotAbstract() {
-    JavaFileObject factory =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Factory",
             "package test;",
             "",
             "import dagger.assisted.AssistedFactory;",
             "",
             "@AssistedFactory class Factory {}");
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(factory);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "The @AssistedFactory-annotated type must be either an abstract class or interface.");
+
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "The @AssistedFactory-annotated type must be either an abstract class or "
+                      + "interface.");
+            });
   }
 
   @Test
   public void testNestedFactoryNotStatic() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -79,39 +79,49 @@ public class AssistedFactoryErrorsTest {
             "    abstract Foo create(int i);",
             "  }",
             "}");
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining("Nested @AssistedFactory-annotated types must be static.");
+
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("Nested @AssistedFactory-annotated types must be static.");
+            });
   }
 
   @Test
   public void testFactoryMissingAbstractMethod() {
-    JavaFileObject factory =
-        JavaFileObjects.forSourceLines(
+    Source factory =
+        CompilerTests.javaSource(
             "test.Factory",
             "package test;",
             "",
             "import dagger.assisted.AssistedFactory;",
             "",
             "@AssistedFactory interface Factory {}");
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(factory);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "The @AssistedFactory-annotated type is missing an abstract, non-default method whose"
-                + " return type matches the assisted injection type.");
+
+    CompilerTests.daggerCompiler(factory)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "The @AssistedFactory-annotated type is missing an abstract, non-default method "
+                      + "whose return type matches the assisted injection type.");
+            });
   }
 
   @Test
   public void testFactoryReturnsNonDeclaredType() {
-    JavaFileObject noInject =
-        JavaFileObjects.forSourceLines(
-            "test.NoInject", "package test;", "", "final class NoInject {}");
-    JavaFileObject noAssistedParam =
-        JavaFileObjects.forSourceLines(
+    Source noInject =
+        CompilerTests.javaSource(
+            "test.NoInject",
+            "package test;",
+            "",
+            "final class NoInject {}");
+
+    Source noAssistedParam =
+        CompilerTests.javaSource(
             "test.NoAssistedParam",
             "package test;",
             "",
@@ -120,8 +130,9 @@ public class AssistedFactoryErrorsTest {
             "final class NoAssistedParam {",
             "  @AssistedInject NoAssistedParam() {}",
             "}");
-    JavaFileObject factory =
-        JavaFileObjects.forSourceLines(
+
+    Source factory =
+        CompilerTests.javaSource(
             "test.Factory",
             "package test;",
             "",
@@ -137,48 +148,47 @@ public class AssistedFactoryErrorsTest {
             "",
             "  T createT();", // Fails return type not @AssistedInject
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(factory, noInject, noAssistedParam);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(4);
 
-    assertThat(compilation)
-        .hadErrorContaining(
-            "The @AssistedFactory-annotated type should contain a single abstract, non-default "
-                + "method but found multiple: ["
-                + "createInt(), createNoInject(), createNoAssistedParam(), createT()]")
-        .inFile(factory)
-        .onLine(6);
-
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Invalid return type: int. "
-                + "An assisted factory's abstract method must return a type with an "
-                + "@AssistedInject-annotated constructor.")
-        .inFile(factory)
-        .onLine(7);
-
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Invalid return type: test.NoInject. "
-                + "An assisted factory's abstract method must return a type with an "
-                + "@AssistedInject-annotated constructor.")
-        .inFile(factory)
-        .onLine(9);
-
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Invalid return type: T. "
-                + "An assisted factory's abstract method must return a type with an "
-                + "@AssistedInject-annotated constructor.")
-        .inFile(factory)
-        .onLine(13);
+    CompilerTests.daggerCompiler(factory, noInject, noAssistedParam)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(4);
+              subject.hasErrorContaining(
+                      "The @AssistedFactory-annotated type should contain a single abstract, "
+                          + "non-default method but found multiple: ["
+                          + "test.Factory.createInt(), "
+                          + "test.Factory.createNoInject(), "
+                          + "test.Factory.createNoAssistedParam(), "
+                          + "test.Factory.createT()"
+                          + "]")
+                  .onSource(factory)
+                  .onLine(6);
+              subject.hasErrorContaining(
+                      "Invalid return type: int. "
+                          + "An assisted factory's abstract method must return a type with an "
+                          + "@AssistedInject-annotated constructor.")
+                  .onSource(factory)
+                  .onLine(7);
+              subject.hasErrorContaining(
+                      "Invalid return type: test.NoInject. "
+                          + "An assisted factory's abstract method must return a type with an "
+                          + "@AssistedInject-annotated constructor.")
+                  .onSource(factory)
+                  .onLine(9);
+              subject.hasErrorContaining(
+                      "Invalid return type: T. "
+                          + "An assisted factory's abstract method must return a type with an "
+                          + "@AssistedInject-annotated constructor.")
+                  .onSource(factory)
+                  .onLine(13);
+            });
   }
 
   @Test
   public void testFactoryMultipleAbstractMethods() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -189,8 +199,8 @@ public class AssistedFactoryErrorsTest {
             "  @AssistedInject Foo(@Assisted int i) {}",
             "}");
 
-    JavaFileObject fooFactoryInterface =
-        JavaFileObjects.forSourceLines(
+    Source fooFactoryInterface =
+        CompilerTests.javaSource(
             "test.FooFactoryInterface",
             "package test;",
             "",
@@ -198,8 +208,8 @@ public class AssistedFactoryErrorsTest {
             " Foo createFoo1(int i);",
             "}");
 
-    JavaFileObject fooFactory =
-        JavaFileObjects.forSourceLines(
+    Source fooFactory =
+        CompilerTests.javaSource(
             "test.FooFactory",
             "package test;",
             "",
@@ -212,20 +222,25 @@ public class AssistedFactoryErrorsTest {
             " Foo createFoo3(int i);",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(foo, fooFactory, fooFactoryInterface);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "The @AssistedFactory-annotated type should contain a single abstract, non-default "
-                + "method but found multiple: [createFoo1(int), createFoo2(int), createFoo3(int)]");
+    CompilerTests.daggerCompiler(foo, fooFactory, fooFactoryInterface)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "The @AssistedFactory-annotated type should contain a single abstract, "
+                          + "non-default method but found multiple: ["
+                          + "test.FooFactoryInterface.createFoo1(int), "
+                          + "test.FooFactory.createFoo2(int), "
+                          + "test.FooFactory.createFoo3(int)"
+                          + "]");
+            });
   }
 
   @Test
   public void testFactoryMismatchingParameter() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -236,8 +251,8 @@ public class AssistedFactoryErrorsTest {
             "  @AssistedInject Foo(@Assisted int i) {}",
             "}");
 
-    JavaFileObject fooFactory =
-        JavaFileObjects.forSourceLines(
+    Source fooFactory =
+        CompilerTests.javaSource(
             "test.FooFactory",
             "package test;",
             "",
@@ -247,22 +262,24 @@ public class AssistedFactoryErrorsTest {
             "interface FooFactory {",
             " Foo create(String i);",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(foo, fooFactory);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "The parameters in the factory method must match the @Assisted parameters in "
-                + "test.Foo.\n"
-                + "        Actual: test.FooFactory#create(java.lang.String)\n"
-                + "      Expected: test.FooFactory#create(int)");
+
+    CompilerTests.daggerCompiler(foo, fooFactory)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "The parameters in the factory method must match the @Assisted parameters in "
+                      + "test.Foo.");
+              subject.hasErrorContaining("  Actual: test.FooFactory#create(java.lang.String)");
+              subject.hasErrorContaining("Expected: test.FooFactory#create(int)");
+            });
   }
 
   @Test
   public void testFactoryMismatchingGenericParameter() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -273,8 +290,8 @@ public class AssistedFactoryErrorsTest {
             "  @AssistedInject Foo(@Assisted T t) {}",
             "}");
 
-    JavaFileObject fooFactory =
-        JavaFileObjects.forSourceLines(
+    Source fooFactory =
+        CompilerTests.javaSource(
             "test.FooFactory",
             "package test;",
             "",
@@ -284,22 +301,24 @@ public class AssistedFactoryErrorsTest {
             "interface FooFactory<T> {",
             "  Foo<T> create(String str);",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(foo, fooFactory);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "The parameters in the factory method must match the @Assisted parameters in "
-                + "test.Foo<T>.\n"
-                + "        Actual: test.FooFactory#create(java.lang.String)\n"
-                + "      Expected: test.FooFactory#create(T)");
+
+    CompilerTests.daggerCompiler(foo, fooFactory)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "The parameters in the factory method must match the @Assisted parameters in "
+                      + "test.Foo<T>.");
+              subject.hasErrorContaining("  Actual: test.FooFactory#create(java.lang.String)");
+              subject.hasErrorContaining("Expected: test.FooFactory#create(T)");
+            });
   }
 
   @Test
   public void testFactoryDuplicateGenericParameter() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -310,8 +329,8 @@ public class AssistedFactoryErrorsTest {
             "  @AssistedInject Foo(@Assisted String str, @Assisted T t) {}",
             "}");
 
-    JavaFileObject fooFactory =
-        JavaFileObjects.forSourceLines(
+    Source fooFactory =
+        CompilerTests.javaSource(
             "test.FooFactory",
             "package test;",
             "",
@@ -321,19 +340,22 @@ public class AssistedFactoryErrorsTest {
             "interface FooFactory {",
             "  Foo<String> create(String str1, String str2);",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(foo, fooFactory);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@AssistedFactory method has duplicate @Assisted types: @Assisted java.lang.String");
+
+    CompilerTests.daggerCompiler(foo, fooFactory)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@AssistedFactory method has duplicate @Assisted types: "
+                      + "@Assisted java.lang.String");
+            });
   }
 
   @Test
   public void testAssistedInjectionRequest() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -344,8 +366,8 @@ public class AssistedFactoryErrorsTest {
             "  @AssistedInject Foo(@Assisted String str) {}",
             "}");
 
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -357,8 +379,8 @@ public class AssistedFactoryErrorsTest {
             "  Bar(Foo foo, Provider<Foo> fooProvider) {}",
             "}");
 
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.FooModule",
             "package test;",
             "",
@@ -374,8 +396,8 @@ public class AssistedFactoryErrorsTest {
             "  }",
             "}");
 
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -389,30 +411,33 @@ public class AssistedFactoryErrorsTest {
             "  Provider<Foo> fooProvider();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(foo, bar, module, component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(6);
+    CompilerTests.daggerCompiler(foo, bar, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(6);
 
-    String fooError =
-        "Dagger does not support injecting @AssistedInject type, test.Foo. "
-            + "Did you mean to inject its assisted factory type instead?";
-    assertThat(compilation).hadErrorContaining(fooError).inFile(bar).onLine(8);
-    assertThat(compilation).hadErrorContaining(fooError).inFile(module).onLine(10);
-    assertThat(compilation).hadErrorContaining(fooError).inFile(component).onLine(8);
+              String fooError =
+                  "Dagger does not support injecting @AssistedInject type, test.Foo. "
+                      + "Did you mean to inject its assisted factory type instead?";
+              subject.hasErrorContaining(fooError).onSource(bar).onLine(8);
+              subject.hasErrorContaining(fooError).onSource(module).onLine(10);
+              subject.hasErrorContaining(fooError).onSource(component).onLine(8);
 
-    String fooProviderError =
-        "Dagger does not support injecting @AssistedInject type, javax.inject.Provider<test.Foo>. "
-            + "Did you mean to inject its assisted factory type instead?";
-    assertThat(compilation).hadErrorContaining(fooProviderError).inFile(bar).onLine(8);
-    assertThat(compilation).hadErrorContaining(fooProviderError).inFile(module).onLine(10);
-    assertThat(compilation).hadErrorContaining(fooProviderError).inFile(component).onLine(10);
+              String fooProviderError =
+                  "Dagger does not support injecting @AssistedInject type, "
+                      + "javax.inject.Provider<test.Foo>. "
+                      + "Did you mean to inject its assisted factory type instead?";
+              subject.hasErrorContaining(fooProviderError).onSource(bar).onLine(8);
+              subject.hasErrorContaining(fooProviderError).onSource(module).onLine(10);
+              subject.hasErrorContaining(fooProviderError).onSource(component).onLine(10);
+            });
   }
 
   @Test
   public void testProvidesAssistedBindings() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -429,8 +454,8 @@ public class AssistedFactoryErrorsTest {
             "  }",
             "}");
 
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.FooModule",
             "package test;",
             "",
@@ -451,24 +476,27 @@ public class AssistedFactoryErrorsTest {
             "  }",
             "}");
 
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo, module);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(2);
-    assertThat(compilation)
-        .hadErrorContaining("[test.Foo] Dagger does not support providing @AssistedInject types.")
-        .inFile(module)
-        .onLine(10);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "[test.Foo.Factory] Dagger does not support providing @AssistedFactory types.")
-        .inFile(module)
-        .onLine(15);
+    CompilerTests.daggerCompiler(foo, module)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining(
+                      "[test.Foo] Dagger does not support providing @AssistedInject types.")
+                  .onSource(module)
+                  .onLine(10);
+              subject.hasErrorContaining(
+                      "[test.Foo.Factory] Dagger does not support providing @AssistedFactory "
+                          + "types.")
+                  .onSource(module)
+                  .onLine(15);
+            });
   }
 
   @Test
   public void testProvidesAssistedBindingsAsFactoryBindsInstance() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -485,8 +513,8 @@ public class AssistedFactoryErrorsTest {
             "  }",
             "}");
 
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -503,24 +531,27 @@ public class AssistedFactoryErrorsTest {
             "  }",
             "}");
 
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo, component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(2);
-    assertThat(compilation)
-        .hadErrorContaining("[test.Foo] Dagger does not support providing @AssistedInject types.")
-        .inFile(component)
-        .onLine(11);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "[test.Foo.Factory] Dagger does not support providing @AssistedFactory types.")
-        .inFile(component)
-        .onLine(12);
+    CompilerTests.daggerCompiler(foo, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining(
+                      "[test.Foo] Dagger does not support providing @AssistedInject types.")
+                  .onSource(component)
+                  .onLine(11);
+              subject.hasErrorContaining(
+                      "[test.Foo.Factory] Dagger does not support providing @AssistedFactory "
+                          + "types.")
+                  .onSource(component)
+                  .onLine(12);
+            });
   }
 
   @Test
   public void testProvidesAssistedBindingsAsBuilderBindsInstance() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -537,8 +568,8 @@ public class AssistedFactoryErrorsTest {
             "  }",
             "}");
 
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -555,24 +586,27 @@ public class AssistedFactoryErrorsTest {
             "  }",
             "}");
 
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo, component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(2);
-    assertThat(compilation)
-        .hadErrorContaining("[test.Foo] Dagger does not support providing @AssistedInject types.")
-        .inFile(component)
-        .onLine(10);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "[test.Foo.Factory] Dagger does not support providing @AssistedFactory types.")
-        .inFile(component)
-        .onLine(11);
+    CompilerTests.daggerCompiler(foo, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining(
+                      "[test.Foo] Dagger does not support providing @AssistedInject types.")
+                  .onSource(component)
+                  .onLine(10);
+              subject.hasErrorContaining(
+                      "[test.Foo.Factory] Dagger does not support providing @AssistedFactory "
+                          + "types.")
+                  .onSource(component)
+                  .onLine(11);
+            });
   }
 
   @Test
   public void testProvidesAssistedBindingsAsOptional() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -589,8 +623,8 @@ public class AssistedFactoryErrorsTest {
             "  }",
             "}");
 
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.FooModule",
             "package test;",
             "",
@@ -605,24 +639,27 @@ public class AssistedFactoryErrorsTest {
             "  @BindsOptionalOf Foo.Factory optionalFooFactory();",
             "}");
 
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo, module);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(2);
-    assertThat(compilation)
-        .hadErrorContaining("[test.Foo] Dagger does not support providing @AssistedInject types.")
-        .inFile(module)
-        .onLine(9);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "[test.Foo.Factory] Dagger does not support providing @AssistedFactory types.")
-        .inFile(module)
-        .onLine(11);
+    CompilerTests.daggerCompiler(foo, module)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining(
+                      "[test.Foo] Dagger does not support providing @AssistedInject types.")
+                  .onSource(module)
+                  .onLine(9);
+              subject.hasErrorContaining(
+                      "[test.Foo.Factory] Dagger does not support providing @AssistedFactory "
+                          + "types.")
+                  .onSource(module)
+                  .onLine(11);
+            });
   }
 
   @Test
   public void testInjectsLazyOfAssistedFactory() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -639,8 +676,8 @@ public class AssistedFactoryErrorsTest {
             "  }",
             "}");
 
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -652,21 +689,24 @@ public class AssistedFactoryErrorsTest {
             "  Bar(Foo.Factory fooFactory, Lazy<Foo.Factory> fooFactoryLazy) {}",
             "}");
 
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo, bar);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Dagger does not support injecting Lazy<T>, Producer<T>, or Produced<T> "
-                + "when T is an @AssistedFactory-annotated type such as test.Foo.Factory")
-        .inFile(bar)
-        .onLine(8);
+
+    CompilerTests.daggerCompiler(foo, bar)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "Dagger does not support injecting Lazy<T>, Producer<T>, or Produced<T> "
+                          + "when T is an @AssistedFactory-annotated type such as test.Foo.Factory")
+                  .onSource(bar)
+                  .onLine(8);
+            });
   }
 
   @Test
   public void testScopedAssistedInjection() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -686,19 +726,22 @@ public class AssistedFactoryErrorsTest {
             "  }",
             "}");
 
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining("A type with an @AssistedInject-annotated constructor cannot be scoped")
-        .inFile(foo)
-        .onLine(8);
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "A type with an @AssistedInject-annotated constructor cannot be scoped")
+                  .onSource(foo)
+                  .onLine(8);
+            });
   }
 
   @Test
   public void testMultipleInjectAnnotations() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -712,45 +755,20 @@ public class AssistedFactoryErrorsTest {
             "  Foo(@Assisted int i) {}",
             "}");
 
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Constructors cannot be annotated with both @Inject and @AssistedInject");
-  }
-
-  @Test
-  public void testAssistedInjectNotOnConstructor() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
-            "test.Foo",
-            "package test;",
-            "",
-            "import dagger.assisted.AssistedInject;",
-            "",
-            "class Foo {",
-            "  @AssistedInject",
-            "  void someMethod() {}",
-            "}");
-
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-
-    // Note: this isn't actually a Dagger error, it's a javac error since @AssistedInject only
-    // targets constructors. However, it's good to have this test in case that ever changes.
-    assertThat(compilation)
-        .hadErrorContainingMatch(
-            "annotation (type|interface) not applicable to this kind of declaration")
-        .inFile(foo)
-        .onLine(6);
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "Constructors cannot be annotated with both @Inject and @AssistedInject");
+            });
   }
 
   @Test
   public void testAssistedInjectWithNoAssistedParametersIsNotInjectable() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -761,8 +779,8 @@ public class AssistedFactoryErrorsTest {
             "  Foo(Bar bar) {}",
             "}");
 
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -774,8 +792,8 @@ public class AssistedFactoryErrorsTest {
             "  Bar() {}",
             "}");
 
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -786,27 +804,28 @@ public class AssistedFactoryErrorsTest {
             "  Foo foo();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(foo, bar, component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(2);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Dagger does not support injecting @AssistedInject type, test.Bar. "
-                + "Did you mean to inject its assisted factory type instead?")
-        .inFile(foo)
-        .onLine(7);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "\033[1;31m[Dagger/MissingBinding]\033[0m "
-                + "Foo cannot be provided without an @Inject constructor or an @Provides-annotated "
-                + "method.");
+
+    CompilerTests.daggerCompiler(foo, bar, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining(
+                      "Dagger does not support injecting @AssistedInject type, test.Bar. "
+                          + "Did you mean to inject its assisted factory type instead?")
+                  .onSource(foo)
+                  .onLine(7);
+              subject.hasErrorContaining(
+                  "\033[1;31m[Dagger/MissingBinding]\033[0m "
+                      + "Foo cannot be provided without an @Inject constructor or an "
+                      + "@Provides-annotated method.");
+            });
   }
 
   @Test
   public void testInaccessibleFoo() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.subpackage.InaccessibleFoo",
             "package test.subpackage;",
             "",
@@ -817,8 +836,8 @@ public class AssistedFactoryErrorsTest {
             "  @AssistedInject InaccessibleFoo(@Assisted int i) {}",
             "}");
 
-    JavaFileObject fooFactory =
-        JavaFileObjects.forSourceLines(
+    Source fooFactory =
+        CompilerTests.javaSource(
             "test.subpackage.InaccessibleFooFactory",
             "package test.subpackage;",
             "",
@@ -829,8 +848,8 @@ public class AssistedFactoryErrorsTest {
             "  InaccessibleFoo create(int i);",
             "}");
 
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.FooFactoryComponent",
             "package test;",
             "",
@@ -842,26 +861,30 @@ public class AssistedFactoryErrorsTest {
             "  InaccessibleFooFactory inaccessibleFooFactory();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(foo, fooFactory, component);
+    CompilerTests.DaggerCompiler daggerCompiler =
+        CompilerTests.daggerCompiler(foo, fooFactory, component)
+            .withProcessingOptions(compilerMode.processorOptions());
 
     if (compilerMode == CompilerMode.FAST_INIT_MODE) {
       // TODO(bcorso): Remove once we fix inaccessible assisted factory imlementation for fastInit.
-      assertThat(compilation).failed();
-      assertThat(compilation).hadErrorCount(1);
-      assertThat(compilation)
-          .hadErrorContaining(
-              "test.subpackage.InaccessibleFoo is not public in test.subpackage; cannot be "
-                  + "accessed from outside package");
+      daggerCompiler.compile(
+          subject -> {
+            // TODO(bcorso): We don't report the error count here because javac reports
+            // the error once, whereas ksp reports the error twice.
+            subject
+                .hasErrorContaining(
+                    "test.subpackage.InaccessibleFoo is not public in test.subpackage; cannot be "
+                        + "accessed from outside package");
+          });
     } else {
-      assertThat(compilation).succeeded();
+      daggerCompiler.compile(subject -> subject.hasErrorCount(0));
     }
   }
 
   @Test
   public void testAssistedFactoryMethodWithTypeParametersFails() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -878,13 +901,16 @@ public class AssistedFactoryErrorsTest {
             "  }",
             "}");
 
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@AssistedFactory does not currently support type parameters in the creator method.")
-        .inFile(foo)
-        .onLine(12);
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "@AssistedFactory does not currently support type parameters in the creator "
+                          + "method.")
+                  .onSource(foo)
+                  .onLine(12);
+            });
   }
 }

@@ -42,6 +42,7 @@ import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
+import dagger.internal.codegen.xprocessing.XTypes;
 import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -146,7 +147,7 @@ final class DependencyRequestValidator {
         if (isAssistedInjectionType(typeElement)) {
           report.addError(
               "Dagger does not support injecting @AssistedInject type, "
-                  + requestType
+                  + XTypes.toStableString(requestType)
                   + ". Did you mean to inject its assisted factory type instead?",
               requestElement);
         }
@@ -156,7 +157,7 @@ final class DependencyRequestValidator {
           report.addError(
               "Dagger does not support injecting Lazy<T>, Producer<T>, "
                   + "or Produced<T> when T is an @AssistedFactory-annotated type such as "
-                  + keyType,
+                  + XTypes.toStableString(keyType),
               requestElement);
         }
       }
@@ -165,7 +166,7 @@ final class DependencyRequestValidator {
         report.addError(
             "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, "
                 + "or Produced<T> when T is a wildcard type such as "
-                + keyType,
+                + XTypes.toStableString(keyType),
             requestElement);
       }
       if (isTypeOf(keyType, TypeNames.MEMBERS_INJECTOR)) {

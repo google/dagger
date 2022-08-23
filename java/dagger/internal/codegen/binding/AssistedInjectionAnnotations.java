@@ -44,6 +44,7 @@ import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.xprocessing.XTypeElements;
+import dagger.internal.codegen.xprocessing.XTypes;
 import dagger.spi.model.BindingKind;
 import java.util.List;
 import java.util.Optional;
@@ -243,8 +244,8 @@ public final class AssistedInjectionAnnotations {
     @Override
     public final String toString() {
       return qualifier().isEmpty()
-          ? String.format("@Assisted %s", type())
-          : String.format("@Assisted(\"%s\") %s", qualifier(), type());
+          ? String.format("@Assisted %s", XTypes.toStableString(type()))
+          : String.format("@Assisted(\"%s\") %s", qualifier(), XTypes.toStableString(type()));
     }
   }
 

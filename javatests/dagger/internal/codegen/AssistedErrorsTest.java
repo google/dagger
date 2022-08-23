@@ -16,13 +16,9 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableCollection;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -43,8 +39,8 @@ public class AssistedErrorsTest {
 
   @Test
   public void testAssistedNotWithAssistedInjectionConstructor() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -59,25 +55,23 @@ public class AssistedErrorsTest {
             "      @Assisted int i",
             "  ) {}",
             "}");
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(2);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@Assisted parameters can only be used within an @AssistedInject-annotated constructor")
-        .inFile(foo)
-        .onLine(7);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@Assisted parameters can only be used within an @AssistedInject-annotated constructor")
-        .inFile(foo)
-        .onLine(11);
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining(
+                      "@Assisted parameters can only be used within an @AssistedInject-annotated "
+                          + "constructor")
+                  .onSource(foo)
+                  .onLine(7);
+            });
   }
 
   @Test
   public void testNestedFactoryNotStatic() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -93,12 +87,14 @@ public class AssistedErrorsTest {
             "      @FooQualifier @Assisted int i",
             "  ) {}",
             "}");
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(foo);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining("Qualifiers cannot be used with @Assisted parameters.")
-        .inFile(foo)
-        .onLine(12);
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("Qualifiers cannot be used with @Assisted parameters.")
+                  .onSource(foo)
+                  .onLine(12);
+            });
   }
 }

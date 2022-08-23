@@ -39,6 +39,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XMethodElement;
@@ -61,9 +62,11 @@ import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedFactoryMetadata;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedParameter;
 import dagger.internal.codegen.binding.BindingFactory;
+import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.validation.ValidationReport;
+import dagger.internal.codegen.xprocessing.XTypes;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -72,9 +75,12 @@ import javax.inject.Inject;
 /** An annotation processor for {@link dagger.assisted.AssistedFactory}-annotated types. */
 final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTypeElement> {
   private final XProcessingEnv processingEnv;
+  @SuppressWarnings("HidingField")
   private final XMessager messager;
   private final XFiler filer;
   private final BindingFactory bindingFactory;
+  private final MethodSignatureFormatter methodSignatureFormatter;
+  @SuppressWarnings("HidingField")
   private final SuperficialValidator superficialValidator;
 
   @Inject
@@ -83,11 +89,13 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
       XMessager messager,
       XFiler filer,
       BindingFactory bindingFactory,
+      MethodSignatureFormatter methodSignatureFormatter,
       SuperficialValidator superficialValidator) {
     this.processingEnv = processingEnv;
     this.messager = messager;
     this.filer = filer;
     this.bindingFactory = bindingFactory;
+    this.methodSignatureFormatter = methodSignatureFormatter;
     this.superficialValidator = superficialValidator;
   }
 
@@ -149,7 +157,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
               String.format(
                   "Invalid return type: %s. An assisted factory's abstract method must return a "
                       + "type with an @AssistedInject-annotated constructor.",
-                  returnType),
+                  XTypes.toStableString(returnType)),
               method);
         }
         if (hasTypeParameters(method)) {
@@ -164,7 +172,9 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
         report.addError(
             "The @AssistedFactory-annotated type should contain a single abstract, non-default"
                 + " method but found multiple: "
-                + abstractFactoryMethods,
+                + abstractFactoryMethods.stream()
+                    .map(methodSignatureFormatter::formatWithoutReturnType)
+                    .collect(toImmutableList()),
             factory);
       }
 
@@ -191,16 +201,20 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
         report.addError(
             String.format(
                 "The parameters in the factory method must match the @Assisted parameters in %s."
-                    + "\n      Actual: %s#%s"
-                    + "\n    Expected: %s#%s(%s)",
-                metadata.assistedInjectType(),
+                    + "\n    Actual: %s#%s(%s)"
+                    + "\n  Expected: %s#%s(%s)",
+                XTypes.toStableString(metadata.assistedInjectType()),
                 metadata.factory().getQualifiedName(),
-                metadata.factoryMethod(),
+                getSimpleName(metadata.factoryMethod()),
+                metadata.factoryMethod().getParameters().stream()
+                    .map(XExecutableParameterElement::getType)
+                    .map(XTypes::toStableString)
+                    .collect(joining(", ")),
                 metadata.factory().getQualifiedName(),
                 getSimpleName(metadata.factoryMethod()),
                 metadata.assistedInjectAssistedParameters().stream()
                     .map(AssistedParameter::type)
-                    .map(Object::toString)
+                    .map(XTypes::toStableString)
                     .collect(joining(", "))),
             metadata.factoryMethod());
       }

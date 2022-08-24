@@ -58,8 +58,18 @@ public final class CompilerTests {
           "dagger.experimentalDaggerErrorMessages", "enabled");
 
   /** Returns a {@link Source.KotlinSource} with the given file name and content. */
+  public static Source kotlinSource(String fileName, ImmutableCollection<String> srcLines) {
+    return Source.Companion.kotlin(fileName, String.join("\n", srcLines));
+  }
+
+  /** Returns a {@link Source.KotlinSource} with the given file name and content. */
   public static Source kotlinSource(String fileName, String... srcLines) {
     return Source.Companion.kotlin(fileName, String.join("\n", srcLines));
+  }
+
+  /** Returns a {@link Source.JavaSource} with the given file name and content. */
+  public static Source javaSource(String fileName, ImmutableCollection<String> srcLines) {
+    return Source.Companion.java(fileName, String.join("\n", srcLines));
   }
 
   /** Returns a {@link Source.JavaSource} with the given file name and content. */

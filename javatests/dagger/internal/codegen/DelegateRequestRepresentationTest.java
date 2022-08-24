@@ -19,9 +19,10 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.testing.compile.Compilation;
-import com.google.testing.compile.CompilationSubject;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
 import javax.tools.JavaFileObject;
@@ -46,8 +47,8 @@ public class DelegateRequestRepresentationTest {
     this.compilerMode = compilerMode;
   }
 
-  private static final JavaFileObject REGULAR_SCOPED =
-      JavaFileObjects.forSourceLines(
+  private static final Source REGULAR_SCOPED =
+      CompilerTests.javaSource(
           "test.RegularScoped",
           "package test;",
           "",
@@ -61,8 +62,8 @@ public class DelegateRequestRepresentationTest {
           "  @Scope @interface CustomScope {}",
           "}");
 
-  private static final JavaFileObject REUSABLE_SCOPED =
-      JavaFileObjects.forSourceLines(
+  private static final Source REUSABLE_SCOPED =
+      CompilerTests.javaSource(
           "test.ReusableScoped",
           "package test;",
           "",
@@ -74,8 +75,8 @@ public class DelegateRequestRepresentationTest {
           "  @Inject ReusableScoped() {}",
           "}");
 
-  private static final JavaFileObject UNSCOPED =
-      JavaFileObjects.forSourceLines(
+  private static final Source UNSCOPED =
+      CompilerTests.javaSource(
           "test.Unscoped",
           "package test;",
           "",
@@ -85,8 +86,8 @@ public class DelegateRequestRepresentationTest {
           "  @Inject Unscoped() {}",
           "}");
 
-  private static final JavaFileObject COMPONENT =
-      JavaFileObjects.forSourceLines(
+  private static final Source COMPONENT =
+      CompilerTests.javaSource(
           "test.TestComponent",
           "package test;",
           "",
@@ -105,8 +106,8 @@ public class DelegateRequestRepresentationTest {
           "  Object unscoped();",
           "}");
 
-  private static final JavaFileObject QUALIFIER =
-      JavaFileObjects.forSourceLines(
+  private static final Source QUALIFIER =
+      CompilerTests.javaSource(
           "test.Qualifier",
           "package test;",
           "",
@@ -117,8 +118,8 @@ public class DelegateRequestRepresentationTest {
 
   @Test
   public void toDoubleCheck() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -137,15 +138,20 @@ public class DelegateRequestRepresentationTest {
             "  Object unscoped(Unscoped delegate);",
             "}");
 
-    assertThatCompilationWithModule(module)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(
+            module, COMPONENT, QUALIFIER, REGULAR_SCOPED, REUSABLE_SCOPED, UNSCOPED)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void toSingleCheck() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -165,15 +171,20 @@ public class DelegateRequestRepresentationTest {
             "  Object unscoped(Unscoped delegate);",
             "}");
 
-    assertThatCompilationWithModule(module)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(
+            module, COMPONENT, QUALIFIER, REGULAR_SCOPED, REUSABLE_SCOPED, UNSCOPED)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void toUnscoped() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -192,22 +203,27 @@ public class DelegateRequestRepresentationTest {
             "  Object unscoped(Unscoped delegate);",
             "}");
 
-    assertThatCompilationWithModule(module)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(
+            module, COMPONENT, QUALIFIER, REGULAR_SCOPED, REUSABLE_SCOPED, UNSCOPED)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void castNeeded_rawTypes_Provider_get() throws Exception {
-    JavaFileObject accessibleSupertype =
-        JavaFileObjects.forSourceLines(
+    Source accessibleSupertype =
+        CompilerTests.javaSource(
             "other.Supertype",
             "package other;",
             "",
             // accessible from the component, but the subtype is not
             "public interface Supertype {}");
-    JavaFileObject inaccessibleSubtype =
-        JavaFileObjects.forSourceLines(
+    Source inaccessibleSubtype =
+        CompilerTests.javaSource(
             "other.Subtype",
             "package other;",
             "",
@@ -218,8 +234,8 @@ public class DelegateRequestRepresentationTest {
             "class Subtype implements Supertype {",
             "  @Inject Subtype() {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "other.SupertypeModule",
             "package other;",
             "",
@@ -230,8 +246,8 @@ public class DelegateRequestRepresentationTest {
             "public interface SupertypeModule {",
             "  @Binds Supertype to(Subtype subtype);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -243,25 +259,26 @@ public class DelegateRequestRepresentationTest {
             "interface TestComponent {",
             "  other.Supertype supertype();",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(accessibleSupertype, inaccessibleSubtype, module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+
+    CompilerTests.daggerCompiler(accessibleSupertype, inaccessibleSubtype, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void noCast_rawTypes_Provider_get_toInaccessibleType() throws Exception {
-    JavaFileObject supertype =
-        JavaFileObjects.forSourceLines(
+    Source supertype =
+        CompilerTests.javaSource(
             "other.Supertype",
             "package other;",
             "",
             "interface Supertype {}");
-    JavaFileObject subtype =
-        JavaFileObjects.forSourceLines(
+    Source subtype =
+        CompilerTests.javaSource(
             "other.Subtype",
             "package other;",
             "",
@@ -272,8 +289,8 @@ public class DelegateRequestRepresentationTest {
             "class Subtype implements Supertype {",
             "  @Inject Subtype() {}",
             "}");
-    JavaFileObject usesSupertype =
-        JavaFileObjects.forSourceLines(
+    Source usesSupertype =
+        CompilerTests.javaSource(
             "other.UsesSupertype",
             "package other;",
             "",
@@ -282,8 +299,8 @@ public class DelegateRequestRepresentationTest {
             "public class UsesSupertype {",
             "  @Inject UsesSupertype(Supertype supertype) {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "other.SupertypeModule",
             "package other;",
             "",
@@ -294,8 +311,8 @@ public class DelegateRequestRepresentationTest {
             "public interface SupertypeModule {",
             "  @Binds Supertype to(Subtype subtype);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -307,15 +324,17 @@ public class DelegateRequestRepresentationTest {
             "interface TestComponent {",
             "  other.UsesSupertype usesSupertype();",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(supertype, subtype, usesSupertype, module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+
+    CompilerTests.daggerCompiler(supertype, subtype, usesSupertype, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
+  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void castedToRawType() throws Exception {
     JavaFileObject module =
@@ -366,6 +385,7 @@ public class DelegateRequestRepresentationTest {
         .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
   }
 
+  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void doubleBinds() throws Exception {
     JavaFileObject module =
@@ -412,6 +432,7 @@ public class DelegateRequestRepresentationTest {
         .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
   }
 
+  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void inlineFactoryOfInacessibleType() throws Exception {
     JavaFileObject supertype =
@@ -465,8 +486,8 @@ public class DelegateRequestRepresentationTest {
 
   @Test
   public void providerWhenBindsScopeGreaterThanDependencyScope() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -488,8 +509,8 @@ public class DelegateRequestRepresentationTest {
             "  @Singleton",
             "  abstract Object bindString(String str);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -503,25 +524,12 @@ public class DelegateRequestRepresentationTest {
             "  Provider<Object> object();",
             "}");
 
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts())
-        .compile(module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
-  }
-
-  private CompilationSubject assertThatCompilationWithModule(JavaFileObject module) {
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(
-                module,
-                COMPONENT,
-                QUALIFIER,
-                REGULAR_SCOPED,
-                REUSABLE_SCOPED,
-                UNSCOPED);
-    assertThat(compilation).succeeded();
-    return assertThat(compilation);
+    CompilerTests.daggerCompiler(module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 }

@@ -16,14 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import androidx.room.compiler.processing.util.Source;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,8 +43,8 @@ public class ElidedFactoriesTest {
 
   @Test
   public void simpleComponent() throws Exception {
-    JavaFileObject injectedType =
-        JavaFileObjects.forSourceLines(
+    Source injectedType =
+        CompilerTests.javaSource(
             "test.InjectedType",
             "package test;",
             "",
@@ -58,9 +54,9 @@ public class ElidedFactoriesTest {
             "  @Inject InjectedType() {}",
             "}");
 
-    JavaFileObject dependsOnInjected =
-        JavaFileObjects.forSourceLines(
-            "test.InjectedType",
+    Source dependsOnInjected =
+        CompilerTests.javaSource(
+            "test.DependsOnInjected",
             "package test;",
             "",
             "import javax.inject.Inject;",
@@ -68,8 +64,8 @@ public class ElidedFactoriesTest {
             "final class DependsOnInjected {",
             "  @Inject DependsOnInjected(InjectedType injected) {}",
             "}");
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -80,19 +76,19 @@ public class ElidedFactoriesTest {
             "  DependsOnInjected dependsOnInjected();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(injectedType, dependsOnInjected, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerSimpleComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerSimpleComponent"));
+    CompilerTests.daggerCompiler(injectedType, dependsOnInjected, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerSimpleComponent"));
+            });
   }
 
   @Test
   public void simpleComponent_injectsProviderOf_dependsOnScoped() throws Exception {
-    JavaFileObject scopedType =
-        JavaFileObjects.forSourceLines(
+    Source scopedType =
+        CompilerTests.javaSource(
             "test.ScopedType",
             "package test;",
             "",
@@ -104,9 +100,9 @@ public class ElidedFactoriesTest {
             "  @Inject ScopedType() {}",
             "}");
 
-    JavaFileObject dependsOnScoped =
-        JavaFileObjects.forSourceLines(
-            "test.ScopedType",
+    Source dependsOnScoped =
+        CompilerTests.javaSource(
+            "test.DependsOnScoped",
             "package test;",
             "",
             "import javax.inject.Inject;",
@@ -116,8 +112,8 @@ public class ElidedFactoriesTest {
             "  @Inject DependsOnScoped(ScopedType scoped) {}",
             "}");
 
-    JavaFileObject needsProvider =
-        JavaFileObjects.forSourceLines(
+    Source needsProvider =
+        CompilerTests.javaSource(
             "test.NeedsProvider",
             "package test;",
             "",
@@ -127,8 +123,8 @@ public class ElidedFactoriesTest {
             "class NeedsProvider {",
             "  @Inject NeedsProvider(Provider<DependsOnScoped> provider) {}",
             "}");
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -141,19 +137,19 @@ public class ElidedFactoriesTest {
             "  NeedsProvider needsProvider();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(scopedType, dependsOnScoped, componentFile, needsProvider);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerSimpleComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerSimpleComponent"));
+    CompilerTests.daggerCompiler(scopedType, dependsOnScoped, componentFile, needsProvider)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerSimpleComponent"));
+            });
   }
 
   @Test
   public void scopedBinding_onlyUsedInSubcomponent() throws Exception {
-    JavaFileObject scopedType =
-        JavaFileObjects.forSourceLines(
+    Source scopedType =
+        CompilerTests.javaSource(
             "test.ScopedType",
             "package test;",
             "",
@@ -165,9 +161,9 @@ public class ElidedFactoriesTest {
             "  @Inject ScopedType() {}",
             "}");
 
-    JavaFileObject dependsOnScoped =
-        JavaFileObjects.forSourceLines(
-            "test.ScopedType",
+    Source dependsOnScoped =
+        CompilerTests.javaSource(
+            "test.DependsOnScoped",
             "package test;",
             "",
             "import javax.inject.Inject;",
@@ -176,8 +172,8 @@ public class ElidedFactoriesTest {
             "final class DependsOnScoped {",
             "  @Inject DependsOnScoped(ScopedType scoped) {}",
             "}");
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -189,9 +185,9 @@ public class ElidedFactoriesTest {
             "interface SimpleComponent {",
             "  Sub sub();",
             "}");
-    JavaFileObject subcomponentFile =
-        JavaFileObjects.forSourceLines(
-            "test.SimpleComponent",
+    Source subcomponentFile =
+        CompilerTests.javaSource(
+            "test.Sub",
             "package test;",
             "",
             "import dagger.Subcomponent;",
@@ -201,12 +197,12 @@ public class ElidedFactoriesTest {
             "  DependsOnScoped dependsOnScoped();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(scopedType, dependsOnScoped, componentFile, subcomponentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerSimpleComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerSimpleComponent"));
+    CompilerTests.daggerCompiler(scopedType, dependsOnScoped, componentFile, subcomponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerSimpleComponent"));
+            });
   }
 }

@@ -20,8 +20,10 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
 import javax.tools.JavaFileObject;
@@ -48,100 +50,110 @@ public class MapBindingComponentProcessorTest {
 
   @Test
   public void mapBindingsWithEnumKey() throws Exception {
-    JavaFileObject mapModuleOneFile =
-        JavaFileObjects
-            .forSourceLines("test.MapModuleOne",
-                "package test;",
-                "",
-                "import dagger.Module;",
-                "import dagger.Provides;",
-                "import dagger.multibindings.IntoMap;",
-                "",
-                "@Module",
-                "final class MapModuleOne {",
-                "  @Provides @IntoMap @PathKey(PathEnum.ADMIN) Handler provideAdminHandler() {",
-                "    return new AdminHandler();",
-                "  }",
-                "}");
-    JavaFileObject mapModuleTwoFile =
-        JavaFileObjects
-            .forSourceLines("test.MapModuleTwo",
-                "package test;",
-                "",
-                "import dagger.Module;",
-                "import dagger.Provides;",
-                "import dagger.multibindings.IntoMap;",
-                "",
-                "@Module",
-                "final class MapModuleTwo {",
-                "  @Provides @IntoMap @PathKey(PathEnum.LOGIN) Handler provideLoginHandler() {",
-                "    return new LoginHandler();",
-                "  }",
-                "}");
-    JavaFileObject enumKeyFile = JavaFileObjects.forSourceLines("test.PathKey",
-        "package test;",
-        "import dagger.MapKey;",
-        "import java.lang.annotation.Retention;",
-        "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
-        "",
-        "@MapKey(unwrapValue = true)",
-        "@Retention(RUNTIME)",
-        "public @interface PathKey {",
-        "  PathEnum value();",
-        "}");
-    JavaFileObject pathEnumFile = JavaFileObjects.forSourceLines("test.PathEnum",
-        "package test;",
-        "",
-        "public enum PathEnum {",
-        "    ADMIN,",
-        "    LOGIN;",
-        "}");
+    Source mapModuleOneFile =
+        CompilerTests.javaSource(
+            "test.MapModuleOne",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "final class MapModuleOne {",
+            "  @Provides @IntoMap @PathKey(PathEnum.ADMIN) Handler provideAdminHandler() {",
+            "    return new AdminHandler();",
+            "  }",
+            "}");
+    Source mapModuleTwoFile =
+        CompilerTests.javaSource(
+            "test.MapModuleTwo",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "final class MapModuleTwo {",
+            "  @Provides @IntoMap @PathKey(PathEnum.LOGIN) Handler provideLoginHandler() {",
+            "    return new LoginHandler();",
+            "  }",
+            "}");
+    Source enumKeyFile =
+        CompilerTests.javaSource(
+            "test.PathKey",
+            "package test;",
+            "import dagger.MapKey;",
+            "import java.lang.annotation.Retention;",
+            "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
+            "",
+            "@MapKey(unwrapValue = true)",
+            "@Retention(RUNTIME)",
+            "public @interface PathKey {",
+            "  PathEnum value();",
+            "}");
+    Source pathEnumFile =
+        CompilerTests.javaSource(
+            "test.PathEnum",
+            "package test;",
+            "",
+            "public enum PathEnum {",
+            "    ADMIN,",
+            "    LOGIN;",
+            "}");
 
-    JavaFileObject handlerFile =
-        JavaFileObjects.forSourceLines("test.Handler", "package test;", "", "interface Handler {}");
-    JavaFileObject loginHandlerFile =
-        JavaFileObjects.forSourceLines(
+    Source handlerFile =
+        CompilerTests.javaSource(
+            "test.Handler",
+            "package test;",
+            "",
+            "interface Handler {}");
+    Source loginHandlerFile =
+        CompilerTests.javaSource(
             "test.LoginHandler",
             "package test;",
             "",
             "class LoginHandler implements Handler {",
             "  public LoginHandler() {}",
             "}");
-    JavaFileObject adminHandlerFile =
-        JavaFileObjects.forSourceLines(
+    Source adminHandlerFile =
+        CompilerTests.javaSource(
             "test.AdminHandler",
             "package test;",
             "",
             "class AdminHandler implements Handler {",
             "  public AdminHandler() {}",
             "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import java.util.Map;",
-        "import javax.inject.Provider;",
-        "",
-        "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
-        "interface TestComponent {",
-        "  Provider<Map<PathEnum, Provider<Handler>>> dispatcher();",
-        "}");
+    Source componentFile =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Map;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
+            "interface TestComponent {",
+            "  Provider<Map<PathEnum, Provider<Handler>>> dispatcher();",
+            "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(
-                mapModuleOneFile,
-                mapModuleTwoFile,
-                enumKeyFile,
-                pathEnumFile,
-                handlerFile,
-                loginHandlerFile,
-                adminHandlerFile,
-                componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(
+            mapModuleOneFile,
+            mapModuleTwoFile,
+            enumKeyFile,
+            pathEnumFile,
+            handlerFile,
+            loginHandlerFile,
+            adminHandlerFile,
+            componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
@@ -259,81 +271,87 @@ public class MapBindingComponentProcessorTest {
 
   @Test
   public void mapBindingsWithStringKey() throws Exception {
-    JavaFileObject mapModuleOneFile =
-        JavaFileObjects
-            .forSourceLines("test.MapModuleOne",
-                "package test;",
-                "",
-                "import dagger.Module;",
-                "import dagger.Provides;",
-                "import dagger.multibindings.StringKey;",
-                "import dagger.multibindings.IntoMap;",
-                "",
-                "@Module",
-                "final class MapModuleOne {",
-                "  @Provides @IntoMap @StringKey(\"Admin\") Handler provideAdminHandler() {",
-                "    return new AdminHandler();",
-                "  }",
-                "}");
-    JavaFileObject mapModuleTwoFile =
-        JavaFileObjects
-            .forSourceLines("test.MapModuleTwo",
-                "package test;",
-                "",
-                "import dagger.Module;",
-                "import dagger.Provides;",
-                "import dagger.multibindings.IntoMap;",
-                "import dagger.multibindings.StringKey;",
-                "",
-                "@Module",
-                "final class MapModuleTwo {",
-                "  @Provides @IntoMap @StringKey(\"Login\") Handler provideLoginHandler() {",
-                "    return new LoginHandler();",
-                "  }",
-                "}");
-    JavaFileObject handlerFile =
-        JavaFileObjects.forSourceLines("test.Handler", "package test;", "", "interface Handler {}");
-    JavaFileObject loginHandlerFile =
-        JavaFileObjects.forSourceLines(
+    Source mapModuleOneFile =
+        CompilerTests.javaSource(
+            "test.MapModuleOne",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.StringKey;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "final class MapModuleOne {",
+            "  @Provides @IntoMap @StringKey(\"Admin\") Handler provideAdminHandler() {",
+            "    return new AdminHandler();",
+            "  }",
+            "}");
+    Source mapModuleTwoFile =
+        CompilerTests.javaSource(
+            "test.MapModuleTwo",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "",
+            "@Module",
+            "final class MapModuleTwo {",
+            "  @Provides @IntoMap @StringKey(\"Login\") Handler provideLoginHandler() {",
+            "    return new LoginHandler();",
+            "  }",
+            "}");
+    Source handlerFile =
+        CompilerTests.javaSource(
+            "test.Handler",
+            "package test;",
+            "",
+            "interface Handler {}");
+    Source loginHandlerFile =
+        CompilerTests.javaSource(
             "test.LoginHandler",
             "package test;",
             "",
             "class LoginHandler implements Handler {",
             "  public LoginHandler() {}",
             "}");
-    JavaFileObject adminHandlerFile =
-        JavaFileObjects.forSourceLines(
+    Source adminHandlerFile =
+        CompilerTests.javaSource(
             "test.AdminHandler",
             "package test;",
             "",
             "class AdminHandler implements Handler {",
             "  public AdminHandler() {}",
             "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import java.util.Map;",
-        "import javax.inject.Provider;",
-        "",
-        "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
-        "interface TestComponent {",
-        "  Provider<Map<String, Provider<Handler>>> dispatcher();",
-        "}");
+    Source componentFile =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Map;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
+            "interface TestComponent {",
+            "  Provider<Map<String, Provider<Handler>>> dispatcher();",
+            "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(
-                mapModuleOneFile,
-                mapModuleTwoFile,
-                handlerFile,
-                loginHandlerFile,
-                adminHandlerFile,
-                componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(
+            mapModuleOneFile,
+            mapModuleTwoFile,
+            handlerFile,
+            loginHandlerFile,
+            adminHandlerFile,
+            componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
@@ -429,132 +447,150 @@ public class MapBindingComponentProcessorTest {
 
   @Test
   public void mapBindingsWithNonProviderValue() throws Exception {
-    JavaFileObject mapModuleOneFile = JavaFileObjects.forSourceLines("test.MapModuleOne",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "import dagger.multibindings.IntoMap;",
-        "",
-        "@Module",
-        "final class MapModuleOne {",
-        "  @Provides @IntoMap @PathKey(PathEnum.ADMIN) Handler provideAdminHandler() {",
-        "    return new AdminHandler();",
-        "  }",
-        "}");
-    JavaFileObject mapModuleTwoFile = JavaFileObjects.forSourceLines("test.MapModuleTwo",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "import dagger.multibindings.IntoMap;",
-        "",
-        "@Module",
-        "final class MapModuleTwo {",
-        "  @Provides @IntoMap @PathKey(PathEnum.LOGIN) Handler provideLoginHandler() {",
-        "    return new LoginHandler();",
-        "  }",
-        "}");
-    JavaFileObject enumKeyFile = JavaFileObjects.forSourceLines("test.PathKey",
-        "package test;",
-        "import dagger.MapKey;",
-        "import java.lang.annotation.Retention;",
-        "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
-        "",
-        "@MapKey(unwrapValue = true)",
-        "@Retention(RUNTIME)",
-        "public @interface PathKey {",
-        "  PathEnum value();",
-        "}");
-    JavaFileObject pathEnumFile = JavaFileObjects.forSourceLines("test.PathEnum",
-        "package test;",
-        "",
-        "public enum PathEnum {",
-        "    ADMIN,",
-        "    LOGIN;",
-        "}");
-    JavaFileObject handlerFile =
-        JavaFileObjects.forSourceLines("test.Handler", "package test;", "", "interface Handler {}");
-    JavaFileObject loginHandlerFile =
-        JavaFileObjects.forSourceLines(
+    Source mapModuleOneFile =
+        CompilerTests.javaSource(
+            "test.MapModuleOne",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "final class MapModuleOne {",
+            "  @Provides @IntoMap @PathKey(PathEnum.ADMIN) Handler provideAdminHandler() {",
+            "    return new AdminHandler();",
+            "  }",
+            "}");
+    Source mapModuleTwoFile =
+        CompilerTests.javaSource(
+            "test.MapModuleTwo",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "final class MapModuleTwo {",
+            "  @Provides @IntoMap @PathKey(PathEnum.LOGIN) Handler provideLoginHandler() {",
+            "    return new LoginHandler();",
+            "  }",
+            "}");
+    Source enumKeyFile =
+        CompilerTests.javaSource(
+            "test.PathKey",
+            "package test;",
+            "import dagger.MapKey;",
+            "import java.lang.annotation.Retention;",
+            "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
+            "",
+            "@MapKey(unwrapValue = true)",
+            "@Retention(RUNTIME)",
+            "public @interface PathKey {",
+            "  PathEnum value();",
+            "}");
+    Source pathEnumFile =
+        CompilerTests.javaSource(
+            "test.PathEnum",
+            "package test;",
+            "",
+            "public enum PathEnum {",
+            "    ADMIN,",
+            "    LOGIN;",
+            "}");
+    Source handlerFile =
+        CompilerTests.javaSource(
+            "test.Handler",
+            "package test;",
+            "",
+            "interface Handler {}");
+    Source loginHandlerFile =
+        CompilerTests.javaSource(
             "test.LoginHandler",
             "package test;",
             "",
             "class LoginHandler implements Handler {",
             "  public LoginHandler() {}",
             "}");
-    JavaFileObject adminHandlerFile =
-        JavaFileObjects.forSourceLines(
+    Source adminHandlerFile =
+        CompilerTests.javaSource(
             "test.AdminHandler",
             "package test;",
             "",
             "class AdminHandler implements Handler {",
             "  public AdminHandler() {}",
             "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import java.util.Map;",
-        "import javax.inject.Provider;",
-        "",
-        "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
-        "interface TestComponent {",
-        "  Provider<Map<PathEnum, Handler>> dispatcher();",
-        "}");
+    Source componentFile =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Map;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
+            "interface TestComponent {",
+            "  Provider<Map<PathEnum, Handler>> dispatcher();",
+            "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(
-                mapModuleOneFile,
-                mapModuleTwoFile,
-                enumKeyFile,
-                pathEnumFile,
-                handlerFile,
-                loginHandlerFile,
-                adminHandlerFile,
-                componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(
+            mapModuleOneFile,
+            mapModuleTwoFile,
+            enumKeyFile,
+            pathEnumFile,
+            handlerFile,
+            loginHandlerFile,
+            adminHandlerFile,
+            componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void injectMapWithoutMapBinding() throws Exception {
-    JavaFileObject mapModuleFile = JavaFileObjects.forSourceLines("test.MapModule",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "import java.util.HashMap;",
-        "import java.util.Map;",
-        "",
-        "@Module",
-        "final class MapModule {",
-        "  @Provides Map<String, String> provideAMap() {",
-        "    Map<String, String> map = new HashMap<String, String>();",
-        "    map.put(\"Hello\", \"World\");",
-        "    return map;",
-        "  }",
-        "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import java.util.Map;",
-        "",
-        "@Component(modules = {MapModule.class})",
-        "interface TestComponent {",
-        "  Map<String, String> dispatcher();",
-        "}");
+    Source mapModuleFile =
+        CompilerTests.javaSource(
+            "test.MapModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.HashMap;",
+            "import java.util.Map;",
+            "",
+            "@Module",
+            "final class MapModule {",
+            "  @Provides Map<String, String> provideAMap() {",
+            "    Map<String, String> map = new HashMap<String, String>();",
+            "    map.put(\"Hello\", \"World\");",
+            "    return map;",
+            "  }",
+            "}");
+    Source componentFile =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Map;",
+            "",
+            "@Component(modules = {MapModule.class})",
+            "interface TestComponent {",
+            "  Map<String, String> dispatcher();",
+            "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(mapModuleFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(mapModuleFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 }

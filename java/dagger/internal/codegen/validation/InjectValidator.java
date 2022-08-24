@@ -22,6 +22,7 @@ import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assis
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.binding.SourceFiles.factoryNameForElement;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
@@ -43,6 +44,7 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.binding.InjectionAnnotations;
+import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.Accessibility;
@@ -70,6 +72,7 @@ public final class InjectValidator implements ClearableCache {
   private final DaggerSuperficialValidation superficialValidation;
   private final Map<XTypeElement, ValidationReport> provisionReports = new HashMap<>();
   private final Map<XTypeElement, ValidationReport> membersInjectionReports = new HashMap<>();
+  private final MethodSignatureFormatter methodSignatureFormatter;
 
   @Inject
   InjectValidator(
@@ -77,14 +80,16 @@ public final class InjectValidator implements ClearableCache {
       DependencyRequestValidator dependencyRequestValidator,
       CompilerOptions compilerOptions,
       InjectionAnnotations injectionAnnotations,
-      DaggerSuperficialValidation superficialValidation) {
+      DaggerSuperficialValidation superficialValidation,
+      MethodSignatureFormatter methodSignatureFormatter) {
     this(
         processingEnv,
         compilerOptions,
         dependencyRequestValidator,
         Optional.empty(),
         injectionAnnotations,
-        superficialValidation);
+        superficialValidation,
+        methodSignatureFormatter);
   }
 
   private InjectValidator(
@@ -93,13 +98,15 @@ public final class InjectValidator implements ClearableCache {
       DependencyRequestValidator dependencyRequestValidator,
       Optional<Kind> privateAndStaticInjectionDiagnosticKind,
       InjectionAnnotations injectionAnnotations,
-      DaggerSuperficialValidation superficialValidation) {
+      DaggerSuperficialValidation superficialValidation,
+      MethodSignatureFormatter methodSignatureFormatter) {
     this.processingEnv = processingEnv;
     this.compilerOptions = compilerOptions;
     this.dependencyRequestValidator = dependencyRequestValidator;
     this.privateAndStaticInjectionDiagnosticKind = privateAndStaticInjectionDiagnosticKind;
     this.injectionAnnotations = injectionAnnotations;
     this.superficialValidation = superficialValidation;
+    this.methodSignatureFormatter = methodSignatureFormatter;
   }
 
   @Override
@@ -122,7 +129,8 @@ public final class InjectValidator implements ClearableCache {
             dependencyRequestValidator,
             Optional.of(Diagnostic.Kind.ERROR),
             injectionAnnotations,
-            superficialValidation);
+            superficialValidation,
+            methodSignatureFormatter);
   }
 
   public ValidationReport validate(XTypeElement typeElement) {
@@ -149,7 +157,10 @@ public final class InjectValidator implements ClearableCache {
         builder.addError(
             String.format(
                 "Type %s may only contain one injected constructor. Found: %s",
-                typeElement, injectConstructors),
+                typeElement.getQualifiedName(),
+                injectConstructors.stream()
+                    .map(methodSignatureFormatter::format)
+                    .collect(toImmutableList())),
             typeElement);
     }
 

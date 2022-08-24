@@ -27,6 +27,7 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Provides;
 import dagger.internal.codegen.base.Formatter;
+import dagger.internal.codegen.xprocessing.XTypes;
 import dagger.producers.Produces;
 import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.DependencyRequest;
@@ -77,7 +78,8 @@ public final class DependencyRequestFormatter extends Formatter<DependencyReques
     } else if (isVariableElement(requestElement)) {
       return INDENT
           + formatQualifier(request.key().qualifier())
-          + requestType(request.kind(), request.key().type().xprocessing(), processingEnv)
+          + XTypes.toStableString(
+              requestType(request.kind(), request.key().type().xprocessing(), processingEnv))
           + " is injected at\n"
           + DOUBLE_INDENT
           + elementToString(requestElement);

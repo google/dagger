@@ -581,8 +581,8 @@ public final class InjectConstructorFactoryGeneratorTest {
         .hadErrorContaining(
             "Type test.TooManyInjectConstructors may only contain one injected constructor. "
                 + "Found: ["
-                + "TooManyInjectConstructors(), "
-                + "TooManyInjectConstructors(java.lang.String)"
+                + "@Inject test.TooManyInjectConstructors(), "
+                + "@Inject test.TooManyInjectConstructors(String)"
                 + "]")
         .inFile(file)
         .onLine(5);

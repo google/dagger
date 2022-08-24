@@ -16,19 +16,14 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static java.util.stream.Collectors.joining;
 
-import com.google.common.collect.ImmutableCollection;
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.Compiler;
-import com.google.testing.compile.JavaFileObjects;
+import com.google.common.collect.ImmutableMap;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Arrays;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +35,7 @@ public class ComponentShardTest {
   private static final int BINDINGS_PER_SHARD = 2;
 
   @Parameters(name = "{0}")
-  public static ImmutableCollection<Object[]> parameters() {
+  public static ImmutableList<Object[]> parameters() {
     return CompilerMode.TEST_PARAMETERS;
   }
 
@@ -59,8 +54,8 @@ public class ComponentShardTest {
     //     1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
     //          ^--------/
     //
-    ImmutableList.Builder<JavaFileObject> javaFileObjects = ImmutableList.builder();
-    javaFileObjects
+    ImmutableList.Builder<Source> sources = ImmutableList.builder();
+    sources
         // Shard 2: Bindings (1)
         .add(createBinding("Binding1", "Binding2 binding2"))
         // Shard 1: Bindings (2, 3, 4, 5). Contains more than 2 bindings due to cycle.
@@ -73,8 +68,8 @@ public class ComponentShardTest {
         .add(createBinding("Binding7"));
 
     // Add the component with entry points for each binding and its provider.
-    javaFileObjects.add(
-        JavaFileObjects.forSourceLines(
+    sources.add(
+        CompilerTests.javaSource(
             "dagger.internal.codegen.TestComponent",
             "package dagger.internal.codegen;",
             "",
@@ -101,33 +96,35 @@ public class ComponentShardTest {
             "  Provider<Binding7> providerBinding7();",
             "}"));
 
-    Compilation compilation = compiler().compile(javaFileObjects.build());
-    assertThat(compilation).succeededWithoutWarnings();
-    assertThat(compilation)
-        .generatedSourceFile("dagger.internal.codegen.DaggerTestComponent")
-        .hasSourceEquivalentTo(
-            goldenFileRule.goldenFile("dagger.internal.codegen.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(sources.build())
+        .withProcessingOptions(compilerOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("dagger/internal/codegen/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void testNewShardCreatedWithDependencies() throws Exception {
-    ImmutableList.Builder<JavaFileObject> javaFileObjects = ImmutableList.builder();
-    javaFileObjects.add(
+    ImmutableList.Builder<Source> sources = ImmutableList.builder();
+    sources.add(
         createBinding("Binding1"),
         createBinding("Binding2"),
-        JavaFileObjects.forSourceLines(
+        CompilerTests.javaSource(
             "dagger.internal.codegen.Binding3",
             "package dagger.internal.codegen;",
             "",
             "class Binding3 {}"),
-        JavaFileObjects.forSourceLines(
+        CompilerTests.javaSource(
             "dagger.internal.codegen.Dependency",
             "package dagger.internal.codegen;",
             "",
             "interface Dependency {",
             "  Binding3 binding3();",
             "}"),
-        JavaFileObjects.forSourceLines(
+        CompilerTests.javaSource(
             "dagger.internal.codegen.TestComponent",
             "package dagger.internal.codegen;",
             "",
@@ -146,19 +143,21 @@ public class ComponentShardTest {
             "  Provider<Binding3> providerBinding3();",
             "}"));
 
-    Compilation compilation = compiler().compile(javaFileObjects.build());
-    assertThat(compilation).succeededWithoutWarnings();
-    assertThat(compilation)
-        .generatedSourceFile("dagger.internal.codegen.DaggerTestComponent")
-        .hasSourceEquivalentTo(
-            goldenFileRule.goldenFile("dagger.internal.codegen.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(sources.build())
+        .withProcessingOptions(compilerOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("dagger/internal/codegen/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void testNewShardSubcomponentCreated() throws Exception {
-    ImmutableList.Builder<JavaFileObject> javaFileObjects = ImmutableList.builder();
-    javaFileObjects.add(
-        JavaFileObjects.forSourceLines(
+    ImmutableList.Builder<Source> sources = ImmutableList.builder();
+    sources.add(
+        CompilerTests.javaSource(
             "dagger.internal.codegen.SubcomponentScope",
             "package dagger.internal.codegen;",
             "",
@@ -166,7 +165,7 @@ public class ComponentShardTest {
             "",
             "@Scope",
             "public @interface SubcomponentScope {}"),
-        JavaFileObjects.forSourceLines(
+        CompilerTests.javaSource(
             "dagger.internal.codegen.Binding1",
             "package dagger.internal.codegen;",
             "",
@@ -174,7 +173,7 @@ public class ComponentShardTest {
             "final class Binding1 {",
             "  @javax.inject.Inject Binding1() {}",
             "}"),
-        JavaFileObjects.forSourceLines(
+        CompilerTests.javaSource(
             "dagger.internal.codegen.Binding2",
             "package dagger.internal.codegen;",
             "",
@@ -182,7 +181,7 @@ public class ComponentShardTest {
             "final class Binding2 {",
             "  @javax.inject.Inject Binding2() {}",
             "}"),
-        JavaFileObjects.forSourceLines(
+        CompilerTests.javaSource(
             "dagger.internal.codegen.Binding3",
             "package dagger.internal.codegen;",
             "",
@@ -190,7 +189,7 @@ public class ComponentShardTest {
             "final class Binding3 {",
             "  @javax.inject.Inject Binding3() {}",
             "}"),
-        JavaFileObjects.forSourceLines(
+        CompilerTests.javaSource(
             "dagger.internal.codegen.TestComponent",
             "package dagger.internal.codegen;",
             "",
@@ -200,7 +199,7 @@ public class ComponentShardTest {
             "interface TestComponent {",
             "  TestSubcomponent subcomponent();",
             "}"),
-        JavaFileObjects.forSourceLines(
+        CompilerTests.javaSource(
             "dagger.internal.codegen.TestSubcomponent",
             "package dagger.internal.codegen;",
             "",
@@ -218,16 +217,18 @@ public class ComponentShardTest {
             "  Provider<Binding3> providerBinding3();",
             "}"));
 
-    Compilation compilation = compiler().compile(javaFileObjects.build());
-    assertThat(compilation).succeededWithoutWarnings();
-    assertThat(compilation)
-        .generatedSourceFile("dagger.internal.codegen.DaggerTestComponent")
-        .hasSourceEquivalentTo(
-            goldenFileRule.goldenFile("dagger.internal.codegen.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(sources.build())
+        .withProcessingOptions(compilerOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("dagger/internal/codegen/DaggerTestComponent"));
+            });
   }
 
-  private static JavaFileObject createBinding(String bindingName, String... deps) {
-    return JavaFileObjects.forSourceLines(
+  private static Source createBinding(String bindingName, String... deps) {
+    return CompilerTests.javaSource(
         "dagger.internal.codegen." + bindingName,
         "package dagger.internal.codegen;",
         "",
@@ -242,12 +243,11 @@ public class ComponentShardTest {
         "}");
   }
 
-  private Compiler compiler() {
-    return compilerWithOptions(
-        ImmutableSet.<String>builder()
-            .add("-Adagger.generatedClassExtendsComponent=DISABLED")
-            .add("-Adagger.keysPerComponentShard=" + BINDINGS_PER_SHARD)
-            .addAll(compilerMode.javacopts())
-            .build());
+  private ImmutableMap<String, String> compilerOptions() {
+    return ImmutableMap.<String, String>builder()
+        .putAll(compilerMode.processorOptions())
+        .put("dagger.generatedClassExtendsComponent", "DISABLED")
+        .put("dagger.keysPerComponentShard", Integer.toString(BINDINGS_PER_SHARD))
+        .buildOrThrow();
   }
 }

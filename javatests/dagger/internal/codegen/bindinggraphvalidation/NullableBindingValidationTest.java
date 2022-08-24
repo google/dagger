@@ -16,197 +16,254 @@
 
 package dagger.internal.codegen.bindinggraphvalidation;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.bindinggraphvalidation.NullableBindingValidator.nullableToNonNullable;
 
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import dagger.internal.codegen.CompilerMode;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class NullableBindingValidationTest {
-  private static final JavaFileObject NULLABLE =
-      JavaFileObjects.forSourceLines(
-          "test.Nullable", // force one-string-per-line format
-          "package test;",
-          "",
-          "public @interface Nullable {}");
+  @Parameters(name = "{0}")
+  public static ImmutableList<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public NullableBindingValidationTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
+  private static final Source NULLABLE =
+        CompilerTests.javaSource(
+            "test.Nullable", // force one-string-per-line format
+            "package test;",
+            "",
+            "public @interface Nullable {}");
 
   @Test public void nullCheckForConstructorParameters() {
-    JavaFileObject a = JavaFileObjects.forSourceLines("test.A",
-        "package test;",
-        "",
-        "import javax.inject.Inject;",
-        "",
-        "final class A {",
-        "  @Inject A(String string) {}",
-        "}");
-    JavaFileObject module = JavaFileObjects.forSourceLines("test.TestModule",
-        "package test;",
-        "",
-        "import dagger.Provides;",
-        "import javax.inject.Inject;",
-        "",
-        "@dagger.Module",
-        "final class TestModule {",
-        "  @Nullable @Provides String provideString() { return null; }",
-        "}");
-    JavaFileObject component = JavaFileObjects.forSourceLines("test.TestComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component(modules = TestModule.class)",
-        "interface TestComponent {",
-        "  A a();",
-        "}");
-    Compilation compilation = daggerCompiler().compile(NULLABLE, a, module, component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            nullableToNonNullable(
-                "String",
-                "@Nullable @Provides String TestModule.provideString()"));
+    Source a =
+        CompilerTests.javaSource(
+            "test.A",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class A {",
+            "  @Inject A(String string) {}",
+            "}");
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Provides;",
+            "import javax.inject.Inject;",
+            "",
+            "@dagger.Module",
+            "final class TestModule {",
+            "  @Nullable @Provides String provideString() { return null; }",
+            "}");
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  A a();",
+            "}");
+    CompilerTests.daggerCompiler(NULLABLE, a, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  nullableToNonNullable(
+                      "String",
+                      "@Nullable @Provides String TestModule.provideString()"));
+            });
 
     // but if we disable the validation, then it compiles fine.
-    Compilation compilation2 =
-        compilerWithOptions("-Adagger.nullableValidation=WARNING")
-            .compile(NULLABLE, a, module, component);
-    assertThat(compilation2).succeeded();
+    CompilerTests.daggerCompiler(NULLABLE, a, module, component)
+        .withProcessingOptions(
+            ImmutableMap.<String, String>builder()
+                .putAll(compilerMode.processorOptions())
+                .put("dagger.nullableValidation", "WARNING")
+                .buildOrThrow())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test public void nullCheckForMembersInjectParam() {
-    JavaFileObject a = JavaFileObjects.forSourceLines("test.A",
-        "package test;",
-        "",
-        "import javax.inject.Inject;",
-        "",
-        "final class A {",
-        "  @Inject A() {}",
-        "  @Inject void register(String string) {}",
-        "}");
-    JavaFileObject module = JavaFileObjects.forSourceLines("test.TestModule",
-        "package test;",
-        "",
-        "import dagger.Provides;",
-        "import javax.inject.Inject;",
-        "",
-        "@dagger.Module",
-        "final class TestModule {",
-        "  @Nullable @Provides String provideString() { return null; }",
-        "}");
-    JavaFileObject component = JavaFileObjects.forSourceLines("test.TestComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component(modules = TestModule.class)",
-        "interface TestComponent {",
-        "  A a();",
-        "}");
-    Compilation compilation = daggerCompiler().compile(NULLABLE, a, module, component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            nullableToNonNullable(
-                "String",
-                "@Nullable @Provides String TestModule.provideString()"));
+    Source a =
+        CompilerTests.javaSource(
+            "test.A",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class A {",
+            "  @Inject A() {}",
+            "  @Inject void register(String string) {}",
+            "}");
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Provides;",
+            "import javax.inject.Inject;",
+            "",
+            "@dagger.Module",
+            "final class TestModule {",
+            "  @Nullable @Provides String provideString() { return null; }",
+            "}");
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  A a();",
+            "}");
+    CompilerTests.daggerCompiler(NULLABLE, a, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  nullableToNonNullable(
+                      "String",
+                      "@Nullable @Provides String TestModule.provideString()"));
+            });
 
     // but if we disable the validation, then it compiles fine.
-    Compilation compilation2 =
-        compilerWithOptions("-Adagger.nullableValidation=WARNING")
-            .compile(NULLABLE, a, module, component);
-    assertThat(compilation2).succeeded();
+    CompilerTests.daggerCompiler(NULLABLE, a, module, component)
+        .withProcessingOptions(
+            ImmutableMap.<String, String>builder()
+                .putAll(compilerMode.processorOptions())
+                .put("dagger.nullableValidation", "WARNING")
+                .buildOrThrow())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test public void nullCheckForVariable() {
-    JavaFileObject a = JavaFileObjects.forSourceLines("test.A",
-        "package test;",
-        "",
-        "import javax.inject.Inject;",
-        "",
-        "final class A {",
-        "  @Inject String string;",
-        "  @Inject A() {}",
-        "}");
-    JavaFileObject module = JavaFileObjects.forSourceLines("test.TestModule",
-        "package test;",
-        "",
-        "import dagger.Provides;",
-        "import javax.inject.Inject;",
-        "",
-        "@dagger.Module",
-        "final class TestModule {",
-        "  @Nullable @Provides String provideString() { return null; }",
-        "}");
-    JavaFileObject component = JavaFileObjects.forSourceLines("test.TestComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component(modules = TestModule.class)",
-        "interface TestComponent {",
-        "  A a();",
-        "}");
-    Compilation compilation = daggerCompiler().compile(NULLABLE, a, module, component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            nullableToNonNullable(
-                "String",
-                "@Nullable @Provides String TestModule.provideString()"));
+    Source a =
+        CompilerTests.javaSource(
+            "test.A",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class A {",
+            "  @Inject String string;",
+            "  @Inject A() {}",
+            "}");
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Provides;",
+            "import javax.inject.Inject;",
+            "",
+            "@dagger.Module",
+            "final class TestModule {",
+            "  @Nullable @Provides String provideString() { return null; }",
+            "}");
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  A a();",
+            "}");
+    CompilerTests.daggerCompiler(NULLABLE, a, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  nullableToNonNullable(
+                      "String",
+                      "@Nullable @Provides String TestModule.provideString()"));
+            });
 
     // but if we disable the validation, then it compiles fine.
-    Compilation compilation2 =
-        compilerWithOptions("-Adagger.nullableValidation=WARNING")
-            .compile(NULLABLE, a, module, component);
-    assertThat(compilation2).succeeded();
+    CompilerTests.daggerCompiler(NULLABLE, a, module, component)
+        .withProcessingOptions(
+            ImmutableMap.<String, String>builder()
+                .putAll(compilerMode.processorOptions())
+                .put("dagger.nullableValidation", "WARNING")
+                .buildOrThrow())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test public void nullCheckForComponentReturn() {
-    JavaFileObject module = JavaFileObjects.forSourceLines("test.TestModule",
-        "package test;",
-        "",
-        "import dagger.Provides;",
-        "import javax.inject.Inject;",
-        "",
-        "@dagger.Module",
-        "final class TestModule {",
-        "  @Nullable @Provides String provideString() { return null; }",
-        "}");
-    JavaFileObject component = JavaFileObjects.forSourceLines("test.TestComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component(modules = TestModule.class)",
-        "interface TestComponent {",
-        "  String string();",
-        "}");
-    Compilation compilation = daggerCompiler().compile(NULLABLE, module, component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            nullableToNonNullable(
-                "String",
-                "@Nullable @Provides String TestModule.provideString()"));
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Provides;",
+            "import javax.inject.Inject;",
+            "",
+            "@dagger.Module",
+            "final class TestModule {",
+            "  @Nullable @Provides String provideString() { return null; }",
+            "}");
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  String string();",
+            "}");
+    CompilerTests.daggerCompiler(NULLABLE, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  nullableToNonNullable(
+                      "String",
+                      "@Nullable @Provides String TestModule.provideString()"));
+            });
 
     // but if we disable the validation, then it compiles fine.
-    Compilation compilation2 =
-        compilerWithOptions("-Adagger.nullableValidation=WARNING")
-            .compile(NULLABLE, module, component);
-    assertThat(compilation2).succeeded();
+    CompilerTests.daggerCompiler(NULLABLE, module, component)
+        .withProcessingOptions(
+            ImmutableMap.<String, String>builder()
+                .putAll(compilerMode.processorOptions())
+                .put("dagger.nullableValidation", "WARNING")
+                .buildOrThrow())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void nullCheckForOptionalInstance() {
-    JavaFileObject a =
-        JavaFileObjects.forSourceLines(
+    Source a =
+        CompilerTests.javaSource(
             "test.A",
             "package test;",
             "",
@@ -216,8 +273,8 @@ public class NullableBindingValidationTest {
             "final class A {",
             "  @Inject A(Optional<String> optional) {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -230,8 +287,8 @@ public class NullableBindingValidationTest {
             "  @Nullable @Provides static String provideString() { return null; }",
             "  @BindsOptionalOf abstract String optionalString();",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -241,19 +298,22 @@ public class NullableBindingValidationTest {
             "interface TestComponent {",
             "  A a();",
             "}");
-    Compilation compilation = daggerCompiler().compile(NULLABLE, a, module, component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            nullableToNonNullable(
-                "String",
-                "@Nullable @Provides String TestModule.provideString()"));
+    CompilerTests.daggerCompiler(NULLABLE, a, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  nullableToNonNullable(
+                      "String",
+                      "@Nullable @Provides String TestModule.provideString()"));
+            });
   }
 
   @Test
   public void nullCheckForOptionalProvider() {
-    JavaFileObject a =
-        JavaFileObjects.forSourceLines(
+    Source a =
+        CompilerTests.javaSource(
             "test.A",
             "package test;",
             "",
@@ -264,8 +324,8 @@ public class NullableBindingValidationTest {
             "final class A {",
             "  @Inject A(Optional<Provider<String>> optional) {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -278,8 +338,9 @@ public class NullableBindingValidationTest {
             "  @Nullable @Provides static String provideString() { return null; }",
             "  @BindsOptionalOf abstract String optionalString();",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
+
             "test.TestComponent",
             "package test;",
             "",
@@ -289,14 +350,15 @@ public class NullableBindingValidationTest {
             "interface TestComponent {",
             "  A a();",
             "}");
-    Compilation compilation = daggerCompiler().compile(NULLABLE, a, module, component);
-    assertThat(compilation).succeeded();
+    CompilerTests.daggerCompiler(NULLABLE, a, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void nullCheckForOptionalLazy() {
-    JavaFileObject a =
-        JavaFileObjects.forSourceLines(
+    Source a =
+        CompilerTests.javaSource(
             "test.A",
             "package test;",
             "",
@@ -307,8 +369,8 @@ public class NullableBindingValidationTest {
             "final class A {",
             "  @Inject A(Optional<Lazy<String>> optional) {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -321,8 +383,8 @@ public class NullableBindingValidationTest {
             "  @Nullable @Provides static String provideString() { return null; }",
             "  @BindsOptionalOf abstract String optionalString();",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -332,14 +394,15 @@ public class NullableBindingValidationTest {
             "interface TestComponent {",
             "  A a();",
             "}");
-    Compilation compilation = daggerCompiler().compile(NULLABLE, a, module, component);
-    assertThat(compilation).succeeded();
+    CompilerTests.daggerCompiler(NULLABLE, a, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void nullCheckForOptionalProviderOfLazy() {
-    JavaFileObject a =
-        JavaFileObjects.forSourceLines(
+    Source a =
+        CompilerTests.javaSource(
             "test.A",
             "package test;",
             "",
@@ -351,8 +414,8 @@ public class NullableBindingValidationTest {
             "final class A {",
             "  @Inject A(Optional<Provider<Lazy<String>>> optional) {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -365,8 +428,8 @@ public class NullableBindingValidationTest {
             "  @Nullable @Provides static String provideString() { return null; }",
             "  @BindsOptionalOf abstract String optionalString();",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -376,14 +439,15 @@ public class NullableBindingValidationTest {
             "interface TestComponent {",
             "  A a();",
             "}");
-    Compilation compilation = daggerCompiler().compile(NULLABLE, a, module, component);
-    assertThat(compilation).succeeded();
+    CompilerTests.daggerCompiler(NULLABLE, a, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void moduleValidation() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -397,14 +461,19 @@ public class NullableBindingValidationTest {
             "  @Binds abstract Object object(String string);",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
-            .compile(module, NULLABLE);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            nullableToNonNullable(
-                "String",
-                "@Provides @Nullable String TestModule.nullableString()"));
+    CompilerTests.daggerCompiler(NULLABLE, module)
+        .withProcessingOptions(
+            ImmutableMap.<String, String>builder()
+                .putAll(compilerMode.processorOptions())
+                .put("dagger.fullBindingGraphValidation", "ERROR")
+                .buildOrThrow())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  nullableToNonNullable(
+                      "String",
+                      "@Provides @Nullable String TestModule.nullableString()"));
+            });
   }
 }

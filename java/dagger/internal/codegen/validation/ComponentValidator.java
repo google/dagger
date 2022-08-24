@@ -47,7 +47,6 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.HashMultimap;
@@ -92,7 +91,6 @@ import javax.lang.model.SourceVersion;
  */
 @Singleton
 public final class ComponentValidator implements ClearableCache {
-  private final XProcessingEnv processingEnv;
   private final ModuleValidator moduleValidator;
   private final ComponentCreatorValidator creatorValidator;
   private final DependencyRequestValidator dependencyRequestValidator;
@@ -105,7 +103,6 @@ public final class ComponentValidator implements ClearableCache {
 
   @Inject
   ComponentValidator(
-      XProcessingEnv processingEnv,
       ModuleValidator moduleValidator,
       ComponentCreatorValidator creatorValidator,
       DependencyRequestValidator dependencyRequestValidator,
@@ -114,7 +111,6 @@ public final class ComponentValidator implements ClearableCache {
       DependencyRequestFactory dependencyRequestFactory,
       DaggerSuperficialValidation superficialValidation,
       KotlinMetadataUtil metadataUtil) {
-    this.processingEnv = processingEnv;
     this.moduleValidator = moduleValidator;
     this.creatorValidator = creatorValidator;
     this.dependencyRequestValidator = dependencyRequestValidator;
@@ -547,8 +543,7 @@ public final class ComponentValidator implements ClearableCache {
    */
   // TODO(dpb): Does this break for ECJ?
   private boolean overridesAsDeclared(XMethodElement overrider, XMethodElement overridden) {
-    return javacOverrides(
-        overrider, overridden, asTypeElement(overrider.getEnclosingElement()), processingEnv);
+    return javacOverrides(overrider, overridden, asTypeElement(overrider.getEnclosingElement()));
   }
 
   private static Optional<XAnnotation> checkForAnnotations(XType type, Set<ClassName> annotations) {

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -59,15 +60,22 @@ public final class XProcessingEnvs {
   /**
    * Returns {@code true} if {@code overrider} overrides {@code overridden} from within {@code type}
    */
-  // TODO(bcorso): Investigate why XMethodElement#overrides() throws an exception in some cases.
   public static boolean javacOverrides(
       XMethodElement overrider,
       XMethodElement overridden,
-      XTypeElement type,
-      XProcessingEnv processingEnv) {
-    return toJavac(processingEnv)
-        .getElementUtils() // ALLOW_TYPES_ELEMENTS
-        .overrides(toJavac(overrider), toJavac(overridden), toJavac(type));
+      XTypeElement type) {
+    XProcessingEnv processingEnv = getProcessingEnv(type);
+    switch (processingEnv.getBackend()) {
+      case JAVAC:
+        // TODO(bcorso): Investigate why XMethodElement#overrides() throws exception in some cases.
+        return toJavac(processingEnv)
+            .getElementUtils() // ALLOW_TYPES_ELEMENTS
+            .overrides(toJavac(overrider), toJavac(overridden), toJavac(type));
+      case KSP:
+        // For KSP, just use the standard overrides since the issues above are specific to javac.
+        return overrider.overrides(overridden, type);
+    }
+    throw new AssertionError("Unexpected backend: " + processingEnv.getBackend());
   }
 
   /** Returns a new unbounded wildcard type argument, i.e. {@code <?>}. */

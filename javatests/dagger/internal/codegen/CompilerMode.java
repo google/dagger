@@ -26,7 +26,7 @@ import java.util.List;
 
 /** The configuration options for compiler modes. */
 // TODO(bcorso): Consider moving the java version into its own separate enum.
-enum CompilerMode {
+public enum CompilerMode {
   DEFAULT_MODE,
   DEFAULT_JAVA7_MODE("-source", "7", "-target", "7"),
   FAST_INIT_MODE("-Adagger.fastInit=enabled"),
@@ -34,7 +34,7 @@ enum CompilerMode {
   ;
 
   /** Returns the compiler modes as a list of parameters for parameterized tests */
-  static final ImmutableList<Object[]> TEST_PARAMETERS =
+  public static final ImmutableList<Object[]> TEST_PARAMETERS =
       ImmutableList.copyOf(
           new Object[][] {{CompilerMode.DEFAULT_MODE}, {CompilerMode.FAST_INIT_MODE}});
 
@@ -49,7 +49,7 @@ enum CompilerMode {
    *
    * @throws IllegalStateException if the javacopts are not of the form "-Akey=value".
    */
-  ImmutableMap<String, String> processorOptions() {
+  public ImmutableMap<String, String> processorOptions() {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     for (String javacopt : javacopts) {
       // Throw if there's a javacopt in this mode that is not an annotation processor option.
@@ -62,7 +62,7 @@ enum CompilerMode {
   }
 
   /** Returns the javacopts for this compiler mode. */
-  FluentIterable<String> javacopts() {
+  public FluentIterable<String> javacopts() {
     return FluentIterable.from(javacopts);
   }
 
@@ -70,7 +70,7 @@ enum CompilerMode {
    * Returns a {@link JavaFileBuilder} that builds {@link javax.tools.JavaFileObject}s for this
    * mode.
    */
-  JavaFileBuilder javaFileBuilder(String qualifiedName) {
+  public JavaFileBuilder javaFileBuilder(String qualifiedName) {
     return new JavaFileBuilder(this, qualifiedName);
   }
 }

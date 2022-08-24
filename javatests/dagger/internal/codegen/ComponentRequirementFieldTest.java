@@ -16,14 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import androidx.room.compiler.processing.util.Source;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,8 +43,8 @@ public class ComponentRequirementFieldTest {
 
   @Test
   public void bindsInstance() throws Exception {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -68,18 +64,19 @@ public class ComponentRequirementFieldTest {
             "    TestComponent build();",
             "  }",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void instanceModuleMethod() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.ParentModule",
             "package test;",
             "",
@@ -90,8 +87,8 @@ public class ComponentRequirementFieldTest {
             "class ParentModule {",
             "  @Provides int i() { return 0; }",
             "}");
-    JavaFileObject otherPackageModule =
-        JavaFileObjects.forSourceLines(
+    Source otherPackageModule =
+        CompilerTests.javaSource(
             "other.OtherPackageModule",
             "package other;",
             "",
@@ -102,8 +99,8 @@ public class ComponentRequirementFieldTest {
             "public class OtherPackageModule {",
             "  @Provides long l() { return 0L; }",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -115,19 +112,19 @@ public class ComponentRequirementFieldTest {
             "  int i();",
             "  long l();",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(module, otherPackageModule, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(module, otherPackageModule, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void componentInstances() throws Exception {
-    JavaFileObject dependency =
-        JavaFileObjects.forSourceLines(
+    Source dependency =
+        CompilerTests.javaSource(
             "test.Dep",
             "package test;",
             "",
@@ -136,8 +133,8 @@ public class ComponentRequirementFieldTest {
             "  Object object();",
             "}");
 
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -152,9 +149,9 @@ public class ComponentRequirementFieldTest {
             "  String methodOnDep();",
             "  Object otherMethodOnDep();",
             "}");
-    JavaFileObject subcomponent =
-        JavaFileObjects.forSourceLines(
-            "test.TestComponent",
+    Source subcomponent =
+        CompilerTests.javaSource(
+            "test.TestSubcomponent",
             "package test;",
             "",
             "import dagger.Subcomponent;",
@@ -165,19 +162,19 @@ public class ComponentRequirementFieldTest {
             "  Dep depFromSubcomponent();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(dependency, component, subcomponent);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(dependency, component, subcomponent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void componentRequirementNeededInFactoryCreationOfSubcomponent() throws Exception {
-    JavaFileObject parentModule =
-        JavaFileObjects.forSourceLines(
+    Source parentModule =
+        CompilerTests.javaSource(
             "test.ParentModule",
             "package test;",
             "",
@@ -196,8 +193,8 @@ public class ComponentRequirementFieldTest {
             "  @Provides @IntoSet static Object contribution() { return new Object(); }",
             "}");
 
-    JavaFileObject childModule =
-        JavaFileObjects.forSourceLines(
+    Source childModule =
+        CompilerTests.javaSource(
             "test.ChildModule",
             "package test;",
             "",
@@ -210,8 +207,8 @@ public class ComponentRequirementFieldTest {
             "  @Provides @IntoSet static Object contribution() { return new Object(); }",
             "}");
 
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -224,8 +221,8 @@ public class ComponentRequirementFieldTest {
             "  TestSubcomponent subcomponent();",
             "}");
 
-    JavaFileObject subcomponent =
-        JavaFileObjects.forSourceLines(
+    Source subcomponent =
+        CompilerTests.javaSource(
             "test.TestSubcomponent",
             "package test;",
             "",
@@ -237,12 +234,12 @@ public class ComponentRequirementFieldTest {
             "  Provider<Object> dependsOnMultibinding();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(parentModule, childModule, component, subcomponent);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(parentModule, childModule, component, subcomponent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 }

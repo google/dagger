@@ -32,7 +32,6 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSortedSet;
@@ -49,14 +48,10 @@ import javax.inject.Inject;
 
 /** A factory for {@link Binding} objects. */
 final class InjectionSiteFactory {
-
-  private final XProcessingEnv processingEnv;
   private final DependencyRequestFactory dependencyRequestFactory;
 
   @Inject
-  InjectionSiteFactory(
-      XProcessingEnv processingEnv, DependencyRequestFactory dependencyRequestFactory) {
-    this.processingEnv = processingEnv;
+  InjectionSiteFactory(DependencyRequestFactory dependencyRequestFactory) {
     this.dependencyRequestFactory = dependencyRequestFactory;
   }
 
@@ -116,8 +111,7 @@ final class InjectionSiteFactory {
       // methods with the same name.
       XTypeElement enclosingType = closestEnclosingTypeElement(method);
       for (XMethodElement subclassMethod : subclassMethodMap.get(getSimpleName(method))) {
-        if (method != subclassMethod
-            && javacOverrides(subclassMethod, method, enclosingType, processingEnv)) {
+        if (method != subclassMethod && javacOverrides(subclassMethod, method, enclosingType)) {
           return Optional.empty();
         }
       }

@@ -29,6 +29,7 @@ import androidx.room.compiler.processing.util.compiler.TestCompilationArguments;
 import androidx.room.compiler.processing.util.compiler.TestCompilationResult;
 import androidx.room.compiler.processing.util.compiler.TestKotlinCompilerKt;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
@@ -68,7 +69,12 @@ public final class CompilerTests {
 
   /** Returns a {@link Compiler} instance with the given sources. */
   public static DaggerCompiler daggerCompiler(Source... sources) {
-    return DaggerCompiler.builder().sources(ImmutableList.copyOf(sources)).build();
+    return daggerCompiler(ImmutableList.copyOf(sources));
+  }
+
+  /** Returns a {@link Compiler} instance with the given sources. */
+  public static DaggerCompiler daggerCompiler(ImmutableCollection<Source> sources) {
+    return DaggerCompiler.builder().sources(sources).build();
   }
 
   /** Used to compile Dagger sources and inspect the compiled results. */
@@ -81,7 +87,7 @@ public final class CompilerTests {
     }
 
     /** Returns the sources being compiled */
-    abstract ImmutableList<Source> sources();
+    abstract ImmutableCollection<Source> sources();
 
     /** Returns the annotation processor options */
     abstract ImmutableMap<String, String> processorOptions();
@@ -104,7 +110,7 @@ public final class CompilerTests {
 
     public void compile(Consumer<CompilationResultSubject> onCompilationResult) {
       ProcessorTestExtKt.runProcessorTest(
-          sources(),
+          sources().asList(),
           /* classpath= */ ImmutableList.of(),
           processorOptions(),
           /* javacArguments= */ ImmutableList.of(),
@@ -121,7 +127,7 @@ public final class CompilerTests {
     /** Used to build a {@link DaggerCompiler}. */
     @AutoValue.Builder
     public abstract static class Builder {
-      abstract Builder sources(ImmutableList<Source> sources);
+      abstract Builder sources(ImmutableCollection<Source> sources);
       abstract Builder processorOptions(Map<String, String> processorOptions);
       abstract DaggerCompiler build();
     }

@@ -19,11 +19,12 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
-import java.util.Collection;
 import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,7 +35,7 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class MapRequestRepresentationWithGuavaTest {
   @Parameters(name = "{0}")
-  public static Collection<Object[]> parameters() {
+  public static ImmutableList<Object[]> parameters() {
     return CompilerMode.TEST_PARAMETERS;
   }
 
@@ -190,8 +191,8 @@ public class MapRequestRepresentationWithGuavaTest {
 
   @Test
   public void subcomponentOmitsInheritedBindings() throws Exception {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.Parent",
             "package test;",
             "",
@@ -201,8 +202,8 @@ public class MapRequestRepresentationWithGuavaTest {
             "interface Parent {",
             "  Child child();",
             "}");
-    JavaFileObject parentModule =
-        JavaFileObjects.forSourceLines(
+    Source parentModule =
+        CompilerTests.javaSource(
             "test.ParentModule",
             "package test;",
             "",
@@ -217,8 +218,8 @@ public class MapRequestRepresentationWithGuavaTest {
             "    return \"parent value\";",
             "  }",
             "}");
-    JavaFileObject child =
-        JavaFileObjects.forSourceLines(
+    Source child =
+        CompilerTests.javaSource(
             "test.Child",
             "package test;",
             "",
@@ -230,18 +231,19 @@ public class MapRequestRepresentationWithGuavaTest {
             "  Map<String, Object> objectMap();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(parent, parentModule, child);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerParent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParent"));
+    CompilerTests.daggerCompiler(parent, parentModule, child)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerParent"));
+            });
   }
 
   @Test
   public void productionComponents() throws Exception {
-    JavaFileObject mapModuleFile =
-        JavaFileObjects.forSourceLines(
+    Source mapModuleFile =
+        CompilerTests.javaSource(
             "test.MapModule",
             "package test;",
             "",
@@ -253,30 +255,26 @@ public class MapRequestRepresentationWithGuavaTest {
             "interface MapModule {",
             "  @Multibinds Map<String, String> stringMap();",
             "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
-        "package test;",
-        "",
-        "import com.google.common.util.concurrent.ListenableFuture;",
-        "import dagger.producers.ProductionComponent;",
-        "import java.util.Map;",
-        "",
-        "@ProductionComponent(modules = MapModule.class)",
-        "interface TestComponent {",
-        "  ListenableFuture<Map<String, String>> stringMap();",
-        "}");
+    Source componentFile =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import com.google.common.util.concurrent.ListenableFuture;",
+            "import dagger.producers.ProductionComponent;",
+            "import java.util.Map;",
+            "",
+            "@ProductionComponent(modules = MapModule.class)",
+            "interface TestComponent {",
+            "  ListenableFuture<Map<String, String>> stringMap();",
+            "}");
 
-    Compilation compilation =
-        compilerWithOptions(
-                ImmutableList.<String>builder()
-                    .addAll(compilerMode.javacopts())
-                    .build())
-            .compile(mapModuleFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(
-            JavaFileObjects.forSourceString(
-                "test.DaggerTestComponent",
-                goldenFileRule.goldenFileContent("test.DaggerTestComponent")));
+    CompilerTests.daggerCompiler(mapModuleFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 }

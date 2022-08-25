@@ -16,153 +16,185 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.TestUtils.message;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableList;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class MissingBindingSuggestionsTest {
-  private static JavaFileObject injectable(String className, String constructorParams) {
-    return JavaFileObjects.forSourceLines("test." + className,
+  @Parameters(name = "{0}")
+  public static ImmutableList<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public MissingBindingSuggestionsTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
+  private static Source injectable(String className, String constructorParams) {
+    return CompilerTests.javaSource(
+        "test." + className,
         "package test;",
         "",
         "import javax.inject.Inject;",
         "",
-        "class " + className +" {",
+        "class " + className + " {",
         "  @Inject " + className + "(" + constructorParams + ") {}",
         "}");
   }
 
-  private static JavaFileObject emptyInterface(String interfaceName) {
-    return JavaFileObjects.forSourceLines("test." + interfaceName,
+  private static Source emptyInterface(String interfaceName) {
+    return CompilerTests.javaSource(
+        "test." + interfaceName,
         "package test;",
         "",
         "import javax.inject.Inject;",
         "",
-        "interface " + interfaceName +" {}");
+        "interface " + interfaceName + " {}");
   }
 
   @Test public void suggestsBindingInSeparateComponent() {
-    JavaFileObject fooComponent = JavaFileObjects.forSourceLines("test.FooComponent",
-        "package test;",
-        "",
-        "import dagger.Subcomponent;",
-        "",
-        "@Subcomponent",
-        "interface FooComponent {",
-        "  Foo getFoo();",
-        "}");
-    JavaFileObject barModule = JavaFileObjects.forSourceLines("test.BarModule",
-        "package test;",
-        "",
-        "import dagger.Provides;",
-        "import javax.inject.Inject;",
-        "",
-        "@dagger.Module",
-        "final class BarModule {",
-        "  @Provides Bar provideBar() {return null;}",
-        "}");
-    JavaFileObject barComponent = JavaFileObjects.forSourceLines("test.BarComponent",
-        "package test;",
-        "",
-        "import dagger.Subcomponent;",
-        "",
-        "@Subcomponent(modules = {BarModule.class})",
-        "interface BarComponent {",
-        "  Bar getBar();",
-        "}");
-    JavaFileObject foo = injectable("Foo", "Bar bar");
-    JavaFileObject bar = emptyInterface("Bar");
+    Source fooComponent =
+        CompilerTests.javaSource(
+            "test.FooComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface FooComponent {",
+            "  Foo getFoo();",
+            "}");
+    Source barModule =
+        CompilerTests.javaSource(
+            "test.BarModule",
+            "package test;",
+            "",
+            "import dagger.Provides;",
+            "import javax.inject.Inject;",
+            "",
+            "@dagger.Module",
+            "final class BarModule {",
+            "  @Provides Bar provideBar() {return null;}",
+            "}");
+    Source barComponent =
+        CompilerTests.javaSource(
+            "test.BarComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = {BarModule.class})",
+            "interface BarComponent {",
+            "  Bar getBar();",
+            "}");
+    Source foo = injectable("Foo", "Bar bar");
+    Source bar = emptyInterface("Bar");
 
-    JavaFileObject topComponent = JavaFileObjects.forSourceLines("test.TopComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component",
-        "interface TopComponent {",
-        "  FooComponent getFoo();",
-        "  BarComponent getBar(BarModule barModule);",
-        "}");
+    Source topComponent =
+        CompilerTests.javaSource(
+            "test.TopComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TopComponent {",
+            "  FooComponent getFoo();",
+            "  BarComponent getBar(BarModule barModule);",
+            "}");
 
-    Compilation compilation =
-        daggerCompiler().compile(fooComponent, barComponent, topComponent, foo, bar, barModule);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation).hadErrorContaining("A binding for Bar exists in BarComponent:");
+    CompilerTests.daggerCompiler(fooComponent, barComponent, topComponent, foo, bar, barModule)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("A binding for Bar exists in BarComponent:");
+            });
   }
 
   @Test public void suggestsBindingInNestedSubcomponent() {
-    JavaFileObject fooComponent = JavaFileObjects.forSourceLines("test.FooComponent",
-        "package test;",
-        "",
-        "import dagger.Subcomponent;",
-        "",
-        "@Subcomponent",
-        "interface FooComponent {",
-        "  Foo getFoo();",
-        "}");
-    JavaFileObject barComponent = JavaFileObjects.forSourceLines("test.BarComponent",
-        "package test;",
-        "",
-        "import dagger.Subcomponent;",
-        "",
-        "@Subcomponent()",
-        "interface BarComponent {",
-        "  BazComponent getBaz();",
-        "}");
-    JavaFileObject bazModule = JavaFileObjects.forSourceLines("test.BazModule",
-        "package test;",
-        "",
-        "import dagger.Provides;",
-        "import javax.inject.Inject;",
-        "",
-        "@dagger.Module",
-        "final class BazModule {",
-        "  @Provides Baz provideBaz() {return null;}",
-        "}");
-    JavaFileObject bazComponent = JavaFileObjects.forSourceLines("test.BazComponent",
-        "package test;",
-        "",
-        "import dagger.Subcomponent;",
-        "",
-        "@Subcomponent(modules = {BazModule.class})",
-        "interface BazComponent {",
-        "  Baz getBaz();",
-        "}");
-    JavaFileObject foo = injectable("Foo", "Baz baz");
-    JavaFileObject baz = emptyInterface("Baz");
+    Source fooComponent =
+        CompilerTests.javaSource(
+            "test.FooComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface FooComponent {",
+            "  Foo getFoo();",
+            "}");
+    Source barComponent =
+        CompilerTests.javaSource(
+            "test.BarComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent()",
+            "interface BarComponent {",
+            "  BazComponent getBaz();",
+            "}");
+    Source bazModule =
+        CompilerTests.javaSource(
+            "test.BazModule",
+            "package test;",
+            "",
+            "import dagger.Provides;",
+            "import javax.inject.Inject;",
+            "",
+            "@dagger.Module",
+            "final class BazModule {",
+            "  @Provides Baz provideBaz() {return null;}",
+            "}");
+    Source bazComponent =
+        CompilerTests.javaSource(
+            "test.BazComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = {BazModule.class})",
+            "interface BazComponent {",
+            "  Baz getBaz();",
+            "}");
+    Source foo = injectable("Foo", "Baz baz");
+    Source baz = emptyInterface("Baz");
 
-    JavaFileObject topComponent = JavaFileObjects.forSourceLines("test.TopComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component",
-        "interface TopComponent {",
-        "  FooComponent getFoo();",
-        "  BarComponent getBar();",
-        "}");
+    Source topComponent =
+        CompilerTests.javaSource(
+            "test.TopComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TopComponent {",
+            "  FooComponent getFoo();",
+            "  BarComponent getBar();",
+            "}");
 
-    Compilation compilation =
-        daggerCompiler()
-            .compile(fooComponent, barComponent, bazComponent, topComponent, foo, baz, bazModule);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation).hadErrorContaining("A binding for Baz exists in BazComponent:");
+    CompilerTests.daggerCompiler(
+            fooComponent, barComponent, bazComponent, topComponent, foo, baz, bazModule)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("A binding for Baz exists in BazComponent:");
+            });
   }
 
   @Test
   public void missingBindingInParentComponent() {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "Parent",
             "import dagger.Component;",
             "",
@@ -172,8 +204,8 @@ public class MissingBindingSuggestionsTest {
             "  Bar bar();",
             "  Child child();",
             "}");
-    JavaFileObject child =
-        JavaFileObjects.forSourceLines(
+    Source child =
+        CompilerTests.javaSource(
             "Child",
             "import dagger.Subcomponent;",
             "",
@@ -182,24 +214,25 @@ public class MissingBindingSuggestionsTest {
             "  Foo foo();",
             "  Baz baz();",
             "}");
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "Foo",
             "import javax.inject.Inject;",
             "",
             "class Foo {",
             "  @Inject Foo(Bar bar) {}",
             "}");
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+    Source bar =
+        CompilerTests.javaSource(
             "Bar",
             "import javax.inject.Inject;",
             "",
             "class Bar {",
             "  @Inject Bar(Baz baz) {}",
             "}");
-    JavaFileObject baz = JavaFileObjects.forSourceLines("Baz", "class Baz {}");
-    JavaFileObject bazModule = JavaFileObjects.forSourceLines(
+    Source baz = CompilerTests.javaSource("Baz", "class Baz {}");
+    Source bazModule =
+        CompilerTests.javaSource(
         "BazModule",
         "import dagger.Module;",
         "import dagger.Provides;",
@@ -210,30 +243,31 @@ public class MissingBindingSuggestionsTest {
         "  @Provides Baz provideBaz() {return new Baz();}",
         "}");
 
-    Compilation compilation = daggerCompiler().compile(parent, child, foo, bar, baz, bazModule);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            message(
-                "\033[1;31m[Dagger/MissingBinding]\033[0m Baz cannot be provided without an "
-                    + "@Inject constructor or an @Provides-annotated method.",
-                "A binding for Baz exists in Child:",
-                "    Baz is injected at",
-                "        [Parent] Bar(baz)",
-                "    Bar is requested at",
-                "        [Parent] Parent.bar()",
-                "The following other entry points also depend on it:",
-                "    Parent.foo()",
-                "    Child.foo() [Parent → Child]"))
-        .inFile(parent)
-        .onLineContaining("interface Parent");
+    CompilerTests.daggerCompiler(parent, child, foo, bar, baz, bazModule)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "\033[1;31m[Dagger/MissingBinding]\033[0m Baz cannot be provided without an "
+                    + "@Inject constructor or an @Provides-annotated method.");
+              subject.hasErrorContaining("A binding for Baz exists in Child:");
+              subject.hasErrorContaining("    Baz is injected at");
+              subject.hasErrorContaining("        [Parent] Bar(baz)");
+              subject.hasErrorContaining("    Bar is requested at");
+              subject.hasErrorContaining("        [Parent] Parent.bar()");
+              subject.hasErrorContaining("The following other entry points also depend on it:");
+              subject.hasErrorContaining("    Parent.foo()");
+              subject.hasErrorContaining("    Child.foo() [Parent → Child]")
+                  .onSource(parent)
+                  .onLineContaining("interface Parent");
+            });
   }
 
   @Test
   public void missingBindingInSiblingComponent() {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "Parent",
             "import dagger.Component;",
             "",
@@ -244,8 +278,8 @@ public class MissingBindingSuggestionsTest {
             "  Child1 child1();",
             "  Child2 child2();",
             "}");
-    JavaFileObject child1 =
-        JavaFileObjects.forSourceLines(
+    Source child1 =
+        CompilerTests.javaSource(
             "Child1",
             "import dagger.Subcomponent;",
             "",
@@ -254,8 +288,8 @@ public class MissingBindingSuggestionsTest {
             "  Foo foo();",
             "  Baz baz();",
             "}");
-    JavaFileObject child2 =
-        JavaFileObjects.forSourceLines(
+    Source child2 =
+        CompilerTests.javaSource(
             "Child2",
             "import dagger.Subcomponent;",
             "",
@@ -264,24 +298,25 @@ public class MissingBindingSuggestionsTest {
             "  Foo foo();",
             "  Baz baz();",
             "}");
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "Foo",
             "import javax.inject.Inject;",
             "",
             "class Foo {",
             "  @Inject Foo(Bar bar) {}",
             "}");
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+    Source bar =
+        CompilerTests.javaSource(
             "Bar",
             "import javax.inject.Inject;",
             "",
             "class Bar {",
             "  @Inject Bar(Baz baz) {}",
             "}");
-    JavaFileObject baz = JavaFileObjects.forSourceLines("Baz", "class Baz {}");
-    JavaFileObject bazModule = JavaFileObjects.forSourceLines(
+    Source baz = CompilerTests.javaSource("Baz", "class Baz {}");
+    Source bazModule =
+        CompilerTests.javaSource(
         "BazModule",
         "import dagger.Module;",
         "import dagger.Provides;",
@@ -292,26 +327,26 @@ public class MissingBindingSuggestionsTest {
         "  @Provides Baz provideBaz() {return new Baz();}",
         "}");
 
-    Compilation compilation =
-        daggerCompiler().compile(parent, child1, child2, foo, bar, baz, bazModule);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            message(
-                "\033[1;31m[Dagger/MissingBinding]\033[0m Baz cannot be provided without an "
-                    + "@Inject constructor or an @Provides-annotated method.",
-                "A binding for Baz exists in Child2:",
-                "    Baz is injected at",
-                "        [Parent] Bar(baz)",
-                "    Bar is requested at",
-                "        [Parent] Parent.bar()",
-                "The following other entry points also depend on it:",
-                "    Parent.foo()",
-                "    Child1.foo() [Parent → Child1]",
-                "    Child2.foo() [Parent → Child2]",
-                "    Child1.baz() [Parent → Child1]"))
-        .inFile(parent)
-        .onLineContaining("interface Parent");
+    CompilerTests.daggerCompiler(parent, child1, child2, foo, bar, baz, bazModule)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "\033[1;31m[Dagger/MissingBinding]\033[0m Baz cannot be provided without an "
+                      + "@Inject constructor or an @Provides-annotated method.");
+              subject.hasErrorContaining("A binding for Baz exists in Child2:");
+              subject.hasErrorContaining("    Baz is injected at");
+              subject.hasErrorContaining("        [Parent] Bar(baz)");
+              subject.hasErrorContaining("    Bar is requested at");
+              subject.hasErrorContaining("        [Parent] Parent.bar()");
+              subject.hasErrorContaining("The following other entry points also depend on it:");
+              subject.hasErrorContaining("    Parent.foo()");
+              subject.hasErrorContaining("    Child1.foo() [Parent → Child1]");
+              subject.hasErrorContaining("    Child2.foo() [Parent → Child2]");
+              subject.hasErrorContaining("    Child1.baz() [Parent → Child1]")
+                  .onSource(parent)
+                  .onLineContaining("interface Parent");
+            });
   }
 }

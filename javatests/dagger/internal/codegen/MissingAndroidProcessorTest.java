@@ -16,22 +16,31 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableList;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class MissingAndroidProcessorTest {
+  @Parameters(name = "{0}")
+  public static ImmutableList<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public MissingAndroidProcessorTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test
   public void missingProcessor() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -43,17 +52,21 @@ public class MissingAndroidProcessorTest {
             "  @ContributesAndroidInjector",
             "  Object o();",
             "}");
-    JavaFileObject contributesAndroidInjectorStub =
-        JavaFileObjects.forSourceLines(
+    Source contributesAndroidInjectorStub =
+        CompilerTests.javaSource(
             "dagger.android.ContributesAndroidInjector",
             "package dagger.android;",
             "",
             "public @interface ContributesAndroidInjector {}");
-    Compilation compilation = daggerCompiler().compile(module, contributesAndroidInjectorStub);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("dagger.android.processor.AndroidProcessor")
-        .inFile(module)
-        .onLine(9);
+
+    CompilerTests.daggerCompiler(module, contributesAndroidInjectorStub)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("dagger.android.processor.AndroidProcessor")
+                  .onSource(module)
+                  .onLine(9);
+            });
   }
 }

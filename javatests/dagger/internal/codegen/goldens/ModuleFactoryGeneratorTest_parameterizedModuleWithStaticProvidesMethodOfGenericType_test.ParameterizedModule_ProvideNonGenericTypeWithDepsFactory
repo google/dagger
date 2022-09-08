@@ -1,0 +1,43 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Preconditions;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class ParameterizedModule_ProvideNonGenericTypeWithDepsFactory implements Factory<String> {
+  private final Provider<Object> oProvider;
+
+  public ParameterizedModule_ProvideNonGenericTypeWithDepsFactory(Provider<Object> oProvider) {
+    this.oProvider = oProvider;
+  }
+
+  @Override
+  public String get() {
+    return provideNonGenericTypeWithDeps(oProvider.get());
+  }
+
+  public static ParameterizedModule_ProvideNonGenericTypeWithDepsFactory create(
+      Provider<Object> oProvider) {
+    return new ParameterizedModule_ProvideNonGenericTypeWithDepsFactory(oProvider);
+  }
+
+  public static String provideNonGenericTypeWithDeps(Object o) {
+    return Preconditions.checkNotNullFromProvides(ParameterizedModule.provideNonGenericTypeWithDeps(o));
+  }
+}
+

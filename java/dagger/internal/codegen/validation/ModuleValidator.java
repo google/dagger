@@ -24,6 +24,7 @@ import static dagger.internal.codegen.base.ModuleAnnotation.isModuleAnnotation;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getSubcomponentCreator;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
@@ -524,7 +525,11 @@ public final class ModuleValidator {
                     + "reduce the visibility of this module, make the included modules "
                     + "public, or make all of the binding methods on the included modules "
                     + "abstract or static.",
-                formatListForErrorMessage(invalidVisibilityIncludes.asList())),
+                formatListForErrorMessage(
+                    invalidVisibilityIncludes.stream()
+                        .map(XTypeElement::getClassName)
+                        .map(ClassName::canonicalName)
+                        .collect(toImmutableList()))),
             moduleElement);
       }
     }

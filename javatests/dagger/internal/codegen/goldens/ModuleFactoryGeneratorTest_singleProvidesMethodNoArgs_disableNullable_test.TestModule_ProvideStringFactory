@@ -1,0 +1,40 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class TestModule_ProvideStringFactory implements Factory<String> {
+  private final TestModule module;
+
+  public TestModule_ProvideStringFactory(TestModule module) {
+    this.module = module;
+  }
+
+  @Override
+  public String get() {
+    return provideString(module);
+  }
+
+  public static TestModule_ProvideStringFactory create(TestModule module) {
+    return new TestModule_ProvideStringFactory(module);
+  }
+
+  public static String provideString(TestModule instance) {
+    return instance.provideString();
+  }
+}
+

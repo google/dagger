@@ -1,0 +1,41 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Preconditions;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class ChildIntegerModule_ProvideIntegerFactory implements Factory<Integer> {
+  private final ChildIntegerModule module;
+
+  public ChildIntegerModule_ProvideIntegerFactory(ChildIntegerModule module) {
+    this.module = module;
+  }
+
+  @Override
+  public Integer get() {
+    return provideInteger(module);
+  }
+
+  public static ChildIntegerModule_ProvideIntegerFactory create(ChildIntegerModule module) {
+    return new ChildIntegerModule_ProvideIntegerFactory(module);
+  }
+
+  public static Integer provideInteger(ChildIntegerModule instance) {
+    return Preconditions.checkNotNullFromProvides(instance.provideInteger());
+  }
+}
+

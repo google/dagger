@@ -170,9 +170,23 @@ public final class XTypes {
 
   /** Returns {@code true} if the given type is a raw type of a parameterized type. */
   public static boolean isRawParameterizedType(XType type) {
-    return isDeclared(type)
-        && type.getTypeArguments().isEmpty()
-        && !type.getTypeElement().getType().getTypeArguments().isEmpty();
+    XProcessingEnv processingEnv = getProcessingEnv(type);
+    switch (processingEnv.getBackend()) {
+      case JAVAC:
+        return isDeclared(type)
+            && type.getTypeArguments().isEmpty()
+            && !type.getTypeElement().getType().getTypeArguments().isEmpty();
+      case KSP:
+        return isDeclared(type)
+            // TODO(b/245619245): Due to the bug in XProcessing, the logic used for Javac won't work
+            // since XType#getTypeArguments() does not return an empty list for java raw types.
+            // However, the type name seems to get it correct, so we compare the typename to the raw
+            // typename until this bug is fixed.
+            && type.getRawType() != null
+            && type.getTypeName().equals(type.getRawType().getTypeName())
+            && !type.getTypeElement().getType().getTypeArguments().isEmpty();
+    }
+    throw new AssertionError("Unexpected backend: " + processingEnv.getBackend());
   }
 
   /** Returns the given {@code type} as an {@link XArrayType}. */

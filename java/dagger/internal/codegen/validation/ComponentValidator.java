@@ -160,9 +160,13 @@ public final class ComponentValidator implements ClearableCache {
 
     ValidationReport validateElement() {
       if (componentKinds.size() > 1) {
-        return moreThanOneComponentAnnotation();
+        return report.addError(moreThanOneComponentAnnotationError(), component).build();
       }
-
+      if (!(component.isInterface() || component.isClass())) {
+        // If the annotated element is not a class or interface skip the rest of the checks since
+        // the remaining checks will likely just output unhelpful noise in such cases.
+        return report.addError(invalidTypeError(), component).build();
+      }
       validateUseOfCancellationPolicy();
       validateIsAbstractType();
       validateCreators();
@@ -177,12 +181,10 @@ public final class ComponentValidator implements ClearableCache {
       return report.build();
     }
 
-    private ValidationReport moreThanOneComponentAnnotation() {
-      String error =
-          "Components may not be annotated with more than one component annotation: found "
-              + annotationsFor(componentKinds);
-      report.addError(error, component);
-      return report.build();
+    private String moreThanOneComponentAnnotationError() {
+      return String.format(
+          "Components may not be annotated with more than one component annotation: found %s",
+          annotationsFor(componentKinds));
     }
 
     private void validateUseOfCancellationPolicy() {
@@ -194,13 +196,15 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private void validateIsAbstractType() {
-      if (!component.isInterface() && !(component.isClass() && component.isAbstract())) {
-        report.addError(
-            String.format(
-                "@%s may only be applied to an interface or abstract class",
-                componentKind().annotation().simpleName()),
-            component);
+      if (!component.isAbstract()) {
+        report.addError(invalidTypeError(), component);
       }
+    }
+
+    private String invalidTypeError() {
+      return String.format(
+          "@%s may only be applied to an interface or abstract class",
+          componentKind().annotation().simpleName());
     }
 
     private void validateCreators() {

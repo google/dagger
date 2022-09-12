@@ -19,12 +19,10 @@ package dagger.internal.codegen.validation;
 import static com.google.common.collect.Maps.uniqueIndex;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
-import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-import dagger.multibindings.IntoSet;
-import java.util.Set;
 
 /**
  * Binds each {@link BindingMethodValidator} into a map, keyed by {@link
@@ -34,27 +32,18 @@ import java.util.Set;
 public interface BindingMethodValidatorsModule {
   @Provides
   static ImmutableMap<ClassName, BindingMethodValidator> indexValidators(
-      Set<BindingMethodValidator> validators) {
-    return uniqueIndex(validators, BindingMethodValidator::methodAnnotation);
+      ProvidesMethodValidator providesMethodValidator,
+      ProducesMethodValidator producesMethodValidator,
+      BindsMethodValidator bindsMethodValidator,
+      MultibindsMethodValidator multibindsMethodValidator,
+      BindsOptionalOfMethodValidator bindsOptionalOfMethodValidator) {
+    return uniqueIndex(
+        ImmutableSet.of(
+            providesMethodValidator,
+            producesMethodValidator,
+            bindsMethodValidator,
+            multibindsMethodValidator,
+            bindsOptionalOfMethodValidator),
+        BindingMethodValidator::methodAnnotation);
   }
-
-  @Binds
-  @IntoSet
-  BindingMethodValidator provides(ProvidesMethodValidator validator);
-
-  @Binds
-  @IntoSet
-  BindingMethodValidator produces(ProducesMethodValidator validator);
-
-  @Binds
-  @IntoSet
-  BindingMethodValidator binds(BindsMethodValidator validator);
-
-  @Binds
-  @IntoSet
-  BindingMethodValidator multibinds(MultibindsMethodValidator validator);
-
-  @Binds
-  @IntoSet
-  BindingMethodValidator bindsOptionalOf(BindsOptionalOfMethodValidator validator);
 }

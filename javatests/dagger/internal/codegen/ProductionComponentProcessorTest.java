@@ -16,15 +16,11 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import androidx.room.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableMap;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,20 +43,27 @@ public class ProductionComponentProcessorTest {
   }
 
   @Test public void componentOnConcreteClass() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.NotAComponent",
+    Source componentFile =
+        CompilerTests.javaSource("test.NotAComponent",
         "package test;",
         "",
         "import dagger.producers.ProductionComponent;",
         "",
         "@ProductionComponent",
         "final class NotAComponent {}");
-    Compilation compilation = daggerCompiler().compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("interface");
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@ProductionComponent may only be applied to an interface or abstract class");
+            });
   }
 
   @Test public void componentOnEnum() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.NotAComponent",
+    Source componentFile =
+        CompilerTests.javaSource("test.NotAComponent",
         "package test;",
         "",
         "import dagger.producers.ProductionComponent;",
@@ -69,45 +72,57 @@ public class ProductionComponentProcessorTest {
         "enum NotAComponent {",
         "  INSTANCE",
         "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("interface");
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@ProductionComponent may only be applied to an interface or abstract class");
+            });
   }
 
   @Test public void componentOnAnnotation() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.NotAComponent",
+    Source componentFile =
+        CompilerTests.javaSource("test.NotAComponent",
         "package test;",
         "",
         "import dagger.producers.ProductionComponent;",
         "",
         "@ProductionComponent",
         "@interface NotAComponent {}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("interface");
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@ProductionComponent may only be applied to an interface or abstract class");
+            });
   }
 
   @Test public void nonModuleModule() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.NotAComponent",
+    Source componentFile =
+        CompilerTests.javaSource("test.NotAComponent",
         "package test;",
         "",
         "import dagger.producers.ProductionComponent;",
         "",
         "@ProductionComponent(modules = Object.class)",
         "interface NotAComponent {}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("is not annotated with one of @Module, @ProducerModule");
+    CompilerTests.daggerCompiler(componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("is not annotated with one of @Module, @ProducerModule");
+            });
   }
 
   @Test
   public void dependsOnProductionExecutor() throws Exception {
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
+    Source moduleFile =
+        CompilerTests.javaSource(
             "test.ExecutorModule",
             "package test;",
             "",
@@ -123,8 +138,8 @@ public class ProductionComponentProcessorTest {
             "    return MoreExecutors.directExecutor();",
             "  }",
             "}");
-    JavaFileObject producerModuleFile =
-        JavaFileObjects.forSourceLines(
+    Source producerModuleFile =
+        CompilerTests.javaSource(
             "test.SimpleModule",
             "package test;",
             "",
@@ -139,8 +154,8 @@ public class ProductionComponentProcessorTest {
             "    return \"\";",
             "  }",
             "}");
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.SimpleComponent",
             "package test;",
             "",
@@ -158,30 +173,38 @@ public class ProductionComponentProcessorTest {
             "  }",
             "}");
 
-    Compilation compilation =
-        daggerCompiler()
-            .compile(moduleFile, producerModuleFile, componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("String may not depend on the production executor")
-        .inFile(componentFile)
-        .onLineContaining("interface SimpleComponent");
+    String errorMessage = "String may not depend on the production executor";
+    CompilerTests.daggerCompiler(moduleFile, producerModuleFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(errorMessage)
+                  .onSource(componentFile)
+                  .onLineContaining("interface SimpleComponent");
+            });
 
-    compilation =
-        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
-            .compile(producerModuleFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("String may not depend on the production executor")
-        .inFile(producerModuleFile)
-        .onLineContaining("class SimpleModule");
+    // Verify that the error is reported on the module when fullBindingGraphValidation is enabled.
+    CompilerTests.daggerCompiler(producerModuleFile)
+        .withProcessingOptions(
+            ImmutableMap.<String, String>builder()
+                .putAll(compilerMode.processorOptions())
+                .put("dagger.fullBindingGraphValidation", "ERROR")
+                .buildOrThrow())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(errorMessage)
+                  .onSource(producerModuleFile)
+                  .onLineContaining("class SimpleModule");
+            });
     // TODO(dpb): Report at the binding if enclosed in the module.
   }
 
   @Test
   public void simpleComponent() throws Exception {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestClass",
             "package test;",
             "",
@@ -228,15 +251,19 @@ public class ProductionComponentProcessorTest {
             "  }",
             "}");
 
-    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestClass_SimpleComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestClass_SimpleComponent"));
+    CompilerTests.daggerCompiler(component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/DaggerTestClass_SimpleComponent"));
+            });
   }
 
   @Test public void nullableProducersAreNotErrors() {
-    JavaFileObject component = JavaFileObjects.forSourceLines("test.TestClass",
+    Source component =
+        CompilerTests.javaSource("test.TestClass",
         "package test;",
         "",
         "import com.google.common.util.concurrent.ListenableFuture;",
@@ -283,23 +310,25 @@ public class ProductionComponentProcessorTest {
         "    ListenableFuture<A> a();",
         "  }",
         "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .hadWarningContaining("@Nullable on @Produces methods does not do anything")
-        .inFile(component)
-        .onLine(33);
-    assertThat(compilation)
-        .hadWarningContaining("@Nullable on @Produces methods does not do anything")
-        .inFile(component)
-        .onLine(36);
+    CompilerTests.daggerCompiler(component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(2);
+              subject.hasWarningContaining("@Nullable on @Produces methods does not do anything")
+                  .onSource(component)
+                  .onLine(33);
+              subject.hasWarningContaining("@Nullable on @Produces methods does not do anything")
+                  .onSource(component)
+                  .onLine(36);
+            });
   }
 
   @Test
   public void productionScope_injectConstructor() throws Exception {
-    JavaFileObject productionScoped =
-        JavaFileObjects.forSourceLines(
+    Source productionScoped =
+        CompilerTests.javaSource(
             "test.ProductionScoped",
             "package test;",
             "",
@@ -310,8 +339,8 @@ public class ProductionComponentProcessorTest {
             "class ProductionScoped {",
             "  @Inject ProductionScoped() {}",
             "}");
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.Parent",
             "package test;",
             "",
@@ -321,8 +350,8 @@ public class ProductionComponentProcessorTest {
             "interface Parent {",
             "  Child child();",
             "}");
-    JavaFileObject child =
-        JavaFileObjects.forSourceLines(
+    Source child =
+        CompilerTests.javaSource(
             "test.Child",
             "package test;",
             "",
@@ -333,12 +362,12 @@ public class ProductionComponentProcessorTest {
             "  ProductionScoped productionScoped();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(productionScoped, parent, child);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerParent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParent"));
+    CompilerTests.daggerCompiler(productionScoped, parent, child)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerParent"));
+            });
   }
 }

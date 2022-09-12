@@ -21,6 +21,7 @@ import static com.google.common.collect.MoreCollectors.onlyElement;
 import static com.google.common.collect.Streams.stream;
 import static com.google.testing.compile.Compiler.javac;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingEnvConfig;
 import androidx.room.compiler.processing.util.CompilationResultSubject;
 import androidx.room.compiler.processing.util.ProcessorTestExtKt;
@@ -56,6 +57,18 @@ public final class CompilerTests {
   private static final ImmutableMap<String, String> DEFAULT_PROCESSOR_OPTIONS =
       ImmutableMap.of(
           "dagger.experimentalDaggerErrorMessages", "enabled");
+
+  /** Returns the {@link XProcessingEnv.Backend} for the given {@link CompilationResultSubject}. */
+  public static XProcessingEnv.Backend backend(CompilationResultSubject subject) {
+    // TODO(bcorso): Create a more official API for this in XProcessing testing.
+    String output = subject.getCompilationResult().toString();
+    if (output.startsWith("CompilationResult (with ksp)")) {
+      return XProcessingEnv.Backend.KSP;
+    } else if (output.startsWith("CompilationResult (with javac)")) {
+      return XProcessingEnv.Backend.JAVAC;
+    }
+    throw new AssertionError("Unexpected backend for subject.");
+  }
 
   /** Returns a {@link Source.KotlinSource} with the given file name and content. */
   public static Source kotlinSource(String fileName, ImmutableCollection<String> srcLines) {

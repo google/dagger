@@ -16,12 +16,8 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -31,8 +27,8 @@ public class MultibindingTest {
 
   @Test
   public void providesWithTwoMultibindingAnnotations_failsToCompile() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.MultibindingModule",
             "package test;",
             "",
@@ -43,23 +39,36 @@ public class MultibindingTest {
             "",
             "@Module",
             "class MultibindingModule {",
-            "  @Provides @IntoSet @IntoMap Integer provideInt() { ",
+            "  @Provides",
+            "  @IntoSet",
+            "  @IntoMap",
+            "  Integer provideInt() { ",
             "    return 1;",
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(module);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("@Provides methods cannot have more than one multibinding annotation")
-        .inFile(module)
-        .onLine(10);
+    CompilerTests.daggerCompiler(module)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(3);
+              subject.hasErrorContaining(
+                      "@Provides methods cannot have more than one multibinding annotation")
+                  .onSource(module)
+                  .onLine(11);
+              subject.hasErrorContaining(
+                      "@Provides methods cannot have more than one multibinding annotation")
+                  .onSource(module)
+                  .onLine(12);
+              subject.hasErrorContaining("@Provides methods of type map must declare a map key")
+                  .onSource(module)
+                  .onLine(13);
+            });
   }
 
   @Test
   public void appliedOnInvalidMethods_failsToCompile() {
-    JavaFileObject someType =
-        JavaFileObjects.forSourceLines(
+    Source someType =
+        CompilerTests.javaSource(
             "test.SomeType",
             "package test;",
             "",
@@ -76,29 +85,22 @@ public class MultibindingTest {
             "  @IntoMap Map<Integer, Double> map();",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(someType);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
-        .inFile(someType)
-        .onLineContaining("ints();");
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
-        .inFile(someType)
-        .onLineContaining("doubles();");
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods")
-        .inFile(someType)
-        .onLineContaining("map();");
+    CompilerTests.daggerCompiler(someType)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(3);
+              String error =
+                  "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods";
+              subject.hasErrorContaining(error).onSource(someType).onLineContaining("ints();");
+              subject.hasErrorContaining(error).onSource(someType).onLineContaining("doubles();");
+              subject.hasErrorContaining(error).onSource(someType).onLineContaining("map();");
+            });
   }
 
   @Test
   public void concreteBindingForMultibindingAlias() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -115,8 +117,8 @@ public class MultibindingTest {
             "    return Collections.emptyMap();",
             "  }",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -127,20 +129,21 @@ public class MultibindingTest {
             "interface TestComponent {",
             "  Map<String, String> mapOfStringToString();",
             "}");
-    Compilation compilation = daggerCompiler().compile(module, component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Map<String,String> "
-                + "cannot be provided without an @Provides-annotated method")
-        .inFile(component)
-        .onLineContaining("interface TestComponent");
+    CompilerTests.daggerCompiler(module, component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "Map<String,String> cannot be provided without an @Provides-annotated method")
+                  .onSource(component)
+                  .onLineContaining("interface TestComponent");
+            });
   }
 
   @Test
   public void produceConcreteSet_andRequestSetOfProduced() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -156,8 +159,8 @@ public class MultibindingTest {
             "    return Collections.emptySet();",
             "  }",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -179,20 +182,22 @@ public class MultibindingTest {
             "    TestComponent build();",
             "  }",
             "}");
-    Compilation compilation = daggerCompiler().compile(module, component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Set<Produced<String>> "
-                + "cannot be provided without an @Provides- or @Produces-annotated method")
-        .inFile(component)
-        .onLineContaining("interface TestComponent");
+    CompilerTests.daggerCompiler(module, component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "Set<Produced<String>> cannot be provided without an @Provides- or "
+                          + "@Produces-annotated method")
+                  .onSource(component)
+                  .onLineContaining("interface TestComponent");
+            });
   }
 
   @Test
   public void provideExplicitSetInParent_AndMultibindingContributionInChild() {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.Parent",
             "package test;",
             "",
@@ -204,8 +209,8 @@ public class MultibindingTest {
             "  Set<String> set();",
             "  Child child();",
             "}");
-    JavaFileObject parentModule =
-        JavaFileObjects.forSourceLines(
+    Source parentModule =
+        CompilerTests.javaSource(
             "test.ParentModule",
             "package test;",
             "",
@@ -222,8 +227,8 @@ public class MultibindingTest {
             "  }",
             "}");
 
-    JavaFileObject child =
-        JavaFileObjects.forSourceLines(
+    Source child =
+        CompilerTests.javaSource(
             "test.Child",
             "package test;",
             "",
@@ -234,8 +239,8 @@ public class MultibindingTest {
             "interface Child {",
             "  Set<String> set();",
             "}");
-    JavaFileObject childModule =
-        JavaFileObjects.forSourceLines(
+    Source childModule =
+        CompilerTests.javaSource(
             "test.ChildModule",
             "package test;",
             "",
@@ -252,11 +257,13 @@ public class MultibindingTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(parent, parentModule, child, childModule);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("incompatible bindings or declarations")
-        .inFile(parent)
-        .onLineContaining("interface Parent");
+    CompilerTests.daggerCompiler(parent, parentModule, child, childModule)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("incompatible bindings or declarations")
+                  .onSource(parent)
+                  .onLineContaining("interface Parent");
+            });
   }
 }

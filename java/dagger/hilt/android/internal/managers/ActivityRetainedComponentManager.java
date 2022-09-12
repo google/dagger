@@ -23,22 +23,19 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
-import dagger.Binds;
 import dagger.Module;
+import dagger.Provides;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
 import dagger.hilt.android.ActivityRetainedLifecycle;
 import dagger.hilt.android.EntryPointAccessors;
 import dagger.hilt.android.components.ActivityRetainedComponent;
-import dagger.hilt.android.internal.ThreadUtil;
 import dagger.hilt.android.internal.builders.ActivityRetainedComponentBuilder;
+import dagger.hilt.android.internal.lifecycle.RetainedLifecycleImpl;
 import dagger.hilt.android.scopes.ActivityRetainedScoped;
 import dagger.hilt.components.SingletonComponent;
 import dagger.hilt.internal.GeneratedComponentManager;
-import java.util.HashSet;
-import java.util.Set;
-import javax.inject.Inject;
 
 /** A manager for the creation of components that survives activity configuration changes. */
 final class ActivityRetainedComponentManager
@@ -51,7 +48,7 @@ final class ActivityRetainedComponentManager
     ActivityRetainedComponentBuilder retainedComponentBuilder();
   }
 
-  /** Entry point for {@link Lifecycle}. */
+  /** Entry point for {@link ActivityRetainedLifecycle}. */
   @EntryPoint
   @InstallIn(ActivityRetainedComponent.class)
   public interface ActivityRetainedLifecycleEntryPoint {
@@ -75,7 +72,7 @@ final class ActivityRetainedComponentManager
       ActivityRetainedLifecycle lifecycle =
           EntryPoints.get(component, ActivityRetainedLifecycleEntryPoint.class)
               .getActivityRetainedLifecycle();
-      ((ActivityRetainedComponentManager.Lifecycle) lifecycle).dispatchOnCleared();
+      ((RetainedLifecycleImpl) lifecycle).dispatchOnCleared();
     }
   }
 
@@ -123,52 +120,13 @@ final class ActivityRetainedComponentManager
     return viewModelProvider.get(ActivityRetainedComponentViewModel.class).getComponent();
   }
 
-  /** The default implementation of {@link ActivityRetainedLifecycle}. */
-  @ActivityRetainedScoped
-  static final class Lifecycle implements ActivityRetainedLifecycle {
-
-    private final Set<OnClearedListener> listeners = new HashSet<>();
-    private boolean onClearedDispatched = false;
-
-    @Inject
-    Lifecycle() {}
-
-    @Override
-    public void addOnClearedListener(@NonNull OnClearedListener listener) {
-      ThreadUtil.ensureMainThread();
-      throwIfOnClearedDispatched();
-      listeners.add(listener);
-    }
-
-    @Override
-    public void removeOnClearedListener(@NonNull OnClearedListener listener) {
-      ThreadUtil.ensureMainThread();
-      throwIfOnClearedDispatched();
-      listeners.remove(listener);
-    }
-
-    void dispatchOnCleared() {
-      ThreadUtil.ensureMainThread();
-      onClearedDispatched = true;
-      for (OnClearedListener listener : listeners) {
-        listener.onCleared();
-      }
-    }
-
-    private void throwIfOnClearedDispatched() {
-      if (onClearedDispatched) {
-        throw new IllegalStateException(
-            "There was a race between the call to add/remove an OnClearedListener and onCleared(). "
-                + "This can happen when posting to the Main thread from a background thread, "
-                + "which is not supported.");
-      }
-    }
-  }
-
   @Module
   @InstallIn(ActivityRetainedComponent.class)
   abstract static class LifecycleModule {
-    @Binds
-    abstract ActivityRetainedLifecycle bind(Lifecycle impl);
+    @Provides
+    @ActivityRetainedScoped
+    static ActivityRetainedLifecycle provideActivityRetainedLifecycle() {
+      return new RetainedLifecycleImpl();
+    }
   }
 }

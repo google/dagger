@@ -43,6 +43,7 @@ android_library(
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/internal",
         "//java/dagger/hilt/android/internal/builders",
+        "//java/dagger/hilt/android/internal/lifecycle",
         "//java/dagger/hilt/android/scopes",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",

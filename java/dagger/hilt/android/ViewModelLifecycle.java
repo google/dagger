@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Dagger Authors.
+ * Copyright (C) 2022 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,7 @@ package dagger.hilt.android;
 import dagger.hilt.android.lifecycle.RetainedLifecycle;
 
 /**
- * A <code>ActivityRetainedLifecycle</code> class is associated with the lifecycle of the {@link
- * dagger.hilt.android.components.ActivityRetainedComponent}.
+ * A class for registering listeners on the ViewModel lifecycle.
  */
-public interface ActivityRetainedLifecycle extends RetainedLifecycle {
-  /**
-   * Listener for receiving a callback for when the {@link
-   * dagger.hilt.android.components.ActivityRetainedComponent} will no longer be used and destroyed.
-   */
-  interface OnClearedListener extends RetainedLifecycle.OnClearedListener {}
+public interface ViewModelLifecycle extends RetainedLifecycle {
 }

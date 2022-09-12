@@ -60,6 +60,11 @@ public class ViewModelScopedTest {
             // Check that the keyed viewmodels are separate by checking that the bar instances
             // are different, and hence have different components.
             assertThat(fragment.vm1.one.bar).isNotEqualTo(fragment.vm2.one.bar);
+
+            activity.getSupportFragmentManager().beginTransaction().remove(fragment).commitNow();
+
+            assertThat(fragment.vm1.cleared).isTrue();
+            assertThat(fragment.vm2.cleared).isTrue();
           });
     }
   }
@@ -98,11 +103,13 @@ public class ViewModelScopedTest {
 
     final DependsOnBarOne one;
     final DependsOnBarTwo two;
+    boolean cleared = false;
 
     @Inject
-    MyViewModel(DependsOnBarOne one, DependsOnBarTwo two) {
+    MyViewModel(DependsOnBarOne one, DependsOnBarTwo two, ViewModelLifecycle lifecycle) {
       this.one = one;
       this.two = two;
+      lifecycle.addOnClearedListener(() -> cleared = true);
     }
   }
 

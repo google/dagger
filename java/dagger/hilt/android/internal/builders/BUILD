@@ -23,6 +23,7 @@ android_library(
     deps = [
         "//:dagger_with_compiler",
         "//java/dagger/hilt:define_component",
+        "//java/dagger/hilt/android:view_model_lifecycle",
         "//java/dagger/hilt/android/components",
         "@maven//:androidx_activity_activity",
         "@maven//:androidx_fragment_fragment",

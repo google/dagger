@@ -31,7 +31,7 @@ android_local_test(
         "//third_party/java/truth",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android:android_entry_point",
-        "//java/dagger/hilt/android/lifecycle",
+        "//java/dagger/hilt/android/lifecycle:hilt_view_model",
         "//java/dagger/hilt/android/testing:hilt_android_test",
     ],
 )

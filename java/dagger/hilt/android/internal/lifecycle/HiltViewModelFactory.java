@@ -85,8 +85,11 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
           @SuppressWarnings("unchecked")
           protected <T extends ViewModel> T create(
               @NonNull String key, @NonNull Class<T> modelClass, @NonNull SavedStateHandle handle) {
-            ViewModelComponent component =
-                viewModelComponentBuilder.savedStateHandle(handle).build();
+            RetainedLifecycleImpl lifecycle = new RetainedLifecycleImpl();
+            ViewModelComponent component = viewModelComponentBuilder
+                .savedStateHandle(handle)
+                .viewModelLifecycle(lifecycle)
+                .build();
             Provider<? extends ViewModel> provider =
                 EntryPoints.get(component, ViewModelFactoriesEntryPoint.class)
                     .getHiltViewModelMap()
@@ -98,7 +101,9 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
                       + "' to be available in the multi-binding of "
                       + "@HiltViewModelMap but none was found.");
             }
-            return (T) provider.get();
+            ViewModel viewModel = provider.get();
+            viewModel.addCloseable(lifecycle::dispatchOnCleared);
+            return (T) viewModel;
           }
         };
   }

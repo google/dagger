@@ -225,6 +225,7 @@ gen_maven_artifact(
         "androidx.lifecycle:lifecycle-viewmodel",
         "androidx.lifecycle:lifecycle-viewmodel-savedstate",
         "androidx.multidex:multidex",
+        "androidx.savedstate:savedstate",
         "androidx.test:core",
         "com.google.code.findbugs:jsr305",
         "com.google.dagger:dagger",

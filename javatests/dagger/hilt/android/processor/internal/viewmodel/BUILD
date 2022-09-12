@@ -24,7 +24,7 @@ java_test(
     name = "ViewModelProcessorTest",
     runtime_deps = [
         ":ViewModelProcessorTestLib",
-        "//java/dagger/hilt/android/lifecycle",
+        "//java/dagger/hilt/android/lifecycle:hilt_view_model",
         "//third_party/java/compile_testing",
         "//third_party/java/truth",
         "@androidsdk//:platforms/android-32/android.jar",
@@ -51,7 +51,7 @@ java_test(
     name = "ViewModelGeneratorTest",
     runtime_deps = [
         ":ViewModelGeneratorTestLib",
-        "//java/dagger/hilt/android/lifecycle",
+        "//java/dagger/hilt/android/lifecycle:hilt_view_model",
         "//third_party/java/compile_testing",
         "//third_party/java/truth",
         "@androidsdk//:platforms/android-32/android.jar",
@@ -85,7 +85,7 @@ kt_compiler_test(
         "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
         "//third_party/java/compile_testing",
         "//third_party/java/truth",
-        "//java/dagger/hilt/android/lifecycle",
+        "//java/dagger/hilt/android/lifecycle:hilt_view_model",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:hilt_android_app",
     ],

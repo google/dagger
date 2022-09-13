@@ -18,21 +18,20 @@ package dagger.internal.codegen;
 
 import static com.google.common.collect.Sets.cartesianProduct;
 import static com.google.common.collect.Sets.immutableEnumSet;
-import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.SUBCOMPONENT_BUILDER;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.SUBCOMPONENT_FACTORY;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.testing.compile.Compilation;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,8 +58,8 @@ public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorT
 
   @Test
   public void testInlinedSubcomponentCreators_componentMethod() throws Exception {
-    JavaFileObject subcomponent =
-        preprocessedJavaFile(
+    Source subcomponent =
+        preprocessedJavaSource(
             "test.Sub",
             "package test;",
             "",
@@ -73,8 +72,8 @@ public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorT
             "    Sub build();",
             "  }",
             "}");
-    JavaFileObject usesSubcomponent =
-        preprocessedJavaFile(
+    Source usesSubcomponent =
+        preprocessedJavaSource(
             "test.UsesSubcomponent",
             "package test;",
             "",
@@ -83,8 +82,8 @@ public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorT
             "class UsesSubcomponent {",
             "  @Inject UsesSubcomponent(Sub.Builder subBuilder) {}",
             "}");
-    JavaFileObject component =
-        preprocessedJavaFile(
+    Source component =
+        preprocessedJavaSource(
             "test.C",
             "package test;",
             "",
@@ -96,10 +95,11 @@ public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorT
             "  UsesSubcomponent usesSubcomponent();",
             "}");
 
-    Compilation compilation = compile(subcomponent, usesSubcomponent, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerC")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerC"));
+    CompilerTests.daggerCompiler(subcomponent, usesSubcomponent, component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerC"));
+            });
   }
 }

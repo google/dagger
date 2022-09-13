@@ -16,12 +16,8 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -30,8 +26,8 @@ import org.junit.runners.JUnit4;
 public class RawTypeInjectionTest {
   @Test
   public void rawEntryPointTest() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -41,8 +37,8 @@ public class RawTypeInjectionTest {
             "interface TestComponent {",
             "  Foo foo();",  // Fail: requesting raw type
             "}");
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -52,18 +48,21 @@ public class RawTypeInjectionTest {
             "  @Inject Foo() {}",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component, foo);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Foo cannot be provided without an @Provides-annotated method.")
-        .inFile(component)
-        .onLine(6);
+    CompilerTests.daggerCompiler(component, foo)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "Foo cannot be provided without an @Provides-annotated method.")
+                  .onSource(component)
+                  .onLine(6);
+            });
   }
 
   @Test
   public void rawProvidesRequestTest() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -73,8 +72,8 @@ public class RawTypeInjectionTest {
             "interface TestComponent {",
             "  int integer();",
             "}");
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -83,8 +82,8 @@ public class RawTypeInjectionTest {
             "class Foo<T> {",
             "  @Inject Foo() {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -99,19 +98,21 @@ public class RawTypeInjectionTest {
             "  }",
             "}");
 
-
-    Compilation compilation = daggerCompiler().compile(component, foo, module);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Foo cannot be provided without an @Provides-annotated method.")
-        .inFile(component)
-        .onLine(6);
+    CompilerTests.daggerCompiler(component, foo, module)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "Foo cannot be provided without an @Provides-annotated method.")
+                  .onSource(component)
+                  .onLine(6);
+            });
   }
 
   @Test
   public void rawInjectConstructorRequestTest() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -121,8 +122,8 @@ public class RawTypeInjectionTest {
             "interface TestComponent {",
             "  Foo foo();",
             "}");
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -131,8 +132,8 @@ public class RawTypeInjectionTest {
             "class Foo<T> {",
             "  @Inject Foo() {}",
             "}");
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -142,19 +143,21 @@ public class RawTypeInjectionTest {
             "  @Inject Bar(Foo foo) {}", // Fail: requesting raw type
             "}");
 
-
-    Compilation compilation = daggerCompiler().compile(component, foo, bar);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Foo cannot be provided without an @Provides-annotated method.")
-        .inFile(component)
-        .onLine(6);
+    CompilerTests.daggerCompiler(component, foo, bar)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "Foo cannot be provided without an @Provides-annotated method.")
+                  .onSource(component)
+                  .onLine(6);
+            });
   }
 
   @Test
   public void rawProvidesReturnTest() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -165,8 +168,8 @@ public class RawTypeInjectionTest {
             // Test that we can request the raw type if it's provided by a module.
             "  Foo foo();",
             "}");
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -175,8 +178,8 @@ public class RawTypeInjectionTest {
             "class Foo<T> {",
             "  @Inject Foo() {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -198,7 +201,7 @@ public class RawTypeInjectionTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component, foo, module);
-    assertThat(compilation).succeeded();
+    CompilerTests.daggerCompiler(component, foo, module)
+        .compile(subject -> subject.hasErrorCount(0));
   }
 }

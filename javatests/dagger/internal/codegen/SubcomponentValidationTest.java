@@ -17,11 +17,12 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
 import javax.tools.JavaFileObject;
@@ -47,59 +48,8 @@ public class SubcomponentValidationTest {
   @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
 
   @Test public void factoryMethod_missingModulesWithParameters() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component",
-        "interface TestComponent {",
-        "  ChildComponent newChildComponent();",
-        "}");
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
-        "package test;",
-        "",
-        "import dagger.Subcomponent;",
-        "",
-        "@Subcomponent(modules = ModuleWithParameters.class)",
-        "interface ChildComponent {",
-        "  Object object();",
-        "}");
-    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.ModuleWithParameters",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "",
-        "@Module",
-        "final class ModuleWithParameters {",
-        "  private final Object object;",
-        "",
-        "  ModuleWithParameters(Object object) {",
-        "    this.object = object;",
-        "  }",
-        "",
-        "  @Provides Object object() {",
-        "    return object;",
-        "  }",
-        "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(componentFile, childComponentFile, moduleFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "test.ChildComponent requires modules which have no visible default constructors. "
-                + "Add the following modules as parameters to this method: "
-                + "test.ModuleWithParameters")
-        .inFile(componentFile)
-        .onLineContaining("ChildComponent newChildComponent();");
-  }
-
-  @Test
-  public void factoryMethod_grandchild() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -109,8 +59,66 @@ public class SubcomponentValidationTest {
             "interface TestComponent {",
             "  ChildComponent newChildComponent();",
             "}");
-    JavaFileObject childComponent =
-        JavaFileObjects.forSourceLines(
+    Source childComponentFile =
+        CompilerTests.javaSource(
+            "test.ChildComponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ModuleWithParameters.class)",
+            "interface ChildComponent {",
+            "  Object object();",
+            "}");
+    Source moduleFile =
+        CompilerTests.javaSource(
+            "test.ModuleWithParameters",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "final class ModuleWithParameters {",
+            "  private final Object object;",
+            "",
+            "  ModuleWithParameters(Object object) {",
+            "    this.object = object;",
+            "  }",
+            "",
+            "  @Provides Object object() {",
+            "    return object;",
+            "  }",
+            "}");
+    CompilerTests.daggerCompiler(componentFile, childComponentFile, moduleFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "test.ChildComponent requires modules which have no visible default "
+                          + "constructors. Add the following modules as parameters to this method: "
+                          + "test.ModuleWithParameters")
+                  .onSource(componentFile)
+                  .onLineContaining("ChildComponent newChildComponent();");
+            });
+  }
+
+  @Test
+  public void factoryMethod_grandchild() {
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  ChildComponent newChildComponent();",
+            "}");
+    Source childComponent =
+        CompilerTests.javaSource(
             "test.ChildComponent",
             "package test;",
             "",
@@ -120,8 +128,8 @@ public class SubcomponentValidationTest {
             "interface ChildComponent {",
             "  GrandchildComponent newGrandchildComponent();",
             "}");
-    JavaFileObject grandchildComponent =
-        JavaFileObjects.forSourceLines(
+    Source grandchildComponent =
+        CompilerTests.javaSource(
             "test.GrandchildComponent",
             "package test;",
             "",
@@ -131,8 +139,8 @@ public class SubcomponentValidationTest {
             "interface GrandchildComponent {",
             "  Object object();",
             "}");
-    JavaFileObject grandchildModule =
-        JavaFileObjects.forSourceLines(
+    Source grandchildModule =
+        CompilerTests.javaSource(
             "test.GrandchildModule",
             "package test;",
             "",
@@ -151,22 +159,24 @@ public class SubcomponentValidationTest {
             "    return object;",
             "  }",
             "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(component, childComponent, grandchildComponent, grandchildModule);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "[ChildComponent.newGrandchildComponent()] "
-                + "GrandchildComponent requires modules which have no visible default "
-                + "constructors. Add the following modules as parameters to this method: "
-                + "GrandchildModule")
-        .inFile(component)
-        .onLineContaining("interface TestComponent");
+    CompilerTests.daggerCompiler(component, childComponent, grandchildComponent, grandchildModule)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "[ChildComponent.newGrandchildComponent()] "
+                          + "GrandchildComponent requires modules which have no visible default "
+                          + "constructors. Add the following modules as parameters to this method: "
+                          + "GrandchildModule")
+                  .onSource(component)
+                  .onLineContaining("interface TestComponent");
+            });
   }
 
   @Test public void factoryMethod_nonModuleParameter() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
+    Source componentFile =
+        CompilerTests.javaSource("test.TestComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -175,34 +185,38 @@ public class SubcomponentValidationTest {
         "interface TestComponent {",
         "  ChildComponent newChildComponent(String someRandomString);",
         "}");
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
+    Source childComponentFile =
+        CompilerTests.javaSource("test.ChildComponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
         "",
         "@Subcomponent",
         "interface ChildComponent {}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(componentFile, childComponentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Subcomponent factory methods may only accept modules, but java.lang.String is not.")
-        .inFile(componentFile)
-        .onLine(7)
-        .atColumn(43);
+    CompilerTests.daggerCompiler(componentFile, childComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "Subcomponent factory methods may only accept modules, but java.lang.String "
+                          + "is not.")
+                  .onSource(componentFile)
+                  .onLine(7);
+            });
   }
 
   @Test public void factoryMethod_duplicateParameter() {
-    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
+    Source moduleFile =
+        CompilerTests.javaSource("test.TestModule",
         "package test;",
         "",
         "import dagger.Module;",
         "",
         "@Module",
         "final class TestModule {}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
+    Source componentFile =
+        CompilerTests.javaSource("test.TestComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -211,35 +225,38 @@ public class SubcomponentValidationTest {
         "interface TestComponent {",
         "  ChildComponent newChildComponent(TestModule testModule1, TestModule testModule2);",
         "}");
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
+    Source childComponentFile =
+        CompilerTests.javaSource("test.ChildComponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
         "",
         "@Subcomponent(modules = TestModule.class)",
         "interface ChildComponent {}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(moduleFile, componentFile, childComponentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "A module may only occur once as an argument in a Subcomponent factory method, "
-                + "but test.TestModule was already passed.")
-        .inFile(componentFile)
-        .onLine(7)
-        .atColumn(71);
+    CompilerTests.daggerCompiler(componentFile, childComponentFile, moduleFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "A module may only occur once as an argument in a Subcomponent factory "
+                          + "method, but test.TestModule was already passed.")
+                  .onSource(componentFile)
+                  .onLine(7);
+            });
   }
 
   @Test public void factoryMethod_superflouousModule() {
-    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
+    Source moduleFile =
+        CompilerTests.javaSource("test.TestModule",
         "package test;",
         "",
         "import dagger.Module;",
         "",
         "@Module",
         "final class TestModule {}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
+    Source componentFile =
+        CompilerTests.javaSource("test.TestComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -248,27 +265,31 @@ public class SubcomponentValidationTest {
         "interface TestComponent {",
         "  ChildComponent newChildComponent(TestModule testModule);",
         "}");
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
+    Source childComponentFile =
+        CompilerTests.javaSource("test.ChildComponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
         "",
         "@Subcomponent",
         "interface ChildComponent {}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(moduleFile, componentFile, childComponentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "test.TestModule is present as an argument to the test.ChildComponent factory method, "
-                + "but is not one of the modules used to implement the subcomponent.")
-        .inFile(componentFile)
-        .onLine(7);
+    CompilerTests.daggerCompiler(moduleFile, componentFile, childComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "test.TestModule is present as an argument to the test.ChildComponent "
+                          + "factory method, but is not one of the modules used to implement the "
+                          + "subcomponent.")
+                  .onSource(componentFile)
+                  .onLine(7);
+            });
   }
 
   @Test public void missingBinding() {
-    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.TestModule",
+    Source moduleFile =
+        CompilerTests.javaSource("test.TestModule",
         "package test;",
         "",
         "import dagger.Module;",
@@ -280,7 +301,8 @@ public class SubcomponentValidationTest {
         "    return Integer.toString(i);",
         "  }",
         "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
+    Source componentFile =
+        CompilerTests.javaSource("test.TestComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -289,7 +311,8 @@ public class SubcomponentValidationTest {
         "interface TestComponent {",
         "  ChildComponent newChildComponent();",
         "}");
-    JavaFileObject childComponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
+    Source childComponentFile =
+        CompilerTests.javaSource("test.ChildComponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
@@ -298,34 +321,40 @@ public class SubcomponentValidationTest {
         "interface ChildComponent {",
         "  String string();",
         "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(moduleFile, componentFile, childComponentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Integer cannot be provided without an @Inject constructor or an "
-                + "@Provides-annotated method")
-        .inFile(componentFile)
-        .onLineContaining("interface TestComponent");
+    CompilerTests.daggerCompiler(moduleFile, componentFile, childComponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "Integer cannot be provided without an @Inject constructor or an "
+                          + "@Provides-annotated method")
+                  .onSource(componentFile)
+                  .onLineContaining("interface TestComponent");
+            });
   }
 
   @Test public void subcomponentOnConcreteType() {
-    JavaFileObject subcomponentFile = JavaFileObjects.forSourceLines("test.NotASubcomponent",
+    Source subcomponentFile =
+        CompilerTests.javaSource("test.NotASubcomponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
         "",
         "@Subcomponent",
         "final class NotASubcomponent {}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(subcomponentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("interface");
+    CompilerTests.daggerCompiler(subcomponentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("interface");
+            });
   }
 
   @Test public void scopeMismatch() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.ParentComponent",
+    Source componentFile =
+        CompilerTests.javaSource("test.ParentComponent",
         "package test;",
         "",
         "import dagger.Component;",
@@ -336,7 +365,8 @@ public class SubcomponentValidationTest {
         "interface ParentComponent {",
         "  ChildComponent childComponent();",
         "}");
-    JavaFileObject subcomponentFile = JavaFileObjects.forSourceLines("test.ChildComponent",
+    Source subcomponentFile =
+        CompilerTests.javaSource("test.ChildComponent",
         "package test;",
         "",
         "import dagger.Subcomponent;",
@@ -345,7 +375,8 @@ public class SubcomponentValidationTest {
         "interface ChildComponent {",
         "  Object object();",
         "}");
-    JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.ChildModule",
+    Source moduleFile =
+        CompilerTests.javaSource("test.ChildModule",
         "package test;",
         "",
         "import dagger.Module;",
@@ -356,18 +387,20 @@ public class SubcomponentValidationTest {
         "final class ChildModule {",
         "  @Provides @Singleton Object provideObject() { return null; }",
         "}");
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(componentFile, subcomponentFile, moduleFile);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("@Singleton");
+    CompilerTests.daggerCompiler(componentFile, subcomponentFile, moduleFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("@Singleton");
+            });
   }
 
   @Test
   public void delegateFactoryNotCreatedForSubcomponentWhenProviderExistsInParent()
       throws Exception {
-    JavaFileObject parentComponentFile =
-        JavaFileObjects.forSourceLines(
+    Source parentComponentFile =
+        CompilerTests.javaSource(
             "test.ParentComponent",
             "package test;",
             "",
@@ -381,8 +414,8 @@ public class SubcomponentValidationTest {
             "  Dep1 dep1();",
             "  Dep2 dep2();",
             "}");
-    JavaFileObject childComponentFile =
-        JavaFileObjects.forSourceLines(
+    Source childComponentFile =
+        CompilerTests.javaSource(
             "test.ChildComponent",
             "package test;",
             "",
@@ -392,8 +425,8 @@ public class SubcomponentValidationTest {
             "interface ChildComponent {",
             "  Object object();",
             "}");
-    JavaFileObject childModuleFile =
-        JavaFileObjects.forSourceLines(
+    Source childModuleFile =
+        CompilerTests.javaSource(
             "test.ChildModule",
             "package test;",
             "",
@@ -404,8 +437,8 @@ public class SubcomponentValidationTest {
             "final class ChildModule {",
             "  @Provides Object provideObject(A a) { return null; }",
             "}");
-    JavaFileObject aFile =
-        JavaFileObjects.forSourceLines(
+    Source aFile =
+        CompilerTests.javaSource(
             "test.A",
             "package test;",
             "",
@@ -415,8 +448,8 @@ public class SubcomponentValidationTest {
             "  @Inject public A(NeedsDep1 a, Dep1 b, Dep2 c) { }",
             "  @Inject public void methodA() { }",
             "}");
-    JavaFileObject needsDep1File =
-        JavaFileObjects.forSourceLines(
+    Source needsDep1File =
+        CompilerTests.javaSource(
             "test.NeedsDep1",
             "package test;",
             "",
@@ -425,8 +458,8 @@ public class SubcomponentValidationTest {
             "final class NeedsDep1 {",
             "  @Inject public NeedsDep1(Dep1 d) { }",
             "}");
-    JavaFileObject dep1File =
-        JavaFileObjects.forSourceLines(
+    Source dep1File =
+        CompilerTests.javaSource(
             "test.Dep1",
             "package test;",
             "",
@@ -438,8 +471,8 @@ public class SubcomponentValidationTest {
             "  @Inject public Dep1() { }",
             "  @Inject public void dep1Method() { }",
             "}");
-    JavaFileObject dep2File =
-        JavaFileObjects.forSourceLines(
+    Source dep2File =
+        CompilerTests.javaSource(
             "test.Dep2",
             "package test;",
             "",
@@ -452,26 +485,27 @@ public class SubcomponentValidationTest {
             "  @Inject public void dep2Method() { }",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(
-                parentComponentFile,
-                childComponentFile,
-                childModuleFile,
-                aFile,
-                needsDep1File,
-                dep1File,
-                dep2File);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerParentComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParentComponent"));
+    CompilerTests.daggerCompiler(
+            parentComponentFile,
+            childComponentFile,
+            childModuleFile,
+            aFile,
+            needsDep1File,
+            dep1File,
+            dep2File)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/DaggerParentComponent"));
+            });
   }
 
   @Test
   public void multipleSubcomponentsWithSameSimpleNamesCanExistInSameComponent() throws Exception {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.ParentComponent",
             "package test;",
             "",
@@ -482,8 +516,8 @@ public class SubcomponentValidationTest {
             "  Foo.Sub newInstanceSubcomponent();",
             "  NoConflict newNoConflictSubcomponent();",
             "}");
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -494,8 +528,8 @@ public class SubcomponentValidationTest {
             "    Bar.Sub newBarSubcomponent();",
             "  }",
             "}");
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -506,16 +540,16 @@ public class SubcomponentValidationTest {
             "    test.subpackage.Sub newSubcomponentInSubpackage();",
             "  }",
             "}");
-    JavaFileObject baz =
-        JavaFileObjects.forSourceLines(
+    Source baz =
+        CompilerTests.javaSource(
             "test.subpackage.Sub",
             "package test.subpackage;",
             "",
             "import dagger.Subcomponent;",
             "",
             "@Subcomponent public interface Sub {}");
-    JavaFileObject noConflict =
-        JavaFileObjects.forSourceLines(
+    Source noConflict =
+        CompilerTests.javaSource(
             "test.NoConflict",
             "package test;",
             "",
@@ -523,19 +557,20 @@ public class SubcomponentValidationTest {
             "",
             "@Subcomponent interface NoConflict {}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(parent, foo, bar, baz, noConflict);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerParentComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParentComponent"));
+    CompilerTests.daggerCompiler(parent, foo, bar, baz, noConflict)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/DaggerParentComponent"));
+            });
   }
 
   @Test
   public void subcomponentSimpleNamesDisambiguated() throws Exception {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.ParentComponent",
             "package test;",
             "",
@@ -545,8 +580,8 @@ public class SubcomponentValidationTest {
             "interface ParentComponent {",
             "  Sub newSubcomponent();",
             "}");
-    JavaFileObject sub =
-        JavaFileObjects.forSourceLines(
+    Source sub =
+        CompilerTests.javaSource(
             "test.Sub",
             "package test;",
             "",
@@ -555,8 +590,8 @@ public class SubcomponentValidationTest {
             "@Subcomponent interface Sub {",
             "  test.deep.many.levels.that.match.test.Sub newDeepSubcomponent();",
             "}");
-    JavaFileObject deepSub =
-        JavaFileObjects.forSourceLines(
+    Source deepSub =
+        CompilerTests.javaSource(
             "test.deep.many.levels.that.match.test.Sub",
             "package test.deep.many.levels.that.match.test;",
             "",
@@ -564,18 +599,20 @@ public class SubcomponentValidationTest {
             "",
             "@Subcomponent public interface Sub {}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(parent, sub, deepSub);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerParentComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParentComponent"));
+    CompilerTests.daggerCompiler(parent, sub, deepSub)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/DaggerParentComponent"));
+            });
   }
 
   @Test
   public void subcomponentSimpleNamesDisambiguatedInRoot() throws Exception {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "ParentComponent",
             "import dagger.Component;",
             "",
@@ -583,16 +620,16 @@ public class SubcomponentValidationTest {
             "interface ParentComponent {",
             "  Sub newSubcomponent();",
             "}");
-    JavaFileObject sub =
-        JavaFileObjects.forSourceLines(
+    Source sub =
+        CompilerTests.javaSource(
             "Sub",
             "import dagger.Subcomponent;",
             "",
             "@Subcomponent interface Sub {",
             "  test.deep.many.levels.that.match.test.Sub newDeepSubcomponent();",
             "}");
-    JavaFileObject deepSub =
-        JavaFileObjects.forSourceLines(
+    Source deepSub =
+        CompilerTests.javaSource(
             "test.deep.many.levels.that.match.test.Sub",
             "package test.deep.many.levels.that.match.test;",
             "",
@@ -600,18 +637,20 @@ public class SubcomponentValidationTest {
             "",
             "@Subcomponent public interface Sub {}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(parent, sub, deepSub);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("DaggerParentComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParentComponent"));
+    CompilerTests.daggerCompiler(parent, sub, deepSub)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("DaggerParentComponent"));
+            });
   }
 
   @Test
   public void subcomponentImplNameUsesFullyQualifiedClassNameIfNecessary() throws Exception {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.ParentComponent",
             "package test;",
             "",
@@ -622,8 +661,8 @@ public class SubcomponentValidationTest {
             "  top1.a.b.c.d.E.F.Sub top1();",
             "  top2.a.b.c.d.E.F.Sub top2();",
             "}");
-    JavaFileObject top1 =
-        JavaFileObjects.forSourceLines(
+    Source top1 =
+        CompilerTests.javaSource(
             "top1.a.b.c.d.E",
             "package top1.a.b.c.d;",
             "",
@@ -634,8 +673,8 @@ public class SubcomponentValidationTest {
             "    @Subcomponent interface Sub {}",
             "  }",
             "}");
-    JavaFileObject top2 =
-        JavaFileObjects.forSourceLines(
+    Source top2 =
+        CompilerTests.javaSource(
             "top2.a.b.c.d.E",
             "package top2.a.b.c.d;",
             "",
@@ -647,19 +686,21 @@ public class SubcomponentValidationTest {
             "  }",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(parent, top1, top2);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerParentComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParentComponent"));
+    CompilerTests.daggerCompiler(parent, top1, top2)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/DaggerParentComponent"));
+            });
   }
 
   @Test
   public void subcomponentNamesShouldNotConflictWithParent()
       throws Exception {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.C",
             "package test;",
             "",
@@ -669,8 +710,8 @@ public class SubcomponentValidationTest {
             "interface C {",
             "  test.Foo.C newInstanceC();",
             "}");
-    JavaFileObject subcomponentWithSameSimpleNameAsParent =
-        JavaFileObjects.forSourceLines(
+    Source subcomponentWithSameSimpleNameAsParent =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -680,19 +721,20 @@ public class SubcomponentValidationTest {
             "  @Subcomponent interface C {}",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(parent, subcomponentWithSameSimpleNameAsParent);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerC")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerC"));
+    CompilerTests.daggerCompiler(parent, subcomponentWithSameSimpleNameAsParent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/DaggerC"));
+            });
   }
 
   @Test
   public void subcomponentBuilderNamesShouldNotConflict() throws Exception {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.C",
             "package test;",
             "",
@@ -725,18 +767,20 @@ public class SubcomponentValidationTest {
             "  }",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(parent);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerC")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerC"));
+    CompilerTests.daggerCompiler(parent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/DaggerC"));
+            });
   }
 
   @Test
   public void duplicateBindingWithSubcomponentDeclaration() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -751,8 +795,8 @@ public class SubcomponentValidationTest {
             "  }",
             "}");
 
-    JavaFileObject subcomponent =
-        JavaFileObjects.forSourceLines(
+    Source subcomponent =
+        CompilerTests.javaSource(
             "test.Sub",
             "package test;",
             "",
@@ -766,9 +810,9 @@ public class SubcomponentValidationTest {
             "  }",
             "}");
 
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
-            "test.Sub",
+    Source component =
+        CompilerTests.javaSource(
+            "test.C",
             "package test;",
             "",
             "import dagger.Component;",
@@ -778,17 +822,16 @@ public class SubcomponentValidationTest {
             "  Object dependsOnBuilder();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(module, component, subcomponent);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("Sub.Builder is bound multiple times:");
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@Provides Sub.Builder "
-                + "TestModule.providesConflictsWithModuleSubcomponents()");
-    assertThat(compilation)
-        .hadErrorContaining("@Module(subcomponents = Sub.class) for TestModule");
+    CompilerTests.daggerCompiler(module, component, subcomponent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("Sub.Builder is bound multiple times:");
+              subject.hasErrorContaining(
+                  "@Provides Sub.Builder TestModule.providesConflictsWithModuleSubcomponents()");
+              subject.hasErrorContaining("@Module(subcomponents = Sub.class) for TestModule");
+            });
   }
 
   @Test

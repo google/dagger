@@ -267,7 +267,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
         .withProcessingOptions(compilerOptions)
         .compile(
             subject -> {
-              subject.hasErrorCount(3);
+              subject.hasErrorCount(1);
               subject.hasErrorContaining(messages.mustBeInComponent()).onSource(builder);
             });
   }
@@ -401,7 +401,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
         .withProcessingOptions(compilerOptions)
         .compile(
             subject -> {
-              subject.hasErrorCount(2);
+              subject.hasErrorCount(1);
               subject.hasErrorContaining(messages.isPrivate()).onSource(componentFile);
             });
   }
@@ -425,7 +425,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
         .withProcessingOptions(compilerOptions)
         .compile(
             subject -> {
-              subject.hasErrorCount(2);
+              subject.hasErrorCount(1);
               subject.hasErrorContaining(messages.mustBeStatic()).onSource(componentFile);
             });
   }
@@ -449,7 +449,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
         .withProcessingOptions(compilerOptions)
         .compile(
             subject -> {
-              subject.hasErrorCount(2);
+              subject.hasErrorCount(1);
               subject.hasErrorContaining(messages.mustBeAbstract()).onSource(componentFile);
             });
   }

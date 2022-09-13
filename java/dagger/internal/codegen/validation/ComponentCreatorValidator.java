@@ -129,8 +129,12 @@ public final class ComponentCreatorValidator implements ClearableCache {
     /** Validates the creator type. */
     final ValidationReport validate() {
       XTypeElement enclosingType = creator.getEnclosingTypeElement();
-      if (enclosingType == null || !enclosingType.hasAnnotation(annotation.componentAnnotation())) {
-        report.addError(messages.mustBeInComponent());
+
+      // If the type isn't enclosed in a component don't validate anything else since the rest of
+      // the messages will be bogus.
+      if (enclosingType == null
+              || !enclosingType.hasAnnotation(annotation.componentAnnotation())) {
+        return report.addError(messages.mustBeInComponent()).build();
       }
 
       // If the type isn't a class or interface, don't validate anything else since the rest of the
@@ -139,7 +143,12 @@ public final class ComponentCreatorValidator implements ClearableCache {
         return report.build();
       }
 
-      validateTypeRequirements();
+      // If the type isn't a valid creator type, don't validate anything else since the rest of the
+      // messages will be bogus.
+      if (!validateTypeRequirements()) {
+        return report.build();
+      }
+
       switch (annotation.creatorKind()) {
         case FACTORY:
           validateFactory();
@@ -181,21 +190,26 @@ public final class ComponentCreatorValidator implements ClearableCache {
     }
 
     /** Validates basic requirements about the type that are common to both creator kinds. */
-    private void validateTypeRequirements() {
+    private boolean validateTypeRequirements() {
+      boolean isClean = true;
       if (hasTypeParameters(creator)) {
         report.addError(messages.generics());
+        isClean = false;
       }
-
       if (creator.isPrivate()) {
         report.addError(messages.isPrivate());
+        isClean = false;
       }
       if (!creator.isStatic()) {
         report.addError(messages.mustBeStatic());
+        isClean = false;
       }
       // Note: Must be abstract, so no need to check for final.
       if (!creator.isAbstract()) {
         report.addError(messages.mustBeAbstract());
+        isClean = false;
       }
+      return isClean;
     }
 
     private void validateBuilder() {

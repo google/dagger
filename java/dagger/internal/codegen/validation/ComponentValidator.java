@@ -70,6 +70,7 @@ import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.xprocessing.XTypeElements;
+import dagger.internal.codegen.xprocessing.XTypes;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.ArrayDeque;
@@ -362,7 +363,7 @@ public final class ComponentValidator implements ClearableCache {
             report.addError(
                 String.format(
                     "Subcomponent factory methods may only accept modules, but %s is not.",
-                    parameterType),
+                    XTypes.toStableString(parameterType)),
                 parameter);
           }
         }
@@ -482,7 +483,12 @@ public final class ComponentValidator implements ClearableCache {
           .forEach(
               (subcomponent, methods) ->
                   report.addError(
-                      String.format(moreThanOneRefToSubcomponent(), subcomponent, methods),
+                      String.format(
+                          moreThanOneRefToSubcomponent(),
+                          subcomponent.getQualifiedName(),
+                          methods.stream()
+                              .map(methodSignatureFormatter::formatWithoutReturnType)
+                              .collect(toImmutableSet())),
                       component));
     }
 

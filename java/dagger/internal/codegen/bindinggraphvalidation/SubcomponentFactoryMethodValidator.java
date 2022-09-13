@@ -20,12 +20,12 @@ import static com.google.common.collect.Sets.union;
 import static dagger.internal.codegen.binding.ComponentRequirement.componentCanMakeNewInstances;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static java.util.stream.Collectors.joining;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room.compiler.processing.XExecutableType;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
@@ -146,6 +146,8 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
             .currentComponent()
             .className()
             .canonicalName(),
-        Joiner.on(", ").join(missingModules));
+        missingModules.stream()
+            .map(XTypeElement::getQualifiedName)
+            .collect(joining(", ")));
   }
 }

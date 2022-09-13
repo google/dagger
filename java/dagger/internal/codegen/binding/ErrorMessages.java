@@ -239,8 +239,8 @@ public final class ErrorMessages {
     @Override
     public String missingFactoryMethod() {
       return process(
-          "@Component.Builder types must have exactly one no-args method that "
-              + " returns the @Component type");
+          "@Component.Builder types must have exactly one no-args method that returns the "
+              + "@Component type");
     }
 
     @Override

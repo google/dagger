@@ -1,0 +1,60 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.MapFactory;
+import dagger.internal.SetFactory;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    private TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public Provider<Set<String>> setProvider() {
+      return SetFactory.<String>empty();
+    }
+
+    @Override
+    public Provider<Map<String, String>> mapProvider() {
+      return MapFactory.<String, String>emptyMapProvider();
+    }
+  }
+}
+

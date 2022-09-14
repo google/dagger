@@ -19,30 +19,42 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
-import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class SwitchingProviderTest {
+  @Parameters(name = "{0}")
+  public static ImmutableList<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
 
   @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
 
+  private final CompilerMode compilerMode;
+
+  public SwitchingProviderTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test
   public void switchingProviderTest() throws Exception {
-    ImmutableList.Builder<JavaFileObject> javaFileObjects = ImmutableList.builder();
+    ImmutableList.Builder<Source> sources = ImmutableList.builder();
     StringBuilder entryPoints = new StringBuilder();
     for (int i = 0; i <= 100; i++) {
       String bindingName = "Binding" + i;
-      javaFileObjects.add(
-          JavaFileObjects.forSourceLines(
+      sources.add(
+          CompilerTests.javaSource(
               "test." + bindingName,
               "package test;",
               "",
@@ -55,8 +67,8 @@ public class SwitchingProviderTest {
       entryPoints.append(String.format("  Provider<%1$s> get%1$sProvider();\n", bindingName));
     }
 
-    javaFileObjects.add(
-        JavaFileObjects.forSourceLines(
+    sources.add(
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -68,13 +80,17 @@ public class SwitchingProviderTest {
             entryPoints.toString(),
             "}"));
 
-    Compilation compilation = compilerWithAndroidMode().compile(javaFileObjects.build());
-    assertThat(compilation).succeededWithoutWarnings();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(sources.build())
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
+  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void unscopedBinds() throws Exception {
     JavaFileObject module =
@@ -110,13 +126,15 @@ public class SwitchingProviderTest {
             "  Provider<CharSequence> charSequenceProvider();",
             "}");
 
-    Compilation compilation = compilerWithAndroidMode().compile(module, component);
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts()).compile(module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
         .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
   }
 
+  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void scopedBinds() throws Exception {
     JavaFileObject module =
@@ -155,7 +173,8 @@ public class SwitchingProviderTest {
             "  Provider<CharSequence> charSequenceProvider();",
             "}");
 
-    Compilation compilation = compilerWithAndroidMode().compile(module, component);
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts()).compile(module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
@@ -164,8 +183,8 @@ public class SwitchingProviderTest {
 
   @Test
   public void emptyMultibindings_avoidSwitchProviders() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -179,8 +198,8 @@ public class SwitchingProviderTest {
             "  @Multibinds Set<String> set();",
             "  @Multibinds Map<String, String> map();",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -195,23 +214,26 @@ public class SwitchingProviderTest {
             "  Provider<Map<String, String>> mapProvider();",
             "}");
 
-    Compilation compilation = compilerWithAndroidMode().compile(module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void memberInjectors() throws Exception {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
             "class Foo {}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -224,29 +246,32 @@ public class SwitchingProviderTest {
             "  Provider<MembersInjector<Foo>> providerOfMembersInjector();",
             "}");
 
-    Compilation compilation = compilerWithAndroidMode().compile(foo, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(foo, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void optionals() throws Exception {
-    JavaFileObject present =
-        JavaFileObjects.forSourceLines(
+    Source present =
+        CompilerTests.javaSource(
             "test.Present",
             "package test;",
             "",
             "class Present {}");
-    JavaFileObject absent =
-        JavaFileObjects.forSourceLines(
+    Source absent =
+        CompilerTests.javaSource(
             "test.Absent",
             "package test;",
             "",
             "class Absent {}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -261,8 +286,8 @@ public class SwitchingProviderTest {
             "",
             "  @Provides static Present p() { return new Present(); }",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -276,14 +301,13 @@ public class SwitchingProviderTest {
             "  Provider<Optional<Absent>> providerOfOptionalOfAbsent();",
             "}");
 
-    Compilation compilation = compilerWithAndroidMode().compile(present, absent, module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
-  }
-
-  private Compiler compilerWithAndroidMode() {
-    return compilerWithOptions(CompilerMode.FAST_INIT_MODE.javacopts());
+    CompilerTests.daggerCompiler(present, absent, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 }

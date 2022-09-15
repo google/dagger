@@ -15,7 +15,7 @@
 # Description:
 #   Functional tests for Dagger builders
 
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "SOURCE_7_TARGET_7")
+load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "JAVA_RELEASE_MIN")
 load("//:test_defs.bzl", "GenJavaTests")
 
 package(default_visibility = ["//:src"])
@@ -24,7 +24,7 @@ GenJavaTests(
     name = "BuilderBindsInstanceParameterTest",
     srcs = ["BuilderBindsInstanceParameterTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = SOURCE_7_TARGET_7,
+    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
@@ -40,7 +40,7 @@ GenJavaTests(
     name = "BuilderTest",
     srcs = ["BuilderTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = SOURCE_7_TARGET_7,
+    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
@@ -56,7 +56,7 @@ GenJavaTests(
     name = "PrivateConstructorsTest",
     srcs = ["PrivateConstructorsTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = SOURCE_7_TARGET_7,
+    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
@@ -72,7 +72,7 @@ GenJavaTests(
     name = "BuildMethodCovariantReturnTest",
     srcs = ["BuildMethodCovariantReturnTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = SOURCE_7_TARGET_7,
+    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
@@ -88,7 +88,7 @@ GenJavaTests(
     name = "BuildMethodCovariantReturnInheritedTest",
     srcs = ["BuildMethodCovariantReturnInheritedTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = SOURCE_7_TARGET_7,
+    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",

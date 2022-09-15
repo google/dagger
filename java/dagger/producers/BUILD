@@ -20,8 +20,8 @@ load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
+    "JAVA_RELEASE_MIN",
     "POM_VERSION",
-    "SOURCE_7_TARGET_7",
 )
 load("//tools:maven.bzl", "gen_maven_artifact")
 
@@ -39,7 +39,7 @@ filegroup(
 java_library(
     name = "producers",
     srcs = SRCS,
-    javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    javacopts = JAVA_RELEASE_MIN + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     tags = ["maven_coordinates=com.google.dagger:dagger-producers:" + POM_VERSION],
     exports = [
         "//third_party/java/guava/base",

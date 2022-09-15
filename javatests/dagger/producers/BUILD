@@ -19,7 +19,7 @@ load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
-    "SOURCE_7_TARGET_7",
+    "JAVA_RELEASE_MIN",
 )
 load("//:test_defs.bzl", "GenJavaTests")
 
@@ -29,7 +29,7 @@ GenJavaTests(
     name = "producers_tests",
     srcs = glob(["**/*.java"]),
     functional = 0,
-    javacopts = SOURCE_7_TARGET_7 + DOCLINT_REFERENCES + DOCLINT_HTML_AND_SYNTAX,
+    javacopts = JAVA_RELEASE_MIN + DOCLINT_REFERENCES + DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//java/dagger/producers",
         "//third_party/java/guava:testlib",

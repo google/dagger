@@ -19,8 +19,8 @@ load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
+    "JAVA_RELEASE_MIN",
     "POM_VERSION",
-    "SOURCE_7_TARGET_7",
 )
 load("//tools:dejetify.bzl", "dejetified_library")
 load("//tools:maven.bzl", "pom_file")
@@ -43,7 +43,7 @@ filegroup(
 android_library(
     name = "android",
     srcs = SRCS,
-    javacopts = SOURCE_7_TARGET_7 + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    javacopts = JAVA_RELEASE_MIN + DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     manifest = "AndroidManifest.xml",
     plugins = [
         "//java/dagger/android/internal/proguard:plugin",

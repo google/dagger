@@ -15,7 +15,7 @@
 # Description:
 #   Functional tests for Dagger generic types
 
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "SOURCE_7_TARGET_7")
+load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "JAVA_RELEASE_MIN")
 load("//:test_defs.bzl", "GenJavaTests")
 
 package(default_visibility = ["//:src"])
@@ -24,7 +24,7 @@ GenJavaTests(
     name = "GenericTypesComponentTest",
     srcs = ["GenericTypesComponentTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = SOURCE_7_TARGET_7,
+    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//third_party/java/guava/collect",
         "//third_party/java/truth",

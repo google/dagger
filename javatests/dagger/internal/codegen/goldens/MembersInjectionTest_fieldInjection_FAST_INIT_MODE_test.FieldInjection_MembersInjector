@@ -1,0 +1,63 @@
+package test;
+
+import dagger.Lazy;
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class FieldInjection_MembersInjector implements MembersInjector<FieldInjection> {
+  private final Provider<String> stringProvider;
+
+  private final Provider<String> stringProvider2;
+
+  private final Provider<String> stringProvider3;
+
+  public FieldInjection_MembersInjector(Provider<String> stringProvider,
+      Provider<String> stringProvider2, Provider<String> stringProvider3) {
+    this.stringProvider = stringProvider;
+    this.stringProvider2 = stringProvider2;
+    this.stringProvider3 = stringProvider3;
+  }
+
+  public static MembersInjector<FieldInjection> create(Provider<String> stringProvider,
+      Provider<String> stringProvider2, Provider<String> stringProvider3) {
+    return new FieldInjection_MembersInjector(stringProvider, stringProvider2, stringProvider3);
+  }
+
+  @Override
+  public void injectMembers(FieldInjection instance) {
+    injectString(instance, stringProvider.get());
+    injectLazyString(instance, DoubleCheck.lazy(stringProvider2));
+    injectStringProvider(instance, stringProvider3);
+  }
+
+  @InjectedFieldSignature("test.FieldInjection.string")
+  public static void injectString(Object instance, String string) {
+    ((FieldInjection) instance).string = string;
+  }
+
+  @InjectedFieldSignature("test.FieldInjection.lazyString")
+  public static void injectLazyString(Object instance, Lazy<String> lazyString) {
+    ((FieldInjection) instance).lazyString = lazyString;
+  }
+
+  @InjectedFieldSignature("test.FieldInjection.stringProvider")
+  public static void injectStringProvider(Object instance, Provider<String> stringProvider) {
+    ((FieldInjection) instance).stringProvider = stringProvider;
+  }
+}
+

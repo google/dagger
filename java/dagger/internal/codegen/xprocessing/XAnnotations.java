@@ -22,6 +22,7 @@ import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static java.lang.Character.isISOControl;
 import static java.util.stream.Collectors.joining;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XAnnotationValue;
 import androidx.room.compiler.processing.XProcessingEnv;
@@ -38,7 +39,7 @@ public final class XAnnotations {
 
   /** Returns the {@link AnnotationSpec} for the given annotation */
   public static AnnotationSpec getAnnotationSpec(XAnnotation annotation) {
-    return AnnotationSpec.get(toJavac(annotation));
+    return JavaPoetExtKt.toAnnotationSpec(annotation);
   }
 
   /** Returns the string representation of the given annotation. */

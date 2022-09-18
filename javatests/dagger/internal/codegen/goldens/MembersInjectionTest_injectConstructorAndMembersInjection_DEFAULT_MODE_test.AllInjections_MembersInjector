@@ -1,0 +1,50 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class AllInjections_MembersInjector implements MembersInjector<AllInjections> {
+  private final Provider<String> sProvider;
+
+  private final Provider<String> sProvider2;
+
+  public AllInjections_MembersInjector(Provider<String> sProvider, Provider<String> sProvider2) {
+    this.sProvider = sProvider;
+    this.sProvider2 = sProvider2;
+  }
+
+  public static MembersInjector<AllInjections> create(Provider<String> sProvider,
+      Provider<String> sProvider2) {
+    return new AllInjections_MembersInjector(sProvider, sProvider2);
+  }
+
+  @Override
+  public void injectMembers(AllInjections instance) {
+    injectS(instance, sProvider.get());
+    injectS2(instance, sProvider2.get());
+  }
+
+  @InjectedFieldSignature("test.AllInjections.s")
+  public static void injectS(Object instance, String s) {
+    ((AllInjections) instance).s = s;
+  }
+
+  public static void injectS2(Object instance, String s) {
+    ((AllInjections) instance).s(s);
+  }
+}
+

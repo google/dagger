@@ -1,0 +1,42 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import java.util.List;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class InjectConstructor_Factory implements Factory<InjectConstructor> {
+  private final Provider<List<?>> objectsProvider;
+
+  public InjectConstructor_Factory(Provider<List<?>> objectsProvider) {
+    this.objectsProvider = objectsProvider;
+  }
+
+  @Override
+  public InjectConstructor get() {
+    return newInstance(objectsProvider.get());
+  }
+
+  public static InjectConstructor_Factory create(Provider<List<?>> objectsProvider) {
+    return new InjectConstructor_Factory(objectsProvider);
+  }
+
+  public static InjectConstructor newInstance(List<?> objects) {
+    return new InjectConstructor(objects);
+  }
+}
+

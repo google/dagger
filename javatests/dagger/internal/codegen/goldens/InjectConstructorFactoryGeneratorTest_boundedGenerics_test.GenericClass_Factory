@@ -1,0 +1,50 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import java.util.List;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class GenericClass_Factory<A extends Number & Comparable<A>, B extends List<? extends String>, C extends List<? super String>> implements Factory<GenericClass<A, B, C>> {
+  private final Provider<A> aProvider;
+
+  private final Provider<B> bProvider;
+
+  private final Provider<C> cProvider;
+
+  public GenericClass_Factory(Provider<A> aProvider, Provider<B> bProvider, Provider<C> cProvider) {
+    this.aProvider = aProvider;
+    this.bProvider = bProvider;
+    this.cProvider = cProvider;
+  }
+
+  @Override
+  public GenericClass<A, B, C> get() {
+    return newInstance(aProvider.get(), bProvider.get(), cProvider.get());
+  }
+
+  public static <A extends Number & Comparable<A>, B extends List<? extends String>, C extends List<? super String>> GenericClass_Factory<A, B, C> create(
+      Provider<A> aProvider, Provider<B> bProvider, Provider<C> cProvider) {
+    return new GenericClass_Factory<A, B, C>(aProvider, bProvider, cProvider);
+  }
+
+  public static <A extends Number & Comparable<A>, B extends List<? extends String>, C extends List<? super String>> GenericClass<A, B, C> newInstance(
+      A a, B b, C c) {
+    return new GenericClass<A, B, C>(a, b, c);
+  }
+}
+

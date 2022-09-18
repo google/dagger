@@ -1,0 +1,52 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes"
+})
+public final class AllInjections_Factory implements Factory<AllInjections> {
+  private final Provider<String> sProvider;
+
+  private final Provider<String> sProvider2;
+
+  private final Provider<String> sProvider3;
+
+  public AllInjections_Factory(Provider<String> sProvider, Provider<String> sProvider2,
+      Provider<String> sProvider3) {
+    this.sProvider = sProvider;
+    this.sProvider2 = sProvider2;
+    this.sProvider3 = sProvider3;
+  }
+
+  @Override
+  public AllInjections get() {
+    AllInjections instance = newInstance(sProvider.get());
+    AllInjections_MembersInjector.injectS(instance, sProvider2.get());
+    AllInjections_MembersInjector.injectS2(instance, sProvider3.get());
+    return instance;
+  }
+
+  public static AllInjections_Factory create(Provider<String> sProvider,
+      Provider<String> sProvider2, Provider<String> sProvider3) {
+    return new AllInjections_Factory(sProvider, sProvider2, sProvider3);
+  }
+
+  public static AllInjections newInstance(String s) {
+    return new AllInjections(s);
+  }
+}
+

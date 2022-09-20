@@ -22,13 +22,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/prechecks
-  bazel-build:
-    name: 'Bazel build'
-    needs: validate-latest-dagger-version
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/bazel-build
   bazel-test:
     name: 'Bazel tests'
     needs: validate-latest-dagger-version
@@ -36,6 +29,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/bazel-test
+  bazel-build:
+    name: 'Bazel build'
+    needs: validate-latest-dagger-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/bazel-build
   artifact-java-local-tests:
     name: 'Artifact Java local tests'
     needs: bazel-build

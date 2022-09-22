@@ -17,108 +17,135 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableSet;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
 import dagger.internal.codegen.validation.ValidationReport;
+import dagger.testing.compile.CompilerTests;
+import java.util.Map;
 import java.util.Set;
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Processor;
-import javax.annotation.processing.RoundEnvironment;
-import javax.lang.model.element.TypeElement;
-import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ValidationReportTest {
-  private static final JavaFileObject TEST_CLASS_FILE =
-      JavaFileObjects.forSourceLines(
+  private static final Source TEST_CLASS_FILE =
+      CompilerTests.javaSource(
           "test.TestClass",
           "package test;",
           "",
+          "import javax.inject.Singleton;",
+          "",
+          "@Singleton",
           "final class TestClass {}");
 
   @Test
   public void basicReport() {
-    Processor processor =
-        new SimpleTestProcessor() {
-          @Override
-          void test() {
-            ValidationReport.about(getTypeElement("test.TestClass"))
-                .addError("simple error")
-                .build()
-                .printMessagesTo(processingEnv.getMessager());
-          }
-        };
-    Compilation compilation = daggerCompiler(processor).compile(TEST_CLASS_FILE);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("simple error").inFile(TEST_CLASS_FILE).onLine(3);
+    CompilerTests.daggerCompiler(TEST_CLASS_FILE)
+        .withProcessingSteps(
+            () -> new SimpleTestStep() {
+              @Override
+              void test() {
+                ValidationReport.about(getTypeElement("test.TestClass"))
+                    .addError("simple error")
+                    .build()
+                    .printMessagesTo(processingEnv.getMessager());
+              }
+            })
+        .compile(
+          subject -> {
+            subject.hasErrorCount(1);
+            subject.hasErrorContaining("simple error")
+                .onSource(TEST_CLASS_FILE)
+                .onLine(6);
+          });
   }
 
   @Test
   public void messageOnDifferentElement() {
-    Processor processor =
-        new SimpleTestProcessor() {
-          @Override
-          void test() {
-            ValidationReport.about(getTypeElement("test.TestClass"))
-                .addError("simple error", getTypeElement(String.class))
-                .build()
-                .printMessagesTo(processingEnv.getMessager());
-          }
-        };
-    Compilation compilation = daggerCompiler(processor).compile(TEST_CLASS_FILE);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("[java.lang.String] simple error")
-        .inFile(TEST_CLASS_FILE)
-        .onLine(3);
+    CompilerTests.daggerCompiler(TEST_CLASS_FILE)
+        .withProcessingSteps(
+            () -> new SimpleTestStep() {
+              @Override
+              void test() {
+                ValidationReport.about(getTypeElement("test.TestClass"))
+                    .addError("simple error", getTypeElement(String.class))
+                    .build()
+                    .printMessagesTo(processingEnv.getMessager());
+              }
+            })
+        .compile(
+          subject -> {
+            subject.hasErrorCount(1);
+            // TODO(b/249298461): The String types should match between javac and ksp.
+            switch (CompilerTests.backend(subject)) {
+              case JAVAC:
+                subject.hasErrorContaining("[java.lang.String] simple error")
+                    .onSource(TEST_CLASS_FILE)
+                    .onLine(6);
+                break;
+              case KSP:
+                subject.hasErrorContaining("[kotlin.String] simple error")
+                    .onSource(TEST_CLASS_FILE)
+                    .onLine(6);
+            }
+          });
   }
 
   @Test
   public void subreport() {
-    Processor processor =
-        new SimpleTestProcessor() {
-          @Override
-          void test() {
-            ValidationReport parentReport =
-                ValidationReport.about(getTypeElement(String.class))
-                    .addSubreport(
-                        ValidationReport.about(getTypeElement("test.TestClass"))
-                            .addError("simple error")
-                            .build())
-                    .build();
-            assertThat(parentReport.isClean()).isFalse();
-            parentReport.printMessagesTo(processingEnv.getMessager());
-          }
-        };
-    Compilation compilation = daggerCompiler(processor).compile(TEST_CLASS_FILE);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("simple error").inFile(TEST_CLASS_FILE).onLine(3);
+    CompilerTests.daggerCompiler(TEST_CLASS_FILE)
+        .withProcessingSteps(
+            () -> new SimpleTestStep() {
+              @Override
+              void test() {
+                ValidationReport parentReport =
+                    ValidationReport.about(getTypeElement(String.class))
+                        .addSubreport(
+                            ValidationReport.about(getTypeElement("test.TestClass"))
+                                .addError("simple error")
+                                .build())
+                        .build();
+                assertThat(parentReport.isClean()).isFalse();
+                parentReport.printMessagesTo(processingEnv.getMessager());
+              }
+            })
+        .compile(
+          subject -> {
+            subject.hasErrorCount(1);
+            subject.hasErrorContaining("simple error")
+                .onSource(TEST_CLASS_FILE)
+                .onLine(6);
+          });
   }
 
-  private abstract static class SimpleTestProcessor extends AbstractProcessor {
-    @SuppressWarnings("HidingField") // Subclasses should always use the XProcessing version.
+  private abstract static class SimpleTestStep implements XProcessingStep {
     protected XProcessingEnv processingEnv;
 
     @Override
-    public Set<String> getSupportedAnnotationTypes() {
-      return ImmutableSet.of("*");
+    public final ImmutableSet<String> annotations() {
+      // TODO(b/249322175): Replace this with "*" after this bug is fixed.
+      // For now, we just trigger off of annotations in the other sources in the test, but ideally
+      // this should support "*" similar to javac's Processor.
+      return ImmutableSet.of("javax.inject.Singleton");
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-      processingEnv = XProcessingEnv.create(super.processingEnv);
+    public ImmutableSet<XElement> process(
+        XProcessingEnv env, Map<String, ? extends Set<? extends XElement>> elementsByAnnotation) {
+      this.processingEnv = env;
       test();
-      return false;
+      return ImmutableSet.of();
     }
+
+    @Override
+    public void processOver(
+        XProcessingEnv env, Map<String, ? extends Set<? extends XElement>> elementsByAnnotation) {}
 
     protected final XTypeElement getTypeElement(Class<?> clazz) {
       return getTypeElement(clazz.getCanonicalName());

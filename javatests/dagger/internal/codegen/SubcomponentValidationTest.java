@@ -16,16 +16,13 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
-
 import androidx.room.compiler.processing.util.Source;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -836,8 +833,8 @@ public class SubcomponentValidationTest {
 
   @Test
   public void subcomponentDependsOnGeneratedType() {
-    JavaFileObject parent =
-        JavaFileObjects.forSourceLines(
+    Source parent =
+        CompilerTests.javaSource(
             "test.Parent",
             "package test;",
             "",
@@ -847,9 +844,8 @@ public class SubcomponentValidationTest {
             "interface Parent {",
             "  Child.Builder childBuilder();",
             "}");
-
-    JavaFileObject child =
-        JavaFileObjects.forSourceLines(
+    Source child =
+        CompilerTests.javaSource(
             "test.Child",
             "package test;",
             "",
@@ -862,28 +858,28 @@ public class SubcomponentValidationTest {
             "    Child build();",
             "  }",
             "}");
-
-    JavaFileObject childSupertype =
-        JavaFileObjects.forSourceLines(
+    Source childSupertype =
+        CompilerTests.javaSource(
             "test.ChildSupertype",
             "package test;",
             "",
             "interface ChildSupertype {",
-            "  GeneratedType generatedType();",
+            "  GeneratedInjectType generatedType();",
             "}");
-
-    Compilation compilation =
-        daggerCompiler(
-                new GeneratingProcessor(
-                    "test.GeneratedType",
-                    "package test;",
-                    "",
-                    "import javax.inject.Inject;",
-                    "",
-                    "final class GeneratedType {",
-                    "  @Inject GeneratedType() {}",
-                    "}"))
-            .compile(parent, child, childSupertype);
-    assertThat(compilation).succeededWithoutWarnings();
+    TypeSpec generatedInjectType =
+        TypeSpec.classBuilder("GeneratedInjectType")
+            .addMethod(
+                MethodSpec.constructorBuilder()
+                    .addAnnotation(TypeNames.INJECT_JAVAX)
+                    .build())
+            .build();
+    CompilerTests.daggerCompiler(parent, child, childSupertype)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .withProcessingSteps(() -> new GeneratingProcessingStep("test", generatedInjectType))
+        .compile(
+          subject -> {
+            subject.hasErrorCount(0);
+            subject.hasWarningCount(0);
+          });
   }
 }

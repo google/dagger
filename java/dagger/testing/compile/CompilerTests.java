@@ -20,9 +20,11 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.collect.MoreCollectors.onlyElement;
 import static com.google.common.collect.Streams.stream;
 import static com.google.testing.compile.Compiler.javac;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingEnvConfig;
+import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.util.CompilationResultSubject;
 import androidx.room.compiler.processing.util.ProcessorTestExtKt;
 import androidx.room.compiler.processing.util.Source;
@@ -30,9 +32,11 @@ import androidx.room.compiler.processing.util.compiler.TestCompilationArguments;
 import androidx.room.compiler.processing.util.compiler.TestCompilationResult;
 import androidx.room.compiler.processing.util.compiler.TestKotlinCompilerKt;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.testing.compile.Compiler;
 import dagger.internal.codegen.ComponentProcessor;
@@ -50,7 +54,7 @@ import org.junit.rules.TemporaryFolder;
 /** A helper class for working with java compiler tests. */
 public final class CompilerTests {
   // TODO(bcorso): Share this with java/dagger/internal/codegen/DelegateComponentProcessor.java
-  private static final XProcessingEnvConfig PROCESSING_ENV_CONFIG =
+  static final XProcessingEnvConfig PROCESSING_ENV_CONFIG =
       new XProcessingEnvConfig.Builder().disableAnnotatedElementValidation(true).build();
 
   // TODO(bcorso): Share this with javatests/dagger/internal/codegen/Compilers.java
@@ -106,7 +110,9 @@ public final class CompilerTests {
     static Builder builder() {
       Builder builder = new AutoValue_CompilerTests_DaggerCompiler.Builder();
       // Set default values
-      return builder.processorOptions(DEFAULT_PROCESSOR_OPTIONS);
+      return builder
+          .processorOptions(DEFAULT_PROCESSOR_OPTIONS)
+          .processingStepSuppliers(ImmutableSet.of());
     }
 
     /** Returns the sources being compiled */
@@ -114,6 +120,14 @@ public final class CompilerTests {
 
     /** Returns the annotation processor options */
     abstract ImmutableMap<String, String> processorOptions();
+
+    /** Returns the processing steps suppliers. */
+    abstract ImmutableCollection<Supplier<XProcessingStep>> processingStepSuppliers();
+
+    /** Returns the processing steps. */
+    private ImmutableList<XProcessingStep> processingSteps() {
+      return processingStepSuppliers().stream().map(Supplier::get).collect(toImmutableList());
+    }
 
     /** Returns a builder with the current values of this {@link Compiler} as default. */
     abstract Builder toBuilder();
@@ -131,6 +145,11 @@ public final class CompilerTests {
       return toBuilder().processorOptions(newProcessorOptions).build();
     }
 
+    /** Returns a new {@link Compiler} instance with the given processing steps. */
+    public DaggerCompiler withProcessingSteps(Supplier<XProcessingStep>... suppliers) {
+      return toBuilder().processingStepSuppliers(ImmutableList.copyOf(suppliers)).build();
+    }
+
     public void compile(Consumer<CompilationResultSubject> onCompilationResult) {
       ProcessorTestExtKt.runProcessorTest(
           sources().asList(),
@@ -139,8 +158,14 @@ public final class CompilerTests {
           /* javacArguments= */ ImmutableList.of(),
           /* kotlincArguments= */ ImmutableList.of(),
           /* config= */ PROCESSING_ENV_CONFIG,
-          /* javacProcessors= */ ImmutableList.of(new ComponentProcessor()),
-          /* symbolProcessorProviders= */ ImmutableList.of(new KspComponentProcessor.Provider()),
+          /* javacProcessors= */
+          ImmutableList.of(
+              new ComponentProcessor(),
+              new CompilerProcessors.JavacProcessor(processingSteps())),
+          /* symbolProcessorProviders= */
+          ImmutableList.of(
+              new KspComponentProcessor.Provider(),
+              new CompilerProcessors.KspProcessor.Provider(processingSteps())),
           result -> {
             onCompilationResult.accept(result);
             return null;
@@ -152,6 +177,8 @@ public final class CompilerTests {
     public abstract static class Builder {
       abstract Builder sources(ImmutableCollection<Source> sources);
       abstract Builder processorOptions(Map<String, String> processorOptions);
+      abstract Builder processingStepSuppliers(
+          ImmutableCollection<Supplier<XProcessingStep>> processingStepSuppliers);
       abstract DaggerCompiler build();
     }
   }

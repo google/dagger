@@ -21,14 +21,27 @@ load("//:test_defs.bzl", "GenJavaTests")
 
 package(default_visibility = ["//:src"])
 
+# These sources are purposely compiled without the Dagger compiler for certain tests.
 kt_jvm_library(
-    name = "kotlin_sources",
+    name = "kt_lib_no_dagger_compiler",
     srcs = [
         "KotlinInjectedQualifier.kt",
         "KotlinObjectWithMemberInjection.kt",
     ],
     deps = [
         "//java/dagger:core",
+    ],
+)
+
+# These sources are purposely compiled without the Dagger compiler for certain tests.
+java_library(
+    name = "java_lib_no_dagger_compiler",
+    srcs = [
+        "ComponentProcessorTestClasses.java",
+        "InvalidInjectConstructor.java",
+    ],
+    deps = [
+        "//third_party/java/jsr330_inject",
     ],
 )
 
@@ -52,20 +65,12 @@ java_library(
     ],
 )
 
-java_library(
-    name = "InvalidInjectConstructor",
-    srcs = ["InvalidInjectConstructor.java"],
-    # Note: We purposely leave off the dagger processor here.
-    deps = [
-        "//third_party/java/jsr330_inject",
-    ],
-)
-
 GenJavaTests(
     name = "compiler_tests",
     srcs = glob(
         ["*.java"],
         exclude = [
+            "ComponentProcessorTestClasses.java",
             "CompilerMode.java",
             "Compilers.java",
             "InvalidInjectConstructor.java",
@@ -76,9 +81,9 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     deps = [
-        ":InvalidInjectConstructor",
         ":compilers",
-        ":kotlin_sources",
+        ":java_lib_no_dagger_compiler",
+        ":kt_lib_no_dagger_compiler",
         "//java/dagger:core",
         "//java/dagger/internal/codegen:package_info",
         "//java/dagger/internal/codegen:processor",

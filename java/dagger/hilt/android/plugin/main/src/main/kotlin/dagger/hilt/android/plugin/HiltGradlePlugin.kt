@@ -257,7 +257,7 @@ class HiltGradlePlugin @Inject constructor(
       ) { params ->
         val classesDir =
           File(project.buildDir, "intermediates/javac/${androidComponent.name}/classes")
-        params.additionalClassesDir.set(classesDir)
+        params.additionalClassesDir.set(classesDir.absolutePath)
       }
       androidComponent.setAsmFramesComputationMode(
         FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS

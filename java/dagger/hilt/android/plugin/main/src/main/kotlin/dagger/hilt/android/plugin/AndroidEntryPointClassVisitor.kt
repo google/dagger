@@ -36,13 +36,13 @@ import org.objectweb.asm.Opcodes
 class AndroidEntryPointClassVisitor(
   private val apiVersion: Int,
   nextClassVisitor: ClassVisitor,
-  private val additionalClasses: File
+  private val additionalClasses: String
 ) : ClassVisitor(apiVersion, nextClassVisitor) {
 
   @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   interface AndroidEntryPointParams : InstrumentationParameters {
     @get:Internal
-    val additionalClassesDir: Property<File>
+    val additionalClassesDir: Property<String>
   }
 
   @Suppress("UnstableApiUsage") // ASM Pipeline APIs

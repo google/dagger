@@ -34,6 +34,7 @@ java_library(
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
+        "//third_party/kotlin/kotlinpoet",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8",
     ],

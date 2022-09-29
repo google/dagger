@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingEnvConfig;
 import androidx.room.compiler.processing.XProcessingStep;
@@ -35,16 +36,13 @@ import dagger.internal.codegen.bindinggraphvalidation.BindingGraphValidationModu
 import dagger.internal.codegen.componentgenerator.ComponentGeneratorModule;
 import dagger.internal.codegen.processingstep.ProcessingStepsModule;
 import dagger.internal.codegen.validation.BindingMethodValidatorsModule;
-import dagger.internal.codegen.validation.External;
 import dagger.internal.codegen.validation.ExternalBindingGraphPlugins;
 import dagger.internal.codegen.validation.InjectBindingRegistryModule;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugins;
-import dagger.spi.model.BindingGraphPlugin;
-import java.util.Optional;
+import dagger.spi.BindingGraphPlugin;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.tools.Diagnostic.Kind;
 
 /** An implementation of Dagger's component processor that is shared between Javac and KSP. */
 final class DelegateComponentProcessor {
@@ -59,28 +57,11 @@ final class DelegateComponentProcessor {
   @Inject ExternalBindingGraphPlugins externalBindingGraphPlugins;
   @Inject Set<ClearableCache> clearableCaches;
 
+  // TODO(bcorso): Add support for external plugins with dagger.spi.model.BindingGraphPlugin
   public void initialize(
-      XProcessingEnv env,
-      Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins,
-      Optional<ImmutableSet<dagger.spi.BindingGraphPlugin>> legacyTestingPlugins) {
-    ImmutableSet<BindingGraphPlugin> plugins =
-        testingPlugins.orElseGet(() -> ServiceLoaders.loadServices(env, BindingGraphPlugin.class));
-    ImmutableSet<dagger.spi.BindingGraphPlugin> legacyPlugins =
-        legacyTestingPlugins.orElseGet(
-            () -> ServiceLoaders.loadServices(env, dagger.spi.BindingGraphPlugin.class));
-    if (env.getBackend() != XProcessingEnv.Backend.JAVAC) {
-      legacyPlugins.forEach(
-          legacyPlugin ->
-              env.getMessager()
-                  .printMessage(
-                      Kind.ERROR,
-                      "Cannot use legacy dagger.spi.BindingGraphPlugin while compiling with KSP: "
-                          + legacyPlugin.pluginName()
-                          + ". Either compile with KAPT or migrate the plugin to implement "
-                          + "dagger.spi.model.BindingGraphPlugin."));
-    }
+      XProcessingEnv env, ImmutableSet<BindingGraphPlugin> legacyExternalPlugins) {
     DaggerDelegateComponentProcessor_Injector.factory()
-        .create(env, plugins, legacyPlugins)
+        .create(env, legacyExternalPlugins)
         .inject(this);
   }
 
@@ -126,10 +107,7 @@ final class DelegateComponentProcessor {
       @CheckReturnValue
       Injector create(
           @BindsInstance XProcessingEnv processingEnv,
-          @BindsInstance @External ImmutableSet<BindingGraphPlugin> externalPlugins,
-          @BindsInstance
-          @External
-          ImmutableSet<dagger.spi.BindingGraphPlugin> legacyExternalPlugins);
+          @BindsInstance ImmutableSet<BindingGraphPlugin> legacyExternalPlugins);
     }
   }
 }

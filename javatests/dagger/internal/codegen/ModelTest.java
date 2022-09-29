@@ -16,13 +16,14 @@
 
 package dagger.internal.codegen;
 
-import static dagger.spi.model.testing.BindingGraphSubject.assertThat;
+import static com.google.testing.compile.CompilationSubject.assertThat;
+import static com.google.testing.compile.Compiler.javac;
+import static dagger.model.testing.BindingGraphSubject.assertThat;
 
-import androidx.room.compiler.processing.util.Source;
-import dagger.spi.model.BindingGraph;
-import dagger.spi.model.BindingGraphPlugin;
-import dagger.spi.model.DiagnosticReporter;
-import dagger.testing.compile.CompilerTests;
+import com.google.testing.compile.Compilation;
+import com.google.testing.compile.JavaFileObjects;
+import dagger.model.BindingGraph;
+import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -32,8 +33,8 @@ public final class ModelTest {
 
   @Test
   public void cycleTest() {
-    Source a =
-        CompilerTests.javaSource(
+    JavaFileObject a =
+        JavaFileObjects.forSourceLines(
             "test.A",
             "package test;",
             "",
@@ -42,8 +43,8 @@ public final class ModelTest {
             "final class A {",
             "  @Inject A(B b) {}",
             "}");
-    Source b =
-        CompilerTests.javaSource(
+    JavaFileObject b =
+        JavaFileObjects.forSourceLines(
             "test.B",
             "package test;",
             "",
@@ -53,8 +54,8 @@ public final class ModelTest {
             "final class B {",
             "  @Inject B(Provider<A> a) {}",
             "}");
-    Source component =
-        CompilerTests.javaSource(
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
             "test.TestComponent",
             "package test;",
             "",
@@ -65,15 +66,12 @@ public final class ModelTest {
             "  A a();",
             "}");
 
-    CompilerTests.daggerCompiler(a, b, component)
-        .withBindingGraphPlugins(
-            () -> new BindingGraphPlugin() {
-              @Override
-              public void visitGraph(BindingGraph graph, DiagnosticReporter reporter) {
-                assertThat(graph).bindingWithKey("test.A").dependsOnBindingWithKey("test.B");
-                assertThat(graph).bindingWithKey("test.B").dependsOnBindingWithKey("test.A");
-              }
-            })
-        .compile(subject -> subject.hasErrorCount(0));
+    BindingGraphCapturer capturer = new BindingGraphCapturer();
+    Compilation compilation =
+        javac().withProcessors(ComponentProcessor.forTesting(capturer)).compile(a, b, component);
+    assertThat(compilation).succeeded();
+    BindingGraph bindingGraph = capturer.bindingGraphs().get("test.TestComponent");
+    assertThat(bindingGraph).bindingWithKey("test.A").dependsOnBindingWithKey("test.B");
+    assertThat(bindingGraph).bindingWithKey("test.B").dependsOnBindingWithKey("test.A");
   }
 }

@@ -20,7 +20,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.collect.MoreCollectors.onlyElement;
 import static com.google.common.collect.Streams.stream;
 import static com.google.testing.compile.Compiler.javac;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingEnvConfig;
@@ -31,16 +30,13 @@ import androidx.room.compiler.processing.util.compiler.TestCompilationArguments;
 import androidx.room.compiler.processing.util.compiler.TestCompilationResult;
 import androidx.room.compiler.processing.util.compiler.TestKotlinCompilerKt;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.google.testing.compile.Compiler;
 import dagger.internal.codegen.ComponentProcessor;
 import dagger.internal.codegen.KspComponentProcessor;
-import dagger.spi.model.BindingGraphPlugin;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -110,9 +106,7 @@ public final class CompilerTests {
     static Builder builder() {
       Builder builder = new AutoValue_CompilerTests_DaggerCompiler.Builder();
       // Set default values
-      return builder
-          .processorOptions(DEFAULT_PROCESSOR_OPTIONS)
-          .bindingGraphPluginSuppliers(ImmutableSet.of());
+      return builder.processorOptions(DEFAULT_PROCESSOR_OPTIONS);
     }
 
     /** Returns the sources being compiled */
@@ -120,14 +114,6 @@ public final class CompilerTests {
 
     /** Returns the annotation processor options */
     abstract ImmutableMap<String, String> processorOptions();
-
-    /** Returns the {@link BindingGraphPlugin} suppliers. */
-    abstract ImmutableCollection<Supplier<BindingGraphPlugin>> bindingGraphPluginSuppliers();
-
-    /** Returns the {@link BindingGraphPlugin}s. */
-    private ImmutableList<BindingGraphPlugin> bindingGraphPlugins() {
-      return bindingGraphPluginSuppliers().stream().map(Supplier::get).collect(toImmutableList());
-    }
 
     /** Returns a builder with the current values of this {@link Compiler} as default. */
     abstract Builder toBuilder();
@@ -145,10 +131,6 @@ public final class CompilerTests {
       return toBuilder().processorOptions(newProcessorOptions).build();
     }
 
-    public DaggerCompiler withBindingGraphPlugins(Supplier<BindingGraphPlugin>... suppliers) {
-      return toBuilder().bindingGraphPluginSuppliers(ImmutableList.copyOf(suppliers)).build();
-    }
-
     public void compile(Consumer<CompilationResultSubject> onCompilationResult) {
       ProcessorTestExtKt.runProcessorTest(
           sources().asList(),
@@ -157,10 +139,8 @@ public final class CompilerTests {
           /* javacArguments= */ ImmutableList.of(),
           /* kotlincArguments= */ ImmutableList.of(),
           /* config= */ PROCESSING_ENV_CONFIG,
-          /* javacProcessors= */
-          ImmutableList.of(ComponentProcessor.withTestPlugins(bindingGraphPlugins())),
-          /* symbolProcessorProviders= */
-          ImmutableList.of(KspComponentProcessor.Provider.withTestPlugins(bindingGraphPlugins())),
+          /* javacProcessors= */ ImmutableList.of(new ComponentProcessor()),
+          /* symbolProcessorProviders= */ ImmutableList.of(new KspComponentProcessor.Provider()),
           result -> {
             onCompilationResult.accept(result);
             return null;
@@ -172,8 +152,6 @@ public final class CompilerTests {
     public abstract static class Builder {
       abstract Builder sources(ImmutableCollection<Source> sources);
       abstract Builder processorOptions(Map<String, String> processorOptions);
-      abstract Builder bindingGraphPluginSuppliers(
-          ImmutableCollection<Supplier<BindingGraphPlugin>> bindingGraphPluginSuppliers);
       abstract DaggerCompiler build();
     }
   }

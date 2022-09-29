@@ -17,14 +17,11 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static java.util.stream.Collectors.joining;
 
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableMap;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -34,8 +31,8 @@ public final class UnresolvableDependencyTest {
 
   @Test
   public void referencesUnresolvableDependency() {
-    JavaFileObject fooComponent =
-        JavaFileObjects.forSourceLines(
+    Source fooComponent =
+        CompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -46,8 +43,8 @@ public final class UnresolvableDependencyTest {
             "  Foo foo();",
             "}");
 
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -58,8 +55,8 @@ public final class UnresolvableDependencyTest {
             "  Foo(Bar bar) {}",
             "}");
 
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -70,51 +67,71 @@ public final class UnresolvableDependencyTest {
             "  Bar(UnresolvableDependency dep) {}",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(fooComponent, foo, bar);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(3);
-    assertThat(compilation).hadErrorContaining(
-        "cannot find symbol"
-            + "\n  symbol:   class UnresolvableDependency"
-            + "\n  location: class test.Bar");
-    String trace = "\n  "
-        + "\n  Dependency trace:"
-        + "\n      => element (CLASS): test.Bar"
-        + "\n      => element (CONSTRUCTOR): Bar(UnresolvableDependency)"
-        + "\n      => type (EXECUTABLE constructor): (UnresolvableDependency)void"
-        + "\n      => type (ERROR parameter type): UnresolvableDependency";
-    assertThat(compilation).hadErrorContaining(
-        "InjectProcessingStep was unable to process 'Bar(UnresolvableDependency)' because "
-            + "'UnresolvableDependency' could not be resolved." + trace);
-    assertThat(compilation).hadErrorContaining(
-        "ComponentProcessingStep was unable to process 'test.FooComponent' because "
-            + "'UnresolvableDependency' could not be resolved." + trace);
-
     // Only include a minimal portion of the stacktrace to minimize breaking tests due to refactors.
     String stacktraceErrorMessage =
         "dagger.internal.codegen.base"
             + ".DaggerSuperficialValidation$ValidationException$KnownErrorType";
+    CompilerTests.daggerCompiler(fooComponent, foo, bar)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case JAVAC:
+                  subject.hasErrorCount(3);
+                  subject.hasErrorContaining(
+                      "cannot find symbol"
+                          + "\n  symbol:   class UnresolvableDependency"
+                          + "\n  location: class test.Bar");
+                  break;
+                case KSP:
+                  subject.hasErrorCount(2);
+                  break;
+              }
+              // TODO(b/248552462): Javac and KSP should match once this bug is fixed.
+              boolean isJavac = CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC;
+              String trace = "\n  "
+                  + "\n  Dependency trace:"
+                  + "\n      => element (CLASS): test.Bar"
+                  + "\n      => element (CONSTRUCTOR): Bar(%1$s)"
+                  + "\n      => type (EXECUTABLE constructor): (%1$s)void"
+                  + "\n      => type (ERROR parameter type): %1$s";
+              subject.hasErrorContaining(
+                  String.format(
+                      "InjectProcessingStep was unable to process 'Bar(%1$s)' because '%1$s' could "
+                          + "not be resolved." + trace,
+                      isJavac ? "UnresolvableDependency" : "error.NonExistentClass"));
+              subject.hasErrorContaining(
+                  String.format(
+                      "ComponentProcessingStep was unable to process 'test.FooComponent' because "
+                          + "'%1$s' could not be resolved." + trace,
+                      isJavac ? "UnresolvableDependency" : "error.NonExistentClass"));
 
-    // Check that the stacktrace is not included in the error message by default.
-    assertThat(
-            compilation.errors().stream()
-                .map(error -> error.getMessage(null))
-                .collect(joining("\n")))
-        .doesNotContain(stacktraceErrorMessage);
+              // Check that the stacktrace is not included in the error message by default.
+              assertThat(subject.getCompilationResult().rawOutput())
+                  .doesNotContain(stacktraceErrorMessage);
+            });
 
-    // Recompile with the option enabled and check that the stacktrace is now included
-    compilation =
-        compilerWithOptions("-Adagger.includeStacktraceWithDeferredErrorMessages=ENABLED")
-            .compile(fooComponent, foo, bar);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(3);
-    assertThat(compilation).hadErrorContaining(stacktraceErrorMessage);
+
+    CompilerTests.daggerCompiler(fooComponent, foo, bar)
+        .withProcessingOptions(
+            ImmutableMap.of("dagger.includeStacktraceWithDeferredErrorMessages", "ENABLED"))
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case JAVAC:
+                  subject.hasErrorCount(3);
+                  break;
+                case KSP:
+                  subject.hasErrorCount(2);
+                  break;
+              }
+              subject.hasErrorContaining(stacktraceErrorMessage);
+            });
   }
 
   @Test
   public void referencesUnresolvableAnnotationOnType() {
-    JavaFileObject fooComponent =
-        JavaFileObjects.forSourceLines(
+    Source fooComponent =
+        CompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -125,8 +142,8 @@ public final class UnresolvableDependencyTest {
             "  Foo foo();",
             "}");
 
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -137,8 +154,8 @@ public final class UnresolvableDependencyTest {
             "  Foo(Bar bar) {}",
             "}");
 
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -150,29 +167,44 @@ public final class UnresolvableDependencyTest {
             "  Bar(String dep) {}",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(fooComponent, foo, bar);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(3);
-    assertThat(compilation).hadErrorContaining(
-        "cannot find symbol"
-            + "\n  symbol: class UnresolvableAnnotation");
-    String trace = "\n  "
-        + "\n  Dependency trace:"
-        + "\n      => element (CLASS): test.Bar"
-        + "\n      => annotation: @UnresolvableAnnotation"
-        + "\n      => type (ERROR annotation type): UnresolvableAnnotation";
-    assertThat(compilation).hadErrorContaining(
-        "InjectProcessingStep was unable to process 'Bar(java.lang.String)' because "
-            + "'UnresolvableAnnotation' could not be resolved." + trace);
-    assertThat(compilation).hadErrorContaining(
-        "ComponentProcessingStep was unable to process 'test.FooComponent' because "
-            + "'UnresolvableAnnotation' could not be resolved." + trace);
+    CompilerTests.daggerCompiler(fooComponent, foo, bar)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case JAVAC:
+                  subject.hasErrorCount(3);
+                  subject.hasErrorContaining(
+                      "cannot find symbol"
+                          + "\n  symbol: class UnresolvableAnnotation");
+                  break;
+                case KSP:
+                  subject.hasErrorCount(2);
+                  break;
+              }
+              // TODO(b/248552462): Javac and KSP should match once this bug is fixed.
+              boolean isJavac = CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC;
+              String trace = "\n  "
+                  + "\n  Dependency trace:"
+                  + "\n      => element (CLASS): test.Bar"
+                  + "\n      => annotation: @UnresolvableAnnotation"
+                  + "\n      => type (ERROR annotation type): %1$s";
+              subject.hasErrorContaining(
+                  String.format(
+                      "InjectProcessingStep was unable to process 'Bar(java.lang.String)' because "
+                          + "'%1$s' could not be resolved." + trace,
+                      isJavac ? "UnresolvableAnnotation" : "error.NonExistentClass"));
+              subject.hasErrorContaining(
+                  String.format(
+                      "ComponentProcessingStep was unable to process 'test.FooComponent' because "
+                          + "'%1$s' could not be resolved." + trace,
+                      isJavac ? "UnresolvableAnnotation" : "error.NonExistentClass"));
+            });
   }
 
   @Test
   public void referencesUnresolvableAnnotationOnTypeOnParameter() {
-    JavaFileObject fooComponent =
-        JavaFileObjects.forSourceLines(
+    Source fooComponent =
+        CompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -183,8 +215,8 @@ public final class UnresolvableDependencyTest {
             "  Foo foo();",
             "}");
 
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
@@ -195,8 +227,8 @@ public final class UnresolvableDependencyTest {
             "  Foo(Bar bar) {}",
             "}");
 
-    JavaFileObject bar =
-        JavaFileObjects.forSourceLines(
+    Source bar =
+        CompilerTests.javaSource(
             "test.Bar",
             "package test;",
             "",
@@ -207,25 +239,40 @@ public final class UnresolvableDependencyTest {
             "  Bar(@UnresolvableAnnotation String dep) {}",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(fooComponent, foo, bar);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(3);
-    assertThat(compilation).hadErrorContaining(
-        "cannot find symbol"
-            + "\n  symbol:   class UnresolvableAnnotation"
-            + "\n  location: class test.Bar");
-    String trace = "\n  "
-        + "\n  Dependency trace:"
-        + "\n      => element (CLASS): test.Bar"
-        + "\n      => element (CONSTRUCTOR): Bar(java.lang.String)"
-        + "\n      => element (PARAMETER): dep"
-        + "\n      => annotation: @UnresolvableAnnotation"
-        + "\n      => type (ERROR annotation type): UnresolvableAnnotation";
-    assertThat(compilation).hadErrorContaining(
-        "InjectProcessingStep was unable to process 'Bar(java.lang.String)' because "
-            + "'UnresolvableAnnotation' could not be resolved." + trace);
-    assertThat(compilation).hadErrorContaining(
-        "ComponentProcessingStep was unable to process 'test.FooComponent' because "
-            + "'UnresolvableAnnotation' could not be resolved." + trace);
+    CompilerTests.daggerCompiler(fooComponent, foo, bar)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case JAVAC:
+                  subject.hasErrorCount(3);
+                  subject.hasErrorContaining(
+                      "cannot find symbol"
+                          + "\n  symbol:   class UnresolvableAnnotation"
+                          + "\n  location: class test.Bar");
+                  break;
+                case KSP:
+                  subject.hasErrorCount(2);
+                  break;
+              }
+              // TODO(b/248552462): Javac and KSP should match once this bug is fixed.
+              boolean isJavac = CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC;
+              String trace = "\n  "
+                  + "\n  Dependency trace:"
+                  + "\n      => element (CLASS): test.Bar"
+                  + "\n      => element (CONSTRUCTOR): Bar(java.lang.String)"
+                  + "\n      => element (PARAMETER): dep"
+                  + "\n      => annotation: @UnresolvableAnnotation"
+                  + "\n      => type (ERROR annotation type): %1$s";
+              subject.hasErrorContaining(
+                  String.format(
+                      "InjectProcessingStep was unable to process 'Bar(java.lang.String)' because "
+                          + "'%1$s' could not be resolved." + trace,
+                      isJavac ? "UnresolvableAnnotation" : "error.NonExistentClass"));
+              subject.hasErrorContaining(
+                  String.format(
+                      "ComponentProcessingStep was unable to process 'test.FooComponent' because "
+                          + "'%1$s' could not be resolved." + trace,
+                      isJavac ? "UnresolvableAnnotation" : "error.NonExistentClass"));
+            });
   }
 }

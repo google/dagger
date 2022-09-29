@@ -95,31 +95,35 @@ public final class XAnnotations {
    * messages.
    */
   public static String toStableString(XAnnotation annotation) {
-    // TODO(b/249283155): Due to a bug in XProcessing, calling various methods on an annotation that
-    // is an error type may throw an unexpected exception, so we just output the qualified name.
-    if (annotation.getType().isError()) {
-      return "@" + annotation.getQualifiedName();
+    try {
+      // TODO(b/249283155): Due to a bug in XProcessing, calling various methods on an annotation
+      // that is an error type may throw an unexpected exception, so we just output the name.
+      if (annotation.getType().isError()) {
+        return "@" + annotation.getName(); // SUPPRESS_GET_NAME_CHECK
+      }
+      return annotation.getAnnotationValues().isEmpty()
+          // If the annotation doesn't have values then skip the empty parenthesis.
+          ? String.format("@%s", getClassName(annotation).canonicalName())
+          : String.format(
+              "@%s(%s)",
+              getClassName(annotation).canonicalName(),
+              // The annotation values returned by XProcessing should already be in the order
+              // defined in the annotation class and include default values for any missing values.
+              annotation.getAnnotationValues().stream()
+                  .map(
+                      value -> {
+                        String name = value.getName(); // SUPPRESS_GET_NAME_CHECK
+                        String valueAsString = XAnnotationValues.toStableString(value);
+                        // A single value with name "value" can output the value directly.
+                        return annotation.getAnnotationValues().size() == 1
+                                && name.contentEquals("value")
+                            ? valueAsString
+                            : String.format("%s=%s", name, valueAsString);
+                      })
+                  .collect(joining(", ")));
+    } catch (TypeNotPresentException e) {
+      return e.typeName();
     }
-    return annotation.getAnnotationValues().isEmpty()
-        // If the annotation doesn't have values then skip the empty parenthesis.
-        ? String.format("@%s", getClassName(annotation).canonicalName())
-        : String.format(
-            "@%s(%s)",
-            getClassName(annotation).canonicalName(),
-            // The annotation values returned by XProcessing should already be in the order defined
-            // in the annotation class and include default values for any missing values.
-            annotation.getAnnotationValues().stream()
-                .map(
-                    value -> {
-                      String name = value.getName(); // SUPPRESS_GET_NAME_CHECK
-                      String valueAsString = XAnnotationValues.toStableString(value);
-                      // A single value with name "value" can output the value directly.
-                      return annotation.getAnnotationValues().size() == 1
-                              && name.contentEquals("value")
-                          ? valueAsString
-                          : String.format("%s=%s", name, valueAsString);
-                    })
-                .collect(joining(", ")));
   }
 
   private XAnnotations() {}

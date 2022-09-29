@@ -322,7 +322,11 @@ public final class XTypes {
   // should already be independent of the backend but we supply our own custom implementation to
   // remain backwards compatible with the previous implementation, which used TypeMirror#toString().
   public static String toStableString(XType type) {
-    return toStableString(type.getTypeName());
+    try {
+      return toStableString(type.getTypeName());
+    } catch (TypeNotPresentException e) {
+      return e.typeName();
+    }
   }
 
   private static String toStableString(TypeName typeName) {
@@ -368,13 +372,6 @@ public final class XTypes {
   public static String getKindName(XType type) {
     if (isArray(type)) {
       return "ARRAY";
-    } else if (type.isError()) {
-      // Note: Most of these types are disjoint, so ordering doesn't matter. However, error type is
-      // a subtype of declared type so make sure we check isError() before isDeclared() so that
-      // error types are reported as ERROR rather than DECLARED.
-      return "ERROR";
-    } else if (isDeclared(type)) {
-      return "DECLARED";
     } else if (isWildcard(type)) {
       return "WILDCARD";
     } else if (isTypeVariable(type)) {
@@ -387,6 +384,16 @@ public final class XTypes {
       return "NONE";
     } else if (isPrimitive(type)) {
       return LOWER_CAMEL.to(UPPER_UNDERSCORE, type.getTypeName().toString());
+    } else if (type.isError()) {
+      // TODO(b/249801446): For now, we must call XType.isError() after the other checks because
+      // some types in KSP (e.g. Wildcard) are not disjoint from error types and may return true
+      // until this bug is fixed.
+      // Note: Most of these types are disjoint, so ordering doesn't matter. However, error type is
+      // a subtype of declared type so make sure we check isError() before isDeclared() so that
+      // error types are reported as ERROR rather than DECLARED.
+      return "ERROR";
+    } else if (isDeclared(type)) {
+      return "DECLARED";
     } else {
       return "UNKNOWN";
     }

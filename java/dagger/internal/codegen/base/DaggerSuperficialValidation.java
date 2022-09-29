@@ -31,6 +31,7 @@ import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeParameter;
 import static dagger.internal.codegen.xprocessing.XElements.asVariable;
+import static dagger.internal.codegen.xprocessing.XElements.getKindName;
 import static dagger.internal.codegen.xprocessing.XElements.isEnumEntry;
 import static dagger.internal.codegen.xprocessing.XElements.isExecutable;
 import static dagger.internal.codegen.xprocessing.XElements.isTypeParameter;
@@ -60,7 +61,10 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.Reusable;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.xprocessing.XAnnotationValues;
 import dagger.internal.codegen.xprocessing.XAnnotations;
+import dagger.internal.codegen.xprocessing.XElements;
+import dagger.internal.codegen.xprocessing.XExecutableTypes;
 import dagger.internal.codegen.xprocessing.XTypes;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -132,15 +136,15 @@ public final class DaggerSuperficialValidation {
         // on. Thus, skip validation in these cases until this bug is fixed.
         if (!(processingEnv.getBackend() == Backend.KSP
                 && XConverters.toKS(typeElement).getClassKind() == ClassKind.ENUM_ENTRY)) {
-          validateType(Ascii.toLowerCase(element.kindName()), typeElement.getType());
+          validateType(Ascii.toLowerCase(getKindName(element)), typeElement.getType());
         }
       } else if (isVariableElement(element)) {
-        validateType(Ascii.toLowerCase(element.kindName()), asVariable(element).getType());
+        validateType(Ascii.toLowerCase(getKindName(element)), asVariable(element).getType());
       } else if (isExecutable(element)) {
         validateExecutableType(asExecutable(element).getExecutableType());
       } else if (isEnumEntry(element)) {
         validateType(
-            Ascii.toLowerCase(element.kindName()),
+            Ascii.toLowerCase(getKindName(element)),
             asEnumEntry(element).getEnumTypeElement().getType());
       }
     } catch (RuntimeException exception) {
@@ -438,6 +442,13 @@ public final class DaggerSuperficialValidation {
   private void validateAnnotationValue(XAnnotationValue value) {
     try {
       XType expectedType = value.getValueType();
+
+      // TODO(b/249834057): In KSP error types in annotation values are just null, so check this
+      // first and throw KnownErrorType of "<error>" to match Javac for now.
+      if (processingEnv.getBackend() == Backend.KSP && value.getValue() == null) {
+        throw new ValidationException.KnownErrorType("<error>");
+      }
+
       if (value.hasListValue()) {
         validateAnnotationValues(value.asAnnotationValueList());
       } else if (value.hasAnnotationValue()) {
@@ -486,7 +497,7 @@ public final class DaggerSuperficialValidation {
       private final String errorTypeName;
 
       private KnownErrorType(XType errorType) {
-        this.errorTypeName = errorType.getTypeElement().getQualifiedName();
+        this.errorTypeName = XTypes.toStableString(errorType);
       }
 
       private KnownErrorType(String errorTypeName) {
@@ -536,7 +547,12 @@ public final class DaggerSuperficialValidation {
      * Appends a message for the given type and returns this instance of {@link ValidationException}
      */
     private ValidationException append(String desc, XType type) {
-      return append(String.format("type (%s %s): %s", getKindName(type), desc, type));
+      return append(
+          String.format(
+              "type (%s %s): %s",
+              getKindName(type),
+              desc,
+              XTypes.toStableString(type)));
     }
 
     /**
@@ -545,16 +561,18 @@ public final class DaggerSuperficialValidation {
      */
     private ValidationException append(XExecutableType type) {
       return append(
-          String.format("type (EXECUTABLE %s): %s", Ascii.toLowerCase(getKindName(type)), type));
+          String.format(
+              "type (EXECUTABLE %s): %s",
+              Ascii.toLowerCase(getKindName(type)),
+              XExecutableTypes.toStableString(type)));
     }
-
     /**
      * Appends a message for the given annotation and returns this instance of {@link
      * ValidationException}
      */
     private ValidationException append(XAnnotation annotation) {
       // Note: Calling #toString() directly on the annotation throws NPE (b/216180336).
-      return append(String.format("annotation: %s", XAnnotations.toString(annotation)));
+      return append(String.format("annotation: %s", XAnnotations.toStableString(annotation)));
     }
 
     /** Appends the given message and returns this instance of {@link ValidationException} */
@@ -573,20 +591,7 @@ public final class DaggerSuperficialValidation {
               "annotation value (%s): %s=%s",
               getKindName(value),
               value.getName(),  // SUPPRESS_GET_NAME_CHECK
-              unnestedValue(value)));
-    }
-
-    private Object unnestedValue(XAnnotationValue value) {
-      try {
-        return value.hasListValue()
-            ? value.asAnnotationValueList().stream()
-                .map(this::unnestedValue)
-                .collect(toImmutableList())
-            : value.getValue();
-      } catch (TypeNotPresentException e) {
-        // If an annotation value is invalid, return the invalid type instead.
-        return e.typeName();
-      }
+              XAnnotationValues.toStableString(value)));
     }
 
     @Override
@@ -622,7 +627,10 @@ public final class DaggerSuperficialValidation {
     }
 
     private String getMessageForElement(XElement element) {
-      return String.format("element (%s): %s", Ascii.toUpperCase(element.kindName()), element);
+      return String.format(
+          "element (%s): %s",
+          Ascii.toUpperCase(getKindName(element)),
+          XElements.toStableString(element));
     }
   }
 }

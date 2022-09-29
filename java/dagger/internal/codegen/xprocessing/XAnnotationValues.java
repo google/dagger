@@ -124,23 +124,33 @@ public final class XAnnotationValues {
   }
 
   public static String toStableString(XAnnotationValue value) {
-    if (value.hasListValue()) {
-      // TODO(b/241834848): After this is fixed, consider skipping the braces for single values.
-      return value.asAnnotationValueList().stream()
-          .map(v -> toStableString(v))
-          .collect(joining(", ", "{", "}"));
-    } else if (value.hasAnnotationValue()) {
-      return XAnnotations.toStableString(value.asAnnotation());
-    } else if (value.hasEnumValue()) {
-      return getSimpleName(value.asEnum());
-    } else if (value.hasTypeValue()) {
-      return value.asType().getTypeElement().getQualifiedName();
-    } else if (value.hasStringValue()) {
-      return CodeBlock.of("$S", value.asString()).toString();
-    } else if (value.hasCharValue()) {
-      return characterLiteralWithSingleQuotes(value.asChar());
-    } else {
-      return value.getValue().toString();
+    try {
+      // TODO(b/251786719): XProcessing handles error values differently in KSP and Javac. In Javac
+      // an exception is thrown for type "<error>", but in KSP the value is just null. We work
+      // around this here and try to give the same string regardless of the backend.
+      if (value.getValue() == null) {
+        return "<error>";
+      }
+      if (value.hasListValue()) {
+        // TODO(b/241834848): After this is fixed, consider skipping the braces for single values.
+        return value.asAnnotationValueList().stream()
+            .map(v -> toStableString(v))
+            .collect(joining(", ", "{", "}"));
+      } else if (value.hasAnnotationValue()) {
+        return XAnnotations.toStableString(value.asAnnotation());
+      } else if (value.hasEnumValue()) {
+        return getSimpleName(value.asEnum());
+      } else if (value.hasTypeValue()) {
+        return value.asType().getTypeElement().getQualifiedName();
+      } else if (value.hasStringValue()) {
+        return CodeBlock.of("$S", value.asString()).toString();
+      } else if (value.hasCharValue()) {
+        return characterLiteralWithSingleQuotes(value.asChar());
+      } else {
+        return value.getValue().toString();
+      }
+    } catch (TypeNotPresentException e) {
+      return e.typeName();
     }
   }
 

@@ -34,6 +34,7 @@ import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.DaggerSuperficialValidation.ValidationException;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -132,7 +133,7 @@ abstract class TypeCheckingProcessingStep<E extends XElement> implements XProces
             + "have prevented the type from being generated. Otherwise, ensure that type '%3$s' is "
             + "on your classpath.",
         this.getClass().getSimpleName(),
-        element,
+        XElements.toStableString(element),
         exception.typeName());
   }
 
@@ -148,7 +149,7 @@ abstract class TypeCheckingProcessingStep<E extends XElement> implements XProces
             + "have prevented the type from being generated. Otherwise, ensure that type '%3$s' is "
             + "on your classpath.",
         this.getClass().getSimpleName(),
-        element,
+        XElements.toStableString(element),
         exception.getErrorTypeName(),
         exception.getTrace());
   }
@@ -164,7 +165,9 @@ abstract class TypeCheckingProcessingStep<E extends XElement> implements XProces
             + "\nIf the dependency is a generated type, check above for compilation errors that may"
             + " have prevented the type from being generated. Otherwise, ensure that the dependency"
             + " is on your classpath.",
-        this.getClass().getSimpleName(), element, exception.getTrace());
+        this.getClass().getSimpleName(),
+        XElements.toStableString(element),
+        exception.getTrace());
   }
 
   /**

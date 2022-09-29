@@ -16,9 +16,12 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static java.util.stream.Collectors.joining;
+
 import androidx.room.compiler.processing.XConstructorType;
 import androidx.room.compiler.processing.XExecutableType;
 import androidx.room.compiler.processing.XMethodType;
+import com.squareup.javapoet.TypeName;
 
 /** A utility class for {@link XExecutableType} helper methods. */
 // TODO(bcorso): Consider moving these methods into XProcessing library.
@@ -43,6 +46,25 @@ public final class XExecutableTypes {
       return "CONSTRUCTOR";
     }
     return "UNKNOWN";
+  }
+
+  /**
+   * Returns a string representation of {@link XExecutableType} that is independent of the backend
+   * (javac/ksp).
+   */
+  public static String toStableString(XExecutableType executableType) {
+    try {
+      return String.format(
+          "(%s)%s",
+          executableType.getParameterTypes().stream()
+              .map(XTypes::toStableString)
+              .collect(joining(",")),
+          isMethodType(executableType)
+              ? XTypes.toStableString(asMethodType(executableType).getReturnType())
+              : TypeName.VOID);
+    } catch (TypeNotPresentException e) {
+      return e.typeName();
+    }
   }
 
   private XExecutableTypes() {}

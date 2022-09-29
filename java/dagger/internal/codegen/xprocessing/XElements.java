@@ -27,6 +27,7 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XAnnotated;
@@ -92,6 +93,8 @@ public final class XElements {
       return asMethod(element).getJvmName();
     } else if (isConstructor(element)) {
       return "<init>";
+    } else if (isTypeParameter(element)) {
+      return asTypeParameter(element).getName(); // SUPPRESS_GET_NAME_CHECK
     }
     throw new AssertionError("No simple name for: " + element);
   }
@@ -453,6 +456,68 @@ public final class XElements {
           return element.getSimpleName().toString();
         }
       };
+
+  /**
+   * Returns a string representation of {@link XElement} that is independent of the backend
+   * (javac/ksp).
+   */
+  public static String toStableString(XElement element) {
+    try {
+      if (isTypeElement(element)) {
+        return asTypeElement(element).getQualifiedName();
+      } else if (isExecutable(element)) {
+        XExecutableElement executable = asExecutable(element);
+        return String.format(
+            "%s(%s)",
+            getSimpleName(
+                isConstructor(element)
+                    ? asConstructor(element).getEnclosingElement()
+                    : executable),
+            executable.getParameters().stream()
+                .map(XExecutableParameterElement::getType)
+                .map(XTypes::toStableString)
+                .collect(joining(",")));
+      } else if (isEnumEntry(element)
+                     || isField(element)
+                     || isMethodParameter(element)
+                     || isTypeParameter(element)) {
+        return getSimpleName(element);
+      }
+      return element.toString();
+    } catch (TypeNotPresentException e) {
+      return e.typeName();
+    }
+  }
+
+  // XElement#kindName() exists, but doesn't give consistent results between JAVAC and KSP (e.g.
+  // METHOD vs FUNCTION) so this custom implementation is meant to provide that consistency.
+  public static String getKindName(XElement element) {
+    if (isTypeElement(element)) {
+      XTypeElement typeElement = asTypeElement(element);
+      if (typeElement.isClass()) {
+        return "CLASS";
+      } else if (typeElement.isInterface()) {
+        return "INTERFACE";
+      } else if (typeElement.isAnnotationClass()) {
+        return "ANNOTATION_TYPE";
+      }
+    } else if (isEnum(element)) {
+      return "ENUM";
+    } else if (isEnumEntry(element)) {
+      return "ENUM_CONSTANT";
+    } else if (isConstructor(element)) {
+      return "CONSTRUCTOR";
+    } else if (isMethod(element)) {
+      return "METHOD";
+    } else if (isField(element)) {
+      return "FIELD";
+    } else if (isMethodParameter(element)) {
+      return "PARAMETER";
+    } else if (isTypeParameter(element)) {
+      return "TYPE_PARAMETER";
+    }
+    return element.kindName();
+  }
 
   private XElements() {}
 }

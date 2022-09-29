@@ -26,7 +26,7 @@ import com.google.auto.service.AutoService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions;
-import dagger.spi.BindingGraphPlugin;
+import dagger.spi.model.BindingGraphPlugin;
 import java.util.Arrays;
 import java.util.Optional;
 import javax.annotation.processing.Processor;
@@ -45,7 +45,26 @@ public final class ComponentProcessor extends JavacBasicAnnotationProcessor {
    * them from a {@link java.util.ServiceLoader}.
    */
   @VisibleForTesting
-  public static ComponentProcessor forTesting(BindingGraphPlugin... testingPlugins) {
+  public static ComponentProcessor withTestPlugins(BindingGraphPlugin... testingPlugins) {
+    return withTestPlugins(Arrays.asList(testingPlugins));
+  }
+
+  /**
+   * Creates a component processor that uses given {@link BindingGraphPlugin}s instead of loading
+   * them from a {@link java.util.ServiceLoader}.
+   */
+  @VisibleForTesting
+  public static ComponentProcessor withTestPlugins(Iterable<BindingGraphPlugin> testingPlugins) {
+    return new ComponentProcessor(
+        Optional.of(ImmutableSet.copyOf(testingPlugins)), Optional.empty());
+  }
+
+  /**
+   * Creates a component processor that uses given {@link BindingGraphPlugin}s instead of loading
+   * them from a {@link java.util.ServiceLoader}.
+   */
+  @VisibleForTesting
+  public static ComponentProcessor forTesting(dagger.spi.BindingGraphPlugin... testingPlugins) {
     return forTesting(Arrays.asList(testingPlugins));
   }
 
@@ -54,29 +73,31 @@ public final class ComponentProcessor extends JavacBasicAnnotationProcessor {
    * them from a {@link java.util.ServiceLoader}.
    */
   @VisibleForTesting
-  public static ComponentProcessor forTesting(Iterable<BindingGraphPlugin> testingPlugins) {
-    return new ComponentProcessor(Optional.of(ImmutableSet.copyOf(testingPlugins)));
+  public static ComponentProcessor forTesting(
+      Iterable<dagger.spi.BindingGraphPlugin> testingPlugins) {
+    return new ComponentProcessor(
+        Optional.empty(), Optional.of(ImmutableSet.copyOf(testingPlugins)));
   }
 
   private final DelegateComponentProcessor delegate = new DelegateComponentProcessor();
   private final Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins;
+  private final Optional<ImmutableSet<dagger.spi.BindingGraphPlugin>> legacyTestingPlugins;
 
   public ComponentProcessor() {
-    this(Optional.empty());
+    this(Optional.empty(), Optional.empty());
   }
 
-  private ComponentProcessor(Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins) {
+  private ComponentProcessor(
+      Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins,
+      Optional<ImmutableSet<dagger.spi.BindingGraphPlugin>> legacyTestingPlugins) {
     super(options -> DelegateComponentProcessor.PROCESSING_ENV_CONFIG);
     this.testingPlugins = testingPlugins;
+    this.legacyTestingPlugins = legacyTestingPlugins;
   }
 
   @Override
   public void initialize(XProcessingEnv env) {
-    delegate.initialize(env, testingPlugins.orElseGet(() -> loadExternalPlugins(env)));
-  }
-
-  private static ImmutableSet<BindingGraphPlugin> loadExternalPlugins(XProcessingEnv env) {
-    return ServiceLoaders.loadServices(env, BindingGraphPlugin.class);
+    delegate.initialize(env, testingPlugins, legacyTestingPlugins);
   }
 
   @Override

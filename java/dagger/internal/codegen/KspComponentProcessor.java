@@ -20,28 +20,36 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.XRoundEnv;
 import androidx.room.compiler.processing.ksp.KspBasicAnnotationProcessor;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.ksp.processing.SymbolProcessor;
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment;
 import com.google.devtools.ksp.processing.SymbolProcessorProvider;
+import dagger.spi.model.BindingGraphPlugin;
+import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * The KSP processor responsible for generating the classes that drive the Dagger implementation.
  */
 public final class KspComponentProcessor extends KspBasicAnnotationProcessor {
   private final DelegateComponentProcessor delegate = new DelegateComponentProcessor();
+  private final Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins;
 
-  private KspComponentProcessor(SymbolProcessorEnvironment symbolProcessorEnvironment) {
+  private KspComponentProcessor(
+      SymbolProcessorEnvironment symbolProcessorEnvironment,
+      Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins) {
     super(symbolProcessorEnvironment, DelegateComponentProcessor.PROCESSING_ENV_CONFIG);
+    this.testingPlugins = testingPlugins;
   }
 
   @Override
   public void initialize(XProcessingEnv env) {
-    // TODO(bcorso): Support external usage of dagger.spi.model.BindingGraphPlugin.
     delegate.initialize(
         env,
-        // LegacyExternalPlugins are only supported with Javac.
-        /* legacyExternalPlugins= */ ImmutableSet.of());
+        testingPlugins,
+        // The legacy BindingGraphPlugin is only supported with Javac.
+        /* legacyTestingPlugins= */ Optional.empty());
   }
 
   @Override
@@ -56,9 +64,37 @@ public final class KspComponentProcessor extends KspBasicAnnotationProcessor {
 
   /** Provides the {@link KspComponentProcessor}. */
   public static final class Provider implements SymbolProcessorProvider {
+    /**
+     * Creates a component processor that uses given {@link BindingGraphPlugin}s instead of loading
+     * them from a {@link java.util.ServiceLoader}.
+     */
+    @VisibleForTesting
+    public static Provider withTestPlugins(BindingGraphPlugin... testingPlugins) {
+      return withTestPlugins(Arrays.asList(testingPlugins));
+    }
+
+    /**
+     * Creates a component processor that uses given {@link BindingGraphPlugin}s instead of loading
+     * them from a {@link java.util.ServiceLoader}.
+     */
+    @VisibleForTesting
+    public static Provider withTestPlugins(Iterable<BindingGraphPlugin> testingPlugins) {
+      return new Provider(Optional.of(ImmutableSet.copyOf(testingPlugins)));
+    }
+
+    private final Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins;
+
+    public Provider() {
+      this(Optional.empty());
+    }
+
+    private Provider(Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins) {
+      this.testingPlugins = testingPlugins;
+    }
+
     @Override
     public SymbolProcessor create(SymbolProcessorEnvironment symbolProcessorEnvironment) {
-      return new KspComponentProcessor(symbolProcessorEnvironment);
+      return new KspComponentProcessor(symbolProcessorEnvironment, testingPlugins);
     }
   }
 }

@@ -33,8 +33,10 @@ java_library(
         "//third_party/java/compile_testing",
         "//third_party/java/junit",
         "//java/dagger/internal/codegen:processor",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//java/dagger/spi",
         "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )

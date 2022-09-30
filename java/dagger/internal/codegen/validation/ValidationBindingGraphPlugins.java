@@ -87,7 +87,9 @@ public final class ValidationBindingGraphPlugins {
     boolean isClean = true;
     for (BindingGraphPlugin plugin : plugins) {
       DiagnosticReporterImpl reporter =
-          diagnosticReporterFactory.reporter(graph, plugin.pluginName(), errorsAsWarnings);
+          errorsAsWarnings
+              ? diagnosticReporterFactory.reporterWithErrorAsWarnings(graph, plugin.pluginName())
+              : diagnosticReporterFactory.reporter(graph, plugin.pluginName());
       plugin.visitGraph(graph, reporter);
       if (reporter.reportedDiagnosticKinds().contains(ERROR)) {
         isClean = false;

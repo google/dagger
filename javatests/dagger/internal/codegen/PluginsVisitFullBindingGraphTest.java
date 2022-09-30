@@ -16,19 +16,16 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.TestUtils.endsWithMessage;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.Compiler;
-import com.google.testing.compile.JavaFileObjects;
-import dagger.model.BindingGraph;
-import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
+import androidx.room.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableMap;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraphPlugin;
+import dagger.spi.model.DiagnosticReporter;
+import dagger.testing.compile.CompilerTests;
 import java.util.regex.Pattern;
-import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -36,8 +33,8 @@ import org.junit.runners.JUnit4;
 /** Tests for -Adagger.pluginsVisitFullBindingGraph. */
 @RunWith(JUnit4.class)
 public final class PluginsVisitFullBindingGraphTest {
-  private static final JavaFileObject MODULE_WITHOUT_ERRORS =
-      JavaFileObjects.forSourceLines(
+  private static final Source MODULE_WITHOUT_ERRORS =
+      CompilerTests.javaSource(
           "test.ModuleWithoutErrors",
           "package test;",
           "",
@@ -49,8 +46,8 @@ public final class PluginsVisitFullBindingGraphTest {
           "  @Binds Object object(String string);",
           "}");
 
-  private static final JavaFileObject MODULE_WITH_ERRORS =
-      JavaFileObjects.forSourceLines(
+  private static final Source MODULE_WITH_ERRORS =
+      CompilerTests.javaSource(
           "test.ModuleWithErrors",
           "package test;",
           "",
@@ -69,64 +66,66 @@ public final class PluginsVisitFullBindingGraphTest {
 
   @Test
   public void testNoFlags() {
-    Compilation compilation = daggerCompiler().compile(MODULE_WITH_ERRORS);
-    assertThat(compilation).succeeded();
+    CompilerTests.daggerCompiler(MODULE_WITH_ERRORS)
+        .withBindingGraphPlugins(ErrorPlugin::new)
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void testWithVisitPlugins() {
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.pluginsVisitFullBindingGraphs=Enabled")
-            .compile(MODULE_WITH_ERRORS);
-
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContainingMatch(PLUGIN_ERROR_MESSAGE)
-        .inFile(MODULE_WITH_ERRORS)
-        .onLineContaining("interface ModuleWithErrors");
+    CompilerTests.daggerCompiler(MODULE_WITH_ERRORS)
+        .withProcessingOptions(ImmutableMap.of("dagger.pluginsVisitFullBindingGraphs", "Enabled"))
+        .withBindingGraphPlugins(ErrorPlugin::new)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContainingMatch(PLUGIN_ERROR_MESSAGE.toString())
+                  .onSource(MODULE_WITH_ERRORS)
+                  .onLineContaining("interface ModuleWithErrors");
+            });
   }
 
   @Test
   public void testWithValidationNone() {
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=NONE")
-            .compile(MODULE_WITHOUT_ERRORS);
-    assertThat(compilation).succeeded();
+    CompilerTests.daggerCompiler(MODULE_WITHOUT_ERRORS)
+        .withProcessingOptions(ImmutableMap.of("dagger.fullBindingGraphValidation", "NONE"))
+        .withBindingGraphPlugins(ErrorPlugin::new)
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void testWithValidationError() {
     // Test that pluginsVisitFullBindingGraph is enabled with fullBindingGraphValidation.
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
-            .compile(MODULE_WITHOUT_ERRORS);
-
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContainingMatch(PLUGIN_ERROR_MESSAGE)
-        .inFile(MODULE_WITHOUT_ERRORS)
-        .onLineContaining("interface ModuleWithoutErrors");
+    CompilerTests.daggerCompiler(MODULE_WITHOUT_ERRORS)
+        .withProcessingOptions(ImmutableMap.of("dagger.fullBindingGraphValidation", "ERROR"))
+        .withBindingGraphPlugins(ErrorPlugin::new)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContainingMatch(PLUGIN_ERROR_MESSAGE.toString())
+                  .onSource(MODULE_WITHOUT_ERRORS)
+                  .onLineContaining("interface ModuleWithoutErrors");
+            });
   }
 
   @Test
   public void testWithValidationErrorAndVisitPlugins() {
-    Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
-            .withOptions("-Adagger.pluginsVisitFullBindingGraphs=Enabled")
-            .compile(MODULE_WITHOUT_ERRORS);
-
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContainingMatch(PLUGIN_ERROR_MESSAGE)
-        .inFile(MODULE_WITHOUT_ERRORS)
-        .onLineContaining("interface ModuleWithoutErrors");
+    CompilerTests.daggerCompiler(MODULE_WITHOUT_ERRORS)
+        .withProcessingOptions(
+            ImmutableMap.of(
+                "dagger.fullBindingGraphValidation", "ERROR",
+                "dagger.pluginsVisitFullBindingGraphs", "Enabled"))
+        .withBindingGraphPlugins(ErrorPlugin::new)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContainingMatch(PLUGIN_ERROR_MESSAGE.toString())
+                  .onSource(MODULE_WITHOUT_ERRORS)
+                  .onLineContaining("interface ModuleWithoutErrors");
+            });
   }
 
   /** A test plugin that just reports each component with the given {@link Diagnostic.Kind}. */
@@ -135,9 +134,5 @@ public final class PluginsVisitFullBindingGraphTest {
     public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
       diagnosticReporter.reportComponent(ERROR, bindingGraph.rootComponentNode(), "Error!");
     }
-  }
-
-  private static Compiler daggerCompiler() {
-    return javac().withProcessors(ComponentProcessor.forTesting(new ErrorPlugin()));
   }
 }

@@ -41,6 +41,7 @@ import com.google.common.io.Files;
 import com.google.testing.compile.Compiler;
 import dagger.internal.codegen.ComponentProcessor;
 import dagger.internal.codegen.KspComponentProcessor;
+import dagger.spi.model.BindingGraphPlugin;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -112,7 +113,8 @@ public final class CompilerTests {
       // Set default values
       return builder
           .processorOptions(DEFAULT_PROCESSOR_OPTIONS)
-          .processingStepSuppliers(ImmutableSet.of());
+          .processingStepSuppliers(ImmutableSet.of())
+          .bindingGraphPluginSuppliers(ImmutableSet.of());
     }
 
     /** Returns the sources being compiled */
@@ -127,6 +129,14 @@ public final class CompilerTests {
     /** Returns the processing steps. */
     private ImmutableList<XProcessingStep> processingSteps() {
       return processingStepSuppliers().stream().map(Supplier::get).collect(toImmutableList());
+    }
+
+    /** Returns the {@link BindingGraphPlugin} suppliers. */
+    abstract ImmutableCollection<Supplier<BindingGraphPlugin>> bindingGraphPluginSuppliers();
+
+    /** Returns the {@link BindingGraphPlugin}s. */
+    private ImmutableList<BindingGraphPlugin> bindingGraphPlugins() {
+      return bindingGraphPluginSuppliers().stream().map(Supplier::get).collect(toImmutableList());
     }
 
     /** Returns a builder with the current values of this {@link Compiler} as default. */
@@ -150,6 +160,10 @@ public final class CompilerTests {
       return toBuilder().processingStepSuppliers(ImmutableList.copyOf(suppliers)).build();
     }
 
+    public DaggerCompiler withBindingGraphPlugins(Supplier<BindingGraphPlugin>... suppliers) {
+      return toBuilder().bindingGraphPluginSuppliers(ImmutableList.copyOf(suppliers)).build();
+    }
+
     public void compile(Consumer<CompilationResultSubject> onCompilationResult) {
       ProcessorTestExtKt.runProcessorTest(
           sources().asList(),
@@ -160,11 +174,11 @@ public final class CompilerTests {
           /* config= */ PROCESSING_ENV_CONFIG,
           /* javacProcessors= */
           ImmutableList.of(
-              new ComponentProcessor(),
+              ComponentProcessor.withTestPlugins(bindingGraphPlugins()),
               new CompilerProcessors.JavacProcessor(processingSteps())),
           /* symbolProcessorProviders= */
           ImmutableList.of(
-              new KspComponentProcessor.Provider(),
+              KspComponentProcessor.Provider.withTestPlugins(bindingGraphPlugins()),
               new CompilerProcessors.KspProcessor.Provider(processingSteps())),
           result -> {
             onCompilationResult.accept(result);
@@ -179,6 +193,8 @@ public final class CompilerTests {
       abstract Builder processorOptions(Map<String, String> processorOptions);
       abstract Builder processingStepSuppliers(
           ImmutableCollection<Supplier<XProcessingStep>> processingStepSuppliers);
+      abstract Builder bindingGraphPluginSuppliers(
+          ImmutableCollection<Supplier<BindingGraphPlugin>> bindingGraphPluginSuppliers);
       abstract DaggerCompiler build();
     }
   }

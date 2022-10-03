@@ -22,7 +22,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
-import static dagger.internal.codegen.xprocessing.XAnnotations.characterLiteralWithSingleQuotes;
+import static dagger.internal.codegen.xprocessing.XAnnotationValues.characterLiteralWithSingleQuotes;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.asArray;
 

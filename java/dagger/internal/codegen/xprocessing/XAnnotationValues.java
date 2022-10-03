@@ -16,8 +16,13 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static java.lang.Character.isISOControl;
+import static java.util.stream.Collectors.joining;
+
 import androidx.room.compiler.processing.XAnnotationValue;
 import com.google.common.base.Equivalence;
+import com.squareup.javapoet.CodeBlock;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XAnnotationValue} helper methods. */
@@ -115,6 +120,56 @@ public final class XAnnotationValues {
       return "STRING";
     } else {
       return value.hasListValue() ? "UNKNOWN_ARRAY" : "UNKNOWN";
+    }
+  }
+
+  public static String toStableString(XAnnotationValue value) {
+    if (value.hasListValue()) {
+      // TODO(b/241834848): After this is fixed, consider skipping the braces for single values.
+      return value.asAnnotationValueList().stream()
+          .map(v -> toStableString(v))
+          .collect(joining(", ", "{", "}"));
+    } else if (value.hasAnnotationValue()) {
+      return XAnnotations.toStableString(value.asAnnotation());
+    } else if (value.hasEnumValue()) {
+      return getSimpleName(value.asEnum());
+    } else if (value.hasTypeValue()) {
+      return value.asType().getTypeElement().getQualifiedName();
+    } else if (value.hasStringValue()) {
+      return CodeBlock.of("$S", value.asString()).toString();
+    } else if (value.hasCharValue()) {
+      return characterLiteralWithSingleQuotes(value.asChar());
+    } else {
+      return value.getValue().toString();
+    }
+  }
+
+  public static String characterLiteralWithSingleQuotes(char c) {
+    return "'" + characterLiteralWithoutSingleQuotes(c) + "'";
+  }
+
+  // TODO(bcorso): Replace with javapoet when fixed: https://github.com/square/javapoet/issues/698.
+  private static String characterLiteralWithoutSingleQuotes(char c) {
+    // see https://docs.oracle.com/javase/specs/jls/se7/html/jls-3.html#jls-3.10.6
+    switch (c) {
+      case '\b': // backspace (BS)
+        return "\\b";
+      case '\t': // horizontal tab (HT)
+        return "\\t";
+      case '\n': // linefeed (LF)
+        return "\\n";
+      case '\f': // form feed (FF)
+        return "\\f";
+      case '\r': // carriage return (CR)
+        return "\\r";
+      case '\"': // double quote (")
+        return "\"";
+      case '\'': // single quote (')
+        return "\\'";
+      case '\\': // backslash (\)
+        return "\\\\";
+      default:
+        return isISOControl(c) ? String.format("\\u%04x", (int) c) : Character.toString(c);
     }
   }
 

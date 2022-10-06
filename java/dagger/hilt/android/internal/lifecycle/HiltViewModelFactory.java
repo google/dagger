@@ -71,8 +71,6 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
   private final AbstractSavedStateViewModelFactory hiltViewModelFactory;
 
   public HiltViewModelFactory(
-      @NonNull SavedStateRegistryOwner owner,
-      @Nullable Bundle defaultArgs,
       @NonNull Set<String> hiltViewModelKeys,
       @NonNull ViewModelProvider.Factory delegateFactory,
       @NonNull ViewModelComponentBuilder viewModelComponentBuilder) {
@@ -145,8 +143,6 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
     ActivityCreatorEntryPoint entryPoint =
         EntryPoints.get(activity, ActivityCreatorEntryPoint.class);
     return new HiltViewModelFactory(
-        owner,
-        defaultArgs,
         entryPoint.getViewModelKeys(),
         delegateFactory,
         entryPoint.getViewModelComponentBuilder()

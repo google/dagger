@@ -76,13 +76,15 @@ final class ActivityRetainedComponentManager
     }
   }
 
-  private final ViewModelProvider viewModelProvider;
+  private final ViewModelStoreOwner viewModelStoreOwner;
+  private final Context context;
 
   @Nullable private volatile ActivityRetainedComponent component;
   private final Object componentLock = new Object();
 
   ActivityRetainedComponentManager(ComponentActivity activity) {
-    this.viewModelProvider = getViewModelProvider(activity, activity);
+    this.viewModelStoreOwner = activity;
+    this.context = activity;
   }
 
   private ViewModelProvider getViewModelProvider(
@@ -117,7 +119,9 @@ final class ActivityRetainedComponentManager
   }
 
   private ActivityRetainedComponent createComponent() {
-    return viewModelProvider.get(ActivityRetainedComponentViewModel.class).getComponent();
+    return getViewModelProvider(viewModelStoreOwner, context)
+        .get(ActivityRetainedComponentViewModel.class)
+        .getComponent();
   }
 
   @Module

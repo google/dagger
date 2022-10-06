@@ -18,12 +18,9 @@ package dagger.hilt.android.internal.lifecycle;
 
 import static dagger.hilt.internal.Preconditions.checkNotNull;
 
-import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.activity.ComponentActivity;
-import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.savedstate.SavedStateRegistryOwner;
 import dagger.Module;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
@@ -86,22 +83,17 @@ public final class DefaultViewModelFactories {
     ViewModelProvider.Factory fromActivity(
         ComponentActivity activity, ViewModelProvider.Factory delegateFactory) {
       return getHiltViewModelFactory(
-          activity,
-          activity.getIntent() != null ? activity.getIntent().getExtras() : null,
           delegateFactory);
     }
 
     ViewModelProvider.Factory fromFragment(
         Fragment fragment, ViewModelProvider.Factory delegateFactory) {
-      return getHiltViewModelFactory(fragment, fragment.getArguments(), delegateFactory);
+      return getHiltViewModelFactory(delegateFactory);
     }
 
     private ViewModelProvider.Factory getHiltViewModelFactory(
-        SavedStateRegistryOwner owner,
-        @Nullable Bundle defaultArgs,
         ViewModelProvider.Factory delegate) {
-      return new HiltViewModelFactory(
-          owner, defaultArgs, keySet, checkNotNull(delegate), viewModelComponentBuilder);
+      return new HiltViewModelFactory(keySet, checkNotNull(delegate), viewModelComponentBuilder);
     }
   }
 

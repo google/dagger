@@ -156,14 +156,14 @@ public final class Accessibility {
    *   <li>Otherwise returns {@link Object}.
    * </ul>
    */
-  public static XType accessibleType(
+  public static TypeName accessibleTypeName(
       XType type, ClassName requestingClass, XProcessingEnv processingEnv) {
     if (isTypeAccessibleFrom(type, requestingClass.packageName())) {
-      return type;
+      return type.getTypeName();
     } else if (isDeclared(type) && isRawTypeAccessible(type, requestingClass.packageName())) {
-      return processingEnv.getDeclaredType(type.getTypeElement());
+      return type.getRawType().getTypeName();
     } else {
-      return processingEnv.requireType(TypeName.OBJECT);
+      return TypeName.OBJECT;
     }
   }
 

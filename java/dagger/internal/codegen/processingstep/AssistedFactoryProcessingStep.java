@@ -24,7 +24,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.INSTANCE_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
-import static dagger.internal.codegen.langmodel.Accessibility.accessibleType;
+import static dagger.internal.codegen.langmodel.Accessibility.accessibleTypeName;
 import static dagger.internal.codegen.xprocessing.MethodSpecs.overriding;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
@@ -327,8 +327,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
                       isPreJava8SourceVersion(processingEnv)
                           ? CodeBlock.of(
                               "<$T>",
-                              accessibleType(metadata.factoryType(), name, processingEnv)
-                                  .getTypeName())
+                              accessibleTypeName(metadata.factoryType(), name, processingEnv))
                           : CodeBlock.of(""),
                       name,
                       delegateFactoryParam)

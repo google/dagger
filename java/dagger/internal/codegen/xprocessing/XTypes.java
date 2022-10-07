@@ -90,6 +90,7 @@ public final class XTypes {
   }
 
   // TODO(bcorso): Support XType.getEnclosingType() properly in XProcessing.
+  @SuppressWarnings("ReturnMissingNullable")
   public static XType getEnclosingType(XType type) {
     checkArgument(isDeclared(type));
     XProcessingEnv.Backend backend = getProcessingEnv(type).getBackend();
@@ -140,7 +141,11 @@ public final class XTypes {
       case JAVAC:
         // The implementation used for KSP should technically also work in Javac but we avoid it to
         // avoid any possible regressions in Javac.
-        return XProcessingEnvs.erasure(type, processingEnv).getTypeName();
+        return toXProcessing(
+                toJavac(processingEnv).getTypeUtils() // ALLOW_TYPES_ELEMENTS
+                    .erasure(toJavac(type)),
+                processingEnv)
+            .getTypeName();
       case KSP:
         // In KSP, we have to derive the erased TypeName ourselves.
         return erasedTypeName(type.getTypeName());

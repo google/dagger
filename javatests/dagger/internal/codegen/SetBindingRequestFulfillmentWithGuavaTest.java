@@ -16,16 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
 import androidx.room.compiler.processing.util.Source;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -113,23 +107,22 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             });
   }
 
-  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void inaccessible() throws Exception {
-    JavaFileObject inaccessible =
-        JavaFileObjects.forSourceLines(
+    Source inaccessible =
+        CompilerTests.javaSource(
             "other.Inaccessible",
             "package other;",
             "",
             "class Inaccessible {}");
-    JavaFileObject inaccessible2 =
-        JavaFileObjects.forSourceLines(
+    Source inaccessible2 =
+        CompilerTests.javaSource(
             "other.Inaccessible2",
             "package other;",
             "",
             "class Inaccessible2 {}");
-    JavaFileObject usesInaccessible =
-        JavaFileObjects.forSourceLines(
+    Source usesInaccessible =
+        CompilerTests.javaSource(
             "other.UsesInaccessible",
             "package other;",
             "",
@@ -140,8 +133,8 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "  @Inject UsesInaccessible(Set<Inaccessible> set1, Set<Inaccessible2> set2) {}",
             "}");
 
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "other.TestModule",
             "package other;",
             "",
@@ -161,8 +154,8 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "    return Collections.emptySet();",
             "  }",
             "}");
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -177,13 +170,15 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "  UsesInaccessible usesInaccessible();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(module, inaccessible, inaccessible2, usesInaccessible, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(
+            module, inaccessible, inaccessible2, usesInaccessible, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test

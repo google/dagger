@@ -22,8 +22,6 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.RequestKinds.requestType;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
-import static dagger.internal.codegen.xprocessing.XTypes.isAssignableTo;
 import static dagger.spi.model.BindingKind.DELEGATE;
 
 import androidx.room.compiler.processing.XProcessingEnv;
@@ -117,10 +115,10 @@ final class DelegateRequestRepresentation extends RequestRepresentation {
    */
   // TODO(ronshapiro): this probably can be generalized for usage in InjectionMethods
   private Expression castToRawTypeIfNecessary(Expression delegateExpression, XType desiredType) {
-    if (isAssignableTo(delegateExpression.type(), desiredType)) {
+    if (delegateExpression.type().isAssignableTo(desiredType)) {
       return delegateExpression;
     }
-    Expression castedExpression = delegateExpression.castTo(erasure(desiredType, processingEnv));
+    Expression castedExpression = delegateExpression.castTo(desiredType.getRawType());
     // Casted raw type provider expression has to be wrapped parentheses, otherwise there
     // will be an error when DerivedFromFrameworkInstanceRequestRepresentation appends a `get()` to
     // it.

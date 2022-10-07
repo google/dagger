@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.truth.Truth.assertThat;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.getPrimitiveIntType;
 
@@ -62,7 +61,7 @@ public class ExpressionTest {
 
     Expression castTo = expression.castTo(supertype);
 
-    assertThat(toJavac(castTo.type())).isSameInstanceAs(toJavac(supertype));
+    assertThat(castTo.type().getTypeName()).isEqualTo(supertype.getTypeName());
     assertThat(castTo.codeBlock().toString())
         .isEqualTo(
             "(dagger.internal.codegen.ExpressionTest.Supertype) "

@@ -136,11 +136,11 @@ public class MapRequestRepresentationWithGuavaTest {
 
   @Test
   public void inaccessible() throws Exception {
-    JavaFileObject inaccessible =
-        JavaFileObjects.forSourceLines(
+    Source inaccessible =
+        CompilerTests.javaSource(
             "other.Inaccessible", "package other;", "", "class Inaccessible {}");
-    JavaFileObject usesInaccessible =
-        JavaFileObjects.forSourceLines(
+    Source usesInaccessible =
+        CompilerTests.javaSource(
             "other.UsesInaccessible",
             "package other;",
             "",
@@ -151,8 +151,8 @@ public class MapRequestRepresentationWithGuavaTest {
             "  @Inject UsesInaccessible(Map<Integer, Inaccessible> map) {}",
             "}");
 
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "other.TestModule",
             "package other;",
             "",
@@ -164,8 +164,8 @@ public class MapRequestRepresentationWithGuavaTest {
             "public abstract class TestModule {",
             "  @Multibinds abstract Map<Integer, Inaccessible> ints();",
             "}");
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -180,13 +180,13 @@ public class MapRequestRepresentationWithGuavaTest {
             "  UsesInaccessible usesInaccessible();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(module, inaccessible, usesInaccessible, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(module, inaccessible, usesInaccessible, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test

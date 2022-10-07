@@ -27,6 +27,7 @@ import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.ContributionType;
+import dagger.internal.codegen.javapoet.ExpressionType;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.xprocessing.XTypeElements;
 import javax.inject.Inject;
@@ -44,6 +45,15 @@ public final class BindsTypeChecker {
   @Inject
   BindsTypeChecker(XProcessingEnv processingEnv) {
     this.processingEnv = processingEnv;
+  }
+
+  /**
+   * Checks the assignability of {@code rightHandSide} to {@code leftHandSide} given a {@link
+   * ContributionType} context.
+   */
+  public boolean isAssignable(
+      ExpressionType rightHandSide, XType leftHandSide, ContributionType contributionType) {
+    return rightHandSide.isAssignableTo(desiredAssignableType(leftHandSide, contributionType));
   }
 
   /**

@@ -16,16 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -90,11 +84,10 @@ public class SwitchingProviderTest {
             });
   }
 
-  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void unscopedBinds() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -112,8 +105,8 @@ public class SwitchingProviderTest {
             "  @Binds CharSequence c(String s);",
             "  @Binds Object o(CharSequence c);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -126,19 +119,19 @@ public class SwitchingProviderTest {
             "  Provider<CharSequence> charSequenceProvider();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
-  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void scopedBinds() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -157,8 +150,8 @@ public class SwitchingProviderTest {
             "  @Binds @Singleton Object o(CharSequence s);",
             "  @Binds @Singleton CharSequence c(String s);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -173,12 +166,13 @@ public class SwitchingProviderTest {
             "  Provider<CharSequence> charSequenceProvider();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts()).compile(module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test

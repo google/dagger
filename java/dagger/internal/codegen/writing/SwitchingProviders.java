@@ -135,7 +135,7 @@ final class SwitchingProviders {
           //   fooProvider = DoubleCheck.provider(new SwitchingProvider<>(1));
           (binding.scope().isPresent() || binding.kind().equals(BindingKind.ASSISTED_FACTORY))
               ? CodeBlock.of(
-                  "$T", shardImplementation.accessibleType(binding.contributedType()).getTypeName())
+                  "$T", shardImplementation.accessibleTypeName(binding.contributedType()))
               : "",
           shardImplementation.componentFieldsByImplementation().values().stream()
               .map(field -> CodeBlock.of("$N", field))

@@ -18,19 +18,23 @@ package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static dagger.internal.codegen.langmodel.Accessibility.accessibleType;
+import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
+import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.PRIVATE_METHOD;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.TypeName;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.javapoet.ExpressionType;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.spi.model.RequestKind;
 
@@ -71,14 +75,19 @@ final class PrivateMethodRequestRepresentation extends MethodRequestRepresentati
   }
 
   @Override
-  protected XType returnType() {
-    if (request.isRequestKind(RequestKind.INSTANCE)
-        && binding.contributedPrimitiveType().isPresent()) {
-      return binding.contributedPrimitiveType().get();
+  protected ExpressionType returnType() {
+    XType type = request.isRequestKind(RequestKind.INSTANCE)
+                && binding.contributedPrimitiveType().isPresent()
+        ? binding.contributedPrimitiveType().get()
+        : request.requestedType(binding.contributedType(), processingEnv);
+    String requestingPackage = shardImplementation.name().packageName();
+    if (isTypeAccessibleFrom(type, requestingPackage)) {
+      return ExpressionType.create(type);
+    } else if (isDeclared(type) && isRawTypeAccessible(type, requestingPackage)) {
+      return ExpressionType.createRawType(type);
+    } else {
+      return ExpressionType.create(processingEnv.requireType(TypeName.OBJECT));
     }
-
-    XType requestedType = request.requestedType(binding.contributedType(), processingEnv);
-    return accessibleType(requestedType, shardImplementation.name(), processingEnv);
   }
 
   private String methodName() {

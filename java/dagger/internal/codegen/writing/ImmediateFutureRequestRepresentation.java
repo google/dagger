@@ -17,7 +17,7 @@
 package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.langmodel.Accessibility.accessibleType;
+import static dagger.internal.codegen.langmodel.Accessibility.accessibleTypeName;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isPreJava8SourceVersion;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.wrapType;
 
@@ -65,7 +65,7 @@ final class ImmediateFutureRequestRepresentation extends RequestRepresentation {
       if (!expression.type().isSameType(type)) {
         return CodeBlock.of(
             "($T) $L",
-            accessibleType(type, requestingClass, processingEnv).getTypeName(),
+            accessibleTypeName(type, requestingClass, processingEnv),
             expression.codeBlock());
       }
     }

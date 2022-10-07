@@ -16,10 +16,11 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
@@ -61,7 +62,7 @@ final class ExperimentalSwitchingProviderDependencyRepresentation {
     this.bindsTypeChecker = bindsTypeChecker;
     this.type =
         isDelegateSetValuesBinding()
-            ? erasure(processingEnv.requireType(TypeNames.COLLECTION), processingEnv)
+            ? erasure(processingEnv.requireType(TypeNames.COLLECTION))
             : binding.contributedType();
   }
 
@@ -81,7 +82,7 @@ final class ExperimentalSwitchingProviderDependencyRepresentation {
       return expression.castTo(type);
     }
     if (usesErasedTypeCast(requestKind)) {
-      return expression.castTo(erasure(type, processingEnv));
+      return expression.castTo(erasure(type));
     }
     return expression;
   }
@@ -114,6 +115,14 @@ final class ExperimentalSwitchingProviderDependencyRepresentation {
     return requestKind.equals(RequestKind.INSTANCE)
         && !isTypeAccessibleFrom(type, shardImplementation.name().packageName())
         && isRawTypeAccessible(type, shardImplementation.name().packageName());
+  }
+
+  // TODO(bcorso): This is the last usage of erasure that needs to be cleaned up. Currently, it's
+  // only used for the experimental mode, so leaving it for now.
+  private XType erasure(XType type) {
+    return toXProcessing(
+        toJavac(processingEnv).getTypeUtils().erasure(toJavac(type)), // ALLOW_TYPES_ELEMENTS
+        processingEnv);
   }
 
   @AssistedFactory

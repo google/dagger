@@ -30,7 +30,6 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.squareup.javapoet.ClassName;
@@ -166,14 +165,13 @@ final class ExperimentalSwitchingProviders {
           throw new IllegalArgumentException("Unexpected binding kind: " + binding.kind());
       }
 
-      XType castedType = shardImplementation.accessibleType(binding.contributedType());
       return CodeBlock.of(
           "new $T<$L>($L)",
           switchingProviderType,
           // Add the type parameter explicitly when the binding is scoped because Java can't resolve
           // the type when wrapped. For example, the following will error:
           //   fooProvider = DoubleCheck.provider(new SwitchingProvider<>(1));
-          CodeBlock.of("$T", castedType.getTypeName()),
+          CodeBlock.of("$T", shardImplementation.accessibleTypeName(binding.contributedType())),
           switchingProviderDependencies.isEmpty()
               ? CodeBlock.of("$L", switchIds.get(key))
               : CodeBlock.of("$L, $L", switchIds.get(key), switchingProviderDependencies));

@@ -159,13 +159,6 @@ public final class XProcessingEnvs {
     }
   }
 
-  /** Returns the erasure of the given type. */
-  public static XType erasure(XType type, XProcessingEnv processingEnv) {
-    return toXProcessing(
-        toJavac(processingEnv).getTypeUtils().erasure(toJavac(type)), // ALLOW_TYPES_ELEMENTS
-        processingEnv);
-  }
-
   /** Returns a primitive int {@link XType}. */
   public static XType getPrimitiveIntType(XProcessingEnv processingEnv) {
     return toXProcessing(

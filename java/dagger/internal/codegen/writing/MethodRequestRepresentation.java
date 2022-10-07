@@ -17,11 +17,11 @@
 package dagger.internal.codegen.writing;
 
 import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.javapoet.ExpressionType;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 
 /** A binding expression that wraps another in a nullary method on the component. */
@@ -54,7 +54,7 @@ abstract class MethodRequestRepresentation extends RequestRepresentation {
   }
 
   /** Returns the return type for the dependency request. */
-  protected abstract XType returnType();
+  protected abstract ExpressionType returnType();
 
   /** Returns the method call. */
   protected abstract CodeBlock methodCall();

@@ -28,11 +28,8 @@ import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessibl
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.xprocessing.MethodSpecs.overriding;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
-import static dagger.internal.codegen.xprocessing.XTypes.isAssignableTo;
 
 import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
@@ -74,7 +71,6 @@ public final class ComponentRequestRepresentations {
   private final ProductionBindingRepresentation.Factory productionBindingRepresentationFactory;
   private final ExperimentalSwitchingProviderDependencyRepresentation.Factory
       experimentalSwitchingProviderDependencyRepresentationFactory;
-  private final XProcessingEnv processingEnv;
   private final Map<Binding, BindingRepresentation> representations = new HashMap<>();
   private final Map<Binding, ExperimentalSwitchingProviderDependencyRepresentation>
       experimentalSwitchingProviderDependencyRepresentations = new HashMap<>();
@@ -89,8 +85,7 @@ public final class ComponentRequestRepresentations {
       ProvisionBindingRepresentation.Factory provisionBindingRepresentationFactory,
       ProductionBindingRepresentation.Factory productionBindingRepresentationFactory,
       ExperimentalSwitchingProviderDependencyRepresentation.Factory
-          experimentalSwitchingProviderDependencyRepresentationFactory,
-      XProcessingEnv processingEnv) {
+          experimentalSwitchingProviderDependencyRepresentationFactory) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
@@ -101,7 +96,6 @@ public final class ComponentRequestRepresentations {
     this.experimentalSwitchingProviderDependencyRepresentationFactory =
         experimentalSwitchingProviderDependencyRepresentationFactory;
     this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
-    this.processingEnv = processingEnv;
   }
 
   /**
@@ -187,7 +181,7 @@ public final class ComponentRequestRepresentations {
     if (dependencyRequest.kind().equals(RequestKind.INSTANCE)
         && !isTypeAccessibleFrom(dependencyType, requestingClass.packageName())
         && isRawTypeAccessible(dependencyType, requestingClass.packageName())) {
-      return dependencyExpression.castTo(erasure(dependencyType, processingEnv));
+      return dependencyExpression.castTo(dependencyType.getRawType());
     }
 
     return dependencyExpression;
@@ -247,7 +241,7 @@ public final class ComponentRequestRepresentations {
         componentMethod.methodElement()
             .asMemberOf(componentImplementation.graph().componentTypeElement().getType())
             .getReturnType();
-    return !isVoid(returnType) && !isAssignableTo(expression.type(), returnType)
+    return !isVoid(returnType) && !expression.type().isAssignableTo(returnType)
         ? expression.castTo(returnType)
         : expression;
   }

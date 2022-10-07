@@ -20,13 +20,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.javapoet.ExpressionType;
 
 /**
  * A binding expression that implements and uses a component method.
@@ -37,7 +37,6 @@ final class ComponentMethodRequestRepresentation extends MethodRequestRepresenta
   private final RequestRepresentation wrappedRequestRepresentation;
   private final ComponentImplementation componentImplementation;
   private final ComponentMethodDescriptor componentMethod;
-  private final XProcessingEnv processingEnv;
 
   @AssistedInject
   ComponentMethodRequestRepresentation(
@@ -49,7 +48,6 @@ final class ComponentMethodRequestRepresentation extends MethodRequestRepresenta
     this.wrappedRequestRepresentation = checkNotNull(wrappedRequestRepresentation);
     this.componentMethod = checkNotNull(componentMethod);
     this.componentImplementation = componentImplementation;
-    this.processingEnv = processingEnv;
   }
 
   @Override
@@ -74,8 +72,8 @@ final class ComponentMethodRequestRepresentation extends MethodRequestRepresenta
   }
 
   @Override
-  protected XType returnType() {
-    return componentMethod.methodElement().getReturnType();
+  protected ExpressionType returnType() {
+    return ExpressionType.create(componentMethod.methodElement().getReturnType());
   }
 
   @AssistedFactory

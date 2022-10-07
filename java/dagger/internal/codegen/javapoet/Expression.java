@@ -18,6 +18,7 @@ package dagger.internal.codegen.javapoet;
 
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 
+import androidx.room.compiler.processing.XRawType;
 import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.CodeBlock;
 
@@ -36,16 +37,21 @@ import com.squareup.javapoet.CodeBlock;
  * java.lang.Object} and not {@code FooImpl}.
  */
 public final class Expression {
-  private final XType type;
+  private final ExpressionType type;
   private final CodeBlock codeBlock;
 
-  private Expression(XType type, CodeBlock codeBlock) {
+  private Expression(ExpressionType type, CodeBlock codeBlock) {
     this.type = type;
     this.codeBlock = codeBlock;
   }
 
   /** Creates a new {@link Expression} with a {@link XType} and {@link CodeBlock}. */
   public static Expression create(XType type, CodeBlock expression) {
+    return new Expression(ExpressionType.create(type), expression);
+  }
+
+  /** Creates a new {@link Expression} with a {@link ExpressionType} and {@link CodeBlock}. */
+  public static Expression create(ExpressionType type, CodeBlock expression) {
     return new Expression(type, expression);
   }
 
@@ -54,7 +60,7 @@ public final class Expression {
    * Object[]) format, and arguments}.
    */
   public static Expression create(XType type, String format, Object... args) {
-    return new Expression(type, CodeBlock.of(format, args));
+    return create(type, CodeBlock.of(format, args));
   }
 
   /** Returns a new expression that casts the current expression to {@code newType}. */
@@ -62,16 +68,25 @@ public final class Expression {
     return create(newType, CodeBlock.of("($T) $L", newType.getTypeName(), codeBlock));
   }
 
+  /** Returns a new expression that casts the current expression to {@code newType}. */
+  public Expression castTo(XRawType newRawType) {
+    return create(
+        ExpressionType.create(newRawType, type.getProcessingEnv()),
+        CodeBlock.of("($T) $L", newRawType.getTypeName(), codeBlock));
+  }
+
   /**
    * Returns a new expression that {@link #castTo(XType)} casts the current expression to its boxed
    * type if this expression has a primitive type.
    */
   public Expression box() {
-    return isPrimitive(type) ? castTo(type.boxed()) : this;
+    return type.asType().isPresent() && isPrimitive(type.asType().get())
+        ? castTo(type.asType().get().boxed())
+        : this;
   }
 
   /** The {@link XType type} to which the expression evaluates. */
-  public XType type() {
+  public ExpressionType type() {
     return type;
   }
 

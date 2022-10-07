@@ -63,6 +63,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.base.ComponentCreatorKind;
@@ -581,8 +582,8 @@ public final class ComponentImplementation {
      *
      * <p>This method checks accessibility for public types and package private types.
      */
-    XType accessibleType(XType type) {
-      return Accessibility.accessibleType(type, name(), processingEnv);
+    TypeName accessibleTypeName(XType type) {
+      return Accessibility.accessibleTypeName(type, name(), processingEnv);
     }
 
     /**
@@ -596,17 +597,20 @@ public final class ComponentImplementation {
 
     // TODO(dpb): Consider taking FieldSpec, and returning identical FieldSpec with unique name?
     /** Adds the given field to the component. */
+    @Override
     public void addField(FieldSpecKind fieldKind, FieldSpec fieldSpec) {
       fieldSpecsMap.put(fieldKind, fieldSpec);
     }
 
     // TODO(dpb): Consider taking MethodSpec, and returning identical MethodSpec with unique name?
     /** Adds the given method to the component. */
+    @Override
     public void addMethod(MethodSpecKind methodKind, MethodSpec methodSpec) {
       methodSpecsMap.put(methodKind, methodSpec);
     }
 
     /** Adds the given type to the component. */
+    @Override
     public void addType(TypeSpecKind typeKind, TypeSpec typeSpec) {
       typeSpecsMap.put(typeKind, typeSpec);
     }

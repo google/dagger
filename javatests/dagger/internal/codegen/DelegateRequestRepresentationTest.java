@@ -16,16 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
 import androidx.room.compiler.processing.util.Source;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -334,11 +328,10 @@ public class DelegateRequestRepresentationTest {
             });
   }
 
-  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void castedToRawType() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -359,8 +352,8 @@ public class DelegateRequestRepresentationTest {
             "  @Named(\"named\")",
             "  String namedString(String string);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+         CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -376,20 +369,19 @@ public class DelegateRequestRepresentationTest {
             "  @Named(\"named\") Provider<String> namedString();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
-  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void doubleBinds() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -408,8 +400,8 @@ public class DelegateRequestRepresentationTest {
             "  @Binds",
             "  Object object(CharSequence charSequence);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -423,23 +415,25 @@ public class DelegateRequestRepresentationTest {
             "  Provider<Object> object();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
-  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void inlineFactoryOfInacessibleType() throws Exception {
-    JavaFileObject supertype =
-        JavaFileObjects.forSourceLines(
-            "other.Supertype", "package other;", "", "public interface Supertype {}");
-    JavaFileObject injectableSubtype =
-        JavaFileObjects.forSourceLines(
+    Source supertype =
+        CompilerTests.javaSource(
+            "other.Supertype",
+            "package other;",
+            "",
+            "public interface Supertype {}");
+    Source injectableSubtype =
+        CompilerTests.javaSource(
             "other.Subtype",
             "package other;",
             "",
@@ -450,8 +444,8 @@ public class DelegateRequestRepresentationTest {
             // to be referenced with an inline Subtype_Factory.create()
             "  @Inject Subtype() {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "other.TestModule",
             "package other;",
             "",
@@ -462,8 +456,8 @@ public class DelegateRequestRepresentationTest {
             "public interface TestModule {",
             "  @Binds Supertype to(Subtype subtype);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.RequestsSubtypeAsProvider",
             "package test;",
             "",
@@ -475,13 +469,14 @@ public class DelegateRequestRepresentationTest {
             "  Provider<other.Supertype> supertypeProvider();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(supertype, injectableSubtype, module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerRequestsSubtypeAsProvider")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerRequestsSubtypeAsProvider"));
+    CompilerTests.daggerCompiler(supertype, injectableSubtype, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/DaggerRequestsSubtypeAsProvider"));
+            });
   }
 
   @Test

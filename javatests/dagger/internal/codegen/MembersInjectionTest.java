@@ -16,27 +16,14 @@
 
 package dagger.internal.codegen;
 
-import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
 import androidx.room.compiler.processing.util.Source;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.Set;
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.RoundEnvironment;
-import javax.lang.model.element.TypeElement;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -420,8 +407,8 @@ public class MembersInjectionTest {
 
   @Test
   public void componentWithNestingAndGeneratedType() {
-    JavaFileObject nestedTypesFile =
-        JavaFileObjects.forSourceLines(
+    Source nestedTypesFile =
+        CompilerTests.javaSource(
             "test.OuterType",
             "package test;",
             "",
@@ -429,7 +416,7 @@ public class MembersInjectionTest {
             "import javax.inject.Inject;",
             "",
             "final class OuterType {",
-            "  @Inject GeneratedType generated;",
+            "  @Inject GeneratedInjectType generated;",
             "  static class A {",
             "    @Inject A() {}",
             "  }",
@@ -441,85 +428,23 @@ public class MembersInjectionTest {
             "    void inject(B b);",
             "  }",
             "}");
-    JavaFileObject bMembersInjector =
-        JavaFileObjects.forSourceLines(
-            "test.OuterType_B_MembersInjector",
-            "package test;",
-            "",
-            GeneratedLines.generatedImports(
-                "import dagger.MembersInjector;",
-                "import dagger.internal.InjectedFieldSignature;",
-                "import dagger.internal.QualifierMetadata;",
-                "import javax.inject.Provider;"),
-            "",
-            "@QualifierMetadata",
-            GeneratedLines.generatedAnnotations(),
-            "public final class OuterType_B_MembersInjector",
-            "    implements MembersInjector<OuterType.B> {",
-            "  private final Provider<OuterType.A> aProvider;",
-            "",
-            "  public OuterType_B_MembersInjector(Provider<OuterType.A> aProvider) {",
-            "    this.aProvider = aProvider;",
-            "  }",
-            "",
-            "  public static MembersInjector<OuterType.B> create(",
-            "      Provider<OuterType.A> aProvider) {",
-            "    return new OuterType_B_MembersInjector(aProvider);",
-            "  }",
-            "",
-            "  @Override",
-            "  public void injectMembers(OuterType.B instance) {",
-            "    injectA(instance, aProvider.get());",
-            "  }",
-            "",
-            "  @InjectedFieldSignature(\"test.OuterType.B.a\")",
-            "  public static void injectA(Object instance, Object a) {",
-            "    ((OuterType.B) instance).a = (OuterType.A) a;",
-            "  }",
-            "}");
-    assertAbout(javaSource())
-        .that(nestedTypesFile)
-        .withCompilerOptions(compilerMode.javacopts())
-        .processedWith(
-            new ComponentProcessor(),
-            new AbstractProcessor() {
-              private boolean done;
+    TypeSpec generatedInjectType =
+        TypeSpec.classBuilder("GeneratedInjectType")
+            .addMethod(
+                MethodSpec.constructorBuilder()
+                    .addAnnotation(TypeNames.INJECT_JAVAX)
+                    .build())
+            .build();
 
-              @Override
-              public Set<String> getSupportedAnnotationTypes() {
-                return ImmutableSet.of("*");
-              }
-
-              @Override
-              public boolean process(
-                  Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-                if (!done) {
-                  done = true;
-                  try (Writer writer =
-                      processingEnv
-                          .getFiler()
-                          .createSourceFile("test.GeneratedType")
-                          .openWriter()) {
-                    writer.write(
-                        Joiner.on('\n')
-                            .join(
-                                "package test;",
-                                "",
-                                "import javax.inject.Inject;",
-                                "",
-                                "class GeneratedType {",
-                                "  @Inject GeneratedType() {}",
-                                "}"));
-                  } catch (IOException e) {
-                    throw new RuntimeException(e);
-                  }
-                }
-                return false;
-              }
-            })
-        .compilesWithoutError()
-        .and()
-        .generatesSources(bMembersInjector);
+    CompilerTests.daggerCompiler(nestedTypesFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .withProcessingSteps(() -> new GeneratingProcessingStep("test", generatedInjectType))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/OuterType_B_MembersInjector"));
+            });
   }
 
   @Test
@@ -900,17 +825,16 @@ public class MembersInjectionTest {
             });
   }
 
-  // TODO(b/231189307): Convert this to XProcessing testing APIs once erasure usage is fixed.
   @Test
   public void accessibleRawType_ofInaccessibleType() throws Exception {
-    JavaFileObject inaccessible =
-        JavaFileObjects.forSourceLines(
+    Source inaccessible =
+        CompilerTests.javaSource(
             "other.Inaccessible",
             "package other;",
             "",
             "class Inaccessible {}");
-    JavaFileObject inaccessiblesModule =
-        JavaFileObjects.forSourceLines(
+    Source inaccessiblesModule =
+        CompilerTests.javaSource(
             "other.InaccessiblesModule",
             "package other;",
             "",
@@ -928,8 +852,8 @@ public class MembersInjectionTest {
             "    return new ArrayList<>();",
             "  }",
             "}");
-    JavaFileObject usesInaccessibles =
-        JavaFileObjects.forSourceLines(
+    Source usesInaccessibles =
+        CompilerTests.javaSource(
             "other.UsesInaccessibles",
             "package other;",
             "",
@@ -940,8 +864,8 @@ public class MembersInjectionTest {
             "  @Inject UsesInaccessibles() {}",
             "  @Inject List<Inaccessible> inaccessibles;",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -955,13 +879,13 @@ public class MembersInjectionTest {
             "  UsesInaccessibles usesInaccessibles();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(inaccessible, inaccessiblesModule, usesInaccessibles, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(inaccessible, inaccessiblesModule, usesInaccessibles, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test

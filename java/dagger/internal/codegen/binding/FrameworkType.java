@@ -18,12 +18,8 @@ package dagger.internal.codegen.binding;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.rewrapType;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.unwrapTypeOrObject;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.wrapType;
 
 import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -76,24 +72,21 @@ public enum FrameworkType {
       CodeBlock codeBlock = to(requestKind, from.codeBlock());
       switch (requestKind) {
         case INSTANCE:
-          return Expression.create(unwrapTypeOrObject(from.type(), processingEnv), codeBlock);
+          return Expression.create(from.type().unwrapType(), codeBlock);
 
         case PROVIDER:
           return from;
 
         case PROVIDER_OF_LAZY:
-          XType lazyType = rewrapType(from.type(), TypeNames.LAZY, processingEnv);
           return Expression.create(
-              wrapType(TypeNames.PROVIDER, lazyType, processingEnv), codeBlock);
+              from.type().rewrapType(TypeNames.LAZY).wrapType(TypeNames.PROVIDER), codeBlock);
 
         case FUTURE:
-          return Expression.create(
-              rewrapType(from.type(), TypeNames.LISTENABLE_FUTURE, processingEnv), codeBlock);
+          return Expression.create(from.type().rewrapType(TypeNames.LISTENABLE_FUTURE), codeBlock);
 
         default:
           return Expression.create(
-              rewrapType(from.type(), RequestKinds.frameworkClassName(requestKind), processingEnv),
-              codeBlock);
+              from.type().rewrapType(RequestKinds.frameworkClassName(requestKind)), codeBlock);
       }
     }
   },
@@ -120,7 +113,7 @@ public enum FrameworkType {
       switch (requestKind) {
         case FUTURE:
           return Expression.create(
-              rewrapType(from.type(), TypeNames.LISTENABLE_FUTURE, processingEnv),
+              from.type().rewrapType(TypeNames.LISTENABLE_FUTURE),
               to(requestKind, from.codeBlock()));
 
         case PRODUCER:

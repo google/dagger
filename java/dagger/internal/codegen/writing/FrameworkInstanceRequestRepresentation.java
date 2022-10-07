@@ -26,6 +26,7 @@ import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.javapoet.ExpressionType;
 
 /** A binding expression that uses a {@link FrameworkType} field. */
 abstract class FrameworkInstanceRequestRepresentation extends RequestRepresentation {
@@ -50,12 +51,13 @@ abstract class FrameworkInstanceRequestRepresentation extends RequestRepresentat
   Expression getDependencyExpression(ClassName requestingClass) {
     MemberSelect memberSelect = frameworkInstanceSupplier.memberSelect();
     XType expressionType =
+        wrapType(frameworkType().frameworkClassName(), binding.contributedType(), processingEnv);
+    return Expression.create(
         isTypeAccessibleFrom(binding.contributedType(), requestingClass.packageName())
                 || isInlinedFactoryCreation(memberSelect)
-            ? wrapType(
-                frameworkType().frameworkClassName(), binding.contributedType(), processingEnv)
-            : rawFrameworkType();
-    return Expression.create(expressionType, memberSelect.getExpressionFor(requestingClass));
+            ? ExpressionType.create(expressionType)
+            : ExpressionType.createRawType(expressionType),
+        memberSelect.getExpressionFor(requestingClass));
   }
 
   /** Returns the framework type for the binding. */
@@ -74,10 +76,5 @@ abstract class FrameworkInstanceRequestRepresentation extends RequestRepresentat
    */
   private static boolean isInlinedFactoryCreation(MemberSelect memberSelect) {
     return memberSelect.staticMember();
-  }
-
-  private XType rawFrameworkType() {
-    return processingEnv.getDeclaredType(
-        processingEnv.requireTypeElement(frameworkType().frameworkClassName()));
   }
 }

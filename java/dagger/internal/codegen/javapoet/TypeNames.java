@@ -56,6 +56,7 @@ public final class TypeNames {
   public static final ClassName DELEGATE_FACTORY =
       ClassName.get("dagger.internal", "DelegateFactory");
   public static final ClassName DOUBLE_CHECK = ClassName.get("dagger.internal", "DoubleCheck");
+
   public static final ClassName FACTORY = ClassName.get("dagger.internal", "Factory");
   public static final ClassName INJECTED_FIELD_SIGNATURE =
       ClassName.get("dagger.internal", "InjectedFieldSignature");

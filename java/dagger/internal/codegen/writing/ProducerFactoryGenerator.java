@@ -90,16 +90,19 @@ import javax.inject.Inject;
 public final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBinding> {
   private final CompilerOptions compilerOptions;
   private final KeyFactory keyFactory;
+  private final SourceFiles sourceFiles;
 
   @Inject
   ProducerFactoryGenerator(
       XFiler filer,
       XProcessingEnv processingEnv,
       CompilerOptions compilerOptions,
-      KeyFactory keyFactory) {
+      KeyFactory keyFactory,
+      SourceFiles sourceFiles) {
     super(filer, processingEnv);
     this.compilerOptions = compilerOptions;
     this.keyFactory = keyFactory;
+    this.sourceFiles = sourceFiles;
   }
 
   @Override
@@ -192,7 +195,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
               ? CodeBlock.of("$T.createFutureProduced($L)", PRODUCERS, futureAccess)
               : futureAccess);
     }
-    FutureTransform futureTransform = FutureTransform.create(fields, binding, asyncDependencies);
+    FutureTransform futureTransform = createFutureTransform(fields, binding, asyncDependencies);
 
     collectDependenciesBuilder
         .returns(listenableFutureOf(futureTransform.applyArgType()))
@@ -304,8 +307,22 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
     return getSimpleName(dependency.requestElement().get().xprocessing()) + "Future";
   }
 
+  private FutureTransform createFutureTransform(
+        ImmutableMap<DependencyRequest, FieldSpec> fields,
+        ProductionBinding binding,
+        ImmutableList<DependencyRequest> asyncDependencies) {
+      if (asyncDependencies.isEmpty()) {
+        return new NoArgFutureTransform(fields, binding);
+      } else if (asyncDependencies.size() == 1) {
+        return new SingleArgFutureTransform(
+            fields, binding, Iterables.getOnlyElement(asyncDependencies));
+      } else {
+        return new MultiArgFutureTransform(fields, binding, asyncDependencies);
+      }
+    }
+
   /** Represents the transformation of an input future by a producer method. */
-  abstract static class FutureTransform {
+  abstract class FutureTransform {
     protected final ImmutableMap<DependencyRequest, FieldSpec> fields;
     protected final ProductionBinding binding;
 
@@ -332,26 +349,12 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
     }
 
     CodeBlock frameworkTypeUsageStatement(DependencyRequest dependency) {
-      return SourceFiles.frameworkTypeUsageStatement(
+      return sourceFiles.frameworkTypeUsageStatement(
           CodeBlock.of("$N", fields.get(dependency)), dependency.kind());
-    }
-
-    static FutureTransform create(
-        ImmutableMap<DependencyRequest, FieldSpec> fields,
-        ProductionBinding binding,
-        ImmutableList<DependencyRequest> asyncDependencies) {
-      if (asyncDependencies.isEmpty()) {
-        return new NoArgFutureTransform(fields, binding);
-      } else if (asyncDependencies.size() == 1) {
-        return new SingleArgFutureTransform(
-            fields, binding, Iterables.getOnlyElement(asyncDependencies));
-      } else {
-        return new MultiArgFutureTransform(fields, binding, asyncDependencies);
-      }
     }
   }
 
-  static final class NoArgFutureTransform extends FutureTransform {
+  final class NoArgFutureTransform extends FutureTransform {
     NoArgFutureTransform(
         ImmutableMap<DependencyRequest, FieldSpec> fields, ProductionBinding binding) {
       super(fields, binding);
@@ -380,7 +383,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
     }
   }
 
-  static final class SingleArgFutureTransform extends FutureTransform {
+  final class SingleArgFutureTransform extends FutureTransform {
     private final DependencyRequest asyncDependency;
 
     SingleArgFutureTransform(
@@ -426,7 +429,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
     }
   }
 
-  static final class MultiArgFutureTransform extends FutureTransform {
+  final class MultiArgFutureTransform extends FutureTransform {
     private final ImmutableList<DependencyRequest> asyncDependencies;
 
     MultiArgFutureTransform(

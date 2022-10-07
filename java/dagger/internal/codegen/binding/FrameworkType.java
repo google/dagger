@@ -36,13 +36,18 @@ public enum FrameworkType {
   /** A {@link javax.inject.Provider}. */
   PROVIDER {
     @Override
-    public CodeBlock to(RequestKind requestKind, CodeBlock from) {
+    public CodeBlock to(
+        RequestKind requestKind,
+        CodeBlock from) {
       switch (requestKind) {
         case INSTANCE:
           return CodeBlock.of("$L.get()", from);
 
         case LAZY:
-          return CodeBlock.of("$T.lazy($L)", TypeNames.DOUBLE_CHECK, from);
+          return CodeBlock.of(
+              "$T.lazy($L)",
+              TypeNames.DOUBLE_CHECK,
+              from);
 
         case PROVIDER:
           return from;
@@ -55,11 +60,18 @@ public enum FrameworkType {
 
         case FUTURE:
           return CodeBlock.of(
-              "$T.immediateFuture($L)", TypeNames.FUTURES, to(RequestKind.INSTANCE, from));
+              "$T.immediateFuture($L)",
+              TypeNames.FUTURES,
+              to(
+                  RequestKind.INSTANCE,
+                  from));
 
         case PRODUCED:
           return CodeBlock.of(
-              "$T.successful($L)", TypeNames.PRODUCED, to(RequestKind.INSTANCE, from));
+              "$T.successful($L)",
+              TypeNames.PRODUCED,
+              to(
+                  RequestKind.INSTANCE, from));
 
         default:
           throw new IllegalArgumentException(
@@ -68,8 +80,13 @@ public enum FrameworkType {
     }
 
     @Override
-    public Expression to(RequestKind requestKind, Expression from, XProcessingEnv processingEnv) {
-      CodeBlock codeBlock = to(requestKind, from.codeBlock());
+    public Expression to(
+        RequestKind requestKind,
+        Expression from,
+        XProcessingEnv processingEnv) {
+      CodeBlock codeBlock = to(
+          requestKind,
+          from.codeBlock());
       switch (requestKind) {
         case INSTANCE:
           return Expression.create(from.type().unwrapType(), codeBlock);
@@ -94,7 +111,9 @@ public enum FrameworkType {
   /** A {@link dagger.producers.Producer}. */
   PRODUCER_NODE {
     @Override
-    public CodeBlock to(RequestKind requestKind, CodeBlock from) {
+    public CodeBlock to(
+        RequestKind requestKind,
+        CodeBlock from) {
       switch (requestKind) {
         case FUTURE:
           return CodeBlock.of("$L.get()", from);
@@ -109,15 +128,22 @@ public enum FrameworkType {
     }
 
     @Override
-    public Expression to(RequestKind requestKind, Expression from, XProcessingEnv processingEnv) {
+    public Expression to(
+        RequestKind requestKind,
+        Expression from,
+        XProcessingEnv processingEnv) {
       switch (requestKind) {
         case FUTURE:
           return Expression.create(
               from.type().rewrapType(TypeNames.LISTENABLE_FUTURE),
-              to(requestKind, from.codeBlock()));
+              to(
+                  requestKind,
+                  from.codeBlock()));
 
         case PRODUCER:
-          return Expression.create(from.type(), to(requestKind, from.codeBlock()));
+          return Expression.create(from.type(), to(
+              requestKind,
+              from.codeBlock()));
 
         default:
           throw new IllegalArgumentException(
@@ -188,7 +214,9 @@ public enum FrameworkType {
    * @throws IllegalArgumentException if a valid expression cannot be generated for {@code
    *     requestKind}
    */
-  public abstract CodeBlock to(RequestKind requestKind, CodeBlock from);
+  public abstract CodeBlock to(
+      RequestKind requestKind,
+      CodeBlock from);
 
   /**
    * Returns an {@link Expression} that evaluates to a requested object given an expression that
@@ -201,7 +229,9 @@ public enum FrameworkType {
    *     requestKind}
    */
   public abstract Expression to(
-      RequestKind requestKind, Expression from, XProcessingEnv processingEnv);
+      RequestKind requestKind,
+      Expression from,
+      XProcessingEnv processingEnv);
 
   @Override
   public String toString() {

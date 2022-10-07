@@ -22,8 +22,6 @@ import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedParameters;
 import static dagger.internal.codegen.binding.SourceFiles.bindingTypeElementTypeVariableNames;
-import static dagger.internal.codegen.binding.SourceFiles.frameworkFieldUsages;
-import static dagger.internal.codegen.binding.SourceFiles.frameworkTypeUsageStatement;
 import static dagger.internal.codegen.binding.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.binding.SourceFiles.parameterizedGeneratedTypeNameForBinding;
@@ -65,6 +63,7 @@ import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.ProvisionBinding;
+import dagger.internal.codegen.binding.SourceFiles;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
@@ -85,14 +84,17 @@ import javax.inject.Inject;
  */
 public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding> {
   private final CompilerOptions compilerOptions;
+  private final SourceFiles sourceFiles;
 
   @Inject
   FactoryGenerator(
       XFiler filer,
       CompilerOptions compilerOptions,
+      SourceFiles sourceFiles,
       XProcessingEnv processingEnv) {
     super(filer, processingEnv);
     this.compilerOptions = compilerOptions;
+    this.sourceFiles = sourceFiles;
   }
 
   @Override
@@ -259,7 +261,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
         ProvisionMethod.invoke(
             binding,
             request ->
-                frameworkTypeUsageStatement(
+                sourceFiles.frameworkTypeUsageStatement(
                     CodeBlock.of("$N", frameworkFields.get(request)), request.kind()),
             param -> assistedParameters.get(param).name,
             generatedClassNameForBinding(binding),
@@ -283,7 +285,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
                   generatedClassNameForBinding(binding),
                   instance,
                   binding.key().type().xprocessing(),
-                  frameworkFieldUsages(binding.dependencies(), frameworkFields)::get))
+                  sourceFiles.frameworkFieldUsages(binding.dependencies(), frameworkFields)::get))
           .addStatement("return $L", instance);
     } else {
       getMethod.addStatement("return $L", invokeNewInstance);

@@ -64,12 +64,15 @@ import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.RequestKind;
+import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 
 /** Utilities for generating files. */
-public class SourceFiles {
+public final class SourceFiles {
 
   private static final Joiner CLASS_FILE_NAME_JOINER = Joiner.on('_');
+
+  @Inject SourceFiles() {}
 
   /**
    * Generates names and keys for the factory class fields needed to hold the framework classes for
@@ -99,11 +102,14 @@ public class SourceFiles {
                 DependencyVariableNamer.name(dependency)));
   }
 
-  public static CodeBlock frameworkTypeUsageStatement(
+  public CodeBlock frameworkTypeUsageStatement(
       CodeBlock frameworkTypeMemberSelect, RequestKind dependencyKind) {
     switch (dependencyKind) {
       case LAZY:
-        return CodeBlock.of("$T.lazy($L)", DOUBLE_CHECK, frameworkTypeMemberSelect);
+        return CodeBlock.of(
+            "$T.lazy($L)",
+            DOUBLE_CHECK,
+            frameworkTypeMemberSelect);
       case INSTANCE:
       case FUTURE:
         return CodeBlock.of("$L.get()", frameworkTypeMemberSelect);
@@ -121,7 +127,7 @@ public class SourceFiles {
    * Returns a mapping of {@link DependencyRequest}s to {@link CodeBlock}s that {@linkplain
    * #frameworkTypeUsageStatement(CodeBlock, RequestKind) use them}.
    */
-  public static ImmutableMap<DependencyRequest, CodeBlock> frameworkFieldUsages(
+  public ImmutableMap<DependencyRequest, CodeBlock> frameworkFieldUsages(
       ImmutableSet<DependencyRequest> dependencies,
       ImmutableMap<DependencyRequest, FieldSpec> fields) {
     return Maps.toMap(
@@ -318,6 +324,4 @@ public class SourceFiles {
         return SourceVersion.isKeyword(candidateName) ? candidateName + '_' : candidateName;
     }
   }
-
-  private SourceFiles() {}
 }

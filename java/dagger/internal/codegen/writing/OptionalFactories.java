@@ -376,7 +376,8 @@ final class OptionalFactories {
                 spec.optionalKind()
                     .presentExpression(
                         FrameworkType.PROVIDER.to(
-                            spec.valueKind(), CodeBlock.of("$N", delegateField))))
+                            spec.valueKind(),
+                            CodeBlock.of("$N", delegateField))))
             .build();
 
       case PRODUCER_NODE:
@@ -392,7 +393,8 @@ final class OptionalFactories {
                     spec.optionalKind()
                         .presentExpression(
                             FrameworkType.PRODUCER_NODE.to(
-                                spec.valueKind(), CodeBlock.of("$N", delegateField))))
+                                spec.valueKind(),
+                                CodeBlock.of("$N", delegateField))))
                 .build();
 
           case INSTANCE: // return a ListenableFuture<Optional<T>>

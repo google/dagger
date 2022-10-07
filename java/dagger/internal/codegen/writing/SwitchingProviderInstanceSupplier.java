@@ -73,7 +73,9 @@ final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSuppli
         CodeBlock.of(
             "$T.provider($L)",
             binding.scope().isPresent()
-                ? (binding.scope().get().isReusable() ? SINGLE_CHECK : DOUBLE_CHECK)
+                ? (binding.scope().get().isReusable()
+                    ? SINGLE_CHECK
+                    : DOUBLE_CHECK)
                 : SINGLE_CHECK,
             unscoped.creationExpression());
   }

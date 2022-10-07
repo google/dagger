@@ -23,7 +23,6 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.binding.SourceFiles.bindingTypeElementTypeVariableNames;
-import static dagger.internal.codegen.binding.SourceFiles.frameworkFieldUsages;
 import static dagger.internal.codegen.binding.SourceFiles.generateBindingFieldsForDependencies;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.binding.SourceFiles.parameterizedGeneratedTypeNameForBinding;
@@ -60,6 +59,7 @@ import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.FrameworkField;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
+import dagger.internal.codegen.binding.SourceFiles;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.spi.model.DaggerAnnotation;
@@ -72,12 +72,15 @@ import javax.inject.Inject;
  * Generates {@link MembersInjector} implementations from {@link MembersInjectionBinding} instances.
  */
 public final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectionBinding> {
+  private final SourceFiles sourceFiles;
 
   @Inject
   MembersInjectorGenerator(
       XFiler filer,
+      SourceFiles sourceFiles,
       XProcessingEnv processingEnv) {
     super(filer, processingEnv);
+    this.sourceFiles = sourceFiles;
   }
 
   @Override
@@ -196,7 +199,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
             generatedTypeName,
             CodeBlock.of("instance"),
             binding.key().type().xprocessing(),
-            frameworkFieldUsages(binding.dependencies(), dependencyFields)::get));
+            sourceFiles.frameworkFieldUsages(binding.dependencies(), dependencyFields)::get));
 
     if (usesRawFrameworkTypes) {
       injectMembersBuilder.addAnnotation(suppressWarnings(UNCHECKED));

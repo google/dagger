@@ -70,6 +70,11 @@ public abstract class OptionalType {
       return OPTIONAL_KIND_BY_CLASS_NAME.get(type.getClassName());
     }
 
+    /** Returns the {@link ClassName} of this optional kind. */
+    public ClassName className() {
+      return className;
+    }
+
     /** Returns {@code valueType} wrapped in the correct class. */
     public ParameterizedTypeName of(TypeName valueType) {
       return ParameterizedTypeName.get(className, valueType);

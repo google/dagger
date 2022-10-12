@@ -27,7 +27,7 @@ import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConst
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
+import static dagger.internal.codegen.xprocessing.XTypes.erasedTypeName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.nonObjectSuperclass;
 import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
@@ -140,7 +140,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
                       + "Prefer to run the dagger processor over that class instead.",
                   factoryClass.simpleName(),
                   // erasure to strip <T> from msgs.
-                  erasure(binding.key().type().xprocessing(), processingEnv)));
+                  erasedTypeName(binding.key().type().xprocessing())));
         }
       }
     }

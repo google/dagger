@@ -19,12 +19,12 @@ package dagger.internal.codegen.writing;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.erasure;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isPreJava8SourceVersion;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.TypeName;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
@@ -88,15 +88,17 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
                 .getDependencyExpression(bindingRequest(dependency), requestingClass)
                 .codeBlock();
 
-    // If the dependency type is inaccessible, then we have to use Optional.<Object>of(...), or else
-    // we will get "incompatible types: inference variable has incompatible bounds.
     return isTypeAccessibleFrom(
             dependency.key().type().xprocessing(), requestingClass.packageName())
         ? Expression.create(
             binding.key().type().xprocessing(),
             optionalKind.presentExpression(dependencyExpression))
+        // If the dependency type is inaccessible, then we have to use Optional.<Object>of(...), or
+        // else we will get "incompatible types: inference variable has incompatible bounds.
         : Expression.create(
-            erasure(binding.key().type().xprocessing(), processingEnv),
+            processingEnv.getDeclaredType(
+                processingEnv.findTypeElement(optionalKind.className()),
+                processingEnv.findType(TypeName.OBJECT)),
             optionalKind.presentObjectExpression(dependencyExpression));
   }
 

@@ -1326,7 +1326,6 @@ public class ComponentProcessorTest {
           });
   }
 
-  // TODO(b/241158653): Requires allowing extra processors with CompilerTests.daggerCompiler().
   /**
    * We warn when generating a {@link MembersInjector} for a type post-hoc (i.e., if Dagger wasn't
    * invoked when compiling the type). But Dagger only generates {@link MembersInjector}s for types
@@ -1377,31 +1376,20 @@ public class ComponentProcessorTest {
                 .buildOrThrow())
         .compile(
             subject -> {
-              switch (CompilerTests.backend(subject)) {
-                case JAVAC:
-                  subject.hasErrorCount(0);
-                  subject.hasWarningCount(0);
-                  subject.hasNoteContaining(
-                      String.format(
-                          "Generating a MembersInjector for dagger.internal.codegen.%s.",
-                          "ComponentProcessorTestClasses.LocalInjectMemberNoConstructor"));
-                  subject.hasNoteContaining(
-                      String.format(
-                          "Generating a MembersInjector for dagger.internal.codegen.%s.",
-                          "ComponentProcessorTestClasses.LocalInjectMemberWithConstructor"));
-                  subject.hasNoteContaining(
-                      String.format(
-                          "Generating a MembersInjector for dagger.internal.codegen.%s.",
-                          "ComponentProcessorTestClasses.ParentInjectMemberWithConstructor"));
-                  break;
-                case KSP:
-                  // TODO(b/249157946): This should match JAVAC above once this bug is fixed.
-                  subject.hasErrorCount(3);
-                  subject.hasWarningCount(0);
-                  subject.hasErrorContaining("@Inject fields may not be final");
-                  subject.hasErrorContaining("LocalInjectMemberNoConstructor cannot be provided");
-                  break;
-              }
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(0);
+              subject.hasNoteContaining(
+                  String.format(
+                      "Generating a MembersInjector for dagger.internal.codegen.%s.",
+                      "ComponentProcessorTestClasses.LocalInjectMemberNoConstructor"));
+              subject.hasNoteContaining(
+                  String.format(
+                      "Generating a MembersInjector for dagger.internal.codegen.%s.",
+                      "ComponentProcessorTestClasses.LocalInjectMemberWithConstructor"));
+              subject.hasNoteContaining(
+                  String.format(
+                      "Generating a MembersInjector for dagger.internal.codegen.%s.",
+                      "ComponentProcessorTestClasses.ParentInjectMemberWithConstructor"));
             });
   }
 

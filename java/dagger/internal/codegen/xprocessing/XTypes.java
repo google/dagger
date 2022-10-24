@@ -453,7 +453,7 @@ public final class XTypes {
   }
 
   /**
-   * Iterates through the the various types referenced within the given {@code type} and resolves it
+   * Iterates through the various types referenced within the given {@code type} and resolves it
    * if needed.
    */
   public static void resolveIfNeeded(XType type) {

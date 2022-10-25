@@ -34,19 +34,19 @@ final class DaggerC {
   }
 
   private static final class F_CImpl implements Foo.C {
-    private final t_CImpl t_CImpl;
+    private final t_CImpl _t_CImpl;
 
     private final F_CImpl f_CImpl = this;
 
-    private F_CImpl(t_CImpl t_CImpl) {
-      this.t_CImpl = t_CImpl;
+    private F_CImpl(t_CImpl _t_CImpl) {
+      this._t_CImpl = _t_CImpl;
 
 
     }
   }
 
   private static final class t_CImpl implements C {
-    private final t_CImpl t_CImpl = this;
+    private final t_CImpl _t_CImpl = this;
 
     private t_CImpl() {
 
@@ -55,7 +55,7 @@ final class DaggerC {
 
     @Override
     public Foo.C newInstanceC() {
-      return new F_CImpl(t_CImpl);
+      return new F_CImpl(_t_CImpl);
     }
   }
 }

@@ -386,7 +386,14 @@ public final class ComponentImplementation {
                       componentImpl.isNested()
                           ? simpleVariableName(componentImpl.name())
                           : simpleVariableName(component);
-                  FieldSpec.Builder field = FieldSpec.builder(fieldType, fieldName, PRIVATE, FINAL);
+                  FieldSpec.Builder field =
+                      FieldSpec.builder(
+                          fieldType,
+                          fieldName.equals(componentImpl.name().simpleName())
+                              ? "_" + fieldName
+                              : fieldName,
+                          PRIVATE,
+                          FINAL);
                   componentImplementation.componentShard.componentFieldNames.claim(fieldName);
 
                   return field.build();

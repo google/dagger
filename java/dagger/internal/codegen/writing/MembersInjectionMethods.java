@@ -167,7 +167,11 @@ final class MembersInjectionMethods {
 
     MethodSpec method = methodBuilder.build();
     shardImplementation.addMethod(MEMBERS_INJECTION_METHOD, method);
-    return Expression.create(membersInjectedType, CodeBlock.of("$N", method));
+    return Expression.create(
+        membersInjectedType,
+        useStaticInjectionMethod
+            ? CodeBlock.of("$T.$N", shardImplementation.name(), method)
+            : CodeBlock.of("$N", method));
   }
 
   private static ImmutableSet<InjectionSite> injectionSites(Binding binding) {

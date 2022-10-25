@@ -41,7 +41,7 @@ final class DaggerParentComponent {
 
     private final B_SubImpl b_SubImpl;
 
-    private final ts_SubImpl ts_SubImpl = this;
+    private final ts_SubImpl _ts_SubImpl = this;
 
     private ts_SubImpl(ParentComponentImpl parentComponentImpl, F_SubImpl f_SubImpl,
         B_SubImpl b_SubImpl) {

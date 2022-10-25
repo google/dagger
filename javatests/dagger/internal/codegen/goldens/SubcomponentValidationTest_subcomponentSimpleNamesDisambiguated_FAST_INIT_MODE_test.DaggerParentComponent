@@ -36,13 +36,13 @@ final class DaggerParentComponent {
   private static final class tdmltmt_SubImpl implements test.deep.many.levels.that.match.test.Sub {
     private final ParentComponentImpl parentComponentImpl;
 
-    private final t_SubImpl t_SubImpl;
+    private final t_SubImpl _t_SubImpl;
 
-    private final tdmltmt_SubImpl tdmltmt_SubImpl = this;
+    private final tdmltmt_SubImpl _tdmltmt_SubImpl = this;
 
-    private tdmltmt_SubImpl(ParentComponentImpl parentComponentImpl, t_SubImpl t_SubImpl) {
+    private tdmltmt_SubImpl(ParentComponentImpl parentComponentImpl, t_SubImpl _t_SubImpl) {
       this.parentComponentImpl = parentComponentImpl;
-      this.t_SubImpl = t_SubImpl;
+      this._t_SubImpl = _t_SubImpl;
 
 
     }
@@ -51,7 +51,7 @@ final class DaggerParentComponent {
   private static final class t_SubImpl implements Sub {
     private final ParentComponentImpl parentComponentImpl;
 
-    private final t_SubImpl t_SubImpl = this;
+    private final t_SubImpl _t_SubImpl = this;
 
     private t_SubImpl(ParentComponentImpl parentComponentImpl) {
       this.parentComponentImpl = parentComponentImpl;
@@ -61,7 +61,7 @@ final class DaggerParentComponent {
 
     @Override
     public test.deep.many.levels.that.match.test.Sub newDeepSubcomponent() {
-      return new tdmltmt_SubImpl(parentComponentImpl, t_SubImpl);
+      return new tdmltmt_SubImpl(parentComponentImpl, _t_SubImpl);
     }
   }
 

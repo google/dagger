@@ -16,11 +16,10 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.xprocessing.XProcessingEnvs.rewrapType;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
@@ -62,7 +61,10 @@ final class ExperimentalSwitchingProviderDependencyRepresentation {
     this.bindsTypeChecker = bindsTypeChecker;
     this.type =
         isDelegateSetValuesBinding()
-            ? erasure(processingEnv.requireType(TypeNames.COLLECTION))
+            // For convience we allow @Binds @ElementsIntoSet from Collection => Set so that List
+            // can be contributed without converting to a Set first. Thus, here we rewrap the
+            // contributed type from Set<T> => Collection<T> to reflect this.
+            ? rewrapType(binding.contributedType(), TypeNames.COLLECTION, processingEnv)
             : binding.contributedType();
   }
 
@@ -82,8 +84,8 @@ final class ExperimentalSwitchingProviderDependencyRepresentation {
     if (usesExplicitTypeCast(expression, requestKind)) {
       return expression.castTo(type);
     }
-    if (usesErasedTypeCast(requestKind)) {
-      return expression.castTo(erasure(type));
+    if (usesRawTypeCast(requestKind)) {
+      return expression.castTo(type.getRawType());
     }
     return expression;
   }
@@ -111,19 +113,11 @@ final class ExperimentalSwitchingProviderDependencyRepresentation {
         && isTypeAccessibleFrom(type, shardImplementation.name().packageName());
   }
 
-  private boolean usesErasedTypeCast(RequestKind requestKind) {
+  private boolean usesRawTypeCast(RequestKind requestKind) {
     // If a type has inaccessible type arguments, then cast to raw type.
     return requestKind.equals(RequestKind.INSTANCE)
         && !isTypeAccessibleFrom(type, shardImplementation.name().packageName())
         && isRawTypeAccessible(type, shardImplementation.name().packageName());
-  }
-
-  // TODO(bcorso): This is the last usage of erasure that needs to be cleaned up. Currently, it's
-  // only used for the experimental mode, so leaving it for now.
-  private XType erasure(XType type) {
-    return toXProcessing(
-        toJavac(processingEnv).getTypeUtils().erasure(toJavac(type)), // ALLOW_TYPES_ELEMENTS
-        processingEnv);
   }
 
   @AssistedFactory

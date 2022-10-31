@@ -1188,4 +1188,49 @@ public class MembersInjectionTest {
               subject.generatedSource(goldenFileRule.goldenSource("test/DaggerMyComponent"));
             });
   }
+
+  // Regression test for https://github.com/google/dagger/issues/3619
+  @Test
+  public void testQualifierWithEnumInDifferentPackage()
+      throws Exception {
+    Source myEnum =
+        CompilerTests.javaSource(
+            "some.pkg.MyEnum",
+            "package some.pkg;",
+            "",
+            "public enum MyEnum { ONE, TWO }");
+
+    Source myQualifier =
+        CompilerTests.javaSource(
+            "some.other.pkg.MyQualifier",
+            "package some.other.pkg;",
+            "",
+            "import javax.inject.Qualifier;",
+            "import some.pkg.MyEnum;",
+            "",
+            "@Qualifier",
+            "public @interface MyQualifier {",
+            "  MyEnum value();",
+            "}");
+
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import some.other.pkg.MyQualifier;",
+            "import some.pkg.MyEnum;",
+            "",
+            "class Foo {",
+            "  @Inject @MyQualifier(MyEnum.ONE) String str;",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, myQualifier, myEnum)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+            });
+  }
 }

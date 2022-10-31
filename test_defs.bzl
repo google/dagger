@@ -15,7 +15,11 @@
 """This file defines constants useful across the Dagger tests."""
 
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library", "kt_jvm_test")
+load(
+    "@io_bazel_rules_kotlin//kotlin:kotlin.bzl",
+    "kt_jvm_library",
+    "kt_jvm_test",
+)
 
 # Defines a set of build variants and the list of extra javacopts to build with.
 # The key will be appended to the generated test names to ensure uniqueness.
@@ -174,6 +178,9 @@ def _gen_tests(
 
     if not test_only_deps:
         test_only_deps = []
+
+    if not plugins:
+        plugins = []
 
     test_deps = test_only_deps + deps
     if supporting_files:

@@ -76,7 +76,8 @@ final class ExperimentalSwitchingProviderDependencyRepresentation {
             requestKind,
             Expression.create(
                 frameworkType,
-                CodeBlock.of("(($T) dependencies[$L])", frameworkType.getTypeName(), index)),
+                CodeBlock.of(
+                    "(($T) dependencies[$L])", frameworkType.getRawType().getTypeName(), index)),
             processingEnv);
     if (usesExplicitTypeCast(expression, requestKind)) {
       return expression.castTo(type);

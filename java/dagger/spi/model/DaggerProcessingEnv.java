@@ -25,11 +25,19 @@ import javax.annotation.processing.ProcessingEnvironment;
 /** Wrapper type for an element. */
 @AutoValue
 public abstract class DaggerProcessingEnv {
+  /** Represents a type of backend used for compilation. */
+  public enum Backend { JAVAC, KSP }
+
   public static DaggerProcessingEnv from(XProcessingEnv processingEnv) {
     return new AutoValue_DaggerProcessingEnv(processingEnv);
   }
 
   public abstract XProcessingEnv xprocessing();
+
+  /** Returns the backend used in this compilation. */
+  public Backend getBackend() {
+    return Backend.valueOf(xprocessing().getBackend().name());
+  }
 
   public ProcessingEnvironment java() {
     return toJavac(xprocessing());

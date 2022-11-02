@@ -73,8 +73,7 @@ final class DelegateComponentProcessor {
           legacyPlugin ->
               env.getMessager()
                   .printMessage(
-                      // TODO(b/250036454): Use ERROR here instead.
-                      Kind.WARNING,
+                      Kind.ERROR,
                       "Cannot use legacy dagger.spi.BindingGraphPlugin while compiling with KSP: "
                           + legacyPlugin.pluginName()
                           + ". Either compile with KAPT or migrate the plugin to implement "

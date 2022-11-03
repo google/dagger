@@ -17,7 +17,7 @@
 package dagger.functional.producers.subcomponent.sub;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import dagger.functional.producers.ExecutorModule;
+import dagger.functional.producers.subcomponent.ExecutorModule;
 import dagger.producers.ProductionSubcomponent;
 
 @ProductionSubcomponent(modules = {ExecutorModule.class, ChildModule.class})

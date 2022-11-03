@@ -18,7 +18,6 @@ package dagger.functional.producers.subcomponent;
 
 import dagger.Module;
 import dagger.Subcomponent;
-import dagger.functional.producers.ExecutorModule;
 import dagger.producers.ProducerModule;
 import dagger.producers.ProductionComponent;
 import dagger.producers.ProductionSubcomponent;

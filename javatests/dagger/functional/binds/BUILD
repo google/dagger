@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Description:
-#   Functional tests for Dagger Producers
+#   Functional tests for Dagger @Binds usages
 
 load(
     "//:build_defs.bzl",

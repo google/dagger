@@ -17,7 +17,6 @@
 package dagger.functional.producers.badexecutor;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import dagger.functional.producers.ExecutorModule;
 import dagger.producers.ProductionComponent;
 
 /**

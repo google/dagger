@@ -17,7 +17,6 @@
 package dagger.functional.producers.multibindings;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import dagger.functional.producers.ExecutorModule;
 import dagger.functional.producers.multibindings.Qualifiers.EmptyButDeclaredInModule;
 import dagger.functional.producers.multibindings.Qualifiers.EmptyButDeclaredInModuleAndProducerModule;
 import dagger.functional.producers.multibindings.Qualifiers.ObjCount;

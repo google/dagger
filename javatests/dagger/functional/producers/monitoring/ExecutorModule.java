@@ -16,14 +16,31 @@
 
 package dagger.functional.producers.monitoring;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import dagger.functional.producers.monitoring.ThreadQualifiers.EntryPoint;
-import dagger.producers.ProductionComponent;
-import javax.inject.Singleton;
+import com.google.common.util.concurrent.MoreExecutors;
+import dagger.Module;
+import dagger.Provides;
+import dagger.producers.Production;
+import java.util.concurrent.Executor;
 
-@Singleton
-@ProductionComponent(modules = {ExecutorModule.class, MonitoringModule.class, ThreadModule.class})
-interface ThreadMonitoredComponent {
-  @EntryPoint
-  ListenableFuture<ThreadAccumulator> threadAccumulator();
+/**
+ * A module that provides an optionally user-defined executor for a production component, defaulting
+ * to the direct executor.
+ */
+@Module
+public final class ExecutorModule {
+  private final Executor executor;
+
+  public ExecutorModule() {
+    this(MoreExecutors.directExecutor());
+  }
+
+  public ExecutorModule(Executor executor) {
+    this.executor = executor;
+  }
+
+  @Provides
+  @Production
+  Executor executor() {
+    return executor;
+  }
 }

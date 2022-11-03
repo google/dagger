@@ -16,13 +16,31 @@
 
 package dagger.functional.producers.scope;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import dagger.producers.ProductionComponent;
-import java.util.Set;
+import com.google.common.util.concurrent.MoreExecutors;
+import dagger.Module;
+import dagger.Provides;
+import dagger.producers.Production;
+import java.util.concurrent.Executor;
 
-@ProductionComponent(modules = {ExecutorModule.class, ScopedModule.class, SetProducerModule.class})
-interface SetComponent {
-  ScopedObject scopedObject();
+/**
+ * A module that provides an optionally user-defined executor for a production component, defaulting
+ * to the direct executor.
+ */
+@Module
+public final class ExecutorModule {
+  private final Executor executor;
 
-  ListenableFuture<Set<Object>> set();
+  public ExecutorModule() {
+    this(MoreExecutors.directExecutor());
+  }
+
+  public ExecutorModule(Executor executor) {
+    this.executor = executor;
+  }
+
+  @Provides
+  @Production
+  Executor executor() {
+    return executor;
+  }
 }

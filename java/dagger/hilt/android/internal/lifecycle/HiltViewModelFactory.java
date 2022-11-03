@@ -140,6 +140,11 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
       @NonNull SavedStateRegistryOwner owner,
       @Nullable Bundle defaultArgs,
       @NonNull ViewModelProvider.Factory delegateFactory) {
+    return createInternal(activity, delegateFactory);
+  }
+
+  public static ViewModelProvider.Factory createInternal(
+      @NonNull Activity activity, @NonNull ViewModelProvider.Factory delegateFactory) {
     ActivityCreatorEntryPoint entryPoint =
         EntryPoints.get(activity, ActivityCreatorEntryPoint.class);
     return new HiltViewModelFactory(

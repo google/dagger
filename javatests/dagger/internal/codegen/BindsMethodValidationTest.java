@@ -206,11 +206,9 @@ public class BindsMethodValidationTest {
                           + "\n      => element (METHOD): bindObject(test.Child<java.lang.String>)"
                           + "\n      => element (PARAMETER): child"
                           + "\n      => type (DECLARED parameter): test.Child<java.lang.String>"
-                          + "\n      => type (DECLARED supertype): test.Parent<%2$s>"
+                          + "\n      => type (DECLARED supertype): test.Parent<java.lang.String>"
                           + "\n      => type (ERROR supertype): %1$s",
-                      isJavac ? "MissingType" : "error.NonExistentClass",
-                      // TODO(b/249816631): KSP returns unresolved supertypes.
-                      isJavac ? "java.lang.String" : "T"));
+                      isJavac ? "MissingType" : "error.NonExistentClass"));
             });
   }
 
@@ -274,11 +272,9 @@ public class BindsMethodValidationTest {
                           + "\n      => element (INTERFACE): test.TestModule"
                           + "\n      => element (METHOD): bindChild(java.lang.String)"
                           + "\n      => type (DECLARED return type): test.Child<java.lang.String>"
-                          + "\n      => type (DECLARED supertype): test.Parent<%2$s>"
+                          + "\n      => type (DECLARED supertype): test.Parent<java.lang.String>"
                           + "\n      => type (ERROR supertype): %1$s",
-                      isJavac ? "MissingType" : "error.NonExistentClass",
-                      // TODO(b/249816631): KSP returns unresolved supertypes.
-                      isJavac ? "java.lang.String" : "T"));
+                      isJavac ? "MissingType" : "error.NonExistentClass"));
             });
   }
 

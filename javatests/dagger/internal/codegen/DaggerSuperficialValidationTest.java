@@ -554,10 +554,8 @@ public class DaggerSuperficialValidationTest {
                                 "  => element (METHOD): getChild()",
                                 "  => type (DECLARED return type): "
                                     + "test.Outer.Child<java.lang.Long>",
-                                "  => type (DECLARED supertype): test.Outer.Parent<%s>",
+                                "  => type (DECLARED supertype): test.Outer.Parent<java.lang.Long>",
                                 "  => type (ERROR supertype): %s"),
-                            // TODO(b/249816631): KSP returns unresolved supertypes.
-                            isJavac ? "java.lang.Long" : "T",
                             isJavac ? "MissingType<T>" : "error.NonExistentClass"));
               }
             })

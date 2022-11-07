@@ -39,7 +39,7 @@ public final class JavaPoetExt {
         .getEnclosedTypeElements()
         .forEach(nestedTypeElement -> builder.alwaysQualify(getSimpleName(nestedTypeElement)));
 
-    typeElement.getSuperTypes().stream()
+    typeElement.getType().getSuperTypes().stream()
         .filter(XTypes::isDeclared)
         .map(XType::getTypeElement)
         .forEach(superType -> avoidClashesWithNestedClasses(builder, superType));

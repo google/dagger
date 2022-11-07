@@ -58,7 +58,6 @@ import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.ksp.symbol.ClassKind;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.TypeName;
 import dagger.Reusable;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.xprocessing.XAnnotationValues;
@@ -68,10 +67,8 @@ import dagger.internal.codegen.xprocessing.XExecutableTypes;
 import dagger.internal.codegen.xprocessing.XTypes;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -315,23 +312,9 @@ public final class DaggerSuperficialValidation {
     // "$" even after the type has been resolved. Thus, we try to resolve the type as early as
     // possible to prevent using/caching the incorrect TypeName.
     XTypes.resolveIfNeeded(type);
-    validateTypeInternal(desc, type, new HashSet<>());
-  }
-
-  private void validateTypeInternal(String desc, XType type, Set<TypeName> visitedTypeNames) {
-    checkNotNull(type);
     try {
-      // TODO(b/247846778): Due to a bug in XProcessing, KSP typenames sometimes incorrectly have
-      // recursive types, e.g. a wildcard type of `? extends Foo` will have a bounds of
-      // `? extends Foo` instead of `Foo`, leading to infinite loops. Thus, we skip validation if
-      // the type name has already been validated for the given type. This condition can be removed
-      // once the corresponding bug is fixed.
-      if (processingEnv.getBackend() == Backend.KSP && !visitedTypeNames.add(type.getTypeName())) {
-        return;
-      }
       if (isArray(type)) {
-        validateTypeInternal(
-            "array component type", asArray(type).getComponentType(), visitedTypeNames);
+        validateType("array component type", asArray(type).getComponentType());
       } else if (isDeclared(type)) {
         if (isStrictValidationEnabled) {
           // There's a bug in TypeVisitor which will visit the visitDeclared() method rather than
@@ -341,11 +324,10 @@ public final class DaggerSuperficialValidation {
             throw new ValidationException.KnownErrorType(type);
           }
         }
-        type.getTypeArguments()
-            .forEach(typeArg -> validateTypeInternal("type argument", typeArg, visitedTypeNames));
+        type.getTypeArguments().forEach(typeArg -> validateType("type argument", typeArg));
       } else if (isWildcard(type)) {
         if (type.extendsBound() != null) {
-          validateTypeInternal("extends bound type", type.extendsBound(), visitedTypeNames);
+          validateType("extends bound type", type.extendsBound());
         }
       } else if (isErrorKind(type)) {
         throw new ValidationException.KnownErrorType(type);

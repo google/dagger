@@ -30,9 +30,6 @@ fun getAndroidComponentsExtension(project: Project): AndroidComponentsExtensionC
     version >= SimpleAGPVersion(7, 0) -> {
       AndroidComponentsExtensionCompatApi70Impl(project)
     }
-    version >= SimpleAGPVersion(4, 2) -> {
-      AndroidComponentsExtensionCompatApi42Impl(project)
-    }
     else -> {
       error("Android Gradle Plugin $version is not supported")
     }

@@ -18,16 +18,24 @@ package dagger.internal.codegen.bindinggraphvalidation;
 
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getLast;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.base.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.base.RequestKinds.canBeSatisfiedByProductionBinding;
 import static dagger.internal.codegen.binding.DependencyRequestFormatter.DOUBLE_INDENT;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
+import static java.util.stream.Collectors.joining;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.WildcardTypeName;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
 import dagger.internal.codegen.binding.InjectBindingRegistry;
 import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
@@ -43,6 +51,7 @@ import dagger.spi.model.ComponentPath;
 import dagger.spi.model.DiagnosticReporter;
 import dagger.spi.model.Key;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -97,6 +106,29 @@ final class MissingBindingValidator extends ValidationBindingGraphPlugin {
       BindingGraph prunedGraph,
       BindingGraph fullGraph,
       DiagnosticReporter diagnosticReporter) {
+    XType type = missingBinding.key().type().xprocessing();
+    Optional<WildcardTypeName> wildcardTypeArgument = getWildcardTypeArgument(type);
+    String wildcardTypeErrorMessage = "";
+    if (wildcardTypeArgument.isPresent()) {
+      ImmutableSet<Binding> nonWildcardBindings =
+          findNonWildcardType(fullGraph, wildcardTypeArgument.get(), type);
+      if (!nonWildcardBindings.isEmpty()) {
+        wildcardTypeErrorMessage =
+            String.format(
+                "\n"
+                    + "Note: A binding for the invariant type %s exists in the following"
+                    + " components: [%s]. (In Kotlin source, a type like 'Set<Foo>' may"
+                    + " be translated as 'Set<? extends Foo>'. To avoid this implicit"
+                    + " conversion you can add '@JvmSuppressWildcards' on the associated type"
+                    + " argument, e.g. 'Set<@JvmSuppressWildcards Foo>'.)",
+                nonWildcardBindings.iterator().next().key(),
+                nonWildcardBindings.stream()
+                    .map(binding -> binding.componentPath().toString())
+                    .distinct()
+                    .collect(joining(", ")));
+      }
+    }
+
     List<ComponentPath> alternativeComponents =
         fullGraph.bindings(missingBinding.key()).stream()
             .map(Binding::componentPath)
@@ -113,14 +145,50 @@ final class MissingBindingValidator extends ValidationBindingGraphPlugin {
           ERROR,
           fullGraph.componentNode(missingBinding.componentPath()).get(),
           missingBindingErrorMessage(missingBinding, fullGraph)
+              + wildcardTypeErrorMessage
               + diagnosticMessageGeneratorFactory.create(prunedGraph).getMessage(missingBinding));
     } else {
       diagnosticReporter.reportComponent(
           ERROR,
           fullGraph.componentNode(missingBinding.componentPath()).get(),
           missingBindingErrorMessage(missingBinding, fullGraph)
+              + wildcardTypeErrorMessage
               + wrongComponentErrorMessage(missingBinding, alternativeComponents, prunedGraph));
     }
+  }
+
+  private Optional<WildcardTypeName> getWildcardTypeArgument(XType type) {
+    if (!isDeclared(type) || type.getTypeArguments().size() != 1) {
+      return Optional.empty();
+    }
+    // TODO(b/267647646): casting to ParameterizedTypeName isn't necessary once type argument's
+    // information is propagated correctly in xprocessing.
+    ParameterizedTypeName typeName = (ParameterizedTypeName) type.getTypeName();
+    return getOnlyElement(typeName.typeArguments) instanceof WildcardTypeName
+        ? Optional.of((WildcardTypeName) getOnlyElement(typeName.typeArguments))
+        : Optional.empty();
+  }
+
+  // Find if non-wildcard version of the wildcard parameterized type binding exists in the graph.
+  private static ImmutableSet<Binding> findNonWildcardType(
+      BindingGraph graph, WildcardTypeName wildcardType, XType bindingType) {
+    TypeName nonWildcardType =
+        ParameterizedTypeName.get(
+            bindingType.getTypeElement().getClassName(), getBound(wildcardType));
+    return graph.bindings().stream()
+        .filter(binding -> binding.key().type().xprocessing().getTypeName().equals(nonWildcardType))
+        .collect(toImmutableSet());
+  }
+
+  private static TypeName getBound(WildcardTypeName wildcardType) {
+    // Note: The javapoet API returns a list to be extensible, but there's currently no way to get
+    // multiple bounds, and it's not really clear what we should do if there were multiple bounds
+    // so we just assume there's only one for now. The javapoet API also guarantees that there will
+    // always be at least one upper bound -- in the absence of an explicit upper bound the Object
+    // type is used (e.g. Set<?> has an upper bound of Object).
+    return !wildcardType.lowerBounds.isEmpty()
+        ? getOnlyElement(wildcardType.lowerBounds)
+        : getOnlyElement(wildcardType.upperBounds);
   }
 
   private String missingBindingErrorMessage(MissingBinding missingBinding, BindingGraph graph) {
@@ -167,7 +235,7 @@ final class MissingBindingValidator extends ValidationBindingGraphPlugin {
         getComponentFromDependencyEdge(dependencyTrace.get(0), graph, false);
     boolean hasSameComponentName = false;
     for (ComponentPath component : alternativeComponentPath) {
-      message.append("\nA binding for ").append(missingBinding.key()).append(" exists in ");
+      message.append("\nNote: A binding for ").append(missingBinding.key()).append(" exists in ");
       String currentComponentName = component.currentComponent().className().canonicalName();
       if (currentComponentName.contentEquals(missingComponentName)) {
         hasSameComponentName = true;

@@ -1298,4 +1298,213 @@ public class MissingBindingValidationTest {
                   "[foo.Sub] foo.Sub.getObject() [Parent → Child1 → foo.Sub]");
             });
   }
+
+  @Test
+  public void requestWildcardTypeWithNonWildcardTypeBindingProvided_failsWithMissingBinding() {
+    Source component =
+        CompilerTests.javaSource(
+            "test.MyComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Set;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface MyComponent {",
+            "  Foo getFoo();",
+            "  Child getChild();",
+            "}");
+    Source child =
+        CompilerTests.javaSource(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {}");
+    Source childModule =
+        CompilerTests.javaSource(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Set;",
+            "import java.util.HashSet;",
+            "",
+            "@Module",
+            "interface ChildModule {",
+            "  @Provides",
+            "  static Set<? extends Bar> provideBar() {",
+            "    return new HashSet<Bar>();",
+            "  }",
+            "}");
+    Source fooSrc =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import java.util.Set;",
+            "",
+            "class Foo {",
+            "  @Inject Foo(Set<? extends Bar> bar) {}",
+            "}");
+    Source barSrc =
+        CompilerTests.javaSource("test.Bar", "package test;", "", "public interface Bar {}");
+    Source moduleSrc =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.ElementsIntoSet;",
+            "import java.util.Set;",
+            "import java.util.HashSet;",
+            "",
+            "@Module",
+            "public class TestModule {",
+            "   @ElementsIntoSet",
+            "   @Provides",
+            "   Set<Bar> provideBars() {",
+            "     return new HashSet<Bar>();",
+            "   }",
+            "}");
+
+    CompilerTests.daggerCompiler(component, child, childModule, fooSrc, barSrc, moduleSrc)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "Note: A binding for the invariant type Set<Bar> exists in the following"
+                          + " components: [MyComponent].")
+                  .onSource(component)
+                  .onLineContaining("interface MyComponent");
+            });
+  }
+
+  @Test
+  public void
+      injectParameterDoesNotSuppressWildcardGeneration_conflictsWithNonWildcardTypeBinding() {
+    Source component =
+        CompilerTests.javaSource(
+            "test.MyComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Set;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface MyComponent {",
+            "  Foo getFoo();",
+            "}");
+    Source fooSrc =
+        CompilerTests.kotlinSource(
+            "Foo.kt",
+            "package test",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "class Foo @Inject constructor(val bar: Set<Bar>) {}");
+    Source barSrc =
+        CompilerTests.javaSource("test.Bar", "package test;", "", "public interface Bar {}");
+    Source moduleSrc =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.ElementsIntoSet;",
+            "import java.util.Set;",
+            "import java.util.HashSet;",
+            "",
+            "@Module",
+            "public class TestModule {",
+            "   @ElementsIntoSet",
+            "   @Provides",
+            "   Set<Bar> provideBars() {",
+            "     return new HashSet<Bar>();",
+            "   }",
+            "}");
+
+    CompilerTests.daggerCompiler(component, fooSrc, barSrc, moduleSrc)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "Note: A binding for the invariant type Set<Bar> exists in the following"
+                          + " components: [MyComponent].")
+                  .onSource(component)
+                  .onLineContaining("interface MyComponent");
+            });
+  }
+
+  @Test
+  public void injectWildcardTypeWithNonWildcardTypeBindingProvided_failsWithMissingBinding() {
+    Source component =
+        CompilerTests.javaSource(
+            "test.MyComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Set;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface MyComponent {",
+            "  Foo getFoo();",
+            "}");
+    Source fooSrc =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import java.util.Set;",
+            "",
+            "class Foo {",
+            "  @Inject Set<? extends Bar> bar;",
+            "  @Inject Foo() {}",
+            "}");
+    Source barSrc =
+        CompilerTests.javaSource("test.Bar", "package test;", "", "public interface Bar {}");
+    Source moduleSrc =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.ElementsIntoSet;",
+            "import java.util.Set;",
+            "import java.util.HashSet;",
+            "",
+            "@Module",
+            "public class TestModule {",
+            "   @ElementsIntoSet",
+            "   @Provides",
+            "   Set<Bar> provideBars() {",
+            "     return new HashSet<Bar>();",
+            "   }",
+            "}");
+
+    CompilerTests.daggerCompiler(component, fooSrc, barSrc, moduleSrc)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "Note: A binding for the invariant type Set<Bar> exists in the following"
+                          + " components: [MyComponent].")
+                  .onSource(component)
+                  .onLineContaining("interface MyComponent");
+            });
+  }
 }

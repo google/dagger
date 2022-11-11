@@ -7,11 +7,11 @@ runs:
     # Cancel previous runs on the same branch to avoid unnecessary parallel
     # runs of the same job. See https://github.com/google/go-github/pull/1821
     - name: Cancel previous
-      uses: styfle/cancel-workflow-action@0.8.0
+      uses: styfle/cancel-workflow-action@0.11.0
       with:
         access_token: ${{ github.token }}
     - name: 'Check out gh-pages repository'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: 'refs/heads/gh-pages'
         path: gh-pages

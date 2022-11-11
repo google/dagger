@@ -20,35 +20,35 @@ jobs:
     name: 'Validate Dagger version'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/prechecks
   bazel-build:
     name: 'Bazel build'
     needs: validate-latest-dagger-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/bazel-build
   bazel-test:
     name: 'Bazel tests'
     needs: validate-latest-dagger-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/bazel-test
   artifact-java-local-tests:
     name: 'Artifact Java local tests'
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/artifact-java-local-tests
   test-gradle-plugin:
     name: 'Test Hilt Gradle plugin'
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/test-gradle-plugin
   artifact-android-local-tests:
     name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
@@ -58,7 +58,7 @@ jobs:
       matrix:
         agp: ['7.0.0', '7.1.2']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/artifact-android-local-tests
         with:
           agp: '${{ matrix.agp }}'
@@ -69,7 +69,7 @@ jobs:
     # See https://github.com/marketplace/actions/android-emulator-runner
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/artifact-android-emulator-tests
         timeout-minutes: 25
         with:
@@ -87,7 +87,7 @@ jobs:
       matrix: # Run on 16 (PreL), 21 (L), and 26 (O).
         api-level: [16, 21, 26]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/artifact-android-emulator-tests
         timeout-minutes: 25
         with:
@@ -101,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
           java-version: '${{ env.USE_JAVA_VERSION }}'
@@ -109,9 +109,9 @@ jobs:
           server-username: CI_DEPLOY_USERNAME
           server-password: CI_DEPLOY_PASSWORD
       - name: 'Check out repository'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: 'Cache local Maven repository'
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.m2/repository
@@ -120,14 +120,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: 'Cache Bazel files'
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/bazel
           key: ${{ runner.os }}-bazel-build-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-bazel-build-
       - name: 'Cache Gradle files'
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
@@ -167,7 +167,7 @@ jobs:
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/build-gradle-plugin
         with:
           agp: '+'

@@ -33,6 +33,9 @@ deploy_library() {
     library="${library%.*}-shaded.${library##*.}"
   fi
 
+  # Validate that the classes in the library jar begin with expected prefixes.
+  validate_jar $(bazel_output_file $library)
+
   # TODO(bcorso): Consider moving this into the "gen_maven_artifact" macro, this
   # requires having the version checked-in for the build system.
   add_tracking_version \
@@ -95,6 +98,20 @@ add_tracking_version() {
   else
     echo "Could not add tracking version file to $library"
     exit 1
+  fi
+}
+
+validate_jar() {
+  local library=$1
+  if [[ $library == */gwt/libgwt.jar ]]; then
+     python $(dirname $0)/validate-jar-entry-prefixes.py \
+        $library "dagger/,META-INF/,javax/inject/"
+  elif [[ $library == */java/dagger/hilt/android/artifact.aar ]]; then
+     python $(dirname $0)/validate-jar-entry-prefixes.py \
+        $library "dagger/,META-INF/,hilt_aggregated_deps/"
+  else
+     python $(dirname $0)/validate-jar-entry-prefixes.py \
+        $library "dagger/,META-INF/"
   fi
 }
 

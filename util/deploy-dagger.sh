@@ -54,7 +54,7 @@ _deploy \
 # This artifact uses the shaded classes from dagger-spi, so we use the same
 # shading rules so that our references to those classes are shaded the same way.
 _deploy \
-  "com.google.auto.common,dagger.spi.shaded.auto.common;androidx.room.compiler.processing,dagger.spi.shaded.androidx.room.compiler.processing" \
+  "com.google.auto.common,dagger.spi.shaded.auto.common;androidx.room.compiler,dagger.spi.shaded.androidx.room.compiler" \
   java/dagger/internal/codegen/artifact.jar \
   java/dagger/internal/codegen/pom.xml \
   java/dagger/internal/codegen/artifact-src.jar \
@@ -70,7 +70,7 @@ _deploy \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.spi.shaded.auto.common;androidx.room.compiler.processing,dagger.spi.shaded.androidx.room.compiler.processing" \
+  "com.google.auto.common,dagger.spi.shaded.auto.common;androidx.room.compiler,dagger.spi.shaded.androidx.room.compiler" \
   java/dagger/spi/artifact.jar \
   java/dagger/spi/pom.xml \
   java/dagger/spi/artifact-src.jar \

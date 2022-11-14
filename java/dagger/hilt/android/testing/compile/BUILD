@@ -23,9 +23,6 @@ java_library(
         "HiltCompilerTests.java",
     ],
     deps = [
-        "//third_party/java/guava/collect",
-        "//third_party/java/compile_testing",
-        "//third_party/java/junit",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
         "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",
@@ -40,5 +37,8 @@ java_library(
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/testing/compile",
+        "//third_party/java/compile_testing",
+        "//third_party/java/guava/collect",
+        "//third_party/java/junit",
     ],
 )

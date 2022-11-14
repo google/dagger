@@ -27,8 +27,8 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//:dagger_with_compiler",
-        "@maven//:jakarta_inject_jakarta_inject_api",
         "//third_party/java/junit",
         "//third_party/java/truth",
+        "@maven//:jakarta_inject_jakarta_inject_api",
     ],
 )

@@ -28,12 +28,11 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
-        
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
     deps = [
-        "//third_party/java/auto:factory",
         "//:dagger_with_compiler",
+        "//third_party/java/auto:factory",
     ],
 )

@@ -28,9 +28,9 @@ compiler_test(
         "@maven//:androidx_annotation_annotation",
     ],
     deps = [
+        "//java/dagger/hilt/android/testing/compile",
         "//third_party/java/compile_testing",
         "//third_party/java/junit",
         "//third_party/java/truth",
-        "//java/dagger/hilt/android/testing/compile",
     ],
 )

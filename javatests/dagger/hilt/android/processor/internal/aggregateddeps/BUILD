@@ -33,10 +33,10 @@ compiler_test(
         "@androidsdk//:platforms/android-32/android.jar",
     ],
     deps = [
+        "//java/dagger/hilt/android/testing/compile",
         "//third_party/java/compile_testing",
         "//third_party/java/junit",
         "//third_party/java/truth",
-        "//java/dagger/hilt/android/testing/compile",
     ],
 )
 
@@ -52,10 +52,10 @@ compiler_test(
         "@androidsdk//:platforms/android-32/android.jar",
     ],
     deps = [
+        "//java/dagger/hilt/android/testing/compile",
         "//third_party/java/compile_testing",
         "//third_party/java/junit",
         "//third_party/java/truth",
-        "//java/dagger/hilt/android/testing/compile",
     ],
 )
 

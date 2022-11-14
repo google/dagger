@@ -26,7 +26,6 @@ GenJavaTests(
     srcs = ["PropertyQualifierTest.java"],
     functional = True,
     test_only_deps = [
-        
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
@@ -76,7 +75,6 @@ GenJavaTests(
     srcs = ["ObjectModuleTest.java"],
     functional = True,
     test_only_deps = [
-        
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
@@ -105,7 +103,6 @@ GenJavaTests(
     srcs = ["DependsOnGeneratedCodeTest.java"],
     functional = True,
     test_only_deps = [
-        
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
@@ -122,8 +119,8 @@ kt_jvm_library(
     # TODO(danysantiago): Remove 'plugins' once kt_jvm_library supports 'exported_plugins'.
     plugins = ["//javatests/dagger/functional/kotlin/processor:plugin"],
     deps = [
-        "//third_party/java/auto:factory",
         "//:dagger_with_compiler",
+        "//third_party/java/auto:factory",
     ],
 )
 
@@ -132,7 +129,6 @@ GenJavaTests(
     srcs = ["CompanionModuleTest.java"],
     functional = True,
     test_only_deps = [
-        
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",

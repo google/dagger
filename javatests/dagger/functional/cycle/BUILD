@@ -35,8 +35,8 @@ GenJavaTests(
         "//third_party/java/junit",
     ],
     deps = [
-        "//third_party/java/guava/collect",
         "//:dagger_with_compiler",
+        "//third_party/java/guava/collect",
     ],
 )
 

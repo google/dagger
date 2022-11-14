@@ -26,16 +26,15 @@ GenJavaTests(
     ],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     test_only_deps = [
-        
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
     deps = [
-        "//third_party/java/auto:value",
         "//:dagger_with_compiler",
-        "//third_party/java/jsr305_annotations",
         "//javatests/dagger/functional/jdk8:optional_binding_components",
+        "//third_party/java/auto:value",
+        "//third_party/java/jsr305_annotations",
     ],
 )

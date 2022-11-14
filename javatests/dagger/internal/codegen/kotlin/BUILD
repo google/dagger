@@ -39,11 +39,11 @@ kt_compiler_test(
         "//java/dagger/spi",
     ],
     deps = [
+        "//java/dagger/internal/codegen:package_info",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
-        "//java/dagger/internal/codegen:package_info",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
     ],
 )
 
@@ -67,13 +67,13 @@ kt_compiler_test(
         "//java/dagger/spi",
     ],
     deps = [
-        "//third_party/java/guava/collect",
-        "//third_party/java/junit",
-        "//third_party/java/truth",
         "//java/dagger/internal/codegen:package_info",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//third_party/java/guava/collect",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )
 
@@ -97,9 +97,9 @@ kt_compiler_test(
         "//java/dagger/spi",
     ],
     deps = [
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
     ],
 )

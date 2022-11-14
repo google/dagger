@@ -24,9 +24,9 @@ java_library(
     testonly = 1,
     srcs = ["GoldenFileRule.java"],
     deps = [
-        "//third_party/java/guava/io",
-        "//third_party/java/compile_testing",
-        "//third_party/java/junit",
         "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//third_party/java/compile_testing",
+        "//third_party/java/guava/io",
+        "//third_party/java/junit",
     ],
 )

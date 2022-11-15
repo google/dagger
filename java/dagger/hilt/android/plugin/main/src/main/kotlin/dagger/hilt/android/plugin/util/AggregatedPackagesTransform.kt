@@ -46,7 +46,7 @@ abstract class AggregatedPackagesTransform : TransformAction<TransformParameters
     val input = inputArtifactProvider.get().asFile
     when {
       input.isFile -> transformFile(outputs, input)
-      input.isDirectory -> input.walkTopDown().filter { it.isFile }.forEach {
+      input.isDirectory -> input.walkInPlatformIndependentOrder().filter { it.isFile }.forEach {
         transformFile(outputs, it)
       }
       else -> error("File/directory does not exist: ${input.absolutePath}")

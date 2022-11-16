@@ -507,8 +507,8 @@ public final class InjectionTest {
     } catch (IllegalStateException e) {
       assertThat(e)
           .hasMessageThat()
-      .contains(
-      "@WithFragmentBindings Hilt view must be attached to an @AndroidEntryPoint Fragment");
+          .contains(
+              "@WithFragmentBindings Hilt view must be attached to an @AndroidEntryPoint Fragment");
     }
   }
 
@@ -525,7 +525,7 @@ public final class InjectionTest {
     } catch (IllegalStateException e) {
       assertThat(e)
           .hasMessageThat()
-      .contains("Hilt Fragments must be attached to an @AndroidEntryPoint Activity");
+          .contains("Hilt Fragments must be attached to an @AndroidEntryPoint Activity");
     }
   }
 
@@ -538,7 +538,7 @@ public final class InjectionTest {
     } catch (IllegalStateException e) {
       assertThat(e)
           .hasMessageThat()
-      .contains("Hilt view must be attached to an @AndroidEntryPoint Fragment or Activity");
+          .contains("Hilt view must be attached to an @AndroidEntryPoint Fragment or Activity");
     }
   }
 
@@ -554,7 +554,7 @@ public final class InjectionTest {
     } catch (IllegalStateException e) {
       assertThat(e)
           .hasMessageThat()
-      .contains("Hilt view must be attached to an @AndroidEntryPoint Fragment or Activity");
+          .contains("Hilt view must be attached to an @AndroidEntryPoint Fragment or Activity");
     }
   }
 
@@ -566,9 +566,9 @@ public final class InjectionTest {
     } catch (IllegalStateException e) {
       assertThat(e)
           .hasMessageThat()
-      .contains(
-          "Hilt view cannot be created using the application context. "
-              + "Use a Hilt Fragment or Activity context");
+          .contains(
+              "Hilt view cannot be created using the application context. "
+                  + "Use a Hilt Fragment or Activity context");
     }
   }
 

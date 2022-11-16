@@ -120,8 +120,7 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
       Context parent = getParentContext(GeneratedComponentManager.class, allowMissing);
       Preconditions.checkState(
           !(parent instanceof GeneratedComponentManager),
-          "%s, @WithFragmentBindings Hilt view must be attached to an "
-              + "@AndroidEntryPoint Fragment. "
+          "%s, @WithFragmentBindings Hilt view must be attached to an @AndroidEntryPoint Fragment. "
               + "Was attached to context %s",
           view.getClass(),
           parent.getClass().getName());

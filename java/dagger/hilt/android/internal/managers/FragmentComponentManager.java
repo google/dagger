@@ -70,8 +70,7 @@ public class FragmentComponentManager implements GeneratedComponentManager<Objec
 
   private Object createComponent() {
     Preconditions.checkNotNull(
-        fragment.getHost(),
-    "Hilt Fragments must be attached before creating the component.");
+        fragment.getHost(), "Hilt Fragments must be attached before creating the component.");
     Preconditions.checkState(
         fragment.getHost() instanceof GeneratedComponentManager,
         "Hilt Fragments must be attached to an @AndroidEntryPoint Activity. Found: %s",

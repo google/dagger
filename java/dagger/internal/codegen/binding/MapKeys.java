@@ -26,7 +26,8 @@ import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
-import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
+import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
+import static dagger.internal.codegen.xprocessing.XTypes.rewrapType;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -115,7 +116,11 @@ public final class MapKeys {
               + getSimpleName(annotationValueMethod)
               + " cannot be an array");
     }
-    return isPrimitive(annotationValueType) ? annotationValueType.boxed() : annotationValueType;
+    // If the source kind is Kotlin, the annotation value type is seen as KClass rather than Class,
+    // but either way we want the multibinding key to be Class so we rewrap it here.
+    return isTypeOf(annotationValueType, TypeNames.KCLASS)
+        ? rewrapType(annotationValueType, TypeNames.CLASS)
+        : annotationValueType.boxed();
   }
 
   /**

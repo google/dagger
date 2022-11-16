@@ -80,8 +80,7 @@ public final class ExpressionType {
 
   public ExpressionType rewrapType(ClassName wrapper) {
     return optionalType.isPresent()
-        ? ExpressionType.create(
-            XProcessingEnvs.rewrapType(optionalType.get(), wrapper, processingEnv))
+        ? ExpressionType.create(XTypes.rewrapType(optionalType.get(), wrapper))
         : ExpressionType.createRawType(processingEnv.requireType(wrapper));
   }
 

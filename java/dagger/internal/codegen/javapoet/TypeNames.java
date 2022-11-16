@@ -166,6 +166,8 @@ public final class TypeNames {
   public static final ClassName JDK_OPTIONAL = ClassName.get("java.util", "Optional");
   public static final ClassName OVERRIDE = ClassName.get("java.lang", "Override");
   public static final ClassName JVM_STATIC = ClassName.get("kotlin.jvm", "JvmStatic");
+  public static final ClassName CLASS = ClassName.get("java.lang", "Class");
+  public static final ClassName KCLASS = ClassName.get("kotlin.reflect", "KClass");
 
   /**
    * {@link TypeName#VOID} is lowercase-v {@code void} whereas this represents the class, {@link

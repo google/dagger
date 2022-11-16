@@ -368,6 +368,30 @@ public final class XTypes {
   }
 
   /**
+   * Returns {@code type}'s single type argument wrapped in {@code wrappingClass}.
+   *
+   * <p>For example, if {@code type} is {@code List<Number>} and {@code wrappingClass} is {@code
+   * Set.class}, this will return {@code Set<Number>}.
+   *
+   * <p>If {@code type} has no type parameters, returns a {@link XType} for {@code wrappingClass} as
+   * a raw type.
+   *
+   * @throws IllegalArgumentException if {@code} has more than one type argument.
+   */
+  public static XType rewrapType(XType type, ClassName wrappingClassName) {
+    XProcessingEnv processingEnv = getProcessingEnv(type);
+    XTypeElement wrappingType = processingEnv.requireTypeElement(wrappingClassName.canonicalName());
+    switch (type.getTypeArguments().size()) {
+      case 0:
+        return processingEnv.getDeclaredType(wrappingType);
+      case 1:
+        return processingEnv.getDeclaredType(wrappingType, getOnlyElement(type.getTypeArguments()));
+      default:
+        throw new IllegalArgumentException(type + " has more than 1 type argument");
+    }
+  }
+
+  /**
    * Returns a string representation of {@link XType} that is independent of the backend
    * (javac/ksp).
    */

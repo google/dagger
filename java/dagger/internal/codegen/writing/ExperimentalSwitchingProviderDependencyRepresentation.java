@@ -19,7 +19,7 @@ package dagger.internal.codegen.writing;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.rewrapType;
+import static dagger.internal.codegen.xprocessing.XTypes.rewrapType;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
@@ -64,7 +64,7 @@ final class ExperimentalSwitchingProviderDependencyRepresentation {
             // For convience we allow @Binds @ElementsIntoSet from Collection => Set so that List
             // can be contributed without converting to a Set first. Thus, here we rewrap the
             // contributed type from Set<T> => Collection<T> to reflect this.
-            ? rewrapType(binding.contributedType(), TypeNames.COLLECTION, processingEnv)
+            ? rewrapType(binding.contributedType(), TypeNames.COLLECTION)
             : binding.contributedType();
   }
 

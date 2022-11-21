@@ -64,7 +64,7 @@ public final class ServiceComponentManager implements GeneratedComponentManager<
     Application application = service.getApplication();
     Preconditions.checkState(
         application instanceof GeneratedComponentManager,
-        "Hilt service must be attached to an @AndroidEntryPoint Application. Found: %s",
+        "Hilt service must be attached to an @HiltAndroidApp Application. Found: %s",
         application.getClass());
 
     return EntryPoints.get(application, ServiceComponentBuilderEntryPoint.class)

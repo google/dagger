@@ -63,8 +63,10 @@ public final class AndroidEntryPointProcessor extends BaseProcessor {
           ProcessorErrors.checkState(
               projectType == GradleProjectType.APP,
               element,
-              "Application class annotated with @HiltAndroidApp has to be defined in "
-                  + "an android application project");
+              "Application class, %s, annotated with @HiltAndroidApp must be defined in a "
+                  + "Gradle android application module (i.e. contains a build.gradle file with "
+                  + "`plugins { id 'com.android.application' }`).",
+              metadata.element().getQualifiedName());
         }
 
         // The generated application references the generated component so they must be generated

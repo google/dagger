@@ -93,8 +93,9 @@ class HiltGradlePluginTest {
 
     val result = gradleRunner.buildAndFail()
     assertThat(result.getOutput()).contains(
-      "Application class annotated with @HiltAndroidApp has to be defined in an android " +
-          "application project"
+      "Application class, minimal.MyApp, annotated with @HiltAndroidApp must be defined in a "
+          + "Gradle android application module (i.e. contains a build.gradle file with "
+          + "`plugins { id 'com.android.application' }`)."
     )
   }
 }

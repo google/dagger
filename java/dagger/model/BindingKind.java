@@ -98,7 +98,7 @@ public enum BindingKind {
   OPTIONAL,
 
   /**
-   * A binding for {@link dagger.Binds}-annotated method that that delegates from requests for one
+   * A binding for {@link dagger.Binds}-annotated method that delegates from requests for one
    * key to another.
    */
   // TODO(dpb,ronshapiro): This name is confusing and could use work. Not all usages of @Binds

@@ -21,6 +21,7 @@ import static dagger.internal.codegen.extension.DaggerCollectors.onlyElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.getUnboundedWildcardType;
 import static dagger.internal.codegen.xprocessing.XTypes.isAssignableTo;
+import static dagger.internal.codegen.xprocessing.XTypes.rewrapType;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
@@ -74,7 +75,9 @@ public final class BindsTypeChecker {
         return methodParameterType(parameterizedSetType, "add");
       case SET_VALUES:
         // TODO(b/211774331): The left hand side type should be limited to Set types.
-        return methodParameterType(leftHandSide, "addAll");
+        // NOTE: We rewrap the LHS to use java.util.Set before looking for the addAll() method
+        // because Kotlin source may be using kotlin.collection.Set which does not include addAll().
+        return methodParameterType(rewrapType(leftHandSide,  TypeNames.SET), "addAll");
       case MAP:
         XType parameterizedMapType =
             processingEnv.getDeclaredType(mapElement(), unboundedWildcard(), leftHandSide);

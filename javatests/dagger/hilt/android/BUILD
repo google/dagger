@@ -278,8 +278,6 @@ android_local_test(
         # Note: Hilt's bytecode injection doesn't work in Blaze but we disable
         # superclass validation in this test just to verify everything builds.
         "-Adagger.hilt.android.internal.disableAndroidSuperclassValidation=true",
-        # Note: Used to test base classes across java packages.
-        "-Xep:PackageLocation:OFF",
     ],
     manifest_values = {
         "minSdkVersion": "14",

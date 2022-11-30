@@ -42,14 +42,19 @@ def GenJavaTests(
         lib_javacopts = None,
         test_javacopts = None,
         functional = True):
-    has_kotlin_sources = any([
+    has_kotlin_lib_sources = any([
         src
         for src in srcs
         if src.endswith(".kt") and not src.endswith("Test.kt")
     ])
+    has_kotlin_test_sources = any([
+        src
+        for src in srcs
+        if src.endswith("Test.kt")
+    ])
     _GenTests(
-        kt_jvm_library if has_kotlin_sources else java_library,
-        java_test,
+        kt_jvm_library if has_kotlin_lib_sources else java_library,
+        kt_jvm_test if has_kotlin_test_sources else java_test,
         name,
         srcs,
         deps,
@@ -165,7 +170,7 @@ def _gen_tests(
     supporting_files = []
 
     for src in srcs:
-        if src.endswith("Test.java"):
+        if src.endswith("Test.java") or src.endswith("Test.kt"):
             test_files.append(src)
         else:
             supporting_files.append(src)
@@ -186,9 +191,11 @@ def _gen_tests(
     if supporting_files:
         supporting_files_name = name + suffix + "_lib"
         test_deps.append(":" + supporting_files_name)
-        javacopts_kwargs = {"javacopts": ((javacopts or []) + (lib_javacopts or []))}
+        library_javacopts_kwargs = {"javacopts": ((javacopts or []) + (lib_javacopts or []))}
+
+        # TODO(bcorso): Add javacopts explicitly once kt_jvm_test supports them.
         if library_rule_type == kt_jvm_library:
-            javacopts_kwargs = {}
+           library_javacopts_kwargs = {}
         library_rule_type(
             name = supporting_files_name,
             testonly = 1,
@@ -196,14 +203,14 @@ def _gen_tests(
             plugins = plugins,
             tags = tags,
             deps = deps,
-            **javacopts_kwargs
+            **library_javacopts_kwargs
         )
         if (functional and library_rule_type != kt_jvm_library):
             _hjar_test(supporting_files_name, tags)
 
     should_add_goldens = not functional and (test_rule_type == java_test)
     for test_file in test_files:
-        test_name = test_file.replace(".java", "")
+        test_name = test_file.rsplit(".", 1)[0]
         prefix_path = "src/test/java/"
         package_name = native.package_name()
         if package_name.find("javatests/") != -1:
@@ -211,16 +218,21 @@ def _gen_tests(
         if should_add_goldens:
             test_kwargs["resources"] = native.glob(["goldens/%s_*" % test_name])
         test_class = (package_name + "/" + test_name).rpartition(prefix_path)[2].replace("/", ".")
+        test_kwargs_with_javacopts = {"javacopts": ((javacopts or []) + (test_javacopts or []))}
+
+        # TODO(bcorso): Add javacopts explicitly once kt_jvm_test supports them.
+        if test_rule_type == kt_jvm_test:
+           test_kwargs_with_javacopts = {}
+        test_kwargs_with_javacopts.update(test_kwargs)
         test_rule_type(
             name = test_name + suffix,
             srcs = [test_file],
-            javacopts = (javacopts or []) + (test_javacopts or []),
             jvm_flags = jvm_flags,
             plugins = plugins,
             tags = tags,
             test_class = test_class,
             deps = test_deps,
-            **test_kwargs
+            **test_kwargs_with_javacopts
         )
 
 def _hjar_test(name, tags):

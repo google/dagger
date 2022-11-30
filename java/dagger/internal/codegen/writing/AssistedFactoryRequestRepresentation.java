@@ -23,7 +23,6 @@ import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assis
 import static dagger.internal.codegen.writing.AssistedInjectionParameters.assistedFactoryParameterSpecs;
 import static dagger.internal.codegen.xprocessing.MethodSpecs.overriding;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
-import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
@@ -93,7 +92,8 @@ final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
     TypeSpec.Builder builder =
         TypeSpec.anonymousClassBuilder("")
             .addMethod(
-                MethodSpec.methodBuilder(getSimpleName(factoryMethod))
+                // We're overriding the method so we have to use the jvm name here.
+                MethodSpec.methodBuilder(factoryMethod.getJvmName())
                     .addModifiers(factoryOverride.modifiers)
                     .addTypeVariables(factoryOverride.typeVariables)
                     .returns(factoryOverride.returnType)

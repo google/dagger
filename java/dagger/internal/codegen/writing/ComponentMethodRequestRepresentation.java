@@ -17,7 +17,6 @@
 package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import com.squareup.javapoet.CodeBlock;
@@ -68,7 +67,7 @@ final class ComponentMethodRequestRepresentation extends MethodRequestRepresenta
 
   @Override
   protected CodeBlock methodCall() {
-    return CodeBlock.of("$N()", getSimpleName(componentMethod.methodElement()));
+    return CodeBlock.of("$N()", componentMethod.methodElement().getJvmName());
   }
 
   @Override

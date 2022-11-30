@@ -398,7 +398,7 @@ final class InjectionMethods {
     CodeBlock arguments = copyParameters(builder, parameterNameSet, method.getParameters());
     CodeBlock invocation =
         checkNotNullPolicy.checkForNull(
-            CodeBlock.of("$L.$L($L)", instance, getSimpleName(method), arguments));
+            CodeBlock.of("$L.$L($L)", instance, method.getJvmName(), arguments));
 
     copyThrows(builder, method);
 

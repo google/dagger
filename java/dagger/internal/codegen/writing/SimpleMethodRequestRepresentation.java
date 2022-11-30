@@ -24,7 +24,7 @@ import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBloc
 import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod.requiresInjectionMethod;
-import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isPreJava8SourceVersion;
 
 import androidx.room.compiler.processing.XElement;
@@ -116,7 +116,8 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
       } else {
         module = CodeBlock.of("$T", bindingTypeElement.getClassName());
       }
-      invocation = CodeBlock.of("$L.$L($L)", module, getSimpleName(bindingElement), arguments);
+      invocation =
+          CodeBlock.of("$L.$L($L)", module, asMethod(bindingElement).getJvmName(), arguments);
     } else {
       throw new AssertionError("Unexpected binding element: " + bindingElement);
     }

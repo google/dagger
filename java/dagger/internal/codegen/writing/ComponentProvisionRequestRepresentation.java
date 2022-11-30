@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
-import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -60,7 +60,8 @@ final class ComponentProvisionRequestRepresentation extends RequestRepresentatio
             ? CodeBlock.of("(($T) dependencies[0])", componentRequirement().type().getTypeName())
             : getComponentRequirementExpression(requestingClass);
     CodeBlock invocation =
-        CodeBlock.of("$L.$L()", componentDependency, getSimpleName(binding.bindingElement().get()));
+        CodeBlock.of(
+            "$L.$L()", componentDependency, asMethod(binding.bindingElement().get()).getJvmName());
     return Expression.create(
         binding.contributedPrimitiveType().orElse(binding.key().type().xprocessing()),
         maybeCheckForNull(binding, compilerOptions, invocation));

@@ -108,6 +108,15 @@ public final class XElements {
     } else if (isEnumEntry(element)) {
       return asEnumEntry(element).getName(); // SUPPRESS_GET_NAME_CHECK
     } else if (isMethod(element)) {
+      // Note: We use "jvm name" here rather than "simple name" because simple name is not reliable
+      // in KAPT. In particular, XProcessing relies on matching the method to its descriptor found
+      // in the Kotlin @Metadata to get the simple name. However, this doesn't work for method
+      // descriptors that contain generated types because the stub and @Metadata will disagree due
+      // to the following bug:
+      // https://youtrack.jetbrains.com/issue/KT-35124/KAPT-not-correcting-error-types-in-Kotlin-Metadata-information-produced-for-the-stubs.
+      // In any case, always using the jvm name should be safe; however, it will unfortunately
+      // contain any obfuscation added by kotlinc, e.g. for "internal" methods, which can make the
+      // "simple name" not as nice/short when used for things like error messages or class names.
       return asMethod(element).getJvmName();
     } else if (isConstructor(element)) {
       return "<init>";

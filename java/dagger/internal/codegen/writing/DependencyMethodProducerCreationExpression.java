@@ -21,7 +21,7 @@ import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.anonymousClassBuilder;
 import static dagger.internal.codegen.javapoet.TypeNames.dependencyMethodProducerOf;
 import static dagger.internal.codegen.javapoet.TypeNames.listenableFutureOf;
-import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -97,7 +97,7 @@ final class DependencyMethodProducerCreationExpression
                     .addStatement(
                         "return $N.$L()",
                         dependencyField,
-                        getSimpleName(binding.bindingElement().get()))
+                        asMethod(binding.bindingElement().get()).getJvmName())
                     .build())
             .build());
   }

@@ -18,7 +18,6 @@ package dagger.functional.subcomponent;
 
 import dagger.Module;
 import dagger.Provides;
-import dagger.functional.SomeQualifier;
 
 @Module
 final class UnresolvableChildComponentModule {

@@ -17,7 +17,6 @@
 package dagger.functional.subcomponent;
 
 import dagger.Component;
-import dagger.functional.SomeQualifier;
 import javax.inject.Singleton;
 
 @Component(modules = {ParentModule.class, UnresolvableChildComponentModule.class})

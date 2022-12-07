@@ -15,6 +15,7 @@
 """This file defines constants useful across the Dagger tests."""
 
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
+load("//:build_defs.bzl", "JAVA_RELEASE_MIN")
 load(
     "@io_bazel_rules_kotlin//kotlin:kotlin.bzl",
     "kt_jvm_library",
@@ -39,9 +40,8 @@ def GenJavaTests(
         test_only_deps = None,
         plugins = None,
         javacopts = None,
-        lib_javacopts = None,
-        test_javacopts = None,
-        functional = True):
+        functional = True,
+        require_jdk7_syntax = True):
     has_kotlin_lib_sources = any([
         src
         for src in srcs
@@ -61,9 +61,8 @@ def GenJavaTests(
         test_only_deps,
         plugins,
         javacopts,
-        lib_javacopts,
-        test_javacopts,
         functional,
+        require_jdk7_syntax,
     )
 
 def GenRobolectricTests(
@@ -73,9 +72,8 @@ def GenRobolectricTests(
         test_only_deps = None,
         plugins = None,
         javacopts = None,
-        lib_javacopts = None,
-        test_javacopts = None,
         functional = True,
+        require_jdk7_syntax = True,
         manifest_values = None):
     deps = (deps or []) + ["//:android_local_test_exports"]
     _GenTests(
@@ -87,9 +85,8 @@ def GenRobolectricTests(
         test_only_deps,
         plugins,
         javacopts,
-        lib_javacopts,
-        test_javacopts,
         functional,
+        require_jdk7_syntax,
         test_kwargs = {"manifest_values": manifest_values},
     )
 
@@ -102,9 +99,8 @@ def _GenTests(
         test_only_deps,
         plugins,
         javacopts,
-        lib_javacopts,
-        test_javacopts,
         functional,
+        require_jdk7_syntax,
         test_kwargs = None):
     _gen_tests(
         library_rule_type,
@@ -115,9 +111,8 @@ def _GenTests(
         test_only_deps,
         plugins,
         javacopts,
-        lib_javacopts,
-        test_javacopts,
         functional,
+        require_jdk7_syntax,
         test_kwargs = test_kwargs,
     )
 
@@ -134,9 +129,8 @@ def _GenTests(
                 test_only_deps,
                 plugins,
                 variant_javacopts,
-                lib_javacopts,
-                test_javacopts,
                 functional,
+                require_jdk7_syntax,
                 variant_name,
                 test_kwargs = test_kwargs,
             )
@@ -150,9 +144,8 @@ def _gen_tests(
         test_only_deps,
         plugins,
         javacopts,
-        lib_javacopts,
-        test_javacopts,
         functional,
+        require_jdk7_syntax,
         variant_name = None,
         test_kwargs = None):
     if variant_name:
@@ -187,11 +180,22 @@ def _gen_tests(
     if not plugins:
         plugins = []
 
+    if not javacopts:
+        javacopts = []
+
     test_deps = test_only_deps + deps
     if supporting_files:
         supporting_files_name = name + suffix + "_lib"
         test_deps.append(":" + supporting_files_name)
-        library_javacopts_kwargs = {"javacopts": ((javacopts or []) + (lib_javacopts or []))}
+        if functional and require_jdk7_syntax:
+            # TODO(b/261894425): Decide if we still want to apply JAVA_RELEASE_MIN by default.
+            # Note: Technically, we should also apply JAVA_RELEASE_MIN to tests too, since we have
+            # Dagger code in there as well, but we keep it only on libraries for legacy reasons, and
+            # fixing tests to be jdk7 compatible would require a bit of work. We should decide on
+            # b/261894425 before committing to that work.
+            library_javacopts_kwargs = {"javacopts": javacopts + JAVA_RELEASE_MIN}
+        else:
+            library_javacopts_kwargs = {"javacopts": javacopts}
 
         # TODO(bcorso): Add javacopts explicitly once kt_jvm_test supports them.
         if library_rule_type == kt_jvm_library:
@@ -218,7 +222,7 @@ def _gen_tests(
         if should_add_goldens:
             test_kwargs["resources"] = native.glob(["goldens/%s_*" % test_name])
         test_class = (package_name + "/" + test_name).rpartition(prefix_path)[2].replace("/", ".")
-        test_kwargs_with_javacopts = {"javacopts": ((javacopts or []) + (test_javacopts or []))}
+        test_kwargs_with_javacopts = {"javacopts": javacopts}
 
         # TODO(bcorso): Add javacopts explicitly once kt_jvm_test supports them.
         if test_rule_type == kt_jvm_test:

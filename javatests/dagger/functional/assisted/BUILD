@@ -15,7 +15,7 @@
 # Description:
 #   Functional tests for Dagger
 
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "JAVA_RELEASE_MIN")
+load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenJavaTests")
 
 package(default_visibility = ["//:src"])
@@ -24,7 +24,6 @@ GenJavaTests(
     name = "AssistedFactoryAsQualifiedBindingTest",
     srcs = ["AssistedFactoryAsQualifiedBindingTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//:dagger_with_compiler",
         "//third_party/java/truth",
@@ -36,7 +35,6 @@ GenJavaTests(
     name = "AssistedFactoryBindsTest",
     srcs = ["AssistedFactoryBindsTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//:dagger_with_compiler",
         "//third_party/java/truth",
@@ -48,7 +46,6 @@ GenJavaTests(
     name = "AssistedFactoryDuplicatedParamNamesTest",
     srcs = ["AssistedFactoryDuplicatedParamNamesTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//:dagger_with_compiler",
         "//third_party/java/truth",
@@ -60,7 +57,6 @@ GenJavaTests(
     name = "AssistedFactoryInaccessibleTest",
     srcs = ["AssistedFactoryInaccessibleTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//:dagger_with_compiler",
         "//third_party/java/truth",
@@ -73,7 +69,6 @@ GenJavaTests(
     name = "AssistedFactoryParameterizedTest",
     srcs = ["AssistedFactoryParameterizedTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//:dagger_with_compiler",
         "//third_party/java/truth",
@@ -85,7 +80,6 @@ GenJavaTests(
     name = "AssistedFactoryTest",
     srcs = ["AssistedFactoryTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//:dagger_with_compiler",
         "//third_party/java/truth",
@@ -97,7 +91,6 @@ GenJavaTests(
     name = "AssistedFactoryWithArrayTypesTest",
     srcs = ["AssistedFactoryWithArrayTypesTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//:dagger_with_compiler",
         "//third_party/java/truth",
@@ -109,7 +102,6 @@ GenJavaTests(
     name = "AssistedFactoryWithAssistedInjectParamTest",
     srcs = ["AssistedFactoryWithAssistedInjectParamTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//:dagger_with_compiler",
         "//third_party/java/truth",
@@ -121,7 +113,6 @@ GenJavaTests(
     name = "AssistedFactoryWithMultibindingsTest",
     srcs = ["AssistedFactoryWithMultibindingsTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//:dagger_with_compiler",
         "//third_party/java/truth",
@@ -133,7 +124,6 @@ GenJavaTests(
     name = "AssistedFactoryWithQualifiedTypesTest",
     srcs = ["AssistedFactoryWithQualifiedTypesTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//:dagger_with_compiler",
         "//third_party/java/truth",

@@ -19,7 +19,6 @@ load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
-    "JAVA_RELEASE_MIN",
 )
 load("//:test_defs.bzl", "GenJavaTests")
 
@@ -29,7 +28,6 @@ GenJavaTests(
     name = "producers-functional-tests",
     srcs = glob(["**/*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
-    lib_javacopts = JAVA_RELEASE_MIN,
     deps = [
         "//:producers_with_compiler",
         "//third_party/java/auto:value",

@@ -15,11 +15,7 @@
 # Description:
 #   Functional tests for Dagger subcomponent usages.
 
-load(
-    "//:build_defs.bzl",
-    "DOCLINT_HTML_AND_SYNTAX",
-    "JAVA_RELEASE_MIN",
-)
+load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenJavaTests")
 
 package(default_visibility = ["//:src"])
@@ -28,7 +24,6 @@ GenJavaTests(
     name = "subcomponent",
     srcs = glob(["**/*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     deps = [
         "//:dagger_with_compiler",
         "//third_party/java/auto:factory",

@@ -15,7 +15,7 @@
 # Description:
 #   Functional tests for Dagger
 
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "JAVA_RELEASE_MIN")
+load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenJavaTests")
 
 package(default_visibility = ["//:src"])
@@ -24,7 +24,6 @@ GenJavaTests(
     name = "reusable",
     srcs = glob(["**/*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",

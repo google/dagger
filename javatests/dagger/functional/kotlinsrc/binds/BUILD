@@ -19,7 +19,6 @@ load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
-    "JAVA_RELEASE_MIN",
 )
 load("//:test_defs.bzl", "GenJavaTests")
 
@@ -37,7 +36,6 @@ GenJavaTests(
     # to modify/add to our GenJavaTests infrastructure to make this work.
     srcs = glob(["**/*.kt"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
-    lib_javacopts = JAVA_RELEASE_MIN,
     deps = [
         "//:dagger_with_compiler",
         "//third_party/java/auto:factory",

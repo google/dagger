@@ -20,11 +20,11 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenKtTests")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
+GenKtTests(
     name = "factory",
     srcs = glob(["*.kt"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,

@@ -26,7 +26,10 @@ package(default_visibility = ["//:src"])
 
 GenJavaTests(
     name = "binds",
-    srcs = glob(["**/*.java"]),
+    srcs = glob(["*.java"]),
+    gen_library_deps = [
+        "//javatests/dagger/functional/binds/subpackage",
+    ],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:dagger_with_compiler",

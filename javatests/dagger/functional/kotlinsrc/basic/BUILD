@@ -20,13 +20,16 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenKtTests")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
+GenKtTests(
     name = "basic",
-    srcs = glob(["**/*.kt"]),
+    srcs = glob(["*.kt"]),
+    gen_library_deps = [
+        "//javatests/dagger/functional/kotlinsrc/basic/subpackage",
+    ],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:dagger_with_compiler",

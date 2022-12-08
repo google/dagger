@@ -16,11 +16,11 @@
 #   Functional tests for Dagger builders
 
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenKtTests")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
+GenKtTests(
     name = "BuilderBindsInstanceParameterTest",
     srcs = ["BuilderBindsInstanceParameterTest.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
@@ -35,7 +35,7 @@ GenJavaTests(
     deps = [],
 )
 
-GenJavaTests(
+GenKtTests(
     name = "BuilderTest",
     srcs = ["BuilderTest.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
@@ -50,7 +50,7 @@ GenJavaTests(
     deps = [],
 )
 
-GenJavaTests(
+GenKtTests(
     name = "PrivateConstructorsTest",
     srcs = ["PrivateConstructorsTest.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
@@ -65,7 +65,7 @@ GenJavaTests(
     deps = [],
 )
 
-GenJavaTests(
+GenKtTests(
     name = "BuildMethodCovariantReturnTest",
     srcs = ["BuildMethodCovariantReturnTest.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
@@ -80,7 +80,7 @@ GenJavaTests(
     deps = [],
 )
 
-GenJavaTests(
+GenKtTests(
     name = "BuildMethodCovariantReturnInheritedTest",
     srcs = ["BuildMethodCovariantReturnInheritedTest.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,

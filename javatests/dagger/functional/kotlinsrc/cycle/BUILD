@@ -16,11 +16,11 @@
 #   Functional tests for Dagger cycles with kotlin source
 
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenKtTests")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
+GenKtTests(
     name = "CycleTest",
     srcs = [
         "CycleTest.kt",
@@ -39,7 +39,7 @@ GenJavaTests(
     ],
 )
 
-GenJavaTests(
+GenKtTests(
     name = "DoubleCheckCycleTest",
     srcs = ["DoubleCheckCycleTest.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
@@ -54,7 +54,7 @@ GenJavaTests(
     ],
 )
 
-GenJavaTests(
+GenKtTests(
     name = "LongCycleTest",
     srcs = [
         "LongCycle.kt",

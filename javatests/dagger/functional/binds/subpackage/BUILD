@@ -13,23 +13,20 @@
 # limitations under the License.
 
 # Description:
-#   Functional tests for Dagger basic usages
+#   Functional tests for Dagger @Binds usages
 
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenJavaLibrary")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
-    name = "basic",
+GenJavaLibrary(
+    name = "subpackage",
     srcs = glob(["*.java"]),
-    gen_library_deps = [
-        "//javatests/dagger/functional/basic/subpackage",
-    ],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:dagger_with_compiler",

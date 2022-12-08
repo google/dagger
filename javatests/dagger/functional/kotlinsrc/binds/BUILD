@@ -20,21 +20,16 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenKtTests")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
+GenKtTests(
     name = "binds",
-    # TODO(bcorso): Move "/binds/subpackage" sources into their own build file so that
-    # NotExposed.kt is actaully not exposed. Currently, since kotlin does not support
-    # package visibility, we're using internal visibility which means NotExposed.kt is
-    # still exposed to classes in this package since they're in the same build unit.
-    # The difficulty here is that GenJavaTests creates various variants of each
-    # library and test, so e.g. FooTest_FASTINIT would need to depend on the proper
-    # variant, like /binds/subpackage:subpackage_FASTINIT library, so we'll likely need
-    # to modify/add to our GenJavaTests infrastructure to make this work.
-    srcs = glob(["**/*.kt"]),
+    srcs = glob(["*.kt"]),
+    gen_library_deps = [
+        "//javatests/dagger/functional/kotlinsrc/binds/subpackage",
+    ],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:dagger_with_compiler",

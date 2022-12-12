@@ -17,11 +17,11 @@
 package dagger.hilt.processor.internal;
 
 import static com.google.auto.common.MoreElements.asType;
+import static com.google.auto.common.MoreElements.isType;
 
 import java.util.stream.Collectors;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.QualifiedNameable;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
@@ -160,7 +160,7 @@ public final class ElementDescriptors {
          * specification, section 4.2</a>.
          */
         private String getInternalName(Element element) {
-          try {
+          if (isType(element)) {
             TypeElement typeElement = asType(element);
             switch (typeElement.getNestingKind()) {
               case TOP_LEVEL:
@@ -172,15 +172,7 @@ public final class ElementDescriptors {
               default:
                 throw new IllegalArgumentException("Unsupported nesting kind.");
             }
-          } catch (IllegalArgumentException e) {
-            // Not a TypeElement, try something else...
           }
-
-          if (element instanceof QualifiedNameable) {
-            QualifiedNameable qualifiedNameElement = (QualifiedNameable) element;
-            return qualifiedNameElement.getQualifiedName().toString().replace('.', '/');
-          }
-
           return element.getSimpleName().toString();
         }
       };

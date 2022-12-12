@@ -31,6 +31,8 @@ import static androidx.room.compiler.processing.XTypeKt.isVoid;
 import static androidx.room.compiler.processing.XTypeKt.isVoidObject;
 import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static com.google.auto.common.MoreElements.asType;
+import static com.google.auto.common.MoreElements.isType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -66,14 +68,12 @@ import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XTypeParameterElement;
 import androidx.room.compiler.processing.XVariableElement;
-import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import java.util.Collection;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.QualifiedNameable;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
@@ -501,8 +501,8 @@ public final class XElements {
          * specification, section 4.2</a>.
          */
         private String getInternalName(Element element) {
-          try {
-            TypeElement typeElement = MoreElements.asType(element);
+          if (isType(element)) {
+            TypeElement typeElement = asType(element);
             switch (typeElement.getNestingKind()) {
               case TOP_LEVEL:
                 return typeElement.getQualifiedName().toString().replace('.', '/');
@@ -513,15 +513,7 @@ public final class XElements {
               default:
                 throw new IllegalArgumentException("Unsupported nesting kind.");
             }
-          } catch (IllegalArgumentException e) {
-            // Not a TypeElement, try something else...
           }
-
-          if (element instanceof QualifiedNameable) {
-            QualifiedNameable qualifiedNameElement = (QualifiedNameable) element;
-            return qualifiedNameElement.getQualifiedName().toString().replace('.', '/');
-          }
-
           return element.getSimpleName().toString();
         }
       };

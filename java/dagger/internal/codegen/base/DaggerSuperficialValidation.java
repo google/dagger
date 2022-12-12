@@ -136,7 +136,8 @@ public final class DaggerSuperficialValidation {
           validateType(Ascii.toLowerCase(getKindName(element)), typeElement.getType());
         }
       } else if (isVariableElement(element)) {
-        validateType(Ascii.toLowerCase(getKindName(element)), asVariable(element).getType());
+        validateType(
+            Ascii.toLowerCase(getKindName(element)) + " type", asVariable(element).getType());
       } else if (isExecutable(element)) {
         validateExecutableType(asExecutable(element).getExecutableType());
       } else if (isEnumEntry(element)) {
@@ -265,9 +266,8 @@ public final class DaggerSuperficialValidation {
   public void validateElement(XElement element) {
     checkNotNull(element);
 
-    // Validate the type and annotations first since these are common to all element kinds. We don't
+    // Validate the annotations first since these are common to all element kinds. We don't
     // need to wrap these in try-catch because the *Of() methods are already wrapped.
-    validateTypeOf(element);
     validateAnnotationsOf(element);
 
     // Validate enclosed elements based on the given element's kind.
@@ -294,6 +294,12 @@ public final class DaggerSuperficialValidation {
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception).append(element);
     }
+
+    // Validate the type last. This allows errors on more specific elements to be caught above.
+    // E.g. errors on parameters will be attributed to the parameter elements rather than the method
+    // type, which generally leads to nicer error messages. We don't need to wrap these in try-catch
+    // because the *Of() methods are already wrapped.
+    validateTypeOf(element);
   }
 
   private void validateTypes(String desc, Collection<? extends XType> types) {

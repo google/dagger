@@ -77,7 +77,6 @@ public class DaggerSuperficialValidationTest {
                                 "Validation trace:",
                                 "  => element (CLASS): test.TestClass",
                                 "  => element (METHOD): blah()",
-                                "  => type (EXECUTABLE method): ()%1$s",
                                 "  => type (ERROR return type): %1$s"),
                             isJavac ? "MissingType" : "error.NonExistentClass"));
               }
@@ -117,7 +116,6 @@ public class DaggerSuperficialValidationTest {
                                 "Validation trace:",
                                 "  => element (CLASS): test.TestClass",
                                 "  => element (METHOD): blah()",
-                                "  => type (EXECUTABLE method): ()%1$s",
                                 "  => type (ERROR return type): %1$s"),
                             isJavac ? "<any>" : "error.NonExistentClass"));
               }
@@ -160,8 +158,6 @@ public class DaggerSuperficialValidationTest {
                                 "Validation trace:",
                                 "  => element (CLASS): test.TestClass",
                                 "  => element (METHOD): blah()",
-                                "  => type (EXECUTABLE method): "
-                                    + "()java.util.Map<java.util.Set<?>,%1$s>",
                                 "  => type (DECLARED return type): "
                                     + "java.util.Map<java.util.Set<?>,%1$s>",
                                 "  => type (ERROR type argument): %1$s"),
@@ -217,7 +213,7 @@ public class DaggerSuperficialValidationTest {
             "",
             "@javax.inject.Singleton", // TODO(b/249322175): Used to trigger processing step
             "abstract class TestClass {",
-            "  abstract void foo(MissingType x);",
+            "  abstract void foo(MissingType param);",
             "}");
     CompilerTests.daggerCompiler(javaFileObject)
         .withProcessingSteps(
@@ -240,7 +236,7 @@ public class DaggerSuperficialValidationTest {
                                 "Validation trace:",
                                 "  => element (CLASS): test.TestClass",
                                 "  => element (METHOD): foo(%1$s)",
-                                "  => type (EXECUTABLE method): (%1$s)void",
+                                "  => element (PARAMETER): param",
                                 "  => type (ERROR parameter type): %1$s"),
                             isJavac ? "MissingType" : "error.NonExistentClass"));
               }
@@ -372,7 +368,6 @@ public class DaggerSuperficialValidationTest {
                                 "Validation trace:",
                                 "  => element (CLASS): test.TestClass",
                                 "  => element (METHOD): extendsTest()",
-                                "  => type (EXECUTABLE method): ()java.util.Set<? extends %1$s>",
                                 "  => type (DECLARED return type): java.util.Set<? extends %1$s>",
                                 "  => type (WILDCARD type argument): ? extends %1$s",
                                 "  => type (ERROR extends bound type): %1$s"),

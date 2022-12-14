@@ -18,14 +18,13 @@ package dagger.functional.membersinject;
 
 import dagger.Component;
 import dagger.functional.membersinject.subpackage.a.AGrandchild;
-import dagger.functional.membersinject.subpackage.a.AModule;
 import dagger.functional.membersinject.subpackage.a.AParent;
 import dagger.functional.membersinject.subpackage.b.BChild;
 
 /**
  * A component that tests members injection across packages and subclasses.
  */
-@Component(modules = {AModule.class})
+@Component
 public interface MembersInjectionVisibilityComponent {
   void inject(AParent aParent);
 

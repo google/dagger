@@ -20,28 +20,21 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenJavaLibrary")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
-    name = "membersinject",
-    srcs = glob(["**/*.java"]),
+GenJavaLibrary(
+    name = "child",
+    srcs = [
+        "BChild.java",
+        "BPackagePrivateObject.java",
+    ],
     gen_library_deps = [
-        "//javatests/dagger/functional/membersinject/subpackage/a:grandchild",
         "//javatests/dagger/functional/membersinject/subpackage/a:parent",
-        "//javatests/dagger/functional/membersinject/subpackage/b:child",
     ],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:dagger_with_compiler",
-        "//third_party/java/auto:factory",
-        "//third_party/java/guava/base",
-        "//third_party/java/guava/collect",
-        "//third_party/java/guava/util/concurrent",
-        "//third_party/java/jsr305_annotations",
-        "//third_party/java/jsr330_inject",
-        "//third_party/java/junit",
-        "//third_party/java/truth",
     ],
 )

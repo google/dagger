@@ -29,6 +29,7 @@ import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForB
 import static dagger.internal.codegen.binding.SourceFiles.memberInjectedFieldSignatureForVariable;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.binding.SourceFiles.protectAgainstKeywords;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toConcatenatedCodeBlock;
@@ -46,7 +47,6 @@ import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypeElements.typeVariableNames;
 import static dagger.internal.codegen.xprocessing.XTypes.erasedTypeName;
-import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -311,16 +311,17 @@ final class InjectionMethods {
         ClassName generatedTypeName,
         CodeBlock instanceCodeBlock,
         Function<DependencyRequest, CodeBlock> dependencyUsage) {
-      ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
-      arguments.add(instanceCodeBlock);
-      if (!injectionSite.dependencies().isEmpty()) {
-        arguments.addAll(
-            injectionSite.dependencies().stream().map(dependencyUsage).collect(toList()));
-      }
-
+      ImmutableList<CodeBlock> arguments =
+          ImmutableList.<CodeBlock>builder()
+              .add(instanceCodeBlock)
+              .addAll(
+                  injectionSite.dependencies().stream()
+                      .map(dependencyUsage)
+                      .collect(toImmutableList()))
+              .build();
       ClassName enclosingClass = membersInjectorNameForType(injectionSite.enclosingTypeElement());
       MethodSpec methodSpec = create(injectionSite);
-      return invokeMethod(methodSpec, arguments.build(), enclosingClass, generatedTypeName);
+      return invokeMethod(methodSpec, arguments, enclosingClass, generatedTypeName);
     }
 
     /*

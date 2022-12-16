@@ -20,25 +20,45 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingEnvConfig;
 import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.XRoundEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CheckReturnValue;
+import dagger.Binds;
 import dagger.BindsInstance;
 import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.SourceFileGenerationException;
 import dagger.internal.codegen.base.SourceFileGenerator;
+import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.InjectBindingRegistry;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
+import dagger.internal.codegen.binding.ModuleDescriptor;
+import dagger.internal.codegen.binding.ProductionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.bindinggraphvalidation.BindingGraphValidationModule;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.componentgenerator.ComponentGeneratorModule;
+import dagger.internal.codegen.kotlin.KotlinMetadataFactory;
 import dagger.internal.codegen.processingstep.ProcessingStepsModule;
+import dagger.internal.codegen.validation.AnyBindingMethodValidator;
 import dagger.internal.codegen.validation.BindingMethodValidatorsModule;
+import dagger.internal.codegen.validation.ComponentCreatorValidator;
+import dagger.internal.codegen.validation.ComponentValidator;
 import dagger.internal.codegen.validation.External;
 import dagger.internal.codegen.validation.ExternalBindingGraphPlugins;
 import dagger.internal.codegen.validation.InjectBindingRegistryModule;
+import dagger.internal.codegen.validation.InjectValidator;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugins;
+import dagger.internal.codegen.writing.FactoryGenerator;
+import dagger.internal.codegen.writing.HjarSourceFileGenerator;
+import dagger.internal.codegen.writing.MembersInjectorGenerator;
+import dagger.internal.codegen.writing.ModuleGenerator;
+import dagger.internal.codegen.writing.ModuleProxies.ModuleConstructorProxyGenerator;
+import dagger.internal.codegen.writing.ProducerFactoryGenerator;
+import dagger.multibindings.IntoSet;
 import dagger.spi.model.BindingGraphPlugin;
 import java.util.Optional;
 import java.util.Set;
@@ -130,9 +150,74 @@ final class DelegateComponentProcessor {
       Injector create(
           @BindsInstance XProcessingEnv processingEnv,
           @BindsInstance @External ImmutableSet<BindingGraphPlugin> externalPlugins,
-          @BindsInstance
-          @External
-          ImmutableSet<dagger.spi.BindingGraphPlugin> legacyExternalPlugins);
+          @BindsInstance @External
+              ImmutableSet<dagger.spi.BindingGraphPlugin> legacyExternalPlugins);
     }
+  }
+
+  @Module
+  interface ProcessingRoundCacheModule {
+    @Binds
+    @IntoSet
+    ClearableCache anyBindingMethodValidator(AnyBindingMethodValidator cache);
+
+    @Binds
+    @IntoSet
+    ClearableCache injectValidator(InjectValidator cache);
+
+    @Binds
+    @IntoSet
+    ClearableCache moduleDescriptorFactory(ModuleDescriptor.Factory cache);
+
+    @Binds
+    @IntoSet
+    ClearableCache bindingGraphFactory(BindingGraphFactory cache);
+
+    @Binds
+    @IntoSet
+    ClearableCache componentValidator(ComponentValidator cache);
+
+    @Binds
+    @IntoSet
+    ClearableCache componentCreatorValidator(ComponentCreatorValidator cache);
+
+    @Binds
+    @IntoSet
+    ClearableCache kotlinMetadata(KotlinMetadataFactory cache);
+  }
+
+  @Module
+  interface SourceFileGeneratorsModule {
+    @Provides
+    static SourceFileGenerator<ProvisionBinding> factoryGenerator(
+        FactoryGenerator generator, CompilerOptions compilerOptions) {
+      return hjarWrapper(generator, compilerOptions);
+    }
+
+    @Provides
+    static SourceFileGenerator<ProductionBinding> producerFactoryGenerator(
+        ProducerFactoryGenerator generator, CompilerOptions compilerOptions) {
+      return hjarWrapper(generator, compilerOptions);
+    }
+
+    @Provides
+    static SourceFileGenerator<MembersInjectionBinding> membersInjectorGenerator(
+        MembersInjectorGenerator generator, CompilerOptions compilerOptions) {
+      return hjarWrapper(generator, compilerOptions);
+    }
+
+    @Provides
+    @ModuleGenerator
+    static SourceFileGenerator<XTypeElement> moduleConstructorProxyGenerator(
+        ModuleConstructorProxyGenerator generator, CompilerOptions compilerOptions) {
+      return hjarWrapper(generator, compilerOptions);
+    }
+  }
+
+  private static <T> SourceFileGenerator<T> hjarWrapper(
+      SourceFileGenerator<T> generator, CompilerOptions compilerOptions) {
+    return compilerOptions.headerCompilation()
+        ? HjarSourceFileGenerator.wrap(generator)
+        : generator;
   }
 }

@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Dagger Authors.
+# Copyright (C) 2022 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 #   Functional tests for Dagger
 
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenKtTests")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
+GenKtTests(
     name = "reusable",
-    srcs = glob(["*.java"]),
+    srcs = glob(["*.kt"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//:dagger_with_compiler",

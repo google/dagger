@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package dagger.functional.generictypes;
+package dagger.functional.generictypes.subpackage;
 
 import javax.inject.Inject;
 
 public class Generic<T> {
-  final T t;
+  public final T t;
 
-  @Inject public Generic(T t) {
+  @Inject
+  Generic(T t) {
     this.t = t;
   }
 }

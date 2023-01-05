@@ -17,6 +17,8 @@
 package dagger.functional.generictypes;
 
 import dagger.Lazy;
+import dagger.functional.generictypes.subpackage.Generic;
+import dagger.functional.generictypes.subpackage.Generic2;
 import javax.inject.Inject;
 import javax.inject.Provider;
 

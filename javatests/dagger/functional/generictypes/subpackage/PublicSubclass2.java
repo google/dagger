@@ -16,7 +16,6 @@
 
 package dagger.functional.generictypes.subpackage;
 
-import dagger.functional.generictypes.Generic;
 import javax.inject.Inject;
 
 public class PublicSubclass2 extends Generic<PackagePrivateContainer.PublicEnclosed> {

@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 
 import dagger.functional.generictypes.subpackage.Exposed;
+import dagger.functional.generictypes.subpackage.Generic;
 import dagger.functional.generictypes.subpackage.PublicSubclass;
 import java.util.ArrayList;
 import java.util.LinkedList;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.functional.generictypes;
+package dagger.functional.generictypes.subpackage;
 
 import javax.inject.Inject;
 

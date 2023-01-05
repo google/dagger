@@ -16,6 +16,7 @@
 
 package dagger.functional.generictypes;
 
+import dagger.functional.generictypes.subpackage.Generic;
 import javax.inject.Inject;
 
 class ReferencesGeneric {

@@ -16,11 +16,11 @@
 
 package dagger.functional.generictypes.subpackage;
 
-import dagger.functional.generictypes.Generic;
 import javax.inject.Inject;
 
 public class PublicSubclass extends Generic<PackagePrivate> {
-  @Inject public PublicSubclass(PackagePrivate pp) {
+  @Inject
+  PublicSubclass(PackagePrivate pp) {
     super(pp);
   }
 }

@@ -18,3 +18,5 @@ runs:
     - name: 'Validate latest Dagger version'
       run: ./gh-pages/.github/scripts/validate-latest-dagger-version.sh gh-pages/_config.yml
       shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}

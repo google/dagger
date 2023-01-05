@@ -7,7 +7,13 @@ function github-rest-api {
 
   local GITHUB_API_HEADER_ACCEPT="Accept: application/vnd.github.v3+json"
 
-  curl -s $GITHUB_REST_API -H $GITHUB_API_HEADER_ACCEPT
+  if [ -z "$GH_TOKEN" ]; then
+    curl -s $GITHUB_REST_API -H $GITHUB_API_HEADER_ACCEPT
+  else
+    curl -s $GITHUB_REST_API \
+      -H $GITHUB_API_HEADER_ACCEPT \
+      -H "authorization: Bearer $GH_TOKEN"
+  fi
 }
 
 function github-latest-release-tag {

@@ -27,3 +27,5 @@ jobs:
         uses: actions/checkout@v2
       - name: 'Validate latest Dagger version'
         run: ./.github/scripts/validate-latest-dagger-version.sh _config.yml
+        env:
+          GH_TOKEN: ${{ github.token }}

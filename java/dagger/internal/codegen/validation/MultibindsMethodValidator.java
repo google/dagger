@@ -21,11 +21,11 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsM
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
@@ -77,29 +77,43 @@ class MultibindsMethodValidator extends BindingMethodValidator {
     /** Adds an error unless the method returns a {@code Map<K, V>} or {@code Set<T>}. */
     @Override
     protected void checkType() {
-      if (!isPlainMap(method.getReturnType()) && !isPlainSet(method.getReturnType())) {
-        report.addError(bindingMethods("must return Map<K, V> or Set<T>"));
+      if (MapType.isMap(method.getReturnType())) {
+        checkMapType(MapType.from(method.getReturnType()));
+      } else if (SetType.isSet(method.getReturnType())) {
+        checkSetType(SetType.from(method.getReturnType()));
+      } else {
+        report.addError(bindingMethods("return type must be either a Set or Map type."));
       }
     }
 
-    private boolean isPlainMap(XType returnType) {
-      if (!MapType.isMap(returnType)) {
-        return false;
+    private void checkMapType(MapType mapType) {
+      if (mapType.isRawType()) {
+        report.addError(bindingMethods("return type cannot be a raw Map type"));
+      } else if (isWildcard(mapType.keyType())) {
+        report.addError(
+            bindingMethods("return type cannot use a wildcard as the Map key type."));
+      } else if (isWildcard(mapType.valueType())) {
+        report.addError(
+            bindingMethods("return type cannot use a wildcard as the Map value type."));
+      } else if (isFrameworkType(mapType.valueType())) {
+        String frameworkTypeName = getSimpleName(mapType.valueType().getTypeElement());
+        report.addError(
+            bindingMethods(
+                "return type cannot use '%s' in the Map value type.", frameworkTypeName));
       }
-      MapType mapType = MapType.from(returnType);
-      return !mapType.isRawType()
-          && !isWildcard(mapType.valueType())
-          && !isFrameworkType(mapType.valueType());
     }
 
-    private boolean isPlainSet(XType returnType) {
-      if (!SetType.isSet(returnType)) {
-        return false;
+    private void checkSetType(SetType setType) {
+      if (setType.isRawType()) {
+        report.addError(bindingMethods("return type cannot be a raw Set type"));
+      } else if (isWildcard(setType.elementType())) {
+        report.addError(bindingMethods("return type cannot use a wildcard as the Set value type."));
+      } else if (isFrameworkType(setType.elementType())) {
+        String frameworkTypeName = getSimpleName(setType.elementType().getTypeElement());
+        report.addError(
+            bindingMethods(
+                "return type cannot use '%s' in the Set value type.", frameworkTypeName));
       }
-      SetType setType = SetType.from(returnType);
-      return !setType.isRawType()
-          && !isWildcard(setType.elementType())
-          && !isFrameworkType(setType.elementType());
     }
   }
 }

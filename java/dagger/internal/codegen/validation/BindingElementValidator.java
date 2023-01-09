@@ -19,7 +19,6 @@ package dagger.internal.codegen.validation;
 import static androidx.room.compiler.processing.XTypeKt.isArray;
 import static androidx.room.compiler.processing.XTypeKt.isVoid;
 import static com.google.common.base.Verify.verifyNotNull;
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedInjectionType;
@@ -246,10 +245,7 @@ public abstract class BindingElementValidator<E extends XElement> {
         if (setType.isRawType()) {
           report.addError(elementsIntoSetRawSetMessage());
         } else {
-          // TODO(bcorso): Use setType.elementType() once setType is fully converted to XProcessing.
-          // However, currently SetType returns TypeMirror instead of XType and we have no
-          // conversion from TypeMirror to XType, so we just get the type ourselves.
-          checkKeyType(getOnlyElement(type.getTypeArguments()));
+          checkKeyType(setType.elementType());
         }
       }
     }

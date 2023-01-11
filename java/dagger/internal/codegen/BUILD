@@ -49,13 +49,10 @@ java_library(
         "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/spi",
         "//third_party/java/auto:service",
-        "//third_party/java/auto:value",
         "//third_party/java/error_prone:annotations",
         "//third_party/java/google_java_format",
-        "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
-        "//third_party/java/jsr330_inject",
         "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )

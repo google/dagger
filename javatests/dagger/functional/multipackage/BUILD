@@ -24,18 +24,28 @@ load("//:test_defs.bzl", "GenJavaTests")
 
 package(default_visibility = ["//:src"])
 
+# TODO(b/265156633): These transitive dep shouldn't be needed, but are required because KSP
+# doesn't have access to transitive deps on classpath.
+TRANSITIVE_DEPS = [
+    "//javatests/dagger/functional/multipackage/b",
+    "//javatests/dagger/functional/multipackage/c",
+    "//javatests/dagger/functional/multipackage/d",
+    "//javatests/dagger/functional/multipackage/foo",
+    "//javatests/dagger/functional/multipackage/grandsub",
+]
+
 GenJavaTests(
     name = "multipackage",
-    srcs = glob(["**/*.java"]),
+    srcs = glob(["*.java"]),
+    gen_library_deps = TRANSITIVE_DEPS + [
+        "//javatests/dagger/functional/multipackage/a",
+        "//javatests/dagger/functional/multipackage/moduleconstructor",
+        "//javatests/dagger/functional/multipackage/primitives",
+        "//javatests/dagger/functional/multipackage/sub",
+    ],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:dagger_with_compiler",
-        "//third_party/java/auto:factory",
-        "//third_party/java/guava/base",
-        "//third_party/java/guava/collect",
-        "//third_party/java/guava/util/concurrent",
-        "//third_party/java/jsr305_annotations",
-        "//third_party/java/jsr330_inject",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],

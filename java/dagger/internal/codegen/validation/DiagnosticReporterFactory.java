@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.validation;
 
-import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
 import static dagger.internal.codegen.xprocessing.XElements.transitivelyEncloses;
 import static javax.tools.Diagnostic.Kind.ERROR;
@@ -25,7 +24,6 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
-import com.google.errorprone.annotations.FormatMethod;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.spi.model.BindingGraph.ComponentNode;
@@ -64,7 +62,7 @@ final class DiagnosticReporterFactory {
    * A {@link DiagnosticReporter} that keeps track of which {@linkplain Diagnostic.Kind kinds} of
    * diagnostics were reported.
    */
-  final class DiagnosticReporterImpl implements DiagnosticReporter {
+  final class DiagnosticReporterImpl extends DiagnosticReporter {
     private final String plugin;
     private final XTypeElement rootComponent;
     private final boolean reportErrorsAsWarnings;
@@ -94,34 +92,12 @@ final class DiagnosticReporterFactory {
       printMessage(diagnosticKind, message, rootComponent);
     }
 
-    @Override
-    @FormatMethod
-    public void reportComponent(
-        Diagnostic.Kind diagnosticKind,
-        ComponentNode componentNode,
-        String messageFormat,
-        Object firstArg,
-        Object... moreArgs) {
-      reportComponent(
-          diagnosticKind, componentNode, formatMessage(messageFormat, firstArg, moreArgs));
-    }
-
     // TODO(ronshapiro): should this also include the binding element?
     @Override
     public void reportBinding(
         Diagnostic.Kind diagnosticKind, MaybeBinding binding, String message) {
       printMessage(
           diagnosticKind, message + diagnosticMessageGenerator.getMessage(binding), rootComponent);
-    }
-
-    @Override
-    public void reportBinding(
-        Diagnostic.Kind diagnosticKind,
-        MaybeBinding binding,
-        String messageFormat,
-        Object firstArg,
-        Object... moreArgs) {
-      reportBinding(diagnosticKind, binding, formatMessage(messageFormat, firstArg, moreArgs));
     }
 
     @Override
@@ -134,37 +110,11 @@ final class DiagnosticReporterFactory {
     }
 
     @Override
-    public void reportDependency(
-        Diagnostic.Kind diagnosticKind,
-        DependencyEdge dependencyEdge,
-        String messageFormat,
-        Object firstArg,
-        Object... moreArgs) {
-      reportDependency(
-          diagnosticKind, dependencyEdge, formatMessage(messageFormat, firstArg, moreArgs));
-    }
-
-    @Override
     public void reportSubcomponentFactoryMethod(
         Diagnostic.Kind diagnosticKind,
         ChildFactoryMethodEdge childFactoryMethodEdge,
         String message) {
       printMessage(diagnosticKind, message, childFactoryMethodEdge.factoryMethod().xprocessing());
-    }
-
-    @Override
-    public void reportSubcomponentFactoryMethod(
-        Diagnostic.Kind diagnosticKind,
-        ChildFactoryMethodEdge childFactoryMethodEdge,
-        String messageFormat,
-        Object firstArg,
-        Object... moreArgs) {
-      reportSubcomponentFactoryMethod(
-          diagnosticKind, childFactoryMethodEdge, formatMessage(messageFormat, firstArg, moreArgs));
-    }
-
-    private String formatMessage(String messageFormat, Object firstArg, Object[] moreArgs) {
-      return String.format(messageFormat, asList(firstArg, moreArgs).toArray());
     }
 
     private void printMessage(

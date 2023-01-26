@@ -19,13 +19,11 @@ package dagger.internal.codegen.bindinggraphvalidation;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.transitivelyEncloses;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.errorprone.annotations.FormatMethod;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
@@ -131,7 +129,7 @@ final class CompositeBindingGraphPlugin extends ValidationBindingGraphPlugin {
   // TODO(erichang): This kind of breaks some of the encapsulation by relying on or repeating
   // logic within DiagnosticReporterImpl. Hopefully if the experiment for aggregated messages
   // goes well though this can be merged with that implementation.
-  private static final class AggregatingDiagnosticReporter implements DiagnosticReporter {
+  private static final class AggregatingDiagnosticReporter extends DiagnosticReporter {
     private final DiagnosticReporter delegate;
     private final BindingGraph graph;
     // Initialize with a new line so the first message appears below the reported component
@@ -180,40 +178,17 @@ final class CompositeBindingGraphPlugin extends ValidationBindingGraphPlugin {
     }
 
     @Override
-    public void reportComponent(Diagnostic.Kind diagnosticKind, ComponentNode componentNode,
-        String message) {
+    public void reportComponent(
+        Diagnostic.Kind diagnosticKind, ComponentNode componentNode, String message) {
       addMessage(diagnosticKind, message);
       messageGenerator.appendComponentPathUnlessAtRoot(messageBuilder, componentNode);
     }
 
     @Override
-    @FormatMethod
-    public void reportComponent(
-        Diagnostic.Kind diagnosticKind,
-        ComponentNode componentNode,
-        String messageFormat,
-        Object firstArg,
-        Object... moreArgs) {
-      reportComponent(
-          diagnosticKind, componentNode, formatMessage(messageFormat, firstArg, moreArgs));
-    }
-
-    @Override
-    public void reportBinding(Diagnostic.Kind diagnosticKind, MaybeBinding binding,
-        String message) {
+    public void reportBinding(
+        Diagnostic.Kind diagnosticKind, MaybeBinding binding, String message) {
       addMessage(diagnosticKind,
           String.format("%s%s", message, messageGenerator.getMessage(binding)));
-    }
-
-    @Override
-    @FormatMethod
-    public void reportBinding(
-        Diagnostic.Kind diagnosticKind,
-        MaybeBinding binding,
-        String messageFormat,
-        Object firstArg,
-        Object... moreArgs) {
-      reportBinding(diagnosticKind, binding, formatMessage(messageFormat, firstArg, moreArgs));
     }
 
     @Override
@@ -221,18 +196,6 @@ final class CompositeBindingGraphPlugin extends ValidationBindingGraphPlugin {
         Diagnostic.Kind diagnosticKind, DependencyEdge dependencyEdge, String message) {
       addMessage(diagnosticKind,
           String.format("%s%s", message, messageGenerator.getMessage(dependencyEdge)));
-    }
-
-    @Override
-    @FormatMethod
-    public void reportDependency(
-        Diagnostic.Kind diagnosticKind,
-        DependencyEdge dependencyEdge,
-        String messageFormat,
-        Object firstArg,
-        Object... moreArgs) {
-      reportDependency(
-          diagnosticKind, dependencyEdge, formatMessage(messageFormat, firstArg, moreArgs));
     }
 
     @Override
@@ -256,18 +219,6 @@ final class CompositeBindingGraphPlugin extends ValidationBindingGraphPlugin {
       }
     }
 
-    @Override
-    @FormatMethod
-    public void reportSubcomponentFactoryMethod(
-        Diagnostic.Kind diagnosticKind,
-        ChildFactoryMethodEdge childFactoryMethodEdge,
-        String messageFormat,
-        Object firstArg,
-        Object... moreArgs) {
-      reportSubcomponentFactoryMethod(
-          diagnosticKind, childFactoryMethodEdge, formatMessage(messageFormat, firstArg, moreArgs));
-    }
-
     /** Adds a message to the stored aggregated message. */
     private void addMessage(Diagnostic.Kind diagnosticKind, String message) {
       checkNotNull(diagnosticKind);
@@ -283,10 +234,6 @@ final class CompositeBindingGraphPlugin extends ValidationBindingGraphPlugin {
       // Adds brackets as well as special color strings to make the string red and bold.
       messageBuilder.append(String.format("\033[1;31m[%s]\033[0m ", currentPluginName));
       messageBuilder.append(message);
-    }
-
-    private static String formatMessage(String messageFormat, Object firstArg, Object[] moreArgs) {
-      return String.format(messageFormat, asList(firstArg, moreArgs).toArray());
     }
 
     private void mergeDiagnosticKind(Diagnostic.Kind diagnosticKind) {

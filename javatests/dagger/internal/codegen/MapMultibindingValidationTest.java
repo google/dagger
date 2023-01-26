@@ -209,16 +209,15 @@ public class MapMultibindingValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
               subject.hasErrorContaining(
-                  "\033[1;31m[Dagger/MapKeys]\033[0m The same map key is bound more than once for "
-                    + "Map<MapModule.WrappedMapKey,String>");
-              subject.hasErrorContaining(
-                  "    @Provides @IntoMap @MapModule.WrappedMapKey(\"foo\") String "
-                    + "MapModule.stringMapEntry1()");
-              subject.hasErrorContaining(
-                  "    @Provides @IntoMap @MapModule.WrappedMapKey(\"foo\") String "
-                    + "MapModule.stringMapEntry2()")
+                      String.join(
+                          "\n",
+                          "\033[1;31m[Dagger/MapKeys]\033[0m The same map key is bound more than "
+                              + "once for Map<MapModule.WrappedMapKey,String>",
+                          "    @Provides @IntoMap @MapModule.WrappedMapKey(\"foo\") String "
+                              + "MapModule.stringMapEntry1()",
+                          "    @Provides @IntoMap @MapModule.WrappedMapKey(\"foo\") String "
+                              + "MapModule.stringMapEntry2()"))
                   .onSource(component)
                   .onLineContaining("interface TestComponent");
             });

@@ -71,9 +71,11 @@ public class ComponentHierarchyValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("conflicting scopes");
-              subject.hasErrorContaining("test.Parent also has @Singleton");
+              subject.hasErrorContaining(
+                  String.join(
+                      "\n",
+                      "test.Child has conflicting scopes:",
+                      "    test.Parent also has @Singleton"));
             });
 
     // Check that compiling with disableInterComponentScopeValidation=none flag succeeds.
@@ -178,9 +180,11 @@ public class ComponentHierarchyValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("test.Child repeats @ProducerModules:");
-              subject.hasErrorContaining("test.Parent also installs: test.RepeatedProducerModule")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "test.Child repeats @ProducerModules:",
+                          "test.Parent also installs: test.RepeatedProducerModule"))
                   .onSource(component)
                   .onLineContaining("interface Parent");
             });
@@ -304,14 +308,13 @@ public class ComponentHierarchyValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
               subject.hasErrorContaining(
-                  "test.Child repeats modules with scoped bindings or declarations:");
-              subject.hasErrorContaining("- test.Parent also includes:");
-              subject.hasErrorContaining(
-                  "    - test.ModuleWithScopedProvides with scopes: @test.TestScope");
-              subject.hasErrorContaining(
-                  "    - test.ModuleWithScopedBinds with scopes: @test.TestScope");
+                  String.join(
+                      "\n",
+                      "test.Child repeats modules with scoped bindings or declarations:",
+                      "- test.Parent also includes:",
+                      "    - test.ModuleWithScopedProvides with scopes: @test.TestScope",
+                      "    - test.ModuleWithScopedBinds with scopes: @test.TestScope"));
             });
   }
 

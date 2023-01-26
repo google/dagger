@@ -78,10 +78,12 @@ public class ConflictingEntryPointsTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("can only implement the method once. Found:");
-              subject.hasErrorContaining("    Long test.Base1.foo()");
-              subject.hasErrorContaining("    Number test.Base2.foo()")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "can only implement the method once. Found:",
+                          "    Long test.Base1.foo()",
+                          "    Number test.Base2.foo()"))
                   .onSource(component)
                   .onLineContaining("interface TestComponent");
             });
@@ -128,10 +130,12 @@ public class ConflictingEntryPointsTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("can only implement the method once. Found:");
-              subject.hasErrorContaining("    Long test.Base1.foo()");
-              subject.hasErrorContaining("    Number test.Base2.foo()")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "can only implement the method once. Found:",
+                          "    Long test.Base1.foo()",
+                          "    Number test.Base2.foo()"))
                   .onSource(component)
                   .onLineContaining("interface TestComponent");
             });
@@ -181,10 +185,12 @@ public class ConflictingEntryPointsTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("can only implement the method once. Found:");
-              subject.hasErrorContaining("    Object test.Base1.foo()");
-              subject.hasErrorContaining("    @Named(\"foo\") Object test.Base2.foo()")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "can only implement the method once. Found:",
+                          "    Object test.Base1.foo()",
+                          "    @Named(\"foo\") Object test.Base2.foo()"))
                   .onSource(component)
                   .onLineContaining("interface TestComponent");
             });

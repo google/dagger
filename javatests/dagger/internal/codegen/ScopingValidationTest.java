@@ -72,14 +72,15 @@ public class ScopingValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
               subject.hasErrorContaining(
-                  "MyComponent (unscoped) may not reference scoped bindings:");
-              subject.hasErrorContaining("    @Singleton class ScopedType");
-              subject.hasErrorContaining("    ScopedType is requested at");
-              subject.hasErrorContaining("        MyComponent.string()");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining("    @Provides @Singleton String ScopedModule.string()");
+                  String.join(
+                      "\n",
+                      "MyComponent (unscoped) may not reference scoped bindings:",
+                      "    @Singleton class ScopedType",
+                      "    ScopedType is requested at",
+                      "        MyComponent.string()",
+                      "",
+                      "    @Provides @Singleton String ScopedModule.string()"));
             });
   }
 
@@ -157,11 +158,12 @@ public class ScopingValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
               subject.hasErrorContaining(
-                  "Parent scoped with @Singleton may not reference bindings with different "
-                      + "scopes:");
-              subject.hasErrorContaining("    @Binds @ChildScope Foo ParentModule.bind(FooImpl)");
+                  String.join(
+                      "\n",
+                      "Parent scoped with @Singleton may not reference bindings with different "
+                          + "scopes:",
+                      "    @Binds @ChildScope Foo ParentModule.bind(FooImpl)"));
             });
   }
 
@@ -232,23 +234,22 @@ public class ScopingValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining(
-                  "MyComponent scoped with @Singleton may not reference bindings with different "
-                      + "scopes:");
-              subject.hasErrorContaining("    @PerTest class ScopedType");
-              subject.hasErrorContaining("    ScopedType is requested at");
-              subject.hasErrorContaining("        MyComponent.string()");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining("    @Provides @PerTest String ScopedModule.string()");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining(
-                      String.format(
-                          "    @Provides @Per(%s) boolean ScopedModule.bool()",
+              subject
+                  .hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "MyComponent scoped with @Singleton may not reference bindings with "
+                              + "different scopes:",
+                          "    @PerTest class ScopedType",
+                          "    ScopedType is requested at",
+                          "        MyComponent.string()",
+                          "",
+                          "    @Provides @PerTest String ScopedModule.string()",
+                          "",
                           // TODO(b/241293838): Remove dependency on backend once this bug is fixed.
                           CompilerTests.backend(subject).equals(XProcessingEnv.Backend.JAVAC)
-                              ? "MyComponent.class"
-                              : "MyComponent"))
+                              ? "    @Provides @Per(MyComponent.class) boolean ScopedModule.bool()"
+                              : "    @Provides @Per(MyComponent) boolean ScopedModule.bool()"))
                   .onSource(componentFile)
                   .onLineContaining("interface MyComponent");
             });
@@ -259,20 +260,18 @@ public class ScopingValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(2);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("ScopedModule contains bindings with different scopes:");
-              subject.hasErrorContaining("    @Provides @PerTest String ScopedModule.string()");
-              subject.hasErrorContaining("");
               subject.hasErrorContaining(
-                  "    @Provides @Singleton float ScopedModule.floatingPoint()");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining(
-                      String.format(
-                          "    @Provides @Per(%s) boolean ScopedModule.bool()",
+                      String.join(
+                          "\n",
+                          "ScopedModule contains bindings with different scopes:",
+                          "    @Provides @PerTest String ScopedModule.string()",
+                          "",
+                          "    @Provides @Singleton float ScopedModule.floatingPoint()",
+                          "",
                           // TODO(b/241293838): Remove dependency on backend once this bug is fixed.
                           CompilerTests.backend(subject).equals(XProcessingEnv.Backend.JAVAC)
-                              ? "MyComponent.class"
-                              : "MyComponent"))
+                              ? "    @Provides @Per(MyComponent.class) boolean ScopedModule.bool()"
+                              : "    @Provides @Per(MyComponent) boolean ScopedModule.bool()"))
                   .onSource(moduleFile)
                   .onLineContaining("class ScopedModule");
             });
@@ -645,10 +644,11 @@ public class ScopingValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
               subject.hasErrorContaining(
-                  "test.UnscopedComponent (unscoped) cannot depend on scoped components:");
-              subject.hasErrorContaining("    @Singleton test.ScopedComponent");
+                  String.join(
+                      "\n",
+                      "test.UnscopedComponent (unscoped) cannot depend on scoped components:",
+                      "    @Singleton test.ScopedComponent"));
             });
   }
 
@@ -703,10 +703,11 @@ public class ScopingValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
               subject.hasErrorContaining(
-                  "This @Singleton component cannot depend on scoped components:");
-              subject.hasErrorContaining("    @test.SimpleScope test.SimpleScopedComponent");
+                  String.join(
+                      "\n",
+                      "This @Singleton component cannot depend on scoped components:",
+                      "    @test.SimpleScope test.SimpleScopedComponent"));
             });
   }
 
@@ -791,13 +792,14 @@ public class ScopingValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
               subject.hasErrorContaining(
-                  "test.ComponentShort depends on scoped components in a non-hierarchical scope "
-                      + "ordering:");
-              subject.hasErrorContaining("    @test.ScopeA test.ComponentLong");
-              subject.hasErrorContaining("    @test.ScopeB test.ComponentMedium1");
-              subject.hasErrorContaining("    @test.ScopeA test.ComponentShort");
+                  String.join(
+                      "\n",
+                      "test.ComponentShort depends on scoped components in a non-hierarchical "
+                          + "scope ordering:",
+                      "    @test.ScopeA test.ComponentLong",
+                      "    @test.ScopeB test.ComponentMedium1",
+                      "    @test.ScopeA test.ComponentShort"));
             });
   }
 
@@ -873,13 +875,14 @@ public class ScopingValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
               subject.hasErrorContaining(
-                  "test.ComponentShort depends on scoped components in a non-hierarchical scope "
-                      + "ordering:");
-              subject.hasErrorContaining("    @test.ScopeA test.ComponentLong");
-              subject.hasErrorContaining("    @test.ScopeB test.ComponentMedium");
-              subject.hasErrorContaining("    @test.ScopeA test.ComponentShort");
+                  String.join(
+                      "\n",
+                      "test.ComponentShort depends on scoped components in a non-hierarchical "
+                          + "scope ordering:",
+                      "    @test.ScopeA test.ComponentLong",
+                      "    @test.ScopeB test.ComponentMedium",
+                      "    @test.ScopeA test.ComponentShort"));
             });
 
     // Test that compilation succeeds when transitive validation is disabled because the scope cycle

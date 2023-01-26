@@ -85,19 +85,23 @@ public class DependencyCycleValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("Found a dependency cycle:");
-              subject.hasErrorContaining("    Outer.C is injected at");
-              subject.hasErrorContaining("        Outer.A(cParam)");
-              subject.hasErrorContaining("    Outer.A is injected at");
-              subject.hasErrorContaining("        Outer.B(aParam)");
-              subject.hasErrorContaining("    Outer.B is injected at");
-              subject.hasErrorContaining("        Outer.C(bParam)");
-              subject.hasErrorContaining("    Outer.C is injected at");
-              subject.hasErrorContaining("        Outer.A(cParam)");
-              subject.hasErrorContaining("The cycle is requested via:");
-              subject.hasErrorContaining("    Outer.C is requested at");
-              subject.hasErrorContaining("        Outer.CComponent.getC()")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    Outer.C is injected at",
+                          "        Outer.A(cParam)",
+                          "    Outer.A is injected at",
+                          "        Outer.B(aParam)",
+                          "    Outer.B is injected at",
+                          "        Outer.C(bParam)",
+                          "    Outer.C is injected at",
+                          "        Outer.A(cParam)",
+                          "    ...",
+                          "",
+                          "The cycle is requested via:",
+                          "    Outer.C is requested at",
+                          "        Outer.CComponent.getC()"))
                   .onSource(SIMPLE_CYCLIC_DEPENDENCY)
                   .onLineContaining("interface CComponent");
             });
@@ -187,23 +191,25 @@ public class DependencyCycleValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("Found a dependency cycle:");
-              subject.hasErrorContaining("    Outer.C is injected at");
-              subject.hasErrorContaining("        Outer.A(cParam)");
-              subject.hasErrorContaining("    Outer.A is injected at");
-              subject.hasErrorContaining("        Outer.B(aParam)");
-              subject.hasErrorContaining("    Outer.B is injected at");
-              subject.hasErrorContaining("        Outer.C(bParam)");
-              subject.hasErrorContaining("    Outer.C is injected at");
-              subject.hasErrorContaining("        Outer.A(cParam)");
-              subject.hasErrorContaining("   ...");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining("The cycle is requested via:");
-              subject.hasErrorContaining("    Outer.C is injected at");
-              subject.hasErrorContaining("        Outer.D(cParam)");
-              subject.hasErrorContaining("    Outer.D is requested at");
-              subject.hasErrorContaining("        Outer.DComponent.getD()")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    Outer.C is injected at",
+                          "        Outer.A(cParam)",
+                          "    Outer.A is injected at",
+                          "        Outer.B(aParam)",
+                          "    Outer.B is injected at",
+                          "        Outer.C(bParam)",
+                          "    Outer.C is injected at",
+                          "        Outer.A(cParam)",
+                          "   ...",
+                          "",
+                          "The cycle is requested via:",
+                          "    Outer.C is injected at",
+                          "        Outer.D(cParam)",
+                          "    Outer.D is requested at",
+                          "        Outer.DComponent.getD()"))
                   .onSource(component)
                   .onLineContaining("interface DComponent");
             });
@@ -257,23 +263,25 @@ public class DependencyCycleValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("Found a dependency cycle:");
-              subject.hasErrorContaining("    Outer.C is injected at");
-              subject.hasErrorContaining("        Outer.CModule.c(c)");
-              subject.hasErrorContaining("    Map<String,Outer.C> is injected at");
-              subject.hasErrorContaining("        Outer.A(cMap)");
-              subject.hasErrorContaining("    Outer.A is injected at");
-              subject.hasErrorContaining("        Outer.B(aParam)");
-              subject.hasErrorContaining("    Outer.B is injected at");
-              subject.hasErrorContaining("        Outer.C(bParam)");
-              subject.hasErrorContaining("    Outer.C is injected at");
-              subject.hasErrorContaining("        Outer.CModule.c(c)");
-              subject.hasErrorContaining("   ...");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining("The cycle is requested via:");
-              subject.hasErrorContaining("    Outer.C is requested at");
-              subject.hasErrorContaining("        Outer.CComponent.getC()")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    Outer.C is injected at",
+                          "        Outer.CModule.c(c)",
+                          "    Map<String,Outer.C> is injected at",
+                          "        Outer.A(cMap)",
+                          "    Outer.A is injected at",
+                          "        Outer.B(aParam)",
+                          "    Outer.B is injected at",
+                          "        Outer.C(bParam)",
+                          "    Outer.C is injected at",
+                          "        Outer.CModule.c(c)",
+                          "   ...",
+                          "",
+                          "The cycle is requested via:",
+                          "    Outer.C is requested at",
+                          "        Outer.CComponent.getC()"))
                   .onSource(component)
                   .onLineContaining("interface CComponent");
             });
@@ -325,23 +333,25 @@ public class DependencyCycleValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("Found a dependency cycle:");
-              subject.hasErrorContaining("    Outer.C is injected at");
-              subject.hasErrorContaining("        Outer.CModule.c(c)");
-              subject.hasErrorContaining("    Set<Outer.C> is injected at");
-              subject.hasErrorContaining("        Outer.A(cSet)");
-              subject.hasErrorContaining("    Outer.A is injected at");
-              subject.hasErrorContaining("        Outer.B(aParam)");
-              subject.hasErrorContaining("    Outer.B is injected at");
-              subject.hasErrorContaining("        Outer.C(bParam)");
-              subject.hasErrorContaining("    Outer.C is injected at");
-              subject.hasErrorContaining("        Outer.CModule.c(c)");
-              subject.hasErrorContaining("   ...");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining("The cycle is requested via:");
-              subject.hasErrorContaining("    Outer.C is requested at");
-              subject.hasErrorContaining("        Outer.CComponent.getC()")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    Outer.C is injected at",
+                          "        Outer.CModule.c(c)",
+                          "    Set<Outer.C> is injected at",
+                          "        Outer.A(cSet)",
+                          "    Outer.A is injected at",
+                          "        Outer.B(aParam)",
+                          "    Outer.B is injected at",
+                          "        Outer.C(bParam)",
+                          "    Outer.C is injected at",
+                          "        Outer.CModule.c(c)",
+                          "   ...",
+                          "",
+                          "The cycle is requested via:",
+                          "    Outer.C is requested at",
+                          "        Outer.CComponent.getC()"))
                   .onSource(component)
                   .onLineContaining("interface CComponent");
             });
@@ -388,23 +398,25 @@ public class DependencyCycleValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("Found a dependency cycle:");
-              subject.hasErrorContaining("    Outer.C is injected at");
-              subject.hasErrorContaining("        Outer.A(cParam)");
-              subject.hasErrorContaining("    Outer.A is injected at");
-              subject.hasErrorContaining("        Outer.B(aParam)");
-              subject.hasErrorContaining("    Outer.B is injected at");
-              subject.hasErrorContaining("        Outer.C(bParam)");
-              subject.hasErrorContaining("    Outer.C is injected at");
-              subject.hasErrorContaining("        Outer.A(cParam)");
-              subject.hasErrorContaining("   ...");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining("The cycle is requested via:");
-              subject.hasErrorContaining("    Provider<Outer.C> is injected at");
-              subject.hasErrorContaining("        Outer.D(cParam)");
-              subject.hasErrorContaining("    Outer.D is requested at");
-              subject.hasErrorContaining("        Outer.DComponent.getD()")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    Outer.C is injected at",
+                          "        Outer.A(cParam)",
+                          "    Outer.A is injected at",
+                          "        Outer.B(aParam)",
+                          "    Outer.B is injected at",
+                          "        Outer.C(bParam)",
+                          "    Outer.C is injected at",
+                          "        Outer.A(cParam)",
+                          "   ...",
+                          "",
+                          "The cycle is requested via:",
+                          "    Provider<Outer.C> is injected at",
+                          "        Outer.D(cParam)",
+                          "    Outer.D is requested at",
+                          "        Outer.DComponent.getD()"))
                   .onSource(component)
                   .onLineContaining("interface DComponent");
             });
@@ -479,19 +491,21 @@ public class DependencyCycleValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("Found a dependency cycle:");
-              subject.hasErrorContaining("    String is injected at");
-              subject.hasErrorContaining("        CycleModule.object(string)");
-              subject.hasErrorContaining("    Object is injected at");
-              subject.hasErrorContaining("        CycleModule.string(object)");
-              subject.hasErrorContaining("    String is injected at");
-              subject.hasErrorContaining("        CycleModule.object(string)");
-              subject.hasErrorContaining("    ...");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining("The cycle is requested via:");
-              subject.hasErrorContaining("    String is requested at");
-              subject.hasErrorContaining("        Grandchild.entry()")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    String is injected at",
+                          "        CycleModule.object(string)",
+                          "    Object is injected at",
+                          "        CycleModule.string(object)",
+                          "    String is injected at",
+                          "        CycleModule.object(string)",
+                          "    ...",
+                          "",
+                          "The cycle is requested via:",
+                          "    String is requested at",
+                          "        Grandchild.entry()"))
                   .onSource(parent)
                   .onLineContaining("interface Parent");
             });
@@ -568,19 +582,21 @@ public class DependencyCycleValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("Found a dependency cycle:");
-              subject.hasErrorContaining("    String is injected at");
-              subject.hasErrorContaining("        CycleModule.object(string)");
-              subject.hasErrorContaining("    Object is injected at");
-              subject.hasErrorContaining("        CycleModule.string(object)");
-              subject.hasErrorContaining("    String is injected at");
-              subject.hasErrorContaining("        CycleModule.object(string)");
-              subject.hasErrorContaining("    ...");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining("The cycle is requested via:");
-              subject.hasErrorContaining("    String is requested at");
-              subject.hasErrorContaining("        Child.entry() [Parent → Child]")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    String is injected at",
+                          "        CycleModule.object(string)",
+                          "    Object is injected at",
+                          "        CycleModule.string(object)",
+                          "    String is injected at",
+                          "        CycleModule.object(string)",
+                          "    ...",
+                          "",
+                          "The cycle is requested via:",
+                          "    String is requested at",
+                          "        Child.entry() [Parent → Child]"))
                   .onSource(parent)
                   .onLineContaining("interface Parent");
             });
@@ -626,19 +642,21 @@ public class DependencyCycleValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("Found a dependency cycle:");
-              subject.hasErrorContaining("    Object is injected at");
-              subject.hasErrorContaining("        TestModule.bindQualified(unqualified)");
-              subject.hasErrorContaining("    @SomeQualifier Object is injected at");
-              subject.hasErrorContaining("        TestModule.bindUnqualified(qualified)");
-              subject.hasErrorContaining("    Object is injected at");
-              subject.hasErrorContaining("        TestModule.bindQualified(unqualified)");
-              subject.hasErrorContaining("    ...");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining("The cycle is requested via:");
-              subject.hasErrorContaining("    Object is requested at");
-              subject.hasErrorContaining("        TestComponent.unqualified()")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    Object is injected at",
+                          "        TestModule.bindQualified(unqualified)",
+                          "    @SomeQualifier Object is injected at",
+                          "        TestModule.bindUnqualified(qualified)",
+                          "    Object is injected at",
+                          "        TestModule.bindQualified(unqualified)",
+                          "    ...",
+                          "",
+                          "The cycle is requested via:",
+                          "    Object is requested at",
+                          "        TestComponent.unqualified()"))
                   .onSource(component)
                   .onLineContaining("interface TestComponent");
             });
@@ -675,17 +693,19 @@ public class DependencyCycleValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("Found a dependency cycle:");
-              subject.hasErrorContaining("    Object is injected at");
-              subject.hasErrorContaining("        TestModule.bindToSelf(sameKey)");
-              subject.hasErrorContaining("    Object is injected at");
-              subject.hasErrorContaining("        TestModule.bindToSelf(sameKey)");
-              subject.hasErrorContaining("    ...");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining("The cycle is requested via:");
-              subject.hasErrorContaining("    Object is requested at");
-              subject.hasErrorContaining("        TestComponent.selfReferential()")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    Object is injected at",
+                          "        TestModule.bindToSelf(sameKey)",
+                          "    Object is injected at",
+                          "        TestModule.bindToSelf(sameKey)",
+                          "    ...",
+                          "",
+                          "The cycle is requested via:",
+                          "    Object is requested at",
+                          "        TestComponent.selfReferential()"))
                   .onSource(component)
                   .onLineContaining("interface TestComponent");
             });
@@ -732,21 +752,23 @@ public class DependencyCycleValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              // TODO(b/243689574): Combine this to a single assertion once this bug is fixed.
-              subject.hasErrorContaining("Found a dependency cycle:");
-              subject.hasErrorContaining("    test.B is injected at");
-              subject.hasErrorContaining("        test.A.b");
-              subject.hasErrorContaining("    test.A is injected at");
-              subject.hasErrorContaining("        test.B.a");
-              subject.hasErrorContaining("    test.B is injected at");
-              subject.hasErrorContaining("        test.A.b");
-              subject.hasErrorContaining("    ...");
-              subject.hasErrorContaining("");
-              subject.hasErrorContaining("The cycle is requested via:");
-              subject.hasErrorContaining("    test.B is injected at");
-              subject.hasErrorContaining("        test.A.b");
-              subject.hasErrorContaining("    test.A is injected at");
-              subject.hasErrorContaining("        CycleComponent.inject(test.A)")
+              subject.hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    test.B is injected at",
+                          "        test.A.b",
+                          "    test.A is injected at",
+                          "        test.B.a",
+                          "    test.B is injected at",
+                          "        test.A.b",
+                          "    ...",
+                          "",
+                          "The cycle is requested via:",
+                          "    test.B is injected at",
+                          "        test.A.b",
+                          "    test.A is injected at",
+                          "        CycleComponent.inject(test.A)"))
                   .onSource(component)
                   .onLineContaining("interface CycleComponent");
             });

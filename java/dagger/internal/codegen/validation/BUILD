@@ -46,6 +46,5 @@ java_library(
         "//third_party/java/guava/util/concurrent",
         "//third_party/java/javapoet",
         "//third_party/java/jsr330_inject",
-        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8",
     ],
 )

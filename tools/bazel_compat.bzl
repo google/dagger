@@ -38,7 +38,7 @@ def bazel_kt_android_library(name, kwargs):
         # Add the kotlin_stdlib, otherwise it will be missing from java-only projects.
         # We use deps rather than exports because exports isn't picked up by the pom file.
         # See https://github.com/google/dagger/issues/3119
-        required_deps = ["@maven//:org_jetbrains_kotlin_kotlin_stdlib"]
+        required_deps = ["//third_party/kotlin/kotlin:kotlin_stdlib"]
         kwargs["deps"] = kwargs.get("deps", []) + required_deps
 
     # TODO(b/203519416): Bazel's kt_android_library outputs its jars under a target

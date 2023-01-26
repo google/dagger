@@ -34,7 +34,7 @@ java_library(
         "//third_party/java/javapoet",
         "//third_party/java/jsr305_annotations",
         "//third_party/java/jsr330_inject",
-        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "//third_party/kotlin/kotlin:kotlin_stdlib",
         "@maven//:org_jetbrains_kotlinx_kotlinx_metadata_jvm",
     ],
 )

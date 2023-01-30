@@ -26,6 +26,8 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.getSubcom
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.validation.ModuleValidator.ModuleMethodKind.ABSTRACT_DECLARATION;
+import static dagger.internal.codegen.validation.ModuleValidator.ModuleMethodKind.INSTANCE_BINDING;
 import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
@@ -91,8 +93,8 @@ public final class ModuleValidator {
           TypeNames.PRODUCTION_SUBCOMPONENT_BUILDER,
           TypeNames.PRODUCTION_SUBCOMPONENT_FACTORY);
   private static final Optional<Class<?>> ANDROID_PROCESSOR;
-  private static final String CONTRIBUTES_ANDROID_INJECTOR_NAME =
-      "dagger.android.ContributesAndroidInjector";
+  private static final ClassName CONTRIBUTES_ANDROID_INJECTOR_NAME =
+      ClassName.get("dagger.android", "ContributesAndroidInjector");
   private static final String ANDROID_PROCESSOR_NAME = "dagger.android.processor.AndroidProcessor";
 
   static {
@@ -165,9 +167,6 @@ public final class ModuleValidator {
   private ValidationReport validateUncached(XTypeElement module, Set<XTypeElement> visitedModules) {
     ValidationReport.Builder builder = ValidationReport.about(module);
     ModuleKind moduleKind = ModuleKind.forAnnotatedElement(module).get();
-    Optional<XType> contributesAndroidInjector =
-        Optional.ofNullable(processingEnv.findTypeElement(CONTRIBUTES_ANDROID_INJECTOR_NAME))
-            .map(XTypeElement::getType);
     List<XMethodElement> moduleMethods = module.getDeclaredMethods();
     List<XMethodElement> bindingMethods = new ArrayList<>();
     for (XMethodElement moduleMethod : moduleMethods) {
@@ -175,28 +174,14 @@ public final class ModuleValidator {
         builder.addSubreport(anyBindingMethodValidator.validate(moduleMethod));
         bindingMethods.add(moduleMethod);
       }
-
-      for (XAnnotation annotation : moduleMethod.getAllAnnotations()) {
-        if (!ANDROID_PROCESSOR.isPresent()
-            && contributesAndroidInjector.isPresent()
-            && areEquivalentTypes(contributesAndroidInjector.get(), annotation.getType())) {
-          builder.addSubreport(
-              ValidationReport.about(moduleMethod)
-                  .addError(
-                      String.format(
-                          "@%s was used, but %s was not found on the processor path",
-                          CONTRIBUTES_ANDROID_INJECTOR_NAME, ANDROID_PROCESSOR_NAME))
-                  .build());
-          break;
-        }
-      }
     }
+
+    validateDaggerAndroidProcessorRequirements(module, builder);
 
     if (bindingMethods.stream()
         .map(ModuleMethodKind::ofMethod)
         .collect(toImmutableSet())
-        .containsAll(
-            EnumSet.of(ModuleMethodKind.ABSTRACT_DECLARATION, ModuleMethodKind.INSTANCE_BINDING))) {
+        .containsAll(EnumSet.of(ABSTRACT_DECLARATION, INSTANCE_BINDING))) {
       builder.addError(
           String.format(
               "A @%s may not contain both non-static and abstract binding methods",
@@ -232,6 +217,26 @@ public final class ModuleValidator {
     }
 
     return builder.build();
+  }
+
+  private void validateDaggerAndroidProcessorRequirements(
+      XTypeElement module, ValidationReport.Builder builder) {
+    if (ANDROID_PROCESSOR.isPresent()
+        || processingEnv.findTypeElement(CONTRIBUTES_ANDROID_INJECTOR_NAME) == null) {
+      return;
+    }
+    module.getDeclaredMethods().stream()
+        .filter(method -> method.hasAnnotation(CONTRIBUTES_ANDROID_INJECTOR_NAME))
+        .forEach(
+            method ->
+                builder.addSubreport(
+                    ValidationReport.about(method)
+                        .addError(
+                            String.format(
+                                "@%s was used, but %s was not found on the processor path",
+                                CONTRIBUTES_ANDROID_INJECTOR_NAME.simpleName(),
+                                ANDROID_PROCESSOR_NAME))
+                        .build()));
   }
 
   private void validateReferencedSubcomponents(
@@ -467,13 +472,12 @@ public final class ModuleValidator {
     // a binding method in Parent, and "c" because Child is defining a binding method that overrides
     // Parent.
     XTypeElement currentClass = subject;
-    XType objectType = processingEnv.findType(TypeName.OBJECT);
     // We keep track of visited methods so we don't spam with multiple failures.
     Set<XMethodElement> visitedMethods = Sets.newHashSet();
     ListMultimap<String, XMethodElement> allMethodsByName =
         MultimapBuilder.hashKeys().arrayListValues().build(moduleMethodsByName);
 
-    while (!currentClass.getSuperType().isSameType(objectType)) {
+    while (!currentClass.getSuperType().getTypeName().equals(TypeName.OBJECT)) {
       currentClass = currentClass.getSuperType().getTypeElement();
       List<XMethodElement> superclassMethods = currentClass.getDeclaredMethods();
       for (XMethodElement superclassMethod : superclassMethods) {

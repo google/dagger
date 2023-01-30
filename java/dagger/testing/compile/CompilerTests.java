@@ -70,7 +70,8 @@ public final class CompilerTests {
     String output = subject.getCompilationResult().toString();
     if (output.startsWith("CompilationResult (with ksp)")) {
       return XProcessingEnv.Backend.KSP;
-    } else if (output.startsWith("CompilationResult (with javac)")) {
+    } else if (output.startsWith("CompilationResult (with javac)")
+                   || output.startsWith("CompilationResult (with kapt)")) {
       return XProcessingEnv.Backend.JAVAC;
     }
     throw new AssertionError("Unexpected backend for subject.");

@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatModuleMethod;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.util.Source;
 import dagger.Module;
 import dagger.producers.ProducerModule;
@@ -462,5 +463,118 @@ public final class ModuleValidationTest {
                   break;
               }
             });
+  }
+
+  // Regression test for b/264618194.
+  @Test
+  public void objectModuleInheritsInstanceBindingFails() {
+    Source objectModule =
+        CompilerTests.kotlinSource(
+            "test.ObjectModule.kt",
+            "package test",
+            "",
+            "import dagger.Module",
+            "import dagger.Provides",
+            "",
+            "@Module",
+            "object ObjectModule : ClassModule() {",
+            "  @Provides fun provideString(): String = \"\"",
+            "}");
+    Source classModule =
+        CompilerTests.kotlinSource(
+            "test.ClassModule.kt",
+            "package test",
+            "",
+            "import dagger.Module",
+            "import dagger.Provides",
+            "",
+            "@Module",
+            "abstract class ClassModule {",
+            "  @Provides fun provideInt(): Int = 1",
+            "}");
+    Source component =
+        CompilerTests.kotlinSource(
+            "test.TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "",
+            "@Component(modules = [ObjectModule::class])",
+            "interface TestComponent {",
+            "  fun getInt(): Int",
+            "  fun getString(): String",
+            "}");
+
+    CompilerTests.daggerCompiler(component, objectModule, classModule)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining("test.ObjectModule has errors")
+                  .onSource(component)
+                  .onLineContaining("ObjectModule::class");
+              subject.hasErrorContaining(
+                      "@Module-annotated Kotlin object cannot inherit instance "
+                          + "(i.e. non-abstract, non-JVM static) binding method: "
+                          + "@Provides int test.ClassModule.provideInt()")
+                  .onSource(objectModule)
+                  .onLineContaining(
+                      // TODO(b/267223703): KAPT incorrectly reports the error on the annotation.
+                      CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC
+                          ? "@Module"
+                          : "object ObjectModule");
+            });
+  }
+
+  // Regression test for b/264618194.
+  @Test
+  public void objectModuleInheritsNonInstanceBindingSucceeds() {
+    Source objectModule =
+        CompilerTests.kotlinSource(
+            "test.ObjectModule.kt",
+            "package test",
+            "",
+            "import dagger.Module",
+            "import dagger.Provides",
+            "",
+            "@Module",
+            "object ObjectModule : ClassModule() {",
+            "  @Provides fun provideString(): String = \"\"",
+            "}");
+    Source classModule =
+        CompilerTests.javaSource(
+            "test.ClassModule",
+            "package test;",
+            "",
+            "import dagger.Binds;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "public abstract class ClassModule {",
+            "  // A non-binding instance method is okay.",
+            "  public int nonBindingMethod() {",
+            "    return 1;",
+            "  }",
+            "",
+            "  // A static binding method is also okay.",
+            "  @Provides",
+            "  public static int provideInt() {",
+            "    return 1;",
+            "  }",
+            "}");
+    Source component =
+        CompilerTests.kotlinSource(
+            "test.TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "",
+            "@Component(modules = [ObjectModule::class])",
+            "interface TestComponent {",
+            "  fun getInt(): Int",
+            "  fun getString(): String",
+            "}");
+    CompilerTests.daggerCompiler(component, objectModule, classModule)
+        .compile(subject -> subject.hasErrorCount(0));
   }
 }

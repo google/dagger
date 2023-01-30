@@ -176,6 +176,7 @@ public final class ModuleValidator {
       }
     }
 
+    validateKotlinObjectDoesNotInheritInstanceBindingMethods(module, moduleKind, builder);
     validateDaggerAndroidProcessorRequirements(module, builder);
 
     if (bindingMethods.stream()
@@ -237,6 +238,29 @@ public final class ModuleValidator {
                                 CONTRIBUTES_ANDROID_INJECTOR_NAME.simpleName(),
                                 ANDROID_PROCESSOR_NAME))
                         .build()));
+  }
+
+  private void validateKotlinObjectDoesNotInheritInstanceBindingMethods(
+      XTypeElement module, ModuleKind moduleKind, ValidationReport.Builder builder) {
+    if (!module.isKotlinObject()) {
+      return;
+    }
+    XTypeElement currentClass = module;
+    while (!currentClass.getSuperType().getTypeName().equals(TypeName.OBJECT)) {
+      currentClass = currentClass.getSuperType().getTypeElement();
+      currentClass.getDeclaredMethods().stream()
+          .filter(anyBindingMethodValidator::isBindingMethod)
+          .filter(method -> ModuleMethodKind.ofMethod(method) == INSTANCE_BINDING)
+          .forEach(
+              method ->
+                  // TODO(b/264618194): Consider allowing this use case.
+                  builder.addError(
+                      String.format(
+                          "@%s-annotated Kotlin object cannot inherit instance (i.e. non-abstract, "
+                              + "non-JVM static) binding method: %s",
+                          moduleKind.annotation().simpleName(),
+                          methodSignatureFormatter.format(method))));
+    }
   }
 
   private void validateReferencedSubcomponents(

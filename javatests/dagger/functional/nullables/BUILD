@@ -25,17 +25,11 @@ load("//:test_defs.bzl", "GenJavaTests")
 package(default_visibility = ["//:src"])
 
 GenJavaTests(
-    name = "nullables",
-    srcs = glob(["*.java"]),
+    name = "NullabilityTest",
+    srcs = ["NullabilityTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:dagger_with_compiler",
-        "//third_party/java/auto:factory",
-        "//third_party/java/guava/base",
-        "//third_party/java/guava/collect",
-        "//third_party/java/guava/util/concurrent",
-        "//third_party/java/jsr305_annotations",
-        "//third_party/java/jsr330_inject",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],

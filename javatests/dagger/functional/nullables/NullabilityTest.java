@@ -19,6 +19,11 @@ package dagger.functional.nullables;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
+import dagger.Reusable;
+import javax.inject.Inject;
 import javax.inject.Provider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,9 +31,96 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class NullabilityTest {
-  @Test public void testNullability_provides() {
+  @interface Nullable {}
+
+  @Component(dependencies = NullComponent.class)
+  interface NullComponentWithDependency {
+    @Nullable String string();
+    Number number();
+    Provider<String> stringProvider();
+    Provider<Number> numberProvider();
+  }
+
+  @Component(modules = NullModule.class)
+  interface NullComponent {
+    @Nullable String string();
+    @Nullable Integer integer();
+    NullFoo nullFoo();
+    Number number();
+    Provider<String> stringProvider();
+    Provider<Number> numberProvider();
+  }
+
+  @Module
+  static class NullModule {
+    Number numberValue = null;
+    Integer integerCallCount = 0;
+
+    @Nullable
+    @Provides
+    String provideNullableString() {
+      return null;
+    }
+
+    @Provides
+    Number provideNumber() {
+      return numberValue;
+    }
+
+    @Nullable
+    @Provides
+    @Reusable
+    Integer provideNullReusableInteger() {
+      integerCallCount++;
+      return null;
+    }
+  }
+
+  @SuppressWarnings("BadInject") // This is just for testing purposes.
+  static class NullFoo {
+    final String string;
+    final Number number;
+    final Provider<String> stringProvider;
+    final Provider<Number> numberProvider;
+
+    @Inject
+    NullFoo(
+        @Nullable String string,
+        Number number,
+        Provider<String> stringProvider,
+        Provider<Number> numberProvider) {
+      this.string = string;
+      this.number = number;
+      this.stringProvider = stringProvider;
+      this.numberProvider = numberProvider;
+    }
+
+    String methodInjectedString;
+    Number methodInjectedNumber;
+    Provider<String> methodInjectedStringProvider;
+    Provider<Number> methodInjectedNumberProvider;
+    @Inject void inject(
+        @Nullable String string,
+        Number number,
+        Provider<String> stringProvider,
+        Provider<Number> numberProvider) {
+      this.methodInjectedString = string;
+      this.methodInjectedNumber = number;
+      this.methodInjectedStringProvider = stringProvider;
+      this.methodInjectedNumberProvider = numberProvider;
+    }
+
+    @Nullable @Inject String fieldInjectedString;
+    @Inject Number fieldInjectedNumber;
+    @Inject Provider<String> fieldInjectedStringProvider;
+    @Inject Provider<Number> fieldInjectedNumberProvider;
+  }
+
+  @Test
+  public void testNullability_provides() {
     NullModule module = new NullModule();
-    NullComponent component = DaggerNullComponent.builder().nullModule(module).build();
+    NullComponent component =
+        DaggerNullabilityTest_NullComponent.builder().nullModule(module).build();
 
     // Can't construct NullFoo because it depends on Number, and Number was null.
     try {
@@ -53,9 +145,11 @@ public class NullabilityTest {
         nullFoo.fieldInjectedNumberProvider);
   }
 
-  @Test public void testNullability_reusuable() {
+  @Test
+  public void testNullability_reusuable() {
     NullModule module = new NullModule();
-    NullComponent component = DaggerNullComponent.builder().nullModule(module).build();
+    NullComponent component =
+        DaggerNullabilityTest_NullComponent.builder().nullModule(module).build();
 
     // Test that the @Nullable @Reusuable binding is cached properly even when the value is null.
     assertThat(module.integerCallCount).isEqualTo(0);
@@ -65,7 +159,8 @@ public class NullabilityTest {
     assertThat(module.integerCallCount).isEqualTo(1);
   }
 
-  @Test public void testNullability_components() {
+  @Test
+  public void testNullability_components() {
     NullComponent nullComponent = new NullComponent() {
       @Override public Provider<String> stringProvider() {
         return new Provider<String>() {
@@ -100,7 +195,9 @@ public class NullabilityTest {
       }
     };
     NullComponentWithDependency component =
-        DaggerNullComponentWithDependency.builder().nullComponent(nullComponent).build();
+        DaggerNullabilityTest_NullComponentWithDependency.builder()
+            .nullComponent(nullComponent)
+            .build();
     validate(false, component.string(), component.stringProvider(), component.numberProvider());
 
     // Also validate that the component's number() method fails

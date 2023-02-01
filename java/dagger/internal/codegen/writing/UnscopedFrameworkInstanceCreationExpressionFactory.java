@@ -156,7 +156,7 @@ final class UnscopedFrameworkInstanceCreationExpressionFactory {
   private InstanceFactoryCreationExpression instanceFactoryCreationExpression(
       ContributionBinding binding, ComponentRequirement componentRequirement) {
     return new InstanceFactoryCreationExpression(
-        binding.nullableType().isPresent(),
+        binding.isNullable(),
         () ->
             componentRequirementExpressions.getExpressionDuringInitialization(
                 componentRequirement, componentImplementation.name()));

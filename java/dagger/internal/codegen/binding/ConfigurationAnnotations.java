@@ -20,12 +20,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotations;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 
-import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -49,17 +46,6 @@ public final class ConfigurationAnnotations {
 
   static boolean isSubcomponentCreator(XElement element) {
     return hasAnyAnnotation(element, subcomponentCreatorAnnotations());
-  }
-
-  /** Returns the first type that specifies this' nullability, or empty if none. */
-  public static Optional<XAnnotation> getNullableAnnotation(XElement element) {
-    return element.getAllAnnotations().stream()
-        .filter(annotation -> getClassName(annotation).simpleName().contentEquals("Nullable"))
-        .findFirst();
-  }
-
-  public static Optional<XType> getNullableType(XElement element) {
-    return getNullableAnnotation(element).map(XAnnotation::getType);
   }
 
   /** Returns the enclosed types annotated with the given annotation. */

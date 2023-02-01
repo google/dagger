@@ -82,6 +82,7 @@ public abstract class ProvisionBinding extends ContributionBinding {
 
   public static Builder builder() {
     return new AutoValue_ProvisionBinding.Builder()
+        .nullability(Nullability.NOT_NULLABLE)
         .provisionDependencies(ImmutableSet.of())
         .injectionSites(ImmutableSortedSet.of());
   }
@@ -95,7 +96,7 @@ public abstract class ProvisionBinding extends ContributionBinding {
   public boolean shouldCheckForNull(CompilerOptions compilerOptions) {
     return KINDS_TO_CHECK_FOR_NULL.contains(kind())
         && !contributedPrimitiveType().isPresent()
-        && !nullableType().isPresent()
+        && !isNullable()
         && compilerOptions.doCheckForNulls();
   }
 

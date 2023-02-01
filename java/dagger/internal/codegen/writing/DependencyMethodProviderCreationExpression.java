@@ -47,6 +47,7 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.xprocessing.XAnnotations;
 
 /**
  * A {@link javax.inject.Provider} creation expression for a provision method on a component's
@@ -102,9 +103,12 @@ final class DependencyMethodProviderCreationExpression
             .addModifiers(PUBLIC)
             .returns(keyType)
             .addStatement("return $L", invocation);
-    if (binding.nullableType().isPresent()) {
-      getMethod.addAnnotation(binding.nullableType().get().getTypeElement().getClassName());
-    }
+
+    binding
+        .nullability()
+        .nullableAnnotation()
+        .map(XAnnotations::getClassName)
+        .ifPresent(getMethod::addAnnotation);
 
     // We need to use the componentShard here since the generated type is static and shards are
     // not static classes so it can't be nested inside the shard.

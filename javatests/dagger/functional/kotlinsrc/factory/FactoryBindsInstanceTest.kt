@@ -42,17 +42,13 @@ class FactoryBindsInstanceTest {
     assertThat(component.string()).isEqualTo("baz")
   }
 
-  @Target(AnnotationTarget.FUNCTION, AnnotationTarget.VALUE_PARAMETER)
-  @Retention(AnnotationRetention.BINARY)
-  internal annotation class Nullable
-
   @Component
   internal interface NullableBindsInstanceComponent {
-    @Nullable fun string(): String?
+    fun string(): String?
 
     @Component.Factory
     interface Factory {
-      fun create(@BindsInstance @Nullable string: String?): NullableBindsInstanceComponent
+      fun create(@BindsInstance string: String?): NullableBindsInstanceComponent
     }
   }
 

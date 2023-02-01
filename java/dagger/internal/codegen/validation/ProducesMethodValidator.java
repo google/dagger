@@ -17,7 +17,6 @@
 package dagger.internal.codegen.validation;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableAnnotation;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
@@ -29,6 +28,7 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.codegen.binding.InjectionAnnotations;
+import dagger.internal.codegen.binding.Nullability;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.xprocessing.XTypes;
 import java.util.Optional;
@@ -89,7 +89,8 @@ final class ProducesMethodValidator extends BindingMethodValidator {
      */
     // TODO(beder): Properly handle nullable with producer methods.
     private void checkNullable() {
-      if (getNullableAnnotation(method).isPresent()) {
+      Nullability nullability = Nullability.of(method);
+      if (nullability.nullableAnnotation().isPresent()) {
         report.addWarning("@Nullable on @Produces methods does not do anything");
       }
     }

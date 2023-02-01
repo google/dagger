@@ -43,8 +43,8 @@ import java.util.Optional;
 @CheckReturnValue
 public abstract class ContributionBinding extends Binding implements HasContributionType {
 
-  /** Returns the type that specifies this' nullability, absent if not nullable. */
-  public abstract Optional<XType> nullableType();
+  /** Returns the nullability of this binding. */
+  public abstract Nullability nullability();
 
   // Note: We're using DaggerAnnotation instead of XAnnotation for its equals/hashcode
   public abstract Optional<DaggerAnnotation> mapKey();
@@ -64,7 +64,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
 
   @Override
   public final boolean isNullable() {
-    return nullableType().isPresent();
+    return nullability().isNullable();
   }
 
   /**
@@ -134,7 +134,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
     public abstract B key(Key key);
 
     @CanIgnoreReturnValue
-    public abstract B nullableType(Optional<XType> nullableType);
+    public abstract B nullability(Nullability nullability);
 
     @CanIgnoreReturnValue
     abstract B mapKey(Optional<DaggerAnnotation> mapKey);

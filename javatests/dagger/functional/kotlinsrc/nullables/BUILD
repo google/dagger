@@ -34,3 +34,14 @@ GenKtTests(
         "//third_party/java/truth",
     ],
 )
+
+GenKtTests(
+    name = "NullabilityInteroptTest",
+    srcs = ["NullabilityInteroptTest.kt"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)

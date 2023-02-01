@@ -27,7 +27,7 @@ interface TestComponent {
 
   @Named("input") fun input(): String
 
-  @Nullable @Named("nullable input") fun nullableInput(): String
+  @Named("nullable input") fun nullableInput(): String?
 
   fun listOfString(): List<String>
 
@@ -41,8 +41,7 @@ interface TestComponent {
 
     @BindsInstance fun input(@Named("input") input: String): Builder
 
-    @BindsInstance
-    fun nullableInput(@Nullable @Named("nullable input") nullableInput: String?): Builder
+    @BindsInstance fun nullableInput(@Named("nullable input") nullableInput: String?): Builder
 
     @BindsInstance fun listOfString(listOfString: List<String>): Builder
 

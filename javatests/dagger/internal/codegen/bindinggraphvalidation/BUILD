@@ -27,6 +27,7 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//java/dagger/internal/codegen/bindinggraphvalidation",
+        "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/testing/compile",
         "//javatests/dagger/internal/codegen:compilers",

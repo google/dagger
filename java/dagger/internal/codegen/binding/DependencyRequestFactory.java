@@ -24,7 +24,6 @@ import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.base.RequestKinds.frameworkClassName;
 import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedParameter;
-import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
 import static dagger.spi.model.RequestKind.FUTURE;
@@ -214,7 +213,8 @@ public final class DependencyRequestFactory {
         .kind(kind)
         .key(key.get())
         .isNullable(
-            allowsNull(getRequestKind(OptionalType.from(requestKey).valueType()), Optional.empty()))
+            requestKindImplicitlyAllowsNull(
+                getRequestKind(OptionalType.from(requestKey).valueType())))
         .build();
   }
 
@@ -225,17 +225,21 @@ public final class DependencyRequestFactory {
         .kind(requestKind)
         .key(keyFactory.forQualifiedType(qualifier, extractKeyType(type)))
         .requestElement(DaggerElement.from(requestElement))
-        .isNullable(allowsNull(requestKind, getNullableType(requestElement)))
+        .isNullable(allowsNull(requestKind, Nullability.of(requestElement)))
         .build();
   }
 
   /**
    * Returns {@code true} if a given request element allows null values. {@link
-   * RequestKind#INSTANCE} requests must be annotated with {@code @Nullable} in order to allow null
-   * values. All other request kinds implicitly allow null values because they are are wrapped
-   * inside {@link Provider}, {@link Lazy}, etc.
+   * RequestKind#INSTANCE} requests must be nullable in order to allow null values. All other
+   * request kinds implicitly allow null values because they are are wrapped inside {@link
+   * Provider}, {@link Lazy}, etc.
    */
-  private boolean allowsNull(RequestKind kind, Optional<XType> nullableType) {
-    return nullableType.isPresent() || !kind.equals(INSTANCE);
+  private boolean allowsNull(RequestKind kind, Nullability nullability) {
+    return nullability.isNullable() || requestKindImplicitlyAllowsNull(kind);
+  }
+
+  private boolean requestKindImplicitlyAllowsNull(RequestKind kind) {
+    return !kind.equals(INSTANCE);
   }
 }

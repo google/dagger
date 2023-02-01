@@ -29,13 +29,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
-internal annotation class Nullable
-
 @RunWith(JUnit4::class)
 class NullabilityTest {
   @Component(dependencies = [NullComponent::class])
   internal interface NullComponentWithDependency {
-    @Nullable fun string(): String?
+    fun string(): String?
     fun number(): Number
     fun stringProvider(): Provider<String>
     fun numberProvider(): Provider<Number>
@@ -43,8 +41,8 @@ class NullabilityTest {
 
   @Component(modules = [NullModule::class])
   internal interface NullComponent {
-    @Nullable fun string(): String?
-    @Nullable fun integer(): Int?
+    fun string(): String?
+    fun integer(): Int?
     fun nullFoo(): NullFoo
     fun number(): Number
     fun stringProvider(): Provider<String>
@@ -56,11 +54,10 @@ class NullabilityTest {
     var numberValue: Number? = null
     var integerCallCount = 0
 
-    @Nullable @Provides fun provideNullableString(): String? = null
+    @Provides fun provideNullableString(): String? = null
 
     @Provides fun provideNumber(): Number = numberValue!!
 
-    @Nullable
     @Provides
     @Reusable
     fun provideNullReusableInteger(): Int? {
@@ -73,7 +70,7 @@ class NullabilityTest {
   internal class NullFoo
   @Inject
   constructor(
-    @param:Nullable val string: String?,
+    val string: String?,
     val number: Number,
     val stringProvider: Provider<String>,
     val numberProvider: Provider<Number>
@@ -85,7 +82,7 @@ class NullabilityTest {
 
     @Inject
     fun inject(
-      @Nullable string: String?,
+      string: String?,
       number: Number,
       stringProvider: Provider<String>,
       numberProvider: Provider<Number>
@@ -96,7 +93,7 @@ class NullabilityTest {
       methodInjectedNumberProvider = numberProvider
     }
 
-    @JvmField @Nullable @Inject var fieldInjectedString: String? = null
+    @JvmField @Inject var fieldInjectedString: String? = null
     @Inject lateinit var fieldInjectedNumber: Number
     @Inject lateinit var fieldInjectedStringProvider: Provider<String>
     @Inject lateinit var fieldInjectedNumberProvider: Provider<Number>

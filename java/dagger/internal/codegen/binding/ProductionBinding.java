@@ -111,6 +111,7 @@ public abstract class ProductionBinding extends ContributionBinding {
 
   public static Builder builder() {
     return new AutoValue_ProductionBinding.Builder()
+        .nullability(Nullability.NOT_NULLABLE)
         .explicitDependencies(ImmutableList.<DependencyRequest>of())
         .thrownTypes(ImmutableList.<XType>of());
   }

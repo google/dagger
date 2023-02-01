@@ -21,11 +21,5 @@ import dagger.Provides
 
 @Module
 internal object NullableModule {
-  @Provides @Nullable fun nullObject(): Any? = null
-
-  /**
-   * A `Nullable` that isn't [javax.annotation.Nullable], to ensure that Dagger can be built without
-   * depending on JSR-305.
-   */
-  internal annotation class Nullable
+  @Provides fun nullObject(): Any? = null
 }

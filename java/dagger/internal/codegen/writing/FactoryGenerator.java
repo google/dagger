@@ -44,8 +44,6 @@ import static javax.lang.model.element.Modifier.STATIC;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XType;
-import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -68,6 +66,7 @@ import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
+import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.DependencyRequest;
@@ -270,9 +269,9 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
 
     if (binding.kind().equals(PROVISION)) {
       binding
-          .nullableType()
-          .map(XType::getTypeElement)
-          .map(XTypeElement::getClassName)
+          .nullability()
+          .nullableAnnotation()
+          .map(XAnnotations::getClassName)
           .ifPresent(getMethod::addAnnotation);
       getMethod.addStatement("return $L", invokeNewInstance);
     } else if (!binding.injectionSites().isEmpty()) {

@@ -191,8 +191,7 @@ public abstract class ComponentRequirement {
 
   public static ComponentRequirement forBoundInstance(ContributionBinding binding) {
     checkArgument(binding.kind().equals(BindingKind.BOUND_INSTANCE));
-    return forBoundInstance(
-        binding.key(), binding.nullableType().isPresent(), binding.bindingElement().get());
+    return forBoundInstance(binding.key(), binding.isNullable(), binding.bindingElement().get());
   }
 
   static ComponentRequirement forBoundInstance(

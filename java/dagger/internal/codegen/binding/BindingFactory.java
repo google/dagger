@@ -24,7 +24,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentProductionMethod;
-import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
@@ -53,7 +52,6 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
@@ -88,7 +86,6 @@ public final class BindingFactory {
 
   @Inject
   BindingFactory(
-      XProcessingEnv processingEnv,
       KeyFactory keyFactory,
       DependencyRequestFactory dependencyRequestFactory,
       InjectionSiteFactory injectionSiteFactory,
@@ -193,7 +190,7 @@ public final class BindingFactory {
             this::providesMethodBinding)
         .kind(PROVISION)
         .scope(injectionAnnotations.getScope(providesMethod))
-        .nullableType(getNullableType(providesMethod))
+        .nullability(Nullability.of(providesMethod))
         .build();
   }
 
@@ -338,7 +335,7 @@ public final class BindingFactory {
       builder =
           ProvisionBinding.builder()
               .key(keyFactory.forComponentMethod(dependencyMethod))
-              .nullableType(getNullableType(dependencyMethod))
+              .nullability(Nullability.of(dependencyMethod))
               .kind(COMPONENT_PROVISION)
               .scope(injectionAnnotations.getScope(dependencyMethod));
     }
@@ -362,7 +359,7 @@ public final class BindingFactory {
         .contributionType(ContributionType.UNIQUE)
         .bindingElement(element)
         .key(requirement.key().get())
-        .nullableType(getNullableType(parameterElement))
+        .nullability(Nullability.of(parameterElement))
         .kind(BOUND_INSTANCE)
         .build();
   }
@@ -413,7 +410,7 @@ public final class BindingFactory {
     switch (actualBinding.bindingType()) {
       case PRODUCTION:
         return buildDelegateBinding(
-            ProductionBinding.builder().nullableType(actualBinding.nullableType()),
+            ProductionBinding.builder().nullability(actualBinding.nullability()),
             delegateDeclaration,
             TypeNames.PRODUCER);
 
@@ -421,7 +418,7 @@ public final class BindingFactory {
         return buildDelegateBinding(
             ProvisionBinding.builder()
                 .scope(injectionAnnotations.getScope(delegateDeclaration.bindingElement().get()))
-                .nullableType(actualBinding.nullableType()),
+                .nullability(actualBinding.nullability()),
             delegateDeclaration,
             TypeNames.PROVIDER);
 

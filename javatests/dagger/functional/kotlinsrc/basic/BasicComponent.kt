@@ -74,12 +74,12 @@ interface BasicComponent :
   fun lazyInjectedThingProviderFun(): Provider<Lazy<InjectedThing>>
   fun injectedThingMembersInjectorFun(): MembersInjector<InjectedThing>
 
-  @NullableModule.Nullable fun nullObjectFun(): Any
+  fun nullObjectFun(): Any?
   fun nullObjectProviderFun(): Provider<Any>
   fun lazyNullObjectFun(): Lazy<Any>
   fun typeWithInheritedMembersInjectionFun(): TypeWithInheritedMembersInjection
   fun typeWithInheritedMembersInjectionMembersInjectorFun():
-      MembersInjector<TypeWithInheritedMembersInjection>
+    MembersInjector<TypeWithInheritedMembersInjection>
 
   val byteVal: Byte
   val charVal: Char
@@ -124,11 +124,10 @@ interface BasicComponent :
   val lazyInjectedThingProviderVal: Provider<Lazy<InjectedThing>>
   val injectedThingMembersInjectorVal: MembersInjector<InjectedThing>
 
-  // TODO(b/261506732): Support nullable and qualifiers on properties without using @get:
-  @get:NullableModule.Nullable val nullObjectVal: Any
+  val nullObjectVal: Any?
   val nullObjectProviderVal: Provider<Any>
   val lazyNullObjectVal: Lazy<Any>
   val typeWithInheritedMembersInjectionVal: TypeWithInheritedMembersInjection
   val typeWithInheritedMembersInjectionMembersInjectorVal:
-      MembersInjector<TypeWithInheritedMembersInjection>
+    MembersInjector<TypeWithInheritedMembersInjection>
 }

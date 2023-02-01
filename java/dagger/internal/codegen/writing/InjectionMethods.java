@@ -24,7 +24,6 @@ import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedParameter;
-import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.binding.SourceFiles.memberInjectedFieldSignatureForVariable;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
@@ -71,6 +70,7 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
+import dagger.internal.codegen.binding.Nullability;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.extension.DaggerCollectors;
@@ -406,9 +406,9 @@ final class InjectionMethods {
     if (isVoid(method.getReturnType())) {
       return builder.addStatement("$L", invocation).build();
     } else {
-      getNullableType(method)
-          .map(XType::getTypeElement)
-          .map(XTypeElement::getClassName)
+      Nullability.of(method)
+          .nullableAnnotation()
+          .map(XAnnotations::getClassName)
           .ifPresent(builder::addAnnotation);
       return builder
           .returns(method.getReturnType().getTypeName())

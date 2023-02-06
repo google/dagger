@@ -40,6 +40,7 @@ import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.XTypeVariableType;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
 import com.squareup.javapoet.ArrayTypeName;
@@ -215,6 +216,11 @@ public final class XTypes {
     return (XArrayType) type;
   }
 
+  /** Returns the given {@code type} as an {@link XTypeVariableType}. */
+  public static XTypeVariableType asTypeVariable(XType type) {
+    return (XTypeVariableType) type;
+  }
+
   /** Returns {@code true} if the raw type of {@code type} is equal to {@code className}. */
   public static boolean isTypeOf(XType type, ClassName className) {
     return isDeclared(type) && type.getTypeElement().getClassName().equals(className);
@@ -281,10 +287,6 @@ public final class XTypes {
   /** Returns {@code true} if the given type has type parameters. */
   public static boolean hasTypeParameters(XType type) {
     return !type.getTypeArguments().isEmpty();
-  }
-
-  public static boolean isExecutable(XType type) {
-    return type instanceof XExecutableType;
   }
 
   public static boolean isMethod(XExecutableType type) {

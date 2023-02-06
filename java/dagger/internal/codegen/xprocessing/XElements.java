@@ -38,6 +38,8 @@ import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isNested;
+import static dagger.internal.codegen.xprocessing.XTypes.asArray;
+import static dagger.internal.codegen.xprocessing.XTypes.asTypeVariable;
 import static dagger.internal.codegen.xprocessing.XTypes.isBoolean;
 import static dagger.internal.codegen.xprocessing.XTypes.isChar;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
@@ -50,7 +52,6 @@ import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XAnnotated;
 import androidx.room.compiler.processing.XAnnotation;
-import androidx.room.compiler.processing.XArrayType;
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XEnumEntry;
@@ -321,6 +322,7 @@ public final class XElements {
    * href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3.2">JVM
    * specification, section 4.3.2</a>.
    */
+  // TODO(b/255424933): Expose getFieldDescriptor() method in XProcessing instead.
   public static String getFieldDescriptor(XFieldElement element) {
     return getSimpleName(element) + ":" + getDescriptor(element.getType());
   }
@@ -334,7 +336,7 @@ public final class XElements {
    * href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3.3">JVM
    * specification, section 4.3.3</a>.
    */
-  // TODO(bcorso): Expose getMethodDescriptor() method in XProcessing instead.
+  // TODO(b/255424933): Expose getMethodDescriptor() method in XProcessing instead.
   public static String getMethodDescriptor(XMethodElement element) {
     return getSimpleName(element) + getDescriptor(element.getExecutableType());
   }
@@ -362,15 +364,14 @@ public final class XElements {
     if (isKotlinUnit(type) || type.isNone() || isVoid(type) || isVoidObject(type)) {
       return "V";
     } else if (isArray(type)) {
-      XArrayType arrayType = (XArrayType) type;
-      return "[" + getDescriptor(arrayType.getComponentType());
+      return "[" + getDescriptor(asArray(type).getComponentType());
     } else if (isDeclared(type) || type.isError()) {
       return "L" + getInternalName(type.getTypeElement()) + ";";
-    } else if (XTypes.isExecutable(type)) {
-      return getDescriptor((XExecutableType) type);
     } else if (isTypeVariable(type)) {
-      // TODO(b/231169600) Expose bounds for type argument from XProcessing to obtain descriptor.
-      throw new AssertionError("Generic type is currently unsupported: " + type);
+      // For a type variable with multiple bounds: "the erasure of a type variable is determined
+      // by the first type in its bound" - JLS Sec 4.4
+      // See https://docs.oracle.com/javase/specs/jls/se16/html/jls-4.html#jls-4.4
+      return kspGetDescriptor(asTypeVariable(type).getUpperBounds().get(0));
     } else if (isInt(type)) {
       return "I";
     } else if (isLong(type)) {

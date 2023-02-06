@@ -17,13 +17,12 @@
 package dagger.internal.codegen.kotlin;
 
 import static com.google.common.truth.Truth.assertThat;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
-import androidx.room.compiler.processing.XFieldElement;
-import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XElementKt;
 import androidx.room.compiler.processing.util.Source;
 import androidx.room.compiler.processing.util.XTestInvocation;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.xprocessing.XElements;
 import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
@@ -63,11 +62,11 @@ public final class KspDescriptorTest {
         .compile(
             invocation -> {
               if (invocation.isKsp()) {
-                assertThat(getFieldDescriptor(invocation))
+                assertThat(getFieldDescriptors(invocation))
                     .containsExactly(
                         "field1:I", "field2:Lkotlin/String;", "field3:Lkotlin/collections/List;");
               } else {
-                assertThat(getFieldDescriptor(invocation))
+                assertThat(getFieldDescriptors(invocation))
                     .containsExactly(
                         "field1:I", "field2:Ljava/lang/String;", "field3:Ljava/util/List;");
               }
@@ -93,13 +92,13 @@ public final class KspDescriptorTest {
         .compile(
             invocation -> {
               if (invocation.isKsp()) {
-                assertThat(getFieldDescriptor(invocation))
+                assertThat(getFieldDescriptors(invocation))
                     .containsExactly(
                         "field1:I",
                         "field2:Lkotlin/String;",
                         "field3:Lkotlin/collections/MutableList;");
               } else {
-                assertThat(getFieldDescriptor(invocation))
+                assertThat(getFieldDescriptors(invocation))
                     .containsExactly(
                         "field1:I", "field2:Ljava/lang/String;", "field3:Ljava/util/List;");
               }
@@ -128,7 +127,7 @@ public final class KspDescriptorTest {
         .compile(
             invocation -> {
               if (invocation.isKsp()) {
-                assertThat(getMethodDescriptor(invocation))
+                assertThat(getMethodDescriptors(invocation))
                     .containsExactly(
                         "method1()V",
                         "method2(ZI)V",
@@ -139,7 +138,7 @@ public final class KspDescriptorTest {
                         "method7()Lkotlin/Any;",
                         "method8()Lkotlin/collections/Map;");
               } else {
-                assertThat(getMethodDescriptor(invocation))
+                assertThat(getMethodDescriptors(invocation))
                     .containsExactly(
                         "method1()V",
                         "method2(ZI)V",
@@ -180,7 +179,7 @@ public final class KspDescriptorTest {
         .compile(
             invocation -> {
               if (invocation.isKsp()) {
-                assertThat(getMethodDescriptor(invocation))
+                assertThat(getMethodDescriptors(invocation))
                     .containsExactly(
                         "method1()V",
                         "method2(ZI)V",
@@ -192,7 +191,7 @@ public final class KspDescriptorTest {
                         "method8(Ljava/util/ArrayList;)Lkotlin/collections/MutableList;",
                         "method9()Lkotlin/collections/MutableMap;");
               } else {
-                assertThat(getMethodDescriptor(invocation))
+                assertThat(getMethodDescriptors(invocation))
                     .containsExactly(
                         "method1()V",
                         "method2(ZI)V",
@@ -227,13 +226,13 @@ public final class KspDescriptorTest {
         .compile(
             invocation -> {
               if (invocation.isKsp()) {
-                assertThat(getMethodDescriptor(invocation))
+                assertThat(getMethodDescriptors(invocation))
                     .containsExactly(
                         "method1([Ltest/CustomClass;)V",
                         "method2()[Ltest/CustomClass;",
                         "method3([Lkotlin/Int;)V");
               } else {
-                assertThat(getMethodDescriptor(invocation))
+                assertThat(getMethodDescriptors(invocation))
                     .containsExactly(
                         "method1([Ltest/CustomClass;)V",
                         "method2()[Ltest/CustomClass;",
@@ -263,14 +262,14 @@ public final class KspDescriptorTest {
         .compile(
             invocation -> {
               if (invocation.isKsp()) {
-                assertThat(getMethodDescriptor(invocation))
+                assertThat(getMethodDescriptors(invocation))
                     .containsExactly(
                         "method1([Ltest/CustomClass;)V",
                         "method2()[Ltest/CustomClass;",
                         "method3([I)V",
                         "method4([I)V");
               } else {
-                assertThat(getMethodDescriptor(invocation))
+                assertThat(getMethodDescriptors(invocation))
                     .containsExactly(
                         "method1([Ltest/CustomClass;)V",
                         "method2()[Ltest/CustomClass;",
@@ -307,14 +306,13 @@ public final class KspDescriptorTest {
 
     CompilerTests.invocationCompiler(customClassSrc, dummySrc, describeAnnotationSrc)
         .compile(
-            invocation -> {
-              assertThat(getMethodDescriptor(invocation))
-                  .containsExactly(
-                      "method1(Ltest/CustomClass$InnerData;)V",
-                      "method2(Ltest/CustomClass$StaticInnerData;)V",
-                      "method3(Ltest/CustomClass$EnumData;)V",
-                      "method4()Ltest/CustomClass$StaticInnerData;");
-            });
+            invocation ->
+                assertThat(getMethodDescriptors(invocation))
+                    .containsExactly(
+                        "method1(Ltest/CustomClass$InnerData;)V",
+                        "method2(Ltest/CustomClass$StaticInnerData;)V",
+                        "method3(Ltest/CustomClass$EnumData;)V",
+                        "method4()Ltest/CustomClass$StaticInnerData;"));
   }
 
   @Test
@@ -337,11 +335,11 @@ public final class KspDescriptorTest {
         .compile(
             invocation -> {
               if (invocation.isKsp()) {
-                assertThat(getFieldDescriptor(invocation))
+                assertThat(getFieldDescriptors(invocation))
                     .containsExactly(
                         "field1:Ltest/DummyClass;", "field2:Ltest/DummyClass$Nested1$Nested2;");
               } else {
-                assertThat(getFieldDescriptor(invocation))
+                assertThat(getFieldDescriptors(invocation))
                     .containsExactly(
                         "field1:Ltest/DummyClass;", "field2:Ltest/DummyClass$Nested1$Nested2;");
               }
@@ -370,9 +368,19 @@ public final class KspDescriptorTest {
     CompilerTests.invocationCompiler(dummySrc, describeAnnotationSrc)
         .compile(
             invocation -> {
-              // TODO(b/231169600): Add ksp test when generic type is supported.
-              if (!invocation.isKsp()) {
-                assertThat(getMethodDescriptor(invocation))
+              if (invocation.isKsp()) {
+                assertThat(getMethodDescriptors(invocation))
+                    .containsExactly(
+                        "method1(Lkotlin/Any;)V",
+                        "method2()Lkotlin/Any;",
+                        "method3()Lkotlin/collections/List;",
+                        "method4()Lkotlin/collections/Map;",
+                        "method5()Lkotlin/collections/List;",
+                        "method6(Lkotlin/Any;)Lkotlin/Any;",
+                        "method7(Lkotlin/Any;)Lkotlin/String;",
+                        "method8()Lkotlin/collections/Collection;");
+              } else {
+                assertThat(getMethodDescriptors(invocation))
                     .containsExactly(
                         "method1(Ljava/lang/Object;)V",
                         "method2()Ljava/lang/Object;",
@@ -407,17 +415,29 @@ public final class KspDescriptorTest {
             " @Describe ArrayList<Map<String, T>> method5() { return null; }",
             " @Describe <I, O extends I> O method6(I input) { return null; }",
             " @Describe static <I, O extends String> O method7(I input) { return null; }",
-            " @Describe static <P extends Collection<String> & Comparable<String>> P method8() {"
-                + " return null; }",
+            " @Describe static <P extends Collection<String> & Comparable<String>> P method8() {",
+            "   return null;",
+            " }",
             " @Describe static <P extends String & List<Character>> P method9() { return null; }",
             "}");
 
     CompilerTests.invocationCompiler(dummySrc, describeAnnotationSrc)
         .compile(
             invocation -> {
-              // TODO(b/231169600): Add ksp test when generic type is supported.
-              if (!invocation.isKsp()) {
-                assertThat(getMethodDescriptor(invocation))
+              if (invocation.isKsp()) {
+                assertThat(getMethodDescriptors(invocation))
+                    .containsExactly(
+                        "method1(Lkotlin/Any;)V",
+                        "method2()Lkotlin/Any;",
+                        "method3()Lkotlin/collections/MutableList;",
+                        "method4()Lkotlin/collections/MutableMap;",
+                        "method5()Ljava/util/ArrayList;",
+                        "method6(Lkotlin/Any;)Lkotlin/Any;",
+                        "method7(Lkotlin/Any;)Lkotlin/String;",
+                        "method8()Lkotlin/collections/MutableCollection;",
+                        "method9()Lkotlin/String;");
+              } else {
+                assertThat(getMethodDescriptors(invocation))
                     .containsExactly(
                         "method1(Ljava/lang/Object;)V",
                         "method2()Ljava/lang/Object;",
@@ -432,17 +452,19 @@ public final class KspDescriptorTest {
             });
   }
 
-  private ImmutableSet<String> getFieldDescriptor(XTestInvocation invocation) {
+  private static ImmutableList<String> getFieldDescriptors(XTestInvocation invocation) {
     return invocation.getRoundEnv().getElementsAnnotatedWith("test.Describe").stream()
-        .filter(element -> element instanceof XFieldElement)
-        .map(element -> XElements.getFieldDescriptor((XFieldElement) element))
-        .collect(toImmutableSet());
+        .filter(XElementKt::isField)
+        .map(XElements::asField)
+        .map(XElements::getFieldDescriptor)
+        .collect(toImmutableList());
   }
 
-  private ImmutableSet<String> getMethodDescriptor(XTestInvocation invocation) {
+  private static ImmutableList<String> getMethodDescriptors(XTestInvocation invocation) {
     return invocation.getRoundEnv().getElementsAnnotatedWith("test.Describe").stream()
-        .filter(element -> element instanceof XMethodElement)
-        .map(element -> XElements.getMethodDescriptor((XMethodElement) element))
-        .collect(toImmutableSet());
+        .filter(XElementKt::isMethod)
+        .map(XElements::asMethod)
+        .map(XElements::getMethodDescriptor)
+        .collect(toImmutableList());
   }
 }

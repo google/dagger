@@ -65,12 +65,4 @@ public enum CompilerMode {
   public FluentIterable<String> javacopts() {
     return FluentIterable.from(javacopts);
   }
-
-  /**
-   * Returns a {@link JavaFileBuilder} that builds {@link javax.tools.JavaFileObject}s for this
-   * mode.
-   */
-  public JavaFileBuilder javaFileBuilder(String qualifiedName) {
-    return new JavaFileBuilder(this, qualifiedName);
-  }
 }

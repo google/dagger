@@ -20,15 +20,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
-import com.google.testing.compile.JavaFileObjects;
 import dagger.testing.compile.CompilerTests;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import javax.tools.JavaFileObject;
 
 /**
- * A fluent API to build a {@link JavaFileObject} appropriate for a current set of settings, such as
+ * A fluent API to build a {@link Source} appropriate for a current set of settings, such as
  * compiler mode.
  *
  * <p>After creating a builder, you can add lines to the file. Call {@link #addLines(String...)} to
@@ -87,11 +85,6 @@ final class JavaFileBuilder {
       sourceLines.add(lines);
     }
     return this;
-  }
-
-  /** Builds the {@link JavaFileObject}. */
-  JavaFileObject build() {
-    return JavaFileObjects.forSourceLines(qualifiedName, sourceLines.build());
   }
 
   /** Builds the {@link Source}. */

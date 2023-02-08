@@ -92,7 +92,11 @@ final class DependencyRequestValidator {
     new Validator(report, requestElement, requestType).validate();
   }
 
-  /** Returns {@code true} if a kotlin inject field is missing metadata about its qualifiers. */
+  /**
+   * Returns {@code true} if a kotlin inject field is missing metadata about its qualifiers.
+   *
+   * <p>See https://youtrack.jetbrains.com/issue/KT-34684.
+   */
   private boolean missingQualifierMetadata(XElement requestElement) {
     if (isField(requestElement)) {
       XFieldElement fieldElement = asField(requestElement);

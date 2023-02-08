@@ -16,14 +16,8 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
-
 import androidx.room.compiler.processing.util.Source;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
 import dagger.testing.compile.CompilerTests;
-import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -61,11 +55,10 @@ public class MembersInjectionValidationTest {
             });
   }
 
-  // TODO(b/246320661): Use XProcessing testing once this bug is fixed.
   @Test
   public void membersInjectPrimitive() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -75,12 +68,14 @@ public class MembersInjectionValidationTest {
             "interface TestComponent {",
             "  void inject(int primitive);",
             "}");
-    Compilation compilation = daggerCompiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Cannot inject members into int")
-        .inFile(component)
-        .onLineContaining("void inject(int primitive);");
+    CompilerTests.daggerCompiler(component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("Cannot inject members into int")
+                  .onSource(component)
+                  .onLineContaining("void inject(int primitive);");
+            });
   }
 
   @Test
@@ -263,11 +258,10 @@ public class MembersInjectionValidationTest {
             });
   }
 
-  // TODO(b/245934092): Update this test after this bug is fixed on XProcessing side.
   @Test
   public void missingMembersInjectorForKotlinProperty() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -278,8 +272,8 @@ public class MembersInjectionValidationTest {
             "interface TestComponent {",
             "  void inject(KotlinInjectedQualifier injected);",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -293,17 +287,28 @@ public class MembersInjectionValidationTest {
             "  @Named(\"TheString\")",
             "  String theString() { return \"\"; }",
             "}");
-    Compilation compilation = daggerCompiler().compile(component, module);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Unable to read annotations on an injected Kotlin property.");
+    CompilerTests.daggerCompiler(component, module)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  // KSP works fine in this case so we shouldn't expect any errors here.
+                  subject.hasErrorCount(0);
+                  break;
+                case JAVAC:
+                  subject.hasErrorCount(2);
+                  subject.hasErrorContaining(
+                      "Unable to read annotations on an injected Kotlin property.");
+                  subject.hasErrorContaining("KotlinInjectedQualifier cannot be provided");
+                  break;
+              }
+            });
   }
 
-  // TODO(b/245934092): Update this test after this bug is fixed on XProcessing side.
   @Test
   public void memberInjectionForKotlinObjectFails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -314,10 +319,22 @@ public class MembersInjectionValidationTest {
             "interface TestComponent {",
             "  void inject(KotlinObjectWithMemberInjection injected);",
             "}");
-    Compilation compilation = daggerCompiler().compile(component, testModule.toJFO());
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Dagger does not support injection into Kotlin objects");
+    CompilerTests.daggerCompiler(component, testModule)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  subject.hasErrorCount(2);
+                  break;
+                case JAVAC:
+                  subject.hasErrorCount(3);
+                  subject.hasErrorContaining(
+                      "Dagger does not support injection into static fields");
+                  break;
+              }
+              subject.hasErrorContaining("Dagger does not support injection into Kotlin objects");
+              subject.hasErrorContaining("KotlinObjectWithMemberInjection cannot be provided");
+            });
   }
 
   @Test
@@ -345,11 +362,10 @@ public class MembersInjectionValidationTest {
             });
   }
 
-  // TODO(b/245934092): Update this test after this bug is fixed on XProcessing side.
   @Test
   public void memberInjectionForKotlinClassWithCompanionObjectFails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -361,17 +377,29 @@ public class MembersInjectionValidationTest {
             "  void inject(KotlinClassWithMemberInjectedCompanion injected);",
             "  void injectCompanion(KotlinClassWithMemberInjectedCompanion.Companion injected);",
             "}");
-    Compilation compilation = daggerCompiler().compile(component, testModule.toJFO());
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Dagger does not support injection into static fields");
+    CompilerTests.daggerCompiler(component, testModule)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  subject.hasErrorCount(4);
+                  subject.hasErrorContaining(
+                      "Dagger does not support injection into Kotlin objects");
+                  break;
+                case JAVAC:
+                  subject.hasErrorCount(2);
+                  break;
+              }
+              subject.hasErrorContaining("Dagger does not support injection into static fields");
+              subject.hasErrorContaining(
+                  "KotlinClassWithMemberInjectedCompanion cannot be provided");
+            });
   }
 
-  // TODO(b/245792321): Update this test once this bug is fixed.
   @Test
   public void setterMemberInjectionForKotlinClassWithCompanionObjectFails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -382,17 +410,30 @@ public class MembersInjectionValidationTest {
             "interface TestComponent {",
             "  void inject(KotlinClassWithSetterMemberInjectedCompanion.Companion injected);",
             "}");
-    Compilation compilation = daggerCompiler().compile(component, testModule.toJFO());
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Dagger does not support injection into Kotlin objects");
+    CompilerTests.daggerCompiler(component, testModule)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  // TODO(b/268257007): The KSP results should match KAPT once this bug is fixed.
+                  subject.hasErrorCount(3);
+                  subject.hasErrorContaining(
+                      "Dagger does not support injection into static methods");
+                  break;
+                case JAVAC:
+                  subject.hasErrorCount(2);
+                  break;
+              }
+              subject.hasErrorContaining("Dagger does not support injection into Kotlin objects");
+              subject.hasErrorContaining(
+                  "KotlinClassWithSetterMemberInjectedCompanion.Companion cannot be provided");
+            });
   }
 
-  // TODO(b/245934092): Update this test after this bug is fixed on XProcessing side.
   @Test
   public void memberInjectionForKotlinClassWithNamedCompanionObjectFails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -405,17 +446,29 @@ public class MembersInjectionValidationTest {
             "  void injectCompanion(KotlinClassWithMemberInjectedNamedCompanion.TheCompanion"
                 + " injected);",
             "}");
-    Compilation compilation = daggerCompiler().compile(component, testModule.toJFO());
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Dagger does not support injection into static fields");
+    CompilerTests.daggerCompiler(component, testModule)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  subject.hasErrorCount(4);
+                  subject.hasErrorContaining(
+                      "Dagger does not support injection into Kotlin objects");
+                  break;
+                case JAVAC:
+                  subject.hasErrorCount(2);
+                  break;
+              }
+              subject.hasErrorContaining("Dagger does not support injection into static fields");
+              subject.hasErrorContaining(
+                  "KotlinClassWithMemberInjectedNamedCompanion cannot be provided");
+            });
   }
 
-  // TODO(b/245792321): Update this test once this bug is fixed.
   @Test
   public void setterMemberInjectionForKotlinClassWithNamedCompanionObjectFails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -427,10 +480,25 @@ public class MembersInjectionValidationTest {
             "  void inject(",
             "      KotlinClassWithSetterMemberInjectedNamedCompanion.TheCompanion injected);",
             "}");
-    Compilation compilation = daggerCompiler().compile(component, testModule.toJFO());
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Dagger does not support injection into Kotlin objects");
+    CompilerTests.daggerCompiler(component, testModule)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  // TODO(b/268257007): The KSP results should match KAPT once this bug is fixed.
+                  subject.hasErrorCount(3);
+                  subject.hasErrorContaining(
+                      "Dagger does not support injection into static methods");
+                  break;
+                case JAVAC:
+                  subject.hasErrorCount(2);
+                  break;
+              }
+              subject.hasErrorContaining("Dagger does not support injection into Kotlin objects");
+              subject.hasErrorContaining(
+                  "KotlinClassWithSetterMemberInjectedNamedCompanion.TheCompanion "
+                      + "cannot be provided");
+            });
   }
 
   private final Source testModule =

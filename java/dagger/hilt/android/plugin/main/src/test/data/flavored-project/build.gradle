@@ -28,3 +28,15 @@ allprojects {
         mavenCentral()
     }
 }
+subprojects {
+    afterEvaluate {
+        dependencies {
+            // This is needed to align older versions of kotlin-stdlib.
+            // The main issue is that in v1.8.0 the jdk7 and jdk8 artifacts were
+            // merged into kotlin-stdlib, so without this alignment we end up
+            // getting duplicate classes by pulling in both artifacts.
+            // See: https://kotlinlang.org/docs/whatsnew18.html#usage-of-the-latest-kotlin-stdlib-version-in-transitive-dependencies
+            implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.0"))
+        }
+    }
+}

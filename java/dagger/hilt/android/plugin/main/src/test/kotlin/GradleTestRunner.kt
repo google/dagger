@@ -161,6 +161,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
         }
 
         dependencies {
+          implementation(platform('org.jetbrains.kotlin:kotlin-bom:1.8.0'))
           ${dependencies.joinToString(separator = "\n")}
         }
 

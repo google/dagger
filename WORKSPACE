@@ -107,9 +107,9 @@ robolectric_repositories()
 # Load Kotlin repository
 #############################
 
-RULES_KOTLIN_TAG = "v1.6.0"
+RULES_KOTLIN_TAG = "v1.8-RC-1"
 
-RULES_KOTLIN_SHA = "a57591404423a52bd6b18ebba7979e8cd2243534736c5c94d35c89718ea38f94"
+RULES_KOTLIN_SHA = "1779628569eb3b0fe97a3fb5c3ed8090e6503e425600b401c7b1afb6b23a3098"
 
 http_archive(
     name = "io_bazel_rules_kotlin",
@@ -119,10 +119,10 @@ http_archive(
 
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
 
-KOTLIN_VERSION = "1.7.0"
+KOTLIN_VERSION = "1.8.0"
 
 # Get from https://github.com/JetBrains/kotlin/releases/
-KOTLINC_RELEASE_SHA = "f5216644ad81571e5db62ec2322fe07468927bda40f51147ed626a2884b55f9a"
+KOTLINC_RELEASE_SHA = "0bb9419fac9832a56a3a19cad282f8f2d6f1237d2d467dc8dfe9bd4a2a43c42e"
 
 kotlin_repositories(
     compiler_release = kotlinc_version(
@@ -171,7 +171,7 @@ CHECKER_FRAMEWORK_VERSION = "2.5.3"
 
 ERROR_PRONE_VERSION = "2.14.0"
 
-KSP_VERSION = "1.7.0-1.0.6"
+KSP_VERSION = "1.8.0-1.0.9"
 
 maven_install(
     artifacts = [
@@ -245,8 +245,7 @@ maven_install(
         "org.jetbrains.kotlin:kotlin-compiler-embeddable:%s" % KOTLIN_VERSION,
         "org.jetbrains.kotlin:kotlin-daemon-embeddable:%s" % KOTLIN_VERSION,
         "org.jetbrains.kotlin:kotlin-stdlib:%s" % KOTLIN_VERSION,
-        "org.jetbrains.kotlin:kotlin-stdlib-jdk8:%s" % KOTLIN_VERSION,
-        "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.5.0",
+        "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.6.0",
         "org.mockito:mockito-core:2.28.2",
         "org.objenesis:objenesis:1.0",
         "org.robolectric:robolectric:4.4",

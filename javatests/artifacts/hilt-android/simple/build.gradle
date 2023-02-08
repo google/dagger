@@ -17,7 +17,7 @@
 buildscript {
     ext {
         dagger_version = 'LOCAL-SNAPSHOT'
-        kotlin_version = '1.7.0'
+        kotlin_version = '1.8.0'
         agp_version = System.getenv('AGP_VERSION') ?: "7.1.2"
     }
     repositories {
@@ -49,6 +49,18 @@ allprojects {
             showStackTraces true
             showStandardStreams true
             events = ["passed", "skipped", "failed", "standardOut", "standardError"]
+        }
+    }
+}
+subprojects {
+    afterEvaluate {
+        dependencies {
+            // This is needed to align older versions of kotlin-stdlib.
+            // The main issue is that in v1.8.0 the jdk7 and jdk8 artifacts were
+            // merged into kotlin-stdlib, so without this alignment we end up
+            // getting duplicate classes by pulling in both artifacts.
+            // See: https://kotlinlang.org/docs/whatsnew18.html#usage-of-the-latest-kotlin-stdlib-version-in-transitive-dependencies
+            implementation(platform("org.jetbrains.kotlin:kotlin-bom:$kotlin_version"))
         }
     }
 }

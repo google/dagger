@@ -16,12 +16,6 @@
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
-buildscript {
-  ext {
-    agp_version = System.getenv('AGP_VERSION') ?: "7.2.0"
-  }
-}
-
 plugins {
   id 'org.jetbrains.kotlin.jvm'
   id 'java-gradle-plugin'

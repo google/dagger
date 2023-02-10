@@ -16,18 +16,14 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.TestUtils.message;
 import static org.junit.Assume.assumeFalse;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
 import dagger.testing.compile.CompilerTests;
-import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -1227,11 +1223,10 @@ public class DuplicateBindingsValidationTest {
   }
 
   // Tests the format of the error for a somewhat complex binding method.
-  // TODO(b/241293838): Convert this test to use XProcessing Testing after fixing this bug.
   @Test
   public void formatTest() {
-    JavaFileObject modules =
-        JavaFileObjects.forSourceLines(
+    Source modules =
+        CompilerTests.javaSource(
             "test.Modules",
             "package test;",
             "",
@@ -1269,8 +1264,8 @@ public class DuplicateBindingsValidationTest {
             "    }",
             "  }",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -1283,17 +1278,23 @@ public class DuplicateBindingsValidationTest {
             "interface TestComponent {",
             "  @Modules.Foo(bar = String.class) String foo();",
             "}");
-    Compilation compilation = daggerCompiler().compile(modules, component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            message(
-                "String is bound multiple times:",
-                "    @Provides @Singleton @Modules.Foo(bar = String.class) String "
-                    + "Modules.Module1.foo(int, ImmutableList<Boolean>)",
-                "    @Provides @Singleton @Modules.Foo(bar = String.class) String "
-                    + "Modules.Module2.foo(int, ImmutableList<Boolean>)"))
-        .inFile(component);
+    CompilerTests.daggerCompiler(modules, component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  String.format(
+                      String.join(
+                          "\n",
+                          "String is bound multiple times:",
+                          "    @Provides @Singleton @Modules.Foo(%1$s) String "
+                              + "Modules.Module1.foo(int, ImmutableList<Boolean>)",
+                          "    @Provides @Singleton @Modules.Foo(%1$s) String "
+                              + "Modules.Module2.foo(int, ImmutableList<Boolean>)"),
+                      // TODO(b/241293838): KSP and java should match after this is fixed.
+                      CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP
+                          ? "bar=String"
+                          : "bar = String.class"));
+            });
   }
 }

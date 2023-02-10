@@ -16,16 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,8 +43,8 @@ public class MapRequestRepresentationWithGuavaTest {
 
   @Test
   public void mapBindings() throws Exception {
-    JavaFileObject mapModuleFile =
-        JavaFileObjects.forSourceLines(
+    Source mapModuleFile =
+        CompilerTests.javaSource(
             "test.MapModule",
             "package test;",
             "",
@@ -70,8 +64,8 @@ public class MapRequestRepresentationWithGuavaTest {
             "  @Provides @IntoMap @LongKey(1) static long provideLong1() { return 1; }",
             "  @Provides @IntoMap @LongKey(2) static long provideLong2() { return 2; }",
             "}");
-    JavaFileObject subcomponentModuleFile =
-        JavaFileObjects.forSourceLines(
+    Source subcomponentModuleFile =
+        CompilerTests.javaSource(
             "test.SubcomponentMapModule",
             "package test;",
             "",
@@ -89,8 +83,8 @@ public class MapRequestRepresentationWithGuavaTest {
             "  @Provides @IntoMap @LongKey(4) static long provideLong4() { return 4; }",
             "  @Provides @IntoMap @LongKey(5) static long provideLong5() { return 5; }",
             "}");
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -110,8 +104,8 @@ public class MapRequestRepresentationWithGuavaTest {
             "",
             "  Sub sub();",
             "}");
-    JavaFileObject subcomponent =
-        JavaFileObjects.forSourceLines(
+    Source subcomponent =
+        CompilerTests.javaSource(
             "test.Sub",
             "package test;",
             "",
@@ -124,14 +118,13 @@ public class MapRequestRepresentationWithGuavaTest {
             "  Map<Long, Long> longs();",
             "  Map<Long, Provider<Long>> providerLongs();",
             "}");
-
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(mapModuleFile, componentFile, subcomponentModuleFile, subcomponent);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(mapModuleFile, componentFile, subcomponentModuleFile, subcomponent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test

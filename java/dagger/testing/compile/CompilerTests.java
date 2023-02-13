@@ -78,23 +78,25 @@ public final class CompilerTests {
   }
 
   /** Returns a {@link Source.KotlinSource} with the given file name and content. */
-  public static Source kotlinSource(String fileName, ImmutableCollection<String> srcLines) {
-    return Source.Companion.kotlin(fileName, String.join("\n", srcLines));
+  public static Source.KotlinSource kotlinSource(
+      String fileName, ImmutableCollection<String> srcLines) {
+    return (Source.KotlinSource) Source.Companion.kotlin(fileName, String.join("\n", srcLines));
   }
 
   /** Returns a {@link Source.KotlinSource} with the given file name and content. */
-  public static Source kotlinSource(String fileName, String... srcLines) {
-    return Source.Companion.kotlin(fileName, String.join("\n", srcLines));
+  public static Source.KotlinSource kotlinSource(String fileName, String... srcLines) {
+    return (Source.KotlinSource) Source.Companion.kotlin(fileName, String.join("\n", srcLines));
   }
 
   /** Returns a {@link Source.JavaSource} with the given file name and content. */
-  public static Source javaSource(String fileName, ImmutableCollection<String> srcLines) {
-    return Source.Companion.java(fileName, String.join("\n", srcLines));
+  public static Source.JavaSource javaSource(
+      String fileName, ImmutableCollection<String> srcLines) {
+    return (Source.JavaSource) Source.Companion.java(fileName, String.join("\n", srcLines));
   }
 
   /** Returns a {@link Source.JavaSource} with the given file name and content. */
-  public static Source javaSource(String fileName, String... srcLines) {
-    return Source.Companion.java(fileName, String.join("\n", srcLines));
+  public static Source.JavaSource javaSource(String fileName, String... srcLines) {
+    return (Source.JavaSource) Source.Companion.java(fileName, String.join("\n", srcLines));
   }
 
   /** Returns a {@link Compiler} instance with the given sources. */
@@ -205,14 +207,13 @@ public final class CompilerTests {
           /* classpath= */ ImmutableList.of(),
           processorOptions(),
           /* javacArguments= */ ImmutableList.of(),
-          /* kotlincArguments= */ ImmutableList.of(),
+          /* kotlincArguments= */ ImmutableList.of(
+              "-P", "plugin:org.jetbrains.kotlin.kapt3:correctErrorTypes=true"),
           /* config= */ PROCESSING_ENV_CONFIG,
-          /* javacProcessors= */
-          ImmutableList.of(
+          /* javacProcessors= */ ImmutableList.of(
               ComponentProcessor.withTestPlugins(bindingGraphPlugins()),
               new CompilerProcessors.JavacProcessor(processingSteps())),
-          /* symbolProcessorProviders= */
-          ImmutableList.of(
+          /* symbolProcessorProviders= */ ImmutableList.of(
               KspComponentProcessor.Provider.withTestPlugins(bindingGraphPlugins()),
               new CompilerProcessors.KspProcessor.Provider(processingSteps())),
           result -> {

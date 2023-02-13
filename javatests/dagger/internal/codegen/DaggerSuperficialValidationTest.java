@@ -28,6 +28,7 @@ import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -39,10 +40,27 @@ import java.util.Set;
 import javax.inject.Singleton;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class DaggerSuperficialValidationTest {
+  enum SourceKind {
+    JAVA,
+    KOTLIN
+  }
+
+  @Parameters(name = "sourceKind={0}")
+  public static ImmutableList<Object[]> parameters() {
+    return ImmutableList.of(new Object[] {SourceKind.JAVA}, new Object[] {SourceKind.KOTLIN});
+  }
+
+  private final SourceKind sourceKind;
+
+  public DaggerSuperficialValidationTest(SourceKind sourceKind) {
+    this.sourceKind = sourceKind;
+  }
+
   private static final Joiner NEW_LINES = Joiner.on("\n  ");
 
   @Test
@@ -54,6 +72,13 @@ public class DaggerSuperficialValidationTest {
             "",
             "abstract class TestClass {",
             "  abstract MissingType blah();",
+            "}"),
+        CompilerTests.kotlinSource(
+            "test.TestClass.kt",
+            "package test",
+            "",
+            "abstract class TestClass {",
+            "  abstract fun blah(): MissingType",
             "}"),
         (processingEnv, superficialValidation) -> {
           XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
@@ -85,6 +110,13 @@ public class DaggerSuperficialValidationTest {
             "",
             "abstract class TestClass {",
             "  abstract MissingType<?> blah();",
+            "}"),
+        CompilerTests.kotlinSource(
+            "test.TestClass.kt",
+            "package test",
+            "",
+            "abstract class TestClass {",
+            "  abstract fun blah(): MissingType<*>",
             "}"),
         (processingEnv, superficialValidation) -> {
           XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
@@ -120,6 +152,13 @@ public class DaggerSuperficialValidationTest {
             "abstract class TestClass {",
             "  abstract Map<Set<?>, MissingType<?>> blah();",
             "}"),
+        CompilerTests.kotlinSource(
+            "test.TestClass.kt",
+            "package test",
+            "",
+            "abstract class TestClass {",
+            "  abstract fun blah(): Map<Set<*>, MissingType<*>>",
+            "}"),
         (processingEnv, superficialValidation) -> {
           XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
           ValidationException exception =
@@ -151,7 +190,16 @@ public class DaggerSuperficialValidationTest {
             "package test;",
             "",
             "class TestClass<T extends MissingType> {}"),
+        CompilerTests.kotlinSource(
+            "test.TestClass.kt", //
+            "package test",
+            "",
+            "class TestClass<T : MissingType>"),
         (processingEnv, superficialValidation) -> {
+          if (isKAPT(processingEnv)) {
+            // TODO(b/268536260): Figure out why XProcessing Testing infra fails when using KAPT.
+            return;
+          }
           XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
           ValidationException exception =
               assertThrows(
@@ -181,6 +229,13 @@ public class DaggerSuperficialValidationTest {
             "",
             "abstract class TestClass {",
             "  abstract void foo(MissingType param);",
+            "}"),
+        CompilerTests.kotlinSource(
+            "test.TestClass.kt",
+            "package test",
+            "",
+            "abstract class TestClass {",
+            "  abstract fun foo(param: MissingType);",
             "}"),
         (processingEnv, superficialValidation) -> {
           XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
@@ -213,6 +268,12 @@ public class DaggerSuperficialValidationTest {
             "",
             "@MissingAnnotation",
             "class TestClass {}"),
+        CompilerTests.kotlinSource(
+            "test.TestClass.kt", //
+            "package test",
+            "",
+            "@MissingAnnotation",
+            "class TestClass"),
         (processingEnv, superficialValidation) -> {
           XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
           ValidationException exception =
@@ -242,6 +303,11 @@ public class DaggerSuperficialValidationTest {
             "package test;",
             "",
             "class TestClass<T extends Comparable<T>> {}"),
+        CompilerTests.kotlinSource(
+            "test.TestClass.kt", //
+            "package test",
+            "",
+            "class TestClass<T : Comparable<T>>"),
         (processingEnv, superficialValidation) ->
             superficialValidation.validateElement(processingEnv.findTypeElement("test.TestClass")));
   }
@@ -255,6 +321,13 @@ public class DaggerSuperficialValidationTest {
             "",
             "abstract class TestClass {",
             "  abstract TestClass foo(TestClass x);",
+            "}"),
+        CompilerTests.kotlinSource(
+            "test.TestClass.kt",
+            "package test",
+            "",
+            "abstract class TestClass {",
+            "  abstract fun foo(x: TestClass): TestClass",
             "}"),
         (processingEnv, superficialValidation) ->
             superficialValidation.validateElement(processingEnv.findTypeElement("test.TestClass")));
@@ -270,13 +343,26 @@ public class DaggerSuperficialValidationTest {
             "import java.util.Set;",
             "",
             "class TestClass {",
-            "  Set<? extends MissingType> extendsTest() {",
+            "  static final class Foo<T> {}",
+            "",
+            "  Foo<? extends MissingType> extendsTest() {",
             "    return null;",
             "  }",
             "",
-            "  Set<? super MissingType> superTest() {",
+            "  Foo<? super MissingType> superTest() {",
             "    return null;",
             "  }",
+            "}"),
+        CompilerTests.kotlinSource(
+            "test.TestClass.kt",
+            "package test",
+            "",
+            "class TestClass {",
+            "  class Foo<T>",
+            "",
+            "  fun extendsTest(): Foo<out MissingType> = TODO()",
+            "",
+            "  fun superTest(): Foo<in MissingType> = TODO()",
             "}"),
         (processingEnv, superficialValidation) -> {
           XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
@@ -294,7 +380,7 @@ public class DaggerSuperficialValidationTest {
                           "Validation trace:",
                           "  => element (CLASS): test.TestClass",
                           "  => element (METHOD): extendsTest()",
-                          "  => type (DECLARED return type): java.util.Set<? extends %1$s>",
+                          "  => type (DECLARED return type): test.TestClass.Foo<? extends %1$s>",
                           "  => type (WILDCARD type argument): ? extends %1$s",
                           "  => type (ERROR extends bound type): %1$s"),
                       isJavac ? "MissingType" : "error.NonExistentClass"));
@@ -309,7 +395,16 @@ public class DaggerSuperficialValidationTest {
             "package test;",
             "",
             "class TestClass<T extends Number & Missing> {}"),
+        CompilerTests.kotlinSource(
+            "test.TestClass.kt",
+            "package test",
+            "",
+            "class TestClass<T> where T: Number, T: Missing"),
         (processingEnv, superficialValidation) -> {
+          if (isKAPT(processingEnv)) {
+            // TODO(b/268536260): Figure out why XProcessing Testing infra fails when using KAPT.
+            return;
+          }
           XTypeElement testClassElement = processingEnv.findTypeElement("test.TestClass");
           ValidationException exception =
               assertThrows(
@@ -345,8 +440,27 @@ public class DaggerSuperficialValidationTest {
             "  @TestAnnotation(classes = MissingType.class)",
             "  static class TestClass {}",
             "}"),
+        CompilerTests.kotlinSource(
+            "test.Outer.kt",
+            "package test",
+            "",
+            "class Outer {",
+            "  annotation class TestAnnotation(",
+            "    val classes: Array<kotlin.reflect.KClass<*>>",
+            "  )",
+            "",
+            "  @TestAnnotation(classes = [MissingType::class])",
+            "  class TestClass {}",
+            "}"),
         (processingEnv, superficialValidation) -> {
           XTypeElement testClassElement = processingEnv.findTypeElement("test.Outer.TestClass");
+          if (processingEnv.getBackend() == XProcessingEnv.Backend.KSP
+              && sourceKind == SourceKind.KOTLIN) {
+            // TODO(b/269364338): When using kotlin source with KSP the MissingType annotation value
+            // appears to be missing so validating this element does not cause the expected failure.
+            superficialValidation.validateElement(testClassElement);
+            return;
+          }
           ValidationException exception =
               assertThrows(
                   ValidationException.KnownErrorType.class,
@@ -383,7 +497,26 @@ public class DaggerSuperficialValidationTest {
             "    TestClass(@TestAnnotation(classes = MissingType.class) String strParam) {}",
             "  }",
             "}"),
+        CompilerTests.kotlinSource(
+            "test.Outer.kt",
+            "package test",
+            "",
+            "class Outer {",
+            "  annotation class TestAnnotation(",
+            "    val classes: Array<kotlin.reflect.KClass<*>>",
+            "  )",
+            "",
+            "  class TestClass(",
+            "      @TestAnnotation(classes = [MissingType::class]) strParam: String",
+            "  )",
+            "}"),
         (processingEnv, superficialValidation) -> {
+          if (sourceKind == SourceKind.KOTLIN) {
+            // TODO(b/268536260): Figure out why XProcessing Testing infra fails when using KAPT.
+            // TODO(b/269364338): When using kotlin source the MissingType annotation value appears
+            // to be missing so validating this element does not cause the expected failure.
+            return;
+          }
           XTypeElement testClassElement = processingEnv.findTypeElement("test.Outer.TestClass");
           XConstructorElement constructor = testClassElement.getConstructors().get(0);
           XVariableElement parameter = constructor.getParameters().get(0);
@@ -420,6 +553,15 @@ public class DaggerSuperficialValidationTest {
             "  Child<Long> getChild() { return null; }",
             "  static class Child<T> extends Parent<T> {}",
             "  static class Parent<T> extends MissingType<T> {}",
+            "}"),
+        CompilerTests.kotlinSource(
+            "test.Outer.kt",
+            "package test",
+            "",
+            "class Outer {",
+            "  fun getChild(): Child<Long> = TODO()",
+            "  class Child<T> : Parent<T>",
+            "  open class Parent<T> : MissingType<T>",
             "}"),
         (processingEnv, superficialValidation) -> {
           XTypeElement outerElement = processingEnv.findTypeElement("test.Outer");
@@ -459,9 +601,25 @@ public class DaggerSuperficialValidationTest {
             "  static class Child extends Parent<MissingType> {}",
             "  static class Parent<T> {}",
             "}"),
+        CompilerTests.kotlinSource(
+            "test.Outer.kt",
+            "package test",
+            "",
+            "class Outer {",
+            "  fun getChild(): Child = TODO()",
+            "  class Child : Parent<MissingType>()",
+            "  open class Parent<T>",
+            "}"),
         (processingEnv, superficialValidation) -> {
           XTypeElement outerElement = processingEnv.findTypeElement("test.Outer");
           XMethodElement getChildMethod = outerElement.getDeclaredMethods().get(0);
+          if (isKAPT(processingEnv)) {
+            // https://youtrack.jetbrains.com/issue/KT-34193/Kapt-CorrectErrorTypes-doesnt-work-for-generics
+            // There's no way to work around this bug in KAPT so validation doesn't catch this case.
+            superficialValidation.validateTypeHierarchyOf(
+                "return type", getChildMethod, getChildMethod.getReturnType());
+            return;
+          }
           ValidationException exception =
               assertThrows(
                   ValidationException.KnownErrorType.class,
@@ -485,16 +643,28 @@ public class DaggerSuperficialValidationTest {
         });
   }
 
-  private void runTest(Source source, AssertionHandler assertionHandler) {
-    CompilerTests.daggerCompiler(source)
+  private void runTest(
+      Source.JavaSource javaSource,
+      Source.KotlinSource kotlinSource,
+      AssertionHandler assertionHandler) {
+    CompilerTests.daggerCompiler(sourceKind == SourceKind.JAVA ? javaSource : kotlinSource)
         .withProcessingSteps(() -> new AssertingStep(assertionHandler))
+        // We're expecting compiler errors that we assert on in the assertionHandler.
         .compile(subject -> subject.hasError());
   }
 
-  private void runSuccessfulTest(Source source, AssertionHandler assertionHandler) {
-    CompilerTests.daggerCompiler(source)
+  private void runSuccessfulTest(
+      Source.JavaSource javaSource,
+      Source.KotlinSource kotlinSource,
+      AssertionHandler assertionHandler) {
+    CompilerTests.daggerCompiler(sourceKind == SourceKind.JAVA ? javaSource : kotlinSource)
         .withProcessingSteps(() -> new AssertingStep(assertionHandler))
         .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  private boolean isKAPT(XProcessingEnv processingEnv) {
+    return processingEnv.getBackend() == XProcessingEnv.Backend.JAVAC
+        && sourceKind == SourceKind.KOTLIN;
   }
 
   private interface AssertionHandler {

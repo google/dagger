@@ -56,7 +56,6 @@ import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
-import com.google.devtools.ksp.symbol.ClassKind;
 import com.squareup.javapoet.ClassName;
 import dagger.Reusable;
 import dagger.internal.codegen.compileroption.CompilerOptions;
@@ -127,14 +126,7 @@ public final class DaggerSuperficialValidation {
       // In XProcessing, there is no generic way to get an element "asType" so we break this down
       // differently for different element kinds.
       if (isTypeElement(element)) {
-        XTypeElement typeElement = asTypeElement(element);
-        // TODO(b/247828057): Due to a bug in XProcessing, enum entry types are sometimes
-        // represented by XTypeElement rather than XEnumEntry in KSP which leads to failures later
-        // on. Thus, skip validation in these cases until this bug is fixed.
-        if (!(processingEnv.getBackend() == Backend.KSP
-                && XConverters.toKS(typeElement).getClassKind() == ClassKind.ENUM_ENTRY)) {
-          validateType(Ascii.toLowerCase(getKindName(element)), typeElement.getType());
-        }
+        validateType(Ascii.toLowerCase(getKindName(element)), asTypeElement(element).getType());
       } else if (isVariableElement(element)) {
         validateType(
             Ascii.toLowerCase(getKindName(element)) + " type", asVariable(element).getType());

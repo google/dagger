@@ -35,25 +35,20 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.annotation.Nullable;
+import kotlin.Metadata;
 import kotlinx.metadata.Flag;
-import kotlinx.metadata.KmClassVisitor;
-import kotlinx.metadata.KmConstructorExtensionVisitor;
-import kotlinx.metadata.KmConstructorVisitor;
-import kotlinx.metadata.KmExtensionType;
-import kotlinx.metadata.KmFunctionExtensionVisitor;
-import kotlinx.metadata.KmFunctionVisitor;
-import kotlinx.metadata.KmPropertyExtensionVisitor;
-import kotlinx.metadata.KmPropertyVisitor;
-import kotlinx.metadata.KmValueParameterVisitor;
-import kotlinx.metadata.jvm.JvmConstructorExtensionVisitor;
+import kotlinx.metadata.KmClass;
+import kotlinx.metadata.KmConstructor;
+import kotlinx.metadata.KmFunction;
+import kotlinx.metadata.KmProperty;
+import kotlinx.metadata.jvm.JvmExtensionsKt;
 import kotlinx.metadata.jvm.JvmFieldSignature;
-import kotlinx.metadata.jvm.JvmFunctionExtensionVisitor;
+import kotlinx.metadata.jvm.JvmMetadataUtil;
 import kotlinx.metadata.jvm.JvmMethodSignature;
-import kotlinx.metadata.jvm.JvmPropertyExtensionVisitor;
-import kotlinx.metadata.jvm.KotlinClassHeader;
 import kotlinx.metadata.jvm.KotlinClassMetadata;
 
 /** Data class of a TypeElement and its Kotlin metadata. */
@@ -159,161 +154,39 @@ abstract class KotlinMetadata {
     }
   }
 
-  /** Parse Kotlin class metadata from a given type element * */
+  /** Parse Kotlin class metadata from a given type element. */
   static KotlinMetadata from(XTypeElement typeElement) {
-    return new AutoValue_KotlinMetadata(
-        typeElement, ClassVisitor.createClassMetadata(metadataOf(typeElement)));
+    return new AutoValue_KotlinMetadata(typeElement, ClassMetadata.create(metadataOf(typeElement)));
   }
 
   private static KotlinClassMetadata.Class metadataOf(XTypeElement typeElement) {
-    XAnnotation metadataAnnotation = typeElement.getAnnotation(TypeNames.KOTLIN_METADATA);
-    Preconditions.checkNotNull(metadataAnnotation);
-    KotlinClassHeader header =
-        new KotlinClassHeader(
-            metadataAnnotation.getAsInt("k"),
-            metadataAnnotation.getAsIntList("mv").stream().mapToInt(Integer::intValue).toArray(),
-            metadataAnnotation.getAsStringList("d1").toArray(new String[0]),
-            metadataAnnotation.getAsStringList("d2").toArray(new String[0]),
-            metadataAnnotation.getAsString("xs"),
-            metadataAnnotation.getAnnotationValue("pn").hasStringValue()
-                ? metadataAnnotation.getAsString("pn")
+    XAnnotation annotationMirror = typeElement.getAnnotation(TypeNames.KOTLIN_METADATA);
+    Preconditions.checkNotNull(annotationMirror);
+    Metadata metadataAnnotation =
+        JvmMetadataUtil.Metadata(
+            annotationMirror.getAsInt("k"),
+            annotationMirror.getAsIntList("mv").stream().mapToInt(Integer::intValue).toArray(),
+            annotationMirror.getAsStringList("d1").toArray(new String[0]),
+            annotationMirror.getAsStringList("d2").toArray(new String[0]),
+            annotationMirror.getAsString("xs"),
+            annotationMirror.getAnnotationValue("pn").hasStringValue()
+                ? annotationMirror.getAsString("pn")
                 : null,
-            metadataAnnotation.getAnnotationValue("xi").hasIntValue()
-                ? metadataAnnotation.getAsInt("xi")
+            annotationMirror.getAnnotationValue("xi").hasIntValue()
+                ? annotationMirror.getAsInt("xi")
                 : null);
-    KotlinClassMetadata metadata = KotlinClassMetadata.read(header);
+    KotlinClassMetadata metadata = KotlinClassMetadata.read(metadataAnnotation);
     if (metadata == null) {
-      // Should only happen on Kotlin < 1.0 (i.e. metadata version < 1.1)
+      // Can happen if Kotlin < 1.0 or if metadata version is not supported, i.e.
+      // kotlinx-metadata-jvm is outdated.
       throw new IllegalStateException(
-          "Unsupported metadata version. Check that your Kotlin version is >= 1.0");
+          "Unable to read Kotlin metadata due to unsupported metadata version.");
     }
     if (metadata instanceof KotlinClassMetadata.Class) {
       // TODO(danysantiago): If when we need other types of metadata then move to right method.
       return (KotlinClassMetadata.Class) metadata;
     } else {
       throw new IllegalStateException("Unsupported metadata type: " + metadata);
-    }
-  }
-
-  private static final class ClassVisitor extends KmClassVisitor {
-    static ClassMetadata createClassMetadata(KotlinClassMetadata.Class data) {
-      ClassVisitor visitor = new ClassVisitor();
-      data.accept(visitor);
-      return visitor.classMetadata.build();
-    }
-
-    private final ClassMetadata.Builder classMetadata = ClassMetadata.builder();
-
-    @Override
-    public void visit(int flags, String name) {
-      classMetadata.flags(flags).name(name);
-    }
-
-    @Override
-    public KmConstructorVisitor visitConstructor(int flags) {
-      return new KmConstructorVisitor() {
-        private final FunctionMetadata.Builder constructor =
-            FunctionMetadata.builder(flags, "<init>");
-
-        @Override
-        public KmValueParameterVisitor visitValueParameter(int flags, String name) {
-          constructor.addParameter(ValueParameterMetadata.create(flags, name));
-          return super.visitValueParameter(flags, name);
-        }
-
-        @Override
-        public KmConstructorExtensionVisitor visitExtensions(KmExtensionType kmExtensionType) {
-          return kmExtensionType.equals(JvmConstructorExtensionVisitor.TYPE)
-              ? new JvmConstructorExtensionVisitor() {
-                @Override
-                public void visit(JvmMethodSignature jvmMethodSignature) {
-                  constructor.signature(jvmMethodSignature.asString());
-                }
-              }
-              : null;
-        }
-
-        @Override
-        public void visitEnd() {
-          classMetadata.addConstructor(constructor.build());
-        }
-      };
-    }
-
-    @Override
-    public KmFunctionVisitor visitFunction(int flags, String name) {
-      return new KmFunctionVisitor() {
-        private final FunctionMetadata.Builder function = FunctionMetadata.builder(flags, name);
-
-        @Override
-        public KmValueParameterVisitor visitValueParameter(int flags, String name) {
-          function.addParameter(ValueParameterMetadata.create(flags, name));
-          return super.visitValueParameter(flags, name);
-        }
-
-        @Override
-        public KmFunctionExtensionVisitor visitExtensions(KmExtensionType kmExtensionType) {
-          return kmExtensionType.equals(JvmFunctionExtensionVisitor.TYPE)
-              ? new JvmFunctionExtensionVisitor() {
-                @Override
-                public void visit(JvmMethodSignature jvmMethodSignature) {
-                  function.signature(jvmMethodSignature.asString());
-                }
-              }
-              : null;
-        }
-
-        @Override
-        public void visitEnd() {
-          classMetadata.addFunction(function.build());
-        }
-      };
-    }
-
-    @Override
-    public void visitCompanionObject(String companionObjectName) {
-      classMetadata.companionObjectName(companionObjectName);
-    }
-
-    @Override
-    public KmPropertyVisitor visitProperty(
-        int flags, String name, int getterFlags, int setterFlags) {
-      return new KmPropertyVisitor() {
-        private final PropertyMetadata.Builder property = PropertyMetadata.builder(flags, name);
-
-        @Override
-        public KmPropertyExtensionVisitor visitExtensions(KmExtensionType kmExtensionType) {
-          if (!kmExtensionType.equals(JvmPropertyExtensionVisitor.TYPE)) {
-            return null;
-          }
-
-          return new JvmPropertyExtensionVisitor() {
-            @Override
-            public void visit(
-                int jvmFlags,
-                @Nullable JvmFieldSignature jvmFieldSignature,
-                @Nullable JvmMethodSignature jvmGetterSignature,
-                @Nullable JvmMethodSignature jvmSetterSignature) {
-              property.fieldSignature(
-                  Optional.ofNullable(jvmFieldSignature).map(JvmFieldSignature::asString));
-              property.getterSignature(
-                  Optional.ofNullable(jvmGetterSignature).map(JvmMethodSignature::asString));
-            }
-
-            @Override
-            public void visitSyntheticMethodForAnnotations(
-                @Nullable JvmMethodSignature methodSignature) {
-              property.methodForAnnotationsSignature(
-                  Optional.ofNullable(methodSignature).map(JvmMethodSignature::asString));
-            }
-          };
-        }
-
-        @Override
-        public void visitEnd() {
-          classMetadata.addProperty(property.build());
-        }
-      };
     }
   }
 
@@ -327,13 +200,25 @@ abstract class KotlinMetadata {
 
     abstract ImmutableMap<String, PropertyMetadata> propertiesByFieldSignature();
 
-    static Builder builder() {
-      return new AutoValue_KotlinMetadata_ClassMetadata.Builder();
+    static ClassMetadata create(KotlinClassMetadata.Class metadata) {
+      KmClass kmClass = metadata.toKmClass();
+      ClassMetadata.Builder builder =
+          ClassMetadata.builder(
+              kmClass.getFlags(), kmClass.getName()); // // SUPPRESS_GET_NAME_CHECK
+      builder.companionObjectName(Optional.ofNullable(kmClass.getCompanionObject()));
+      kmClass.getConstructors().forEach(it -> builder.addConstructor(FunctionMetadata.create(it)));
+      kmClass.getFunctions().forEach(it -> builder.addFunction(FunctionMetadata.create(it)));
+      kmClass.getProperties().forEach(it -> builder.addProperty(PropertyMetadata.create(it)));
+      return builder.build();
+    }
+
+    private static Builder builder(int flags, String name) {
+      return new AutoValue_KotlinMetadata_ClassMetadata.Builder().flags(flags).name(name);
     }
 
     @AutoValue.Builder
     abstract static class Builder implements BaseMetadata.Builder<Builder> {
-      abstract Builder companionObjectName(String companionObjectName);
+      abstract Builder companionObjectName(Optional<String> companionObjectName);
 
       abstract ImmutableSet.Builder<FunctionMetadata> constructorsBuilder();
 
@@ -369,7 +254,35 @@ abstract class KotlinMetadata {
 
     abstract ImmutableList<ValueParameterMetadata> parameters();
 
-    static Builder builder(int flags, String name) {
+    static FunctionMetadata create(KmConstructor metadata) {
+      FunctionMetadata.Builder builder = FunctionMetadata.builder(metadata.getFlags(), "<init>");
+      metadata
+          .getValueParameters()
+          .forEach(
+              it ->
+                  builder.addParameter(
+                      ValueParameterMetadata.create(
+                          it.getFlags(), it.getName()))); // SUPPRESS_GET_NAME_CHECK
+      builder.signature(Objects.requireNonNull(JvmExtensionsKt.getSignature(metadata)).asString());
+      return builder.build();
+    }
+
+    static FunctionMetadata create(KmFunction metadata) {
+      FunctionMetadata.Builder builder =
+          FunctionMetadata.builder(
+              metadata.getFlags(), metadata.getName()); // SUPPRESS_GET_NAME_CHECK
+      metadata
+          .getValueParameters()
+          .forEach(
+              it ->
+                  builder.addParameter(
+                      ValueParameterMetadata.create(
+                          it.getFlags(), it.getName()))); // SUPPRESS_GET_NAME_CHECK
+      builder.signature(Objects.requireNonNull(JvmExtensionsKt.getSignature(metadata)).asString());
+      return builder.build();
+    }
+
+    private static Builder builder(int flags, String name) {
       return new AutoValue_KotlinMetadata_FunctionMetadata.Builder().flags(flags).name(name);
     }
 
@@ -398,7 +311,23 @@ abstract class KotlinMetadata {
     /** Returns JVM method descriptor of the synthetic method for property annotations. */
     abstract Optional<String> methodForAnnotationsSignature();
 
-    static Builder builder(int flags, String name) {
+    static PropertyMetadata create(KmProperty metadata) {
+      PropertyMetadata.Builder builder =
+          PropertyMetadata.builder(
+              metadata.getFlags(), metadata.getName()); // SUPPRESS_GET_NAME_CHECK
+      builder.fieldSignature(
+          Optional.ofNullable(JvmExtensionsKt.getFieldSignature(metadata))
+              .map(JvmFieldSignature::asString));
+      builder.getterSignature(
+          Optional.ofNullable(JvmExtensionsKt.getGetterSignature(metadata))
+              .map(JvmMethodSignature::asString));
+      builder.methodForAnnotationsSignature(
+          Optional.ofNullable(JvmExtensionsKt.getSyntheticMethodForAnnotations(metadata))
+              .map(JvmMethodSignature::asString));
+      return builder.build();
+    }
+
+    private static Builder builder(int flags, String name) {
       return new AutoValue_KotlinMetadata_PropertyMetadata.Builder().flags(flags).name(name);
     }
 

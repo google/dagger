@@ -16,34 +16,29 @@
 
 package dagger.hilt.processor.internal.definecomponent;
 
-import static com.google.auto.common.AnnotationMirrors.getAnnotationElementAndValue;
-import static com.google.auto.common.MoreElements.asType;
-import static com.google.auto.common.MoreTypes.asTypeElement;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static java.util.stream.Collectors.joining;
-import static javax.lang.model.element.Modifier.STATIC;
 
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XAnnotationValue;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
-import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
+import dagger.internal.codegen.xprocessing.XAnnotations;
+import dagger.internal.codegen.xprocessing.XElements;
+import dagger.internal.codegen.xprocessing.XTypes;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.ElementFilter;
 
 /** Metadata for types annotated with {@link dagger.hilt.DefineComponent}. */
 final class DefineComponentMetadatas {
@@ -51,16 +46,16 @@ final class DefineComponentMetadatas {
     return new DefineComponentMetadatas();
   }
 
-  private final Map<Element, DefineComponentMetadata> metadatas = new HashMap<>();
+  private final Map<XElement, DefineComponentMetadata> metadatas = new HashMap<>();
 
   private DefineComponentMetadatas() {}
 
   /** Returns the metadata for an element annotated with {@link dagger.hilt.DefineComponent}. */
-  DefineComponentMetadata get(Element element) {
+  DefineComponentMetadata get(XElement element) {
     return get(element, new LinkedHashSet<>());
   }
 
-  private DefineComponentMetadata get(Element element, LinkedHashSet<Element> childPath) {
+  private DefineComponentMetadata get(XElement element, LinkedHashSet<XElement> childPath) {
     if (!metadatas.containsKey(element)) {
       metadatas.put(element, getUncached(element, childPath));
     }
@@ -68,102 +63,106 @@ final class DefineComponentMetadatas {
   }
 
   private DefineComponentMetadata getUncached(
-      Element element, LinkedHashSet<Element> childPath) {
+      XElement element, LinkedHashSet<XElement> childPath) {
     ProcessorErrors.checkState(
         childPath.add(element),
         element,
         "@DefineComponent cycle: %s -> %s",
-        childPath.stream().map(Object::toString).collect(joining(" -> ")),
-        element);
+        childPath.stream().map(XElements::toStableString).collect(joining(" -> ")),
+        XElements.toStableString(element));
 
     ProcessorErrors.checkState(
-        Processors.hasAnnotation(element, ClassNames.DEFINE_COMPONENT),
+        element.hasAnnotation(ClassNames.DEFINE_COMPONENT),
         element,
         "%s, expected to be annotated with @DefineComponent. Found: %s",
-        element,
-        element.getAnnotationMirrors());
+        XElements.toStableString(element),
+        element.getAllAnnotations().stream()
+            .map(XAnnotations::toStableString)
+            .collect(toImmutableList()));
 
     // TODO(bcorso): Allow abstract classes?
     ProcessorErrors.checkState(
-        element.getKind().equals(ElementKind.INTERFACE),
+        isTypeElement(element) && asTypeElement(element).isInterface(),
         element,
         "@DefineComponent is only allowed on interfaces. Found: %s",
-        element);
-    TypeElement component = asType(element);
+        XElements.toStableString(element));
+    XTypeElement component = asTypeElement(element);
 
     // TODO(bcorso): Allow extending interfaces?
     ProcessorErrors.checkState(
-        component.getInterfaces().isEmpty(),
+        component.getSuperInterfaces().isEmpty(),
         component,
         "@DefineComponent %s, cannot extend a super class or interface. Found: %s",
-        component,
-        component.getInterfaces());
+        XElements.toStableString(component),
+        component.getSuperInterfaces().stream()
+            .map(XTypes::toStableString)
+            .collect(toImmutableList()));
 
     // TODO(bcorso): Allow type parameters?
     ProcessorErrors.checkState(
         component.getTypeParameters().isEmpty(),
         component,
         "@DefineComponent %s, cannot have type parameters.",
-        component.asType());
+        XTypes.toStableString(component.getType()));
 
     // TODO(bcorso): Allow non-static abstract methods (aka EntryPoints)?
-    List<ExecutableElement> nonStaticMethods =
-        ElementFilter.methodsIn(component.getEnclosedElements()).stream()
-            .filter(method -> !method.getModifiers().contains(STATIC))
-            .collect(Collectors.toList());
+    ImmutableList<XExecutableElement> nonStaticMethods =
+        component.getDeclaredMethods().stream()
+            .filter(method -> !method.isStatic())
+            .collect(toImmutableList());
+
     ProcessorErrors.checkState(
         nonStaticMethods.isEmpty(),
         component,
         "@DefineComponent %s, cannot have non-static methods. Found: %s",
-        component,
-        nonStaticMethods);
+        XElements.toStableString(component),
+        nonStaticMethods.stream()
+            .map(XElements::toStableString)
+            .collect(toImmutableList()));
 
     // No need to check non-static fields since interfaces can't have them.
 
-    ImmutableList<TypeElement> scopes =
+    ImmutableList<XTypeElement> scopes =
         Processors.getScopeAnnotations(component).stream()
-            .map(AnnotationMirror::getAnnotationType)
-            .map(MoreTypes::asTypeElement)
+            .map(XAnnotation::getTypeElement)
             .collect(toImmutableList());
 
-    ImmutableList<AnnotationMirror> aliasScopes =
-        Processors.getAnnotationsAnnotatedWith(component, ClassNames.ALIAS_OF);
+    ImmutableList<XAnnotation> aliasScopes =
+        ImmutableList.copyOf(component.getAnnotationsAnnotatedWith(ClassNames.ALIAS_OF));
     ProcessorErrors.checkState(
         aliasScopes.isEmpty(),
         component,
         "@DefineComponent %s, references invalid scope(s) annotated with @AliasOf. "
             + "@DefineComponent scopes cannot be aliases of other scopes: %s",
-        component,
-        aliasScopes);
+        XElements.toStableString(component),
+        aliasScopes.stream().map(XAnnotations::toStableString).collect(toImmutableList()));
 
-    AnnotationMirror mirror =
-        Processors.getAnnotationMirror(component, ClassNames.DEFINE_COMPONENT);
-    AnnotationValue parentValue = getAnnotationElementAndValue(mirror, "parent").getValue();
+    XAnnotation annotation = component.getAnnotation(ClassNames.DEFINE_COMPONENT);
+    XAnnotationValue parentValue = annotation.getAnnotationValue("parent");
 
     ProcessorErrors.checkState(
-        // TODO(bcorso): Contribute a check to auto/common AnnotationValues.
         !"<error>".contentEquals(parentValue.getValue().toString()),
         component,
         "@DefineComponent %s, references an invalid parent type: %s",
-        component,
-        mirror);
+        XElements.toStableString(component),
+        XAnnotations.toStableString(annotation));
 
-    TypeElement parent = asTypeElement(AnnotationValues.getTypeMirror(parentValue));
+    XTypeElement parent = parentValue.asType().getTypeElement();
 
     ProcessorErrors.checkState(
-        ClassName.get(parent).equals(ClassNames.DEFINE_COMPONENT_NO_PARENT)
-            || Processors.hasAnnotation(parent, ClassNames.DEFINE_COMPONENT),
+        parent.getClassName().equals(ClassNames.DEFINE_COMPONENT_NO_PARENT)
+            || parent.hasAnnotation(ClassNames.DEFINE_COMPONENT),
         component,
         "@DefineComponent %s, references a type not annotated with @DefineComponent: %s",
-        component,
-        parent);
+        XElements.toStableString(component),
+        XElements.toStableString(parent));
 
     Optional<DefineComponentMetadata> parentComponent =
-        ClassName.get(parent).equals(ClassNames.DEFINE_COMPONENT_NO_PARENT)
+        parent.getClassName().equals(ClassNames.DEFINE_COMPONENT_NO_PARENT)
             ? Optional.empty()
             : Optional.of(get(parent, childPath));
 
-    ClassName componentClassName = ClassName.get(component);
+    ClassName componentClassName = component.getClassName();
 
     ProcessorErrors.checkState(
         parentComponent.isPresent()
@@ -172,7 +171,7 @@ final class DefineComponentMetadatas {
         "@DefineComponent %s is missing a parent declaration.\n"
             + "Please declare the parent, for example: @DefineComponent(parent ="
             + " SingletonComponent.class)",
-        component);
+        XElements.toStableString(component));
 
     ProcessorErrors.checkState(
         componentClassName.equals(ClassNames.SINGLETON_COMPONENT)
@@ -180,7 +179,7 @@ final class DefineComponentMetadatas {
         component,
         "Cannot have a component with the same simple name as the reserved %s: %s",
         ClassNames.SINGLETON_COMPONENT.simpleName(),
-        componentClassName);
+        componentClassName.canonicalName());
 
     return new AutoValue_DefineComponentMetadatas_DefineComponentMetadata(
         component, scopes, parentComponent);
@@ -190,10 +189,10 @@ final class DefineComponentMetadatas {
   abstract static class DefineComponentMetadata {
 
     /** Returns the component annotated with {@link dagger.hilt.DefineComponent}. */
-    abstract TypeElement component();
+    abstract XTypeElement component();
 
     /** Returns the scopes of the component. */
-    abstract ImmutableList<TypeElement> scopes();
+    abstract ImmutableList<XTypeElement> scopes();
 
     /** Returns the parent component, if one exists. */
     abstract Optional<DefineComponentMetadata> parentMetadata();

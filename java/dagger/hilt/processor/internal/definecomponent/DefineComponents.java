@@ -16,36 +16,41 @@
 
 package dagger.hilt.processor.internal.definecomponent;
 
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
-import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentBuilderMetadatas.DefineComponentBuilderMetadata;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentMetadatas.DefineComponentMetadata;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import javax.lang.model.element.TypeElement;
 
 /**
  * A utility class for getting {@link DefineComponentMetadata} and {@link
  * DefineComponentBuilderMetadata}.
  */
 public final class DefineComponents {
-
-  public static DefineComponents create() {
-    return new DefineComponents();
+  public static DefineComponents create(XProcessingEnv processingEnv) {
+    return new DefineComponents(processingEnv);
   }
 
+  private final XProcessingEnv processingEnv;
   private final DefineComponentMetadatas componentMetadatas = DefineComponentMetadatas.create();
   private final DefineComponentBuilderMetadatas componentBuilderMetadatas =
       DefineComponentBuilderMetadatas.create(componentMetadatas);
-  private DefineComponents() {}
+
+  private DefineComponents(XProcessingEnv processingEnv) {
+    this.processingEnv = processingEnv;
+  }
 
   /** Returns the set of aggregated {@link ComponentDescriptor}s. */
   public ImmutableSet<ComponentDescriptor> getComponentDescriptors(
@@ -54,6 +59,7 @@ public final class DefineComponents {
         aggregatedMetadatas.stream()
             .filter(DefineComponentClassesMetadata::isComponent)
             .map(DefineComponentClassesMetadata::element)
+            .map(element -> toXProcessing(element, processingEnv))
             .map(componentMetadatas::get)
             .collect(toImmutableSet());
 
@@ -61,6 +67,7 @@ public final class DefineComponents {
         aggregatedMetadatas.stream()
             .filter(DefineComponentClassesMetadata::isComponentBuilder)
             .map(DefineComponentClassesMetadata::element)
+            .map(element -> toXProcessing(element, processingEnv))
             .map(componentBuilderMetadatas::get)
             .collect(toImmutableSet());
 
@@ -70,17 +77,17 @@ public final class DefineComponents {
 
     // Check that there are not multiple builders per component
     for (DefineComponentMetadata componentMetadata : builderMultimap.keySet()) {
-      TypeElement component = componentMetadata.component();
+      XTypeElement component = componentMetadata.component();
       ProcessorErrors.checkState(
           builderMultimap.get(componentMetadata).size() <= 1,
           component,
           "Multiple @%s declarations are not allowed for @%s type, %s. Found: %s",
           ClassNames.DEFINE_COMPONENT_BUILDER,
           ClassNames.DEFINE_COMPONENT,
-          component,
+          XElements.toStableString(component),
           builderMultimap.get(componentMetadata).stream()
               .map(DefineComponentBuilderMetadata::builder)
-              .map(TypeElement::toString)
+              .map(XTypeElement::getQualifiedName)
               .sorted()
               .collect(toImmutableList()));
     }
@@ -99,13 +106,15 @@ public final class DefineComponents {
       Map<DefineComponentMetadata, DefineComponentBuilderMetadata> builderMap) {
     ComponentDescriptor.Builder builder =
         ComponentDescriptor.builder()
-            .component(ClassName.get(componentMetadata.component()))
+            .component(componentMetadata.component().getClassName())
             .scopes(
-                componentMetadata.scopes().stream().map(ClassName::get).collect(toImmutableSet()));
+                componentMetadata.scopes().stream()
+                    .map(XTypeElement::getClassName)
+                    .collect(toImmutableSet()));
 
 
     if (builderMap.containsKey(componentMetadata)) {
-      builder.creator(ClassName.get(builderMap.get(componentMetadata).builder()));
+      builder.creator(builderMap.get(componentMetadata).builder().getClassName());
     }
 
     componentMetadata

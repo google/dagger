@@ -86,7 +86,7 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
             .map(element -> ComponentTreeDepsMetadata.from(element, getElementUtils()))
             .collect(toImmutableSet());
 
-    DefineComponents defineComponents = DefineComponents.create();
+    DefineComponents defineComponents = DefineComponents.create(processingEnv());
     for (ComponentTreeDepsMetadata metadata : componentTreeDepsToProcess) {
       processComponentTreeDeps(metadata, defineComponents);
     }

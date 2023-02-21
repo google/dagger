@@ -178,7 +178,7 @@ public final class DefineComponentProcessorTest {
     assertThat(compilation)
         .hadErrorContaining(
             "@DefineComponent test.FooComponent, cannot extend a super class or interface."
-                + " Found: test.Foo");
+                + " Found: [test.Foo]");
   }
 
   @Test
@@ -316,7 +316,7 @@ public final class DefineComponentProcessorTest {
     assertThat(compilation)
         .hadErrorContaining(
             "@DefineComponent.Builder test.FooComponentBuilder, cannot extend a super class "
-                + "or interface. Found: test.Foo");
+                + "or interface. Found: [test.Foo]");
   }
 
   @Test

@@ -17,8 +17,10 @@
 package dagger.hilt.processor.internal;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -43,9 +45,7 @@ public final class ProcessorErrors {
    *     string using {@link String#valueOf(Object)}
    * @throws BadInputException if {@code expression} is false
    */
-  public static void checkState(
-      boolean expression,
-      @Nullable Object errorMessage) {
+  public static void checkState(boolean expression, @Nullable Object errorMessage) {
     if (!expression) {
       throw new BadInputException(String.valueOf(errorMessage));
     }
@@ -88,9 +88,23 @@ public final class ProcessorErrors {
    * @throws BadInputException if {@code expression} is false
    */
   public static void checkState(
-      boolean expression,
-      Element badElement,
-      @Nullable Object errorMessage) {
+      boolean expression, XElement badElement, @Nullable Object errorMessage) {
+    Preconditions.checkNotNull(badElement);
+    checkState(expression, toJavac(badElement), errorMessage);
+  }
+
+  /**
+   * Ensures the truth of an expression involving the state of the calling instance, but not
+   * involving any parameters to the calling method.
+   *
+   * @param expression a boolean expression
+   * @param badElement the element that was at fault
+   * @param errorMessage the exception message to use if the check fails; will be converted to a
+   *     string using {@link String#valueOf(Object)}
+   * @throws BadInputException if {@code expression} is false
+   */
+  public static void checkState(
+      boolean expression, Element badElement, @Nullable Object errorMessage) {
     Preconditions.checkNotNull(badElement);
     if (!expression) {
       throw new BadInputException(String.valueOf(errorMessage), badElement);
@@ -208,6 +222,39 @@ public final class ProcessorErrors {
       throw new BadInputException(
           String.format(errorMessageTemplate, errorMessageArgs), badElements);
     }
+  }
+
+  /**
+   * Ensures the truth of an expression involving the state of the calling instance, but not
+   * involving any parameters to the calling method.
+   *
+   * @param expression a boolean expression
+   * @param badElements the elements that were at fault
+   * @param errorMessageTemplate a template for the exception message should the check fail. The
+   *     message is formed by replacing each {@code %s} placeholder in the template with an
+   *     argument. These are matched by position - the first {@code %s} gets {@code
+   *     errorMessageArgs[0]}, etc. Unmatched arguments will be appended to the formatted message in
+   *     square braces. Unmatched placeholders will be left as-is.
+   * @param errorMessageArgs the arguments to be substituted into the message template. Arguments
+   *     are converted to strings using {@link String#valueOf(Object)}.
+   * @throws BadInputException if {@code expression} is false
+   * @throws NullPointerException if the check fails and either {@code errorMessageTemplate} or
+   *     {@code errorMessageArgs} is null (don't let this happen)
+   */
+  // TODO(bcorso): Rename this checkState once the javac API is removed (overloading doesn't work
+  // here since they have the same erasured signature).
+  @FormatMethod
+  public static void checkStateX(
+      boolean expression,
+      Collection<? extends XElement> badElements,
+      @Nullable @FormatString String errorMessageTemplate,
+      @Nullable Object... errorMessageArgs) {
+    Preconditions.checkNotNull(badElements);
+    checkState(
+        expression,
+        badElements.stream().map(XConverters::toJavac).collect(toImmutableList()),
+        errorMessageTemplate,
+        errorMessageArgs);
   }
 
   /**

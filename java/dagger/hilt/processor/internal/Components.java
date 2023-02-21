@@ -16,8 +16,11 @@
 
 package dagger.hilt.processor.internal;
 
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -30,6 +33,11 @@ import javax.lang.model.util.Elements;
 
 /** Helper methods for defining components and the component hierarchy. */
 public final class Components {
+  /** Returns the {@link dagger.hilt.InstallIn} components for a given element. */
+  public static ImmutableSet<ClassName> getComponents(XElement element) {
+    return getComponents(toJavac(getProcessingEnv(element)).getElementUtils(), toJavac(element));
+  }
+
   /** Returns the {@link dagger.hilt.InstallIn} components for a given element. */
   public static ImmutableSet<ClassName> getComponents(Elements elements, Element element) {
     ImmutableSet<ClassName> components;

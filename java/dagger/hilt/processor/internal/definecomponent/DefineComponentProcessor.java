@@ -16,7 +16,6 @@
 
 package dagger.hilt.processor.internal.definecomponent;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import androidx.room.compiler.processing.XElement;
@@ -25,17 +24,13 @@ import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentBuilderMetadatas.DefineComponentBuilderMetadata;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentMetadatas.DefineComponentMetadata;
 import java.io.IOException;
-import java.util.Set;
 import javax.annotation.processing.Processor;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /**
@@ -62,39 +57,34 @@ public final class DefineComponentProcessor extends BaseProcessor {
   }
 
   @Override
-  public Set<String> getSupportedAnnotationTypes() {
+  public ImmutableSet<String> getSupportedAnnotationTypes() {
     return ImmutableSet.of(
         ClassNames.DEFINE_COMPONENT.toString(), ClassNames.DEFINE_COMPONENT_BUILDER.toString());
   }
 
   @Override
   public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    processEach(toJavac(annotation), toJavac(element));
-  }
-
-  private void processEach(TypeElement annotation, Element element) throws Exception {
-    if (ClassName.get(annotation).equals(ClassNames.DEFINE_COMPONENT)) {
+    if (annotation.getClassName().equals(ClassNames.DEFINE_COMPONENT)) {
       // TODO(bcorso): For cycles we currently process each element in the cycle. We should skip
       // processing of subsequent elements in a cycle, but this requires ensuring that the first
       // element processed is always the same so that our failure tests are stable.
       DefineComponentMetadata metadata = componentMetadatas.get(element);
       generateFile("component", metadata.component());
-    } else if (ClassName.get(annotation).equals(ClassNames.DEFINE_COMPONENT_BUILDER)) {
+    } else if (annotation.getClassName().equals(ClassNames.DEFINE_COMPONENT_BUILDER)) {
       DefineComponentBuilderMetadata metadata = componentBuilderMetadatas.get(element);
       generateFile("builder", metadata.builder());
     } else {
-      throw new AssertionError("Unhandled annotation type: " + annotation);
+      throw new AssertionError("Unhandled annotation type: " + annotation.getQualifiedName());
     }
   }
 
-  private void generateFile(String member, TypeElement typeElement) throws IOException {
+  private void generateFile(String member, XTypeElement typeElement) throws IOException {
     Processors.generateAggregatingClass(
         ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE,
         AnnotationSpec.builder(ClassNames.DEFINE_COMPONENT_CLASSES)
             .addMember(member, "$S", typeElement.getQualifiedName())
             .build(),
         typeElement,
-        getClass(),
-        getProcessingEnv());
+        getClass());
   }
 }

@@ -16,29 +16,26 @@
 
 package dagger.hilt.processor.internal.definecomponent;
 
-import static javax.lang.model.element.Modifier.STATIC;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
-import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XFieldElement;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.TypeName;
+import com.google.common.collect.ImmutableList;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentMetadatas.DefineComponentMetadata;
+import dagger.internal.codegen.xprocessing.XAnnotations;
+import dagger.internal.codegen.xprocessing.XElements;
+import dagger.internal.codegen.xprocessing.XTypes;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementFilter;
 
 /** Metadata for types annotated with {@link dagger.hilt.DefineComponent.Builder}. */
 final class DefineComponentBuilderMetadatas {
@@ -46,115 +43,125 @@ final class DefineComponentBuilderMetadatas {
     return new DefineComponentBuilderMetadatas(componentMetadatas);
   }
 
-  private final Map<Element, DefineComponentBuilderMetadata> builderMetadatas = new HashMap<>();
+  private final Map<XElement, DefineComponentBuilderMetadata> builderMetadatas = new HashMap<>();
   private final DefineComponentMetadatas componentMetadatas;
 
   private DefineComponentBuilderMetadatas(DefineComponentMetadatas componentMetadatas) {
     this.componentMetadatas = componentMetadatas;
   }
 
-  DefineComponentBuilderMetadata get(Element element) {
+  DefineComponentBuilderMetadata get(XElement element) {
     if (!builderMetadatas.containsKey(element)) {
       builderMetadatas.put(element, getUncached(element));
     }
     return builderMetadatas.get(element);
   }
 
-  private DefineComponentBuilderMetadata getUncached(Element element) {
+  private DefineComponentBuilderMetadata getUncached(XElement element) {
     ProcessorErrors.checkState(
-        Processors.hasAnnotation(element, ClassNames.DEFINE_COMPONENT_BUILDER),
+        element.hasAnnotation(ClassNames.DEFINE_COMPONENT_BUILDER),
         element,
         "%s, expected to be annotated with @DefineComponent.Builder. Found: %s",
-        element,
-        element.getAnnotationMirrors());
+        XElements.toStableString(element),
+        element.getAllAnnotations().stream()
+            .map(XAnnotations::toStableString)
+            .collect(toImmutableList()));
 
     // TODO(bcorso): Allow abstract classes?
     ProcessorErrors.checkState(
-        element.getKind().equals(ElementKind.INTERFACE),
+        isTypeElement(element) && asTypeElement(element).isInterface(),
         element,
         "@DefineComponent.Builder is only allowed on interfaces. Found: %s",
-        element);
-    TypeElement builder = MoreElements.asType(element);
+        XElements.toStableString(element));
+    XTypeElement builder = asTypeElement(element);
 
     // TODO(bcorso): Allow extending interfaces?
     ProcessorErrors.checkState(
-        builder.getInterfaces().isEmpty(),
+        builder.getSuperInterfaces().isEmpty(),
         builder,
         "@DefineComponent.Builder %s, cannot extend a super class or interface. Found: %s",
-        builder,
-        builder.getInterfaces());
+        XElements.toStableString(builder),
+        builder.getSuperInterfaces().stream()
+            .map(XTypes::toStableString)
+            .collect(toImmutableList()));
 
     // TODO(bcorso): Allow type parameters?
     ProcessorErrors.checkState(
         builder.getTypeParameters().isEmpty(),
         builder,
         "@DefineComponent.Builder %s, cannot have type parameters.",
-        builder.asType());
+        XTypes.toStableString(builder.getType()));
 
-    List<VariableElement> nonStaticFields =
-        ElementFilter.fieldsIn(builder.getEnclosedElements()).stream()
-            .filter(method -> !method.getModifiers().contains(STATIC))
-            .collect(Collectors.toList());
+    ImmutableList<XFieldElement> nonStaticFields =
+        builder.getDeclaredFields().stream()
+            .filter(field -> !field.isStatic())
+            .collect(toImmutableList());
+
     ProcessorErrors.checkState(
         nonStaticFields.isEmpty(),
         builder,
         "@DefineComponent.Builder %s, cannot have non-static fields. Found: %s",
-        builder,
-        nonStaticFields);
+        XElements.toStableString(builder),
+        nonStaticFields.stream()
+            .map(XElements::toStableString)
+            .collect(toImmutableList()));
 
-    List<ExecutableElement> buildMethods =
-        ElementFilter.methodsIn(builder.getEnclosedElements()).stream()
-            .filter(method -> !method.getModifiers().contains(STATIC))
+    ImmutableList<XMethodElement> buildMethods =
+        builder.getDeclaredMethods().stream()
+            .filter(method -> !method.isStatic())
             .filter(method -> method.getParameters().isEmpty())
-            .collect(Collectors.toList());
+            .collect(toImmutableList());
 
     ProcessorErrors.checkState(
         buildMethods.size() == 1,
         builder,
         "@DefineComponent.Builder %s, must have exactly 1 build method that takes no parameters. "
             + "Found: %s",
-        builder,
-        buildMethods);
+        XElements.toStableString(builder),
+        buildMethods.stream()
+            .map(XElements::toStableString)
+            .collect(toImmutableList()));
 
-    ExecutableElement buildMethod = buildMethods.get(0);
-    TypeMirror component = buildMethod.getReturnType();
+    XMethodElement buildMethod = buildMethods.get(0);
+    XType componentType = buildMethod.getReturnType();
     ProcessorErrors.checkState(
-        buildMethod.getReturnType().getKind().equals(TypeKind.DECLARED)
-            && Processors.hasAnnotation(
-                MoreTypes.asTypeElement(component), ClassNames.DEFINE_COMPONENT),
+        isDeclared(componentType)
+            && componentType.getTypeElement().hasAnnotation(ClassNames.DEFINE_COMPONENT),
         builder,
         "@DefineComponent.Builder method, %s#%s, must return a @DefineComponent type. Found: %s",
-        builder,
-        buildMethod,
-        component);
+        XElements.toStableString(builder),
+        XElements.toStableString(buildMethod),
+        XTypes.toStableString(componentType));
 
-    List<ExecutableElement> nonStaticNonBuilderMethods =
-        ElementFilter.methodsIn(builder.getEnclosedElements()).stream()
-            .filter(method -> !method.getModifiers().contains(STATIC))
+    ImmutableList<XMethodElement> nonStaticNonBuilderMethods =
+        builder.getDeclaredMethods().stream()
+            .filter(method -> !method.isStatic())
             .filter(method -> !method.equals(buildMethod))
-            .filter(method -> !TypeName.get(method.getReturnType()).equals(ClassName.get(builder)))
-            .collect(Collectors.toList());
+            .filter(method -> !method.getReturnType().getTypeName().equals(builder.getClassName()))
+            .collect(toImmutableList());
 
-    ProcessorErrors.checkState(
+    ProcessorErrors.checkStateX(
         nonStaticNonBuilderMethods.isEmpty(),
         nonStaticNonBuilderMethods,
         "@DefineComponent.Builder %s, all non-static methods must return %s or %s. Found: %s",
-        builder,
-        builder,
-        component,
-        nonStaticNonBuilderMethods);
+        XElements.toStableString(builder),
+        XElements.toStableString(builder),
+        XTypes.toStableString(componentType),
+        nonStaticNonBuilderMethods.stream()
+            .map(XElements::toStableString)
+            .collect(toImmutableList()));
 
     return new AutoValue_DefineComponentBuilderMetadatas_DefineComponentBuilderMetadata(
         builder,
         buildMethod,
-        componentMetadatas.get(MoreTypes.asTypeElement(component)));
+        componentMetadatas.get(componentType.getTypeElement()));
   }
 
   @AutoValue
   abstract static class DefineComponentBuilderMetadata {
-    abstract TypeElement builder();
+    abstract XTypeElement builder();
 
-    abstract ExecutableElement buildMethod();
+    abstract XMethodElement buildMethod();
 
     abstract DefineComponentMetadata componentMetadata();
   }

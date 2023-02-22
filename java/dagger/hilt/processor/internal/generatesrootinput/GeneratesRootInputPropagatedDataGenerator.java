@@ -16,41 +16,40 @@
 
 package dagger.hilt.processor.internal.generatesrootinput;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XFiler.Mode;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
-import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.Element;
 
 /** Generates resource files for {@link GeneratesRootInputs}. */
 final class GeneratesRootInputPropagatedDataGenerator {
-  private final ProcessingEnvironment processingEnv;
-  private final Element element;
+  private final XProcessingEnv processingEnv;
+  private final XTypeElement element;
 
-  GeneratesRootInputPropagatedDataGenerator(ProcessingEnvironment processingEnv, Element element) {
+  GeneratesRootInputPropagatedDataGenerator(XProcessingEnv processingEnv, XTypeElement element) {
     this.processingEnv = processingEnv;
     this.element = element;
   }
 
-  void generate() throws IOException {
-    TypeSpec.Builder generator =
-        TypeSpec.classBuilder(Processors.getFullEnclosedName(element))
-            .addOriginatingElement(element)
-            .addAnnotation(
-                AnnotationSpec.builder(ClassNames.GENERATES_ROOT_INPUT_PROPAGATED_DATA)
-                    .addMember("value", "$T.class", element)
-                    .build())
-            .addJavadoc(
-                "Generated class to"
-                    + "get the list of annotations that generate input for root.\n");
+  void generate() {
+    TypeSpec.Builder generator = TypeSpec.classBuilder(Processors.getFullEnclosedName(element));
+
+    JavaPoetExtKt.addOriginatingElement(generator, element)
+        .addAnnotation(
+            AnnotationSpec.builder(ClassNames.GENERATES_ROOT_INPUT_PROPAGATED_DATA)
+                .addMember("value", "$T.class", element.getClassName())
+                .build())
+        .addJavadoc(
+            "Generated class to get the list of annotations that generate input for root.\n");
 
     Processors.addGeneratedAnnotation(generator, processingEnv, getClass());
-
-    JavaFile.builder(GeneratesRootInputs.AGGREGATING_PACKAGE, generator.build())
-        .build()
-        .writeTo(processingEnv.getFiler());
+    JavaFile javaFile =
+        JavaFile.builder(GeneratesRootInputs.AGGREGATING_PACKAGE, generator.build()).build();
+    processingEnv.getFiler().write(javaFile, Mode.Isolating);
   }
 }

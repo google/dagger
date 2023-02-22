@@ -27,6 +27,8 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.GeneratedAnnotations;
@@ -568,6 +570,7 @@ public final class Processors {
     return className.packageName().replace('.', '_') + getEnclosedName(className);
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /**
    * Returns the fully qualified class name, with _ instead of . For elements that are not type
    * elements, this continues to append the simple name of elements. For example,
@@ -590,6 +593,15 @@ public final class Processors {
       element = element.getEnclosingElement();
     }
     return qualifiedName.replace('.', '_');
+  }
+
+  /**
+   * Returns the fully qualified class name, with _ instead of . For elements that are not type
+   * elements, this continues to append the simple name of elements. For example,
+   * foo_bar_Outer_Inner_fooMethod.
+   */
+  public static String getFullEnclosedName(XElement element) {
+    return getFullEnclosedName(toJavac(element));
   }
 
   /** Appends the given string to the end of the class name. */
@@ -988,6 +1000,12 @@ public final class Processors {
         || hasAnnotation(method, ClassNames.MULTIBINDS);
   }
 
+  public static void addGeneratedAnnotation(
+      TypeSpec.Builder typeSpecBuilder, XProcessingEnv env, Class<?> generatorClass) {
+    addGeneratedAnnotation(typeSpecBuilder, toJavac(env), generatorClass);
+  }
+
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   public static void addGeneratedAnnotation(
       TypeSpec.Builder typeSpecBuilder, ProcessingEnvironment env, Class<?> generatorClass) {
     addGeneratedAnnotation(typeSpecBuilder, env, generatorClass.getName());

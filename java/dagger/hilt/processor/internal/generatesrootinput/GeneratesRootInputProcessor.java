@@ -16,7 +16,8 @@
 
 package dagger.hilt.processor.internal.generatesrootinput;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import androidx.room.compiler.processing.XElement;
@@ -26,11 +27,9 @@ import com.google.common.collect.ImmutableSet;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Set;
 import javax.annotation.processing.Processor;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.TypeElement;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /**
@@ -48,17 +47,14 @@ public final class GeneratesRootInputProcessor extends BaseProcessor {
 
   @Override
   public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    processEach(toJavac(annotation), toJavac(element));
-  }
-
-  private void processEach(TypeElement annotation, Element element) throws Exception {
     ProcessorErrors.checkState(
-        element.getKind().equals(ElementKind.ANNOTATION_TYPE),
+        isTypeElement(element) && asTypeElement(element).isAnnotationClass(),
         element,
         "%s should only annotate other annotations. However, it was found annotating %s",
-        annotation,
-        element);
+        XElements.toStableString(annotation),
+        XElements.toStableString(element));
 
-    new GeneratesRootInputPropagatedDataGenerator(this.getProcessingEnv(), element).generate();
+    new GeneratesRootInputPropagatedDataGenerator(this.processingEnv(),
+        asTypeElement(element)).generate();
   }
 }

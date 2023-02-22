@@ -23,6 +23,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
+import dagger.hilt.processor.internal.definecomponent.DefineComponents;
 import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -30,6 +31,21 @@ import javax.lang.model.util.Elements;
 
 /** Helper methods for defining components and the component hierarchy. */
 public final class Components {
+  // TODO(bcorso): Remove this once all usages are replaced with #getComponents().
+  /**
+   * Returns the {@link ComponentDescriptor}s for a given element annotated with {@link
+   * dagger.hilt.InstallIn}.
+   */
+  public static ImmutableSet<ComponentDescriptor> getComponentDescriptors(
+      Elements elements, Element element) {
+    DefineComponents defineComponents = DefineComponents.create();
+    return getComponents(elements, element).stream()
+        .map(component -> elements.getTypeElement(component.canonicalName()))
+        // TODO(b/144939893): Memoize ComponentDescriptors so we're not recalculating.
+        .map(defineComponents::componentDescriptor)
+        .collect(toImmutableSet());
+  }
+
   /** Returns the {@link dagger.hilt.InstallIn} components for a given element. */
   public static ImmutableSet<ClassName> getComponents(Elements elements, Element element) {
     ImmutableSet<ClassName> components;
@@ -62,10 +78,6 @@ public final class Components {
     }
 
     return components;
-  }
-
-  public static AnnotationSpec getInstallInAnnotationSpec(ClassName... components) {
-    return getInstallInAnnotationSpec(ImmutableSet.copyOf(components));
   }
 
   public static AnnotationSpec getInstallInAnnotationSpec(ImmutableSet<ClassName> components) {

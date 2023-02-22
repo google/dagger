@@ -136,8 +136,10 @@ java_library(
     ],
     deps = [
         ":classnames",
+        ":component_descriptor",
         ":processor_errors",
         ":processors",
+        "//java/dagger/hilt/processor/internal/definecomponent:define_components",
         "//java/dagger/hilt/processor/internal/kotlin",
         "//java/dagger/internal/codegen/extension",
         "//third_party/java/auto:common",

@@ -325,6 +325,22 @@ class HiltGradlePlugin @Inject constructor(
       project.files(variant.javaCompileProvider.map {it.destinationDirectory.get() })
     )
 
+    val hiltAnnotationProcessorConfiguration = project.configurations.create(
+      "hiltAnnotationProcessor${variant.name.capitalize()}"
+    ).also { config ->
+      config.isCanBeConsumed = false
+      config.isCanBeResolved = true
+      // Add user annotation processor configuration, so that SPI plugins and other processors
+      // are discoverable.
+      val apConfigurations: List<Configuration> = mutableListOf<Configuration>().apply {
+        add(variant.annotationProcessorConfiguration)
+        project.configurations.findByName(getKaptConfigName(variant))?.let { add(it) }
+      }
+      config.extendsFrom(*apConfigurations.toTypedArray())
+      // Add hilt-compiler even though it might be in the AP configurations already.
+      project.dependencies.add(config.name, "com.google.dagger:hilt-compiler:$HILT_VERSION")
+    }
+
     fun getInputClasspath(artifactAttributeValue: String) =
       mutableListOf<Configuration>().apply {
         @Suppress("DEPRECATION") // Older variant API is deprecated
@@ -399,21 +415,7 @@ class HiltGradlePlugin @Inject constructor(
       }
       compileTask.destinationDirectory.set(componentClasses.singleFile)
       compileTask.options.apply {
-        annotationProcessorPath = project.configurations.create(
-          "hiltAnnotationProcessor${variant.name.capitalize()}"
-        ).also { config ->
-          config.isCanBeConsumed = false
-          config.isCanBeResolved = true
-          // Add user annotation processor configuration, so that SPI plugins and other processors
-          // are discoverable.
-          val apConfigurations: List<Configuration> = mutableListOf<Configuration>().apply {
-            add(variant.annotationProcessorConfiguration)
-            project.configurations.findByName(getKaptConfigName(variant))?.let { add(it) }
-          }
-          config.extendsFrom(*apConfigurations.toTypedArray())
-          // Add hilt-compiler even though it might be in the AP configurations already.
-          project.dependencies.add(config.name, "com.google.dagger:hilt-compiler:$HILT_VERSION")
-        }
+        annotationProcessorPath = hiltAnnotationProcessorConfiguration
         generatedSourceOutputDirectory.set(
           project.file(
             project.buildDir.resolve("generated/hilt/component_sources/${variant.name}/")
@@ -491,9 +493,15 @@ class HiltGradlePlugin @Inject constructor(
     if (project.state.failure != null) {
       return
     }
-    val dependencies = project.configurations.flatMap { configuration ->
-      configuration.dependencies.map { dependency -> dependency.group to dependency.name }
-    }
+    val dependencies = project.configurations
+      .filterNot {
+        // Exclude plugin created config since plugin adds the deps to them.
+        it.name.startsWith("hiltAnnotationProcessor") ||
+          it.name.startsWith("hiltCompileOnly")
+      }
+      .flatMap { configuration ->
+        configuration.dependencies.map { dependency -> dependency.group to dependency.name }
+      }.toSet()
     if (!dependencies.contains(LIBRARY_GROUP to "hilt-android")) {
       error(missingDepError("$LIBRARY_GROUP:hilt-android"))
     }

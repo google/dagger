@@ -21,8 +21,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-class SPIPluginTest {
+@RunWith(Parameterized::class)
+class SPIPluginTest(val withKapt: Boolean) {
   @get:Rule
   val testProjectDir = TemporaryFolder()
 
@@ -40,12 +43,23 @@ class SPIPluginTest {
         """.trimIndent()
       )
     }
+    val processorConfig = if (withKapt) "kapt" else "annotationProcessor"
+    if (withKapt) {
+      gradleRunner.addPluginClasspath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0")
+      gradleRunner.addPluginId("kotlin-android")
+      gradleRunner.addPluginId("kotlin-kapt")
+      gradleRunner.addAdditionalClosure("""
+      |kotlin {
+      |  jvmToolchain(11)
+      |}
+      """.trimMargin())
+    }
     gradleRunner.addHiltOption("enableAggregatingTask = true")
     gradleRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'",
       "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'",
-      "annotationProcessor project(':spi-plugin')",
+      "$processorConfig 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'",
+      "$processorConfig project(':spi-plugin')",
     )
     gradleRunner.addSrc(
       srcPath = "minimal/MyApp.java",
@@ -73,5 +87,11 @@ class SPIPluginTest {
     assertThat(result.getOutput()).contains(
       "[spi.TestPlugin] Found component: minimal.MyApp_HiltComponents.SingletonC"
     )
+  }
+
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "withKapt = {0}")
+    fun params() = listOf(false, true)
   }
 }

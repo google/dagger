@@ -72,6 +72,7 @@ dependencies {
   testImplementation 'junit:junit:4.12'
   testImplementation 'com.google.truth:truth:1.0.1'
   testPluginCompile 'com.android.tools.build:gradle:7.1.2'
+  testPluginCompile 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
 }
 
 // Configure the generating task of plugin-under-test-metadata.properties to

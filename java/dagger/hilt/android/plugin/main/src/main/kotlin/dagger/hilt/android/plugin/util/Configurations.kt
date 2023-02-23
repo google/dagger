@@ -31,6 +31,6 @@ internal fun getKaptConfigName(variant: com.android.build.gradle.api.BaseVariant
     is com.android.build.gradle.api.UnitTestVariant ->
       "kaptTest${variant.name.substringBeforeLast("UnitTest").capitalize()}"
     else ->
-      "kapt${variant.name}"
+      "kapt${variant.name.capitalize()}"
   }
 }

@@ -27,6 +27,7 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Provides;
 import dagger.internal.codegen.base.Formatter;
+import dagger.internal.codegen.model.DaggerElement;
 import dagger.internal.codegen.xprocessing.XTypes;
 import dagger.producers.Produces;
 import dagger.spi.model.DaggerAnnotation;
@@ -66,7 +67,7 @@ public final class DependencyRequestFormatter extends Formatter<DependencyReques
     if (!request.requestElement().isPresent()) {
       return "";
     }
-    XElement requestElement = request.requestElement().get().xprocessing();
+    XElement requestElement = DaggerElement.xprocessing(request.requestElement().get());
     if (isMethod(requestElement)) {
       return INDENT
           + request.key()

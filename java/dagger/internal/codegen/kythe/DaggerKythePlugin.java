@@ -44,6 +44,7 @@ import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.internal.codegen.javac.JavacPluginModule;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.model.DaggerElement;
 import dagger.internal.codegen.validation.InjectBindingRegistryModule;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.DependencyEdge;
@@ -132,7 +133,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
 
   private void addDependencyEdge(
       DependencyRequest dependency, BindingDeclaration bindingDeclaration) {
-    XElement requestElement = dependency.requestElement().get().xprocessing();
+    XElement requestElement = DaggerElement.xprocessing(dependency.requestElement().get());
     XElement bindingElement = bindingDeclaration.bindingElement().get();
     Optional<VName> requestElementNode = jvmNode(requestElement, "request element");
     Optional<VName> bindingElementNode = jvmNode(bindingElement, "binding element");

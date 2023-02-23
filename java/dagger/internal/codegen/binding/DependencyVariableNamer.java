@@ -21,6 +21,7 @@ import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import com.google.common.base.Ascii;
 import com.google.common.base.CaseFormat;
+import dagger.internal.codegen.model.DaggerElement;
 import dagger.spi.model.DependencyRequest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,7 +41,8 @@ final class DependencyVariableNamer {
       return simpleVariableName(dependency.key().type().xprocessing().getTypeElement());
     }
 
-    String variableName = getSimpleName(dependency.requestElement().get().xprocessing());
+    String variableName =
+        getSimpleName(DaggerElement.xprocessing(dependency.requestElement().get()));
     if (Ascii.isUpperCase(variableName.charAt(0))) {
       variableName = toLowerCamel(variableName);
     }

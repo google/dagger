@@ -52,6 +52,7 @@ import com.google.common.collect.Table;
 import dagger.internal.codegen.base.ElementFormatter;
 import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
+import dagger.internal.codegen.model.DaggerElement;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.DependencyEdge;
@@ -59,7 +60,6 @@ import dagger.spi.model.BindingGraph.Edge;
 import dagger.spi.model.BindingGraph.MaybeBinding;
 import dagger.spi.model.BindingGraph.Node;
 import dagger.spi.model.ComponentPath;
-import dagger.spi.model.DaggerElement;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -237,7 +237,8 @@ public final class DiagnosticMessageGenerator {
       new Formatter<DependencyEdge>() {
         @Override
         public String format(DependencyEdge object) {
-          XElement requestElement = object.dependencyRequest().requestElement().get().xprocessing();
+          XElement requestElement =
+              DaggerElement.xprocessing(object.dependencyRequest().requestElement().get());
           StringBuilder builder = new StringBuilder(elementToString(requestElement));
 
           // For entry points declared in subcomponents or supertypes of the root component,
@@ -369,7 +370,8 @@ public final class DiagnosticMessageGenerator {
 
   private XTypeElement typeDeclaringEntryPoint(DependencyEdge entryPoint) {
     return asTypeElement(
-        entryPoint.dependencyRequest().requestElement().get().xprocessing().getEnclosingElement());
+        DaggerElement.xprocessing(entryPoint.dependencyRequest().requestElement().get())
+            .getEnclosingElement());
   }
 
   /**
@@ -380,7 +382,7 @@ public final class DiagnosticMessageGenerator {
     return comparing(
         edge ->
             closestEnclosingTypeElement(
-                    edge.dependencyRequest().requestElement().get().xprocessing())
+                    DaggerElement.xprocessing(edge.dependencyRequest().requestElement().get()))
                 .getQualifiedName());
   }
 
@@ -392,7 +394,7 @@ public final class DiagnosticMessageGenerator {
    */
   private Comparator<DependencyEdge> requestElementDeclarationOrder() {
     return comparing(
-        edge -> edge.dependencyRequest().requestElement().get().xprocessing(),
+        edge -> DaggerElement.xprocessing(edge.dependencyRequest().requestElement().get()),
         // TODO(bcorso): This is inefficient as it requires each element to iterate through all of
         // its siblings to find its order. Ideally, the order of all elements would be calculated in
         // a single pass and cached, but the organization of the current code makes that a bit

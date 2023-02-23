@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Dagger Authors.
+ * Copyright (C) 2023 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,16 @@
 
 package dagger.spi.model;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-
-import androidx.room.compiler.processing.XElement;
-import com.google.auto.value.AutoValue;
+import com.google.devtools.ksp.symbol.KSAnnotated;
 import javax.lang.model.element.Element;
 
 /** Wrapper type for an element. */
-@AutoValue
-public abstract class DaggerElement {
-  public static DaggerElement from(XElement element) {
-    return new AutoValue_DaggerElement(element);
-  }
+public interface DaggerElement {
+  /** Returns representation of a javac element. */
+  public Element java();
 
-  public abstract XElement xprocessing();
+  /** Returns representation of a ksp element. */
+  public KSAnnotated ksp();
 
-  public Element java() {
-    return toJavac(xprocessing());
-  }
-
-  @Override
-  public final String toString() {
-    return xprocessing().toString();
-  }
+  public CompilerEnvironment backend();
 }

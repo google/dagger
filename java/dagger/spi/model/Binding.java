@@ -45,8 +45,8 @@ public interface Binding extends MaybeBinding {
   ImmutableSet<DependencyRequest> dependencies();
 
   /**
-   * The {@link DaggerElement} that declares this binding. Absent for
-   * {@linkplain BindingKind binding kinds} that are not always declared by exactly one element.
+   * The {@link DaggerElement} that declares this binding. Absent for {@linkplain BindingKind
+   * binding kinds} that are not always declared by exactly one element.
    *
    * <p>For example, consider {@link BindingKind#MULTIBOUND_SET}. A component with many
    * {@code @IntoSet} bindings for the same key will have a synthetic binding that depends on all
@@ -54,7 +54,7 @@ public interface Binding extends MaybeBinding {
    * contribute a synthetic binding, but since multiple {@code @Multibinds} methods can coexist in
    * the same component (and contribute to one single binding), it has no binding element.
    */
-  Optional<DaggerElement> bindingElement();
+  Optional<? extends DaggerElement> bindingElement();
 
   /**
    * The {@link DaggerTypeElement} of the module which contributes this binding. Absent for bindings

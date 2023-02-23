@@ -74,6 +74,7 @@ import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.model.DaggerElement;
 import dagger.producers.Producer;
 import dagger.producers.internal.AbstractProducesMethodProducer;
 import dagger.producers.internal.Producers;
@@ -304,7 +305,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
 
   /** Returns a name of the variable representing this dependency's future. */
   private static String dependencyFutureName(DependencyRequest dependency) {
-    return getSimpleName(dependency.requestElement().get().xprocessing()) + "Future";
+    return getSimpleName(DaggerElement.xprocessing(dependency.requestElement().get())) + "Future";
   }
 
   private FutureTransform createFutureTransform(
@@ -406,7 +407,8 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
 
     @Override
     String applyArgName() {
-      String argName = getSimpleName(asyncDependency.requestElement().get().xprocessing());
+      String argName =
+          getSimpleName(DaggerElement.xprocessing(asyncDependency.requestElement().get()));
       if (argName.equals("module")) {
         return "moduleArg";
       }

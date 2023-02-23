@@ -75,6 +75,7 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.extension.DaggerCollectors;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.model.DaggerElement;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.DependencyRequest;
@@ -167,7 +168,9 @@ final class InjectionMethods {
           binding.provisionDependencies().stream()
               .collect(
                   toImmutableMap(
-                      request -> asMethodParameter(request.requestElement().get().xprocessing()),
+                      request ->
+                          asMethodParameter(
+                              DaggerElement.xprocessing(request.requestElement().get())),
                       request -> request));
 
       ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();

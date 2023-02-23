@@ -29,6 +29,7 @@ import com.google.common.collect.Multimaps;
 import dagger.internal.codegen.base.Scopes;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.model.DaggerElement;
 import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import dagger.spi.model.Binding;
@@ -135,7 +136,7 @@ final class IncompatiblyScopedBindingsValidator extends ValidationBindingGraphPl
         case PROVISION:
           message.append(
               methodSignatureFormatter.format(
-                  asExecutable(binding.bindingElement().get().xprocessing())));
+                  asExecutable(DaggerElement.xprocessing(binding.bindingElement().get()))));
           break;
 
         case INJECTION:
@@ -143,7 +144,8 @@ final class IncompatiblyScopedBindingsValidator extends ValidationBindingGraphPl
               .append(getReadableSource(binding.scope().get()))
               .append(" class ")
               .append(
-                  closestEnclosingTypeElement(binding.bindingElement().get().xprocessing())
+                  closestEnclosingTypeElement(
+                          DaggerElement.xprocessing(binding.bindingElement().get()))
                       .getQualifiedName())
               .append(diagnosticMessageGenerator.getMessage(binding));
 

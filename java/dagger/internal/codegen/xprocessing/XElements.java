@@ -70,6 +70,7 @@ import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XTypeParameterElement;
 import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
+import com.google.devtools.ksp.symbol.KSAnnotated;
 import com.squareup.javapoet.ClassName;
 import java.util.Collection;
 import java.util.Optional;
@@ -549,6 +550,23 @@ public final class XElements {
     } catch (TypeNotPresentException e) {
       return e.typeName();
     }
+  }
+
+  public static KSAnnotated toKS(XElement element) {
+    if (isExecutable(element)) {
+      return toKS(asExecutable(element));
+    }
+    if (isTypeElement(element)) {
+      return toKS(asTypeElement(element));
+    }
+    if (isField(element)) {
+      return toKS(asField(element));
+    }
+    if (isMethodParameter(element)) {
+      return toKS(asMethodParameter(element));
+    }
+    throw new IllegalStateException(
+        "Returning KSAnnotated declaration for " + element + " is not supported.");
   }
 
   // XElement#kindName() exists, but doesn't give consistent results between JAVAC and KSP (e.g.

@@ -17,8 +17,8 @@
 package dagger.internal.codegen.binding;
 
 import dagger.internal.codegen.base.ElementFormatter;
+import dagger.internal.codegen.model.DaggerElement;
 import dagger.spi.model.BindingGraph.DependencyEdge;
-import dagger.spi.model.DaggerElement;
 import dagger.spi.model.DependencyRequest;
 
 /** An implementation of {@link DependencyEdge}. */

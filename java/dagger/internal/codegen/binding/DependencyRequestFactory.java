@@ -43,7 +43,7 @@ import dagger.Lazy;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.spi.model.DaggerElement;
+import dagger.internal.codegen.model.DaggerElement;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import dagger.spi.model.RequestKind;

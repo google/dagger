@@ -1,4 +1,4 @@
-# Copyright (C) 2019 The Dagger Authors.
+# Copyright (C) 2023 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,39 +13,23 @@
 # limitations under the License.
 
 # Description:
-#   Code related to validating the user-written Dagger code
+#   Dagger model implementations for internal use.
 
 load("@rules_java//java:defs.bzl", "java_library")
 
 package(default_visibility = ["//:src"])
 
 java_library(
-    name = "validation",
+    name = "model",
     srcs = glob(["*.java"]),
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
-    tags = ["maven:merged"],
     deps = [
-        "//java/dagger:core",
-        "//java/dagger/internal/codegen/base",
-        "//java/dagger/internal/codegen/binding",
-        "//java/dagger/internal/codegen/compileroption",
-        "//java/dagger/internal/codegen/extension",
-        "//java/dagger/internal/codegen/javapoet",
-        "//java/dagger/internal/codegen/kotlin",
-        "//java/dagger/internal/codegen/langmodel",
-        "//java/dagger/internal/codegen/model",
         "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/spi",
-        "//third_party/java/auto:common",
         "//third_party/java/auto:value",
-        "//third_party/java/checker_framework_annotations",
-        "//third_party/java/error_prone:annotations",
         "//third_party/java/guava/base",
-        "//third_party/java/guava/cache",
         "//third_party/java/guava/collect",
         "//third_party/java/guava/graph",
-        "//third_party/java/guava/util/concurrent",
-        "//third_party/java/javapoet",
-        "//third_party/java/jsr330_inject",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )

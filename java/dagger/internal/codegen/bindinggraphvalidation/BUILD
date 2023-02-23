@@ -33,6 +33,7 @@ java_library(
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/model",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/spi",

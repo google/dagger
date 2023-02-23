@@ -484,9 +484,14 @@ public final class Processors {
     throw new IllegalStateException("Cannot find a top-level type for " + originalElement);
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /** Returns true if the given element is a top-level element. */
   public static boolean isTopLevel(Element element) {
     return element.getEnclosingElement().getKind() == ElementKind.PACKAGE;
+  }
+
+  public static boolean isTopLevel(XElement element) {
+    return isTopLevel(toJavac(element));
   }
 
   /** Returns true if the given element is annotated with the given annotation. */

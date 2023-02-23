@@ -16,21 +16,19 @@
 
 package dagger.hilt.processor.internal.originatingelement;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XElementKt;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
+import dagger.internal.codegen.xprocessing.XElements;
 import javax.annotation.processing.Processor;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /**
@@ -48,29 +46,24 @@ public final class OriginatingElementProcessor extends BaseProcessor {
 
   @Override
   public void processEach(XTypeElement annotation, XElement element) {
-    processEach(toJavac(annotation), toJavac(element));
-  }
-
-  private void processEach(TypeElement annotation, Element element) {
     ProcessorErrors.checkState(
-        MoreElements.isType(element) && Processors.isTopLevel(element),
+        XElementKt.isTypeElement(element) && Processors.isTopLevel(element),
         element,
         "@%s should only be used to annotate top-level types, but found: %s",
-        annotation.getSimpleName(),
-        element);
+        annotation.getClassName().simpleName(),
+        XElements.toStableString(element));
 
-    TypeElement originatingElementValue =
-        Processors.getAnnotationClassValue(
-            getElementUtils(),
-            Processors.getAnnotationMirror(element, ClassNames.ORIGINATING_ELEMENT),
-            "topLevelClass");
+    XTypeElement topLevelClassElement =
+        element.getAnnotation(ClassNames.ORIGINATING_ELEMENT)
+            .getAsType("topLevelClass")
+            .getTypeElement();
 
     // TODO(bcorso): ProcessorErrors should allow us to point to the annotation too.
     ProcessorErrors.checkState(
-        Processors.isTopLevel(originatingElementValue),
+        Processors.isTopLevel(topLevelClassElement),
         element,
         "@%s.topLevelClass value should be a top-level class, but found: %s",
-        annotation.getSimpleName(),
-        originatingElementValue);
+        annotation.getClassName().simpleName(),
+        topLevelClassElement.getClassName());
   }
 }

@@ -17,7 +17,6 @@
 package dagger.internal.codegen.kotlin;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
-import static dagger.internal.codegen.xprocessing.XElements.getFieldDescriptor;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room.compiler.processing.XAnnotation;
@@ -32,7 +31,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.extension.DaggerCollectors;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.xprocessing.XElements;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -74,7 +72,7 @@ abstract class KotlinMetadata {
   @Memoized
   ImmutableMap<String, XMethodElement> methodDescriptors() {
     return typeElement().getDeclaredMethods().stream()
-        .collect(toImmutableMap(XElements::getMethodDescriptor, Function.identity()));
+        .collect(toImmutableMap(XMethodElement::getJvmDescriptor, Function.identity()));
   }
 
   /** Gets the synthetic method for annotations of a given field element. */
@@ -133,7 +131,7 @@ abstract class KotlinMetadata {
   }
 
   private PropertyMetadata findProperty(XFieldElement field) {
-    String fieldDescriptor = getFieldDescriptor(field);
+    String fieldDescriptor = field.getJvmDescriptor();
     if (classMetadata().propertiesByFieldSignature().containsKey(fieldDescriptor)) {
       return classMetadata().propertiesByFieldSignature().get(fieldDescriptor);
     } else {

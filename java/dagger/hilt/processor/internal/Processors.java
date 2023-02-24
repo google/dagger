@@ -665,14 +665,20 @@ public final class Processors {
         .collect(toOptional());
   }
 
-  /** @return true if element inherits directly or indirectly from the className */
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
+  /** Returns {@code true} if element inherits directly or indirectly from the className */
   public static boolean isAssignableFrom(TypeElement element, ClassName className) {
     return isAssignableFromAnyOf(element, ImmutableSet.of(className));
   }
 
-  /** @return true if element inherits directly or indirectly from any of the classNames */
-  public static boolean isAssignableFromAnyOf(TypeElement element,
-      ImmutableSet<ClassName> classNames) {
+  /** Returns {@code true} if element inherits directly or indirectly from the className. */
+  public static boolean isAssignableFrom(XTypeElement element, ClassName className) {
+    return isAssignableFromAnyOf(toJavac(element), ImmutableSet.of(className));
+  }
+
+  /** Returns {@code true} if element inherits directly or indirectly from any of the classNames. */
+  public static boolean isAssignableFromAnyOf(
+      TypeElement element, ImmutableSet<ClassName> classNames) {
     for (ClassName className : classNames) {
       if (ClassName.get(element).equals(className)) {
         return true;

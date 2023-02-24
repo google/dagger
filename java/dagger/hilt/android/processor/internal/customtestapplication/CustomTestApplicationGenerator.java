@@ -20,6 +20,9 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XFiler.Mode;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -31,7 +34,6 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 
 /** Generates an Android Application that holds the Singleton component. */
@@ -40,38 +42,37 @@ final class CustomTestApplicationGenerator {
       ParameterSpec.builder(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER, "componentManager")
           .build();
 
-  private final ProcessingEnvironment processingEnv;
+  private final XProcessingEnv processingEnv;
   private final CustomTestApplicationMetadata metadata;
 
   public CustomTestApplicationGenerator(
-      ProcessingEnvironment processingEnv, CustomTestApplicationMetadata metadata) {
+      XProcessingEnv processingEnv, CustomTestApplicationMetadata metadata) {
     this.processingEnv = processingEnv;
     this.metadata = metadata;
   }
 
   public void generate() throws IOException {
-    TypeSpec.Builder generator =
-        TypeSpec.classBuilder(metadata.appName())
-            .addOriginatingElement(metadata.element())
-            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .superclass(metadata.baseAppName())
-            .addSuperinterface(
-                ParameterizedTypeName.get(ClassNames.GENERATED_COMPONENT_MANAGER, TypeName.OBJECT))
-            .addSuperinterface(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER_HOLDER)
-            .addField(
-                FieldSpec.builder(ClassName.OBJECT, "componentManagerLock", PRIVATE, FINAL)
-                    .initializer("new $T()", ClassName.OBJECT)
-                    .build())
-            .addField(getComponentManagerField())
-            .addMethod(getComponentManagerMethod())
-            .addMethod(getComponentMethod());
+    TypeSpec.Builder generator = TypeSpec.classBuilder(metadata.appName());
+    JavaPoetExtKt.addOriginatingElement(generator, metadata.element())
+        .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+        .superclass(metadata.baseAppName())
+        .addSuperinterface(
+            ParameterizedTypeName.get(ClassNames.GENERATED_COMPONENT_MANAGER, TypeName.OBJECT))
+        .addSuperinterface(ClassNames.TEST_APPLICATION_COMPONENT_MANAGER_HOLDER)
+        .addField(
+            FieldSpec.builder(ClassName.OBJECT, "componentManagerLock", PRIVATE, FINAL)
+                .initializer("new $T()", ClassName.OBJECT)
+                .build())
+        .addField(getComponentManagerField())
+        .addMethod(getComponentManagerMethod())
+        .addMethod(getComponentMethod());
 
     Processors.addGeneratedAnnotation(
         generator, processingEnv, CustomTestApplicationProcessor.class);
 
-    JavaFile.builder(metadata.appName().packageName(), generator.build())
-        .build()
-        .writeTo(processingEnv.getFiler());
+    JavaFile javaFile =
+        JavaFile.builder(metadata.appName().packageName(), generator.build()).build();
+    processingEnv.getFiler().write(javaFile, Mode.Isolating);
   }
 
   // Initialize this in attachBaseContext to not pull it into the main dex.

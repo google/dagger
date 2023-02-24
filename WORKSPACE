@@ -171,7 +171,7 @@ CHECKER_FRAMEWORK_VERSION = "2.5.3"
 
 ERROR_PRONE_VERSION = "2.14.0"
 
-KSP_VERSION = "1.8.0-1.0.9"
+KSP_VERSION = KOTLIN_VERSION + "-1.0.9"
 
 maven_install(
     artifacts = [

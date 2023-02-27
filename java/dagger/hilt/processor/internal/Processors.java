@@ -18,6 +18,7 @@ package dagger.hilt.processor.internal;
 
 import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asPackage;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.asVariable;
@@ -1044,12 +1045,19 @@ public final class Processors {
         : typeName;
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   public static Optional<TypeElement> getOriginatingTestElement(
       Element element, Elements elements) {
     TypeElement topLevelType = getOriginatingTopLevelType(element, elements);
     return hasAnnotation(topLevelType, ClassNames.HILT_ANDROID_TEST)
         ? Optional.of(asType(topLevelType))
         : Optional.empty();
+  }
+
+  public static Optional<XTypeElement> getOriginatingTestElement(XElement element) {
+    XProcessingEnv processingEnv = getProcessingEnv(element);
+    return getOriginatingTestElement(toJavac(element), toJavac(processingEnv).getElementUtils())
+        .map(typeElement -> toXProcessing(typeElement, processingEnv));
   }
 
   private static TypeElement getOriginatingTopLevelType(Element element, Elements elements) {

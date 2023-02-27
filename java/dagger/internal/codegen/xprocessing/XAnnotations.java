@@ -18,13 +18,17 @@ package dagger.internal.codegen.xprocessing;
 
 import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.JavaPoetExtKt;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.common.base.Equivalence;
+import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import java.util.Arrays;
@@ -130,6 +134,14 @@ public final class XAnnotations {
     } catch (TypeNotPresentException e) {
       return e.typeName();
     }
+  }
+
+  /** Returns the value of the given [key] as a list of type elements. */
+  public static ImmutableList<XTypeElement> getAsTypeElementList(
+      XAnnotation annotation, String key) {
+    return annotation.getAsTypeList(key).stream()
+        .map(XType::getTypeElement)
+        .collect(toImmutableList());
   }
 
   private XAnnotations() {}

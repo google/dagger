@@ -16,13 +16,12 @@
 
 package dagger.hilt.processor.internal.uninstallmodules;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -31,10 +30,10 @@ import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
+import dagger.internal.codegen.xprocessing.XAnnotations;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Set;
 import javax.annotation.processing.Processor;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Validates {@link dagger.hilt.android.testing.UninstallModules} usages. */
@@ -49,43 +48,35 @@ public final class UninstallModulesProcessor extends BaseProcessor {
 
   @Override
   public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    processEach(toJavac(annotation), toJavac(element));
-  }
-
-  private void processEach(TypeElement annotation, Element element) throws Exception {
     // TODO(bcorso): Consider using RootType to check this?
     // TODO(bcorso): Loosen this restriction to allow defining sets of ignored modules in libraries.
-    ProcessorErrors.checkState(
-        MoreElements.isType(element)
-            && Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST),
+    ProcessorErrors.checkState(isTypeElement(element)
+            && element.hasAnnotation(ClassNames.HILT_ANDROID_TEST),
         element,
         "@%s should only be used on test classes annotated with @%s, but found: %s",
-        annotation.getSimpleName(),
+        annotation.getClassName().simpleName(),
         ClassNames.HILT_ANDROID_TEST.simpleName(),
         element);
 
-    TypeElement testElement = MoreElements.asType(element);
-    ImmutableList<TypeElement> uninstallModules =
-        Processors.getAnnotationClassValues(
-            getElementUtils(),
-            Processors.getAnnotationMirror(testElement, ClassNames.UNINSTALL_MODULES),
+    XTypeElement testElement = XElements.asTypeElement(element);
+    ImmutableList<XTypeElement> uninstallModules = XAnnotations.getAsTypeElementList(
+            testElement.getAnnotation(ClassNames.UNINSTALL_MODULES),
             "value");
 
     checkModulesHaveInstallIn(testElement, uninstallModules);
     checkModulesDontOriginateFromTest(testElement, uninstallModules);
 
-    new AggregatedUninstallModulesGenerator(testElement, uninstallModules, getProcessingEnv())
-        .generate();
+    new AggregatedUninstallModulesGenerator(testElement, uninstallModules).generate();
   }
 
   private void checkModulesHaveInstallIn(
-      TypeElement testElement, ImmutableList<TypeElement> uninstallModules) {
-    ImmutableList<TypeElement> invalidModules =
+      XTypeElement testElement, ImmutableList<XTypeElement> uninstallModules) {
+    ImmutableList<XTypeElement> invalidModules =
         uninstallModules.stream()
             .filter(
                 module ->
-                    !(Processors.hasAnnotation(module, ClassNames.MODULE)
-                        && Processors.hasAnnotation(module, ClassNames.INSTALL_IN)))
+                    !(module.hasAnnotation(ClassNames.MODULE)
+                        && module.hasAnnotation(ClassNames.INSTALL_IN)))
             .collect(toImmutableList());
 
     ProcessorErrors.checkState(
@@ -94,17 +85,17 @@ public final class UninstallModulesProcessor extends BaseProcessor {
         testElement,
         "@UninstallModules should only include modules annotated with both @Module and @InstallIn, "
             + "but found: %s.",
-        invalidModules);
+        invalidModules.stream().map(XElements::toStableString).collect(toImmutableList()));
   }
 
   private void checkModulesDontOriginateFromTest(
-      TypeElement testElement, ImmutableList<TypeElement> uninstallModules) {
+      XTypeElement testElement, ImmutableList<XTypeElement> uninstallModules) {
     ImmutableList<ClassName> invalidModules =
         uninstallModules.stream()
             .filter(
                 module ->
-                    Processors.getOriginatingTestElement(module, getElementUtils()).isPresent())
-            .map(ClassName::get)
+                    Processors.getOriginatingTestElement(module).isPresent())
+            .map(XTypeElement::getClassName)
             .collect(toImmutableList());
 
     ProcessorErrors.checkState(

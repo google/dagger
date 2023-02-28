@@ -17,7 +17,6 @@
 package dagger.hilt.processor.internal;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -26,12 +25,10 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
-import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.AnnotationValueVisitor;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
@@ -78,19 +75,6 @@ public final class AnnotationValues {
     return TypeMirrorVisitor.INSTANCE.visit(value);
   }
 
-  private static final class EnumVisitor extends DefaultVisitor<VariableElement> {
-    static final EnumVisitor INSTANCE = new EnumVisitor();
-
-    EnumVisitor() {
-      super(VariableElement.class);
-    }
-
-    @Override
-    public VariableElement visitEnumConstant(VariableElement value, Void unused) {
-      return value;
-    }
-  }
-
   /** Returns a class array value as a set of {@link TypeElement}. */
   public static ImmutableSet<TypeElement> getTypeElements(AnnotationValue value) {
     return getAnnotationValues(value).stream()
@@ -101,15 +85,6 @@ public final class AnnotationValues {
   /** Returns a class value as a {@link TypeElement}. */
   public static TypeElement getTypeElement(AnnotationValue value) {
     return asTypeElement(getTypeMirror(value));
-  }
-
-  /**
-   * Returns the value as a VariableElement.
-   *
-   * @throws IllegalArgumentException if the value is not an enum.
-   */
-  public static VariableElement getEnum(AnnotationValue value) {
-    return EnumVisitor.INSTANCE.visit(value);
   }
 
   /** Returns a string array value as a set of strings. */
@@ -146,49 +121,11 @@ public final class AnnotationValues {
     return type.cast(value);
   }
 
-  /** Returns the int value of an annotation */
-  public static int getIntValue(AnnotationMirror annotation, String valueName) {
-    return (int) getAnnotationValue(annotation, valueName).getValue();
-  }
-
-  /** Returns an optional int value of an annotation if the value name is present */
-  public static Optional<Integer> getOptionalIntValue(
-      AnnotationMirror annotation, String valueName) {
-    return isValuePresent(annotation, valueName)
-        ? Optional.of(getIntValue(annotation, valueName))
-        : Optional.empty();
-  }
-
-  /** Returns the String value of an annotation */
-  public static String getStringValue(AnnotationMirror annotation, String valueName) {
-    return (String) getAnnotationValue(annotation, valueName).getValue();
-  }
-
-  /** Returns an optional String value of an annotation if the value name is present */
-  public static Optional<String> getOptionalStringValue(
-      AnnotationMirror annotation, String valueName) {
-    return isValuePresent(annotation, valueName)
-        ? Optional.of(getStringValue(annotation, valueName))
-        : Optional.empty();
-  }
-
-  /** Returns the int array value of an annotation */
-  public static int[] getIntArrayValue(AnnotationMirror annotation, String valueName) {
-    return getAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
-        .mapToInt(it -> (int) it.getValue())
-        .toArray();
-  }
-
   /** Returns the String array value of an annotation */
   public static String[] getStringArrayValue(AnnotationMirror annotation, String valueName) {
     return getAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
         .map(it -> (String) it.getValue())
         .toArray(String[]::new);
-  }
-
-  private static boolean isValuePresent(AnnotationMirror annotation, String valueName) {
-    return getAnnotationValuesWithDefaults(annotation).keySet().stream()
-        .anyMatch(member -> member.getSimpleName().contentEquals(valueName));
   }
 
   /**

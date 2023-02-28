@@ -50,7 +50,6 @@ import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
@@ -63,16 +62,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ErrorType;
@@ -223,14 +219,6 @@ public final class Processors {
     return annotationMembers;
   }
 
-  /** Returns an optional {@link TypeElement} for a class attribute on an annotation. */
-  public static Optional<TypeElement> getOptionalAnnotationClassValue(
-      Elements elements, AnnotationMirror annotation, String key) {
-    return getAnnotationClassValues(elements, annotation).get(key).stream()
-        .map(MoreTypes::asTypeElement)
-        .collect(toOptional());
-  }
-
   /** Returns a list of {@link TypeElement}s for a class attribute on an annotation. */
   public static ImmutableList<TypeElement> getOptionalAnnotationClassValues(
       Elements elements, AnnotationMirror annotation, String key) {
@@ -306,15 +294,6 @@ public final class Processors {
             null /* the Void accumulator */));
   }
 
-  /**
-   * Returns the declared type if the received mirror represents a declared type or an array of
-   * declared types, otherwise throws an {@link IllegalStateException}.
-   */
-  public static DeclaredType getDeclaredType(TypeMirror type) {
-    return getOptionalDeclaredType(type)
-        .orElseThrow(() -> new IllegalStateException("Not a declared type: " + type));
-  }
-
   /** Gets the values from an annotation value representing a string array. */
   public static ImmutableList<String> getStringArrayAnnotationValue(AnnotationValue value) {
     return value.accept(new SimpleAnnotationValueVisitor7<ImmutableList<String>, Void>() {
@@ -335,55 +314,6 @@ public final class Processors {
     }, /* unused accumulator */ null);
   }
 
-  /** Gets the values from an annotation value representing an int. */
-  public static Boolean getBooleanAnnotationValue(AnnotationValue value) {
-    return value.accept(
-        new SimpleAnnotationValueVisitor7<Boolean, Void>() {
-          @Override
-          public Boolean defaultAction(Object o, Void unused) {
-            throw new IllegalStateException("Expected a boolean, got instead: " + o);
-          }
-
-          @Override
-          public Boolean visitBoolean(boolean value, Void unused) {
-            return value;
-          }
-        }, /* unused accumulator */
-        null);
-  }
-
-  /** Gets the values from an annotation value representing an int. */
-  public static Integer getIntAnnotationValue(AnnotationValue value) {
-    return value.accept(new SimpleAnnotationValueVisitor7<Integer, Void>() {
-      @Override
-      public Integer defaultAction(Object o, Void unused) {
-        throw new IllegalStateException("Expected an int, got instead: " + o);
-      }
-
-      @Override
-      public Integer visitInt(int value, Void unused) {
-        return value;
-      }
-    }, /* unused accumulator */ null);
-  }
-
-  /** Gets the values from an annotation value representing a long. */
-  public static Long getLongAnnotationValue(AnnotationValue value) {
-    return value.accept(
-        new SimpleAnnotationValueVisitor7<Long, Void>() {
-          @Override
-          public Long defaultAction(Object o, Void unused) {
-            throw new IllegalStateException("Expected an int, got instead: " + o);
-          }
-
-          @Override
-          public Long visitLong(long value, Void unused) {
-            return value;
-          }
-        },
-        null /* unused accumulator */);
-  }
-
   /** Gets the values from an annotation value representing a string. */
   public static String getStringAnnotationValue(AnnotationValue value) {
     return value.accept(new SimpleAnnotationValueVisitor7<String, Void>() {
@@ -397,77 +327,6 @@ public final class Processors {
         return value;
       }
     }, /* unused accumulator */ null);
-  }
-
-  /** Gets the values from an annotation value representing a DeclaredType. */
-  public static DeclaredType getDeclaredTypeAnnotationValue(AnnotationValue value) {
-    return value.accept(
-        new SimpleAnnotationValueVisitor7<DeclaredType, Void>() {
-          @Override
-          public DeclaredType defaultAction(Object o, Void unused) {
-            throw new IllegalStateException("Expected a TypeMirror, got instead: " + o);
-          }
-
-          @Override
-          public DeclaredType visitType(TypeMirror typeMirror, Void unused) {
-            return MoreTypes.asDeclared(typeMirror);
-          }
-        }, /* unused accumulator */
-        null);
-  }
-
-  private static final SimpleAnnotationValueVisitor7<ImmutableSet<VariableElement>, Void>
-      ENUM_ANNOTATION_VALUE_VISITOR =
-          new SimpleAnnotationValueVisitor7<ImmutableSet<VariableElement>, Void>() {
-            @Override
-            public ImmutableSet<VariableElement> defaultAction(Object o, Void unused) {
-              throw new IllegalStateException(
-                  "Expected an Enum or an Enum array, got instead: " + o);
-            }
-
-            @Override
-            public ImmutableSet<VariableElement> visitArray(
-                List<? extends AnnotationValue> values, Void unused) {
-              ImmutableSet.Builder<VariableElement> builder = ImmutableSet.builder();
-              for (AnnotationValue value : values) {
-                builder.addAll(value.accept(this, null));
-              }
-              return builder.build();
-            }
-
-            @Override
-            public ImmutableSet<VariableElement> visitEnumConstant(
-                VariableElement value, Void unused) {
-              return ImmutableSet.of(value);
-            }
-          };
-
-  /** Gets the values from an annotation value representing a Enum array. */
-  public static ImmutableSet<VariableElement> getEnumArrayAnnotationValue(AnnotationValue value) {
-    return value.accept(ENUM_ANNOTATION_VALUE_VISITOR, /* unused accumulator */ null);
-  }
-
-  /** Converts an annotation value map to be keyed by the attribute name. */
-  public static ImmutableMap<String, AnnotationValue> convertToAttributeNameMap(
-      Map<? extends ExecutableElement, ? extends AnnotationValue> annotationValues) {
-    ImmutableMap.Builder<String, AnnotationValue> builder = ImmutableMap.builder();
-    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e
-        : annotationValues.entrySet()) {
-      String attribute = e.getKey().getSimpleName().toString();
-      builder.put(attribute, e.getValue());
-    }
-    return builder.build();
-  }
-
-  /** Returns the given elements containing package element. */
-  public static PackageElement getPackageElement(Element originalElement) {
-    checkNotNull(originalElement);
-    for (Element e = originalElement; e != null; e = e.getEnclosingElement()) {
-      if (e instanceof PackageElement) {
-        return (PackageElement) e;
-      }
-    }
-    throw new IllegalStateException("Cannot find a package for " + originalElement);
   }
 
   public static TypeElement getTopLevelType(Element originalElement) {
@@ -505,12 +364,6 @@ public final class Processors {
     return hasAnnotation(mirror.getAnnotationType().asElement(), className);
   }
 
-  /** Returns true if the given element is annotated with the given annotation. */
-  public static boolean hasAnnotation(
-      AnnotationMirror mirror, Class<? extends Annotation> annotation) {
-    return hasAnnotation(mirror.getAnnotationType().asElement(), annotation);
-  }
-
   /** Returns true if the given element has an annotation that is an error kind. */
   public static boolean hasErrorTypeAnnotation(Element element) {
     for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
@@ -521,33 +374,12 @@ public final class Processors {
     return false;
   }
 
-
-  /**
-   * Returns all elements in the round that are annotated with at least 1 of the given
-   * annotations.
-   */
-  @SafeVarargs
-  public static ImmutableSet<Element> getElementsAnnotatedWith(RoundEnvironment roundEnv,
-      Class<? extends Annotation>... annotations) {
-    ImmutableSet.Builder<Element> builder = ImmutableSet.builder();
-    for (Class<? extends Annotation> annotation : annotations){
-      builder.addAll(roundEnv.getElementsAnnotatedWith(annotation));
-    }
-
-    return builder.build();
-  }
-
   /**
    * Returns the name of a class, including prefixing with enclosing class names. i.e. for inner
    * class Foo enclosed by Bar, returns Bar_Foo instead of just Foo
    */
   public static String getEnclosedName(ClassName name) {
     return Joiner.on('_').join(name.simpleNames());
-  }
-
-  /** Returns the name of a class. See {@link #getEnclosedName(ClassName)}. */
-  public static String getEnclosedName(TypeElement element) {
-    return getEnclosedName(ClassName.get(element));
   }
 
   /**
@@ -564,11 +396,6 @@ public final class Processors {
    */
   public static ClassName getEnclosedClassName(TypeElement typeElement) {
     return getEnclosedClassName(ClassName.get(typeElement));
-  }
-
-  /** Returns the fully qualified class name, with _ instead of . */
-  public static String getFullyQualifiedEnclosedClassName(ClassName className) {
-    return className.packageName().replace('.', '_') + getEnclosedName(className);
   }
 
   // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
@@ -628,12 +455,6 @@ public final class Processors {
     String withoutSuffix =
         originalSimpleName.substring(0, originalSimpleName.length() - suffix.length());
     return originalName.peerClass(withoutSuffix);
-  }
-
-  /** @see #getAnnotationMirror(Element, ClassName) */
-  public static AnnotationMirror getAnnotationMirror(
-      Element element, Class<? extends Annotation> annotationClass) {
-    return getAnnotationMirror(element, ClassName.get(annotationClass));
   }
 
   /**
@@ -728,20 +549,6 @@ public final class Processors {
     return builder.build();
   }
 
-  public static ImmutableList<ExecutableElement> getConstructors(TypeElement element) {
-    ImmutableList.Builder<ExecutableElement> builder = ImmutableList.builder();
-    for (Element enclosed : element.getEnclosedElements()) {
-      // Only look for executable elements, not fields, etc
-      if (enclosed instanceof ExecutableElement) {
-        ExecutableElement method = (ExecutableElement) enclosed;
-        if (method.getSimpleName().contentEquals(CONSTRUCTOR_NAME)) {
-          builder.add(method);
-        }
-      }
-    }
-    return builder.build();
-  }
-
   /**
    * Returns all transitive methods from a given TypeElement, not including constructors. Also does
    * not include methods from Object or that override methods on Object.
@@ -770,26 +577,6 @@ public final class Processors {
     ProcessorErrors.checkState(e.asType().getKind() != TypeKind.ERROR, e,
         "Unable to resolve the type %s. Look for compilation errors above related to this type.",
         e);
-  }
-
-  private static void addInterfaceMethods(
-      TypeElement type, ImmutableList.Builder<ExecutableElement> interfaceMethods) {
-    for (TypeMirror interfaceMirror : type.getInterfaces()) {
-      TypeElement interfaceElement = MoreTypes.asTypeElement(interfaceMirror);
-      interfaceMethods.addAll(getMethods(interfaceElement));
-      addInterfaceMethods(interfaceElement, interfaceMethods);
-    }
-  }
-
-  /**
-   * Finds methods of interfaces implemented by {@code type}. This method also checks the
-   * superinterfaces of those interfaces. This method does not check the interfaces of any
-   * superclass of {@code type}.
-   */
-  public static ImmutableList<ExecutableElement> methodsOnInterfaces(TypeElement type) {
-    ImmutableList.Builder<ExecutableElement> interfaceMethods = new ImmutableList.Builder<>();
-    addInterfaceMethods(type, interfaceMethods);
-    return interfaceMethods.build();
   }
 
   /** Returns MapKey annotated annotations found on an element. */
@@ -854,7 +641,7 @@ public final class Processors {
     switch (method.getSimpleName().toString()) {
       case "equals":
         return (method.getParameters().size() == 1)
-            && (method.getParameters().get(0).asType().toString().equals("java.lang.Object"));
+            && method.getParameters().get(0).asType().toString().equals("java.lang.Object");
       case "hashCode":
       case "toString":
       case "clone":
@@ -878,13 +665,6 @@ public final class Processors {
       default:
         return false;
     }
-  }
-
-  public static ParameterSpec parameterSpecFromVariableElement(VariableElement element) {
-    return ParameterSpec.builder(
-        ClassName.get(element.asType()),
-        upperToLowerCamel(element.getSimpleName().toString()))
-        .build();
   }
 
   /**
@@ -917,11 +697,6 @@ public final class Processors {
         .addTypeVariables(methodSpec.typeVariables);
   }
 
-  /** @return A method spec for an empty constructor (useful for abstract Dagger modules). */
-  public static MethodSpec privateEmptyConstructor() {
-    return MethodSpec.constructorBuilder().addModifiers(Modifier.PRIVATE).build();
-  }
-
   /**
    * Returns true if the given method is annotated with one of the annotations Dagger recognizes
    * for abstract methods (e.g. @Binds).
@@ -933,10 +708,6 @@ public final class Processors {
         || hasAnnotation(method, ClassNames.CONTRIBUTES_ANDROID_INJECTOR);
   }
 
-  public static ImmutableSet<TypeElement> toTypeElements(Elements elements, String[] classes) {
-    return FluentIterable.from(classes).transform(elements::getTypeElement).toSet();
-  }
-
   public static ImmutableSet<ClassName> toClassNames(Iterable<TypeElement> elements) {
     return FluentIterable.from(elements).transform(ClassName::get).toSet();
   }
@@ -945,9 +716,9 @@ public final class Processors {
     // Binding methods that lack ABSTRACT or STATIC require module instantiation.
     // Required by Dagger.  See b/31489617.
     return ElementFilter.methodsIn(elements.getAllMembers(module)).stream()
-        .filter(Processors::isBindingMethod)
-        .map(ExecutableElement::getModifiers)
-        .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC))
+            .filter(Processors::isBindingMethod)
+            .map(ExecutableElement::getModifiers)
+            .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC))
         // TODO(erichang): Getting a new KotlinMetadataUtil each time isn't great here, but until
         // we have some sort of dependency management it will be difficult to share the instance.
         && !getMetadataUtil().isObjectOrCompanionObjectClass(module);

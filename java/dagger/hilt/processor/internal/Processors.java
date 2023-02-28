@@ -21,8 +21,8 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asPackage;
 import static com.google.auto.common.MoreElements.asType;
-import static com.google.auto.common.MoreElements.asVariable;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils.getMetadataUtil;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -31,12 +31,10 @@ import static javax.lang.model.element.Modifier.STATIC;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.GeneratedAnnotations;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.FluentIterable;
@@ -55,9 +53,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtil;
-import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils;
-import dagger.internal.codegen.extension.DaggerStreams;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.LinkedHashSet;
@@ -66,7 +61,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.AnnotationMirror;
@@ -793,58 +787,15 @@ public final class Processors {
 
   /** Returns MapKey annotated annotations found on an element. */
   public static ImmutableList<AnnotationMirror> getMapKeyAnnotations(Element element) {
-    ImmutableSet<? extends AnnotationMirror> mapKeys =
-        AnnotationMirrors.getAnnotatedAnnotations(element, ClassNames.MAP_KEY.canonicalName());
     // Normally, we wouldn't need to handle Kotlin metadata because map keys are typically used
     // only on methods. However, with @BindValueIntoMap, this can be used on fields so we need
     // to check annotations on the property as well, just like with qualifiers.
-    KotlinMetadataUtil metadataUtil = KotlinMetadataUtils.getMetadataUtil();
-    if (element.getKind() == ElementKind.FIELD
-        // static fields are generally not supported, no need to get map keys from Kotlin metadata
-        && !element.getModifiers().contains(STATIC)
-        && metadataUtil.hasMetadata(element)) {
-      VariableElement fieldElement = asVariable(element);
-      return Stream.concat(
-              mapKeys.stream(),
-              metadataUtil.isMissingSyntheticPropertyForAnnotations(fieldElement)
-                  ? Stream.empty()
-                  : metadataUtil
-                      .getSyntheticPropertyAnnotations(fieldElement, ClassNames.MAP_KEY)
-                      .stream())
-          .map(AnnotationMirrors.equivalence()::wrap)
-          .distinct()
-          .map(Wrapper::get)
-          .collect(DaggerStreams.toImmutableList());
-    } else {
-      return ImmutableList.copyOf(mapKeys);
-    }
+    return getMetadataUtil().getAnnotationsAnnotatedWith(element, ClassNames.MAP_KEY);
   }
 
   /** Returns Qualifier annotated annotations found on an element. */
   public static ImmutableList<AnnotationMirror> getQualifierAnnotations(Element element) {
-    // TODO(bcorso): Consolidate this logic with InjectionAnnotations in Dagger
-    ImmutableSet<? extends AnnotationMirror> qualifiers =
-        AnnotationMirrors.getAnnotatedAnnotations(element, ClassNames.QUALIFIER.canonicalName());
-    KotlinMetadataUtil metadataUtil = KotlinMetadataUtils.getMetadataUtil();
-    if (element.getKind() == ElementKind.FIELD
-        // static fields are generally not supported, no need to get qualifier from kotlin metadata
-        && !element.getModifiers().contains(STATIC)
-        && metadataUtil.hasMetadata(element)) {
-      VariableElement fieldElement = asVariable(element);
-      return Stream.concat(
-              qualifiers.stream(),
-              metadataUtil.isMissingSyntheticPropertyForAnnotations(fieldElement)
-                  ? Stream.empty()
-                  : metadataUtil
-                      .getSyntheticPropertyAnnotations(fieldElement, ClassNames.QUALIFIER)
-                      .stream())
-          .map(AnnotationMirrors.equivalence()::wrap)
-          .distinct()
-          .map(Wrapper::get)
-          .collect(DaggerStreams.toImmutableList());
-    } else {
-      return ImmutableList.copyOf(qualifiers);
-    }
+    return getMetadataUtil().getAnnotationsAnnotatedWith(element, ClassNames.QUALIFIER);
   }
 
   /** Returns Scope annotated annotations found on an element. */
@@ -985,7 +936,7 @@ public final class Processors {
         .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC))
         // TODO(erichang): Getting a new KotlinMetadataUtil each time isn't great here, but until
         // we have some sort of dependency management it will be difficult to share the instance.
-        && !KotlinMetadataUtils.getMetadataUtil().isObjectOrCompanionObjectClass(module);
+        && !getMetadataUtil().isObjectOrCompanionObjectClass(module);
   }
 
   public static boolean hasVisibleEmptyConstructor(TypeElement type) {

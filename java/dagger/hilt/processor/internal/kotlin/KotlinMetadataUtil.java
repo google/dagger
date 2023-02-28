@@ -17,29 +17,28 @@
 package dagger.hilt.processor.internal.kotlin;
 
 import static com.google.auto.common.MoreElements.asType;
+import static com.google.auto.common.MoreElements.asVariable;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreElements.isType;
-import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
+import static javax.lang.model.element.Modifier.STATIC;
 import static kotlinx.metadata.Flag.Class.IS_COMPANION_OBJECT;
-import static kotlinx.metadata.Flag.Class.IS_DATA;
 import static kotlinx.metadata.Flag.Class.IS_OBJECT;
-import static kotlinx.metadata.Flag.IS_PRIVATE;
 
+import com.google.auto.common.AnnotationMirrors;
+import com.google.auto.common.MoreElements;
+import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
-import dagger.hilt.processor.internal.kotlin.KotlinMetadata.FunctionMetadata;
-import dagger.internal.codegen.extension.DaggerCollectors;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.ElementFilter;
 import kotlin.Metadata;
 import kotlinx.metadata.Flag;
 
@@ -62,29 +61,62 @@ public final class KotlinMetadataUtil {
   }
 
   /**
+   * Returns the annotations on the given {@code element} annotated with {@code annotationName}.
+   *
+   * <p>Note: If the given {@code element} is a non-static field this method will return
+   * annotations on both the backing field and the associated synthetic property (if one exists).
+   */
+  public ImmutableList<AnnotationMirror> getAnnotationsAnnotatedWith(
+      Element element, ClassName annotationName) {
+    return getAnnotations(element).stream()
+        .filter(annotation -> hasAnnotation(annotation, annotationName))
+        .collect(toImmutableList());
+  }
+
+  /**
+   * Returns the annotations on the given {@code element} that match the {@code annotationName}.
+   *
+   * <p>Note: If the given {@code element} is a non-static field this method will return
+   * annotations on both the backing field and the associated synthetic property (if one exists).
+   */
+  private ImmutableList<AnnotationMirror> getAnnotations(Element element) {
+    // Currently, we avoid trying to get annotations from properties on object class's (i.e.
+    // properties with static jvm backing fields) due to issues explained in CL/336150864.
+    // Instead, just return the annotations on the element.
+    if (element.getKind() != ElementKind.FIELD || element.getModifiers().contains(STATIC)) {
+      return ImmutableList.copyOf(element.getAnnotationMirrors());
+    }
+    // Dedupe any annotation that appears on both the field and the property
+    return Stream.concat(
+            element.getAnnotationMirrors().stream(),
+            getSyntheticPropertyAnnotations(asVariable(element)).stream())
+        .map(AnnotationMirrors.equivalence()::wrap)
+        .distinct()
+        .map(Equivalence.Wrapper::get)
+        .collect(toImmutableList());
+  }
+
+  private boolean hasAnnotation(AnnotationMirror annotation, ClassName annotationName) {
+    return MoreElements.isAnnotationPresent(
+        annotation.getAnnotationType().asElement(),
+        annotationName.canonicalName());
+  }
+
+  /**
    * Returns the synthetic annotations of a Kotlin property.
    *
    * <p>Note that this method only looks for additional annotations in the synthetic property
    * method, if any, of a Kotlin property and not for annotations in its backing field.
    */
-  public ImmutableList<? extends AnnotationMirror> getSyntheticPropertyAnnotations(
-      VariableElement fieldElement, ClassName annotationType) {
-    return metadataFactory
-        .create(fieldElement)
-        .getSyntheticAnnotationMethod(fieldElement)
-        .map(methodElement -> getAnnotationsAnnotatedWith(methodElement, annotationType))
-        .orElse(ImmutableList.of());
-  }
-
-  /** Returns annotations of element that are annotated with subAnnotation */
-  private static ImmutableList<AnnotationMirror> getAnnotationsAnnotatedWith(
-      Element element, ClassName subAnnotation) {
-    return element.getAnnotationMirrors().stream()
-        .filter(
-            annotation ->
-                isAnnotationPresent(
-                    annotation.getAnnotationType().asElement(), subAnnotation.canonicalName()))
-        .collect(toImmutableList());
+  private ImmutableList<AnnotationMirror> getSyntheticPropertyAnnotations(VariableElement field) {
+    return hasMetadata(field)
+        ? metadataFactory
+            .create(field)
+            .getSyntheticAnnotationMethod(field)
+            .map(Element::getAnnotationMirrors)
+            .map(annotations -> ImmutableList.<AnnotationMirror>copyOf(annotations))
+            .orElse(ImmutableList.<AnnotationMirror>of())
+        : ImmutableList.of();
   }
 
   /**
@@ -102,12 +134,6 @@ public final class KotlinMetadataUtil {
         && metadataFactory.create(typeElement).classMetadata().flags(IS_OBJECT);
   }
 
-  /** Returns {@code true} if this type element is a Kotlin data class. */
-  public boolean isDataClass(TypeElement typeElement) {
-    return hasMetadata(typeElement)
-        && metadataFactory.create(typeElement).classMetadata().flags(IS_DATA);
-  }
-
   /* Returns {@code true} if this type element is a Kotlin Companion Object. */
   public boolean isCompanionObjectClass(TypeElement typeElement) {
     return hasMetadata(typeElement)
@@ -117,36 +143,6 @@ public final class KotlinMetadataUtil {
   /** Returns {@code true} if this type element is a Kotlin object or companion object. */
   public boolean isObjectOrCompanionObjectClass(TypeElement typeElement) {
     return isObjectClass(typeElement) || isCompanionObjectClass(typeElement);
-  }
-
-  /* Returns {@code true} if this type element has a Kotlin Companion Object. */
-  public boolean hasEnclosedCompanionObject(TypeElement typeElement) {
-    return hasMetadata(typeElement)
-        && metadataFactory.create(typeElement).classMetadata().companionObjectName().isPresent();
-  }
-
-  /* Returns the Companion Object element enclosed by the given type element. */
-  public TypeElement getEnclosedCompanionObject(TypeElement typeElement) {
-    return metadataFactory
-        .create(typeElement)
-        .classMetadata()
-        .companionObjectName()
-        .map(
-            companionObjectName ->
-                ElementFilter.typesIn(typeElement.getEnclosedElements()).stream()
-                    .filter(
-                        innerType -> innerType.getSimpleName().contentEquals(companionObjectName))
-                    .collect(DaggerCollectors.onlyElement()))
-        .get();
-  }
-
-  /**
-   * Returns {@code true} if the given type element was declared <code>private</code> in its Kotlin
-   * source.
-   */
-  public boolean isVisibilityPrivate(TypeElement typeElement) {
-    return hasMetadata(typeElement)
-        && metadataFactory.create(typeElement).classMetadata().flags(IS_PRIVATE);
   }
 
   /**
@@ -174,17 +170,6 @@ public final class KotlinMetadataUtil {
   public boolean containsConstructorWithDefaultParam(TypeElement typeElement) {
     return hasMetadata(typeElement)
         && metadataFactory.create(typeElement).containsConstructorWithDefaultParam();
-  }
-
-  /**
-   * Returns a map mapping all method signatures within the given class element, including methods
-   * that it inherits from its ancestors, to their method names.
-   */
-  public ImmutableMap<String, String> getAllMethodNamesBySignature(TypeElement element) {
-    checkState(
-        hasMetadata(element), "Can not call getAllMethodNamesBySignature for non-Kotlin class");
-    return metadataFactory.create(element).classMetadata().functionsBySignature().values().stream()
-        .collect(toImmutableMap(FunctionMetadata::signature, FunctionMetadata::name));
   }
 
   /** Returns the argument or the closest enclosing element that is a {@link TypeElement}. */

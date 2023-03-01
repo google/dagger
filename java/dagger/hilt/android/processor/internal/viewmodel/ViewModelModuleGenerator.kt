@@ -16,7 +16,9 @@
 
 package dagger.hilt.android.processor.internal.viewmodel
 
-import com.google.auto.common.GeneratedAnnotationSpecs
+import androidx.room.compiler.processing.ExperimentalProcessingApi
+import androidx.room.compiler.processing.XProcessingEnv
+import androidx.room.compiler.processing.addOriginatingElement
 import com.squareup.javapoet.AnnotationSpec
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.JavaFile
@@ -24,10 +26,8 @@ import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.TypeSpec
 import dagger.hilt.android.processor.internal.AndroidClassNames
 import dagger.hilt.processor.internal.ClassNames
-import javax.annotation.processing.ProcessingEnvironment
-import javax.lang.model.SourceVersion
+import dagger.hilt.processor.internal.Processors
 import javax.lang.model.element.Modifier
-import javax.lang.model.util.Elements
 
 /**
  * Source generator to support Hilt injection of ViewModels.
@@ -57,49 +57,47 @@ import javax.lang.model.util.Elements
  * }
  * ```
  */
+@OptIn(ExperimentalProcessingApi::class)
 internal class ViewModelModuleGenerator(
-  private val processingEnv: ProcessingEnvironment,
+  private val processingEnv: XProcessingEnv,
   private val injectedViewModel: ViewModelMetadata
 ) {
   fun generate() {
-    val modulesTypeSpec = TypeSpec.classBuilder(injectedViewModel.modulesClassName)
-      .addOriginatingElement(injectedViewModel.typeElement)
-      .addGeneratedAnnotation(processingEnv.elementUtils, processingEnv.sourceVersion)
-      .addAnnotation(
-        AnnotationSpec.builder(ClassNames.ORIGINATING_ELEMENT)
-          .addMember(
-            "topLevelClass",
-            "$T.class",
-            injectedViewModel.className.topLevelClassName()
+    val modulesTypeSpec =
+      TypeSpec.classBuilder(injectedViewModel.modulesClassName)
+        .apply {
+          addOriginatingElement(injectedViewModel.typeElement)
+          Processors.addGeneratedAnnotation(this, processingEnv, ViewModelProcessor::class.java)
+          addAnnotation(
+            AnnotationSpec.builder(ClassNames.ORIGINATING_ELEMENT)
+              .addMember(
+                "topLevelClass",
+                "$T.class",
+                injectedViewModel.className.topLevelClassName()
+              )
+              .build()
           )
-          .build()
-      )
-      .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-      .addType(getBindsModuleTypeSpec())
-      .addType(getKeyModuleTypeSpec())
-      .addMethod(
-        MethodSpec.constructorBuilder()
-          .addModifiers(Modifier.PRIVATE)
-          .build()
-      )
-      .build()
-    JavaFile.builder(injectedViewModel.modulesClassName.packageName(), modulesTypeSpec)
-      .build()
-      .writeTo(processingEnv.filer)
+          addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+          addType(getBindsModuleTypeSpec())
+          addType(getKeyModuleTypeSpec())
+          addMethod(MethodSpec.constructorBuilder().addModifiers(Modifier.PRIVATE).build())
+        }
+        .build()
+
+    processingEnv.filer.write(
+      JavaFile.builder(injectedViewModel.modulesClassName.packageName(), modulesTypeSpec).build()
+    )
   }
 
-  private fun getBindsModuleTypeSpec() = createModuleTypeSpec(
-    className = "BindsModule",
-    component = AndroidClassNames.VIEW_MODEL_COMPONENT
-  )
-    .addModifiers(Modifier.ABSTRACT)
-    .addMethod(
-      MethodSpec.constructorBuilder()
-        .addModifiers(Modifier.PRIVATE)
-        .build()
-    )
-    .addMethod(getViewModelBindsMethod())
-    .build()
+  private fun getBindsModuleTypeSpec() =
+    createModuleTypeSpec(
+        className = "BindsModule",
+        component = AndroidClassNames.VIEW_MODEL_COMPONENT
+      )
+      .addModifiers(Modifier.ABSTRACT)
+      .addMethod(MethodSpec.constructorBuilder().addModifiers(Modifier.PRIVATE).build())
+      .addMethod(getViewModelBindsMethod())
+      .build()
 
   private fun getViewModelBindsMethod() =
     MethodSpec.methodBuilder("binds")
@@ -116,18 +114,15 @@ internal class ViewModelModuleGenerator(
       .addParameter(injectedViewModel.className, "vm")
       .build()
 
-  private fun getKeyModuleTypeSpec() = createModuleTypeSpec(
-    className = "KeyModule",
-    component = AndroidClassNames.ACTIVITY_RETAINED_COMPONENT
-  )
-    .addModifiers(Modifier.FINAL)
-    .addMethod(
-      MethodSpec.constructorBuilder()
-        .addModifiers(Modifier.PRIVATE)
-        .build()
-    )
-    .addMethod(getViewModelKeyProvidesMethod())
-    .build()
+  private fun getKeyModuleTypeSpec() =
+    createModuleTypeSpec(
+        className = "KeyModule",
+        component = AndroidClassNames.ACTIVITY_RETAINED_COMPONENT
+      )
+      .addModifiers(Modifier.FINAL)
+      .addMethod(MethodSpec.constructorBuilder().addModifiers(Modifier.PRIVATE).build())
+      .addMethod(getViewModelKeyProvidesMethod())
+      .build()
 
   private fun getViewModelKeyProvidesMethod() =
     MethodSpec.methodBuilder("provide")
@@ -157,18 +152,5 @@ internal class ViewModelModuleGenerator(
     const val N = "\$N"
     const val S = "\$S"
     const val W = "\$W"
-
-    private fun TypeSpec.Builder.addGeneratedAnnotation(
-      elements: Elements,
-      sourceVersion: SourceVersion
-    ) = apply {
-      GeneratedAnnotationSpecs.generatedAnnotationSpec(
-        elements,
-        sourceVersion,
-        ViewModelProcessor::class.java
-      ).ifPresent { generatedAnnotation ->
-        addAnnotation(generatedAnnotation)
-      }
-    }
   }
 }

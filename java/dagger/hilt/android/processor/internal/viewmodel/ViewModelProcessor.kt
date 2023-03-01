@@ -16,18 +16,16 @@
 
 package dagger.hilt.android.processor.internal.viewmodel
 
+import androidx.room.compiler.processing.ExperimentalProcessingApi
 import androidx.room.compiler.processing.XElement
 import androidx.room.compiler.processing.XRoundEnv
 import androidx.room.compiler.processing.XTypeElement
-import androidx.room.compiler.processing.compat.XConverters.toJavac
-import com.google.auto.common.MoreElements
 import com.google.auto.service.AutoService
 import dagger.hilt.android.processor.internal.AndroidClassNames
 import dagger.hilt.processor.internal.BaseProcessor
+import dagger.internal.codegen.xprocessing.XElements
 import javax.annotation.processing.Processor
 import javax.lang.model.SourceVersion
-import javax.lang.model.element.Element
-import javax.lang.model.element.TypeElement
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessorType
 
@@ -36,25 +34,22 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessorType
 @IncrementalAnnotationProcessor(IncrementalAnnotationProcessorType.ISOLATING)
 class ViewModelProcessor : BaseProcessor() {
 
-  private val parsedElements = mutableSetOf<TypeElement>()
+  private val parsedElements = mutableSetOf<XTypeElement>()
 
   override fun getSupportedAnnotationTypes() = setOf(AndroidClassNames.HILT_VIEW_MODEL.toString())
 
   override fun getSupportedSourceVersion() = SourceVersion.latest()
 
+  @OptIn(ExperimentalProcessingApi::class)
   override fun processEach(annotation: XTypeElement, element: XElement) {
-    processEach(element.toJavac())
-  }
-
-  private fun processEach(element: Element) {
-    val typeElement = MoreElements.asType(element)
+    val typeElement = XElements.asTypeElement(element)
     if (parsedElements.add(typeElement)) {
       ViewModelMetadata.create(
-          processingEnv,
+          processingEnv(),
           typeElement,
         )
         ?.let { viewModelMetadata ->
-          ViewModelModuleGenerator(processingEnv, viewModelMetadata).generate()
+          ViewModelModuleGenerator(processingEnv(), viewModelMetadata).generate()
         }
     }
   }

@@ -16,76 +16,69 @@
 
 package dagger.hilt.android.processor.internal.viewmodel
 
-import com.google.auto.common.MoreElements
+import androidx.room.compiler.processing.ExperimentalProcessingApi
+import androidx.room.compiler.processing.XProcessingEnv
+import androidx.room.compiler.processing.XTypeElement
 import com.squareup.javapoet.ClassName
 import dagger.hilt.android.processor.internal.AndroidClassNames
 import dagger.hilt.processor.internal.ClassNames
 import dagger.hilt.processor.internal.ProcessorErrors
 import dagger.hilt.processor.internal.Processors
-import javax.annotation.processing.ProcessingEnvironment
-import javax.lang.model.element.Modifier
-import javax.lang.model.element.NestingKind
-import javax.lang.model.element.TypeElement
-import javax.lang.model.util.ElementFilter
+import dagger.internal.codegen.xprocessing.XAnnotations
+import dagger.internal.codegen.xprocessing.XTypes
 
-/**
- * Data class that represents a Hilt injected ViewModel
- */
-internal class ViewModelMetadata private constructor(
-  val typeElement: TypeElement
-) {
-  val className = ClassName.get(typeElement)
+/** Data class that represents a Hilt injected ViewModel */
+@OptIn(ExperimentalProcessingApi::class)
+internal class ViewModelMetadata private constructor(val typeElement: XTypeElement) {
+  val className = typeElement.className
 
-  val modulesClassName = ClassName.get(
-    MoreElements.getPackage(typeElement).qualifiedName.toString(),
-    "${className.simpleNames().joinToString("_")}_HiltModules"
-  )
+  val modulesClassName =
+    ClassName.get(
+      typeElement.packageName,
+      "${className.simpleNames().joinToString("_")}_HiltModules"
+    )
 
   companion object {
     internal fun create(
-      processingEnv: ProcessingEnvironment,
-      typeElement: TypeElement,
+      processingEnv: XProcessingEnv,
+      typeElement: XTypeElement,
     ): ViewModelMetadata? {
-      val types = processingEnv.typeUtils
-      val elements = processingEnv.elementUtils
-
       ProcessorErrors.checkState(
-        types.isSubtype(
-          typeElement.asType(),
-          elements.getTypeElement(AndroidClassNames.VIEW_MODEL.toString()).asType()
-        ),
+        XTypes.isSubtype(typeElement.type, processingEnv.requireType(AndroidClassNames.VIEW_MODEL)),
         typeElement,
         "@HiltViewModel is only supported on types that subclass %s.",
         AndroidClassNames.VIEW_MODEL
       )
 
-      ElementFilter.constructorsIn(typeElement.enclosedElements).filter { constructor ->
-        ProcessorErrors.checkState(
-          !Processors.hasAnnotation(constructor, ClassNames.ASSISTED_INJECT),
-          constructor,
-          "ViewModel constructor should be annotated with @Inject instead of @AssistedInject."
-        )
-        Processors.hasAnnotation(constructor, ClassNames.INJECT)
-      }.let { injectConstructors ->
-        ProcessorErrors.checkState(
-          injectConstructors.size == 1,
-          typeElement,
-          "@HiltViewModel annotated class should contain exactly one @Inject " +
-            "annotated constructor."
-        )
-
-        injectConstructors.forEach { constructor ->
+      typeElement
+        .getConstructors()
+        .filter { constructor ->
           ProcessorErrors.checkState(
-            !constructor.modifiers.contains(Modifier.PRIVATE),
+            !constructor.hasAnnotation(ClassNames.ASSISTED_INJECT),
             constructor,
-            "@Inject annotated constructors must not be private."
+            "ViewModel constructor should be annotated with @Inject instead of @AssistedInject."
           )
+          constructor.hasAnnotation(ClassNames.INJECT)
         }
-      }
+        .let { injectConstructors ->
+          ProcessorErrors.checkState(
+            injectConstructors.size == 1,
+            typeElement,
+            "@HiltViewModel annotated class should contain exactly one @Inject " +
+              "annotated constructor."
+          )
+
+          injectConstructors.forEach { injectConstructor ->
+            ProcessorErrors.checkState(
+              !injectConstructor.isPrivate(),
+              injectConstructor,
+              "@Inject annotated constructors must not be private."
+            )
+          }
+        }
 
       ProcessorErrors.checkState(
-        typeElement.nestingKind != NestingKind.MEMBER ||
-          typeElement.modifiers.contains(Modifier.STATIC),
+        !typeElement.isNested() || typeElement.isStatic(),
         typeElement,
         "@HiltViewModel may only be used on inner classes if they are static."
       )
@@ -95,13 +88,11 @@ internal class ViewModelMetadata private constructor(
           scopeAnnotations.isEmpty(),
           typeElement,
           "@HiltViewModel classes should not be scoped. Found: %s",
-          scopeAnnotations.joinToString()
+          scopeAnnotations.joinToString { XAnnotations.toStableString(it) }
         )
       }
 
-      return ViewModelMetadata(
-        typeElement
-      )
+      return ViewModelMetadata(typeElement)
     }
   }
 }

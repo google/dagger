@@ -28,6 +28,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
@@ -804,9 +805,16 @@ public final class Processors {
     return getMetadataUtil().getAnnotationsAnnotatedWith(element, ClassNames.QUALIFIER);
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /** Returns Scope annotated annotations found on an element. */
   public static ImmutableList<AnnotationMirror> getScopeAnnotations(Element element) {
     return getAnnotationsAnnotatedWith(element, ClassNames.SCOPE);
+  }
+
+  /** Returns Scope annotated annotations found on an element. */
+  public static ImmutableList<XAnnotation> getScopeAnnotations(XElement element) {
+    return ImmutableList.copyOf(
+        element.getAnnotationsAnnotatedWith(ClassNames.SCOPE));
   }
 
   /** Returns annotations of element that are annotated with subAnnotation */

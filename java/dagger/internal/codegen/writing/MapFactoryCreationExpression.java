@@ -31,7 +31,7 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.spi.model.DependencyRequest;
+import dagger.internal.codegen.model.DependencyRequest;
 import java.util.stream.Stream;
 
 /** A factory creation expression for a multibound map. */

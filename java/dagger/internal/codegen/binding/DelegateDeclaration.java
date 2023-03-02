@@ -30,8 +30,8 @@ import dagger.Binds;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.ContributionType.HasContributionType;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.spi.model.DaggerAnnotation;
-import dagger.spi.model.DependencyRequest;
+import dagger.internal.codegen.model.DaggerAnnotation;
+import dagger.internal.codegen.model.DependencyRequest;
 import java.util.Optional;
 import javax.inject.Inject;
 

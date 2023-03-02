@@ -27,8 +27,8 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.RequestKind;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.RequestKind;
 import java.util.Optional;
 
 /** One of the core types initialized as fields in a generated component. */

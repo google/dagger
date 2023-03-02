@@ -27,7 +27,7 @@ import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ModuleAnnotation;
-import dagger.spi.model.Key;
+import dagger.internal.codegen.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
 

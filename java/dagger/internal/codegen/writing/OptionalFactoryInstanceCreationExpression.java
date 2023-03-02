@@ -27,8 +27,8 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 
 /**
- * A {@link FrameworkInstanceCreationExpression} for {@link dagger.spi.model.BindingKind#OPTIONAL
- * optional bindings}.
+ * A {@link FrameworkInstanceCreationExpression} for {@link
+ * dagger.internal.codegen.model.BindingKind#OPTIONAL optional bindings}.
  */
 final class OptionalFactoryInstanceCreationExpression
     implements FrameworkInstanceCreationExpression {

@@ -21,7 +21,7 @@ import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import com.google.common.base.Ascii;
 import com.google.common.base.CaseFormat;
-import dagger.spi.model.DependencyRequest;
+import dagger.internal.codegen.model.DependencyRequest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

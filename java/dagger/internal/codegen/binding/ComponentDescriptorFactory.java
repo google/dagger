@@ -43,8 +43,8 @@ import dagger.internal.codegen.base.ComponentAnnotation;
 import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ModuleAnnotation;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
+import dagger.internal.codegen.model.Scope;
 import dagger.internal.codegen.xprocessing.XTypeElements;
-import dagger.spi.model.Scope;
 import java.util.Optional;
 import javax.inject.Inject;
 

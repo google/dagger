@@ -18,9 +18,9 @@ package dagger.internal.codegen.bindinggraphvalidation;
 
 import static dagger.internal.codegen.base.Formatter.INDENT;
 import static dagger.internal.codegen.base.Scopes.getReadableSource;
+import static dagger.internal.codegen.model.BindingKind.INJECTION;
 import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
-import static dagger.spi.model.BindingKind.INJECTION;
 import static java.util.stream.Collectors.joining;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
@@ -29,12 +29,12 @@ import com.google.common.collect.Multimaps;
 import dagger.internal.codegen.base.Scopes;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.model.Binding;
+import dagger.internal.codegen.model.BindingGraph;
+import dagger.internal.codegen.model.BindingGraph.ComponentNode;
+import dagger.internal.codegen.model.DiagnosticReporter;
 import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
-import dagger.spi.model.Binding;
-import dagger.spi.model.BindingGraph;
-import dagger.spi.model.BindingGraph.ComponentNode;
-import dagger.spi.model.DiagnosticReporter;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
@@ -69,9 +69,9 @@ final class IncompatiblyScopedBindingsValidator extends ValidationBindingGraphPl
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
     DiagnosticMessageGenerator diagnosticMessageGenerator =
         diagnosticMessageGeneratorFactory.create(bindingGraph);
-    ImmutableSetMultimap.Builder<ComponentNode, dagger.spi.model.Binding> incompatibleBindings =
-        ImmutableSetMultimap.builder();
-    for (dagger.spi.model.Binding binding : bindingGraph.bindings()) {
+    ImmutableSetMultimap.Builder<ComponentNode, dagger.internal.codegen.model.Binding>
+        incompatibleBindings = ImmutableSetMultimap.builder();
+    for (dagger.internal.codegen.model.Binding binding : bindingGraph.bindings()) {
       binding
           .scope()
           .filter(scope -> !scope.isReusable())

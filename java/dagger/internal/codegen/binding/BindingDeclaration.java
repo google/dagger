@@ -23,9 +23,9 @@ import static java.util.Comparator.comparing;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XTypeElement;
+import dagger.internal.codegen.model.BindingKind;
+import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.xprocessing.XElements;
-import dagger.spi.model.BindingKind;
-import dagger.spi.model.Key;
 import java.util.Comparator;
 import java.util.Optional;
 

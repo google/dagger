@@ -30,9 +30,9 @@ import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
-import dagger.spi.model.BindingKind;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.Key;
+import dagger.internal.codegen.model.BindingKind;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.Key;
 import java.util.Optional;
 
 /** Represents the full members injection of a particular type. */

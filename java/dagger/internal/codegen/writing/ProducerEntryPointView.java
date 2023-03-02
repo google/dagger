@@ -29,11 +29,11 @@ import com.squareup.javapoet.FieldSpec;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.model.RequestKind;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.producers.Producer;
 import dagger.producers.internal.CancellationListener;
 import dagger.producers.internal.Producers;
-import dagger.spi.model.RequestKind;
 import java.util.Optional;
 
 /**

@@ -105,7 +105,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
       return;
     }
 
-    Supplier<dagger.spi.model.BindingGraph> fullBindingGraphSupplier =
+    Supplier<dagger.internal.codegen.model.BindingGraph> fullBindingGraphSupplier =
         Suppliers.memoize(
             () -> bindingGraphFactory.create(componentDescriptor, true).topLevelBindingGraph());
     if (bindingGraphValidator.shouldDoFullBindingGraphValidation(component)) {

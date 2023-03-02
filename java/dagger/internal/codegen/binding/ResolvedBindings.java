@@ -27,7 +27,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
-import dagger.spi.model.Key;
+import dagger.internal.codegen.model.Key;
 
 /**
  * The collection of bindings that have been resolved for a key. For valid graphs, contains exactly

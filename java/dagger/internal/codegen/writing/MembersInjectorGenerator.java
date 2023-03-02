@@ -61,10 +61,10 @@ import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.SourceFiles;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.model.DaggerAnnotation;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
-import dagger.spi.model.DaggerAnnotation;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.Key;
 import java.util.Map.Entry;
 import javax.inject.Inject;
 

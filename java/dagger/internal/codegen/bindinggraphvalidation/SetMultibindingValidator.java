@@ -16,8 +16,8 @@
 
 package dagger.internal.codegen.bindinggraphvalidation;
 
-import static dagger.spi.model.BindingKind.DELEGATE;
-import static dagger.spi.model.BindingKind.MULTIBOUND_SET;
+import static dagger.internal.codegen.model.BindingKind.DELEGATE;
+import static dagger.internal.codegen.model.BindingKind.MULTIBOUND_SET;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.common.base.Joiner;
@@ -25,11 +25,11 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
+import dagger.internal.codegen.model.Binding;
+import dagger.internal.codegen.model.BindingGraph;
+import dagger.internal.codegen.model.DiagnosticReporter;
+import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
-import dagger.spi.model.Binding;
-import dagger.spi.model.BindingGraph;
-import dagger.spi.model.DiagnosticReporter;
-import dagger.spi.model.Key;
 import javax.inject.Inject;
 
 /** Validates that there are not multiple set binding contributions to the same binding. */

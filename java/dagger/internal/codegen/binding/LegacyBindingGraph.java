@@ -22,8 +22,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
-import dagger.spi.model.Key;
-import dagger.spi.model.RequestKind;
+import dagger.internal.codegen.model.Key;
+import dagger.internal.codegen.model.RequestKind;
 import java.util.Collection;
 import java.util.Map;
 

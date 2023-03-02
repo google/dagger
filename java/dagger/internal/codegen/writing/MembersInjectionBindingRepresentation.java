@@ -23,7 +23,7 @@ import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
-import dagger.spi.model.RequestKind;
+import dagger.internal.codegen.model.RequestKind;
 
 /**
  * A binding representation that wraps code generation methods that satisfy all kinds of request for

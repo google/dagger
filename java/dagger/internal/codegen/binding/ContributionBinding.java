@@ -29,11 +29,11 @@ import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.ContributionType.HasContributionType;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
+import dagger.internal.codegen.model.BindingKind;
+import dagger.internal.codegen.model.DaggerAnnotation;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.xprocessing.XTypes;
-import dagger.spi.model.BindingKind;
-import dagger.spi.model.DaggerAnnotation;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.Key;
 import java.util.Optional;
 
 /**

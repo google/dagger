@@ -26,9 +26,9 @@ import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescri
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.producers.internal.Producers;
-import dagger.spi.model.Key;
 
 /** Binding expression for producer node instances. */
 final class ProducerNodeInstanceRequestRepresentation

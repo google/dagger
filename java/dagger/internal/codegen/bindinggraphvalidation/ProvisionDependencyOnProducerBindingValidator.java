@@ -22,12 +22,12 @@ import static dagger.internal.codegen.base.RequestKinds.canBeSatisfiedByProducti
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import dagger.internal.codegen.model.Binding;
+import dagger.internal.codegen.model.BindingGraph;
+import dagger.internal.codegen.model.BindingGraph.DependencyEdge;
+import dagger.internal.codegen.model.BindingGraph.Node;
+import dagger.internal.codegen.model.DiagnosticReporter;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
-import dagger.spi.model.Binding;
-import dagger.spi.model.BindingGraph;
-import dagger.spi.model.BindingGraph.DependencyEdge;
-import dagger.spi.model.BindingGraph.Node;
-import dagger.spi.model.DiagnosticReporter;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 

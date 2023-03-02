@@ -23,9 +23,9 @@ import static dagger.internal.codegen.xprocessing.XElements.isStatic;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import dagger.spi.model.BindingKind;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.Scope;
+import dagger.internal.codegen.model.BindingKind;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.Scope;
 import java.util.Optional;
 
 /**

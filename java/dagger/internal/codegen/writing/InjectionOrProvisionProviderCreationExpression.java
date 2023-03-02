@@ -18,7 +18,7 @@ package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
-import static dagger.spi.model.BindingKind.INJECTION;
+import static dagger.internal.codegen.model.BindingKind.INJECTION;
 
 import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;

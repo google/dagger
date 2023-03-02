@@ -28,8 +28,8 @@ import androidx.room.compiler.processing.XArrayType;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.Key;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.Key;
 import java.util.Iterator;
 
 /**
@@ -50,7 +50,8 @@ public final class KeyVariableNamer {
 
   public static String name(Key key) {
     if (key.multibindingContributionIdentifier().isPresent()) {
-      return key.multibindingContributionIdentifier().get().bindingMethod();
+      return getSimpleName(
+          key.multibindingContributionIdentifier().get().bindingMethod().xprocessing());
     }
 
     StringBuilder builder = new StringBuilder();

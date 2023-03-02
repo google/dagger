@@ -19,8 +19,8 @@ package dagger.internal.codegen.base;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 
 import androidx.room.compiler.processing.XProcessingEnv;
-import dagger.spi.model.DaggerAnnotation;
-import dagger.spi.model.Scope;
+import dagger.internal.codegen.model.DaggerAnnotation;
+import dagger.internal.codegen.model.Scope;
 
 /** Common names and convenience methods for {@link Scope}s. */
 public final class Scopes {

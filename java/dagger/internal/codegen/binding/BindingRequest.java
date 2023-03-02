@@ -21,9 +21,9 @@ import static dagger.internal.codegen.base.RequestKinds.requestType;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.Key;
-import dagger.spi.model.RequestKind;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.Key;
+import dagger.internal.codegen.model.RequestKind;
 import java.util.Optional;
 
 /**

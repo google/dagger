@@ -44,8 +44,8 @@ import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
+import dagger.internal.codegen.model.RequestKind;
 import dagger.internal.codegen.xprocessing.XTypes;
-import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import javax.inject.Inject;
 

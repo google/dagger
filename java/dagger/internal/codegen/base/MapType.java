@@ -26,8 +26,8 @@ import com.google.auto.value.AutoValue;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.xprocessing.XTypes;
-import dagger.spi.model.Key;
 
 /** Information about a {@link java.util.Map} type. */
 @AutoValue

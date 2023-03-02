@@ -32,8 +32,8 @@ import com.squareup.javapoet.ParameterSpec;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedFactoryMetadata;
 import dagger.internal.codegen.binding.Binding;
+import dagger.internal.codegen.model.BindingKind;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
-import dagger.spi.model.BindingKind;
 import java.util.List;
 
 /** Utility class for generating unique assisted parameter names for a component shard. */

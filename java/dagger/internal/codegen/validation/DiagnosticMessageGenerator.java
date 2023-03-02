@@ -52,14 +52,14 @@ import com.google.common.collect.Table;
 import dagger.internal.codegen.base.ElementFormatter;
 import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
-import dagger.spi.model.Binding;
-import dagger.spi.model.BindingGraph;
-import dagger.spi.model.BindingGraph.DependencyEdge;
-import dagger.spi.model.BindingGraph.Edge;
-import dagger.spi.model.BindingGraph.MaybeBinding;
-import dagger.spi.model.BindingGraph.Node;
-import dagger.spi.model.ComponentPath;
-import dagger.spi.model.DaggerElement;
+import dagger.internal.codegen.model.Binding;
+import dagger.internal.codegen.model.BindingGraph;
+import dagger.internal.codegen.model.BindingGraph.DependencyEdge;
+import dagger.internal.codegen.model.BindingGraph.Edge;
+import dagger.internal.codegen.model.BindingGraph.MaybeBinding;
+import dagger.internal.codegen.model.BindingGraph.Node;
+import dagger.internal.codegen.model.ComponentPath;
+import dagger.internal.codegen.model.DaggerElement;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -262,7 +262,8 @@ public final class DiagnosticMessageGenerator {
    * Returns the dependency trace from one of the {@code entryPoints} to {@code binding} to {@code
    * message} as a list <i>ending with</i> the entry point.
    */
-  // TODO(ronshapiro): Adding a DependencyPath type to dagger.spi.model could be useful, i.e.
+  // TODO(ronshapiro): Adding a DependencyPath type to dagger.internal.codegen.model could be
+  // useful, i.e.
   // bindingGraph.shortestPathFromEntryPoint(DependencyEdge, MaybeBindingNode)
   public ImmutableList<DependencyEdge> dependencyTrace(
       MaybeBinding binding, ImmutableSet<DependencyEdge> entryPoints) {

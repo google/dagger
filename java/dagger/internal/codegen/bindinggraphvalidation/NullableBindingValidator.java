@@ -24,11 +24,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.model.Binding;
+import dagger.internal.codegen.model.BindingGraph;
+import dagger.internal.codegen.model.BindingGraph.DependencyEdge;
+import dagger.internal.codegen.model.DiagnosticReporter;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
-import dagger.spi.model.Binding;
-import dagger.spi.model.BindingGraph;
-import dagger.spi.model.BindingGraph.DependencyEdge;
-import dagger.spi.model.DiagnosticReporter;
 import javax.inject.Inject;
 
 /**

@@ -41,14 +41,14 @@ import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.model.DependencyRequest;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
-import dagger.spi.model.DependencyRequest;
 import java.util.Optional;
 
 /**
  * A binding expression that invokes methods or constructors directly (without attempting to scope)
- * {@link dagger.spi.model.RequestKind#INSTANCE} requests.
+ * {@link dagger.internal.codegen.model.RequestKind#INSTANCE} requests.
  */
 final class SimpleMethodRequestRepresentation extends RequestRepresentation {
   private final CompilerOptions compilerOptions;

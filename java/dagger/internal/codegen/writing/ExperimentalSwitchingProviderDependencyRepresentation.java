@@ -33,10 +33,10 @@ import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.model.BindingKind;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.RequestKind;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
-import dagger.spi.model.BindingKind;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.RequestKind;
 
 /**
  * Returns type casted expressions to satisfy dependency requests from experimental switching

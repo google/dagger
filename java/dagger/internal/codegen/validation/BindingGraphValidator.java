@@ -21,7 +21,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ValidationType;
-import dagger.spi.model.BindingGraph;
+import dagger.internal.codegen.model.BindingGraph;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 

@@ -33,6 +33,7 @@ java_library(
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/model",
         "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/spi",
         "//third_party/java/auto:common",
@@ -46,5 +47,6 @@ java_library(
         "//third_party/java/guava/util/concurrent",
         "//third_party/java/javapoet",
         "//third_party/java/jsr330_inject",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )

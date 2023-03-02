@@ -38,7 +38,7 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.spi.model.DependencyRequest;
+import dagger.internal.codegen.model.DependencyRequest;
 import java.util.Collections;
 
 /** A binding expression for multibound sets. */

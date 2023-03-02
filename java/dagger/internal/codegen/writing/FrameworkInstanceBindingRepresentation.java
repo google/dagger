@@ -18,8 +18,8 @@ package dagger.internal.codegen.writing;
 
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
+import static dagger.internal.codegen.model.BindingKind.DELEGATE;
 import static dagger.internal.codegen.writing.ProvisionBindingRepresentation.needsCaching;
-import static dagger.spi.model.BindingKind.DELEGATE;
 
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
@@ -28,7 +28,7 @@ import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.ProvisionBinding;
-import dagger.spi.model.RequestKind;
+import dagger.internal.codegen.model.RequestKind;
 import java.util.HashMap;
 import java.util.Map;
 

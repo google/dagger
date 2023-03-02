@@ -27,10 +27,10 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Provides;
 import dagger.internal.codegen.base.Formatter;
+import dagger.internal.codegen.model.DaggerAnnotation;
+import dagger.internal.codegen.model.DependencyRequest;
 import dagger.internal.codegen.xprocessing.XTypes;
 import dagger.producers.Produces;
-import dagger.spi.model.DaggerAnnotation;
-import dagger.spi.model.DependencyRequest;
 import java.util.Optional;
 import javax.inject.Inject;
 

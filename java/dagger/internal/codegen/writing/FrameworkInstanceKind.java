@@ -16,11 +16,11 @@
 
 package dagger.internal.codegen.writing;
 
-import static dagger.spi.model.BindingKind.DELEGATE;
+import static dagger.internal.codegen.model.BindingKind.DELEGATE;
 
 import dagger.internal.codegen.binding.ContributionBinding;
+import dagger.internal.codegen.model.BindingKind;
 import dagger.internal.codegen.writing.ComponentImplementation.CompilerMode;
-import dagger.spi.model.BindingKind;
 
 /** Generation mode for satisfying framework request to Provision Binding. */
 enum FrameworkInstanceKind {

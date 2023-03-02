@@ -17,10 +17,10 @@
 package dagger.internal.codegen.validation;
 
 import com.google.common.base.Preconditions;
-import dagger.spi.model.BindingGraph;
-import dagger.spi.model.BindingGraph.ComponentNode;
-import dagger.spi.model.BindingGraphPlugin;
-import dagger.spi.model.DiagnosticReporter;
+import dagger.internal.codegen.model.BindingGraph;
+import dagger.internal.codegen.model.BindingGraph.ComponentNode;
+import dagger.internal.codegen.model.BindingGraphPlugin;
+import dagger.internal.codegen.model.DiagnosticReporter;
 import java.util.HashSet;
 import java.util.Set;
 

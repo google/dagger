@@ -30,7 +30,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.spi.model.Key;
+import dagger.internal.codegen.model.Key;
 
 /**
  * Information about an {@code Optional} type.

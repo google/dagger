@@ -16,15 +16,15 @@
 
 package dagger.internal.codegen.bindinggraphvalidation;
 
-import static dagger.spi.model.BindingKind.INJECTION;
+import static dagger.internal.codegen.model.BindingKind.INJECTION;
 
+import dagger.internal.codegen.model.Binding;
+import dagger.internal.codegen.model.BindingGraph;
+import dagger.internal.codegen.model.DiagnosticReporter;
 import dagger.internal.codegen.validation.InjectValidator;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import dagger.internal.codegen.validation.ValidationReport;
 import dagger.internal.codegen.validation.ValidationReport.Item;
-import dagger.spi.model.Binding;
-import dagger.spi.model.BindingGraph;
-import dagger.spi.model.DiagnosticReporter;
 import javax.inject.Inject;
 
 /** Validates bindings from {@code @Inject}-annotated constructors. */

@@ -38,18 +38,18 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.WildcardTypeName;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
 import dagger.internal.codegen.binding.InjectBindingRegistry;
+import dagger.internal.codegen.model.Binding;
+import dagger.internal.codegen.model.BindingGraph;
+import dagger.internal.codegen.model.BindingGraph.ComponentNode;
+import dagger.internal.codegen.model.BindingGraph.DependencyEdge;
+import dagger.internal.codegen.model.BindingGraph.Edge;
+import dagger.internal.codegen.model.BindingGraph.MissingBinding;
+import dagger.internal.codegen.model.BindingGraph.Node;
+import dagger.internal.codegen.model.ComponentPath;
+import dagger.internal.codegen.model.DiagnosticReporter;
+import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
-import dagger.spi.model.Binding;
-import dagger.spi.model.BindingGraph;
-import dagger.spi.model.BindingGraph.ComponentNode;
-import dagger.spi.model.BindingGraph.DependencyEdge;
-import dagger.spi.model.BindingGraph.Edge;
-import dagger.spi.model.BindingGraph.MissingBinding;
-import dagger.spi.model.BindingGraph.Node;
-import dagger.spi.model.ComponentPath;
-import dagger.spi.model.DiagnosticReporter;
-import dagger.spi.model.Key;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -282,11 +282,11 @@ final class MissingBindingValidator extends ValidationBindingGraphPlugin {
     if (source instanceof ComponentNode) {
       return canBeSatisfiedByProductionBinding(edge.dependencyRequest().kind());
     }
-    if (source instanceof dagger.spi.model.Binding) {
-      return ((dagger.spi.model.Binding) source).isProduction();
+    if (source instanceof Binding) {
+      return ((Binding) source).isProduction();
     }
     throw new IllegalArgumentException(
-        "expected a dagger.spi.model.Binding or ComponentNode: " + source);
+        "expected a dagger.internal.codegen.model.Binding or ComponentNode: " + source);
   }
 
   private boolean typeHasInjectionSites(Key key) {

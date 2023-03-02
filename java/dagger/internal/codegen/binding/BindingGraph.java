@@ -42,15 +42,15 @@ import com.google.common.collect.Sets;
 import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.Traverser;
 import dagger.internal.codegen.base.TarjanSCCs;
-import dagger.spi.model.BindingGraph.ChildFactoryMethodEdge;
-import dagger.spi.model.BindingGraph.ComponentNode;
-import dagger.spi.model.BindingGraph.DependencyEdge;
-import dagger.spi.model.BindingGraph.Edge;
-import dagger.spi.model.BindingGraph.Node;
-import dagger.spi.model.ComponentPath;
-import dagger.spi.model.DaggerTypeElement;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.Key;
+import dagger.internal.codegen.model.BindingGraph.ChildFactoryMethodEdge;
+import dagger.internal.codegen.model.BindingGraph.ComponentNode;
+import dagger.internal.codegen.model.BindingGraph.DependencyEdge;
+import dagger.internal.codegen.model.BindingGraph.Edge;
+import dagger.internal.codegen.model.BindingGraph.Node;
+import dagger.internal.codegen.model.ComponentPath;
+import dagger.internal.codegen.model.DaggerTypeElement;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.Key;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -71,7 +71,8 @@ public abstract class BindingGraph {
    * their bindings.
    */
   @AutoValue
-  public abstract static class TopLevelBindingGraph extends dagger.spi.model.BindingGraph {
+  public abstract static class TopLevelBindingGraph
+      extends dagger.internal.codegen.model.BindingGraph {
     static TopLevelBindingGraph create(
         ImmutableNetwork<Node, Edge> network, boolean isFullBindingGraph) {
       TopLevelBindingGraph topLevelBindingGraph =
@@ -106,7 +107,8 @@ public abstract class BindingGraph {
 
     TopLevelBindingGraph() {}
 
-    // This overrides dagger.spi.model.BindingGraph with a more efficient implementation.
+    // This overrides dagger.internal.codegen.model.BindingGraph with a more efficient
+    // implementation.
     @Override
     public Optional<ComponentNode> componentNode(ComponentPath componentPath) {
       return componentNodes.containsKey(componentPath)
@@ -162,9 +164,10 @@ public abstract class BindingGraph {
     }
 
     private static ImmutableSet<Binding> frameworkRequestBindingSet(
-        ImmutableNetwork<Node, Edge> network, ImmutableSet<dagger.spi.model.Binding> bindings) {
+        ImmutableNetwork<Node, Edge> network,
+        ImmutableSet<dagger.internal.codegen.model.Binding> bindings) {
       Set<Binding> frameworkRequestBindings = new HashSet<>();
-      for (dagger.spi.model.Binding binding : bindings) {
+      for (dagger.internal.codegen.model.Binding binding : bindings) {
         ImmutableList<DependencyEdge> edges =
             network.inEdges(binding).stream()
                 .flatMap(instancesOf(DependencyEdge.class))

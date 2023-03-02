@@ -20,10 +20,10 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
-import dagger.spi.model.BindingGraph.ComponentNode;
-import dagger.spi.model.ComponentPath;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.Scope;
+import dagger.internal.codegen.model.BindingGraph.ComponentNode;
+import dagger.internal.codegen.model.ComponentPath;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.Scope;
 
 /** An implementation of {@link ComponentNode} that also exposes the {@link ComponentDescriptor}. */
 @AutoValue

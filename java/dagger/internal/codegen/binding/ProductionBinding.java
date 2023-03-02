@@ -29,8 +29,8 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.SetType;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.Key;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.Key;
 import java.util.Optional;
 import java.util.stream.Stream;
 

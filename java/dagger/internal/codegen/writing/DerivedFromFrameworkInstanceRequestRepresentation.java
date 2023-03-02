@@ -29,8 +29,8 @@ import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescri
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.spi.model.BindingKind;
-import dagger.spi.model.RequestKind;
+import dagger.internal.codegen.model.BindingKind;
+import dagger.internal.codegen.model.RequestKind;
 
 /** A binding expression that depends on a framework instance. */
 final class DerivedFromFrameworkInstanceRequestRepresentation extends RequestRepresentation {

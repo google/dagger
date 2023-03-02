@@ -96,22 +96,21 @@ public final class ExternalBindingGraphPlugins {
   }
 
   /** Returns {@code false} if any of the plugins reported an error. */
-  boolean visit(BindingGraph graph) {
+  boolean visit(dagger.internal.codegen.model.BindingGraph graph) {
     return visitLegacyPlugins(graph) && visitPlugins(graph);
   }
 
-  private boolean visitLegacyPlugins(BindingGraph graph) {
+  private boolean visitLegacyPlugins(dagger.internal.codegen.model.BindingGraph graph) {
     // Return early to avoid converting the binding graph when there are no external plugins.
     if (legacyPlugins.isEmpty()) {
       return true;
     }
-
-    dagger.model.BindingGraph legacyGraph = ExternalBindingGraphConverter.fromSpiModel(graph);
+    dagger.model.BindingGraph legacyGraph = ModelBindingGraphConverter.toModel(graph);
     boolean isClean = true;
     for (dagger.spi.BindingGraphPlugin legacyPlugin : legacyPlugins) {
       DiagnosticReporterImpl reporter =
           diagnosticReporterFactory.reporter(graph, legacyPlugin.pluginName());
-      DiagnosticReporter legacyReporter = ExternalBindingGraphConverter.fromSpiModel(reporter);
+      DiagnosticReporter legacyReporter = ModelBindingGraphConverter.toModel(reporter);
       legacyPlugin.visitGraph(legacyGraph, legacyReporter);
       if (reporter.reportedDiagnosticKinds().contains(ERROR)) {
         isClean = false;
@@ -120,12 +119,13 @@ public final class ExternalBindingGraphPlugins {
     return isClean;
   }
 
-  private boolean visitPlugins(BindingGraph graph) {
+  private boolean visitPlugins(dagger.internal.codegen.model.BindingGraph graph) {
+    BindingGraph spiGraph = SpiModelBindingGraphConverter.toSpiModel(graph);
     boolean isClean = true;
     for (BindingGraphPlugin plugin : plugins) {
       DiagnosticReporterImpl reporter =
           diagnosticReporterFactory.reporter(graph, plugin.pluginName());
-      plugin.visitGraph(graph, reporter);
+      plugin.visitGraph(spiGraph, SpiModelBindingGraphConverter.toSpiModel(reporter));
       if (reporter.reportedDiagnosticKinds().contains(ERROR)) {
         isClean = false;
       }

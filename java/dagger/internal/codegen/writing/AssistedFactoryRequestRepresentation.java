@@ -38,7 +38,7 @@ import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.spi.model.DependencyRequest;
+import dagger.internal.codegen.model.DependencyRequest;
 import java.util.Optional;
 
 /**

@@ -46,8 +46,8 @@ import dagger.MapKey;
 import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.MapKeyAccessibility;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.model.DaggerAnnotation;
 import dagger.internal.codegen.xprocessing.XElements;
-import dagger.spi.model.DaggerAnnotation;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 

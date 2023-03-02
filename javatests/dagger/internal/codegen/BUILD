@@ -96,6 +96,7 @@ GenJavaTests(
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/codegen/model",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/writing",
         "//java/dagger/internal/codegen/xprocessing",

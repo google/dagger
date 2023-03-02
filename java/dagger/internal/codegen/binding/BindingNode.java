@@ -24,25 +24,25 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import dagger.BindsOptionalOf;
 import dagger.Module;
+import dagger.internal.codegen.model.BindingKind;
+import dagger.internal.codegen.model.ComponentPath;
+import dagger.internal.codegen.model.DaggerElement;
+import dagger.internal.codegen.model.DaggerTypeElement;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.Key;
+import dagger.internal.codegen.model.Scope;
 import dagger.multibindings.Multibinds;
-import dagger.spi.model.BindingKind;
-import dagger.spi.model.ComponentPath;
-import dagger.spi.model.DaggerElement;
-import dagger.spi.model.DaggerTypeElement;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.Key;
-import dagger.spi.model.Scope;
 import java.util.Optional;
 
 /**
- * An implementation of {@link dagger.spi.model.Binding} that also exposes {@link
+ * An implementation of {@link dagger.internal.codegen.model.Binding} that also exposes {@link
  * BindingDeclaration}s associated with the binding.
  */
-// TODO(dpb): Consider a supertype of dagger.spi.model.Binding that
+// TODO(dpb): Consider a supertype of dagger.internal.codegen.model.Binding that
 // dagger.internal.codegen.binding.Binding
 // could also implement.
 @AutoValue
-public abstract class BindingNode implements dagger.spi.model.Binding {
+public abstract class BindingNode implements dagger.internal.codegen.model.Binding {
   public static BindingNode create(
       ComponentPath component,
       Binding delegate,

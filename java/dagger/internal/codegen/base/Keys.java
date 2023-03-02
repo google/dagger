@@ -24,8 +24,8 @@ import static dagger.internal.codegen.xprocessing.XTypes.isRawParameterizedType;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import dagger.spi.model.DaggerAnnotation;
-import dagger.spi.model.Key;
+import dagger.internal.codegen.model.DaggerAnnotation;
+import dagger.internal.codegen.model.Key;
 import java.util.Optional;
 
 /** Utility methods related to {@link Key}s. */

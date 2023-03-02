@@ -40,7 +40,7 @@ import com.google.common.collect.Multimap;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
 import dagger.internal.codegen.base.ComponentCreatorKind;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.spi.model.DependencyRequest;
+import dagger.internal.codegen.model.DependencyRequest;
 import java.util.List;
 
 /**

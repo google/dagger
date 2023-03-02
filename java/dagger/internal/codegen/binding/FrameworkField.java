@@ -20,8 +20,8 @@ import static androidx.room.compiler.processing.XElementKt.isConstructor;
 import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
+import static dagger.internal.codegen.model.BindingKind.MEMBERS_INJECTOR;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
-import static dagger.spi.model.BindingKind.MEMBERS_INJECTOR;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XType;

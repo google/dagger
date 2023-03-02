@@ -24,6 +24,7 @@ import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static androidx.room.compiler.processing.XElementKt.isVariableElement;
 import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toKS;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -47,6 +48,7 @@ import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XTypeParameterElement;
 import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
+import com.google.devtools.ksp.symbol.KSAnnotated;
 import com.squareup.javapoet.ClassName;
 import java.util.Collection;
 import java.util.Optional;
@@ -60,6 +62,23 @@ public final class XElements {
   /** Returns the simple name of the member container. */
   public static String getSimpleName(XMemberContainer memberContainer) {
     return memberContainer.getClassName().simpleName();
+  }
+
+  public static KSAnnotated toKSAnnotated(XElement element) {
+    if (isExecutable(element)) {
+      return toKS(asExecutable(element));
+    }
+    if (isTypeElement(element)) {
+      return toKS(asTypeElement(element));
+    }
+    if (isField(element)) {
+      return toKS(asField(element));
+    }
+    if (isMethodParameter(element)) {
+      return toKS(asMethodParameter(element));
+    }
+    throw new IllegalStateException(
+        "Returning KSAnnotated declaration for " + element + " is not supported.");
   }
 
   /** Returns the simple name of the element. */

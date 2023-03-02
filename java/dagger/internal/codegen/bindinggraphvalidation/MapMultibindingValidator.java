@@ -21,7 +21,7 @@ import static com.google.common.collect.Multimaps.filterKeys;
 import static dagger.internal.codegen.base.Formatter.INDENT;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSetMultimap;
-import static dagger.spi.model.BindingKind.MULTIBOUND_MAP;
+import static dagger.internal.codegen.model.BindingKind.MULTIBOUND_MAP;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.common.collect.ImmutableList;
@@ -37,11 +37,11 @@ import dagger.internal.codegen.binding.BindingNode;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.KeyFactory;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.model.Binding;
+import dagger.internal.codegen.model.BindingGraph;
+import dagger.internal.codegen.model.DiagnosticReporter;
+import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
-import dagger.spi.model.Binding;
-import dagger.spi.model.BindingGraph;
-import dagger.spi.model.DiagnosticReporter;
-import dagger.spi.model.Key;
 import java.util.Set;
 import javax.inject.Inject;
 

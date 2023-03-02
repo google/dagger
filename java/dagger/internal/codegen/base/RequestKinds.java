@@ -23,15 +23,15 @@ import static dagger.internal.codegen.javapoet.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.javapoet.TypeNames.producedOf;
 import static dagger.internal.codegen.javapoet.TypeNames.producerOf;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
+import static dagger.internal.codegen.model.RequestKind.LAZY;
+import static dagger.internal.codegen.model.RequestKind.PRODUCED;
+import static dagger.internal.codegen.model.RequestKind.PRODUCER;
+import static dagger.internal.codegen.model.RequestKind.PROVIDER;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.wrapType;
 import static dagger.internal.codegen.xprocessing.XTypes.checkTypePresent;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
-import static dagger.spi.model.RequestKind.LAZY;
-import static dagger.spi.model.RequestKind.PRODUCED;
-import static dagger.spi.model.RequestKind.PRODUCER;
-import static dagger.spi.model.RequestKind.PROVIDER;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
@@ -39,7 +39,7 @@ import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.spi.model.RequestKind;
+import dagger.internal.codegen.model.RequestKind;
 
 /** Utility methods for {@link RequestKind}s. */
 public final class RequestKinds {
@@ -142,7 +142,7 @@ public final class RequestKinds {
 
   /**
    * A dagger- or {@code javax.inject}-defined class for {@code requestKind} that that can wrap
-   * another type but share the same {@link dagger.spi.model.Key}.
+   * another type but share the same {@link dagger.internal.codegen.model.Key}.
    *
    * <p>For example, {@code Provider<String>} and {@code Lazy<String>} can both be requested if a
    * key exists for {@code String}; they all share the same key.

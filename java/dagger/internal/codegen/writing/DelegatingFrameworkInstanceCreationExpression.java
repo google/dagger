@@ -27,8 +27,8 @@ import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.CodeBlocks;
+import dagger.internal.codegen.model.DependencyRequest;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
-import dagger.spi.model.DependencyRequest;
 
 /** A framework instance creation expression for a {@link dagger.Binds @Binds} binding. */
 final class DelegatingFrameworkInstanceCreationExpression

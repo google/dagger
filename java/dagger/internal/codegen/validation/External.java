@@ -22,8 +22,8 @@ import java.lang.annotation.RetentionPolicy;
 import javax.inject.Qualifier;
 
 /**
- * Qualifier annotation for the {@link dagger.spi.model.BindingGraphPlugin}s that are registered by
- * users.
+ * Qualifier annotation for the {@link dagger.internal.codegen.model.BindingGraphPlugin}s that are
+ * registered by users.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

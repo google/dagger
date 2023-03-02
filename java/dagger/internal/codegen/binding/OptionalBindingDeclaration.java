@@ -24,7 +24,7 @@ import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import dagger.BindsOptionalOf;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.spi.model.Key;
+import dagger.internal.codegen.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
 

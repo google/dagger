@@ -19,7 +19,7 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.anonymousProvider;
-import static dagger.spi.model.RequestKind.INSTANCE;
+import static dagger.internal.codegen.model.RequestKind.INSTANCE;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;

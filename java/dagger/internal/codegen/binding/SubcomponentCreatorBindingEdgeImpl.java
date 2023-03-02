@@ -23,8 +23,8 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
-import dagger.spi.model.BindingGraph.SubcomponentCreatorBindingEdge;
-import dagger.spi.model.DaggerTypeElement;
+import dagger.internal.codegen.model.BindingGraph.SubcomponentCreatorBindingEdge;
+import dagger.internal.codegen.model.DaggerTypeElement;
 
 /** An implementation of {@link SubcomponentCreatorBindingEdge}. */
 public final class SubcomponentCreatorBindingEdgeImpl implements SubcomponentCreatorBindingEdge {

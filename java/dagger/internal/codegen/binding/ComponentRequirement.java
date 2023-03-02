@@ -32,9 +32,9 @@ import com.google.auto.value.AutoValue;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.model.BindingKind;
+import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.xprocessing.XTypeElements;
-import dagger.spi.model.BindingKind;
-import dagger.spi.model.Key;
 import java.util.Optional;
 
 /** A type that a component needs an instance of. */

@@ -35,8 +35,8 @@ import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.ExpressionType;
+import dagger.internal.codegen.model.RequestKind;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
-import dagger.spi.model.RequestKind;
 
 /**
  * A binding expression that wraps the dependency expressions in a private, no-arg method.

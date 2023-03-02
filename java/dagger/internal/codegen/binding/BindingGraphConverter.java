@@ -20,7 +20,7 @@ import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.extension.DaggerGraphs.unreachableNodes;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static dagger.spi.model.BindingKind.SUBCOMPONENT_CREATOR;
+import static dagger.internal.codegen.model.BindingKind.SUBCOMPONENT_CREATOR;
 
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
@@ -37,16 +37,16 @@ import com.google.common.graph.Network;
 import com.google.common.graph.NetworkBuilder;
 import dagger.internal.codegen.binding.BindingGraph.TopLevelBindingGraph;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
-import dagger.spi.model.BindingGraph.ComponentNode;
-import dagger.spi.model.BindingGraph.DependencyEdge;
-import dagger.spi.model.BindingGraph.Edge;
-import dagger.spi.model.BindingGraph.MissingBinding;
-import dagger.spi.model.BindingGraph.Node;
-import dagger.spi.model.ComponentPath;
-import dagger.spi.model.DaggerExecutableElement;
-import dagger.spi.model.DaggerTypeElement;
-import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.Key;
+import dagger.internal.codegen.model.BindingGraph.ComponentNode;
+import dagger.internal.codegen.model.BindingGraph.DependencyEdge;
+import dagger.internal.codegen.model.BindingGraph.Edge;
+import dagger.internal.codegen.model.BindingGraph.MissingBinding;
+import dagger.internal.codegen.model.BindingGraph.Node;
+import dagger.internal.codegen.model.ComponentPath;
+import dagger.internal.codegen.model.DaggerExecutableElement;
+import dagger.internal.codegen.model.DaggerTypeElement;
+import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.model.Key;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -55,7 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 
-/** Converts {@link BindingGraph}s to {@link dagger.spi.model.BindingGraph}s. */
+/** Converts {@link BindingGraph}s to {@link dagger.internal.codegen.model.BindingGraph}s. */
 final class BindingGraphConverter {
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
 
@@ -65,8 +65,8 @@ final class BindingGraphConverter {
   }
 
   /**
-   * Creates the external {@link dagger.spi.model.BindingGraph} representing the given internal
-   * {@link BindingGraph}.
+   * Creates the external {@link dagger.internal.codegen.model.BindingGraph} representing the given
+   * internal {@link BindingGraph}.
    */
   BindingGraph convert(LegacyBindingGraph legacyBindingGraph, boolean isFullBindingGraph) {
     MutableNetwork<Node, Edge> network = asNetwork(legacyBindingGraph);
@@ -276,8 +276,8 @@ final class BindingGraphConverter {
     }
 
     /**
-     * Adds a {@link dagger.spi.model.BindingGraph.DependencyEdge} from a node to the binding(s)
-     * that satisfy a dependency request.
+     * Adds a {@link dagger.internal.codegen.model.BindingGraph.DependencyEdge} from a node to the
+     * binding(s) that satisfy a dependency request.
      */
     private void addDependencyEdges(Node source, DependencyRequest dependencyRequest) {
       ResolvedBindings dependencies = resolvedDependencies(source, dependencyRequest);

@@ -22,8 +22,8 @@ import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.binding.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
-import static dagger.spi.model.BindingKind.MULTIBOUND_MAP;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
@@ -41,8 +41,8 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.spi.model.BindingKind;
-import dagger.spi.model.DependencyRequest;
+import dagger.internal.codegen.model.BindingKind;
+import dagger.internal.codegen.model.DependencyRequest;
 import java.util.Collections;
 
 /** A {@link RequestRepresentation} for multibound maps. */

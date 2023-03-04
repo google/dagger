@@ -21,6 +21,11 @@ runs:
     - name: 'Java build'
       run: bazel build //java/...
       shell: bash
+    # Todo(kuanyingchou) Remove the step once the fix is released:
+    # https://issues.apache.org/jira/browse/MNG-7679
+    - name: Set up Maven
+      run: ./util/install-maven.sh 3.8.7
+      shell: bash
     - name: 'Install local snapshot'
       run: ./util/install-local-snapshot.sh
       shell: bash

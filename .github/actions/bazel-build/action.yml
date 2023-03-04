@@ -21,6 +21,9 @@ runs:
     - name: 'Java build'
       run: bazel build //java/...
       shell: bash
+    - name: 'Install maven version'
+      run: ./util/install-maven.sh ${{ env.USE_MAVEN_VERSION }}
+      shell: bash
     - name: 'Install local snapshot'
       run: ./util/install-local-snapshot.sh
       shell: bash

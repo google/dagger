@@ -477,7 +477,7 @@ public final class Processors {
   /**
    * Returns the annotation mirror from the given element that corresponds to the given class.
    *
-   * @throws {@link IllegalArgumentException} if 2 or more annotations are found.
+   * @throws IllegalArgumentException if 2 or more annotations are found.
    * @return {@link Optional#empty()} if no annotation is found on the element.
    */
   static Optional<AnnotationMirror> getAnnotationMirrorOptional(

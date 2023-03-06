@@ -16,10 +16,8 @@
 
 package dagger.hilt.processor.internal.kotlin;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 
-import androidx.room.compiler.processing.XElement;
 import dagger.hilt.processor.internal.ClassNames;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +39,6 @@ public final class KotlinMetadataFactory {
   @Inject
   KotlinMetadataFactory() {}
 
-  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /**
    * Parses and returns the {@link KotlinMetadata} out of a given element.
    *
@@ -55,16 +52,5 @@ public final class KotlinMetadataFactory {
       throw new IllegalStateException("Missing @Metadata for: " + enclosingElement);
     }
     return metadataCache.computeIfAbsent(enclosingElement, KotlinMetadata::from);
-  }
-
-  /**
-   * Parses and returns the {@link KotlinMetadata} out of a given element.
-   *
-   * @throws IllegalStateException if the element has no metadata or is not enclosed in a type
-   *     element with metadata. To check if an element has metadata use {@link
-   *     KotlinMetadataUtil#hasMetadata(Element)}
-   */
-  public KotlinMetadata create(XElement element) {
-    return create(toJavac(element));
   }
 }

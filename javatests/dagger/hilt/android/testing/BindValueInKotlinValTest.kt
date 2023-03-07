@@ -30,6 +30,9 @@ class BindValueInKotlinValTest {
 
     @Named(TEST_QUALIFIER)
     fun bindValueString2(): String
+
+    @Named(TEST_QUALIFIER_INTERNAL)
+    fun bindValueString3(): String
   }
 
   @get:Rule
@@ -41,6 +44,10 @@ class BindValueInKotlinValTest {
   @BindValue
   @Named(TEST_QUALIFIER)
   val bindValueString2 = BIND_VALUE_STRING2
+
+  @BindValue
+  @Named(TEST_QUALIFIER_INTERNAL)
+  internal val bindValueString3 = BIND_VALUE_STRING3
 
   @BindValueIntoMap
   @MyMapKey(BIND_VALUE_MAP_KEY_STRING)
@@ -54,6 +61,10 @@ class BindValueInKotlinValTest {
   lateinit var string2: String
 
   @Inject
+  @Named(TEST_QUALIFIER_INTERNAL)
+  lateinit var string3: String
+
+  @Inject
   lateinit var map: Map<String, String>
 
   @Test
@@ -61,6 +72,7 @@ class BindValueInKotlinValTest {
     rule.inject()
     assertThat(string1).isEqualTo(BIND_VALUE_STRING1)
     assertThat(string2).isEqualTo(BIND_VALUE_STRING2)
+    assertThat(string3).isEqualTo(BIND_VALUE_STRING3)
     assertThat(map).containsExactlyEntriesIn(
         mapOf(BIND_VALUE_MAP_KEY_STRING to BIND_VALUE_MAP_VALUE_STRING))
   }
@@ -68,8 +80,10 @@ class BindValueInKotlinValTest {
   companion object {
     private const val BIND_VALUE_STRING1 = "BIND_VALUE_STRING1"
     private const val BIND_VALUE_STRING2 = "BIND_VALUE_STRING2"
+    private const val BIND_VALUE_STRING3 = "BIND_VALUE_STRING3"
     private const val BIND_VALUE_MAP_KEY_STRING = "BIND_VALUE_MAP_KEY_STRING"
     private const val BIND_VALUE_MAP_VALUE_STRING = "BIND_VALUE_MAP_VALUE_STRING"
     private const val TEST_QUALIFIER = "TEST_QUALIFIER"
+    private const val TEST_QUALIFIER_INTERNAL = "TEST_QUALIFIER_INTERNAL"
   }
 }

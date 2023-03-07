@@ -24,6 +24,7 @@ import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils.getMetadataUtil;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -579,6 +580,7 @@ public final class Processors {
         e);
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /** Returns MapKey annotated annotations found on an element. */
   public static ImmutableList<AnnotationMirror> getMapKeyAnnotations(Element element) {
     // Normally, we wouldn't need to handle Kotlin metadata because map keys are typically used
@@ -587,9 +589,24 @@ public final class Processors {
     return getMetadataUtil().getAnnotationsAnnotatedWith(element, ClassNames.MAP_KEY);
   }
 
+  /** Returns MapKey annotated annotations found on an element. */
+  public static ImmutableList<XAnnotation> getMapKeyAnnotations(XElement element) {
+    return getMapKeyAnnotations(toJavac(element)).stream()
+        .map(annotationMirror -> toXProcessing(annotationMirror, getProcessingEnv(element)))
+        .collect(toImmutableList());
+  }
+
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /** Returns Qualifier annotated annotations found on an element. */
   public static ImmutableList<AnnotationMirror> getQualifierAnnotations(Element element) {
     return getMetadataUtil().getAnnotationsAnnotatedWith(element, ClassNames.QUALIFIER);
+  }
+
+  /** Returns Qualifier annotated annotations found on an element. */
+  public static ImmutableList<XAnnotation> getQualifierAnnotations(XElement element) {
+    return getQualifierAnnotations(toJavac(element)).stream()
+        .map(annotationMirror -> toXProcessing(annotationMirror, getProcessingEnv(element)))
+        .collect(toImmutableList());
   }
 
   // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
@@ -764,11 +781,16 @@ public final class Processors {
                         .build()));
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   public static AnnotationSpec getOriginatingElementAnnotation(TypeElement element) {
     TypeName rawType = rawTypeName(ClassName.get(getTopLevelType(element)));
     return AnnotationSpec.builder(ClassNames.ORIGINATING_ELEMENT)
         .addMember("topLevelClass", "$T.class", rawType)
         .build();
+  }
+
+  public static AnnotationSpec getOriginatingElementAnnotation(XTypeElement element) {
+    return getOriginatingElementAnnotation(toJavac(element));
   }
 
   /**

@@ -16,6 +16,7 @@
 
 package dagger.hilt.processor.internal.kotlin;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
 import static com.google.auto.common.AnnotationValues.getAnnotationValues;
@@ -24,6 +25,7 @@ import static dagger.hilt.processor.internal.ElementDescriptors.getMethodDescrip
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static kotlinx.metadata.Flag.ValueParameter.DECLARES_DEFAULT_VALUE;
 
+import androidx.room.compiler.processing.XFieldElement;
 import com.google.auto.common.AnnotationValues;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -103,6 +105,7 @@ abstract class KotlinMetadata {
             });
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /**
    * Returns true if the synthetic method for annotations is missing. This can occur when inspecting
    * the Kotlin metadata of a property from another compilation unit.
@@ -114,6 +117,14 @@ abstract class KotlinMetadata {
         // the qualifier is already properly attached to the field). For these cases, it isn't
         // considered missing since there was no method to look for in the first place.
         .orElse(false);
+  }
+
+  /**
+   * Returns true if the synthetic method for annotations is missing. This can occur when inspecting
+   * the Kotlin metadata of a property from another compilation unit.
+   */
+  boolean isMissingSyntheticAnnotationMethod(XFieldElement fieldElement) {
+    return isMissingSyntheticAnnotationMethod(toJavac(fieldElement));
   }
 
   private Optional<MethodForAnnotations> getAnnotationMethod(VariableElement fieldElement) {

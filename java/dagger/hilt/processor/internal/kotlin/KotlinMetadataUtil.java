@@ -16,6 +16,9 @@
 
 package dagger.hilt.processor.internal.kotlin;
 
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.asVariable;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
@@ -25,6 +28,9 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static kotlinx.metadata.Flag.Class.IS_COMPANION_OBJECT;
 import static kotlinx.metadata.Flag.Class.IS_OBJECT;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XFieldElement;
+import androidx.room.compiler.processing.XMethodElement;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
@@ -52,6 +58,7 @@ public final class KotlinMetadataUtil {
     this.metadataFactory = metadataFactory;
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /**
    * Returns {@code true} if this element has the Kotlin Metadata annotation or if it is enclosed in
    * an element that does.
@@ -61,10 +68,18 @@ public final class KotlinMetadataUtil {
   }
 
   /**
+   * Returns {@code true} if this element has the Kotlin Metadata annotation or if it is enclosed in
+   * an element that does.
+   */
+  public boolean hasMetadata(XElement element) {
+    return hasMetadata(toJavac(element));
+  }
+
+  /**
    * Returns the annotations on the given {@code element} annotated with {@code annotationName}.
    *
-   * <p>Note: If the given {@code element} is a non-static field this method will return
-   * annotations on both the backing field and the associated synthetic property (if one exists).
+   * <p>Note: If the given {@code element} is a non-static field this method will return annotations
+   * on both the backing field and the associated synthetic property (if one exists).
    */
   public ImmutableList<AnnotationMirror> getAnnotationsAnnotatedWith(
       Element element, ClassName annotationName) {
@@ -163,8 +178,14 @@ public final class KotlinMetadataUtil {
         && metadataFactory.create(method).getFunctionMetadata(method).flags(Flag.IS_INTERNAL);
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   public Optional<ExecutableElement> getPropertyGetter(VariableElement fieldElement) {
     return metadataFactory.create(fieldElement).getPropertyGetter(fieldElement);
+  }
+
+  public Optional<XMethodElement> getPropertyGetter(XFieldElement fieldElement) {
+    return getPropertyGetter(toJavac(fieldElement))
+        .map(element -> (XMethodElement) toXProcessing(element, getProcessingEnv(fieldElement)));
   }
 
   public boolean containsConstructorWithDefaultParam(TypeElement typeElement) {

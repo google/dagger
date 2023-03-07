@@ -16,9 +16,16 @@
 
 package dagger.hilt.android.processor.internal.bindvalue;
 
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.xprocessing.XElements.asField;
 
-import com.google.auto.common.MoreElements;
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XElementKt;
+import androidx.room.compiler.processing.XFieldElement;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -28,15 +35,10 @@ import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtil;
 import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils;
+import dagger.internal.codegen.xprocessing.XAnnotations;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Collection;
 import java.util.Optional;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 
 /**
  * Represents metadata for a test class that has {@code BindValue} fields.
@@ -56,17 +58,22 @@ abstract class BindValueMetadata {
       ImmutableSet.of(
           ClassNames.ANDROID_BIND_VALUE_INTO_MAP);
 
-  /** @return the {@code TestRoot} annotated class's name. */
-  abstract TypeElement testElement();
+  /**
+   * @return the {@code TestRoot} annotated class's name.
+   */
+  abstract XTypeElement testElement();
 
   /** @return a {@link ImmutableSet} of elements annotated with @BindValue. */
   abstract ImmutableSet<BindValueElement> bindValueElements();
 
-  /** @return a new BindValueMetadata instance. */
-  static BindValueMetadata create(TypeElement testElement, Collection<Element> bindValueElements) {
+  /**
+   * @return a new BindValueMetadata instance.
+   */
+  static BindValueMetadata create(
+      XTypeElement testElement, Collection<XElement> bindValueElements) {
 
     ImmutableSet.Builder<BindValueElement> elements = ImmutableSet.builder();
-    for (Element element : bindValueElements) {
+    for (XElement element : bindValueElements) {
       elements.add(BindValueElement.create(element));
     }
 
@@ -75,17 +82,17 @@ abstract class BindValueMetadata {
 
   @AutoValue
   abstract static class BindValueElement {
-    abstract VariableElement variableElement();
+    abstract XFieldElement fieldElement();
 
     abstract ClassName annotationName();
 
-    abstract Optional<AnnotationMirror> qualifier();
+    abstract Optional<XAnnotation> qualifier();
 
-    abstract Optional<AnnotationMirror> mapKey();
+    abstract Optional<XAnnotation> mapKey();
 
-    abstract Optional<ExecutableElement> getterElement();
+    abstract Optional<XMethodElement> getterElement();
 
-    static BindValueElement create(Element element) {
+    static BindValueElement create(XElement element) {
       ImmutableList<ClassName> bindValues = BindValueProcessor.getBindValueAnnotations(element);
       ProcessorErrors.checkState(
           bindValues.size() == 1,
@@ -93,83 +100,85 @@ abstract class BindValueMetadata {
           "Fields can be annotated with only one of @BindValue, @BindValueIntoMap,"
               + " @BindElementsIntoSet, @BindValueIntoSet. Found: %s",
           bindValues.stream().map(m -> "@" + m.simpleName()).collect(toImmutableList()));
-      ClassName annotationClassName = bindValues.get(0);
+      ClassName annotationClassName = getOnlyElement(bindValues);
 
       ProcessorErrors.checkState(
-          element.getKind() == ElementKind.FIELD,
+          XElementKt.isField(element),
           element,
           "@%s can only be used with fields. Found: %s",
           annotationClassName.simpleName(),
-          element);
+          XElements.toStableString(element));
+
+      XFieldElement field = asField(element);
 
       KotlinMetadataUtil metadataUtil = KotlinMetadataUtils.getMetadataUtil();
-      Optional<ExecutableElement> propertyGetter =
-          metadataUtil.hasMetadata(element)
-              ? metadataUtil.getPropertyGetter(MoreElements.asVariable(element))
+      Optional<XMethodElement> propertyGetter =
+          metadataUtil.hasMetadata(field)
+              ? metadataUtil.getPropertyGetter(field)
               : Optional.empty();
       if (propertyGetter.isPresent()) {
         ProcessorErrors.checkState(
-            !propertyGetter.get().getModifiers().contains(Modifier.PRIVATE),
-            element,
+            !propertyGetter.get().isPrivate(),
+            field,
             "@%s field getter cannot be private. Found: %s",
             annotationClassName.simpleName(),
-            element);
+            XElements.toStableString(field));
       } else {
         ProcessorErrors.checkState(
-            !element.getModifiers().contains(Modifier.PRIVATE),
-            element,
+            !XElements.isPrivate(field),
+            field,
             "@%s fields cannot be private. Found: %s",
             annotationClassName.simpleName(),
-            element);
+            XElements.toStableString(field));
       }
 
       ProcessorErrors.checkState(
-          !Processors.hasAnnotation(element, ClassNames.INJECT),
-          element,
+          !field.hasAnnotation(ClassNames.INJECT),
+          field,
           "@%s fields cannot be used with @Inject annotation. Found %s",
           annotationClassName.simpleName(),
-          element);
+          XElements.toStableString(field));
 
-      ImmutableList<AnnotationMirror> qualifiers = Processors.getQualifierAnnotations(element);
+      ImmutableList<XAnnotation> qualifiers = Processors.getQualifierAnnotations(field);
       ProcessorErrors.checkState(
           qualifiers.size() <= 1,
-          element,
+          field,
           "@%s fields cannot have more than one qualifier. Found %s",
           annotationClassName.simpleName(),
-          qualifiers);
+          qualifiers.stream().map(XAnnotations::toStableString).collect(toImmutableList()));
 
-      ImmutableList<AnnotationMirror> mapKeys = Processors.getMapKeyAnnotations(element);
-      Optional<AnnotationMirror> optionalMapKeys;
+      ImmutableList<XAnnotation> mapKeys = Processors.getMapKeyAnnotations(field);
+      Optional<XAnnotation> optionalMapKeys;
       if (BIND_VALUE_INTO_MAP_ANNOTATIONS.contains(annotationClassName)) {
         ProcessorErrors.checkState(
             mapKeys.size() == 1,
-            element,
+            field,
             "@BindValueIntoMap fields must have exactly one @MapKey. Found %s",
-            mapKeys);
+            mapKeys.stream().map(XAnnotations::toStableString).collect(toImmutableList()));
         optionalMapKeys = Optional.of(mapKeys.get(0));
       } else {
         ProcessorErrors.checkState(
             mapKeys.isEmpty(),
-            element,
+            field,
             "@MapKey can only be used on @BindValueIntoMap fields, not @%s fields",
             annotationClassName.simpleName());
         optionalMapKeys = Optional.empty();
       }
 
-      ImmutableList<AnnotationMirror> scopes = Processors.getScopeAnnotations(element);
+      ImmutableList<XAnnotation> scopes = Processors.getScopeAnnotations(field);
       ProcessorErrors.checkState(
           scopes.isEmpty(),
-          element,
+          field,
           "@%s fields cannot be scoped. Found %s",
           annotationClassName.simpleName(),
-          scopes);
+          scopes.stream().map(XAnnotations::toStableString).collect(toImmutableList()));
 
       return new AutoValue_BindValueMetadata_BindValueElement(
-          (VariableElement) element,
+          field,
           annotationClassName,
           qualifiers.isEmpty()
-              ? Optional.<AnnotationMirror>empty()
-              : Optional.<AnnotationMirror>of(qualifiers.get(0)),
+              ? Optional.<XAnnotation>empty()
+              : Optional.<XAnnotation>of(qualifiers.get(0)),
           optionalMapKeys,
           propertyGetter);
     }

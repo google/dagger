@@ -16,9 +16,14 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import static com.google.auto.common.MoreTypes.asExecutable;
+import static com.google.auto.common.MoreTypes.asTypeElement;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.hilt.processor.internal.ElementDescriptors.getMethodDescriptor;
+import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
-import com.google.common.collect.Iterables;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -28,13 +33,14 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
-import dagger.hilt.android.processor.internal.MoreTypes;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
+import java.util.Optional;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.util.ElementFilter;
 
@@ -48,8 +54,7 @@ public final class BroadcastReceiverGenerator {
   private final AndroidEntryPointMetadata metadata;
   private final ClassName generatedClassName;
 
-  public BroadcastReceiverGenerator(
-      ProcessingEnvironment env, AndroidEntryPointMetadata metadata) {
+  public BroadcastReceiverGenerator(ProcessingEnvironment env, AndroidEntryPointMetadata metadata) {
     this.env = env;
     this.metadata = metadata;
 
@@ -94,8 +99,9 @@ public final class BroadcastReceiverGenerator {
               .build());
     }
 
-    JavaFile.builder(generatedClassName.packageName(),
-        builder.build()).build().writeTo(env.getFiler());
+    JavaFile.builder(generatedClassName.packageName(), builder.build())
+        .build()
+        .writeTo(env.getFiler());
   }
 
   private static boolean isOnReceiveImplemented(TypeElement typeElement) {
@@ -108,7 +114,7 @@ public final class BroadcastReceiverGenerator {
     if (isImplemented) {
       return true;
     } else if (typeElement.getSuperclass().getKind() != TypeKind.NONE) {
-      return isOnReceiveImplemented(MoreTypes.asTypeElement(typeElement.getSuperclass()));
+      return isOnReceiveImplemented(asTypeElement(typeElement.getSuperclass()));
     } else {
       return false;
     }
@@ -137,18 +143,39 @@ public final class BroadcastReceiverGenerator {
     } else {
       // Get the onReceive method element from BroadcastReceiver.
       ExecutableElement onReceiveElement =
-          Iterables.getOnlyElement(
-              MoreTypes.findMethods(
+          getOnlyElement(
+              findMethodsByName(
                   env.getElementUtils()
                       .getTypeElement(AndroidClassNames.BROADCAST_RECEIVER.toString()),
                   "onReceive"));
 
       // If the base class or one of its super classes implements onReceive, call super.onReceive()
-      MoreTypes.findInheritedMethod(env.getTypeUtils(), metadata.baseElement(), onReceiveElement)
+      findMethodBySubsignature(metadata.baseElement(), onReceiveElement)
           .filter(onReceive -> !onReceive.getModifiers().contains(Modifier.ABSTRACT))
           .ifPresent(onReceive -> method.addStatement("super.onReceive(context, intent)"));
     }
-
     return method.build();
+  }
+
+  private Optional<ExecutableElement> findMethodBySubsignature(
+      TypeElement typeElement, ExecutableElement method) {
+    String methodName = method.getSimpleName().toString();
+    ExecutableType methodType = asExecutable(method.asType());
+    Optional<ExecutableElement> match = Optional.empty();
+    while (!match.isPresent() && !typeElement.asType().getKind().equals(TypeKind.NONE)) {
+      match =
+          findMethodsByName(typeElement, methodName).stream()
+              .filter(m -> env.getTypeUtils().isSubsignature(asExecutable(m.asType()), methodType))
+              .collect(toOptional());
+      typeElement = asTypeElement(typeElement.getSuperclass());
+    }
+    return match;
+  }
+
+  private static ImmutableSet<ExecutableElement> findMethodsByName(
+      TypeElement typeElement, String name) {
+    return ElementFilter.methodsIn(typeElement.getEnclosedElements()).stream()
+        .filter(m -> m.getSimpleName().contentEquals(name))
+        .collect(toImmutableSet());
   }
 }

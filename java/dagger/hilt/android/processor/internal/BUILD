@@ -27,18 +27,6 @@ java_library(
     ],
 )
 
-# TODO(erichang): Merge this into other utils
-java_library(
-    name = "utils",
-    srcs = [
-        "MoreTypes.java",
-    ],
-    deps = [
-        "//third_party/java/guava/base",
-        "//third_party/java/guava/collect",
-    ],
-)
-
 filegroup(
     name = "srcs_filegroup",
     srcs = glob(["**/*"]),

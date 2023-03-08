@@ -64,7 +64,6 @@ java_library(
     deps = [
         ":metadata",
         "//java/dagger/hilt/android/processor/internal:android_classnames",
-        "//java/dagger/hilt/android/processor/internal:utils",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:compiler_options",
         "//java/dagger/hilt/processor/internal:component_names",

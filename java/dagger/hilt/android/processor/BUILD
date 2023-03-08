@@ -36,7 +36,6 @@ gen_maven_artifact(
     artifact_target = ":artifact-lib",
     artifact_target_libs = [
         "//java/dagger/hilt/android/processor/internal:android_classnames",
-        "//java/dagger/hilt/android/processor/internal:utils",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:android_generators",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:metadata",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",

@@ -151,6 +151,11 @@ public final class KotlinMetadataUtil {
   }
 
   /* Returns {@code true} if this type element is a Kotlin Companion Object. */
+  public boolean isCompanionObjectClass(XTypeElement typeElement) {
+    return isCompanionObjectClass(toJavac(typeElement));
+  }
+
+  /* Returns {@code true} if this type element is a Kotlin Companion Object. */
   public boolean isCompanionObjectClass(TypeElement typeElement) {
     return hasMetadata(typeElement)
         && metadataFactory.create(typeElement).classMetadata().flags(IS_COMPANION_OBJECT);

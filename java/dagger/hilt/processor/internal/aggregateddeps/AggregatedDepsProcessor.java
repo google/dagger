@@ -17,6 +17,7 @@
 package dagger.hilt.processor.internal.aggregateddeps;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.getPackage;
@@ -317,7 +318,8 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     TypeElement entryPoint = asType(element);
 
     if (entryPointAnnotation.equals(ClassNames.EARLY_ENTRY_POINT)) {
-      ImmutableSet<ClassName> components = Components.getComponents(getElementUtils(), element);
+      ImmutableSet<ClassName> components =
+          Components.getComponents(toXProcessing(element, processingEnv()));
       ProcessorErrors.checkState(
           components.equals(ImmutableSet.of(ClassNames.SINGLETON_COMPONENT)),
           element,
@@ -354,7 +356,8 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
       ImmutableSet<ClassName> replacedModules)
       throws Exception {
     // Get @InstallIn components here to catch errors before skipping user's pkg-private element.
-    ImmutableSet<ClassName> components = Components.getComponents(getElementUtils(), element);
+    ImmutableSet<ClassName> components =
+        Components.getComponents(toXProcessing(element, processingEnv()));
 
     if (isValidKind(element)) {
       Optional<PkgPrivateMetadata> pkgPrivateMetadata =

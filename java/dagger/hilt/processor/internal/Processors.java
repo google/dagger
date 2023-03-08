@@ -54,6 +54,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.xprocessing.XAnnotations;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.LinkedHashSet;
@@ -183,6 +184,22 @@ public final class Processors {
   public static TypeElement getAnnotationClassValue(
       Elements elements, AnnotationMirror annotation, String key) {
     return Iterables.getOnlyElement(getAnnotationClassValues(elements, annotation, key));
+  }
+
+  /** Returns a list of {@link XTypeElement}s for a class attribute on an annotation. */
+  public static ImmutableList<XTypeElement> getAnnotationClassValues(
+      XAnnotation annotation, String key) {
+    ImmutableList<XTypeElement> values = XAnnotations.getAsTypeElementList(annotation, key);
+
+    ProcessorErrors.checkState(
+        values.size() >= 1,
+        annotation.getTypeElement(),
+        "@%s, '%s' class is invalid or missing: %s",
+        annotation.getName(),
+        key,
+        XAnnotations.toStableString(annotation));
+
+    return values;
   }
 
   /** Returns a list of {@link TypeElement}s for a class attribute on an annotation. */
@@ -363,6 +380,11 @@ public final class Processors {
   /** Returns true if the given element has an annotation with the given class name. */
   public static boolean hasAnnotation(AnnotationMirror mirror, ClassName className) {
     return hasAnnotation(mirror.getAnnotationType().asElement(), className);
+  }
+
+  /** Returns true if the given element has an annotation that is an error kind. */
+  public static boolean hasErrorTypeAnnotation(XElement element) {
+    return hasErrorTypeAnnotation(toJavac(element));
   }
 
   /** Returns true if the given element has an annotation that is an error kind. */

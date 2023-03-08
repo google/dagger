@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.bindinggraphvalidation;
 
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -24,16 +25,17 @@ import static dagger.internal.codegen.base.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.base.RequestKinds.canBeSatisfiedByProductionBinding;
 import static dagger.internal.codegen.binding.DependencyRequestFormatter.DOUBLE_INDENT;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
-import static java.util.stream.Collectors.joining;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.ParameterizedTypeName;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.WildcardTypeName;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
@@ -46,13 +48,17 @@ import dagger.internal.codegen.model.BindingGraph.Edge;
 import dagger.internal.codegen.model.BindingGraph.MissingBinding;
 import dagger.internal.codegen.model.BindingGraph.Node;
 import dagger.internal.codegen.model.ComponentPath;
+import dagger.internal.codegen.model.DaggerAnnotation;
 import dagger.internal.codegen.model.DiagnosticReporter;
 import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
+import dagger.internal.codegen.xprocessing.XTypes;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /** Reports errors for missing bindings. */
@@ -106,34 +112,28 @@ final class MissingBindingValidator extends ValidationBindingGraphPlugin {
       BindingGraph prunedGraph,
       BindingGraph fullGraph,
       DiagnosticReporter diagnosticReporter) {
-    XType type = missingBinding.key().type().xprocessing();
-    Optional<WildcardTypeName> wildcardTypeArgument = getWildcardTypeArgument(type);
+    ImmutableSet<Binding> wildcardAlternatives =
+        getSimilarTypeBindings(fullGraph, missingBinding.key());
     String wildcardTypeErrorMessage = "";
-    if (wildcardTypeArgument.isPresent()) {
-      ImmutableSet<Binding> nonWildcardBindings =
-          findNonWildcardType(fullGraph, wildcardTypeArgument.get(), type);
-      if (!nonWildcardBindings.isEmpty()) {
-        wildcardTypeErrorMessage =
-            String.format(
-                "\n"
-                    + "Note: A binding for the invariant type %s exists in the following"
-                    + " components: [%s]. (In Kotlin source, a type like 'Set<Foo>' may"
-                    + " be translated as 'Set<? extends Foo>'. To avoid this implicit"
-                    + " conversion you can add '@JvmSuppressWildcards' on the associated type"
-                    + " argument, e.g. 'Set<@JvmSuppressWildcards Foo>'.)",
-                nonWildcardBindings.iterator().next().key(),
-                nonWildcardBindings.stream()
-                    .map(binding -> binding.componentPath().toString())
-                    .distinct()
-                    .collect(joining(", ")));
-      }
+    if (!wildcardAlternatives.isEmpty()) {
+      wildcardTypeErrorMessage =
+          String.format(
+              "\nFound similar bindings:\n    %s",
+              String.join(
+                  "\n    ",
+                  wildcardAlternatives.stream()
+                      .map(
+                          binding -> binding.key().type() + " in [" + binding.componentPath() + "]")
+                      .collect(toImmutableSet())));
     }
 
     List<ComponentPath> alternativeComponents =
-        fullGraph.bindings(missingBinding.key()).stream()
-            .map(Binding::componentPath)
-            .distinct()
-            .collect(Collectors.toList());
+        wildcardAlternatives.isEmpty()
+            ? fullGraph.bindings(missingBinding.key()).stream()
+                .map(Binding::componentPath)
+                .distinct()
+                .collect(toImmutableList())
+            : ImmutableList.of();
     // Print component name for each binding along the dependency path if the missing binding
     // exists in a different component than expected
     if (alternativeComponents.isEmpty()) {
@@ -146,38 +146,43 @@ final class MissingBindingValidator extends ValidationBindingGraphPlugin {
           fullGraph.componentNode(missingBinding.componentPath()).get(),
           missingBindingErrorMessage(missingBinding, fullGraph)
               + wildcardTypeErrorMessage
+              + "\n\nMissing binding usage:"
               + diagnosticMessageGeneratorFactory.create(prunedGraph).getMessage(missingBinding));
     } else {
       diagnosticReporter.reportComponent(
           ERROR,
           fullGraph.componentNode(missingBinding.componentPath()).get(),
           missingBindingErrorMessage(missingBinding, fullGraph)
-              + wildcardTypeErrorMessage
               + wrongComponentErrorMessage(missingBinding, alternativeComponents, prunedGraph));
     }
   }
 
-  private Optional<WildcardTypeName> getWildcardTypeArgument(XType type) {
-    if (!isDeclared(type) || type.getTypeArguments().size() != 1) {
-      return Optional.empty();
+  private static ImmutableSet<Binding> getSimilarTypeBindings(
+      BindingGraph graph, Key missingBindingKey) {
+    XType missingBindingType = missingBindingKey.type().xprocessing();
+    Optional<DaggerAnnotation> missingBindingQualifier = missingBindingKey.qualifier();
+    ImmutableList<TypeName> flatMissingBindingType = flattenBindingType(missingBindingType);
+    if (flatMissingBindingType.size() <= 1) {
+      return ImmutableSet.of();
     }
-    // TODO(b/267647646): casting to ParameterizedTypeName isn't necessary once type argument's
-    // information is propagated correctly in xprocessing.
-    ParameterizedTypeName typeName = (ParameterizedTypeName) type.getTypeName();
-    return getOnlyElement(typeName.typeArguments) instanceof WildcardTypeName
-        ? Optional.of((WildcardTypeName) getOnlyElement(typeName.typeArguments))
-        : Optional.empty();
+    return graph.bindings().stream()
+        .filter(
+            binding ->
+                binding.key().qualifier().equals(missingBindingQualifier)
+                    && isSimilarType(binding.key().type().xprocessing(), flatMissingBindingType))
+        .collect(toImmutableSet());
   }
 
-  // Find if non-wildcard version of the wildcard parameterized type binding exists in the graph.
-  private static ImmutableSet<Binding> findNonWildcardType(
-      BindingGraph graph, WildcardTypeName wildcardType, XType bindingType) {
-    TypeName nonWildcardType =
-        ParameterizedTypeName.get(
-            bindingType.getTypeElement().getClassName(), getBound(wildcardType));
-    return graph.bindings().stream()
-        .filter(binding -> binding.key().type().xprocessing().getTypeName().equals(nonWildcardType))
-        .collect(toImmutableSet());
+  /**
+   * Unwraps a parameterized type to a list of TypeNames. e.g. {@code Map<Foo, List<Bar>>} to {@code
+   * [Map, Foo, List, Bar]}.
+   */
+  private static ImmutableList<TypeName> flattenBindingType(XType type) {
+    return ImmutableList.copyOf(new TypeDfsIterator(type));
+  }
+
+  private static boolean isSimilarType(XType type, List<TypeName> flatTypeNames) {
+    return Iterators.elementsEqual(flatTypeNames.iterator(), new TypeDfsIterator(type));
   }
 
   private static TypeName getBound(WildcardTypeName wildcardType) {
@@ -306,5 +311,53 @@ final class MissingBindingValidator extends ValidationBindingGraphPlugin {
 
   private Node source(Edge edge, BindingGraph graph) {
     return graph.network().incidentNodes(edge).source();
+  }
+
+  /**
+   * An iterator over a list of TypeNames produced by flattening a parameterized type. e.g. {@code
+   * Map<Foo, List<Bar>>} to {@code [Map, Foo, List, Bar]}.
+   *
+   * <p>The iterator returns the bound when encounters a wildcard type.
+   */
+  private static class TypeDfsIterator implements Iterator<TypeName> {
+    final Deque<XType> stack = new ArrayDeque<>();
+
+    TypeDfsIterator(XType root) {
+      stack.push(root);
+    }
+
+    @Override
+    public boolean hasNext() {
+      return !stack.isEmpty();
+    }
+
+    @Override
+    public TypeName next() {
+      XType next = stack.pop();
+      if (isDeclared(next)) {
+        if (XTypes.isRawParameterizedType(next)) {
+          XType obj = getProcessingEnv(next).requireType(TypeName.OBJECT);
+          for (int i = 0; i < next.getTypeElement().getType().getTypeArguments().size(); i++) {
+            stack.push(obj);
+          }
+        } else {
+          for (XType arg : Lists.reverse(next.getTypeArguments())) {
+            stack.push(arg);
+          }
+        }
+      }
+      return getBaseTypeName(next);
+    }
+
+    private static TypeName getBaseTypeName(XType type) {
+      if (isDeclared(type)) {
+        return type.getRawType().getTypeName();
+      }
+      TypeName typeName = type.getTypeName();
+      if (typeName instanceof WildcardTypeName) {
+        return getBound((WildcardTypeName) typeName);
+      }
+      return typeName;
+    }
   }
 }

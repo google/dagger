@@ -16,10 +16,6 @@
 
 package dagger.spi.model;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toKS;
-
-import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.value.AutoValue;
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment;
 import javax.annotation.Nullable;
@@ -35,26 +31,13 @@ public abstract class DaggerProcessingEnv {
     return backend.equals(Backend.JAVAC);
   }
 
-  public static DaggerProcessingEnv from(XProcessingEnv processingEnv) {
-    Backend backend = Backend.valueOf(processingEnv.getBackend().name());
-    if (backend.equals(Backend.JAVAC)) {
-      return fromJavac(toJavac(processingEnv));
-    } else if (backend.equals(Backend.KSP)) {
-      return fromKsp(toKS(processingEnv));
-    }
-    throw new IllegalStateException(String.format("Backend %s is not supported yet.", backend));
-  }
-
   public static DaggerProcessingEnv fromJavac(ProcessingEnvironment env) {
-    return new AutoValue_DaggerProcessingEnv(Backend.JAVAC, env, null);
+    return new AutoValue_DaggerProcessingEnv(env, null);
   }
 
   public static DaggerProcessingEnv fromKsp(SymbolProcessorEnvironment env) {
-    return new AutoValue_DaggerProcessingEnv(Backend.KSP, null, env);
+    return new AutoValue_DaggerProcessingEnv(null, env);
   }
-
-  /** Returns the backend used in this compilation. */
-  public abstract Backend backend();
 
   /**
    * Java representation for the processing environment, returns {@code null} not using java
@@ -65,4 +48,14 @@ public abstract class DaggerProcessingEnv {
 
   @Nullable
   public abstract SymbolProcessorEnvironment ksp();
+
+  /** Returns the backend used in this compilation. */
+  public DaggerProcessingEnv.Backend backend() {
+    if (java() != null) {
+      return DaggerProcessingEnv.Backend.JAVAC;
+    } else if (ksp() != null) {
+      return DaggerProcessingEnv.Backend.KSP;
+    }
+    throw new AssertionError("Unexpected backend");
+  }
 }

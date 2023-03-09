@@ -25,6 +25,7 @@ import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
+import dagger.spi.model.DaggerType;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
@@ -69,7 +70,7 @@ public final class BindingGraphSubject extends Subject {
    * @param type the canonical name of the type, as returned by {@link TypeMirror#toString()}
    */
   public BindingSubject bindingWithKey(String type) {
-    return bindingWithKeyString(keyString(type));
+    return bindingWithKeyString(type);
   }
 
   /**
@@ -94,16 +95,28 @@ public final class BindingGraphSubject extends Subject {
 
   private ImmutableSet<Binding> getBindingNodes(String keyString) {
     return actual.bindings().stream()
-        .filter(binding -> binding.key().toString().equals(keyString))
+        .filter(binding -> keyString(binding).equals(keyString))
         .collect(toImmutableSet());
   }
 
-  private static String keyString(String type) {
-    return type;
+  public static String keyString(Binding binding) {
+    return binding.key().qualifier().isPresent()
+        ? keyString(binding.key().qualifier().get().toString(), formattedType(binding.key().type()))
+        : formattedType(binding.key().type());
   }
 
   private static String keyString(String qualifier, String type) {
     return String.format("%s %s", qualifier, type);
+  }
+
+  private static String formattedType(DaggerType type) {
+    switch (type.backend()) {
+      case JAVAC:
+        return type.java().toString();
+      case KSP:
+        return type.ksp().getDeclaration().getQualifiedName().asString();
+    }
+    throw new AssertionError("Unsupported backend");
   }
 
   /** A Truth subject for a {@link Binding}. */
@@ -122,7 +135,7 @@ public final class BindingGraphSubject extends Subject {
      * @param type the canonical name of the type, as returned by {@link TypeMirror#toString()}
      */
     public void dependsOnBindingWithKey(String type) {
-      dependsOnBindingWithKeyString(keyString(type));
+      dependsOnBindingWithKeyString(type);
     }
 
     /**
@@ -138,7 +151,7 @@ public final class BindingGraphSubject extends Subject {
 
     private void dependsOnBindingWithKeyString(String keyString) {
       if (actualBindingGraph().requestedBindings(actual).stream()
-          .noneMatch(binding -> binding.key().toString().equals(keyString))) {
+          .noneMatch(binding -> keyString(binding).equals(keyString))) {
         failWithActual("expected to depend on binding with key", keyString);
       }
     }

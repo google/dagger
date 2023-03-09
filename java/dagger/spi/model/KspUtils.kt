@@ -17,8 +17,20 @@
 package dagger.spi.model
 
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSDeclaration
 
 fun KSClassDeclaration.hasAnnotation(annotationName: String): Boolean =
   annotations.any {
     it.annotationType.resolve().declaration.qualifiedName?.asString().equals(annotationName)
   }
+
+/** Returns root package name as empty string instead of <root>. */
+fun KSDeclaration.getNormalizedPackageName(): String {
+  return packageName.asString().let {
+    if (it == "<root>") {
+      ""
+    } else {
+      it
+    }
+  }
+}

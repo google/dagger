@@ -40,7 +40,6 @@ kt_jvm_library(
     deps = [
         "//java/dagger:core",
         "//java/dagger/internal/codegen/extension",
-        "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/producers",
         "//third_party/java/auto:common",
         "//third_party/java/auto:value",

@@ -117,6 +117,8 @@ public abstract class BindingGraph {
    */
   public abstract boolean isFullBindingGraph();
 
+  public abstract DaggerProcessingEnv.Backend backend();
+
   /**
    * Returns {@code true} if the {@link #rootComponentNode()} is a subcomponent. This occurs in
    * when {@code -Adagger.fullBindingGraphValidation} is used in a compilation with a subcomponent.

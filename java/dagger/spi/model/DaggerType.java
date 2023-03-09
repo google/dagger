@@ -16,57 +16,20 @@
 
 package dagger.spi.model;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toKS;
-
-import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Preconditions;
 import com.google.devtools.ksp.symbol.KSType;
-import dagger.internal.codegen.xprocessing.XTypes;
 import javax.annotation.Nullable;
 import javax.lang.model.type.TypeMirror;
 
 /** Wrapper type for a type. */
 @AutoValue
 public abstract class DaggerType {
-  public static DaggerType from(XType type, XProcessingEnv env) {
-    Preconditions.checkNotNull(type);
-    String backend = env.getBackend().name();
-    String representation = XTypes.toStableString(type);
-    if (backend.equals(DaggerProcessingEnv.Backend.JAVAC.name())) {
-      return builder()
-          .java(toJavac(type))
-          .representation(representation)
-          .backend(DaggerProcessingEnv.Backend.JAVAC)
-          .build();
-    } else if (backend.equals(DaggerProcessingEnv.Backend.KSP.name())) {
-      return builder()
-          .ksp(toKS(type))
-          .representation(representation)
-          .backend(DaggerProcessingEnv.Backend.KSP)
-          .build();
-    }
-    throw new IllegalStateException(String.format("Backend %s is not supported yet.", backend));
+  public static DaggerType fromJavac(TypeMirror type) {
+    return new AutoValue_DaggerType(type, null);
   }
 
-  public static Builder builder() {
-    return new AutoValue_DaggerType.Builder();
-  }
-
-  /** A builder for {@link DaggerType}s. */
-  @AutoValue.Builder
-  public abstract static class Builder {
-    public abstract Builder java(@Nullable TypeMirror java);
-
-    public abstract Builder ksp(@Nullable KSType ksp);
-
-    public abstract Builder backend(DaggerProcessingEnv.Backend backend);
-
-    public abstract Builder representation(String value);
-
-    public abstract DaggerType build();
+  public static DaggerType fromKsp(KSType type) {
+    return new AutoValue_DaggerType(null, type);
   }
 
   /** Java representation for the type, returns {@code null} not using java annotation processor. */
@@ -77,12 +40,23 @@ public abstract class DaggerType {
   @Nullable
   public abstract KSType ksp();
 
-  public abstract DaggerProcessingEnv.Backend backend();
-
-  abstract String representation();
+  public DaggerProcessingEnv.Backend backend() {
+    if (java() != null) {
+      return DaggerProcessingEnv.Backend.JAVAC;
+    } else if (ksp() != null) {
+      return DaggerProcessingEnv.Backend.KSP;
+    }
+    throw new AssertionError("Unexpected backend");
+  }
 
   @Override
   public final String toString() {
-    return representation();
+    switch (backend()) {
+      case JAVAC:
+        return java().toString();
+      case KSP:
+        return ksp().toString();
+    }
+    throw new IllegalStateException(String.format("Backend %s not supported yet.", backend()));
   }
 }

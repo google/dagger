@@ -85,6 +85,7 @@ gen_maven_artifact(
         "//java/dagger/internal/codegen/processingstep",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/writing",
+        "//java/dagger/internal/codegen/xprocessing",
     ],
     artifact_target_maven_deps = [
         "com.google.auto:auto-common",

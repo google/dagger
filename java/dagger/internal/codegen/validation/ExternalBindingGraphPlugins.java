@@ -30,7 +30,6 @@ import dagger.internal.codegen.validation.DiagnosticReporterFactory.DiagnosticRe
 import dagger.spi.DiagnosticReporter;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraphPlugin;
-import dagger.spi.model.DaggerProcessingEnv;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -82,7 +81,7 @@ public final class ExternalBindingGraphPlugins {
         supportedOptions.isEmpty()
             ? ImmutableMap.of()
             : Maps.filterKeys(processingOptions, supportedOptions::contains);
-    plugin.init(DaggerProcessingEnv.from(processingEnv), filteredOptions);
+    plugin.init(SpiModelBindingGraphConverter.toSpiModel(processingEnv), filteredOptions);
   }
 
   private void initializeLegacyPlugin(dagger.spi.BindingGraphPlugin plugin) {

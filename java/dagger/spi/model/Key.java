@@ -87,7 +87,7 @@ public abstract class Key {
     return Joiner.on(' ')
         .skipNulls()
         .join(
-            qualifier().map(DaggerAnnotation::representation).orElse(null),
+            qualifier().map(DaggerAnnotation::toString).orElse(null),
             type(),
             multibindingContributionIdentifier().orElse(null));
   }

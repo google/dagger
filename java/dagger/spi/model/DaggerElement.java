@@ -16,36 +16,20 @@
 
 package dagger.spi.model;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-
-import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.value.AutoValue;
 import com.google.devtools.ksp.symbol.KSAnnotated;
-import dagger.internal.codegen.xprocessing.XElements;
 import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 
 /** Wrapper type for an element. */
 @AutoValue
 public abstract class DaggerElement {
-  public static DaggerElement from(XElement element, XProcessingEnv env) {
-    DaggerProcessingEnv.Backend backend =
-        DaggerProcessingEnv.Backend.valueOf(env.getBackend().name());
-    if (backend.equals(DaggerProcessingEnv.Backend.JAVAC)) {
-      return fromJavac(toJavac(element));
-    } else if (backend.equals(DaggerProcessingEnv.Backend.KSP)) {
-      return fromKsp(XElements.toKSAnnotated(element));
-    }
-    throw new IllegalStateException(String.format("Backend %s is not supported yet.", backend));
-  }
-
   public static DaggerElement fromJavac(Element element) {
-    return new AutoValue_DaggerElement(element, null, DaggerProcessingEnv.Backend.JAVAC);
+    return new AutoValue_DaggerElement(element, null);
   }
 
   public static DaggerElement fromKsp(KSAnnotated ksp) {
-    return new AutoValue_DaggerElement(null, ksp, DaggerProcessingEnv.Backend.KSP);
+    return new AutoValue_DaggerElement(null, ksp);
   }
 
   /**
@@ -58,10 +42,23 @@ public abstract class DaggerElement {
   @Nullable
   public abstract KSAnnotated ksp();
 
-  public abstract DaggerProcessingEnv.Backend backend();
+  public DaggerProcessingEnv.Backend backend() {
+    if (java() != null) {
+      return DaggerProcessingEnv.Backend.JAVAC;
+    } else if (ksp() != null) {
+      return DaggerProcessingEnv.Backend.KSP;
+    }
+    throw new AssertionError("Unexpected backend");
+  }
 
   @Override
   public final String toString() {
-    return DaggerProcessingEnv.isJavac(backend()) ? java().toString() : ksp().toString();
+    switch (backend()) {
+      case JAVAC:
+        return java().toString();
+      case KSP:
+        return ksp().toString();
+    }
+    throw new IllegalStateException(String.format("Backend %s not supported yet.", backend()));
   }
 }

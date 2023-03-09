@@ -14,8 +14,8 @@ function install-maven-version {
   # Download the maven version
   curl https://archive.apache.org/dist/maven/maven-3/${VERSION}/binaries/apache-maven-${VERSION}-bin.tar.gz --output apache-maven-${VERSION}-bin.tar.gz
 
-  # Unzip the contents to the /opt/ directory
-  tar xvf apache-maven-${VERSION}-bin.tar.gz -C /usr/share/
+  # Unzip the contents to the /usr/share/ directory
+  sudo tar xvf apache-maven-${VERSION}-bin.tar.gz -C /usr/share/
   popd
 
   # Replace old symlink with new one

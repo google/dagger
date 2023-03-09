@@ -20,6 +20,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableMap;
@@ -63,21 +64,25 @@ public final class SpiModelBindingGraphConverter {
     return DiagnosticReporterImpl.create(reporter);
   }
 
-  public static BindingGraph toSpiModel(dagger.internal.codegen.model.BindingGraph graph) {
-    return BindingGraphImpl.create(graph);
+  public static BindingGraph toSpiModel(
+      dagger.internal.codegen.model.BindingGraph graph, XProcessingEnv env) {
+    return BindingGraphImpl.create(graph, env);
   }
 
   private static ImmutableNetwork<Node, Edge> toSpiModel(
       Network<
               dagger.internal.codegen.model.BindingGraph.Node,
               dagger.internal.codegen.model.BindingGraph.Edge>
-          internalNetwork) {
+          internalNetwork,
+      XProcessingEnv env) {
     MutableNetwork<Node, Edge> network =
         NetworkBuilder.directed().allowsParallelEdges(true).allowsSelfLoops(true).build();
 
     ImmutableMap<dagger.internal.codegen.model.BindingGraph.Node, Node> fromInternalNodes =
         internalNetwork.nodes().stream()
-            .collect(toImmutableMap(node -> node, SpiModelBindingGraphConverter::toSpiModel));
+            .collect(
+                toImmutableMap(
+                    node -> node, node -> SpiModelBindingGraphConverter.toSpiModel(node, env)));
 
     for (Node node : fromInternalNodes.values()) {
       network.addNode(node);
@@ -88,56 +93,58 @@ public final class SpiModelBindingGraphConverter {
       network.addEdge(
           fromInternalNodes.get(edgePair.source()),
           fromInternalNodes.get(edgePair.target()),
-          toSpiModel(edge));
+          toSpiModel(edge, env));
     }
     return ImmutableNetwork.copyOf(network);
   }
 
-  private static Node toSpiModel(dagger.internal.codegen.model.BindingGraph.Node node) {
+  private static Node toSpiModel(
+      dagger.internal.codegen.model.BindingGraph.Node node, XProcessingEnv env) {
     if (node instanceof dagger.internal.codegen.model.Binding) {
-      return BindingNodeImpl.create((dagger.internal.codegen.model.Binding) node);
+      return BindingNodeImpl.create((dagger.internal.codegen.model.Binding) node, env);
     } else if (node instanceof dagger.internal.codegen.model.BindingGraph.ComponentNode) {
       return ComponentNodeImpl.create(
-          (dagger.internal.codegen.model.BindingGraph.ComponentNode) node);
+          (dagger.internal.codegen.model.BindingGraph.ComponentNode) node, env);
     } else if (node instanceof dagger.internal.codegen.model.BindingGraph.MissingBinding) {
       return MissingBindingImpl.create(
-          (dagger.internal.codegen.model.BindingGraph.MissingBinding) node);
+          (dagger.internal.codegen.model.BindingGraph.MissingBinding) node, env);
     } else {
       throw new IllegalStateException("Unhandled node type: " + node.getClass());
     }
   }
 
-  private static Edge toSpiModel(dagger.internal.codegen.model.BindingGraph.Edge edge) {
+  private static Edge toSpiModel(
+      dagger.internal.codegen.model.BindingGraph.Edge edge, XProcessingEnv env) {
     if (edge instanceof dagger.internal.codegen.model.BindingGraph.DependencyEdge) {
       return DependencyEdgeImpl.create(
-          (dagger.internal.codegen.model.BindingGraph.DependencyEdge) edge);
+          (dagger.internal.codegen.model.BindingGraph.DependencyEdge) edge, env);
     } else if (edge instanceof dagger.internal.codegen.model.BindingGraph.ChildFactoryMethodEdge) {
       return ChildFactoryMethodEdgeImpl.create(
-          (dagger.internal.codegen.model.BindingGraph.ChildFactoryMethodEdge) edge);
+          (dagger.internal.codegen.model.BindingGraph.ChildFactoryMethodEdge) edge, env);
     } else if (edge
         instanceof dagger.internal.codegen.model.BindingGraph.SubcomponentCreatorBindingEdge) {
       return SubcomponentCreatorBindingEdgeImpl.create(
-          (dagger.internal.codegen.model.BindingGraph.SubcomponentCreatorBindingEdge) edge);
+          (dagger.internal.codegen.model.BindingGraph.SubcomponentCreatorBindingEdge) edge, env);
     } else {
       throw new IllegalStateException("Unhandled edge type: " + edge.getClass());
     }
   }
 
-  private static Key toSpiModel(dagger.internal.codegen.model.Key key) {
+  private static Key toSpiModel(dagger.internal.codegen.model.Key key, XProcessingEnv env) {
     Key.Builder builder =
-        Key.builder(DaggerType.from(key.type().xprocessing()))
+        Key.builder(DaggerType.from(key.type().xprocessing(), env))
             .qualifier(
-                key.qualifier().map(qualifier -> DaggerAnnotation.from(qualifier.xprocessing())));
+                key.qualifier()
+                    .map(qualifier -> DaggerAnnotation.from(qualifier.xprocessing(), env)));
     if (key.multibindingContributionIdentifier().isPresent()) {
       return builder
           .multibindingContributionIdentifier(
               DaggerTypeElement.from(
-                  key.multibindingContributionIdentifier()
-                      .get()
-                      .contributingModule()
-                      .xprocessing()),
+                  key.multibindingContributionIdentifier().get().contributingModule().xprocessing(),
+                  env),
               DaggerExecutableElement.from(
-                  key.multibindingContributionIdentifier().get().bindingMethod().xprocessing()))
+                  key.multibindingContributionIdentifier().get().bindingMethod().xprocessing(),
+                  env))
           .build();
     }
     return builder.build().withoutMultibindingContributionIdentifier();
@@ -153,27 +160,28 @@ public final class SpiModelBindingGraphConverter {
 
   @SuppressWarnings("CheckReturnValue")
   private static DependencyRequest toSpiModel(
-      dagger.internal.codegen.model.DependencyRequest request) {
+      dagger.internal.codegen.model.DependencyRequest request, XProcessingEnv env) {
     DependencyRequest.Builder builder =
         DependencyRequest.builder()
             .kind(toSpiModel(request.kind()))
-            .key(toSpiModel(request.key()))
+            .key(toSpiModel(request.key(), env))
             .isNullable(request.isNullable());
 
     request
         .requestElement()
-        .ifPresent(e -> builder.requestElement(DaggerElement.from(e.xprocessing())));
+        .ifPresent(e -> builder.requestElement(DaggerElement.from(e.xprocessing(), env)));
     return builder.build();
   }
 
-  private static Scope toSpiModel(dagger.internal.codegen.model.Scope scope) {
-    return Scope.scope(DaggerAnnotation.from(scope.scopeAnnotation().xprocessing()));
+  private static Scope toSpiModel(dagger.internal.codegen.model.Scope scope, XProcessingEnv env) {
+    return Scope.scope(DaggerAnnotation.from(scope.scopeAnnotation().xprocessing(), env));
   }
 
-  private static ComponentPath toSpiModel(dagger.internal.codegen.model.ComponentPath path) {
+  private static ComponentPath toSpiModel(
+      dagger.internal.codegen.model.ComponentPath path, XProcessingEnv env) {
     return ComponentPath.create(
         path.components().stream()
-            .map(component -> DaggerTypeElement.from(component.xprocessing()))
+            .map(component -> DaggerTypeElement.from(component.xprocessing(), env))
             .collect(toImmutableList()));
   }
 
@@ -206,16 +214,17 @@ public final class SpiModelBindingGraphConverter {
   @AutoValue
   abstract static class ComponentNodeImpl implements ComponentNode {
     static ComponentNode create(
-        dagger.internal.codegen.model.BindingGraph.ComponentNode componentNode) {
+        dagger.internal.codegen.model.BindingGraph.ComponentNode componentNode,
+        XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_ComponentNodeImpl(
-          toSpiModel(componentNode.componentPath()),
+          toSpiModel(componentNode.componentPath(), env),
           componentNode.isSubcomponent(),
           componentNode.isRealComponent(),
           componentNode.entryPoints().stream()
-              .map(SpiModelBindingGraphConverter::toSpiModel)
+              .map(request -> SpiModelBindingGraphConverter.toSpiModel(request, env))
               .collect(toImmutableSet()),
           componentNode.scopes().stream()
-              .map(SpiModelBindingGraphConverter::toSpiModel)
+              .map(request -> SpiModelBindingGraphConverter.toSpiModel(request, env))
               .collect(toImmutableSet()),
           componentNode);
     }
@@ -230,17 +239,19 @@ public final class SpiModelBindingGraphConverter {
 
   @AutoValue
   abstract static class BindingNodeImpl implements Binding {
-    static Binding create(dagger.internal.codegen.model.Binding binding) {
+    static Binding create(dagger.internal.codegen.model.Binding binding, XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_BindingNodeImpl(
-          toSpiModel(binding.key()),
-          toSpiModel(binding.componentPath()),
+          toSpiModel(binding.key(), env),
+          toSpiModel(binding.componentPath(), env),
           binding.dependencies().stream()
-              .map(SpiModelBindingGraphConverter::toSpiModel)
+              .map(request -> SpiModelBindingGraphConverter.toSpiModel(request, env))
               .collect(toImmutableSet()),
-          binding.bindingElement().map(element -> DaggerElement.from(element.xprocessing())),
-          binding.contributingModule().map(module -> DaggerTypeElement.from(module.xprocessing())),
+          binding.bindingElement().map(element -> DaggerElement.from(element.xprocessing(), env)),
+          binding
+              .contributingModule()
+              .map(module -> DaggerTypeElement.from(module.xprocessing(), env)),
           binding.requiresModuleInstance(),
-          binding.scope().map(SpiModelBindingGraphConverter::toSpiModel),
+          binding.scope().map(scope -> SpiModelBindingGraphConverter.toSpiModel(scope, env)),
           binding.isNullable(),
           binding.isProduction(),
           toSpiModel(binding.kind()),
@@ -258,10 +269,11 @@ public final class SpiModelBindingGraphConverter {
   @AutoValue
   abstract static class MissingBindingImpl extends MissingBinding {
     static MissingBinding create(
-        dagger.internal.codegen.model.BindingGraph.MissingBinding missingBinding) {
+        dagger.internal.codegen.model.BindingGraph.MissingBinding missingBinding,
+        XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_MissingBindingImpl(
-          toSpiModel(missingBinding.componentPath()),
-          toSpiModel(missingBinding.key()),
+          toSpiModel(missingBinding.componentPath(), env),
+          toSpiModel(missingBinding.key(), env),
           missingBinding);
     }
 
@@ -278,9 +290,10 @@ public final class SpiModelBindingGraphConverter {
   @AutoValue
   abstract static class DependencyEdgeImpl implements DependencyEdge {
     static DependencyEdge create(
-        dagger.internal.codegen.model.BindingGraph.DependencyEdge dependencyEdge) {
+        dagger.internal.codegen.model.BindingGraph.DependencyEdge dependencyEdge,
+        XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_DependencyEdgeImpl(
-          toSpiModel(dependencyEdge.dependencyRequest()),
+          toSpiModel(dependencyEdge.dependencyRequest(), env),
           dependencyEdge.isEntryPoint(),
           dependencyEdge);
     }
@@ -296,9 +309,10 @@ public final class SpiModelBindingGraphConverter {
   @AutoValue
   abstract static class ChildFactoryMethodEdgeImpl implements ChildFactoryMethodEdge {
     static ChildFactoryMethodEdge create(
-        dagger.internal.codegen.model.BindingGraph.ChildFactoryMethodEdge childFactoryMethodEdge) {
+        dagger.internal.codegen.model.BindingGraph.ChildFactoryMethodEdge childFactoryMethodEdge,
+        XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_ChildFactoryMethodEdgeImpl(
-          DaggerExecutableElement.from(childFactoryMethodEdge.factoryMethod().xprocessing()),
+          DaggerExecutableElement.from(childFactoryMethodEdge.factoryMethod().xprocessing(), env),
           childFactoryMethodEdge);
     }
 
@@ -315,10 +329,11 @@ public final class SpiModelBindingGraphConverter {
       implements SubcomponentCreatorBindingEdge {
     static SubcomponentCreatorBindingEdge create(
         dagger.internal.codegen.model.BindingGraph.SubcomponentCreatorBindingEdge
-            subcomponentCreatorBindingEdge) {
+            subcomponentCreatorBindingEdge,
+        XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_SubcomponentCreatorBindingEdgeImpl(
           subcomponentCreatorBindingEdge.declaringModules().stream()
-              .map(module -> DaggerTypeElement.from(module.xprocessing()))
+              .map(module -> DaggerTypeElement.from(module.xprocessing(), env))
               .collect(toImmutableSet()),
           subcomponentCreatorBindingEdge);
     }
@@ -334,10 +349,11 @@ public final class SpiModelBindingGraphConverter {
 
   @AutoValue
   abstract static class BindingGraphImpl extends BindingGraph {
-    static BindingGraph create(dagger.internal.codegen.model.BindingGraph bindingGraph) {
+    static BindingGraph create(
+        dagger.internal.codegen.model.BindingGraph bindingGraph, XProcessingEnv env) {
       BindingGraphImpl bindingGraphImpl =
           new AutoValue_SpiModelBindingGraphConverter_BindingGraphImpl(
-              toSpiModel(bindingGraph.network()), bindingGraph.isFullBindingGraph());
+              toSpiModel(bindingGraph.network(), env), bindingGraph.isFullBindingGraph());
 
       bindingGraphImpl.componentNodesByPath =
           bindingGraphImpl.componentNodes().stream()

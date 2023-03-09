@@ -17,27 +17,59 @@
 package dagger.spi.model;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static androidx.room.compiler.processing.compat.XConverters.toKS;
 
 import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.value.AutoValue;
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration;
+import dagger.internal.codegen.xprocessing.XElements;
+import javax.annotation.Nullable;
 import javax.lang.model.element.ExecutableElement;
 
 /** Wrapper type for an executable element. */
 @AutoValue
 public abstract class DaggerExecutableElement {
-  public static DaggerExecutableElement from(XExecutableElement executableElement) {
-    return new AutoValue_DaggerExecutableElement(checkNotNull(executableElement));
+  public static DaggerExecutableElement from(
+      XExecutableElement executableElement, XProcessingEnv env) {
+    DaggerProcessingEnv.Backend backend =
+        DaggerProcessingEnv.Backend.valueOf(env.getBackend().name());
+    if (backend.equals(DaggerProcessingEnv.Backend.JAVAC)) {
+      return fromJava(toJavac(executableElement), XElements.getSimpleName(executableElement));
+    } else if (backend.equals(DaggerProcessingEnv.Backend.KSP)) {
+      return fromKsp(toKS(executableElement), XElements.getSimpleName(executableElement));
+    }
+    throw new IllegalStateException(String.format("Backend %s is not supported yet.", backend));
   }
 
-  public abstract XExecutableElement xprocessing();
-
-  public ExecutableElement java() {
-    return toJavac(xprocessing());
+  public static DaggerExecutableElement fromJava(
+      ExecutableElement executableElement, String simpleName) {
+    return new AutoValue_DaggerExecutableElement(
+        executableElement, null, DaggerProcessingEnv.Backend.JAVAC, simpleName);
   }
+
+  public static DaggerExecutableElement fromKsp(
+      KSFunctionDeclaration declaration, String simpleName) {
+    return new AutoValue_DaggerExecutableElement(
+        null, declaration, DaggerProcessingEnv.Backend.KSP, simpleName);
+  }
+
+  /**
+   * Java representation for the element, returns {@code null} not using java annotation processor.
+   */
+  @Nullable
+  public abstract ExecutableElement java();
+
+  /** KSP declaration for the element, returns {@code null} not using KSP. */
+  @Nullable
+  public abstract KSFunctionDeclaration ksp();
+
+  public abstract DaggerProcessingEnv.Backend backend();
+
+  abstract String simpleName();
 
   @Override
   public final String toString() {
-    return xprocessing().toString();
+    return DaggerProcessingEnv.isJavac(backend()) ? java().toString() : ksp().toString();
   }
 }

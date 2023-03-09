@@ -17,44 +17,85 @@
 package dagger.spi.model;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toKS;
 
 import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Equivalence;
 import com.google.common.base.Preconditions;
-import com.squareup.javapoet.ClassName;
+import com.google.devtools.ksp.symbol.KSAnnotation;
 import dagger.internal.codegen.xprocessing.XAnnotations;
+import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
 
 /** Wrapper type for an annotation. */
 @AutoValue
 public abstract class DaggerAnnotation {
-
-  public static DaggerAnnotation from(XAnnotation annotation) {
+  public static DaggerAnnotation from(XAnnotation annotation, XProcessingEnv env) {
     Preconditions.checkNotNull(annotation);
-    return new AutoValue_DaggerAnnotation(XAnnotations.equivalence().wrap(annotation));
+    DaggerProcessingEnv.Backend backend =
+        DaggerProcessingEnv.Backend.valueOf(env.getBackend().name());
+    String representation = XAnnotations.toString(annotation);
+    DaggerTypeElement typeElement = DaggerTypeElement.from(annotation.getTypeElement(), env);
+    if (backend.equals(DaggerProcessingEnv.Backend.JAVAC)) {
+      return builder()
+          .annotationTypeElement(typeElement)
+          .java(toJavac(annotation))
+          .representation(representation)
+          .backend(backend)
+          .build();
+    } else if (backend.equals(DaggerProcessingEnv.Backend.KSP)) {
+      return builder()
+          .annotationTypeElement(typeElement)
+          .ksp(toKS(annotation))
+          .representation(representation)
+          .backend(backend)
+          .build();
+    }
+    throw new IllegalStateException(String.format("Backend %s is not supported yet.", backend));
   }
 
-  abstract Equivalence.Wrapper<XAnnotation> equivalenceWrapper();
-
-  public DaggerTypeElement annotationTypeElement() {
-    return DaggerTypeElement.from(xprocessing().getType().getTypeElement());
+  public static Builder builder() {
+    return new AutoValue_DaggerAnnotation.Builder();
   }
 
-  public ClassName className() {
-    return annotationTypeElement().className();
+  /** A builder for {@link DaggerAnnotation}s. */
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder annotationTypeElement(DaggerTypeElement value);
+
+    @Nullable
+    public abstract Builder java(@Nullable AnnotationMirror value);
+
+    @Nullable
+    public abstract Builder ksp(@Nullable KSAnnotation value);
+
+    public abstract Builder backend(DaggerProcessingEnv.Backend value);
+
+    public abstract Builder representation(String value);
+
+    public abstract DaggerAnnotation build();
   }
 
-  public XAnnotation xprocessing() {
-    return equivalenceWrapper().get();
-  }
+  public abstract DaggerTypeElement annotationTypeElement();
 
-  public AnnotationMirror java() {
-    return toJavac(xprocessing());
-  }
+  /**
+   * java representation for the annotation, returns {@code null} if the annotation isn't a java
+   * element.
+   */
+  @Nullable
+  public abstract AnnotationMirror java();
+
+  /** KSP declaration for the annotation, returns {@code null} not using KSP. */
+  @Nullable
+  public abstract KSAnnotation ksp();
+
+  public abstract DaggerProcessingEnv.Backend backend();
+
+  abstract String representation();
 
   @Override
   public final String toString() {
-    return XAnnotations.toString(xprocessing());
+    return representation();
   }
 }

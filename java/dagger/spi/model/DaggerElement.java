@@ -19,24 +19,49 @@ package dagger.spi.model;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.value.AutoValue;
+import com.google.devtools.ksp.symbol.KSAnnotated;
+import dagger.internal.codegen.xprocessing.XElements;
+import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 
 /** Wrapper type for an element. */
 @AutoValue
 public abstract class DaggerElement {
-  public static DaggerElement from(XElement element) {
-    return new AutoValue_DaggerElement(element);
+  public static DaggerElement from(XElement element, XProcessingEnv env) {
+    DaggerProcessingEnv.Backend backend =
+        DaggerProcessingEnv.Backend.valueOf(env.getBackend().name());
+    if (backend.equals(DaggerProcessingEnv.Backend.JAVAC)) {
+      return fromJavac(toJavac(element));
+    } else if (backend.equals(DaggerProcessingEnv.Backend.KSP)) {
+      return fromKsp(XElements.toKSAnnotated(element));
+    }
+    throw new IllegalStateException(String.format("Backend %s is not supported yet.", backend));
   }
 
-  public abstract XElement xprocessing();
-
-  public Element java() {
-    return toJavac(xprocessing());
+  public static DaggerElement fromJavac(Element element) {
+    return new AutoValue_DaggerElement(element, null, DaggerProcessingEnv.Backend.JAVAC);
   }
+
+  public static DaggerElement fromKsp(KSAnnotated ksp) {
+    return new AutoValue_DaggerElement(null, ksp, DaggerProcessingEnv.Backend.KSP);
+  }
+
+  /**
+   * Java representation for the element, returns {@code null} not using java annotation processor.
+   */
+  @Nullable
+  public abstract Element java();
+
+  /** KSP declaration for the element, returns {@code null} not using KSP. */
+  @Nullable
+  public abstract KSAnnotated ksp();
+
+  public abstract DaggerProcessingEnv.Backend backend();
 
   @Override
   public final String toString() {
-    return xprocessing().toString();
+    return DaggerProcessingEnv.isJavac(backend()) ? java().toString() : ksp().toString();
   }
 }

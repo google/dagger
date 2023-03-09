@@ -16,12 +16,10 @@
 
 package dagger.spi.model;
 
-import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Joiner;
-import dagger.internal.codegen.xprocessing.XAnnotations;
 import java.util.Optional;
 
 /**
@@ -89,10 +87,7 @@ public abstract class Key {
     return Joiner.on(' ')
         .skipNulls()
         .join(
-            qualifier()
-                .map(DaggerAnnotation::xprocessing)
-                .map(XAnnotations::toStableString)
-                .orElse(null),
+            qualifier().map(DaggerAnnotation::representation).orElse(null),
             type(),
             multibindingContributionIdentifier().orElse(null));
   }
@@ -135,8 +130,7 @@ public abstract class Key {
     private static MultibindingContributionIdentifier create(
         DaggerTypeElement contributingModule, DaggerExecutableElement bindingMethod) {
       return new AutoValue_Key_MultibindingContributionIdentifier(
-          contributingModule.xprocessing().getQualifiedName(),
-          getSimpleName(bindingMethod.xprocessing()));
+          contributingModule.qualifiedName(), bindingMethod.simpleName());
     }
 
     /** Returns the module containing the multibinding method. */
@@ -152,7 +146,7 @@ public abstract class Key {
      * whole object.
      */
     @Override
-    public String toString() {
+    public final String toString() {
       return String.format("%s#%s", contributingModule(), bindingMethod());
     }
   }

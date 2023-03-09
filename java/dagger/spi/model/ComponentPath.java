@@ -23,7 +23,6 @@ import static java.util.stream.Collectors.joining;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
-import com.squareup.javapoet.ClassName;
 
 /** A path containing a component and all of its ancestor components. */
 @AutoValue
@@ -90,10 +89,7 @@ public abstract class ComponentPath {
 
   @Override
   public final String toString() {
-    return components().stream()
-        .map(DaggerTypeElement::className)
-        .map(ClassName::canonicalName)
-        .collect(joining(" → "));
+    return components().stream().map(DaggerTypeElement::qualifiedName).collect(joining(" → "));
   }
 
   @Memoized

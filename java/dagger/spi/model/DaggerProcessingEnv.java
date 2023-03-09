@@ -17,9 +17,12 @@
 package dagger.spi.model;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toKS;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.value.AutoValue;
+import com.google.devtools.ksp.processing.SymbolProcessorEnvironment;
+import javax.annotation.Nullable;
 import javax.annotation.processing.ProcessingEnvironment;
 
 /** Wrapper type for an element. */
@@ -28,18 +31,38 @@ public abstract class DaggerProcessingEnv {
   /** Represents a type of backend used for compilation. */
   public enum Backend { JAVAC, KSP }
 
-  public static DaggerProcessingEnv from(XProcessingEnv processingEnv) {
-    return new AutoValue_DaggerProcessingEnv(processingEnv);
+  public static boolean isJavac(Backend backend) {
+    return backend.equals(Backend.JAVAC);
   }
 
-  public abstract XProcessingEnv xprocessing();
+  public static DaggerProcessingEnv from(XProcessingEnv processingEnv) {
+    Backend backend = Backend.valueOf(processingEnv.getBackend().name());
+    if (backend.equals(Backend.JAVAC)) {
+      return fromJavac(toJavac(processingEnv));
+    } else if (backend.equals(Backend.KSP)) {
+      return fromKsp(toKS(processingEnv));
+    }
+    throw new IllegalStateException(String.format("Backend %s is not supported yet.", backend));
+  }
+
+  public static DaggerProcessingEnv fromJavac(ProcessingEnvironment env) {
+    return new AutoValue_DaggerProcessingEnv(Backend.JAVAC, env, null);
+  }
+
+  public static DaggerProcessingEnv fromKsp(SymbolProcessorEnvironment env) {
+    return new AutoValue_DaggerProcessingEnv(Backend.KSP, null, env);
+  }
 
   /** Returns the backend used in this compilation. */
-  public Backend getBackend() {
-    return Backend.valueOf(xprocessing().getBackend().name());
-  }
+  public abstract Backend backend();
 
-  public ProcessingEnvironment java() {
-    return toJavac(xprocessing());
-  }
+  /**
+   * Java representation for the processing environment, returns {@code null} not using java
+   * annotation processor.
+   */
+  @Nullable
+  public abstract ProcessingEnvironment java();
+
+  @Nullable
+  public abstract SymbolProcessorEnvironment ksp();
 }

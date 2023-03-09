@@ -120,7 +120,7 @@ public final class ExternalBindingGraphPlugins {
   }
 
   private boolean visitPlugins(dagger.internal.codegen.model.BindingGraph graph) {
-    BindingGraph spiGraph = SpiModelBindingGraphConverter.toSpiModel(graph);
+    BindingGraph spiGraph = SpiModelBindingGraphConverter.toSpiModel(graph, processingEnv);
     boolean isClean = true;
     for (BindingGraphPlugin plugin : plugins) {
       DiagnosticReporterImpl reporter =

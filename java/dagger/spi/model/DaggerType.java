@@ -17,38 +17,72 @@
 package dagger.spi.model;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toKS;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Equivalence;
 import com.google.common.base.Preconditions;
+import com.google.devtools.ksp.symbol.KSType;
 import dagger.internal.codegen.xprocessing.XTypes;
+import javax.annotation.Nullable;
 import javax.lang.model.type.TypeMirror;
 
 /** Wrapper type for a type. */
 @AutoValue
 public abstract class DaggerType {
-  public static DaggerType from(XType type) {
+  public static DaggerType from(XType type, XProcessingEnv env) {
     Preconditions.checkNotNull(type);
-    return new AutoValue_DaggerType(XTypes.equivalence().wrap(type));
+    String backend = env.getBackend().name();
+    String representation = XTypes.toStableString(type);
+    if (backend.equals(DaggerProcessingEnv.Backend.JAVAC.name())) {
+      return builder()
+          .java(toJavac(type))
+          .representation(representation)
+          .backend(DaggerProcessingEnv.Backend.JAVAC)
+          .build();
+    } else if (backend.equals(DaggerProcessingEnv.Backend.KSP.name())) {
+      return builder()
+          .ksp(toKS(type))
+          .representation(representation)
+          .backend(DaggerProcessingEnv.Backend.KSP)
+          .build();
+    }
+    throw new IllegalStateException(String.format("Backend %s is not supported yet.", backend));
   }
 
-  abstract Equivalence.Wrapper<XType> equivalenceWrapper();
-
-  public XType xprocessing() {
-    return equivalenceWrapper().get();
+  public static Builder builder() {
+    return new AutoValue_DaggerType.Builder();
   }
 
-  public TypeMirror java() {
-    return toJavac(xprocessing());
+  /** A builder for {@link DaggerType}s. */
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder java(@Nullable TypeMirror java);
+
+    public abstract Builder ksp(@Nullable KSType ksp);
+
+    public abstract Builder backend(DaggerProcessingEnv.Backend backend);
+
+    public abstract Builder representation(String value);
+
+    public abstract DaggerType build();
   }
+
+  /** Java representation for the type, returns {@code null} not using java annotation processor. */
+  @Nullable
+  public abstract TypeMirror java();
+
+  /** KSP declaration for the type, returns {@code null} not using KSP. */
+  @Nullable
+  public abstract KSType ksp();
+
+  public abstract DaggerProcessingEnv.Backend backend();
+
+  abstract String representation();
 
   @Override
   public final String toString() {
-    // We define our own stable string rather than use XType#toString() here because
-    // XType#toString() is currently not stable across backends. In particular, in javac it returns
-    // the qualified type but in ksp it returns the simple name.
-    // TODO(bcorso): Consider changing XProcessing so that #toString() is stable across backends.
-    return XTypes.toStableString(xprocessing());
+    return representation();
   }
 }

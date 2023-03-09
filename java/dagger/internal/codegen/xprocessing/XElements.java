@@ -52,6 +52,7 @@ import com.google.devtools.ksp.symbol.KSAnnotated;
 import com.squareup.javapoet.ClassName;
 import java.util.Collection;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.lang.model.element.ElementKind;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
@@ -62,23 +63,6 @@ public final class XElements {
   /** Returns the simple name of the member container. */
   public static String getSimpleName(XMemberContainer memberContainer) {
     return memberContainer.getClassName().simpleName();
-  }
-
-  public static KSAnnotated toKSAnnotated(XElement element) {
-    if (isExecutable(element)) {
-      return toKS(asExecutable(element));
-    }
-    if (isTypeElement(element)) {
-      return toKS(asTypeElement(element));
-    }
-    if (isField(element)) {
-      return toKS(asField(element));
-    }
-    if (isMethodParameter(element)) {
-      return toKS(asMethodParameter(element));
-    }
-    throw new IllegalStateException(
-        "Returning KSAnnotated declaration for " + element + " is not supported.");
   }
 
   /** Returns the simple name of the element. */
@@ -108,6 +92,40 @@ public final class XElements {
       return asTypeParameter(element).getName(); // SUPPRESS_GET_NAME_CHECK
     }
     throw new AssertionError("No simple name for: " + element);
+  }
+
+  private static boolean isSyntheticElement(XElement element) {
+    if (isMethodParameter(element)) {
+      XExecutableParameterElement executableParam = asMethodParameter(element);
+      return executableParam.isContinuationParam()
+          || executableParam.isReceiverParam()
+          || executableParam.isKotlinPropertyParam();
+    }
+    if (isMethod(element)) {
+      return asMethod(element).isKotlinPropertyMethod();
+    }
+    return false;
+  }
+
+  @Nullable
+  public static KSAnnotated toKSAnnotated(XElement element) {
+    if (isSyntheticElement(element)) {
+      return toKS(element);
+    }
+    if (isExecutable(element)) {
+      return toKS(asExecutable(element));
+    }
+    if (isTypeElement(element)) {
+      return toKS(asTypeElement(element));
+    }
+    if (isField(element)) {
+      return toKS(asField(element));
+    }
+    if (isMethodParameter(element)) {
+      return toKS(asMethodParameter(element));
+    }
+    throw new IllegalStateException(
+        "Returning KSAnnotated declaration for " + element + " is not supported.");
   }
 
   /**

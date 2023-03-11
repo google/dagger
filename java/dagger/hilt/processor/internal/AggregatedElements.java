@@ -16,12 +16,17 @@
 
 package dagger.hilt.processor.internal;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.extension.DaggerStreams;
 import java.util.Optional;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
@@ -58,6 +63,7 @@ public final class AggregatedElements {
         : element;
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /** Returns all aggregated elements in the aggregating package after validating them. */
   public static ImmutableSet<TypeElement> from(
       String aggregatingPackage, ClassName aggregatingAnnotation, Elements elements) {
@@ -93,6 +99,14 @@ public final class AggregatedElements {
     }
 
     return aggregatedElements;
+  }
+
+  /** Returns all aggregated elements in the aggregating package after validating them. */
+  public static ImmutableSet<XTypeElement> from(
+      String aggregatingPackage, ClassName aggregatingAnnotation, XProcessingEnv env) {
+    return from(aggregatingPackage, aggregatingAnnotation, toJavac(env).getElementUtils()).stream()
+        .map(it -> toXProcessing(it, env))
+        .collect(DaggerStreams.toImmutableSet());
   }
 
   private AggregatedElements() {}

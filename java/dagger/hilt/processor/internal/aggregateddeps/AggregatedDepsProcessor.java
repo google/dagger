@@ -16,21 +16,18 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-import static com.google.auto.common.MoreElements.asType;
-import static com.google.auto.common.MoreElements.getPackage;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isModuleInstallInCheckDisabled;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static javax.lang.model.element.ElementKind.CLASS;
-import static javax.lang.model.element.ElementKind.INTERFACE;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.STATIC;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XElementKt;
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
@@ -41,20 +38,12 @@ import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Components;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
+import dagger.internal.codegen.extension.DaggerStreams;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.processing.Processor;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Name;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Processor that outputs dummy files to propagate information through multiple javac runs. */
@@ -76,7 +65,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
   private static final ImmutableSet<ClassName> INSTALL_IN_ANNOTATIONS =
       ImmutableSet.of(ClassNames.INSTALL_IN, ClassNames.TEST_INSTALL_IN);
 
-  private final Set<Element> seen = new HashSet<>();
+  private final Set<XElement> seen = new HashSet<>();
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {
@@ -92,10 +81,6 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
 
   @Override
   public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    processEach(toJavac(element));
-  }
-
-  private void processEach(Element element) throws Exception {
     if (!seen.add(element)) {
       return;
     }
@@ -113,7 +98,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         element,
         "@%s-annotated classes must also be annotated with @Module or @EntryPoint: %s",
         installInAnnotation.map(ClassName::simpleName).orElse("@InstallIn"),
-        element);
+        XElements.toStableString(element));
 
     ProcessorErrors.checkState(
         !(isEntryPoint && isModule),
@@ -121,7 +106,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         "@%s and @%s cannot be used on the same interface: %s",
         moduleAnnotation.map(ClassName::simpleName).orElse("@Module"),
         entryPointAnnotation.map(ClassName::simpleName).orElse("@EntryPoint"),
-        element);
+        XElements.toStableString(element));
 
     if (isModule) {
       processModule(element, installInAnnotation, moduleAnnotation.get());
@@ -133,7 +118,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
   }
 
   private void processModule(
-      Element element, Optional<ClassName> installInAnnotation, ClassName moduleAnnotation)
+      XElement element, Optional<ClassName> installInAnnotation, ClassName moduleAnnotation)
       throws Exception {
     ProcessorErrors.checkState(
         installInAnnotation.isPresent()
@@ -151,17 +136,19 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     }
 
     ProcessorErrors.checkState(
-        element.getKind() == CLASS || element.getKind() == INTERFACE,
+        XElementKt.isTypeElement(element)
+            && (XElements.asTypeElement(element).isClass()
+                || XElements.asTypeElement(element).isInterface()),
         element,
         "Only classes and interfaces can be annotated with @Module: %s",
         element);
-    TypeElement module = asType(element);
+    XTypeElement module = XElements.asTypeElement(element);
 
     ProcessorErrors.checkState(
         Processors.isTopLevel(module)
-            || module.getModifiers().contains(STATIC)
-            || module.getModifiers().contains(ABSTRACT)
-            || Processors.hasAnnotation(module.getEnclosingElement(), ClassNames.HILT_ANDROID_TEST),
+            || module.isStatic()
+            || module.isAbstract()
+            || module.getEnclosingElement().hasAnnotation(ClassNames.HILT_ANDROID_TEST),
         module,
         "Nested @%s modules must be static unless they are directly nested within a test. "
             + "Found: %s",
@@ -172,16 +159,16 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     // calling a visible empty constructor.
     ProcessorErrors.checkState(
         // Skip ApplicationContextModule, since Hilt manages this module internally.
-        ClassNames.APPLICATION_CONTEXT_MODULE.equals(ClassName.get(module))
-            || !Processors.requiresModuleInstance(getElementUtils(), module)
+        ClassNames.APPLICATION_CONTEXT_MODULE.equals(module.getClassName())
+            || !Processors.requiresModuleInstance(module)
             || Processors.hasVisibleEmptyConstructor(module),
         module,
         "Modules that need to be instantiated by Hilt must have a visible, empty constructor.");
 
     // TODO(b/28989613): This should really be fixed in Dagger. Remove once Dagger bug is fixed.
-    ImmutableList<ExecutableElement> abstractMethodsWithMissingBinds =
-        ElementFilter.methodsIn(module.getEnclosedElements()).stream()
-            .filter(method -> method.getModifiers().contains(ABSTRACT))
+    ImmutableList<XExecutableElement> abstractMethodsWithMissingBinds =
+        module.getDeclaredMethods().stream()
+            .filter(XMethodElement::isAbstract)
             .filter(method -> !Processors.hasDaggerAbstractMethodAnnotation(method))
             .collect(toImmutableList());
     ProcessorErrors.checkState(
@@ -189,27 +176,27 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         module,
         "Found unimplemented abstract methods, %s, in an abstract module, %s. "
             + "Did you forget to add a Dagger binding annotation (e.g. @Binds)?",
-        abstractMethodsWithMissingBinds,
-        module);
+        abstractMethodsWithMissingBinds.stream()
+            .map(XElements::toStableString)
+            .collect(DaggerStreams.toImmutableList()),
+        XElements.toStableString(module));
 
-    ImmutableList<TypeElement> replacedModules = ImmutableList.of();
-    if (Processors.hasAnnotation(module, ClassNames.TEST_INSTALL_IN)) {
-      Optional<TypeElement> originatingTestElement =
-          Processors.getOriginatingTestElement(module, getElementUtils());
+    ImmutableList<XTypeElement> replacedModules = ImmutableList.of();
+    if (module.hasAnnotation(ClassNames.TEST_INSTALL_IN)) {
+      Optional<XTypeElement> originatingTestElement = Processors.getOriginatingTestElement(module);
       ProcessorErrors.checkState(
           !originatingTestElement.isPresent(),
           // TODO(b/152801981): this should really error on the annotation value
           module,
           "@TestInstallIn modules cannot be nested in (or originate from) a "
               + "@HiltAndroidTest-annotated class:  %s",
-          originatingTestElement
-              .map(testElement -> testElement.getQualifiedName().toString())
-              .orElse(""));
+          originatingTestElement.map(XTypeElement::getQualifiedName).orElse(""));
 
-      AnnotationMirror testInstallIn =
-          Processors.getAnnotationMirror(module, ClassNames.TEST_INSTALL_IN);
+      XAnnotation testInstallIn = module.getAnnotation(ClassNames.TEST_INSTALL_IN);
       replacedModules =
-          Processors.getAnnotationClassValues(getElementUtils(), testInstallIn, "replaces");
+          testInstallIn.getAsTypeList("replaces").stream()
+              .map(XType::getTypeElement)
+              .collect(DaggerStreams.toImmutableList());
 
       ProcessorErrors.checkState(
           !replacedModules.isEmpty(),
@@ -217,11 +204,9 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
           module,
           "@TestInstallIn#replaces() cannot be empty. Use @InstallIn instead.");
 
-      ImmutableList<TypeElement> nonInstallInModules =
+      ImmutableList<XTypeElement> nonInstallInModules =
           replacedModules.stream()
-              .filter(
-                  replacedModule ->
-                      !Processors.hasAnnotation(replacedModule, ClassNames.INSTALL_IN))
+              .filter(replacedModule -> !replacedModule.hasAnnotation(ClassNames.INSTALL_IN))
               .collect(toImmutableList());
 
       ProcessorErrors.checkState(
@@ -229,13 +214,15 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
           // TODO(b/152801981): this should really error on the annotation value
           module,
           "@TestInstallIn#replaces() can only contain @InstallIn modules, but found: %s",
-          nonInstallInModules);
+          nonInstallInModules.stream()
+              .map(XElements::toStableString)
+              .collect(DaggerStreams.toImmutableList()));
 
-      ImmutableList<TypeElement> hiltWrapperModules =
+      ImmutableList<XTypeElement> hiltWrapperModules =
           replacedModules.stream()
               .filter(
                   replacedModule ->
-                      replacedModule.getSimpleName().toString().startsWith("HiltWrapper_"))
+                      replacedModule.getClassName().simpleName().startsWith("HiltWrapper_"))
               .collect(toImmutableList());
 
       ProcessorErrors.checkState(
@@ -244,20 +231,17 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
           module,
           "@TestInstallIn#replaces() cannot contain Hilt generated public wrapper modules, "
               + "but found: %s. ",
-          hiltWrapperModules);
+          hiltWrapperModules.stream()
+              .map(XElements::toStableString)
+              .collect(DaggerStreams.toImmutableList()));
 
-      if (!getPackage(module).getQualifiedName().toString().startsWith("dagger.hilt")) {
+      if (!module.getPackageName().startsWith("dagger.hilt")) {
         // Prevent external users from overriding Hilt's internal modules. Techincally, except for
         // ApplicationContextModule, making all modules pkg-private should be enough but this is an
         // extra measure of precaution.
-        ImmutableList<TypeElement> hiltInternalModules =
+        ImmutableList<XTypeElement> hiltInternalModules =
             replacedModules.stream()
-                .filter(
-                    replacedModule ->
-                        getPackage(replacedModule)
-                            .getQualifiedName()
-                            .toString()
-                            .startsWith("dagger.hilt"))
+                .filter(replacedModule -> replacedModule.getPackageName().startsWith("dagger.hilt"))
                 .collect(toImmutableList());
 
         ProcessorErrors.checkState(
@@ -265,16 +249,17 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
             // TODO(b/152801981): this should really error on the annotation value
             module,
             "@TestInstallIn#replaces() cannot contain internal Hilt modules, but found: %s. ",
-            hiltInternalModules);
+            hiltInternalModules.stream()
+                .map(XElements::toStableString)
+                .collect(DaggerStreams.toImmutableList()));
       }
 
       // Prevent users from uninstalling test-specific @InstallIn modules.
-      ImmutableList<TypeElement> replacedTestSpecificInstallIn =
+      ImmutableList<XTypeElement> replacedTestSpecificInstallIn =
           replacedModules.stream()
               .filter(
                   replacedModule ->
-                      Processors.getOriginatingTestElement(replacedModule, getElementUtils())
-                          .isPresent())
+                      Processors.getOriginatingTestElement(replacedModule).isPresent())
               .collect(toImmutableList());
 
       ProcessorErrors.checkState(
@@ -283,59 +268,58 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
           module,
           "@TestInstallIn#replaces() cannot replace test specific @InstallIn modules, but found: "
               + "%s. Please remove the @InstallIn module manually rather than replacing it.",
-          replacedTestSpecificInstallIn);
+          replacedTestSpecificInstallIn.stream()
+              .map(XElements::toStableString)
+              .collect(DaggerStreams.toImmutableList()));
     }
 
     generateAggregatedDeps(
         "modules",
         module,
         moduleAnnotation,
-        replacedModules.stream().map(ClassName::get).collect(toImmutableSet()));
+        replacedModules.stream().map(XTypeElement::getClassName).collect(toImmutableSet()));
   }
 
   private void processEntryPoint(
-      Element element, Optional<ClassName> installInAnnotation, ClassName entryPointAnnotation)
+      XElement element, Optional<ClassName> installInAnnotation, ClassName entryPointAnnotation)
       throws Exception {
     ProcessorErrors.checkState(
         installInAnnotation.isPresent() ,
         element,
         "@%s %s must also be annotated with @InstallIn",
         entryPointAnnotation.simpleName(),
-        element);
+        XElements.toStableString(element));
 
     ProcessorErrors.checkState(
-        !Processors.hasAnnotation(element, ClassNames.TEST_INSTALL_IN),
+        !element.hasAnnotation(ClassNames.TEST_INSTALL_IN),
         element,
         "@TestInstallIn can only be used with modules");
 
     ProcessorErrors.checkState(
-        element.getKind() == INTERFACE,
+        XElementKt.isTypeElement(element) && XElements.asTypeElement(element).isInterface(),
         element,
         "Only interfaces can be annotated with @%s: %s",
         entryPointAnnotation.simpleName(),
-        element);
-    TypeElement entryPoint = asType(element);
+        XElements.toStableString(element));
+    XTypeElement entryPoint = XElements.asTypeElement(element);
 
     if (entryPointAnnotation.equals(ClassNames.EARLY_ENTRY_POINT)) {
-      ImmutableSet<ClassName> components = Components.getComponents(getElementUtils(), element);
+      ImmutableSet<ClassName> components = Components.getComponents(element);
       ProcessorErrors.checkState(
           components.equals(ImmutableSet.of(ClassNames.SINGLETON_COMPONENT)),
           element,
           "@EarlyEntryPoint can only be installed into the SingletonComponent. Found: %s",
           components);
 
-      Optional<TypeElement> optionalTestElement =
-          Processors.getOriginatingTestElement(element, getElementUtils());
+      Optional<XTypeElement> optionalTestElement = Processors.getOriginatingTestElement(element);
       ProcessorErrors.checkState(
           !optionalTestElement.isPresent(),
           element,
           "@EarlyEntryPoint-annotated entry point, %s, cannot be nested in (or originate from) "
               + "a @HiltAndroidTest-annotated class, %s. This requirement is to avoid confusion "
               + "with other, test-specific entry points.",
-          asType(element).getQualifiedName().toString(),
-          optionalTestElement
-              .map(testElement -> testElement.getQualifiedName().toString())
-              .orElse(""));
+          XElements.asTypeElement(element).getQualifiedName(),
+          optionalTestElement.map(testElement -> testElement.getQualifiedName()).orElse(""));
     }
 
     generateAggregatedDeps(
@@ -349,39 +333,33 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
 
   private void generateAggregatedDeps(
       String key,
-      TypeElement element,
+      XTypeElement element,
       ClassName annotation,
       ImmutableSet<ClassName> replacedModules)
       throws Exception {
     // Get @InstallIn components here to catch errors before skipping user's pkg-private element.
-    ImmutableSet<ClassName> components = Components.getComponents(getElementUtils(), element);
+    ImmutableSet<ClassName> components = Components.getComponents(element);
 
     if (isValidKind(element)) {
-      Optional<PkgPrivateMetadata> pkgPrivateMetadata =
-          PkgPrivateMetadata.of(getElementUtils(), element, annotation);
+      Optional<PkgPrivateMetadata> pkgPrivateMetadata = PkgPrivateMetadata.of(element, annotation);
       if (pkgPrivateMetadata.isPresent()) {
         if (key.contentEquals("modules")) {
-          new PkgPrivateModuleGenerator(getProcessingEnv(), pkgPrivateMetadata.get()).generate();
+          new PkgPrivateModuleGenerator(processingEnv(), pkgPrivateMetadata.get()).generate();
         } else {
-          new PkgPrivateEntryPointGenerator(getProcessingEnv(), pkgPrivateMetadata.get())
-              .generate();
+          new PkgPrivateEntryPointGenerator(processingEnv(), pkgPrivateMetadata.get()).generate();
         }
       } else {
         Optional<ClassName> testName =
-            Processors.getOriginatingTestElement(element, getElementUtils()).map(ClassName::get);
-        new AggregatedDepsGenerator(
-                key, element, testName, components, replacedModules, getProcessingEnv())
-            .generate();
+            Processors.getOriginatingTestElement(element).map(XTypeElement::getClassName);
+        new AggregatedDepsGenerator(key, element, testName, components, replacedModules).generate();
       }
     }
   }
 
   private static Optional<ClassName> getAnnotation(
-      Element element, ImmutableSet<ClassName> annotations) {
+      XElement element, ImmutableSet<ClassName> annotations) {
     ImmutableSet<ClassName> usedAnnotations =
-        annotations.stream()
-            .filter(annotation -> Processors.hasAnnotation(element, annotation))
-            .collect(toImmutableSet());
+        annotations.stream().filter(element::hasAnnotation).collect(toImmutableSet());
 
     if (usedAnnotations.isEmpty()) {
       return Optional.empty();
@@ -391,63 +369,41 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         usedAnnotations.size() == 1,
         element,
         "Only one of the following annotations can be used on %s: %s",
-        element,
+        XElements.toStableString(element),
         usedAnnotations);
 
     return Optional.of(getOnlyElement(usedAnnotations));
   }
 
-  private static boolean isValidKind(Element element) {
+  private static boolean isValidKind(XElement element) {
     // don't go down the rabbit hole of analyzing undefined types. N.B. we don't issue
     // an error here because javac already has and we don't want to spam the user.
-    return element.asType().getKind() != TypeKind.ERROR;
+    return !XElements.asTypeElement(element).getType().isError();
   }
 
-  private boolean installInCheckDisabled(Element element) {
+  private boolean installInCheckDisabled(XElement element) {
     return isModuleInstallInCheckDisabled(getProcessingEnv())
-        || Processors.hasAnnotation(element, ClassNames.DISABLE_INSTALL_IN_CHECK);
+        || element.hasAnnotation(ClassNames.DISABLE_INSTALL_IN_CHECK);
   }
 
   /**
    * When using Dagger Producers, don't process generated modules. They will not have the expected
    * annotations.
    */
-  private static boolean isDaggerGeneratedModule(Element element) {
-    if (!Processors.hasAnnotation(element, ClassNames.MODULE)) {
+  private static boolean isDaggerGeneratedModule(XElement element) {
+    if (!element.hasAnnotation(ClassNames.MODULE)) {
       return false;
     }
-    return element.getAnnotationMirrors().stream()
-        .filter(mirror -> isGenerated(mirror))
-        .map(mirror -> asString(getOnlyElement(asList(getAnnotationValue(mirror, "value")))))
+    return element.getAllAnnotations().stream()
+        .filter(annotation -> isGenerated(annotation))
+        .map(annotation -> getOnlyElement(annotation.getAsStringList("value")))
         .anyMatch(value -> value.startsWith("dagger"));
   }
 
-  private static List<? extends AnnotationValue> asList(AnnotationValue value) {
-    return value.accept(
-        new SimpleAnnotationValueVisitor8<List<? extends AnnotationValue>, Void>() {
-          @Override
-          public List<? extends AnnotationValue> visitArray(
-              List<? extends AnnotationValue> value, Void unused) {
-            return value;
-          }
-        },
-        null);
-  }
+  private static boolean isGenerated(XAnnotation annotation) {
+    String name = annotation.getTypeElement().getQualifiedName();
 
-  private static String asString(AnnotationValue value) {
-    return value.accept(
-        new SimpleAnnotationValueVisitor8<String, Void>() {
-          @Override
-          public String visitString(String value, Void unused) {
-            return value;
-          }
-        },
-        null);
-  }
-
-  private static boolean isGenerated(AnnotationMirror annotationMirror) {
-    Name name = asType(annotationMirror.getAnnotationType().asElement()).getQualifiedName();
-    return name.contentEquals("javax.annotation.Generated")
-        || name.contentEquals("javax.annotation.processing.Generated");
+    return name.equals("javax.annotation.Generated")
+        || name.equals("javax.annotation.processing.Generated");
   }
 }

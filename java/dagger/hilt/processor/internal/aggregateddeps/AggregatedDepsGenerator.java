@@ -16,14 +16,13 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
 import java.util.Optional;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.TypeElement;
 
 /**
  * Generates the @AggregatedDeps annotated class used to pass information
@@ -35,30 +34,27 @@ final class AggregatedDepsGenerator {
       ClassName.get("dagger.hilt.processor.internal.aggregateddeps", "AggregatedDeps");
 
   private final String dependencyType;
-  private final TypeElement dependency;
+  private final XTypeElement dependency;
   private final Optional<ClassName> testName;
   private final ImmutableSet<ClassName> components;
   private final ImmutableSet<ClassName> replacedDependencies;
-  private final ProcessingEnvironment processingEnv;
 
   AggregatedDepsGenerator(
       String dependencyType,
-      TypeElement dependency,
+      XTypeElement dependency,
       Optional<ClassName> testName,
       ImmutableSet<ClassName> components,
-      ImmutableSet<ClassName> replacedDependencies,
-      ProcessingEnvironment processingEnv) {
+      ImmutableSet<ClassName> replacedDependencies) {
     this.dependencyType = dependencyType;
     this.dependency = dependency;
     this.testName = testName;
     this.components = components;
     this.replacedDependencies = replacedDependencies;
-    this.processingEnv = processingEnv;
   }
 
   void generate() throws IOException {
     Processors.generateAggregatingClass(
-        AGGREGATING_PACKAGE, aggregatedDepsAnnotation(), dependency, getClass(), processingEnv);
+        AGGREGATING_PACKAGE, aggregatedDepsAnnotation(), dependency, getClass());
   }
 
   private AnnotationSpec aggregatedDepsAnnotation() {

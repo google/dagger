@@ -19,6 +19,8 @@ package dagger.hilt.processor.internal.aggregateddeps;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -27,8 +29,6 @@ import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.earlyentrypoint.AggregatedEarlyEntryPointMetadata;
 import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 
 /** Represents information needed to create a component (i.e. modules, entry points, etc) */
 @AutoValue
@@ -38,21 +38,21 @@ public abstract class ComponentDependencies {
   }
 
   /** Returns the modules for a component, without any filtering. */
-  public abstract ImmutableSetMultimap<ClassName, TypeElement> modules();
+  public abstract ImmutableSetMultimap<ClassName, XTypeElement> modules();
 
   /** Returns the entry points associated with the given a component. */
-  public abstract ImmutableSetMultimap<ClassName, TypeElement> entryPoints();
+  public abstract ImmutableSetMultimap<ClassName, XTypeElement> entryPoints();
 
   /** Returns the component entry point associated with the given a component. */
-  public abstract ImmutableSetMultimap<ClassName, TypeElement> componentEntryPoints();
+  public abstract ImmutableSetMultimap<ClassName, XTypeElement> componentEntryPoints();
 
   @AutoValue.Builder
   abstract static class Builder {
-    abstract ImmutableSetMultimap.Builder<ClassName, TypeElement> modulesBuilder();
+    abstract ImmutableSetMultimap.Builder<ClassName, XTypeElement> modulesBuilder();
 
-    abstract ImmutableSetMultimap.Builder<ClassName, TypeElement> entryPointsBuilder();
+    abstract ImmutableSetMultimap.Builder<ClassName, XTypeElement> entryPointsBuilder();
 
-    abstract ImmutableSetMultimap.Builder<ClassName, TypeElement> componentEntryPointsBuilder();
+    abstract ImmutableSetMultimap.Builder<ClassName, XTypeElement> componentEntryPointsBuilder();
 
     abstract ComponentDependencies build();
   }
@@ -63,16 +63,16 @@ public abstract class ComponentDependencies {
       ImmutableSet<AggregatedDepsMetadata> aggregatedDepsMetadata,
       ImmutableSet<AggregatedUninstallModulesMetadata> aggregatedUninstallModulesMetadata,
       ImmutableSet<AggregatedEarlyEntryPointMetadata> aggregatedEarlyEntryPointMetadata,
-      Elements elements) {
-    ImmutableSet<TypeElement> uninstalledModules =
-        ImmutableSet.<TypeElement>builder()
+      XProcessingEnv env) {
+    ImmutableSet<XTypeElement> uninstalledModules =
+        ImmutableSet.<XTypeElement>builder()
             .addAll(
                 aggregatedUninstallModulesMetadata.stream()
                     .flatMap(metadata -> metadata.uninstallModuleElements().stream())
                     // @AggregatedUninstallModules always references the user module, so convert to
                     // the generated public wrapper if needed.
                     // TODO(bcorso): Consider converting this to the public module in the processor.
-                    .map(module -> PkgPrivateMetadata.publicModule(module, elements))
+                    .map(module -> PkgPrivateMetadata.publicModule(module, env))
                     .collect(toImmutableSet()))
             .addAll(
                 aggregatedDepsMetadata.stream()
@@ -84,8 +84,8 @@ public abstract class ComponentDependencies {
     ImmutableSet<ClassName> componentNames =
         descriptors.stream().map(ComponentDescriptor::component).collect(toImmutableSet());
     for (AggregatedDepsMetadata metadata : aggregatedDepsMetadata) {
-      for (TypeElement componentElement : metadata.componentElements()) {
-        ClassName componentName = ClassName.get(componentElement);
+      for (XTypeElement componentElement : metadata.componentElements()) {
+        ClassName componentName = componentElement.getClassName();
         checkState(
             componentNames.contains(componentName), "%s is not a valid Component.", componentName);
         switch (metadata.dependencyType()) {
@@ -111,11 +111,11 @@ public abstract class ComponentDependencies {
         .putAll(
             ClassNames.SINGLETON_COMPONENT,
             aggregatedEarlyEntryPointMetadata.stream()
-                .map(AggregatedEarlyEntryPointMetadata::earlyEntryPoint)
+                .map(metadata -> metadata.getEarlyEntryPoint(env))
                 // @AggregatedEarlyEntryPointMetadata always references the user module, so convert
                 // to the generated public wrapper if needed.
                 // TODO(bcorso): Consider converting this to the public module in the processor.
-                .map(entryPoint -> PkgPrivateMetadata.publicEarlyEntryPoint(entryPoint, elements))
+                .map(entryPoint -> PkgPrivateMetadata.publicEarlyEntryPoint(entryPoint, env))
                 .collect(toImmutableSet()));
 
     return componentDependencies.build();

@@ -16,12 +16,15 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XFiler.Mode;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.Processors;
+import dagger.internal.codegen.xprocessing.XAnnotations;
 import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 
 /**
@@ -30,10 +33,10 @@ import javax.lang.model.element.Modifier;
  * install the module when the component is created in another package.
  */
 final class PkgPrivateModuleGenerator {
-  private final ProcessingEnvironment env;
+  private final XProcessingEnv env;
   private final PkgPrivateMetadata metadata;
 
-  PkgPrivateModuleGenerator(ProcessingEnvironment env, PkgPrivateMetadata metadata) {
+  PkgPrivateModuleGenerator(XProcessingEnv env, PkgPrivateMetadata metadata) {
     this.env = env;
     this.metadata = metadata;
   }
@@ -52,22 +55,24 @@ final class PkgPrivateModuleGenerator {
   // public final class HiltModuleWrapper_MyModule {}
   void generate() throws IOException {
     TypeSpec.Builder builder =
-        TypeSpec.classBuilder(metadata.generatedClassName().simpleName())
-            .addOriginatingElement(metadata.getTypeElement())
+        JavaPoetExtKt.addOriginatingElement(
+                TypeSpec.classBuilder(metadata.generatedClassName().simpleName()),
+                metadata.getTypeElement())
             .addAnnotation(Processors.getOriginatingElementAnnotation(metadata.getTypeElement()))
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             // generated @InstallIn is exactly the same as the module being processed
             .addAnnotation(
-                AnnotationSpec.get(metadata.getOptionalInstallInAnnotationMirror().get()))
+                XAnnotations.getAnnotationSpec(metadata.getOptionalInstallInAnnotation().get()))
             .addAnnotation(
                 AnnotationSpec.builder(metadata.getAnnotation())
-                    .addMember("includes", "$T.class", metadata.getTypeElement())
+                    .addMember("includes", "$T.class", metadata.getTypeElement().getClassName())
                     .build());
 
     Processors.addGeneratedAnnotation(builder, env, getClass());
 
-    JavaFile.builder(metadata.generatedClassName().packageName(), builder.build())
-        .build()
-        .writeTo(env.getFiler());
+    env.getFiler()
+        .write(
+            JavaFile.builder(metadata.generatedClassName().packageName(), builder.build()).build(),
+            Mode.Isolating);
   }
 }

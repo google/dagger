@@ -16,12 +16,14 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
-import com.squareup.javapoet.AnnotationSpec;
+import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XFiler.Mode;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.Processors;
+import dagger.internal.codegen.xprocessing.XAnnotations;
 import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 
 /**
@@ -29,10 +31,10 @@ import javax.lang.model.element.Modifier;
  * user's entrypoint to use pkg-private visibility to hide from external packages.
  */
 final class PkgPrivateEntryPointGenerator {
-  private final ProcessingEnvironment env;
+  private final XProcessingEnv env;
   private final PkgPrivateMetadata metadata;
 
-  PkgPrivateEntryPointGenerator(ProcessingEnvironment env, PkgPrivateMetadata metadata) {
+  PkgPrivateEntryPointGenerator(XProcessingEnv env, PkgPrivateMetadata metadata) {
     this.env = env;
     this.metadata = metadata;
   }
@@ -55,8 +57,9 @@ final class PkgPrivateEntryPointGenerator {
   void generate() throws IOException {
 
     TypeSpec.Builder entryPointInterfaceBuilder =
-        TypeSpec.interfaceBuilder(metadata.generatedClassName().simpleName())
-            .addOriginatingElement(metadata.getTypeElement())
+        JavaPoetExtKt.addOriginatingElement(
+                TypeSpec.interfaceBuilder(metadata.generatedClassName().simpleName()),
+                metadata.getTypeElement())
             .addAnnotation(Processors.getOriginatingElementAnnotation(metadata.getTypeElement()))
             .addModifiers(Modifier.PUBLIC)
             .addSuperinterface(metadata.baseClassName())
@@ -64,14 +67,16 @@ final class PkgPrivateEntryPointGenerator {
 
     Processors.addGeneratedAnnotation(entryPointInterfaceBuilder, env, getClass());
 
-    if (metadata.getOptionalInstallInAnnotationMirror().isPresent()) {
+    if (metadata.getOptionalInstallInAnnotation().isPresent()) {
       entryPointInterfaceBuilder.addAnnotation(
-          AnnotationSpec.get(metadata.getOptionalInstallInAnnotationMirror().get()));
+          XAnnotations.getAnnotationSpec(metadata.getOptionalInstallInAnnotation().get()));
     }
 
-    JavaFile.builder(
-            metadata.generatedClassName().packageName(), entryPointInterfaceBuilder.build())
-        .build()
-        .writeTo(env.getFiler());
+    env.getFiler()
+        .write(
+            JavaFile.builder(
+                    metadata.generatedClassName().packageName(), entryPointInterfaceBuilder.build())
+                .build(),
+            Mode.Isolating);
   }
 }

@@ -18,6 +18,9 @@ package dagger.hilt.processor.internal.earlyentrypoint;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -44,6 +47,10 @@ public abstract class AggregatedEarlyEntryPointMetadata {
 
   /** Returns the element annotated with {@link dagger.hilt.android.EarlyEntryPoint}. */
   public abstract TypeElement earlyEntryPoint();
+
+  public XTypeElement getEarlyEntryPoint(XProcessingEnv env) {
+    return XConverters.toXProcessing(earlyEntryPoint(), env);
+  }
 
   /** Returns metadata for all aggregated elements in the aggregating package. */
   public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(Elements elements) {

@@ -30,7 +30,9 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.GeneratedAnnotations;
@@ -347,6 +349,7 @@ public final class Processors {
     }, /* unused accumulator */ null);
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   public static TypeElement getTopLevelType(Element originalElement) {
     checkNotNull(originalElement);
     for (Element e = originalElement; e != null; e = e.getEnclosingElement()) {
@@ -355,6 +358,11 @@ public final class Processors {
       }
     }
     throw new IllegalStateException("Cannot find a top-level type for " + originalElement);
+  }
+
+  public static XTypeElement getTopLevelType(XElement originalElement) {
+    return toXProcessing(
+        getTopLevelType(toJavac(originalElement)), getProcessingEnv(originalElement));
   }
 
   // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
@@ -736,9 +744,10 @@ public final class Processors {
         .addTypeVariables(methodSpec.typeVariables);
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /**
-   * Returns true if the given method is annotated with one of the annotations Dagger recognizes
-   * for abstract methods (e.g. @Binds).
+   * Returns true if the given method is annotated with one of the annotations Dagger recognizes for
+   * abstract methods (e.g. @Binds).
    */
   public static boolean hasDaggerAbstractMethodAnnotation(ExecutableElement method) {
     return hasAnnotation(method, ClassNames.BINDS)
@@ -747,10 +756,22 @@ public final class Processors {
         || hasAnnotation(method, ClassNames.CONTRIBUTES_ANDROID_INJECTOR);
   }
 
+  /**
+   * Returns true if the given method is annotated with one of the annotations Dagger recognizes for
+   * abstract methods (e.g. @Binds).
+   */
+  public static boolean hasDaggerAbstractMethodAnnotation(XExecutableElement method) {
+    return method.hasAnnotation(ClassNames.BINDS)
+        || method.hasAnnotation(ClassNames.BINDS_OPTIONAL_OF)
+        || method.hasAnnotation(ClassNames.MULTIBINDS)
+        || method.hasAnnotation(ClassNames.CONTRIBUTES_ANDROID_INJECTOR);
+  }
+
   public static ImmutableSet<ClassName> toClassNames(Iterable<TypeElement> elements) {
     return FluentIterable.from(elements).transform(ClassName::get).toSet();
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   public static boolean requiresModuleInstance(Elements elements, TypeElement module) {
     // Binding methods that lack ABSTRACT or STATIC require module instantiation.
     // Required by Dagger.  See b/31489617.
@@ -763,14 +784,19 @@ public final class Processors {
         && !getMetadataUtil().isObjectOrCompanionObjectClass(module);
   }
 
-  public static boolean hasVisibleEmptyConstructor(TypeElement type) {
-    List<ExecutableElement> constructors = ElementFilter.constructorsIn(type.getEnclosedElements());
+  public static boolean requiresModuleInstance(XTypeElement module) {
+    return requiresModuleInstance(
+        toJavac(getProcessingEnv(module)).getElementUtils(), toJavac(module));
+  }
+
+  public static boolean hasVisibleEmptyConstructor(XTypeElement type) {
+    List<XConstructorElement> constructors = type.getConstructors();
     return constructors.isEmpty()
         || constructors.stream()
             .filter(constructor -> constructor.getParameters().isEmpty())
             .anyMatch(
                 constructor ->
-                    !constructor.getModifiers().contains(Modifier.PRIVATE)
+                    !constructor.isPrivate()
                         );
   }
 

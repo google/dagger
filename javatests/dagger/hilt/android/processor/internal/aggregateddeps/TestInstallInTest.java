@@ -111,7 +111,7 @@ public class TestInstallInTest {
         .hadErrorContaining(
             "@TestInstallIn, 'replaces' class is invalid or missing: "
                 + "@dagger.hilt.testing.TestInstallIn("
-                + "components={dagger.hilt.components.SingletonComponent.class}, replaces={})");
+                + "components={dagger.hilt.components.SingletonComponent}, replaces={})");
   }
 
   @Test

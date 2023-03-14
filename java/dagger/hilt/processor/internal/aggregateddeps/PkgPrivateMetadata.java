@@ -16,8 +16,13 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.Visibility;
 import com.google.auto.value.AutoValue;
@@ -68,11 +73,25 @@ public abstract class PkgPrivateMetadata {
   /** Returns TypeElement for the module element the metadata object represents */
   abstract TypeElement getTypeElement();
 
+  /** Returns TypeElement for the module element the metadata object represents */
+  public XTypeElement getXTypeElement(XProcessingEnv env) {
+    return toXProcessing(getTypeElement(), env);
+  }
+
   /**
    * Returns an optional @InstallIn AnnotationMirror for the module element the metadata object
    * represents
    */
   abstract Optional<AnnotationMirror> getOptionalInstallInAnnotationMirror();
+
+  /**
+   * Returns an optional @InstallIn XAnnotation for the module element the metadata object
+   * represents
+   */
+  public Optional<XAnnotation> getOptionalInstallInAnnotation(XProcessingEnv env) {
+    return getOptionalInstallInAnnotationMirror()
+        .map(annotationMirror -> toXProcessing(annotationMirror, env));
+  }
 
   /** Return the Type of this package private element. */
   abstract ClassName getAnnotation();
@@ -83,6 +102,7 @@ public abstract class PkgPrivateMetadata {
         Processors.getEnclosedClassName(ClassName.get(getTypeElement())), PREFIX);
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /**
    * Returns an Optional PkgPrivateMetadata requiring Hilt processing, otherwise returns an empty
    * Optional.
@@ -118,5 +138,10 @@ public abstract class PkgPrivateMetadata {
     }
     return Optional.of(
         new AutoValue_PkgPrivateMetadata(MoreElements.asType(element), installIn, annotation));
+  }
+
+  static Optional<PkgPrivateMetadata> of(
+      XProcessingEnv env, XTypeElement element, ClassName annotation) {
+    return of(toJavac(env).getElementUtils(), toJavac(element), annotation);
   }
 }

@@ -25,6 +25,10 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XFiler.Mode;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -37,21 +41,20 @@ import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
 import java.util.List;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
 /** Generates an implementation of {@link dagger.hilt.android.internal.TestComponentData}. */
 public final class TestComponentDataGenerator {
-  private final ProcessingEnvironment processingEnv;
-  private final TypeElement originatingElement;
+  private final XProcessingEnv processingEnv;
+  private final XTypeElement originatingElement;
   private final RootMetadata rootMetadata;
   private final ClassName name;
   private final ComponentNames componentNames;
 
   public TestComponentDataGenerator(
-      ProcessingEnvironment processingEnv,
-      TypeElement originatingElement,
+      XProcessingEnv processingEnv,
+      XTypeElement originatingElement,
       RootMetadata rootMetadata,
       ComponentNames componentNames) {
     this.processingEnv = processingEnv;
@@ -92,18 +95,19 @@ public final class TestComponentDataGenerator {
   public void generate() throws IOException {
     TypeSpec.Builder generator =
         TypeSpec.classBuilder(name)
-            .addOriginatingElement(originatingElement)
             .superclass(ClassNames.TEST_COMPONENT_DATA_SUPPLIER)
             .addModifiers(PUBLIC, FINAL)
             .addMethod(getMethod())
             .addMethod(getTestInjectInternalMethod());
 
+    JavaPoetExtKt.addOriginatingElement(generator, originatingElement);
+
     Processors.addGeneratedAnnotation(
         generator, processingEnv, ClassNames.ROOT_PROCESSOR.toString());
 
-    JavaFile.builder(name.packageName(), generator.build())
-        .build()
-        .writeTo(processingEnv.getFiler());
+    processingEnv
+        .getFiler()
+        .write(JavaFile.builder(name.packageName(), generator.build()).build(), Mode.Isolating);
   }
 
   private MethodSpec getMethod() {
@@ -220,7 +224,8 @@ public final class TestComponentDataGenerator {
 
   private CodeBlock callInjectTest(TypeElement testElement) {
     return CodeBlock.of(
-        "(($T) (($T) $T.getApplication($T.getApplicationContext())).generatedComponent()).injectTest(testInstance)",
+        "(($T) (($T) $T.getApplication($T.getApplicationContext()))"
+            + ".generatedComponent()).injectTest(testInstance)",
         rootMetadata.testRootMetadata().testInjectorName(),
         ClassNames.GENERATED_COMPONENT_MANAGER,
         ClassNames.CONTEXTS,

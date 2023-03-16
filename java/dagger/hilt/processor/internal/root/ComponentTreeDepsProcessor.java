@@ -16,14 +16,11 @@
 
 package dagger.hilt.processor.internal.root;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
-import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static javax.lang.model.element.Modifier.PUBLIC;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import androidx.room.compiler.processing.XElement;
@@ -49,12 +46,11 @@ import dagger.hilt.processor.internal.definecomponent.DefineComponentClassesMeta
 import dagger.hilt.processor.internal.definecomponent.DefineComponents;
 import dagger.hilt.processor.internal.earlyentrypoint.AggregatedEarlyEntryPointMetadata;
 import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.processing.Processor;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Processor that outputs dagger components based on transitive build deps. */
@@ -71,11 +67,7 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
 
   @Override
   public void processEach(XTypeElement annotation, XElement element) {
-    processEach(toJavac(element));
-  }
-
-  private void processEach(Element element) {
-    componentTreeDepNames.add(ClassName.get(asType(element)));
+    componentTreeDepNames.add(XElements.asTypeElement(element).getClassName());
   }
 
   @Override
@@ -83,8 +75,8 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
     ImmutableSet<ComponentTreeDepsMetadata> componentTreeDepsToProcess =
         componentTreeDepNames.stream()
             .filter(className -> !processed.contains(className))
-            .map(className -> getElementUtils().getTypeElement(className.canonicalName()))
-            .map(element -> ComponentTreeDepsMetadata.from(element, getElementUtils()))
+            .map(className -> processingEnv().requireTypeElement(className))
+            .map(element -> ComponentTreeDepsMetadata.from(element, processingEnv()))
             .collect(toImmutableSet());
 
     DefineComponents defineComponents = DefineComponents.create(processingEnv());
@@ -96,7 +88,7 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
   private void processComponentTreeDeps(
       ComponentTreeDepsMetadata metadata,
       DefineComponents defineComponents) throws IOException {
-    TypeElement metadataElement = getElementUtils().getTypeElement(metadata.name().canonicalName());
+    XTypeElement metadataElement = processingEnv().requireTypeElement(metadata.name());
     try {
       // We choose a name for the generated components/wrapper based off of the originating element
       // annotated with @ComponentTreeDeps. This is close to but isn't necessarily a "real" name of
@@ -158,7 +150,7 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
                   .collect(toImmutableList());
           generateTestComponentData(metadataElement, rootMetadatas, componentNames);
         } else {
-          generateApplication(root.element());
+          generateApplication(toXProcessing(root.element(), processingEnv()));
         }
 
       setProcessingState(metadata, root);
@@ -179,32 +171,31 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
   }
 
   private void generateTestComponentData(
-      TypeElement metadataElement,
+      XTypeElement metadataElement,
       ImmutableList<RootMetadata> rootMetadatas,
       ComponentNames componentNames)
       throws IOException {
     for (RootMetadata rootMetadata : rootMetadatas) {
       // TODO(bcorso): Consider moving this check earlier into processEach.
-      TypeElement testElement = rootMetadata.testRootMetadata().testElement();
+      XTypeElement testElement =
+          toXProcessing(rootMetadata.testRootMetadata().testElement(), processingEnv());
       ProcessorErrors.checkState(
-          testElement.getModifiers().contains(PUBLIC),
+          testElement.isPublic(),
           testElement,
           "Hilt tests must be public, but found: %s",
-          testElement);
-      new TestComponentDataGenerator(
-              getProcessingEnv(), metadataElement, rootMetadata, componentNames)
+          XElements.toStableString(testElement));
+      new TestComponentDataGenerator(processingEnv(), metadataElement, rootMetadata, componentNames)
           .generate();
     }
   }
 
-  private void generateApplication(TypeElement rootElement) throws IOException {
+  private void generateApplication(XTypeElement rootElement) throws IOException {
     // The generated application references the generated component so they must be generated
     // in the same build unit. Thus, we only generate the application here if we're using the
     // Hilt Gradle plugin's aggregating task. If we're using the aggregating processor, we need
     // to generate the application within AndroidEntryPointProcessor instead.
     if (!useAggregatingRootProcessor(getProcessingEnv())) {
-      AndroidEntryPointMetadata metadata =
-          AndroidEntryPointMetadata.of(toXProcessing(rootElement, processingEnv()));
+      AndroidEntryPointMetadata metadata = AndroidEntryPointMetadata.of(rootElement);
       new ApplicationGenerator(processingEnv(), metadata).generate();
     }
   }

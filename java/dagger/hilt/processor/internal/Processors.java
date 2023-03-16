@@ -473,6 +473,7 @@ public final class Processors {
     return name.peerClass(prefix + name.simpleName());
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /**
    * Removes the string {@code suffix} from the simple name of {@code type} and returns it.
    *
@@ -483,6 +484,25 @@ public final class Processors {
     String originalSimpleName = originalName.simpleName();
     ProcessorErrors.checkState(originalSimpleName.endsWith(suffix),
         type, "Name of type %s must end with '%s'", originalName, suffix);
+    String withoutSuffix =
+        originalSimpleName.substring(0, originalSimpleName.length() - suffix.length());
+    return originalName.peerClass(withoutSuffix);
+  }
+
+  /**
+   * Removes the string {@code suffix} from the simple name of {@code type} and returns it.
+   *
+   * @throws BadInputException if the simple name of {@code type} does not end with {@code suffix}
+   */
+  public static ClassName removeNameSuffix(XTypeElement type, String suffix) {
+    ClassName originalName = type.getClassName();
+    String originalSimpleName = originalName.simpleName();
+    ProcessorErrors.checkState(
+        originalSimpleName.endsWith(suffix),
+        type,
+        "Name of type %s must end with '%s'",
+        originalName,
+        suffix);
     String withoutSuffix =
         originalSimpleName.substring(0, originalSimpleName.length() - suffix.length());
     return originalName.peerClass(withoutSuffix);
@@ -818,6 +838,7 @@ public final class Processors {
     addGeneratedAnnotation(typeSpecBuilder, env, generatorClass.getName());
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   public static void addGeneratedAnnotation(
       TypeSpec.Builder typeSpecBuilder, ProcessingEnvironment env, String generatorClass) {
     GeneratedAnnotations.generatedAnnotation(env.getElementUtils(), env.getSourceVersion())
@@ -827,6 +848,17 @@ public final class Processors {
                     AnnotationSpec.builder(ClassName.get(annotation))
                         .addMember("value", "$S", generatorClass)
                         .build()));
+  }
+
+  public static void addGeneratedAnnotation(
+      TypeSpec.Builder typeSpecBuilder, XProcessingEnv env, String generatorClass) {
+    XTypeElement annotation = env.findGeneratedAnnotation();
+    if (annotation != null) {
+      typeSpecBuilder.addAnnotation(
+          AnnotationSpec.builder(annotation.getClassName())
+              .addMember("value", "$S", generatorClass)
+              .build());
+    }
   }
 
   // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.

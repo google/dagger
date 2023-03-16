@@ -16,11 +16,14 @@
 
 package dagger.hilt.processor.internal.root;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.hilt.processor.internal.AggregatedElements.unwrapProxies;
 import static dagger.hilt.processor.internal.AnnotationValues.getTypeElements;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -67,6 +70,7 @@ abstract class ComponentTreeDepsMetadata {
   /** Returns the {@link dagger.hilt.android.earlyentrypoint.AggregatedEarlyEntryPoint} deps. */
   abstract ImmutableSet<TypeElement> aggregatedEarlyEntryPointDeps();
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   static ComponentTreeDepsMetadata from(TypeElement element, Elements elements) {
     checkArgument(Processors.hasAnnotation(element, ClassNames.COMPONENT_TREE_DEPS));
     AnnotationMirror annotationMirror =
@@ -83,6 +87,10 @@ abstract class ComponentTreeDepsMetadata {
         unwrapProxies(getTypeElements(values.get("aggregatedDeps")), elements),
         unwrapProxies(getTypeElements(values.get("uninstallModulesDeps")), elements),
         unwrapProxies(getTypeElements(values.get("earlyEntryPointDeps")), elements));
+  }
+
+  static ComponentTreeDepsMetadata from(XTypeElement element, XProcessingEnv env) {
+    return from(toJavac(element), toJavac(env).getElementUtils());
   }
 
   static ComponentTreeDepsMetadata from(ComponentTreeDepsIr ir, Elements elements) {

@@ -18,20 +18,15 @@ package dagger.hilt.processor.internal.definecomponent;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
-import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.root.ir.DefineComponentClassesIr;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 
 /**
  * A class that represents the values stored in an {@link
@@ -41,13 +36,13 @@ import javax.lang.model.util.Elements;
 public abstract class DefineComponentClassesMetadata {
 
   /** Returns the aggregating element */
-  public abstract TypeElement aggregatingElement();
+  public abstract XTypeElement aggregatingElement();
 
   /**
    * Returns the element annotated with {@code dagger.hilt.internal.definecomponent.DefineComponent}
    * or {@code dagger.hilt.internal.definecomponent.DefineComponent.Builder}.
    */
-  public abstract TypeElement element();
+  public abstract XTypeElement element();
 
   /** Returns {@code true} if this element represents a component. */
   abstract boolean isComponent();
@@ -58,32 +53,26 @@ public abstract class DefineComponentClassesMetadata {
   }
 
   /** Returns metadata for all aggregated elements in the aggregating package. */
-  public static ImmutableSet<DefineComponentClassesMetadata> from(Elements elements) {
+  public static ImmutableSet<DefineComponentClassesMetadata> from(XProcessingEnv env) {
     return from(
         AggregatedElements.from(
-            ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE,
-            ClassNames.DEFINE_COMPONENT_CLASSES,
-            elements),
-        elements);
+            ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE, ClassNames.DEFINE_COMPONENT_CLASSES, env),
+        env);
   }
 
   /** Returns metadata for each aggregated element. */
   public static ImmutableSet<DefineComponentClassesMetadata> from(
-      ImmutableSet<TypeElement> aggregatedElements, Elements elements) {
+      ImmutableSet<XTypeElement> aggregatedElements, XProcessingEnv env) {
     return aggregatedElements.stream()
-        .map(aggregatedElement -> create(aggregatedElement, elements))
+        .map(aggregatedElement -> create(aggregatedElement, env))
         .collect(toImmutableSet());
   }
 
-  private static DefineComponentClassesMetadata create(TypeElement element, Elements elements) {
-    AnnotationMirror annotationMirror =
-        Processors.getAnnotationMirror(element, ClassNames.DEFINE_COMPONENT_CLASSES);
+  private static DefineComponentClassesMetadata create(XTypeElement element, XProcessingEnv env) {
+    XAnnotation annotation = element.getAnnotation(ClassNames.DEFINE_COMPONENT_CLASSES);
 
-    ImmutableMap<String, AnnotationValue> values =
-        Processors.getAnnotationValues(elements, annotationMirror);
-
-    String componentName = AnnotationValues.getString(values.get("component"));
-    String builderName = AnnotationValues.getString(values.get("builder"));
+    String componentName = annotation.getAsString("component");
+    String builderName = annotation.getAsString("builder");
 
     ProcessorErrors.checkState(
         !(componentName.isEmpty() && builderName.isEmpty()),
@@ -97,7 +86,7 @@ public abstract class DefineComponentClassesMetadata {
 
     boolean isComponent = !componentName.isEmpty();
     String componentOrBuilderName = isComponent ? componentName : builderName;
-    TypeElement componentOrBuilderElement = elements.getTypeElement(componentOrBuilderName);
+    XTypeElement componentOrBuilderElement = env.findTypeElement(componentOrBuilderName);
     ProcessorErrors.checkState(
         componentOrBuilderElement != null,
         componentOrBuilderElement,
@@ -111,7 +100,7 @@ public abstract class DefineComponentClassesMetadata {
 
   public static DefineComponentClassesIr toIr(DefineComponentClassesMetadata metadata) {
     return new DefineComponentClassesIr(
-        ClassName.get(metadata.aggregatingElement()),
-        ClassName.get(metadata.element()).canonicalName());
+        metadata.aggregatingElement().getClassName(),
+        metadata.element().getClassName().canonicalName());
   }
 }

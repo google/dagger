@@ -21,6 +21,8 @@ import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static java.util.Comparator.comparing;
 
 import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XFiler.Mode;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -40,7 +42,6 @@ import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
 import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 
 /**
@@ -49,12 +50,12 @@ import javax.lang.model.element.Modifier;
 final class BindValueGenerator {
   private static final String SUFFIX = "_BindValueModule";
 
-  private final ProcessingEnvironment env;
+  private final XProcessingEnv env;
   private final BindValueMetadata metadata;
   private final ClassName testClassName;
   private final ClassName className;
 
-  BindValueGenerator(ProcessingEnvironment env, BindValueMetadata metadata) {
+  BindValueGenerator(XProcessingEnv env, BindValueMetadata metadata) {
     this.env = env;
     this.metadata = metadata;
     testClassName = metadata.testElement().getClassName();
@@ -83,9 +84,8 @@ final class BindValueGenerator {
         .sorted(comparing(MethodSpec::toString))
         .forEachOrdered(builder::addMethod);
 
-    JavaFile.builder(className.packageName(), builder.build())
-        .build()
-        .writeTo(env.getFiler());
+    env.getFiler()
+        .write(JavaFile.builder(className.packageName(), builder.build()).build(), Mode.Isolating);
   }
 
   // @Provides

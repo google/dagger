@@ -21,21 +21,18 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XAnnotationValue;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
-import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.root.ir.AggregatedDepsIr;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 
 /**
  * A class that represents the values stored in an {@link
@@ -52,97 +49,94 @@ public abstract class AggregatedDepsMetadata {
   }
 
   /** Returns the aggregating element */
-  public abstract TypeElement aggregatingElement();
+  public abstract XTypeElement aggregatingElement();
 
-  public abstract Optional<TypeElement> testElement();
+  public abstract Optional<XTypeElement> testElement();
 
-  public abstract ImmutableSet<TypeElement> componentElements();
+  public abstract ImmutableSet<XTypeElement> componentElements();
 
   abstract DependencyType dependencyType();
 
-  public abstract TypeElement dependency();
+  public abstract XTypeElement dependency();
 
-  public abstract ImmutableSet<TypeElement> replacedDependencies();
+  public abstract ImmutableSet<XTypeElement> replacedDependencies();
 
   public boolean isModule() {
     return dependencyType() == DependencyType.MODULE;
   }
 
   /** Returns metadata for all aggregated elements in the aggregating package. */
-  public static ImmutableSet<AggregatedDepsMetadata> from(Elements elements) {
+  public static ImmutableSet<AggregatedDepsMetadata> from(XProcessingEnv env) {
     return from(
-        AggregatedElements.from(AGGREGATED_DEPS_PACKAGE, ClassNames.AGGREGATED_DEPS, elements),
-        elements);
+        AggregatedElements.from(AGGREGATED_DEPS_PACKAGE, ClassNames.AGGREGATED_DEPS, env), env);
   }
 
   /** Returns metadata for each aggregated element. */
   public static ImmutableSet<AggregatedDepsMetadata> from(
-      ImmutableSet<TypeElement> aggregatedElements, Elements elements) {
+      ImmutableSet<XTypeElement> aggregatedElements, XProcessingEnv env) {
     return aggregatedElements.stream()
-        .map(aggregatedElement -> create(aggregatedElement, elements))
+        .map(aggregatedElement -> create(aggregatedElement, env))
         .collect(toImmutableSet());
   }
 
   public static AggregatedDepsIr toIr(AggregatedDepsMetadata metadata) {
     return new AggregatedDepsIr(
-        ClassName.get(metadata.aggregatingElement()),
+        metadata.aggregatingElement().getClassName(),
         metadata.componentElements().stream()
-            .map(ClassName::get)
+            .map(XTypeElement::getClassName)
             .map(ClassName::canonicalName)
             .collect(Collectors.toList()),
-        metadata.testElement()
-            .map(ClassName::get)
+        metadata
+            .testElement()
+            .map(XTypeElement::getClassName)
             .map(ClassName::canonicalName)
             .orElse(null),
         metadata.replacedDependencies().stream()
-            .map(ClassName::get)
+            .map(XTypeElement::getClassName)
             .map(ClassName::canonicalName)
             .collect(Collectors.toList()),
         metadata.dependencyType() == DependencyType.MODULE
-            ? ClassName.get(metadata.dependency()).canonicalName()
+            ? metadata.dependency().getClassName().canonicalName()
             : null,
         metadata.dependencyType() == DependencyType.ENTRY_POINT
-            ? ClassName.get(metadata.dependency()).canonicalName()
+            ? metadata.dependency().getClassName().canonicalName()
             : null,
         metadata.dependencyType() == DependencyType.COMPONENT_ENTRY_POINT
-            ? ClassName.get(metadata.dependency()).canonicalName()
+            ? metadata.dependency().getClassName().canonicalName()
             : null);
   }
 
-  private static AggregatedDepsMetadata create(TypeElement element, Elements elements) {
-    AnnotationMirror annotationMirror =
-        Processors.getAnnotationMirror(element, ClassNames.AGGREGATED_DEPS);
-
-    ImmutableMap<String, AnnotationValue> values =
-        Processors.getAnnotationValues(elements, annotationMirror);
+  private static AggregatedDepsMetadata create(XTypeElement element, XProcessingEnv env) {
+    XAnnotation annotation = element.getAnnotation(ClassNames.AGGREGATED_DEPS);
 
     return new AutoValue_AggregatedDepsMetadata(
         element,
-        getTestElement(values.get("test"), elements),
-        getComponents(values.get("components"), elements),
+        getTestElement(annotation.getAnnotationValue("test"), env),
+        getComponents(annotation.getAnnotationValue("components"), env),
         getDependencyType(
-            values.get("modules"), values.get("entryPoints"), values.get("componentEntryPoints")),
+            annotation.getAnnotationValue("modules"),
+            annotation.getAnnotationValue("entryPoints"),
+            annotation.getAnnotationValue("componentEntryPoints")),
         getDependency(
-            values.get("modules"),
-            values.get("entryPoints"),
-            values.get("componentEntryPoints"),
-            elements),
-        getReplacedDependencies(values.get("replaces"), elements));
+            annotation.getAnnotationValue("modules"),
+            annotation.getAnnotationValue("entryPoints"),
+            annotation.getAnnotationValue("componentEntryPoints"),
+            env),
+        getReplacedDependencies(annotation.getAnnotationValue("replaces"), env));
   }
 
-  private static Optional<TypeElement> getTestElement(
-      AnnotationValue testValue, Elements elements) {
+  private static Optional<XTypeElement> getTestElement(
+      XAnnotationValue testValue, XProcessingEnv env) {
     checkNotNull(testValue);
-    String test = AnnotationValues.getString(testValue);
-    return test.isEmpty() ? Optional.empty() : Optional.of(elements.getTypeElement(test));
+    String test = testValue.asString();
+    return test.isEmpty() ? Optional.empty() : Optional.of(env.findTypeElement(test));
   }
 
-  private static ImmutableSet<TypeElement> getComponents(
-      AnnotationValue componentsValue, Elements elements) {
+  private static ImmutableSet<XTypeElement> getComponents(
+      XAnnotationValue componentsValue, XProcessingEnv env) {
     checkNotNull(componentsValue);
-    ImmutableSet<TypeElement> componentNames =
-        AnnotationValues.getAnnotationValues(componentsValue).stream()
-            .map(AnnotationValues::getString)
+    ImmutableSet<XTypeElement> componentNames =
+        componentsValue.asStringList().stream()
             .map(
                 // This is a temporary hack to map the old ApplicationComponent to the new
                 // SingletonComponent. Technically, this is only needed for backwards compatibility
@@ -153,71 +147,70 @@ public abstract class AggregatedDepsMetadata {
                             "dagger.hilt.android.components.ApplicationComponent")
                         ? ClassNames.SINGLETON_COMPONENT.canonicalName()
                         : componentName)
-            .map(elements::getTypeElement)
+            .map(env::requireTypeElement)
             .collect(toImmutableSet());
     checkState(!componentNames.isEmpty());
     return componentNames;
   }
 
   private static DependencyType getDependencyType(
-      AnnotationValue modulesValue,
-      AnnotationValue entryPointsValue,
-      AnnotationValue componentEntryPointsValue) {
+      XAnnotationValue modulesValue,
+      XAnnotationValue entryPointsValue,
+      XAnnotationValue componentEntryPointsValue) {
     checkNotNull(modulesValue);
     checkNotNull(entryPointsValue);
     checkNotNull(componentEntryPointsValue);
 
     ImmutableSet.Builder<DependencyType> dependencyTypes = ImmutableSet.builder();
-    if (!AnnotationValues.getAnnotationValues(modulesValue).isEmpty()) {
+    if (!modulesValue.asAnnotationValueList().isEmpty()) {
       dependencyTypes.add(DependencyType.MODULE);
     }
-    if (!AnnotationValues.getAnnotationValues(entryPointsValue).isEmpty()) {
+    if (!entryPointsValue.asAnnotationValueList().isEmpty()) {
       dependencyTypes.add(DependencyType.ENTRY_POINT);
     }
-    if (!AnnotationValues.getAnnotationValues(componentEntryPointsValue).isEmpty()) {
+    if (!componentEntryPointsValue.asAnnotationValueList().isEmpty()) {
       dependencyTypes.add(DependencyType.COMPONENT_ENTRY_POINT);
     }
     return getOnlyElement(dependencyTypes.build());
   }
 
-  private static TypeElement getDependency(
-      AnnotationValue modulesValue,
-      AnnotationValue entryPointsValue,
-      AnnotationValue componentEntryPointsValue,
-      Elements elements) {
+  private static XTypeElement getDependency(
+      XAnnotationValue modulesValue,
+      XAnnotationValue entryPointsValue,
+      XAnnotationValue componentEntryPointsValue,
+      XProcessingEnv env) {
     checkNotNull(modulesValue);
     checkNotNull(entryPointsValue);
     checkNotNull(componentEntryPointsValue);
 
     String dependencyName =
-        AnnotationValues.getString(
-            getOnlyElement(
-                ImmutableSet.<AnnotationValue>builder()
-                    .addAll(AnnotationValues.getAnnotationValues(modulesValue))
-                    .addAll(AnnotationValues.getAnnotationValues(entryPointsValue))
-                    .addAll(AnnotationValues.getAnnotationValues(componentEntryPointsValue))
-                    .build()));
-    TypeElement dependency = elements.getTypeElement(dependencyName);
+        getOnlyElement(
+                ImmutableSet.<XAnnotationValue>builder()
+                    .addAll(modulesValue.asAnnotationValueList())
+                    .addAll(entryPointsValue.asAnnotationValueList())
+                    .addAll(componentEntryPointsValue.asAnnotationValueList())
+                    .build())
+            .asString();
+    XTypeElement dependency = env.findTypeElement(dependencyName);
     checkNotNull(dependency, "Could not get element for %s", dependencyName);
     return dependency;
   }
 
-  private static ImmutableSet<TypeElement> getReplacedDependencies(
-      AnnotationValue replacedDependenciesValue, Elements elements) {
+  private static ImmutableSet<XTypeElement> getReplacedDependencies(
+      XAnnotationValue replacedDependenciesValue, XProcessingEnv env) {
     // Allow null values to support libraries using a Hilt version before @TestInstallIn was added
     return replacedDependenciesValue == null
         ? ImmutableSet.of()
-        : AnnotationValues.getAnnotationValues(replacedDependenciesValue).stream()
-            .map(AnnotationValues::getString)
-            .map(elements::getTypeElement)
-            .map(replacedDep -> getPublicDependency(replacedDep, elements))
+        : replacedDependenciesValue.asStringList().stream()
+            .map(env::requireTypeElement)
+            .map(replacedDep -> getPublicDependency(replacedDep, env))
             .collect(toImmutableSet());
   }
 
   /** Returns the public Hilt wrapper module, or the module itself if its already public. */
-  private static TypeElement getPublicDependency(TypeElement dependency, Elements elements) {
-    return PkgPrivateMetadata.of(elements, dependency, ClassNames.MODULE)
-        .map(metadata -> elements.getTypeElement(metadata.generatedClassName().toString()))
+  private static XTypeElement getPublicDependency(XTypeElement dependency, XProcessingEnv env) {
+    return PkgPrivateMetadata.of(dependency, ClassNames.MODULE)
+        .map(metadata -> env.requireTypeElement(metadata.generatedClassName().toString()))
         .orElse(dependency);
   }
 }

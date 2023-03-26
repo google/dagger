@@ -16,50 +16,47 @@
 
 package dagger.hilt.processor.internal.root;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.TypeElement;
 
 /** Generates an {@link dagger.hilt.internal.aggregatedroot.AggregatedRoot}. */
 final class AggregatedRootGenerator {
-  private final TypeElement rootElement;
-  private final TypeElement originatingRootElement;
-  private final TypeElement rootAnnotation;
-  private final ProcessingEnvironment processingEnv;
+  private final XTypeElement rootElement;
+  private final XTypeElement originatingRootElement;
+  private final XTypeElement rootAnnotation;
 
   AggregatedRootGenerator(
-      TypeElement rootElement,
-      TypeElement originatingRootElement,
-      TypeElement rootAnnotation,
-      ProcessingEnvironment processingEnv) {
+      XTypeElement rootElement, XTypeElement originatingRootElement, XTypeElement rootAnnotation) {
     this.rootElement = rootElement;
     this.originatingRootElement = originatingRootElement;
     this.rootAnnotation = rootAnnotation;
-    this.processingEnv = processingEnv;
   }
 
   void generate() throws IOException {
-    AnnotationSpec.Builder aggregatedRootAnnotation = AnnotationSpec.builder(
-        ClassNames.AGGREGATED_ROOT)
+    AnnotationSpec.Builder aggregatedRootAnnotation =
+        AnnotationSpec.builder(ClassNames.AGGREGATED_ROOT)
             .addMember("root", "$S", rootElement.getQualifiedName())
-            .addMember("rootPackage", "$S", ClassName.get(rootElement).packageName())
+            .addMember("rootPackage", "$S", rootElement.getClassName().packageName())
             .addMember("originatingRoot", "$S", originatingRootElement.getQualifiedName())
-            .addMember("originatingRootPackage", "$S",
-                ClassName.get(originatingRootElement).packageName())
-            .addMember("rootAnnotation", "$T.class", rootAnnotation);
-    ClassName.get(rootElement).simpleNames().forEach(
-        name -> aggregatedRootAnnotation.addMember("rootSimpleNames", "$S", name));
-    ClassName.get(originatingRootElement).simpleNames().forEach(
-        name -> aggregatedRootAnnotation.addMember("originatingRootSimpleNames", "$S", name));
+            .addMember(
+                "originatingRootPackage", "$S", originatingRootElement.getClassName().packageName())
+            .addMember("rootAnnotation", "$T.class", rootAnnotation.getClassName());
+    rootElement
+        .getClassName()
+        .simpleNames()
+        .forEach(name -> aggregatedRootAnnotation.addMember("rootSimpleNames", "$S", name));
+    originatingRootElement
+        .getClassName()
+        .simpleNames()
+        .forEach(
+            name -> aggregatedRootAnnotation.addMember("originatingRootSimpleNames", "$S", name));
     Processors.generateAggregatingClass(
         ClassNames.AGGREGATED_ROOT_PACKAGE,
         aggregatedRootAnnotation.build(),
         rootElement,
-        getClass(),
-        processingEnv);
+        getClass());
   }
 }

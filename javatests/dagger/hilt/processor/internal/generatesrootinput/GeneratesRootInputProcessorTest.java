@@ -16,13 +16,12 @@
 
 package dagger.hilt.processor.internal.generatesrootinput;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XRoundEnv;
-import com.google.auto.common.MoreElements;
 import com.google.common.truth.Correspondence;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
@@ -30,11 +29,11 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.BaseProcessor;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.lang.model.element.Element;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,7 +45,7 @@ public final class GeneratesRootInputProcessorTest {
   private static final int GENERATED_CLASSES = 5;
   private static final ClassName TEST_ANNOTATION = ClassName.get("test", "TestAnnotation");
 
-  private final List<Element> elementsToWaitFor = new ArrayList<>();
+  private final List<XElement> elementsToWaitFor = new ArrayList<>();
   private int generatedClasses = 0;
 
   @SupportedAnnotationTypes("*")
@@ -56,13 +55,13 @@ public final class GeneratesRootInputProcessorTest {
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
       super.init(processingEnv);
-      generatesRootInputs = new GeneratesRootInputs(processingEnv);
+      generatesRootInputs = new GeneratesRootInputs(processingEnv());
     }
 
     @Override
     protected void postRoundProcess(XRoundEnv roundEnv) throws Exception {
       if (generatedClasses > 0) {
-        elementsToWaitFor.addAll(generatesRootInputs.getElementsToWaitFor(toJavac(roundEnv)));
+        elementsToWaitFor.addAll(generatesRootInputs.getElementsToWaitFor(roundEnv));
       }
       if (generatedClasses < GENERATED_CLASSES) {
         TypeSpec typeSpec =
@@ -91,8 +90,8 @@ public final class GeneratesRootInputProcessorTest {
     assertThat(compilation).succeeded();
     assertThat(elementsToWaitFor)
         .comparingElementsUsing(
-            Correspondence.<Element, String>transforming(
-                element -> MoreElements.asType(element).getQualifiedName().toString(),
+            Correspondence.<XElement, String>transforming(
+                element -> XElements.asTypeElement(element).getQualifiedName(),
                 "has qualified name of"))
         .containsExactly("foo.Foo0", "foo.Foo1", "foo.Foo2", "foo.Foo3", "foo.Foo4")
         .inOrder();

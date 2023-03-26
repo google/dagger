@@ -116,6 +116,7 @@ java_library(
         ":processor_errors",
         ":processors",
         "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:common",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",

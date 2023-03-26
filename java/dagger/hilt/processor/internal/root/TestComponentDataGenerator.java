@@ -23,9 +23,9 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
-import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XFiler.Mode;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
@@ -41,8 +41,6 @@ import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
 import java.util.List;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
 /** Generates an implementation of {@link dagger.hilt.android.internal.TestComponentData}. */
 public final class TestComponentDataGenerator {
@@ -111,13 +109,13 @@ public final class TestComponentDataGenerator {
   }
 
   private MethodSpec getMethod() {
-    TypeElement testElement = rootMetadata.testRootMetadata().testElement();
+    XTypeElement testElement = rootMetadata.testRootMetadata().testElement();
     ClassName component =
         componentNames.generatedComponent(
-            ClassName.get(testElement), ClassNames.SINGLETON_COMPONENT);
-    ImmutableSet<TypeElement> daggerRequiredModules =
+            testElement.getClassName(), ClassNames.SINGLETON_COMPONENT);
+    ImmutableSet<XTypeElement> daggerRequiredModules =
         rootMetadata.modulesThatDaggerCannotConstruct(ClassNames.SINGLETON_COMPONENT);
-    ImmutableSet<TypeElement> hiltRequiredModules =
+    ImmutableSet<XTypeElement> hiltRequiredModules =
         daggerRequiredModules.stream()
             .filter(module -> !canBeConstructedByHilt(module, testElement))
             .collect(toImmutableSet());
@@ -129,7 +127,8 @@ public final class TestComponentDataGenerator {
             "return new $T($L, $L, $L, $L, $L)",
             ClassNames.TEST_COMPONENT_DATA,
             rootMetadata.waitForBindValue(),
-            CodeBlock.of("testInstance -> injectInternal(($1T) testInstance)", testElement),
+            CodeBlock.of(
+                "testInstance -> injectInternal(($1T) testInstance)", testElement.getClassName()),
             getElementsListed(daggerRequiredModules),
             getElementsListed(hiltRequiredModules),
             CodeBlock.of(
@@ -161,8 +160,8 @@ public final class TestComponentDataGenerator {
    *     : (FooTest.TestModule) modules.get(FooTest.TestModule.class))
    * </code></pre>
    */
-  private static String getAddModuleStatement(TypeElement module, TypeElement testElement) {
-    ClassName className = ClassName.get(module);
+  private static String getAddModuleStatement(XTypeElement module, XTypeElement testElement) {
+    ClassName className = module.getClassName();
     return canBeConstructedByHilt(module, testElement)
         ? CodeBlock.of(
                 ".$1L(autoAddModuleEnabled\n"
@@ -182,21 +181,21 @@ public final class TestComponentDataGenerator {
             .toString();
   }
 
-  private static boolean canBeConstructedByHilt(TypeElement module, TypeElement testElement) {
+  private static boolean canBeConstructedByHilt(XTypeElement module, XTypeElement testElement) {
     return hasOnlyAccessibleNoArgConstructor(module)
         && module.getEnclosingElement().equals(testElement);
   }
 
-  private static boolean hasOnlyAccessibleNoArgConstructor(TypeElement module) {
-    List<ExecutableElement> declaredConstructors = constructorsIn(module.getEnclosedElements());
+  private static boolean hasOnlyAccessibleNoArgConstructor(XTypeElement module) {
+    List<XConstructorElement> declaredConstructors = module.getConstructors();
     return declaredConstructors.isEmpty()
         || (declaredConstructors.size() == 1
-            && !declaredConstructors.get(0).getModifiers().contains(PRIVATE)
+            && !declaredConstructors.get(0).isPrivate()
             && declaredConstructors.get(0).getParameters().isEmpty());
   }
 
   /* Arrays.asList(FooTest.TestModule.class, ...) */
-  private static CodeBlock getElementsListed(ImmutableSet<TypeElement> modules) {
+  private static CodeBlock getElementsListed(ImmutableSet<XTypeElement> modules) {
     return modules.isEmpty()
         ? CodeBlock.of("$T.emptySet()", ClassNames.COLLECTIONS)
         : CodeBlock.of(
@@ -204,13 +203,13 @@ public final class TestComponentDataGenerator {
             ClassNames.HASH_SET,
             ClassNames.ARRAYS,
             modules.stream()
-                .map(module -> CodeBlock.of("$T.class", module).toString())
+                .map(module -> CodeBlock.of("$T.class", module.getClassName()).toString())
                 .collect(joining(",")));
   }
 
   private MethodSpec getTestInjectInternalMethod() {
-    TypeElement testElement = rootMetadata.testRootMetadata().testElement();
-    ClassName testName = ClassName.get(testElement);
+    XTypeElement testElement = rootMetadata.testRootMetadata().testElement();
+    ClassName testName = testElement.getClassName();
     return MethodSpec.methodBuilder("injectInternal")
         .addModifiers(PRIVATE, STATIC)
         .addParameter(testName, "testInstance")
@@ -222,7 +221,7 @@ public final class TestComponentDataGenerator {
         .build();
   }
 
-  private CodeBlock callInjectTest(TypeElement testElement) {
+  private CodeBlock callInjectTest(XTypeElement testElement) {
     return CodeBlock.of(
         "(($T) (($T) $T.getApplication($T.getApplicationContext()))"
             + ".generatedComponent()).injectTest(testInstance)",

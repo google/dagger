@@ -40,12 +40,12 @@ public final class AliasOfs {
     ImmutableSetMultimap.Builder<ClassName, ClassName> builder = ImmutableSetMultimap.builder();
     metadatas.forEach(
         metadata -> {
-          ClassName aliasScopeName = ClassName.get(metadata.aliasElement());
+          ClassName aliasScopeName = metadata.aliasElement().getClassName();
           metadata
               .defineComponentScopeElements()
               .forEach(
                   defineComponentScope -> {
-                    ClassName defineComponentScopeName = ClassName.get(defineComponentScope);
+                    ClassName defineComponentScopeName = defineComponentScope.getClassName();
                     ProcessorErrors.checkState(
                         defineComponentScopes.contains(defineComponentScopeName),
                         metadata.aliasElement(),

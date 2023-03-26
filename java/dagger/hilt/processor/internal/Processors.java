@@ -20,7 +20,6 @@ import static androidx.room.compiler.processing.compat.XConverters.getProcessing
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asPackage;
-import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils.getMetadataUtil;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
@@ -29,19 +28,20 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
 import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XAnnotationValue;
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XFiler.Mode;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.GeneratedAnnotations;
-import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -56,7 +56,9 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.extension.DaggerStreams;
 import dagger.internal.codegen.xprocessing.XAnnotations;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.LinkedHashSet;
@@ -65,13 +67,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
@@ -99,44 +99,39 @@ public final class Processors {
       AnnotationSpec aggregatingAnnotation,
       XTypeElement originatingElement,
       Class<?> generatorClass) throws IOException {
-    generateAggregatingClass(
-        aggregatingPackage,
-        aggregatingAnnotation,
-        toJavac(originatingElement),
-        generatorClass,
-        toJavac(getProcessingEnv(originatingElement)));
-  }
-
-  // TODO(bcorso): Remove this method once all usages are migrated to XProcessing.
-  /** Generates the aggregating metadata class for an aggregating annotation. */
-  public static void generateAggregatingClass(
-      String aggregatingPackage,
-      AnnotationSpec aggregatingAnnotation,
-      TypeElement originatingElement,
-      Class<?> generatorClass,
-      ProcessingEnvironment env) throws IOException {
     ClassName name =
         ClassName.get(aggregatingPackage, "_" + getFullEnclosedName(originatingElement));
     TypeSpec.Builder builder =
         TypeSpec.classBuilder(name)
             .addModifiers(PUBLIC)
-            .addOriginatingElement(originatingElement)
             .addAnnotation(aggregatingAnnotation)
             .addJavadoc("This class should only be referenced by generated code! ")
             .addJavadoc("This class aggregates information across multiple compilations.\n");;
+    JavaPoetExtKt.addOriginatingElement(builder, originatingElement);
 
+    XProcessingEnv env = getProcessingEnv(originatingElement);
     addGeneratedAnnotation(builder, env, generatorClass);
-
-    JavaFile.builder(name.packageName(), builder.build()).build().writeTo(env.getFiler());
+    env.getFiler()
+        .write(JavaFile.builder(name.packageName(), builder.build()).build(), Mode.Isolating);
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /** Returns a map from {@link AnnotationMirror} attribute name to {@link AnnotationValue}s */
-  public static ImmutableMap<String, AnnotationValue> getAnnotationValues(Elements elements,
-      AnnotationMirror annotation) {
+  public static ImmutableMap<String, AnnotationValue> getAnnotationValues(
+      Elements elements, AnnotationMirror annotation) {
     ImmutableMap.Builder<String, AnnotationValue> annotationMembers = ImmutableMap.builder();
     for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e
         : elements.getElementValuesWithDefaults(annotation).entrySet()) {
       annotationMembers.put(e.getKey().getSimpleName().toString(), e.getValue());
+    }
+    return annotationMembers.build();
+  }
+
+  /** Returns a map from {@link AnnotationMirror} attribute name to {@link AnnotationValue}s */
+  public static ImmutableMap<String, XAnnotationValue> getAnnotationValues(XAnnotation annotation) {
+    ImmutableMap.Builder<String, XAnnotationValue> annotationMembers = ImmutableMap.builder();
+    for (XAnnotationValue value : annotation.getAnnotationValues()) {
+      annotationMembers.put(value.getName(), value);
     }
     return annotationMembers.build();
   }
@@ -188,6 +183,11 @@ public final class Processors {
     return Iterables.getOnlyElement(getAnnotationClassValues(elements, annotation, key));
   }
 
+  /** Returns the {@link TypeElement} for a class attribute on an annotation. */
+  public static XTypeElement getAnnotationClassValue(XAnnotation annotation, String key) {
+    return Iterables.getOnlyElement(getAnnotationClassValues(annotation, key));
+  }
+
   /** Returns a list of {@link XTypeElement}s for a class attribute on an annotation. */
   public static ImmutableList<XTypeElement> getAnnotationClassValues(
       XAnnotation annotation, String key) {
@@ -200,23 +200,6 @@ public final class Processors {
         annotation.getName(),
         key,
         XAnnotations.toStableString(annotation));
-
-    return values;
-  }
-
-  /** Returns a list of {@link TypeElement}s for a class attribute on an annotation. */
-  public static ImmutableList<TypeElement> getAnnotationClassValues(
-      Elements elements, AnnotationMirror annotation, String key) {
-    ImmutableList<TypeElement> values = getOptionalAnnotationClassValues(elements, annotation, key);
-
-    ProcessorErrors.checkState(
-        values.size() >= 1,
-        // TODO(b/152801981): Point to the annotation value rather than the annotated element.
-        annotation.getAnnotationType().asElement(),
-        "@%s, '%s' class is invalid or missing: %s",
-        annotation.getAnnotationType().asElement().getSimpleName(),
-        key,
-        annotation);
 
     return values;
   }
@@ -240,12 +223,44 @@ public final class Processors {
   }
 
   /** Returns a list of {@link TypeElement}s for a class attribute on an annotation. */
+  public static ImmutableList<TypeElement> getAnnotationClassValues(
+      Elements elements, AnnotationMirror annotation, String key) {
+    ImmutableList<TypeElement> values = getOptionalAnnotationClassValues(elements, annotation, key);
+
+    ProcessorErrors.checkState(
+        values.size() >= 1,
+        // TODO(b/152801981): Point to the annotation value rather than the annotated element.
+        annotation.getAnnotationType().asElement(),
+        "@%s, '%s' class is invalid or missing: %s",
+        annotation.getAnnotationType().asElement().getSimpleName(),
+        key,
+        annotation);
+
+    return values;
+  }
+
+  /** Returns a list of {@link TypeElement}s for a class attribute on an annotation. */
   public static ImmutableList<TypeElement> getOptionalAnnotationClassValues(
       Elements elements, AnnotationMirror annotation, String key) {
     return ImmutableList.copyOf(
         getAnnotationClassValues(elements, annotation).get(key).stream()
             .map(MoreTypes::asTypeElement)
             .collect(Collectors.toList()));
+  }
+
+  /** Returns a list of {@link XTypeElement}s for a class attribute on an annotation. */
+  public static ImmutableList<XTypeElement> getOptionalAnnotationClassValues(
+      XAnnotation annotation, String key) {
+    XAnnotationValue annotationValue = annotation.getAnnotationValue(key);
+    ImmutableList<XType> types;
+    if (annotationValue.hasTypeListValue()) {
+      types = ImmutableList.copyOf(annotationValue.asTypeList());
+    } else if (annotationValue.hasTypeValue()) {
+      types = ImmutableList.of(annotationValue.asType());
+    } else {
+      types = ImmutableList.of();
+    }
+    return types.stream().map(XType::getTypeElement).collect(toImmutableList());
   }
 
   private static final class DeclaredTypeAnnotationValueVisitor
@@ -349,30 +364,18 @@ public final class Processors {
     }, /* unused accumulator */ null);
   }
 
-  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
-  public static TypeElement getTopLevelType(Element originalElement) {
+  public static XTypeElement getTopLevelType(XElement originalElement) {
     checkNotNull(originalElement);
-    for (Element e = originalElement; e != null; e = e.getEnclosingElement()) {
+    for (XElement e = originalElement; e != null; e = e.getEnclosingElement()) {
       if (isTopLevel(e)) {
-        return MoreElements.asType(e);
+        return XElements.asTypeElement(e);
       }
     }
     throw new IllegalStateException("Cannot find a top-level type for " + originalElement);
   }
 
-  public static XTypeElement getTopLevelType(XElement originalElement) {
-    return toXProcessing(
-        getTopLevelType(toJavac(originalElement)), getProcessingEnv(originalElement));
-  }
-
-  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
-  /** Returns true if the given element is a top-level element. */
-  public static boolean isTopLevel(Element element) {
-    return element.getEnclosingElement().getKind() == ElementKind.PACKAGE;
-  }
-
   public static boolean isTopLevel(XElement element) {
-    return isTopLevel(toJavac(element));
+    return element.getEnclosingElement() == null;
   }
 
   /** Returns true if the given element is annotated with the given annotation. */
@@ -425,8 +428,8 @@ public final class Processors {
    * Returns an equivalent class name with the {@code .} (dots) used for inner classes replaced with
    * {@code _}.
    */
-  public static ClassName getEnclosedClassName(TypeElement typeElement) {
-    return getEnclosedClassName(ClassName.get(typeElement));
+  public static ClassName getEnclosedClassName(XTypeElement typeElement) {
+    return getEnclosedClassName(typeElement.getClassName());
   }
 
   // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
@@ -702,7 +705,7 @@ public final class Processors {
       return true;
     }
 
-    if (method.getModifiers().contains(Modifier.STATIC)) {
+    if (method.getModifiers().contains(STATIC)) {
       return false;
     }
     switch (method.getSimpleName().toString()) {
@@ -787,8 +790,10 @@ public final class Processors {
         || method.hasAnnotation(ClassNames.CONTRIBUTES_ANDROID_INJECTOR);
   }
 
-  public static ImmutableSet<ClassName> toClassNames(Iterable<TypeElement> elements) {
-    return FluentIterable.from(elements).transform(ClassName::get).toSet();
+  public static ImmutableSet<ClassName> toClassNames(Iterable<XTypeElement> elements) {
+    return ImmutableSet.copyOf(elements).stream()
+        .map(XTypeElement::getClassName)
+        .collect(DaggerStreams.toImmutableSet());
   }
 
   // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
@@ -805,8 +810,12 @@ public final class Processors {
   }
 
   public static boolean requiresModuleInstance(XTypeElement module) {
-    return requiresModuleInstance(
-        toJavac(getProcessingEnv(module)).getElementUtils(), toJavac(module));
+    // Binding methods that lack ABSTRACT or STATIC require module instantiation.
+    // Required by Dagger.  See b/31489617.
+    return module.getDeclaredMethods().stream()
+            .filter(Processors::isBindingMethod)
+            .anyMatch(method -> !method.isAbstract() && !method.isStatic())
+        && !module.isKotlinObject();
   }
 
   public static boolean hasVisibleEmptyConstructor(XTypeElement type) {
@@ -820,6 +829,7 @@ public final class Processors {
                         );
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   private static boolean isBindingMethod(ExecutableElement method) {
     return hasAnnotation(method, ClassNames.PROVIDES)
         || hasAnnotation(method, ClassNames.BINDS)
@@ -827,27 +837,16 @@ public final class Processors {
         || hasAnnotation(method, ClassNames.MULTIBINDS);
   }
 
+  private static boolean isBindingMethod(XExecutableElement method) {
+    return method.hasAnnotation(ClassNames.PROVIDES)
+        || method.hasAnnotation(ClassNames.BINDS)
+        || method.hasAnnotation(ClassNames.BINDS_OPTIONAL_OF)
+        || method.hasAnnotation(ClassNames.MULTIBINDS);
+  }
+
   public static void addGeneratedAnnotation(
       TypeSpec.Builder typeSpecBuilder, XProcessingEnv env, Class<?> generatorClass) {
-    addGeneratedAnnotation(typeSpecBuilder, toJavac(env), generatorClass);
-  }
-
-  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
-  public static void addGeneratedAnnotation(
-      TypeSpec.Builder typeSpecBuilder, ProcessingEnvironment env, Class<?> generatorClass) {
     addGeneratedAnnotation(typeSpecBuilder, env, generatorClass.getName());
-  }
-
-  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
-  public static void addGeneratedAnnotation(
-      TypeSpec.Builder typeSpecBuilder, ProcessingEnvironment env, String generatorClass) {
-    GeneratedAnnotations.generatedAnnotation(env.getElementUtils(), env.getSourceVersion())
-        .ifPresent(
-            annotation ->
-                typeSpecBuilder.addAnnotation(
-                    AnnotationSpec.builder(ClassName.get(annotation))
-                        .addMember("value", "$S", generatorClass)
-                        .build()));
   }
 
   public static void addGeneratedAnnotation(
@@ -861,16 +860,11 @@ public final class Processors {
     }
   }
 
-  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
-  public static AnnotationSpec getOriginatingElementAnnotation(TypeElement element) {
-    TypeName rawType = rawTypeName(ClassName.get(getTopLevelType(element)));
+  public static AnnotationSpec getOriginatingElementAnnotation(XTypeElement element) {
+    TypeName rawType = rawTypeName(getTopLevelType(element).getClassName());
     return AnnotationSpec.builder(ClassNames.ORIGINATING_ELEMENT)
         .addMember("topLevelClass", "$T.class", rawType)
         .build();
-  }
-
-  public static AnnotationSpec getOriginatingElementAnnotation(XTypeElement element) {
-    return getOriginatingElementAnnotation(toJavac(element));
   }
 
   /**
@@ -883,30 +877,19 @@ public final class Processors {
         : typeName;
   }
 
-  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
-  public static Optional<TypeElement> getOriginatingTestElement(
-      Element element, Elements elements) {
-    TypeElement topLevelType = getOriginatingTopLevelType(element, elements);
-    return hasAnnotation(topLevelType, ClassNames.HILT_ANDROID_TEST)
-        ? Optional.of(asType(topLevelType))
+  public static Optional<XTypeElement> getOriginatingTestElement(XElement element) {
+    XTypeElement topLevelType = getOriginatingTopLevelType(element);
+    return topLevelType.hasAnnotation(ClassNames.HILT_ANDROID_TEST)
+        ? Optional.of(topLevelType)
         : Optional.empty();
   }
 
-  public static Optional<XTypeElement> getOriginatingTestElement(XElement element) {
-    XProcessingEnv processingEnv = getProcessingEnv(element);
-    return getOriginatingTestElement(toJavac(element), toJavac(processingEnv).getElementUtils())
-        .map(typeElement -> toXProcessing(typeElement, processingEnv));
-  }
-
-  private static TypeElement getOriginatingTopLevelType(Element element, Elements elements) {
-    TypeElement topLevelType = getTopLevelType(element);
-    if (hasAnnotation(topLevelType, ClassNames.ORIGINATING_ELEMENT)) {
+  private static XTypeElement getOriginatingTopLevelType(XElement element) {
+    XTypeElement topLevelType = getTopLevelType(element);
+    if (topLevelType.hasAnnotation(ClassNames.ORIGINATING_ELEMENT)) {
       return getOriginatingTopLevelType(
           getAnnotationClassValue(
-              elements,
-              getAnnotationMirror(topLevelType, ClassNames.ORIGINATING_ELEMENT),
-              "topLevelClass"),
-          elements);
+              topLevelType.getAnnotation(ClassNames.ORIGINATING_ELEMENT), "topLevelClass"));
     }
 
     return topLevelType;

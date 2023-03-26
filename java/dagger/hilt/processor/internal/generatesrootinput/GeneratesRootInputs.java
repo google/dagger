@@ -16,10 +16,14 @@
 
 package dagger.hilt.processor.internal.generatesrootinput;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Suppliers.memoize;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XRoundEnv;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -28,8 +32,6 @@ import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import java.util.List;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -42,27 +44,28 @@ public final class GeneratesRootInputs {
   static final String AGGREGATING_PACKAGE =
       GeneratesRootInputs.class.getPackage().getName() + ".codegen";
 
-  private final Elements elements;
+  private final XProcessingEnv env;
   private final Supplier<ImmutableList<ClassName>> generatesRootInputAnnotations =
       memoize(() -> getAnnotationList());
 
-  public GeneratesRootInputs(ProcessingEnvironment processingEnvironment) {
-    this.elements = processingEnvironment.getElementUtils();
+  public GeneratesRootInputs(XProcessingEnv processingEnvironment) {
+    this.env = processingEnvironment;
   }
 
-  public ImmutableSet<Element> getElementsToWaitFor(RoundEnvironment roundEnv) {
+  public ImmutableSet<XElement> getElementsToWaitFor(XRoundEnv roundEnv) {
     // Processing can only take place after all dependent annotations have been processed
     // Note: We start with ClassName rather than TypeElement because jdk8 does not treat type
     // elements as equal across rounds. Thus, in order for RoundEnvironment#getElementsAnnotatedWith
     // to work properly, we get new elements to ensure it works across rounds (See b/148693284).
     return generatesRootInputAnnotations.get().stream()
-        .map(className -> elements.getTypeElement(className.toString()))
+        .map(className -> env.findTypeElement(className.toString()))
         .filter(element -> element != null)
-        .flatMap(annotation -> roundEnv.getElementsAnnotatedWith(annotation).stream())
+        .flatMap(
+            annotation -> roundEnv.getElementsAnnotatedWith(annotation.getQualifiedName()).stream())
         .collect(toImmutableSet());
   }
 
-  private ImmutableList<ClassName> getAnnotationList() {
+  private static ImmutableList<ClassName> getAnnotationList(Elements elements) {
     PackageElement packageElement = elements.getPackageElement(AGGREGATING_PACKAGE);
 
     if (packageElement == null) {
@@ -102,5 +105,9 @@ public final class GeneratesRootInputs {
     // cultivated later. We have to manually add it to the list.
     builder.add(ClassNames.PRODUCTION_COMPONENT);
     return builder.build();
+  }
+
+  private ImmutableList<ClassName> getAnnotationList() {
+    return getAnnotationList(toJavac(env).getElementUtils());
   }
 }

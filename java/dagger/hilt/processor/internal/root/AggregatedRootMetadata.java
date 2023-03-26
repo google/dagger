@@ -18,20 +18,15 @@ package dagger.hilt.processor.internal.root;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
-import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.root.ir.AggregatedRootIr;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.TypeElement;
 
 /**
  * Represents the values stored in an {@link dagger.hilt.internal.aggregatedroot.AggregatedRoot}.
@@ -40,19 +35,19 @@ import javax.lang.model.element.TypeElement;
 abstract class AggregatedRootMetadata {
 
   /** Returns the aggregating element */
-  public abstract TypeElement aggregatingElement();
+  public abstract XTypeElement aggregatingElement();
 
   /** Returns the element that was annotated with the root annotation. */
-  abstract TypeElement rootElement();
+  abstract XTypeElement rootElement();
 
   /**
-   * Returns the originating root element. In most cases this will be the same as
-   * {@link #rootElement()}.
+   * Returns the originating root element. In most cases this will be the same as {@link
+   * #rootElement()}.
    */
-  abstract TypeElement originatingRootElement();
+  abstract XTypeElement originatingRootElement();
 
   /** Returns the root annotation as an element. */
-  abstract TypeElement rootAnnotation();
+  abstract XTypeElement rootAnnotation();
 
   /** Returns whether this root can use a shared component. */
   abstract boolean allowsSharingComponent();
@@ -62,16 +57,16 @@ abstract class AggregatedRootMetadata {
     return RootType.of(rootElement());
   }
 
-  static ImmutableSet<AggregatedRootMetadata> from(ProcessingEnvironment env) {
+  static ImmutableSet<AggregatedRootMetadata> from(XProcessingEnv env) {
     return from(
         AggregatedElements.from(
-            ClassNames.AGGREGATED_ROOT_PACKAGE, ClassNames.AGGREGATED_ROOT, env.getElementUtils()),
+            ClassNames.AGGREGATED_ROOT_PACKAGE, ClassNames.AGGREGATED_ROOT, env),
         env);
   }
 
   /** Returns metadata for each aggregated element. */
   public static ImmutableSet<AggregatedRootMetadata> from(
-      ImmutableSet<TypeElement> aggregatedElements, ProcessingEnvironment env) {
+      ImmutableSet<XTypeElement> aggregatedElements, XProcessingEnv env) {
     return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, env))
         .collect(toImmutableSet());
@@ -79,29 +74,23 @@ abstract class AggregatedRootMetadata {
 
   public static AggregatedRootIr toIr(AggregatedRootMetadata metadata) {
     return new AggregatedRootIr(
-        ClassName.get(metadata.aggregatingElement()),
-        ClassName.get(metadata.rootElement()),
-        ClassName.get(metadata.originatingRootElement()),
-        ClassName.get(metadata.rootAnnotation()),
+        metadata.aggregatingElement().getClassName(),
+        metadata.rootElement().getClassName(),
+        metadata.originatingRootElement().getClassName(),
+        metadata.rootAnnotation().getClassName(),
         metadata.allowsSharingComponent());
   }
 
-  private static AggregatedRootMetadata create(TypeElement element, ProcessingEnvironment env) {
-    AnnotationMirror annotationMirror =
-        Processors.getAnnotationMirror(element, ClassNames.AGGREGATED_ROOT);
+  private static AggregatedRootMetadata create(XTypeElement element, XProcessingEnv env) {
+    XAnnotation annotation = element.getAnnotation(ClassNames.AGGREGATED_ROOT);
 
-    ImmutableMap<String, AnnotationValue> values =
-        Processors.getAnnotationValues(env.getElementUtils(), annotationMirror);
-
-    TypeElement rootElement =
-        env.getElementUtils().getTypeElement(AnnotationValues.getString(values.get("root")));
+    XTypeElement rootElement = env.requireTypeElement(annotation.getAsString("root"));
     boolean allowSharingComponent = true;
     return new AutoValue_AggregatedRootMetadata(
         element,
         rootElement,
-        env.getElementUtils()
-            .getTypeElement(AnnotationValues.getString(values.get("originatingRoot"))),
-        AnnotationValues.getTypeElement(values.get("rootAnnotation")),
+        env.requireTypeElement(annotation.getAsString("originatingRoot")),
+        annotation.getAsType("rootAnnotation").getTypeElement(),
         allowSharingComponent);
   }
 }

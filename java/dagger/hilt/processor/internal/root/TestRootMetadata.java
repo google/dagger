@@ -16,14 +16,15 @@
 
 package dagger.hilt.processor.internal.root;
 
-import com.google.auto.common.MoreElements;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.Element;
+import dagger.internal.codegen.xprocessing.XElements;
 import javax.lang.model.element.TypeElement;
 
 /** Metadata class for {@code InternalTestRoot} annotated classes. */
@@ -31,19 +32,19 @@ import javax.lang.model.element.TypeElement;
 abstract class TestRootMetadata {
 
   /** Returns the {@link TypeElement} for the test class. */
-  abstract TypeElement testElement();
+  abstract XTypeElement testElement();
 
   /** Returns the {@link TypeElement} for the base application. */
-  abstract TypeElement baseElement();
+  abstract XTypeElement baseElement();
 
   /** Returns the {@link ClassName} for the test class. */
   ClassName testName() {
-    return ClassName.get(testElement());
+    return testElement().getClassName();
   }
 
   /** Returns the {@link ClassName} for the base application. */
   ClassName baseAppName() {
-    return ClassName.get(baseElement());
+    return baseElement().getClassName();
   }
 
   /** The name of the generated Hilt test application class for the given test name. */
@@ -56,19 +57,18 @@ abstract class TestRootMetadata {
     return Processors.append(Processors.getEnclosedClassName(testName()), "_GeneratedInjector");
   }
 
-  static TestRootMetadata of(ProcessingEnvironment env, Element element) {
+  static TestRootMetadata of(XProcessingEnv env, XElement element) {
 
-    TypeElement testElement = MoreElements.asType(element);
+    XTypeElement testElement = XElements.asTypeElement(element);
+    XTypeElement baseElement = env.requireTypeElement(ClassNames.MULTI_DEX_APPLICATION);
 
-    TypeElement baseElement =
-        env.getElementUtils().getTypeElement(ClassNames.MULTI_DEX_APPLICATION.toString());
     ProcessorErrors.checkState(
-        !Processors.hasAnnotation(element, ClassNames.ANDROID_ENTRY_POINT),
+        !element.hasAnnotation(ClassNames.ANDROID_ENTRY_POINT),
         element,
         "Tests cannot be annotated with @AndroidEntryPoint. Please use @HiltAndroidTest");
 
     ProcessorErrors.checkState(
-        Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST),
+        element.hasAnnotation(ClassNames.HILT_ANDROID_TEST),
         element,
         "Tests must be annotated with @HiltAndroidTest");
 

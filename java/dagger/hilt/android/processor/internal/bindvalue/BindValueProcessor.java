@@ -97,7 +97,7 @@ public final class BindValueProcessor extends BaseProcessor {
     // Generate a module for each testing class with a @BindValue field.
     for (Map.Entry<XTypeElement, Collection<XElement>> e : testRootMap.asMap().entrySet()) {
       BindValueMetadata metadata = BindValueMetadata.create(e.getKey(), e.getValue());
-      new BindValueGenerator(getProcessingEnv(), metadata).generate();
+      new BindValueGenerator(processingEnv(), metadata).generate();
     }
   }
 

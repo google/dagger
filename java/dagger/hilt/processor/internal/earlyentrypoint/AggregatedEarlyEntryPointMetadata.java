@@ -18,19 +18,14 @@ package dagger.hilt.processor.internal.earlyentrypoint;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
-import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.root.ir.AggregatedEarlyEntryPointIr;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 
 /**
  * A class that represents the values stored in an {@link
@@ -40,44 +35,40 @@ import javax.lang.model.util.Elements;
 public abstract class AggregatedEarlyEntryPointMetadata {
 
   /** Returns the aggregating element */
-  public abstract TypeElement aggregatingElement();
+  public abstract XTypeElement aggregatingElement();
 
   /** Returns the element annotated with {@link dagger.hilt.android.EarlyEntryPoint}. */
-  public abstract TypeElement earlyEntryPoint();
+  public abstract XTypeElement earlyEntryPoint();
 
   /** Returns metadata for all aggregated elements in the aggregating package. */
-  public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(Elements elements) {
+  public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(XProcessingEnv env) {
     return from(
         AggregatedElements.from(
             ClassNames.AGGREGATED_EARLY_ENTRY_POINT_PACKAGE,
             ClassNames.AGGREGATED_EARLY_ENTRY_POINT,
-            elements),
-        elements);
+            env),
+        env);
   }
 
   /** Returns metadata for each aggregated element. */
   public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(
-      ImmutableSet<TypeElement> aggregatedElements, Elements elements) {
+      ImmutableSet<XTypeElement> aggregatedElements, XProcessingEnv env) {
     return aggregatedElements.stream()
-        .map(aggregatedElement -> create(aggregatedElement, elements))
+        .map(aggregatedElement -> create(aggregatedElement, env))
         .collect(toImmutableSet());
   }
 
   public static AggregatedEarlyEntryPointIr toIr(AggregatedEarlyEntryPointMetadata metadata) {
     return new AggregatedEarlyEntryPointIr(
-        ClassName.get(metadata.aggregatingElement()),
-        ClassName.get(metadata.earlyEntryPoint()).canonicalName());
+        metadata.aggregatingElement().getClassName(),
+        metadata.earlyEntryPoint().getClassName().canonicalName());
   }
 
-  private static AggregatedEarlyEntryPointMetadata create(TypeElement element, Elements elements) {
-    AnnotationMirror annotationMirror =
-        Processors.getAnnotationMirror(element, ClassNames.AGGREGATED_EARLY_ENTRY_POINT);
-
-    ImmutableMap<String, AnnotationValue> values =
-        Processors.getAnnotationValues(elements, annotationMirror);
+  private static AggregatedEarlyEntryPointMetadata create(
+      XTypeElement element, XProcessingEnv env) {
+    XAnnotation annotation = element.getAnnotation(ClassNames.AGGREGATED_EARLY_ENTRY_POINT);
 
     return new AutoValue_AggregatedEarlyEntryPointMetadata(
-        element,
-        elements.getTypeElement(AnnotationValues.getString(values.get("earlyEntryPoint"))));
+        element, env.requireTypeElement(annotation.getAsString("earlyEntryPoint")));
   }
 }

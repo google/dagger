@@ -18,20 +18,16 @@ package dagger.hilt.processor.internal.root;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
-import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.root.ir.ProcessedRootSentinelIr;
 import java.util.stream.Collectors;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 
 /**
  * Represents the values stored in an {@link
@@ -41,42 +37,35 @@ import javax.lang.model.util.Elements;
 abstract class ProcessedRootSentinelMetadata {
 
   /** Returns the aggregating element */
-  public abstract TypeElement aggregatingElement();
+  public abstract XTypeElement aggregatingElement();
 
   /** Returns the processed root elements. */
-  abstract ImmutableSet<TypeElement> rootElements();
+  abstract ImmutableSet<XTypeElement> rootElements();
 
-  static ImmutableSet<ProcessedRootSentinelMetadata> from(Elements elements) {
+  static ImmutableSet<ProcessedRootSentinelMetadata> from(XProcessingEnv env) {
     return AggregatedElements.from(
-            ClassNames.PROCESSED_ROOT_SENTINEL_PACKAGE,
-            ClassNames.PROCESSED_ROOT_SENTINEL,
-            elements)
+            ClassNames.PROCESSED_ROOT_SENTINEL_PACKAGE, ClassNames.PROCESSED_ROOT_SENTINEL, env)
         .stream()
-        .map(aggregatedElement -> create(aggregatedElement, elements))
+        .map(aggregatedElement -> create(aggregatedElement, env))
         .collect(toImmutableSet());
   }
 
   static ProcessedRootSentinelIr toIr(ProcessedRootSentinelMetadata metadata) {
     return new ProcessedRootSentinelIr(
-        ClassName.get(metadata.aggregatingElement()),
+        metadata.aggregatingElement().getClassName(),
         metadata.rootElements().stream()
-            .map(ClassName::get)
+            .map(XTypeElement::getClassName)
             .map(ClassName::canonicalName)
-            .collect(Collectors.toList())
-    );
+            .collect(Collectors.toList()));
   }
 
-  private static ProcessedRootSentinelMetadata create(TypeElement element, Elements elements) {
-    AnnotationMirror annotationMirror =
-        Processors.getAnnotationMirror(element, ClassNames.PROCESSED_ROOT_SENTINEL);
-
-    ImmutableMap<String, AnnotationValue> values =
-        Processors.getAnnotationValues(elements, annotationMirror);
+  private static ProcessedRootSentinelMetadata create(XTypeElement element, XProcessingEnv env) {
+    XAnnotation annotationMirror = element.getAnnotation(ClassNames.PROCESSED_ROOT_SENTINEL);
 
     return new AutoValue_ProcessedRootSentinelMetadata(
         element,
-        AnnotationValues.getStrings(values.get("roots")).stream()
-            .map(elements::getTypeElement)
+        annotationMirror.getAsStringList("roots").stream()
+            .map(env::requireTypeElement)
             .collect(toImmutableSet()));
   }
 }

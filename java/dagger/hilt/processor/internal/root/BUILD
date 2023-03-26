@@ -150,6 +150,7 @@ java_library(
     deps = [
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/javapoet",
     ],
 )

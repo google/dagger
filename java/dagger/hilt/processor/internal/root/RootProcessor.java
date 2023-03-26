@@ -16,11 +16,11 @@
 
 package dagger.hilt.processor.internal.root;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isCrossCompilationRootValidationDisabled;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isSharedTestComponentsEnabled;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.AGGREGATING;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.DYNAMIC;
@@ -29,7 +29,6 @@ import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XRoundEnv;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
 import dagger.hilt.processor.internal.BadInputException;
@@ -51,12 +50,11 @@ import dagger.hilt.processor.internal.root.ir.DefineComponentClassesIr;
 import dagger.hilt.processor.internal.root.ir.InvalidRootsException;
 import dagger.hilt.processor.internal.root.ir.ProcessedRootSentinelIr;
 import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Arrays;
 import java.util.Set;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Processor that outputs dagger components based on transitive build deps. */
@@ -70,7 +68,7 @@ public final class RootProcessor extends BaseProcessor {
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
     super.init(processingEnvironment);
-    generatesRootInputs = new GeneratesRootInputs(processingEnvironment);
+    generatesRootInputs = new GeneratesRootInputs(processingEnv());
   }
 
   @Override
@@ -92,24 +90,18 @@ public final class RootProcessor extends BaseProcessor {
 
   @Override
   public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    processEach(toJavac(annotation), toJavac(element));
-  }
-
-  private void processEach(TypeElement annotation, Element element) throws Exception {
-    TypeElement rootElement = MoreElements.asType(element);
+    XTypeElement rootElement = XElements.asTypeElement(element);
     // TODO(bcorso): Move this logic into a separate isolating processor to avoid regenerating it
     // for unrelated changes in Gradle.
     RootType rootType = RootType.of(rootElement);
     if (rootType.isTestRoot()) {
-      new TestInjectorGenerator(
-              getProcessingEnv(), TestRootMetadata.of(getProcessingEnv(), rootElement))
+      new TestInjectorGenerator(processingEnv(), TestRootMetadata.of(processingEnv(), rootElement))
           .generate();
     }
 
-    TypeElement originatingRootElement =
-        Root.create(rootElement, getProcessingEnv()).originatingRootElement();
-    new AggregatedRootGenerator(rootElement, originatingRootElement, annotation, getProcessingEnv())
-        .generate();
+    XTypeElement originatingRootElement =
+        Root.create(rootElement, processingEnv()).originatingRootElement();
+    new AggregatedRootGenerator(rootElement, originatingRootElement, annotation).generate();
   }
 
   @Override
@@ -117,14 +109,14 @@ public final class RootProcessor extends BaseProcessor {
     if (!useAggregatingRootProcessor(getProcessingEnv())) {
       return;
     }
-    ImmutableSet<Element> newElements = generatesRootInputs.getElementsToWaitFor(toJavac(roundEnv));
+    ImmutableSet<XElement> newElements = generatesRootInputs.getElementsToWaitFor(roundEnv);
     if (processed) {
       checkState(
           newElements.isEmpty(),
           "Found extra modules after compilation: %s\n"
               + "(If you are adding an annotation processor that generates root input for hilt, "
               + "the annotation must be annotated with @dagger.hilt.GeneratesRootInput.\n)",
-          newElements);
+          newElements.stream().map(XElements::toStableString).collect(toImmutableList()));
     } else if (newElements.isEmpty()) {
       processed = true;
 
@@ -134,26 +126,26 @@ public final class RootProcessor extends BaseProcessor {
       }
       // Generate an @ComponentTreeDeps for each unique component tree.
       ComponentTreeDepsGenerator componentTreeDepsGenerator =
-          new ComponentTreeDepsGenerator(getProcessingEnv());
+          new ComponentTreeDepsGenerator(processingEnv());
       for (ComponentTreeDepsMetadata metadata : componentTreeDepsMetadatas(rootsToProcess)) {
         componentTreeDepsGenerator.generate(metadata);
       }
 
       // Generate a sentinel for all processed roots.
       for (AggregatedRootIr ir : rootsToProcess) {
-        TypeElement rootElement = getElementUtils().getTypeElement(ir.getRoot().canonicalName());
-        new ProcessedRootSentinelGenerator(rootElement, getProcessingEnv()).generate();
+        XTypeElement rootElement = processingEnv().requireTypeElement(ir.getRoot().canonicalName());
+        new ProcessedRootSentinelGenerator(rootElement).generate();
       }
     }
   }
 
   private ImmutableSet<AggregatedRootIr> rootsToProcess() {
     ImmutableSet<ProcessedRootSentinelIr> processedRoots =
-        ProcessedRootSentinelMetadata.from(getElementUtils()).stream()
+        ProcessedRootSentinelMetadata.from(processingEnv()).stream()
             .map(ProcessedRootSentinelMetadata::toIr)
             .collect(toImmutableSet());
     ImmutableSet<AggregatedRootIr> aggregatedRoots =
-        AggregatedRootMetadata.from(processingEnv).stream()
+        AggregatedRootMetadata.from(processingEnv()).stream()
             .map(AggregatedRootMetadata::toIr)
             .collect(toImmutableSet());
 
@@ -175,23 +167,23 @@ public final class RootProcessor extends BaseProcessor {
   private ImmutableSet<ComponentTreeDepsMetadata> componentTreeDepsMetadatas(
       ImmutableSet<AggregatedRootIr> aggregatedRoots) {
     ImmutableSet<DefineComponentClassesIr> defineComponentDeps =
-        DefineComponentClassesMetadata.from(getElementUtils()).stream()
+        DefineComponentClassesMetadata.from(processingEnv()).stream()
             .map(DefineComponentClassesMetadata::toIr)
             .collect(toImmutableSet());
     ImmutableSet<AliasOfPropagatedDataIr> aliasOfDeps =
-        AliasOfPropagatedDataMetadata.from(getElementUtils()).stream()
+        AliasOfPropagatedDataMetadata.from(processingEnv()).stream()
             .map(AliasOfPropagatedDataMetadata::toIr)
             .collect(toImmutableSet());
     ImmutableSet<AggregatedDepsIr> aggregatedDeps =
-        AggregatedDepsMetadata.from(getElementUtils()).stream()
+        AggregatedDepsMetadata.from(processingEnv()).stream()
             .map(AggregatedDepsMetadata::toIr)
             .collect(toImmutableSet());
     ImmutableSet<AggregatedUninstallModulesIr> aggregatedUninstallModulesDeps =
-        AggregatedUninstallModulesMetadata.from(getElementUtils()).stream()
+        AggregatedUninstallModulesMetadata.from(processingEnv()).stream()
             .map(AggregatedUninstallModulesMetadata::toIr)
             .collect(toImmutableSet());
     ImmutableSet<AggregatedEarlyEntryPointIr> aggregatedEarlyEntryPointDeps =
-        AggregatedEarlyEntryPointMetadata.from(getElementUtils()).stream()
+        AggregatedEarlyEntryPointMetadata.from(processingEnv()).stream()
             .map(AggregatedEarlyEntryPointMetadata::toIr)
             .collect(toImmutableSet());
 
@@ -208,7 +200,7 @@ public final class RootProcessor extends BaseProcessor {
             aggregatedUninstallModulesDeps,
             aggregatedEarlyEntryPointDeps);
     return componentTreeDeps.stream()
-        .map(it -> ComponentTreeDepsMetadata.from(it, getElementUtils()))
+        .map(it -> ComponentTreeDepsMetadata.from(it, processingEnv()))
         .collect(toImmutableSet());
   }
 }

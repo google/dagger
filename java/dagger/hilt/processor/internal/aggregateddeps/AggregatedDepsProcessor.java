@@ -342,8 +342,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
     ImmutableSet<ClassName> components = Components.getComponents(element);
 
     if (isValidKind(element)) {
-      Optional<PkgPrivateMetadata> pkgPrivateMetadata =
-          PkgPrivateMetadata.of(processingEnv(), element, annotation);
+      Optional<PkgPrivateMetadata> pkgPrivateMetadata = PkgPrivateMetadata.of(element, annotation);
       if (pkgPrivateMetadata.isPresent()) {
         if (key.contentEquals("modules")) {
           new PkgPrivateModuleGenerator(processingEnv(), pkgPrivateMetadata.get()).generate();

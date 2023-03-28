@@ -16,9 +16,12 @@
 
 package dagger.hilt.processor.internal;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static javax.lang.model.element.Modifier.PUBLIC;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -31,35 +34,34 @@ import javax.lang.model.util.Elements;
 public final class AggregatedElements {
 
   /** Returns the class name of the proxy or {@link Optional#empty()} if a proxy is not needed. */
-  public static Optional<ClassName> aggregatedElementProxyName(TypeElement aggregatedElement) {
-    if (aggregatedElement.getModifiers().contains(PUBLIC)) {
+  public static Optional<ClassName> aggregatedElementProxyName(XTypeElement aggregatedElement) {
+    if (aggregatedElement.isPublic() && !aggregatedElement.isInternal()) {
       // Public aggregated elements do not have proxies.
       return Optional.empty();
     }
-    ClassName name = ClassName.get(aggregatedElement);
+    ClassName name = aggregatedElement.getClassName();
     // To avoid going over the class name size limit, just prepend a single character.
     return Optional.of(name.peerClass("_" + name.simpleName()));
   }
 
   /** Returns back the set of input {@code aggregatedElements} with all proxies unwrapped. */
-  public static ImmutableSet<TypeElement> unwrapProxies(
-      ImmutableSet<TypeElement> aggregatedElements, Elements elements) {
+  public static ImmutableSet<XTypeElement> unwrapProxies(
+      ImmutableSet<XTypeElement> aggregatedElements) {
     return aggregatedElements.stream()
-        .map(aggregatedElement -> unwrapProxy(aggregatedElement, elements))
+        .map(AggregatedElements::unwrapProxy)
         .collect(toImmutableSet());
   }
 
-  private static TypeElement unwrapProxy(TypeElement element, Elements elements) {
-    return Processors.hasAnnotation(element, ClassNames.AGGREGATED_ELEMENT_PROXY)
+  private static XTypeElement unwrapProxy(XTypeElement element) {
+    return element.hasAnnotation(ClassNames.AGGREGATED_ELEMENT_PROXY)
         ? Processors.getAnnotationClassValue(
-            elements,
-            Processors.getAnnotationMirror(element, ClassNames.AGGREGATED_ELEMENT_PROXY),
-            "value")
+            element.getAnnotation(ClassNames.AGGREGATED_ELEMENT_PROXY), "value")
         : element;
   }
 
+  // TODO(kuanyingchou): Migrate this once we have suitable APIs for packages in XProcessing.
   /** Returns all aggregated elements in the aggregating package after validating them. */
-  public static ImmutableSet<TypeElement> from(
+  private static ImmutableSet<TypeElement> from(
       String aggregatingPackage, ClassName aggregatingAnnotation, Elements elements) {
     PackageElement packageElement = elements.getPackageElement(aggregatingPackage);
 
@@ -93,6 +95,14 @@ public final class AggregatedElements {
     }
 
     return aggregatedElements;
+  }
+
+  /** Returns all aggregated elements in the aggregating package after validating them. */
+  public static ImmutableSet<XTypeElement> from(
+      String aggregatingPackage, ClassName aggregatingAnnotation, XProcessingEnv env) {
+    return from(aggregatingPackage, aggregatingAnnotation, toJavac(env).getElementUtils()).stream()
+        .map(element -> toXProcessing(element, env))
+        .collect(toImmutableSet());
   }
 
   private AggregatedElements() {}

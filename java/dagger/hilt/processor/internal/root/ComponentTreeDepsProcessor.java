@@ -16,7 +16,7 @@
 
 package dagger.hilt.processor.internal.root;
 
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
@@ -47,6 +47,7 @@ import dagger.hilt.processor.internal.definecomponent.DefineComponents;
 import dagger.hilt.processor.internal.earlyentrypoint.AggregatedEarlyEntryPointMetadata;
 import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
 import dagger.internal.codegen.xprocessing.XElements;
+import dagger.internal.codegen.xprocessing.XTypeElements;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -99,9 +100,9 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
 
       boolean isDefaultRoot = ClassNames.DEFAULT_ROOT.equals(renamedRoot);
       ImmutableSet<Root> roots =
-          AggregatedRootMetadata.from(metadata.aggregatedRootDeps(), processingEnv).stream()
+          AggregatedRootMetadata.from(metadata.aggregatedRootDeps(), processingEnv()).stream()
               .map(AggregatedRootMetadata::rootElement)
-              .map(rootElement -> Root.create(rootElement, getProcessingEnv()))
+              .map(rootElement -> Root.create(rootElement, processingEnv()))
               .collect(toImmutableSet());
 
       // TODO(bcorso): For legacy reasons, a lot of the generating code requires a "root" as input
@@ -109,48 +110,54 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
       // represent multiple roots, we should refactor this logic.
       Root root =
           isDefaultRoot
-              ? Root.createDefaultRoot(getProcessingEnv())
+              ? Root.createDefaultRoot(processingEnv())
               // Non-default roots should only ever be associated with one root element
               : getOnlyElement(roots);
 
       ImmutableSet<ComponentDescriptor> componentDescriptors =
           defineComponents.getComponentDescriptors(
               DefineComponentClassesMetadata.from(
-                  metadata.defineComponentDeps(), getElementUtils()));
+                  XTypeElements.toJavac(metadata.defineComponentDeps()),
+                  toJavac(processingEnv()).getElementUtils()));
       ComponentTree tree = ComponentTree.from(componentDescriptors);
       ComponentDependencies deps =
           ComponentDependencies.from(
               componentDescriptors,
-              AggregatedDepsMetadata.from(metadata.aggregatedDeps(), getElementUtils()),
+              AggregatedDepsMetadata.from(
+                  XTypeElements.toJavac(metadata.aggregatedDeps()),
+                  toJavac(processingEnv()).getElementUtils()),
               AggregatedUninstallModulesMetadata.from(
-                  metadata.aggregatedUninstallModulesDeps(), getElementUtils()),
+                  XTypeElements.toJavac(metadata.aggregatedUninstallModulesDeps()),
+                  toJavac(processingEnv()).getElementUtils()),
               AggregatedEarlyEntryPointMetadata.from(
-                  metadata.aggregatedEarlyEntryPointDeps(), getElementUtils()),
-              getElementUtils());
+                  XTypeElements.toJavac(metadata.aggregatedEarlyEntryPointDeps()),
+                  toJavac(processingEnv()).getElementUtils()),
+              toJavac(processingEnv()).getElementUtils());
       AliasOfs aliasOfs =
           AliasOfs.create(
-              AliasOfPropagatedDataMetadata.from(metadata.aliasOfDeps(), getElementUtils()),
+              AliasOfPropagatedDataMetadata.from(
+                  XTypeElements.toJavac(metadata.aliasOfDeps()),
+                  toJavac(processingEnv()).getElementUtils()),
               componentDescriptors);
-      RootMetadata rootMetadata =
-          RootMetadata.create(root, tree, deps, aliasOfs, getProcessingEnv());
+      RootMetadata rootMetadata = RootMetadata.create(root, tree, deps, aliasOfs, processingEnv());
 
       generateComponents(metadata, rootMetadata, componentNames);
 
         // Generate a creator for the early entry point if there is a default component available
         // and there are early entry points.
         if (isDefaultRoot && !metadata.aggregatedEarlyEntryPointDeps().isEmpty()) {
-          EarlySingletonComponentCreatorGenerator.generate(getProcessingEnv());
+          EarlySingletonComponentCreatorGenerator.generate(processingEnv());
         }
 
         if (root.isTestRoot()) {
           // Generate test related classes for each test root that uses this component.
           ImmutableList<RootMetadata> rootMetadatas =
               roots.stream()
-                  .map(test -> RootMetadata.create(test, tree, deps, aliasOfs, getProcessingEnv()))
+                  .map(test -> RootMetadata.create(test, tree, deps, aliasOfs, processingEnv()))
                   .collect(toImmutableList());
           generateTestComponentData(metadataElement, rootMetadatas, componentNames);
         } else {
-          generateApplication(toXProcessing(root.element(), processingEnv()));
+          generateApplication(root.element());
         }
 
       setProcessingState(metadata, root);
@@ -167,7 +174,7 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
   private void generateComponents(
       ComponentTreeDepsMetadata metadata, RootMetadata rootMetadata, ComponentNames componentNames)
       throws IOException {
-    RootGenerator.generate(metadata, rootMetadata, componentNames, getProcessingEnv());
+    RootGenerator.generate(metadata, rootMetadata, componentNames, processingEnv());
   }
 
   private void generateTestComponentData(
@@ -177,8 +184,7 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
       throws IOException {
     for (RootMetadata rootMetadata : rootMetadatas) {
       // TODO(bcorso): Consider moving this check earlier into processEach.
-      XTypeElement testElement =
-          toXProcessing(rootMetadata.testRootMetadata().testElement(), processingEnv());
+      XTypeElement testElement = rootMetadata.testRootMetadata().testElement();
       ProcessorErrors.checkState(
           testElement.isPublic(),
           testElement,

@@ -19,6 +19,8 @@ package dagger.hilt.processor.internal.root;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static java.util.Comparator.comparing;
 
+import androidx.room.compiler.processing.XFiler.Mode;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.common.base.Joiner;
 import com.google.common.base.Utf8;
 import com.google.common.collect.ImmutableCollection;
@@ -36,7 +38,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 
 /** Generates a Dagger component or subcomponent interface. */
@@ -47,7 +48,7 @@ final class ComponentGenerator {
           .thenComparing(ClassName::compareTo);
   private static final Comparator<TypeName> TYPE_NAME_SORTER = comparing(TypeName::toString);
 
-  private final ProcessingEnvironment processingEnv;
+  private final XProcessingEnv processingEnv;
   private final ClassName name;
   private final Optional<ClassName> superclass;
   private final ImmutableList<ClassName> modules;
@@ -58,7 +59,7 @@ final class ComponentGenerator {
   private final Optional<TypeSpec> componentBuilder;
 
   public ComponentGenerator(
-      ProcessingEnvironment processingEnv,
+      XProcessingEnv processingEnv,
       ClassName name,
       Optional<ClassName> superclass,
       Set<? extends ClassName> modules,
@@ -161,7 +162,9 @@ final class ComponentGenerator {
 
     Processors.addGeneratedAnnotation(builder, processingEnv, ClassNames.ROOT_PROCESSOR.toString());
 
-    JavaFile.builder(name.packageName(), builder.build()).build().writeTo(processingEnv.getFiler());
+    processingEnv
+        .getFiler()
+        .write(JavaFile.builder(name.packageName(), builder.build()).build(), Mode.Isolating);
     return partitionName;
   }
 }

@@ -16,13 +16,13 @@
 
 package dagger.hilt.processor.internal.root;
 
-import com.google.auto.common.MoreElements;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
+import dagger.internal.codegen.xprocessing.XElements;
 
 /** Metadata for a root element that can trigger the {@link RootProcessor}. */
 @AutoValue
@@ -40,41 +40,40 @@ abstract class Root {
    *   <li>To inject tests that only depend on global dependencies
    * </ul>
    */
-  static Root createDefaultRoot(ProcessingEnvironment env) {
-    TypeElement rootElement =
-        env.getElementUtils().getTypeElement(ClassNames.DEFAULT_ROOT.canonicalName());
+  static Root createDefaultRoot(XProcessingEnv env) {
+    XTypeElement rootElement = env.requireTypeElement(ClassNames.DEFAULT_ROOT.canonicalName());
     return new AutoValue_Root(rootElement, rootElement, /*isTestRoot=*/ true);
   }
 
   /** Creates a {@plainlink Root root} for the given {@plainlink Element element}. */
-  static Root create(Element element, ProcessingEnvironment env) {
-    TypeElement rootElement = MoreElements.asType(element);
-    if (ClassNames.DEFAULT_ROOT.equals(ClassName.get(rootElement))) {
+  static Root create(XElement element, XProcessingEnv env) {
+    XTypeElement rootElement = XElements.asTypeElement(element);
+    if (ClassNames.DEFAULT_ROOT.equals(rootElement.getClassName())) {
       return createDefaultRoot(env);
     }
     return new AutoValue_Root(rootElement, rootElement, RootType.of(rootElement).isTestRoot());
   }
 
   /** Returns the root element that should be used with processing. */
-  abstract TypeElement element();
+  abstract XTypeElement element();
 
   /**
    * Returns the originating root element. In most cases this will be the same as {@link
    * #element()}.
    */
-  abstract TypeElement originatingRootElement();
+  abstract XTypeElement originatingRootElement();
 
   /** Returns {@code true} if this is a test root. */
   abstract boolean isTestRoot();
 
   /** Returns the class name of the root element. */
   ClassName classname() {
-    return ClassName.get(element());
+    return element().getClassName();
   }
 
   /** Returns the class name of the originating root element. */
   ClassName originatingRootClassname() {
-    return ClassName.get(originatingRootElement());
+    return originatingRootElement().getClassName();
   }
 
   @Override

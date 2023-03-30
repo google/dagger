@@ -56,6 +56,7 @@ java_library(
         "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:common",
         "//third_party/java/auto:service",
+        "//third_party/java/error_prone:annotations",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/guava/graph",
@@ -150,6 +151,7 @@ java_library(
     deps = [
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/javapoet",
     ],
 )

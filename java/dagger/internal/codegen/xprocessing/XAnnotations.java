@@ -139,9 +139,13 @@ public final class XAnnotations {
   /** Returns the value of the given [key] as a list of type elements. */
   public static ImmutableList<XTypeElement> getAsTypeElementList(
       XAnnotation annotation, String key) {
-    return annotation.getAsTypeList(key).stream()
-        .map(XType::getTypeElement)
-        .collect(toImmutableList());
+    if (annotation.getAnnotationValue(key).hasTypeListValue()) {
+      return annotation.getAsTypeList(key).stream()
+          .map(XType::getTypeElement)
+          .collect(toImmutableList());
+    } else {
+      return ImmutableList.of(annotation.getAsType(key).getTypeElement());
+    }
   }
 
   private XAnnotations() {}

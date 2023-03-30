@@ -16,6 +16,8 @@
 
 package dagger.hilt.processor.internal.root;
 
+import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.squareup.javapoet.JavaFile;
 import java.io.IOException;
 import java.io.Writer;
@@ -37,6 +39,7 @@ import javax.tools.JavaFileObject;
 final class RootFileFormatter {
   private static final Pattern CLASS_PATERN = Pattern.compile("(\\h*)(.*class.*implements)(.*\\{)");
 
+  // TODO(kuanyingchou): This should be converted to XProcessing as well.
   /** Formats the {@link JavaFile} java source file. */
   static void write(JavaFile javaFile, Filer filer) throws IOException {
     String fileName =
@@ -61,6 +64,11 @@ final class RootFileFormatter {
       }
       throw e;
     }
+  }
+
+  /** Formats the {@link JavaFile} java source file. */
+  static void write(JavaFile javaFile, XFiler filer) throws IOException {
+    write(javaFile, XConverters.toJavac(filer));
   }
 
   private static String formatInterfaces(String content, Pattern pattern) {

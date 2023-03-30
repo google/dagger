@@ -19,6 +19,7 @@ package dagger.internal.codegen.xprocessing;
 import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XHasModifiers;
@@ -32,6 +33,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.devtools.ksp.symbol.Origin;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeVariableName;
+import javax.lang.model.element.TypeElement;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XTypeElement} helper methods. */
@@ -146,6 +148,17 @@ public final class XTypeElements {
         return typeElement.hasAnnotation(ClassName.get("kotlin", "Metadata"));
     }
     throw new AssertionError("Unhandled backend kind: " + processingEnv.getBackend());
+  }
+
+  public static ImmutableSet<TypeElement> toJavac(ImmutableSet<XTypeElement> elements) {
+    return elements.stream().map(XConverters::toJavac).collect(toImmutableSet());
+  }
+
+  public static ImmutableSet<XTypeElement> toXProcessing(
+      ImmutableSet<TypeElement> elements, XProcessingEnv env) {
+    return elements.stream()
+        .map(element -> XConverters.toXProcessing(element, env))
+        .collect(toImmutableSet());
   }
 
   private XTypeElements() {}

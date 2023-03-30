@@ -16,7 +16,6 @@
 
 package dagger.hilt.processor.internal.root;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.hilt.processor.internal.Processors.toClassNames;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -24,6 +23,9 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -43,9 +45,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
 
 /** Generates components and any other classes needed for a root. */
 final class RootGenerator {
@@ -54,7 +54,7 @@ final class RootGenerator {
       ComponentTreeDepsMetadata componentTreeDepsMetadata,
       RootMetadata metadata,
       ComponentNames componentNames,
-      ProcessingEnvironment env)
+      XProcessingEnv env)
       throws IOException {
     new RootGenerator(
             componentTreeDepsMetadata,
@@ -64,9 +64,9 @@ final class RootGenerator {
         .generateComponents();
   }
 
-  private final TypeElement originatingElement;
+  private final XTypeElement originatingElement;
   private final RootMetadata metadata;
-  private final ProcessingEnvironment env;
+  private final XProcessingEnv env;
   private final Root root;
   private final Map<String, Integer> simpleComponentNamesToDedupeSuffix = new HashMap<>();
   private final Map<ComponentDescriptor, ClassName> componentNameMap = new HashMap<>();
@@ -76,10 +76,8 @@ final class RootGenerator {
       ComponentTreeDepsMetadata componentTreeDepsMetadata,
       RootMetadata metadata,
       ComponentNames componentNames,
-      ProcessingEnvironment env) {
-    this.originatingElement =
-        checkNotNull(
-            env.getElementUtils().getTypeElement(componentTreeDepsMetadata.name().toString()));
+      XProcessingEnv env) {
+    this.originatingElement = env.requireTypeElement(componentTreeDepsMetadata.name().toString());
     this.metadata = metadata;
     this.componentNames = componentNames;
     this.env = env;
@@ -178,7 +176,6 @@ final class RootGenerator {
       ClassName componentName, ClassName builderName, ClassName moduleName) {
     TypeSpec.Builder subcomponentBuilderModule =
         TypeSpec.interfaceBuilder(moduleName)
-            .addOriginatingElement(originatingElement)
             .addModifiers(ABSTRACT)
             .addAnnotation(
                 AnnotationSpec.builder(ClassNames.MODULE)
@@ -192,7 +189,7 @@ final class RootGenerator {
                     .returns(builderName)
                     .addParameter(componentName.nestedClass("Builder"), "builder")
                     .build());
-
+    JavaPoetExtKt.addOriginatingElement(subcomponentBuilderModule, originatingElement);
     Processors.addGeneratedAnnotation(
         subcomponentBuilderModule, env, ClassNames.ROOT_PROCESSOR.toString());
 
@@ -203,13 +200,15 @@ final class RootGenerator {
     return descriptor
         .creator()
         .map(
-            creator ->
-                TypeSpec.interfaceBuilder("Builder")
-                    .addOriginatingElement(originatingElement)
-                    .addModifiers(STATIC, ABSTRACT)
-                    .addSuperinterface(creator)
-                    .addAnnotation(componentBuilderAnnotation(descriptor))
-                    .build());
+            creator -> {
+              TypeSpec.Builder builder =
+                  TypeSpec.interfaceBuilder("Builder")
+                      .addModifiers(STATIC, ABSTRACT)
+                      .addSuperinterface(creator)
+                      .addAnnotation(componentBuilderAnnotation(descriptor));
+              JavaPoetExtKt.addOriginatingElement(builder, originatingElement);
+              return builder.build();
+            });
   }
 
   private ClassName componentAnnotation(ComponentDescriptor componentDescriptor) {

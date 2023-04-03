@@ -16,95 +16,79 @@
 
 package dagger.hilt.processor.internal.generatesrootinput;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Suppliers.memoize;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XRoundEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.hilt.processor.internal.Processors;
+import dagger.internal.codegen.xprocessing.XAnnotations;
 import java.util.List;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.RoundEnvironment;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 
 /** Extracts the list of annotations annotated with {@link dagger.hilt.GeneratesRootInput}. */
 public final class GeneratesRootInputs {
   static final String AGGREGATING_PACKAGE =
       GeneratesRootInputs.class.getPackage().getName() + ".codegen";
 
-  private final Elements elements;
+  private final XProcessingEnv env;
   private final Supplier<ImmutableList<ClassName>> generatesRootInputAnnotations =
       memoize(() -> getAnnotationList());
 
-  public GeneratesRootInputs(ProcessingEnvironment processingEnvironment) {
-    this.elements = processingEnvironment.getElementUtils();
+  public GeneratesRootInputs(XProcessingEnv processingEnvironment) {
+    this.env = processingEnvironment;
   }
 
-  public ImmutableSet<Element> getElementsToWaitFor(RoundEnvironment roundEnv) {
+  public ImmutableSet<XElement> getElementsToWaitFor(XRoundEnv roundEnv) {
     // Processing can only take place after all dependent annotations have been processed
     // Note: We start with ClassName rather than TypeElement because jdk8 does not treat type
     // elements as equal across rounds. Thus, in order for RoundEnvironment#getElementsAnnotatedWith
     // to work properly, we get new elements to ensure it works across rounds (See b/148693284).
     return generatesRootInputAnnotations.get().stream()
-        .map(className -> elements.getTypeElement(className.toString()))
+        .map(className -> env.findTypeElement(className.toString()))
         .filter(element -> element != null)
-        .flatMap(annotation -> roundEnv.getElementsAnnotatedWith(annotation).stream())
+        .flatMap(
+            annotation -> roundEnv.getElementsAnnotatedWith(annotation.getQualifiedName()).stream())
         .collect(toImmutableSet());
   }
 
-  public ImmutableSet<XElement> getElementsToWaitFor(XRoundEnv roundEnv, XProcessingEnv env) {
-    return Processors.mapElementsToXProcessing(getElementsToWaitFor(toJavac(roundEnv)), env);
-  }
-
   private ImmutableList<ClassName> getAnnotationList() {
-    PackageElement packageElement = elements.getPackageElement(AGGREGATING_PACKAGE);
-
-    if (packageElement == null) {
-      return ImmutableList.of();
-    }
-
-    List<? extends Element> annotationElements = packageElement.getEnclosedElements();
-    checkState(!annotationElements.isEmpty(), "No elements Found in package %s.", packageElement);
+    List<? extends XTypeElement> annotationElements =
+        env.getTypeElementsFromPackage(AGGREGATING_PACKAGE);
 
     ImmutableList.Builder<ClassName> builder = ImmutableList.builder();
-    for (Element element : annotationElements) {
+    for (XTypeElement element : annotationElements) {
       ProcessorErrors.checkState(
-          element.getKind() == ElementKind.CLASS,
+          element.isClass(),
           element,
           "Only classes may be in package %s. Did you add custom code in the package?",
-          packageElement);
+          AGGREGATING_PACKAGE);
 
-      AnnotationMirror annotationMirror =
-          Processors.getAnnotationMirror(element, ClassNames.GENERATES_ROOT_INPUT_PROPAGATED_DATA);
+      XAnnotation annotation =
+          element.getAnnotation(ClassNames.GENERATES_ROOT_INPUT_PROPAGATED_DATA);
       ProcessorErrors.checkState(
-          annotationMirror != null,
+          annotation != null,
           element,
           "Classes in package %s must be annotated with @%s: %s."
               + " Found: %s. Files in this package are generated, did you add custom code in the"
               + " package? ",
-          packageElement,
+          AGGREGATING_PACKAGE,
           ClassNames.GENERATES_ROOT_INPUT_PROPAGATED_DATA,
-          element.getSimpleName(),
-          element.getAnnotationMirrors());
+          element.getClassName().simpleName(),
+          element.getAllAnnotations().stream()
+              .map(XAnnotations::toStableString)
+              .collect(toImmutableSet()));
 
-      TypeElement annotation =
-          Processors.getAnnotationClassValue(elements, annotationMirror, "value");
+      XTypeElement value = annotation.getAsType("value").getTypeElement();
 
-      builder.add(ClassName.get(annotation));
+      builder.add(value.getClassName());
     }
     // This annotation was on Dagger so it couldn't be annotated with @GeneratesRootInput to be
     // cultivated later. We have to manually add it to the list.

@@ -69,7 +69,7 @@ public final class RootProcessor extends BaseProcessor {
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
     super.init(processingEnvironment);
-    generatesRootInputs = new GeneratesRootInputs(processingEnvironment);
+    generatesRootInputs = new GeneratesRootInputs(processingEnv());
   }
 
   @Override
@@ -115,8 +115,7 @@ public final class RootProcessor extends BaseProcessor {
       return;
     }
     ImmutableSet<XElement> newElements =
-        generatesRootInputs.getElementsToWaitFor(roundEnv, processingEnv()).stream()
-            .collect(toImmutableSet());
+        generatesRootInputs.getElementsToWaitFor(roundEnv).stream().collect(toImmutableSet());
     if (processed) {
       checkState(
           newElements.isEmpty(),

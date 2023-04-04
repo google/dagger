@@ -86,13 +86,18 @@ public final class XTypeElements {
         .collect(toImmutableList());
   }
 
-  // TODO(b/229784604): This is needed until the XProcessing getAllMethods fix is upstreamed. Due
-  // to the existing bug, XTypeElement#getAllMethods() will currently contain some inaccessible
-  // package-private methods from base classes, so we filter them manually here.
+  // TODO(wanyingd): rename this to getAllMethodsWithoutPrivate, since the private method declared
+  // within this element is being filtered out. This doesn't mirror {@code
+  // MoreElements#getAllMethods}'s behavior but have the same name, and can cause confusion to
+  // developers.
   public static ImmutableList<XMethodElement> getAllMethods(XTypeElement type) {
     return asStream(type.getAllMethods())
         .filter(method -> isAccessibleFrom(method, type))
         .collect(toImmutableList());
+  }
+
+  public static ImmutableList<XMethodElement> getAllMethodsIncludingPrivate(XTypeElement type) {
+    return asStream(type.getAllMethods()).collect(toImmutableList());
   }
 
   private static boolean isAccessibleFrom(XMethodElement method, XTypeElement type) {

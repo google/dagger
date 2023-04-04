@@ -18,8 +18,10 @@ package dagger.internal.codegen.xprocessing;
 
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
+import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
@@ -45,6 +47,11 @@ public final class JavaPoetExt {
         .forEach(superType -> avoidClashesWithNestedClasses(builder, superType));
 
     return builder;
+  }
+
+  public static ParameterSpec toParameterSpec(XExecutableParameterElement param) {
+    return ParameterSpec.builder(param.getType().getTypeName(), XElements.getSimpleName(param))
+        .build();
   }
 
   private JavaPoetExt() {}

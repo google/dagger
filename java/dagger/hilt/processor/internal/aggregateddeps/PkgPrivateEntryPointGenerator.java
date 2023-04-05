@@ -59,7 +59,7 @@ final class PkgPrivateEntryPointGenerator {
     TypeSpec.Builder entryPointInterfaceBuilder =
         JavaPoetExtKt.addOriginatingElement(
                 TypeSpec.interfaceBuilder(metadata.generatedClassName().simpleName()),
-                metadata.getXTypeElement(env))
+                metadata.getTypeElement())
             .addAnnotation(Processors.getOriginatingElementAnnotation(metadata.getTypeElement()))
             .addModifiers(Modifier.PUBLIC)
             .addSuperinterface(metadata.baseClassName())
@@ -67,9 +67,9 @@ final class PkgPrivateEntryPointGenerator {
 
     Processors.addGeneratedAnnotation(entryPointInterfaceBuilder, env, getClass());
 
-    if (metadata.getOptionalInstallInAnnotation(env).isPresent()) {
+    if (metadata.getOptionalInstallInAnnotation().isPresent()) {
       entryPointInterfaceBuilder.addAnnotation(
-          XAnnotations.getAnnotationSpec(metadata.getOptionalInstallInAnnotation(env).get()));
+          XAnnotations.getAnnotationSpec(metadata.getOptionalInstallInAnnotation().get()));
     }
 
     env.getFiler()

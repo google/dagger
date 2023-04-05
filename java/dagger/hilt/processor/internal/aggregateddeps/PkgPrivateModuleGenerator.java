@@ -60,12 +60,12 @@ final class PkgPrivateModuleGenerator {
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             // generated @InstallIn is exactly the same as the module being processed
             .addAnnotation(
-                XAnnotations.getAnnotationSpec(metadata.getOptionalInstallInAnnotation(env).get()))
+                XAnnotations.getAnnotationSpec(metadata.getOptionalInstallInAnnotation().get()))
             .addAnnotation(
                 AnnotationSpec.builder(metadata.getAnnotation())
-                    .addMember("includes", "$T.class", metadata.getXTypeElement(env).getClassName())
+                    .addMember("includes", "$T.class", metadata.getTypeElement().getClassName())
                     .build());
-    JavaPoetExtKt.addOriginatingElement(builder, metadata.getXTypeElement(env));
+    JavaPoetExtKt.addOriginatingElement(builder, metadata.getTypeElement());
 
     Processors.addGeneratedAnnotation(builder, env, getClass());
 

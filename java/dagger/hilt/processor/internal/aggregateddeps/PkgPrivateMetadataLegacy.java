@@ -16,44 +16,35 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
+import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
 
-
-import androidx.room.compiler.processing.XAnnotation;
-import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XTypeElement;
+import com.google.auto.common.MoreElements;
+import com.google.auto.common.Visibility;
 import com.google.auto.value.AutoValue;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
-import dagger.internal.codegen.xprocessing.XElements;
-import dagger.internal.codegen.xprocessing.XTypeElements;
+import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils;
 import java.util.Optional;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
 
 /** PkgPrivateModuleMetadata contains a set of utilities for processing package private modules. */
 @AutoValue
-public abstract class PkgPrivateMetadata {
+public abstract class PkgPrivateMetadataLegacy {
   /** Returns the public Hilt wrapped type or the type itself if it is already public. */
-  public static XTypeElement publicModule(XTypeElement element, XProcessingEnv env) {
-    return publicDep(element, env, ClassNames.MODULE);
+  public static TypeElement publicEntryPoint(TypeElement element, Elements elements) {
+    return publicDep(element, elements, ClassNames.ENTRY_POINT);
   }
 
-  /** Returns the public Hilt wrapped type or the type itself if it is already public. */
-  public static XTypeElement publicEarlyEntryPoint(XTypeElement element, XProcessingEnv env) {
-    return publicDep(element, env, ClassNames.EARLY_ENTRY_POINT);
-  }
-
-  /** Returns the public Hilt wrapped type or the type itself if it is already public. */
-  public static XTypeElement publicEntryPoint(XTypeElement element, XProcessingEnv env) {
-    return publicDep(element, env, ClassNames.ENTRY_POINT);
-  }
-
-  private static XTypeElement publicDep(
-      XTypeElement element, XProcessingEnv env, ClassName annotation) {
-    return of(element, annotation)
-        .map(PkgPrivateMetadata::generatedClassName)
+  private static TypeElement publicDep(
+      TypeElement element, Elements elements, ClassName annotation) {
+    return of(elements, element, annotation)
+        .map(PkgPrivateMetadataLegacy::generatedClassName)
         .map(ClassName::canonicalName)
-        .map(env::requireTypeElement)
+        .map(elements::getTypeElement)
         .orElse(element);
   }
 
@@ -61,42 +52,44 @@ public abstract class PkgPrivateMetadata {
 
   /** Returns the base class name of the elemenet. */
   TypeName baseClassName() {
-    return getTypeElement().getClassName();
+    return TypeName.get(getTypeElement().asType());
   }
 
   /** Returns TypeElement for the module element the metadata object represents */
-  abstract XTypeElement getTypeElement();
+  abstract TypeElement getTypeElement();
 
   /**
    * Returns an optional @InstallIn AnnotationMirror for the module element the metadata object
    * represents
    */
-  abstract Optional<XAnnotation> getOptionalInstallInAnnotation();
+  abstract Optional<AnnotationMirror> getOptionalInstallInAnnotationMirror();
 
   /** Return the Type of this package private element. */
   abstract ClassName getAnnotation();
 
-  /** Returns the expected generated classname for the element the metadata object represents */
+  /** Returns the expected genenerated classname for the element the metadata object represents */
   final ClassName generatedClassName() {
     return Processors.prepend(
-        Processors.getEnclosedClassName(getTypeElement().getClassName()), PREFIX);
+        Processors.getEnclosedClassName(ClassName.get(getTypeElement())), PREFIX);
   }
 
   /**
-   * Returns an Optional PkgPrivateMetadata requiring Hilt processing, otherwise returns an empty
-   * Optional.
+   * Returns an Optional PkgPrivateMetadataLegacy requiring Hilt processing, otherwise returns an
+   * empty Optional.
    */
-  static Optional<PkgPrivateMetadata> of(XTypeElement element, ClassName annotation) {
+  static Optional<PkgPrivateMetadataLegacy> of(
+      Elements elements, TypeElement element, ClassName annotation) {
     // If this is a public element no wrapping is needed
-    if (XTypeElements.isEffectivelyPublic(element) && !element.isInternal()) {
+    if (effectiveVisibilityOfElement(element) == Visibility.PUBLIC
+        && !KotlinMetadataUtils.getMetadataUtil().isVisibilityInternal(element)) {
       return Optional.empty();
     }
 
-    Optional<XAnnotation> installIn;
-    if (element.hasAnnotation(ClassNames.INSTALL_IN)) {
-      installIn = Optional.of(element.getAnnotation(ClassNames.INSTALL_IN));
-    } else if (element.hasAnnotation(ClassNames.TEST_INSTALL_IN)) {
-      installIn = Optional.of(element.getAnnotation(ClassNames.TEST_INSTALL_IN));
+    Optional<AnnotationMirror> installIn;
+    if (Processors.hasAnnotation(element, ClassNames.INSTALL_IN)) {
+      installIn = Optional.of(Processors.getAnnotationMirror(element, ClassNames.INSTALL_IN));
+    } else if (Processors.hasAnnotation(element, ClassNames.TEST_INSTALL_IN)) {
+      installIn = Optional.of(Processors.getAnnotationMirror(element, ClassNames.TEST_INSTALL_IN));
     } else {
       throw new IllegalStateException(
           "Expected element to be annotated with @InstallIn: " + element);
@@ -109,11 +102,12 @@ public abstract class PkgPrivateMetadata {
       // error more confusing for users since they probably aren't aware of the wrapper. When
       // skipped, if the root is in a different package, the error will instead just be on the
       // generated Hilt component.
-      if (Processors.requiresModuleInstance(element)) {
+      if (Processors.requiresModuleInstance(elements, MoreElements.asType(element))) {
         return Optional.empty();
       }
     }
     return Optional.of(
-        new AutoValue_PkgPrivateMetadata(XElements.asTypeElement(element), installIn, annotation));
+        new AutoValue_PkgPrivateMetadataLegacy(
+            MoreElements.asType(element), installIn, annotation));
   }
 }

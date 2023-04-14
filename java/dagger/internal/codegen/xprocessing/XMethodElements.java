@@ -16,7 +16,11 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
@@ -34,6 +38,20 @@ public final class XMethodElements {
   /** Returns {@code true} if the given method has type parameters. */
   public static boolean hasTypeParameters(XMethodElement method) {
     return !method.getExecutableType().getTypeVariableNames().isEmpty();
+  }
+
+  // TODO(b/278628663): Replace with XMethodElement#isDefault.
+  public static boolean isDefault(XMethodElement method) {
+    XProcessingEnv processingEnv = getProcessingEnv(method);
+    switch (processingEnv.getBackend()) {
+      case JAVAC:
+        return toJavac(method).isDefault();
+      case KSP:
+        throw new AssertionError(
+            "XMethodElement#isDefault() is not supported on KSP yet: "
+                + XElements.toStableString(method));
+    }
+    throw new AssertionError(String.format("Unsupported backend %s", processingEnv.getBackend()));
   }
 
   private XMethodElements() {}

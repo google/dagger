@@ -17,7 +17,6 @@
 package dagger.hilt.processor.internal;
 
 import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Ascii.toUpperCase;
 
 import androidx.room.compiler.processing.XProcessingEnv;
@@ -30,8 +29,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
 
 /** Hilt annotation processor options. */
@@ -64,13 +61,13 @@ public final class HiltCompilerOptions {
    * HiltAndroidApp} or {@code HiltAndroidTest} usages in the same compilation unit.
    */
   public static boolean isCrossCompilationRootValidationDisabled(
-      ImmutableSet<TypeElement> rootElements, ProcessingEnvironment env) {
+      ImmutableSet<XTypeElement> rootElements, XProcessingEnv env) {
     EnumOption<BooleanValue> option = DISABLE_CROSS_COMPILATION_ROOT_VALIDATION;
     return option.get(env) == BooleanValue.TRUE;
   }
 
   /** Returns {@code true} if the check for {@link dagger.hilt.InstallIn} is disabled. */
-  public static boolean isModuleInstallInCheckDisabled(ProcessingEnvironment env) {
+  public static boolean isModuleInstallInCheckDisabled(XProcessingEnv env) {
     return DISABLE_MODULES_HAVE_INSTALL_IN_CHECK.get(env) == BooleanValue.TRUE;
   }
 
@@ -82,7 +79,7 @@ public final class HiltCompilerOptions {
    * dagger.hilt.android.testing.BindValue} or a test {@link dagger.Module}) cannot use the shared
    * component. In these cases, a component will be generated for the test.
    */
-  public static boolean isSharedTestComponentsEnabled(ProcessingEnvironment env) {
+  public static boolean isSharedTestComponentsEnabled(XProcessingEnv env) {
     return SHARE_TEST_COMPONENTS.get(env) == BooleanValue.TRUE;
   }
 
@@ -91,17 +88,8 @@ public final class HiltCompilerOptions {
    *
    * <p>Note:This is for internal use only!
    */
-  public static boolean useAggregatingRootProcessor(ProcessingEnvironment env) {
-    return USE_AGGREGATING_ROOT_PROCESSOR.get(env) == BooleanValue.TRUE;
-  }
-
-  /**
-   * Returns {@code true} if the aggregating processor is enabled (default is {@code true}).
-   *
-   * <p>Note:This is for internal use only!
-   */
   public static boolean useAggregatingRootProcessor(XProcessingEnv env) {
-    return useAggregatingRootProcessor(toJavac(env));
+    return USE_AGGREGATING_ROOT_PROCESSOR.get(env) == BooleanValue.TRUE;
   }
 
   /**
@@ -109,7 +97,7 @@ public final class HiltCompilerOptions {
    *
    * <p>Note:This is for internal use only!
    */
-  public static GradleProjectType getGradleProjectType(ProcessingEnvironment env) {
+  public static GradleProjectType getGradleProjectType(XProcessingEnv env) {
     return GRADLE_PROJECT_TYPE.get(env);
   }
 
@@ -186,11 +174,7 @@ public final class HiltCompilerOptions {
       return "dagger.hilt." + name;
     }
 
-    E get(XProcessingEnv processingEnv) {
-      return get(toJavac(processingEnv));
-    }
-
-    E get(ProcessingEnvironment env) {
+    E get(XProcessingEnv env) {
       String value = env.getOptions().get(getQualifiedName());
       if (value == null) {
         return defaultValue;

@@ -189,7 +189,7 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
     // in the same build unit. Thus, we only generate the application here if we're using the
     // Hilt Gradle plugin's aggregating task. If we're using the aggregating processor, we need
     // to generate the application within AndroidEntryPointProcessor instead.
-    if (!useAggregatingRootProcessor(getProcessingEnv())) {
+    if (!useAggregatingRootProcessor(processingEnv())) {
       AndroidEntryPointMetadata metadata = AndroidEntryPointMetadata.of(rootElement);
       new ApplicationGenerator(processingEnv(), metadata).generate();
     }

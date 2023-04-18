@@ -28,7 +28,6 @@ import com.google.common.base.Throwables;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.lang.model.element.Element;
 import javax.tools.Diagnostic.Kind;
 
 /** Utility class to handle keeping track of errors during processing. */
@@ -67,8 +66,8 @@ final class ProcessorErrorHandler {
       if (badInput.getBadElements().isEmpty()) {
         hiltErrors.add(HiltError.of(badInput.getMessage()));
       }
-      for (Element element : badInput.getBadElements()) {
-        hiltErrors.add(HiltError.of(badInput.getMessage(), toXProcessing(element, processingEnv)));
+      for (XElement element : badInput.getBadElements()) {
+        hiltErrors.add(HiltError.of(badInput.getMessage(), element));
       }
     } else if (t instanceof ErrorTypeException) {
       ErrorTypeException badInput = (ErrorTypeException) t;

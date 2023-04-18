@@ -58,7 +58,7 @@ public final class AndroidEntryPointProcessor extends BaseProcessor {
     new InjectorEntryPointGenerator(processingEnv(), metadata).generate();
     switch (metadata.androidType()) {
       case APPLICATION:
-        GradleProjectType projectType = getGradleProjectType(getProcessingEnv());
+        GradleProjectType projectType = getGradleProjectType(processingEnv());
         if (projectType != GradleProjectType.UNSET) {
           ProcessorErrors.checkState(
               projectType == GradleProjectType.APP,
@@ -73,7 +73,7 @@ public final class AndroidEntryPointProcessor extends BaseProcessor {
         // in the same build unit. Thus, we only generate the application here if we're using the
         // aggregating root processor. If we're using the Hilt Gradle plugin's aggregating task, we
         // need to generate the application within ComponentTreeDepsProcessor instead.
-        if (useAggregatingRootProcessor(getProcessingEnv())) {
+        if (useAggregatingRootProcessor(processingEnv())) {
           // While we could always generate the application in ComponentTreeDepsProcessor, even if
           // we're using the aggregating root processor, it can lead to extraneous errors when
           // things fail before ComponentTreeDepsProcessor runs so we generate it here to avoid that

@@ -17,7 +17,6 @@
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
 import static androidx.room.compiler.processing.XTypeKt.isInt;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 
@@ -28,7 +27,6 @@ import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeParameterElement;
-import com.google.auto.common.Visibility;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
@@ -91,10 +89,9 @@ public final class ViewGenerator {
   }
 
   private boolean isConstructorVisibleToGeneratedClass(XConstructorElement constructor) {
-    Visibility visibility = Visibility.ofElement(toJavac(constructor));
-    if (visibility == Visibility.DEFAULT && !isInOurPackage(constructor)) {
+    if (Processors.hasJavaPackagePrivateVisibility(constructor) && !isInOurPackage(constructor)) {
       return false;
-    } else if (visibility == Visibility.PRIVATE) {
+    } else if (constructor.isPrivate()) {
       return false;
     }
 

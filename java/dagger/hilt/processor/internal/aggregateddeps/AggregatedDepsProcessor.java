@@ -383,7 +383,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
   }
 
   private boolean installInCheckDisabled(XElement element) {
-    return isModuleInstallInCheckDisabled(getProcessingEnv())
+    return isModuleInstallInCheckDisabled(processingEnv())
         || element.hasAnnotation(ClassNames.DISABLE_INSTALL_IN_CHECK);
   }
 

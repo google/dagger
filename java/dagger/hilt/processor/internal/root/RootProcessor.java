@@ -158,9 +158,9 @@ public final class RootProcessor extends BaseProcessor {
     boolean isCrossCompilationRootValidationDisabled =
         isCrossCompilationRootValidationDisabled(
             aggregatedRoots.stream()
-                .map(ir -> getElementUtils().getTypeElement(ir.getRoot().canonicalName()))
+                .map(ir -> processingEnv().requireTypeElement(ir.getRoot().canonicalName()))
                 .collect(toImmutableSet()),
-            processingEnv);
+            processingEnv());
     try {
       return ImmutableSet.copyOf(
           AggregatedRootIrValidator.rootsToProcess(
@@ -198,7 +198,7 @@ public final class RootProcessor extends BaseProcessor {
     Set<ComponentTreeDepsIr> componentTreeDeps =
         ComponentTreeDepsIrCreator.components(
             isTest,
-            isSharedTestComponentsEnabled(processingEnv),
+            isSharedTestComponentsEnabled(processingEnv()),
             aggregatedRoots,
             defineComponentDeps,
             aliasOfDeps,

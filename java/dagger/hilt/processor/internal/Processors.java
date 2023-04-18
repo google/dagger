@@ -32,6 +32,7 @@ import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XFiler.Mode;
+import androidx.room.compiler.processing.XHasModifiers;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
@@ -501,6 +502,13 @@ public final class Processors {
               topLevelType.getAnnotation(ClassNames.ORIGINATING_ELEMENT), "topLevelClass"));
     }
     return topLevelType;
+  }
+
+  public static boolean hasJavaPackagePrivateVisibility(XHasModifiers element) {
+    return !element.isPrivate()
+        && !element.isProtected()
+        && !element.isInternal()
+        && !element.isPublic();
   }
 
   private Processors() {}

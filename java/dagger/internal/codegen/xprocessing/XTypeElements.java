@@ -123,6 +123,10 @@ public final class XTypeElements {
     return allVisibilities(element).contains(Visibility.PRIVATE);
   }
 
+  public static boolean isJvmClass(XTypeElement element) {
+    return element.isClass() || element.isKotlinObject() || element.isCompanionObject();
+  }
+
   /**
    * Returns a list of visibilities containing visibility of the given element and the visibility of
    * its enclosing elements.

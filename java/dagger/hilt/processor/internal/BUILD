@@ -84,16 +84,6 @@ java_library(
 )
 
 java_library(
-    name = "element_descriptors",
-    srcs = [
-        "ElementDescriptors.java",
-    ],
-    deps = [
-        "//third_party/java/auto:common",
-    ],
-)
-
-java_library(
     name = "component_names",
     srcs = [
         "ComponentNames.java",
@@ -142,10 +132,8 @@ java_library(
         ":classnames",
         ":processor_errors",
         ":processors",
-        "//java/dagger/hilt/processor/internal/kotlin",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/xprocessing",
-        "//third_party/java/auto:common",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",

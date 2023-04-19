@@ -17,7 +17,6 @@
 package dagger.hilt.processor.internal;
 
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
-import static dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils.getMetadataUtil;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
@@ -47,7 +46,7 @@ public final class Components {
           && isTypeElement(enclosing)
           && isTypeElement(element)
           && enclosing.hasAnnotation(ClassNames.MODULE)
-          && getMetadataUtil().isCompanionObjectClass(asTypeElement(element))) {
+          && asTypeElement(element).isCompanionObject()) {
         return getComponents(enclosing);
       }
       if (Processors.hasErrorTypeAnnotation(element)) {

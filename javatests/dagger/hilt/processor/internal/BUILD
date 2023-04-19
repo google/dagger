@@ -18,18 +18,6 @@
 package(default_visibility = ["//:src"])
 
 java_test(
-    name = "ElementDescriptorsTest",
-    size = "small",
-    srcs = ["ElementDescriptorsTest.java"],
-    deps = [
-        "//java/dagger/hilt/processor/internal:element_descriptors",
-        "//third_party/java/compile_testing",
-        "//third_party/java/junit",
-        "//third_party/java/truth",
-    ],
-)
-
-java_test(
     name = "ProcessorsTest",
     size = "small",
     srcs = ["ProcessorsTest.java"],

@@ -16,36 +16,27 @@
 
 package dagger.hilt.processor.internal.kotlin;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
-import static com.google.auto.common.AnnotationValues.getAnnotationValues;
-import static com.google.auto.common.MoreElements.getAnnotationMirror;
-import static dagger.hilt.processor.internal.ElementDescriptors.getMethodDescriptor;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static kotlinx.metadata.Flag.ValueParameter.DECLARES_DEFAULT_VALUE;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XFieldElement;
-import com.google.auto.common.AnnotationValues;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ElementDescriptors;
 import dagger.internal.codegen.extension.DaggerCollectors;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.ElementFilter;
 import kotlin.Metadata;
 import kotlinx.metadata.Flag;
 import kotlinx.metadata.KmClass;
@@ -67,21 +58,21 @@ abstract class KotlinMetadata {
   private static final String DELEGATED_PROPERTY_NAME_SUFFIX = "$delegate";
 
   // Map that associates field elements with its Kotlin synthetic method for annotations.
-  private final Map<VariableElement, Optional<MethodForAnnotations>>
-      elementFieldAnnotationMethodMap = new HashMap<>();
-
-  // Map that associates field elements with its Kotlin getter method.
-  private final Map<VariableElement, Optional<ExecutableElement>> elementFieldGetterMethodMap =
+  private final Map<XFieldElement, Optional<MethodForAnnotations>> elementFieldAnnotationMethodMap =
       new HashMap<>();
 
-  abstract TypeElement typeElement();
+  // Map that associates field elements with its Kotlin getter method.
+  private final Map<XFieldElement, Optional<XMethodElement>> elementFieldGetterMethodMap =
+      new HashMap<>();
+
+  abstract XTypeElement typeElement();
 
   abstract ClassMetadata classMetadata();
 
   @Memoized
-  ImmutableMap<String, ExecutableElement> methodDescriptors() {
-    return ElementFilter.methodsIn(typeElement().getEnclosedElements()).stream()
-        .collect(toImmutableMap(ElementDescriptors::getMethodDescriptor, Function.identity()));
+  ImmutableMap<String, XMethodElement> methodDescriptors() {
+    return typeElement().getDeclaredMethods().stream()
+        .collect(toImmutableMap(XMethodElement::getJvmDescriptor, Function.identity()));
   }
 
   /** Returns true if any constructor of the defined a default parameter. */
@@ -93,7 +84,7 @@ abstract class KotlinMetadata {
   }
 
   /** Gets the synthetic method for annotations of a given field element. */
-  Optional<ExecutableElement> getSyntheticAnnotationMethod(VariableElement fieldElement) {
+  Optional<XMethodElement> getSyntheticAnnotationMethod(XFieldElement fieldElement) {
     return getAnnotationMethod(fieldElement)
         .map(
             methodForAnnotations -> {
@@ -101,38 +92,16 @@ abstract class KotlinMetadata {
                 throw new IllegalStateException(
                     "Method for annotations is missing for " + fieldElement);
               }
-              return methodForAnnotations.method();
+              return XElements.asMethod(methodForAnnotations.method());
             });
   }
 
-  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
-  /**
-   * Returns true if the synthetic method for annotations is missing. This can occur when inspecting
-   * the Kotlin metadata of a property from another compilation unit.
-   */
-  boolean isMissingSyntheticAnnotationMethod(VariableElement fieldElement) {
-    return getAnnotationMethod(fieldElement)
-        .map(methodForAnnotations -> methodForAnnotations == MethodForAnnotations.MISSING)
-        // This can be missing if there was no property annotation at all (e.g. no annotations or
-        // the qualifier is already properly attached to the field). For these cases, it isn't
-        // considered missing since there was no method to look for in the first place.
-        .orElse(false);
-  }
-
-  /**
-   * Returns true if the synthetic method for annotations is missing. This can occur when inspecting
-   * the Kotlin metadata of a property from another compilation unit.
-   */
-  boolean isMissingSyntheticAnnotationMethod(XFieldElement fieldElement) {
-    return isMissingSyntheticAnnotationMethod(toJavac(fieldElement));
-  }
-
-  private Optional<MethodForAnnotations> getAnnotationMethod(VariableElement fieldElement) {
+  private Optional<MethodForAnnotations> getAnnotationMethod(XFieldElement fieldElement) {
     return elementFieldAnnotationMethodMap.computeIfAbsent(
         fieldElement, this::getAnnotationMethodUncached);
   }
 
-  private Optional<MethodForAnnotations> getAnnotationMethodUncached(VariableElement fieldElement) {
+  private Optional<MethodForAnnotations> getAnnotationMethodUncached(XFieldElement fieldElement) {
     return findProperty(fieldElement)
         .methodForAnnotationsSignature()
         .map(
@@ -145,19 +114,19 @@ abstract class KotlinMetadata {
   }
 
   /** Gets the getter method of a given field element corresponding to a property. */
-  Optional<ExecutableElement> getPropertyGetter(VariableElement fieldElement) {
+  Optional<XMethodElement> getPropertyGetter(XFieldElement fieldElement) {
     return elementFieldGetterMethodMap.computeIfAbsent(
         fieldElement, this::getPropertyGetterUncached);
   }
 
-  private Optional<ExecutableElement> getPropertyGetterUncached(VariableElement fieldElement) {
+  private Optional<XMethodElement> getPropertyGetterUncached(XFieldElement fieldElement) {
     return findProperty(fieldElement)
         .getterSignature()
         .flatMap(signature -> Optional.ofNullable(methodDescriptors().get(signature)));
   }
 
-  private PropertyMetadata findProperty(VariableElement field) {
-    String fieldDescriptor = ElementDescriptors.getFieldDescriptor(field);
+  private PropertyMetadata findProperty(XFieldElement field) {
+    String fieldDescriptor = field.getJvmDescriptor();
     if (classMetadata().propertiesByFieldSignature().containsKey(fieldDescriptor)) {
       return classMetadata().propertiesByFieldSignature().get(fieldDescriptor);
     } else {
@@ -169,8 +138,8 @@ abstract class KotlinMetadata {
     }
   }
 
-  private static String getPropertyNameFromField(VariableElement field) {
-    String name = field.getSimpleName().toString();
+  private static String getPropertyNameFromField(XFieldElement field) {
+    String name = XElements.getSimpleName(field);
     if (name.endsWith(DELEGATED_PROPERTY_NAME_SUFFIX)) {
       return name.substring(0, name.length() - DELEGATED_PROPERTY_NAME_SUFFIX.length());
     } else {
@@ -178,27 +147,22 @@ abstract class KotlinMetadata {
     }
   }
 
-  FunctionMetadata getFunctionMetadata(ExecutableElement method) {
-    return classMetadata().functionsBySignature().get(getMethodDescriptor(method));
-  }
-
   /** Parse Kotlin class metadata from a given type element. */
-  static KotlinMetadata from(TypeElement typeElement) {
+  static KotlinMetadata from(XTypeElement typeElement) {
     return new AutoValue_KotlinMetadata(typeElement, ClassMetadata.create(metadataOf(typeElement)));
   }
 
-  private static KotlinClassMetadata.Class metadataOf(TypeElement typeElement) {
-    AnnotationMirror annotationMirror =
-        getAnnotationMirror(typeElement, ClassNames.KOTLIN_METADATA.canonicalName()).get();
+  private static KotlinClassMetadata.Class metadataOf(XTypeElement typeElement) {
+    XAnnotation annotation = typeElement.getAnnotation(ClassNames.KOTLIN_METADATA);
     Metadata metadataAnnotation =
         JvmMetadataUtil.Metadata(
-            getIntValue(annotationMirror, "k"),
-            getIntArrayValue(annotationMirror, "mv"),
-            getStringArrayValue(annotationMirror, "d1"),
-            getStringArrayValue(annotationMirror, "d2"),
-            getStringValue(annotationMirror, "xs"),
-            getOptionalStringValue(annotationMirror, "pn").orElse(null),
-            getOptionalIntValue(annotationMirror, "xi").orElse(null));
+            annotation.getAsInt("k"),
+            annotation.getAsIntList("mv").stream().mapToInt(Integer::intValue).toArray(),
+            annotation.getAsStringList("d1").toArray(new String[0]),
+            annotation.getAsStringList("d2").toArray(new String[0]),
+            annotation.getAsString("xs"),
+            getOptionalStringValue(annotation, "pn").orElse(null),
+            getOptionalIntValue(annotation, "xi").orElse(null));
     KotlinClassMetadata metadata = KotlinClassMetadata.read(metadataAnnotation);
     if (metadata == null) {
       // Can happen if Kotlin < 1.0 or if metadata version is not supported, i.e.
@@ -387,52 +351,30 @@ abstract class KotlinMetadata {
 
   @AutoValue
   abstract static class MethodForAnnotations {
-    static MethodForAnnotations create(ExecutableElement method) {
+    static MethodForAnnotations create(XMethodElement method) {
       return new AutoValue_KotlinMetadata_MethodForAnnotations(method);
     }
 
     static final MethodForAnnotations MISSING = MethodForAnnotations.create(null);
 
     @Nullable
-    abstract ExecutableElement method();
+    abstract XMethodElement method();
   }
 
-  private static int getIntValue(AnnotationMirror annotation, String valueName) {
-    return AnnotationValues.getInt(getAnnotationValue(annotation, valueName));
-  }
-
-  private static Optional<Integer> getOptionalIntValue(
-      AnnotationMirror annotation, String valueName) {
+  private static Optional<Integer> getOptionalIntValue(XAnnotation annotation, String valueName) {
     return isValuePresent(annotation, valueName)
-        ? Optional.of(getIntValue(annotation, valueName))
+        ? Optional.of(annotation.getAsInt(valueName))
         : Optional.empty();
   }
 
-  private static int[] getIntArrayValue(AnnotationMirror annotation, String valueName) {
-    return getAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
-        .mapToInt(AnnotationValues::getInt)
-        .toArray();
-  }
-
-  private static String getStringValue(AnnotationMirror annotation, String valueName) {
-    return AnnotationValues.getString(getAnnotationValue(annotation, valueName));
-  }
-
-  private static Optional<String> getOptionalStringValue(
-      AnnotationMirror annotation, String valueName) {
+  private static Optional<String> getOptionalStringValue(XAnnotation annotation, String valueName) {
     return isValuePresent(annotation, valueName)
-        ? Optional.of(getStringValue(annotation, valueName))
+        ? Optional.of(annotation.getAsString(valueName))
         : Optional.empty();
   }
 
-  private static String[] getStringArrayValue(AnnotationMirror annotation, String valueName) {
-    return getAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
-        .map(AnnotationValues::getString)
-        .toArray(String[]::new);
-  }
-
-  private static boolean isValuePresent(AnnotationMirror annotation, String valueName) {
-    return getAnnotationValuesWithDefaults(annotation).keySet().stream()
-        .anyMatch(member -> member.getSimpleName().contentEquals(valueName));
+  private static boolean isValuePresent(XAnnotation annotation, String valueName) {
+    return annotation.getAnnotationValues().stream()
+        .anyMatch(member -> member.getName().equals(valueName));
   }
 }

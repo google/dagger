@@ -21,9 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils.getMetadataUtil;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PUBLIC;
-import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.JavaPoetExtKt;
 import androidx.room.compiler.processing.XAnnotation;
@@ -56,12 +54,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.Elements;
 
 /** Static helper methods for writing a processor. */
 public final class Processors {
@@ -106,7 +99,7 @@ public final class Processors {
     env.getFiler().write(JavaFile.builder(name.packageName(), builder.build()).build(), mode);
   }
 
-  /** Returns a map from {@link AnnotationMirror} attribute name to {@link AnnotationValue}s */
+  /** Returns a map from {@link XAnnotation} attribute name to {@link XAnnotationValue}s */
   public static ImmutableMap<String, XAnnotationValue> getAnnotationValues(XAnnotation annotation) {
     ImmutableMap.Builder<String, XAnnotationValue> annotationMembers = ImmutableMap.builder();
     for (XAnnotationValue value : annotation.getAnnotationValues()) {
@@ -183,11 +176,6 @@ public final class Processors {
     return getAnnotationMirrorOptional(element, className).isPresent();
   }
 
-  /** Returns true if the given element has an annotation with the given class name. */
-  public static boolean hasAnnotation(AnnotationMirror mirror, ClassName className) {
-    return hasAnnotation(mirror.getAnnotationType().asElement(), className);
-  }
-
   /** Returns true if the given element has an annotation that is an error kind. */
   public static boolean hasErrorTypeAnnotation(XElement element) {
     for (XAnnotation annotation : element.getAllAnnotations()) {
@@ -196,6 +184,19 @@ public final class Processors {
       }
     }
     return false;
+  }
+
+  /**
+   * Returns the annotation mirror from the given element that corresponds to the given class.
+   *
+   * @throws IllegalArgumentException if 2 or more annotations are found.
+   * @return {@link Optional#empty()} if no annotation is found on the element.
+   */
+  static Optional<AnnotationMirror> getAnnotationMirrorOptional(
+      Element element, ClassName className) {
+    return element.getAnnotationMirrors().stream()
+        .filter(mirror -> ClassName.get(mirror.getAnnotationType()).equals(className))
+        .collect(toOptional());
   }
 
   /**
@@ -274,36 +275,6 @@ public final class Processors {
     String withoutSuffix =
         originalSimpleName.substring(0, originalSimpleName.length() - suffix.length());
     return originalName.peerClass(withoutSuffix);
-  }
-
-  /**
-   * Returns the annotation mirror from the given element that corresponds to the given class.
-   *
-   * @throws IllegalStateException if the given element isn't annotated with that annotation.
-   */
-  public static AnnotationMirror getAnnotationMirror(Element element, ClassName className) {
-    Optional<AnnotationMirror> annotationMirror = getAnnotationMirrorOptional(element, className);
-    if (annotationMirror.isPresent()) {
-      return annotationMirror.get();
-    } else {
-      throw new IllegalStateException(
-          String.format(
-              "Couldn't find annotation %s on element %s. Found annotations: %s",
-              className, element.getSimpleName(), element.getAnnotationMirrors()));
-    }
-  }
-
-  /**
-   * Returns the annotation mirror from the given element that corresponds to the given class.
-   *
-   * @throws IllegalArgumentException if 2 or more annotations are found.
-   * @return {@link Optional#empty()} if no annotation is found on the element.
-   */
-  static Optional<AnnotationMirror> getAnnotationMirrorOptional(
-      Element element, ClassName className) {
-    return element.getAnnotationMirrors().stream()
-        .filter(mirror -> ClassName.get(mirror.getAnnotationType()).equals(className))
-        .collect(toOptional());
   }
 
   /** Returns {@code true} if element inherits directly or indirectly from the className. */
@@ -406,19 +377,6 @@ public final class Processors {
         || method.hasAnnotation(ClassNames.CONTRIBUTES_ANDROID_INJECTOR);
   }
 
-  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
-  public static boolean requiresModuleInstance(Elements elements, TypeElement module) {
-    // Binding methods that lack ABSTRACT or STATIC require module instantiation.
-    // Required by Dagger.  See b/31489617.
-    return ElementFilter.methodsIn(elements.getAllMembers(module)).stream()
-            .filter(Processors::isBindingMethod)
-            .map(ExecutableElement::getModifiers)
-            .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC))
-        // TODO(erichang): Getting a new KotlinMetadataUtil each time isn't great here, but until
-        // we have some sort of dependency management it will be difficult to share the instance.
-        && !getMetadataUtil().isObjectOrCompanionObjectClass(module);
-  }
-
   public static boolean requiresModuleInstance(XTypeElement module) {
     // Binding methods that lack ABSTRACT or STATIC require module instantiation.
     // Required by Dagger.  See b/31489617.
@@ -437,14 +395,6 @@ public final class Processors {
                 constructor ->
                     !constructor.isPrivate()
                         );
-  }
-
-  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
-  private static boolean isBindingMethod(ExecutableElement method) {
-    return hasAnnotation(method, ClassNames.PROVIDES)
-        || hasAnnotation(method, ClassNames.BINDS)
-        || hasAnnotation(method, ClassNames.BINDS_OPTIONAL_OF)
-        || hasAnnotation(method, ClassNames.MULTIBINDS);
   }
 
   private static boolean isBindingMethod(XExecutableElement method) {

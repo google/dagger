@@ -26,12 +26,16 @@ def main(argv):
   caches_to_delete = []
   for ref, caches in caches_by_ref.items():
     # If the pull request is already "closed", then delete all caches.
-    if (ref != 'refs/heads/master'):
-      pull_request_number = re.findall(r'refs/pull/(\d+)/merge', ref)[0]
-      pull_request = get_pull_request(pull_request_number)
-      if pull_request['state'] == 'closed':
-        caches_to_delete += caches
-        continue
+    if (ref != 'refs/heads/master' and ref != 'master'):
+      match = re.findall(r'refs/pull/(\d+)/merge', ref)
+      if match:
+        pull_request_number = match[0]
+        pull_request = get_pull_request(pull_request_number)
+        if pull_request['state'] == 'closed':
+          caches_to_delete += caches
+          continue
+      else:
+        raise ValueError('Could not find pull request number:', ref)
 
     # Check for caches with the same key prefix and delete the older caches.
     caches_by_key = {}

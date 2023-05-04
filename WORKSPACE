@@ -107,9 +107,9 @@ robolectric_repositories()
 # Load Kotlin repository
 #############################
 
-RULES_KOTLIN_TAG = "v1.8-RC-1"
+RULES_KOTLIN_TAG = "v1.8"
 
-RULES_KOTLIN_SHA = "1779628569eb3b0fe97a3fb5c3ed8090e6503e425600b401c7b1afb6b23a3098"
+RULES_KOTLIN_SHA = "01293740a16e474669aba5b5a1fe3d368de5832442f164e4fbfc566815a8bc3a"
 
 http_archive(
     name = "io_bazel_rules_kotlin",
@@ -119,10 +119,10 @@ http_archive(
 
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
 
-KOTLIN_VERSION = "1.8.0"
+KOTLIN_VERSION = "1.9.0"
 
 # Get from https://github.com/JetBrains/kotlin/releases/
-KOTLINC_RELEASE_SHA = "0bb9419fac9832a56a3a19cad282f8f2d6f1237d2d467dc8dfe9bd4a2a43c42e"
+KOTLINC_RELEASE_SHA = "1fc50d805f9809e92de43e91f089cc8618567c1a350faebdabf8a40c5048bee8"
 
 kotlin_repositories(
     compiler_release = kotlinc_version(
@@ -171,7 +171,7 @@ CHECKER_FRAMEWORK_VERSION = "2.5.3"
 
 ERROR_PRONE_VERSION = "2.14.0"
 
-KSP_VERSION = KOTLIN_VERSION + "-1.0.9"
+KSP_VERSION = KOTLIN_VERSION + "-1.0.12"
 
 maven_install(
     artifacts = [

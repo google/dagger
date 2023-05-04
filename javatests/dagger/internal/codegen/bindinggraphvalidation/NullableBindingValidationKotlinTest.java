@@ -84,7 +84,7 @@ public class NullableBindingValidationKotlinTest {
                   nullableToNonNullable(
                       "String",
                       CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC
-                          ? "@Nullable @Provides String TestModule.provideString()"
+                          ? "@Provides @Nullable String TestModule.provideString()"
                           // TODO(b/268550160): For KSP, we should be including the kotlin typename
                           // in the error message, e.g. "String?" otherwise the message doesn't make
                           // a lot of sense.
@@ -145,7 +145,7 @@ public class NullableBindingValidationKotlinTest {
                   nullableToNonNullable(
                       "String",
                       CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC
-                          ? "@Nullable @Provides String TestModule.provideString()"
+                          ? "@Provides @Nullable String TestModule.provideString()"
                           // TODO(b/268550160): For KSP, we should be including the kotlin typename
                           // in the error message, e.g. "String?" otherwise the message doesn't make
                           // a lot of sense.
@@ -206,7 +206,7 @@ public class NullableBindingValidationKotlinTest {
                   nullableToNonNullable(
                       "String",
                       CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC
-                          ? "@Nullable @Provides String TestModule.provideString()"
+                          ? "@Provides @Nullable String TestModule.provideString()"
                           // TODO(b/268550160): For KSP, we should be including the kotlin typename
                           // in the error message, e.g. "String?" otherwise the message doesn't make
                           // a lot of sense.
@@ -256,7 +256,7 @@ public class NullableBindingValidationKotlinTest {
                   nullableToNonNullable(
                       "String",
                       CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC
-                          ? "@Nullable @Provides String TestModule.provideString()"
+                          ? "@Provides @Nullable String TestModule.provideString()"
                           // TODO(b/268550160): For KSP, we should be including the kotlin typename
                           // in the error message, e.g. "String?" otherwise the message doesn't make
                           // a lot of sense.
@@ -321,7 +321,7 @@ public class NullableBindingValidationKotlinTest {
                   nullableToNonNullable(
                       "String",
                       CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC
-                          ? "@Nullable @Provides String TestModule.Companion.provideString()"
+                          ? "@Provides @Nullable String TestModule.Companion.provideString()"
                           // TODO(b/268550160): For KSP, we should be including the kotlin typename
                           // in the error message, e.g. "String?" otherwise the message doesn't make
                           // a lot of sense.
@@ -497,7 +497,7 @@ public class NullableBindingValidationKotlinTest {
                   nullableToNonNullable(
                       "String",
                       CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC
-                          ? "@Nullable @Provides String TestModule.Companion.nullableString()"
+                          ? "@Provides @Nullable String TestModule.Companion.nullableString()"
                           // TODO(b/268550160): For KSP, we should be including the kotlin typename
                           // in the error message, e.g. "String?" otherwise the message doesn't make
                           // a lot of sense.

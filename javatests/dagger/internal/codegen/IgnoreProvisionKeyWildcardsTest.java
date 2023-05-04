@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.util.CompilationResultSubject;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -219,8 +218,7 @@ public class IgnoreProvisionKeyWildcardsTest {
   @Test
   public void testProvidesMultibindsSetContributionsWithDifferentTypeVariances() {
     compile(
-        /* javaComponentClass = */
-        NEW_LINES.join(
+        /* javaComponentClass= */ NEW_LINES.join(
             "@Component(modules = MyModule.class)",
             "interface MyComponent {",
             "  Set<Foo<? extends Bar>> setExtends();",
@@ -231,8 +229,7 @@ public class IgnoreProvisionKeyWildcardsTest {
             "  @Provides @IntoSet static Foo<? extends Bar> setExtends() { return null; }",
             "  @Provides @IntoSet static Foo<Bar> set() { return null; }",
             "}"),
-        /* kotlinComponentClass = */
-        NEW_LINES.join(
+        /* kotlinComponentClass= */ NEW_LINES.join(
             "@Component(modules = [MyModule::class])",
             "interface MyComponent {",
             "  fun setExtends(): Set<Foo<out Bar>>",
@@ -247,14 +244,12 @@ public class IgnoreProvisionKeyWildcardsTest {
           if (isIgnoreProvisionKeyWildcardsEnabled) {
             subject.hasErrorCount(1);
             subject.hasErrorContaining(
-                String.format(
-                    NEW_LINES_FOR_ERROR_MSG.join(
-                        "Set<Foo<? extends Bar>> has incompatible bindings or declarations:",
-                        "    Set bindings and declarations:",
-                        "        %1$s Foo<Bar> MyModule.set()",
-                        "        %1$s Foo<? extends Bar> MyModule.setExtends()",
-                        "    in component: [MyComponent]"),
-                    isKapt(subject) ? "@IntoSet @Provides" : "@Provides @IntoSet"));
+                NEW_LINES_FOR_ERROR_MSG.join(
+                    "Set<Foo<? extends Bar>> has incompatible bindings or declarations:",
+                    "    Set bindings and declarations:",
+                    "        @Provides @IntoSet Foo<Bar> MyModule.set()",
+                    "        @Provides @IntoSet Foo<? extends Bar> MyModule.setExtends()",
+                    "    in component: [MyComponent]"));
           } else {
             subject.hasErrorCount(0);
           }
@@ -300,9 +295,8 @@ public class IgnoreProvisionKeyWildcardsTest {
                         "Set<Foo<? extends Bar>> has incompatible bindings or declarations:",
                         "    Set bindings and declarations:",
                         "        @Multibinds Set<Foo<Bar>> MyModule.mulitbindSet()",
-                        "        %s Foo<? extends Bar> %s.setExtends()",
+                        "        @Provides @IntoSet Foo<? extends Bar> %s.setExtends()",
                         "    in component: [MyComponent]"),
-                    isKapt(subject) ? "@IntoSet @Provides" : "@Provides @IntoSet",
                     sourceKind == SourceKind.KOTLIN ? "MyModule.Companion" : "MyModule"));
           } else {
             subject.hasErrorCount(0);
@@ -313,8 +307,7 @@ public class IgnoreProvisionKeyWildcardsTest {
   @Test
   public void testProvidesIntoSetAndElementsIntoSetContributionsWithDifferentVariances() {
     compile(
-        /* javaComponentClass = */
-        NEW_LINES.join(
+        /* javaComponentClass= */ NEW_LINES.join(
             "@Component(modules = MyModule.class)",
             "interface MyComponent {",
             "  Set<Foo<? extends Bar>> setExtends();",
@@ -328,8 +321,7 @@ public class IgnoreProvisionKeyWildcardsTest {
             "  @ElementsIntoSet",
             "  static Set<Foo<Bar>> set() { return null; }",
             "}"),
-        /* kotlinComponentClass = */
-        NEW_LINES.join(
+        /* kotlinComponentClass= */ NEW_LINES.join(
             "@Component(modules = [MyModule::class])",
             "interface MyComponent {",
             "  fun setExtends(): Set<Foo<out Bar>>",
@@ -344,15 +336,12 @@ public class IgnoreProvisionKeyWildcardsTest {
           if (isIgnoreProvisionKeyWildcardsEnabled) {
             subject.hasErrorCount(1);
             subject.hasErrorContaining(
-                String.format(
-                    NEW_LINES_FOR_ERROR_MSG.join(
-                        "Set<Foo<? extends Bar>> has incompatible bindings or declarations:",
-                        "    Set bindings and declarations:",
-                        "        %s Set<Foo<Bar>> MyModule.set()",
-                        "        %s Foo<? extends Bar> MyModule.setExtends()",
-                        "    in component: [MyComponent]"),
-                    isKapt(subject) ? "@ElementsIntoSet @Provides" : "@Provides @ElementsIntoSet",
-                    isKapt(subject) ? "@IntoSet @Provides" : "@Provides @IntoSet"));
+                NEW_LINES_FOR_ERROR_MSG.join(
+                    "Set<Foo<? extends Bar>> has incompatible bindings or declarations:",
+                    "    Set bindings and declarations:",
+                    "        @Provides @ElementsIntoSet Set<Foo<Bar>> MyModule.set()",
+                    "        @Provides @IntoSet Foo<? extends Bar> MyModule.setExtends()",
+                    "    in component: [MyComponent]"));
           } else {
             subject.hasErrorCount(0);
           }
@@ -526,12 +515,8 @@ public class IgnoreProvisionKeyWildcardsTest {
                         "        %s Foo<Bar> MyModule.foo()",
                         "        %s Foo<? extends Bar> MyModule.fooExtends()",
                         "    in component: [MyComponent]"),
-                    isKapt(subject)
-                        ? "@StringKey(\"foo\") @IntoMap @Provides"
-                        : "@Provides @IntoMap @StringKey(\"foo\")",
-                    isKapt(subject)
-                        ? "@StringKey(\"fooExtends\") @IntoMap @Provides"
-                        : "@Provides @IntoMap @StringKey(\"fooExtends\")"));
+                    "@Provides @IntoMap @StringKey(\"foo\")",
+                    "@Provides @IntoMap @StringKey(\"fooExtends\")"));
           } else {
             subject.hasErrorCount(0);
           }
@@ -648,10 +633,5 @@ public class IgnoreProvisionKeyWildcardsTest {
           .withProcessingOptions(processingOptions)
           .compile(onCompilationResult);
     }
-  }
-
-  private boolean isKapt(CompilationResultSubject subject) {
-    return sourceKind == SourceKind.KOTLIN
-        && CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC;
   }
 }

@@ -103,6 +103,10 @@ final class ProcessorErrorHandler {
     }
   }
 
+  public boolean isEmpty() {
+    return hiltErrors.isEmpty();
+  }
+
   @AutoValue
   abstract static class HiltError {
     static HiltError of(String message) {

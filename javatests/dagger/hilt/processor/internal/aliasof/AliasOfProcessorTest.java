@@ -81,6 +81,33 @@ public final class AliasOfProcessorTest {
   }
 
   @Test
+  public void fails_alisOfOnNonScope() {
+    JavaFileObject scope =
+        JavaFileObjects.forSourceLines(
+            "test.AliasScope",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "import javax.inject.Singleton;",
+            "import dagger.hilt.migration.AliasOf;",
+            "",
+            "@AliasOf(Singleton.class)",
+            "public @interface AliasScope{}");
+
+    Compilation compilation =
+        compiler()
+            .withOptions("-Xlint:-processing") // Suppresses unclaimed annotation warning
+            .compile(scope);
+
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation)
+        .hadErrorContaining(
+            "AliasOf should only be used on scopes. However, it was found "
+                + "annotating test.AliasScope");
+  }
+
+  @Test
   public void fails_conflictingAliasScope() {
     JavaFileObject scope =
         JavaFileObjects.forSourceLines(

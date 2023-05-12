@@ -17,11 +17,11 @@
 
 load("//:build_defs.bzl", "POM_VERSION")
 load("//tools:maven.bzl", "gen_maven_artifact")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("//tools:bazel_compat.bzl", "compat_kt_jvm_library")
 
 package(default_visibility = ["//:src"])
 
-kt_jvm_library(
+compat_kt_jvm_library(
     name = "lint-artifact-lib",
     srcs = glob(["*.kt"]),
     tags = ["maven_coordinates=com.google.dagger:dagger-lint:" + POM_VERSION],
@@ -33,22 +33,6 @@ kt_jvm_library(
         "@maven//:com_android_tools_lint_lint",
         "@maven//:com_android_tools_lint_lint_api",
     ],
-)
-
-# Current `kt_jvm_library` does not output source jars and gen_maven_artifact expects one.
-# See: https://github.com/bazelbuild/rules_kotlin/issues/324
-genrule(
-    name = "dagger-lint-sources",
-    srcs = glob(["*.kt"]),
-    outs = ["liblint-artifact-lib-src.jar"],
-    cmd = """
-        TEMP="$$(mktemp -d)"
-        for file in $(SRCS); do
-            filename="$$TEMP/$${file#java/}"
-            mkdir -p `dirname $$filename` && cp $$file $$filename
-        done
-        jar cf $@ -C $$TEMP .
-    """,
 )
 
 gen_maven_artifact(

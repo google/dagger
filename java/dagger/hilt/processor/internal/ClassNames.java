@@ -126,6 +126,7 @@ public final class ClassNames {
   public static final ClassName INSTALL_IN =
       get("dagger.hilt", "InstallIn");
   public static final ClassName TEST_INSTALL_IN = get("dagger.hilt.testing", "TestInstallIn");
+  public static final ClassName INSTALL_BINDING = get("dagger.hilt", "InstallBinding");
   public static final ClassName ENTRY_POINT =
       get("dagger.hilt", "EntryPoint");
   public static final ClassName ENTRY_POINTS = get("dagger.hilt", "EntryPoints");

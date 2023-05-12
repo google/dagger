@@ -34,6 +34,7 @@ java_library(
         "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
         "//java/dagger/hilt/processor/internal/earlyentrypoint:processor_lib",
         "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",
+        "//java/dagger/hilt/processor/internal/installbinding:processor_lib",
         "//java/dagger/hilt/processor/internal/originatingelement:processor_lib",
         "//java/dagger/hilt/processor/internal/root:component_tree_deps_processor_lib",
         "//java/dagger/hilt/processor/internal/root:root_processor_lib",
@@ -97,6 +98,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/processor/internal/root/ir:ir",
         "//java/dagger/hilt/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
+        "//java/dagger/hilt/processor/internal/installbinding:processor_lib",
     ],
     artifact_target_maven_deps = [
         "com.google.code.findbugs:jsr305",

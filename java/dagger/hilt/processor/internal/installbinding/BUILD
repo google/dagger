@@ -1,4 +1,4 @@
-# Copyright (C) 2020 The Dagger Authors.
+# Copyright (C) 2022 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,8 @@
 # limitations under the License.
 
 # Description:
-#   ViewModelInject processor.
+#   A processor for @dagger.hilt.InstallBinding.
+
 load("//tools:bazel_compat.bzl", "compat_kt_jvm_library")
 
 package(default_visibility = ["//:src"])
@@ -21,49 +22,24 @@ package(default_visibility = ["//:src"])
 java_plugin(
     name = "processor",
     generates_api = 1,
-    processor_class = "dagger.hilt.android.processor.internal.viewmodel.ViewModelProcessor",
+    processor_class = "dagger.hilt.processor.internal.installbinding.InstallBinding",
     deps = [":processor_lib"],
 )
 
 compat_kt_jvm_library(
     name = "processor_lib",
     srcs = [
-        "ViewModelMetadata.kt",
-        "ViewModelModuleGenerator.kt",
-        "ViewModelProcessor.kt",
+        "InstallBindingProcessor.kt",
     ],
     deps = [
-        "//java/dagger/hilt/android/processor/internal:android_classnames",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
-        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:common",
         "//third_party/java/auto:service",
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
-        "//third_party/java/javapoet",
-    ],
-)
-
-java_plugin(
-    name = "validation_plugin",
-    deps = [":validation_plugin_lib"],
-)
-
-compat_kt_jvm_library(
-    name = "validation_plugin_lib",
-    srcs = [
-        "ViewModelValidationPlugin.kt",
-    ],
-    deps = [
-        "//:spi",
-        "//java/dagger/hilt/android/processor/internal:android_classnames",
-        "//java/dagger/hilt/processor/internal:processors",
-        "//third_party/java/auto:common",
-        "//third_party/java/auto:service",
-        "//third_party/java/guava/graph",
         "//third_party/java/javapoet",
     ],
 )

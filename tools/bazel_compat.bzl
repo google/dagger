@@ -16,6 +16,7 @@
 """
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 
 def compat_kt_android_library(name, **kwargs):
     bazel_kt_android_library(name, kwargs)
@@ -62,4 +63,16 @@ def bazel_kt_android_library(name, kwargs):
     native.alias(
         name = "lib{}-src.jar".format(name),
         actual = ":{}_internal_kt-sources.jar".format(name),
+    )
+
+def compat_kt_jvm_library(name, **kwargs):
+    kt_jvm_library(
+        name = name,
+        **kwargs
+    )
+
+    # See: https://github.com/bazelbuild/rules_kotlin/issues/324
+    native.alias(
+        name = "lib{}-src.jar".format(name),
+        actual = ":{}-sources.jar".format(name),
     )

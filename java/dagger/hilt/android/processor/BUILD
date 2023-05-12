@@ -75,6 +75,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/processor/internal/root/ir:ir",
         "//java/dagger/hilt/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
+        "//java/dagger/hilt/processor/internal/installbinding:processor_lib",
     ],
     artifact_target_maven_deps = [
         "com.google.code.findbugs:jsr305",

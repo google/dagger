@@ -16,11 +16,11 @@
 #   A library containing intermediate representations of the various Hilt
 #   aggregating annotations along with logic to process them.
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("//tools:bazel_compat.bzl", "compat_kt_jvm_library")
 
 package(default_visibility = ["//:src"])
 
-kt_jvm_library(
+compat_kt_jvm_library(
     name = "ir",
     srcs = glob(["*.kt"]),
     # Dependencies here should be kept to a minimum since this library is
@@ -28,22 +28,6 @@ kt_jvm_library(
     deps = [
         "//third_party/java/javapoet",
     ],
-)
-
-# Current `kt_jvm_library` does not output source jars and gen_maven_artifact expects one.
-# See: https://github.com/bazelbuild/rules_kotlin/issues/324
-genrule(
-    name = "ir-sources",
-    srcs = glob(["*.kt"]),
-    outs = ["libir-src.jar"],
-    cmd = """
-        TEMP="$$(mktemp -d)"
-        for file in $(SRCS); do
-            filename="$$TEMP/$${file#java/}"
-            mkdir -p `dirname $$filename` && cp $$file $$filename
-        done
-        jar cf $@ -C $$TEMP .
-    """,
 )
 
 filegroup(

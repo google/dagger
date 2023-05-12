@@ -59,6 +59,17 @@ java_library(
 )
 
 java_library(
+    name = "install_binding",
+    srcs = [
+        "InstallBinding.java",
+    ],
+    deps = [
+        ":generates_root_input",
+        ":package_info",
+    ],
+)
+
+java_library(
     name = "generates_root_input",
     srcs = [
         "GeneratesRootInput.java",
@@ -174,6 +185,7 @@ filegroup(
         "//java/dagger/hilt/processor/internal/definecomponent:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/disableinstallincheck:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/generatesrootinput:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal/installbinding:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/optionvalues:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/originatingelement:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/root:srcs_filegroup",
@@ -189,6 +201,7 @@ java_library(
         ":define_component",
         ":entry_point",
         ":generates_root_input",
+        ":install_binding",
         ":install_in",
         ":package_info",
         "//java/dagger:core",
@@ -207,6 +220,7 @@ gen_maven_artifact(
         "//java/dagger/hilt:define_component",
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:generates_root_input",
+        "//java/dagger/hilt:install_binding",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt:package_info",
         "//java/dagger/hilt/codegen:originating_element",

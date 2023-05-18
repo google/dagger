@@ -43,7 +43,7 @@ public abstract class JavacBaseProcessingStepProcessor extends JavacBasicAnnotat
   }
 
   @Override
-  public SourceVersion getSupportedSourceVersion() {
+  public final SourceVersion getSupportedSourceVersion() {
     return SourceVersion.latestSupported();
   }
 

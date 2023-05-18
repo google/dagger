@@ -18,28 +18,17 @@ package dagger.hilt.android.processor.internal.customtestapplication;
 
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
-import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableSet;
-import dagger.hilt.processor.internal.BaseProcessor;
-import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.JavacBaseProcessingStepProcessor;
 import javax.annotation.processing.Processor;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Processes usages of {@link dagger.hilt.android.testing.CustomTestApplication}. */
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
-public final class CustomTestApplicationProcessor extends BaseProcessor {
-
+public final class CustomTestApplicationProcessor extends JavacBaseProcessingStepProcessor {
   @Override
-  public ImmutableSet<String> getSupportedAnnotationTypes() {
-    return ImmutableSet.of(ClassNames.CUSTOM_TEST_APPLICATION.toString());
-  }
-
-  @Override
-  public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    CustomTestApplicationMetadata metadata = CustomTestApplicationMetadata.of(element);
-    new CustomTestApplicationGenerator(processingEnv(), metadata).generate();
+  protected CustomTestApplicationProcessingStep processingStep() {
+    return new CustomTestApplicationProcessingStep(getXProcessingEnv());
   }
 }

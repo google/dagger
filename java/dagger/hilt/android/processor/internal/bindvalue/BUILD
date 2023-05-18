@@ -30,6 +30,7 @@ java_library(
     srcs = [
         "BindValueGenerator.java",
         "BindValueMetadata.java",
+        "BindValueProcessingStep.java",
         "BindValueProcessor.java",
     ],
     deps = [
@@ -42,14 +43,12 @@ java_library(
         "//java/dagger/hilt/processor/internal/kotlin",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/xprocessing",
-        "//third_party/java/auto:common",
         "//third_party/java/auto:service",
         "//third_party/java/auto:value",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
         "//third_party/java/javapoet",
-        "//third_party/java/jsr250_annotations",
     ],
 )
 

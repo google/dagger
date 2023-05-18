@@ -108,7 +108,6 @@ gen_maven_artifact(
         "com.google.guava:guava",
         "com.squareup:javapoet",
         "com.squareup:kotlinpoet",
-        "javax.annotation:javax.annotation-api",
         "javax.inject:javax.inject",
         "net.ltgt.gradle.incap:incap",
         "org.jetbrains.kotlin:kotlin-stdlib",

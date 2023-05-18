@@ -51,8 +51,15 @@ import java.util.function.Function;
 public abstract class BaseProcessingStep implements XProcessingStep {
   private final ProcessorErrorHandler errorHandler;
 
+  private final XProcessingEnv processingEnv;
+
   public BaseProcessingStep(XProcessingEnv env) {
     errorHandler = new ProcessorErrorHandler(env);
+    processingEnv = env;
+  }
+
+  protected final XProcessingEnv processingEnv() {
+    return processingEnv;
   }
 
   @Override
@@ -64,8 +71,7 @@ public abstract class BaseProcessingStep implements XProcessingStep {
 
   protected void preProcess() {}
 
-  public abstract void processEach(XProcessingEnv env, ClassName annotation, XElement element)
-      throws Exception;
+  public abstract void processEach(ClassName annotation, XElement element) throws Exception;
 
   protected void postProcess() throws Exception {}
 
@@ -84,7 +90,7 @@ public abstract class BaseProcessingStep implements XProcessingStep {
       if (elements != null) {
         for (XElement element : elements) {
           try {
-            processEach(env, annotationClassNamesByName.get(annotationName), element);
+            processEach(annotationClassNamesByName.get(annotationName), element);
           } catch (Exception e) {
             if (e instanceof ErrorTypeException && !isLastRound) {
               // Allow an extra round to reprocess to try to resolve this type.

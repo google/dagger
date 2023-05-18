@@ -43,7 +43,7 @@ public final class AliasOfProcessingStep extends BaseProcessingStep {
   }
 
   @Override
-  public void processEach(XProcessingEnv env, ClassName annotation, XElement element) {
+  public void processEach(ClassName annotation, XElement element) {
     ProcessorErrors.checkState(
         element.hasAnnotation(ClassNames.SCOPE),
         element,

@@ -93,7 +93,8 @@ abstract class BindValueMetadata {
     abstract Optional<XMethodElement> getterElement();
 
     static BindValueElement create(XElement element) {
-      ImmutableList<ClassName> bindValues = BindValueProcessor.getBindValueAnnotations(element);
+      ImmutableList<ClassName> bindValues =
+          BindValueProcessingStep.getBindValueAnnotations(element);
       ProcessorErrors.checkState(
           bindValues.size() == 1,
           element,

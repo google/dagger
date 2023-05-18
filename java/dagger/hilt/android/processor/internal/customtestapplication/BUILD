@@ -29,6 +29,7 @@ java_library(
     srcs = [
         "CustomTestApplicationGenerator.java",
         "CustomTestApplicationMetadata.java",
+        "CustomTestApplicationProcessingStep.java",
         "CustomTestApplicationProcessor.java",
     ],
     deps = [
@@ -38,7 +39,6 @@ java_library(
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/xprocessing",
-        "//third_party/java/auto:common",
         "//third_party/java/auto:service",
         "//third_party/java/auto:value",
         "//third_party/java/guava/base",

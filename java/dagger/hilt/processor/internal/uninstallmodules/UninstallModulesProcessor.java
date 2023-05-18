@@ -16,93 +16,20 @@
 
 package dagger.hilt.processor.internal.uninstallmodules;
 
-import static androidx.room.compiler.processing.XElementKt.isTypeElement;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
-import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.ClassName;
-import dagger.hilt.processor.internal.BaseProcessor;
-import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.hilt.processor.internal.Processors;
-import dagger.internal.codegen.xprocessing.XAnnotations;
-import dagger.internal.codegen.xprocessing.XElements;
-import java.util.Set;
+import dagger.hilt.processor.internal.BaseProcessingStep;
+import dagger.hilt.processor.internal.JavacBaseProcessingStepProcessor;
 import javax.annotation.processing.Processor;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Validates {@link dagger.hilt.android.testing.UninstallModules} usages. */
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
-public final class UninstallModulesProcessor extends BaseProcessor {
-
+public final class UninstallModulesProcessor extends JavacBaseProcessingStepProcessor {
   @Override
-  public Set<String> getSupportedAnnotationTypes() {
-    return ImmutableSet.of(ClassNames.UNINSTALL_MODULES.toString());
-  }
-
-  @Override
-  public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    // TODO(bcorso): Consider using RootType to check this?
-    // TODO(bcorso): Loosen this restriction to allow defining sets of ignored modules in libraries.
-    ProcessorErrors.checkState(isTypeElement(element)
-            && element.hasAnnotation(ClassNames.HILT_ANDROID_TEST),
-        element,
-        "@%s should only be used on test classes annotated with @%s, but found: %s",
-        annotation.getClassName().simpleName(),
-        ClassNames.HILT_ANDROID_TEST.simpleName(),
-        element);
-
-    XTypeElement testElement = XElements.asTypeElement(element);
-    ImmutableList<XTypeElement> uninstallModules = XAnnotations.getAsTypeElementList(
-            testElement.getAnnotation(ClassNames.UNINSTALL_MODULES),
-            "value");
-
-    checkModulesHaveInstallIn(testElement, uninstallModules);
-    checkModulesDontOriginateFromTest(testElement, uninstallModules);
-
-    new AggregatedUninstallModulesGenerator(testElement, uninstallModules).generate();
-  }
-
-  private void checkModulesHaveInstallIn(
-      XTypeElement testElement, ImmutableList<XTypeElement> uninstallModules) {
-    ImmutableList<XTypeElement> invalidModules =
-        uninstallModules.stream()
-            .filter(
-                module ->
-                    !(module.hasAnnotation(ClassNames.MODULE)
-                        && module.hasAnnotation(ClassNames.INSTALL_IN)))
-            .collect(toImmutableList());
-
-    ProcessorErrors.checkState(
-        invalidModules.isEmpty(),
-        // TODO(b/152801981): Point to the annotation value rather than the annotated element.
-        testElement,
-        "@UninstallModules should only include modules annotated with both @Module and @InstallIn, "
-            + "but found: %s.",
-        invalidModules.stream().map(XElements::toStableString).collect(toImmutableList()));
-  }
-
-  private void checkModulesDontOriginateFromTest(
-      XTypeElement testElement, ImmutableList<XTypeElement> uninstallModules) {
-    ImmutableList<ClassName> invalidModules =
-        uninstallModules.stream()
-            .filter(
-                module ->
-                    Processors.getOriginatingTestElement(module).isPresent())
-            .map(XTypeElement::getClassName)
-            .collect(toImmutableList());
-
-    ProcessorErrors.checkState(
-        invalidModules.isEmpty(),
-        // TODO(b/152801981): Point to the annotation value rather than the annotated element.
-        testElement,
-        "@UninstallModules should not contain test modules, but found: %s",
-        invalidModules);
+  protected BaseProcessingStep processingStep() {
+    return new UninstallModulesProcessingStep(getXProcessingEnv());
   }
 }

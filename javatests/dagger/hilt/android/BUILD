@@ -14,7 +14,7 @@
 # Description:
 #   Tests for internal code for implementing Hilt processors.
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
+load("//third_party/kotlin/build_extensions:rules.bzl", "kt_android_library")
 
 package(default_visibility = ["//:src"])
 

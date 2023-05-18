@@ -15,7 +15,7 @@
 """Macros for building with Bazel.
 """
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
+load("//third_party/kotlin/build_extensions:rules.bzl", "kt_android_library")
 
 def compat_kt_android_library(name, **kwargs):
     bazel_kt_android_library(name, kwargs)

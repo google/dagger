@@ -30,6 +30,7 @@ kt_jvm_library(
     srcs = [
         "ViewModelMetadata.kt",
         "ViewModelModuleGenerator.kt",
+        "ViewModelProcessingStep.kt",
         "ViewModelProcessor.kt",
     ],
     deps = [
@@ -39,7 +40,6 @@ kt_jvm_library(
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/internal/codegen/xprocessing",
-        "//third_party/java/auto:common",
         "//third_party/java/auto:service",
         "//third_party/java/guava/collect",
         "//third_party/java/incap",

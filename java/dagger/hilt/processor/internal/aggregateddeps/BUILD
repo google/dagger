@@ -37,6 +37,7 @@ java_library(
     name = "processor_lib",
     srcs = [
         "AggregatedDepsGenerator.java",
+        "AggregatedDepsProcessingStep.java",
         "AggregatedDepsProcessor.java",
         "PkgPrivateEntryPointGenerator.java",
         "PkgPrivateModuleGenerator.java",
@@ -51,7 +52,6 @@ java_library(
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/xprocessing",
-        "//third_party/java/auto:common",
         "//third_party/java/auto:service",
         "//third_party/java/guava/collect",
         "//third_party/java/incap",

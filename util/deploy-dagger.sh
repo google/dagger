@@ -52,7 +52,7 @@ _deploy \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.spi.shaded.auto.common;androidx.room.compiler,dagger.spi.shaded.androidx.room.compiler;kotlinx.metadata,dagger.spi.shaded.kotlinx.metadata" \
+  "com.google.auto.common,dagger.spi.shaded.auto.common;androidx.room.compiler,dagger.spi.shaded.androidx.room.compiler;kotlinx.metadata,dagger.spi.shaded.kotlinx.metadata;androidx.room,dagger.spi.shaded.androidx.room" \
   java/dagger/internal/codegen/artifact.jar \
   java/dagger/internal/codegen/pom.xml \
   java/dagger/internal/codegen/artifact-src.jar \
@@ -68,7 +68,7 @@ _deploy \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.spi.shaded.auto.common;androidx.room.compiler,dagger.spi.shaded.androidx.room.compiler;kotlinx.metadata,dagger.spi.shaded.kotlinx.metadata" \
+  "com.google.auto.common,dagger.spi.shaded.auto.common;androidx.room.compiler,dagger.spi.shaded.androidx.room.compiler;kotlinx.metadata,dagger.spi.shaded.kotlinx.metadata;androidx.room,dagger.spi.shaded.androidx.room" \
   java/dagger/spi/artifact.jar \
   java/dagger/spi/pom.xml \
   java/dagger/spi/artifact-src.jar \

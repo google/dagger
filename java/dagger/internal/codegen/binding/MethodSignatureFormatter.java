@@ -22,6 +22,7 @@ import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypeP
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XExecutableElement;
@@ -32,6 +33,7 @@ import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
+import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.internal.codegen.xprocessing.XTypes;
@@ -42,6 +44,9 @@ import javax.inject.Inject;
 
 /** Formats the signature of an {@link XExecutableElement} suitable for use in error messages. */
 public final class MethodSignatureFormatter extends Formatter<XExecutableElement> {
+  private static final ClassName JET_BRAINS_NOT_NULL =
+      ClassName.get("org.jetbrains.annotations", "NotNull");
+
   private final InjectionAnnotations injectionAnnotations;
 
   @Inject
@@ -103,14 +108,13 @@ public final class MethodSignatureFormatter extends Formatter<XExecutableElement
     StringBuilder builder = new StringBuilder();
     List<XAnnotation> annotations = method.getAllAnnotations();
     if (!annotations.isEmpty()) {
-      Iterator<XAnnotation> annotationIterator = annotations.iterator();
-      for (int i = 0; annotationIterator.hasNext(); i++) {
-        if (i > 0) {
-          builder.append(' ');
-        }
-        builder.append(formatAnnotation(annotationIterator.next()));
-      }
-      builder.append(' ');
+      builder.append(
+          annotations.stream()
+              // Filter out @NotNull annotations added by KAPT to make error messages consistent
+              .filter(annotation -> !annotation.getClassName().equals(JET_BRAINS_NOT_NULL))
+              .map(MethodSignatureFormatter::formatAnnotation)
+              .collect(joining(" ")))
+          .append(" ");
     }
     if (getSimpleName(method).contentEquals("<init>")) {
       builder.append(container.getQualifiedName());

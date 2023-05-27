@@ -83,6 +83,7 @@ public final class ClassNames {
       get("dagger.multibindings", "Multibinds");
   public static final ClassName INTO_MAP = get("dagger.multibindings", "IntoMap");
   public static final ClassName INTO_SET = get("dagger.multibindings", "IntoSet");
+  public static final ClassName ELEMENTS_INTO_SET = get("dagger.multibindings", "ElementsIntoSet");
   public static final ClassName STRING_KEY = get("dagger.multibindings", "StringKey");
   public static final ClassName PROVIDES =
       get("dagger", "Provides");

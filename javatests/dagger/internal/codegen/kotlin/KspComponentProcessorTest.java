@@ -93,6 +93,34 @@ public final class KspComponentProcessorTest {
   }
 
   @Test
+  public void
+      testComponentReferencingGeneratedTypeInCompanionObject_successfullyGeneratedComponent()
+          throws Exception {
+    Source componentSrc =
+        CompilerTests.kotlinSource(
+            "MyComponent.kt",
+            "package test",
+            "",
+            "import dagger.BindsInstance",
+            "import dagger.Component",
+            "",
+            "@Component",
+            "interface MyComponent {",
+            " @Component.Builder",
+            " interface Builder {",
+            "   @BindsInstance fun text(text: String): Builder",
+            "   fun build(): MyComponent",
+            " }",
+            "",
+            " companion object {",
+            "   fun getComponent(text: String) = DaggerMyComponent.builder().text(text).build()",
+            " }",
+            "}");
+
+    CompilerTests.daggerCompiler(componentSrc).compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
   public void injectBindingComponentTest() throws Exception {
     Source componentSrc =
         CompilerTests.kotlinSource(

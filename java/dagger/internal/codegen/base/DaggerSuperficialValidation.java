@@ -59,6 +59,7 @@ import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import dagger.Reusable;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.xprocessing.XAnnotationValues;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.internal.codegen.xprocessing.XElements;
@@ -271,7 +272,18 @@ public final class DaggerSuperficialValidation {
         if (typeElement.getSuperType() != null) {
           validateType("superclass", typeElement.getSuperType());
         }
-        validateElements(typeElement.getEnclosedElements());
+        // TODO (b/286313067) move the logic to ComponentValidator once the validation logic is
+        // split into individual validators to satisfy different needs.
+        // Dagger doesn't use components' static method, therefore, they shouldn't be validated to
+        // be able to stop component generation.
+        if (typeElement.hasAnnotation(TypeNames.COMPONENT)) {
+          validateElements(
+              typeElement.getEnclosedElements().stream()
+                  .filter(member -> !XElements.isStatic(member))
+                  .collect(toImmutableList()));
+        } else {
+          validateElements(typeElement.getEnclosedElements());
+        }
       } else if (isExecutable(element)) {
         if (isMethod(element)) {
           validateType("return type", asMethod(element).getReturnType());

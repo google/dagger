@@ -19,6 +19,7 @@ package dagger.hilt.processor.internal;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingEnvConfig;
 import androidx.room.compiler.processing.XProcessingStep;
+import androidx.room.compiler.processing.XRoundEnv;
 import androidx.room.compiler.processing.javac.JavacBasicAnnotationProcessor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -64,7 +65,17 @@ public abstract class JavacBaseProcessingStepProcessor extends JavacBasicAnnotat
     return ImmutableList.of(processingStep);
   }
 
+  @Override
+  public void preRound(XProcessingEnv env, XRoundEnv round) {
+    processingStep.preRoundProcess(env, round);
+  }
+
   protected abstract BaseProcessingStep processingStep();
+
+  @Override
+  public void postRound(XProcessingEnv env, XRoundEnv round) {
+    processingStep.postRoundProcess(env, round);
+  }
 
   /** Returns additional processing options that should only be applied for a single processor. */
   protected Set<String> additionalProcessingOptions() {

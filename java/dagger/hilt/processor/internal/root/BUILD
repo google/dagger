@@ -30,6 +30,7 @@ java_library(
     name = "component_tree_deps_processor_lib",
     srcs = [
         "ComponentGenerator.java",
+        "ComponentTreeDepsProcessingStep.java",
         "ComponentTreeDepsProcessor.java",
         "EarlySingletonComponentCreatorGenerator.java",
         "RootFileFormatter.java",
@@ -54,7 +55,6 @@ java_library(
         "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/xprocessing",
-        "//third_party/java/auto:common",
         "//third_party/java/auto:service",
         "//third_party/java/error_prone:annotations",
         "//third_party/java/guava/base",

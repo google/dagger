@@ -18,17 +18,9 @@ package dagger.hilt.processor.internal.definecomponent;
 
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
-import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XRoundEnv;
-import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.AnnotationSpec;
-import dagger.hilt.processor.internal.BaseProcessor;
-import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.Processors;
-import dagger.hilt.processor.internal.definecomponent.DefineComponentBuilderMetadatas.DefineComponentBuilderMetadata;
-import dagger.hilt.processor.internal.definecomponent.DefineComponentMetadatas.DefineComponentMetadata;
+import dagger.hilt.processor.internal.BaseProcessingStep;
+import dagger.hilt.processor.internal.JavacBaseProcessingStepProcessor;
 import javax.annotation.processing.Processor;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
@@ -38,52 +30,9 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
  */
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
-public final class DefineComponentProcessor extends BaseProcessor {
-  // Note: these caches should be cleared between rounds.
-  private DefineComponentMetadatas componentMetadatas;
-  private DefineComponentBuilderMetadatas componentBuilderMetadatas;
-
+public final class DefineComponentProcessor extends JavacBaseProcessingStepProcessor {
   @Override
-  public void preRoundProcess(XRoundEnv roundEnv) {
-    componentMetadatas = DefineComponentMetadatas.create();
-    componentBuilderMetadatas = DefineComponentBuilderMetadatas.create(componentMetadatas);
-  }
-
-  @Override
-  public void postRoundProcess(XRoundEnv roundEnv) {
-    componentMetadatas = null;
-    componentBuilderMetadatas = null;
-  }
-
-  @Override
-  public ImmutableSet<String> getSupportedAnnotationTypes() {
-    return ImmutableSet.of(
-        ClassNames.DEFINE_COMPONENT.toString(), ClassNames.DEFINE_COMPONENT_BUILDER.toString());
-  }
-
-  @Override
-  public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    if (annotation.getClassName().equals(ClassNames.DEFINE_COMPONENT)) {
-      // TODO(bcorso): For cycles we currently process each element in the cycle. We should skip
-      // processing of subsequent elements in a cycle, but this requires ensuring that the first
-      // element processed is always the same so that our failure tests are stable.
-      DefineComponentMetadata metadata = componentMetadatas.get(element);
-      generateFile("component", metadata.component());
-    } else if (annotation.getClassName().equals(ClassNames.DEFINE_COMPONENT_BUILDER)) {
-      DefineComponentBuilderMetadata metadata = componentBuilderMetadatas.get(element);
-      generateFile("builder", metadata.builder());
-    } else {
-      throw new AssertionError("Unhandled annotation type: " + annotation.getQualifiedName());
-    }
-  }
-
-  private void generateFile(String member, XTypeElement typeElement) {
-    Processors.generateAggregatingClass(
-        ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE,
-        AnnotationSpec.builder(ClassNames.DEFINE_COMPONENT_CLASSES)
-            .addMember(member, "$S", typeElement.getQualifiedName())
-            .build(),
-        typeElement,
-        getClass());
+  protected BaseProcessingStep processingStep() {
+    return new DefineComponentProcessingStep(getXProcessingEnv());
   }
 }

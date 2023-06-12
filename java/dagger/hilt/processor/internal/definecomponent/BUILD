@@ -30,6 +30,7 @@ java_plugin(
 java_library(
     name = "processor_lib",
     srcs = [
+        "DefineComponentProcessingStep.java",
         "DefineComponentProcessor.java",
     ],
     deps = [

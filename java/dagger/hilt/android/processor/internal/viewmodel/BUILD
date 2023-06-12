@@ -30,6 +30,7 @@ kt_jvm_library(
     srcs = [
         "ViewModelMetadata.kt",
         "ViewModelModuleGenerator.kt",
+        "ViewModelProcessingStep.kt",
         "ViewModelProcessor.kt",
     ],
     deps = [

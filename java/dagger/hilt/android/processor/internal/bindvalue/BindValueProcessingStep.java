@@ -23,6 +23,7 @@ import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XRoundEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
@@ -59,7 +60,7 @@ public final class BindValueProcessingStep extends BaseProcessingStep {
   }
 
   @Override
-  protected void preProcess() {
+  protected void preProcess(XProcessingEnv env, XRoundEnv round) {
     testRootMap.clear();
   }
 
@@ -85,7 +86,7 @@ public final class BindValueProcessingStep extends BaseProcessingStep {
   }
 
   @Override
-  public void postProcess() throws Exception {
+  protected void postProcess(XProcessingEnv env, XRoundEnv round) throws Exception {
     // Generate a module for each testing class with a @BindValue field.
     for (Map.Entry<XTypeElement, Collection<XElement>> e : testRootMap.asMap().entrySet()) {
       BindValueMetadata metadata = BindValueMetadata.create(e.getKey(), e.getValue());

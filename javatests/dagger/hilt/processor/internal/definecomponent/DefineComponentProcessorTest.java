@@ -67,7 +67,7 @@ public final class DefineComponentProcessorTest {
             "package dagger.hilt.processor.internal.definecomponent.codegen;",
             "",
             "@DefineComponentClasses(component = \"test.FooComponent\")",
-            "@Generated(\"" + DefineComponentProcessingStep.class.getName() + "\")",
+            "@Generated(\"" + DefineComponentProcessor.class.getName() + "\")",
             "public class _test_FooComponent {}");
 
     JavaFileObject builderOutput =
@@ -76,7 +76,7 @@ public final class DefineComponentProcessorTest {
             "package dagger.hilt.processor.internal.definecomponent.codegen;",
             "",
             "@DefineComponentClasses(builder = \"test.FooComponentBuilder\")",
-            "@Generated(\"" + DefineComponentProcessingStep.class.getName() + "\")",
+            "@Generated(\"" + DefineComponentProcessor.class.getName() + "\")",
             "public class _test_FooComponentBuilder {}");
 
     Compilation compilation = compiler().compile(component, builder);

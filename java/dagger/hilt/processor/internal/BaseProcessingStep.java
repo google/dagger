@@ -22,7 +22,6 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingStep;
-import androidx.room.compiler.processing.XRoundEnv;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -70,34 +69,18 @@ public abstract class BaseProcessingStep implements XProcessingStep {
 
   protected abstract Set<ClassName> annotationClassNames();
 
-  protected abstract void processEach(ClassName annotation, XElement element) throws Exception;
+  protected void preProcess() {}
 
-  protected void preProcess(XProcessingEnv env, XRoundEnv round) {}
+  public abstract void processEach(ClassName annotation, XElement element) throws Exception;
 
-  protected void postProcess(XProcessingEnv env, XRoundEnv round) throws Exception {}
-
-  public final void preRoundProcess(XProcessingEnv env, XRoundEnv round) {
-    preProcess(env, round);
-  }
-
-  public final void postRoundProcess(XProcessingEnv env, XRoundEnv round) {
-    if (errorHandler.isEmpty()) {
-      try {
-        postProcess(env, round);
-      } catch (Exception e) {
-        errorHandler.recordError(e);
-      }
-    }
-    if (!delayErrors() || round.isProcessingOver()) {
-      errorHandler.checkErrors();
-    }
-  }
+  protected void postProcess() throws Exception {}
 
   @Override
   public final ImmutableSet<XElement> process(
       XProcessingEnv env,
       Map<String, ? extends Set<? extends XElement>> elementsByAnnotation,
       boolean isLastRound) {
+    preProcess();
     ImmutableMap<String, ClassName> annotationClassNamesByName =
         annotationClassNames().stream()
             .collect(toImmutableMap(ClassName::canonicalName, Function.identity()));
@@ -118,6 +101,16 @@ public abstract class BaseProcessingStep implements XProcessingStep {
           }
         }
       }
+    }
+    if (errorHandler.isEmpty()) {
+      try {
+        postProcess();
+      } catch (Exception e) {
+        errorHandler.recordError(e);
+      }
+    }
+    if (!delayErrors() || isLastRound) {
+      errorHandler.checkErrors();
     }
     return elementsToReprocessBuilder.build();
   }

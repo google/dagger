@@ -32,10 +32,7 @@ java_plugin(
 
 java_library(
     name = "processor_lib",
-    srcs = [
-        "AndroidEntryPointProcessingStep.java",
-        "AndroidEntryPointProcessor.java",
-    ],
+    srcs = ["AndroidEntryPointProcessor.java"],
     deps = [
         ":android_generators",
         ":metadata",
@@ -48,7 +45,6 @@ java_library(
         "//third_party/java/auto:service",
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
-        "//third_party/java/javapoet",
     ],
 )
 

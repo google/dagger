@@ -21,7 +21,6 @@ java_library(
     name = "base_processor",
     srcs = [
         "BaseProcessingStep.java",
-        "BaseProcessor.java",
         "JavacBaseProcessingStepProcessor.java",
         "ProcessorErrorHandler.java",
     ],

@@ -21,19 +21,25 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XFiler.Mode;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.XRoundEnv;
+import androidx.room.compiler.processing.javac.JavacBasicAnnotationProcessor;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.truth.Correspondence;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
-import dagger.hilt.processor.internal.BaseProcessor;
+import dagger.hilt.GeneratesRootInput;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.lang.model.SourceVersion;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,17 +55,26 @@ public final class GeneratesRootInputProcessorTest {
   private int generatedClasses = 0;
 
   @SupportedAnnotationTypes("*")
-  public final class TestAnnotationProcessor extends BaseProcessor {
+  public final class TestAnnotationProcessor extends JavacBasicAnnotationProcessor {
     private GeneratesRootInputs generatesRootInputs;
 
     @Override
-    public synchronized void init(ProcessingEnvironment processingEnv) {
-      super.init(processingEnv);
-      generatesRootInputs = new GeneratesRootInputs(processingEnv());
+    public void initialize(XProcessingEnv env) {
+      generatesRootInputs = new GeneratesRootInputs(env);
     }
 
     @Override
-    protected void postRoundProcess(XRoundEnv roundEnv) throws Exception {
+    public SourceVersion getSupportedSourceVersion() {
+      return SourceVersion.latestSupported();
+    }
+
+    @Override
+    public ImmutableList<XProcessingStep> processingSteps() {
+      return ImmutableList.of(() -> ImmutableSet.of("*"));
+    }
+
+    @Override
+    public void postRound(XProcessingEnv processingEnv, XRoundEnv roundEnv) {
       if (generatedClasses > 0) {
         elementsToWaitFor.addAll(generatesRootInputs.getElementsToWaitFor(roundEnv));
       }
@@ -68,7 +83,7 @@ public final class GeneratesRootInputProcessorTest {
             TypeSpec.classBuilder("Foo" + generatedClasses++)
                 .addAnnotation(TEST_ANNOTATION)
                 .build();
-        JavaFile.builder("foo", typeSpec).build().writeTo(processingEnv.getFiler());
+        processingEnv.getFiler().write(JavaFile.builder("foo", typeSpec).build(), Mode.Isolating);
       }
     }
   }
@@ -79,9 +94,8 @@ public final class GeneratesRootInputProcessorTest {
         JavaFileObjects.forSourceLines(
             "test.TestAnnotation",
             "package test;",
-            "@dagger.hilt.GeneratesRootInput",
+            "@" + GeneratesRootInput.class.getCanonicalName(),
             "public @interface TestAnnotation {}");
-
     Compilation compilation =
         javac()
             .withProcessors(new TestAnnotationProcessor(), new GeneratesRootInputProcessor())

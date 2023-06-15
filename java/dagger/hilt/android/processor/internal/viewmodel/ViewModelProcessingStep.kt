@@ -19,8 +19,7 @@ package dagger.hilt.android.processor.internal.viewmodel
 import androidx.room.compiler.processing.ExperimentalProcessingApi
 import androidx.room.compiler.processing.XElement
 import androidx.room.compiler.processing.XProcessingEnv
-import androidx.room.compiler.processing.XRoundEnv
-import androidx.room.compiler.processing.XTypeElement
+import com.google.common.collect.ImmutableSet
 import com.squareup.javapoet.ClassName
 import dagger.hilt.android.processor.internal.AndroidClassNames
 import dagger.hilt.processor.internal.BaseProcessingStep
@@ -29,7 +28,7 @@ import dagger.internal.codegen.xprocessing.XElements
 @OptIn(ExperimentalProcessingApi::class)
 /** Annotation processor for @ViewModelInject. */
 class ViewModelProcessingStep(env: XProcessingEnv) : BaseProcessingStep(env) {
-  override fun annotationClassNames(): Set<ClassName> = setOf(AndroidClassNames.HILT_VIEW_MODEL)
+  override fun annotationClassNames() = ImmutableSet.of(AndroidClassNames.HILT_VIEW_MODEL)
 
   override fun processEach(annotation: ClassName, element: XElement) {
     val typeElement = XElements.asTypeElement(element)

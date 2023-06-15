@@ -62,12 +62,17 @@ public abstract class BaseProcessingStep implements XProcessingStep {
 
   @Override
   public final ImmutableSet<String> annotations() {
-    return annotationClassNames().stream().map(ClassName::canonicalName).collect(toImmutableSet());
+    ImmutableSet<ClassName> annotationClassNames = annotationClassNames();
+    if (annotationClassNames == null || annotationClassNames.isEmpty()) {
+      throw new IllegalStateException("annotationClassNames() should return one or more elements.");
+    } else {
+      return annotationClassNames.stream().map(ClassName::canonicalName).collect(toImmutableSet());
+    }
   }
 
-  protected abstract Set<ClassName> annotationClassNames();
+  protected abstract ImmutableSet<ClassName> annotationClassNames();
 
-  protected abstract void processEach(ClassName annotation, XElement element) throws Exception;
+  protected void processEach(ClassName annotation, XElement element) throws Exception {}
 
   protected void preProcess(XProcessingEnv env, XRoundEnv round) {}
 

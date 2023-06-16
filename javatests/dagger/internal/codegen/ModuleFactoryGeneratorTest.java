@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2014 The Dagger Authors.
  *
@@ -557,6 +556,31 @@ public class ModuleFactoryGeneratorTest {
             });
   }
 
+  @Test
+  public void privateModule_kotlin() {
+    Source moduleFile =
+        CompilerTests.kotlinSource(
+            "test.TestModule.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "import dagger.Module",
+            "import dagger.Provides",
+            "",
+            "@Module",
+            "private class TestModule {",
+            "  @Provides fun provideInt(): Int = 1",
+            "}");
+
+    CompilerTests.daggerCompiler(moduleFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining("Modules cannot be private")
+                  .onSource(moduleFile);
+            });
+  }
 
   @Test
   public void enclosedInPrivateModule() {

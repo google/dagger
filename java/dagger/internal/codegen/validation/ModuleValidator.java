@@ -537,7 +537,7 @@ public final class ModuleValidator {
 
   private void validateModuleVisibility(
       XTypeElement moduleElement, ModuleKind moduleKind, ValidationReport.Builder reportBuilder) {
-    if (moduleElement.isPrivate() || moduleElement.isKtPrivate()) {
+    if (moduleElement.isPrivate()) {
       reportBuilder.addError("Modules cannot be private.", moduleElement);
     } else if (isEffectivelyPrivate(moduleElement)) {
       reportBuilder.addError("Modules cannot be enclosed in private types.", moduleElement);

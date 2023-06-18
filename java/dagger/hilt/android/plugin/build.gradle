@@ -23,7 +23,12 @@ allprojects {
     mavenCentral()
   }
 }
+
+project.buildDir = 'gradleBuild'
+
 subprojects {
+    it.project.buildDir = 'gradleBuild'
+
     afterEvaluate {
         dependencies {
             // This is needed to align older versions of kotlin-stdlib.

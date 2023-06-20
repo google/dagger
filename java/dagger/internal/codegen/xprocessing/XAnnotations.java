@@ -39,7 +39,7 @@ public final class XAnnotations {
 
   /** Returns the {@link AnnotationSpec} for the given annotation */
   public static AnnotationSpec getAnnotationSpec(XAnnotation annotation) {
-    return JavaPoetExtKt.toAnnotationSpec(annotation);
+    return JavaPoetExtKt.toAnnotationSpec(annotation, false);
   }
 
   /** Returns the string representation of the given annotation. */

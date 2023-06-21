@@ -289,7 +289,7 @@ public class DaggerSuperficialValidationTest {
                       NEW_LINES.join(
                           "Validation trace:",
                           "  => element (CLASS): test.TestClass",
-                          "  => annotation: @MissingAnnotation",
+                          "  => annotation type: MissingAnnotation",
                           "  => type (ERROR annotation type): %s"),
                       isJavac ? "MissingAnnotation" : "error.NonExistentClass"));
         });
@@ -474,6 +474,7 @@ public class DaggerSuperficialValidationTest {
                       NEW_LINES.join(
                           "Validation trace:",
                           "  => element (CLASS): test.Outer.TestClass",
+                          "  => annotation type: test.Outer.TestAnnotation",
                           "  => annotation: @test.Outer.TestAnnotation(classes={<%1$s>})",
                           "  => annotation value (TYPE_ARRAY): classes={<%1$s>}",
                           "  => annotation value (TYPE): classes=<%1$s>"),
@@ -535,6 +536,7 @@ public class DaggerSuperficialValidationTest {
                           "  => element (CLASS): test.Outer.TestClass",
                           "  => element (CONSTRUCTOR): TestClass(java.lang.String)",
                           "  => element (PARAMETER): strParam",
+                          "  => annotation type: test.Outer.TestAnnotation",
                           "  => annotation: @test.Outer.TestAnnotation(classes={<%1$s>})",
                           "  => annotation value (TYPE_ARRAY): classes={<%1$s>}",
                           "  => annotation value (TYPE): classes=<%1$s>"),

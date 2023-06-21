@@ -105,12 +105,6 @@ public final class XAnnotations {
       if (annotation.getType().isError()) {
         return "@" + annotation.getName(); // SUPPRESS_GET_NAME_CHECK
       }
-      // TODO(b/264089557): Non-annotation elements can be incorrectly treated as annotation in KSP,
-      // therefore calling getAnnotationValues() can cause confusing error.
-      if (getProcessingEnv(annotation).getBackend() == XProcessingEnv.Backend.KSP
-          && annotation.getTypeElement().getConstructors().size() != 1) {
-        return String.format("@%s", getClassName(annotation).canonicalName());
-      }
       return annotation.getAnnotationValues().isEmpty()
           // If the annotation doesn't have values then skip the empty parenthesis.
           ? String.format("@%s", getClassName(annotation).canonicalName())

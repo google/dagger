@@ -404,10 +404,22 @@ public final class DaggerSuperficialValidation {
   private void validateAnnotation(XAnnotation annotation) {
     try {
       validateType("annotation type", annotation.getType());
-      validateAnnotationValues(getDefaultValues(annotation));
-      validateAnnotationValues(annotation.getAnnotationValues());
+      try {
+        // Note: We separate this into its own try-catch since there's a bug where we could get an
+        // error when getting the annotation values due to b/264089557. This way we will at least
+        // report the name of the annotation in the error message.
+        validateAnnotationValues(getDefaultValues(annotation));
+        validateAnnotationValues(annotation.getAnnotationValues());
+      } catch (RuntimeException exception) {
+        throw ValidationException.from(exception).append(annotation);
+      }
     } catch (RuntimeException exception) {
-      throw ValidationException.from(exception).append(annotation);
+      throw ValidationException.from(exception)
+          .append(
+              "annotation type: "
+                  + (annotation.getType().isError()
+                      ? annotation.getName() // SUPPRESS_GET_NAME_CHECK
+                      : annotation.getClassName().canonicalName()));
     }
   }
 

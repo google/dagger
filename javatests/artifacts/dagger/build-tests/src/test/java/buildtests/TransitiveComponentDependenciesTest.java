@@ -61,6 +61,7 @@ public class TransitiveComponentDependenciesTest {
                 + "\n  "
                 + "\n  Dependency trace:"
                 + "\n      => element (CLASS): libraryB.ComponentB"
+                + "\n      => annotation type: dagger.Component"
                 + "\n      => annotation: @dagger.Component("
                 + "modules={}, dependencies={libraryA.ComponentA})"
                 + "\n      => annotation value (TYPE_ARRAY): dependencies={libraryA.ComponentA}"

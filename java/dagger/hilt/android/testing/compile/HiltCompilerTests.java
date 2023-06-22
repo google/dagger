@@ -162,11 +162,30 @@ public final class HiltCompilerTests {
   @AutoValue
   public abstract static class HiltCompiler {
     static Builder builder() {
-      return new AutoValue_HiltCompilerTests_HiltCompiler.Builder();
+      return new AutoValue_HiltCompilerTests_HiltCompiler.Builder()
+          // Set the builder defaults.
+          .additionalJavacProcessors(ImmutableList.of())
+          .additionalKspProcessors(ImmutableList.of());
     }
 
     /** Returns the sources being compiled */
     abstract ImmutableCollection<Source> sources();
+
+    /** Returns the extra Javac processors. */
+    abstract ImmutableCollection<Processor> additionalJavacProcessors();
+
+    /** Returns the extra KSP processors. */
+    abstract ImmutableCollection<SymbolProcessorProvider> additionalKspProcessors();
+
+    /** Returns a new {@link HiltCompiler} instance with the additional Javac processors. */
+    public HiltCompiler withAdditionalJavacProcessors(Processor... processors) {
+      return toBuilder().additionalJavacProcessors(ImmutableList.copyOf(processors)).build();
+    }
+
+    /** Returns a new {@link HiltCompiler} instance with the additional KSP processors. */
+    public HiltCompiler withAdditionalKspProcessors(SymbolProcessorProvider... processors) {
+      return toBuilder().additionalKspProcessors(ImmutableList.copyOf(processors)).build();
+    }
 
     /** Returns a builder with the current values of this {@link Compiler} as default. */
     abstract Builder toBuilder();
@@ -180,18 +199,29 @@ public final class HiltCompilerTests {
           /* kotlincArguments= */ ImmutableList.of(
               "-P", "plugin:org.jetbrains.kotlin.kapt3:correctErrorTypes=true"),
           /* config= */ HiltProcessingEnvConfigs.CONFIGS,
-          /* javacProcessors= */ defaultProcessors(),
-          /* symbolProcessorProviders= */ kspDefaultProcessors(),
+          /* javacProcessors= */
+          ImmutableList.<Processor>builder()
+              .addAll(defaultProcessors())
+              .addAll(additionalJavacProcessors())
+              .build(),
+          /* symbolProcessorProviders= */
+          ImmutableList.<SymbolProcessorProvider>builder()
+              .addAll(kspDefaultProcessors())
+              .addAll(additionalKspProcessors())
+              .build(),
           result -> {
             onCompilationResult.accept(result);
             return null;
           });
     }
 
-    /** Used to build a {@link DaggerCompiler}. */
+    /** Used to build a {@link HiltCompiler}. */
     @AutoValue.Builder
     public abstract static class Builder {
       abstract Builder sources(ImmutableCollection<Source> sources);
+      abstract Builder additionalJavacProcessors(ImmutableCollection<Processor> processors);
+      abstract Builder additionalKspProcessors(
+          ImmutableCollection<SymbolProcessorProvider> processors);
 
       abstract HiltCompiler build();
     }

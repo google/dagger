@@ -28,12 +28,15 @@ compiler_test(
         "//:dagger_with_compiler",
         "//third_party/java/jsr250_annotations",
         "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/android/components",
     ],
     deps = [
+        "//java/dagger/hilt/android/testing/compile",
         "//java/dagger/hilt/processor/internal/disableinstallincheck:processor_lib",
-        "//third_party/java/compile_testing",
+        "//java/dagger/internal/codegen/xprocessing",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/junit",
-        "//third_party/java/truth",
     ],
 )
 

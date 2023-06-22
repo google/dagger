@@ -16,12 +16,9 @@
 
 package dagger.hilt.processor.internal.disableinstallincheck;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import androidx.room.compiler.processing.util.Source;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import dagger.testing.compile.CompilerTests;
-import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -32,38 +29,49 @@ public class DisableInstallInCheckProcessorErrorsTest {
 
   @Test
   public void testIllegalCombinationInstallIn() {
-    JavaFileObject source =
-        JavaFileObjects.forSourceLines(
-            "foo.bar",
+    Source module =
+        CompilerTests.javaSource(
+            "foo.bar.NotModule",
             "package foo.bar;",
             "",
             "import dagger.hilt.migration.DisableInstallInCheck;",
-            "import dagger.hilt.EntryPoint;",
             "",
             "@DisableInstallInCheck",
-            "final class NotModule {}",
+            "final class NotModule {}");
+
+    Source entryPoint =
+        CompilerTests.javaSource(
+            "foo.bar.FooEntryPoint",
+            "package foo.bar;",
+            "",
+            "import dagger.hilt.components.SingletonComponent;",
+            "import dagger.hilt.migration.DisableInstallInCheck;",
+            "import dagger.hilt.EntryPoint;",
+            "import dagger.hilt.InstallIn;",
             "",
             "@DisableInstallInCheck",
             "@EntryPoint",
+            "@InstallIn(SingletonComponent.class)",
             "interface FooEntryPoint {}");
 
-    Compilation compilation =
-        CompilerTests.compiler()
-            .withProcessors(new DisableInstallInCheckProcessor())
-            .compile(source);
-
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DisableInstallInCheck should only be used on modules. However, it was found"
-                + " annotating foo.bar.NotModule")
-        .inFile(source)
-        .onLine(7);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DisableInstallInCheck should only be used on modules. However, it was found"
-                + " annotating foo.bar.FooEntryPoint")
-        .inFile(source)
-        .onLine(11);
+    HiltCompilerTests.hiltCompiler(module, entryPoint)
+        .withAdditionalJavacProcessors(new DisableInstallInCheckProcessor())
+        .withAdditionalKspProcessors(new KspDisableInstallInCheckProcessor.Provider())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject
+                  .hasErrorContaining(
+                      "@DisableInstallInCheck should only be used on modules. However, it was found"
+                          + " annotating foo.bar.NotModule")
+                  .onSource(module)
+                  .onLine(6);
+              subject
+                  .hasErrorContaining(
+                      "@DisableInstallInCheck should only be used on modules. However, it was found"
+                          + " annotating foo.bar.FooEntryPoint")
+                  .onSource(entryPoint)
+                  .onLine(11);
+            });
   }
 }

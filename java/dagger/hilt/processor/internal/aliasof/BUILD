@@ -30,6 +30,7 @@ java_library(
         "AliasOfProcessingStep.java",
         "AliasOfProcessor.java",
         "AliasOfPropagatedDataGenerator.java",
+        "KspAliasOfProcessor.java",
     ],
     deps = [
         "//java/dagger/hilt/processor/internal:base_processor",
@@ -42,6 +43,7 @@ java_library(
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
         "//third_party/java/javapoet",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )
 

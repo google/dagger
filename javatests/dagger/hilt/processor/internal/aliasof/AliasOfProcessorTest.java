@@ -19,8 +19,10 @@ package dagger.hilt.processor.internal.aliasof;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.hilt.android.testing.compile.HiltCompilerTests.compiler;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -82,8 +84,8 @@ public final class AliasOfProcessorTest {
 
   @Test
   public void fails_alisOfOnNonScope() {
-    JavaFileObject scope =
-        JavaFileObjects.forSourceLines(
+    Source scope =
+        HiltCompilerTests.javaSource(
             "test.AliasScope",
             "package test;",
             "",
@@ -94,17 +96,14 @@ public final class AliasOfProcessorTest {
             "@AliasOf(Singleton.class)",
             "public @interface AliasScope{}");
 
-    Compilation compilation =
-        compiler()
-            .withOptions("-Xlint:-processing") // Suppresses unclaimed annotation warning
-            .compile(scope);
-
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "AliasOf should only be used on scopes. However, it was found "
-                + "annotating test.AliasScope");
+    HiltCompilerTests.hiltCompiler(scope)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "AliasOf should only be used on scopes. However, it was found "
+                      + "annotating test.AliasScope");
+            });
   }
 
   @Test

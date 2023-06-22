@@ -37,6 +37,7 @@ import dagger.hilt.android.processor.internal.customtestapplication.CustomTestAp
 import dagger.hilt.processor.internal.HiltProcessingEnvConfigs;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessor;
 import dagger.hilt.processor.internal.aliasof.AliasOfProcessor;
+import dagger.hilt.processor.internal.aliasof.KspAliasOfProcessor;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentProcessor;
 import dagger.hilt.processor.internal.earlyentrypoint.EarlyEntryPointProcessor;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputProcessor;
@@ -152,7 +153,9 @@ public final class HiltCompilerTests {
 
   private static ImmutableList<SymbolProcessorProvider> kspDefaultProcessors() {
     // TODO(bcorso): Add the rest of the KSP processors here.
-    return ImmutableList.of(new KspAndroidEntryPointProcessor.Provider());
+    return ImmutableList.of(
+        new KspAndroidEntryPointProcessor.Provider(),
+        new KspAliasOfProcessor.Provider());
   }
 
   /** Used to compile Hilt sources and inspect the compiled results. */

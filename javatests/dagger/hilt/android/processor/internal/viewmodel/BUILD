@@ -20,30 +20,20 @@ load("//java/dagger/testing/compile:macros.bzl", "kt_compiler_test")
 
 package(default_visibility = ["//:src"])
 
-java_test(
+kt_compiler_test(
     name = "ViewModelProcessorTest",
-    runtime_deps = [
-        ":ViewModelProcessorTestLib",
-        "//java/dagger/hilt/android/lifecycle:hilt_view_model",
-        "//third_party/java/compile_testing",
-        "//third_party/java/truth",
+    srcs = ["ViewModelProcessorTest.kt"],
+    compiler_deps = [
+        "//java/dagger/hilt/android:hilt_android_app",
         "@androidsdk//:platforms/android-32/android.jar",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
-    ],
-)
-
-kt_jvm_library(
-    name = "ViewModelProcessorTestLib",
-    srcs = [
-        "ViewModelProcessorTest.kt",
+        "//java/dagger/hilt/android/lifecycle:hilt_view_model",
     ],
     deps = [
-        ":test_utils",
         "//java/dagger/hilt/android/processor/internal/viewmodel:processor_lib",
-        "//third_party/java/compile_testing",
+        "//java/dagger/hilt/android/testing/compile",
+        "//java/dagger/internal/codegen/xprocessing",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/junit",
-        "//third_party/java/truth",
     ],
 )
 

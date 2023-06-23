@@ -169,7 +169,8 @@ public final class HiltCompilerTests {
       return new AutoValue_HiltCompilerTests_HiltCompiler.Builder()
           // Set the builder defaults.
           .additionalJavacProcessors(ImmutableList.of())
-          .additionalKspProcessors(ImmutableList.of());
+          .additionalKspProcessors(ImmutableList.of())
+          .javacArguments(ImmutableList.of());
     }
 
     /** Returns the sources being compiled */
@@ -181,6 +182,9 @@ public final class HiltCompilerTests {
     /** Returns the extra KSP processors. */
     abstract ImmutableCollection<SymbolProcessorProvider> additionalKspProcessors();
 
+    /** Returns the command-line options */
+    abstract ImmutableCollection<String> javacArguments();
+
     /** Returns a new {@link HiltCompiler} instance with the additional Javac processors. */
     public HiltCompiler withAdditionalJavacProcessors(Processor... processors) {
       return toBuilder().additionalJavacProcessors(ImmutableList.copyOf(processors)).build();
@@ -191,6 +195,16 @@ public final class HiltCompilerTests {
       return toBuilder().additionalKspProcessors(ImmutableList.copyOf(processors)).build();
     }
 
+    /** Returns a new {@link HiltCompiler} instance with command-line options. */
+    public HiltCompiler withJavacArguments(String... arguments) {
+      return toBuilder().javacArguments(ImmutableList.copyOf(arguments)).build();
+    }
+
+    /** Returns a new {@link HiltCompiler} instance with command-line options. */
+    public HiltCompiler withJavacArguments(ImmutableCollection<String> arguments) {
+      return toBuilder().javacArguments(arguments).build();
+    }
+
     /** Returns a builder with the current values of this {@link Compiler} as default. */
     abstract Builder toBuilder();
 
@@ -199,17 +213,15 @@ public final class HiltCompilerTests {
           sources().asList(),
           /* classpath= */ ImmutableList.of(CompilerTests.compilerDepsJar()),
           /* options= */ ImmutableMap.of(),
-          /* javacArguments= */ ImmutableList.of(),
+          /* javacArguments= */ javacArguments().asList(),
           /* kotlincArguments= */ ImmutableList.of(
               "-P", "plugin:org.jetbrains.kotlin.kapt3:correctErrorTypes=true"),
           /* config= */ HiltProcessingEnvConfigs.CONFIGS,
-          /* javacProcessors= */
-          ImmutableList.<Processor>builder()
+          /* javacProcessors= */ ImmutableList.<Processor>builder()
               .addAll(defaultProcessors())
               .addAll(additionalJavacProcessors())
               .build(),
-          /* symbolProcessorProviders= */
-          ImmutableList.<SymbolProcessorProvider>builder()
+          /* symbolProcessorProviders= */ ImmutableList.<SymbolProcessorProvider>builder()
               .addAll(kspDefaultProcessors())
               .addAll(additionalKspProcessors())
               .build(),
@@ -226,6 +238,8 @@ public final class HiltCompilerTests {
       abstract Builder additionalJavacProcessors(ImmutableCollection<Processor> processors);
       abstract Builder additionalKspProcessors(
           ImmutableCollection<SymbolProcessorProvider> processors);
+
+      abstract Builder javacArguments(ImmutableCollection<String> arguments);
 
       abstract HiltCompiler build();
     }

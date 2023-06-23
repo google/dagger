@@ -32,6 +32,7 @@ java_library(
         "BindValueMetadata.java",
         "BindValueProcessingStep.java",
         "BindValueProcessor.java",
+        "KspBindValueProcessor.java",
     ],
     deps = [
         "//:dagger_with_compiler",
@@ -49,6 +50,7 @@ java_library(
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
         "//third_party/java/javapoet",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )
 

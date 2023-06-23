@@ -16,12 +16,8 @@
 
 package dagger.hilt.android.processor.internal.aggregateddeps;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.hilt.android.testing.compile.HiltCompilerTests.compiler;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -31,8 +27,8 @@ public class EarlyEntryPointProcessorTest {
 
   @Test
   public void testUsedWithEntryPoint_fails() {
-    JavaFileObject entryPoint =
-        JavaFileObjects.forSourceLines(
+    Source entryPoint =
+        HiltCompilerTests.javaSource(
             "test.UsedWithEntryPoint",
             "package test;",
             "",
@@ -45,21 +41,24 @@ public class EarlyEntryPointProcessorTest {
             "@EntryPoint",
             "@InstallIn(SingletonComponent.class)",
             "public interface UsedWithEntryPoint {}");
-    Compilation compilation = compiler().compile(entryPoint);
-
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Only one of the following annotations can be used on test.UsedWithEntryPoint: "
-                + "[dagger.hilt.EntryPoint, dagger.hilt.android.EarlyEntryPoint]")
-        .inFile(entryPoint)
-        .onLine(11);
+    HiltCompilerTests.hiltCompiler(entryPoint)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "Only one of the following annotations can be used on"
+                          + " test.UsedWithEntryPoint: [dagger.hilt.EntryPoint,"
+                          + " dagger.hilt.android.EarlyEntryPoint]")
+                  .onSource(entryPoint)
+                  .onLine(11);
+            });
   }
 
   @Test
   public void testNotSingletonComponent_fails() {
-    JavaFileObject entryPoint =
-        JavaFileObjects.forSourceLines(
+    Source entryPoint =
+        HiltCompilerTests.javaSource(
             "test.NotSingletonComponent",
             "package test;",
             "",
@@ -72,21 +71,23 @@ public class EarlyEntryPointProcessorTest {
             "@InstallIn(ActivityComponent.class)",
             "public interface NotSingletonComponent {}");
 
-    Compilation compilation = compiler().compile(entryPoint);
-
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@EarlyEntryPoint can only be installed into the SingletonComponent. "
-                + "Found: [dagger.hilt.android.components.ActivityComponent]")
-        .inFile(entryPoint)
-        .onLine(10);
+    HiltCompilerTests.hiltCompiler(entryPoint)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "@EarlyEntryPoint can only be installed into the SingletonComponent. "
+                          + "Found: [dagger.hilt.android.components.ActivityComponent]")
+                  .onSource(entryPoint)
+                  .onLine(10);
+            });
   }
 
   @Test
   public void testThatTestInstallInCannotOriginateFromTest() {
-    JavaFileObject test =
-        JavaFileObjects.forSourceLines(
+    Source test =
+        HiltCompilerTests.javaSource(
             "test.MyTest",
             "package test;",
             "",
@@ -102,15 +103,17 @@ public class EarlyEntryPointProcessorTest {
             "  @InstallIn(SingletonComponent.class)",
             "  interface NestedEarlyEntryPoint {}",
             "}");
-    Compilation compilation = compiler().compile(test);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@EarlyEntryPoint-annotated entry point, test.MyTest.NestedEarlyEntryPoint, cannot "
-                + "be nested in (or originate from) a @HiltAndroidTest-annotated class, "
-                + "test.MyTest.")
-        .inFile(test)
-        .onLine(13);
+    HiltCompilerTests.hiltCompiler(test)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "@EarlyEntryPoint-annotated entry point, test.MyTest.NestedEarlyEntryPoint,"
+                          + " cannot be nested in (or originate from) a @HiltAndroidTest-annotated"
+                          + " class, test.MyTest.")
+                  .onSource(test)
+                  .onLine(13);
+            });
   }
 }

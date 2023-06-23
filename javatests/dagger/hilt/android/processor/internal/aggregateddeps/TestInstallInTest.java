@@ -19,8 +19,10 @@ package dagger.hilt.android.processor.internal.aggregateddeps;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.hilt.android.testing.compile.HiltCompilerTests.compiler;
 
+import androidx.room.compiler.processing.util.Source;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,6 +31,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TestInstallInTest {
 
+  // TODO(danysantiago): Migrate to hiltCompiler() after b/288893275 is fixed.
   @Test
   public void testMissingValues() {
     JavaFileObject testInstallInModule =
@@ -55,8 +58,8 @@ public class TestInstallInTest {
 
   @Test
   public void testEmptyComponentValues() {
-    JavaFileObject installInModule =
-        JavaFileObjects.forSourceLines(
+    Source installInModule =
+        HiltCompilerTests.javaSource(
             "test.InstallInModule",
             "package test;",
             "",
@@ -67,8 +70,8 @@ public class TestInstallInTest {
             "@Module",
             "@InstallIn(SingletonComponent.class)",
             "interface InstallInModule {}");
-    JavaFileObject testInstallInModule =
-        JavaFileObjects.forSourceLines(
+    Source testInstallInModule =
+        HiltCompilerTests.javaSource(
             "test.TestInstallInModule",
             "package test;",
             "",
@@ -78,21 +81,23 @@ public class TestInstallInTest {
             "@Module",
             "@TestInstallIn(components = {}, replaces = InstallInModule.class)",
             "interface TestInstallInModule {}");
-    Compilation compilation = compiler().compile(installInModule, testInstallInModule);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    // TODO(bcorso): Add inFile().onLine() whenever we've fixed Processors.getAnnotationClassValues
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@TestInstallIn, 'components' class is invalid or missing: "
-                + "@dagger.hilt.testing.TestInstallIn("
-                + "components={}, replaces={test.InstallInModule})");
+    HiltCompilerTests.hiltCompiler(installInModule, testInstallInModule)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              // TODO(bcorso): Add inFile().onLine() whenever we've fixed
+              // Processors.getAnnotationClassValues
+              subject.hasErrorContaining(
+                  "@TestInstallIn, 'components' class is invalid or missing: "
+                      + "@dagger.hilt.testing.TestInstallIn("
+                      + "components={}, replaces={test.InstallInModule})");
+            });
   }
 
   @Test
   public void testEmptyReplacesValues() {
-    JavaFileObject testInstallInModule =
-        JavaFileObjects.forSourceLines(
+    Source testInstallInModule =
+        HiltCompilerTests.javaSource(
             "test.TestInstallInModule",
             "package test;",
             "",
@@ -103,21 +108,23 @@ public class TestInstallInTest {
             "@Module",
             "@TestInstallIn(components = SingletonComponent.class, replaces = {})",
             "interface TestInstallInModule {}");
-    Compilation compilation = compiler().compile(testInstallInModule);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    // TODO(bcorso): Add inFile().onLine() whenever we've fixed Processors.getAnnotationClassValues
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@TestInstallIn, 'replaces' class is invalid or missing: "
-                + "@dagger.hilt.testing.TestInstallIn("
-                + "components={dagger.hilt.components.SingletonComponent}, replaces={})");
+    HiltCompilerTests.hiltCompiler(testInstallInModule)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              // TODO(bcorso): Add inFile().onLine() whenever we've fixed
+              // Processors.getAnnotationClassValues
+              subject.hasErrorContaining(
+                  "@TestInstallIn, 'replaces' class is invalid or missing: "
+                      + "@dagger.hilt.testing.TestInstallIn("
+                      + "components={dagger.hilt.components.SingletonComponent}, replaces={})");
+            });
   }
 
   @Test
   public void testMissingModuleAnnotation() {
-    JavaFileObject installInModule =
-        JavaFileObjects.forSourceLines(
+    Source installInModule =
+        HiltCompilerTests.javaSource(
             "test.InstallInModule",
             "package test;",
             "",
@@ -128,8 +135,8 @@ public class TestInstallInTest {
             "@Module",
             "@InstallIn(SingletonComponent.class)",
             "interface InstallInModule {}");
-    JavaFileObject testInstallInModule =
-        JavaFileObjects.forSourceLines(
+    Source testInstallInModule =
+        HiltCompilerTests.javaSource(
             "test.TestInstallInModule",
             "package test;",
             "",
@@ -141,21 +148,23 @@ public class TestInstallInTest {
             "    components = SingletonComponent.class,",
             "    replaces = InstallInModule.class)",
             "interface TestInstallInModule {}");
-    Compilation compilation = compiler().compile(installInModule, testInstallInModule);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@TestInstallIn-annotated classes must also be annotated with @Module or @EntryPoint: "
-                + "test.TestInstallInModule")
-        .inFile(testInstallInModule)
-        .onLine(10);
+    HiltCompilerTests.hiltCompiler(installInModule, testInstallInModule)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "@TestInstallIn-annotated classes must also be annotated with @Module or"
+                          + " @EntryPoint: test.TestInstallInModule")
+                  .onSource(testInstallInModule)
+                  .onLine(10);
+            });
   }
 
   @Test
   public void testInvalidUsageOnEntryPoint() {
-    JavaFileObject installInModule =
-        JavaFileObjects.forSourceLines(
+    Source installInModule =
+        HiltCompilerTests.javaSource(
             "test.InstallInModule",
             "package test;",
             "",
@@ -166,8 +175,8 @@ public class TestInstallInTest {
             "@Module",
             "@InstallIn(SingletonComponent.class)",
             "interface InstallInModule {}");
-    JavaFileObject testInstallInEntryPoint =
-        JavaFileObjects.forSourceLines(
+    Source testInstallInEntryPoint =
+        HiltCompilerTests.javaSource(
             "test.TestInstallInEntryPoint",
             "package test;",
             "",
@@ -180,21 +189,22 @@ public class TestInstallInTest {
             "    components = SingletonComponent.class,",
             "    replaces = InstallInModule.class)",
             "interface TestInstallInEntryPoint {}");
-    Compilation compilation = compiler().compile(installInModule, testInstallInEntryPoint);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining("@TestInstallIn can only be used with modules")
-        .inFile(testInstallInEntryPoint)
-        .onLine(11);
+    HiltCompilerTests.hiltCompiler(installInModule, testInstallInEntryPoint)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining("@TestInstallIn can only be used with modules")
+                  .onSource(testInstallInEntryPoint)
+                  .onLine(11);
+            });
   }
 
   @Test
   public void testInvalidReplaceModules() {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines("test.Foo", "package test;", "", "class Foo {}");
-    JavaFileObject testInstallInModule =
-        JavaFileObjects.forSourceLines(
+    Source foo = HiltCompilerTests.javaSource("test.Foo", "package test;", "", "class Foo {}");
+    Source testInstallInModule =
+        HiltCompilerTests.javaSource(
             "test.TestInstallInModule",
             "package test;",
             "",
@@ -207,20 +217,23 @@ public class TestInstallInTest {
             "    components = SingletonComponent.class,",
             "    replaces = Foo.class)",
             "interface TestInstallInModule {}");
-    Compilation compilation = compiler().compile(foo, testInstallInModule);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@TestInstallIn#replaces() can only contain @InstallIn modules, but found: [test.Foo]")
-        .inFile(testInstallInModule)
-        .onLine(11);
+    HiltCompilerTests.hiltCompiler(foo, testInstallInModule)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "@TestInstallIn#replaces() can only contain @InstallIn modules, but found:"
+                          + " [test.Foo]")
+                  .onSource(testInstallInModule)
+                  .onLine(11);
+            });
   }
 
   @Test
   public void testInternalDaggerReplaceModules() {
-    JavaFileObject testInstallInModule =
-        JavaFileObjects.forSourceLines(
+    Source testInstallInModule =
+        HiltCompilerTests.javaSource(
             "test.TestInstallInModule",
             "package test;",
             "",
@@ -233,21 +246,23 @@ public class TestInstallInTest {
             "    components = SingletonComponent.class,",
             "    replaces = dagger.hilt.android.internal.modules.ApplicationContextModule.class)",
             "interface TestInstallInModule {}");
-    Compilation compilation = compiler().compile(testInstallInModule);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@TestInstallIn#replaces() cannot contain internal Hilt modules, but found: "
-                + "[dagger.hilt.android.internal.modules.ApplicationContextModule]")
-        .inFile(testInstallInModule)
-        .onLine(11);
+    HiltCompilerTests.hiltCompiler(testInstallInModule)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "@TestInstallIn#replaces() cannot contain internal Hilt modules, but found: "
+                          + "[dagger.hilt.android.internal.modules.ApplicationContextModule]")
+                  .onSource(testInstallInModule)
+                  .onLine(11);
+            });
   }
 
   @Test
   public void testHiltWrapperDaggerReplaceModules() {
-    JavaFileObject testInstallInModule =
-        JavaFileObjects.forSourceLines(
+    Source testInstallInModule =
+        HiltCompilerTests.javaSource(
             "test.TestInstallInModule",
             "package test;",
             "",
@@ -264,22 +279,25 @@ public class TestInstallInTest {
             // handle modules generated in the same round.
             "    replaces = HiltWrapper_InstallInModule.class)",
             "interface TestInstallInModule {}");
-    Compilation compilation = compiler().compile(testInstallInModule);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@TestInstallIn#replaces() cannot contain Hilt generated public wrapper modules, "
-                + "but found: [dagger.hilt.android.processor.internal.aggregateddeps."
-                + "HiltWrapper_InstallInModule]")
-        .inFile(testInstallInModule)
-        .onLine(12);
+    HiltCompilerTests.hiltCompiler(testInstallInModule)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "@TestInstallIn#replaces() cannot contain Hilt generated public wrapper"
+                          + " modules, but found:"
+                          + " [dagger.hilt.android.processor.internal.aggregateddeps."
+                          + "HiltWrapper_InstallInModule]")
+                  .onSource(testInstallInModule)
+                  .onLine(12);
+            });
   }
 
   @Test
   public void testCannotReplaceLocalInstallInModule() {
-    JavaFileObject test =
-        JavaFileObjects.forSourceLines(
+    Source test =
+        HiltCompilerTests.javaSource(
             "test.MyTest",
             "package test;",
             "",
@@ -295,8 +313,8 @@ public class TestInstallInTest {
             "  @InstallIn(SingletonComponent.class)",
             "  interface LocalInstallInModule {}",
             "}");
-    JavaFileObject testInstallIn =
-        JavaFileObjects.forSourceLines(
+    Source testInstallIn =
+        HiltCompilerTests.javaSource(
             "test.TestInstallInModule",
             "package test;",
             "",
@@ -309,21 +327,23 @@ public class TestInstallInTest {
             "    components = SingletonComponent.class,",
             "    replaces = MyTest.LocalInstallInModule.class)",
             "interface TestInstallInModule {}");
-    Compilation compilation = compiler().compile(test, testInstallIn);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "TestInstallIn#replaces() cannot replace test specific @InstallIn modules, but found: "
-                + "[test.MyTest.LocalInstallInModule].")
-        .inFile(testInstallIn)
-        .onLine(11);
+    HiltCompilerTests.hiltCompiler(test, testInstallIn)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "TestInstallIn#replaces() cannot replace test specific @InstallIn modules,"
+                          + " but found: [test.MyTest.LocalInstallInModule].")
+                  .onSource(testInstallIn)
+                  .onLine(11);
+            });
   }
 
   @Test
   public void testThatTestInstallInCannotOriginateFromTest() {
-    JavaFileObject installInModule =
-        JavaFileObjects.forSourceLines(
+    Source installInModule =
+        HiltCompilerTests.javaSource(
             "test.InstallInModule",
             "package test;",
             "",
@@ -334,8 +354,8 @@ public class TestInstallInTest {
             "@Module",
             "@InstallIn(SingletonComponent.class)",
             "interface InstallInModule {}");
-    JavaFileObject test =
-        JavaFileObjects.forSourceLines(
+    Source test =
+        HiltCompilerTests.javaSource(
             "test.MyTest",
             "package test;",
             "",
@@ -352,14 +372,16 @@ public class TestInstallInTest {
             "      replaces = InstallInModule.class)",
             "  interface TestInstallInModule {}",
             "}");
-    Compilation compilation = compiler().compile(test, installInModule);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@TestInstallIn modules cannot be nested in (or originate from) a "
-                + "@HiltAndroidTest-annotated class:  test.MyTest")
-        .inFile(test)
-        .onLine(14);
+    HiltCompilerTests.hiltCompiler(test, installInModule)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining(
+                      "@TestInstallIn modules cannot be nested in (or originate from) a "
+                          + "@HiltAndroidTest-annotated class:  test.MyTest")
+                  .onSource(test)
+                  .onLine(14);
+            });
   }
 }

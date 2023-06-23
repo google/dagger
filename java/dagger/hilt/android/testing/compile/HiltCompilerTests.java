@@ -34,6 +34,7 @@ import com.google.testing.compile.Compiler;
 import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPointProcessor;
 import dagger.hilt.android.processor.internal.androidentrypoint.KspAndroidEntryPointProcessor;
 import dagger.hilt.android.processor.internal.customtestapplication.CustomTestApplicationProcessor;
+import dagger.hilt.android.processor.internal.customtestapplication.KspCustomTestApplicationProcessor;
 import dagger.hilt.processor.internal.HiltProcessingEnvConfigs;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessor;
 import dagger.hilt.processor.internal.aggregateddeps.KspAggregatedDepsProcessor;
@@ -163,6 +164,7 @@ public final class HiltCompilerTests {
         new KspAliasOfProcessor.Provider(),
         new KspAggregatedDepsProcessor.Provider(),
         new KspComponentProcessor.Provider(),
+        new KspCustomTestApplicationProcessor.Provider(),
         new KspDefineComponentProcessor.Provider(),
         new KspEarlyEntryPointProcessor.Provider(),
         new KspOriginatingElementProcessor.Provider());

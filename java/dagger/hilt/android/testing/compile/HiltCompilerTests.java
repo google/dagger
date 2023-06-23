@@ -49,6 +49,7 @@ import dagger.hilt.processor.internal.originatingelement.KspOriginatingElementPr
 import dagger.hilt.processor.internal.originatingelement.OriginatingElementProcessor;
 import dagger.hilt.processor.internal.root.ComponentTreeDepsProcessor;
 import dagger.hilt.processor.internal.root.RootProcessor;
+import dagger.hilt.processor.internal.uninstallmodules.KspUninstallModulesProcessor;
 import dagger.hilt.processor.internal.uninstallmodules.UninstallModulesProcessor;
 import dagger.internal.codegen.ComponentProcessor;
 import dagger.internal.codegen.KspComponentProcessor;
@@ -167,7 +168,8 @@ public final class HiltCompilerTests {
         new KspCustomTestApplicationProcessor.Provider(),
         new KspDefineComponentProcessor.Provider(),
         new KspEarlyEntryPointProcessor.Provider(),
-        new KspOriginatingElementProcessor.Provider());
+        new KspOriginatingElementProcessor.Provider(),
+        new KspUninstallModulesProcessor.Provider());
   }
 
   /** Used to compile Hilt sources and inspect the compiled results. */

@@ -54,7 +54,7 @@ public final class UninstallModulesProcessingStep extends BaseProcessingStep {
         "@%s should only be used on test classes annotated with @%s, but found: %s",
         annotation.simpleName(),
         ClassNames.HILT_ANDROID_TEST.simpleName(),
-        element);
+        XElements.toStableString(element));
 
     XTypeElement testElement = XElements.asTypeElement(element);
     ImmutableList<XTypeElement> uninstallModules =

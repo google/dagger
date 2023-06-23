@@ -16,11 +16,7 @@
 
 package dagger.hilt.processor.internal.uninstallmodules;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.hilt.android.testing.compile.HiltCompilerTests.compiler;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -30,133 +26,125 @@ public class UninstallModulesProcessorTest {
 
   @Test
   public void testInvalidModuleNoInstallIn_fails() {
-    Compilation compilation =
-        compiler()
-            .compile(
-                JavaFileObjects.forSourceLines(
-                    "test.MyTest",
-                    "package test;",
-                    "",
-                    "import dagger.hilt.android.testing.HiltAndroidTest;",
-                    "import dagger.hilt.android.testing.UninstallModules;",
-                    "",
-                    "@UninstallModules(InvalidModule.class)",
-                    "@HiltAndroidTest",
-                    "public class MyTest {}"),
-                JavaFileObjects.forSourceLines(
-                    "test.InvalidModule",
-                    "package test;",
-                    "",
-                    "import dagger.Module;",
-                    "import dagger.hilt.migration.DisableInstallInCheck;",
-                    "",
-                    "@DisableInstallInCheck",
-                    "@Module",
-                    "public class InvalidModule {}"));
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@UninstallModules should only include modules annotated with both @Module and "
-                + "@InstallIn, but found: [test.InvalidModule].");
+    HiltCompilerTests.hiltCompiler(
+            HiltCompilerTests.javaSource(
+                "test.MyTest",
+                "package test;",
+                "",
+                "import dagger.hilt.android.testing.HiltAndroidTest;",
+                "import dagger.hilt.android.testing.UninstallModules;",
+                "",
+                "@UninstallModules(InvalidModule.class)",
+                "@HiltAndroidTest",
+                "public class MyTest {}"),
+            HiltCompilerTests.javaSource(
+                "test.InvalidModule",
+                "package test;",
+                "",
+                "import dagger.Module;",
+                "import dagger.hilt.migration.DisableInstallInCheck;",
+                "",
+                "@DisableInstallInCheck",
+                "@Module",
+                "public class InvalidModule {}"))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@UninstallModules should only include modules annotated with both @Module and "
+                      + "@InstallIn, but found: [test.InvalidModule].");
+            });
   }
 
   @Test
   public void testInvalidModuleNoModule_fails() {
-    Compilation compilation =
-        compiler()
-            .compile(
-                JavaFileObjects.forSourceLines(
-                    "test.MyTest",
-                    "package test;",
-                    "",
-                    "import dagger.hilt.android.testing.HiltAndroidTest;",
-                    "import dagger.hilt.android.testing.UninstallModules;",
-                    "",
-                    "@UninstallModules(InvalidModule.class)",
-                    "@HiltAndroidTest",
-                    "public class MyTest {}"),
-                JavaFileObjects.forSourceLines(
-                    "test.InvalidModule",
-                    "package test;",
-                    "",
-                    "public class InvalidModule {",
-                    "}"));
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@UninstallModules should only include modules annotated with both @Module and "
-                + "@InstallIn, but found: [test.InvalidModule].");
+    HiltCompilerTests.hiltCompiler(
+            HiltCompilerTests.javaSource(
+                "test.MyTest",
+                "package test;",
+                "",
+                "import dagger.hilt.android.testing.HiltAndroidTest;",
+                "import dagger.hilt.android.testing.UninstallModules;",
+                "",
+                "@UninstallModules(InvalidModule.class)",
+                "@HiltAndroidTest",
+                "public class MyTest {}"),
+            HiltCompilerTests.javaSource(
+                "test.InvalidModule", "package test;", "", "public class InvalidModule {", "}"))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@UninstallModules should only include modules annotated with both @Module and "
+                      + "@InstallIn, but found: [test.InvalidModule].");
+            });
   }
 
   @Test
   public void testInvalidTest_fails() {
-    Compilation compilation =
-        compiler()
-            .compile(
-                JavaFileObjects.forSourceLines(
-                    "test.InvalidTest",
-                    "package test;",
-                    "",
-                    "import dagger.hilt.android.testing.UninstallModules;",
-                    "",
-                    "@UninstallModules(ValidModule.class)",
-                    "public class InvalidTest {}"),
-                JavaFileObjects.forSourceLines(
-                    "test.ValidModule",
-                    "package test;",
-                    "",
-                    "import dagger.Module;",
-                    "import dagger.hilt.InstallIn;",
-                    "import dagger.hilt.components.SingletonComponent;",
-                    "",
-                    "@Module",
-                    "@InstallIn(SingletonComponent.class)",
-                    "public class ValidModule {}"));
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@UninstallModules should only be used on test classes annotated with @HiltAndroidTest,"
-                + " but found: test.InvalidTest");
+    HiltCompilerTests.hiltCompiler(
+            HiltCompilerTests.javaSource(
+                "test.InvalidTest",
+                "package test;",
+                "",
+                "import dagger.hilt.android.testing.UninstallModules;",
+                "",
+                "@UninstallModules(ValidModule.class)",
+                "public class InvalidTest {}"),
+            HiltCompilerTests.javaSource(
+                "test.ValidModule",
+                "package test;",
+                "",
+                "import dagger.Module;",
+                "import dagger.hilt.InstallIn;",
+                "import dagger.hilt.components.SingletonComponent;",
+                "",
+                "@Module",
+                "@InstallIn(SingletonComponent.class)",
+                "public class ValidModule {}"))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@UninstallModules should only be used on test classes annotated with"
+                      + " @HiltAndroidTest, but found: test.InvalidTest");
+            });
   }
 
   @Test
   public void testInvalidTestModule_fails() {
-    Compilation compilation =
-        compiler()
-            .compile(
-                JavaFileObjects.forSourceLines(
-                    "test.MyTest",
-                    "package test;",
-                    "",
-                    "import dagger.Module;",
-                    "import dagger.hilt.InstallIn;",
-                    "import dagger.hilt.components.SingletonComponent;",
-                    "import dagger.hilt.android.testing.HiltAndroidTest;",
-                    "import dagger.hilt.android.testing.UninstallModules;",
-                    "",
-                    "@UninstallModules({",
-                    "    MyTest.PkgPrivateInvalidModule.class,",
-                    "    MyTest.PublicInvalidModule.class,",
-                    "})",
-                    "@HiltAndroidTest",
-                    "public class MyTest {",
-                    "  @Module",
-                    "  @InstallIn(SingletonComponent.class)",
-                    "  interface PkgPrivateInvalidModule {}",
-                    "",
-                    "  @Module",
-                    "  @InstallIn(SingletonComponent.class)",
-                    "  public interface PublicInvalidModule {}",
-                    "}"));
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    // TODO(bcorso): Consider unwrapping pkg-private modules before reporting the error.
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@UninstallModules should not contain test modules, but found: "
-                + "[test.MyTest.PkgPrivateInvalidModule, test.MyTest.PublicInvalidModule]");
+    HiltCompilerTests.hiltCompiler(
+            HiltCompilerTests.javaSource(
+                "test.MyTest",
+                "package test;",
+                "",
+                "import dagger.Module;",
+                "import dagger.hilt.InstallIn;",
+                "import dagger.hilt.components.SingletonComponent;",
+                "import dagger.hilt.android.testing.HiltAndroidTest;",
+                "import dagger.hilt.android.testing.UninstallModules;",
+                "",
+                "@UninstallModules({",
+                "    MyTest.PkgPrivateInvalidModule.class,",
+                "    MyTest.PublicInvalidModule.class,",
+                "})",
+                "@HiltAndroidTest",
+                "public class MyTest {",
+                "  @Module",
+                "  @InstallIn(SingletonComponent.class)",
+                "  interface PkgPrivateInvalidModule {}",
+                "",
+                "  @Module",
+                "  @InstallIn(SingletonComponent.class)",
+                "  public interface PublicInvalidModule {}",
+                "}"))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              // TODO(bcorso): Consider unwrapping pkg-private modules before reporting the error.
+              subject.hasErrorContaining(
+                  "@UninstallModules should not contain test modules, but found: "
+                      + "[test.MyTest.PkgPrivateInvalidModule, test.MyTest.PublicInvalidModule]");
+            });
   }
 }

@@ -15,23 +15,25 @@
 # Description:
 # Tests the functionality of GeneratesRootInputProcessor.
 
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-load("//:test_defs.bzl", "GenJavaTests")
+load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
+compiler_test(
     name = "GeneratesRootInputProcessorTest",
-    srcs = glob(["*.java"]),
-    functional = False,
-    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    srcs = ["GeneratesRootInputProcessorTest.java"],
+    compiler_deps = [
+        "//java/dagger/hilt:generates_root_input",
+        "@androidsdk//:platforms/android-32/android.jar",
+        "@maven//:androidx_annotation_annotation",
+    ],
     deps = [
         "//java/dagger/hilt:generates_root_input",
+        "//java/dagger/hilt/android/testing/compile",
+        "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal/generatesrootinput:generates_root_inputs",
-        "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",
         "//java/dagger/internal/codegen/xprocessing",
-        "//third_party/java/compile_testing",
-        "//third_party/java/guava/collect",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/javapoet",
         "//third_party/java/junit",
         "//third_party/java/truth",

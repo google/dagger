@@ -48,6 +48,7 @@ import java.util.Set;
  */
 public abstract class BaseProcessingStep implements XProcessingStep {
   private final ProcessorErrorHandler errorHandler;
+  boolean isAnnotationClassNamesOverridden = true;
 
   private final XProcessingEnv processingEnv;
 
@@ -63,6 +64,9 @@ public abstract class BaseProcessingStep implements XProcessingStep {
   @Override
   public final ImmutableSet<String> annotations() {
     ImmutableSet<ClassName> annotationClassNames = annotationClassNames();
+    if (!isAnnotationClassNamesOverridden) {
+      return ImmutableSet.of("*");
+    }
     if (annotationClassNames == null || annotationClassNames.isEmpty()) {
       throw new IllegalStateException("annotationClassNames() should return one or more elements.");
     } else {
@@ -70,7 +74,12 @@ public abstract class BaseProcessingStep implements XProcessingStep {
     }
   }
 
-  protected abstract ImmutableSet<ClassName> annotationClassNames();
+  // When this method is not implemented by users, all annotated elements will processed by this
+  // processing step.
+  protected ImmutableSet<ClassName> annotationClassNames() {
+    isAnnotationClassNamesOverridden = false;
+    return ImmutableSet.of();
+  }
 
   protected void processEach(ClassName annotation, XElement element) throws Exception {}
 

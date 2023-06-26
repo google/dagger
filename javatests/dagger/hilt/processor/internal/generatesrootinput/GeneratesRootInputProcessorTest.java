@@ -17,30 +17,22 @@
 package dagger.hilt.processor.internal.generatesrootinput;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.Compiler.javac;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler.Mode;
 import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.XRoundEnv;
-import androidx.room.compiler.processing.javac.JavacBasicAnnotationProcessor;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.truth.Correspondence;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.GeneratesRootInput;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
+import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.lang.model.SourceVersion;
-import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -54,29 +46,18 @@ public final class GeneratesRootInputProcessorTest {
   private final List<XElement> elementsToWaitFor = new ArrayList<>();
   private int generatedClasses = 0;
 
-  @SupportedAnnotationTypes("*")
-  public final class TestAnnotationProcessor extends JavacBasicAnnotationProcessor {
+  public final class TestAnnotationStep extends BaseProcessingStep {
     private GeneratesRootInputs generatesRootInputs;
 
-    @Override
-    public void initialize(XProcessingEnv env) {
+    public TestAnnotationStep(XProcessingEnv env) {
+      super(env);
       generatesRootInputs = new GeneratesRootInputs(env);
     }
 
     @Override
-    public SourceVersion getSupportedSourceVersion() {
-      return SourceVersion.latestSupported();
-    }
-
-    @Override
-    public ImmutableList<XProcessingStep> processingSteps() {
-      return ImmutableList.of(() -> ImmutableSet.of("*"));
-    }
-
-    @Override
-    public void postRound(XProcessingEnv processingEnv, XRoundEnv roundEnv) {
+    public void postProcess(XProcessingEnv processingEnv, XRoundEnv round) {
       if (generatedClasses > 0) {
-        elementsToWaitFor.addAll(generatesRootInputs.getElementsToWaitFor(roundEnv));
+        elementsToWaitFor.addAll(generatesRootInputs.getElementsToWaitFor(round));
       }
       if (generatedClasses < GENERATED_CLASSES) {
         TypeSpec typeSpec =
@@ -90,24 +71,27 @@ public final class GeneratesRootInputProcessorTest {
 
   @Test
   public void succeeds_ComponentProcessorWaitsForAnnotationsWithGeneratesRootInput() {
-    JavaFileObject testAnnotation =
-        JavaFileObjects.forSourceLines(
+    Source testAnnotation =
+        HiltCompilerTests.javaSource(
             "test.TestAnnotation",
             "package test;",
             "@" + GeneratesRootInput.class.getCanonicalName(),
             "public @interface TestAnnotation {}");
-    Compilation compilation =
-        javac()
-            .withProcessors(new TestAnnotationProcessor(), new GeneratesRootInputProcessor())
-            .compile(testAnnotation);
 
-    assertThat(compilation).succeeded();
-    assertThat(elementsToWaitFor)
-        .comparingElementsUsing(
-            Correspondence.<XElement, String>transforming(
-                element -> XElements.asTypeElement(element).getQualifiedName(),
-                "has qualified name of"))
-        .containsExactly("foo.Foo0", "foo.Foo1", "foo.Foo2", "foo.Foo3", "foo.Foo4")
-        .inOrder();
+    HiltCompilerTests.hiltCompiler(testAnnotation)
+        .withProcessingSteps(TestAnnotationStep::new)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              assertThat(elementsToWaitFor)
+                  .comparingElementsUsing(
+                      Correspondence.<XElement, String>transforming(
+                          element -> XElements.asTypeElement(element).getQualifiedName(),
+                          "has qualified name of"))
+                  .containsExactly("foo.Foo0", "foo.Foo1", "foo.Foo2", "foo.Foo3", "foo.Foo4")
+                  .inOrder();
+              elementsToWaitFor.clear();
+              generatedClasses = 0;
+            });
   }
 }

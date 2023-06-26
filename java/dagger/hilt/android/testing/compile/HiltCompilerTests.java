@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.testing.compile;
 
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static java.util.stream.Collectors.toMap;
 
 import androidx.room.compiler.processing.XProcessingEnv;
@@ -35,6 +36,7 @@ import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPoin
 import dagger.hilt.android.processor.internal.androidentrypoint.KspAndroidEntryPointProcessor;
 import dagger.hilt.android.processor.internal.customtestapplication.CustomTestApplicationProcessor;
 import dagger.hilt.android.processor.internal.customtestapplication.KspCustomTestApplicationProcessor;
+import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.hilt.processor.internal.HiltProcessingEnvConfigs;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessor;
 import dagger.hilt.processor.internal.aggregateddeps.KspAggregatedDepsProcessor;
@@ -45,6 +47,7 @@ import dagger.hilt.processor.internal.definecomponent.KspDefineComponentProcesso
 import dagger.hilt.processor.internal.earlyentrypoint.EarlyEntryPointProcessor;
 import dagger.hilt.processor.internal.earlyentrypoint.KspEarlyEntryPointProcessor;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputProcessor;
+import dagger.hilt.processor.internal.generatesrootinput.KspGeneratesRootInputProcessor;
 import dagger.hilt.processor.internal.originatingelement.KspOriginatingElementProcessor;
 import dagger.hilt.processor.internal.originatingelement.OriginatingElementProcessor;
 import dagger.hilt.processor.internal.root.ComponentTreeDepsProcessor;
@@ -61,6 +64,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.annotation.processing.Processor;
 import org.junit.rules.TemporaryFolder;
 
@@ -195,6 +199,7 @@ public final class HiltCompilerTests {
         new KspCustomTestApplicationProcessor.Provider(),
         new KspDefineComponentProcessor.Provider(),
         new KspEarlyEntryPointProcessor.Provider(),
+        new KspGeneratesRootInputProcessor.Provider(),
         new KspOriginatingElementProcessor.Provider(),
         new KspRootProcessor.Provider(),
         new KspUninstallModulesProcessor.Provider());
@@ -209,6 +214,7 @@ public final class HiltCompilerTests {
           .processorOptions(ImmutableMap.of())
           .additionalJavacProcessors(ImmutableList.of())
           .additionalKspProcessors(ImmutableList.of())
+          .processingSteps(ImmutableList.of())
           .javacArguments(ImmutableList.of());
     }
 
@@ -230,6 +236,14 @@ public final class HiltCompilerTests {
     /** Returns a new {@link HiltCompiler} instance with the annotation processors options. */
     public HiltCompiler withProcessorOptions(ImmutableMap<String, String> processorOptions) {
       return toBuilder().processorOptions(processorOptions).build();
+    }
+
+    /** Returns the processing steps suppliers. */
+    abstract ImmutableCollection<Function<XProcessingEnv, BaseProcessingStep>> processingSteps();
+
+    public HiltCompiler withProcessingSteps(
+        Function<XProcessingEnv, BaseProcessingStep>... mapping) {
+      return toBuilder().processingSteps(ImmutableList.copyOf(mapping)).build();
     }
 
     /** Returns a new {@link HiltCompiler} instance with the additional Javac processors. */
@@ -267,10 +281,18 @@ public final class HiltCompilerTests {
           /* javacProcessors= */ ImmutableList.<Processor>builder()
               .addAll(defaultProcessors())
               .addAll(additionalJavacProcessors())
+              .addAll(
+                  processingSteps().stream()
+                      .map(HiltCompilerProcessors.JavacProcessor::new)
+                      .collect(toImmutableList()))
               .build(),
           /* symbolProcessorProviders= */ ImmutableList.<SymbolProcessorProvider>builder()
               .addAll(kspDefaultProcessors())
               .addAll(additionalKspProcessors())
+              .addAll(
+                  processingSteps().stream()
+                      .map(HiltCompilerProcessors.KspProcessor.Provider::new)
+                      .collect(toImmutableList()))
               .build(),
           result -> {
             onCompilationResult.accept(result);
@@ -287,6 +309,10 @@ public final class HiltCompilerTests {
       abstract Builder additionalKspProcessors(
           ImmutableCollection<SymbolProcessorProvider> processors);
       abstract Builder javacArguments(ImmutableCollection<String> arguments);
+
+      abstract Builder processingSteps(
+          ImmutableCollection<Function<XProcessingEnv, BaseProcessingStep>> processingSteps);
+
       abstract HiltCompiler build();
     }
   }

@@ -32,7 +32,7 @@ import javax.tools.Diagnostic.Kind;
 /** Utility class to handle keeping track of errors during processing. */
 final class ProcessorErrorHandler {
 
-  private static final String FAILURE_PREFIX = "[Hilt]\n";
+  private static final String FAILURE_PREFIX = "[Hilt] ";
 
   // Special characters to make the tag red and bold to draw attention since
   // this error can get drowned out by other errors resulting from missing

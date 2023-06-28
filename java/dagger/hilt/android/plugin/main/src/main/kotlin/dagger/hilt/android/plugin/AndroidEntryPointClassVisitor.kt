@@ -39,13 +39,11 @@ class AndroidEntryPointClassVisitor(
   private val additionalClasses: File
 ) : ClassVisitor(apiVersion, nextClassVisitor) {
 
-  @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   interface AndroidEntryPointParams : InstrumentationParameters {
     @get:Internal
     val additionalClassesDir: Property<File>
   }
 
-  @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   abstract class Factory : AsmClassVisitorFactory<AndroidEntryPointParams> {
     override fun createClassVisitor(
       classContext: ClassContext,

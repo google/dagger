@@ -24,6 +24,10 @@ data class SimpleAGPVersion(
   val minor: Int,
 ) : Comparable<SimpleAGPVersion> {
 
+  override fun toString(): String {
+    return "$major.$minor"
+  }
+
   override fun compareTo(other: SimpleAGPVersion): Int {
     return compareValuesBy(
       this,

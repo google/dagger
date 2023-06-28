@@ -123,10 +123,10 @@ private constructor(
           return object : AnnotationVisitor(asmApiVersion, nextAnnotationVisitor) {
             lateinit var rootClass: String
             var rootPackage: String? = null
-            val rootSimpleNames: MutableList<String> = mutableListOf<String>()
+            val rootSimpleNames: MutableList<String> = mutableListOf()
             lateinit var originatingRootClass: String
             var originatingRootPackage: String? = null
-            val originatingRootSimpleNames: MutableList<String> = mutableListOf<String>()
+            val originatingRootSimpleNames: MutableList<String> = mutableListOf()
             lateinit var rootAnnotationClassName: Type
 
             override fun visit(name: String, value: Any?) {
@@ -136,14 +136,13 @@ private constructor(
                 "originatingRoot" -> originatingRootClass = value as String
                 "originatingRootPackage" -> originatingRootPackage = value as String
                 "rootAnnotation" -> rootAnnotationClassName = (value as Type)
-                else -> throw IllegalStateException("Unexpected annotation value: " + name)
+                else -> error("Unexpected annotation value: $name")
               }
               super.visit(name, value)
             }
 
-            override fun visitArray(name: String): AnnotationVisitor? {
+            override fun visitArray(name: String): AnnotationVisitor {
               return object : AnnotationVisitor(asmApiVersion, super.visitArray(name)) {
-                @Suppress("UNCHECKED_CAST")
                 override fun visit(passThroughValueName: String?, value: Any?) {
                   // Note that passThroughValueName should usually be null since the real name
                   // is the name passed to visitArray.
@@ -239,7 +238,7 @@ private constructor(
                 AliasOfPropagatedDataIr(
                   fqName = annotatedClassName,
                   defineComponentScopes =
-                    defineComponentScopeClassNames.map({ it.toClassName() }).toList(),
+                    defineComponentScopeClassNames.map { it.toClassName() }.toList(),
                   alias = aliasClassName.toClassName(),
                 )
               )
@@ -439,7 +438,7 @@ private constructor(
       fallbackCanonicalName: String
     ): ClassName {
       if (packageName != null) {
-        check(simpleNames.size > 0)
+        check(simpleNames.isNotEmpty())
         return ClassName.get(
           packageName,
           simpleNames.first(),

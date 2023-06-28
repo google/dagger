@@ -22,11 +22,9 @@ import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.TestExtension
-import com.android.build.gradle.TestedExtension
 import com.android.build.gradle.api.AndroidBasePlugin
 import com.android.build.gradle.tasks.JdkImageInput
 import dagger.hilt.android.plugin.task.AggregateDepsTask
-import dagger.hilt.android.plugin.task.HiltTransformTestClassesTask
 import dagger.hilt.android.plugin.util.AggregatedPackagesTransform
 import dagger.hilt.android.plugin.util.ComponentCompat
 import dagger.hilt.android.plugin.util.CopyTransform
@@ -34,7 +32,6 @@ import dagger.hilt.android.plugin.util.SimpleAGPVersion
 import dagger.hilt.android.plugin.util.capitalize
 import dagger.hilt.android.plugin.util.getAndroidComponentsExtension
 import dagger.hilt.android.plugin.util.getKaptConfigName
-import dagger.hilt.android.plugin.util.getSdkPath
 import dagger.hilt.processor.internal.optionvalues.GradleProjectType
 import java.io.File
 import javax.inject.Inject
@@ -45,7 +42,6 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.provider.ProviderFactory
-import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.process.CommandLineArgumentProvider
 import org.gradle.util.GradleVersion
@@ -60,7 +56,7 @@ import org.objectweb.asm.Opcodes
  * update the superclass.
  */
 class HiltGradlePlugin @Inject constructor(
-  val providers: ProviderFactory
+  private val providers: ProviderFactory
 ) : Plugin<Project> {
   override fun apply(project: Project) {
     var configured = false
@@ -82,15 +78,13 @@ class HiltGradlePlugin @Inject constructor(
     val hiltExtension = project.extensions.create(
       HiltExtension::class.java, "hilt", HiltExtensionImpl::class.java
     )
+    if (SimpleAGPVersion.ANDROID_GRADLE_PLUGIN_VERSION < SimpleAGPVersion(7, 0)) {
+      error("The Hilt Android Gradle plugin is only compatible with Android Gradle plugin (AGP) " +
+              "version 7.0 or higher (found ${SimpleAGPVersion.ANDROID_GRADLE_PLUGIN_VERSION}).")
+    }
     configureDependencyTransforms(project)
     configureCompileClasspath(project, hiltExtension)
-    if (SimpleAGPVersion.ANDROID_GRADLE_PLUGIN_VERSION < SimpleAGPVersion(4, 2)) {
-      // Configures bytecode transform using older APIs pre AGP 4.2
-      configureBytecodeTransform(project, hiltExtension)
-    } else {
-      // Configures bytecode transform using AGP 4.2 ASM pipeline.
-      configureBytecodeTransformASM(project, hiltExtension)
-    }
+    configureBytecodeTransformASM(project, hiltExtension)
     configureAggregatingTask(project, hiltExtension)
     configureProcessorFlags(project, hiltExtension)
   }
@@ -242,7 +236,6 @@ class HiltGradlePlugin @Inject constructor(
     project.dependencies.add(compileOnlyConfigName, artifactView.files)
   }
 
-  @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   private fun configureBytecodeTransformASM(project: Project, hiltExtension: HiltExtension) {
     var warnAboutLocalTestsFlag = false
     fun registerTransform(androidComponent: ComponentCompat) {
@@ -266,24 +259,6 @@ class HiltGradlePlugin @Inject constructor(
       )
     }
     getAndroidComponentsExtension(project).onAllVariants { registerTransform(it) }
-  }
-
-  private fun configureBytecodeTransform(project: Project, hiltExtension: HiltExtension) {
-    val androidExtension = project.baseExtension() ?: error("Android BaseExtension not found.")
-    androidExtension::class.java.getMethod(
-      "registerTransform",
-      Class.forName("com.android.build.api.transform.Transform"),
-      Array<Any>::class.java
-    ).invoke(androidExtension, AndroidEntryPointTransform(), emptyArray<Any>())
-
-    // Create and configure a task for applying the transform for host-side unit tests. b/37076369
-    project.testedExtension()?.unitTestVariants?.all { unitTestVariant ->
-      HiltTransformTestClassesTask.create(
-        project = project,
-        unitTestVariant = unitTestVariant,
-        extension = hiltExtension
-      )
-    }
   }
 
   private fun configureAggregatingTask(project: Project, hiltExtension: HiltExtension) {
@@ -442,9 +417,6 @@ class HiltGradlePlugin @Inject constructor(
     variant.registerPostJavacGeneratedBytecode(componentClasses)
   }
 
-  private fun getAndroidJar(project: Project, compileSdkVersion: String) =
-    project.files(File(project.getSdkPath(), "platforms/$compileSdkVersion/android.jar"))
-
   private fun configureProcessorFlags(project: Project, hiltExtension: HiltExtension) {
     val androidExtension = project.baseExtension() ?: error("Android BaseExtension not found.")
 
@@ -515,9 +487,6 @@ class HiltGradlePlugin @Inject constructor(
 
   private fun Project.baseExtension(): BaseExtension?
       = extensions.findByType(BaseExtension::class.java)
-
-  private fun Project.testedExtension(): TestedExtension?
-      = extensions.findByType(TestedExtension::class.java)
 
   companion object {
     val ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String::class.java)

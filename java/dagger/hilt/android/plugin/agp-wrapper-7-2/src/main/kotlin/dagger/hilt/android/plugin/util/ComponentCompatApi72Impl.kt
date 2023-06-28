@@ -27,7 +27,6 @@ internal class ComponentCompatApi72Impl(private val component: Component) : Comp
   override val name: String
     get() = component.name
 
-  @Suppress("UnstableApiUsage")
   override fun <ParamT : InstrumentationParameters> transformClassesWith(
     classVisitorFactoryImplClass: Class<out AsmClassVisitorFactory<ParamT>>,
     scope: InstrumentationScope,
@@ -40,7 +39,6 @@ internal class ComponentCompatApi72Impl(private val component: Component) : Comp
     )
   }
 
-  @Suppress("UnstableApiUsage")
   override fun setAsmFramesComputationMode(mode: FramesComputationMode) {
     component.instrumentation.setAsmFramesComputationMode(mode)
   }

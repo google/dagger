@@ -25,7 +25,6 @@ class AndroidComponentsExtensionCompatApi70Impl(
   private val project: Project
 ) : AndroidComponentsExtensionCompat {
 
-  @Suppress("UnstableApiUsage")
   override fun onAllVariants(block: (ComponentCompat) -> Unit) {
     val actual = project.extensions.getByType(AndroidComponentsExtension::class.java)
     actual.onVariants { variant ->

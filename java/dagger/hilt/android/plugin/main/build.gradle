@@ -64,13 +64,13 @@ dependencies {
   implementation gradleApi()
   compileOnly "com.android.tools.build:gradle:$agp_version"
   compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-  implementation 'org.javassist:javassist:3.26.0-GA'
   implementation 'org.ow2.asm:asm:9.0'
   implementation "com.squareup:javapoet:1.13.0"
 
   testImplementation gradleTestKit()
   testImplementation 'junit:junit:4.12'
   testImplementation 'com.google.truth:truth:1.0.1'
+  testImplementation 'org.javassist:javassist:3.26.0-GA'
   testPluginCompile 'com.android.tools.build:gradle:7.1.2'
   testPluginCompile 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
 }
@@ -83,16 +83,14 @@ tasks.withType(PluginUnderTestMetadata.class).named("pluginUnderTestMetadata").c
   it.pluginClasspath.from(configurations.testPluginCompile)
 }
 
-compileKotlin {
-  kotlinOptions {
-    jvmTarget = '11'
-    allWarningsAsErrors = true
-  }
+kotlin {
+  jvmToolchain(11)
 }
 
-java {
-  sourceCompatibility JavaVersion.VERSION_11
-  targetCompatibility JavaVersion.VERSION_11
+compileKotlin {
+  kotlinOptions {
+    allWarningsAsErrors = true
+  }
 }
 
 // Imports a shared library from the main project. The library and its classes

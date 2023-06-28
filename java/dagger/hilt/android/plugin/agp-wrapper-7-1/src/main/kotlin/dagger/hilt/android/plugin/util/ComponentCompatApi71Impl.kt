@@ -27,7 +27,6 @@ internal class ComponentCompatApi71Impl(private val component: Component) : Comp
   override val name: String
     get() = component.name
 
-  @Suppress("UnstableApiUsage")
   override fun <ParamT : InstrumentationParameters> transformClassesWith(
     classVisitorFactoryImplClass: Class<out AsmClassVisitorFactory<ParamT>>,
     scope: InstrumentationScope,

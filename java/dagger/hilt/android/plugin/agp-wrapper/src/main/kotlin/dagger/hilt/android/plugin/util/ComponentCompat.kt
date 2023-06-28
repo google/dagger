@@ -26,7 +26,6 @@ import com.android.build.api.instrumentation.InstrumentationScope
  * - In AGP 4.2 its package is 'com.android.build.api.component'
  * - In AGP 7.0 its packages is 'com.android.build.api.variant'
  */
-@Suppress("UnstableApiUsage") // ASM Pipeline APIs
 abstract class ComponentCompat {
 
   /** Redeclaration of [com.android.build.api.variant.ComponentIdentity.name] */

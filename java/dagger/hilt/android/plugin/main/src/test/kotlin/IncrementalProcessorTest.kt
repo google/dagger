@@ -195,7 +195,6 @@ class IncrementalProcessorTest(private val incapMode: String) {
 
     // Compute directory paths
     val defaultGenSrcDir = "build/generated/ap_generated_sources/debug/out/"
-    val testDefaultGenSrcDir = "build/generated/ap_generated_sources/debugUnitTest/out/"
     fun getComponentTreeDepsGenSrcDir(variant: String) = if (incapMode == ISOLATING_MODE) {
       "build/generated/hilt/component_trees/$variant/"
     } else {

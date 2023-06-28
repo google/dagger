@@ -91,6 +91,7 @@ kotlin {
 compileKotlin {
   kotlinOptions {
     allWarningsAsErrors = true
+    freeCompilerArgs += [ "-opt-in=kotlin.ExperimentalStdlibApi" ]
   }
 }
 

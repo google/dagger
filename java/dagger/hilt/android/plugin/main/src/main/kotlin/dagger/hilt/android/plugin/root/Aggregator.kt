@@ -123,10 +123,10 @@ private constructor(
           return object : AnnotationVisitor(asmApiVersion, nextAnnotationVisitor) {
             lateinit var rootClass: String
             var rootPackage: String? = null
-            val rootSimpleNames: MutableList<String> = mutableListOf()
+            val rootSimpleNames = mutableListOf<String>()
             lateinit var originatingRootClass: String
             var originatingRootPackage: String? = null
-            val originatingRootSimpleNames: MutableList<String> = mutableListOf()
+            val originatingRootSimpleNames = mutableListOf<String>()
             lateinit var rootAnnotationClassName: Type
 
             override fun visit(name: String, value: Any?) {

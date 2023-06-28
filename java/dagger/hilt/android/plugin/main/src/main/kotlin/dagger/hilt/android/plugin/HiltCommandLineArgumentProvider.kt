@@ -36,7 +36,7 @@ internal class HiltCommandLineArgumentProvider(
 
   private val prefix = if (forKsp) "" else "-A"
 
-  override fun asArguments() = mutableMapOf<String, String>().apply {
+  override fun asArguments() = buildMap {
     // Enable Dagger's fast-init, the best mode for Hilt.
     put("dagger.fastInit", "enabled")
     // Disable @AndroidEntryPoint superclass validation.

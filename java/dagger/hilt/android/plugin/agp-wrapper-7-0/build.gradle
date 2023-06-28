@@ -2,6 +2,10 @@ plugins {
   id 'org.jetbrains.kotlin.jvm'
 }
 
+kotlin {
+  jvmToolchain(11)
+}
+
 dependencies {
   implementation project(':agp-wrapper')
   compileOnly gradleApi()

@@ -313,7 +313,7 @@ class HiltGradlePlugin @Inject constructor(
       config.isCanBeResolved = true
       // Add user annotation processor configuration, so that SPI plugins and other processors
       // are discoverable.
-      val apConfigurations: List<Configuration> = mutableListOf<Configuration>().apply {
+      val apConfigurations: List<Configuration> = buildList {
         add(variant.annotationProcessorConfiguration)
         // TODO(danysantiago): Also add KSP config
         project.configurations.findByName(getKaptConfigName(variant))?.let { add(it) }
@@ -324,7 +324,7 @@ class HiltGradlePlugin @Inject constructor(
     }
 
     fun getInputClasspath(artifactAttributeValue: String) =
-      mutableListOf<Configuration>().apply {
+      buildList<Configuration> {
         @Suppress("DEPRECATION") // Older variant API is deprecated
         if (variant is com.android.build.gradle.api.TestVariant) {
           add(variant.testedVariant.runtimeConfiguration)

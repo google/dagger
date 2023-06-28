@@ -62,8 +62,7 @@ kt_jvm_library(
     deps = [
         "//:spi",
         "//java/dagger/hilt/android/processor/internal:android_classnames",
-        "//java/dagger/hilt/processor/internal:processors",
-        "//third_party/java/auto:common",
+        "//java/dagger/hilt/processor/internal:dagger_models",
         "//third_party/java/auto:service",
         "//third_party/java/guava/graph",
         "//third_party/java/javapoet",

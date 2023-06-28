@@ -28,8 +28,7 @@ import org.junit.runners.JUnit4
 class ViewModelValidationPluginTest {
 
   private fun testCompiler(): Compiler = compiler(
-    ComponentProcessor.forTesting(ViewModelValidationPlugin()),
-    ViewModelProcessor()
+    ComponentProcessor.withTestPlugins(ViewModelValidationPlugin()), ViewModelProcessor()
   )
 
   private val hiltAndroidApp = """

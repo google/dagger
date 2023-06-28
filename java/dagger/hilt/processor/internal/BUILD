@@ -15,6 +15,8 @@
 # Description:
 #   Internal code for implementing Hilt processors.
 
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+
 package(default_visibility = ["//:src"])
 
 java_library(
@@ -79,6 +81,7 @@ java_library(
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
     ],
 )
@@ -162,6 +165,24 @@ java_library(
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
     ],
+)
+
+kt_jvm_library(
+    name = "dagger_models",
+    srcs = ["DaggerModels.kt"],
+    deps = [
+        ":processors",
+        "//:spi",
+        "//third_party/java/auto:common",
+        "//third_party/java/javapoet",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
+    ],
+)
+
+# See: https://github.com/bazelbuild/rules_kotlin/issues/324
+alias(
+    name = "libdagger_models-src.jar",
+    actual = ":dagger_models-sources.jar",
 )
 
 filegroup(

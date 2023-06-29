@@ -24,7 +24,7 @@ exclude:
 sass:
   style: compressed
 
-googleAnalyticsId: UA-43772875-7
+googleAnalyticsId: G-R5FZ763JXQ
 
 daggerVersion: "2.46.1"
 

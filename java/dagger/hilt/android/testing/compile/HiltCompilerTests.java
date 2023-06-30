@@ -191,9 +191,9 @@ public final class HiltCompilerTests {
   private static ImmutableList<SymbolProcessorProvider> kspDefaultProcessors() {
     // TODO(bcorso): Add the rest of the KSP processors here.
     return ImmutableList.of(
-        new KspAndroidEntryPointProcessor.Provider(),
-        new KspAliasOfProcessor.Provider(),
         new KspAggregatedDepsProcessor.Provider(),
+        new KspAliasOfProcessor.Provider(),
+        new KspAndroidEntryPointProcessor.Provider(),
         new KspComponentProcessor.Provider(),
         new KspComponentTreeDepsProcessor.Provider(),
         new KspCustomTestApplicationProcessor.Provider(),

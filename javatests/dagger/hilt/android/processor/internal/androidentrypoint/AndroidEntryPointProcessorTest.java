@@ -16,16 +16,12 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.hilt.android.testing.compile.HiltCompilerTests.compiler;
-
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XProcessingEnv.Backend;
 import androidx.room.compiler.processing.util.CompilationResultSubject;
 import androidx.room.compiler.processing.util.Source;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import com.google.common.collect.ImmutableMap;
 import dagger.hilt.android.testing.compile.HiltCompilerTests;
-import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -106,8 +102,8 @@ public class AndroidEntryPointProcessorTest {
 
   @Test
   public void disableSuperclassValidation_activity() {
-    JavaFileObject testActivity =
-        JavaFileObjects.forSourceLines(
+    Source testActivity =
+        HiltCompilerTests.javaSource(
             "test.MyActivity",
             "package test;",
             "",
@@ -116,17 +112,17 @@ public class AndroidEntryPointProcessorTest {
             "",
             "@AndroidEntryPoint",
             "public class MyActivity extends ComponentActivity { }");
-    Compilation compilation =
-        compiler()
-            .withOptions("-Adagger.hilt.android.internal.disableAndroidSuperclassValidation=true")
-            .compile(testActivity);
-    assertThat(compilation).succeeded();
+    HiltCompilerTests.hiltCompiler(testActivity)
+        .withProcessorOptions(
+            ImmutableMap.of(
+                "dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true"))
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void disableSuperclassValidation_application() {
-    JavaFileObject testApplication =
-        JavaFileObjects.forSourceLines(
+    Source testApplication =
+        HiltCompilerTests.javaSource(
             "test.MyApp",
             "package test;",
             "",
@@ -135,17 +131,17 @@ public class AndroidEntryPointProcessorTest {
             "",
             "@HiltAndroidApp",
             "public class MyApp extends Application { }");
-    Compilation compilation =
-        compiler()
-            .withOptions("-Adagger.hilt.android.internal.disableAndroidSuperclassValidation=true")
-            .compile(testApplication);
-    assertThat(compilation).succeeded();
+    HiltCompilerTests.hiltCompiler(testApplication)
+        .withProcessorOptions(
+            ImmutableMap.of(
+                "dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true"))
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void checkBaseActivityExtendsComponentActivity() {
-    JavaFileObject testActivity =
-        JavaFileObjects.forSourceLines(
+    Source testActivity =
+        HiltCompilerTests.javaSource(
             "test.MyActivity",
             "package test;",
             "",
@@ -154,18 +150,18 @@ public class AndroidEntryPointProcessorTest {
             "",
             "@AndroidEntryPoint(Activity.class)",
             "public class MyActivity extends Hilt_MyActivity { }");
-    Compilation compilation = compiler().compile(testActivity);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Activities annotated with @AndroidEntryPoint must be a subclass of "
-            + "androidx.activity.ComponentActivity. (e.g. FragmentActivity, AppCompatActivity, "
-            + "etc.)");
+    HiltCompilerTests.hiltCompiler(testActivity).compile(subject -> {
+        subject.compilationDidFail();
+        subject.hasErrorContaining(
+            "Activities annotated with @AndroidEntryPoint must be a subclass of "
+                + "androidx.activity.ComponentActivity. (e.g. FragmentActivity, AppCompatActivity, "
+                + "etc.)"); });
   }
 
   @Test
   public void checkBaseActivityWithTypeParameters() {
-    JavaFileObject testActivity =
-        JavaFileObjects.forSourceLines(
+    Source testActivity =
+        HiltCompilerTests.javaSource(
             "test.BaseActivity",
             "package test;",
             "",
@@ -174,13 +170,18 @@ public class AndroidEntryPointProcessorTest {
             "",
             "@AndroidEntryPoint(ComponentActivity.class)",
             "public class BaseActivity<T> extends Hilt_BaseActivity {}");
-    Compilation compilation = compiler().compile(testActivity);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(2);
-    assertThat(compilation).hadErrorContaining(
-        "cannot find symbol\n  symbol: class Hilt_BaseActivity");
-    assertThat(compilation).hadErrorContaining(
-        "@AndroidEntryPoint-annotated classes cannot have type parameters.");
+    HiltCompilerTests.hiltCompiler(testActivity)
+        .compile(
+            subject -> {
+              subject.compilationDidFail();
+              if (HiltCompilerTests.backend(subject) == Backend.JAVAC) {
+                subject.hasErrorCount(2);
+              } else {
+                subject.hasErrorCount(1);
+              }
+              subject.hasErrorContaining(
+                  "@AndroidEntryPoint-annotated classes cannot have type parameters.");
+            });
   }
 
   @Test

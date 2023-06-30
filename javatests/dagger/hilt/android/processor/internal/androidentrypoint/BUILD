@@ -49,7 +49,7 @@ compiler_test(
         "//java/dagger/hilt/android/testing/compile",
         "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
-        "//third_party/java/compile_testing",
+        "//third_party/java/guava/collect",
         "//third_party/java/junit",
     ],
 )

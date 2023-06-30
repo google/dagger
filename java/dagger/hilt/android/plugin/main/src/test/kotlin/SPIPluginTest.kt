@@ -25,7 +25,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-class SPIPluginTest(val withKapt: Boolean) {
+class SPIPluginTest(val backend: Backend) {
   @get:Rule
   val testProjectDir = TemporaryFolder()
 
@@ -43,11 +43,18 @@ class SPIPluginTest(val withKapt: Boolean) {
         """.trimIndent()
       )
     }
-    val processorConfig = if (withKapt) "kapt" else "annotationProcessor"
-    if (withKapt) {
-      gradleRunner.addPluginClasspath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0")
+    val processorConfig = when (backend) {
+      Backend.JAVAC -> "annotationProcessor"
+      Backend.KAPT -> "kapt"
+      Backend.KSP -> "ksp"
+    }
+    if (backend == Backend.KAPT || backend == Backend.KSP) {
       gradleRunner.addPluginId("kotlin-android")
-      gradleRunner.addPluginId("kotlin-kapt")
+      if (backend == Backend.KAPT) {
+        gradleRunner.addPluginId("kotlin-kapt")
+      } else {
+        gradleRunner.addPluginId("com.google.devtools.ksp")
+      }
       gradleRunner.addAdditionalClosure("""
       |kotlin {
       |  jvmToolchain(11)
@@ -91,7 +98,11 @@ class SPIPluginTest(val withKapt: Boolean) {
 
   companion object {
     @JvmStatic
-    @Parameterized.Parameters(name = "withKapt = {0}")
-    fun params() = listOf(false, true)
+    @Parameterized.Parameters(name = "backend = {0}")
+    fun params() = listOf(Backend.JAVAC, Backend.KAPT, Backend.KSP)
+
+    enum class Backend {
+      JAVAC, KAPT, KSP
+    }
   }
 }

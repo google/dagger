@@ -35,6 +35,7 @@ import dagger.hilt.android.plugin.util.addKspTaskProcessorOptions
 import dagger.hilt.android.plugin.util.capitalize
 import dagger.hilt.android.plugin.util.getAndroidComponentsExtension
 import dagger.hilt.android.plugin.util.getKaptConfigName
+import dagger.hilt.android.plugin.util.getKspConfigName
 import dagger.hilt.android.plugin.util.isKspTask
 import dagger.hilt.processor.internal.optionvalues.GradleProjectType
 import java.io.File
@@ -279,8 +280,10 @@ class HiltGradlePlugin @Inject constructor(
     val hiltCompileConfiguration = project.configurations.create(
       "hiltCompileOnly${variant.name.capitalize()}"
     ).apply {
+      description = "Hilt aggregated compile only dependencies for '${variant.name}'"
       isCanBeConsumed = false
       isCanBeResolved = true
+      isVisible = false
     }
     // Add the JavaCompile task classpath and output dir to the config, the task's classpath
     // will contain:
@@ -301,14 +304,23 @@ class HiltGradlePlugin @Inject constructor(
     val hiltAnnotationProcessorConfiguration = project.configurations.create(
       "hiltAnnotationProcessor${variant.name.capitalize()}"
     ).also { config ->
+      config.description = "Hilt annotation processor classpath for '${variant.name}'"
       config.isCanBeConsumed = false
       config.isCanBeResolved = true
+      config.isVisible = false
       // Add user annotation processor configuration, so that SPI plugins and other processors
       // are discoverable.
       val apConfigurations: List<Configuration> = buildList {
         add(variant.annotationProcessorConfiguration)
-        // TODO(danysantiago): Also add KSP config
-        project.configurations.findByName(getKaptConfigName(variant))?.let { add(it) }
+        project.plugins.withId("kotlin-kapt") {
+          project.configurations.findByName(getKaptConfigName(variant))?.let { add(it) }
+        }
+        project.plugins.withId("com.google.devtools.ksp") {
+          // Add the main 'ksp' config since the variant aware config does not extend main.
+          // https://github.com/google/ksp/issues/1433
+          project.configurations.findByName("ksp")?.let { add(it) }
+          project.configurations.findByName(getKspConfigName(variant))?.let { add(it) }
+        }
       }
       config.extendsFrom(*apConfigurations.toTypedArray())
       // Add hilt-compiler even though it might be in the AP configurations already.

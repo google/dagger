@@ -16,10 +16,10 @@
 
 package spi;
 
-import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.ComponentNode;
-import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraph.ComponentNode;
+import dagger.spi.model.BindingGraphPlugin;
+import dagger.spi.model.DiagnosticReporter;
 import javax.tools.Diagnostic;
 
 /**

@@ -74,6 +74,7 @@ dependencies {
   testImplementation 'org.javassist:javassist:3.26.0-GA'
   testPluginCompile 'com.android.tools.build:gradle:7.1.2'
   testPluginCompile 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
+  testPluginCompile 'com.google.devtools.ksp:symbol-processing-gradle-plugin:1.8.0-1.0.9'
 }
 
 // Configure the generating task of plugin-under-test-metadata.properties to

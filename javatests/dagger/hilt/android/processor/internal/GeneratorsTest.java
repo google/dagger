@@ -16,23 +16,23 @@
 
 package dagger.hilt.android.processor.internal;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.hilt.android.testing.compile.HiltCompilerTests.compiler;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.XProcessingEnv.Backend;
+import androidx.room.compiler.processing.util.Source;
+import com.google.common.base.Joiner;
+import com.google.common.truth.StringSubject;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public final class GeneratorsTest {
+  private static final Joiner JOINER = Joiner.on("\n");
 
   @Test
   public void copyConstructorParametersCopiesExternalNullables() {
-    JavaFileObject baseActivity =
-        JavaFileObjects.forSourceLines(
+    Source baseActivity =
+        HiltCompilerTests.javaSource(
             "test.BaseActivity",
             "package test;",
             "",
@@ -44,8 +44,8 @@ public final class GeneratorsTest {
             "      @androidx.annotation.Nullable String androidxNullable,",
             "      @javax.annotation.Nullable String javaxNullable) { }",
             "}");
-    JavaFileObject myActivity =
-        JavaFileObjects.forSourceLines(
+    Source myActivity =
+        HiltCompilerTests.javaSource(
             "test.MyActivity",
             "package test;",
             "",
@@ -60,36 +60,36 @@ public final class GeneratorsTest {
             "    super(supportNullable, androidxNullable, javaxNullable);",
             "  }",
             "}");
-    Compilation compilation = compiler().compile(baseActivity, myActivity);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyActivity")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyActivity",
-                "package test;",
-                "",
-                "import androidx.annotation.Nullable;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ActivityGenerator\")",
-                "abstract class Hilt_MyActivity extends BaseActivity implements",
-                "    GeneratedComponentManagerHolder {",
-                "  Hilt_MyActivity(",
-                "      @Nullable String supportNullable,",
-                "      @Nullable String androidxNullable,",
-                "      @javax.annotation.Nullable String javaxNullable) {",
-                "    super(supportNullable, androidxNullable, javaxNullable);",
-                "    _initHiltInternal();",
-                "  }",
-                "}"));
+    HiltCompilerTests.hiltCompiler(baseActivity, myActivity)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyActivity.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains("import androidx.annotation.Nullable;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ActivityGenerator\")",
+                      "abstract class Hilt_MyActivity extends BaseActivity implements "
+                          + "GeneratedComponentManagerHolder {"));
+              stringSubject.contains(
+                  JOINER.join(
+                      "  Hilt_MyActivity(@Nullable String supportNullable,"
+                      + " @Nullable String androidxNullable,",
+                      "      @javax.annotation.Nullable String javaxNullable) {",
+                      "    super(supportNullable, androidxNullable, javaxNullable);",
+                      "    _initHiltInternal();",
+                      "  }"));
+            });
   }
 
   @Test
   public void copyConstructorParametersConvertsAndroidInternalNullableToExternal() {
     // Relies on View(Context, AttributeSet), which has android-internal
     // @android.annotation.Nullable on AttributeSet.
-    JavaFileObject myView =
-        JavaFileObjects.forSourceLines(
+    Source myView =
+        HiltCompilerTests.javaSource(
             "test.MyView",
             "package test;",
             "",
@@ -104,30 +104,43 @@ public final class GeneratorsTest {
             "    super(context, attrs);",
             "  }",
             "}");
-    Compilation compilation = compiler().compile(myView);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyView")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyView",
-                "package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ViewGenerator\")",
-                "abstract class Hilt_MyView extends View implements",
-                "GeneratedComponentManagerHolder {",
-                "  Hilt_MyView(Context context, @Nullable AttributeSet attrs) {",
-                "    super(context, attrs);",
-                "    inject();",
-                "  }",
-                "}"));
+    HiltCompilerTests.hiltCompiler(myView)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyView.java");
+              stringSubject.contains("import androidx.annotation.Nullable;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ViewGenerator\")",
+                      "abstract class Hilt_MyView extends View implements"
+                          + " GeneratedComponentManagerHolder {"));
+              // TODO(kuanyingchou): Remove the condition once
+              //  https://github.com/google/ksp/issues/1459 is fixed
+              if (HiltCompilerTests.backend(subject) == Backend.KSP) {
+                stringSubject.contains(
+                    JOINER.join(
+                        "  Hilt_MyView(Context p0, @Nullable AttributeSet p1) {",
+                        "    super(p0, p1);",
+                        "    inject();",
+                        "  }"));
+              } else {
+                stringSubject.contains(
+                    JOINER.join(
+                        "  Hilt_MyView(Context context, @Nullable AttributeSet attrs) {",
+                        "    super(context, attrs);",
+                        "    inject();",
+                        "  }"));
+              }
+            });
   }
 
   // This is a regression test for https://github.com/google/dagger/issues/3296
   @Test
   public void isRestrictedApiConstructorWithPrimitiveParameterTest() {
-    JavaFileObject baseView =
-        JavaFileObjects.forSourceLines(
+    Source baseView =
+        HiltCompilerTests.javaSource(
             "test.BaseView",
             "package test;",
             "",
@@ -140,8 +153,8 @@ public final class GeneratorsTest {
             "    super(context, attrs);",
             "  }",
             "}");
-    JavaFileObject myView =
-        JavaFileObjects.forSourceLines(
+    Source myView =
+        HiltCompilerTests.javaSource(
             "test.MyView",
             "package test;",
             "",
@@ -156,15 +169,14 @@ public final class GeneratorsTest {
             "    super(i, j, context, attrs);",
             "  }",
             "}");
-    Compilation compilation = compiler().compile(baseView, myView);
-    assertThat(compilation).succeeded();
+    HiltCompilerTests.hiltCompiler(baseView, myView).compile(subject -> subject.hasErrorCount(0));
   }
 
   // This is a regression test for https://github.com/google/dagger/issues/3296
   @Test
   public void isRestrictedApiConstructorWithArrayParameterTest() {
-    JavaFileObject baseView =
-        JavaFileObjects.forSourceLines(
+    Source baseView =
+        HiltCompilerTests.javaSource(
             "test.BaseView",
             "package test;",
             "",
@@ -177,8 +189,8 @@ public final class GeneratorsTest {
             "    super(context, attrs);",
             "  }",
             "}");
-    JavaFileObject myView =
-        JavaFileObjects.forSourceLines(
+    Source myView =
+        HiltCompilerTests.javaSource(
             "test.MyView",
             "package test;",
             "",
@@ -193,15 +205,14 @@ public final class GeneratorsTest {
             "    super(strs, i, context, attrs);",
             "  }",
             "}");
-    Compilation compilation = compiler().compile(baseView, myView);
-    assertThat(compilation).succeeded();
+    HiltCompilerTests.hiltCompiler(baseView, myView).compile(subject -> subject.hasErrorCount(0));
   }
 
   // This is a regression test for https://github.com/google/dagger/issues/3296
   @Test
   public void isRestrictedApiConstructorWithTypeParameterTest() {
-    JavaFileObject baseView =
-        JavaFileObjects.forSourceLines(
+    Source baseView =
+        HiltCompilerTests.javaSource(
             "test.BaseView",
             "package test;",
             "",
@@ -214,8 +225,8 @@ public final class GeneratorsTest {
             "    super(context, attrs);",
             "  }",
             "}");
-    JavaFileObject myView =
-        JavaFileObjects.forSourceLines(
+    Source myView =
+        HiltCompilerTests.javaSource(
             "test.MyView",
             "package test;",
             "",
@@ -230,14 +241,13 @@ public final class GeneratorsTest {
             "    super(str, i, context, attrs);",
             "  }",
             "}");
-    Compilation compilation = compiler().compile(baseView, myView);
-    assertThat(compilation).succeeded();
+    HiltCompilerTests.hiltCompiler(baseView, myView).compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void copyTargetApiAnnotationActivity() {
-    JavaFileObject myActivity =
-        JavaFileObjects.forSourceLines(
+    Source myActivity =
+        HiltCompilerTests.javaSource(
             "test.MyActivity",
             "package test;",
             "",
@@ -248,26 +258,25 @@ public final class GeneratorsTest {
             "@TargetApi(24)",
             "@AndroidEntryPoint(FragmentActivity.class)",
             "public class MyActivity extends Hilt_MyActivity {}");
-    Compilation compilation = compiler().compile(myActivity);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyActivity")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyActivity",
-                " package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ActivityGenerator\")",
-                "@TargetApi(24)",
-                "abstract class Hilt_MyActivity extends FragmentActivity ",
-                "implements GeneratedComponentManagerHolder {",
-                "}"));
+    HiltCompilerTests.hiltCompiler(myActivity)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyActivity.java");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ActivityGenerator\")",
+                      "@TargetApi(24)",
+                      "abstract class Hilt_MyActivity extends FragmentActivity"
+                          + " implements GeneratedComponentManagerHolder {"));
+            });
   }
 
   @Test
   public void copyTargetApiAnnotationOverView() {
-    JavaFileObject myView =
-        JavaFileObjects.forSourceLines(
+    Source myView =
+        HiltCompilerTests.javaSource(
             "test.MyView",
             "package test;",
             "",
@@ -284,27 +293,26 @@ public final class GeneratorsTest {
             "   super(context, attributeSet);",
             " }",
             "}");
-    Compilation compilation = compiler().compile(myView);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyView")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyView",
-                "",
-                "package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ViewGenerator\")",
-                "@TargetApi(24)",
-                "abstract class Hilt_MyView extends LinearLayout implements"
-                    + " GeneratedComponentManagerHolder {",
-                "}"));
+    HiltCompilerTests.hiltCompiler(myView)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyView.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ViewGenerator\")",
+                      "@TargetApi(24)",
+                      "abstract class Hilt_MyView extends LinearLayout implements"
+                          + " GeneratedComponentManagerHolder {"));
+            });
   }
 
   @Test
   public void copyTargetApiAnnotationApplication() {
-    JavaFileObject myApplication =
-        JavaFileObjects.forSourceLines(
+    Source myApplication =
+        HiltCompilerTests.javaSource(
             "test.MyApplication",
             "package test;",
             "",
@@ -315,25 +323,27 @@ public final class GeneratorsTest {
             "@TargetApi(24)",
             "@HiltAndroidApp(Application.class)",
             "public class MyApplication extends Hilt_MyApplication {}");
-    Compilation compilation = compiler().compile(myApplication);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyApplication")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyApplication",
-                " package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ApplicationGenerator\")",
-                "@TargetApi(24)",
-                "abstract class Hilt_MyApplication extends Application implements"
-                    + " GeneratedComponentManagerHolder {}"));
+    HiltCompilerTests.hiltCompiler(myApplication)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyApplication.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint."
+                          + "ApplicationGenerator\")",
+                      "@TargetApi(24)",
+                      "abstract class Hilt_MyApplication extends Application implements"
+                          + " GeneratedComponentManagerHolder {"));
+            });
   }
 
   @Test
   public void copyTargetApiAnnotationFragment() {
-    JavaFileObject myApplication =
-        JavaFileObjects.forSourceLines(
+    Source myApplication =
+        HiltCompilerTests.javaSource(
             "test.MyFragment",
             "package test;",
             "",
@@ -344,25 +354,26 @@ public final class GeneratorsTest {
             "@TargetApi(24)",
             "@AndroidEntryPoint(Fragment.class)",
             "public class MyFragment extends Hilt_MyFragment {}");
-    Compilation compilation = compiler().compile(myApplication);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyFragment")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyFragment",
-                "package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.FragmentGenerator\")",
-                "@TargetApi(24)",
-                "abstract class Hilt_MyFragment extends Fragment implements"
-                    + " GeneratedComponentManagerHolder {}"));
+    HiltCompilerTests.hiltCompiler(myApplication)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyFragment.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.FragmentGenerator\")",
+                      "@TargetApi(24)",
+                      "abstract class Hilt_MyFragment extends Fragment implements"
+                          + " GeneratedComponentManagerHolder {"));
+            });
   }
 
   @Test
   public void copyTargetApiBroadcastRecieverGenerator() {
-    JavaFileObject myBroadcastReceiver =
-        JavaFileObjects.forSourceLines(
+    Source myBroadcastReceiver =
+        HiltCompilerTests.javaSource(
             "test.MyBroadcastReceiver",
             "package test;",
             "",
@@ -373,24 +384,25 @@ public final class GeneratorsTest {
             "@TargetApi(24)",
             "@AndroidEntryPoint(BroadcastReceiver.class)",
             "public class MyBroadcastReceiver extends Hilt_MyBroadcastReceiver {}");
-    Compilation compilation = compiler().compile(myBroadcastReceiver);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyBroadcastReceiver")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyBroadcastReceiver",
-                "package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.BroadcastReceiverGenerator\")",
-                "@TargetApi(24)",
-                "abstract class Hilt_MyBroadcastReceiver extends BroadcastReceiver {}"));
+    HiltCompilerTests.hiltCompiler(myBroadcastReceiver)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyBroadcastReceiver.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.BroadcastReceiverGenerator\")",
+                      "@TargetApi(24)",
+                      "abstract class Hilt_MyBroadcastReceiver extends BroadcastReceiver {"));
+            });
   }
 
   @Test
   public void copyTargetApiServiceGenerator() {
-    JavaFileObject myService =
-        JavaFileObjects.forSourceLines(
+    Source myService =
+        HiltCompilerTests.javaSource(
             "test.MyService",
             "package test;",
             "",
@@ -408,25 +420,26 @@ public final class GeneratorsTest {
             "     return null;",
             "   }",
             "}");
-    Compilation compilation = compiler().compile(myService);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyService")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyService",
-                "package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ServiceGenerator\")",
-                "@TargetApi(24)",
-                "abstract class Hilt_MyService extends Service implements"
-                    + " GeneratedComponentManagerHolder{}"));
+    HiltCompilerTests.hiltCompiler(myService)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyService.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ServiceGenerator\")",
+                      "@TargetApi(24)",
+                      "abstract class Hilt_MyService extends Service implements"
+                          + " GeneratedComponentManagerHolder {"));
+            });
   }
 
   @Test
   public void copySuppressWarningsAnnotationActivity_annotationCopied() {
-    JavaFileObject myActivity =
-        JavaFileObjects.forSourceLines(
+    Source myActivity =
+        HiltCompilerTests.javaSource(
             "test.MyActivity",
             "package test;",
             "",
@@ -437,26 +450,26 @@ public final class GeneratorsTest {
             "@SuppressWarnings(\"deprecation\")",
             "@AndroidEntryPoint(FragmentActivity.class)",
             "public class MyActivity extends Hilt_MyActivity {}");
-    Compilation compilation = compiler().compile(myActivity);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyActivity")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyActivity",
-                " package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ActivityGenerator\")",
-                "@SuppressWarnings(\"deprecation\")",
-                "abstract class Hilt_MyActivity extends FragmentActivity ",
-                "implements GeneratedComponentManagerHolder {",
-                "}"));
+    HiltCompilerTests.hiltCompiler(myActivity)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyActivity.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ActivityGenerator\")",
+                      "@SuppressWarnings(\"deprecation\")",
+                      "abstract class Hilt_MyActivity extends FragmentActivity "
+                          + "implements GeneratedComponentManagerHolder {"));
+            });
   }
 
   @Test
   public void copySuppressWarningsAnnotation_onView_annotationCopied() {
-    JavaFileObject myView =
-        JavaFileObjects.forSourceLines(
+    Source myView =
+        HiltCompilerTests.javaSource(
             "test.MyView",
             "package test;",
             "",
@@ -473,27 +486,26 @@ public final class GeneratorsTest {
             "   super(context, attributeSet);",
             " }",
             "}");
-    Compilation compilation = compiler().compile(myView);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyView")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyView",
-                "",
-                "package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ViewGenerator\")",
-                "@SuppressWarnings(\"deprecation\")",
-                "abstract class Hilt_MyView extends LinearLayout implements"
-                    + " GeneratedComponentManagerHolder {",
-                "}"));
+    HiltCompilerTests.hiltCompiler(myView)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyView.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ViewGenerator\")",
+                      "@SuppressWarnings(\"deprecation\")",
+                      "abstract class Hilt_MyView extends LinearLayout implements"
+                          + " GeneratedComponentManagerHolder {"));
+            });
   }
 
   @Test
   public void copySuppressWarningsAnnotation_onApplication_annotationCopied() {
-    JavaFileObject myApplication =
-        JavaFileObjects.forSourceLines(
+    Source myApplication =
+        HiltCompilerTests.javaSource(
             "test.MyApplication",
             "package test;",
             "",
@@ -504,25 +516,26 @@ public final class GeneratorsTest {
             "@SuppressWarnings(\"deprecation\")",
             "@HiltAndroidApp(Application.class)",
             "public class MyApplication extends Hilt_MyApplication {}");
-    Compilation compilation = compiler().compile(myApplication);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyApplication")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyApplication",
-                " package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ApplicationGenerator\")",
-                "@SuppressWarnings(\"deprecation\")",
-                "abstract class Hilt_MyApplication extends Application implements"
-                    + " GeneratedComponentManagerHolder {}"));
+    HiltCompilerTests.hiltCompiler(myApplication)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyApplication.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ApplicationGenerator\")",
+                      "@SuppressWarnings(\"deprecation\")",
+                      "abstract class Hilt_MyApplication extends Application implements"
+                          + " GeneratedComponentManagerHolder {"));
+            });
   }
 
   @Test
   public void copySuppressWarningsAnnotation_onFragment_annotationCopied() {
-    JavaFileObject myApplication =
-        JavaFileObjects.forSourceLines(
+    Source myApplication =
+        HiltCompilerTests.javaSource(
             "test.MyFragment",
             "package test;",
             "",
@@ -533,25 +546,26 @@ public final class GeneratorsTest {
             "@SuppressWarnings(\"rawtypes\")",
             "@AndroidEntryPoint(Fragment.class)",
             "public class MyFragment extends Hilt_MyFragment {}");
-    Compilation compilation = compiler().compile(myApplication);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyFragment")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyFragment",
-                "package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.FragmentGenerator\")",
-                "@SuppressWarnings(\"rawtypes\")",
-                "abstract class Hilt_MyFragment extends Fragment implements"
-                    + " GeneratedComponentManagerHolder {}"));
+    HiltCompilerTests.hiltCompiler(myApplication)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyFragment.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.FragmentGenerator\")",
+                      "@SuppressWarnings(\"rawtypes\")",
+                      "abstract class Hilt_MyFragment extends Fragment implements"
+                          + " GeneratedComponentManagerHolder {"));
+            });
   }
 
   @Test
   public void copySuppressWarnings_onBroadcastRecieverGenerator_annotationCopied() {
-    JavaFileObject myBroadcastReceiver =
-        JavaFileObjects.forSourceLines(
+    Source myBroadcastReceiver =
+        HiltCompilerTests.javaSource(
             "test.MyBroadcastReceiver",
             "package test;",
             "",
@@ -562,24 +576,26 @@ public final class GeneratorsTest {
             "@SuppressWarnings(\"deprecation\")",
             "@AndroidEntryPoint(BroadcastReceiver.class)",
             "public class MyBroadcastReceiver extends Hilt_MyBroadcastReceiver {}");
-    Compilation compilation = compiler().compile(myBroadcastReceiver);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyBroadcastReceiver")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyBroadcastReceiver",
-                "package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.BroadcastReceiverGenerator\")",
-                "@SuppressWarnings(\"deprecation\")",
-                "abstract class Hilt_MyBroadcastReceiver extends BroadcastReceiver {}"));
+    HiltCompilerTests.hiltCompiler(myBroadcastReceiver)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyBroadcastReceiver.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint."
+                          + "BroadcastReceiverGenerator\")",
+                      "@SuppressWarnings(\"deprecation\")",
+                      "abstract class Hilt_MyBroadcastReceiver extends BroadcastReceiver {"));
+            });
   }
 
   @Test
   public void copySuppressWarnings_onServiceGenerator_annotationCopied() {
-    JavaFileObject myService =
-        JavaFileObjects.forSourceLines(
+    Source myService =
+        HiltCompilerTests.javaSource(
             "test.MyService",
             "package test;",
             "",
@@ -597,18 +613,20 @@ public final class GeneratorsTest {
             "     return null;",
             "   }",
             "}");
-    Compilation compilation = compiler().compile(myService);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test/Hilt_MyService")
-        .containsElementsIn(
-            JavaFileObjects.forSourceLines(
-                "test.Hilt_MyService",
-                "package test;",
-                "",
-                "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint.ServiceGenerator\")",
-                "@SuppressWarnings(\"deprecation\")",
-                "abstract class Hilt_MyService extends Service implements"
-                    + " GeneratedComponentManagerHolder{}"));
+    HiltCompilerTests.hiltCompiler(myService)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyService.java");
+              stringSubject.contains("package test;");
+              stringSubject.contains(
+                  JOINER.join(
+                      "@Generated(\"dagger.hilt.android.processor.internal.androidentrypoint."
+                          + "ServiceGenerator\")",
+                      "@SuppressWarnings(\"deprecation\")",
+                      "abstract class Hilt_MyService extends Service implements"
+                          + " GeneratedComponentManagerHolder {"));
+            });
   }
 }

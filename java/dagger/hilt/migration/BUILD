@@ -18,9 +18,7 @@ package(default_visibility = ["//:src"])
 
 java_library(
     name = "alias_of",
-    srcs = [
-        "AliasOf.java",
-    ],
+    srcs = ["AliasOf.java"],
     exported_plugins = [
         "//java/dagger/hilt/processor/internal/aliasof:processor",
     ],

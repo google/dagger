@@ -21,6 +21,7 @@ import static androidx.room.compiler.processing.XElementKt.isVariableElement;
 import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asVariable;
+import static dagger.internal.codegen.xprocessing.XElements.isFromJavaSource;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
@@ -50,8 +51,20 @@ public abstract class Nullability {
     return isNullable ? new AutoValue_Nullability(isNullable, nullableAnnotation) : NOT_NULLABLE;
   }
 
+  /**
+   * Returns {@code true} if the element's type is a Kotlin nullable type, e.g. {@code Foo?}.
+   *
+   * <p>Note that this method ignores any {@code @Nullable} type annotations and only looks for
+   * explicit {@code ?} usages on kotlin types.
+   */
   private static boolean isKotlinTypeNullable(XElement element) {
-    if (isMethod(element)) {
+    if (isFromJavaSource(element)) {
+      // Note: Technically, it isn't possible for Java sources to have nullable types like in Kotlin
+      // sources, but for some reason KSP treats certain types as nullable if they have a
+      // specific @Nullable (TYPE_USE target) annotation. Thus, to avoid inconsistencies with KAPT,
+      // just return false if this element is from a java source.
+      return false;
+    } else if (isMethod(element)) {
       return isKotlinTypeNullable(asMethod(element).getReturnType());
     } else if (isVariableElement(element)) {
       return isKotlinTypeNullable(asVariable(element).getType());

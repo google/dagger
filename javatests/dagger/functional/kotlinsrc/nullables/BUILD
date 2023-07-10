@@ -25,6 +25,18 @@ load("//:test_defs.bzl", "GenKtTests")
 package(default_visibility = ["//:src"])
 
 GenKtTests(
+    name = "JspecifyNullableTest",
+    srcs = ["JspecifyNullableTest.kt"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/jspecify_annotations",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+GenKtTests(
     name = "NullabilityTest",
     srcs = ["NullabilityTest.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,

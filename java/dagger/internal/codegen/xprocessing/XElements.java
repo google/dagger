@@ -49,6 +49,7 @@ import androidx.room.compiler.processing.XTypeParameterElement;
 import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.ksp.symbol.KSAnnotated;
+import com.google.devtools.ksp.symbol.Origin;
 import com.squareup.javapoet.ClassName;
 import java.util.Collection;
 import java.util.Optional;
@@ -381,6 +382,44 @@ public final class XElements {
 
   public static String packageName(XElement element) {
     return element.getClosestMemberContainer().asClassName().getPackageName();
+  }
+
+  /** Returns true if the source of the given type element is Java. */
+  public static boolean isFromJavaSource(XElement element) {
+    XProcessingEnv processingEnv = getProcessingEnv(element);
+    switch (processingEnv.getBackend()) {
+      case KSP:
+        // Check the origin of the declaration to determine the source kind.
+        Origin origin = toKS(element).getOrigin();
+        return origin == Origin.JAVA || origin == Origin.JAVA_LIB;
+      case JAVAC:
+        // If the element has kotlin metadata then the source is Kotlin.
+        return !hasKotlinMetadata(element);
+    }
+    throw new AssertionError("Unhandled backend kind: " + processingEnv.getBackend());
+  }
+
+  /** Returns true if the source of the given type element is Kotlin. */
+  public static boolean isFromKotlinSource(XElement element) {
+    XProcessingEnv processingEnv = getProcessingEnv(element);
+    switch (processingEnv.getBackend()) {
+      case KSP:
+        // Check the origin of the declaration to determine the source kind.
+        Origin origin = toKS(element).getOrigin();
+        return origin == Origin.KOTLIN || origin == Origin.KOTLIN_LIB;
+      case JAVAC:
+        // If the element has kotlin metadata then the source is Kotlin.
+        return hasKotlinMetadata(element);
+    }
+    throw new AssertionError("Unhandled backend kind: " + processingEnv.getBackend());
+  }
+
+  /**
+   * Returns {@code true} if the given element (or its nearest enclosing type element) is annotated
+   * with {@code kotlin.Metadata}.
+   */
+  private static boolean hasKotlinMetadata(XElement element) {
+    return closestEnclosingTypeElement(element).hasAnnotation(ClassName.get("kotlin", "Metadata"));
   }
 
   private XElements() {}

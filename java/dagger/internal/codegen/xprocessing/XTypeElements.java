@@ -16,21 +16,16 @@
 
 package dagger.internal.codegen.xprocessing;
 
-import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XHasModifiers;
 import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XTypeParameterElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.devtools.ksp.symbol.Origin;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeVariableName;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
@@ -140,21 +135,6 @@ public final class XTypeElements {
       currentElement = currentElement.getEnclosingTypeElement();
     }
     return visibilities.build();
-  }
-
-  /** Returns true if the source of the given type element is Kotlin. */
-  public static boolean isKotlinSource(XTypeElement typeElement) {
-    XProcessingEnv processingEnv = getProcessingEnv(typeElement);
-    switch (processingEnv.getBackend()) {
-      case KSP:
-        // If this is KSP, then we should be able to check the origin of the declaration.
-        Origin origin = XConverters.toKS(typeElement).getOrigin();
-        return origin == Origin.KOTLIN || origin == Origin.KOTLIN_LIB;
-      case JAVAC:
-        // If this is KAPT, then the java stubs should have kotlin metadata.
-        return typeElement.hasAnnotation(ClassName.get("kotlin", "Metadata"));
-    }
-    throw new AssertionError("Unhandled backend kind: " + processingEnv.getBackend());
   }
 
   private XTypeElements() {}

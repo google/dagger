@@ -23,7 +23,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isAndroidSuperClassValidationDisabled;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
-import static dagger.internal.codegen.xprocessing.XTypeElements.isKotlinSource;
+import static dagger.internal.codegen.xprocessing.XElements.isFromKotlinSource;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
 import androidx.room.compiler.processing.XAnnotation;
@@ -159,7 +159,7 @@ public abstract class AndroidEntryPointMetadata {
   public Modifier[] generatedClassModifiers() {
     // Note XElement#isPublic() refers to the jvm visibility. Since "internal" visibility is
     // represented as public in the jvm, we have to check XElement#isInternal() explicitly.
-    return isKotlinSource(element()) && element().isPublic() && !element().isInternal()
+    return isFromKotlinSource(element()) && element().isPublic() && !element().isInternal()
         ? new Modifier[] {Modifier.ABSTRACT, Modifier.PUBLIC}
         : new Modifier[] {Modifier.ABSTRACT};
   }

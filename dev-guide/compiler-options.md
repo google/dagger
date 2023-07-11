@@ -74,6 +74,38 @@ If full binding graph validation is turned on, [SPI](spi.md) implementations
 will see a `BindingGraph` representing the bindings for each module, component,
 and subcomponent as well.
 
+## Ignore wildcards in keys of provisioned bindings {#ignore-provision-key-wildcards}
+
+The `dagger.ignoreProvisionKeyWildcards` flag is disabled be default, but it can
+be enabled by passing the `-Adagger.ignoreProvisionKeyWildcards=ENABLED`
+annotation processing option during compilation.
+
+When enabled, Dagger's annotation processor will no longer allow provisioning
+two bindings that only differ by the wildcards in their types. For example,
+consider the module below:
+
+```
+@Module
+interface MyModule {
+  @Provides Foo<Bar> provideFooBar() { ... }
+  @Provides Foo<? extends Bar> provideFooExtendsBar() { ... }
+}
+```
+
+When `dagger.ignoreProvisionKeyWildcards` is disabled `MyModule` will result in
+the creation of two separate bindings: `Foo<Bar>` and `Foo<? extends Bar>`.
+
+However, when `dagger.ignoreProvisionKeyWildcards` is enabled `MyModule` will
+result in a `[Dagger/DuplicateBindings]` error because `Foo<Bar>` and
+`Foo<? extends Bar>` are considered duplicate bindings since they only differ by
+the wildcards in their type.
+
+In general, **we recommend enabling this flag** because it can be error prone to
+have multiple bindings that only differ by the wildcards in their type. This is
+especially true when dealing with Kotlin sources, where wildcards must be
+interpreted indirectly from a number of factors other than the explicit variance
+at the use site.
+
 <!-- References -->
 
 [`@Component`]: https://dagger.dev/api/latest/dagger/Component.html

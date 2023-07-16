@@ -40,6 +40,7 @@ import javax.tools.Diagnostic;
 
 /** Contains metadata about the given hilt root. */
 public final class RootMetadata {
+
   private static final ClassName APPLICATION_CONTEXT_MODULE =
       ClassName.get("dagger.hilt.android.internal.modules", "ApplicationContextModule");
 

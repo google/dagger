@@ -31,8 +31,8 @@ import dagger.hilt.internal.Preconditions;
  *
  * <p>A manager for the creation of components that live in the Service.
  *
- * <p>Note: This class is not typed since its type in generated code is always <?> or <Object>. This
- * is mainly due to the fact that we don't know the components at the time of generation, and
+ * <p>Note: This class is not typed since its type in generated code is always {@code <?>} or {@code <Object>}.
+ * This is mainly due to the fact that we don't know the components at the time of generation, and
  * because even the injector interface type is not a valid type if we have a hilt base class.
  */
 public final class ServiceComponentManager implements GeneratedComponentManager<Object> {

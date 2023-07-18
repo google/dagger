@@ -24,7 +24,12 @@ allprojects {
     mavenCentral()
   }
 }
+
+// Avoids conflict with BUILD file
+project.buildDir = 'buildOut'
+
 subprojects {
+    project.buildDir = 'buildOut'
     afterEvaluate {
         dependencies {
             // This is needed to align older versions of kotlin-stdlib.

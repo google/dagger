@@ -174,3 +174,12 @@ jobs:
       - uses: ./.github/actions/build-gradle-plugin
         with:
           agp: '+'
+  cleanup-caches:
+    name: 'Clean up GitHub Action caches'
+    # TODO(bcorso): Consider also waiting on artifact-android-emulator-tests
+    # and artifact-android-emulator-legacy-api-tests after checking flakiness.
+    needs: [bazel-test, artifact-java-local-tests, artifact-android-local-tests, test-gradle-plugin]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/cleanup-caches

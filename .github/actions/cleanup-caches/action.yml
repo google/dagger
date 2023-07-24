@@ -1,0 +1,13 @@
+name: 'Clean up caches'
+description: 'Cleans up GitHub Action caches.'
+
+runs:
+  using: "composite"
+  steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v3
+      - name: 'Cleanup caches'
+        run: python ./util/cleanup-github-caches.py
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

@@ -407,9 +407,10 @@ final class InjectionMethods {
       return builder.addStatement("$L", invocation).build();
     } else {
       Nullability.of(method)
-          .nullableAnnotation()
+          .nullableAnnotations()
+          .stream()
           .map(XAnnotations::getClassName)
-          .ifPresent(builder::addAnnotation);
+          .forEach(builder::addAnnotation);
       return builder
           .returns(method.getReturnType().getTypeName())
           .addStatement("return $L", invocation)

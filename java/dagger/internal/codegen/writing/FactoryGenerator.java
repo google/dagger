@@ -270,9 +270,10 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
     if (binding.kind().equals(PROVISION)) {
       binding
           .nullability()
-          .nullableAnnotation()
+          .nullableAnnotations()
+          .stream()
           .map(XAnnotations::getClassName)
-          .ifPresent(getMethod::addAnnotation);
+          .forEach(getMethod::addAnnotation);
       getMethod.addStatement("return $L", invokeNewInstance);
     } else if (!binding.injectionSites().isEmpty()) {
       CodeBlock instance = CodeBlock.of("instance");

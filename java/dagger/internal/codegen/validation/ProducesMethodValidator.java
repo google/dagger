@@ -90,7 +90,7 @@ final class ProducesMethodValidator extends BindingMethodValidator {
     // TODO(beder): Properly handle nullable with producer methods.
     private void checkNullable() {
       Nullability nullability = Nullability.of(method);
-      if (nullability.nullableAnnotation().isPresent()) {
+      if (!nullability.nullableAnnotations().isEmpty()) {
         report.addWarning("@Nullable on @Produces methods does not do anything");
       }
     }

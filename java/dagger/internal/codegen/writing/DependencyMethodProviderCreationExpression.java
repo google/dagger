@@ -106,9 +106,10 @@ final class DependencyMethodProviderCreationExpression
 
     binding
         .nullability()
-        .nullableAnnotation()
+        .nullableAnnotations()
+        .stream()
         .map(XAnnotations::getClassName)
-        .ifPresent(getMethod::addAnnotation);
+        .forEach(getMethod::addAnnotation);
 
     // We need to use the componentShard here since the generated type is static and shards are
     // not static classes so it can't be nested inside the shard.

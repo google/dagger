@@ -16,13 +16,14 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
-import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XExecutableElement;
@@ -33,12 +34,12 @@ import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
+import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.internal.codegen.xprocessing.XTypes;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 
@@ -46,6 +47,8 @@ import javax.inject.Inject;
 public final class MethodSignatureFormatter extends Formatter<XExecutableElement> {
   private static final ClassName JET_BRAINS_NOT_NULL =
       ClassName.get("org.jetbrains.annotations", "NotNull");
+  private static final ClassName JET_BRAINS_NULLABLE =
+      ClassName.get("org.jetbrains.annotations", "Nullable");
 
   private final InjectionAnnotations injectionAnnotations;
 
@@ -106,15 +109,9 @@ public final class MethodSignatureFormatter extends Formatter<XExecutableElement
       XTypeElement container,
       boolean includeReturnType) {
     StringBuilder builder = new StringBuilder();
-    List<XAnnotation> annotations = method.getAllAnnotations();
-    if (!annotations.isEmpty()) {
-      builder.append(
-          annotations.stream()
-              // Filter out @NotNull annotations added by KAPT to make error messages consistent
-              .filter(annotation -> !annotation.getClassName().equals(JET_BRAINS_NOT_NULL))
-              .map(MethodSignatureFormatter::formatAnnotation)
-              .collect(joining(" ")))
-          .append(" ");
+    ImmutableList<String> formattedAnnotations = formatedAnnotations(method);
+    if (!formattedAnnotations.isEmpty()) {
+      builder.append(String.join(" ", formattedAnnotations)).append(" ");
     }
     if (getSimpleName(method).contentEquals("<init>")) {
       builder.append(container.getQualifiedName());
@@ -152,6 +149,28 @@ public final class MethodSignatureFormatter extends Formatter<XExecutableElement
 
   private static String nameOfType(XType type) {
     return stripCommonTypePrefixes(XTypes.toStableString(type));
+  }
+
+  private static ImmutableList<String> formatedAnnotations(XExecutableElement executableElement) {
+    ImmutableList<String> formattedAnnotations =
+        executableElement.getAllAnnotations().stream()
+            // Filter out @NotNull annotations added by KAPT to make error messages consistent
+            .filter(annotation -> !annotation.getClassName().equals(JET_BRAINS_NOT_NULL))
+            .map(MethodSignatureFormatter::formatAnnotation)
+            .collect(toImmutableList());
+    Nullability nullability = Nullability.of(executableElement);
+    if (nullability.isKotlinTypeNullable()
+            && nullability.nullableAnnotations().stream()
+                .map(XAnnotations::getClassName)
+                .noneMatch(JET_BRAINS_NULLABLE::equals)
+            && getProcessingEnv(executableElement).findTypeElement(JET_BRAINS_NULLABLE) != null) {
+      formattedAnnotations =
+          ImmutableList.<String>builder()
+              .addAll(formattedAnnotations)
+              .add(String.format("@%s", JET_BRAINS_NULLABLE.canonicalName()))
+              .build();
+    }
+    return formattedAnnotations;
   }
 
   private static String formatAnnotation(XAnnotation annotation) {

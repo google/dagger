@@ -58,7 +58,7 @@ public abstract class DaggerAnnotation {
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     switch (backend()) {
       case JAVAC:
         return AnnotationMirrors.toString(java());

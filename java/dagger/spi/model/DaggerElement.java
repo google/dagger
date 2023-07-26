@@ -52,7 +52,7 @@ public abstract class DaggerElement {
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     switch (backend()) {
       case JAVAC:
         return java().toString();

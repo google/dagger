@@ -17,7 +17,6 @@
 package dagger.internal.codegen.writing;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
@@ -56,7 +55,7 @@ final class MembersInjectionRequestRepresentation extends RequestRepresentation 
     XMethodElement methodElement = componentMethod.methodElement();
     XExecutableParameterElement parameter = getOnlyElement(methodElement.getParameters());
     return membersInjectionMethods.getInjectExpression(
-        binding.key(), CodeBlock.of("$L", getSimpleName(parameter)), component.name());
+        binding.key(), CodeBlock.of("$L", parameter.getJvmName()), component.name());
   }
 
   // TODO(bcorso): Consider making this a method on all RequestRepresentations.

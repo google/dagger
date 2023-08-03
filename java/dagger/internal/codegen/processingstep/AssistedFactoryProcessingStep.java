@@ -311,7 +311,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
                       // use the parameter names of the @AssistedFactory method.
                       metadata.assistedInjectAssistedParameters().stream()
                           .map(metadata.assistedFactoryAssistedParametersMap()::get)
-                          .map(param -> CodeBlock.of("$L", getSimpleName(param)))
+                          .map(param -> CodeBlock.of("$L", param.getJvmName()))
                           .collect(toParametersCodeBlock()))
                   .build())
           .addMethod(

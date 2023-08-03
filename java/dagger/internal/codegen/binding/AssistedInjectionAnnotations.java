@@ -22,11 +22,11 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
-import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XConstructorType;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XHasModifiers;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
@@ -90,14 +90,15 @@ public final class AssistedInjectionAnnotations {
   }
 
   private static ImmutableList<ParameterSpec> assistedParameterSpecs(
-      List<? extends XVariableElement> paramElements, List<XType> paramTypes) {
+      List<? extends XExecutableParameterElement> paramElements, List<XType> paramTypes) {
     ImmutableList.Builder<ParameterSpec> assistedParameterSpecs = ImmutableList.builder();
     for (int i = 0; i < paramElements.size(); i++) {
-      XVariableElement paramElement = paramElements.get(i);
+      XExecutableParameterElement paramElement = paramElements.get(i);
       XType paramType = paramTypes.get(i);
       if (isAssistedParameter(paramElement)) {
         assistedParameterSpecs.add(
-            ParameterSpec.builder(paramType.getTypeName(), getSimpleName(paramElement)).build());
+            ParameterSpec.builder(paramType.getTypeName(), paramElement.getJvmName())
+                .build());
       }
     }
     return assistedParameterSpecs.build();
@@ -133,7 +134,7 @@ public final class AssistedInjectionAnnotations {
         .collect(toImmutableSet());
   }
 
-  public static ImmutableList<XVariableElement> assistedParameters(Binding binding) {
+  public static ImmutableList<XExecutableParameterElement> assistedParameters(Binding binding) {
     return binding.kind() == BindingKind.ASSISTED_INJECTION
         ? asConstructor(binding.bindingElement().get()).getParameters().stream()
             .filter(AssistedInjectionAnnotations::isAssistedParameter)
@@ -184,8 +185,10 @@ public final class AssistedInjectionAnnotations {
     public abstract ImmutableList<AssistedParameter> assistedFactoryAssistedParameters();
 
     @Memoized
-    public ImmutableMap<AssistedParameter, XVariableElement> assistedInjectAssistedParametersMap() {
-      ImmutableMap.Builder<AssistedParameter, XVariableElement> builder = ImmutableMap.builder();
+    public ImmutableMap<AssistedParameter, XExecutableParameterElement>
+        assistedInjectAssistedParametersMap() {
+      ImmutableMap.Builder<AssistedParameter, XExecutableParameterElement> builder =
+          ImmutableMap.builder();
       for (AssistedParameter assistedParameter : assistedInjectAssistedParameters()) {
         builder.put(assistedParameter, assistedParameter.element());
       }
@@ -193,9 +196,10 @@ public final class AssistedInjectionAnnotations {
     }
 
     @Memoized
-    public ImmutableMap<AssistedParameter, XVariableElement>
+    public ImmutableMap<AssistedParameter, XExecutableParameterElement>
         assistedFactoryAssistedParametersMap() {
-      ImmutableMap.Builder<AssistedParameter, XVariableElement> builder = ImmutableMap.builder();
+      ImmutableMap.Builder<AssistedParameter, XExecutableParameterElement> builder =
+          ImmutableMap.builder();
       for (AssistedParameter assistedParameter : assistedFactoryAssistedParameters()) {
         builder.put(assistedParameter, assistedParameter.element());
       }
@@ -211,7 +215,8 @@ public final class AssistedInjectionAnnotations {
    */
   @AutoValue
   public abstract static class AssistedParameter {
-    public static AssistedParameter create(XVariableElement parameter, XType parameterType) {
+    public static AssistedParameter create(
+        XExecutableParameterElement parameter, XType parameterType) {
       AssistedParameter assistedParameter =
           new AutoValue_AssistedInjectionAnnotations_AssistedParameter(
               Optional.ofNullable(parameter.getAnnotation(TypeNames.ASSISTED))
@@ -223,7 +228,7 @@ public final class AssistedInjectionAnnotations {
       return assistedParameter;
     }
 
-    private XVariableElement parameterElement;
+    private XExecutableParameterElement parameterElement;
     private XType parameterType;
 
     /** Returns the string qualifier from the {@link Assisted#value()}. */
@@ -237,7 +242,7 @@ public final class AssistedInjectionAnnotations {
       return parameterType;
     }
 
-    public final XVariableElement element() {
+    public final XExecutableParameterElement element() {
       return parameterElement;
     }
 
@@ -260,7 +265,7 @@ public final class AssistedInjectionAnnotations {
 
     ImmutableList.Builder<AssistedParameter> builder = ImmutableList.builder();
     for (int i = 0; i < assistedInjectConstructor.getParameters().size(); i++) {
-      XVariableElement parameter = assistedInjectConstructor.getParameters().get(i);
+      XExecutableParameterElement parameter = assistedInjectConstructor.getParameters().get(i);
       XType parameterType = assistedInjectConstructorType.getParameterTypes().get(i);
       if (parameter.hasAnnotation(TypeNames.ASSISTED)) {
         builder.add(AssistedParameter.create(parameter, parameterType));
@@ -273,7 +278,7 @@ public final class AssistedInjectionAnnotations {
       XMethodElement factoryMethod, XMethodType factoryMethodType) {
     ImmutableList.Builder<AssistedParameter> builder = ImmutableList.builder();
     for (int i = 0; i < factoryMethod.getParameters().size(); i++) {
-      XVariableElement parameter = factoryMethod.getParameters().get(i);
+      XExecutableParameterElement parameter = factoryMethod.getParameters().get(i);
       XType parameterType = factoryMethodType.getParameterTypes().get(i);
       builder.add(AssistedParameter.create(parameter, parameterType));
     }

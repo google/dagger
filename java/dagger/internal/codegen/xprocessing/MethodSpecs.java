@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.xprocessing;
 
-import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
@@ -47,7 +46,7 @@ public final class MethodSpecs {
       builder.addModifiers(PROTECTED);
     }
     for (int i = 0; i < methodType.getParameterTypes().size(); i++) {
-      String parameterName = getSimpleName(method.getParameters().get(i));
+      String parameterName = method.getParameters().get(i).getJvmName();
       TypeName parameterType = methodType.getParameterTypes().get(i).getTypeName();
       builder.addParameter(ParameterSpec.builder(parameterType, parameterName).build());
     }

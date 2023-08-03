@@ -50,8 +50,7 @@ public final class JavaPoetExt {
   }
 
   public static ParameterSpec toParameterSpec(XExecutableParameterElement param) {
-    return ParameterSpec.builder(param.getType().getTypeName(), XElements.getSimpleName(param))
-        .build();
+    return ParameterSpec.builder(param.getType().getTypeName(), param.getJvmName()).build();
   }
 
   private JavaPoetExt() {}

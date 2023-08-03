@@ -42,6 +42,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
@@ -648,12 +649,12 @@ public final class ComponentImplementation {
       return assistedParamNames.getUniqueName(name);
     }
 
-    public String getUniqueFieldNameForAssistedParam(XVariableElement element) {
-      if (uniqueAssistedName.containsKey(element)) {
-        return uniqueAssistedName.get(element);
+    public String getUniqueFieldNameForAssistedParam(XExecutableParameterElement parameter) {
+      if (uniqueAssistedName.containsKey(parameter)) {
+        return uniqueAssistedName.get(parameter);
       }
-      String name = getUniqueAssistedParamName(getSimpleName(element));
-      uniqueAssistedName.put(element, name);
+      String name = getUniqueAssistedParamName(parameter.getJvmName());
+      uniqueAssistedName.put(parameter, name);
       return name;
     }
 

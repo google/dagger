@@ -244,6 +244,16 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     noLongerRecognized(FLOATING_BINDS_METHODS);
     noLongerRecognized(EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS);
     noLongerRecognized(USE_GRADLE_INCREMENTAL_PROCESSING);
+    if (!isEnabled(IGNORE_PROVISION_KEY_WILDCARDS)) {
+      if (processingEnv.getBackend() == XProcessingEnv.Backend.KSP) {
+        processingEnv.getMessager().printMessage(
+            Diagnostic.Kind.ERROR,
+            String.format(
+                "When using KSP, you must also enable the '%s' compiler option (see %s).",
+                "dagger.ignoreProvisionKeyWildcards",
+                "https://dagger.dev/dev-guide/compiler-options#ignore-provision-key-wildcards"));
+      }
+    }
     return this;
   }
 
@@ -335,7 +345,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
     GENERATED_CLASS_EXTENDS_COMPONENT,
 
-    IGNORE_PROVISION_KEY_WILDCARDS,
+    IGNORE_PROVISION_KEY_WILDCARDS(ENABLED),
 
     VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES(ENABLED)
     ;

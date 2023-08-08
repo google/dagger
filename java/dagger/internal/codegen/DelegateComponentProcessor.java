@@ -98,8 +98,9 @@ final class DelegateComponentProcessor {
                           + legacyPlugin.pluginName()
                           + ". Either compile with KAPT or migrate the plugin to implement "
                           + "dagger.spi.model.BindingGraphPlugin."));
-      // We've already reported warnings on the invalid legacy plugins above. We can't actually
-      // process these plugins in KSP, so just skip them to allow processing of the valid plugins.
+      // Even though we've reported an error, processing will still continue for the remainder of
+      // the processing round to try to catch other errors. We set the javac plugins to empty to
+      // skip processing since it would just result in ClassCastExceptions in KSP.
       legacyPlugins = ImmutableSet.of();
     }
     DaggerDelegateComponentProcessor_Injector.factory()

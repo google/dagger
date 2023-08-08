@@ -569,6 +569,27 @@ public class IgnoreProvisionKeyWildcardsTest {
       String javaComponentClass,
       String kotlinComponentClass,
       Consumer<CompilationResultSubject> onCompilationResult) {
+    compileInternal(
+        javaComponentClass,
+        kotlinComponentClass,
+        subject -> {
+          if (!isIgnoreProvisionKeyWildcardsEnabled) {
+            if (CompilerTests.backend(subject) ==
+                androidx.room.compiler.processing.XProcessingEnv.Backend.KSP) {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "When using KSP, you must also enable the 'dagger.ignoreProvisionKeyWildcards'");
+              return;
+            }
+          }
+          onCompilationResult.accept(subject);
+        });
+  }
+
+  private void compileInternal(
+      String javaComponentClass,
+      String kotlinComponentClass,
+      Consumer<CompilationResultSubject> onCompilationResult) {
     if (sourceKind == SourceKind.JAVA) {
       // Compile with Java sources
       CompilerTests.daggerCompiler(

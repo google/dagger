@@ -34,7 +34,6 @@ import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.internal.codegen.xprocessing.XElements;
-import java.util.Optional;
 import javax.inject.Inject;
 
 /** Utility class for interacting with Kotlin Metadata. */
@@ -131,10 +130,6 @@ public final class KotlinMetadataUtil {
             .map(ImmutableList::copyOf)
             .orElse(ImmutableList.<XAnnotation>of())
         : ImmutableList.of();
-  }
-
-  public Optional<XMethodElement> getPropertyGetter(XFieldElement fieldElement) {
-    return metadataFactory.create(fieldElement).getPropertyGetter(fieldElement);
   }
 
   public boolean containsConstructorWithDefaultParam(XTypeElement typeElement) {

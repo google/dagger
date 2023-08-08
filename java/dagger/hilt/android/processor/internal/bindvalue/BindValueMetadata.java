@@ -33,8 +33,6 @@ import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
-import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtil;
-import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Collection;
@@ -111,12 +109,7 @@ abstract class BindValueMetadata {
           XElements.toStableString(element));
 
       XFieldElement field = asField(element);
-
-      KotlinMetadataUtil metadataUtil = KotlinMetadataUtils.getMetadataUtil();
-      Optional<XMethodElement> propertyGetter =
-          metadataUtil.hasMetadata(field)
-              ? metadataUtil.getPropertyGetter(field)
-              : Optional.empty();
+      Optional<XMethodElement> propertyGetter = Optional.ofNullable(field.getGetter());
       if (propertyGetter.isPresent()) {
         ProcessorErrors.checkState(
             !propertyGetter.get().isPrivate(),

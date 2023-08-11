@@ -253,8 +253,6 @@ public final class AssistedInjectionAnnotations {
       XType assistedInjectType) {
     // We keep track of the constructor both as an ExecutableElement to access @Assisted
     // parameters and as an ExecutableType to access the resolved parameter types.
-    ImmutableSet<XConstructorElement> assistedInjectConstructors =
-        assistedInjectedConstructors(assistedInjectType.getTypeElement());
     XConstructorElement assistedInjectConstructor =
         getOnlyElement(assistedInjectedConstructors(assistedInjectType.getTypeElement()));
     XConstructorType assistedInjectConstructorType =

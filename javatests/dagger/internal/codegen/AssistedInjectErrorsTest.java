@@ -245,6 +245,39 @@ public class AssistedInjectErrorsTest {
   }
 
   @Test
+  public void testMultipleInjectedConstructors() {
+    Source foo =
+        CompilerTests.kotlinSource(
+            "test.Foo.kt",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted",
+            "import dagger.assisted.AssistedInject",
+            "import dagger.assisted.AssistedFactory",
+            "import javax.inject.Inject",
+            "",
+            "class Foo @AssistedInject constructor(@Assisted i: Int) {",
+            "",
+            "  @Inject",
+            "  constructor(s: String, @Assisted i: Int): this(i) {}",
+            "}");
+
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining(
+                  "Type test.Foo may only contain one injected constructor."
+                      + " Found: [@Inject test.Foo(String, int),"
+                      + " @dagger.assisted.AssistedInject test.Foo(int)]");
+              subject.hasErrorContaining(
+                  "@Assisted parameters can only be used within an"
+                      + " @AssistedInject-annotated constructor.");
+            });
+  }
+
+  @Test
   public void testMultipleAssistedInjectedConstructors() {
     Source foo =
         CompilerTests.kotlinSource(

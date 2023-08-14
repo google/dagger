@@ -200,6 +200,8 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
       tempFolder.newFile("gradle.properties").apply {
         writeText("""
         android.useAndroidX=true
+        // TODO(b/296583777): See if there's a better way to fix the OOM error.
+        org.gradle.jvmargs=-XX:MaxMetaspaceSize=1g
         """.trimIndent())
       }
   }

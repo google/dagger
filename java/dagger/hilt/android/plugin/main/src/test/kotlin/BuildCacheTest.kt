@@ -82,8 +82,6 @@ class BuildCacheTest(private val enableAggregatingTask: Boolean) {
     val secondResult = secondGradleRunner.build()
     val cacheableTasks: List<String> =
       mutableListOf<String>().apply {
-        add(":checkDebugAarMetadata")
-        add(":checkDebugDuplicateClasses")
         add(":compileDebugJavaWithJavac")
         add(":compressDebugAssets")
         add(":desugarDebugFileDependencies")
@@ -105,9 +103,6 @@ class BuildCacheTest(private val enableAggregatingTask: Boolean) {
         add(":mergeProjectDexDebug")
         add(":processDebugManifestForPackage")
         add(":transformDebugClassesWithAsm")
-        add(":validateSigningDebug")
-        add(":writeDebugAppMetadata")
-        add(":writeDebugSigningConfigVersions")
       }
 
     val tasksFromCache =

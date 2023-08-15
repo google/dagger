@@ -140,6 +140,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
 
     @Override
     protected final void checkAdditionalProperties() {
+      checkNotExtensionFunction();
       checkEnclosingElement();
       checkTypeParameters();
       checkNotPrivate();
@@ -151,6 +152,12 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
 
     /** Checks additional properties of the binding method. */
     protected void checkAdditionalMethodProperties() {}
+
+    private void checkNotExtensionFunction() {
+      if (method.isExtensionFunction()) {
+        report.addError(bindingMethods("can not be an extension function"));
+      }
+    }
 
     /**
      * Adds an error if the method is not declared in a class or interface annotated with one of the

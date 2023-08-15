@@ -53,6 +53,70 @@ public class BindsMethodValidationTest {
   }
 
   @Test
+  public void noExtensionForBinds() {
+    Source module =
+        CompilerTests.kotlinSource(
+            "test.TestModule.kt",
+            "package test",
+            "",
+            "import dagger.Binds",
+            "",
+            moduleAnnotation,
+            "interface TestModule {",
+            "  @Binds fun FooImpl.bindObject(): Foo",
+            "}");
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo", // Prevents formatting onto a single line
+            "package test;",
+            "",
+            "interface Foo {}");
+    Source fooImpl =
+        CompilerTests.javaSource(
+            "test.FooImpl", // Prevents formatting onto a single line
+            "package test;",
+            "",
+            "class FooImpl implements Foo {",
+            "   @Inject FooImpl() {}",
+            "}");
+    CompilerTests.daggerCompiler(module, foo, fooImpl)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("@Binds methods can not be an extension function");
+            });
+  }
+
+  @Test
+  public void noExtensionForProvides() {
+    Source module =
+        CompilerTests.kotlinSource(
+            "test.TestModule.kt",
+            "package test",
+            "",
+            "import dagger.Provides",
+            "",
+            moduleAnnotation,
+            "object TestModule {",
+            "  @Provides fun Foo.providesString(): String = \"hello\"",
+            "}");
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo", // Prevents formatting onto a single line
+            "package test;",
+            "",
+            "class Foo {",
+            "  @Inject Foo() {}",
+            "}");
+    CompilerTests.daggerCompiler(module, foo)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("@Provides methods can not be an extension function");
+            });
+  }
+
+  @Test
   public void nonAbstract() {
     assertThatMethod("@Binds Object concrete(String impl) { return null; }")
         .hasError("must be abstract");

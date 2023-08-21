@@ -79,6 +79,9 @@ nav:
             name: Versions
             url: /versions
         - item:
+            name: KSP
+            url: /ksp
+        - item:
             name: FAQ
             url: /faq
   - item:

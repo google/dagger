@@ -112,7 +112,7 @@ public final class AnnotationExpression {
     } else if (value.hasAnnotationValue()) {
       return getAnnotationInstanceExpression(value.asAnnotation());
     } else if (value.hasTypeValue()) {
-      return CodeBlock.of("$T.class", value.asType().getTypeName());
+      return CodeBlock.of("$T.class", value.asType().getTypeElement().getClassName());
     } else if (value.hasStringValue()) {
       return CodeBlock.of("$S", value.asString());
     } else if (value.hasByteValue()) {

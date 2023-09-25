@@ -19,6 +19,8 @@ package dagger.internal;
 import static dagger.internal.Preconditions.checkNotNull;
 
 import dagger.Lazy;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.inject.Provider;
 
 /**
@@ -31,6 +33,8 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
   private volatile Provider<T> provider;
   private volatile Object instance = UNINITIALIZED;
 
+  private final Lock lock = new ReentrantLock();
+
   private DoubleCheck(Provider<T> provider) {
     assert provider != null;
     this.provider = provider;
@@ -41,7 +45,8 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
   public T get() {
     Object result = instance;
     if (result == UNINITIALIZED) {
-      synchronized (this) {
+      lock.lock();
+      try {
         result = instance;
         if (result == UNINITIALIZED) {
           result = provider.get();
@@ -50,6 +55,8 @@ public final class DoubleCheck<T> implements Provider<T>, Lazy<T> {
            * can make it eligible for GC. */
           provider = null;
         }
+      } finally {
+        lock.unlock();
       }
     }
     return (T) result;

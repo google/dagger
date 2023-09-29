@@ -21,14 +21,12 @@ import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.extension.DaggerGraphs.unreachableNodes;
 import static dagger.internal.codegen.model.BindingKind.SUBCOMPONENT_CREATOR;
 
-import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
 import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.NetworkBuilder;
@@ -40,7 +38,6 @@ import dagger.internal.codegen.model.BindingGraph.Edge;
 import dagger.internal.codegen.model.BindingGraph.MissingBinding;
 import dagger.internal.codegen.model.BindingGraph.Node;
 import dagger.internal.codegen.model.ComponentPath;
-import dagger.internal.codegen.model.DaggerExecutableElement;
 import dagger.internal.codegen.model.DaggerTypeElement;
 import dagger.internal.codegen.model.DependencyRequest;
 import dagger.internal.codegen.model.Key;
@@ -110,10 +107,9 @@ final class BindingGraphConverter {
      * <p>This implementation does the following:
      *
      * <ol>
-     *   <li>If this component is installed in its parent by a subcomponent factory method, calls
-     *       {@link #visitSubcomponentFactoryMethod(ComponentNode, ComponentNode, XMethodElement)}.
-     *   <li>For each entry point in the component, calls {@link #visitEntryPoint(ComponentNode,
-     *       DependencyRequest)}.
+     *   <li>If this component is installed in its parent by a subcomponent factory method, adds
+     *       an edge between the parent and child components.
+     *   <li>For each entry point, adds an edge between the component and the entry point.
      *   <li>For each child component, calls {@link #visitComponent(LegacyBindingGraph)},
      *       updating the traversal state.
      * </ol>
@@ -127,7 +123,7 @@ final class BindingGraphConverter {
 
       for (ComponentMethodDescriptor entryPointMethod :
           graph.componentDescriptor().entryPointMethods()) {
-        visitEntryPoint(graph.componentNode(), entryPointMethod.dependencyRequest().get());
+        addDependencyEdges(graph.componentNode(), entryPointMethod.dependencyRequest().get());
       }
 
       for (ResolvedBindings resolvedBindings : graph.resolvedBindings()) {
@@ -149,52 +145,20 @@ final class BindingGraphConverter {
         }
       }
 
-      if (bindingGraphPath.size() > 1) {
-        LegacyBindingGraph parentGraph = Iterators.get(bindingGraphPath.descendingIterator(), 1);
-        parentGraph
+      for (LegacyBindingGraph childGraph : graph.subgraphs()) {
+        visitComponent(childGraph);
+        graph
             .componentDescriptor()
-            .getFactoryMethodForChildComponent(graph.componentDescriptor())
+            .getFactoryMethodForChildComponent(childGraph.componentDescriptor())
             .ifPresent(
                 childFactoryMethod ->
-                    visitSubcomponentFactoryMethod(
-                        parentGraph.componentNode(),
+                    network.addEdge(
                         graph.componentNode(),
-                        childFactoryMethod.methodElement()));
-      }
-
-      for (LegacyBindingGraph child : graph.subgraphs()) {
-        visitComponent(child);
+                        childGraph.componentNode(),
+                        new ChildFactoryMethodEdgeImpl(childFactoryMethod.methodElement())));
       }
 
       verify(bindingGraphPath.removeLast().equals(graph));
-    }
-
-    /**
-     * Called once for each entry point in a component.
-     *
-     * @param componentNode the component that contains the entry point
-     * @param entryPoint the entry point to visit
-     */
-    private void visitEntryPoint(ComponentNode componentNode, DependencyRequest entryPoint) {
-      addDependencyEdges(componentNode, entryPoint);
-    }
-
-    /**
-     * Called if this component was installed in its parent by a subcomponent factory method.
-     *
-     * @param parentComponent the parent graph
-     * @param currentComponent the currently visited graph
-     * @param factoryMethod the factory method in the parent component that declares that the
-     *     current component is a child
-     */
-    private void visitSubcomponentFactoryMethod(
-        ComponentNode parentComponent,
-        ComponentNode currentComponent,
-        XMethodElement factoryMethod) {
-      network.addEdge(
-          parentComponent,
-          currentComponent,
-          new ChildFactoryMethodEdgeImpl(DaggerExecutableElement.from(factoryMethod)));
     }
 
     /**

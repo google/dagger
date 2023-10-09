@@ -24,25 +24,21 @@ import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.annotation.Nullable;
-import androidx.lifecycle.HasDefaultViewModelProviderFactory;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.viewmodel.CreationExtras;
-import androidx.lifecycle.viewmodel.MutableCreationExtras;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
-import dagger.hilt.android.internal.lifecycle.HiltViewModelFactory;
 import dagger.hilt.android.lifecycle.HiltViewModel;
+import dagger.hilt.android.lifecycle.HiltViewModelExtensions;
 import dagger.hilt.android.scopes.ViewModelScoped;
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
 import dagger.hilt.android.testing.HiltTestApplication;
 import javax.inject.Inject;
-import kotlin.jvm.functions.Function1;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -158,16 +154,18 @@ public class ViewModelAssistedTest {
             new ViewModelProvider(
                     getViewModelStore(),
                     getDefaultViewModelProviderFactory(),
-                    getCreationExtrasWithCreationCallback(
-                        this, factory -> ((MyViewModel.Factory) factory).create("foo")))
+                    HiltViewModelExtensions.withCreationCallback(
+                        getDefaultViewModelCreationExtras(),
+                        (MyViewModel.Factory factory) -> factory.create("foo")))
                 .get(MyViewModel.class);
       } else {
         vm =
             new ViewModelProvider(
                     getViewModelStore(),
                     getDefaultViewModelProviderFactory(),
-                    getCreationExtrasWithCreationCallback(
-                        this, factory -> ((MyViewModel.Factory) factory).create("bar")))
+                    HiltViewModelExtensions.withCreationCallback(
+                        getDefaultViewModelCreationExtras(),
+                        (MyViewModel.Factory factory) -> factory.create("bar")))
                 .get(MyViewModel.class);
       }
     }
@@ -187,16 +185,18 @@ public class ViewModelAssistedTest {
           new ViewModelProvider(
                   getViewModelStore(),
                   getDefaultViewModelProviderFactory(),
-                  getCreationExtrasWithCreationCallback(
-                      this, factory -> ((MyViewModel.Factory) factory).create("foo")))
+                  HiltViewModelExtensions.withCreationCallback(
+                      getDefaultViewModelCreationExtras(),
+                      (MyViewModel.Factory factory) -> factory.create("foo")))
               .get("a", MyViewModel.class);
 
       vm2 =
           new ViewModelProvider(
                   getViewModelStore(),
                   getDefaultViewModelProviderFactory(),
-                  getCreationExtrasWithCreationCallback(
-                      this, factory -> ((MyViewModel.Factory) factory).create("bar")))
+                  HiltViewModelExtensions.withCreationCallback(
+                      getDefaultViewModelCreationExtras(),
+                      (MyViewModel.Factory factory) -> factory.create("bar")))
               .get("b", MyViewModel.class);
     }
   }
@@ -228,8 +228,9 @@ public class ViewModelAssistedTest {
           new ViewModelProvider(
                   getViewModelStore(),
                   getDefaultViewModelProviderFactory(),
-                  getCreationExtrasWithCreationCallback(
-                      this, factory -> ((MyViewModel.Factory) factory).create("bar")))
+                  HiltViewModelExtensions.withCreationCallback(
+                      getDefaultViewModelCreationExtras(),
+                      (MyViewModel.Factory factory) -> factory.create("bar")))
               .get(MyInjectedViewModel.class);
     }
   }
@@ -266,8 +267,9 @@ public class ViewModelAssistedTest {
           new ViewModelProvider(
                   getViewModelStore(),
                   getDefaultViewModelProviderFactory(),
-                  getCreationExtrasWithCreationCallback(
-                      this, factory -> ((MyViewModel.AnotherFactory) factory).create("foo")))
+                  HiltViewModelExtensions.withCreationCallback(
+                      getDefaultViewModelCreationExtras(),
+                      (MyViewModel.AnotherFactory factory) -> factory.create("foo")))
               .get(MyViewModel.class);
     }
   }
@@ -284,18 +286,11 @@ public class ViewModelAssistedTest {
           new ViewModelProvider(
                   getViewModelStore(),
                   getDefaultViewModelProviderFactory(),
-                  getCreationExtrasWithCreationCallback(
-                      this, factory -> ((MyViewModel.Factory) factory).create("foo")))
+                  HiltViewModelExtensions.withCreationCallback(
+                      getDefaultViewModelCreationExtras(),
+                      (MyViewModel.Factory factory) -> factory.create("foo")))
               .get(MyViewModel.class);
     }
-  }
-
-  private static CreationExtras getCreationExtrasWithCreationCallback(
-      HasDefaultViewModelProviderFactory owner, Function1<Object, ViewModel> callback) {
-    MutableCreationExtras extras =
-        new MutableCreationExtras(owner.getDefaultViewModelCreationExtras());
-    extras.set(HiltViewModelFactory.CREATION_CALLBACK_KEY, callback);
-    return extras;
   }
 
   @HiltViewModel(assistedFactory = MyViewModel.Factory.class)

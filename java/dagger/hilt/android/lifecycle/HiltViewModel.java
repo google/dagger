@@ -53,7 +53,46 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * <p>Exactly one constructor in the {@code ViewModel} must be annotated with {@code Inject}.
+ * <p>{@code ViewModel}s annotated with {@link HiltViewModel} can also be used with assisted
+ * injection:
+ *
+ * <pre>
+ * &#64;HiltViewModel(assistedFactory = DonutViewModel.Factory.class)
+ * public class DonutViewModel extends ViewModel {
+ *     &#64;AssistedInject
+ *     public DonutViewModel(
+ *         SavedStateHandle handle,
+ *         RecipeRepository repository, 
+ *         $#64;Assisted int donutId
+ *     ) {
+ *         // ...
+ *     }
+ *
+ *     &#64;AssistedFactory
+ *     public interface Factory {
+ *         DonutViewModel create(int donutId);
+ *     }
+ * }
+ * </pre>
+ *
+ * <pre>
+ * &#64;AndroidEntryPoint
+ * public class CookingActivity extends AppCompatActivity {
+ *     public void onCreate(Bundle savedInstanceState) {
+ *         DonutViewModel vm = new ViewModelProvider(
+ *             getViewModelStore(),
+ *             getDefaultViewModelProviderFactory(),
+ *             HiltViewModelExtensions.withCreationCallback(
+ *                 getDefaultViewModelCreationExtras(),
+ *                 (DonutViewModel.Factory factory) -> factory.create(1)
+ *             )
+ *         ).get(DonutViewModel.class);
+ *     }
+ * }
+ * </pre>
+ *
+ * <p>Exactly one constructor in the {@code ViewModel} must be annotated with {@code Inject} or
+ * {@code AssistedInject}.
  *
  * <p>Only dependencies available in the {@link dagger.hilt.android.components.ViewModelComponent}
  * can be injected into the {@code ViewModel}.

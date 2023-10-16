@@ -1,0 +1,96 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
+})
+final class DaggerMyComponent {
+  private DaggerMyComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static MyComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public MyComponent build() {
+      return new MyComponentImpl();
+    }
+  }
+
+  private static final class MySubcomponentImpl implements MySubcomponent {
+    private final MyComponentImpl myComponentImpl;
+
+    private final MySubcomponentImpl mySubcomponentImpl = this;
+
+    private MyAssistedClass_Factory myAssistedClassProvider;
+
+    private Provider<MySubcomponentAssistedFactory> mySubcomponentAssistedFactoryProvider;
+
+    private MySubcomponentImpl(MyComponentImpl myComponentImpl) {
+      this.myComponentImpl = myComponentImpl;
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.myAssistedClassProvider = MyAssistedClass_Factory.create(Baz_Factory.create());
+      this.mySubcomponentAssistedFactoryProvider = MySubcomponentAssistedFactory_Impl.create(myAssistedClassProvider);
+    }
+
+    @Override
+    public MySubcomponentAssistedFactory mySubcomponentAssistedFactory() {
+      return mySubcomponentAssistedFactoryProvider.get();
+    }
+  }
+
+  private static final class MyComponentImpl implements MyComponent {
+    private final MyComponentImpl myComponentImpl = this;
+
+    private MyAssistedClass_Factory myAssistedClassProvider;
+
+    private Provider<MyComponentAssistedFactory> myComponentAssistedFactoryProvider;
+
+    private MyComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.myAssistedClassProvider = MyAssistedClass_Factory.create(Baz_Factory.create());
+      this.myComponentAssistedFactoryProvider = MyComponentAssistedFactory_Impl.create(myAssistedClassProvider);
+    }
+
+    @Override
+    public MyComponentAssistedFactory myComponentAssistedFactory() {
+      return myComponentAssistedFactoryProvider.get();
+    }
+
+    @Override
+    public MySubcomponent mySubcomponent() {
+      return new MySubcomponentImpl(myComponentImpl);
+    }
+  }
+}

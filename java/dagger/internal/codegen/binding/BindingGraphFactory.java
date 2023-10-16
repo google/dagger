@@ -51,6 +51,7 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.model.BindingKind;
 import dagger.internal.codegen.model.ComponentPath;
 import dagger.internal.codegen.model.DaggerTypeElement;
 import dagger.internal.codegen.model.DependencyRequest;
@@ -812,11 +813,17 @@ public final class BindingGraphFactory implements ClearableCache {
         /* Resolve in the parent in case there are multibinding contributions or conflicts in some
          * component between this one and the previously-resolved one. */
         parentResolver.get().resolve(key);
-        if (!new LocalDependencyChecker().dependsOnLocalBindings(key)
-            && getLocalExplicitBindings(key).isEmpty()) {
+        ResolvedBindings previouslyResolvedBindings = getPreviouslyResolvedBindings(key).get();
+        // TODO(b/305748522): Allow caching for assisted injection bindings.
+        boolean isAssistedInjectionBinding =
+            previouslyResolvedBindings.bindings().stream()
+                .anyMatch(binding -> binding.kind() == BindingKind.ASSISTED_INJECTION);
+        if (!isAssistedInjectionBinding
+                && !new LocalDependencyChecker().dependsOnLocalBindings(key)
+                && getLocalExplicitBindings(key).isEmpty()) {
           /* Cache the inherited parent component's bindings in case resolving at the parent found
            * bindings in some component between this one and the previously-resolved one. */
-          resolvedContributionBindings.put(key, getPreviouslyResolvedBindings(key).get());
+          resolvedContributionBindings.put(key, previouslyResolvedBindings);
           return;
         }
       }

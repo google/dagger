@@ -1,0 +1,149 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.SingleCheck;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
+})
+final class DaggerMyComponent {
+  private DaggerMyComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static MyComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public MyComponent build() {
+      return new MyComponentImpl();
+    }
+  }
+
+  private static final class MySubcomponentImpl implements MySubcomponent {
+    private final MyComponentImpl myComponentImpl;
+
+    private final MySubcomponentImpl mySubcomponentImpl = this;
+
+    private Provider<MySubcomponentAssistedFactory> mySubcomponentAssistedFactoryProvider;
+
+    private MySubcomponentImpl(MyComponentImpl myComponentImpl) {
+      this.myComponentImpl = myComponentImpl;
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.mySubcomponentAssistedFactoryProvider = SingleCheck.provider(new SwitchingProvider<MySubcomponentAssistedFactory>(myComponentImpl, mySubcomponentImpl, 0));
+    }
+
+    @Override
+    public MySubcomponentAssistedFactory mySubcomponentAssistedFactory() {
+      return mySubcomponentAssistedFactoryProvider.get();
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final MyComponentImpl myComponentImpl;
+
+      private final MySubcomponentImpl mySubcomponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(MyComponentImpl myComponentImpl, MySubcomponentImpl mySubcomponentImpl,
+          int id) {
+        this.myComponentImpl = myComponentImpl;
+        this.mySubcomponentImpl = mySubcomponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // test.MySubcomponentAssistedFactory 
+          return (T) new MySubcomponentAssistedFactory() {
+            @Override
+            public MyAssistedClass create(Bar bar, Foo foo) {
+              return new MyAssistedClass(foo, new Baz(), bar);
+            }
+          };
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+
+  private static final class MyComponentImpl implements MyComponent {
+    private final MyComponentImpl myComponentImpl = this;
+
+    private Provider<MyComponentAssistedFactory> myComponentAssistedFactoryProvider;
+
+    private MyComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.myComponentAssistedFactoryProvider = SingleCheck.provider(new SwitchingProvider<MyComponentAssistedFactory>(myComponentImpl, 0));
+    }
+
+    @Override
+    public MyComponentAssistedFactory myComponentAssistedFactory() {
+      return myComponentAssistedFactoryProvider.get();
+    }
+
+    @Override
+    public MySubcomponent mySubcomponent() {
+      return new MySubcomponentImpl(myComponentImpl);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final MyComponentImpl myComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(MyComponentImpl myComponentImpl, int id) {
+        this.myComponentImpl = myComponentImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // test.MyComponentAssistedFactory 
+          return (T) new MyComponentAssistedFactory() {
+            @Override
+            public MyAssistedClass create(Bar bar, Foo foo) {
+              return new MyAssistedClass(foo, new Baz(), bar);
+            }
+          };
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}

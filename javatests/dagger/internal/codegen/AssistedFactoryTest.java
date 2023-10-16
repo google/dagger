@@ -326,4 +326,110 @@ public class AssistedFactoryTest {
               subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
             });
   }
+
+  // This is a regression test for b/305748522
+  // The important thing for this test is that we have two assisted factories for the same assisted
+  // injection class and that they are requested in different components.
+  @Test
+  public void testMultipleAssistedFactoryInDifferentComponents() throws Exception {
+    Source component =
+        CompilerTests.javaSource(
+            "test.MyComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface MyComponent {",
+            "  MyComponentAssistedFactory myComponentAssistedFactory();",
+            "  MySubcomponent mySubcomponent();",
+            "}");
+    Source subcomponent =
+        CompilerTests.javaSource(
+            "test.MySubcomponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface MySubcomponent {",
+            "  MySubcomponentAssistedFactory mySubcomponentAssistedFactory();",
+            "}");
+    Source assistedClass =
+        CompilerTests.javaSource(
+            "test.MyAssistedClass",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "final class MyAssistedClass {",
+            "  private final Foo foo;",
+            "  private final Bar bar;",
+            "",
+            "  @AssistedInject",
+            "  MyAssistedClass(@Assisted Foo foo, Baz baz, @Assisted Bar bar) {",
+            "    this.foo = foo;",
+            "    this.bar = bar;",
+            "  }",
+            "}");
+    Source componentAssistedFactory =
+        CompilerTests.javaSource(
+            "test.MyComponentAssistedFactory",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "interface MyComponentAssistedFactory {",
+            "  MyAssistedClass create(Bar bar, Foo foo);",
+            "}");
+    Source subcomponentAssistedFactory =
+        CompilerTests.javaSource(
+            "test.MySubcomponentAssistedFactory",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "interface MySubcomponentAssistedFactory {",
+            "  MyAssistedClass create(Bar bar, Foo foo);",
+            "}");
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "final class Foo {}");
+    Source bar =
+        CompilerTests.javaSource(
+            "test.Bar",
+            "package test;",
+            "final class Bar {}");
+    Source baz =
+        CompilerTests.javaSource(
+            "test.Baz",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "final class Baz {",
+            "  @Inject Baz() {}",
+            "}");
+
+    CompilerTests.daggerCompiler(
+            component,
+            subcomponent,
+            assistedClass,
+            componentAssistedFactory,
+            subcomponentAssistedFactory,
+            foo,
+            bar,
+            baz)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerMyComponent"));
+            });
+  }
 }

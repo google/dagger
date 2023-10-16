@@ -47,7 +47,6 @@ final class FrameworkInstanceBindingRepresentation {
   FrameworkInstanceBindingRepresentation(
       @Assisted ProvisionBinding binding,
       BindingGraph graph,
-      @Assisted FrameworkInstanceSupplier providerField,
       ComponentImplementation componentImplementation,
       DelegateRequestRepresentation.Factory delegateRequestRepresentationFactory,
       DerivedFromFrameworkInstanceRequestRepresentation.Factory
@@ -65,7 +64,7 @@ final class FrameworkInstanceBindingRepresentation {
     this.providerRequestRepresentation =
         binding.kind().equals(DELEGATE) && !needsCaching(binding, graph)
             ? delegateRequestRepresentationFactory.create(binding, RequestKind.PROVIDER)
-            : providerInstanceRequestRepresentationFactory.create(binding, providerField);
+            : providerInstanceRequestRepresentationFactory.create(binding);
     this.producerFromProviderRepresentation =
         producerNodeInstanceRequestRepresentationFactory.create(
             binding,
@@ -108,7 +107,6 @@ final class FrameworkInstanceBindingRepresentation {
 
   @AssistedFactory
   static interface Factory {
-    FrameworkInstanceBindingRepresentation create(
-        ProvisionBinding binding, FrameworkInstanceSupplier providerField);
+    FrameworkInstanceBindingRepresentation create(ProvisionBinding binding);
   }
 }

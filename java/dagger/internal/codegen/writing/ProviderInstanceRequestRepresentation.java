@@ -20,18 +20,29 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
-import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
+import dagger.internal.codegen.binding.ProvisionBinding;
 
 /** Binding expression for provider instances. */
 final class ProviderInstanceRequestRepresentation extends FrameworkInstanceRequestRepresentation {
 
   @AssistedInject
   ProviderInstanceRequestRepresentation(
-      @Assisted ContributionBinding binding,
-      @Assisted FrameworkInstanceSupplier frameworkInstanceSupplier,
+      @Assisted ProvisionBinding binding,
+      SwitchingProviderInstanceSupplier.Factory switchingProviderInstanceSupplierFactory,
+      StaticFactoryInstanceSupplier.Factory staticFactoryInstanceSupplierFactory,
+      ProviderInstanceSupplier.Factory providerInstanceSupplierFactory,
+      ComponentImplementation componentImplementation,
       XProcessingEnv processingEnv) {
-    super(binding, frameworkInstanceSupplier, processingEnv);
+    super(
+        binding,
+        frameworkInstanceSupplier(
+            binding,
+            switchingProviderInstanceSupplierFactory,
+            staticFactoryInstanceSupplierFactory,
+            providerInstanceSupplierFactory,
+            componentImplementation),
+        processingEnv);
   }
 
   @Override
@@ -39,9 +50,27 @@ final class ProviderInstanceRequestRepresentation extends FrameworkInstanceReque
     return FrameworkType.PROVIDER;
   }
 
+  private static FrameworkInstanceSupplier frameworkInstanceSupplier(
+      ProvisionBinding binding,
+      SwitchingProviderInstanceSupplier.Factory switchingProviderInstanceSupplierFactory,
+      StaticFactoryInstanceSupplier.Factory staticFactoryInstanceSupplierFactory,
+      ProviderInstanceSupplier.Factory providerInstanceSupplierFactory,
+      ComponentImplementation componentImplementation) {
+    FrameworkInstanceKind frameworkInstanceKind =
+        FrameworkInstanceKind.from(binding, componentImplementation.compilerMode());
+    switch (frameworkInstanceKind) {
+      case SWITCHING_PROVIDER:
+        return switchingProviderInstanceSupplierFactory.create(binding);
+      case STATIC_FACTORY:
+        return staticFactoryInstanceSupplierFactory.create(binding);
+      case PROVIDER_FIELD:
+        return providerInstanceSupplierFactory.create(binding);
+    }
+    throw new AssertionError("Unexpected FrameworkInstanceKind: " + frameworkInstanceKind);
+  }
+
   @AssistedFactory
   static interface Factory {
-    ProviderInstanceRequestRepresentation create(
-        ContributionBinding binding, FrameworkInstanceSupplier frameworkInstanceSupplier);
+    ProviderInstanceRequestRepresentation create(ProvisionBinding binding);
   }
 }

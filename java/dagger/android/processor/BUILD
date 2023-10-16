@@ -15,6 +15,7 @@
 # Description:
 #   Public Dagger API for Android
 
+load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 load("@rules_java//java:defs.bzl", "java_library", "java_plugin")
 load(
     "//:build_defs.bzl",
@@ -23,7 +24,6 @@ load(
     "POM_VERSION",
 )
 load("//tools:maven.bzl", "pom_file")
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 package(default_visibility = ["//:src"])
 
@@ -40,14 +40,15 @@ java_library(
     deps = [
         "//java/dagger:core",
         "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/spi",
-        "//third_party/java/auto:common",
         "//third_party/java/auto:service",
         "//third_party/java/auto:value",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
         "//third_party/java/javapoet",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )
 

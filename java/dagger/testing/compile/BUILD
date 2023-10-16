@@ -26,6 +26,9 @@ java_library(
         "CompilerProcessors.java",
         "CompilerTests.java",
     ],
+    exports = [
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+    ],
     deps = [
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/codegen/extension",

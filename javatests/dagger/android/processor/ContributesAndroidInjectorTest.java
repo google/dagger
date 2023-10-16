@@ -16,20 +16,17 @@
 
 package dagger.android.processor;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.Compiler.javac;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import dagger.testing.compile.CompilerTests;
+import dagger.testing.compile.CompilerTests.DaggerCompiler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public final class ContributesAndroidInjectorTest {
-  private static final JavaFileObject TEST_ACTIVITY =
-      JavaFileObjects.forSourceLines(
+  private static final Source TEST_ACTIVITY =
+      CompilerTests.javaSource(
           "test.TestActivity",
           "package test;",
           "",
@@ -39,8 +36,8 @@ public final class ContributesAndroidInjectorTest {
 
   @Test
   public void notAbstract() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -55,26 +52,26 @@ public final class ContributesAndroidInjectorTest {
             "  }",
             "}");
 
-    Compilation compilation = compile(module, TEST_ACTIVITY);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("must be abstract")
-        .inFile(module)
-        .onLineContaining("test()");
+    compile(module, TEST_ACTIVITY)
+        .compile(
+            subject -> {
+              subject.compilationDidFail();
+              subject.hasErrorContaining("must be abstract").onLineContaining("test()");
+            });
   }
 
   @Test
   public void hasParameters() {
-    JavaFileObject otherActivity =
-        JavaFileObjects.forSourceLines(
+    Source otherActivity =
+        CompilerTests.javaSource(
             "test.OtherActivity",
             "package test;",
             "",
             "import android.app.Activity;",
             "",
             "class OtherActivity extends Activity {}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -90,22 +87,19 @@ public final class ContributesAndroidInjectorTest {
             "  abstract OtherActivity manyParams(OtherActivity two, Object o);",
             "}");
 
-    Compilation compilation = compile(module, TEST_ACTIVITY, otherActivity);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("cannot have parameters")
-        .inFile(module)
-        .onLineContaining("oneParam(");
-    assertThat(compilation)
-        .hadErrorContaining("cannot have parameters")
-        .inFile(module)
-        .onLineContaining("manyParams(");
+    compile(module, TEST_ACTIVITY, otherActivity)
+        .compile(
+            subject -> {
+              subject.compilationDidFail();
+              subject.hasErrorContaining("cannot have parameters").onLineContaining("oneParam(");
+              subject.hasErrorContaining("cannot have parameters").onLineContaining("manyParams(");
+            });
   }
 
   @Test
   public void notInAModule() {
-    JavaFileObject randomFile =
-        JavaFileObjects.forSourceLines(
+    Source randomFile =
+        CompilerTests.javaSource(
             "test.RandomFile",
             "package test;",
             "",
@@ -116,26 +110,26 @@ public final class ContributesAndroidInjectorTest {
             "  abstract TestActivity test() {}",
             "}");
 
-    Compilation compilation = compile(randomFile, TEST_ACTIVITY);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("must be in a @Module")
-        .inFile(randomFile)
-        .onLineContaining("test()");
+    compile(randomFile, TEST_ACTIVITY)
+        .compile(
+            subject -> {
+              subject.compilationDidFail();
+              subject.hasErrorContaining("must be in a @Module").onLineContaining("test()");
+            });
   }
 
   @Test
   public void parameterizedReturnType() {
-    JavaFileObject parameterizedActivity =
-        JavaFileObjects.forSourceLines(
+    Source parameterizedActivity =
+        CompilerTests.javaSource(
             "test.ParameterizedActivity",
             "package test;",
             "",
             "import android.app.Activity;",
             "",
             "class ParameterizedActivity<T> extends Activity {}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -148,18 +142,20 @@ public final class ContributesAndroidInjectorTest {
             "  abstract <T> ParameterizedActivity<T> test();",
             "}");
 
-    Compilation compilation = compile(module, TEST_ACTIVITY, parameterizedActivity);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("cannot return parameterized types")
-        .inFile(module)
-        .onLineContaining("test()");
+    compile(module, TEST_ACTIVITY, parameterizedActivity)
+        .compile(
+            subject -> {
+              subject.compilationDidFail();
+              subject
+                  .hasErrorContaining("cannot return parameterized types")
+                  .onLineContaining("test()");
+            });
   }
 
   @Test
   public void moduleIsntModule() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -172,18 +168,20 @@ public final class ContributesAndroidInjectorTest {
             "  abstract TestActivity test();",
             "}");
 
-    Compilation compilation = compile(module, TEST_ACTIVITY);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Intent is not a @Module")
-        .inFile(module)
-        .onLineContaining("modules = android.content.Intent.class");
+    compile(module, TEST_ACTIVITY)
+        .compile(
+            subject -> {
+              subject.compilationDidFail();
+              subject
+                  .hasErrorContaining("Intent is not a @Module")
+                  .onLineContaining("modules = android.content.Intent.class");
+            });
   }
 
   @Test
   public void hasQualifier() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -200,15 +198,19 @@ public final class ContributesAndroidInjectorTest {
             "  abstract TestActivity test();",
             "}");
 
-    Compilation compilation = compile(module, TEST_ACTIVITY);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("@ContributesAndroidInjector methods cannot have qualifiers")
-        .inFile(module)
-        .onLineContaining("@AndroidQualifier");
+    compile(module, TEST_ACTIVITY)
+        .compile(
+            subject -> {
+              subject.compilationDidFail();
+              subject
+                  .hasErrorContaining("@ContributesAndroidInjector methods cannot have qualifiers")
+                  .onLineContaining("@AndroidQualifier");
+            });
   }
 
-  private static Compilation compile(JavaFileObject... javaFileObjects) {
-    return javac().withProcessors(new AndroidProcessor()).compile(javaFileObjects);
+  private static DaggerCompiler compile(Source... sources) {
+    return CompilerTests.daggerCompiler(sources)
+        .withAdditionalJavacProcessors(new AndroidProcessor())
+        .withAdditionalKspProcessors(new KspAndroidProcessor.Provider());
   }
 }

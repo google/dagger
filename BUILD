@@ -76,17 +76,6 @@ android_library(
 )
 
 jarjar_library(
-    name = "shaded_android_processor",
-    jars = [
-        "//java/dagger/android/processor",
-        "//third_party/java/auto:common",
-    ],
-    rules = [
-        "rule com.google.auto.common.** dagger.android.shaded.auto.common.@1",
-    ],
-)
-
-jarjar_library(
     name = "shaded_grpc_server_processor",
     jars = [
         "//java/dagger/grpc/server/processor",

@@ -16,23 +16,27 @@
 
 package dagger.android.processor;
 
-import static com.google.auto.common.GeneratedAnnotationSpecs.generatedAnnotationSpec;
+import static androidx.room.compiler.processing.JavaPoetExtKt.addOriginatingElement;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static com.squareup.javapoet.TypeSpec.interfaceBuilder;
+import static dagger.android.processor.DelegateAndroidProcessor.FLAG_EXPERIMENTAL_USE_STRING_KEYS;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
-import static javax.lang.model.util.ElementFilter.methodsIn;
+import static javax.tools.Diagnostic.Kind.ERROR;
 
-import com.google.auto.common.BasicAnnotationProcessor.Step;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
+import com.google.common.base.Ascii;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
@@ -41,52 +45,26 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.WildcardTypeName;
-import dagger.android.processor.AndroidInjectorDescriptor.Validator;
-import java.io.IOException;
-import javax.annotation.processing.Filer;
-import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.util.Elements;
+import dagger.internal.codegen.xprocessing.XElements;
 
 /** Generates the implementation specified in {@code ContributesAndroidInjector}. */
-final class ContributesAndroidInjectorGenerator implements Step {
-
+final class ContributesAndroidInjectorProcessingStep extends BaseProcessingStep {
   private final AndroidInjectorDescriptor.Validator validator;
-  private final Filer filer;
-  private final Elements elements;
-  private final boolean useStringKeys;
-  private final SourceVersion sourceVersion;
+  private final XProcessingEnv processingEnv;
 
-  ContributesAndroidInjectorGenerator(
-      Validator validator,
-      boolean useStringKeys,
-      Filer filer,
-      Elements elements,
-      SourceVersion sourceVersion) {
-    this.validator = validator;
-    this.useStringKeys = useStringKeys;
-    this.filer = filer;
-    this.elements = elements;
-    this.sourceVersion = sourceVersion;
+  ContributesAndroidInjectorProcessingStep(XProcessingEnv processingEnv) {
+    this.processingEnv = processingEnv;
+    this.validator = new AndroidInjectorDescriptor.Validator(processingEnv.getMessager());
   }
 
   @Override
-  public ImmutableSet<String> annotations() {
-    return ImmutableSet.of(TypeNames.CONTRIBUTES_ANDROID_INJECTOR.toString());
+  public ImmutableSet<ClassName> annotationClassNames() {
+    return ImmutableSet.of(TypeNames.CONTRIBUTES_ANDROID_INJECTOR);
   }
 
   @Override
-  public ImmutableSet<Element> process(ImmutableSetMultimap<String, Element> elementsByAnnotation) {
-    ImmutableSet.Builder<Element> deferredElements = ImmutableSet.builder();
-    for (ExecutableElement method : methodsIn(elementsByAnnotation.values())) {
-      try {
-        validator.createIfValid(method).ifPresent(this::generate);
-      } catch (TypeNotPresentException e) {
-        deferredElements.add(method);
-      }
-    }
-    return deferredElements.build();
+  public void process(XElement element, ImmutableSet<ClassName> annotationNames) {
+    validator.createIfValid(XElements.asMethod(element)).ifPresent(this::generate);
   }
 
   private void generate(AndroidInjectorDescriptor descriptor) {
@@ -97,7 +75,7 @@ final class ContributesAndroidInjectorGenerator implements Step {
             .peerClass(
                 Joiner.on('_').join(descriptor.enclosingModule().simpleNames())
                     + "_"
-                    + LOWER_CAMEL.to(UPPER_CAMEL, descriptor.method().getSimpleName().toString()));
+                    + LOWER_CAMEL.to(UPPER_CAMEL, XElements.getSimpleName(descriptor.method())));
 
     String baseName = descriptor.injectedType().simpleName();
     ClassName subcomponentName = moduleName.nestedClass(baseName + "Subcomponent");
@@ -105,7 +83,6 @@ final class ContributesAndroidInjectorGenerator implements Step {
 
     TypeSpec.Builder module =
         classBuilder(moduleName)
-            .addOriginatingElement(descriptor.method())
             .addAnnotation(
                 AnnotationSpec.builder(TypeNames.MODULE)
                     .addMember("subcomponents", "$T.class", subcomponentName)
@@ -114,16 +91,45 @@ final class ContributesAndroidInjectorGenerator implements Step {
             .addMethod(bindAndroidInjectorFactory(descriptor, subcomponentFactoryName))
             .addType(subcomponent(descriptor, subcomponentName, subcomponentFactoryName))
             .addMethod(constructorBuilder().addModifiers(PRIVATE).build());
-    generatedAnnotationSpec(elements, sourceVersion, AndroidProcessor.class)
-        .ifPresent(module::addAnnotation);
 
-    try {
-      JavaFile.builder(moduleName.packageName(), module.build())
-          .skipJavaLangImports(true)
-          .build()
-          .writeTo(filer);
-    } catch (IOException e) {
-      throw new AssertionError(e);
+    addOriginatingElement(module, descriptor.method());
+
+    XTypeElement generatedAnnotation = processingEnv.findGeneratedAnnotation();
+    if (generatedAnnotation != null) {
+      module.addAnnotation(
+          AnnotationSpec.builder(generatedAnnotation.getClassName())
+              .addMember(
+                  "value", "$S", ClassName.get("dagger.android.processor", "AndroidProcessor"))
+              .build());
+    }
+
+    processingEnv
+        .getFiler()
+        .write(
+            JavaFile.builder(moduleName.packageName(), module.build())
+                .skipJavaLangImports(true)
+                .build(),
+            XFiler.Mode.Isolating);
+  }
+
+  private static boolean useStringKeys(XProcessingEnv processingEnv) {
+    if (!processingEnv.getOptions().containsKey(FLAG_EXPERIMENTAL_USE_STRING_KEYS)) {
+      return false;
+    }
+    String flagValue = processingEnv.getOptions().get(FLAG_EXPERIMENTAL_USE_STRING_KEYS);
+    if (flagValue == null || Ascii.equalsIgnoreCase(flagValue, "true")) {
+      return true;
+    } else if (Ascii.equalsIgnoreCase(flagValue, "false")) {
+      return false;
+    } else {
+      processingEnv
+          .getMessager()
+          .printMessage(
+              ERROR,
+              String.format(
+                  "Unknown flag value: %s. %s must be set to either 'true' or 'false'.",
+                  flagValue, FLAG_EXPERIMENTAL_USE_STRING_KEYS));
+      return false;
     }
   }
 
@@ -142,7 +148,7 @@ final class ContributesAndroidInjectorGenerator implements Step {
   }
 
   private AnnotationSpec androidInjectorMapKey(AndroidInjectorDescriptor descriptor) {
-    if (useStringKeys) {
+    if (useStringKeys(processingEnv)) {
       return AnnotationSpec.builder(TypeNames.ANDROID_INJECTION_KEY)
           .addMember("value", "$S", descriptor.injectedType().toString())
           .build();

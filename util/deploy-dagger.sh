@@ -108,8 +108,8 @@ _deploy \
   ""
 
 _deploy \
-  "" \
-  shaded_android_processor.jar \
+  "com.google.auto.common,dagger.spi.internal.shaded.auto.common;androidx.room.compiler,dagger.spi.internal.shaded.androidx.room.compiler;kotlinx.metadata,dagger.spi.internal.shaded.kotlinx.metadata;androidx.room,dagger.spi.internal.shaded.androidx.room" \
+  java/dagger/android/processor/libprocessor.jar \
   java/dagger/android/processor/pom.xml \
   java/dagger/android/processor/libprocessor-src.jar \
   java/dagger/android/processor/processor-javadoc.jar \

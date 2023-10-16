@@ -16,29 +16,23 @@
 
 package dagger.android.processor;
 
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-import static dagger.android.processor.MoreDaggerElements.getAnnotatedAnnotations;
-import static java.util.stream.Collectors.toList;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-
-import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XAnnotationValue;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.TypeName;
-import java.util.List;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Optional;
-import javax.annotation.processing.Messager;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 import javax.tools.Diagnostic.Kind;
 
 /**
@@ -60,7 +54,7 @@ abstract class AndroidInjectorDescriptor {
   abstract ClassName enclosingModule();
 
   /** The method annotated with {@code ContributesAndroidInjector}. */
-  abstract ExecutableElement method();
+  abstract XExecutableElement method();
 
   @AutoValue.Builder
   abstract static class Builder {
@@ -72,15 +66,15 @@ abstract class AndroidInjectorDescriptor {
 
     abstract Builder enclosingModule(ClassName enclosingModule);
 
-    abstract Builder method(ExecutableElement method);
+    abstract Builder method(XExecutableElement method);
 
     abstract AndroidInjectorDescriptor build();
   }
 
   static final class Validator {
-    private final Messager messager;
+    private final XMessager messager;
 
-    Validator(Messager messager) {
+    Validator(XMessager messager) {
       this.messager = messager;
     }
 
@@ -88,10 +82,10 @@ abstract class AndroidInjectorDescriptor {
      * Validates a {@code ContributesAndroidInjector} method, returning an {@link
      * AndroidInjectorDescriptor} if it is valid, or {@link Optional#empty()} otherwise.
      */
-    Optional<AndroidInjectorDescriptor> createIfValid(ExecutableElement method) {
+    Optional<AndroidInjectorDescriptor> createIfValid(XMethodElement method) {
       ErrorReporter reporter = new ErrorReporter(method, messager);
 
-      if (!method.getModifiers().contains(ABSTRACT)) {
+      if (!method.isAbstract()) {
         reporter.reportError("@ContributesAndroidInjector methods must be abstract");
       }
 
@@ -101,41 +95,40 @@ abstract class AndroidInjectorDescriptor {
 
       AndroidInjectorDescriptor.Builder builder =
           new AutoValue_AndroidInjectorDescriptor.Builder().method(method);
-      TypeElement enclosingElement = MoreElements.asType(method.getEnclosingElement());
-      if (!MoreDaggerElements.isAnnotationPresent(enclosingElement, TypeNames.MODULE)) {
+      XTypeElement enclosingElement = XElements.asTypeElement(method.getEnclosingElement());
+      if (!enclosingElement.hasAnnotation(TypeNames.MODULE)) {
         reporter.reportError("@ContributesAndroidInjector methods must be in a @Module");
       }
-      builder.enclosingModule(ClassName.get(enclosingElement));
+      builder.enclosingModule(enclosingElement.getClassName());
 
-      TypeMirror injectedType = method.getReturnType();
-      if (MoreTypes.asDeclared(injectedType).getTypeArguments().isEmpty()) {
-        builder.injectedType(ClassName.get(MoreTypes.asTypeElement(injectedType)));
+      XType injectedType = method.getReturnType();
+      if (injectedType.getTypeArguments().isEmpty()) {
+        builder.injectedType(injectedType.getTypeElement().getClassName());
       } else {
         reporter.reportError(
             "@ContributesAndroidInjector methods cannot return parameterized types");
       }
 
-      AnnotationMirror annotation =
-          MoreDaggerElements.getAnnotationMirror(method, TypeNames.CONTRIBUTES_ANDROID_INJECTOR)
-              .get();
-      for (TypeMirror module :
-          getAnnotationValue(annotation, "modules").accept(new AllTypesVisitor(), null)) {
-        if (MoreDaggerElements.isAnnotationPresent(MoreTypes.asElement(module), TypeNames.MODULE)) {
-          builder.modulesBuilder().add((ClassName) TypeName.get(module));
+      XAnnotation annotation = method.getAnnotation(TypeNames.CONTRIBUTES_ANDROID_INJECTOR);
+      for (XType module : getTypeList(annotation.getAnnotationValue("modules"))) {
+        if (module.getTypeElement().hasAnnotation(TypeNames.MODULE)) {
+          builder.modulesBuilder().add((ClassName) module.getTypeName());
         } else {
           reporter.reportError(String.format("%s is not a @Module", module), annotation);
         }
       }
 
-      for (AnnotationMirror scope : Sets.union(
-          getAnnotatedAnnotations(method, TypeNames.SCOPE),
-          getAnnotatedAnnotations(method, TypeNames.SCOPE_JAVAX))) {
-        builder.scopesBuilder().add(AnnotationSpec.get(scope));
+      for (XAnnotation scope :
+          Sets.union(
+              method.getAnnotationsAnnotatedWith(TypeNames.SCOPE),
+              method.getAnnotationsAnnotatedWith(TypeNames.SCOPE_JAVAX))) {
+        builder.scopesBuilder().add(JavaPoetExtKt.toAnnotationSpec(scope));
       }
 
-      for (AnnotationMirror qualifier : Sets.union(
-          getAnnotatedAnnotations(method, TypeNames.QUALIFIER),
-          getAnnotatedAnnotations(method, TypeNames.QUALIFIER_JAVAX))) {
+      for (XAnnotation qualifier :
+          Sets.union(
+              method.getAnnotationsAnnotatedWith(TypeNames.QUALIFIER),
+              method.getAnnotationsAnnotatedWith(TypeNames.QUALIFIER_JAVAX))) {
         reporter.reportError(
             "@ContributesAndroidInjector methods cannot have qualifiers", qualifier);
       }
@@ -143,13 +136,23 @@ abstract class AndroidInjectorDescriptor {
       return reporter.hasError ? Optional.empty() : Optional.of(builder.build());
     }
 
+    private static ImmutableList<XType> getTypeList(XAnnotationValue annotationValue) {
+      if (annotationValue.hasTypeListValue()) {
+        return ImmutableList.copyOf(annotationValue.asTypeList());
+      }
+      if (annotationValue.hasTypeValue()) {
+        return ImmutableList.of(annotationValue.asType());
+      }
+      throw new IllegalArgumentException("Does not have type list");
+    }
+
     // TODO(ronshapiro): use ValidationReport once it is moved out of the compiler
     private static class ErrorReporter {
-      private final Element subject;
-      private final Messager messager;
+      private final XElement subject;
+      private final XMessager messager;
       private boolean hasError;
 
-      ErrorReporter(Element subject, Messager messager) {
+      ErrorReporter(XElement subject, XMessager messager) {
         this.subject = subject;
         this.messager = messager;
       }
@@ -159,29 +162,10 @@ abstract class AndroidInjectorDescriptor {
         messager.printMessage(Kind.ERROR, error, subject);
       }
 
-      void reportError(String error, AnnotationMirror annotation) {
+      void reportError(String error, XAnnotation annotation) {
         hasError = true;
         messager.printMessage(Kind.ERROR, error, subject, annotation);
       }
-    }
-  }
-
-  private static final class AllTypesVisitor
-      extends SimpleAnnotationValueVisitor8<ImmutableSet<TypeMirror>, Void> {
-    @Override
-    public ImmutableSet<TypeMirror> visitArray(List<? extends AnnotationValue> values, Void aVoid) {
-      return ImmutableSet.copyOf(
-          values.stream().flatMap(v -> v.accept(this, null).stream()).collect(toList()));
-    }
-
-    @Override
-    public ImmutableSet<TypeMirror> visitType(TypeMirror a, Void aVoid) {
-      return ImmutableSet.of(a);
-    }
-
-    @Override
-    protected ImmutableSet<TypeMirror> defaultAction(Object o, Void aVoid) {
-      throw new AssertionError(o);
     }
   }
 }

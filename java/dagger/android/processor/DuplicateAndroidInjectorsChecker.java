@@ -16,34 +16,34 @@
 
 package dagger.android.processor;
 
-import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.android.processor.AndroidMapKeys.injectedTypeFromMapKey;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XType;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
-import dagger.MapKey;
-import dagger.model.Binding;
-import dagger.model.BindingGraph;
-import dagger.model.BindingKind;
-import dagger.model.Key;
-import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
+import dagger.internal.codegen.xprocessing.DaggerElements;
+import dagger.internal.codegen.xprocessing.XElements;
+import dagger.internal.codegen.xprocessing.XTypes;
+import dagger.spi.model.Binding;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraphPlugin;
+import dagger.spi.model.BindingKind;
+import dagger.spi.model.DaggerProcessingEnv;
+import dagger.spi.model.DiagnosticReporter;
+import dagger.spi.model.Key;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * Validates that the two maps that {@code DispatchingAndroidInjector} injects have logically
@@ -53,6 +53,13 @@ import javax.lang.model.type.TypeMirror;
  */
 @AutoService(BindingGraphPlugin.class)
 public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugin {
+  private DaggerProcessingEnv processingEnv;
+
+  @Override
+  public void init(DaggerProcessingEnv processingEnv, Map<String, String> options) {
+    this.processingEnv = processingEnv;
+  }
+
   @Override
   public void visitGraph(BindingGraph graph, DiagnosticReporter diagnosticReporter) {
     for (Binding binding : graph.bindings()) {
@@ -64,7 +71,10 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
 
   private boolean isDispatchingAndroidInjector(Binding binding) {
     Key key = binding.key();
-    return MoreDaggerTypes.isTypeOf(TypeNames.DISPATCHING_ANDROID_INJECTOR, key.type())
+
+    return XTypes.isTypeOf(
+            DaggerElements.toXProcessing(key.type(), processingEnv),
+            TypeNames.DISPATCHING_ANDROID_INJECTOR)
         && !key.qualifier().isPresent();
   }
 
@@ -79,7 +89,7 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
 
     ImmutableListMultimap.Builder<String, Binding> mapKeyIndex = ImmutableListMultimap.builder();
     for (Binding injectorFactory : injectorFactories) {
-      AnnotationMirror mapKey = mapKey(injectorFactory).get();
+      XAnnotation mapKey = mapKey(injectorFactory).get();
       Optional<String> injectedType = injectedTypeFromMapKey(mapKey);
       if (injectedType.isPresent()) {
         mapKeyIndex.put(injectedType.get(), injectorFactory);
@@ -113,21 +123,26 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
         .filter(requestedBinding -> requestedBinding.kind().equals(BindingKind.MULTIBOUND_MAP))
         .filter(
             requestedBinding -> {
-              TypeMirror valueType =
-                  MoreTypes.asDeclared(requestedBinding.key().type()).getTypeArguments().get(1);
-              if (!MoreDaggerTypes.isTypeOf(TypeNames.PROVIDER, valueType)
-                  || !valueType.getKind().equals(TypeKind.DECLARED)) {
+              XType valueType =
+                  DaggerElements.toXProcessing(requestedBinding.key().type(), processingEnv)
+                      .getTypeArguments()
+                      .get(1);
+              if (!XTypes.isTypeOf(valueType, TypeNames.PROVIDER)
+                  || !XTypes.isDeclared(valueType)) {
                 return false;
               }
-              TypeMirror providedType = MoreTypes.asDeclared(valueType).getTypeArguments().get(0);
-              return MoreDaggerTypes.isTypeOf(TypeNames.ANDROID_INJECTOR_FACTORY, providedType);
+              XType providedType = valueType.getTypeArguments().get(0);
+              return XTypes.isTypeOf(providedType, TypeNames.ANDROID_INJECTOR_FACTORY);
             });
   }
 
-  private Optional<AnnotationMirror> mapKey(Binding binding) {
+  private Optional<XAnnotation> mapKey(Binding binding) {
     return binding
         .bindingElement()
-        .map(bindingElement -> getAnnotatedAnnotations(bindingElement, MapKey.class))
+        .map(
+            bindingElement ->
+                XElements.getAnnotatedAnnotations(
+                    DaggerElements.toXProcessing(bindingElement, processingEnv), TypeNames.MAP_KEY))
         .flatMap(
             annotations ->
                 annotations.isEmpty()

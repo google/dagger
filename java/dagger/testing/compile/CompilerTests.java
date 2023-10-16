@@ -21,6 +21,7 @@ import static com.google.common.collect.MoreCollectors.onlyElement;
 import static com.google.common.collect.Streams.stream;
 import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static java.util.stream.Collectors.toMap;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingEnvConfig;
@@ -39,6 +40,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
+import com.google.devtools.ksp.processing.SymbolProcessorProvider;
 import com.google.testing.compile.Compiler;
 import dagger.internal.codegen.ComponentProcessor;
 import dagger.internal.codegen.KspComponentProcessor;
@@ -46,11 +48,13 @@ import dagger.spi.model.BindingGraphPlugin;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
+import javax.annotation.processing.Processor;
 import org.junit.rules.TemporaryFolder;
 
 /** A helper class for working with java compiler tests. */
@@ -150,6 +154,8 @@ public final class CompilerTests {
       // Set default values
       return builder
           .processorOptions(DEFAULT_PROCESSOR_OPTIONS)
+          .additionalJavacProcessors(ImmutableList.of())
+          .additionalKspProcessors(ImmutableList.of())
           .processingStepSuppliers(ImmutableSet.of())
           .bindingGraphPluginSuppliers(ImmutableSet.of());
     }
@@ -159,6 +165,12 @@ public final class CompilerTests {
 
     /** Returns the annotation processor options */
     abstract ImmutableMap<String, String> processorOptions();
+
+    /** Returns the extra Javac processors. */
+    abstract ImmutableCollection<Processor> additionalJavacProcessors();
+
+    /** Returns the extra KSP processors. */
+    abstract ImmutableCollection<SymbolProcessorProvider> additionalKspProcessors();
 
     /** Returns the processing steps suppliers. */
     abstract ImmutableCollection<Supplier<XProcessingStep>> processingStepSuppliers();
@@ -192,6 +204,16 @@ public final class CompilerTests {
       return toBuilder().processorOptions(newProcessorOptions).build();
     }
 
+    /** Returns a new {@link HiltCompiler} instance with the additional Javac processors. */
+    public DaggerCompiler withAdditionalJavacProcessors(Processor... processors) {
+      return toBuilder().additionalJavacProcessors(ImmutableList.copyOf(processors)).build();
+    }
+
+    /** Returns a new {@link HiltCompiler} instance with the additional KSP processors. */
+    public DaggerCompiler withAdditionalKspProcessors(SymbolProcessorProvider... processors) {
+      return toBuilder().additionalKspProcessors(ImmutableList.copyOf(processors)).build();
+    }
+
     /** Returns a new {@link Compiler} instance with the given processing steps. */
     public DaggerCompiler withProcessingSteps(Supplier<XProcessingStep>... suppliers) {
       return toBuilder().processingStepSuppliers(ImmutableList.copyOf(suppliers)).build();
@@ -210,16 +232,30 @@ public final class CompilerTests {
           /* kotlincArguments= */ ImmutableList.of(
               "-P", "plugin:org.jetbrains.kotlin.kapt3:correctErrorTypes=true"),
           /* config= */ PROCESSING_ENV_CONFIG,
-          /* javacProcessors= */ ImmutableList.of(
-              ComponentProcessor.withTestPlugins(bindingGraphPlugins()),
-              new CompilerProcessors.JavacProcessor(processingSteps())),
-          /* symbolProcessorProviders= */ ImmutableList.of(
-              KspComponentProcessor.Provider.withTestPlugins(bindingGraphPlugins()),
-              new CompilerProcessors.KspProcessor.Provider(processingSteps())),
+          /* javacProcessors= */ mergeProcessors(
+              ImmutableList.of(
+                  ComponentProcessor.withTestPlugins(bindingGraphPlugins()),
+                  new CompilerProcessors.JavacProcessor(processingSteps())),
+              additionalJavacProcessors()),
+          /* symbolProcessorProviders= */ mergeProcessors(
+              ImmutableList.of(
+                  KspComponentProcessor.Provider.withTestPlugins(bindingGraphPlugins()),
+                  new CompilerProcessors.KspProcessor.Provider(processingSteps())),
+              additionalKspProcessors()),
           result -> {
             onCompilationResult.accept(result);
             return null;
           });
+    }
+
+    private static <T> ImmutableList<T> mergeProcessors(
+        Collection<T> defaultProcessors, Collection<T> extraProcessors) {
+      Map<Class<?>, T> processors =
+          defaultProcessors.stream()
+              .collect(toMap(Object::getClass, (T e) -> e, (p1, p2) -> p2, HashMap::new));
+      // Adds extra processors, and allows overriding any processors of the same class.
+      extraProcessors.forEach(processor -> processors.put(processor.getClass(), processor));
+      return ImmutableList.copyOf(processors.values());
     }
 
     /** Used to build a {@link DaggerCompiler}. */
@@ -227,6 +263,12 @@ public final class CompilerTests {
     public abstract static class Builder {
       abstract Builder sources(ImmutableCollection<Source> sources);
       abstract Builder processorOptions(Map<String, String> processorOptions);
+
+      abstract Builder additionalJavacProcessors(ImmutableCollection<Processor> processors);
+
+      abstract Builder additionalKspProcessors(
+          ImmutableCollection<SymbolProcessorProvider> processors);
+
       abstract Builder processingStepSuppliers(
           ImmutableCollection<Supplier<XProcessingStep>> processingStepSuppliers);
       abstract Builder bindingGraphPluginSuppliers(

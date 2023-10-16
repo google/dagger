@@ -16,13 +16,10 @@
 
 package dagger.android.processor;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.Compiler.javac;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import androidx.room.compiler.processing.util.Source;
 import dagger.internal.codegen.ComponentProcessor;
-import javax.tools.JavaFileObject;
+import dagger.internal.codegen.KspComponentProcessor;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -31,16 +28,16 @@ import org.junit.runners.JUnit4;
 public final class DuplicateAndroidInjectorsCheckerTest {
   @Test
   public void conflictingMapKeys() {
-    JavaFileObject activity =
-        JavaFileObjects.forSourceLines(
+    Source activity =
+        CompilerTests.javaSource(
             "test.TestActivity",
             "package test;",
             "",
             "import android.app.Activity;",
             "",
             "public class TestActivity extends Activity {}");
-    JavaFileObject injectorFactory =
-        JavaFileObjects.forSourceLines(
+    Source injectorFactory =
+        CompilerTests.javaSource(
             "test.TestInjectorFactory",
             "package test;",
             "",
@@ -53,8 +50,8 @@ public final class DuplicateAndroidInjectorsCheckerTest {
             "  @Override",
             "  public AndroidInjector<TestActivity> create(TestActivity instance) { return null; }",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -76,8 +73,8 @@ public final class DuplicateAndroidInjectorsCheckerTest {
             "  @AndroidInjectionKey(\"test.TestActivity\")",
             "  AndroidInjector.Factory<?> stringKey(TestInjectorFactory factory);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -90,17 +87,20 @@ public final class DuplicateAndroidInjectorsCheckerTest {
             "  DispatchingAndroidInjector<Activity> dispatchingInjector();",
             "}");
 
-    Compilation compilation =
-        javac()
-            .withProcessors(ComponentProcessor.forTesting(new DuplicateAndroidInjectorsChecker()))
-            .compile(activity, injectorFactory, module, component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Multiple injector factories bound for the same type")
-        .inFile(component)
-        .onLineContaining("interface TestComponent");
-    assertThat(compilation).hadErrorContaining("classKey(test.TestInjectorFactory)");
-    assertThat(compilation).hadErrorContaining("stringKey(test.TestInjectorFactory)");
-    assertThat(compilation).hadErrorCount(1);
+    CompilerTests.daggerCompiler(activity, injectorFactory, module, component)
+        .withAdditionalJavacProcessors(
+            ComponentProcessor.withTestPlugins(new DuplicateAndroidInjectorsChecker()))
+        .withAdditionalKspProcessors(
+            KspComponentProcessor.Provider.withTestPlugins(new DuplicateAndroidInjectorsChecker()))
+        .compile(
+            subject -> {
+              subject.compilationDidFail();
+              subject
+                  .hasErrorContaining("Multiple injector factories bound for the same type")
+                  .onLineContaining("interface TestComponent");
+              subject.hasErrorContaining("classKey(test.TestInjectorFactory)");
+              subject.hasErrorContaining("stringKey(test.TestInjectorFactory)");
+              subject.hasErrorCount(1);
+            });
   }
 }

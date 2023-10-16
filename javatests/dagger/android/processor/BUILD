@@ -30,6 +30,7 @@ GenJavaTests(
         "//java/dagger/android",
         "//java/dagger/android/processor",
         "//java/dagger/internal/codegen:processor",
+        "//java/dagger/testing/compile",
         "//third_party/java/compile_testing",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",

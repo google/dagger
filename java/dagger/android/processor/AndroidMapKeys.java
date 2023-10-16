@@ -16,13 +16,9 @@
 
 package dagger.android.processor;
 
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XAnnotationValue;
 import java.util.Optional;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 
 final class AndroidMapKeys {
   /**
@@ -30,13 +26,12 @@ final class AndroidMapKeys {
    * it's {@link dagger.multibindings.ClassKey}, returns the fully-qualified class name of the
    * annotation value. Otherwise returns {@link Optional#empty()}.
    */
-  static Optional<String> injectedTypeFromMapKey(AnnotationMirror mapKey) {
-    Object mapKeyClass = getAnnotationValue(mapKey, "value").getValue();
-    if (mapKeyClass instanceof String) {
-      return Optional.of((String) mapKeyClass);
-    } else if (mapKeyClass instanceof TypeMirror) {
-      TypeElement type = MoreTypes.asTypeElement((TypeMirror) mapKeyClass);
-      return Optional.of(type.getQualifiedName().toString());
+  static Optional<String> injectedTypeFromMapKey(XAnnotation mapKey) {
+    XAnnotationValue mapKeyClass = mapKey.getAnnotationValue("value");
+    if (mapKeyClass.hasStringValue()) {
+      return Optional.of(mapKeyClass.asString());
+    } else if (mapKeyClass.hasTypeValue()) {
+      return Optional.of(mapKeyClass.asType().getTypeElement().getQualifiedName());
     } else {
       return Optional.empty();
     }

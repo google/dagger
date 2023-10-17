@@ -19,7 +19,6 @@ package dagger.internal.codegen.binding;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
-import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.SourceFiles.generatedMonitoringModuleName;
 import static dagger.internal.codegen.model.BindingKind.ASSISTED_INJECTION;
@@ -75,6 +74,13 @@ import javax.inject.Singleton;
 /** A factory for {@link BindingGraph} objects. */
 @Singleton
 public final class BindingGraphFactory implements ClearableCache {
+  private enum DependsOnLocalBindingsResult {
+    TRUE,
+    FALSE,
+    // A result is temporarily unknown if we run into a cycle since whether or not a binding in a
+    // cycle depends on a local binding depends on all other bindings in the cycle.
+    UNKNOWN
+  }
 
   private final XProcessingEnv processingEnv;
   private final InjectBindingRegistry injectBindingRegistry;
@@ -324,8 +330,9 @@ public final class BindingGraphFactory implements ClearableCache {
     final Map<Key, ResolvedBindings> resolvedContributionBindings = new LinkedHashMap<>();
     final Map<Key, ResolvedBindings> resolvedMembersInjectionBindings = new LinkedHashMap<>();
     final Deque<Key> cycleStack = new ArrayDeque<>();
-    final Map<Key, Boolean> keyDependsOnLocalBindingsCache = new HashMap<>();
-    final Map<Binding, Boolean> bindingDependsOnLocalBindingsCache = new HashMap<>();
+    final Map<Key, DependsOnLocalBindingsResult> keyDependsOnLocalBindingsCache = new HashMap<>();
+    final Map<Binding, DependsOnLocalBindingsResult> bindingDependsOnLocalBindingsCache =
+        new HashMap<>();
     final Queue<ComponentDescriptor> subcomponentsToResolve = new ArrayDeque<>();
 
     Resolver(
@@ -870,7 +877,7 @@ public final class BindingGraphFactory implements ClearableCache {
     }
 
     private final class LocalDependencyChecker {
-      private final Set<Object> cycleChecker = new HashSet<>();
+      private final Deque<Object> localCycleStack = new ArrayDeque<>();
 
       /**
        * Returns {@code true} if any of the bindings resolved for {@code key} are multibindings with
@@ -884,13 +891,13 @@ public final class BindingGraphFactory implements ClearableCache {
        * @throws IllegalArgumentException if {@link #getPreviouslyResolvedBindings(Key)} is empty
        */
       private boolean dependsOnLocalBindings(Key key) {
-        // Don't recur infinitely if there are valid cycles in the dependency graph.
-        // http://b/23032377
-        if (!cycleChecker.add(key)) {
-          return false;
+        if (dependsOnLocalBindingsInternal(key) == DependsOnLocalBindingsResult.UNKNOWN) {
+          // If the result is UNKNOWN then it means that we've iterated through all dependencies
+          // in the cycle and none of them had a local binding (otherwise the result would be TRUE)
+          // so just return FALSE now.
+          keyDependsOnLocalBindingsCache.put(key, DependsOnLocalBindingsResult.FALSE);
         }
-        return reentrantComputeIfAbsent(
-            keyDependsOnLocalBindingsCache, key, this::dependsOnLocalBindingsUncached);
+        return keyDependsOnLocalBindingsCache.get(key) == DependsOnLocalBindingsResult.TRUE;
       }
 
       /**
@@ -903,14 +910,52 @@ public final class BindingGraphFactory implements ClearableCache {
        * multibindings with contributions from subcomponents.
        */
       private boolean dependsOnLocalBindings(Binding binding) {
-        if (!cycleChecker.add(binding)) {
-          return false;
+        if (dependsOnLocalBindingsInternal(binding) == DependsOnLocalBindingsResult.UNKNOWN) {
+          // If the result is UNKNOWN then it means that we've iterated through all dependencies
+          // in the cycle and none of them had a local binding (otherwise the result would be TRUE)
+          // so just return FALSE now.
+          bindingDependsOnLocalBindingsCache.put(binding, DependsOnLocalBindingsResult.FALSE);
         }
-        return reentrantComputeIfAbsent(
-            bindingDependsOnLocalBindingsCache, binding, this::dependsOnLocalBindingsUncached);
+        return bindingDependsOnLocalBindingsCache.get(binding) == DependsOnLocalBindingsResult.TRUE;
       }
 
-      private boolean dependsOnLocalBindingsUncached(Key key) {
+      private DependsOnLocalBindingsResult dependsOnLocalBindingsInternal(Key key) {
+        if (localCycleStack.contains(key)) {
+          // Don't recur infinitely if there are valid cycles in the dependency graph (b/23032377).
+          return DependsOnLocalBindingsResult.UNKNOWN;
+        }
+        try {
+          localCycleStack.push(key);
+          DependsOnLocalBindingsResult result = dependsOnLocalBindingsUncached(key);
+          // If the result is UNKNOWN, don't cache so that it can be tried again later.
+          if (result != DependsOnLocalBindingsResult.UNKNOWN) {
+            keyDependsOnLocalBindingsCache.put(key, result);
+          }
+          return result;
+        } finally {
+          localCycleStack.pop();
+        }
+      }
+
+      private DependsOnLocalBindingsResult dependsOnLocalBindingsInternal(Binding binding) {
+        if (localCycleStack.contains(binding)) {
+          // Don't recur infinitely if there are valid cycles in the dependency graph (b/23032377).
+          return DependsOnLocalBindingsResult.UNKNOWN;
+        }
+        try {
+          localCycleStack.push(binding);
+          DependsOnLocalBindingsResult result = dependsOnLocalBindingsUncached(binding);
+          // If the result is UNKNOWN, don't cache so that it can be tried again later.
+          if (result != DependsOnLocalBindingsResult.UNKNOWN) {
+            bindingDependsOnLocalBindingsCache.put(binding, result);
+          }
+          return result;
+        } finally {
+          localCycleStack.pop();
+        }
+      }
+
+      private DependsOnLocalBindingsResult dependsOnLocalBindingsUncached(Key key) {
         checkArgument(
             getPreviouslyResolvedBindings(key).isPresent(),
             "no previously resolved bindings in %s for %s",
@@ -919,28 +964,45 @@ public final class BindingGraphFactory implements ClearableCache {
         ResolvedBindings previouslyResolvedBindings = getPreviouslyResolvedBindings(key).get();
         if (hasLocalMultibindingContributions(key)
             || hasLocalOptionalBindingContribution(previouslyResolvedBindings)) {
-          return true;
+          return DependsOnLocalBindingsResult.TRUE;
         }
-
+        boolean hasUnknown = false;
         for (Binding binding : previouslyResolvedBindings.bindings()) {
-          if (dependsOnLocalBindings(binding)) {
-            return true;
+          switch (dependsOnLocalBindingsInternal(binding)) {
+            case TRUE:
+              return DependsOnLocalBindingsResult.TRUE;
+            case UNKNOWN:
+              hasUnknown = true;
+              break;
+            case FALSE:
+              continue;
           }
         }
-        return false;
+        return hasUnknown
+            ? DependsOnLocalBindingsResult.UNKNOWN
+            : DependsOnLocalBindingsResult.FALSE;
       }
 
-      private boolean dependsOnLocalBindingsUncached(Binding binding) {
+      private DependsOnLocalBindingsResult dependsOnLocalBindingsUncached(Binding binding) {
+        boolean hasUnknown = false;
         if ((!binding.scope().isPresent() || binding.scope().get().isReusable())
             // TODO(beder): Figure out what happens with production subcomponents.
             && !binding.bindingType().equals(BindingType.PRODUCTION)) {
           for (DependencyRequest dependency : binding.dependencies()) {
-            if (dependsOnLocalBindings(dependency.key())) {
-              return true;
+            switch (dependsOnLocalBindingsInternal(dependency.key())) {
+              case TRUE:
+                return DependsOnLocalBindingsResult.TRUE;
+              case UNKNOWN:
+                hasUnknown = true;
+                break;
+              case FALSE:
+                continue;
             }
           }
         }
-        return false;
+        return hasUnknown
+            ? DependsOnLocalBindingsResult.UNKNOWN
+            : DependsOnLocalBindingsResult.FALSE;
       }
 
       /**

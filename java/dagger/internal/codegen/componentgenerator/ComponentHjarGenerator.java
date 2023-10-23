@@ -192,7 +192,14 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
                         && isElementAccessibleFrom(
                             module.moduleElement(),
                             component.typeElement().getClassName().packageName()))
-            .map(module -> ComponentRequirement.forModule(module.moduleElement().getType())));
+            .map(module -> ComponentRequirement.forModule(module.moduleElement().getType()))
+            // If the user hasn't defined an explicit creator/builder then we need to prune out the
+            // module requirements that don't require a module instance to match the non-hjar
+            // implementation.
+            .filter(
+                requirement ->
+                    component.creatorDescriptor().isPresent()
+                        || requirement.requiresModuleInstance()));
   }
 
   private boolean hasBindsInstanceMethods(ComponentDescriptor componentDescriptor) {

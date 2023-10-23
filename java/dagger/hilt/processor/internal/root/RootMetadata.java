@@ -21,7 +21,6 @@ import static com.google.common.base.Suppliers.memoize;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room.compiler.processing.XConstructorElement;
-import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Supplier;
@@ -196,33 +195,10 @@ public final class RootMetadata {
   }
 
   private static boolean daggerCanConstruct(XTypeElement type) {
-    if (type.isKotlinObject()) {
-      // Treat Kotlin object modules as if Dagger can construct them (it technically can't, but it
-      // doesn't need to as it can use them since all their provision methods are static).
+    if (!Processors.requiresModuleInstance(type)) {
       return true;
     }
-
-    return !isInnerClass(type)
-        && !hasNonDaggerAbstractMethod(type)
-        && (hasOnlyStaticProvides(type) || hasVisibleEmptyConstructor(type));
-  }
-
-  private static boolean isInnerClass(XTypeElement type) {
-    return type.isNested() && !type.isStatic();
-  }
-
-  private static boolean hasNonDaggerAbstractMethod(XTypeElement type) {
-    // TODO(erichang): Actually this isn't really supported b/28989613
-    return type.getDeclaredMethods().stream()
-        .filter(XMethodElement::isAbstract)
-        .anyMatch(method -> !Processors.hasDaggerAbstractMethodAnnotation(method));
-  }
-
-  private static boolean hasOnlyStaticProvides(XTypeElement type) {
-    // TODO(erichang): Check for @Produces too when we have a producers story
-    return type.getDeclaredMethods().stream()
-        .filter(method -> method.hasAnnotation(ClassNames.PROVIDES))
-        .allMatch(XMethodElement::isStatic);
+    return hasVisibleEmptyConstructor(type) && (!type.isNested() || type.isStatic());
   }
 
   private static boolean hasVisibleEmptyConstructor(XTypeElement type) {

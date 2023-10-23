@@ -1,7 +1,6 @@
 package test;
 
 import dagger.internal.DaggerGenerated;
-import dagger.internal.Preconditions;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -29,60 +28,6 @@ final class DaggerTestComponent {
 
   static final class Builder {
     private Builder() {
-    }
-
-    /**
-     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
-     */
-    @Deprecated
-    public Builder testModule(TestModule testModule) {
-      Preconditions.checkNotNull(testModule);
-      return this;
-    }
-
-    /**
-     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
-     */
-    @Deprecated
-    public Builder parentTestIncluded(ParentTestIncluded parentTestIncluded) {
-      Preconditions.checkNotNull(parentTestIncluded);
-      return this;
-    }
-
-    /**
-     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
-     */
-    @Deprecated
-    public Builder alwaysIncluded(AlwaysIncluded alwaysIncluded) {
-      Preconditions.checkNotNull(alwaysIncluded);
-      return this;
-    }
-
-    /**
-     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
-     */
-    @Deprecated
-    public Builder depModule(DepModule depModule) {
-      Preconditions.checkNotNull(depModule);
-      return this;
-    }
-
-    /**
-     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
-     */
-    @Deprecated
-    public Builder parentDepIncluded(ParentDepIncluded parentDepIncluded) {
-      Preconditions.checkNotNull(parentDepIncluded);
-      return this;
-    }
-
-    /**
-     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
-     */
-    @Deprecated
-    public Builder refByDep(RefByDep refByDep) {
-      Preconditions.checkNotNull(refByDep);
-      return this;
     }
 
     public TestComponent build() {

@@ -202,6 +202,12 @@ final class ComponentCreatorImplementationFactory {
         case NEEDED:
           return Optional.of(normalSetterMethod(requirement));
         case UNNEEDED:
+          // If this is a generated Builder, then remove the setter methods for modules that don't
+          // require an instance.
+          if (!componentDescriptor().creatorDescriptor().isPresent()
+                  && !requirement.requiresModuleInstance()) {
+            return Optional.empty();
+          }
           // TODO(bcorso): Don't generate noop setters for any unneeded requirements.
           // However, since this is a breaking change we can at least avoid trying
           // to generate noop setters for impossible cases like when the requirement type

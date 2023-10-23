@@ -2,7 +2,6 @@ package test;
 
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.DaggerGenerated;
-import dagger.internal.Preconditions;
 import java.util.Set;
 import javax.annotation.processing.Generated;
 
@@ -31,15 +30,6 @@ final class DaggerTestComponent {
 
   static final class Builder {
     private Builder() {
-    }
-
-    /**
-     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
-     */
-    @Deprecated
-    public Builder setModule(SetModule setModule) {
-      Preconditions.checkNotNull(setModule);
-      return this;
     }
 
     public TestComponent build() {

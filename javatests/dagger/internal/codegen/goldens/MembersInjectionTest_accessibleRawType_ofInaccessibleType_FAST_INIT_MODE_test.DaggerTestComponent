@@ -3,11 +3,9 @@ package test;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.DoubleCheck;
-import dagger.internal.Preconditions;
 import java.util.List;
 import javax.annotation.processing.Generated;
 import javax.inject.Provider;
-import other.InaccessiblesModule;
 import other.InaccessiblesModule_InaccessiblesFactory;
 import other.UsesInaccessibles;
 import other.UsesInaccessibles_Factory;
@@ -38,15 +36,6 @@ final class DaggerTestComponent {
 
   static final class Builder {
     private Builder() {
-    }
-
-    /**
-     * @deprecated This module is declared, but an instance is not used in the component. This method is a no-op. For more, see https://dagger.dev/unused-modules.
-     */
-    @Deprecated
-    public Builder inaccessiblesModule(InaccessiblesModule inaccessiblesModule) {
-      Preconditions.checkNotNull(inaccessiblesModule);
-      return this;
     }
 
     public TestComponent build() {

@@ -54,8 +54,7 @@ public final class ComponentNestedTypeTest {
 
   @Test
   public void typeNameWontClashWithNestedTypeName() {
-    TestComponent component =
-        DaggerComponentNestedTypeTest_TestComponent.builder().testModule(new TestModule()).build();
+    TestComponent component = DaggerComponentNestedTypeTest_TestComponent.create();
     assertThat(component.nestedType()).isNotNull();
   }
 }

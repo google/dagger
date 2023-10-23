@@ -145,7 +145,7 @@ public abstract class ComponentRequirement {
    * <p>Alternatively, if the module is a Kotlin Object then the binding methods are considered
    * {@code static}, requiring no module instance.
    */
-  private boolean requiresModuleInstance() {
+  public boolean requiresModuleInstance() {
     if (typeElement().isKotlinObject() || typeElement().isCompanionObject()) {
       return false;
     }

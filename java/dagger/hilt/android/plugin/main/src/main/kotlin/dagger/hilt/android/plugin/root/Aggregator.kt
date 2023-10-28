@@ -385,7 +385,7 @@ private constructor(
     files.forEach { file ->
       when {
         file.isFile -> visitFile(file)
-        file.isDirectory -> file.walkTopDown().filter { it.isFile }.forEach { visitFile(it) }
+        file.isDirectory -> file.walkInPlatformIndependentOrder().filter { it.isFile }.forEach { visitFile(it) }
         else -> logger.warn("Can't process file/directory that doesn't exist: $file")
       }
     }

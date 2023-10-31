@@ -37,7 +37,9 @@ jobs:
   bazel-test:
     name: 'Bazel tests'
     needs: validate-latest-dagger-version
-    runs-on: ubuntu-latest
+    runs-on:
+      group: large-runner
+      labels: ubuntu-22.04-16core
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/bazel-test

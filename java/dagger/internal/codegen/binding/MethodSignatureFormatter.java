@@ -161,7 +161,6 @@ public final class MethodSignatureFormatter extends Formatter<XExecutableElement
     Nullability nullability = Nullability.of(executableElement);
     if (nullability.isKotlinTypeNullable()
             && nullability.nullableAnnotations().stream()
-                .map(XAnnotations::getClassName)
                 .noneMatch(JET_BRAINS_NULLABLE::equals)
             && getProcessingEnv(executableElement).findTypeElement(JET_BRAINS_NULLABLE) != null) {
       formattedAnnotations =

@@ -47,7 +47,6 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
-import dagger.internal.codegen.xprocessing.XAnnotations;
 
 /**
  * A {@link javax.inject.Provider} creation expression for a provision method on a component's
@@ -107,8 +106,6 @@ final class DependencyMethodProviderCreationExpression
     binding
         .nullability()
         .nullableAnnotations()
-        .stream()
-        .map(XAnnotations::getClassName)
         .forEach(getMethod::addAnnotation);
 
     // We need to use the componentShard here since the generated type is static and shards are

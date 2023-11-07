@@ -407,8 +407,6 @@ final class InjectionMethods {
     } else {
       Nullability.of(method)
           .nullableAnnotations()
-          .stream()
-          .map(XAnnotations::getClassName)
           .forEach(builder::addAnnotation);
       return builder
           .returns(method.getReturnType().getTypeName())

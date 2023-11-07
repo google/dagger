@@ -19,7 +19,6 @@ package dagger.internal.codegen.binding;
 import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isVariableElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asVariable;
 
@@ -29,6 +28,9 @@ import androidx.room.compiler.processing.XNullability;
 import androidx.room.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.xprocessing.XAnnotations;
+import java.util.stream.Stream;
 
 /**
  * Contains information about the nullability of an element.
@@ -49,9 +51,14 @@ public abstract class Nullability {
   public static Nullability of(XElement element) {
     return new AutoValue_Nullability(
         /* isKotlinTypeNullable= */ isKotlinTypeNullable(element),
-        /* nullableAnnotations= */ element.getAllAnnotations().stream()
-            .filter(annotation -> getClassName(annotation).simpleName().contentEquals("Nullable"))
-            .collect(toImmutableSet()));
+        /* nullableAnnotations= */ getNullableAnnotations(element.getAllAnnotations().stream()));
+  }
+
+  private static ImmutableSet<ClassName> getNullableAnnotations(Stream<XAnnotation> annotations) {
+    return annotations
+        .map(XAnnotations::getClassName)
+        .filter(annotation -> annotation.simpleName().contentEquals("Nullable"))
+        .collect(toImmutableSet());
   }
 
   /**
@@ -82,7 +89,7 @@ public abstract class Nullability {
 
   public abstract boolean isKotlinTypeNullable();
 
-  public abstract ImmutableSet<XAnnotation> nullableAnnotations();
+  public abstract ImmutableSet<ClassName> nullableAnnotations();
 
   public final boolean isNullable() {
     return isKotlinTypeNullable() || !nullableAnnotations().isEmpty();

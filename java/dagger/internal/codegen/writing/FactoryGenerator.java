@@ -70,7 +70,6 @@ import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.model.Scope;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
-import dagger.internal.codegen.xprocessing.XAnnotations;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -270,8 +269,6 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
       binding
           .nullability()
           .nullableAnnotations()
-          .stream()
-          .map(XAnnotations::getClassName)
           .forEach(getMethod::addAnnotation);
       getMethod.addStatement("return $L", invokeNewInstance);
     } else if (!binding.injectionSites().isEmpty()) {

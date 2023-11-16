@@ -5,6 +5,18 @@ inputs:
   agp:
     description: 'The version of AGP to test with.'
     required: true
+    type: choice
+    options:
+      - '7.0.0'
+      - '7.1.2'
+      - '8.1.0'
+  jdk:
+    description: 'The version of JDK to test with.'
+    required: true
+    type: choice
+    options:
+      - '11'
+      - '17'
 
 runs:
   using: "composite"
@@ -25,11 +37,11 @@ runs:
       with:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
-    - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
+    - name: 'Install Java ${{ inputs.jdk }}'
       uses: actions/setup-java@v3
       with:
         distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
-        java-version: '${{ env.USE_JAVA_VERSION }}'
+        java-version: '${{ inputs.jdk }}'
     - name: 'Gradle Android local tests (AGP ${{ inputs.agp }})'
       run: ./util/run-local-gradle-android-tests.sh "${{ inputs.agp }}"
       shell: bash

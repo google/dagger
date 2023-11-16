@@ -19,4 +19,4 @@ util/run-local-gradle-tests.sh
 util/run-local-gradle-android-tests.sh "7.0.0"
 util/run-local-gradle-android-tests.sh "7.1.2"
 
-
+# TODO: this script is not up-to-date with Dagger github actions

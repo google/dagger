@@ -63,12 +63,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        agp: ['7.0.0', '7.1.2']
+        include:
+          - agp: '7.0.0'
+            jdk: '11'
+          - agp: '7.1.2'
+            jdk: '11'
+          - agp: '8.1.0'
+            jdk: '17'
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/artifact-android-local-tests
         with:
           agp: '${{ matrix.agp }}'
+          jdk: '${{ matrix.jdk }}'
   artifact-android-emulator-tests:
     name: 'Artifact Android emulator tests (API 30)'
     needs: bazel-build

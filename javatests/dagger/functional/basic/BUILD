@@ -26,7 +26,9 @@ package(default_visibility = ["//:src"])
 
 GenJavaTests(
     name = "basic",
-    srcs = glob(["*.java"]),
+    srcs = glob(
+        ["*.java"],
+    ),
     gen_library_deps = [
         "//javatests/dagger/functional/basic/subpackage",
     ],

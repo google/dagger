@@ -69,11 +69,6 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   @Inject XProcessingEnv xProcessingEnv;
 
   @Override
-  public String getName() { // SUPPRESS_GET_NAME_CHECK
-    return "dagger_plugin";
-  }
-
-  @Override
   public Void visitClassDef(JCClassDecl tree, Void p) {
     if (tree.sym != null) {
       XTypeElement type = toXProcessing(tree.sym, xProcessingEnv);

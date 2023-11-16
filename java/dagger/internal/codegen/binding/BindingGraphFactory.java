@@ -649,7 +649,7 @@ public final class BindingGraphFactory implements ClearableCache {
      */
     private XTypeElement getOwningComponent(Key requestKey, ContributionBinding binding) {
       if (isResolvedInParent(requestKey, binding)
-          && !new LocalDependencyChecker().dependsOnLocalBindings(binding)) {
+          && !new RequiresResolutionChecker().requiresResolution(binding)) {
         ResolvedBindings parentResolvedBindings =
             parentResolver.get().resolvedContributionBindings.get(requestKey);
         return parentResolvedBindings.owningComponent(binding);
@@ -876,7 +876,7 @@ public final class BindingGraphFactory implements ClearableCache {
             previouslyResolvedBindings.bindings().stream()
                 .anyMatch(binding -> binding.kind() == BindingKind.ASSISTED_INJECTION);
         if (!isAssistedInjectionBinding
-                && !new LocalDependencyChecker().dependsOnLocalBindings(key)
+                && !new RequiresResolutionChecker().requiresResolution(key)
                 && getLocalExplicitBindings(key).isEmpty()) {
           /* Cache the inherited parent component's bindings in case resolving at the parent found
            * bindings in some component between this one and the previously-resolved one. */
@@ -921,7 +921,7 @@ public final class BindingGraphFactory implements ClearableCache {
       return resolvedMembersInjectionBindings.get(key);
     }
 
-    private final class LocalDependencyChecker {
+    private final class RequiresResolutionChecker {
       private final Set<Object> cycleChecker = new HashSet<>();
 
       /**
@@ -935,14 +935,14 @@ public final class BindingGraphFactory implements ClearableCache {
        *
        * @throws IllegalArgumentException if {@link #getPreviouslyResolvedBindings(Key)} is empty
        */
-      private boolean dependsOnLocalBindings(Key key) {
+      private boolean requiresResolution(Key key) {
         // Don't recur infinitely if there are valid cycles in the dependency graph.
         // http://b/23032377
         if (!cycleChecker.add(key)) {
           return false;
         }
         return reentrantComputeIfAbsent(
-            keyDependsOnLocalBindingsCache, key, this::dependsOnLocalBindingsUncached);
+            keyDependsOnLocalBindingsCache, key, this::requiresResolutionUncached);
       }
 
       /**
@@ -954,15 +954,15 @@ public final class BindingGraphFactory implements ClearableCache {
        * <p>We don't care about non-reusable scoped dependencies because they will never depend on
        * multibindings with contributions from subcomponents.
        */
-      private boolean dependsOnLocalBindings(Binding binding) {
+      private boolean requiresResolution(Binding binding) {
         if (!cycleChecker.add(binding)) {
           return false;
         }
         return reentrantComputeIfAbsent(
-            bindingDependsOnLocalBindingsCache, binding, this::dependsOnLocalBindingsUncached);
+            bindingDependsOnLocalBindingsCache, binding, this::requiresResolutionUncached);
       }
 
-      private boolean dependsOnLocalBindingsUncached(Key key) {
+      private boolean requiresResolutionUncached(Key key) {
         checkArgument(
             getPreviouslyResolvedBindings(key).isPresent(),
             "no previously resolved bindings in %s for %s",
@@ -970,24 +970,25 @@ public final class BindingGraphFactory implements ClearableCache {
             key);
         ResolvedBindings previouslyResolvedBindings = getPreviouslyResolvedBindings(key).get();
         if (hasLocalMultibindingContributions(key)
-            || hasLocalOptionalBindingContribution(previouslyResolvedBindings)) {
+                || hasLocalOptionalBindingContribution(previouslyResolvedBindings)
+        ) {
           return true;
         }
 
         for (Binding binding : previouslyResolvedBindings.bindings()) {
-          if (dependsOnLocalBindings(binding)) {
+          if (requiresResolution(binding)) {
             return true;
           }
         }
         return false;
       }
 
-      private boolean dependsOnLocalBindingsUncached(Binding binding) {
+      private boolean requiresResolutionUncached(Binding binding) {
         if ((!binding.scope().isPresent() || binding.scope().get().isReusable())
             // TODO(beder): Figure out what happens with production subcomponents.
             && !binding.bindingType().equals(BindingType.PRODUCTION)) {
           for (DependencyRequest dependency : binding.dependencies()) {
-            if (dependsOnLocalBindings(dependency.key())) {
+            if (requiresResolution(dependency.key())) {
               return true;
             }
           }

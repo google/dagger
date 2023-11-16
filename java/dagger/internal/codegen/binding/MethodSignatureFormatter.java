@@ -35,6 +35,7 @@ import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Streams;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.xprocessing.XAnnotations;
@@ -152,17 +153,24 @@ public final class MethodSignatureFormatter extends Formatter<XExecutableElement
   }
 
   private static ImmutableList<String> formatedAnnotations(XExecutableElement executableElement) {
-    ImmutableList<String> formattedAnnotations =
-        executableElement.getAllAnnotations().stream()
-            // Filter out @NotNull annotations added by KAPT to make error messages consistent
-            .filter(annotation -> !annotation.getClassName().equals(JET_BRAINS_NOT_NULL))
-            .map(MethodSignatureFormatter::formatAnnotation)
-            .collect(toImmutableList());
     Nullability nullability = Nullability.of(executableElement);
+    ImmutableList<String> formattedAnnotations =
+        Streams.concat(
+                executableElement.getAllAnnotations().stream()
+                    // Filter out @NotNull annotations added by KAPT to make error messages
+                    // consistent
+                    .filter(annotation -> !annotation.getClassName().equals(JET_BRAINS_NOT_NULL))
+                    .map(MethodSignatureFormatter::formatAnnotation),
+                nullability.nullableAnnotations().stream()
+                    // Filter out @NotNull annotations added by KAPT to make error messages
+                    // consistent
+                    .filter(annotation -> !annotation.equals(JET_BRAINS_NOT_NULL))
+                    .map(annotation -> String.format("@%s", annotation.canonicalName())))
+            .distinct()
+            .collect(toImmutableList());
     if (nullability.isKotlinTypeNullable()
-            && nullability.nullableAnnotations().stream()
-                .noneMatch(JET_BRAINS_NULLABLE::equals)
-            && getProcessingEnv(executableElement).findTypeElement(JET_BRAINS_NULLABLE) != null) {
+        && nullability.nullableAnnotations().stream().noneMatch(JET_BRAINS_NULLABLE::equals)
+        && getProcessingEnv(executableElement).findTypeElement(JET_BRAINS_NULLABLE) != null) {
       formattedAnnotations =
           ImmutableList.<String>builder()
               .addAll(formattedAnnotations)

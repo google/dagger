@@ -65,7 +65,7 @@ dependencies {
   compileOnly "com.android.tools.build:gradle:$agp_version"
   compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   compileOnly "com.google.devtools.ksp:symbol-processing-gradle-plugin:$ksp_version"
-  implementation 'org.ow2.asm:asm:9.0'
+  implementation 'org.ow2.asm:asm:9.6'
   implementation "com.squareup:javapoet:1.13.0"
 
   testImplementation gradleTestKit()

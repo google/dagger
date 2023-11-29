@@ -12,9 +12,9 @@ env:
   USE_JAVA_VERSION: '11'
   # This is required by AGP 8.3+.
   USE_JAVA_VERSION_FOR_PLUGIN: '17'
-  # Our Bazel builds currently rely on 6.3.2. The version is set via
+  # Our Bazel builds currently rely on 6.4.0. The version is set via
   # baselisk by USE_BAZEL_VERSION: https://github.com/bazelbuild/bazelisk.
-  USE_BAZEL_VERSION: '6.3.2'
+  USE_BAZEL_VERSION: '6.4.0'
   DAGGER_RELEASE_VERSION: "${{ github.event.inputs.dagger_release_version }}"
   # The default Maven 3.9.0 has a regression so we manually install 3.8.7.
   # https://issues.apache.org/jira/browse/MNG-7679

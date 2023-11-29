@@ -17,8 +17,8 @@
 buildscript {
     ext {
         agp_version = "8.1.0"
-        kotlin_version = "1.9.0"
-        ksp_version = "$kotlin_version-1.0.12"
+        kotlin_version = "1.9.20"
+        ksp_version = "$kotlin_version-1.0.14"
     }
     repositories {
         google()

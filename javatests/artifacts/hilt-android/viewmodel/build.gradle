@@ -19,7 +19,7 @@ buildscript {
         hilt_version = 'LOCAL-SNAPSHOT'
         // AGP is set below 7.2.0 on purpose to be able to obfuscate debug apk.
         agp_version = "7.1.2"
-        kotlin_version = '1.9.0'
+        kotlin_version = '1.9.20'
     }
     repositories {
         google()

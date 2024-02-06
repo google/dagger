@@ -253,9 +253,14 @@ public final class DiagnosticMessageGenerator {
         }
       };
 
-  private static boolean isTracedRequest(
+  private boolean isTracedRequest(
       ImmutableList<DependencyEdge> dependencyTrace, DependencyEdge request) {
-    return !dependencyTrace.isEmpty() && request.equals(dependencyTrace.get(0));
+    return !dependencyTrace.isEmpty()
+        && request.dependencyRequest().equals(dependencyTrace.get(0).dependencyRequest())
+        // Comparing the dependency request is not enough since the request is just the key.
+        // Instead, we check that the target incident node is the same.
+        && graph.network().incidentNodes(request).target()
+            .equals(graph.network().incidentNodes(dependencyTrace.get(0)).target());
   }
 
   /**

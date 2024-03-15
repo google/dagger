@@ -20,6 +20,8 @@ load("//:build_defs.bzl", "POM_VERSION")
 
 package(default_visibility = ["//:src"])
 
+# Testing a change
+
 java_library(
     name = "install_in",
     srcs = ["InstallIn.java"],

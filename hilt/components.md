@@ -194,7 +194,7 @@ as dependencies into your own custom bindings.
 Component                       | Default Bindings
 ------------------------------- | ---------------------------------------------
 **`SingletonComponent`**        | `Application`[^2]
-**`ActivityRetainedComponent`** | `Application`
+**`ActivityRetainedComponent`** | `Application`, `ActivityRetainedLifecycle`
 **`ViewModelComponent`**        | `SavedStateHandle`, `ViewModelLifecycle`
 **`ActivityComponent`**         | `Application`, `Activity`
 **`FragmentComponent`**         | `Application`, `Activity`, `Fragment`

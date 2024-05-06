@@ -239,7 +239,8 @@ final class DependencyCycleValidator extends ValidationBindingGraphPlugin {
       case PROVIDER:
       case LAZY:
       case PROVIDER_OF_LAZY:
-          return !disallowCycleBreaks;
+        // If cycle breaks are allowed, break
+        return !disallowCycleBreaks;
 
       case INSTANCE:
         if (MapType.isMap(requestedType)) {

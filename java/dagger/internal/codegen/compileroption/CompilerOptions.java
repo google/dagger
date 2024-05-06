@@ -149,4 +149,6 @@ public abstract class CompilerOptions {
    * for {@code Foo<? extends Bar>} and {@code Foo<Bar>} would result in a duplicate binding error.
    */
   public abstract boolean ignoreProvisionKeyWildcards();
+
+  public abstract boolean disallowCycleBreaks();
 }

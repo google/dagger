@@ -43,6 +43,7 @@ import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.model.Binding;
 import dagger.internal.codegen.model.BindingGraph;
@@ -64,10 +65,15 @@ import javax.inject.Inject;
 final class DependencyCycleValidator extends ValidationBindingGraphPlugin {
 
   private final DependencyRequestFormatter dependencyRequestFormatter;
+  private final boolean disallowCycleBreaks;
 
   @Inject
-  DependencyCycleValidator(DependencyRequestFormatter dependencyRequestFormatter) {
+  DependencyCycleValidator(
+          DependencyRequestFormatter dependencyRequestFormatter,
+          CompilerOptions compilerOptions
+  ) {
     this.dependencyRequestFormatter = dependencyRequestFormatter;
+    this.disallowCycleBreaks = compilerOptions.disallowCycleBreaks();
   }
 
   @Override
@@ -233,7 +239,7 @@ final class DependencyCycleValidator extends ValidationBindingGraphPlugin {
       case PROVIDER:
       case LAZY:
       case PROVIDER_OF_LAZY:
-        return true;
+          return !disallowCycleBreaks;
 
       case INSTANCE:
         if (MapType.isMap(requestedType)) {

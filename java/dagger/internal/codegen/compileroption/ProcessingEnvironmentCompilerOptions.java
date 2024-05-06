@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.compileroption.FeatureStatus.DISABLED;
 import static dagger.internal.codegen.compileroption.FeatureStatus.ENABLED;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.DISALLOW_CYCLE_BREAKS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_DAGGER_ERROR_MESSAGES;
@@ -195,6 +196,11 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
+  public boolean disallowCycleBreaks() {
+     return isEnabled(DISALLOW_CYCLE_BREAKS);
+  }
+
+  @Override
   public boolean strictMultibindingValidation() {
     return isEnabled(STRICT_MULTIBINDING_VALIDATION);
   }
@@ -347,7 +353,9 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
     IGNORE_PROVISION_KEY_WILDCARDS(ENABLED),
 
-    VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES(ENABLED)
+    VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES(ENABLED),
+
+    DISALLOW_CYCLE_BREAKS
     ;
 
     final FeatureStatus defaultValue;

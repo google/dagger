@@ -117,6 +117,9 @@ public final class ViewGenerator {
           AnnotationSpec.builder(AndroidClassNames.TARGET_API).addMember("value", "21").build());
     }
 
+    builder.beginControlFlow("if(isInEditMode())")
+      .addStatement("return")
+      .endControlFlow();
     builder.addStatement("inject()");
 
     return builder.build();

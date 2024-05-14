@@ -21,5 +21,5 @@ package dagger.internal;
  * {@code jakarta.inject.Provider} easier. Do not use outside of Dagger implementation code.
  */
 // TODO(erichang): Make this also extend the Jakarta Provider
-public interface Provider<T> extends javax.inject.Provider<T> {
+public interface Provider<T> extends javax.inject.Provider<T>{
 }

@@ -18,6 +18,6 @@ package library2;
 
 
 /** A class that is a transitive dependency of the app. */
-public final class MyTransitiveType {
+public class MyTransitiveType {
   public static final int VALUE = 3;
 }

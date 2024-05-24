@@ -27,9 +27,18 @@ import library1.MyComponentModule;
 import library1.MyQualifier;
 import library1.MySubcomponentWithBuilder;
 import library1.MySubcomponentWithFactory;
+import library1.TransitiveDeps.DependsOnMyTransitiveTypeViaInject;
+import library1.TransitiveDeps.DependsOnMyTransitiveTypeViaProvides;
+import library1.TransitiveDeps.TransitiveDepsModule;
 
 @Singleton
-@Component(dependencies = MyComponentDependency.class, modules = MyComponentModule.class)
+@Component(
+  dependencies = MyComponentDependency.class,
+  modules = {
+    MyComponentModule.class,
+    TransitiveDepsModule.class
+  }
+)
 abstract class MyComponent extends MyBaseComponent {
   abstract Foo foo();
 
@@ -63,6 +72,10 @@ abstract class MyComponent extends MyBaseComponent {
   abstract MyComponentDependencyBinding qualifiedMyComponentDependencyBinding();
 
   abstract MyComponentDependencyBinding unqualifiedMyComponentDependencyBinding();
+
+  abstract DependsOnMyTransitiveTypeViaProvides dependsOnMyTransitiveTypeViaProvides();
+
+  abstract DependsOnMyTransitiveTypeViaInject dependsOnMyTransitiveTypeViaInject();
 
   @Component.Factory
   abstract static class Factory extends MyBaseComponent.Factory {

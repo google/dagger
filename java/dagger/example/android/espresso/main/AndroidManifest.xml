@@ -1,0 +1,20 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  package="com.example.android.espresso">
+
+  <uses-sdk
+    android:minSdkVersion="14"
+    android:targetSdkVersion="24"/>
+
+  <application
+    android:label="Espresso Dagger"
+    android:name="dagger.example.android.espresso.main.MainApplication"
+    android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+    <activity android:name="dagger.example.android.espresso.main.MainActivity">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+  </application>
+
+</manifest>

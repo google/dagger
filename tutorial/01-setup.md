@@ -111,7 +111,7 @@ class CommandLineAtm {
     CommandRouter commandRouter = new CommandRouter();
 
     while (scanner.hasNextLine()) {
-      Status unused = commandRouter.route(scanner.nextLine());
+      Result unused = commandRouter.route(scanner.nextLine());
     }
   }
 }

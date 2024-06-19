@@ -409,6 +409,9 @@ final class Generators {
         methodSpecBuilder
             .beginControlFlow("if (!injected)")
             .addStatement("injected = true")
+                .beginControlFlow("if ($T.injectForTesting(this))", ClassNames.TEST_INJECT_INTERCEPTOR)
+                .addStatement("return")
+                .endControlFlow()
             .addStatement(
                 "(($T) $L).$L($L)",
                 metadata.injectorClassName(),
@@ -425,6 +428,10 @@ final class Generators {
             .beginControlFlow("if (!injected)")
             .beginControlFlow("synchronized (injectedLock)")
             .beginControlFlow("if (!injected)")
+                .beginControlFlow("if ($T.injectForTesting(this))", ClassNames.TEST_INJECT_INTERCEPTOR)
+                .addStatement("injected = true")
+                .addStatement("return")
+                .endControlFlow()
             .addStatement(
                 "(($T) $T.generatedComponent(context)).$L($L)",
                 metadata.injectorClassName(),

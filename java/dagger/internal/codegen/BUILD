@@ -28,7 +28,10 @@ java_library(
     name = "processor",
     srcs = glob(
         ["*.java"],
-        exclude = ["package-info.java"],
+        exclude = [
+            "package-info.java",
+            "ArchipelagoComponentProcessor.java",
+        ],
     ),
     plugins = [
         "//java/dagger/internal/codegen/bootstrap",

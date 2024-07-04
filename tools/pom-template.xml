@@ -34,7 +34,7 @@
     <url>https://github.com/google/dagger/</url>
     <connection>scm:git:git://github.com/google/dagger.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/google/dagger.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>dagger-{pom_version}</tag>
   </scm>
 
   <issueManagement>

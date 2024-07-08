@@ -29,7 +29,7 @@ class CommandLineAtm {
     CommandRouter commandRouter = commandRouterFactory.router();
 
     while (scanner.hasNextLine()) {
-      Status unused = commandRouter.route(scanner.nextLine());
+      Result unused = commandRouter.route(scanner.nextLine());
     }
   }
 }

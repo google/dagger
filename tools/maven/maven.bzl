@@ -14,26 +14,26 @@
 """Macros to simplify generating maven files.
 """
 
-load("@google_bazel_common//tools/jarjar:jarjar.bzl", "jarjar_library")
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
-load("@google_bazel_common//tools/maven:pom_file.bzl", default_pom_file = "pom_file")
 load("@rules_java//java:defs.bzl", "java_binary")
+load("//tools/jarjar:jarjar.bzl", "jarjar_library")
+load("//tools/javadoc:javadoc.bzl", "javadoc_library")
 load(":maven_info.bzl", "MavenInfo", "collect_maven_info")
+load(":pom_file.bzl", "pom_file")
 
 SHADED_MAVEN_DEPS = [
     "com.google.auto:auto-common",
     "org.jetbrains.kotlinx:kotlinx-metadata-jvm",
 ]
 
-def pom_file(name, targets, artifact_name, artifact_id, packaging = None, **kwargs):
-    default_pom_file(
+def dagger_pom_file(name, targets, artifact_name, artifact_id, packaging = None, **kwargs):
+    pom_file(
         name = name,
         targets = targets,
         preferred_group_ids = [
             "com.google.dagger",
             "com.google",
         ],
-        template_file = "//tools:pom-template.xml",
+        template_file = "//tools/maven:pom-template.xml",
         substitutions = {
             "{artifact_name}": artifact_name,
             "{artifact_id}": artifact_id,
@@ -174,7 +174,7 @@ def _gen_maven_artifact(
     ]
 
     artifact_id = artifact_coordinates.split(":")[1]
-    pom_file(
+    dagger_pom_file(
         name = pom_name,
         testonly = testonly,
         artifact_id = artifact_id,

@@ -1,6 +1,5 @@
 # A framework supporting Dagger-injected gRPC servers.
 
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build_defs.bzl",
@@ -8,7 +7,8 @@ load(
     "DOCLINT_REFERENCES",
     "POM_VERSION",
 )
-load("//tools:maven.bzl", "pom_file")
+load("//tools/javadoc:javadoc.bzl", "javadoc_library")
+load("//tools/maven:maven.bzl", "dagger_pom_file")
 
 package(default_visibility = ["//:src"])
 
@@ -53,14 +53,14 @@ java_library(
     ],
 )
 
-pom_file(
+dagger_pom_file(
     name = "annotations-pom",
     artifact_id = "dagger-grpc-server-annotations",
     artifact_name = "Dagger gRPC Server Annotations",
     targets = [":annotations"],
 )
 
-pom_file(
+dagger_pom_file(
     name = "server-pom",
     artifact_id = "dagger-grpc-server",
     artifact_name = "Dagger gRPC Server",

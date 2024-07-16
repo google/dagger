@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("//:build_defs.bzl", "POM_VERSION")
-load("//tools:maven.bzl", "gen_maven_artifact")
+load("//tools/maven:maven.bzl", "gen_maven_artifact")
 
 # Description:
 #   A library that wraps the Dagger API to make DI usage and testing easier.

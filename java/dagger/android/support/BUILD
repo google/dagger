@@ -21,9 +21,9 @@ load(
 )
 load("//tools:dejetify.bzl", "dejetified_library")
 load(
-    "//tools:maven.bzl",
+    "//tools/maven:maven.bzl",
+    "dagger_pom_file",
     "gen_maven_artifact",
-    "pom_file",
 )
 
 package(default_visibility = ["//:src"])
@@ -57,13 +57,13 @@ gen_maven_artifact(
     artifact_name = "Dagger Android Support",
     artifact_target = ":support",
     artifact_target_maven_deps = [
-        "androidx.activity:activity",
+        "androidx.activity:activity:aar",
         "androidx.annotation:annotation",
-        "androidx.appcompat:appcompat",
-        "androidx.fragment:fragment",
+        "androidx.appcompat:appcompat:aar",
+        "androidx.fragment:fragment:aar",
         "androidx.lifecycle:lifecycle-common",
-        "androidx.lifecycle:lifecycle-viewmodel",
-        "androidx.lifecycle:lifecycle-viewmodel-savedstate",
+        "androidx.lifecycle:lifecycle-viewmodel:aar",
+        "androidx.lifecycle:lifecycle-viewmodel-savedstate:aar",
         "com.google.dagger:dagger",
         "com.google.dagger:dagger-android",
     ],
@@ -95,7 +95,7 @@ android_library(
     ],
 )
 
-pom_file(
+dagger_pom_file(
     name = "legacy-pom",
     artifact_id = "dagger-android-support-legacy",
     artifact_name = "Dagger Android Legacy Support",

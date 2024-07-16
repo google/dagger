@@ -17,7 +17,7 @@
 
 load("@rules_java//java:defs.bzl", "java_library")
 load("//:build_defs.bzl", "POM_VERSION")
-load("//tools:maven.bzl", "pom_file")
+load("//tools/maven:maven.bzl", "dagger_pom_file")
 
 package(default_visibility = ["//:src"])
 
@@ -41,7 +41,7 @@ java_library(
     visibility = ["//visibility:private"],
 )
 
-pom_file(
+dagger_pom_file(
     name = "pom",
     artifact_id = "dagger-gwt",
     artifact_name = "Dagger GWT",

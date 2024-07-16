@@ -6,3 +6,6 @@ build --host_javacopt=-g
 # TODO(ronshapiro): explore how much work it would be to reenable this
 build --javacopt="-Xep:BetaApi:OFF"
 build --host_javacopt="-Xep:BetaApi:OFF"
+
+# Enable MODULE.bazel
+common --enable_bzlmod

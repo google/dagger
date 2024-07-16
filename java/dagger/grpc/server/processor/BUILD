@@ -1,11 +1,11 @@
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 load("@rules_java//java:defs.bzl", "java_library", "java_plugin")
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "POM_VERSION",
 )
-load("//tools:maven.bzl", "pom_file")
+load("//tools/javadoc:javadoc.bzl", "javadoc_library")
+load("//tools/maven:maven.bzl", "dagger_pom_file")
 
 package(default_visibility = ["//:src"])
 
@@ -28,7 +28,7 @@ java_library(
     ],
 )
 
-pom_file(
+dagger_pom_file(
     name = "pom",
     artifact_id = "dagger-grpc-server-processor",
     artifact_name = "Dagger gRPC Server Processor",

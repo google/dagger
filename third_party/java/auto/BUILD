@@ -26,7 +26,6 @@ alias(
 java_plugin(
     name = "auto_value_processor",
     processor_class = "com.google.auto.value.processor.AutoValueProcessor",
-    visibility = ["//visibility:private"],
     deps = [
         ":common",
         ":service",

@@ -16,7 +16,7 @@
 #   A library based on Hilt that provides standard components and automated injection for Android.
 load("//:build_defs.bzl", "POM_VERSION")
 load("//tools:bazel_compat.bzl", "compat_kt_android_library")
-load("//tools:maven.bzl", "gen_maven_artifact")
+load("//tools/maven:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
 
@@ -228,14 +228,14 @@ gen_maven_artifact(
         "//java/dagger/hilt/internal/componenttreedeps:componenttreedeps",
     ],
     artifact_target_maven_deps = [
-        "androidx.activity:activity",
+        "androidx.activity:activity:aar",
         "androidx.annotation:annotation",
-        "androidx.annotation:annotation-experimental",
-        "androidx.fragment:fragment",
+        "androidx.annotation:annotation-experimental:aar",
+        "androidx.fragment:fragment:aar",
         "androidx.lifecycle:lifecycle-common",
-        "androidx.lifecycle:lifecycle-viewmodel",
-        "androidx.lifecycle:lifecycle-viewmodel-savedstate",
-        "androidx.savedstate:savedstate",
+        "androidx.lifecycle:lifecycle-viewmodel:aar",
+        "androidx.lifecycle:lifecycle-viewmodel-savedstate:aar",
+        "androidx.savedstate:savedstate:aar",
         "com.google.code.findbugs:jsr305",
         "com.google.dagger:dagger-lint-aar",
         "com.google.dagger:dagger",

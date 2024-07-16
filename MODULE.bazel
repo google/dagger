@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Dagger Authors.
+# Copyright (C) 2024 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Description:
-#   Tools for Dagger
+bazel_dep(
+    name = "bazel_skylib",
+    version = "1.7.1",
+)
 
-load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+bazel_dep(
+    name = "rules_java",
+    version = "7.7.0",
+)
 
-package(default_visibility = ["//:src"])
+bazel_dep(
+    name = "rules_kotlin",
+    version = "1.9.6",
+    repo_name = "io_bazel_rules_kotlin",
+)
 
-bzl_library(
-    name = "dejetify_bzl",
-    srcs = ["dejetify.bzl"],
+bazel_dep(
+    name = "rules_jvm_external",
+    version = "6.2",
+)
+
+bazel_dep(
+    name = "rules_robolectric",
+    version = "4.13",
+    repo_name = "robolectric",
 )

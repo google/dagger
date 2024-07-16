@@ -22,7 +22,7 @@ load(
     "JAVA_RELEASE_MIN",
     "POM_VERSION",
 )
-load("//tools:maven.bzl", "gen_maven_artifact")
+load("//tools/maven:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
 

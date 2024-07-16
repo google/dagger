@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Dagger Authors.
+# Copyright (C) 2024 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Description:
-#   Tools for Dagger
-
-load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+# Starlark rules for generating Javadoc
 
 package(default_visibility = ["//:src"])
-
-bzl_library(
-    name = "dejetify_bzl",
-    srcs = ["dejetify.bzl"],
-)

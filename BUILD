@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@google_bazel_common//tools/jarjar:jarjar.bzl", "jarjar_library")
-load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "define_kt_toolchain")
 load("@rules_java//java:defs.bzl", "java_library")
+load("//tools/jarjar:jarjar.bzl", "jarjar_library")
+load("//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 package(default_visibility = ["//visibility:public"])
 

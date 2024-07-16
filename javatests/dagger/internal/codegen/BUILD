@@ -72,7 +72,7 @@ java_library(
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
         "//third_party/java/truth",
-        "@com_google_auto_value_auto_value//jar",
+        "@maven//:com_google_auto_value_auto_value",
     ],
 )
 
@@ -110,7 +110,7 @@ DEPS = [
     "//third_party/java/guava/collect",
     "//third_party/java/guava/util/concurrent",
     "//third_party/java/auto:value",
-    "@com_google_auto_value_auto_value//jar",
+    "@maven//:com_google_auto_value_auto_value",
     "//third_party/java/auto:common",
     "//third_party/java/compile_testing",
     "//third_party/java/javapoet",

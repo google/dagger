@@ -19,16 +19,16 @@ load("//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 package(default_visibility = ["//visibility:public"])
 
-define_kt_toolchain(
-    name = "kotlin_toolchain",
-    api_version = "1.4",
-    jvm_target = "1.8",
-    language_version = "1.4",
-)
-
 package_group(
     name = "src",
     packages = ["//..."],
+)
+
+define_kt_toolchain(
+    name = "kotlin_toolchain",
+    api_version = "1.9",
+    jvm_target = "1.8",
+    language_version = "1.9",
 )
 
 java_library(

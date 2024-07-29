@@ -6,3 +6,27 @@ build --host_javacopt=-g
 # TODO(ronshapiro): explore how much work it would be to reenable this
 build --javacopt="-Xep:BetaApi:OFF"
 build --host_javacopt="-Xep:BetaApi:OFF"
+
+# Enable Bzlmod for every Bazel command. This flag will be enabled by default in
+# Bazel 7.0.0, but for now we enable it manually.
+common --enable_bzlmod
+
+# Note: This flag is required to prevent actions from clashing with each when
+# reading/writing tmp files. Without this flag we get errors like:
+#
+#  Error: Cannot use file /tmp/hsperfdata_runner/12 because it is locked by
+#         another process
+#
+# This flag will be enabled by default in Bazel 7.0.0, but for now we enable it
+# manually. For more details: https://github.com/bazelbuild/bazel/issues/3236.
+build --incompatible_sandbox_hermetic_tmp
+
+# Sets the JDK for compiling sources and executing tests.
+build --java_language_version=11
+build --tool_java_language_version=11
+build --java_runtime_version=remotejdk_11
+build --tool_java_runtime_version=remotejdk_11
+
+# Sets the default source/target for Dagger's processors. Note that Dagger's api
+# libraries can target JDK 8, so we set it explicitly on the Bazel target.
+build --javacopt="-source 8 -target 11"

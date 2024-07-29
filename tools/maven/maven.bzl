@@ -356,7 +356,8 @@ def _validate_list(name, actual_list, expected_list, banned_list = []):
         fail("\t[Error]: Found banned {}: \n\t\t".format(name) + "\n\t\t".join(banned))
 
 def _strip_artifact_version(artifact):
-    return artifact.rsplit(":", 1)[0]
+    # Returns "groupId:artifactId"
+    return ":".join(artifact.split(":")[:2])
 
 _validate_maven_deps = rule(
     implementation = _validate_maven_deps_impl,

@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Dagger Authors.
+# Copyright (C) 2024 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This file defines constants useful across the Dagger build."""
+bazel_dep(
+    name = "bazel_skylib",
+    version = "1.7.1",
+)
 
-DOCLINT_HTML_AND_SYNTAX = ["-Xdoclint:html,syntax"]
+bazel_dep(
+    name = "rules_java",
+    version = "7.0.6",
+)
 
-DOCLINT_REFERENCES = ["-Xdoclint:reference"]
+bazel_dep(
+    name = "rules_kotlin",
+    version = "1.9.0",
+    repo_name = "io_bazel_rules_kotlin",
+)
 
-JAVA_RELEASE_MIN = [
-    "-source 8 -target 8",
-]
+bazel_dep(
+    name = "rules_jvm_external",
+    version = "5.3",
+)
 
-POM_VERSION = "${project.version}"
+bazel_dep(
+    name = "rules_robolectric",
+    version = "4.11.1",
+    repo_name = "robolectric",
+)

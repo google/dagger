@@ -21,9 +21,9 @@ package(default_visibility = ["//visibility:public"])
 
 define_kt_toolchain(
     name = "kotlin_toolchain",
-    api_version = "1.4",
-    jvm_target = "1.8",
-    language_version = "1.4",
+    api_version = "1.8",
+    jvm_target = "17",
+    language_version = "1.8",
 )
 
 package_group(

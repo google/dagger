@@ -140,4 +140,9 @@ final class JavacPluginCompilerOptions extends CompilerOptions {
   public boolean ignoreProvisionKeyWildcards() {
     return false;
   }
+
+  @Override
+  public boolean allowKsp() {
+    return false;
+  }
 }

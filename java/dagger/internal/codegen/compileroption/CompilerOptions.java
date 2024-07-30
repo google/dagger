@@ -135,6 +135,14 @@ public abstract class CompilerOptions {
   }
 
   /**
+   * Returns {@code true} if the Dagger/Hilt KSP processors are allowed.
+   *
+   * <p>Note: the Dagger/Hilt KSP processors are still in alpha. Once the processors are stable, we
+   * will likely remove the need for this flag.
+   */
+  public abstract boolean allowKsp();
+
+  /**
    * This option enables a fix to an issue where Dagger previously would erroneously allow
    * multibinding contributions in a component to have dependencies on child components. This will
    * eventually become the default and enforced.

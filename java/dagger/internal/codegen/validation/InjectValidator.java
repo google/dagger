@@ -256,6 +256,13 @@ public final class InjectValidator implements ClearableCache {
           constructorElement);
     }
 
+    if (enclosingElement.isValueClass()) {
+      builder.addError(
+          String.format("@%s constructors on Kotlin inline value classes is not supported",
+              injectAnnotation.simpleName()),
+              constructorElement);
+    }
+
     // Note: superficial validation of the annotations is done as part of getting the scopes.
     ImmutableSet<Scope> scopes =
         injectionAnnotations.getScopes(constructorElement.getEnclosingElement());

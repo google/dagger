@@ -99,4 +99,14 @@ public final class MyComponentTest {
     assertThat(component.qualifiedMyComponentDependencyBinding())
         .isNotEqualTo(component.unqualifiedMyComponentDependencyBinding());
   }
+
+  @Test
+  public void testDependsOnMyTransitiveTypeViaProvides() {
+    assertThat(component.dependsOnMyTransitiveTypeViaProvides()).isNotNull();
+  }
+
+  @Test
+  public void testDependsOnMyTransitiveTypeViaInject() {
+    assertThat(component.dependsOnMyTransitiveTypeViaInject()).isNotNull();
+  }
 }

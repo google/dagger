@@ -64,6 +64,9 @@ public class DaggerSuperficialValidationTest {
   private static final Joiner NEW_LINES = Joiner.on("\n  ");
 
   @Test
+  public void testCase() {}
+
+  @Test
   public void missingReturnType() {
     runTest(
         CompilerTests.javaSource(

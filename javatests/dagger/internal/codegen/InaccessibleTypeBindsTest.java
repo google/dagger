@@ -38,11 +38,7 @@ public class InaccessibleTypeBindsTest {
     return ImmutableList.copyOf(
         new Object[][] {
             {CompilerMode.DEFAULT_MODE},
-            {CompilerMode.DEFAULT_JAVA7_MODE},
             {CompilerMode.FAST_INIT_MODE},
-            // FastInit with Java7 is the mode that motivated this test, but do the other
-            // modes anyway for completeness.
-            {CompilerMode.FAST_INIT_JAVA7_MODE}
         });
   }
 

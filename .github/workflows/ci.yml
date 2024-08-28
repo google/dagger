@@ -13,6 +13,8 @@ env:
   USE_JAVA_VERSION: '11'
   # This is required by AGP 8.3+.
   USE_JAVA_VERSION_FOR_PLUGIN: '17'
+  # This is required by SdkManagerCli
+  USE_JAVA_VERSION_FOR_EMULATOR_TESTS: '18'
   # The default Maven 3.9.0 has a regression so we manually install 3.8.7.
   # https://issues.apache.org/jira/browse/MNG-7679
   USE_MAVEN_VERSION: '3.8.7'
@@ -84,7 +86,7 @@ jobs:
     name: 'Artifact Android emulator tests (API ${{ matrix.api-level }})'
     # We only run this on master push (essentially a postsubmit) since these
     # can take a while to run
-    if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
+    # if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     needs: bazel-build
     # It's recommended to run emulator tests on macOS
     # See https://github.com/marketplace/actions/android-emulator-runner

@@ -38,9 +38,7 @@ public class OptionalBindingRequestFulfillmentTest {
     return ImmutableList.copyOf(
         new Object[][] {
             {CompilerMode.DEFAULT_MODE},
-            {CompilerMode.DEFAULT_JAVA7_MODE},
             {CompilerMode.FAST_INIT_MODE},
-            {CompilerMode.FAST_INIT_JAVA7_MODE}
         });
   }
 

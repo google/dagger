@@ -3,7 +3,6 @@
 set -eu
 
 readonly M2_DAGGER_REPO=~/.m2/repository/com/google/dagger
-readonly JDK7="51"
 readonly JDK8="52"
 
 _validate_jar() {
@@ -29,15 +28,15 @@ _validate_jar() {
 }
 
 # Dagger API artifacts
-_validate_jar "dagger-gwt" "jar" $JDK7
-_validate_jar "dagger" "jar" $JDK7
-_validate_jar "dagger-android" "aar" $JDK7
-_validate_jar "dagger-android-legacy" "aar" $JDK7
-_validate_jar "dagger-android-support" "aar" $JDK7
-_validate_jar "dagger-android-support-legacy" "aar" $JDK7
-_validate_jar "dagger-producers" "jar" $JDK7
-_validate_jar "dagger-grpc-server" "jar" $JDK7
-_validate_jar "dagger-grpc-server-annotations" "jar" $JDK7
+_validate_jar "dagger-gwt" "jar" $JDK8
+_validate_jar "dagger" "jar" $JDK8
+_validate_jar "dagger-android" "aar" $JDK8
+_validate_jar "dagger-android-legacy" "aar" $JDK8
+_validate_jar "dagger-android-support" "aar" $JDK8
+_validate_jar "dagger-android-support-legacy" "aar" $JDK8
+_validate_jar "dagger-producers" "jar" $JDK8
+_validate_jar "dagger-grpc-server" "jar" $JDK8
+_validate_jar "dagger-grpc-server-annotations" "jar" $JDK8
 _validate_jar "dagger-lint" "jar" $JDK8
 _validate_jar "dagger-lint-aar" "aar" $JDK8
 

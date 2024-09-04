@@ -228,7 +228,7 @@ interface MovieViewModelFactory {
 ```kotlin
 @AssistedFactory
 interface MovieViewModelFactory {
-  fun create(val movieId: Int): MovieViewModel
+  fun create(movieId: Int): MovieViewModel
 }
 ```
 {: .c-codeselector__code .c-codeselector__code_kotlin }

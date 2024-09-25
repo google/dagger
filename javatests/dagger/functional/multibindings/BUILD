@@ -37,6 +37,7 @@ GenJavaTests(
         "MultibindsModule.java",
         "NestedAnnotationContainer.java",
         "NumberClassKey.java",
+        "RequiresFieldInjection.java",
         "ShortKey.java",
         "UnwrappedAnnotationKey.java",
         "WrappedAnnotationKey.java",

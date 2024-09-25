@@ -16,6 +16,7 @@
 
 package dagger.functional.multibindings;
 
+import dagger.MembersInjector;
 import dagger.Module;
 import dagger.multibindings.Multibinds;
 import java.util.Map;
@@ -39,7 +40,13 @@ abstract class MultibindsModule {
   abstract Set<CharSequence> set();
 
   @Multibinds
+  abstract Set<MembersInjector<?>> membersInjectorSet();
+
+  @Multibinds
   abstract Map<String, CharSequence> map();
+
+  @Multibinds
+  abstract Map<Class<?>, MembersInjector<?>> membersInjectorMap();
 
   @Multibinds
   @Named("complexQualifier")

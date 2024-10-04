@@ -16,11 +16,6 @@
 
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
 load("//:build_defs.bzl", "JAVA_RELEASE_MIN")
-load(
-    "@io_bazel_rules_kotlin//kotlin:kotlin.bzl",
-    "kt_jvm_library",
-    "kt_jvm_test",
-)
 
 # Defines a set of build variants and the list of extra javacopts to build with.
 # The key will be appended to the generated test names to ensure uniqueness.

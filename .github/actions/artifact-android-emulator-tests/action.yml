@@ -25,16 +25,22 @@ runs:
       with:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
-    - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
+    # JDK 17+ is required for com.android.sdklib.tool.sdkmanager.SdkManagerCli
+    - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_PLUGIN }}'
       uses: actions/setup-java@v3
       with:
         distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
-        java-version: '${{ env.USE_JAVA_VERSION }}'
+        java-version: '${{ env.USE_JAVA_VERSION_FOR_PLUGIN }}'
     - name: 'Gradle Android emulator tests (API ${{ inputs.api-level }})'
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: ${{ inputs.api-level }}
         target: google_apis
+        arch: x86_64
+        force-avd-creation: false
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        avd-name: 'emulator-5554'
         script: ./util/run-local-emulator-tests.sh
     - name: 'Upload test reports (API ${{ inputs.api-level }})'
       if: ${{ always() }}

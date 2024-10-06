@@ -147,6 +147,27 @@ public final class InjectConstructorFactoryGeneratorTest {
             });
   }
 
+  @Test public void injectConstructorOnInlineValueClass() {
+    Source file =
+        CompilerTests.kotlinSource(
+            "test.InlineValueClass.kt",
+            "package test",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "@JvmInline value class InlineValueClass",
+            "  @Inject constructor(private val v: Int)");
+    CompilerTests.daggerCompiler(file)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "@Inject constructors on Kotlin inline value classes is not supported")
+                  .onSource(file)
+                  .onLine(6);
+            });
+  }
+
   @Test public void fieldAndMethodGenerics() {
     Source file =
         CompilerTests.javaSource(

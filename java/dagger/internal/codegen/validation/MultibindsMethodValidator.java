@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.validation;
 
+import static dagger.internal.codegen.base.FrameworkTypes.isAccessorType;
 import static dagger.internal.codegen.base.FrameworkTypes.isFrameworkType;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsMultibindings.NO_MULTIBINDINGS;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.NO_SCOPING;
@@ -95,7 +96,7 @@ class MultibindsMethodValidator extends BindingMethodValidator {
       } else if (isWildcard(mapType.valueType())) {
         report.addError(
             bindingMethods("return type cannot use a wildcard as the Map value type."));
-      } else if (isFrameworkType(mapType.valueType())) {
+      } else if (isAccessorType(mapType.valueType())) {
         String frameworkTypeName = getSimpleName(mapType.valueType().getTypeElement());
         report.addError(
             bindingMethods(
@@ -108,7 +109,7 @@ class MultibindsMethodValidator extends BindingMethodValidator {
         report.addError(bindingMethods("return type cannot be a raw Set type"));
       } else if (isWildcard(setType.elementType())) {
         report.addError(bindingMethods("return type cannot use a wildcard as the Set value type."));
-      } else if (isFrameworkType(setType.elementType())) {
+      } else if (isAccessorType(setType.elementType())) {
         String frameworkTypeName = getSimpleName(setType.elementType().getTypeElement());
         report.addError(
             bindingMethods(

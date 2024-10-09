@@ -16,6 +16,8 @@
 
 package dagger.functional.multibindings;
 
+import dagger.MapKey;
+import dagger.MembersInjector;
 import dagger.Module;
 import dagger.Provides;
 import dagger.multibindings.ClassKey;
@@ -93,6 +95,19 @@ class MultibindingModule {
   @Provides
   static Collection<String> provideMapValues(Map<String, String> map) {
     return map.values();
+  }
+
+  @Provides
+  @IntoMap
+  @ClassKey(RequiresFieldInjection.class)
+  static MembersInjector<?> provideMembersInjectorIntoMap(MembersInjector<RequiresFieldInjection> injector) {
+    return injector;
+  }
+
+  @Provides
+  @IntoSet
+  static MembersInjector<?> provideMembersInjectorIntoSet(MembersInjector<RequiresFieldInjection> injector) {
+    return injector;
   }
 
   @Provides

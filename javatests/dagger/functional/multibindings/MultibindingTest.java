@@ -183,6 +183,18 @@ public class MultibindingTest {
         .containsEntry("key", "qualified foo value");
   }
 
+  @Test
+  public void membersInjectorSet() {
+    assertThat(multibindingComponent.membersInjectorSet())
+        .containsExactly(multibindingComponent.membersInjector());
+  }
+
+  @Test
+  public void membersInjectorMap() {
+    assertThat(multibindingComponent.membersInjectorMap())
+        .containsExactly(RequiresFieldInjection.class, multibindingComponent.membersInjector());
+  }
+
   @AutoAnnotation
   static StringKey testStringKey(String value) {
     return new AutoAnnotation_MultibindingTest_testStringKey(value);

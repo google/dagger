@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_java//java:defs.bzl", "java_plugin")
 
 package(default_visibility = ["//:src"])

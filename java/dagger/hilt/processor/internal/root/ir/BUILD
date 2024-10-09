@@ -16,7 +16,7 @@
 #   A library containing intermediate representations of the various Hilt
 #   aggregating annotations along with logic to process them.
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 package(default_visibility = ["//:src"])
 

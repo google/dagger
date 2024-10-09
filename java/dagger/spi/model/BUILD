@@ -15,7 +15,7 @@
 # Description:
 #   Dagger's core APIs exposed for plugins
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 package(default_visibility = [
     # The dagger/spi should be the only direct dependent on this target.

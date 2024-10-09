@@ -14,7 +14,7 @@
 
 """Convenience wrapper for kt_android_library."""
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", io_kt_android_library = "kt_android_library")
+load("@io_bazel_rules_kotlin//kotlin:android.bzl", io_kt_android_library = "kt_android_library")
 
 def kt_android_library(**kwargs):
     io_kt_android_library(**kwargs)

@@ -14,7 +14,7 @@
 """Macros for building compiler tests."""
 
 load("@rules_java//java:defs.bzl", "java_binary", "java_test")
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 def compiler_test(name, size = "large", compiler_deps = None, **kwargs):
     """Generates a java_test that tests java compilation with the given compiler deps.

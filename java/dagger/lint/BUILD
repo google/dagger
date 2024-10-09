@@ -15,7 +15,7 @@
 # Description:
 #   Dagger Lint Rules
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//:build_defs.bzl", "POM_VERSION")
 load("//tools/maven:maven.bzl", "gen_maven_artifact")
 

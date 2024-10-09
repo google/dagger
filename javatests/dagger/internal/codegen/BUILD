@@ -15,7 +15,7 @@
 # Description:
 #   Tests for the Dagger compiler/codegen
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_java//java:defs.bzl", "java_library")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenJavaTests")

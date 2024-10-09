@@ -17,7 +17,7 @@
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
 load("//:build_defs.bzl", "JAVA_RELEASE_MIN")
 load(
-    "@io_bazel_rules_kotlin//kotlin:kotlin.bzl",
+    "@io_bazel_rules_kotlin//kotlin:jvm.bzl",
     "kt_jvm_library",
     "kt_jvm_test",
 )

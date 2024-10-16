@@ -61,23 +61,23 @@ public class BasicTest {
   }
 
   @Theory public void boxedPrimitives(BasicComponent basicComponent) {
-    assertThat(basicComponent.getBoxedByte()).isEqualTo(new Byte(BOUND_BYTE));
-    assertThat(basicComponent.getBoxedChar()).isEqualTo(new Character(BOUND_CHAR));
-    assertThat(basicComponent.getBoxedShort()).isEqualTo(new Short(BOUND_SHORT));
-    assertThat(basicComponent.getBoxedInt()).isEqualTo(new Integer(BOUND_INT));
-    assertThat(basicComponent.getBoxedLong()).isEqualTo(new Long(BOUND_LONG));
-    assertThat(basicComponent.getBoxedBoolean()).isEqualTo(new Boolean(BOUND_BOOLEAN));
+    assertThat(basicComponent.getBoxedByte()).isEqualTo(Byte.valueOf(BOUND_BYTE));
+    assertThat(basicComponent.getBoxedChar()).isEqualTo(Character.valueOf(BOUND_CHAR));
+    assertThat(basicComponent.getBoxedShort()).isEqualTo(Short.valueOf(BOUND_SHORT));
+    assertThat(basicComponent.getBoxedInt()).isEqualTo(Integer.valueOf(BOUND_INT));
+    assertThat(basicComponent.getBoxedLong()).isEqualTo(Long.valueOf(BOUND_LONG));
+    assertThat(basicComponent.getBoxedBoolean()).isEqualTo(Boolean.valueOf(BOUND_BOOLEAN));
     assertThat(basicComponent.getBoxedFloat()).isEqualTo(BOUND_FLOAT);
     assertThat(basicComponent.getBoxedDouble()).isEqualTo(BOUND_DOUBLE);
   }
 
   @Theory public void boxedPrimitiveProviders(BasicComponent basicComponent) {
-    assertThat(basicComponent.getByteProvider().get()).isEqualTo(new Byte(BOUND_BYTE));
-    assertThat(basicComponent.getCharProvider().get()).isEqualTo(new Character(BOUND_CHAR));
-    assertThat(basicComponent.getShortProvider().get()).isEqualTo(new Short(BOUND_SHORT));
-    assertThat(basicComponent.getIntProvider().get()).isEqualTo(new Integer(BOUND_INT));
-    assertThat(basicComponent.getLongProvider().get()).isEqualTo(new Long(BOUND_LONG));
-    assertThat(basicComponent.getBooleanProvider().get()).isEqualTo(new Boolean(BOUND_BOOLEAN));
+    assertThat(basicComponent.getByteProvider().get()).isEqualTo(Byte.valueOf(BOUND_BYTE));
+    assertThat(basicComponent.getCharProvider().get()).isEqualTo(Character.valueOf(BOUND_CHAR));
+    assertThat(basicComponent.getShortProvider().get()).isEqualTo(Short.valueOf(BOUND_SHORT));
+    assertThat(basicComponent.getIntProvider().get()).isEqualTo(Integer.valueOf(BOUND_INT));
+    assertThat(basicComponent.getLongProvider().get()).isEqualTo(Long.valueOf(BOUND_LONG));
+    assertThat(basicComponent.getBooleanProvider().get()).isEqualTo(Boolean.valueOf(BOUND_BOOLEAN));
     assertThat(basicComponent.getFloatProvider().get()).isEqualTo(BOUND_FLOAT);
     assertThat(basicComponent.getDoubleProvider().get()).isEqualTo(BOUND_DOUBLE);
   }

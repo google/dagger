@@ -33,6 +33,9 @@ public final class FrameworkTypes {
   private static final ImmutableSet<ClassName> PROVISION_TYPES =
       ImmutableSet.of(TypeNames.PROVIDER, TypeNames.LAZY, TypeNames.MEMBERS_INJECTOR);
 
+  private static final ImmutableSet<ClassName> ACCESSOR_TYPES =
+      ImmutableSet.of(TypeNames.PROVIDER, TypeNames.LAZY, TypeNames.PRODUCED, TypeNames.PRODUCER);
+
   // NOTE(beder): ListenableFuture is not considered a producer framework type because it is not
   // defined by the framework, so we can't treat it specially in ordinary Dagger.
   private static final ImmutableSet<ClassName> PRODUCTION_TYPES =
@@ -49,6 +52,11 @@ public final class FrameworkTypes {
   /** Returns true if the type represents a framework type. */
   public static boolean isFrameworkType(XType type) {
     return typeIsOneOf(ALL_FRAMEWORK_TYPES, type);
+  }
+
+  /** Returns true if the type represents an accessor type. */
+  public static boolean isAccessorType(XType type) {
+    return typeIsOneOf(ACCESSOR_TYPES, type);
   }
 
   private static boolean typeIsOneOf(Set<ClassName> classNames, XType type) {

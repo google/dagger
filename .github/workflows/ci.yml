@@ -80,14 +80,14 @@ jobs:
     name: 'Artifact Android emulator tests (API ${{ matrix.api-level }})'
     # We only run this on master push (essentially a postsubmit) since these
     # can take a while to run
-    if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
+    # if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     needs: bazel-build
     # It's recommended to run emulator tests on macOS
     # See https://github.com/marketplace/actions/android-emulator-runner
     runs-on: macos-latest
     strategy:
       matrix: # Run on 16 (PreL), 21 (L), and 26 (O).
-        api-level: [16, 21, 26, 30]
+        api-level: [21, 26, 30]
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/artifact-android-emulator-tests

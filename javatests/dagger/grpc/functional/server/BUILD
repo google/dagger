@@ -9,6 +9,7 @@ package(default_visibility = ["//:src"])
 
 java_proto_library(
     name = "coffee_service_java_proto",
+    has_services = True,  # b/241918504
     deps = [":protos"],
 )
 

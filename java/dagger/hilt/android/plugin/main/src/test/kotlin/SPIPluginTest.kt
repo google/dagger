@@ -54,6 +54,11 @@ class SPIPluginTest(val backend: Backend) {
         gradleRunner.addPluginId("kotlin-kapt")
       } else {
         gradleRunner.addPluginId("com.google.devtools.ksp")
+        gradleRunner.addAdditionalClosure("""
+        |ksp {
+        |    arg("dagger.allowKsp", "enabled")
+        |}
+        """.trimMargin())
       }
       gradleRunner.addAdditionalClosure("""
       |kotlin {

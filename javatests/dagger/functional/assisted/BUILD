@@ -25,6 +25,7 @@ GenJavaTests(
     srcs = ["AssistedFactoryAsQualifiedBindingTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     test_only_deps = [
+        "//third_party/java/guava/collect",  # TODO(b/): This shouldn't be needed.
         "//:dagger_with_compiler",
         "//third_party/java/truth",
         "//third_party/java/junit",
@@ -114,6 +115,7 @@ GenJavaTests(
     srcs = ["AssistedFactoryWithMultibindingsTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     test_only_deps = [
+        "//third_party/java/guava/collect",  # TODO(b/): This shouldn't be needed.
         "//:dagger_with_compiler",
         "//third_party/java/truth",
         "//third_party/java/junit",

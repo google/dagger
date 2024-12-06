@@ -475,18 +475,17 @@ public class DaggerSuperficialValidationTest {
                   () -> superficialValidation.validateElement(testClassElement));
           // TODO(b/248552462): Javac and KSP should match once this bug is fixed.
           boolean isJavac = processingEnv.getBackend() == XProcessingEnv.Backend.JAVAC;
-          assertThat(exception)
-              .hasMessageThat()
-              .contains(
-                  String.format(
-                      NEW_LINES.join(
-                          "Validation trace:",
-                          "  => element (CLASS): test.Outer.TestClass",
-                          "  => annotation type: test.Outer.TestAnnotation",
-                          "  => annotation: @test.Outer.TestAnnotation(classes={<%1$s>})",
-                          "  => annotation value (TYPE_ARRAY): classes={<%1$s>}",
-                          "  => annotation value (TYPE): classes=<%1$s>"),
-                      isJavac ? "error" : "Error"));
+          String expectedMessage =
+              String.format(
+                  NEW_LINES.join(
+                      "Validation trace:",
+                      "  => element (CLASS): test.Outer.TestClass",
+                      "  => annotation type: test.Outer.TestAnnotation",
+                      "  => annotation: @test.Outer.TestAnnotation(classes={<%1$s>})",
+                      "  => annotation value (TYPE_ARRAY): classes={<%1$s>}",
+                      "  => annotation value (TYPE): classes=<%1$s>"),
+                  isJavac ? "error" : "Error");
+          assertThat(exception).hasMessageThat().contains(expectedMessage);
         });
   }
 
@@ -533,20 +532,19 @@ public class DaggerSuperficialValidationTest {
                   () -> superficialValidation.validateElement(parameter));
           // TODO(b/248552462): Javac and KSP should match once this bug is fixed.
           boolean isJavac = processingEnv.getBackend() == XProcessingEnv.Backend.JAVAC;
-          assertThat(exception)
-              .hasMessageThat()
-              .contains(
-                  String.format(
-                      NEW_LINES.join(
-                          "Validation trace:",
-                          "  => element (CLASS): test.Outer.TestClass",
-                          "  => element (CONSTRUCTOR): TestClass(java.lang.String)",
-                          "  => element (PARAMETER): strParam",
-                          "  => annotation type: test.Outer.TestAnnotation",
-                          "  => annotation: @test.Outer.TestAnnotation(classes={<%1$s>})",
-                          "  => annotation value (TYPE_ARRAY): classes={<%1$s>}",
-                          "  => annotation value (TYPE): classes=<%1$s>"),
-                      isJavac ? "error" : "Error"));
+          String expectedMessage =
+              String.format(
+                  NEW_LINES.join(
+                      "Validation trace:",
+                      "  => element (CLASS): test.Outer.TestClass",
+                      "  => element (CONSTRUCTOR): TestClass(java.lang.String)",
+                      "  => element (PARAMETER): strParam",
+                      "  => annotation type: test.Outer.TestAnnotation",
+                      "  => annotation: @test.Outer.TestAnnotation(classes={<%1$s>})",
+                      "  => annotation value (TYPE_ARRAY): classes={<%1$s>}",
+                      "  => annotation value (TYPE): classes=<%1$s>"),
+                  isJavac ? "error" : "Error");
+          assertThat(exception).hasMessageThat().contains(expectedMessage);
         });
   }
 

@@ -22,11 +22,6 @@ load(
     "kt_jvm_test",
 )
 
-# Defines a set of build variants and the list of extra javacopts to build with.
-# The key will be appended to the generated test names to ensure uniqueness.
-_NON_FUNCTIONAL_BUILD_VARIANTS = {None: []}
-_FUNCTIONAL_BUILD_VARIANTS = {
-    None: [],  # The default build variant (no javacopts).
     "Shards": ["-Adagger.keysPerComponentShard=2"],
     "FastInit": ["-Adagger.fastInit=enabled"],
     "FastInit_Shards": ["-Adagger.fastInit=enabled", "-Adagger.keysPerComponentShard=2"],

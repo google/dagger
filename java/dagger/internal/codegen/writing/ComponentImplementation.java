@@ -59,6 +59,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MultimapBuilder;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -491,8 +492,26 @@ public final class ComponentImplementation {
                       requirement -> requirement,
                       requirement ->
                           ParameterSpec.builder(
-                                  requirement.type().getTypeName(),
+                                  requirement
+                                      .type()
+                                      .getTypeName()
+                                      .annotated(
+                                          requirement
+                                              .getNullability()
+                                              .typeUseNullableAnnotations()
+                                              .stream()
+                                              .map(AnnotationSpec::builder)
+                                              .map(AnnotationSpec.Builder::build)
+                                              .collect(toImmutableList())),
                                   getUniqueFieldName(requirement.variableName() + "Param"))
+                              .addAnnotations(
+                                  requirement
+                                      .getNullability()
+                                      .nonTypeUseNullableAnnotations()
+                                      .stream()
+                                      .map(AnnotationSpec::builder)
+                                      .map(AnnotationSpec.Builder::build)
+                                      .collect(toImmutableList()))
                               .build()));
     }
 

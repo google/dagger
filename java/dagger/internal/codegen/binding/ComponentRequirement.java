@@ -34,6 +34,7 @@ import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.model.BindingKind;
 import dagger.internal.codegen.model.Key;
+import dagger.internal.codegen.xprocessing.Nullability;
 import dagger.internal.codegen.xprocessing.XTypeElements;
 import java.util.Optional;
 
@@ -105,6 +106,16 @@ public abstract class ComponentRequirement {
    * instances), but others' require Elements which must wait until {@link #nullPolicy} is called.
    */
   abstract Optional<NullPolicy> overrideNullPolicy();
+
+  /**
+   * The nullability of the requirement. If set, this is used to determine the nullability of the
+   * requirement's type.
+   */
+  public Nullability getNullability() {
+    return nullability;
+  }
+
+  private Nullability nullability = Nullability.NOT_NULLABLE;
 
   /** The requirement's null policy. */
   public NullPolicy nullPolicy() {
@@ -195,16 +206,18 @@ public abstract class ComponentRequirement {
 
   public static ComponentRequirement forBoundInstance(BoundInstanceBinding binding) {
     checkArgument(binding.kind().equals(BindingKind.BOUND_INSTANCE));
-    return forBoundInstance(binding.key(), binding.isNullable(), binding.bindingElement().get());
+    return forBoundInstance(
+        binding.key(), binding.isNullable(), binding.bindingElement().get(), binding.nullability());
   }
 
   static ComponentRequirement forBoundInstance(
-      Key key, boolean nullable, XElement elementForVariableName) {
+      Key key, boolean nullable, XElement elementForVariableName, Nullability nullability) {
     return create(
         Kind.BOUND_INSTANCE,
         key.type().xprocessing(),
         nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
         Optional.of(key),
+        nullability,
         getSimpleName(elementForVariableName));
   }
 
@@ -212,8 +225,9 @@ public abstract class ComponentRequirement {
     return create(
         kind,
         type,
-        Optional.empty(),
-        Optional.empty(),
+        /* overrideNullPolicy= */ Optional.empty(),
+        /* key= */ Optional.empty(),
+        Nullability.NOT_NULLABLE,
         simpleVariableName(type.getTypeElement().getClassName()));
   }
 
@@ -222,10 +236,12 @@ public abstract class ComponentRequirement {
       XType type,
       Optional<NullPolicy> overrideNullPolicy,
       Optional<Key> key,
+      Nullability nullability,
       String variableName) {
     ComponentRequirement requirement =
         new AutoValue_ComponentRequirement(
             kind, type.getTypeName(), overrideNullPolicy, key, variableName);
+    requirement.nullability = nullability;
     requirement.type = type;
     return requirement;
   }

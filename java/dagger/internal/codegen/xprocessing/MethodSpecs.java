@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.xprocessing.JavaPoetExt.toParameterSpec;
 import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -24,6 +25,7 @@ import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XType;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.MethodSpec;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
@@ -33,13 +35,27 @@ public final class MethodSpecs {
   /** Returns a {@link MethodSpec} that overrides the given method. */
   public static MethodSpec.Builder overriding(XMethodElement method, XType owner) {
     XMethodType methodType = method.asMemberOf(owner);
+    Nullability nullability = Nullability.of(method);
     MethodSpec.Builder builder =
         // We're overriding the method so we have to use the jvm name here.
         MethodSpec.methodBuilder(method.getJvmName())
             .addAnnotation(Override.class)
+            .addAnnotations(
+                nullability.nonTypeUseNullableAnnotations().stream()
+                    .map(AnnotationSpec::builder)
+                    .map(AnnotationSpec.Builder::build)
+                    .collect(toImmutableList()))
             .addTypeVariables(methodType.getTypeVariableNames())
             .varargs(method.isVarArgs())
-            .returns(methodType.getReturnType().getTypeName());
+            .returns(
+                methodType
+                    .getReturnType()
+                    .getTypeName()
+                    .annotated(
+                        nullability.typeUseNullableAnnotations().stream()
+                            .map(AnnotationSpec::builder)
+                            .map(AnnotationSpec.Builder::build)
+                            .collect(toImmutableList())));
     if (method.isPublic()) {
       builder.addModifiers(PUBLIC);
     } else if (method.isProtected()) {

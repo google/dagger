@@ -75,6 +75,7 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:dagger_with_compiler",
+        "//third_party/java/guava/collect",  # TODO(b/): This shouldn't be needed.
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
@@ -86,6 +87,7 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:dagger_with_compiler",
+        "//third_party/java/guava/collect",  # TODO(b/): This shouldn't be needed.
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
@@ -98,6 +100,7 @@ GenJavaTests(
     deps = [
         "//:dagger_with_compiler",
         "//third_party/java/auto:value",
+        "//third_party/java/guava/collect",  # TODO(b/): This shouldn't be needed.
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
@@ -110,6 +113,7 @@ GenJavaTests(
     deps = [
         "//:dagger_with_compiler",
         "//third_party/java/auto:value",
+        "//third_party/java/guava/collect",  # TODO(b/): This shouldn't be needed.
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],

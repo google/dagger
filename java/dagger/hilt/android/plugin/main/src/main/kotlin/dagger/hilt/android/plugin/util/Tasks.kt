@@ -17,7 +17,9 @@
 package dagger.hilt.android.plugin.util
 
 import com.android.build.api.variant.ComponentIdentity
-import com.google.devtools.ksp.gradle.KspTaskJvm
+import com.google.devtools.ksp.gradle.KspAATask
+import com.google.devtools.ksp.gradle.KspTask
+import kotlin.reflect.KClass
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.compile.JavaCompile
@@ -73,7 +75,7 @@ internal fun addKspTaskProcessorOptions(
   variantIdentity: ComponentIdentity,
   produceArgProvider: (Task) -> CommandLineArgumentProvider
 ) = project.plugins.withId("com.google.devtools.ksp") {
-  checkClass("com.google.devtools.ksp.gradle.KspTaskJvm") {
+  check(kspOneTaskClass != null || kspTwoTaskClass != null) {
     """
     The KSP plugin was detected to be applied but its task class could not be found.
 
@@ -85,12 +87,24 @@ internal fun addKspTaskProcessorOptions(
     See https://github.com/google/dagger/issues/3965 for more details.
     """.trimIndent()
   }
-  project.tasks.withType(KspTaskJvm::class.java).configureEach { task ->
-    if (task.name == "ksp${variantIdentity.name.capitalize()}Kotlin" ||
+  fun <T : Task> configureEach(
+    kclass: KClass<T>,
+    block: T.(CommandLineArgumentProvider) -> Unit
+  ) {
+    project.tasks.withType(kclass.java).configureEach { task ->
+      if (task.name == "ksp${variantIdentity.name.capitalize()}Kotlin" ||
         // Task names in shared/src/AndroidMain in KMP projects has a platform suffix.
         task.name == "ksp${variantIdentity.name.capitalize()}KotlinAndroid") {
-      task.commandLineArgumentProviders.add(produceArgProvider.invoke(task))
+        val argProvider = produceArgProvider.invoke(task)
+        task.block(argProvider)
+      }
     }
+  }
+  if (kspOneTaskClass != null) {
+    configureEach(KspTask::class) { commandLineArgumentProviders.add(it) }
+  }
+  if (kspTwoTaskClass != null) {
+    configureEach(KspAATask::class) { commandLineArgumentProviders.add(it) }
   }
 }
 
@@ -102,10 +116,21 @@ private inline fun checkClass(fqn: String, msg: () -> String) {
   }
 }
 
-internal fun Task.isKspTask(): Boolean = try {
-  val kspTaskClass = Class.forName("com.google.devtools.ksp.gradle.KspTask")
-  kspTaskClass.isAssignableFrom(this::class.java)
-} catch (ex: ClassNotFoundException) {
-  false
-}
+internal val kspOneTaskClass =
+  try {
+    Class.forName("com.google.devtools.ksp.gradle.KspTask")
+  } catch (ex: ClassNotFoundException) {
+    null
+  }
+
+internal val kspTwoTaskClass =
+  try {
+    Class.forName("com.google.devtools.ksp.gradle.KspAATask")
+  } catch (ex: ClassNotFoundException) {
+    null
+  }
+
+internal fun Task.isKspTask() =
+  kspOneTaskClass?.isAssignableFrom(this::class.java) == true ||
+    kspTwoTaskClass?.isAssignableFrom(this::class.java) == true
 

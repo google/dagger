@@ -41,6 +41,7 @@ import dagger.internal.codegen.base.ComponentCreatorAnnotation;
 import dagger.internal.codegen.base.ComponentCreatorKind;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.xprocessing.Nullability;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.util.List;
 
@@ -217,7 +218,10 @@ public abstract class ComponentCreatorDescriptor {
       DependencyRequest request =
           dependencyRequestFactory.forRequiredResolvedVariable(parameter, parameterType);
       return ComponentRequirement.forBoundInstance(
-          request.key(), request.isNullable(), elementForVariableName);
+          request.key(),
+          request.isNullable(),
+          elementForVariableName,
+          Nullability.of(elementForVariableName));
     }
 
     return parameterType.getTypeElement().hasAnyAnnotation(moduleAnnotations())

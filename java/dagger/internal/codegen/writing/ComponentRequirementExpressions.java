@@ -19,12 +19,14 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Suppliers.memoize;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.COMPONENT_REQUIREMENT_FIELD;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Supplier;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -129,7 +131,22 @@ public final class ComponentRequirementExpressions {
     private MemberSelect createField() {
       String fieldName = componentShard.getUniqueFieldName(componentRequirement.variableName());
       TypeName fieldType = componentRequirement.type().getTypeName();
-      FieldSpec field = FieldSpec.builder(fieldType, fieldName, PRIVATE, FINAL).build();
+      FieldSpec field =
+          FieldSpec.builder(
+                  fieldType.annotated(
+                      componentRequirement.getNullability().typeUseNullableAnnotations().stream()
+                          .map(AnnotationSpec::builder)
+                          .map(AnnotationSpec.Builder::build)
+                          .collect(toImmutableList())),
+                  fieldName,
+                  PRIVATE,
+                  FINAL)
+              .addAnnotations(
+                  componentRequirement.getNullability().nonTypeUseNullableAnnotations().stream()
+                      .map(AnnotationSpec::builder)
+                      .map(AnnotationSpec.Builder::build)
+                      .collect(toImmutableList()))
+              .build();
       componentShard.addField(COMPONENT_REQUIREMENT_FIELD, field);
       componentShard.addComponentRequirementInitialization(fieldInitialization(field));
       return MemberSelect.localField(componentShard, fieldName);

@@ -24,7 +24,7 @@ build --java_runtime_version=remotejdk_18
 build --tool_java_runtime_version=remotejdk_18
 
 # Default source/target versions.
-build --javacopt="-source 8 -target 8"
+build --javacopt="--release 8"
 
 # Workaround for https://openjdk.java.net/jeps/411.
 # See https://github.com/bazelbuild/bazel/issues/14502#issuecomment-1018366245.

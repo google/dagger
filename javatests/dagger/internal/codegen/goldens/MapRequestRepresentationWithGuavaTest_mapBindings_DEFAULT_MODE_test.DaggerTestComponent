@@ -46,7 +46,7 @@ final class DaggerTestComponent {
 
     private final SubImpl subImpl = this;
 
-    private SubImpl(TestComponentImpl testComponentImpl) {
+    SubImpl(TestComponentImpl testComponentImpl) {
       this.testComponentImpl = testComponentImpl;
 
 
@@ -66,7 +66,7 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
 
     }

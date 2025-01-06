@@ -46,12 +46,12 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent, CancellationListener {
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
 
     }
 
-    private Set<String> setOfString() {
+    Set<String> setOfString() {
       return ImmutableSet.<String>copyOf(EmptySetModule_EmptySetFactory.emptySet());
     }
 

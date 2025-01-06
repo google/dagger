@@ -45,7 +45,7 @@ final class DaggerSimpleComponent {
 
     private final SubImpl subImpl = this;
 
-    private SubImpl(SimpleComponentImpl simpleComponentImpl) {
+    SubImpl(SimpleComponentImpl simpleComponentImpl) {
       this.simpleComponentImpl = simpleComponentImpl;
 
 
@@ -60,9 +60,9 @@ final class DaggerSimpleComponent {
   private static final class SimpleComponentImpl implements SimpleComponent {
     private final SimpleComponentImpl simpleComponentImpl = this;
 
-    private Provider<ScopedType> scopedTypeProvider;
+    Provider<ScopedType> scopedTypeProvider;
 
-    private SimpleComponentImpl() {
+    SimpleComponentImpl() {
 
       initialize();
 

@@ -69,9 +69,9 @@ final class DaggerTestComponent {
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Map<PathEnum, Handler>> mapOfPathEnumAndHandlerProvider;
+    Provider<Map<PathEnum, Handler>> mapOfPathEnumAndHandlerProvider;
 
-    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+    TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
       this.mapModuleOne = mapModuleOneParam;
       this.mapModuleTwo = mapModuleTwoParam;
       initialize(mapModuleOneParam, mapModuleTwoParam);

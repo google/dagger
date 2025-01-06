@@ -46,12 +46,12 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent, CancellationListener {
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
 
     }
 
-    private Map<Integer, String> mapOfIntegerAndString() {
+    Map<Integer, String> mapOfIntegerAndString() {
       return Collections.<Integer, String>singletonMap(1, TestModule_Value1Factory.value1());
     }
 

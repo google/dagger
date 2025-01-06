@@ -43,7 +43,7 @@ final class DaggerC {
 
     private final F_CImpl f_CImpl = this;
 
-    private F_CImpl(t_CImpl _t_CImpl) {
+    F_CImpl(t_CImpl _t_CImpl) {
       this._t_CImpl = _t_CImpl;
 
 
@@ -53,7 +53,7 @@ final class DaggerC {
   private static final class t_CImpl implements C {
     private final t_CImpl _t_CImpl = this;
 
-    private t_CImpl() {
+    t_CImpl() {
 
 
     }

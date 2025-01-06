@@ -65,13 +65,13 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Handler> provideAdminHandlerProvider;
+    Provider<Handler> provideAdminHandlerProvider;
 
-    private Provider<Handler> provideLoginHandlerProvider;
+    Provider<Handler> provideLoginHandlerProvider;
 
-    private Provider<Map<PathEnum, Handler>> mapOfPathEnumAndHandlerProvider;
+    Provider<Map<PathEnum, Handler>> mapOfPathEnumAndHandlerProvider;
 
-    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+    TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
 
       initialize(mapModuleOneParam, mapModuleTwoParam);
 

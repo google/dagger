@@ -56,11 +56,11 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Map<Class<?>, Integer>> mapOfClassOfAndIntegerProvider;
+    Provider<Map<Class<?>, Integer>> mapOfClassOfAndIntegerProvider;
 
-    private Provider<Map<MapKeys.ComplexKey, Integer>> mapOfComplexKeyAndIntegerProvider;
+    Provider<Map<MapKeys.ComplexKey, Integer>> mapOfComplexKeyAndIntegerProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 

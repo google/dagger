@@ -66,7 +66,7 @@ final class DaggerTestComponent {
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl(TestModule testModuleParam, other.test.TestModule testModuleParam2) {
+    TestComponentImpl(TestModule testModuleParam, other.test.TestModule testModuleParam2) {
       this.testModule = testModuleParam;
       this.testModule2 = testModuleParam2;
 

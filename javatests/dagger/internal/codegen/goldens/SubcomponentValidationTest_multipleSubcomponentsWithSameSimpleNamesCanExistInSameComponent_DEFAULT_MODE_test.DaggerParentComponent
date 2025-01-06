@@ -48,8 +48,7 @@ final class DaggerParentComponent {
 
     private final ts_SubImpl _ts_SubImpl = this;
 
-    private ts_SubImpl(ParentComponentImpl parentComponentImpl, F_SubImpl f_SubImpl,
-        B_SubImpl b_SubImpl) {
+    ts_SubImpl(ParentComponentImpl parentComponentImpl, F_SubImpl f_SubImpl, B_SubImpl b_SubImpl) {
       this.parentComponentImpl = parentComponentImpl;
       this.f_SubImpl = f_SubImpl;
       this.b_SubImpl = b_SubImpl;
@@ -65,7 +64,7 @@ final class DaggerParentComponent {
 
     private final B_SubImpl b_SubImpl = this;
 
-    private B_SubImpl(ParentComponentImpl parentComponentImpl, F_SubImpl f_SubImpl) {
+    B_SubImpl(ParentComponentImpl parentComponentImpl, F_SubImpl f_SubImpl) {
       this.parentComponentImpl = parentComponentImpl;
       this.f_SubImpl = f_SubImpl;
 
@@ -83,7 +82,7 @@ final class DaggerParentComponent {
 
     private final F_SubImpl f_SubImpl = this;
 
-    private F_SubImpl(ParentComponentImpl parentComponentImpl) {
+    F_SubImpl(ParentComponentImpl parentComponentImpl) {
       this.parentComponentImpl = parentComponentImpl;
 
 
@@ -100,7 +99,7 @@ final class DaggerParentComponent {
 
     private final NoConflictImpl noConflictImpl = this;
 
-    private NoConflictImpl(ParentComponentImpl parentComponentImpl) {
+    NoConflictImpl(ParentComponentImpl parentComponentImpl) {
       this.parentComponentImpl = parentComponentImpl;
 
 
@@ -110,7 +109,7 @@ final class DaggerParentComponent {
   private static final class ParentComponentImpl implements ParentComponent {
     private final ParentComponentImpl parentComponentImpl = this;
 
-    private ParentComponentImpl() {
+    ParentComponentImpl() {
 
 
     }

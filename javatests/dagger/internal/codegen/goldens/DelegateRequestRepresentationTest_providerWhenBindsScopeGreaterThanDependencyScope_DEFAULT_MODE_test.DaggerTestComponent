@@ -44,11 +44,11 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<String> provideStringProvider;
+    Provider<String> provideStringProvider;
 
-    private Provider<Object> bindStringProvider;
+    Provider<Object> bindStringProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 

@@ -69,7 +69,7 @@ final class DaggerC {
 
     private final F_SubImpl f_SubImpl = this;
 
-    private F_SubImpl(CImpl cImpl) {
+    F_SubImpl(CImpl cImpl) {
       this.cImpl = cImpl;
 
 
@@ -81,7 +81,7 @@ final class DaggerC {
 
     private final B_SubImpl b_SubImpl = this;
 
-    private B_SubImpl(CImpl cImpl) {
+    B_SubImpl(CImpl cImpl) {
       this.cImpl = cImpl;
 
 
@@ -91,7 +91,7 @@ final class DaggerC {
   private static final class CImpl implements C {
     private final CImpl cImpl = this;
 
-    private CImpl() {
+    CImpl() {
 
 
     }

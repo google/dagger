@@ -46,17 +46,17 @@ public final class DaggerMyComponent {
 
     private final MySubcomponentImpl mySubcomponentImpl = this;
 
-    private MySubcomponentImpl(MyComponentImpl myComponentImpl) {
+    MySubcomponentImpl(MyComponentImpl myComponentImpl) {
       this.myComponentImpl = myComponentImpl;
 
 
     }
 
-    private Set<String> setOfString() {
+    Set<String> setOfString() {
       return ImmutableSet.<String>of(MyComponentModule_ProvideStringFactory.provideString(), MySubcomponentModule_ProvideStringFactory.provideString());
     }
 
-    private Bar bar() {
+    Bar bar() {
       return injectBar(Bar_Factory.newInstance());
     }
 
@@ -75,12 +75,12 @@ public final class DaggerMyComponent {
   private static final class MyComponentImpl implements MyComponent {
     private final MyComponentImpl myComponentImpl = this;
 
-    private MyComponentImpl() {
+    MyComponentImpl() {
 
 
     }
 
-    private Set<String> setOfString() {
+    Set<String> setOfString() {
       return ImmutableSet.<String>of(MyComponentModule_ProvideStringFactory.provideString());
     }
 

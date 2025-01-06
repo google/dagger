@@ -69,13 +69,13 @@ final class DaggerTestComponent {
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Handler> provideAdminHandlerProvider;
+    Provider<Handler> provideAdminHandlerProvider;
 
-    private Provider<Handler> provideLoginHandlerProvider;
+    Provider<Handler> provideLoginHandlerProvider;
 
-    private Provider mapOfPathEnumAndProviderOfHandlerProvider;
+    Provider mapOfPathEnumAndProviderOfHandlerProvider;
 
-    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+    TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
       this.mapModuleOne = mapModuleOneParam;
       this.mapModuleTwo = mapModuleTwoParam;
       initialize(mapModuleOneParam, mapModuleTwoParam);

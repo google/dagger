@@ -68,8 +68,7 @@ final class DaggerTestComponent {
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl(ParentModule parentModuleParam,
-        OtherPackageModule otherPackageModuleParam) {
+    TestComponentImpl(ParentModule parentModuleParam, OtherPackageModule otherPackageModuleParam) {
       this.parentModule = parentModuleParam;
       this.otherPackageModule = otherPackageModuleParam;
 

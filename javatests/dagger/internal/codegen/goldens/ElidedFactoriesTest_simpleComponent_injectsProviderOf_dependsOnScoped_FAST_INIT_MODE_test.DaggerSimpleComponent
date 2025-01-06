@@ -43,11 +43,11 @@ final class DaggerSimpleComponent {
   private static final class SimpleComponentImpl implements SimpleComponent {
     private final SimpleComponentImpl simpleComponentImpl = this;
 
-    private Provider<ScopedType> scopedTypeProvider;
+    Provider<ScopedType> scopedTypeProvider;
 
-    private Provider<DependsOnScoped> dependsOnScopedProvider;
+    Provider<DependsOnScoped> dependsOnScopedProvider;
 
-    private SimpleComponentImpl() {
+    SimpleComponentImpl() {
 
       initialize();
 

@@ -43,9 +43,9 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<CharSequence> cProvider;
+    Provider<CharSequence> cProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 

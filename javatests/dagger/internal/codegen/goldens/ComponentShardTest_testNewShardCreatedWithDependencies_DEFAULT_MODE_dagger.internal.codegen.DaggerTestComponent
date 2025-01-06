@@ -46,17 +46,17 @@ final class DaggerTestComponent {
   }
 
   private static final class TestComponentImpl implements TestComponent {
-    private TestComponentImplShard testComponentImplShard;
+    TestComponentImplShard testComponentImplShard;
 
     private final Dependency dependency;
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Binding1> binding1Provider;
+    Provider<Binding1> binding1Provider;
 
-    private Provider<Binding2> binding2Provider;
+    Provider<Binding2> binding2Provider;
 
-    private TestComponentImpl(Dependency dependencyParam) {
+    TestComponentImpl(Dependency dependencyParam) {
       this.dependency = dependencyParam;
       initialize(dependencyParam);
       testComponentImplShard = new TestComponentImplShard(testComponentImpl, dependencyParam);
@@ -115,10 +115,9 @@ final class DaggerTestComponent {
   private static final class TestComponentImplShard {
     private final TestComponentImpl testComponentImpl;
 
-    private Provider<Binding3> binding3Provider;
+    Provider<Binding3> binding3Provider;
 
-    private TestComponentImplShard(TestComponentImpl testComponentImpl,
-        Dependency dependencyParam) {
+    TestComponentImplShard(TestComponentImpl testComponentImpl, Dependency dependencyParam) {
       this.testComponentImpl = testComponentImpl;
       initialize(dependencyParam);
     }

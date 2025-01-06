@@ -48,7 +48,7 @@ final class DaggerBComponent {
 
     private final BComponentImpl bComponentImpl = this;
 
-    private BComponentImpl(AComponent aComponentParam) {
+    BComponentImpl(AComponent aComponentParam) {
       this.aComponent = aComponentParam;
 
     }

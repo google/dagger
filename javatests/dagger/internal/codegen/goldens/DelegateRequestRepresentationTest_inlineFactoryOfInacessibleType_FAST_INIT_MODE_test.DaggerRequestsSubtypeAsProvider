@@ -45,9 +45,9 @@ final class DaggerRequestsSubtypeAsProvider {
     private final RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl = this;
 
     @SuppressWarnings("rawtypes")
-    private Provider subtypeProvider;
+    Provider subtypeProvider;
 
-    private RequestsSubtypeAsProviderImpl() {
+    RequestsSubtypeAsProviderImpl() {
 
       initialize();
 

@@ -59,7 +59,7 @@ final class DaggerTestComponent {
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl(Integer iParam, List<String> listParam) {
+    TestComponentImpl(Integer iParam, List<String> listParam) {
       this.i = iParam;
       this.list = listParam;
 

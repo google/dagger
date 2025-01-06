@@ -42,209 +42,209 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Binding0> binding0Provider;
+    Provider<Binding0> binding0Provider;
 
-    private Provider<Binding1> binding1Provider;
+    Provider<Binding1> binding1Provider;
 
-    private Provider<Binding2> binding2Provider;
+    Provider<Binding2> binding2Provider;
 
-    private Provider<Binding3> binding3Provider;
+    Provider<Binding3> binding3Provider;
 
-    private Provider<Binding4> binding4Provider;
+    Provider<Binding4> binding4Provider;
 
-    private Provider<Binding5> binding5Provider;
+    Provider<Binding5> binding5Provider;
 
-    private Provider<Binding6> binding6Provider;
+    Provider<Binding6> binding6Provider;
 
-    private Provider<Binding7> binding7Provider;
+    Provider<Binding7> binding7Provider;
 
-    private Provider<Binding8> binding8Provider;
+    Provider<Binding8> binding8Provider;
 
-    private Provider<Binding9> binding9Provider;
+    Provider<Binding9> binding9Provider;
 
-    private Provider<Binding10> binding10Provider;
+    Provider<Binding10> binding10Provider;
 
-    private Provider<Binding11> binding11Provider;
+    Provider<Binding11> binding11Provider;
 
-    private Provider<Binding12> binding12Provider;
+    Provider<Binding12> binding12Provider;
 
-    private Provider<Binding13> binding13Provider;
+    Provider<Binding13> binding13Provider;
 
-    private Provider<Binding14> binding14Provider;
+    Provider<Binding14> binding14Provider;
 
-    private Provider<Binding15> binding15Provider;
+    Provider<Binding15> binding15Provider;
 
-    private Provider<Binding16> binding16Provider;
+    Provider<Binding16> binding16Provider;
 
-    private Provider<Binding17> binding17Provider;
+    Provider<Binding17> binding17Provider;
 
-    private Provider<Binding18> binding18Provider;
+    Provider<Binding18> binding18Provider;
 
-    private Provider<Binding19> binding19Provider;
+    Provider<Binding19> binding19Provider;
 
-    private Provider<Binding20> binding20Provider;
+    Provider<Binding20> binding20Provider;
 
-    private Provider<Binding21> binding21Provider;
+    Provider<Binding21> binding21Provider;
 
-    private Provider<Binding22> binding22Provider;
+    Provider<Binding22> binding22Provider;
 
-    private Provider<Binding23> binding23Provider;
+    Provider<Binding23> binding23Provider;
 
-    private Provider<Binding24> binding24Provider;
+    Provider<Binding24> binding24Provider;
 
-    private Provider<Binding25> binding25Provider;
+    Provider<Binding25> binding25Provider;
 
-    private Provider<Binding26> binding26Provider;
+    Provider<Binding26> binding26Provider;
 
-    private Provider<Binding27> binding27Provider;
+    Provider<Binding27> binding27Provider;
 
-    private Provider<Binding28> binding28Provider;
+    Provider<Binding28> binding28Provider;
 
-    private Provider<Binding29> binding29Provider;
+    Provider<Binding29> binding29Provider;
 
-    private Provider<Binding30> binding30Provider;
+    Provider<Binding30> binding30Provider;
 
-    private Provider<Binding31> binding31Provider;
+    Provider<Binding31> binding31Provider;
 
-    private Provider<Binding32> binding32Provider;
+    Provider<Binding32> binding32Provider;
 
-    private Provider<Binding33> binding33Provider;
+    Provider<Binding33> binding33Provider;
 
-    private Provider<Binding34> binding34Provider;
+    Provider<Binding34> binding34Provider;
 
-    private Provider<Binding35> binding35Provider;
+    Provider<Binding35> binding35Provider;
 
-    private Provider<Binding36> binding36Provider;
+    Provider<Binding36> binding36Provider;
 
-    private Provider<Binding37> binding37Provider;
+    Provider<Binding37> binding37Provider;
 
-    private Provider<Binding38> binding38Provider;
+    Provider<Binding38> binding38Provider;
 
-    private Provider<Binding39> binding39Provider;
+    Provider<Binding39> binding39Provider;
 
-    private Provider<Binding40> binding40Provider;
+    Provider<Binding40> binding40Provider;
 
-    private Provider<Binding41> binding41Provider;
+    Provider<Binding41> binding41Provider;
 
-    private Provider<Binding42> binding42Provider;
+    Provider<Binding42> binding42Provider;
 
-    private Provider<Binding43> binding43Provider;
+    Provider<Binding43> binding43Provider;
 
-    private Provider<Binding44> binding44Provider;
+    Provider<Binding44> binding44Provider;
 
-    private Provider<Binding45> binding45Provider;
+    Provider<Binding45> binding45Provider;
 
-    private Provider<Binding46> binding46Provider;
+    Provider<Binding46> binding46Provider;
 
-    private Provider<Binding47> binding47Provider;
+    Provider<Binding47> binding47Provider;
 
-    private Provider<Binding48> binding48Provider;
+    Provider<Binding48> binding48Provider;
 
-    private Provider<Binding49> binding49Provider;
+    Provider<Binding49> binding49Provider;
 
-    private Provider<Binding50> binding50Provider;
+    Provider<Binding50> binding50Provider;
 
-    private Provider<Binding51> binding51Provider;
+    Provider<Binding51> binding51Provider;
 
-    private Provider<Binding52> binding52Provider;
+    Provider<Binding52> binding52Provider;
 
-    private Provider<Binding53> binding53Provider;
+    Provider<Binding53> binding53Provider;
 
-    private Provider<Binding54> binding54Provider;
+    Provider<Binding54> binding54Provider;
 
-    private Provider<Binding55> binding55Provider;
+    Provider<Binding55> binding55Provider;
 
-    private Provider<Binding56> binding56Provider;
+    Provider<Binding56> binding56Provider;
 
-    private Provider<Binding57> binding57Provider;
+    Provider<Binding57> binding57Provider;
 
-    private Provider<Binding58> binding58Provider;
+    Provider<Binding58> binding58Provider;
 
-    private Provider<Binding59> binding59Provider;
+    Provider<Binding59> binding59Provider;
 
-    private Provider<Binding60> binding60Provider;
+    Provider<Binding60> binding60Provider;
 
-    private Provider<Binding61> binding61Provider;
+    Provider<Binding61> binding61Provider;
 
-    private Provider<Binding62> binding62Provider;
+    Provider<Binding62> binding62Provider;
 
-    private Provider<Binding63> binding63Provider;
+    Provider<Binding63> binding63Provider;
 
-    private Provider<Binding64> binding64Provider;
+    Provider<Binding64> binding64Provider;
 
-    private Provider<Binding65> binding65Provider;
+    Provider<Binding65> binding65Provider;
 
-    private Provider<Binding66> binding66Provider;
+    Provider<Binding66> binding66Provider;
 
-    private Provider<Binding67> binding67Provider;
+    Provider<Binding67> binding67Provider;
 
-    private Provider<Binding68> binding68Provider;
+    Provider<Binding68> binding68Provider;
 
-    private Provider<Binding69> binding69Provider;
+    Provider<Binding69> binding69Provider;
 
-    private Provider<Binding70> binding70Provider;
+    Provider<Binding70> binding70Provider;
 
-    private Provider<Binding71> binding71Provider;
+    Provider<Binding71> binding71Provider;
 
-    private Provider<Binding72> binding72Provider;
+    Provider<Binding72> binding72Provider;
 
-    private Provider<Binding73> binding73Provider;
+    Provider<Binding73> binding73Provider;
 
-    private Provider<Binding74> binding74Provider;
+    Provider<Binding74> binding74Provider;
 
-    private Provider<Binding75> binding75Provider;
+    Provider<Binding75> binding75Provider;
 
-    private Provider<Binding76> binding76Provider;
+    Provider<Binding76> binding76Provider;
 
-    private Provider<Binding77> binding77Provider;
+    Provider<Binding77> binding77Provider;
 
-    private Provider<Binding78> binding78Provider;
+    Provider<Binding78> binding78Provider;
 
-    private Provider<Binding79> binding79Provider;
+    Provider<Binding79> binding79Provider;
 
-    private Provider<Binding80> binding80Provider;
+    Provider<Binding80> binding80Provider;
 
-    private Provider<Binding81> binding81Provider;
+    Provider<Binding81> binding81Provider;
 
-    private Provider<Binding82> binding82Provider;
+    Provider<Binding82> binding82Provider;
 
-    private Provider<Binding83> binding83Provider;
+    Provider<Binding83> binding83Provider;
 
-    private Provider<Binding84> binding84Provider;
+    Provider<Binding84> binding84Provider;
 
-    private Provider<Binding85> binding85Provider;
+    Provider<Binding85> binding85Provider;
 
-    private Provider<Binding86> binding86Provider;
+    Provider<Binding86> binding86Provider;
 
-    private Provider<Binding87> binding87Provider;
+    Provider<Binding87> binding87Provider;
 
-    private Provider<Binding88> binding88Provider;
+    Provider<Binding88> binding88Provider;
 
-    private Provider<Binding89> binding89Provider;
+    Provider<Binding89> binding89Provider;
 
-    private Provider<Binding90> binding90Provider;
+    Provider<Binding90> binding90Provider;
 
-    private Provider<Binding91> binding91Provider;
+    Provider<Binding91> binding91Provider;
 
-    private Provider<Binding92> binding92Provider;
+    Provider<Binding92> binding92Provider;
 
-    private Provider<Binding93> binding93Provider;
+    Provider<Binding93> binding93Provider;
 
-    private Provider<Binding94> binding94Provider;
+    Provider<Binding94> binding94Provider;
 
-    private Provider<Binding95> binding95Provider;
+    Provider<Binding95> binding95Provider;
 
-    private Provider<Binding96> binding96Provider;
+    Provider<Binding96> binding96Provider;
 
-    private Provider<Binding97> binding97Provider;
+    Provider<Binding97> binding97Provider;
 
-    private Provider<Binding98> binding98Provider;
+    Provider<Binding98> binding98Provider;
 
-    private Provider<Binding99> binding99Provider;
+    Provider<Binding99> binding99Provider;
 
-    private Provider<Binding100> binding100Provider;
+    Provider<Binding100> binding100Provider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
       initialize2();

@@ -42,7 +42,7 @@ final class DaggerOuterType_SimpleComponent {
   private static final class SimpleComponentImpl implements OuterType.SimpleComponent {
     private final SimpleComponentImpl simpleComponentImpl = this;
 
-    private SimpleComponentImpl() {
+    SimpleComponentImpl() {
 
 
     }

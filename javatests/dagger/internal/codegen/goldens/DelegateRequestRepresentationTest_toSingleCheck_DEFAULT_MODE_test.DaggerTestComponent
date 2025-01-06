@@ -44,13 +44,13 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<RegularScoped> regularScopedProvider;
+    Provider<RegularScoped> regularScopedProvider;
 
-    private Provider<ReusableScoped> reusableScopedProvider;
+    Provider<ReusableScoped> reusableScopedProvider;
 
-    private Provider<Object> unscopedProvider;
+    Provider<Object> unscopedProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 

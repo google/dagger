@@ -43,11 +43,11 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Bar> barProvider;
+    Provider<Bar> barProvider;
 
-    private Provider<FooFactory> fooFactoryProvider;
+    Provider<FooFactory> fooFactoryProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 

@@ -52,6 +52,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.api.artifacts.ExternalDependency
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.compile.JavaCompile
@@ -421,7 +422,9 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
           it.name.startsWith("hiltAnnotationProcessor") || it.name.startsWith("hiltCompileOnly")
         }
         .flatMap { configuration ->
-          configuration.dependencies.map { dependency -> dependency.group to dependency.name }
+          configuration.dependencies
+            .filterIsInstance<ExternalDependency>()
+            .map { dependency -> dependency.group to dependency.name }
         }
         .toSet()
     fun getMissingDepMsg(depCoordinate: String): String =

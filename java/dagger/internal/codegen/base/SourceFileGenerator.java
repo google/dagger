@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.CAST;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.DEPRECATION;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.KOTLIN_INTERNAL;
+import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.MISSING_EXPLICIT_CTOR;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNINITIALIZED;
@@ -93,7 +94,7 @@ public abstract class SourceFileGenerator<T> {
         AnnotationSpecs.suppressWarnings(
             ImmutableSet.<Suppression>builder()
                 .addAll(warningSuppressions())
-                .add(UNCHECKED, RAWTYPES, KOTLIN_INTERNAL, CAST, DEPRECATION, UNINITIALIZED)
+                .add(UNCHECKED, RAWTYPES, KOTLIN_INTERNAL, CAST, DEPRECATION, MISSING_EXPLICIT_CTOR, UNINITIALIZED)
                 .build()));
 
     String packageName = closestEnclosingTypeElement(originatingElement).getPackageName();

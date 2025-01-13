@@ -33,6 +33,7 @@ public final class AnnotationSpecs {
     KOTLIN_INTERNAL("KotlinInternal", "KotlinInternalInJava"),
     CAST("cast"),
     DEPRECATION("deprecation"),
+    MISSING_EXPLICIT_CTOR("missing-explicit-ctor"),
     UNINITIALIZED("nullness:initialization.field.uninitialized");
 
     private final ImmutableList<String> values;

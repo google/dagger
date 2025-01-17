@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.internal.managers;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import androidx.fragment.app.Fragment;
@@ -141,6 +142,15 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
 
   }
 
+  public static Context maybeGetParent(View view) {
+    if (view.getParent() instanceof View) {
+      // N.B. View's never update their mContext field, so this must be done on the parent view.
+      Context parentViewContext = ((View) view.getParent()).getContext();
+      return unwrapAny(parentViewContext, FragmentContextWrapper.class, Activity.class);
+    }
+    return null;
+  }
+
   private Context getParentContext(Class<?> parentType, boolean allowMissing) {
     Context context = unwrap(view.getContext(), parentType);
     if (context == Contexts.getApplication(context.getApplicationContext())) {
@@ -158,6 +168,18 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
 
   private static Context unwrap(Context context, Class<?> target) {
     while (context instanceof ContextWrapper && !target.isInstance(context)) {
+      context = ((ContextWrapper) context).getBaseContext();
+    }
+    return context;
+  }
+
+  private static Context unwrapAny(Context context, Class<?>... target) {
+    while (context instanceof ContextWrapper) {
+      for (Class<?> clazz : target) {
+        if (clazz.isInstance(context)) {
+          return context;
+        }
+      }
       context = ((ContextWrapper) context).getBaseContext();
     }
     return context;

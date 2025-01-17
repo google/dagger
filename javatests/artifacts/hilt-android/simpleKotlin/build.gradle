@@ -53,3 +53,9 @@ allprojects {
         }
     }
 }
+
+subprojects {
+  ksp {
+    arg("dagger.allowKsp", "enabled")
+  }
+}

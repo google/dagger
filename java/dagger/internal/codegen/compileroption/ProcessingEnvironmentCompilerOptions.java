@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.compileroption.FeatureStatus.DISABLED;
 import static dagger.internal.codegen.compileroption.FeatureStatus.ENABLED;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.ALLOW_KSP;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_AHEAD_OF_TIME_SUBCOMPONENTS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_ANDROID_MODE;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.EXPERIMENTAL_DAGGER_ERROR_MESSAGES;
@@ -107,6 +108,11 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
   private boolean fastInitInternal(XTypeElement component) {
     return isEnabled(FAST_INIT);
+  }
+
+  @Override
+  public boolean allowKsp() {
+    return isEnabled(ALLOW_KSP);
   }
 
   @Override
@@ -253,6 +259,15 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
               "dagger.ignoreProvisionKeyWildcards",
               "https://dagger.dev/dev-guide/compiler-options#ignore-provision-key-wildcards"));
     }
+    if (processingEnv.getBackend() == XProcessingEnv.Backend.KSP
+            && !isEnabled(ALLOW_KSP)) {
+      messager.printMessage(
+          Diagnostic.Kind.ERROR,
+          String.format(
+              "Dagger's KSP processor is still in alpha. Until the feature goes stable, set the "
+                  + "'%s=ENABLED' compiler option when using KSP.",
+              optionName(ALLOW_KSP)));
+    }
     return this;
   }
 
@@ -313,6 +328,8 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
    */
   enum Feature implements EnumOption<FeatureStatus> {
     FAST_INIT,
+
+    ALLOW_KSP,
 
     EXPERIMENTAL_ANDROID_MODE,
 

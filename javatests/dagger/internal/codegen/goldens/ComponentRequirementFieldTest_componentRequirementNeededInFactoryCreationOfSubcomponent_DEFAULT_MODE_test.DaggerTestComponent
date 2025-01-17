@@ -57,11 +57,11 @@ final class DaggerTestComponent {
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
-    private Provider<Set<Object>> setOfObjectProvider;
+    Provider<Set<Object>> setOfObjectProvider;
 
-    private Provider<Object> reliesOnMultibindingProvider;
+    Provider<Object> reliesOnMultibindingProvider;
 
-    private TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
+    TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
       this.testComponentImpl = testComponentImpl;
 
       initialize();
@@ -85,11 +85,11 @@ final class DaggerTestComponent {
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Set<Object>> setOfObjectProvider;
+    Provider<Set<Object>> setOfObjectProvider;
 
-    private Provider<Object> reliesOnMultibindingProvider;
+    Provider<Object> reliesOnMultibindingProvider;
 
-    private TestComponentImpl(ParentModule parentModuleParam) {
+    TestComponentImpl(ParentModule parentModuleParam) {
       this.parentModule = parentModuleParam;
       initialize(parentModuleParam);
 

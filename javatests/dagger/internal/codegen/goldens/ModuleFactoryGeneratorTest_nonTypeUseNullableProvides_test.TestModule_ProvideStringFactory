@@ -44,3 +44,4 @@ public final class TestModule_ProvideStringFactory implements Factory<String> {
     return instance.provideString();
   }
 }
+

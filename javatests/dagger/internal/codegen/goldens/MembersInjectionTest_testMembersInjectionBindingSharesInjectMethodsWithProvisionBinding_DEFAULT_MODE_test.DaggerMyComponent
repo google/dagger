@@ -42,7 +42,7 @@ public final class DaggerMyComponent {
   private static final class MyComponentImpl implements MyComponent {
     private final MyComponentImpl myComponentImpl = this;
 
-    private MyComponentImpl() {
+    MyComponentImpl() {
 
 
     }

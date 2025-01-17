@@ -47,18 +47,18 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Foo> bindProvider;
+    Provider<Foo> bindProvider;
 
     @SuppressWarnings("rawtypes")
-    private Provider fooImplProvider;
+    Provider fooImplProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 
     }
 
-    private Object fooImpl() {
+    Object fooImpl() {
       return FooImpl_Factory.newInstance(bindProvider);
     }
 

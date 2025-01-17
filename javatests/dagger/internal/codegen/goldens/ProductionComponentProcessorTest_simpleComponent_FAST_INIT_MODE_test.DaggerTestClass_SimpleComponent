@@ -76,21 +76,21 @@ final class DaggerTestClass_SimpleComponent {
 
     private Producer<TestClass.A> aEntryPoint;
 
-    private Provider<Executor> executorProvider;
+    Provider<Executor> executorProvider;
 
-    private Provider<Executor> productionImplementationExecutorProvider;
+    Provider<Executor> productionImplementationExecutorProvider;
 
-    private Provider<TestClass.SimpleComponent> simpleComponentProvider;
+    Provider<TestClass.SimpleComponent> simpleComponentProvider;
 
-    private Provider<ProductionComponentMonitor> monitorProvider;
+    Provider<ProductionComponentMonitor> monitorProvider;
 
-    private Provider<TestClass.B> bProvider;
+    Provider<TestClass.B> bProvider;
 
-    private Producer<TestClass.B> bProducer;
+    Producer<TestClass.B> bProducer;
 
-    private Producer<TestClass.A> aProducer;
+    Producer<TestClass.A> aProducer;
 
-    private SimpleComponentImpl(TestClass.AModule aModuleParam, TestClass.BModule bModuleParam) {
+    SimpleComponentImpl(TestClass.AModule aModuleParam, TestClass.BModule bModuleParam) {
       this.bModule = bModuleParam;
       initialize(aModuleParam, bModuleParam);
 

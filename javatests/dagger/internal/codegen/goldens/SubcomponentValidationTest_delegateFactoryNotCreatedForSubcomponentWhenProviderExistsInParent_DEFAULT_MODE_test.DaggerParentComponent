@@ -48,17 +48,17 @@ final class DaggerParentComponent {
 
     private final ChildComponentImpl childComponentImpl = this;
 
-    private ChildComponentImpl(ParentComponentImpl parentComponentImpl) {
+    ChildComponentImpl(ParentComponentImpl parentComponentImpl) {
       this.parentComponentImpl = parentComponentImpl;
       this.childModule = new ChildModule();
 
     }
 
-    private NeedsDep1 needsDep1() {
+    NeedsDep1 needsDep1() {
       return new NeedsDep1(parentComponentImpl.dep1Provider.get());
     }
 
-    private A a() {
+    A a() {
       return injectA(A_Factory.newInstance(needsDep1(), parentComponentImpl.dep1Provider.get(), parentComponentImpl.dep2Provider.get()));
     }
 
@@ -77,11 +77,11 @@ final class DaggerParentComponent {
   private static final class ParentComponentImpl implements ParentComponent {
     private final ParentComponentImpl parentComponentImpl = this;
 
-    private Provider<Dep1> dep1Provider;
+    Provider<Dep1> dep1Provider;
 
-    private Provider<Dep2> dep2Provider;
+    Provider<Dep2> dep2Provider;
 
-    private ParentComponentImpl() {
+    ParentComponentImpl() {
 
       initialize();
 

@@ -55,7 +55,7 @@ final class DaggerTestComponent {
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl(MapModule mapModuleParam) {
+    TestComponentImpl(MapModule mapModuleParam) {
       this.mapModule = mapModuleParam;
 
     }

@@ -43,9 +43,9 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<FooFactory<String>> fooFactoryProvider;
+    Provider<FooFactory<String>> fooFactoryProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 

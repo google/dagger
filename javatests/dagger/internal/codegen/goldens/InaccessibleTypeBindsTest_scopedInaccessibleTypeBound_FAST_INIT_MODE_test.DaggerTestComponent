@@ -45,11 +45,11 @@ final class DaggerTestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
     @SuppressWarnings("rawtypes")
-    private Provider fooImplProvider;
+    Provider fooImplProvider;
 
-    private Provider<Foo> bindProvider;
+    Provider<Foo> bindProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 

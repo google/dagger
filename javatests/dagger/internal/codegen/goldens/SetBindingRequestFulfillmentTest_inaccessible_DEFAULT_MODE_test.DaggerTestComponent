@@ -47,12 +47,12 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
 
     }
 
-    private Set setOfInaccessible2() {
+    Set setOfInaccessible2() {
       return SetBuilder.newSetBuilder(1).addAll(TestModule_EmptySetFactory.emptySet()).build();
     }
 

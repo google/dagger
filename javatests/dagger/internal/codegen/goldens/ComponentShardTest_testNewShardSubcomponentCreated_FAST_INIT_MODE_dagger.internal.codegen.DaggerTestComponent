@@ -41,17 +41,17 @@ final class DaggerTestComponent {
   }
 
   private static final class TestSubcomponentImpl implements TestSubcomponent {
-    private TestSubcomponentImplShard testSubcomponentImplShard;
+    TestSubcomponentImplShard testSubcomponentImplShard;
 
     private final TestComponentImpl testComponentImpl;
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
-    private Provider<Binding1> binding1Provider;
+    Provider<Binding1> binding1Provider;
 
-    private Provider<Binding2> binding2Provider;
+    Provider<Binding2> binding2Provider;
 
-    private TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
+    TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
       this.testComponentImpl = testComponentImpl;
 
       initialize();
@@ -127,7 +127,7 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
 
     }
@@ -143,9 +143,9 @@ final class DaggerTestComponent {
 
     private final TestSubcomponentImpl testSubcomponentImpl;
 
-    private Provider<Binding3> binding3Provider;
+    Provider<Binding3> binding3Provider;
 
-    private TestSubcomponentImplShard(TestComponentImpl testComponentImpl,
+    TestSubcomponentImplShard(TestComponentImpl testComponentImpl,
         TestSubcomponentImpl testSubcomponentImpl) {
       this.testComponentImpl = testComponentImpl;
       this.testSubcomponentImpl = testSubcomponentImpl;

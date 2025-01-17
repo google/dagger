@@ -35,9 +35,10 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl(@Nullable Bar argParam) {
+    TestComponentImpl(@Nullable Bar argParam) {
 
 
     }
   }
 }
+

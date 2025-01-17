@@ -47,9 +47,9 @@ final class DaggerBComponent {
   private static final class BComponentImpl implements BComponent {
     private final BComponentImpl bComponentImpl = this;
 
-    private Provider<Integer> iProvider;
+    Provider<Integer> iProvider;
 
-    private BComponentImpl(IntComponent intComponentParam) {
+    BComponentImpl(IntComponent intComponentParam) {
 
       initialize(intComponentParam);
 

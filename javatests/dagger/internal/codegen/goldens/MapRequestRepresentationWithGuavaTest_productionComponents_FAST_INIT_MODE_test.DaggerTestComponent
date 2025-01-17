@@ -46,7 +46,7 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent, CancellationListener {
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
 
     }

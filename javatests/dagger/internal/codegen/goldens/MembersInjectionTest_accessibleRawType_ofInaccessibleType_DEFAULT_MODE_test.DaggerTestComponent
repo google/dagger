@@ -50,9 +50,9 @@ final class DaggerTestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
     @SuppressWarnings("rawtypes")
-    private Provider inaccessiblesProvider;
+    Provider inaccessiblesProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 

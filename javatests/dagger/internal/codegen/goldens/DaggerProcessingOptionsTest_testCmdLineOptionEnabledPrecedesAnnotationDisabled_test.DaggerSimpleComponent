@@ -44,9 +44,9 @@ final class DaggerSimpleComponent {
   private static final class SimpleComponentImpl implements SimpleComponent {
     private final SimpleComponentImpl simpleComponentImpl = this;
 
-    private Provider<SomeInjectableType> someInjectableTypeProvider;
+    Provider<SomeInjectableType> someInjectableTypeProvider;
 
-    private SimpleComponentImpl() {
+    SimpleComponentImpl() {
 
       initialize();
 

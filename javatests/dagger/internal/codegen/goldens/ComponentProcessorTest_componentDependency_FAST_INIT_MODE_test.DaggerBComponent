@@ -49,9 +49,9 @@ final class DaggerBComponent {
 
     private final BComponentImpl bComponentImpl = this;
 
-    private Provider<A> aProvider;
+    Provider<A> aProvider;
 
-    private BComponentImpl(AComponent aComponentParam) {
+    BComponentImpl(AComponent aComponentParam) {
       this.aComponent = aComponentParam;
       initialize(aComponentParam);
 

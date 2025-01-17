@@ -47,7 +47,7 @@ final class DaggerSimpleComponent {
 
     private final SimpleComponentImpl simpleComponentImpl = this;
 
-    private SimpleComponentImpl(Integer iParam) {
+    SimpleComponentImpl(Integer iParam) {
       this.i = iParam;
 
     }

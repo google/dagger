@@ -69,13 +69,13 @@ final class DaggerTestComponent {
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Handler> provideAdminHandlerProvider;
+    Provider<Handler> provideAdminHandlerProvider;
 
-    private Provider<Handler> provideLoginHandlerProvider;
+    Provider<Handler> provideLoginHandlerProvider;
 
-    private Provider mapOfWrappedClassKeyAndProviderOfHandlerProvider;
+    Provider mapOfWrappedClassKeyAndProviderOfHandlerProvider;
 
-    private TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+    TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
       this.mapModuleOne = mapModuleOneParam;
       this.mapModuleTwo = mapModuleTwoParam;
       initialize(mapModuleOneParam, mapModuleTwoParam);
@@ -110,13 +110,13 @@ final class DaggerTestComponent {
       @Override
       public T get() {
         switch (id) {
-          case 0: // java.util.Map<test.WrappedClassKey,javax.inject.Provider<test.Handler>> 
+          case 0: // java.util.Map<test.WrappedClassKey,javax.inject.Provider<test.Handler>>
           return (T) ImmutableMap.<WrappedClassKey, javax.inject.Provider<Handler>>of(WrappedClassKeyCreator.createWrappedClassKey(Integer.class), testComponentImpl.provideAdminHandlerProvider, WrappedClassKeyCreator.createWrappedClassKey(Long.class), testComponentImpl.provideLoginHandlerProvider);
 
-          case 1: // java.util.Map<test.WrappedClassKey,javax.inject.Provider<test.Handler>> test.MapModuleOne#provideAdminHandler 
+          case 1: // java.util.Map<test.WrappedClassKey,test.Handler> test.MapModuleOne#provideAdminHandler
           return (T) MapModuleOne_ProvideAdminHandlerFactory.provideAdminHandler(testComponentImpl.mapModuleOne);
 
-          case 2: // java.util.Map<test.WrappedClassKey,javax.inject.Provider<test.Handler>> test.MapModuleTwo#provideLoginHandler 
+          case 2: // java.util.Map<test.WrappedClassKey,test.Handler> test.MapModuleTwo#provideLoginHandler
           return (T) MapModuleTwo_ProvideLoginHandlerFactory.provideLoginHandler(testComponentImpl.mapModuleTwo);
 
           default: throw new AssertionError(id);

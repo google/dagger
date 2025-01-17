@@ -45,7 +45,7 @@ final class DaggerParentComponent {
 
     private final tdmltmt_SubImpl _tdmltmt_SubImpl = this;
 
-    private tdmltmt_SubImpl(ParentComponentImpl parentComponentImpl, t_SubImpl _t_SubImpl) {
+    tdmltmt_SubImpl(ParentComponentImpl parentComponentImpl, t_SubImpl _t_SubImpl) {
       this.parentComponentImpl = parentComponentImpl;
       this._t_SubImpl = _t_SubImpl;
 
@@ -58,7 +58,7 @@ final class DaggerParentComponent {
 
     private final t_SubImpl _t_SubImpl = this;
 
-    private t_SubImpl(ParentComponentImpl parentComponentImpl) {
+    t_SubImpl(ParentComponentImpl parentComponentImpl) {
       this.parentComponentImpl = parentComponentImpl;
 
 
@@ -73,7 +73,7 @@ final class DaggerParentComponent {
   private static final class ParentComponentImpl implements ParentComponent {
     private final ParentComponentImpl parentComponentImpl = this;
 
-    private ParentComponentImpl() {
+    ParentComponentImpl() {
 
 
     }

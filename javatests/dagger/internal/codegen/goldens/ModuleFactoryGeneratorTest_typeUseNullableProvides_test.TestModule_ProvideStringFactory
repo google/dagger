@@ -42,3 +42,4 @@ public final class TestModule_ProvideStringFactory implements Factory<@Nullable 
     return instance.provideString();
   }
 }
+

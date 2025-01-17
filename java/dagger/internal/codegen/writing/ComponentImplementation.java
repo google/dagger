@@ -557,7 +557,7 @@ public final class ComponentImplementation {
         // Add the shard if this is the first time it's requested by something.
         String shardFieldName =
             componentShard.getUniqueFieldName(UPPER_CAMEL.to(LOWER_CAMEL, name.simpleName()));
-        FieldSpec shardField = FieldSpec.builder(name, shardFieldName, PRIVATE).build();
+        FieldSpec shardField = FieldSpec.builder(name, shardFieldName).build();
 
         shardFieldsByImplementation.put(this, shardField);
       }
@@ -724,6 +724,10 @@ public final class ComponentImplementation {
     /** Claims a new method name for the component. Does nothing if method name already exists. */
     public void claimMethodName(CharSequence name) {
       componentMethodNames.claim(name);
+    }
+
+    public boolean isShardClassPrivate() {
+      return modifiers().contains(PRIVATE);
     }
 
     @Override
@@ -938,7 +942,11 @@ public final class ComponentImplementation {
 
     /** Creates and adds the constructor and methods needed for initializing the component. */
     private void addConstructorAndInitializationMethods() {
-      MethodSpec.Builder constructor = constructorBuilder().addModifiers(PRIVATE);
+      MethodSpec.Builder constructor = constructorBuilder();
+      // TODO(bcorso): remove once dagger.generatedClassExtendsComponent flag is removed.
+      if (!isShardClassPrivate()) {
+        constructor.addModifiers(PRIVATE);
+      }
       ImmutableList<ParameterSpec> parameters = constructorParameters.values().asList();
 
       // Add a constructor parameter and initialization for each component field. We initialize

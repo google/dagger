@@ -45,9 +45,9 @@ final class DaggerMyComponent {
 
     private final MySubcomponentImpl mySubcomponentImpl = this;
 
-    private Provider<MySubcomponentAssistedFactory> mySubcomponentAssistedFactoryProvider;
+    Provider<MySubcomponentAssistedFactory> mySubcomponentAssistedFactoryProvider;
 
-    private MySubcomponentImpl(MyComponentImpl myComponentImpl) {
+    MySubcomponentImpl(MyComponentImpl myComponentImpl) {
       this.myComponentImpl = myComponentImpl;
 
       initialize();
@@ -99,9 +99,9 @@ final class DaggerMyComponent {
   private static final class MyComponentImpl implements MyComponent {
     private final MyComponentImpl myComponentImpl = this;
 
-    private Provider<MyComponentAssistedFactory> myComponentAssistedFactoryProvider;
+    Provider<MyComponentAssistedFactory> myComponentAssistedFactoryProvider;
 
-    private MyComponentImpl() {
+    MyComponentImpl() {
 
       initialize();
 

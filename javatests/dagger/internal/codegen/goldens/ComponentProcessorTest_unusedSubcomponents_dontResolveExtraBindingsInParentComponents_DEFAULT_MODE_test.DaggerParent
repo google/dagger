@@ -41,7 +41,7 @@ final class DaggerParent {
   private static final class ParentImpl implements Parent {
     private final ParentImpl parentImpl = this;
 
-    private ParentImpl() {
+    ParentImpl() {
 
 
     }

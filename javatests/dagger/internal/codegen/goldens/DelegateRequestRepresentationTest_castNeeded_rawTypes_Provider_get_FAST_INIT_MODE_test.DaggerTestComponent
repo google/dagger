@@ -46,9 +46,9 @@ final class DaggerTestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
     @SuppressWarnings("rawtypes")
-    private Provider subtypeProvider;
+    Provider subtypeProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 

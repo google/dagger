@@ -162,7 +162,7 @@ final class SwitchingProviders {
 
       return CodeBlock.builder()
           // TODO(bcorso): Is there something else more useful than the key?
-          .add("case $L: // $L \n", switchIds.get(key), key)
+          .add("case $L: // $L\n", switchIds.get(key), key)
           .addStatement("return ($T) $L", T, instanceCodeBlock)
           .build();
     }

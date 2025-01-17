@@ -41,7 +41,7 @@ public final class DaggerPublicComponent {
   private static final class PublicComponentImpl implements PublicComponent {
     private final PublicComponentImpl publicComponentImpl = this;
 
-    private PublicComponentImpl() {
+    PublicComponentImpl() {
 
 
     }

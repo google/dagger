@@ -48,7 +48,7 @@ final class DaggerTestComponent {
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
-    private TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
+    TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
       this.testComponentImpl = testComponentImpl;
 
 
@@ -70,7 +70,7 @@ final class DaggerTestComponent {
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl(Dep depParam) {
+    TestComponentImpl(Dep depParam) {
       this.dep = depParam;
 
     }

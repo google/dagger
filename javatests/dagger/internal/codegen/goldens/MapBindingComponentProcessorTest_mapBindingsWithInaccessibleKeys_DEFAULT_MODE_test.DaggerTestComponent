@@ -57,20 +57,20 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Map<Class<?>, Integer>> mapOfClassOfAndIntegerProvider;
+    Provider<Map<Class<?>, Integer>> mapOfClassOfAndIntegerProvider;
 
     @SuppressWarnings("rawtypes")
-    private Provider mapOfPackagePrivateEnumAndIntegerProvider;
+    Provider mapOfPackagePrivateEnumAndIntegerProvider;
 
-    private Provider<Map<MapKeys.ComplexKey, Integer>> mapOfComplexKeyAndIntegerProvider;
+    Provider<Map<MapKeys.ComplexKey, Integer>> mapOfComplexKeyAndIntegerProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 
     }
 
-    private Map mapOfPackagePrivateEnumAndInteger() {
+    Map mapOfPackagePrivateEnumAndInteger() {
       return ImmutableMap.of(MapModule_EnumKeyMapKey.create(), MapModule.enumKey());
     }
 

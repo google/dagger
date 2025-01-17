@@ -44,9 +44,9 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<Foo> bindProvider;
+    Provider<Foo> bindProvider;
 
-    private TestComponentImpl() {
+    TestComponentImpl() {
 
       initialize();
 

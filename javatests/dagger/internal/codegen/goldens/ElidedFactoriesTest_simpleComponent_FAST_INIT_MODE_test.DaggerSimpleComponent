@@ -41,7 +41,7 @@ final class DaggerSimpleComponent {
   private static final class SimpleComponentImpl implements SimpleComponent {
     private final SimpleComponentImpl simpleComponentImpl = this;
 
-    private SimpleComponentImpl() {
+    SimpleComponentImpl() {
 
 
     }

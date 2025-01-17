@@ -54,12 +54,12 @@ final class DaggerTestComponent {
 
     private final TestComponentImpl testComponentImpl = this;
 
-    private TestComponentImpl(TestModule testModuleParam) {
+    TestComponentImpl(TestModule testModuleParam) {
       this.testModule = testModuleParam;
 
     }
 
-    private B b() {
+    B b() {
       return TestModule_BFactory.b(testModule, new C());
     }
 

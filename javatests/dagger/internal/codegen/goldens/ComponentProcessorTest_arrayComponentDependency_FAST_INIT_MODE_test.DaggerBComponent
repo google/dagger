@@ -49,9 +49,9 @@ final class DaggerBComponent {
 
     private final BComponentImpl bComponentImpl = this;
 
-    private Provider<String[]> stringsProvider;
+    Provider<String[]> stringsProvider;
 
-    private BComponentImpl(ArrayComponent arrayComponentParam) {
+    BComponentImpl(ArrayComponent arrayComponentParam) {
       this.arrayComponent = arrayComponentParam;
       initialize(arrayComponentParam);
 

@@ -26,6 +26,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import dagger.assisted.Assisted;
@@ -99,7 +100,11 @@ final class PrivateMethodRequestRepresentation extends MethodRequestRepresentati
       shardImplementation.addMethod(
           PRIVATE_METHOD,
           methodBuilder(methodName)
-              .addModifiers(PRIVATE)
+              // TODO(bcorso): remove once dagger.generatedClassExtendsComponent flag is removed.
+              .addModifiers(
+                  !shardImplementation.isShardClassPrivate()
+                      ? ImmutableSet.of(PRIVATE)
+                      : ImmutableSet.of())
               .returns(returnType().getTypeName())
               .addStatement(
                   "return $L",

@@ -39,7 +39,7 @@ final class DaggerSimpleComponent {
 
     private final SimpleComponentImpl simpleComponentImpl = this;
 
-    private SimpleComponentImpl(Object objectParam) {
+    SimpleComponentImpl(Object objectParam) {
       this.object = objectParam;
 
     }

@@ -37,7 +37,6 @@ allprojects {
     mavenCentral()
     mavenLocal()
   }
-
   configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
       if (details.requested.group == 'com.google.dagger'
@@ -46,5 +45,11 @@ allprojects {
         details.because 'LOCAL-SNAPSHOT should act as latest version.'
       }
     }
+  }
+}
+
+subprojects {
+  ksp {
+    arg("dagger.allowKsp", "enabled")
   }
 }

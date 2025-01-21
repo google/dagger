@@ -61,6 +61,7 @@ import dagger.internal.codegen.KspComponentProcessor;
 import dagger.testing.compile.CompilerTests;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -222,7 +223,7 @@ public final class HiltCompilerTests {
     static Builder builder() {
       return new AutoValue_HiltCompilerTests_HiltCompiler.Builder()
           // Set the builder defaults.
-          .processorOptions(ImmutableMap.of())
+          .processorOptions(CompilerTests.DEFAULT_PROCESSOR_OPTIONS)
           .additionalJavacProcessors(ImmutableList.of())
           .additionalKspProcessors(ImmutableList.of())
           .processingSteps(ImmutableList.of())
@@ -246,7 +247,11 @@ public final class HiltCompilerTests {
 
     /** Returns a new {@link HiltCompiler} instance with the annotation processors options. */
     public HiltCompiler withProcessorOptions(ImmutableMap<String, String> processorOptions) {
-      return toBuilder().processorOptions(processorOptions).build();
+      // Add default processor options first to allow overridding with new key-value pairs.
+      Map<String, String> newProcessorOptions =
+          new HashMap<>(CompilerTests.DEFAULT_PROCESSOR_OPTIONS);
+      newProcessorOptions.putAll(processorOptions);
+      return toBuilder().processorOptions(ImmutableMap.copyOf(newProcessorOptions)).build();
     }
 
     /** Returns the processing steps suppliers. */

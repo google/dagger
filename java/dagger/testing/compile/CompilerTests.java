@@ -64,8 +64,9 @@ public final class CompilerTests {
       new XProcessingEnvConfig.Builder().disableAnnotatedElementValidation(true).build();
 
   // TODO(bcorso): Share this with javatests/dagger/internal/codegen/Compilers.java
-  private static final ImmutableMap<String, String> DEFAULT_PROCESSOR_OPTIONS =
+  public static final ImmutableMap<String, String> DEFAULT_PROCESSOR_OPTIONS =
       ImmutableMap.of(
+          "dagger.allowKsp", "enabled",
           "dagger.experimentalDaggerErrorMessages", "enabled");
 
   private static final ImmutableList<String> DEFAULT_JAVAC_OPTIONS = ImmutableList.of();

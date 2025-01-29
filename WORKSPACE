@@ -210,6 +210,13 @@ KOTLIN_VERSION = "2.0.21"
 
 KSP_VERSION = KOTLIN_VERSION + "-1.0.28"
 
+# XProcessing testing uses the embeddable Kotlin version. Ideally, this would be
+# the same as KOTLIN_VERSION, but XProcessing testing requires 2.1.0 and Bazel
+# doesn't support 2.1.0 yet. See https://github.com/bazelbuild/rules_kotlin/issues/1176.
+EMBEDDABLE_KOTLIN_VERSION = "2.1.0"
+
+EMBEDDABLE_KSP_VERSION = EMBEDDABLE_KOTLIN_VERSION + "-1.0.28"
+
 MAVEN_VERSION = "3.3.3"
 
 maven_install(
@@ -251,7 +258,6 @@ maven_install(
         "com.google.devtools.ksp:symbol-processing:%s" % KSP_VERSION,
         "com.google.devtools.ksp:symbol-processing-api:%s" % KSP_VERSION,
         "com.google.devtools.ksp:symbol-processing-common-deps:%s" % KSP_VERSION,
-        "com.google.devtools.ksp:symbol-processing-aa-embeddable:%s" % KSP_VERSION,
         "com.google.errorprone:error_prone_annotation:%s" % ERROR_PRONE_VERSION,
         "com.google.errorprone:error_prone_annotations:%s" % ERROR_PRONE_VERSION,
         "com.google.errorprone:error_prone_check_api:%s" % ERROR_PRONE_VERSION,
@@ -294,9 +300,6 @@ maven_install(
         "org.eclipse.sisu:org.eclipse.sisu.plexus:%s" % ECLIPSE_SISU_VERSION,
         "org.eclipse.sisu:org.eclipse.sisu.inject:%s" % ECLIPSE_SISU_VERSION,
         "org.hamcrest:hamcrest-core:1.3",
-        "org.jetbrains.kotlin:kotlin-annotation-processing-embeddable:%s" % KOTLIN_VERSION,
-        "org.jetbrains.kotlin:kotlin-compiler-embeddable:%s" % KOTLIN_VERSION,
-        "org.jetbrains.kotlin:kotlin-daemon-embeddable:%s" % KOTLIN_VERSION,
         "org.jetbrains.kotlin:kotlin-metadata-jvm:%s" % KOTLIN_VERSION,
         "org.jetbrains.kotlin:kotlin-stdlib:%s" % KOTLIN_VERSION,
         "org.jspecify:jspecify:1.0.0",
@@ -308,6 +311,23 @@ maven_install(
         "org.ow2.asm:asm-commons:%s" % ASM_VERSION,
         "org.robolectric:robolectric:%s" % ROBOLECTRIC_VERSION,
         "org.robolectric:shadows-framework:%s" % ROBOLECTRIC_VERSION,  # For ActivityController
+    ],
+    repositories = [
+        "https://repo1.maven.org/maven2",
+        "https://maven.google.com",
+    ],
+)
+
+maven_install(
+    name = "kotlin_embeddable",
+    artifacts = [
+        "com.google.devtools.ksp:symbol-processing:%s" % EMBEDDABLE_KSP_VERSION,
+        "com.google.devtools.ksp:symbol-processing-aa-embeddable:%s" % EMBEDDABLE_KSP_VERSION,
+        "org.jetbrains.kotlin:kotlin-annotation-processing-embeddable:%s" % EMBEDDABLE_KOTLIN_VERSION,
+        "org.jetbrains.kotlin:kotlin-compiler-embeddable:%s" % EMBEDDABLE_KOTLIN_VERSION,
+        "org.jetbrains.kotlin:kotlin-daemon-embeddable:%s" % EMBEDDABLE_KOTLIN_VERSION,
+        "org.jetbrains.kotlin:kotlin-metadata-jvm:%s" % EMBEDDABLE_KOTLIN_VERSION,
+        "org.jetbrains.kotlin:kotlin-stdlib:%s" % EMBEDDABLE_KOTLIN_VERSION,
     ],
     repositories = [
         "https://repo1.maven.org/maven2",

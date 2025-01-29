@@ -63,12 +63,12 @@ java_library(
     testonly = 1,
     exports = [
         ":xprocessing-testing-lib",
-        "@maven//:com_google_devtools_ksp_symbol_processing",
-        "@maven//:com_google_devtools_ksp_symbol_processing_aa_embeddable",
-        "@maven//:com_google_devtools_ksp_symbol_processing_common_deps",
-        "@maven//:org_jetbrains_kotlin_kotlin_annotation_processing_embeddable",
-        "@maven//:org_jetbrains_kotlin_kotlin_compiler_embeddable",
-        "@maven//:org_jetbrains_kotlin_kotlin_daemon_embeddable",
+        "@kotlin_embeddable//:com_google_devtools_ksp_symbol_processing",
+        "@kotlin_embeddable//:com_google_devtools_ksp_symbol_processing_aa_embeddable",
+        "@kotlin_embeddable//:com_google_devtools_ksp_symbol_processing_common_deps",
+        "@kotlin_embeddable//:org_jetbrains_kotlin_kotlin_annotation_processing_embeddable",
+        "@kotlin_embeddable//:org_jetbrains_kotlin_kotlin_compiler_embeddable",
+        "@kotlin_embeddable//:org_jetbrains_kotlin_kotlin_daemon_embeddable",
     ],
 )
 

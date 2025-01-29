@@ -1,6 +1,7 @@
 # Functional tests for Dagger-gRPC
 
 load("@rules_java//java:defs.bzl", "java_proto_library")
+load("//third_party/protobuf/bazel:proto_library.bzl", "proto_library")
 
 package(default_visibility = ["//:src"])
 

@@ -16,10 +16,8 @@
 
 package dagger.hilt.processor.internal.kotlin
 
-import androidx.room.compiler.processing.XAnnotation
-import androidx.room.compiler.processing.XFieldElement
-import androidx.room.compiler.processing.XMethodElement
 import androidx.room.compiler.processing.XTypeElement
+import androidx.room.compiler.processing.compat.XConverters.toJavac
 import kotlin.Metadata
 import kotlin.metadata.declaresDefaultValue
 import kotlin.metadata.KmClass
@@ -53,7 +51,7 @@ class ClassMetadata private constructor(private val kmClass: KmClass) {
     /** Parse Kotlin class metadata from a given type element. */
     @JvmStatic
     fun of(typeElement: XTypeElement): ClassMetadata {
-      val metadataAnnotation = checkNotNull(typeElement.getAnnotation(Metadata::class)).value
+      val metadataAnnotation = typeElement.toJavac().getAnnotation(Metadata::class.java)!!
       return when (val classMetadata = KotlinClassMetadata.readStrict(metadataAnnotation)) {
         is KotlinClassMetadata.Class -> ClassMetadata(classMetadata.kmClass)
         else -> error("Unsupported metadata type: ${classMetadata}")

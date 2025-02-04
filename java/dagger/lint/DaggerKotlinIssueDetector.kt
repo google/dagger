@@ -201,7 +201,7 @@ class DaggerKotlinIssueDetector : Detector(), SourceCodeScanner {
       override fun visitMethod(node: UMethod) {
         if (!node.isConstructor &&
           node.hasAnnotation(PROVIDES_ANNOTATION) &&
-          node.hasAnnotation(JVM_STATIC_ANNOTATION)
+          node.findAnnotation(JVM_STATIC_ANNOTATION) != null
         ) {
           val containingClass = node.toUElement()?.getContainingUClass() ?: return
           if (containingClass.isObject()) {

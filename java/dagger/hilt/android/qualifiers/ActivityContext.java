@@ -24,6 +24,6 @@ import javax.inject.Qualifier;
 
 /** Annotation for a {@code Context} that corresponds to the activity. */
 @Qualifier
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD})
 public @interface ActivityContext {}

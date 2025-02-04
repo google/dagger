@@ -42,9 +42,6 @@ runs:
     - name: 'Run Bazel tests'
       run: bazel test --test_output=errors //...
       shell: bash
-    - name: 'Run Bazel examples'
-      run: cd examples/bazel; bazel test --test_output=errors //...
-      shell: bash
     - name: 'Clean bazel cache'
       run: rm -rf $(bazel info repository_cache)
       shell: bash

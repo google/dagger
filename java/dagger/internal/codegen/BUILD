@@ -36,7 +36,7 @@ java_library(
     tags = ["maven_coordinates=com.google.dagger:dagger-compiler:" + POM_VERSION],
     deps = [
         ":package_info",
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/bindinggraphvalidation",

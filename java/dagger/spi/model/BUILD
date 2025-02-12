@@ -38,7 +38,7 @@ kt_jvm_library(
     srcs = [":model-srcs"],
     # TODO(bcorso): Add javacopts explicitly once kt_jvm_library supports them.
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/internal/codegen/extension",
         "//third_party/java/auto:common",
         "//third_party/java/auto:value",

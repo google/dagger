@@ -188,7 +188,7 @@ java_library(
     tags = ["maven_coordinates=com.google.dagger:hilt-core:" + POM_VERSION],
     exports = [
         ":package_info",
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/hilt:define_component",
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:generates_root_input",

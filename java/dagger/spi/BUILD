@@ -44,7 +44,7 @@ java_library(
         "//java/dagger/spi/model",
     ],
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/model",
         "//third_party/java/auto:value",
         "//third_party/java/error_prone:annotations",

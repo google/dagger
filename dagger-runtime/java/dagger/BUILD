@@ -22,7 +22,6 @@ load(
     "JAVA_RELEASE_MIN",
     "POM_VERSION",
 )
-load("//tools/maven:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
 
@@ -37,22 +36,6 @@ java_library(
         "//third_party/java/jsr330_inject",
         "@maven//:jakarta_inject_jakarta_inject_api",
     ],
-)
-
-gen_maven_artifact(
-    name = "artifact",
-    artifact_coordinates = "com.google.dagger:dagger:" + POM_VERSION,
-    artifact_name = "Dagger",
-    artifact_target = ":core",
-    artifact_target_maven_deps = [
-        "org.jspecify:jspecify",
-        "jakarta.inject:jakarta.inject-api",
-        "javax.inject:javax.inject",
-    ],
-    javadoc_root_packages = ["dagger"],
-    javadoc_srcs = [":javadoc-srcs"],
-    proguard_specs = [":proguard.pro"],
-    r8_specs = [":r8.pro"],
 )
 
 filegroup(

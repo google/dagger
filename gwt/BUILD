@@ -29,7 +29,7 @@ java_library(
     tags = ["maven_coordinates=com.google.dagger:dagger-gwt:" + POM_VERSION],
     exports = [
         ":manual_deps",
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
     ],
 )
 

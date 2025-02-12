@@ -33,7 +33,7 @@ java_library(
     tags = ["maven:merged"],
     exports = [":shared"],
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/internal/codegen/compileroption",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/javapoet",

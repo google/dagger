@@ -23,7 +23,7 @@ kt_compiler_test(
     name = "KspComponentProcessorTest",
     srcs = ["KspComponentProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/internal/codegen:package_info",
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/codegen/base",
@@ -51,7 +51,7 @@ kt_compiler_test(
     name = "ComponentValidationKtTest",
     srcs = ["ComponentValidationKtTest.java"],
     compiler_deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/internal/codegen:package_info",
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/codegen/base",

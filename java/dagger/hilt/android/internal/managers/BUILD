@@ -35,6 +35,7 @@ android_library(
         "SavedStateHandleModule.java",
         "ServiceComponentManager.java",
         "ViewComponentManager.java",
+        "TestInjectInterceptor.java",
     ],
     exports = [
         ":saved_state_handle_holder",

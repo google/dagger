@@ -28,7 +28,7 @@ compat_kt_jvm_library(
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     tags = ["maven:merged"],
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/internal/codegen/base:shared",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/javapoet",

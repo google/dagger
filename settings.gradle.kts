@@ -21,7 +21,7 @@ fun includeProject(name: String, path: String) {
   project(name).projectDir = File(path)
 }
 
-includeProject(":dagger", "gradle-projects/dagger-runtime")
+includeProject(":dagger", "dagger-runtime")
 
 includeProject(":dagger-compiler", "gradle-projects/dagger-compiler")
 

@@ -12,21 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Description:
-#   A library for javac the javac plugin module.
-
-load("@rules_java//java:defs.bzl", "java_library")
-
 package(default_visibility = ["//:src"])
 
-java_library(
-    name = "javac",
-    srcs = glob(["*.java"]),
-    plugins = ["//java/dagger/internal/codegen:component-codegen"],
-    deps = [
-        "//dagger-runtime/java/dagger:core",
-        "//java/dagger/internal/codegen/compileroption",
-        "//java/dagger/internal/codegen/xprocessing",
-        "//third_party/java/guava/collect",
-    ],
+filegroup(
+    name = "proguard",
+    srcs = ["com.android.tools/proguard/proguard.pro"],
+)
+
+filegroup(
+    name = "r8",
+    srcs = ["com.android.tools/r8/r8.pro"],
 )

@@ -34,7 +34,7 @@ define_kt_toolchain(
 java_library(
     name = "dagger_with_compiler",
     exported_plugins = ["//java/dagger/internal/codegen:component-codegen"],
-    exports = ["//java/dagger:core"],
+    exports = ["//dagger-runtime/java/dagger:core"],
 )
 
 java_library(
@@ -108,7 +108,7 @@ javadoc_library(
     name = "user-docs",
     testonly = 1,
     srcs = [
-        "//java/dagger:javadoc-srcs",
+        "//dagger-runtime/java/dagger:javadoc-srcs",
         "//java/dagger/android:android-srcs",
         "//java/dagger/android/support:support-srcs",
         "//java/dagger/grpc/server:javadoc-srcs",
@@ -129,7 +129,7 @@ javadoc_library(
     ],
     root_packages = ["dagger"],
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/android",
         "//java/dagger/android/support",
         "//java/dagger/grpc/server",

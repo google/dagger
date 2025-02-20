@@ -37,10 +37,10 @@ _deploy() {
 
 _deploy \
   "" \
-  java/dagger/artifact.jar \
-  java/dagger/pom.xml \
-  java/dagger/artifact-src.jar \
-  java/dagger/artifact-javadoc.jar \
+  dagger-runtime/artifact.jar \
+  dagger-runtime/pom.xml \
+  dagger-runtime/artifact-src.jar \
+  dagger-runtime/artifact-javadoc.jar \
   "dagger"
 
 _deploy \

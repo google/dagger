@@ -24,7 +24,7 @@ java_library(
     srcs = glob(["*.java"]),
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:common",

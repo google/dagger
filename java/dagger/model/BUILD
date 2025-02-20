@@ -42,7 +42,7 @@ java_library(
     srcs = [":model-srcs"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/internal/codegen/extension",
         "//third_party/java/auto:common",
         "//third_party/java/auto:value",

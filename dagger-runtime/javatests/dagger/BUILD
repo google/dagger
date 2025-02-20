@@ -26,7 +26,7 @@ GenJavaTests(
     functional = 0,
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//third_party/java/guava/collect",
         "//third_party/java/guava/util/concurrent",
         "//third_party/java/jsr330_inject",

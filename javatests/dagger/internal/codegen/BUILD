@@ -30,7 +30,7 @@ kt_jvm_library(
         "KotlinObjectWithMemberInjection.kt",
     ],
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
     ],
 )
 
@@ -47,7 +47,7 @@ java_library(
         "TestUtils.java",
     ],
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/internal/codegen:package_info",
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/codegen/base",
@@ -107,7 +107,7 @@ DEPS = [
     "//third_party/java/junit",
     "//third_party/java/mockito",
     "//third_party/java/truth",
-    "//java/dagger:core",
+    "//dagger-runtime/java/dagger:core",
     "//java/dagger/internal/codegen:package_info",
     "//java/dagger/internal/codegen:processor",
     "//java/dagger/internal/codegen/base",

@@ -25,7 +25,7 @@ java_library(
     plugins = ["//java/dagger/internal/codegen:component-codegen"],
     deps = [
         ":kythe_plugin",
-        "//java/dagger:core",
+        "//dagger-runtime/java/dagger:core",
         "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/javac",

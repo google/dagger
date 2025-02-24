@@ -17,6 +17,7 @@
 package dagger.hilt;
 
 import static java.lang.annotation.RetentionPolicy.CLASS;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -44,7 +45,7 @@ import java.lang.annotation.Target;
  *
  * @see <a href="https://dagger.dev/hilt/entry-points">Entry points</a>
  */
-@Retention(CLASS)
+@Retention(RUNTIME)
 @Target(ElementType.TYPE)
 @GeneratesRootInput
 public @interface EntryPoint {}

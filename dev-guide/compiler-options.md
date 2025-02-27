@@ -32,7 +32,7 @@ logic with standard graph data structures and algorithms). However, enabling
 these fixes also comes with a behavior change that could affect some users in
 rare cases.
 
-[`LegacyBindingGraphFactory`]:(https://github.com/google/dagger/blob/master/java/dagger/internal/codegen/binding/LegacyBindingGraphFactory.java)
+[`LegacyBindingGraphFactory`]:(https://github.com/google/dagger/blob/master/dagger-compiler/main/java/dagger/internal/codegen/binding/LegacyBindingGraphFactory.java)
 
 ### Behavior changes
 

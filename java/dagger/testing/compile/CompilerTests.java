@@ -59,7 +59,8 @@ import org.junit.rules.TemporaryFolder;
 
 /** A helper class for working with java compiler tests. */
 public final class CompilerTests {
-  // TODO(bcorso): Share this with java/dagger/internal/codegen/DelegateComponentProcessor.java
+  // TODO(bcorso): Share this with
+  // dagger-compiler/main/java/dagger/internal/codegen/DelegateComponentProcessor.java
   static final XProcessingEnvConfig PROCESSING_ENV_CONFIG =
       new XProcessingEnvConfig.Builder().disableAnnotatedElementValidation(true).build();
 

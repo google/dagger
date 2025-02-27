@@ -34,8 +34,8 @@ gen_maven_artifact(
     artifact_name = "Dagger Android Processor",
     artifact_target = "//dagger-android-processor/main/java/dagger/android/processor",
     artifact_target_libs = [
-        "//java/dagger/internal/codegen/xprocessing",
         "//dagger-android-processor/main/java/dagger/android/processor:base_processing_step",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
     ],
     artifact_target_maven_deps = [
         "com.google.dagger:dagger",

@@ -80,6 +80,6 @@ gen_maven_artifact(
     shaded_deps = [
         "//third_party/java/auto:common",
         "//third_party/kotlin/kotlin_metadata_jvm",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-jar",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-jar",
     ],
 )

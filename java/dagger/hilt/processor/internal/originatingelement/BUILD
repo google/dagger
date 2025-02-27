@@ -34,11 +34,11 @@ java_library(
         "OriginatingElementProcessor.java",
     ],
     deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
-        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:service",
         "//third_party/java/guava/collect",
         "//third_party/java/incap",

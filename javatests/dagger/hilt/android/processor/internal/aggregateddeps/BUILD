@@ -34,8 +34,8 @@ compiler_test(
         "@androidsdk//:platforms/android-34/android.jar",
     ],
     deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/compile_testing",
         "//third_party/java/junit",
     ],
@@ -53,8 +53,8 @@ compiler_test(
         "@androidsdk//:platforms/android-34/android.jar",
     ],
     deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/junit",
     ],
 )

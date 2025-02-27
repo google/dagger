@@ -5,9 +5,9 @@
 # b/232152495.
 
 ignorePaths:
-- java/dagger/internal/codegen/bootstrap/bootstrap_compiler_deploy.jar
-- java/dagger/internal/codegen/kythe/kythe_plugin_deploy.jar  # TODO(b/235380696): remove this
-- java/dagger/internal/codegen/xprocessing/xprocessing-testing-internal.jar
-- java/dagger/internal/codegen/xprocessing/xprocessing-internal.jar
+- dagger-compiler/main/java/dagger/internal/codegen/bootstrap/bootstrap_compiler_deploy.jar
+- dagger-compiler/main/java/dagger/internal/codegen/kythe/kythe_plugin_deploy.jar  # TODO(b/235380696): remove this
+- dagger-compiler/main/java/dagger/internal/codegen/xprocessing/xprocessing-testing-internal.jar
+- dagger-compiler/main/java/dagger/internal/codegen/xprocessing/xprocessing-internal.jar
 - tools/jarjar/test/test-library1.jar
 - tools/jarjar/test/test-library2.jar

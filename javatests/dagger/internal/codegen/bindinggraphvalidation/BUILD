@@ -27,9 +27,9 @@ GenJavaTests(
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     shard_count = 3,
     deps = [
-        "//java/dagger/internal/codegen/bindinggraphvalidation",
-        "//java/dagger/internal/codegen/xprocessing",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/bindinggraphvalidation",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/testing/compile",
         "//javatests/dagger/internal/codegen:compilers",
         "//third_party/java/auto:common",

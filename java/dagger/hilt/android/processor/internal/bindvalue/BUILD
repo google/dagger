@@ -38,6 +38,7 @@ java_library(
     ],
     deps = [
         "//:dagger_with_compiler",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
         "//dagger-spi",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
@@ -45,7 +46,6 @@ java_library(
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/hilt/processor/internal/kotlin",
-        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:service",
         "//third_party/java/auto:value",
         "//third_party/java/guava/base",

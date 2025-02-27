@@ -25,6 +25,7 @@ package(default_visibility = ["//:src"])
 java_library(
     name = "artifact-lib-shared",
     exports = [
+        "//dagger-compiler/main/java/dagger/internal/codegen:processor",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/bindvalue:bind_value_processor_lib",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
@@ -39,7 +40,6 @@ java_library(
         "//java/dagger/hilt/processor/internal/root:component_tree_deps_processor_lib",
         "//java/dagger/hilt/processor/internal/root:root_processor_lib",
         "//java/dagger/hilt/processor/internal/uninstallmodules:processor_lib",
-        "//java/dagger/internal/codegen:processor",
     ],
 )
 

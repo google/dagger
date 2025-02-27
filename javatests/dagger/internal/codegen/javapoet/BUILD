@@ -26,8 +26,8 @@ GenJavaTests(
     functional = False,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
-        "//java/dagger/internal/codegen/javapoet",
-        "//java/dagger/internal/codegen/langmodel",
+        "//dagger-compiler/main/java/dagger/internal/codegen/javapoet",
+        "//dagger-compiler/main/java/dagger/internal/codegen/langmodel",
         "//third_party/java/auto:common",
         "//third_party/java/compile_testing",
         "//third_party/java/javapoet",

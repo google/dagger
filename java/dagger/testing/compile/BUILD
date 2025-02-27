@@ -27,13 +27,13 @@ java_library(
         "CompilerTests.java",
     ],
     exports = [
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
     ],
     deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen:processor",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//dagger-spi",
-        "//java/dagger/internal/codegen:processor",
-        "//java/dagger/internal/codegen/xprocessing",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/auto:value",
         "//third_party/java/compile_testing",
         "//third_party/java/guava/base",

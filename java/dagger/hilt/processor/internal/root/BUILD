@@ -42,6 +42,7 @@ java_library(
     ],
     deps = [
         ":root_metadata",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
         "//dagger-spi",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:android_generators",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:metadata",
@@ -57,7 +58,6 @@ java_library(
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
         "//java/dagger/hilt/processor/internal/earlyentrypoint:aggregated_early_entry_point_metadata",
         "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
-        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:service",
         "//third_party/java/error_prone:annotations",
         "//third_party/java/guava/base",
@@ -92,6 +92,7 @@ java_library(
     deps = [
         ":root_metadata",
         ":root_type",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
         "//dagger-spi",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:android_generators",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:metadata",
@@ -108,7 +109,6 @@ java_library(
         "//java/dagger/hilt/processor/internal/generatesrootinput:generates_root_inputs",
         "//java/dagger/hilt/processor/internal/root/ir",
         "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
-        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:service",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
@@ -131,6 +131,7 @@ java_library(
     ],
     deps = [
         ":root_type",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
         "//dagger-spi",
         "//java/dagger/hilt/processor/internal:aggregated_elements",
         "//java/dagger/hilt/processor/internal:classnames",
@@ -141,7 +142,6 @@ java_library(
         "//java/dagger/hilt/processor/internal/aliasof:alias_ofs",
         "//java/dagger/hilt/processor/internal/kotlin",
         "//java/dagger/hilt/processor/internal/root/ir",
-        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:common",
         "//third_party/java/auto:value",
         "//third_party/java/guava/base",
@@ -155,9 +155,9 @@ java_library(
     name = "root_type",
     srcs = ["RootType.java"],
     deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:processors",
-        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/javapoet",
     ],
 )

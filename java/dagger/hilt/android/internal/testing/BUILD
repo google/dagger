@@ -52,10 +52,10 @@ android_library(
         ":early_test_singleton_component_creator",
         ":test_component_data",
         ":test_injector",
+        "//hilt-android/main/java/dagger/hilt/internal:test_singleton_component_manager",
         "//hilt-core/main/java/dagger/hilt/internal:component_manager",
         "//hilt-core/main/java/dagger/hilt/internal:preconditions",
         "//java/dagger/hilt/android/testing:on_component_ready_runner",
-        "//java/dagger/hilt/internal:test_singleton_component_manager",
         "@maven//:junit_junit",
     ],
 )
@@ -89,9 +89,9 @@ android_library(
     deps = [
         ":test_application_component_manager",
         ":test_application_component_manager_holder",
+        "//hilt-android/main/java/dagger/hilt/android/internal",
         "//hilt-core/main/java/dagger/hilt/internal:component_manager",
         "//hilt-core/main/java/dagger/hilt/internal:preconditions",
-        "//java/dagger/hilt/android/internal",
         "@maven//:androidx_test_core",
         "@maven//:junit_junit",
     ],

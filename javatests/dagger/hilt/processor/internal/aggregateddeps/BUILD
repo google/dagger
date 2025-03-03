@@ -24,14 +24,14 @@ compiler_test(
     size = "small",
     srcs = ["AggregatedDepsProcessorErrorsTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/internal:component_entry_point",
-        "//java/dagger/hilt/internal:generated_entry_point",
+        "//hilt-android/main/java/dagger/hilt/internal:component_entry_point",
+        "//hilt-android/main/java/dagger/hilt/internal:generated_entry_point",
         "//:dagger_with_compiler",
         "//third_party/java/jsr250_annotations",
         "//hilt-core/main/java/dagger/hilt:entry_point",
         "//hilt-core/main/java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/testing:hilt_android_test",
-        "//java/dagger/hilt/android/components",
+        "//hilt-android/main/java/dagger/hilt/android/components",
         "@androidsdk//:platforms/android-34/android.jar",
     ],
     deps = [

@@ -37,10 +37,10 @@ _deploy() {
 
 _deploy \
   "" \
-  java/dagger/hilt/android/artifact.aar \
-  java/dagger/hilt/android/pom.xml \
-  java/dagger/hilt/android/artifact-src.jar \
-  java/dagger/hilt/android/artifact-javadoc.jar \
+  hilt-android/artifact.aar \
+  hilt-android/pom.xml \
+  hilt-android/artifact-src.jar \
+  hilt-android/artifact-javadoc.jar \
   ""
 
 _deploy \

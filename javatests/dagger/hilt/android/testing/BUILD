@@ -25,8 +25,8 @@ android_local_test(
     manifest_values = TEST_MANIFEST_VALUES,
     deps = [
         "//:android_local_test_exports",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "//hilt-core/main/java/dagger/hilt:entry_point",
-        "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android/testing:bind_value",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "//third_party/java/jsr330_inject",
@@ -42,8 +42,8 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "//hilt-core/main/java/dagger/hilt:entry_point",
-        "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android/testing:bind_value",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "//third_party/java/auto:value",
@@ -60,8 +60,8 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "//hilt-core/main/java/dagger/hilt:entry_point",
-        "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android/testing:bind_value",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "//third_party/java/jsr330_inject",
@@ -77,8 +77,8 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "//hilt-core/main/java/dagger/hilt:entry_point",
-        "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android/testing:bind_value",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "//third_party/java/guava/collect",
@@ -95,8 +95,8 @@ android_local_test(
     deps = [
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "//hilt-core/main/java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "//third_party/java/jsr330_inject",
     ],
@@ -123,7 +123,7 @@ android_library(
     srcs = ["HiltAndroidRuleTestApp.java"],
     deps = [
         "//:android_local_test_exports",
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
     ],
 )
 
@@ -133,8 +133,8 @@ android_local_test(
     manifest_values = TEST_MANIFEST_VALUES,
     deps = [
         "//:android_local_test_exports",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "//hilt-core/main/java/dagger/hilt:entry_point",
-        "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android/testing:bind_value",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "//third_party/java/truth",

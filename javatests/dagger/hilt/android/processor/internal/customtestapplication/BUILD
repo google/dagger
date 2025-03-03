@@ -24,7 +24,7 @@ compiler_test(
     compiler_deps = [
         "//java/dagger/hilt/android/testing:custom_test_application",
         "//java/dagger/hilt/android/testing:hilt_android_test",
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
         "@androidsdk//:platforms/android-34/android.jar",
     ],
     deps = [

@@ -23,7 +23,7 @@ compiler_test(
     name = "UninstallModulesProcessorTest",
     srcs = ["UninstallModulesProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:android_entry_point",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "//java/dagger/hilt/android/testing:uninstall_modules",
         "//hilt-core/main/java/dagger/hilt/migration:disable_install_in_check",

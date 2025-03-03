@@ -28,11 +28,11 @@ android_library(
     ],
     deps = [
         "//:dagger_with_compiler",
+        "//hilt-android/main/java/dagger/hilt/android:entry_point_accessors",
+        "//hilt-android/main/java/dagger/hilt/android/components",
         "//hilt-core/main/java/dagger/hilt:entry_point",
         "//hilt-core/main/java/dagger/hilt:install_in",
         "//hilt-core/main/java/dagger/hilt/internal:preconditions",
-        "//java/dagger/hilt/android:entry_point_accessors",
-        "//java/dagger/hilt/android/components",
     ],
 )
 

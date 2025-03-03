@@ -29,7 +29,7 @@ compiler_test(
         "//third_party/java/jsr250_annotations",
         "//hilt-core/main/java/dagger/hilt:entry_point",
         "//hilt-core/main/java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android/components",
+        "//hilt-android/main/java/dagger/hilt/android/components",
     ],
     deps = [
         "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",

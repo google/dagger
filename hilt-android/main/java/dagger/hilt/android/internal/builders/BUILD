@@ -13,24 +13,22 @@
 # limitations under the License.
 
 # Description:
-#   Hilt android modules for standard components.
+#   Hilt Android component builders
 
 load("@rules_android//rules:rules.bzl", "android_library")
 
 package(default_visibility = ["//:src"])
 
 android_library(
-    name = "modules",
+    name = "builders",
     srcs = glob(["*.java"]),
     deps = [
         "//:dagger_with_compiler",
-        "//hilt-core/main/java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android/components",
-        "//java/dagger/hilt/android/internal",
-        "//java/dagger/hilt/android/qualifiers",
+        "//hilt-android/main/java/dagger/hilt/android:view_model_lifecycle",
+        "//hilt-android/main/java/dagger/hilt/android/components",
+        "//hilt-android/main/java/dagger/hilt/android/internal/managers:saved_state_handle_holder",
+        "//hilt-core/main/java/dagger/hilt:define_component",
         "@maven//:androidx_activity_activity",
-        "@maven//:androidx_annotation_annotation",
-        "@maven//:androidx_annotation_annotation_jvm",
         "@maven//:androidx_fragment_fragment",
         "@maven//:androidx_lifecycle_lifecycle_common",
         "@maven//:androidx_lifecycle_lifecycle_viewmodel",

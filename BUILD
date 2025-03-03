@@ -108,10 +108,12 @@ javadoc_library(
         "//dagger-producers/main/java/dagger/producers:producers-srcs",
         "//dagger-runtime/main/java/dagger:javadoc-srcs",
         "//dagger-spi:srcs",
+        "//hilt-android:javadoc-srcs",
         "//hilt-core:javadoc-srcs",
         "//java/dagger/grpc/server:javadoc-srcs",
         "//java/dagger/grpc/server/processor:javadoc-srcs",
         "//java/dagger/hilt:javadoc-srcs",
+        "//java/dagger/hilt/android/plugin/main:srcs_filegroup",
     ],
     android_api_level = 34,
     # TODO(ronshapiro): figure out how to specify the version number for release builds
@@ -130,9 +132,9 @@ javadoc_library(
         "//dagger-producers/main/java/dagger/producers",
         "//dagger-runtime/main/java/dagger:core",
         "//dagger-spi",
+        "//hilt-android:artifact-lib",
         "//java/dagger/grpc/server",
         "//java/dagger/grpc/server/processor",
-        "//java/dagger/hilt/android:artifact-lib",
         "//java/dagger/hilt/android/testing:artifact-lib",
     ],
 )

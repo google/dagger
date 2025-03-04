@@ -32,10 +32,10 @@ compiler_test(
         "//java/dagger/hilt/android/components",
     ],
     deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/hilt/android/testing/compile",
         "//java/dagger/hilt/processor/internal/disableinstallincheck:processor_lib",
-        "//java/dagger/internal/codegen/xprocessing",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/junit",
     ],
 )

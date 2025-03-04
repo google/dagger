@@ -33,7 +33,7 @@ define_kt_toolchain(
 
 java_library(
     name = "dagger_with_compiler",
-    exported_plugins = ["//java/dagger/internal/codegen:component-codegen"],
+    exported_plugins = ["//dagger-compiler/main/java/dagger/internal/codegen:component-codegen"],
     exports = ["//dagger-runtime/main/java/dagger:core"],
 )
 
@@ -48,11 +48,11 @@ java_library(
 java_library(
     name = "compiler_internals",
     exports = [
-        "//java/dagger/internal/codegen:processor",
-        "//java/dagger/internal/codegen/base",
-        "//java/dagger/internal/codegen/binding",
-        "//java/dagger/internal/codegen/validation",
-        "//java/dagger/internal/codegen/writing",
+        "//dagger-compiler/main/java/dagger/internal/codegen:processor",
+        "//dagger-compiler/main/java/dagger/internal/codegen/base",
+        "//dagger-compiler/main/java/dagger/internal/codegen/binding",
+        "//dagger-compiler/main/java/dagger/internal/codegen/validation",
+        "//dagger-compiler/main/java/dagger/internal/codegen/writing",
     ],
 )
 

@@ -29,8 +29,8 @@ compiler_test(
         "//java/dagger/hilt/android/qualifiers",
     ],
     deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/junit",
     ],
 )

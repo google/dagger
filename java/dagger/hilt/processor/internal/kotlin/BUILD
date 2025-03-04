@@ -27,9 +27,9 @@ compat_kt_jvm_library(
     ]),
     deps = [
         "//:dagger_with_compiler",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
         "//dagger-spi",
         "//java/dagger/hilt/processor/internal:classnames",
-        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:value",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",

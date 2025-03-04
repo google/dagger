@@ -43,8 +43,8 @@ compiler_test(
         "@maven//:androidx_test_core",
     ],
     deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
@@ -75,8 +75,8 @@ compiler_test(
         "@maven//:androidx_test_core",
     ],
     deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
@@ -97,8 +97,8 @@ compiler_test(
         "@maven//:androidx_test_core",
     ],
     deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
     ],
@@ -118,8 +118,8 @@ compiler_test(
         "@maven//:androidx_test_core",
     ],
     deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",

@@ -6,6 +6,7 @@ readonly MVN_GOAL="$1"
 readonly VERSION_NAME="$2"
 shift 2
 readonly EXTRA_MAVEN_ARGS=("$@")
+readonly _SHADED_RULES="com.google.auto.common,dagger.spi.internal.shaded.auto.common;androidx.room.compiler,dagger.spi.internal.shaded.androidx.room.compiler;kotlin.metadata,dagger.spi.internal.shaded.kotlin.metadata;androidx.room,dagger.spi.internal.shaded.androidx.room"
 
 # Builds and deploys the given artifacts to a configured maven goal.
 # @param {string} library the library to deploy.
@@ -52,7 +53,7 @@ _deploy \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.spi.internal.shaded.auto.common;androidx.room.compiler,dagger.spi.internal.shaded.androidx.room.compiler;kotlin.metadata,dagger.spi.internal.shaded.kotlin.metadata;androidx.room,dagger.spi.internal.shaded.androidx.room" \
+  "$_SHADED_RULES" \
   java/dagger/hilt/processor/artifact.jar \
   java/dagger/hilt/processor/pom.xml \
   java/dagger/hilt/processor/artifact-src.jar \
@@ -60,7 +61,7 @@ _deploy \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.spi.internal.shaded.auto.common;androidx.room.compiler,dagger.spi.internal.shaded.androidx.room.compiler;kotlin.metadata,dagger.spi.internal.shaded.kotlin.metadata;androidx.room,dagger.spi.internal.shaded.androidx.room" \
+  "$_SHADED_RULES" \
   java/dagger/hilt/android/processor/artifact.jar \
   java/dagger/hilt/android/processor/pom.xml \
   java/dagger/hilt/android/processor/artifact-src.jar \

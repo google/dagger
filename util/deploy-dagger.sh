@@ -6,6 +6,7 @@ readonly MVN_GOAL="$1"
 readonly VERSION_NAME="$2"
 shift 2
 readonly EXTRA_MAVEN_ARGS=("$@")
+readonly _SHADED_RULES="com.google.auto.common,dagger.spi.internal.shaded.auto.common;androidx.room.compiler,dagger.spi.internal.shaded.androidx.room.compiler;kotlin.metadata,dagger.spi.internal.shaded.kotlin.metadata;androidx.room,dagger.spi.internal.shaded.androidx.room"
 
 # Builds and deploys the given artifacts to a configured maven goal.
 # @param {string} library the library to deploy.
@@ -52,7 +53,7 @@ _deploy \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.spi.internal.shaded.auto.common;androidx.room.compiler,dagger.spi.internal.shaded.androidx.room.compiler;kotlin.metadata,dagger.spi.internal.shaded.kotlin.metadata;androidx.room,dagger.spi.internal.shaded.androidx.room" \
+  "$_SHADED_RULES" \
   dagger-compiler/artifact.jar \
   dagger-compiler/pom.xml \
   dagger-compiler/artifact-src.jar \
@@ -68,7 +69,7 @@ _deploy \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.spi.internal.shaded.auto.common;androidx.room.compiler,dagger.spi.internal.shaded.androidx.room.compiler;kotlin.metadata,dagger.spi.internal.shaded.kotlin.metadata;androidx.room,dagger.spi.internal.shaded.androidx.room" \
+  "$_SHADED_RULES" \
   dagger-spi/artifact.jar \
   dagger-spi/pom.xml \
   dagger-spi/artifact-src.jar \
@@ -108,7 +109,7 @@ _deploy \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.spi.internal.shaded.auto.common;androidx.room.compiler,dagger.spi.internal.shaded.androidx.room.compiler;kotlin.metadata,dagger.spi.internal.shaded.kotlin.metadata;androidx.room,dagger.spi.internal.shaded.androidx.room" \
+  "$_SHADED_RULES" \
   dagger-android-processor/artifact.jar \
   dagger-android-processor/pom.xml \
   dagger-android-processor/artifact-src.jar \
@@ -132,11 +133,11 @@ _deploy \
   ""
 
 _deploy \
-  "" \
-  shaded_grpc_server_processor.jar \
-  java/dagger/grpc/server/processor/pom.xml \
-  java/dagger/grpc/server/processor/libprocessor-src.jar \
-  java/dagger/grpc/server/processor/javadoc.jar \
+  "$_SHADED_RULES" \
+  dagger-grpc-server-processor/artifact.jar \
+  dagger-grpc-server-processor/pom.xml \
+  dagger-grpc-server-processor/artifact-src.jar \
+  dagger-grpc-server-processor/artifact-javadoc.jar \
   ""
 
 _deploy \

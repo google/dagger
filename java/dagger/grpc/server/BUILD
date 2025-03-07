@@ -36,7 +36,9 @@ java_library(
         ["*.java"],
         exclude = ANNOTATIONS_SRCS,
     ),
-    exported_plugins = ["//java/dagger/grpc/server/processor:plugin"],
+    exported_plugins = [
+        "//dagger-grpc-server-processor:plugin",
+    ],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES + JAVA_RELEASE_MIN,
     tags = ["maven_coordinates=com.google.dagger:dagger-grpc-server:" + POM_VERSION],
     exports = [":annotations"],

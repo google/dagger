@@ -14,7 +14,6 @@
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "define_kt_toolchain")
 load("@rules_java//java:defs.bzl", "java_library")
-load("//tools/jarjar:jarjar.bzl", "jarjar_library")
 load("//tools/javadoc:javadoc.bzl", "javadoc_library")
 
 package(default_visibility = ["//visibility:public"])
@@ -70,17 +69,6 @@ android_library(
     ],
 )
 
-jarjar_library(
-    name = "shaded_grpc_server_processor",
-    jars = [
-        "//java/dagger/grpc/server/processor",
-        "//third_party/java/auto:common",
-    ],
-    rules = [
-        "rule com.google.auto.common.** dagger.grpc.shaded.auto.common.@1",
-    ],
-)
-
 android_library(
     name = "android_local_test_exports",
     testonly = 1,
@@ -110,7 +98,6 @@ javadoc_library(
         "//dagger-spi:srcs",
         "//hilt-core:javadoc-srcs",
         "//java/dagger/grpc/server:javadoc-srcs",
-        "//java/dagger/grpc/server/processor:javadoc-srcs",
         "//java/dagger/hilt:javadoc-srcs",
     ],
     android_api_level = 34,
@@ -131,7 +118,6 @@ javadoc_library(
         "//dagger-runtime/main/java/dagger:core",
         "//dagger-spi",
         "//java/dagger/grpc/server",
-        "//java/dagger/grpc/server/processor",
         "//java/dagger/hilt/android:artifact-lib",
         "//java/dagger/hilt/android/testing:artifact-lib",
     ],

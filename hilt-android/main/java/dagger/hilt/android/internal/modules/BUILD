@@ -13,38 +13,29 @@
 # limitations under the License.
 
 # Description:
-#   Hilt Android components
+#   Hilt android modules for standard components.
 
 load("@rules_android//rules:rules.bzl", "android_library")
-load("@rules_java//java:defs.bzl", "java_library")
 
 package(default_visibility = ["//:src"])
 
 android_library(
-    name = "components",
-    srcs = [
-        "ActivityComponent.java",
-        "ActivityRetainedComponent.java",
-        "FragmentComponent.java",
-        "ServiceComponent.java",
-        "ViewComponent.java",
-        "ViewModelComponent.java",
-        "ViewWithFragmentComponent.java",
-    ],
-    exports = [
-        "//hilt-core/main/java/dagger/hilt/components",
-    ],
+    name = "modules",
+    srcs = glob(["*.java"]),
     deps = [
-        ":package_info",
-        "//hilt-core/main/java/dagger/hilt:define_component",
-        "//hilt-core/main/java/dagger/hilt/components",
-        "//java/dagger/hilt/android/scopes",
+        "//:dagger_with_compiler",
+        "//hilt-android/main/java/dagger/hilt/android/components",
+        "//hilt-android/main/java/dagger/hilt/android/internal",
+        "//hilt-android/main/java/dagger/hilt/android/qualifiers",
+        "//hilt-core/main/java/dagger/hilt:install_in",
+        "@maven//:androidx_activity_activity",
+        "@maven//:androidx_annotation_annotation",
+        "@maven//:androidx_annotation_annotation_jvm",
+        "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_common",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
     ],
-)
-
-java_library(
-    name = "package_info",
-    srcs = ["package-info.java"],
 )
 
 filegroup(

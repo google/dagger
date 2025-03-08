@@ -24,9 +24,9 @@ kt_compiler_test(
     name = "ViewModelProcessorTest",
     srcs = ["ViewModelProcessorTest.kt"],
     compiler_deps = [
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
         "@androidsdk//:platforms/android-34/android.jar",
-        "//java/dagger/hilt/android/lifecycle:hilt_view_model",
+        "//hilt-android/main/java/dagger/hilt/android/lifecycle:hilt_view_model",
     ],
     deps = [
         "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
@@ -49,9 +49,9 @@ kt_compiler_test(
         "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
         "//third_party/java/compile_testing",
         "//third_party/java/truth",
-        "//java/dagger/hilt/android/lifecycle:hilt_view_model",
-        "//java/dagger/hilt/android:android_entry_point",
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android/lifecycle:hilt_view_model",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
     ],
     resources = glob(["goldens/*"]),
     deps = [
@@ -81,9 +81,9 @@ kt_compiler_test(
         "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
         "//third_party/java/compile_testing",
         "//third_party/java/truth",
-        "//java/dagger/hilt/android/lifecycle:hilt_view_model",
-        "//java/dagger/hilt/android:android_entry_point",
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android/lifecycle:hilt_view_model",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
     ],
     resources = glob(["goldens/*"]),
     deps = [

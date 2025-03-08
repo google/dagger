@@ -24,7 +24,7 @@ android_library(
     srcs = ["MyAppPreviousCompilation.java"],
     deps = [
         "//:android_local_test_exports",
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
     ],
 )
 
@@ -33,7 +33,7 @@ compiler_test(
     srcs = ["MyAppPreviousCompilationTest.java"],
     compiler_deps = [
         ":MyAppPreviousCompilation",
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "@androidsdk//:platforms/android-34/android.jar",
         "@maven//:androidx_annotation_annotation",
@@ -65,7 +65,7 @@ compiler_test(
     srcs = ["MyTestPreviousCompilationTest.java"],
     compiler_deps = [
         ":MyTestPreviousCompilation",
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "@androidsdk//:platforms/android-34/android.jar",
         "@maven//:androidx_annotation_annotation",
@@ -87,7 +87,7 @@ compiler_test(
     name = "RootProcessorErrorsTest",
     srcs = ["RootProcessorErrorsTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "@androidsdk//:platforms/android-34/android.jar",
         "@maven//:androidx_annotation_annotation",
@@ -108,7 +108,7 @@ compiler_test(
     name = "RootFileFormatterTest",
     srcs = ["RootFileFormatterTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "@androidsdk//:platforms/android-34/android.jar",
         "@maven//:androidx_annotation_annotation",

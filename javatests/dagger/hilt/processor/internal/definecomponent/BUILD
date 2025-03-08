@@ -25,8 +25,8 @@ compiler_test(
     compiler_deps = [
         "//hilt-core/main/java/dagger/hilt:entry_point",
         "//hilt-core/main/java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android/components",
-        "//java/dagger/hilt/android/qualifiers",
+        "//hilt-android/main/java/dagger/hilt/android/components",
+        "//hilt-android/main/java/dagger/hilt/android/qualifiers",
     ],
     deps = [
         "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",

@@ -27,12 +27,12 @@ android_library(
         "OptionalInjectCheck.java",
     ],
     exports = [
-        "//java/dagger/hilt/android/internal/migration:injected_by_hilt",
+        "//hilt-android/main/java/dagger/hilt/android/internal/migration:injected_by_hilt",
     ],
     deps = [
         ":package_info",
+        "//hilt-android/main/java/dagger/hilt/android/internal/migration:injected_by_hilt",
         "//hilt-core/main/java/dagger/hilt/internal:preconditions",
-        "//java/dagger/hilt/android/internal/migration:injected_by_hilt",
         "@maven//:androidx_activity_activity",
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_annotation_annotation_jvm",
@@ -50,12 +50,12 @@ android_library(
         "CustomInjection.java",
     ],
     exports = [
-        "//java/dagger/hilt/android/internal/migration:has_custom_inject",
+        "//hilt-android/main/java/dagger/hilt/android/internal/migration:has_custom_inject",
     ],
     deps = [
         ":package_info",
+        "//hilt-android/main/java/dagger/hilt/android/internal/migration:has_custom_inject",
         "//hilt-core/main/java/dagger/hilt/internal:preconditions",
-        "//java/dagger/hilt/android/internal/migration:has_custom_inject",
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_annotation_annotation_jvm",
     ],

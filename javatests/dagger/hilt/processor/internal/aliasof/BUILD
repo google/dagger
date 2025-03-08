@@ -26,8 +26,8 @@ compiler_test(
     compiler_deps = [
         "@androidsdk//:platforms/android-34/android.jar",
         "//third_party/java/jsr330_inject",
-        "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android/components",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android/components",
         "//hilt-core/main/java/dagger/hilt:define_component",
         "//hilt-core/main/java/dagger/hilt/migration:alias_of",
     ],

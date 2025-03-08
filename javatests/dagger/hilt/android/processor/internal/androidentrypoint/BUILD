@@ -22,7 +22,7 @@ compiler_test(
     name = "ActivityGeneratorTest",
     srcs = ["ActivityGeneratorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:android_entry_point",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "@androidsdk//:platforms/android-34/android.jar",
     ],
     resources = glob([
@@ -40,8 +40,8 @@ compiler_test(
     name = "AndroidEntryPointProcessorTest",
     srcs = ["AndroidEntryPointProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android:android_entry_point",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "@androidsdk//:platforms/android-34/android.jar",
     ],
     deps = [
@@ -57,8 +57,8 @@ kt_compiler_test(
     name = "KotlinAndroidEntryPointProcessorTest",
     srcs = ["KotlinAndroidEntryPointProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android:android_entry_point",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "@androidsdk//:platforms/android-34/android.jar",
     ],
     deps = [

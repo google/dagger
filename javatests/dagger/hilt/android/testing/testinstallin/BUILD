@@ -28,7 +28,7 @@ android_local_test(
         ":TestInstallInModules",
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
-        "//java/dagger/hilt/android:android_entry_point",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "//third_party/java/truth",
         "@maven//:androidx_activity_activity",
@@ -86,7 +86,7 @@ android_library(
         ":TestInstallInModules",
         "//:android_local_test_exports",
         "//:dagger_with_compiler",
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
     ],
 )
 
@@ -96,8 +96,8 @@ android_library(
     srcs = ["TestInstallInModules.java"],
     deps = [
         "//:dagger_with_compiler",
+        "//hilt-android/main/java/dagger/hilt/android/components",
         "//hilt-core/main/java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/testing:test_install_in",
         "@maven//:androidx_activity_activity",
         "@maven//:androidx_fragment_fragment",

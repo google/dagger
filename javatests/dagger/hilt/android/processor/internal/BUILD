@@ -22,8 +22,8 @@ compiler_test(
     name = "GeneratorsTest",
     srcs = ["GeneratorsTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android:android_entry_point",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "@androidsdk//:platforms/android-34/android.jar",
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_annotation_annotation_jvm",

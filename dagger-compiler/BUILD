@@ -59,7 +59,6 @@ gen_maven_artifact(
         "com.google.guava:guava",
         "com.squareup:javapoet",
         "com.squareup:kotlinpoet",
-        "com.squareup:kotlinpoet-javapoet",
         "javax.inject:javax.inject",
         "net.ltgt.gradle.incap:incap",
         "org.checkerframework:checker-compat-qual",

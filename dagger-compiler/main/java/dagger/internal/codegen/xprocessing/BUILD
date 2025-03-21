@@ -57,8 +57,8 @@ java_import(
     jars = ["xprocessing-internal.jar"],
     deps = [
         "//third_party/kotlin/kotlinpoet",
+        "//third_party/kotlin/kotlinpoet/javapoet",
         "@maven//:com_google_devtools_ksp_symbol_processing_api",
-        "@maven//:com_squareup_kotlinpoet_javapoet",
     ],
 )
 

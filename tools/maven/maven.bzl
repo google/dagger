@@ -22,6 +22,7 @@ load(":pom_file.bzl", "pom_file")
 
 SHADED_MAVEN_DEPS = [
     "com.google.auto:auto-common",
+    "com.squareup:kotlinpoet-javapoet",
     "org.jetbrains.kotlin:kotlin-metadata-jvm",
 ]
 

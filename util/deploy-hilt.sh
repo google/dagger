@@ -6,7 +6,15 @@ readonly MVN_GOAL="$1"
 readonly VERSION_NAME="$2"
 shift 2
 readonly EXTRA_MAVEN_ARGS=("$@")
-readonly _SHADED_RULES="com.google.auto.common,dagger.spi.internal.shaded.auto.common;androidx.room.compiler,dagger.spi.internal.shaded.androidx.room.compiler;kotlin.metadata,dagger.spi.internal.shaded.kotlin.metadata;androidx.room,dagger.spi.internal.shaded.androidx.room"
+
+function shaded_rule() {
+  echo "$1,dagger.spi.internal.shaded.$1"
+}
+readonly _SHADED_RULES="\
+$(shaded_rule com.google.auto.common);\
+$(shaded_rule androidx.room);\
+$(shaded_rule kotlin.metadata);\
+$(shaded_rule com.squareup.kotlinpoet.javapoet)"
 
 # Builds and deploys the given artifacts to a configured maven goal.
 # @param {string} library the library to deploy.

@@ -16,6 +16,10 @@
 
 package dagger.hilt.android.plugin.util
 
+import com.android.build.api.variant.AndroidTest
+import com.android.build.api.variant.TestVariant
+import com.android.build.api.variant.Variant
+
 @Suppress("DEPRECATION") // Older variant API is deprecated
 internal fun getKaptConfigName(variant: com.android.build.gradle.api.BaseVariant)
   = getConfigName(variant, "kapt")
@@ -40,6 +44,33 @@ internal fun getConfigName(
     is com.android.build.gradle.api.TestVariant ->
       "${prefix}AndroidTest${variant.name.substringBeforeLast("AndroidTest").capitalize()}"
     is com.android.build.gradle.api.UnitTestVariant ->
+      "${prefix}Test${variant.name.substringBeforeLast("UnitTest").capitalize()}"
+    else ->
+      "${prefix}${variant.name.capitalize()}"
+  }
+}
+
+internal fun getKaptConfigName(variant: Variant)
+  = getConfigName(variant, "kapt")
+
+internal fun getKspConfigName(variant: Variant)
+  = getConfigName(variant, "ksp")
+
+internal fun getConfigName(
+  variant: Variant,
+  prefix: String
+): String {
+  // Config names don't follow the usual task name conventions:
+  // <Variant Name>   -> <Config Name>
+  // debug            -> <prefix>Debug
+  // debugAndroidTest -> <prefix>AndroidTestDebug
+  // debugUnitTest    -> <prefix>TestDebug
+  // release          -> <prefix>Release
+  // releaseUnitTest  -> <prefix>TestRelease
+  return when (variant) {
+    is AndroidTest ->
+      "${prefix}AndroidTest${variant.name.substringBeforeLast("AndroidTest").capitalize()}"
+    is TestVariant ->
       "${prefix}Test${variant.name.substringBeforeLast("UnitTest").capitalize()}"
     else ->
       "${prefix}${variant.name.capitalize()}"

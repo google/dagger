@@ -79,6 +79,9 @@ def bazel_kt_jvm_library(name, kwargs):
       kwargs: Additional arguments of the library.
     """
 
+    if "exported_plugins" in kwargs:
+        kwargs["exported_compiler_plugins"] = kwargs.pop("exported_plugins")
+
     kt_jvm_library(
         name = name,
         **kwargs

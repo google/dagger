@@ -15,10 +15,11 @@
 #   Libraries for migration.
 
 load("@rules_java//java:defs.bzl", "java_library")
+load("//tools:bazel_compat.bzl", "compat_kt_jvm_library")
 
 package(default_visibility = ["//:src"])
 
-java_library(
+compat_kt_jvm_library(
     name = "alias_of",
     srcs = ["AliasOf.java"],
     exported_plugins = [

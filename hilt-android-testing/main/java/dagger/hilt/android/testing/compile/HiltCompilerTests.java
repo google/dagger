@@ -79,13 +79,6 @@ public final class HiltCompilerTests {
           "-P",
           "plugin:org.jetbrains.kotlin.kapt3:correctErrorTypes=true");
 
-  private static final ImmutableList<String> KSP1_DEFAULT_KOTLINC_OPTIONS =
-      ImmutableList.<String>builder()
-          .addAll(DEFAULT_KOTLINC_OPTIONS)
-          .add("-api-version=1.9")
-          .add("-language-version=1.9")
-          .build();
-
   /** Returns the {@link XProcessingEnv.Backend} for the given {@link CompilationResultSubject}. */
   public static XProcessingEnv.Backend backend(CompilationResultSubject subject) {
     return CompilerTests.backend(subject);
@@ -287,16 +280,6 @@ public final class HiltCompilerTests {
 
     public void compile(Consumer<CompilationResultSubject> onCompilationResult) {
       compileInternal(onCompilationResult, DEFAULT_KOTLINC_OPTIONS);
-    }
-
-    /**
-     * Returns a compiler with the KSP1 options.
-     *
-     * @deprecated This is only intended to be used for tests that are not yet compatible with KSP2.
-     */
-    @Deprecated // TODO(b/378271452): Remove once we've fixed issues with KSP2
-    public void legacyCompile(Consumer<CompilationResultSubject> onCompilationResult) {
-      compileInternal(onCompilationResult, KSP1_DEFAULT_KOTLINC_OPTIONS);
     }
 
     private void compileInternal(

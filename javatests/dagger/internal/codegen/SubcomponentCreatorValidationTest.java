@@ -25,6 +25,7 @@ import static dagger.internal.codegen.base.ComponentKind.SUBCOMPONENT;
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
 import static dagger.internal.codegen.binding.ErrorMessages.componentMessagesFor;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
@@ -161,14 +162,18 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
         "  }",
         "}");
     CompilerTests.daggerCompiler(componentFile, childComponentFile)
-        // TODO(b/381556660): Remove legacy KSP1 usage after KSP2 issue has been fixed.
-        .legacyCompile(
+        .compile(
             subject -> {
               subject.hasErrorCount(1);
+              // TODO(b/381556660):KSP2 reports elements in the wrong order.
+              String errorMsg =
+                  CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP
+                      ? "[test.ChildComponent.Builder2, test.ChildComponent.Builder1]"
+                      : "[test.ChildComponent.Builder1, test.ChildComponent.Builder2]";
               subject.hasErrorContaining(
                       String.format(
                           componentMessagesFor(SUBCOMPONENT).moreThanOne(),
-                          process("[test.ChildComponent.Builder1, test.ChildComponent.Builder2]")))
+                          process(errorMsg)))
                   .onSource(childComponentFile);
             });
   }
@@ -204,14 +209,16 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
         "  }",
         "}");
     CompilerTests.daggerCompiler(componentFile, childComponentFile)
-        // TODO(b/381556660): Remove legacy KSP1 usage after KSP2 issue has been fixed.
-        .legacyCompile(
+        .compile(
             subject -> {
               subject.hasErrorCount(1);
+              // TODO(b/381556660):KSP2 reports elements in the wrong order.
+              String errorMsg =
+                  (CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP)
+                      ? "[test.ChildComponent.Factory, test.ChildComponent.Builder]"
+                      : "[test.ChildComponent.Builder, test.ChildComponent.Factory]";
               subject.hasErrorContaining(
-                      String.format(
-                          componentMessagesFor(SUBCOMPONENT).moreThanOne(),
-                          "[test.ChildComponent.Builder, test.ChildComponent.Factory]"))
+                      String.format(componentMessagesFor(SUBCOMPONENT).moreThanOne(), errorMsg))
                   .onSource(childComponentFile);
             });
   }

@@ -27,6 +27,7 @@ import static dagger.internal.codegen.base.ComponentCreatorKind.FACTORY;
 import static dagger.internal.codegen.base.ComponentKind.COMPONENT;
 import static dagger.internal.codegen.binding.ErrorMessages.componentMessagesFor;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -180,8 +181,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
 
     CompilerTests.daggerCompiler(componentFile)
         .withProcessingOptions(compilerOptions)
-        // TODO(b/381556660): Remove legacy KSP1 usage after KSP2 issue has been fixed.
-        .legacyCompile(
+        .compile(
             subject -> {
               subject.hasErrorCount(1);
               subject.hasErrorContaining(
@@ -216,14 +216,16 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
             "}");
     CompilerTests.daggerCompiler(componentFile)
         .withProcessingOptions(compilerOptions)
-        // TODO(b/381556660): Remove legacy KSP1 usage after KSP2 issue has been fixed.
-        .legacyCompile(
+        .compile(
             subject -> {
               subject.hasErrorCount(1);
+              String errorMsg =
+                  // TODO(b/381556660): KSP2 reports the elements in the wrong order.
+                  CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP
+                      ? "[test.SimpleComponent.Factory, test.SimpleComponent.Builder]"
+                      : "[test.SimpleComponent.Builder, test.SimpleComponent.Factory]";
               subject.hasErrorContaining(
-                      String.format(
-                          componentMessagesFor(COMPONENT).moreThanOne(),
-                          "[test.SimpleComponent.Builder, test.SimpleComponent.Factory]"))
+                      String.format(componentMessagesFor(COMPONENT).moreThanOne(), errorMsg))
                   .onSource(componentFile);
             });
   }

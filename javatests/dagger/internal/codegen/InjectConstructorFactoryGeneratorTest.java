@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableMap;
 import dagger.testing.compile.CompilerTests;
@@ -297,17 +298,26 @@ public final class InjectConstructorFactoryGeneratorTest {
             "      String s) {}",
             "}");
     CompilerTests.daggerCompiler(file, QUALIFIER_A, QUALIFIER_B)
-        .legacyCompile(
+        .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContaining(
-                      "A single dependency request may not use more than one @Qualifier")
-                  .onSource(file)
-                  .onLine(7);
-              subject.hasErrorContaining(
-                      "A single dependency request may not use more than one @Qualifier")
-                  .onSource(file)
-                  .onLine(8);
+              if (CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP) {
+                // TODO(b/381557487): KSP2 reports the error on the parameter instead of the
+                // the annotation.
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(9);
+              } else {
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(7);
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(8);
+              }
             });
   }
 
@@ -787,18 +797,26 @@ public final class InjectConstructorFactoryGeneratorTest {
             "      String s) {}",
             "}");
     CompilerTests.daggerCompiler(file, QUALIFIER_A, QUALIFIER_B)
-        // TODO(b/381557487): Remove legacy KSP1 usage after KSP2 issue has been fixed.
-        .legacyCompile(
+        .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContaining(
-                      "A single dependency request may not use more than one @Qualifier")
-                  .onSource(file)
-                  .onLine(7);
-              subject.hasErrorContaining(
-                      "A single dependency request may not use more than one @Qualifier")
-                  .onSource(file)
-                  .onLine(8);
+              if (CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP) {
+                // TODO(b/381557487): KSP2 reports the error on the parameter instead of the
+                // the annotation.
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(9);
+              } else {
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(7);
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(8);
+              }
             });
   }
 

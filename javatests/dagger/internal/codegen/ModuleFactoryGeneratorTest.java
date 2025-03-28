@@ -995,17 +995,24 @@ public class ModuleFactoryGeneratorTest {
             "  }",
             "}");
     CompilerTests.daggerCompiler(moduleFile, QUALIFIER_A, QUALIFIER_B)
-        // TODO(b/381557487): Remove legacy KSP1 usage after KSP2 issue has been fixed.
-        .legacyCompile(
+        .compile(
             subject -> {
               // There are two errors -- 1 per qualifier.
               subject.hasErrorCount(2);
-              subject.hasErrorContaining("may not use more than one @Qualifier")
-                  .onSource(moduleFile)
-                  .onLine(10);
-              subject.hasErrorContaining("may not use more than one @Qualifier")
-                  .onSource(moduleFile)
-                  .onLine(11);
+              if (CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP) {
+                // TODO(b/381557487): KSP2 reports the error on the parameter instead of the
+                // the annotation.
+                subject.hasErrorContaining("may not use more than one @Qualifier")
+                    .onSource(moduleFile)
+                    .onLine(12);
+              } else {
+                subject.hasErrorContaining("may not use more than one @Qualifier")
+                    .onSource(moduleFile)
+                    .onLine(10);
+                subject.hasErrorContaining("may not use more than one @Qualifier")
+                    .onSource(moduleFile)
+                    .onLine(11);
+              }
             });
   }
 

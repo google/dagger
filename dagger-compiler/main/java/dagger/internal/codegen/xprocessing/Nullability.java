@@ -76,14 +76,21 @@ public abstract class Nullability {
   }
 
   static TypeName getTypeNameWithNullableAnnotations(XType type) {
-    TypeName typeName = getAnnotatedTypeName(type, type.getTypeName());
-    return typeName;
+    return type.getTypeName();
   }
 
   private static TypeName getAnnotatedTypeName(XType type, TypeName typeName) {
-    ImmutableSet<XClassName> nullableAnnotations = getNullableAnnotations(type);
     if (typeName instanceof ParameterizedTypeName) {
       ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) typeName;
+      if (type.getTypeArguments().size() != parameterizedTypeName.typeArguments.size()) {
+        throw new IllegalStateException(
+            String.format(
+                "%s has %s type arguments but %s has %s type arguments",
+                type,
+                type.getTypeArguments().size(),
+                parameterizedTypeName,
+                parameterizedTypeName.typeArguments.size()));
+      }
       TypeName[] typeArguments = new TypeName[parameterizedTypeName.typeArguments.size()];
       for (int i = 0; i < parameterizedTypeName.typeArguments.size(); i++) {
         typeArguments[i] =
@@ -93,7 +100,7 @@ public abstract class Nullability {
       typeName = ParameterizedTypeName.get(parameterizedTypeName.rawType, typeArguments);
     }
     return typeName.annotated(
-        nullableAnnotations.stream()
+        getNullableAnnotations(type).stream()
             .map(XConverters::toJavaPoet)
             .map(AnnotationSpec::builder)
             .map(AnnotationSpec.Builder::build)

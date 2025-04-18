@@ -762,9 +762,10 @@ public class AssistedFactoryErrorsTest {
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(
             subject -> {
-              subject.hasErrorCount(1);
+              subject.hasErrorCount(2);
               subject.hasErrorContaining(
                   "Constructors cannot be annotated with both @Inject and @AssistedInject");
+              subject.hasErrorContaining("@Assisted parameter \"i\" can only be used within an @AssistedInject-annotated constructor.");
             });
   }
 

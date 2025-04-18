@@ -19,6 +19,7 @@ package dagger.internal.codegen.validation;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedParameter;
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.binding.SourceFiles.factoryNameForElement;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
@@ -204,6 +205,8 @@ public final class InjectValidator implements ClearableCache {
               .map(XAnnotations::asClassName)
               .get();
 
+      boolean isAssistedInjectConstructor = XTypeNames.ASSISTED_INJECT.equals(injectAnnotation);
+
       if (constructorElement.isPrivate()) {
         builder.addError(
             "Dagger does not support injection into private constructors", constructorElement);
@@ -243,6 +246,9 @@ public final class InjectValidator implements ClearableCache {
       for (XExecutableParameterElement parameter : constructorElement.getParameters()) {
         superficialValidation.validateTypeOf(parameter);
         validateDependencyRequest(builder, parameter);
+        if (!isAssistedInjectConstructor && isAssistedParameter(parameter)) {
+          builder.addError(String.format("@Assisted parameter \"%s\" can only be used within an @AssistedInject-annotated constructor.", parameter.getName()), parameter);
+        }
       }
 
       if (throwsCheckedExceptions(constructorElement)) {
@@ -277,7 +283,7 @@ public final class InjectValidator implements ClearableCache {
       // Note: superficial validation of the annotations is done as part of getting the scopes.
       ImmutableSet<Scope> scopes =
           injectionAnnotations.getScopes(constructorElement.getEnclosingElement());
-      if (injectAnnotation.equals(XTypeNames.ASSISTED_INJECT)) {
+      if (isAssistedInjectConstructor) {
         for (Scope scope : scopes) {
           builder.addError(
               "A type with an @AssistedInject-annotated constructor cannot be scoped",

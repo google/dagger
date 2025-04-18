@@ -123,7 +123,9 @@ public final class DependencyRequestFactory {
     checkNotNull(variableElement);
     checkNotNull(resolvedType);
     // Ban @Assisted parameters, they are not considered dependency requests.
-    checkArgument(!isAssistedParameter(variableElement));
+    checkArgument(!isAssistedParameter(variableElement),
+            "@Assisted parameter '%s' is not allowed (Are you using @Inject instead of @AssistedInject?)",
+            variableElement.getName());
     Optional<XAnnotation> qualifier = injectionAnnotations.getQualifier(variableElement);
     return newDependencyRequest(variableElement, resolvedType, qualifier);
   }

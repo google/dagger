@@ -15,6 +15,7 @@
 # Description:
 #   Internal Proguard Processor
 
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "java_library", "kt_codegen_plugin", "kt_codegen_processor", "kt_codegen_processor_type")  # copybara:strip_line
 load("@rules_java//java:defs.bzl", "java_library", "java_plugin")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 
@@ -38,9 +39,38 @@ java_library(
     ],
 )
 
+java_library(
+    name = "proguard",
+    exported_plugins = [
+        ":plugin",
+        ":plugin_spec",  # copybara:strip_line
+    ],
+    visibility = ["//dagger-android-proguard-processor:__pkg__"],
+)
+
 java_plugin(
     name = "plugin",
     generates_api = 1,
     processor_class = "dagger.android.internal.proguard.ProguardProcessor",
+    visibility = ["//visibility:private"],
     deps = [":proguard-processor"],
 )
+
+# copybara:strip_begin
+kt_codegen_plugin(
+    name = "plugin_spec",
+    processors = [":ProguardProcessor"],
+)
+
+kt_codegen_processor(
+    name = "ProguardProcessor",
+    generates_api = 1,
+    output_intents = [
+        "java",
+        "library_jar_direct",
+    ],
+    processor_class = "dagger.android.internal.proguard.ProguardProcessor",
+    processor_type = kt_codegen_processor_type.KAPT,
+    visibility = ["//visibility:private"],
+)
+# copybara:strip_end

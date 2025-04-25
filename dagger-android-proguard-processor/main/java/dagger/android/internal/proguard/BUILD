@@ -38,9 +38,19 @@ java_library(
     ],
 )
 
+java_library(
+    name = "proguard",
+    exported_plugins = [
+        ":plugin",
+        ":plugin_spec",  # copybara:strip_line
+    ],
+    visibility = ["//dagger-android-proguard-processor:__pkg__"],
+)
+
 java_plugin(
     name = "plugin",
     generates_api = 1,
     processor_class = "dagger.android.internal.proguard.ProguardProcessor",
+    visibility = ["//visibility:private"],
     deps = [":proguard-processor"],
 )

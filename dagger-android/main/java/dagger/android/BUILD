@@ -41,15 +41,13 @@ android_library(
     name = "android",
     srcs = SRCS,
     javacopts = JAVA_RELEASE_MIN + DOCLINT_HTML_AND_SYNTAX,
-    plugins = [
-        "//dagger-android-proguard-processor:plugin",
-    ],
     tags = ["maven_coordinates=com.google.dagger:dagger-android:" + POM_VERSION],
     exports = [
         "//dagger-lint:lint-android-artifact-lib",
     ],
     deps = [
         "//:dagger_with_compiler",
+        "//dagger-android-proguard-processor:proguard",
         "//third_party/java/auto:value",
         "//third_party/java/error_prone:annotations",
         "@maven//:androidx_annotation_annotation",

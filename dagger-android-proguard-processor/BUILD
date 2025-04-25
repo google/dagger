@@ -18,6 +18,6 @@
 package(default_visibility = ["//:src"])
 
 alias(
-    name = "plugin",
-    actual = "//dagger-android-proguard-processor/main/java/dagger/android/internal/proguard:plugin",
+    name = "proguard",
+    actual = "//dagger-android-proguard-processor/main/java/dagger/android/internal/proguard",
 )

@@ -10,6 +10,7 @@ eclipsebin
 bin
 gen
 build
+buildOut
 out
 lib
 

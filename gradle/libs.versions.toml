@@ -22,6 +22,7 @@ auto-service-annotations = { module = "com.google.auto.service:auto-service-anno
 auto-service-compiler = { module = "com.google.auto.service:auto-service", version.ref = "autoService" }
 auto-value-annotations = { module = "com.google.auto.value:auto-value-annotations", version.ref = "autoValue" }
 auto-value-compiler = { module = "com.google.auto.value:auto-value", version.ref = "autoValue" }
+binaryCompatibilityValidatorPlugin = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version = "0.17.0" }
 checkerFramework = { module = "org.checkerframework:checker-compat-qual", version = "2.5.3" }
 findBugs = { module = "com.google.code.findbugs:jsr305", version = "3.0.1" }
 javaFormatter = { module = "com.google.googlejavaformat:google-java-format", version = "1.5" }
@@ -51,10 +52,8 @@ truth = { module = "com.google.truth:truth", version.ref = "truth" }
 shadowPlugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow" }
 
 [plugins]
-binaryCompatibilityValidator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.17.0" }
-dagger-kotlinJvm = { id = "dagger.gradle.build.jvm" }
-dagger-publish = { id = "dagger.gradle.build.publish" }
-dagger-shadow = { id = "dagger.gradle.build.shadow" }
+binaryCompatibilityValidator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator" }
+daggerBuild = { id = "dagger.gradle.build" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 publish = { id = "com.vanniktech.maven.publish", version.ref = "publish" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

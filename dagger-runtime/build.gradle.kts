@@ -1,7 +1,9 @@
+import dagger.gradle.build.ProjectType
+
 plugins {
-  alias(libs.plugins.dagger.kotlinJvm)
-  alias(libs.plugins.dagger.publish)
-  alias(libs.plugins.binaryCompatibilityValidator)
+  alias(libs.plugins.daggerBuild)
+  id(libs.plugins.kotlinJvm.get().pluginId)
+  id(libs.plugins.binaryCompatibilityValidator.get().pluginId)
 }
 
 dependencies {
@@ -12,6 +14,11 @@ dependencies {
   testImplementation(libs.junit)
   testImplementation(libs.truth)
   testImplementation(libs.guava.jre)
+}
+
+daggerBuild {
+  type = ProjectType.LIBRARY
+  isPublished = true
 }
 
 kotlin { explicitApi() }

@@ -150,7 +150,7 @@ class DaggerKotlinIssueDetector : Detector(), SourceCodeScanner {
     )
   }
 
-  override fun getApplicableUastTypes(): List<Class<out UElement>>? {
+  override fun getApplicableUastTypes(): List<Class<out UElement>> {
     return listOf(UMethod::class.java, UField::class.java, UClass::class.java)
   }
 

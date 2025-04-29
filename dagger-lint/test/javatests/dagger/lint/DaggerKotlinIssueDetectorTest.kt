@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Dagger Authors.
+ * Copyright (C) 2025 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package dagger.lint
 
 import com.android.tools.lint.checks.infrastructure.LintDetectorTest
@@ -28,33 +29,39 @@ import org.junit.runners.JUnit4
 class DaggerKotlinIssueDetectorTest : LintDetectorTest() {
 
   private companion object {
-    private val javaxInjectStubs = kotlin(
-      """
+    private val javaxInjectStubs =
+      kotlin(
+          """
         package javax.inject
 
         annotation class Inject
         annotation class Qualifier
       """
-    ).indented()
+        )
+        .indented()
 
-    private val daggerStubs = kotlin(
-      """
+    private val daggerStubs =
+      kotlin(
+          """
         package dagger
 
         annotation class Provides
         annotation class Module
       """
-    ).indented()
+        )
+        .indented()
 
     // For some reason in Bazel the stdlib dependency on the classpath isn't visible to the
     // LintTestTask, so we just include it ourselves here for now.
-    private val jvmStaticStubs = kotlin(
-      """
+    private val jvmStaticStubs =
+      kotlin(
+          """
         package kotlin.jvm
 
         annotation class JvmStatic
       """
-    ).indented()
+        )
+        .indented()
   }
 
   override fun getDetector(): Detector = DaggerKotlinIssueDetector()
@@ -70,7 +77,7 @@ class DaggerKotlinIssueDetectorTest : LintDetectorTest() {
         daggerStubs,
         jvmStaticStubs,
         kotlin(
-          """
+            """
           package foo
           import javax.inject.Inject
           import javax.inject.Qualifier
@@ -181,7 +188,8 @@ class DaggerKotlinIssueDetectorTest : LintDetectorTest() {
             }
           }
         """
-        ).indented()
+          )
+          .indented(),
       )
       .allowCompilationErrors(false)
       // Unlikely that @JvmStatic would be aliased, so skipping these modes.
@@ -211,7 +219,8 @@ class DaggerKotlinIssueDetectorTest : LintDetectorTest() {
           // This is should fail because this should be extracted to a standalone object.
           ^
         0 errors, 7 warnings
-        """.trimIndent()
+        """
+          .trimIndent()
       )
       .expectFixDiffs(
         """
@@ -243,7 +252,8 @@ class DaggerKotlinIssueDetectorTest : LintDetectorTest() {
         @@ -102 +102
         -   @Module
         +  
-        """.trimIndent()
+        """
+          .trimIndent()
       )
   }
 }

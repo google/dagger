@@ -3,22 +3,18 @@ import dagger.gradle.build.ProjectType
 plugins {
   alias(libs.plugins.daggerBuild)
   id(libs.plugins.kotlinJvm.get().pluginId)
-  id(libs.plugins.binaryCompatibilityValidator.get().pluginId)
 }
 
 dependencies {
-  api(libs.javax.inject)
-  api(libs.jakarta.inject)
-  api(libs.jspecify)
-
+  compileOnly(libs.lint.api)
+  compileOnly(libs.lint.checks)
+  compileOnly(libs.auto.service.annotations)
   testImplementation(libs.junit)
-  testImplementation(libs.truth)
-  testImplementation(libs.guava.jre)
+  testImplementation(libs.lint.checks)
+  testImplementation(libs.lint.tests)
 }
 
 daggerBuild {
   type = ProjectType.LIBRARY
   isPublished = true
 }
-
-kotlin { explicitApi() }

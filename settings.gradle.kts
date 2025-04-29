@@ -25,6 +25,10 @@ includeProject(":dagger", "dagger-runtime")
 
 includeProject(":dagger-compiler", "dagger-compiler")
 
+includeProject(":dagger-lint", "dagger-lint")
+
+includeProject(":dagger-lint-aar", "dagger-lint-android")
+
 includeProject(":dagger-producers", "dagger-producers")
 
 includeProject(":dagger-spi", "dagger-spi")

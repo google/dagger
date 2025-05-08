@@ -1,7 +1,11 @@
+import dagger.gradle.build.ProjectType
 import dagger.gradle.build.findXProcessingJar
 import dagger.gradle.build.findXProcessingTestingJar
 
-plugins { alias(libs.plugins.dagger.kotlinJvm) }
+plugins {
+  alias(libs.plugins.daggerBuild)
+  id(libs.plugins.kotlinJvm.get().pluginId)
+}
 
 dependencies {
   implementation(project(":dagger"))
@@ -18,4 +22,9 @@ dependencies {
   implementation(libs.junit)
   implementation(libs.ksp.api)
   implementation(libs.truth)
+}
+
+daggerBuild {
+  type = ProjectType.PROCESSOR
+  isPublished = false
 }

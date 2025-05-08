@@ -28,7 +28,7 @@ import com.google.auto.service.AutoService
  * detecting issues.
  */
 @AutoService(IssueRegistry::class)
-@Suppress("unused", "UnstableApiUsage")
+@Suppress("unused")
 class DaggerIssueRegistry : IssueRegistry() {
   // The minApi is set to the Api this registry was compiled with, if a user has an older Api, Lint
   // will show a warning asking users to upgrade.
@@ -38,10 +38,11 @@ class DaggerIssueRegistry : IssueRegistry() {
   // that might not work. This value eventually has to be updated as newer Api become available.
   override val api: Int = 11
   override val issues: List<Issue> = DaggerKotlinIssueDetector.issues
-  override val vendor = Vendor(
-    vendorName = "Google",
-    identifier = "com.google.dagger:dagger-lint",
-    feedbackUrl = "https://github.com/google/dagger/issues",
-    contact = "https://github.com/google/dagger"
-  )
+  override val vendor =
+    Vendor(
+      vendorName = "Google",
+      identifier = "com.google.dagger:dagger-lint",
+      feedbackUrl = "https://github.com/google/dagger/issues",
+      contact = "https://github.com/google/dagger",
+    )
 }

@@ -45,7 +45,7 @@ android_library(
     name = "artifact-lib",
     tags = ["maven_coordinates=com.google.dagger:hilt-android:" + POM_VERSION],
     exports = [
-        "//dagger-lint:lint-android-artifact-lib",
+        "//dagger-lint-android:lint-android-artifact-lib",
         "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
         "//hilt-android/main/java/dagger/hilt/android:early_entry_point",
         "//hilt-android/main/java/dagger/hilt/android:entry_point_accessors",

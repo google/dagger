@@ -15,7 +15,6 @@
 # Description:
 #   Dagger Lint Rules
 
-load("@rules_android//rules:rules.bzl", "android_library")
 load("//:build_defs.bzl", "POM_VERSION")
 load("//tools/maven:maven.bzl", "gen_maven_artifact")
 
@@ -34,22 +33,4 @@ gen_maven_artifact(
         "com.android.tools.lint:lint-api",
     ],
     pom_name = "lint-pom",
-)
-
-# An empty android artifact to distribute and share the Dagger lint rules for
-# the Android sub-projects.
-android_library(
-    name = "lint-android-artifact-lib",
-    tags = ["maven_coordinates=com.google.dagger:dagger-lint-aar:" + POM_VERSION],
-)
-
-gen_maven_artifact(
-    name = "lint-android-artifact",
-    artifact_coordinates = "com.google.dagger:dagger-lint-aar:" + POM_VERSION,
-    artifact_name = "Dagger Lint Rules AAR Distribution",
-    artifact_target = ":lint-android-artifact-lib",
-    lint_deps = ["//dagger-lint/main/java/dagger/lint:lint-artifact-lib"],
-    manifest = "AndroidManifest.xml",
-    packaging = "aar",
-    pom_name = "lint-android-pom",
 )

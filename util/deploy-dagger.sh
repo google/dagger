@@ -158,8 +158,8 @@ _deploy \
 
 _deploy \
   "" \
-  dagger-lint/lint-android-artifact.aar \
-  dagger-lint/lint-android-pom.xml \
+  dagger-lint-android/lint-android-artifact.aar \
+  dagger-lint-android/lint-android-pom.xml \
   "" \
   "" \
   ""

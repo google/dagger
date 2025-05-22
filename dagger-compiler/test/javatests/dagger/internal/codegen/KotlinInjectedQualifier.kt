@@ -20,7 +20,5 @@ import javax.inject.Inject
 import javax.inject.Named
 
 class KotlinInjectedQualifier {
-  @Inject
-  @Named("TheString")
-  lateinit var qualifiedString: String
+  @Inject @Named("TheString") lateinit var qualifiedString: String
 }

@@ -37,6 +37,7 @@ kt_jvm_library(
 # TODO(bcorso): Move this into a subpackage.
 java_library(
     name = "compilers",
+    testonly = 1,
     srcs = [
         "CompilerMode.java",
         "Compilers.java",
@@ -56,7 +57,7 @@ java_library(
         "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//dagger-producers/main/java/dagger/producers",
         "//dagger-runtime/main/java/dagger:core",
-        "//java/dagger/testing/compile",
+        "//dagger-testing/main/java/dagger/testing/compile",
         "//third_party/java/auto:value_processor",
         "//third_party/java/compile_testing",
         "//third_party/java/guava/base",
@@ -127,8 +128,8 @@ DEPS = [
     "//dagger-spi",
     "//dagger-testing/main/java/dagger/model/testing",
     "//dagger-testing/main/java/dagger/spi/model/testing",
-    "//java/dagger/testing/compile",
-    "//java/dagger/testing/golden",
+    "//dagger-testing/main/java/dagger/testing/compile:compile",
+    "//dagger-testing/main/java/dagger/testing/golden:golden",
 ]
 
 GenJavaTests(

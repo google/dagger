@@ -53,7 +53,7 @@ def compiler_test(name, size = "large", compiler_deps = None, **kwargs):
     # for cases with srcs anyway.
     if kwargs.get("srcs", None):
         # Add a dep to allow usage of CompilerTests.
-        kwargs["deps"] = kwargs.get("deps", []) + ["//java/dagger/testing/compile"]
+        kwargs["deps"] = kwargs.get("deps", []) + ["//dagger-testing/main/java/dagger/testing/compile"]
     java_test(name = name, size = size, **kwargs)
 
 def kt_compiler_test(name, srcs = [], deps = [], **kwargs):
@@ -75,7 +75,7 @@ def kt_compiler_test(name, srcs = [], deps = [], **kwargs):
         name = name + "_ktlib",
         testonly = 1,
         srcs = srcs,
-        deps = deps + ["//java/dagger/testing/compile"],
+        deps = deps + ["//dagger-testing/main/java/dagger/testing/compile"],
         visibility = ["//visibility:private"],
     )
 

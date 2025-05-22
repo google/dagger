@@ -54,7 +54,9 @@ dependencies {
   testImplementation(libs.ksp.common)
   testImplementation(libs.ksp.embeddable)
 
-  testAnnotationProcessor(project(":dagger-compiler"))
+  testAnnotationProcessor(project(":dagger-compiler", "unshaded"))
+  testAnnotationProcessor(libs.auto.common)
+  testAnnotationProcessor(files(project.findXProcessingJar()))
 }
 
 daggerBuild {

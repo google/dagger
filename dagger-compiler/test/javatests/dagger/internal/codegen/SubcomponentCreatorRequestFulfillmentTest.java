@@ -40,7 +40,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class SubcomponentCreatorRequestFulfillmentTest extends ComponentCreatorTestHelper {
-  @Parameters(name = "compilerMode={0}, creatorKind={1}")
+  @Parameters(name = "compilerMode={0},creatorKind={1}")
   public static Collection<Object[]> parameters() {
     Set<List<Object>> params =
         cartesianProduct(

@@ -13,30 +13,33 @@
 # limitations under the License.
 
 # Description:
-#   Tests for dagger.internal.codegen.bindinggraphvalidation
+#   Helpers class for java compiler tests.
 
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-load("//:test_defs.bzl", "GenJavaTests")
+load("@rules_java//java:defs.bzl", "java_library")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
-    name = "bindinggraphvalidation_tests",
-    srcs = glob(["*.java"]),
-    functional = False,
-    javacopts = DOCLINT_HTML_AND_SYNTAX,
-    shard_count = 3,
+java_library(
+    name = "compile",
+    testonly = 1,
+    srcs = [
+        "CompilerProcessors.java",
+        "CompilerTests.java",
+    ],
+    exports = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+    ],
     deps = [
-        "//dagger-compiler/main/java/dagger/internal/codegen/bindinggraphvalidation",
+        "//dagger-compiler/main/java/dagger/internal/codegen:processor",
         "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
         "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
-        "//dagger-compiler/test/javatests/dagger/internal/codegen:compilers",
-        "//dagger-testing/main/java/dagger/testing/compile",
-        "//third_party/java/auto:common",
+        "//dagger-spi",
+        "//third_party/java/auto:value",
         "//third_party/java/compile_testing",
+        "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
-        "//third_party/java/javapoet",
+        "//third_party/java/guava/io",
         "//third_party/java/junit",
-        "//third_party/java/truth",
+        "//third_party/kotlin/kotlin_symbol_processing:symbol-processing-api",
     ],
 )

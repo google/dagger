@@ -183,9 +183,11 @@ public class BindsOptionalOfMethodValidationTest {
 
   /** A qualifier. */
   @Qualifier
+  @SuppressWarnings("MissingRuntimeRetention") // For testing.
   public @interface Qualifier1 {}
 
   /** A qualifier. */
   @Qualifier
+  @SuppressWarnings("MissingRuntimeRetention") // For testing.
   public @interface Qualifier2 {}
 }

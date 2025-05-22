@@ -175,8 +175,10 @@ public class MultibindsValidationTest {
   }
 
   @Qualifier
+  @SuppressWarnings("MissingRuntimeRetention") // For testing.
   public @interface SomeQualifier {}
 
   @Qualifier
+  @SuppressWarnings("MissingRuntimeRetention") // For testing.
   public @interface OtherQualifier {}
 }

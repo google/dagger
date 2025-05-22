@@ -1,4 +1,4 @@
-# Copyright (C) 2020 The Dagger Authors.
+# Copyright (C) 2025 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,3 +13,18 @@
 # limitations under the License.
 
 package(default_visibility = ["//:src"])
+
+# Creates a jar with all the golden files as resources located in a 'goldens'
+# directory at the root of the jar.
+genrule(
+    name = "goldens",
+    srcs = glob(["goldens/**"]),
+    outs = ["libgoldens.jar"],
+    cmd = """
+    TEMP="$$(mktemp -d)"
+    mkdir $$TEMP/goldens
+    cp $(SRCS) $$TEMP/goldens
+    $(JAVABASE)/bin/jar -cvf $@ -C $$TEMP .
+    """,
+    toolchains = ["@bazel_tools//tools/jdk:current_java_runtime"],
+)

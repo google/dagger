@@ -19,39 +19,37 @@ package dagger.internal.codegen
 import javax.inject.Inject
 
 object KotlinObjectWithMemberInjection {
-  @Inject
-  lateinit var property: String
+  @Inject lateinit var property: String
 }
 
 object KotlinObjectWithSetterMemberInjection {
-  @set:Inject
-  lateinit var setterProperty: String
+  @set:Inject lateinit var setterProperty: String
 }
 
+@Suppress("ClassShouldBeObject") // For testing.
 class KotlinClassWithMemberInjectedCompanion {
   companion object {
-    @Inject
-    lateinit var property: String
+    @Inject lateinit var property: String
   }
 }
 
+@Suppress("ClassShouldBeObject") // For testing.
 class KotlinClassWithSetterMemberInjectedCompanion {
   companion object {
-    @set:Inject
-    lateinit var setterProperty: String
+    @set:Inject lateinit var setterProperty: String
   }
 }
 
+@Suppress("ClassShouldBeObject") // For testing.
 class KotlinClassWithMemberInjectedNamedCompanion {
   companion object TheCompanion {
-    @Inject
-    lateinit var property: String
+    @Inject lateinit var property: String
   }
 }
 
+@Suppress("ClassShouldBeObject") // For testing.
 class KotlinClassWithSetterMemberInjectedNamedCompanion {
   companion object TheCompanion {
-    @set:Inject
-    lateinit var setterProperty: String
+    @set:Inject lateinit var setterProperty: String
   }
 }

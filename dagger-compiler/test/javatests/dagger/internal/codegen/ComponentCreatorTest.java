@@ -52,7 +52,7 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
   private final CompilerType compilerType;
   private final ImmutableMap<String, String> compilerOptions;
 
-  @Parameters(name = "compilerMode={0}, creatorKind={1}")
+  @Parameters(name = "compilerMode={0},creatorKind={1}")
   public static Collection<Object[]> parameters() {
     return ImmutableList.of(
       new Object[]{DEFAULT_MODE, COMPONENT_BUILDER, JAVAC},

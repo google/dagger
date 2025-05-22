@@ -9,8 +9,8 @@ plugins {
 
 dependencies {
   implementation(project(":dagger"))
-  implementation(project(":dagger-spi"))
-  implementation(project(":dagger-compiler"))
+  implementation(project(":dagger-spi", "unshaded"))
+  implementation(project(":dagger-compiler", "unshaded"))
   implementation(files(project.findXProcessingJar()))
   implementation(files(project.findXProcessingTestingJar()))
   implementation(libs.auto.value.annotations)

@@ -30,8 +30,8 @@ compiler_test(
     ]),
     deps = [
         "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-testing/main/java/dagger/testing/golden",
         "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
-        "//java/dagger/testing/golden",
         "//third_party/java/junit",
     ],
 )

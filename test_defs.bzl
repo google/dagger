@@ -314,7 +314,7 @@ def _GenTestWithVariant(
     if package_name.find("javatests/") != -1:
         prefix_path = "javatests/"
     if should_add_goldens:
-        test_kwargs["resources"] = native.glob(["goldens/%s_*" % test_name])
+        deps.append("//dagger-compiler/test/resources:goldens")
     test_class = (package_name + "/" + test_name).rpartition(prefix_path)[2].replace("/", ".")
     test_kwargs_with_javacopts = {"javacopts": javacopts}
 

@@ -47,7 +47,7 @@ private constructor(val viewModelElement: XTypeElement, val assistedFactory: XTy
   val modulesClassName =
     ClassName.get(
       viewModelElement.packageName,
-      "${className.simpleNames().joinToString("_")}_HiltModules"
+      "${className.simpleNames().joinToString("_")}_HiltModules",
     )
 
   companion object {
@@ -67,11 +67,11 @@ private constructor(val viewModelElement: XTypeElement, val assistedFactory: XTy
       ProcessorErrors.checkState(
         XTypes.isSubtype(
           viewModelElement.type,
-          processingEnv.requireType(AndroidClassNames.VIEW_MODEL)
+          processingEnv.requireType(AndroidClassNames.VIEW_MODEL),
         ),
         viewModelElement,
         "@HiltViewModel is only supported on types that subclass %s.",
-        AndroidClassNames.VIEW_MODEL
+        AndroidClassNames.VIEW_MODEL,
       )
 
       val isAssistedInjectFeatureEnabled =
@@ -96,7 +96,7 @@ private constructor(val viewModelElement: XTypeElement, val assistedFactory: XTy
           assistedFactory.hasAnnotation(ClassNames.ASSISTED_FACTORY),
           viewModelElement,
           "Class %s is not annotated with @AssistedFactory.",
-          assistedFactoryType.asTypeName().toJavaPoet()
+          assistedFactoryType.asTypeName().toJavaPoet(),
         )
 
         val assistedFactoryMethod = getAssistedFactoryMethods(assistedFactory).singleOrNull()
@@ -105,19 +105,20 @@ private constructor(val viewModelElement: XTypeElement, val assistedFactory: XTy
           assistedFactoryMethod != null,
           assistedFactory,
           "Cannot find assisted factory method in %s.",
-          XElements.toStableString(assistedFactory)
+          XElements.toStableString(assistedFactory),
         )
 
         val assistedFactoryMethodType = assistedFactoryMethod!!.asMemberOf(assistedFactoryType)
 
         ProcessorErrors.checkState(
-          assistedFactoryMethodType.returnType.asTypeName()
-              .equalsIgnoreNullability(viewModelElement.asClassName()),
+          assistedFactoryMethodType.returnType
+            .asTypeName()
+            .equalsIgnoreNullability(viewModelElement.asClassName()),
           assistedFactoryMethod,
           "Class %s must have a factory method that returns a %s. Found %s.",
           XElements.toStableString(assistedFactory),
           XElements.toStableString(viewModelElement),
-          XTypes.toStableString(assistedFactoryMethodType.returnType)
+          XTypes.toStableString(assistedFactoryMethodType.returnType),
         )
       }
 
@@ -130,9 +131,9 @@ private constructor(val viewModelElement: XTypeElement, val assistedFactory: XTy
             ProcessorErrors.checkState(
               !constructor.hasAnnotation(ClassNames.ASSISTED_INJECT),
               constructor,
-              "ViewModel constructor should be annotated with @Inject instead of @AssistedInject."
+              "ViewModel constructor should be annotated with @Inject instead of @AssistedInject.",
             )
-	    Processors.isAnnotatedWithInject(constructor)
+            Processors.isAnnotatedWithInject(constructor)
           }
         }
 
@@ -147,7 +148,7 @@ private constructor(val viewModelElement: XTypeElement, val assistedFactory: XTy
         injectConstructors.size == 1,
         viewModelElement,
         "@HiltViewModel annotated class should contain exactly one %s annotated constructor.",
-        injectAnnotationsMessage
+        injectAnnotationsMessage,
       )
 
       val injectConstructor = injectConstructors.single()
@@ -156,7 +157,7 @@ private constructor(val viewModelElement: XTypeElement, val assistedFactory: XTy
         !injectConstructor.isPrivate(),
         injectConstructor,
         "%s annotated constructors must not be private.",
-        injectAnnotationsMessage
+        injectAnnotationsMessage,
       )
 
       if (injectConstructor.hasAnnotation(ClassNames.ASSISTED_INJECT)) {
@@ -168,7 +169,7 @@ private constructor(val viewModelElement: XTypeElement, val assistedFactory: XTy
           viewModelElement,
           "%s must have a valid assisted factory specified in @HiltViewModel when used with assisted injection. Found %s.",
           XElements.toStableString(viewModelElement),
-          XTypes.toStableString(assistedFactoryType)
+          XTypes.toStableString(assistedFactoryType),
         )
       } else {
         ProcessorErrors.checkState(
@@ -182,7 +183,7 @@ private constructor(val viewModelElement: XTypeElement, val assistedFactory: XTy
       ProcessorErrors.checkState(
         !viewModelElement.isNested() || viewModelElement.isStatic(),
         viewModelElement,
-        "@HiltViewModel may only be used on inner classes if they are static."
+        "@HiltViewModel may only be used on inner classes if they are static.",
       )
 
       Processors.getScopeAnnotations(viewModelElement).let { scopeAnnotations ->
@@ -190,7 +191,7 @@ private constructor(val viewModelElement: XTypeElement, val assistedFactory: XTy
           scopeAnnotations.isEmpty(),
           viewModelElement,
           "@HiltViewModel classes should not be scoped. Found: %s",
-          scopeAnnotations.joinToString { XAnnotations.toStableString(it) }
+          scopeAnnotations.joinToString { XAnnotations.toStableString(it) },
         )
       }
 

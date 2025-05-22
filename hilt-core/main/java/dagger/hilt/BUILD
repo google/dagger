@@ -45,7 +45,7 @@ java_library(
         # TODO(bcorso): Consider using a separate processor to validate @EntryPoint.
         "//hilt-compiler/main/java/dagger/hilt/processor/internal/aggregateddeps:plugin",
     ],
-    proguard_specs = ["proguard-rules.pro"],
+    proguard_specs = ["//hilt-core/main/resources:proguard"],
     deps = [
         ":generates_root_input",
         ":package_info",

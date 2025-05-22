@@ -16,7 +16,10 @@
 
 package dagger.hilt.internal.definecomponent;
 
-/** A class used by {@link DefineComponent#parent()} as the default type when no parent is given. */
+/**
+ * A class used by {@link dagger.hilt.DefineComponent#parent()} as the default type when no parent
+ * is given.
+ */
 public final class DefineComponentNoParent {
   private DefineComponentNoParent() {}
 }

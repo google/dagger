@@ -21,7 +21,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/** For annotating annotations that generate input for the {@link GenerateComponents}. */
+/**
+ * For annotating annotations that generate input for the {@link
+ * dagger.hilt.internal.GeneratedComponent}s.
+ */
 // TODO(danysantiago): Rename to GenerateComponentsInput
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.CLASS)

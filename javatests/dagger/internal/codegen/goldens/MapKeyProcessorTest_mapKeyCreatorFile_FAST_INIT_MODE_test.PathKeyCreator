@@ -27,3 +27,4 @@ public final class PathKeyCreator {
     return new AutoAnnotation_PathKeyCreator_createPathKey(value, relativePath);
   }
 }
+

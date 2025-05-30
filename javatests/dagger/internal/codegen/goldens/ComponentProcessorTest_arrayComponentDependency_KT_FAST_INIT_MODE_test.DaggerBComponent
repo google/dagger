@@ -1,0 +1,93 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerBComponent {
+  private DaggerBComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  static final class Builder {
+    private ArrayComponent arrayComponent;
+
+    private Builder() {
+    }
+
+    public Builder arrayComponent(ArrayComponent arrayComponent) {
+      this.arrayComponent = Preconditions.checkNotNull(arrayComponent);
+      return this;
+    }
+
+    public BComponent build() {
+      Preconditions.checkBuilderRequirement(arrayComponent, ArrayComponent.class);
+      return new BComponentImpl(arrayComponent);
+    }
+  }
+
+  private static final class BComponentImpl implements BComponent {
+    private final ArrayComponent arrayComponent;
+
+    private final BComponentImpl bComponentImpl = this;
+
+    Provider<String[]> stringsProvider;
+
+    BComponentImpl(ArrayComponent arrayComponentParam) {
+      this.arrayComponent = arrayComponentParam;
+      initialize(arrayComponentParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final ArrayComponent arrayComponentParam) {
+      this.stringsProvider = new SwitchingProvider<>(bComponentImpl, 0);
+    }
+
+    @Override
+    public B b() {
+      return new B(stringsProvider);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final BComponentImpl bComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
+        this.bComponentImpl = bComponentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // java.lang.String[]
+          return (T) Preconditions.checkNotNullFromComponent(bComponentImpl.arrayComponent.strings());
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}
+

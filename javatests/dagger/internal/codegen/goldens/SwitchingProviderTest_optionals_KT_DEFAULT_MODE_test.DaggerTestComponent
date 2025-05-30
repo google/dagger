@@ -1,0 +1,110 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InstanceFactory;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import java.util.Optional;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  /**
+   * A {@link Provider} that returns {@code Optional.empty()}.
+   */
+  @SuppressWarnings("rawtypes")
+  private static final Provider ABSENT_JDK_OPTIONAL_PROVIDER = InstanceFactory.create(Optional.empty());
+
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  /**
+   * Returns a {@link Provider} that returns {@code Optional.empty()}.
+   */
+  private static <T> Provider<Optional<T>> absentJdkOptionalProvider() {
+    @SuppressWarnings("unchecked") // safe covariant cast
+    Provider<Optional<T>> provider = (Provider<Optional<T>>) ABSENT_JDK_OPTIONAL_PROVIDER;
+    return provider;
+  }
+
+  /**
+   * A {@code Provider<Optional<T>>} that uses a delegate {@code Provider<T>}.
+   */
+  private static final class PresentJdkOptionalInstanceProvider<T> implements Provider<Optional<T>> {
+    private final Provider<T> delegate;
+
+    private PresentJdkOptionalInstanceProvider(Provider<T> delegate) {
+      this.delegate = Preconditions.checkNotNull(delegate);
+    }
+
+    @Override
+    public Optional<T> get() {
+      return Optional.of(delegate.get());
+    }
+
+    private static <T> Provider<Optional<T>> of(Provider<T> delegate) {
+      return new PresentJdkOptionalInstanceProvider<T>(delegate);
+    }
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    Provider<Optional<Present>> optionalOfPresentProvider;
+
+    Provider<Optional<Absent>> optionalOfAbsentProvider;
+
+    TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.optionalOfPresentProvider = PresentJdkOptionalInstanceProvider.of(TestModule_PFactory.create());
+      this.optionalOfAbsentProvider = absentJdkOptionalProvider();
+    }
+
+    @Override
+    public javax.inject.Provider<Optional<Present>> providerOfOptionalOfPresent() {
+      return optionalOfPresentProvider;
+    }
+
+    @Override
+    public javax.inject.Provider<Optional<Absent>> providerOfOptionalOfAbsent() {
+      return optionalOfAbsentProvider;
+    }
+  }
+}
+

@@ -1,0 +1,112 @@
+package test;
+
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerParentComponent {
+  private DaggerParentComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static ParentComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public ParentComponent build() {
+      return new ParentComponentImpl();
+    }
+  }
+
+  private static final class ChildComponentImpl implements ChildComponent {
+    private final ChildModule childModule;
+
+    private final ParentComponentImpl parentComponentImpl;
+
+    private final ChildComponentImpl childComponentImpl = this;
+
+    ChildComponentImpl(ParentComponentImpl parentComponentImpl) {
+      this.parentComponentImpl = parentComponentImpl;
+      this.childModule = new ChildModule();
+
+    }
+
+    NeedsDep1 needsDep1() {
+      return new NeedsDep1(parentComponentImpl.dep1Provider.get());
+    }
+
+    A a() {
+      return injectA(A_Factory.newInstance(needsDep1(), parentComponentImpl.dep1Provider.get(), parentComponentImpl.dep2Provider.get()));
+    }
+
+    @Override
+    public Object object() {
+      return ChildModule_ProvideObjectFactory.provideObject(childModule, a());
+    }
+
+    @CanIgnoreReturnValue
+    private A injectA(A instance) {
+      A_MembersInjector.injectMethodA(instance);
+      return instance;
+    }
+  }
+
+  private static final class ParentComponentImpl implements ParentComponent {
+    private final ParentComponentImpl parentComponentImpl = this;
+
+    Provider<Dep1> dep1Provider;
+
+    Provider<Dep2> dep2Provider;
+
+    ParentComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.dep1Provider = DoubleCheck.provider(Dep1_Factory.create());
+      this.dep2Provider = DoubleCheck.provider(Dep2_Factory.create());
+    }
+
+    @Override
+    public Dep1 dep1() {
+      return dep1Provider.get();
+    }
+
+    @Override
+    public Dep2 dep2() {
+      return dep2Provider.get();
+    }
+
+    @Override
+    public ChildComponent childComponent() {
+      return new ChildComponentImpl(parentComponentImpl);
+    }
+  }
+}
+

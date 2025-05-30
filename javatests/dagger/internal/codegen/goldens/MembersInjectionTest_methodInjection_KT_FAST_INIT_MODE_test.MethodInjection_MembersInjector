@@ -1,0 +1,70 @@
+package test;
+
+import dagger.Lazy;
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class MethodInjection_MembersInjector implements MembersInjector<MethodInjection> {
+  private final Provider<String> stringProvider;
+
+  private final Provider<String> stringProvider2;
+
+  private final Provider<String> stringProvider3;
+
+  private final Provider<String> stringProvider4;
+
+  private MethodInjection_MembersInjector(Provider<String> stringProvider,
+      Provider<String> stringProvider2, Provider<String> stringProvider3,
+      Provider<String> stringProvider4) {
+    this.stringProvider = stringProvider;
+    this.stringProvider2 = stringProvider2;
+    this.stringProvider3 = stringProvider3;
+    this.stringProvider4 = stringProvider4;
+  }
+
+  public static MembersInjector<MethodInjection> create(Provider<String> stringProvider,
+      Provider<String> stringProvider2, Provider<String> stringProvider3,
+      Provider<String> stringProvider4) {
+    return new MethodInjection_MembersInjector(stringProvider, stringProvider2, stringProvider3, stringProvider4);
+  }
+
+  @Override
+  public void injectMembers(MethodInjection instance) {
+    injectNoArgs(instance);
+    injectOneArg(instance, stringProvider.get());
+    injectManyArgs(instance, stringProvider2.get(), DoubleCheck.lazy(stringProvider3), stringProvider4);
+  }
+
+  public static void injectNoArgs(Object instance) {
+    ((MethodInjection) (instance)).noArgs();
+  }
+
+  public static void injectOneArg(Object instance, String string) {
+    ((MethodInjection) (instance)).oneArg(string);
+  }
+
+  public static void injectManyArgs(Object instance, String string, Lazy<String> lazyString,
+      javax.inject.Provider<String> stringProvider) {
+    ((MethodInjection) (instance)).manyArgs(string, lazyString, stringProvider);
+  }
+}
+

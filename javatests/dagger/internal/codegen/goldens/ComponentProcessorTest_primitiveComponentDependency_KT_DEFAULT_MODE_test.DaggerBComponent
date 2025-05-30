@@ -1,0 +1,82 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerBComponent {
+  private DaggerBComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  static final class Builder {
+    private IntComponent intComponent;
+
+    private Builder() {
+    }
+
+    public Builder intComponent(IntComponent intComponent) {
+      this.intComponent = Preconditions.checkNotNull(intComponent);
+      return this;
+    }
+
+    public BComponent build() {
+      Preconditions.checkBuilderRequirement(intComponent, IntComponent.class);
+      return new BComponentImpl(intComponent);
+    }
+  }
+
+  private static final class BComponentImpl implements BComponent {
+    private final BComponentImpl bComponentImpl = this;
+
+    Provider<Integer> iProvider;
+
+    BComponentImpl(IntComponent intComponentParam) {
+
+      initialize(intComponentParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final IntComponent intComponentParam) {
+      this.iProvider = new IProvider(intComponentParam);
+    }
+
+    @Override
+    public B b() {
+      return new B(iProvider);
+    }
+
+    private static final class IProvider implements Provider<Integer> {
+      private final IntComponent intComponent;
+
+      IProvider(IntComponent intComponent) {
+        this.intComponent = intComponent;
+      }
+
+      @Override
+      public Integer get() {
+        return intComponent.i();
+      }
+    }
+  }
+}
+

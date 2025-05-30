@@ -1,0 +1,110 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerC {
+  private DaggerC() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static C create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public C build() {
+      return new CImpl();
+    }
+  }
+
+  private static final class F_SubBuilder implements C.Foo.Sub.Builder {
+    private final CImpl cImpl;
+
+    private F_SubBuilder(CImpl cImpl) {
+      this.cImpl = cImpl;
+    }
+
+    @Override
+    public C.Foo.Sub build() {
+      return new F_SubImpl(cImpl);
+    }
+  }
+
+  private static final class B_SubBuilder implements C.Bar.Sub.Builder {
+    private final CImpl cImpl;
+
+    private B_SubBuilder(CImpl cImpl) {
+      this.cImpl = cImpl;
+    }
+
+    @Override
+    public C.Bar.Sub build() {
+      return new B_SubImpl(cImpl);
+    }
+  }
+
+  private static final class F_SubImpl implements C.Foo.Sub {
+    private final CImpl cImpl;
+
+    private final F_SubImpl f_SubImpl = this;
+
+    F_SubImpl(CImpl cImpl) {
+      this.cImpl = cImpl;
+
+
+    }
+  }
+
+  private static final class B_SubImpl implements C.Bar.Sub {
+    private final CImpl cImpl;
+
+    private final B_SubImpl b_SubImpl = this;
+
+    B_SubImpl(CImpl cImpl) {
+      this.cImpl = cImpl;
+
+
+    }
+  }
+
+  private static final class CImpl implements C {
+    private final CImpl cImpl = this;
+
+    CImpl() {
+
+
+    }
+
+    @Override
+    public C.Foo.Sub.Builder fooBuilder() {
+      return new F_SubBuilder(cImpl);
+    }
+
+    @Override
+    public C.Bar.Sub.Builder barBuilder() {
+      return new B_SubBuilder(cImpl);
+    }
+  }
+}
+

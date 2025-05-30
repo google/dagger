@@ -1,0 +1,95 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import dagger.producers.internal.CancellationListener;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerParent {
+  private DaggerParent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static Parent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public Parent build() {
+      return new ParentImpl();
+    }
+  }
+
+  private static final class ChildImpl implements Child, CancellationListener {
+    private final ParentImpl parentImpl;
+
+    private final ChildImpl childImpl = this;
+
+    ChildImpl(ParentImpl parentImpl) {
+      this.parentImpl = parentImpl;
+
+
+    }
+
+    @Override
+    public ProductionScoped productionScoped() {
+      return parentImpl.productionScopedProvider.get();
+    }
+
+    @Override
+    public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
+
+
+    }
+  }
+
+  private static final class ParentImpl implements Parent, CancellationListener {
+    private final ParentImpl parentImpl = this;
+
+    Provider<ProductionScoped> productionScopedProvider;
+
+    ParentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.productionScopedProvider = DoubleCheck.provider(ProductionScoped_Factory.create());
+    }
+
+    @Override
+    public Child child() {
+      return new ChildImpl(parentImpl);
+    }
+
+    @Override
+    public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
+
+
+    }
+  }
+}
+

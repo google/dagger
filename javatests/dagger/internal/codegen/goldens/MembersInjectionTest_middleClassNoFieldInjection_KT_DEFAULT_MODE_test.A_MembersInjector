@@ -1,0 +1,51 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class A_MembersInjector implements MembersInjector<A> {
+  private final Provider<String> valueCProvider;
+
+  private final Provider<String> valueAProvider;
+
+  private A_MembersInjector(Provider<String> valueCProvider, Provider<String> valueAProvider) {
+    this.valueCProvider = valueCProvider;
+    this.valueAProvider = valueAProvider;
+  }
+
+  public static MembersInjector<A> create(Provider<String> valueCProvider,
+      Provider<String> valueAProvider) {
+    return new A_MembersInjector(valueCProvider, valueAProvider);
+  }
+
+  @Override
+  public void injectMembers(A instance) {
+    C_MembersInjector.injectValueC(instance, valueCProvider.get());
+    injectValueA(instance, valueAProvider.get());
+  }
+
+  @InjectedFieldSignature("test.A.valueA")
+  public static void injectValueA(Object instance, String valueA) {
+    ((A) (instance)).valueA = valueA;
+  }
+}
+

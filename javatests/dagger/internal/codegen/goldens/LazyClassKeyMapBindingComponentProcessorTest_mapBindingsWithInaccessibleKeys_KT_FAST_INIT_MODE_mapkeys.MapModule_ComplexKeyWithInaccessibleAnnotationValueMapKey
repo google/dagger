@@ -1,0 +1,28 @@
+package mapkeys;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey {
+  private MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey() {
+  }
+
+  public static MapKeys.ComplexKey create() {
+    return MapKeys_ComplexKeyCreator.createComplexKey(new Class[] {String.class}, String.class, MapKeys_ComplexKeyCreator.createLazyClassKey(MapKeys.Inaccessible.class));
+  }
+}
+

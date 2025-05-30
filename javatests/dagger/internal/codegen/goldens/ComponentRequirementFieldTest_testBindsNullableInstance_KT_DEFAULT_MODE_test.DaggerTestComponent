@@ -1,0 +1,44 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static TestComponent.Factory factory() {
+    return new Factory();
+  }
+
+  private static final class Factory implements TestComponent.Factory {
+    @Override
+    public TestComponent create(@Nullable Bar arg) {
+      return new TestComponentImpl(arg);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl(@Nullable Bar argParam) {
+
+
+    }
+  }
+}
+

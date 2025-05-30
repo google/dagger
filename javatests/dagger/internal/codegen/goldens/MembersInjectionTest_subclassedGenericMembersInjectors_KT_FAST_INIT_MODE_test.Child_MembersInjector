@@ -1,0 +1,69 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class Child_MembersInjector<T> implements MembersInjector<Child<T>> {
+  private final Provider<T> xProvider;
+
+  private final Provider<A> yProvider;
+
+  private final Provider<A2> a2Provider;
+
+  private final Provider<A> aProvider;
+
+  private final Provider<T> tProvider;
+
+  private Child_MembersInjector(Provider<T> xProvider, Provider<A> yProvider,
+      Provider<A2> a2Provider, Provider<A> aProvider, Provider<T> tProvider) {
+    this.xProvider = xProvider;
+    this.yProvider = yProvider;
+    this.a2Provider = a2Provider;
+    this.aProvider = aProvider;
+    this.tProvider = tProvider;
+  }
+
+  public static <T> MembersInjector<Child<T>> create(Provider<T> xProvider, Provider<A> yProvider,
+      Provider<A2> a2Provider, Provider<A> aProvider, Provider<T> tProvider) {
+    return new Child_MembersInjector<T>(xProvider, yProvider, a2Provider, aProvider, tProvider);
+  }
+
+  @Override
+  public void injectMembers(Child<T> instance) {
+    Parent_MembersInjector.injectX(instance, xProvider.get());
+    Parent_MembersInjector.injectY(instance, yProvider.get());
+    Parent_MembersInjector.injectA2(instance, a2Provider.get());
+    injectA(instance, aProvider.get());
+    injectT(instance, tProvider.get());
+  }
+
+  @InjectedFieldSignature("test.Child.a")
+  public static <T> void injectA(Object instance, Object a) {
+    ((Child<T>) (instance)).a = (A) (a);
+  }
+
+  @InjectedFieldSignature("test.Child.t")
+  public static <T> void injectT(Object instance, T t) {
+    ((Child<T>) (instance)).t = t;
+  }
+}
+

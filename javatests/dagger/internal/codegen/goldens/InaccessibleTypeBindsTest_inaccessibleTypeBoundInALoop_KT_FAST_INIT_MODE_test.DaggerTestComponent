@@ -1,0 +1,96 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DelegateFactory;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+import other.FooImpl_Factory;
+import other.OtherEntryPoint;
+import other.OtherEntryPoint_Factory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    @SuppressWarnings("rawtypes")
+    Provider fooImplProvider;
+
+    TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    Object fooImpl() {
+      return FooImpl_Factory.newInstance(fooImplProvider);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.fooImplProvider = new DelegateFactory<>();
+      DelegateFactory.setDelegate(fooImplProvider, new SwitchingProvider<>(testComponentImpl, 0));
+    }
+
+    @Override
+    public OtherEntryPoint getOtherEntryPoint() {
+      return OtherEntryPoint_Factory.newInstance(fooImpl());
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // other.FooImpl
+          return (T) FooImpl_Factory.newInstance(testComponentImpl.fooImplProvider);
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,85 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+import top1.a.b.c.d.E;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerParentComponent {
+  private DaggerParentComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static ParentComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public ParentComponent build() {
+      return new ParentComponentImpl();
+    }
+  }
+
+  private static final class F_SubImpl implements E.F.Sub {
+    private final ParentComponentImpl parentComponentImpl;
+
+    private final F_SubImpl f_SubImpl = this;
+
+    F_SubImpl(ParentComponentImpl parentComponentImpl) {
+      this.parentComponentImpl = parentComponentImpl;
+
+
+    }
+  }
+
+  private static final class F2_SubImpl implements top2.a.b.c.d.E.F.Sub {
+    private final ParentComponentImpl parentComponentImpl;
+
+    private final F2_SubImpl f2_SubImpl = this;
+
+    F2_SubImpl(ParentComponentImpl parentComponentImpl) {
+      this.parentComponentImpl = parentComponentImpl;
+
+
+    }
+  }
+
+  private static final class ParentComponentImpl implements ParentComponent {
+    private final ParentComponentImpl parentComponentImpl = this;
+
+    ParentComponentImpl() {
+
+
+    }
+
+    @Override
+    public E.F.Sub top1() {
+      return new F_SubImpl(parentComponentImpl);
+    }
+
+    @Override
+    public top2.a.b.c.d.E.F.Sub top2() {
+      return new F2_SubImpl(parentComponentImpl);
+    }
+  }
+}
+

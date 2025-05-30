@@ -1,0 +1,87 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import java.util.Collections;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerParent {
+  private DaggerParent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static Parent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private ParentModule parentModule;
+
+    private Builder() {
+    }
+
+    public Builder parentModule(ParentModule parentModule) {
+      this.parentModule = Preconditions.checkNotNull(parentModule);
+      return this;
+    }
+
+    public Parent build() {
+      if (parentModule == null) {
+        this.parentModule = new ParentModule();
+      }
+      return new ParentImpl(parentModule);
+    }
+  }
+
+  private static final class ChildImpl implements Child {
+    private final ParentImpl parentImpl;
+
+    private final ChildImpl childImpl = this;
+
+    ChildImpl(ParentImpl parentImpl) {
+      this.parentImpl = parentImpl;
+
+
+    }
+
+    @Override
+    public Map<String, Object> objectMap() {
+      return Collections.<String, Object>singletonMap("parent key", ParentModule_ParentKeyObjectFactory.parentKeyObject(parentImpl.parentModule));
+    }
+  }
+
+  private static final class ParentImpl implements Parent {
+    private final ParentModule parentModule;
+
+    private final ParentImpl parentImpl = this;
+
+    ParentImpl(ParentModule parentModuleParam) {
+      this.parentModule = parentModuleParam;
+
+    }
+
+    @Override
+    public Child child() {
+      return new ChildImpl(parentImpl);
+    }
+  }
+}
+

@@ -1,0 +1,94 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.MapFactory;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private MapModuleOne mapModuleOne;
+
+    private MapModuleTwo mapModuleTwo;
+
+    private Builder() {
+    }
+
+    public Builder mapModuleOne(MapModuleOne mapModuleOne) {
+      this.mapModuleOne = Preconditions.checkNotNull(mapModuleOne);
+      return this;
+    }
+
+    public Builder mapModuleTwo(MapModuleTwo mapModuleTwo) {
+      this.mapModuleTwo = Preconditions.checkNotNull(mapModuleTwo);
+      return this;
+    }
+
+    public TestComponent build() {
+      if (mapModuleOne == null) {
+        this.mapModuleOne = new MapModuleOne();
+      }
+      if (mapModuleTwo == null) {
+        this.mapModuleTwo = new MapModuleTwo();
+      }
+      return new TestComponentImpl(mapModuleOne, mapModuleTwo);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    Provider<Handler> provideAdminHandlerProvider;
+
+    Provider<Handler> provideLoginHandlerProvider;
+
+    Provider<Map<PathEnum, Handler>> mapOfPathEnumAndHandlerProvider;
+
+    TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+
+      initialize(mapModuleOneParam, mapModuleTwoParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final MapModuleOne mapModuleOneParam,
+        final MapModuleTwo mapModuleTwoParam) {
+      this.provideAdminHandlerProvider = MapModuleOne_ProvideAdminHandlerFactory.create(mapModuleOneParam);
+      this.provideLoginHandlerProvider = MapModuleTwo_ProvideLoginHandlerFactory.create(mapModuleTwoParam);
+      this.mapOfPathEnumAndHandlerProvider = MapFactory.<PathEnum, Handler>builder(2).put(PathEnum.ADMIN, provideAdminHandlerProvider).put(PathEnum.LOGIN, provideLoginHandlerProvider).build();
+    }
+
+    @Override
+    public javax.inject.Provider<Map<PathEnum, Handler>> dispatcher() {
+      return mapOfPathEnumAndHandlerProvider;
+    }
+  }
+}
+

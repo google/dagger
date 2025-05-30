@@ -894,17 +894,15 @@ public class AssistedFactoryErrorsTest {
         CompilerTests.daggerCompiler(foo, fooFactory, component)
             .withProcessingOptions(compilerMode.processorOptions());
 
-    if (compilerMode == CompilerMode.FAST_INIT_MODE) {
-      // TODO(bcorso): Remove once we fix inaccessible assisted factory imlementation for fastInit.
+      if (compilerMode == CompilerMode.FAST_INIT_MODE) {
+      // TODO(bcorso): Remove once we fix inaccessible assisted factory implementation for fastInit.
       daggerCompiler.compile(
-          subject -> {
-            // TODO(bcorso): We don't report the error count here because javac reports
-            // the error once, whereas ksp reports the error twice.
-            subject
-                .hasErrorContaining(
-                    "test.subpackage.InaccessibleFoo is not public in test.subpackage; cannot be "
-                        + "accessed from outside package");
-          });
+          subject ->
+              // TODO(bcorso): We don't report the error count here because javac reports
+              // the error once, whereas ksp reports the error twice.
+              subject.hasErrorContaining(
+                  "test.subpackage.InaccessibleFoo is not public in test.subpackage; cannot be "
+                      + "accessed from outside package"));
     } else {
       daggerCompiler.compile(subject -> subject.hasErrorCount(0));
     }

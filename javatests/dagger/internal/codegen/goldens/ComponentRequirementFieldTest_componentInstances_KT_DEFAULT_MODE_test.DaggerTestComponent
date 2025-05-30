@@ -1,0 +1,104 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  static final class Builder {
+    private Dep dep;
+
+    private Builder() {
+    }
+
+    public Builder dep(Dep dep) {
+      this.dep = Preconditions.checkNotNull(dep);
+      return this;
+    }
+
+    public TestComponent build() {
+      Preconditions.checkBuilderRequirement(dep, Dep.class);
+      return new TestComponentImpl(dep);
+    }
+  }
+
+  private static final class TestSubcomponentImpl implements TestSubcomponent {
+    private final TestComponentImpl testComponentImpl;
+
+    private final TestSubcomponentImpl testSubcomponentImpl = this;
+
+    TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+
+
+    }
+
+    @Override
+    public TestComponent parent() {
+      return testComponentImpl;
+    }
+
+    @Override
+    public Dep depFromSubcomponent() {
+      return testComponentImpl.dep;
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final Dep dep;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl(Dep depParam) {
+      this.dep = depParam;
+
+    }
+
+    @Override
+    public TestComponent self() {
+      return this;
+    }
+
+    @Override
+    public Dep dep() {
+      return dep;
+    }
+
+    @Override
+    public String methodOnDep() {
+      return Preconditions.checkNotNullFromComponent(dep.string());
+    }
+
+    @Override
+    public Object otherMethodOnDep() {
+      return Preconditions.checkNotNullFromComponent(dep.object());
+    }
+
+    @Override
+    public TestSubcomponent subcomponent() {
+      return new TestSubcomponentImpl(testComponentImpl);
+    }
+  }
+}
+

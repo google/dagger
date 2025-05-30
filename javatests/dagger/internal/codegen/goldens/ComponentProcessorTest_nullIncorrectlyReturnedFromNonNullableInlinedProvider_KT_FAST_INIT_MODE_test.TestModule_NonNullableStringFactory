@@ -1,0 +1,44 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Preconditions;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class TestModule_NonNullableStringFactory implements Factory<String> {
+  @Override
+  public String get() {
+    return nonNullableString();
+  }
+
+  public static TestModule_NonNullableStringFactory create() {
+    return InstanceHolder.INSTANCE;
+  }
+
+  public static String nonNullableString() {
+    return Preconditions.checkNotNullFromProvides(TestModule.nonNullableString());
+  }
+
+  private static final class InstanceHolder {
+    static final TestModule_NonNullableStringFactory INSTANCE = new TestModule_NonNullableStringFactory();
+  }
+}
+

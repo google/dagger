@@ -1,0 +1,67 @@
+package test;
+
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerSimpleComponent {
+  private DaggerSimpleComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static SimpleComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public SimpleComponent build() {
+      return new SimpleComponentImpl();
+    }
+  }
+
+  private static final class SimpleComponentImpl implements SimpleComponent {
+    private final SimpleComponentImpl simpleComponentImpl = this;
+
+    SimpleComponentImpl() {
+
+
+    }
+
+    @Override
+    public void inject(SomeInjectedType instance) {
+      injectSomeInjectedType(instance);
+    }
+
+    @Override
+    public SomeInjectedType injectAndReturn(SomeInjectedType instance) {
+      return injectSomeInjectedType(instance);
+    }
+
+    @CanIgnoreReturnValue
+    private SomeInjectedType injectSomeInjectedType(SomeInjectedType instance) {
+      SomeInjectedType_MembersInjector.injectInjectedField(instance, new SomeInjectableType());
+      return instance;
+    }
+  }
+}
+

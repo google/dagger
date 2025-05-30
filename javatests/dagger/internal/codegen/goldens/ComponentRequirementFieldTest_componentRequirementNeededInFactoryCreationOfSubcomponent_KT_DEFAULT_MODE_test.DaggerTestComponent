@@ -1,0 +1,115 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import dagger.internal.SetFactory;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private ParentModule parentModule;
+
+    private Builder() {
+    }
+
+    public Builder parentModule(ParentModule parentModule) {
+      this.parentModule = Preconditions.checkNotNull(parentModule);
+      return this;
+    }
+
+    public TestComponent build() {
+      if (parentModule == null) {
+        this.parentModule = new ParentModule();
+      }
+      return new TestComponentImpl(parentModule);
+    }
+  }
+
+  private static final class TestSubcomponentImpl implements TestSubcomponent {
+    private final TestComponentImpl testComponentImpl;
+
+    private final TestSubcomponentImpl testSubcomponentImpl = this;
+
+    Provider<Set<Object>> setOfObjectProvider;
+
+    Provider<Object> reliesOnMultibindingProvider;
+
+    TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.setOfObjectProvider = SetFactory.<Object>builder(2, 0).addProvider(ParentModule_ContributionFactory.create()).addProvider(ChildModule_ContributionFactory.create()).build();
+      this.reliesOnMultibindingProvider = ParentModule_ReliesOnMultibindingFactory.create(testComponentImpl.parentModule, setOfObjectProvider);
+    }
+
+    @Override
+    public javax.inject.Provider<Object> dependsOnMultibinding() {
+      return reliesOnMultibindingProvider;
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final ParentModule parentModule;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    Provider<Set<Object>> setOfObjectProvider;
+
+    Provider<Object> reliesOnMultibindingProvider;
+
+    TestComponentImpl(ParentModule parentModuleParam) {
+      this.parentModule = parentModuleParam;
+      initialize(parentModuleParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final ParentModule parentModuleParam) {
+      this.setOfObjectProvider = SetFactory.<Object>builder(1, 0).addProvider(ParentModule_ContributionFactory.create()).build();
+      this.reliesOnMultibindingProvider = ParentModule_ReliesOnMultibindingFactory.create(parentModuleParam, setOfObjectProvider);
+    }
+
+    @Override
+    public javax.inject.Provider<Object> dependsOnMultibinding() {
+      return reliesOnMultibindingProvider;
+    }
+
+    @Override
+    public TestSubcomponent subcomponent() {
+      return new TestSubcomponentImpl(testComponentImpl);
+    }
+  }
+}
+

@@ -79,6 +79,7 @@ final class DelegateComponentProcessor {
   @Inject ValidationBindingGraphPlugins validationBindingGraphPlugins;
   @Inject ExternalBindingGraphPlugins externalBindingGraphPlugins;
   @Inject Set<ClearableCache> clearableCaches;
+  @Inject CompilerOptions compilerOptions;
 
   public void initialize(
       XProcessingEnv env,

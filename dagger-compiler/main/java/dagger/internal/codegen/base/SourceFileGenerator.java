@@ -70,6 +70,7 @@ public abstract class SourceFileGenerator<T> {
     generate(input);
   }
 
+
   /** Generates a source file to be compiled for {@code T}. */
   public void generate(T input) {
     for (XTypeSpec type : topLevelTypes(input)) {

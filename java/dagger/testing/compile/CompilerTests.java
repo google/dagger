@@ -283,18 +283,12 @@ public final class CompilerTests {
     }
 
     public void compile(Consumer<CompilationResultSubject> onCompilationResult) {
-      compileInternal(onCompilationResult, DEFAULT_KOTLINC_OPTIONS);
-    }
-
-    private void compileInternal(
-        Consumer<CompilationResultSubject> onCompilationResult,
-        ImmutableList<String> kotlincArguments) {
       ProcessorTestExtKt.runProcessorTest(
           sources().asList(),
           additionalClasspath(),
           processorOptions(),
           /* javacArguments= */ DEFAULT_JAVAC_OPTIONS,
-          /* kotlincArguments= */ kotlincArguments,
+          /* kotlincArguments= */ DEFAULT_KOTLINC_OPTIONS,
           /* config= */ PROCESSING_ENV_CONFIG,
           /* javacProcessors= */ mergeProcessors(
               ImmutableList.of(

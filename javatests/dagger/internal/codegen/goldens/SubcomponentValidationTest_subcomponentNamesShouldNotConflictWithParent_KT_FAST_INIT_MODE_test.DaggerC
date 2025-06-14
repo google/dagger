@@ -1,0 +1,67 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerC {
+  private DaggerC() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static C create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public C build() {
+      return new t_CImpl();
+    }
+  }
+
+  private static final class F_CImpl implements Foo.C {
+    private final t_CImpl _t_CImpl;
+
+    private final F_CImpl f_CImpl = this;
+
+    F_CImpl(t_CImpl _t_CImpl) {
+      this._t_CImpl = _t_CImpl;
+
+
+    }
+  }
+
+  private static final class t_CImpl implements C {
+    private final t_CImpl _t_CImpl = this;
+
+    t_CImpl() {
+
+
+    }
+
+    @Override
+    public Foo.C newInstanceC() {
+      return new F_CImpl(_t_CImpl);
+    }
+  }
+}
+

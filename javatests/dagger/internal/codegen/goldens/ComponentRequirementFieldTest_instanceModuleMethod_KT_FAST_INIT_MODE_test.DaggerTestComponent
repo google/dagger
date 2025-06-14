@@ -1,0 +1,88 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import javax.annotation.processing.Generated;
+import other.OtherPackageModule;
+import other.OtherPackageModule_LFactory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private ParentModule parentModule;
+
+    private OtherPackageModule otherPackageModule;
+
+    private Builder() {
+    }
+
+    public Builder parentModule(ParentModule parentModule) {
+      this.parentModule = Preconditions.checkNotNull(parentModule);
+      return this;
+    }
+
+    public Builder otherPackageModule(OtherPackageModule otherPackageModule) {
+      this.otherPackageModule = Preconditions.checkNotNull(otherPackageModule);
+      return this;
+    }
+
+    public TestComponent build() {
+      if (parentModule == null) {
+        this.parentModule = new ParentModule();
+      }
+      if (otherPackageModule == null) {
+        this.otherPackageModule = new OtherPackageModule();
+      }
+      return new TestComponentImpl(parentModule, otherPackageModule);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final ParentModule parentModule;
+
+    private final OtherPackageModule otherPackageModule;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl(ParentModule parentModuleParam, OtherPackageModule otherPackageModuleParam) {
+      this.parentModule = parentModuleParam;
+      this.otherPackageModule = otherPackageModuleParam;
+
+    }
+
+    @Override
+    public int i() {
+      return parentModule.i();
+    }
+
+    @Override
+    public long l() {
+      return OtherPackageModule_LFactory.l(otherPackageModule);
+    }
+  }
+}
+

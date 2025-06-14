@@ -1,0 +1,79 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import java.util.List;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static TestComponent.Builder builder() {
+    return new Builder();
+  }
+
+  private static final class Builder implements TestComponent.Builder {
+    private Integer i;
+
+    private List<String> list;
+
+    @Override
+    public Builder i(int i) {
+      this.i = Preconditions.checkNotNull(i);
+      return this;
+    }
+
+    @Override
+    public Builder list(List<String> list) {
+      this.list = Preconditions.checkNotNull(list);
+      return this;
+    }
+
+    @Override
+    public TestComponent build() {
+      Preconditions.checkBuilderRequirement(i, Integer.class);
+      Preconditions.checkBuilderRequirement(list, List.class);
+      return new TestComponentImpl(i, list);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final Integer i;
+
+    private final List<String> list;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl(Integer iParam, List<String> listParam) {
+      this.i = iParam;
+      this.list = listParam;
+
+    }
+
+    @Override
+    public int i() {
+      return i;
+    }
+
+    @Override
+    public List<String> list() {
+      return list;
+    }
+  }
+}
+

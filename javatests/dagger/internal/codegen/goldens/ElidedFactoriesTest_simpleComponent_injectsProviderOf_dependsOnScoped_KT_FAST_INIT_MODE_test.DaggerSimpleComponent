@@ -1,0 +1,93 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerSimpleComponent {
+  private DaggerSimpleComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static SimpleComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public SimpleComponent build() {
+      return new SimpleComponentImpl();
+    }
+  }
+
+  private static final class SimpleComponentImpl implements SimpleComponent {
+    private final SimpleComponentImpl simpleComponentImpl = this;
+
+    Provider<ScopedType> scopedTypeProvider;
+
+    Provider<DependsOnScoped> dependsOnScopedProvider;
+
+    SimpleComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.scopedTypeProvider = DoubleCheck.provider(new SwitchingProvider<ScopedType>(simpleComponentImpl, 1));
+      this.dependsOnScopedProvider = new SwitchingProvider<>(simpleComponentImpl, 0);
+    }
+
+    @Override
+    public NeedsProvider needsProvider() {
+      return new NeedsProvider(dependsOnScopedProvider);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final SimpleComponentImpl simpleComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(SimpleComponentImpl simpleComponentImpl, int id) {
+        this.simpleComponentImpl = simpleComponentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // test.DependsOnScoped
+          return (T) new DependsOnScoped(simpleComponentImpl.scopedTypeProvider.get());
+
+          case 1: // test.ScopedType
+          return (T) new ScopedType();
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}
+

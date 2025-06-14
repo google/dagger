@@ -19,14 +19,19 @@ load("//:build_defs.bzl", "JAVA_RELEASE_MIN", "TEST_MANIFEST_VALUES")
 load("@rules_android//rules:rules.bzl", "android_library", "android_local_test")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library", "kt_jvm_test")
 
-# Defines a set of build variants and the list of extra javacopts to build with.
-# The key will be appended to the generated test names to ensure uniqueness.
-_FUNCTIONAL_BUILD_VARIANTS = {
-    None: [],  # The default build variant (no javacopts).
-    "Shards": ["-Adagger.keysPerComponentShard=2"],
-    "FastInit": ["-Adagger.fastInit=enabled"],
-    "FastInit_Shards": ["-Adagger.fastInit=enabled", "-Adagger.keysPerComponentShard=2"],
+_JAVACOPTS = {
+    "Shards": "-Adagger.keysPerComponentShard=2",
+    "FastInit": "-Adagger.fastInit=enabled",
+    "Javac": "-Adagger.use_ksp=false",
+    "JavaCodegen": "-Adagger.use_kotlin_codegen=disabled",
 }
+
+_VARIANTS = [
+    # Javac with Java codegen
+    struct(backend = "Javac", codegen = "JavaCodegen", flavors = ["Shards"]),
+    struct(backend = "Javac", codegen = "JavaCodegen", flavors = ["FastInit"]),
+    struct(backend = "Javac", codegen = "JavaCodegen", flavors = ["FastInit", "Shards"]),
+]
 
 def GenCompilerTests(name, srcs, **kwargs):
     """Generates a java_test or kt_jvm_test for each test source in srcs.
@@ -196,54 +201,52 @@ def _GenTestsWithVariants(
     # Ensure that the source code is compatible with the minimum supported Java version.
     javacopts = javacopts + JAVA_RELEASE_MIN
 
-    for (variant_name, variant_javacopts) in _FUNCTIONAL_BUILD_VARIANTS.items():
-        merged_javacopts = javacopts + variant_javacopts
-        for is_ksp in (True, False):
-            if variant_name:
-                suffix = "_" + variant_name
-                tags = [variant_name]
+    for variant in _VARIANTS:
+        suffix = "_" + variant.backend + "_" + variant.codegen
+        variant_javacopts = [_JAVACOPTS[variant.backend], _JAVACOPTS[variant.codegen]]
+        tags = []
+        jvm_flags = []
 
-                # Add jvm_flags so that the mode can be accessed from within tests.
-                jvm_flags = ["-Ddagger.mode=" + variant_name]
-            else:
-                suffix = ""
-                tags = []
-                jvm_flags = []
+        if variant.flavors:
+            flavor_name = "_".join(variant.flavors)
+            suffix += "_" + flavor_name
+            variant_javacopts += [_JAVACOPTS[flavor] for flavor in variant.flavors]
+            tags.append(flavor_name)
 
-            if is_ksp:
-                continue # KSP not yet supported in Bazel
+            # Add jvm_flags so that the mode can be accessed from within tests.
+            jvm_flags.append("-Ddagger.mode=" + flavor_name)
 
-            variant_deps = [canonical_dep_name(dep) + suffix for dep in gen_library_deps]
-            test_deps = list(deps)
-            if supporting_files:
-                supporting_files_name = name + suffix + ("_lib" if test_files else "")
-                _GenLibraryWithVariant(
-                    library_rule_type = library_rule_type,
-                    name = supporting_files_name,
-                    srcs = supporting_files,
-                    tags = tags,
-                    deps = deps + variant_deps,
-                    plugins = plugins,
-                    javacopts = merged_javacopts,
-                )
-                test_deps.append(supporting_files_name)
+        variant_deps = [canonical_dep_name(dep) + suffix for dep in gen_library_deps]
+        test_deps = list(deps)
+        if supporting_files:
+            supporting_files_name = name + suffix + ("_lib" if test_files else "")
+            _GenLibraryWithVariant(
+                library_rule_type = library_rule_type,
+                name = supporting_files_name,
+                srcs = supporting_files,
+                tags = tags,
+                deps = deps + variant_deps,
+                plugins = plugins,
+                javacopts = javacopts + variant_javacopts,
+            )
+            test_deps.append(supporting_files_name)
 
-            for test_file in test_files:
-                test_name = test_file.rsplit(".", 1)[0]
+        for test_file in test_files:
+            test_name = test_file.rsplit(".", 1)[0]
 
-                _GenTestWithVariant(
-                    library_rule_type = library_rule_type,
-                    test_rule_type = test_rule_type,
-                    name = test_name + suffix,
-                    srcs = [test_file],
-                    tags = tags,
-                    deps = test_deps + variant_deps,
-                    plugins = plugins,
-                    javacopts = merged_javacopts,
-                    shard_count = shard_count,
-                    jvm_flags = jvm_flags,
-                    test_kwargs = test_kwargs,
-                )
+            _GenTestWithVariant(
+                library_rule_type = library_rule_type,
+                test_rule_type = test_rule_type,
+                name = test_name + suffix,
+                srcs = [test_file],
+                tags = tags,
+                deps = test_deps + variant_deps,
+                plugins = plugins,
+                javacopts = javacopts + variant_javacopts,
+                shard_count = shard_count,
+                jvm_flags = jvm_flags,
+                test_kwargs = test_kwargs,
+            )
 
 def _GenLibraryWithVariant(
         library_rule_type,

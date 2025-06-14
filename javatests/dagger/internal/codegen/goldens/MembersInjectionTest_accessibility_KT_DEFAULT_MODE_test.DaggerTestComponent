@@ -1,0 +1,72 @@
+package test;
+
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+import other.Foo_Factory;
+import other.Inaccessible_Factory;
+import other.Inaccessible_MembersInjector;
+import other.UsesInaccessible;
+import other.UsesInaccessible_Factory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl() {
+
+
+    }
+
+    Object inaccessible() {
+      return injectInaccessible(Inaccessible_Factory.newInstance());
+    }
+
+    @Override
+    public UsesInaccessible usesInaccessible() {
+      return UsesInaccessible_Factory.newInstance(inaccessible());
+    }
+
+    @CanIgnoreReturnValue
+    private Object injectInaccessible(Object instance) {
+      Inaccessible_MembersInjector.injectFoo(instance, Foo_Factory.newInstance());
+      Inaccessible_MembersInjector.injectMethod(instance, Foo_Factory.newInstance());
+      return instance;
+    }
+  }
+}
+

@@ -1,0 +1,72 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DelegateFactory;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    Provider<FooFactory> fooFactoryProvider;
+
+    Provider<Bar> barProvider;
+
+    Foo_Factory fooProvider;
+
+    TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.fooFactoryProvider = new DelegateFactory<>();
+      this.barProvider = Bar_Factory.create(fooFactoryProvider);
+      this.fooProvider = Foo_Factory.create(barProvider);
+      DelegateFactory.setDelegate(fooFactoryProvider, FooFactory_Impl.createFactoryProvider(fooProvider));
+    }
+
+    @Override
+    public FooFactory fooFactory() {
+      return fooFactoryProvider.get();
+    }
+  }
+}
+

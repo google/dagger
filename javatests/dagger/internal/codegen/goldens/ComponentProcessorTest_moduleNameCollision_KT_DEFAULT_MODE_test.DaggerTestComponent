@@ -1,0 +1,86 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private TestModule testModule;
+
+    private other.test.TestModule testModule2;
+
+    private Builder() {
+    }
+
+    public Builder testModule(TestModule testModule) {
+      this.testModule = Preconditions.checkNotNull(testModule);
+      return this;
+    }
+
+    public Builder testModule(other.test.TestModule testModule) {
+      this.testModule2 = Preconditions.checkNotNull(testModule);
+      return this;
+    }
+
+    public TestComponent build() {
+      if (testModule == null) {
+        this.testModule = new TestModule();
+      }
+      if (testModule2 == null) {
+        this.testModule2 = new other.test.TestModule();
+      }
+      return new TestComponentImpl(testModule, testModule2);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestModule testModule;
+
+    private final other.test.TestModule testModule2;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl(TestModule testModuleParam, other.test.TestModule testModuleParam2) {
+      this.testModule = testModuleParam;
+      this.testModule2 = testModuleParam2;
+
+    }
+
+    @Override
+    public A a() {
+      return TestModule_AFactory.a(testModule);
+    }
+
+    @Override
+    public other.test.A otherA() {
+      return other.test.TestModule_AFactory.a(testModule2);
+    }
+  }
+}
+

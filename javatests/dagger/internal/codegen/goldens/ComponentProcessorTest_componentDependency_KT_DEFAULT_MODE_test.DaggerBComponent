@@ -1,0 +1,82 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerBComponent {
+  private DaggerBComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  static final class Builder {
+    private AComponent aComponent;
+
+    private Builder() {
+    }
+
+    public Builder aComponent(AComponent aComponent) {
+      this.aComponent = Preconditions.checkNotNull(aComponent);
+      return this;
+    }
+
+    public BComponent build() {
+      Preconditions.checkBuilderRequirement(aComponent, AComponent.class);
+      return new BComponentImpl(aComponent);
+    }
+  }
+
+  private static final class BComponentImpl implements BComponent {
+    private final BComponentImpl bComponentImpl = this;
+
+    Provider<A> aProvider;
+
+    BComponentImpl(AComponent aComponentParam) {
+
+      initialize(aComponentParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final AComponent aComponentParam) {
+      this.aProvider = new AProvider(aComponentParam);
+    }
+
+    @Override
+    public B b() {
+      return new B(aProvider);
+    }
+
+    private static final class AProvider implements Provider<A> {
+      private final AComponent aComponent;
+
+      AProvider(AComponent aComponent) {
+        this.aComponent = aComponent;
+      }
+
+      @Override
+      public A get() {
+        return Preconditions.checkNotNullFromComponent(aComponent.a());
+      }
+    }
+  }
+}
+

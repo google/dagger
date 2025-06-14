@@ -1,0 +1,131 @@
+package dagger.internal.codegen;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  static final class Builder {
+    private Dependency dependency;
+
+    private Builder() {
+    }
+
+    public Builder dependency(Dependency dependency) {
+      this.dependency = Preconditions.checkNotNull(dependency);
+      return this;
+    }
+
+    public TestComponent build() {
+      Preconditions.checkBuilderRequirement(dependency, Dependency.class);
+      return new TestComponentImpl(dependency);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    TestComponentImplShard testComponentImplShard;
+
+    private final Dependency dependency;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    Provider<Binding1> binding1Provider;
+
+    Provider<Binding2> binding2Provider;
+
+    TestComponentImpl(Dependency dependencyParam) {
+      this.dependency = dependencyParam;
+      initialize(dependencyParam);
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl, dependencyParam);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final Dependency dependencyParam) {
+      this.binding1Provider = DoubleCheck.provider(Binding1_Factory.create());
+      this.binding2Provider = DoubleCheck.provider(Binding2_Factory.create());
+    }
+
+    @Override
+    public Binding1 binding1() {
+      return binding1Provider.get();
+    }
+
+    @Override
+    public Binding2 binding2() {
+      return binding2Provider.get();
+    }
+
+    @Override
+    public Binding3 binding3() {
+      return Preconditions.checkNotNullFromComponent(dependency.binding3());
+    }
+
+    @Override
+    public javax.inject.Provider<Binding1> providerBinding1() {
+      return binding1Provider;
+    }
+
+    @Override
+    public javax.inject.Provider<Binding2> providerBinding2() {
+      return binding2Provider;
+    }
+
+    @Override
+    public javax.inject.Provider<Binding3> providerBinding3() {
+      return testComponentImpl.testComponentImplShard.binding3Provider;
+    }
+
+    private static final class Binding3Provider implements Provider<Binding3> {
+      private final Dependency dependency;
+
+      Binding3Provider(Dependency dependency) {
+        this.dependency = dependency;
+      }
+
+      @Override
+      public Binding3 get() {
+        return Preconditions.checkNotNullFromComponent(dependency.binding3());
+      }
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
+
+    Provider<Binding3> binding3Provider;
+
+    TestComponentImplShard(TestComponentImpl testComponentImpl, Dependency dependencyParam) {
+      this.testComponentImpl = testComponentImpl;
+      initialize(dependencyParam);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final Dependency dependencyParam) {
+      this.binding3Provider = new TestComponentImpl.Binding3Provider(testComponentImpl.dependency);
+    }
+  }
+}
+

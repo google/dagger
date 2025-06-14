@@ -1,0 +1,123 @@
+package test;
+
+import com.google.common.util.concurrent.ListenableFuture;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.InstanceFactory;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import dagger.internal.SetFactory;
+import dagger.producers.Producer;
+import dagger.producers.internal.CancellationListener;
+import dagger.producers.internal.Producers;
+import dagger.producers.monitoring.ProductionComponentMonitor;
+import java.util.concurrent.Executor;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestClass_SimpleComponent {
+  private DaggerTestClass_SimpleComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestClass.SimpleComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private TestClass.AModule aModule;
+
+    private TestClass.BModule bModule;
+
+    private Builder() {
+    }
+
+    public Builder aModule(TestClass.AModule aModule) {
+      this.aModule = Preconditions.checkNotNull(aModule);
+      return this;
+    }
+
+    public Builder bModule(TestClass.BModule bModule) {
+      this.bModule = Preconditions.checkNotNull(bModule);
+      return this;
+    }
+
+    public TestClass.SimpleComponent build() {
+      if (aModule == null) {
+        this.aModule = new TestClass.AModule();
+      }
+      if (bModule == null) {
+        this.bModule = new TestClass.BModule();
+      }
+      return new SimpleComponentImpl(aModule, bModule);
+    }
+  }
+
+  private static final class SimpleComponentImpl implements TestClass.SimpleComponent, CancellationListener {
+    private final SimpleComponentImpl simpleComponentImpl = this;
+
+    private Producer<TestClass.A> aEntryPoint;
+
+    Provider<Executor> executorProvider;
+
+    Provider<Executor> productionImplementationExecutorProvider;
+
+    Provider<TestClass.SimpleComponent> simpleComponentProvider;
+
+    Provider<ProductionComponentMonitor> monitorProvider;
+
+    Provider<TestClass.B> bProvider;
+
+    Producer<TestClass.B> bProducer;
+
+    Producer<TestClass.A> aProducer;
+
+    SimpleComponentImpl(TestClass.AModule aModuleParam, TestClass.BModule bModuleParam) {
+
+      initialize(aModuleParam, bModuleParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final TestClass.AModule aModuleParam,
+        final TestClass.BModule bModuleParam) {
+      this.executorProvider = TestClass_BModule_ExecutorFactory.create(bModuleParam);
+      this.productionImplementationExecutorProvider = DoubleCheck.provider((Provider) (executorProvider));
+      this.simpleComponentProvider = InstanceFactory.create((TestClass.SimpleComponent) (simpleComponentImpl));
+      this.monitorProvider = DoubleCheck.provider(TestClass_SimpleComponent_MonitoringModule_MonitorFactory.create(simpleComponentProvider, SetFactory.<ProductionComponentMonitor.Factory>empty()));
+      this.bProvider = TestClass_BModule_BFactory.create(bModuleParam, TestClass_C_Factory.create());
+      this.bProducer = Producers.producerFromProvider(bProvider);
+      this.aProducer = TestClass_AModule_AFactory.create(aModuleParam, productionImplementationExecutorProvider, monitorProvider, bProducer);
+      this.aEntryPoint = Producers.entryPointViewOf(aProducer, this);
+    }
+
+    @Override
+    public ListenableFuture<TestClass.A> a() {
+      return aEntryPoint.get();
+    }
+
+    @Override
+    public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
+
+      Producers.cancel(aProducer, mayInterruptIfRunning);
+      Producers.cancel(bProducer, mayInterruptIfRunning);
+    }
+  }
+}
+

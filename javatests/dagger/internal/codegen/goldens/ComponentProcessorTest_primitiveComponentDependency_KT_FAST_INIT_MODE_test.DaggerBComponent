@@ -1,0 +1,93 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerBComponent {
+  private DaggerBComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  static final class Builder {
+    private IntComponent intComponent;
+
+    private Builder() {
+    }
+
+    public Builder intComponent(IntComponent intComponent) {
+      this.intComponent = Preconditions.checkNotNull(intComponent);
+      return this;
+    }
+
+    public BComponent build() {
+      Preconditions.checkBuilderRequirement(intComponent, IntComponent.class);
+      return new BComponentImpl(intComponent);
+    }
+  }
+
+  private static final class BComponentImpl implements BComponent {
+    private final IntComponent intComponent;
+
+    private final BComponentImpl bComponentImpl = this;
+
+    Provider<Integer> iProvider;
+
+    BComponentImpl(IntComponent intComponentParam) {
+      this.intComponent = intComponentParam;
+      initialize(intComponentParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final IntComponent intComponentParam) {
+      this.iProvider = new SwitchingProvider<>(bComponentImpl, 0);
+    }
+
+    @Override
+    public B b() {
+      return new B(iProvider);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final BComponentImpl bComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
+        this.bComponentImpl = bComponentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // java.lang.Integer
+          return (T) (Integer) (bComponentImpl.intComponent.i());
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}
+

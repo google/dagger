@@ -1,0 +1,113 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+import pkg1.A;
+import pkg1.AComponent;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerBComponent {
+  private DaggerBComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  static final class Builder {
+    private AComponent aComponent;
+
+    private pkg2.AComponent aComponent2;
+
+    private Builder() {
+    }
+
+    public Builder aComponent(AComponent aComponent) {
+      this.aComponent = Preconditions.checkNotNull(aComponent);
+      return this;
+    }
+
+    public Builder aComponent(pkg2.AComponent aComponent) {
+      this.aComponent2 = Preconditions.checkNotNull(aComponent);
+      return this;
+    }
+
+    public BComponent build() {
+      Preconditions.checkBuilderRequirement(aComponent, AComponent.class);
+      Preconditions.checkBuilderRequirement(aComponent2, pkg2.AComponent.class);
+      return new BComponentImpl(aComponent, aComponent2);
+    }
+  }
+
+  private static final class BComponentImpl implements BComponent {
+    private final AComponent aComponent;
+
+    private final pkg2.AComponent aComponent2;
+
+    private final BComponentImpl bComponentImpl = this;
+
+    Provider<A> aProvider;
+
+    Provider<pkg2.A> aProvider2;
+
+    BComponentImpl(AComponent aComponentParam, pkg2.AComponent aComponentParam2) {
+      this.aComponent = aComponentParam;
+      this.aComponent2 = aComponentParam2;
+      initialize(aComponentParam, aComponentParam2);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final AComponent aComponentParam,
+        final pkg2.AComponent aComponentParam2) {
+      this.aProvider = new SwitchingProvider<>(bComponentImpl, 0);
+      this.aProvider2 = new SwitchingProvider<>(bComponentImpl, 1);
+    }
+
+    @Override
+    public B b() {
+      return new B(aProvider, aProvider2);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final BComponentImpl bComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
+        this.bComponentImpl = bComponentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // pkg1.A
+          return (T) Preconditions.checkNotNullFromComponent(bComponentImpl.aComponent.a());
+
+          case 1: // pkg2.A
+          return (T) Preconditions.checkNotNullFromComponent(bComponentImpl.aComponent2.a());
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}
+

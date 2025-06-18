@@ -349,7 +349,6 @@ android_local_test(
 
 kt_android_library(
     name = "QualifierInFieldsClass",
-    testonly = True,
     srcs = ["QualifierInFieldsClass.kt"],
     deps = [
         "//hilt-android/main/java/dagger/hilt/android/qualifiers",

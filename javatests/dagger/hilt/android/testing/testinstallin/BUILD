@@ -70,7 +70,6 @@ android_local_test(
 
 android_library(
     name = "TestInstallInApp",
-    testonly = True,
     srcs = ["TestInstallInApp.java"],
     deps = [
         ":TestInstallInModules",
@@ -82,7 +81,6 @@ android_library(
 
 android_library(
     name = "TestInstallInModules",
-    testonly = True,
     srcs = ["TestInstallInModules.java"],
     deps = [
         "//hilt-android-testing/main/java/dagger/hilt/testing:test_install_in",

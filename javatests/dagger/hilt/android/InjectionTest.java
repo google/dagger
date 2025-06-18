@@ -426,7 +426,7 @@ public final class InjectionTest {
   }
 
   @Test
-  @Config(sdk = 21)
+  @Config(sdk = Config.OLDEST_SDK)
   public void testViewNoFragmentBindingsWithFragment_fourthConstructor_presentOnTwentyOne()
       throws Exception {
     TestFragment fragment = setupFragment(TestActivity.class, new TestFragment());

@@ -62,6 +62,12 @@ interface HiltExtension {
    * for more information.
    */
   var disableCrossCompilationRootValidation: Boolean
+
+  /**
+   * If set to `true`, the Hilt Gradle Plugin will not validated that both the Hilt runtime
+   * dependency and compiler dependency are applied to the project. The default value is `false`.
+   */
+  var disableDependencyCheck: Boolean
 }
 
 internal open class HiltExtensionImpl : HiltExtension {
@@ -72,4 +78,5 @@ internal open class HiltExtensionImpl : HiltExtension {
   override var enableTransformForLocalTests: Boolean = false
   override var enableAggregatingTask: Boolean = true
   override var disableCrossCompilationRootValidation: Boolean = false
+  override var disableDependencyCheck: Boolean = false
 }

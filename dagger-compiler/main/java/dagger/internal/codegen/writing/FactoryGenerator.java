@@ -37,6 +37,7 @@ import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.Suppression.R
 import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.xprocessing.XCodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.xprocessing.XCodeBlocks.staticReferenceOf;
 import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
@@ -141,7 +142,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
     FactoryFields factoryFields = FactoryFields.create(binding, compilerOptions);
     // If the factory has no input fields we can use a static instance holder to create a
     // singleton instance of the factory. Otherwise, we create a new instance via the constructor.
-    if (factoryFields.isEmpty()) {
+    if (useStaticInstanceHolder(binding, factoryFields)) {
       factoryBuilder.addType(staticInstanceHolderType(binding));
     } else {
       factoryBuilder
@@ -157,6 +158,11 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
         .build();
   }
 
+  private boolean useStaticInstanceHolder(
+      ContributionBinding binding, FactoryFields factoryFields) {
+    return factoryFields.isEmpty();
+  }
+
   // private static final class InstanceHolder {
   //   static final FooModule_ProvidesFooFactory INSTANCE =
   //       new FooModule_ProvidesFooFactory();
@@ -170,7 +176,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
       // If the factory has type parameters, ignore them in the field declaration & initializer
       instanceHolderFieldBuilder.addAnnotation(suppressWarnings(RAWTYPES));
     }
-    return XTypeSpecs.classBuilder(instanceHolderClassName(binding))
+    return XTypeSpecs.objectBuilder(instanceHolderClassName(binding))
         .addModifiers(PRIVATE, STATIC, FINAL)
         .addProperty(instanceHolderFieldBuilder.build())
         .build();
@@ -222,7 +228,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
             .returns(parameterizedGeneratedTypeNameForBinding(binding))
             .addTypeVariableNames(bindingTypeElementTypeVariableNames(binding));
 
-    if (factoryFields.isEmpty()) {
+    if (useStaticInstanceHolder(binding, factoryFields)) {
       if (!bindingTypeElementTypeVariableNames(binding).isEmpty()) {
         createMethodBuilder.addAnnotation(suppressWarnings(UNCHECKED));
       }
@@ -319,21 +325,21 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
             compilerOptions);
 
     if (!injectionSites(binding).isEmpty()) {
-      XCodeBlock instance = XCodeBlock.of("instance");
+      String instanceName = "instance";
       XCodeBlock invokeInjectionSites =
           InjectionSiteMethod.invokeAll(
               binding,
               generatedClassNameForBinding(binding),
-              instance,
+              XCodeBlock.of("%N", instanceName),
               binding.key().type().xprocessing(),
               sourceFiles.frameworkFieldUsages(
                       binding.dependencies(), factoryFields.frameworkFields)
                   ::get,
               compilerOptions);
       getMethod
-          .addStatement("%T %L = %L", providedTypeName(binding), instance, invokeNewInstance)
+          .addLocalVar(instanceName, providedTypeName(binding), invokeNewInstance)
           .addCode(invokeInjectionSites)
-          .addStatement("return %L", instance);
+          .addStatement("return %N", instanceName);
 
     } else {
       getMethod
@@ -395,19 +401,15 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
     XTypeElement enclosingType = asTypeElement(method.getEnclosingElement());
     UniqueNameSet parameterNameSet = new UniqueNameSet();
     XCodeBlock module;
-    if (method.isStatic() || enclosingType.isCompanionObject()) {
-      module = XCodeBlock.of("%T", enclosingType.asClassName());
-    } else if (enclosingType.isKotlinObject()) {
-      // Call through the singleton instance.
-      // See: https://kotlinlang.org/docs/reference/java-to-kotlin-interop.html#static-methods
-      module = XCodeBlock.of("%T.INSTANCE", enclosingType.asClassName());
+    if (method.isStatic() || enclosingType.isKotlinObject()) {
+      module = staticReferenceOf(enclosingType);
     } else {
       builder.addTypeVariableNames(typeVariableNames(enclosingType));
       module = copyInstance(builder, parameterNameSet, enclosingType.getType());
     }
     XCodeBlock arguments =
         copyParameters(builder, parameterNameSet, method.getParameters(), compilerOptions);
-    XCodeBlock invocation = XCodeBlock.of("%L.%L(%L)", module, method.getJvmName(), arguments);
+    XCodeBlock invocation = XCodeBlock.of("%L.%N(%L)", module, referenceName(method), arguments);
 
     Nullability nullability = Nullability.of(method);
     return builder
@@ -415,6 +417,24 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
         .returns(contributedTypeName(binding))
         .addStatement("return %L", maybeWrapInCheckForNull(binding, invocation))
         .build();
+  }
+
+  /**
+   * Returns the name that should be used to reference the given binding method.
+   *
+   * <p>To ensure we properly handle internal visibility, we handle the reference differently
+   * depending on whether we're generating Java or Kotlin.
+   *
+   * <p>When generating Java, we use the (mangled) JVM name rather than the source name because Java
+   * sources do not have access to the source name of an internal element (even if they're in the
+   * same build unit).
+   *
+   * <p>When generating Kotlin, we use the source name rather than the JVM name because Kotlin
+   * sources do not have access to the (mangled) JVM name of an internal element, which should be
+   * fine since the generated factory should always be in the same build unit as the binding method.
+   */
+  private String referenceName(XMethodElement method) {
+    return method.getJvmName();
   }
 
   private XCodeBlock maybeWrapInCheckForNull(ProvisionBinding binding, XCodeBlock codeBlock) {
@@ -440,7 +460,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
   }
 
   private XAnnotationSpec scopeMetadataAnnotation(ContributionBinding binding) {
-    XAnnotationSpec.Builder builder = XAnnotationSpec.builder(XTypeNames.SCOPE_METADATA);
+    XAnnotationSpecs.Builder builder = XAnnotationSpecs.builder(XTypeNames.SCOPE_METADATA);
     binding
         .scope()
         .map(Scope::scopeAnnotation)
@@ -496,7 +516,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
     XTypeName typeName =
         isTypeAccessibleFromPublicApi(binding.contributedType(), compilerOptions)
             ? binding.contributedType().asTypeName()
-            : XTypeName.ANY_OBJECT;
+            : XTypeName.ANY_OBJECT.copy(/* nullable= */ true);
     return asNullableTypeName(typeName, binding.nullability(), compilerOptions);
   }
 

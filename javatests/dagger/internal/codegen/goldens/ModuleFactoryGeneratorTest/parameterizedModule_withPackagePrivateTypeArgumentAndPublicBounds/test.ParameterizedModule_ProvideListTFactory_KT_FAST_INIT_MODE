@@ -1,51 +1,45 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Preconditions;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Preconditions
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class ParameterizedModule_ProvideListTFactory<T extends Bar> implements Factory<Object> {
-  private final ParameterizedModule<T> module;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class ParameterizedModule_ProvideListTFactory<T : Bar?> : Factory<Any?> {
+  private val module: ParameterizedModule<T>
 
-  private final Provider<T> tProvider;
+  private val tProvider: Provider<T>
 
-  private ParameterizedModule_ProvideListTFactory(ParameterizedModule<T> module,
-      Provider<T> tProvider) {
-    this.module = module;
-    this.tProvider = tProvider;
+  private constructor(module: ParameterizedModule<T>, tProvider: Provider<T>) {
+    this.module = module
+    this.tProvider = tProvider
   }
 
-  @Override
-  public Object get() {
-    return ParameterizedModule_ProvideListTFactory.<T>provideListT(module, tProvider.get());
-  }
+  public override fun `get`(): Any? = provideListT<T>(module, tProvider.get())
 
-  public static <T extends Bar> ParameterizedModule_ProvideListTFactory<T> create(Object module,
-      Provider<?> tProvider) {
-    return new ParameterizedModule_ProvideListTFactory<T>((ParameterizedModule<T>) (module), (Provider<T>) (tProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun <T : Bar?> create(module: Any?, tProvider: Provider<*>): ParameterizedModule_ProvideListTFactory<T> = ParameterizedModule_ProvideListTFactory<T>((module) as ParameterizedModule<T>, (tProvider) as Provider<T>)
 
-  public static <T extends Bar> Object provideListT(Object instance, Object t) {
-    return Preconditions.checkNotNullFromProvides(((ParameterizedModule<T>) (instance)).provideListT((T) (t)));
+    @JvmStatic
+    public fun <T : Bar?> provideListT(instance: Any?, t: Any?): Any? = Preconditions.checkNotNullFromProvides(((instance) as ParameterizedModule<T>).provideListT((t) as T))
   }
 }

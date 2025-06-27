@@ -1,100 +1,135 @@
-package test;
+package test
 
-import dagger.Lazy;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.DoubleCheck;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.Lazy
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.DoubleCheck
+import dagger.`internal`.Factory
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+import dagger.`internal`.Provider as InternalProvider
+import javax.inject.Provider as InjectProvider
 
 @ScopeMetadata
-@QualifierMetadata("test.QualifierA")
+@QualifierMetadata(value = ["test.QualifierA"])
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class GenericClass_Factory<A, B> implements Factory<Object> {
-  private final Provider<A> aProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class GenericClass_Factory<A, B> : Factory<Any?> {
+  private val aProvider: InternalProvider<A>
 
-  private final Provider<A> a2Provider;
+  private val a2Provider: InternalProvider<A>
 
-  private final Provider<A> paProvider;
+  private val paProvider: InternalProvider<A>
 
-  private final Provider<A> qaProvider;
+  private val qaProvider: InternalProvider<A>
 
-  private final Provider<A> laProvider;
+  private val laProvider: InternalProvider<A>
 
-  private final Provider<String> sProvider;
+  private val sProvider: InternalProvider<String?>
 
-  private final Provider<String> s2Provider;
+  private val s2Provider: InternalProvider<String?>
 
-  private final Provider<String> psProvider;
+  private val psProvider: InternalProvider<String?>
 
-  private final Provider<String> qsProvider;
+  private val qsProvider: InternalProvider<String?>
 
-  private final Provider<String> lsProvider;
+  private val lsProvider: InternalProvider<String?>
 
-  private final Provider<B> bProvider;
+  private val bProvider: InternalProvider<B>
 
-  private final Provider<B> b2Provider;
+  private val b2Provider: InternalProvider<B>
 
-  private final Provider<B> pbProvider;
+  private val pbProvider: InternalProvider<B>
 
-  private final Provider<B> qbProvider;
+  private val qbProvider: InternalProvider<B>
 
-  private final Provider<B> lbProvider;
+  private val lbProvider: InternalProvider<B>
 
-  private GenericClass_Factory(Provider<A> aProvider, Provider<A> a2Provider,
-      Provider<A> paProvider, Provider<A> qaProvider, Provider<A> laProvider,
-      Provider<String> sProvider, Provider<String> s2Provider, Provider<String> psProvider,
-      Provider<String> qsProvider, Provider<String> lsProvider, Provider<B> bProvider,
-      Provider<B> b2Provider, Provider<B> pbProvider, Provider<B> qbProvider,
-      Provider<B> lbProvider) {
-    this.aProvider = aProvider;
-    this.a2Provider = a2Provider;
-    this.paProvider = paProvider;
-    this.qaProvider = qaProvider;
-    this.laProvider = laProvider;
-    this.sProvider = sProvider;
-    this.s2Provider = s2Provider;
-    this.psProvider = psProvider;
-    this.qsProvider = qsProvider;
-    this.lsProvider = lsProvider;
-    this.bProvider = bProvider;
-    this.b2Provider = b2Provider;
-    this.pbProvider = pbProvider;
-    this.qbProvider = qbProvider;
-    this.lbProvider = lbProvider;
+  private constructor(
+    aProvider: InternalProvider<A>,
+    a2Provider: InternalProvider<A>,
+    paProvider: InternalProvider<A>,
+    qaProvider: InternalProvider<A>,
+    laProvider: InternalProvider<A>,
+    sProvider: InternalProvider<String?>,
+    s2Provider: InternalProvider<String?>,
+    psProvider: InternalProvider<String?>,
+    qsProvider: InternalProvider<String?>,
+    lsProvider: InternalProvider<String?>,
+    bProvider: InternalProvider<B>,
+    b2Provider: InternalProvider<B>,
+    pbProvider: InternalProvider<B>,
+    qbProvider: InternalProvider<B>,
+    lbProvider: InternalProvider<B>,
+  ) {
+    this.aProvider = aProvider
+    this.a2Provider = a2Provider
+    this.paProvider = paProvider
+    this.qaProvider = qaProvider
+    this.laProvider = laProvider
+    this.sProvider = sProvider
+    this.s2Provider = s2Provider
+    this.psProvider = psProvider
+    this.qsProvider = qsProvider
+    this.lsProvider = lsProvider
+    this.bProvider = bProvider
+    this.b2Provider = b2Provider
+    this.pbProvider = pbProvider
+    this.qbProvider = qbProvider
+    this.lbProvider = lbProvider
   }
 
-  @Override
-  public Object get() {
-    return GenericClass_Factory.<A, B>newInstance(aProvider.get(), a2Provider.get(), paProvider, qaProvider.get(), DoubleCheck.lazy(laProvider), sProvider.get(), s2Provider.get(), psProvider, qsProvider.get(), DoubleCheck.lazy(lsProvider), bProvider.get(), b2Provider.get(), pbProvider, qbProvider.get(), DoubleCheck.lazy(lbProvider));
-  }
+  public override fun `get`(): Any? = newInstance<A, B>(aProvider.get(), a2Provider.get(), paProvider, qaProvider.get(), DoubleCheck.lazy(laProvider), sProvider.get(), s2Provider.get(), psProvider, qsProvider.get(), DoubleCheck.lazy(lsProvider), bProvider.get(), b2Provider.get(), pbProvider, qbProvider.get(), DoubleCheck.lazy(lbProvider))
 
-  public static <A, B> GenericClass_Factory<A, B> create(Provider<?> aProvider,
-      Provider<?> a2Provider, Provider<?> paProvider, Provider<?> qaProvider,
-      Provider<?> laProvider, Provider<?> sProvider, Provider<?> s2Provider, Provider<?> psProvider,
-      Provider<?> qsProvider, Provider<?> lsProvider, Provider<?> bProvider, Provider<?> b2Provider,
-      Provider<?> pbProvider, Provider<?> qbProvider, Provider<?> lbProvider) {
-    return new GenericClass_Factory<A, B>((Provider<A>) (aProvider), (Provider<A>) (a2Provider), (Provider<A>) (paProvider), (Provider<A>) (qaProvider), (Provider<A>) (laProvider), (Provider<String>) (sProvider), (Provider<String>) (s2Provider), (Provider<String>) (psProvider), (Provider<String>) (qsProvider), (Provider<String>) (lsProvider), (Provider<B>) (bProvider), (Provider<B>) (b2Provider), (Provider<B>) (pbProvider), (Provider<B>) (qbProvider), (Provider<B>) (lbProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun <A, B> create(
+      aProvider: InternalProvider<*>,
+      a2Provider: InternalProvider<*>,
+      paProvider: InternalProvider<*>,
+      qaProvider: InternalProvider<*>,
+      laProvider: InternalProvider<*>,
+      sProvider: InternalProvider<*>,
+      s2Provider: InternalProvider<*>,
+      psProvider: InternalProvider<*>,
+      qsProvider: InternalProvider<*>,
+      lsProvider: InternalProvider<*>,
+      bProvider: InternalProvider<*>,
+      b2Provider: InternalProvider<*>,
+      pbProvider: InternalProvider<*>,
+      qbProvider: InternalProvider<*>,
+      lbProvider: InternalProvider<*>,
+    ): GenericClass_Factory<A, B> = GenericClass_Factory<A, B>((aProvider) as InternalProvider<A>, (a2Provider) as InternalProvider<A>, (paProvider) as InternalProvider<A>, (qaProvider) as InternalProvider<A>, (laProvider) as InternalProvider<A>, (sProvider) as InternalProvider<String?>, (s2Provider) as InternalProvider<String?>, (psProvider) as InternalProvider<String?>, (qsProvider) as InternalProvider<String?>, (lsProvider) as InternalProvider<String?>, (bProvider) as InternalProvider<B>, (b2Provider) as InternalProvider<B>, (pbProvider) as InternalProvider<B>, (qbProvider) as InternalProvider<B>, (lbProvider) as InternalProvider<B>)
 
-  public static <A, B> Object newInstance(Object a, Object a2, Object pa, Object qa, Object la,
-      Object s, Object s2, Object ps, Object qs, Object ls, Object b, Object b2, Object pb,
-      Object qb, Object lb) {
-    return new GenericClass<A, B>((A) (a), (A) (a2), (javax.inject.Provider<A>) (pa), (A) (qa), (Lazy<A>) (la), (String) (s), (String) (s2), (javax.inject.Provider<String>) (ps), (String) (qs), (Lazy<String>) (ls), (B) (b), (B) (b2), (javax.inject.Provider<B>) (pb), (B) (qb), (Lazy<B>) (lb));
+    @JvmStatic
+    public fun <A, B> newInstance(
+      a: Any?,
+      a2: Any?,
+      pa: Any?,
+      qa: Any?,
+      la: Any?,
+      s: Any?,
+      s2: Any?,
+      ps: Any?,
+      qs: Any?,
+      ls: Any?,
+      b: Any?,
+      b2: Any?,
+      pb: Any?,
+      qb: Any?,
+      lb: Any?,
+    ): Any? = GenericClass<A, B>((a) as A, (a2) as A, (pa) as InjectProvider<A?>?, (qa) as A, (la) as Lazy<A?>?, (s) as String?, (s2) as String?, (ps) as InjectProvider<String?>?, (qs) as String?, (ls) as Lazy<String?>?, (b) as B, (b2) as B, (pb) as InjectProvider<B?>?, (qb) as B, (lb) as Lazy<B?>?)
   }
 }

@@ -1,61 +1,70 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Preconditions;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Preconditions
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
-@QualifierMetadata({
+@QualifierMetadata(value = [
     "test.QualifierA",
     "test.QualifierB"
-})
+])
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class TestModule_ProvideObjectsFactory implements Factory<Object> {
-  private final TestModule module;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class TestModule_ProvideObjectsFactory : Factory<Any?> {
+  private val module: TestModule
 
-  private final Provider<Object> aProvider;
+  private val aProvider: Provider<Any?>
 
-  private final Provider<Object> bProvider;
+  private val bProvider: Provider<Any?>
 
-  private final Provider<MembersInjector<X>> xInjectorProvider;
+  private val xInjectorProvider: Provider<MembersInjector<X?>?>
 
-  private TestModule_ProvideObjectsFactory(TestModule module, Provider<Object> aProvider,
-      Provider<Object> bProvider, Provider<MembersInjector<X>> xInjectorProvider) {
-    this.module = module;
-    this.aProvider = aProvider;
-    this.bProvider = bProvider;
-    this.xInjectorProvider = xInjectorProvider;
+  private constructor(
+    module: TestModule,
+    aProvider: Provider<Any?>,
+    bProvider: Provider<Any?>,
+    xInjectorProvider: Provider<MembersInjector<X?>?>,
+  ) {
+    this.module = module
+    this.aProvider = aProvider
+    this.bProvider = bProvider
+    this.xInjectorProvider = xInjectorProvider
   }
 
-  @Override
-  public Object get() {
-    return provideObjects(module, aProvider.get(), bProvider.get(), xInjectorProvider.get());
-  }
+  public override fun `get`(): Any? = provideObjects(module, aProvider.get(), bProvider.get(), xInjectorProvider.get())
 
-  public static TestModule_ProvideObjectsFactory create(Object module, Provider<?> aProvider,
-      Provider<?> bProvider, Provider<?> xInjectorProvider) {
-    return new TestModule_ProvideObjectsFactory((TestModule) (module), (Provider<Object>) (aProvider), (Provider<Object>) (bProvider), (Provider<MembersInjector<X>>) (xInjectorProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(
+      module: Any?,
+      aProvider: Provider<*>,
+      bProvider: Provider<*>,
+      xInjectorProvider: Provider<*>,
+    ): TestModule_ProvideObjectsFactory = TestModule_ProvideObjectsFactory((module) as TestModule, (aProvider) as Provider<Any?>, (bProvider) as Provider<Any?>, (xInjectorProvider) as Provider<MembersInjector<X?>?>)
 
-  public static Object provideObjects(Object instance, Object a, Object b, Object xInjector) {
-    return Preconditions.checkNotNullFromProvides(((TestModule) (instance)).provideObjects((Object) (a), (Object) (b), (MembersInjector<X>) (xInjector)));
+    @JvmStatic
+    public fun provideObjects(
+      instance: Any?,
+      a: Any?,
+      b: Any?,
+      xInjector: Any?,
+    ): Any? = Preconditions.checkNotNullFromProvides(((instance) as TestModule).provideObjects((a) as Any?, (b) as Any?, (xInjector) as MembersInjector<X?>?))
   }
 }

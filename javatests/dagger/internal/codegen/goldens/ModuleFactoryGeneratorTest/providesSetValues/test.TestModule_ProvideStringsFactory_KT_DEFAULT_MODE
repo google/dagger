@@ -1,45 +1,41 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Preconditions;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Preconditions
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class TestModule_ProvideStringsFactory implements Factory<Object> {
-  private final TestModule module;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class TestModule_ProvideStringsFactory : Factory<Any?> {
+  private val module: TestModule
 
-  private TestModule_ProvideStringsFactory(TestModule module) {
-    this.module = module;
+  private constructor(module: TestModule) {
+    this.module = module
   }
 
-  @Override
-  public Object get() {
-    return provideStrings(module);
-  }
+  public override fun `get`(): Any? = provideStrings(module)
 
-  public static TestModule_ProvideStringsFactory create(Object module) {
-    return new TestModule_ProvideStringsFactory((TestModule) (module));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(module: Any?): TestModule_ProvideStringsFactory = TestModule_ProvideStringsFactory((module) as TestModule)
 
-  public static Object provideStrings(Object instance) {
-    return Preconditions.checkNotNullFromProvides(((TestModule) (instance)).provideStrings());
+    @JvmStatic
+    public fun provideStrings(instance: Any?): Any? = Preconditions.checkNotNullFromProvides(((instance) as TestModule).provideStrings())
   }
 }

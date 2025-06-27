@@ -1,46 +1,42 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
-import other.pkg.Outer;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+import other.pkg.Outer
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class InjectConstructor_Factory implements Factory<Object> {
-  private final Provider<Outer.Factory> factoryProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class InjectConstructor_Factory : Factory<Any?> {
+  private val factoryProvider: Provider<Outer.Factory?>
 
-  private InjectConstructor_Factory(Provider<Outer.Factory> factoryProvider) {
-    this.factoryProvider = factoryProvider;
+  private constructor(factoryProvider: Provider<Outer.Factory?>) {
+    this.factoryProvider = factoryProvider
   }
 
-  @Override
-  public Object get() {
-    return newInstance(factoryProvider.get());
-  }
+  public override fun `get`(): Any? = newInstance(factoryProvider.get())
 
-  public static InjectConstructor_Factory create(Provider<?> factoryProvider) {
-    return new InjectConstructor_Factory((Provider<Outer.Factory>) (factoryProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(factoryProvider: Provider<*>): InjectConstructor_Factory = InjectConstructor_Factory((factoryProvider) as Provider<Outer.Factory?>)
 
-  public static Object newInstance(Object factory) {
-    return new InjectConstructor((Outer.Factory) (factory));
+    @JvmStatic
+    public fun newInstance(factory: Any?): Any? = InjectConstructor((factory) as Outer.Factory?)
   }
 }

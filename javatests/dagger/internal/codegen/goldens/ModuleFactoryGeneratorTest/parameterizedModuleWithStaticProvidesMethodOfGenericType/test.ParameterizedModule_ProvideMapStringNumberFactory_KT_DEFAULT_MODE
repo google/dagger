@@ -1,43 +1,40 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Preconditions;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Preconditions
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class ParameterizedModule_ProvideMapStringNumberFactory implements Factory<Object> {
-  @Override
-  public Object get() {
-    return provideMapStringNumber();
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class ParameterizedModule_ProvideMapStringNumberFactory : Factory<Any?> {
+  public override fun `get`(): Any? = provideMapStringNumber()
+
+  private object InstanceHolder {
+    public val INSTANCE: ParameterizedModule_ProvideMapStringNumberFactory =
+        ParameterizedModule_ProvideMapStringNumberFactory()
   }
 
-  public static ParameterizedModule_ProvideMapStringNumberFactory create() {
-    return InstanceHolder.INSTANCE;
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(): ParameterizedModule_ProvideMapStringNumberFactory = InstanceHolder.INSTANCE
 
-  public static Object provideMapStringNumber() {
-    return Preconditions.checkNotNullFromProvides(ParameterizedModule.provideMapStringNumber());
-  }
-
-  private static final class InstanceHolder {
-    static final ParameterizedModule_ProvideMapStringNumberFactory INSTANCE = new ParameterizedModule_ProvideMapStringNumberFactory();
+    @JvmStatic
+    public fun provideMapStringNumber(): Any? = Preconditions.checkNotNullFromProvides(ParameterizedModule.provideMapStringNumber())
   }
 }

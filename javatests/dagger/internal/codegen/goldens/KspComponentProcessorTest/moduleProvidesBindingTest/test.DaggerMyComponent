@@ -1,0 +1,66 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class DaggerMyComponent {
+  private DaggerMyComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static MyComponent create() {
+    return new Builder().build();
+  }
+
+  public static final class Builder {
+    private MyModule myModule;
+
+    private Builder() {
+    }
+
+    public Builder myModule(MyModule myModule) {
+      this.myModule = Preconditions.checkNotNull(myModule);
+      return this;
+    }
+
+    public MyComponent build() {
+      if (myModule == null) {
+        this.myModule = new MyModule();
+      }
+      return new MyComponentImpl(myModule);
+    }
+  }
+
+  private static final class MyComponentImpl implements MyComponent {
+    private final MyModule myModule;
+
+    private final MyComponentImpl myComponentImpl = this;
+
+    MyComponentImpl(MyModule myModuleParam) {
+      this.myModule = myModuleParam;
+
+    }
+
+    @Override
+    public Foo foo() {
+      return MyModule_ProvideFooFactory.provideFoo(myModule, MyModule_ProvideBarFactory.provideBar(myModule));
+    }
+  }
+}

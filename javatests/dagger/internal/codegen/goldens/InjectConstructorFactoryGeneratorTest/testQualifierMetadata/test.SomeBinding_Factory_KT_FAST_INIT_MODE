@@ -1,56 +1,63 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Double
+import kotlin.Float
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
-@QualifierMetadata("test.ConstructorParameterQualifier")
+@QualifierMetadata(value = ["test.ConstructorParameterQualifier"])
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class SomeBinding_Factory implements Factory<Object> {
-  private final Provider<Double> dProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class SomeBinding_Factory : Factory<Any?> {
+  private val dProvider: Provider<Double?>
 
-  private final Provider<String> injectFieldProvider;
+  private val injectFieldProvider: Provider<String?>
 
-  private final Provider<Float> fProvider;
+  private val fProvider: Provider<Float?>
 
-  private SomeBinding_Factory(Provider<Double> dProvider, Provider<String> injectFieldProvider,
-      Provider<Float> fProvider) {
-    this.dProvider = dProvider;
-    this.injectFieldProvider = injectFieldProvider;
-    this.fProvider = fProvider;
+  private constructor(
+    dProvider: Provider<Double?>,
+    injectFieldProvider: Provider<String?>,
+    fProvider: Provider<Float?>,
+  ) {
+    this.dProvider = dProvider
+    this.injectFieldProvider = injectFieldProvider
+    this.fProvider = fProvider
   }
 
-  @Override
-  public Object get() {
-    Object instance = newInstance(dProvider.get());
+  public override fun `get`(): Any? {
+    var instance: Any? = newInstance(dProvider.get())
     SomeBinding_MembersInjector.injectInjectField(instance, injectFieldProvider.get());
     SomeBinding_MembersInjector.injectInjectMethod(instance, fProvider.get());
-    return instance;
+    return instance
   }
 
-  public static SomeBinding_Factory create(Provider<?> dProvider, Provider<?> injectFieldProvider,
-      Provider<?> fProvider) {
-    return new SomeBinding_Factory((Provider<Double>) (dProvider), (Provider<String>) (injectFieldProvider), (Provider<Float>) (fProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(
+      dProvider: Provider<*>,
+      injectFieldProvider: Provider<*>,
+      fProvider: Provider<*>,
+    ): SomeBinding_Factory = SomeBinding_Factory((dProvider) as Provider<Double?>, (injectFieldProvider) as Provider<String?>, (fProvider) as Provider<Float?>)
 
-  public static Object newInstance(Object d) {
-    return new SomeBinding((Double) (d));
+    @JvmStatic
+    public fun newInstance(d: Any?): Any? = SomeBinding((d) as Double?)
   }
 }

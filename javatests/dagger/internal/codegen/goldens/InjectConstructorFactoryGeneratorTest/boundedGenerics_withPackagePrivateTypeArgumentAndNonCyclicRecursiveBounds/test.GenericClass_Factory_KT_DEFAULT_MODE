@@ -1,49 +1,44 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class GenericClass_Factory<T1, T2 extends Bar<T1>> implements Factory<Object> {
-  private final Provider<T1> t1Provider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class GenericClass_Factory<T1, T2 : Bar<T1?>?> : Factory<Any?> {
+  private val t1Provider: Provider<T1>
 
-  private final Provider<T2> t2Provider;
+  private val t2Provider: Provider<T2>
 
-  private GenericClass_Factory(Provider<T1> t1Provider, Provider<T2> t2Provider) {
-    this.t1Provider = t1Provider;
-    this.t2Provider = t2Provider;
+  private constructor(t1Provider: Provider<T1>, t2Provider: Provider<T2>) {
+    this.t1Provider = t1Provider
+    this.t2Provider = t2Provider
   }
 
-  @Override
-  public Object get() {
-    return GenericClass_Factory.<T1, T2>newInstance(t1Provider.get(), t2Provider.get());
-  }
+  public override fun `get`(): Any? = newInstance<T1, T2>(t1Provider.get(), t2Provider.get())
 
-  public static <T1, T2 extends Bar<T1>> GenericClass_Factory<T1, T2> create(Provider<?> t1Provider,
-      Provider<?> t2Provider) {
-    return new GenericClass_Factory<T1, T2>((Provider<T1>) (t1Provider), (Provider<T2>) (t2Provider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun <T1, T2 : Bar<T1?>?> create(t1Provider: Provider<*>, t2Provider: Provider<*>): GenericClass_Factory<T1, T2> = GenericClass_Factory<T1, T2>((t1Provider) as Provider<T1>, (t2Provider) as Provider<T2>)
 
-  public static <T1, T2 extends Bar<T1>> Object newInstance(Object t1, Object t2) {
-    return new GenericClass<T1, T2>((T1) (t1), (T2) (t2));
+    @JvmStatic
+    public fun <T1, T2 : Bar<T1?>?> newInstance(t1: Any?, t2: Any?): Any? = GenericClass<T1, T2>((t1) as T1, (t2) as T2)
   }
 }

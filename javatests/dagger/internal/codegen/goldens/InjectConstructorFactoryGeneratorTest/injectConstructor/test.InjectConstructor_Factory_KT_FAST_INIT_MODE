@@ -1,45 +1,42 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class InjectConstructor_Factory implements Factory<Object> {
-  private final Provider<String> sProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class InjectConstructor_Factory : Factory<Any?> {
+  private val sProvider: Provider<String?>
 
-  private InjectConstructor_Factory(Provider<String> sProvider) {
-    this.sProvider = sProvider;
+  private constructor(sProvider: Provider<String?>) {
+    this.sProvider = sProvider
   }
 
-  @Override
-  public Object get() {
-    return newInstance(sProvider.get());
-  }
+  public override fun `get`(): Any? = newInstance(sProvider.get())
 
-  public static InjectConstructor_Factory create(Provider<?> sProvider) {
-    return new InjectConstructor_Factory((Provider<String>) (sProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(sProvider: Provider<*>): InjectConstructor_Factory = InjectConstructor_Factory((sProvider) as Provider<String?>)
 
-  public static Object newInstance(Object s) {
-    return new InjectConstructor((String) (s));
+    @JvmStatic
+    public fun newInstance(s: Any?): Any? = InjectConstructor((s) as String?)
   }
 }

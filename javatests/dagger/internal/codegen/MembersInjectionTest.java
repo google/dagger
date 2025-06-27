@@ -21,6 +21,7 @@ import static dagger.internal.codegen.xprocessing.XFunSpecs.constructorBuilder;
 import androidx.room.compiler.codegen.XClassName;
 import androidx.room.compiler.codegen.XTypeSpec;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.util.CompilationResultSubject;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -1147,8 +1148,7 @@ public class MembersInjectionTest {
               subject.hasErrorCount(0);
               subject.generatedSource(
                   goldenFileRule.goldenSource("test/InjectedType_MembersInjector"));
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/InjectedType_Factory"));
+              assertSourceMatchesGolden(subject, "test/InjectedType_Factory");
             });
   }
 
@@ -1738,5 +1738,10 @@ public class MembersInjectionTest {
             .getContents()
             .replace("@Nullable ", "")
             .replace("import org.jetbrains.annotations.Nullable;\n", ""));
+  }
+
+  private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
+    Source source = goldenFileRule.goldenSource(source);
+    subject.generatedSource(source);
   }
 }

@@ -71,15 +71,7 @@ public final class GoldenFileRule implements TestRule {
    * output the correct golden file in the proper location.
    */
   public Source goldenSource(String generatedFilePath) {
-    // Note: we wrap the IOException in a RuntimeException so that this can be called from within
-    // the lambda required by XProcessing's testing APIs. We could avoid this by calling this method
-    // outside of the lambda, but that seems like an non-worthwile hit to readability.
-    try {
-      return Source.Companion.java(
-          generatedFilePath, goldenFileContent(generatedFilePath.replace('/', '.')));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return goldenSource(generatedFilePath, /* isKotlin= */ false);
   }
 
   /**
@@ -100,7 +92,7 @@ public final class GoldenFileRule implements TestRule {
    * to the location of the missing golden file. This can be used with scripting tools to output
    * the correct golden file in the proper location.
    */
-  public String goldenFileContent(String qualifiedName) throws IOException {
+  private String goldenFileContent(String qualifiedName) throws IOException {
     String fileName = relativeGoldenFileName(description, qualifiedName);
     String resourceName = "goldens/" + fileName;
     URL url = description.getTestClass().getResource(resourceName);

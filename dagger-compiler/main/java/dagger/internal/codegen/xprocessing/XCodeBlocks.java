@@ -30,6 +30,7 @@ import androidx.room.compiler.codegen.XParameterSpec;
 import androidx.room.compiler.codegen.XTypeName;
 import androidx.room.compiler.codegen.compat.XConverters;
 import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.CodeBlock;
 import java.util.stream.Collector;
@@ -124,6 +125,18 @@ public final class XCodeBlocks {
     return XCodeBlock.of("%T", type.asTypeName());
   }
 
+  public static XCodeBlock staticReferenceOf(XTypeElement typeElement) {
+    if (typeElement.isKotlinObject() && !typeElement.isCompanionObject()) {
+      // Call through the singleton instance.
+      // See: https://kotlinlang.org/docs/reference/java-to-kotlin-interop.html#static-methods
+      XCodeBlock.Builder builder = XCodeBlock.builder();
+      toJavaPoet(builder).add("$T.INSTANCE", toJavaPoet(typeElement.asClassName()));
+      toKotlinPoet(builder).add("%T", toKotlinPoet(typeElement.asClassName()));
+      return builder.build();
+    }
+    return XCodeBlock.of("%T", typeElement.asClassName());
+  }
+
   public static XCodeBlock stringLiteral(String toWrap) {
     return XCodeBlock.of("%S", toWrap);
   }
@@ -168,6 +181,28 @@ public final class XCodeBlocks {
     toJavaPoet(builder).add("$T.class", toJavaPoet(typeName));
     toKotlinPoet(builder).add("%T::class.java", toKotlinPoet(typeName));
     return builder.build();
+  }
+
+  public static XCodeBlock ofLocalVal(
+      String name, XTypeName typeName, String format, Object... args) {
+    return ofLocalVal(name, typeName, XCodeBlock.of(format, args));
+  }
+
+  public static XCodeBlock ofLocalVal(String name, XTypeName typeName, XCodeBlock initialization) {
+    return XCodeBlock.builder()
+        .addLocalVariable(name, typeName, /* isMutable= */ false, initialization)
+        .build();
+  }
+
+  public static XCodeBlock ofLocalVar(
+      String name, XTypeName typeName, String format, Object... args) {
+    return ofLocalVar(name, typeName, XCodeBlock.of(format, args));
+  }
+
+  public static XCodeBlock ofLocalVar(String name, XTypeName typeName, XCodeBlock initialization) {
+    return XCodeBlock.builder()
+        .addLocalVariable(name, typeName, /* isMutable= */ true, initialization)
+        .build();
   }
 
   private static final class XCodeBlockJoiner {

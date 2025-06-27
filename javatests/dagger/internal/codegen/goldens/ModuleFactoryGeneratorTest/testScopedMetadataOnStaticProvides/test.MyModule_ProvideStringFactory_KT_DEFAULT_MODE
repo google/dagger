@@ -1,43 +1,39 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Preconditions;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Preconditions
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
-@ScopeMetadata("javax.inject.Singleton")
+@ScopeMetadata(value = "javax.inject.Singleton")
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class MyModule_ProvideStringFactory implements Factory<Object> {
-  @Override
-  public Object get() {
-    return provideString();
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class MyModule_ProvideStringFactory : Factory<Any?> {
+  public override fun `get`(): Any? = provideString()
+
+  private object InstanceHolder {
+    public val INSTANCE: MyModule_ProvideStringFactory = MyModule_ProvideStringFactory()
   }
 
-  public static MyModule_ProvideStringFactory create() {
-    return InstanceHolder.INSTANCE;
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(): MyModule_ProvideStringFactory = InstanceHolder.INSTANCE
 
-  public static Object provideString() {
-    return Preconditions.checkNotNullFromProvides(MyModule.provideString());
-  }
-
-  private static final class InstanceHolder {
-    static final MyModule_ProvideStringFactory INSTANCE = new MyModule_ProvideStringFactory();
+    @JvmStatic
+    public fun provideString(): Any? = Preconditions.checkNotNullFromProvides(MyModule.provideString())
   }
 }

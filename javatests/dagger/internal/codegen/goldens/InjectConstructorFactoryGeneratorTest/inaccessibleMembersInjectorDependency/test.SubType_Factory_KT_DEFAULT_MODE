@@ -1,48 +1,46 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
-import other.SuperType_MembersInjector;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+import other.SuperType_MembersInjector
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class SubType_Factory implements Factory<SubType> {
-  private final Provider inaccessibleTypeProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class SubType_Factory : Factory<Any?> {
+  private val inaccessibleTypeProvider: Provider<*>
 
-  private SubType_Factory(Provider inaccessibleTypeProvider) {
-    this.inaccessibleTypeProvider = inaccessibleTypeProvider;
+  private constructor(inaccessibleTypeProvider: Provider<*>) {
+    this.inaccessibleTypeProvider = inaccessibleTypeProvider
   }
 
-  @Override
-  public SubType get() {
-    SubType instance = newInstance();
+  public override fun `get`(): Any? {
+    var instance: Any? = newInstance()
     SuperType_MembersInjector.injectInaccessibleType(instance, inaccessibleTypeProvider.get());
-    return instance;
+    return instance
   }
 
-  public static SubType_Factory create(Provider inaccessibleTypeProvider) {
-    return new SubType_Factory(inaccessibleTypeProvider);
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(inaccessibleTypeProvider: Provider<*>): SubType_Factory = SubType_Factory((inaccessibleTypeProvider) as Provider<*>)
 
-  public static SubType newInstance() {
-    return new SubType();
+    @JvmStatic
+    public fun newInstance(): Any? = SubType()
   }
 }

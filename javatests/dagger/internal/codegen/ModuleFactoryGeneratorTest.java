@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.util.CompilationResultSubject;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -315,8 +316,7 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_ProvideStringFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_ProvideStringFactory");
             });
   }
 
@@ -335,13 +335,16 @@ public class ModuleFactoryGeneratorTest {
             "    return \"\";",
             "  }",
             "}");
-    daggerCompiler(moduleFile)
-        .withProcessingOptions(ImmutableMap.of("dagger.nullableValidation", "WARNING"))
+    CompilerTests.daggerCompiler(moduleFile)
+        .withProcessingOptions(
+            ImmutableMap.<String, String>builder()
+                .putAll(compilerMode.processorOptions())
+                .put("dagger.nullableValidation", "WARNING")
+                .buildOrThrow())
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_ProvideStringFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_ProvideStringFactory");
             });
   }
 
@@ -363,8 +366,7 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_ProvideStringFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_ProvideStringFactory");
             });
   }
 
@@ -482,8 +484,7 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_ProvideObjectsFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_ProvideObjectsFactory");
             });
   }
 
@@ -509,8 +510,7 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_ProvideStringFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_ProvideStringFactory");
             });
   }
 
@@ -537,8 +537,7 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_ProvideWildcardListFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_ProvideWildcardListFactory");
             });
   }
 
@@ -563,8 +562,7 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_ProvideStringsFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_ProvideStringsFactory");
             });
   }
 
@@ -891,18 +889,11 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/ParentModule_ProvideListBFactory"));
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/ParentModule_ProvideBElementFactory"));
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/ParentModule_ProvideBEntryFactory"));
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/ChildNumberModule_ProvideNumberFactory"));
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/ChildIntegerModule_ProvideIntegerFactory"));
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/DaggerC"));
+              assertSourceMatchesGolden(subject, "test/ParentModule_ProvideListBFactory");
+              assertSourceMatchesGolden(subject, "test/ParentModule_ProvideBElementFactory");
+              assertSourceMatchesGolden(subject, "test/ParentModule_ProvideBEntryFactory");
+              assertSourceMatchesGolden(subject, "test/ChildNumberModule_ProvideNumberFactory");
+              assertSourceMatchesGolden(subject, "test/ChildIntegerModule_ProvideIntegerFactory");
             });
   }
 
@@ -940,15 +931,12 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource(
-                      "test/ParameterizedModule_ProvideMapStringNumberFactory"));
-              subject.generatedSource(
-                  goldenFileRule.goldenSource(
-                      "test/ParameterizedModule_ProvideNonGenericTypeFactory"));
-              subject.generatedSource(
-                  goldenFileRule.goldenSource(
-                      "test/ParameterizedModule_ProvideNonGenericTypeWithDepsFactory"));
+              assertSourceMatchesGolden(
+                  subject, "test/ParameterizedModule_ProvideMapStringNumberFactory");
+              assertSourceMatchesGolden(
+                  subject, "test/ParameterizedModule_ProvideNonGenericTypeFactory");
+              assertSourceMatchesGolden(
+                  subject, "test/ParameterizedModule_ProvideNonGenericTypeWithDepsFactory");
             });
   }
 
@@ -1020,14 +1008,24 @@ public class ModuleFactoryGeneratorTest {
     daggerCompiler(component, usage, concreteModule, parameterizedModule, foo, packagePrivateBar)
         .compile(
             subject -> {
-              // Note: In this case, when calling the factory the component will use the requested
-              // type, Foo, e.g. "ParameterizedModule_ProvideListTFactory.<Foo>create()" since Foo
-              // is publicly accessible. It doesn't matter that the bound type, Bar, is
-              // package-private.
-              subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/ParameterizedModule_ProvideListTFactory"));
-              subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
+              if (compilerMode.isKotlinCodegenEnabled()) {
+                // TODO(b/438765237): Currently, this fails at the declaration of the factory
+                // (rather than the call site) because the internal Bar is exposed in the public
+                // factory declaration:  "class ParameterizedModule_ProvideListTFactory<T : Bar>".
+                // See b/438765237 for details on how we can support this case in the future.
+                subject.hasErrorCount(1);
+                subject.hasErrorContaining(
+                    "Bounds for type parameter, T, in class ParameterizedModule<T extends Bar> "
+                        + "must be publicly accessible.");
+              } else {
+                // Note: In this case, when calling the factory the component will use the requested
+                // type, Foo, e.g. "ParameterizedModule_ProvideListTFactory.<Foo>create()" since Foo
+                // is publicly accessible. It doesn't matter that the bound type, Bar, is
+                // package-private.
+                subject.hasErrorCount(0);
+                assertSourceMatchesGolden(subject, "test/ParameterizedModule_ProvideListTFactory");
+                subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
+              }
             });
   }
 
@@ -1104,8 +1102,7 @@ public class ModuleFactoryGeneratorTest {
               // "ParameterizedModule_ProvideListTFactory.<Bar>create()" since Foo is not publicly
               // accessible.
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/ParameterizedModule_ProvideListTFactory"));
+              assertSourceMatchesGolden(subject, "test/ParameterizedModule_ProvideListTFactory");
               subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
             });
   }
@@ -1183,8 +1180,7 @@ public class ModuleFactoryGeneratorTest {
               // "ParameterizedModule_ProvideMapFactory.<Object, Bar<Object>>create()" since Foo is
               // not publicly accessible.
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/ParameterizedModule_ProvideMapFactory"));
+              assertSourceMatchesGolden(subject, "test/ParameterizedModule_ProvideMapFactory");
               subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
             });
   }
@@ -1643,8 +1639,8 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/TestModule_GetFactory"));
-              subject.generatedSource(goldenFileRule.goldenSource("test/TestModule_CreateFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_GetFactory");
+              assertSourceMatchesGolden(subject, "test/TestModule_CreateFactory");
             });
   }
 
@@ -1652,7 +1648,7 @@ public class ModuleFactoryGeneratorTest {
   public void testScopedMetadataOnStaticProvides() throws Exception {
     Source module =
         CompilerTests.javaSource(
-            "test.ScopedBinding",
+            "test.MyModule",
             "package test;",
             "",
             "import dagger.Module;",
@@ -1679,8 +1675,7 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/MyModule_ProvideStringFactory"));
+              assertSourceMatchesGolden(subject, "test/MyModule_ProvideStringFactory");
             });
   }
 
@@ -1688,7 +1683,7 @@ public class ModuleFactoryGeneratorTest {
   public void testScopedMetadataOnNonStaticProvides() throws Exception {
     Source module =
         CompilerTests.javaSource(
-            "test.ScopedBinding",
+            "test.MyModule",
             "package test;",
             "",
             "import dagger.Module;",
@@ -1715,8 +1710,7 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/MyModule_ProvideStringFactory"));
+              assertSourceMatchesGolden(subject, "test/MyModule_ProvideStringFactory");
             });
   }
 
@@ -1724,7 +1718,7 @@ public class ModuleFactoryGeneratorTest {
   public void testScopeMetadataWithCustomScope() throws Exception {
     Source module =
         CompilerTests.javaSource(
-            "test.ScopedBinding",
+            "test.MyModule",
             "package test;",
             "",
             "import dagger.Module;",
@@ -1764,8 +1758,7 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/MyModule_ProvideStringFactory"));
+              assertSourceMatchesGolden(subject, "test/MyModule_ProvideStringFactory");
             });
   }
 
@@ -1773,7 +1766,7 @@ public class ModuleFactoryGeneratorTest {
   public void testQualifierMetadataOnProvides() throws Exception {
     Source module =
         CompilerTests.javaSource(
-            "test.ScopedBinding",
+            "test.MyModule",
             "package test;",
             "",
             "import dagger.Module;",
@@ -1818,8 +1811,7 @@ public class ModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/MyModule_ProvideStringFactory"));
+              assertSourceMatchesGolden(subject, "test/MyModule_ProvideStringFactory");
             });
   }
 
@@ -1927,5 +1919,10 @@ public class ModuleFactoryGeneratorTest {
         CompilerTests.javaSource("test.TestModule", moduleLines);
     return daggerCompiler(
         fooFile, fooImplFile, barFile, bazFile, bindsMethodAndInstanceProvidesMethodModuleFile);
+  }
+
+  private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
+    Source source = goldenFileRule.goldenSource(source);
+    subject.generatedSource(source);
   }
 }

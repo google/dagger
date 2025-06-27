@@ -1,0 +1,50 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Weak;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerMyComponent {
+  private DaggerMyComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static MyComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public MyComponent build() {
+      return new MyComponentImpl();
+    }
+  }
+
+  private static final class MyComponentImpl implements MyComponent {
+    @Weak
+    private final MyComponentImpl myComponentImpl = this;
+
+    MyComponentImpl() {
+
+
+    }
+  }
+}

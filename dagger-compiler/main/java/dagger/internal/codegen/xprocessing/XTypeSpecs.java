@@ -48,7 +48,7 @@ public final class XTypeSpecs {
   }
 
   public static Builder classBuilder(XClassName className) {
-    return new Builder(Builder.Kind.CLASS).name(className.getSimpleName());
+    return classBuilder(className.getSimpleName());
   }
 
   public static Builder interfaceBuilder(String name) {
@@ -56,7 +56,7 @@ public final class XTypeSpecs {
   }
 
   public static Builder interfaceBuilder(XClassName className) {
-    return new Builder(Builder.Kind.INTERFACE).name(className.getSimpleName());
+    return interfaceBuilder(className.getSimpleName());
   }
 
   public static Builder objectBuilder(String name) {
@@ -64,7 +64,7 @@ public final class XTypeSpecs {
   }
 
   public static Builder objectBuilder(XClassName className) {
-    return new Builder(Builder.Kind.OBJECT).name(className.getSimpleName());
+    return objectBuilder(className.getSimpleName());
   }
 
   public static Builder anonymousClassBuilder() {
@@ -381,6 +381,9 @@ public final class XTypeSpecs {
           break;
         case OBJECT:
           builder = XTypeSpec.objectBuilder(name);
+          if (!isOpen) {
+            toJavaPoet(builder).addModifiers(Modifier.FINAL);
+          }
           break;
         case ANONYMOUS_CLASS:
           checkState(name == null);

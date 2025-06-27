@@ -1,55 +1,63 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import java.util.List;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Comparable
+import kotlin.Number
+import kotlin.String
+import kotlin.Suppress
+import kotlin.collections.MutableList
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class GenericClass_Factory<A extends Number & Comparable<A>, B extends List<? extends String>, C extends List<? super String>> implements Factory<Object> {
-  private final Provider<A> aProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class GenericClass_Factory<A, B : MutableList<out String?>?, C : MutableList<in String?>?> : Factory<Any?> where A : Number?, A : Comparable<A?>? {
+  private val aProvider: Provider<A>
 
-  private final Provider<B> bProvider;
+  private val bProvider: Provider<B>
 
-  private final Provider<C> cProvider;
+  private val cProvider: Provider<C>
 
-  private GenericClass_Factory(Provider<A> aProvider, Provider<B> bProvider,
-      Provider<C> cProvider) {
-    this.aProvider = aProvider;
-    this.bProvider = bProvider;
-    this.cProvider = cProvider;
+  private constructor(
+    aProvider: Provider<A>,
+    bProvider: Provider<B>,
+    cProvider: Provider<C>,
+  ) {
+    this.aProvider = aProvider
+    this.bProvider = bProvider
+    this.cProvider = cProvider
   }
 
-  @Override
-  public Object get() {
-    return GenericClass_Factory.<A, B, C>newInstance(aProvider.get(), bProvider.get(), cProvider.get());
-  }
+  public override fun `get`(): Any? = newInstance<A, B, C>(aProvider.get(), bProvider.get(), cProvider.get())
 
-  public static <A extends Number & Comparable<A>, B extends List<? extends String>, C extends List<? super String>> GenericClass_Factory<A, B, C> create(
-      Provider<?> aProvider, Provider<?> bProvider, Provider<?> cProvider) {
-    return new GenericClass_Factory<A, B, C>((Provider<A>) (aProvider), (Provider<B>) (bProvider), (Provider<C>) (cProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun <A, B : MutableList<out String?>?, C : MutableList<in String?>?> create(
+      aProvider: Provider<*>,
+      bProvider: Provider<*>,
+      cProvider: Provider<*>,
+    ): GenericClass_Factory<A, B, C> where A : Number?, A : Comparable<A?>? = GenericClass_Factory<A, B, C>((aProvider) as Provider<A>, (bProvider) as Provider<B>, (cProvider) as Provider<C>)
 
-  public static <A extends Number & Comparable<A>, B extends List<? extends String>, C extends List<? super String>> Object newInstance(
-      Object a, Object b, Object c) {
-    return new GenericClass<A, B, C>((A) (a), (B) (b), (C) (c));
+    @JvmStatic
+    public fun <A, B : MutableList<out String?>?, C : MutableList<in String?>?> newInstance(
+      a: Any?,
+      b: Any?,
+      c: Any?,
+    ): Any? where A : Number?, A : Comparable<A?>? = GenericClass<A, B, C>((a) as A, (b) as B, (c) as C)
   }
 }

@@ -1,53 +1,50 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Int
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class InjectedType_Factory implements Factory<Object> {
-  private final Provider<Integer> primitiveIntProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class InjectedType_Factory : Factory<Any?> {
+  private val primitiveIntProvider: Provider<Int>
 
-  private final Provider<Integer> boxedIntProvider;
+  private val boxedIntProvider: Provider<Int?>
 
-  private InjectedType_Factory(Provider<Integer> primitiveIntProvider,
-      Provider<Integer> boxedIntProvider) {
-    this.primitiveIntProvider = primitiveIntProvider;
-    this.boxedIntProvider = boxedIntProvider;
+  private constructor(primitiveIntProvider: Provider<Int>, boxedIntProvider: Provider<Int?>) {
+    this.primitiveIntProvider = primitiveIntProvider
+    this.boxedIntProvider = boxedIntProvider
   }
 
-  @Override
-  public Object get() {
-    Object instance = newInstance();
+  public override fun `get`(): Any? {
+    var instance: Any? = newInstance()
     InjectedType_MembersInjector.injectPrimitiveInt(instance, primitiveIntProvider.get());
     InjectedType_MembersInjector.injectBoxedInt(instance, boxedIntProvider.get());
-    return instance;
+    return instance
   }
 
-  public static InjectedType_Factory create(Provider<?> primitiveIntProvider,
-      Provider<?> boxedIntProvider) {
-    return new InjectedType_Factory((Provider<Integer>) (primitiveIntProvider), (Provider<Integer>) (boxedIntProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(primitiveIntProvider: Provider<*>, boxedIntProvider: Provider<*>): InjectedType_Factory = InjectedType_Factory((primitiveIntProvider) as Provider<Int>, (boxedIntProvider) as Provider<Int?>)
 
-  public static Object newInstance() {
-    return new InjectedType();
+    @JvmStatic
+    public fun newInstance(): Any? = InjectedType()
   }
 }

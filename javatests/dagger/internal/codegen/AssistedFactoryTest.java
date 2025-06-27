@@ -275,7 +275,9 @@ public class AssistedFactoryTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/Foo_Factory"));
+              subject.generatedSource(
+                  goldenFileRule.goldenSource(
+                      "test/Foo_Factory", compilerMode.isKotlinCodegenEnabled()));
             });
   }
 

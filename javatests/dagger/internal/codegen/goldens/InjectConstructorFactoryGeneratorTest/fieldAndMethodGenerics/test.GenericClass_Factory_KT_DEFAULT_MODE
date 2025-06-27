@@ -1,52 +1,49 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class GenericClass_Factory<A, B> implements Factory<Object> {
-  private final Provider<A> aProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class GenericClass_Factory<A, B> : Factory<Any?> {
+  private val aProvider: Provider<A>
 
-  private final Provider<B> bProvider;
+  private val bProvider: Provider<B>
 
-  private GenericClass_Factory(Provider<A> aProvider, Provider<B> bProvider) {
-    this.aProvider = aProvider;
-    this.bProvider = bProvider;
+  private constructor(aProvider: Provider<A>, bProvider: Provider<B>) {
+    this.aProvider = aProvider
+    this.bProvider = bProvider
   }
 
-  @Override
-  public Object get() {
-    Object instance = GenericClass_Factory.<A, B>newInstance();
-    GenericClass_MembersInjector.<A, B>injectA(instance, aProvider.get());
-    GenericClass_MembersInjector.<A, B>injectRegister(instance, bProvider.get());
-    return instance;
+  public override fun `get`(): Any? {
+    var instance: Any? = newInstance<A, B>()
+    GenericClass_MembersInjector.injectA<A, B>(instance, aProvider.get());
+    GenericClass_MembersInjector.injectRegister<A, B>(instance, bProvider.get());
+    return instance
   }
 
-  public static <A, B> GenericClass_Factory<A, B> create(Provider<?> aProvider,
-      Provider<?> bProvider) {
-    return new GenericClass_Factory<A, B>((Provider<A>) (aProvider), (Provider<B>) (bProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun <A, B> create(aProvider: Provider<*>, bProvider: Provider<*>): GenericClass_Factory<A, B> = GenericClass_Factory<A, B>((aProvider) as Provider<A>, (bProvider) as Provider<B>)
 
-  public static <A, B> Object newInstance() {
-    return new GenericClass<A, B>();
+    @JvmStatic
+    public fun <A, B> newInstance(): Any? = GenericClass<A, B>()
   }
 }

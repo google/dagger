@@ -59,12 +59,12 @@ import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ModuleKind;
 import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.ComponentDescriptor;
+import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.model.BindingGraph;
 import dagger.internal.codegen.model.Scope;
 import dagger.internal.codegen.xprocessing.XElements;
-import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -568,26 +568,8 @@ public final class ModuleValidator {
     return moduleAnnotation.getAnnotationValue("includes").asTypeList().stream()
         .map(XType::getTypeElement)
         .filter(include -> !isEffectivelyPublic(include))
-        .filter(this::requiresModuleInstance)
+        .filter(ComponentRequirement::requiresModuleInstance)
         .collect(toImmutableSet());
-  }
-
-  /**
-   * Returns {@code true} if a module instance is needed for any of the binding methods on the given
-   * {@code module}. This is the case when the module has any binding methods that are neither
-   * {@code abstract} nor {@code static}. Alternatively, if the module is a Kotlin Object then the
-   * binding methods are considered {@code static}, requiring no module instance.
-   */
-  private boolean requiresModuleInstance(XTypeElement module) {
-    // Note: We use XTypeElements#getAllMethods() rather than XTypeElement#getDeclaredMethods() here
-    // because we need to include binding methods declared in supertypes because unlike most other
-    // validations being done in this class, which assume that supertype binding methods will be
-    // validated in a separate call to the validator since the supertype itself must be a @Module,
-    // we need to look at all the binding methods in the module's type hierarchy here.
-    return !(module.isKotlinObject() || module.isCompanionObject())
-        && !XTypeElements.getAllMethods(module).stream()
-            .filter(anyBindingMethodValidator::isBindingMethod)
-            .allMatch(method -> method.isAbstract() || method.isStatic());
   }
 
   private void validateNoScopeAnnotationsOnModuleElement(

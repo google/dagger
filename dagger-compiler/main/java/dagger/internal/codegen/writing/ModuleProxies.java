@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static dagger.internal.codegen.binding.ComponentRequirement.requiresModuleInstance;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
 import static dagger.internal.codegen.xprocessing.Accessibility.isElementAccessibleFrom;
 import static dagger.internal.codegen.xprocessing.XFunSpecs.constructorBuilder;
@@ -100,7 +101,9 @@ public final class ModuleProxies {
   private static Optional<XConstructorElement> nonPublicNullaryConstructor(
       XTypeElement moduleElement) {
     ModuleKind.checkIsModule(moduleElement);
-    if (moduleElement.isAbstract() || (isNested(moduleElement) && !moduleElement.isStatic())) {
+    if (!requiresModuleInstance(moduleElement)
+            || moduleElement.isAbstract()
+            || (isNested(moduleElement) && !moduleElement.isStatic())) {
       return Optional.empty();
     }
     return moduleElement.getConstructors().stream()

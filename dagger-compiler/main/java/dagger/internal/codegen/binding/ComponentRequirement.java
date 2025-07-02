@@ -149,6 +149,15 @@ public abstract class ComponentRequirement {
   /**
    * Returns {@code true} if an instance is needed for this (module) requirement.
    *
+   * @see #requiresModuleInstance(XTypeElement)
+   */
+  public boolean requiresModuleInstance() {
+    return requiresModuleInstance(typeElement());
+  }
+
+  /**
+   * Returns {@code true} if an instance is needed for this (module) requirement.
+   *
    * <p>An instance is only needed if there is a binding method on the module that is neither {@code
    * abstract} nor {@code static}; if all bindings are one of those, then there should be no
    * possible dependency on instance state in the module's bindings.
@@ -156,16 +165,16 @@ public abstract class ComponentRequirement {
    * <p>Alternatively, if the module is a Kotlin Object then the binding methods are considered
    * {@code static}, requiring no module instance.
    */
-  public boolean requiresModuleInstance() {
-    if (typeElement().isKotlinObject() || typeElement().isCompanionObject()) {
+  public static boolean requiresModuleInstance(XTypeElement typeElement) {
+    if (typeElement.isKotlinObject() || typeElement.isCompanionObject()) {
       return false;
     }
-    return XTypeElements.getAllNonPrivateInstanceMethods(typeElement()).stream()
-        .filter(this::isBindingMethod)
+    return XTypeElements.getAllNonPrivateInstanceMethods(typeElement).stream()
+        .filter(ComponentRequirement::isBindingMethod)
         .anyMatch(method -> !method.isAbstract() && !method.isStatic());
   }
 
-  private boolean isBindingMethod(XMethodElement method) {
+  private static boolean isBindingMethod(XMethodElement method) {
     // TODO(cgdecker): At the very least, we should have utility methods to consolidate this stuff
     // in one place; listing individual annotations all over the place is brittle.
     return hasAnyAnnotation(

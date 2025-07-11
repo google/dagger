@@ -18,8 +18,6 @@
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenKtTests")
 
-package(default_visibility = ["//:src"])
-
 GenKtTests(
     name = "BuilderBindsInstanceParameterTest",
     srcs = ["BuilderBindsInstanceParameterTest.kt"],

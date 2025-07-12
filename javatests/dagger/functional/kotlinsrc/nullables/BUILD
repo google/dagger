@@ -22,8 +22,6 @@ load(
 )
 load("//:test_defs.bzl", "GenKtTests")
 
-package(default_visibility = ["//:src"])
-
 GenKtTests(
     name = "JspecifyNullableTest",
     srcs = ["JspecifyNullableTest.kt"],

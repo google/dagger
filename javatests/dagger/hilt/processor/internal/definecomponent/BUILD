@@ -17,8 +17,6 @@
 
 load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
-package(default_visibility = ["//:src"])
-
 compiler_test(
     name = "DefineComponentProcessorTest",
     srcs = ["DefineComponentProcessorTest.java"],

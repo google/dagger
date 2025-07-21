@@ -14,5 +14,3 @@
 
 # Description:
 #   Build extension helpers for Kotlin.
-
-package(default_visibility = ["//:src"])

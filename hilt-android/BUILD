@@ -139,8 +139,7 @@ gen_maven_artifact(
     manifest = "AndroidManifest.xml",
     packaging = "aar",
     proguard_and_r8_specs = [
-        "//hilt-core/main/java/dagger/hilt:proguard-rules.pro",
-        "//hilt-android/main/java/dagger/hilt/android:proguard-rules.pro",
-        "//hilt-android/main/java/dagger/hilt/internal:proguard-rules.pro",
+        "//hilt-core/main/resources:proguard",
+        "//hilt-android/main/resources:proguard",
     ],
 )

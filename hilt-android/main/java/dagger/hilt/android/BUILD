@@ -124,7 +124,7 @@ android_library(
         "//hilt-compiler/main/java/dagger/hilt/processor/internal/aggregateddeps:plugin",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal/earlyentrypoint:processor",
     ],
-    proguard_specs = ["proguard-rules.pro"],
+    proguard_specs = ["//hilt-android/main/resources:proguard"],
     exports = [
         "//hilt-android/main/java/dagger/hilt/android/internal/earlyentrypoint",
     ],

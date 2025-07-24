@@ -24,14 +24,14 @@ import dagger.hilt.EntryPoints
 import dagger.hilt.android.internal.Contexts
 
 /** Utility functions for dealing with entry points for standard Android components. */
-object EntryPointAccessors {
+public object EntryPointAccessors {
   /**
    * Returns the entry point interface from an application. The context can be any context derived
    * from the application context. May only be used with entry point interfaces installed in the
    * SingletonComponent.
    */
   @JvmStatic
-  fun <T> fromApplication(context: Context, entryPoint: Class<T>): T =
+  public fun <T> fromApplication(context: Context, entryPoint: Class<T>): T =
     EntryPoints.get(Contexts.getApplication(context.applicationContext), entryPoint)
 
   /**
@@ -39,7 +39,7 @@ object EntryPointAccessors {
    * from the application context. May only be used with entry point interfaces installed in the
    * SingletonComponent.
    */
-  inline fun <reified T> fromApplication(context: Context): T =
+  public inline fun <reified T> fromApplication(context: Context): T =
     fromApplication(context, T::class.java)
 
   /**
@@ -47,14 +47,14 @@ object EntryPointAccessors {
    * interfaces installed in the ActivityComponent.
    */
   @JvmStatic
-  fun <T> fromActivity(activity: Activity, entryPoint: Class<T>): T =
+  public fun <T> fromActivity(activity: Activity, entryPoint: Class<T>): T =
     EntryPoints.get(activity, entryPoint)
 
   /**
    * Returns the entry point interface from an activity. May only be used with entry point
    * interfaces installed in the ActivityComponent.
    */
-  inline fun <reified T> fromActivity(activity: Activity): T =
+  public inline fun <reified T> fromActivity(activity: Activity): T =
     fromActivity(activity, T::class.java)
 
   /**
@@ -62,14 +62,14 @@ object EntryPointAccessors {
    * installed in the FragmentComponent.
    */
   @JvmStatic
-  fun <T> fromFragment(fragment: Fragment, entryPoint: Class<T>): T =
+  public fun <T> fromFragment(fragment: Fragment, entryPoint: Class<T>): T =
     EntryPoints.get(fragment, entryPoint)
 
   /**
    * Returns the entry point interface from a fragment. May only be used with entry point interfaces
    * installed in the FragmentComponent.
    */
-  inline fun <reified T> fromFragment(fragment: Fragment): T =
+  public inline fun <reified T> fromFragment(fragment: Fragment): T =
     fromFragment(fragment, T::class.java)
 
   /**
@@ -77,12 +77,12 @@ object EntryPointAccessors {
    * installed in the ViewComponent or ViewNoFragmentComponent.
    */
   @JvmStatic
-  fun <T> fromView(view: View, entryPoint: Class<T>): T = EntryPoints.get(view, entryPoint)
+  public fun <T> fromView(view: View, entryPoint: Class<T>): T = EntryPoints.get(view, entryPoint)
 
   /**
    * Returns the entry point interface from a view. May only be used with entry point interfaces
    * installed in the ViewComponent or ViewNoFragmentComponent.
    */
-  inline fun <reified T> fromView(view: View): T =
+  public inline fun <reified T> fromView(view: View): T =
     fromView(view, T::class.java)
 }

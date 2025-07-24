@@ -17,8 +17,6 @@
 
 load("@rules_java//java:defs.bzl", "java_plugin")
 
-package(default_visibility = ["//:src"])
-
 java_plugin(
     name = "binding-graph-visualizer",
     srcs = glob(["*.java"]),

@@ -18,8 +18,6 @@
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//:build_defs.bzl", "POM_VERSION")
 
-package(default_visibility = ["//:src"])
-
 kt_jvm_library(
     name = "lint-artifact-lib",
     srcs = glob(["*.kt"]),

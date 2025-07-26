@@ -22,8 +22,6 @@ load(
 )
 load("//:test_defs.bzl", "GenKtTests")
 
-package(default_visibility = ["//:src"])
-
 # Looks like Dagger's strict deps exemption isn't working properly in Bazel
 # so we need to expose transitive deps?
 TRANSITIVE_DEPS = [

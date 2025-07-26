@@ -15,8 +15,6 @@
 # Description:
 #   A Gradle plugin that performs a transform.
 
-package(default_visibility = ["//:src"])
-
 genrule(
     name = "import-shared-lib",
     srcs = [

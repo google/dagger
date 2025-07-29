@@ -4,7 +4,7 @@
 
 A fast dependency injector for Java and Android.
 
-Dagger is a compile-time framework for dependency injection. It uses no
+Dagger is a compile-time framework for dependency injection. It uses n
 reflection or runtime bytecode generation, does all its analysis at
 compile-time, and generates plain Java source code.
 

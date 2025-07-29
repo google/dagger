@@ -1,0 +1,64 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import java.util.List;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata({
+    "test.QualifierA",
+    "test.QualifierB"
+})
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class TestModule_ProvideObjectsFactory implements Factory<List<Object>> {
+  private final TestModule module;
+
+  private final Provider<Object> aProvider;
+
+  private final Provider<Object> bProvider;
+
+  private final Provider<MembersInjector<X>> xInjectorProvider;
+
+  private TestModule_ProvideObjectsFactory(TestModule module, Provider<Object> aProvider,
+      Provider<Object> bProvider, Provider<MembersInjector<X>> xInjectorProvider) {
+    this.module = module;
+    this.aProvider = aProvider;
+    this.bProvider = bProvider;
+    this.xInjectorProvider = xInjectorProvider;
+  }
+
+  @Override
+  public List<Object> get() {
+    return provideObjects(module, aProvider.get(), bProvider.get(), xInjectorProvider.get());
+  }
+
+  public static TestModule_ProvideObjectsFactory create(TestModule module,
+      Provider<Object> aProvider, Provider<Object> bProvider,
+      Provider<MembersInjector<X>> xInjectorProvider) {
+    return new TestModule_ProvideObjectsFactory(module, aProvider, bProvider, xInjectorProvider);
+  }
+
+  public static List<Object> provideObjects(TestModule instance, Object a, Object b,
+      MembersInjector<X> xInjector) {
+    return Preconditions.checkNotNullFromProvides(instance.provideObjects(a, b, xInjector));
+  }
+}

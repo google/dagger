@@ -1,0 +1,77 @@
+package test;
+
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import java.util.List;
+import javax.annotation.processing.Generated;
+import other.InaccessiblesModule_InaccessiblesFactory;
+import other.UsesInaccessibles;
+import other.UsesInaccessibles_Factory;
+import other.UsesInaccessibles_MembersInjector;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    @SuppressWarnings("rawtypes")
+    Provider inaccessiblesProvider;
+
+    TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.inaccessiblesProvider = DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());
+    }
+
+    @Override
+    public UsesInaccessibles usesInaccessibles() {
+      return injectUsesInaccessibles(UsesInaccessibles_Factory.newInstance());
+    }
+
+    @CanIgnoreReturnValue
+    private UsesInaccessibles injectUsesInaccessibles(UsesInaccessibles instance) {
+      UsesInaccessibles_MembersInjector.injectInaccessibles(instance, (List) (inaccessiblesProvider.get()));
+      return instance;
+    }
+  }
+}

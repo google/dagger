@@ -14,27 +14,26 @@
 # Description:
 #   Tests for internal code for implementing Hilt processors.
 
+load("@rules_java//java:defs.bzl", "java_library")
 load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
-
-package(default_visibility = ["//:src"])
 
 compiler_test(
     name = "TestInstallInTest",
     srcs = ["TestInstallInTest.java"],
     compiler_deps = [
         ":InstallInModule",
-        "//:dagger_with_compiler",
-        "//java/dagger/hilt:install_in",
-        "//java/dagger/hilt:entry_point",
-        "//java/dagger/hilt/components",
-        "//java/dagger/hilt/android/internal/modules",
-        "//java/dagger/hilt/testing:test_install_in",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-        "@androidsdk//:platforms/android-32/android.jar",
+        "//third_party/java/dagger",
+        "//hilt-core/main/java/dagger/hilt:install_in",
+        "//hilt-core/main/java/dagger/hilt:entry_point",
+        "//hilt-core/main/java/dagger/hilt/components",
+        "//hilt-android/main/java/dagger/hilt/android/internal/modules",
+        "//hilt-android-testing/main/java/dagger/hilt/testing:test_install_in",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/compile_testing",
         "//third_party/java/junit",
     ],
@@ -44,16 +43,16 @@ compiler_test(
     name = "EarlyEntryPointProcessorTest",
     srcs = ["EarlyEntryPointProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt:entry_point",
-        "//java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android:early_entry_point",
-        "//java/dagger/hilt/android/components",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-        "@androidsdk//:platforms/android-32/android.jar",
+        "//hilt-core/main/java/dagger/hilt:entry_point",
+        "//hilt-core/main/java/dagger/hilt:install_in",
+        "//hilt-android/main/java/dagger/hilt/android:early_entry_point",
+        "//hilt-android/main/java/dagger/hilt/android/components",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/junit",
     ],
 )
@@ -62,8 +61,8 @@ java_library(
     name = "InstallInModule",
     srcs = ["InstallInModule.java"],
     deps = [
-        "//:dagger_with_compiler",
-        "//java/dagger/hilt:install_in",
-        "//java/dagger/hilt/components",
+        "//hilt-core/main/java/dagger/hilt:install_in",
+        "//hilt-core/main/java/dagger/hilt/components",
+        "//third_party/java/dagger",
     ],
 )

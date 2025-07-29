@@ -1,0 +1,186 @@
+package dagger.internal.codegen;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestSubcomponentImpl implements TestSubcomponent {
+    TestSubcomponentImplShard testSubcomponentImplShard;
+
+    private final TestComponentImpl testComponentImpl;
+
+    private final TestSubcomponentImpl testSubcomponentImpl = this;
+
+    Provider<Binding1> binding1Provider;
+
+    Provider<Binding2> binding2Provider;
+
+    TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+
+      initialize();
+      testSubcomponentImplShard = new TestSubcomponentImplShard(testComponentImpl, testSubcomponentImpl);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.binding1Provider = DoubleCheck.provider(new SwitchingProvider<Binding1>(testComponentImpl, testSubcomponentImpl, 0));
+      this.binding2Provider = DoubleCheck.provider(new SwitchingProvider<Binding2>(testComponentImpl, testSubcomponentImpl, 1));
+    }
+
+    @Override
+    public Binding1 binding1() {
+      return binding1Provider.get();
+    }
+
+    @Override
+    public Binding2 binding2() {
+      return binding2Provider.get();
+    }
+
+    @Override
+    public Binding3 binding3() {
+      return testSubcomponentImpl.testSubcomponentImplShard.binding3Provider.get();
+    }
+
+    @Override
+    public javax.inject.Provider<Binding1> providerBinding1() {
+      return binding1Provider;
+    }
+
+    @Override
+    public javax.inject.Provider<Binding2> providerBinding2() {
+      return binding2Provider;
+    }
+
+    @Override
+    public javax.inject.Provider<Binding3> providerBinding3() {
+      return testSubcomponentImpl.testSubcomponentImplShard.binding3Provider;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final TestSubcomponentImpl testSubcomponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl,
+          TestSubcomponentImpl testSubcomponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.testSubcomponentImpl = testSubcomponentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // dagger.internal.codegen.Binding1
+          return (T) new Binding1();
+
+          case 1: // dagger.internal.codegen.Binding2
+          return (T) new Binding2();
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public TestSubcomponent subcomponent() {
+      return new TestSubcomponentImpl(testComponentImpl);
+    }
+  }
+
+  private static final class TestSubcomponentImplShard {
+    private final TestComponentImpl testComponentImpl;
+
+    private final TestSubcomponentImpl testSubcomponentImpl;
+
+    Provider<Binding3> binding3Provider;
+
+    TestSubcomponentImplShard(TestComponentImpl testComponentImpl,
+        TestSubcomponentImpl testSubcomponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+      this.testSubcomponentImpl = testSubcomponentImpl;
+      initialize();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.binding3Provider = DoubleCheck.provider(new SwitchingProvider<Binding3>(testComponentImpl, testSubcomponentImpl, 0));
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final TestSubcomponentImpl testSubcomponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl,
+          TestSubcomponentImpl testSubcomponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.testSubcomponentImpl = testSubcomponentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // dagger.internal.codegen.Binding3
+          return (T) new Binding3();
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}

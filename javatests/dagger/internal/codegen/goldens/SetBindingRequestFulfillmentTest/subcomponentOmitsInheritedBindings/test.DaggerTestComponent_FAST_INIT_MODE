@@ -1,0 +1,73 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import java.util.Collections;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerParent {
+  private DaggerParent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static Parent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public Parent build() {
+      return new ParentImpl();
+    }
+  }
+
+  private static final class ChildImpl implements Child {
+    private final ParentImpl parentImpl;
+
+    private final ChildImpl childImpl = this;
+
+    ChildImpl(ParentImpl parentImpl) {
+      this.parentImpl = parentImpl;
+
+
+    }
+
+    @Override
+    public Set<Object> objectSet() {
+      return Collections.<Object>singleton(ParentModule_ParentObjectFactory.parentObject());
+    }
+  }
+
+  private static final class ParentImpl implements Parent {
+    private final ParentImpl parentImpl = this;
+
+    ParentImpl() {
+
+
+    }
+
+    @Override
+    public Child child() {
+      return new ChildImpl(parentImpl);
+    }
+  }
+}

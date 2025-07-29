@@ -1,8 +1,8 @@
 buildscript {
   ext {
-    kotlin_version = "1.9.24"
-    agp_version = System.getenv('AGP_VERSION') ?: "7.2.0"
-    ksp_version = "$kotlin_version-1.0.20"
+    kotlin_version = "2.2.0"
+    agp_version = System.getenv('AGP_VERSION') ?: "8.1.1"
+    ksp_version = "$kotlin_version-2.0.2"
     pluginArtifactId = 'hilt-android-gradle-plugin'
     pluginId = 'com.google.dagger.hilt.android'
   }
@@ -12,9 +12,7 @@ plugins {
   id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
   id 'java-gradle-plugin'
   id 'maven-publish'
-  // Use shadow version >= 7.1.1 to get log4j vulnerability patches:
-  //   https://github.com/johnrengelman/shadow/releases/tag/7.1.1
-  id 'com.github.johnrengelman.shadow' version '7.1.1'
+  id 'com.github.johnrengelman.shadow' version '8.1.1'
   id 'org.jetbrains.kotlin.android' version "$kotlin_version" apply false
 }
 

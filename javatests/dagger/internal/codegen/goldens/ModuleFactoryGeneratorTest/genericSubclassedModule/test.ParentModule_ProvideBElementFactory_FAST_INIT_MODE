@@ -1,0 +1,51 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class ParentModule_ProvideBElementFactory<A extends CharSequence, B, C extends Number & Comparable<C>> implements Factory<B> {
+  private final ParentModule<A, B, C> module;
+
+  private final Provider<B> bProvider;
+
+  private ParentModule_ProvideBElementFactory(ParentModule<A, B, C> module, Provider<B> bProvider) {
+    this.module = module;
+    this.bProvider = bProvider;
+  }
+
+  @Override
+  public B get() {
+    return provideBElement(module, bProvider.get());
+  }
+
+  public static <A extends CharSequence, B, C extends Number & Comparable<C>> ParentModule_ProvideBElementFactory<A, B, C> create(
+      ParentModule<A, B, C> module, Provider<B> bProvider) {
+    return new ParentModule_ProvideBElementFactory<A, B, C>(module, bProvider);
+  }
+
+  public static <A extends CharSequence, B, C extends Number & Comparable<C>> B provideBElement(
+      ParentModule<A, B, C> instance, B b) {
+    return Preconditions.checkNotNullFromProvides(instance.provideBElement(b));
+  }
+}

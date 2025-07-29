@@ -17,8 +17,6 @@
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenKtLibrary", "GenKtTests")
 
-package(default_visibility = ["//:src"])
-
 GenKtTests(
     name = "KotlinAssistedInjectionTest",
     srcs = ["KotlinAssistedInjectionTest.kt"],
@@ -26,13 +24,11 @@ GenKtTests(
         ":KotlinAssistedInjectionClasses",
     ],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    test_only_deps = [
+    deps = [
+        "//third_party/java/auto:factory",
+        "//third_party/java/dagger",
         "//third_party/java/junit",
         "//third_party/java/truth",
-    ],
-    deps = [
-        "//:dagger_with_compiler",
-        "//third_party/java/auto:factory",
     ],
 )
 
@@ -41,7 +37,7 @@ GenKtLibrary(
     srcs = ["KotlinAssistedInjectionClasses.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
-        "//:dagger_with_compiler",
         "//third_party/java/auto:factory",
+        "//third_party/java/dagger",
     ],
 )

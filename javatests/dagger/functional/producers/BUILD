@@ -29,8 +29,8 @@ GenJavaTests(
     srcs = glob(["**/*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//:producers_with_compiler",
         "//third_party/java/auto:value",
+        "//third_party/java/dagger:producers",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/guava/util/concurrent",

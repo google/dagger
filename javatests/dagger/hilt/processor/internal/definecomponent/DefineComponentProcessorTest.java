@@ -271,7 +271,8 @@ public final class DefineComponentProcessorTest {
             subject -> {
               subject.hasErrorCount(1);
               subject.hasErrorContaining(
-                  "@DefineComponent test.FooComponent is missing a parent declaration.");
+                  "@DefineComponent test.FooComponent is missing a parent "
+                  + "declaration.");
             });
   }
 

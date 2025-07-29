@@ -1,0 +1,52 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class InjectConstructor_Factory implements Factory<InjectConstructor> {
+  private final Provider<other.pkg.CommonName> otherPackageProvider;
+
+  private final Provider<CommonName> samePackageProvider;
+
+  private InjectConstructor_Factory(Provider<other.pkg.CommonName> otherPackageProvider,
+      Provider<CommonName> samePackageProvider) {
+    this.otherPackageProvider = otherPackageProvider;
+    this.samePackageProvider = samePackageProvider;
+  }
+
+  @Override
+  public InjectConstructor get() {
+    return newInstance(otherPackageProvider.get(), samePackageProvider.get());
+  }
+
+  public static InjectConstructor_Factory create(
+      Provider<other.pkg.CommonName> otherPackageProvider,
+      Provider<CommonName> samePackageProvider) {
+    return new InjectConstructor_Factory(otherPackageProvider, samePackageProvider);
+  }
+
+  public static InjectConstructor newInstance(other.pkg.CommonName otherPackage,
+      CommonName samePackage) {
+    return new InjectConstructor(otherPackage, samePackage);
+  }
+}

@@ -16,12 +16,19 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XFiler.Mode;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingEnv.Backend;
 import androidx.room.compiler.processing.util.CompilationResultSubject;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.android.testing.compile.HiltCompilerTests;
+import dagger.hilt.processor.internal.BaseProcessingStep;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -68,6 +75,79 @@ public class AndroidEntryPointProcessorTest {
               subject
                   .hasErrorContaining("Expected @AndroidEntryPoint to have a value.")
                   ;
+            });
+  }
+
+  @Test
+  public void generatedSuperclass() {
+    Source annotation =
+        HiltCompilerTests.javaSource(
+            "test.GenerateAndroidActivity",
+            "package test;",
+            "",
+            "@interface GenerateAndroidActivity { }");
+    Source testActivity =
+        HiltCompilerTests.javaSource(
+            "test.MyActivity",
+            "package test;",
+            "",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "",
+            "@GenerateAndroidActivity",
+            "@AndroidEntryPoint(GeneratedActivity.class)",
+            "public class MyActivity extends Hilt_MyActivity { }");
+    HiltCompilerTests.hiltCompiler(annotation, testActivity)
+        .withProcessingSteps(
+            env ->
+                new BaseProcessingStep(env) {
+                  @Override
+                  public void processEach(ClassName annotation, XElement element) {
+                    TypeSpec typeSpec =
+                        TypeSpec.classBuilder("GeneratedActivity")
+                            .superclass(ClassName.get("androidx.activity", "ComponentActivity"))
+                            .build();
+                    processingEnv()
+                        .getFiler()
+                        .write(
+                            JavaFile.builder(/* packageName= */ "test", typeSpec).build(),
+                            Mode.Isolating);
+                  }
+
+                  @Override
+                  protected ImmutableSet<ClassName> annotationClassNames() {
+                    return ImmutableSet.of(ClassName.get("test", "GenerateAndroidActivity"));
+                  }
+                })
+        .compile((CompilationResultSubject subject) -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void errorTypeSuperclass() {
+    Source testActivity =
+        HiltCompilerTests.javaSource(
+            "test.MyActivity",
+            "package test;",
+            "",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "",
+            "@AndroidEntryPoint(NonExistingActivity.class)",
+            "public class MyActivity extends Hilt_MyActivity { }");
+    HiltCompilerTests.hiltCompiler(testActivity)
+        .compile(
+            (CompilationResultSubject subject) -> {
+              if (HiltCompilerTests.backend(subject) == XProcessingEnv.Backend.KSP) {
+                subject
+                    .hasErrorCount(1)
+                    .hasErrorContaining(
+                        "@AndroidEntryPoint, 'value' class is invalid or missing:"
+                            + " @dagger.hilt.android.AndroidEntryPoint(NonExistingActivity)");
+              } else {
+                subject
+                    .hasErrorCount(3)
+                    .hasErrorContaining(
+                        "@AndroidEntryPoint, 'value' class is invalid or missing:"
+                            + " @dagger.hilt.android.AndroidEntryPoint(<error>)");
+              }
             });
   }
 

@@ -1,0 +1,52 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static TestComponent.Factory factory() {
+    return new Factory();
+  }
+
+  private static final class Factory implements TestComponent.Factory {
+    @Override
+    public TestComponent newTestComponent(TestModule mod) {
+      Preconditions.checkNotNull(mod);
+      return new TestComponentImpl(mod);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestModule testModule;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl(TestModule testModuleParam) {
+      this.testModule = testModuleParam;
+
+    }
+
+    @Override
+    public String string() {
+      return TestModule_StringFactory.string(testModule);
+    }
+  }
+}

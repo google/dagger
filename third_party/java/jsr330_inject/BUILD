@@ -17,6 +17,11 @@
 package(default_visibility = ["//:src"])
 
 alias(
+    name = "jsr330_inject_without_dagger",
+    actual = "@maven//:javax_inject_javax_inject",
+)
+
+alias(
     name = "jsr330_inject",
     actual = "@maven//:javax_inject_javax_inject",
 )

@@ -1,0 +1,81 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerSimpleComponent {
+  private DaggerSimpleComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static SimpleComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public SimpleComponent build() {
+      return new SimpleComponentImpl();
+    }
+  }
+
+  private static final class SubImpl implements Sub {
+    private final SimpleComponentImpl simpleComponentImpl;
+
+    private final SubImpl subImpl = this;
+
+    SubImpl(SimpleComponentImpl simpleComponentImpl) {
+      this.simpleComponentImpl = simpleComponentImpl;
+
+
+    }
+
+    @Override
+    public DependsOnScoped dependsOnScoped() {
+      return new DependsOnScoped(simpleComponentImpl.scopedTypeProvider.get());
+    }
+  }
+
+  private static final class SimpleComponentImpl implements SimpleComponent {
+    private final SimpleComponentImpl simpleComponentImpl = this;
+
+    Provider<ScopedType> scopedTypeProvider;
+
+    SimpleComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.scopedTypeProvider = DoubleCheck.provider(ScopedType_Factory.create());
+    }
+
+    @Override
+    public Sub sub() {
+      return new SubImpl(simpleComponentImpl);
+    }
+  }
+}

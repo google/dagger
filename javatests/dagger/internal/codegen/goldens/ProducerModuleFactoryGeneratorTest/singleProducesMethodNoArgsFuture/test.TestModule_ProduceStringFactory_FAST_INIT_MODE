@@ -1,0 +1,52 @@
+package test;
+
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Provider;
+import dagger.producers.internal.AbstractProducesMethodProducer;
+import dagger.producers.monitoring.ProducerToken;
+import dagger.producers.monitoring.ProductionComponentMonitor;
+import java.util.concurrent.Executor;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "FutureReturnValueIgnored",
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class TestModule_ProduceStringFactory extends AbstractProducesMethodProducer<Void, String> {
+  private final TestModule module;
+
+  private TestModule_ProduceStringFactory(TestModule module, Provider<Executor> executorProvider,
+      Provider<ProductionComponentMonitor> productionComponentMonitorProvider) {
+    super(productionComponentMonitorProvider, ProducerToken.create(TestModule_ProduceStringFactory.class), executorProvider);
+    this.module = module;
+  }
+
+  public static TestModule_ProduceStringFactory create(TestModule module,
+      Provider<Executor> executorProvider,
+      Provider<ProductionComponentMonitor> productionComponentMonitorProvider) {
+    return new TestModule_ProduceStringFactory(module, executorProvider, productionComponentMonitorProvider);
+  }
+
+  @Override
+  protected ListenableFuture<Void> collectDependencies() {
+    return Futures.<Void>immediateFuture(null);
+  }
+
+  @Override
+  public ListenableFuture<String> callProducesMethod(Void ignoredVoidArg) {
+    return module.produceString();
+  }
+}

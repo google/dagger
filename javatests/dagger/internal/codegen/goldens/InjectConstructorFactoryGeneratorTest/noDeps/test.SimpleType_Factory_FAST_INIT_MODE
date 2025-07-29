@@ -1,0 +1,42 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class SimpleType_Factory implements Factory<SimpleType> {
+  @Override
+  public SimpleType get() {
+    return newInstance();
+  }
+
+  public static SimpleType_Factory create() {
+    return InstanceHolder.INSTANCE;
+  }
+
+  public static SimpleType newInstance() {
+    return new SimpleType();
+  }
+
+  private static final class InstanceHolder {
+    static final SimpleType_Factory INSTANCE = new SimpleType_Factory();
+  }
+}

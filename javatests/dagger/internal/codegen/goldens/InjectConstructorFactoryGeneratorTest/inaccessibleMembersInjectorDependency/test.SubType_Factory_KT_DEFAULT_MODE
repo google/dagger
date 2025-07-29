@@ -1,0 +1,48 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+import other.SuperType_MembersInjector;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class SubType_Factory implements Factory<SubType> {
+  private final Provider inaccessibleTypeProvider;
+
+  private SubType_Factory(Provider inaccessibleTypeProvider) {
+    this.inaccessibleTypeProvider = inaccessibleTypeProvider;
+  }
+
+  @Override
+  public SubType get() {
+    SubType instance = newInstance();
+    SuperType_MembersInjector.injectInaccessibleType(instance, inaccessibleTypeProvider.get());
+    return instance;
+  }
+
+  public static SubType_Factory create(Provider inaccessibleTypeProvider) {
+    return new SubType_Factory(inaccessibleTypeProvider);
+  }
+
+  public static SubType newInstance() {
+    return new SubType();
+  }
+}

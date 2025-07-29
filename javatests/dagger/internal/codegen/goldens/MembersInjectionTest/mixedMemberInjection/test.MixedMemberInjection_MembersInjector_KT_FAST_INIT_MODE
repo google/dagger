@@ -1,0 +1,72 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class MixedMemberInjection_MembersInjector implements MembersInjector<MixedMemberInjection> {
+  private final Provider<String> stringProvider;
+
+  private final Provider<Object> objectProvider;
+
+  private final Provider<String> sProvider;
+
+  private final Provider<Object> oProvider;
+
+  private MixedMemberInjection_MembersInjector(Provider<String> stringProvider,
+      Provider<Object> objectProvider, Provider<String> sProvider, Provider<Object> oProvider) {
+    this.stringProvider = stringProvider;
+    this.objectProvider = objectProvider;
+    this.sProvider = sProvider;
+    this.oProvider = oProvider;
+  }
+
+  public static MembersInjector<MixedMemberInjection> create(Provider<?> stringProvider,
+      Provider<?> objectProvider, Provider<?> sProvider, Provider<?> oProvider) {
+    return new MixedMemberInjection_MembersInjector((Provider<String>) (stringProvider), (Provider<Object>) (objectProvider), (Provider<String>) (sProvider), (Provider<Object>) (oProvider));
+  }
+
+  @Override
+  public void injectMembers(MixedMemberInjection instance) {
+    injectString(instance, stringProvider.get());
+    injectObject(instance, objectProvider.get());
+    injectSetString(instance, sProvider.get());
+    injectSetObject(instance, oProvider.get());
+  }
+
+  @InjectedFieldSignature("test.MixedMemberInjection.string")
+  public static void injectString(Object instance, Object string) {
+    ((MixedMemberInjection) (instance)).string = (String) (string);
+  }
+
+  @InjectedFieldSignature("test.MixedMemberInjection.object")
+  public static void injectObject(Object instance, Object object) {
+    ((MixedMemberInjection) (instance)).object = (Object) (object);
+  }
+
+  public static void injectSetString(Object instance, Object s) {
+    ((MixedMemberInjection) (instance)).setString((String) (s));
+  }
+
+  public static void injectSetObject(Object instance, Object o) {
+    ((MixedMemberInjection) (instance)).setObject((Object) (o));
+  }
+}

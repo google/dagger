@@ -52,7 +52,7 @@ HILT_ANDROID_ARTIFACTS = [
 DAGGER_REPOSITORIES = [
     "https://maven.google.com",
     "https://repo1.maven.org/maven2",
-    "https://oss.sonatype.org/content/repositories/snapshots",
+    "https://central.sonatype.com/repository/maven-snapshots",
 ]
 
 DAGGER_ANDROID_REPOSITORIES = DAGGER_REPOSITORIES

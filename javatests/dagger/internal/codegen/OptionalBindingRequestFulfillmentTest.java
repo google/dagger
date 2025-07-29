@@ -16,15 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
-import java.util.Collection;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,14 +29,8 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class OptionalBindingRequestFulfillmentTest {
   @Parameters(name = "{0}")
-  public static Collection<Object[]> parameters() {
-    return ImmutableList.copyOf(
-        new Object[][] {
-            {CompilerMode.DEFAULT_MODE},
-            {CompilerMode.DEFAULT_JAVA7_MODE},
-            {CompilerMode.FAST_INIT_MODE},
-            {CompilerMode.FAST_INIT_JAVA7_MODE}
-        });
+  public static ImmutableList<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
   }
 
   @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
@@ -54,8 +43,8 @@ public class OptionalBindingRequestFulfillmentTest {
 
   @Test
   public void inlinedOptionalBindings() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -69,8 +58,8 @@ public class OptionalBindingRequestFulfillmentTest {
             "  @BindsOptionalOf Maybe maybe();",
             "  @BindsOptionalOf DefinitelyNot definitelyNot();",
             "}");
-    JavaFileObject maybe =
-        JavaFileObjects.forSourceLines(
+    Source maybe =
+        CompilerTests.javaSource(
             "other.Maybe",
             "package other;",
             "",
@@ -83,15 +72,15 @@ public class OptionalBindingRequestFulfillmentTest {
             "    @Provides static Maybe provideMaybe() { return new Maybe(); }",
             "  }",
             "}");
-    JavaFileObject definitelyNot =
-        JavaFileObjects.forSourceLines(
+    Source definitelyNot =
+        CompilerTests.javaSource(
             "other.DefinitelyNot",
             "package other;",
             "",
             "public class DefinitelyNot {}");
 
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -110,19 +99,19 @@ public class OptionalBindingRequestFulfillmentTest {
             "  Optional<Provider<Lazy<DefinitelyNot>>> providerOfLazyOfDefinitelyNot();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode)
-            .compile(module, maybe, definitelyNot, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(module, maybe, definitelyNot, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
   public void requestForFuture() throws Exception {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -136,8 +125,8 @@ public class OptionalBindingRequestFulfillmentTest {
             "  @BindsOptionalOf Maybe maybe();",
             "  @BindsOptionalOf DefinitelyNot definitelyNot();",
             "}");
-    JavaFileObject maybe =
-        JavaFileObjects.forSourceLines(
+    Source maybe =
+        CompilerTests.javaSource(
             "other.Maybe",
             "package other;",
             "",
@@ -150,15 +139,15 @@ public class OptionalBindingRequestFulfillmentTest {
             "    @Provides static Maybe provideMaybe() { return new Maybe(); }",
             "  }",
             "}");
-    JavaFileObject definitelyNot =
-        JavaFileObjects.forSourceLines(
+    Source definitelyNot =
+        CompilerTests.javaSource(
             "other.DefinitelyNot",
             "package other;",
             "",
             "public class DefinitelyNot {}");
 
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -175,11 +164,12 @@ public class OptionalBindingRequestFulfillmentTest {
             "  ListenableFuture<Optional<DefinitelyNot>> definitelyNot();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode).compile(module, maybe, definitelyNot, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(module, maybe, definitelyNot, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 }

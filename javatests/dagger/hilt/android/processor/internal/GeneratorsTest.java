@@ -140,6 +140,105 @@ public final class GeneratorsTest {
             });
   }
 
+  // This is a regression test for b/382104423
+  @Test
+  public void typeUseNullableCopiedFromSuperConstructor() {
+    Source baseView =
+        HiltCompilerTests.javaSource(
+            "test.BaseView",
+            "package test;",
+            "",
+            "import android.content.Context;",
+            "import android.util.AttributeSet;",
+            "import android.view.View;",
+            "import org.jspecify.annotations.Nullable;",
+            "",
+            "public class BaseView extends View {",
+            "  public BaseView(Context context, @Nullable AttributeSet attrs) {",
+            "    super(context, attrs);",
+            "  }",
+            "}");
+    Source myView =
+        HiltCompilerTests.javaSource(
+            "test.MyView",
+            "package test;",
+            "",
+            "import android.content.Context;",
+            "import android.util.AttributeSet;",
+            "import android.view.View;",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "import org.jspecify.annotations.Nullable;",
+            "",
+            "@AndroidEntryPoint(BaseView.class)",
+            "public class MyView extends Hilt_MyView {",
+            "  public MyView(Context context, @Nullable AttributeSet attrs) {",
+            "    super(context, attrs);",
+            "  }",
+            "}");
+    HiltCompilerTests.hiltCompiler(baseView, myView)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyView.java");
+              stringSubject.contains("org.jspecify.annotations.Nullable");
+            });
+  }
+
+  @Test
+  public void hybridTypeUseAndDeclarationNullableNotDuplicated() {
+    Source hybridNullable =
+        HiltCompilerTests.javaSource(
+            "test.Nullable",
+            "package test;",
+            "",
+            "import static java.lang.annotation.ElementType.PARAMETER;",
+            "import static java.lang.annotation.ElementType.TYPE_USE;",
+            "",
+            "import java.lang.annotation.Target;",
+            "",
+            "@Target({TYPE_USE, PARAMETER})",
+            "public @interface Nullable {}");
+    Source baseView =
+        HiltCompilerTests.javaSource(
+            "test.BaseView",
+            "package test;",
+            "",
+            "import android.content.Context;",
+            "import android.util.AttributeSet;",
+            "import android.view.View;",
+            "",
+            "public class BaseView extends View {",
+            "  public BaseView(Context context, @Nullable AttributeSet attrs) {",
+            "    super(context, attrs);",
+            "  }",
+            "}");
+    Source myView =
+        HiltCompilerTests.javaSource(
+            "test.MyView",
+            "package test;",
+            "",
+            "import android.content.Context;",
+            "import android.util.AttributeSet;",
+            "import android.view.View;",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "",
+            "@AndroidEntryPoint(BaseView.class)",
+            "public class MyView extends Hilt_MyView {",
+            "  public MyView(Context context, @Nullable AttributeSet attrs) {",
+            "    super(context, attrs);",
+            "  }",
+            "}");
+    HiltCompilerTests.hiltCompiler(hybridNullable, baseView, myView)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyView.java");
+              stringSubject.contains("@Nullable");
+            });
+  }
+
   // This is a regression test for https://github.com/google/dagger/issues/3296
   @Test
   public void isRestrictedApiConstructorWithPrimitiveParameterTest() {

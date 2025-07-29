@@ -27,6 +27,8 @@ import static dagger.internal.codegen.base.ComponentCreatorKind.FACTORY;
 import static dagger.internal.codegen.base.ComponentKind.COMPONENT;
 import static dagger.internal.codegen.binding.ErrorMessages.componentMessagesFor;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.util.CompilationResultSubject;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -183,10 +185,15 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              subject.hasErrorContaining(
+              String formattedList =
+                  formattedList(
+                      subject,
+                      "test.SimpleComponent.Builder",
+                      "test.SimpleComponent.Builder2");
+              subject.hasErrorContainingMatch(
                       String.format(
                           componentMessagesFor(COMPONENT).moreThanOne(),
-                          process("[test.SimpleComponent.Builder, test.SimpleComponent.Builder2]")))
+                          process(formattedList)))
                   .onSource(componentFile);
             });
   }
@@ -218,10 +225,13 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              subject.hasErrorContaining(
-                      String.format(
-                          componentMessagesFor(COMPONENT).moreThanOne(),
-                          "[test.SimpleComponent.Builder, test.SimpleComponent.Factory]"))
+              String formattedList =
+                  formattedList(
+                      subject,
+                      "test.SimpleComponent.Builder",
+                      "test.SimpleComponent.Factory");
+              subject.hasErrorContainingMatch(
+                      String.format(componentMessagesFor(COMPONENT).moreThanOne(), formattedList))
                   .onSource(componentFile);
             });
   }
@@ -1217,5 +1227,14 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
                   .onSource(componentFile)
                   .onLineContaining(process("interface Builder"));
             });
+  }
+
+  private static String formattedList(
+      CompilationResultSubject subject, String element1, String element2) {
+    return
+        CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP
+            // TODO(b/381556660): KSP2 reports the elements in arbitrary order so check both orders.
+            ? String.format("(\\[%s, %s\\]|\\[%s, %s\\])", element1, element2, element2, element1)
+            : String.format("\\[%s, %s\\]", element1, element2);
   }
 }

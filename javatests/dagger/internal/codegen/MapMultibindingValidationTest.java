@@ -88,7 +88,7 @@ public class MapMultibindingValidationTest {
             subject -> {
               subject.hasErrorCount(1);
               subject.hasErrorContaining(
-                      "The same map key is bound more than once for Map<String,Provider<Object>>")
+                      "The same map key is bound more than once for Map<String,Object>")
                   .onSource(module)
                   .onLineContaining("class MapModule");
               subject.hasErrorContaining("provideObjectForAKey()");
@@ -285,7 +285,7 @@ public class MapMultibindingValidationTest {
             subject -> {
               subject.hasErrorCount(1);
               subject.hasErrorContaining(
-                      "Map<String,Provider<Object>> uses more than one @MapKey annotation type")
+                      "Map<String,Object> uses more than one @MapKey annotation type")
                   .onSource(module)
                   .onLineContaining("class MapModule");
               subject.hasErrorContaining("provideObjectForAKey()");
@@ -371,6 +371,84 @@ public class MapMultibindingValidationTest {
               subject.hasErrorCount(1);
               subject.hasErrorContaining(
                   "Map<String,Producer<Object>> uses more than one @MapKey annotation type");
+            });
+  }
+
+  @Test
+  public void mapBindingOfProvider_provides() {
+    Source providesModule =
+        CompilerTests.javaSource(
+            "test.MapModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "import javax.inject.Provider;",
+            "",
+            "@Module",
+            "abstract class MapModule {",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @StringKey(\"foo\")",
+            "  static Provider<String> provideProvider() {",
+            "    return null;",
+            "  }",
+            "}");
+
+    // Entry points aren't needed because the check we care about here is a module validation
+    Source providesComponent = component("");
+
+    CompilerTests.daggerCompiler(providesModule, providesComponent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining(
+                  "@Provides methods with @IntoMap must not return framework types");
+              subject.hasErrorContaining("test.MapModule has errors")
+                  .onSource(providesComponent)
+                  .onLineContaining("@Component(modules = {MapModule.class})");
+            });
+  }
+
+  @Test
+  public void mapBindingOfProvider_binds() {
+    Source bindsModule =
+        CompilerTests.javaSource(
+            "test.MapModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Binds;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "import javax.inject.Provider;",
+            "",
+            "@Module",
+            "abstract class MapModule {",
+            "",
+            "  @Binds",
+            "  @IntoMap",
+            "  @StringKey(\"foo\")",
+            "  abstract Provider<String> provideProvider(Provider<String> provider);",
+            "}");
+
+    // Entry points aren't needed because the check we care about here is a module validation
+    Source bindsComponent = component("");
+
+    CompilerTests.daggerCompiler(bindsModule, bindsComponent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining(
+                  "@Binds methods with @IntoMap must not return framework types");
+              subject.hasErrorContaining("test.MapModule has errors")
+                  .onSource(bindsComponent)
+                  .onLineContaining("@Component(modules = {MapModule.class})");
             });
   }
 

@@ -14,6 +14,7 @@
 # Description:
 #   Tests for internal code for implementing Hilt processors.
 
+load("@rules_android//rules:rules.bzl", "android_library")
 load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
 package(default_visibility = ["//:src"])
@@ -23,7 +24,7 @@ android_library(
     srcs = ["MyAppPreviousCompilation.java"],
     deps = [
         "//:android_local_test_exports",
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
     ],
 )
 
@@ -32,17 +33,15 @@ compiler_test(
     srcs = ["MyAppPreviousCompilationTest.java"],
     compiler_deps = [
         ":MyAppPreviousCompilation",
-        "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-        "@androidsdk//:platforms/android-32/android.jar",
-        "@maven//:androidx_annotation_annotation",
-        "@maven//:org_robolectric_robolectric",
-        "@maven//:androidx_test_ext_junit",
-        "@maven//:androidx_test_core",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
+        "//third_party/java/androidx/annotation",
+        "//third_party/java/robolectric",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
@@ -54,7 +53,7 @@ android_library(
     srcs = ["MyTestPreviousCompilation.java"],
     deps = [
         "//:android_local_test_exports",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
     ],
 )
 
@@ -63,17 +62,15 @@ compiler_test(
     srcs = ["MyTestPreviousCompilationTest.java"],
     compiler_deps = [
         ":MyTestPreviousCompilation",
-        "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-        "@androidsdk//:platforms/android-32/android.jar",
-        "@maven//:androidx_annotation_annotation",
-        "@maven//:org_robolectric_robolectric",
-        "@maven//:androidx_test_ext_junit",
-        "@maven//:androidx_test_core",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
+        "//third_party/java/androidx/annotation",
+        "//third_party/java/robolectric",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
@@ -84,17 +81,15 @@ compiler_test(
     name = "RootProcessorErrorsTest",
     srcs = ["RootProcessorErrorsTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-        "@androidsdk//:platforms/android-32/android.jar",
-        "@maven//:androidx_annotation_annotation",
-        "@maven//:org_robolectric_robolectric",
-        "@maven//:androidx_test_ext_junit",
-        "@maven//:androidx_test_core",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
+        "//third_party/java/androidx/annotation",
+        "//third_party/java/robolectric",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
     ],
@@ -104,17 +99,15 @@ compiler_test(
     name = "RootFileFormatterTest",
     srcs = ["RootFileFormatterTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-        "@androidsdk//:platforms/android-32/android.jar",
-        "@maven//:androidx_annotation_annotation",
-        "@maven//:org_robolectric_robolectric",
-        "@maven//:androidx_test_ext_junit",
-        "@maven//:androidx_test_core",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
+        "//third_party/java/androidx/annotation",
+        "//third_party/java/robolectric",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",

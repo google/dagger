@@ -16,21 +16,15 @@
 
 package dagger.internal.codegen;
 
-import static androidx.room.compiler.processing.util.ProcessorTestExtKt.runProcessorTest;
 import static com.google.common.truth.Truth.assertThat;
 import static dagger.internal.codegen.extension.DaggerCollectors.onlyElement;
 import static dagger.internal.codegen.xprocessing.XTypes.stripVariances;
 
 import androidx.room.compiler.processing.XMethodElement;
-import androidx.room.compiler.processing.XProcessingEnvConfig;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.util.Source;
-import androidx.room.compiler.processing.util.XTestInvocation;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.TypeName;
 import dagger.testing.compile.CompilerTests;
-import java.util.function.Function;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -149,54 +143,39 @@ public class XTypesStripTypeNameTest {
 
   @Test
   public void typeVariableSameVariableName() {
-    runTest(
+    CompilerTests.invocationCompiler(
         CompilerTests.javaSource(
-            "Subject",
-            "interface Subject {",
-            "  <T extends Bar> Foo<T> method1();",
-            "  <T extends Baz> Foo<T> method2();",
-            "",
-            "  interface Foo<T> {}",
-            "  interface Bar {}",
-            "  interface Baz {}",
-            "}"),
-        invocation -> {
-          XTypeElement subject = invocation.getProcessingEnv().requireTypeElement("Subject");
-          TypeName method1ReturnTypeName =
-              getDeclaredMethod(subject, "method1").getReturnType().getTypeName();
-          TypeName method2ReturnTypeName =
-              getDeclaredMethod(subject, "method2").getReturnType().getTypeName();
-          assertThat(method1ReturnTypeName).isEqualTo(method2ReturnTypeName);
-          return null;
-        });
+              "Subject",
+              "interface Subject {",
+              "  <T extends Bar> Foo<T> method1();",
+              "  <T extends Baz> Foo<T> method2();",
+              "",
+              "  interface Foo<T> {}",
+              "  interface Bar {}",
+              "  interface Baz {}",
+              "}"))
+        .compile(
+            invocation -> {
+              XTypeElement subject = invocation.getProcessingEnv().requireTypeElement("Subject");
+              TypeName method1ReturnTypeName =
+                  getDeclaredMethod(subject, "method1").getReturnType().getTypeName();
+              TypeName method2ReturnTypeName =
+                  getDeclaredMethod(subject, "method2").getReturnType().getTypeName();
+              assertThat(method1ReturnTypeName).isEqualTo(method2ReturnTypeName);
+            });
   }
 
   private static void assertStrippedWildcardTypeNameEquals(Source source, String strippedTypeName) {
-    runTest(
-        source,
-        invocation -> {
-          XTypeElement subject = invocation.getProcessingEnv().requireTypeElement("Subject");
-          TypeName returnTypeName =
-              getDeclaredMethod(subject, "method").getReturnType().getTypeName();
-          assertThat(stripVariances(returnTypeName).toString().replace("Subject.", ""))
-              .isEqualTo(strippedTypeName);
-          return null;
-        });
-  }
-
-  private static void runTest(Source source, Function<XTestInvocation, Void> handler) {
-    runProcessorTest(
-        ImmutableList.of(source),
-        /* classpath= */ ImmutableList.of(),
-        /* options= */ ImmutableMap.of(),
-        /* javacArguments= */ ImmutableList.of(),
-        /* kotlincArguments= */ ImmutableList.of(
-            ),
-        /* config= */ new XProcessingEnvConfig.Builder().build(),
-        /* handler= */ invocation -> {
-          handler.apply(invocation);
-          return null;
-        });
+    CompilerTests.invocationCompiler(source)
+        .compile(
+            invocation -> {
+              XTypeElement subject = invocation.getProcessingEnv().requireTypeElement("Subject");
+              TypeName returnTypeName =
+                  getDeclaredMethod(subject, "method").getReturnType().getTypeName();
+              assertThat(stripVariances(returnTypeName).toString().replace("Subject.", ""))
+                  .isEqualTo(strippedTypeName);
+            }
+        );
   }
 
   private static XMethodElement getDeclaredMethod(XTypeElement typeElement, String jvmName) {

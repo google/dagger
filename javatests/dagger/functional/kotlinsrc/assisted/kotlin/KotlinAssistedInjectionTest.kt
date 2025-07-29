@@ -28,8 +28,11 @@ class KotlinAssistedInjectionTest {
   @Component
   internal interface TestComponent {
     fun fooFactory(): FooFactory
+
     fun fooDataFactory(): FooDataFactory
+
     fun barManagerFactory(): BarManager.Factory
+
   }
 
   @Test

@@ -18,8 +18,6 @@
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenKtTests")
 
-package(default_visibility = ["//:src"])
-
 GenKtTests(
     name = "CycleTest",
     srcs = [
@@ -27,15 +25,13 @@ GenKtTests(
         "Cycles.kt",
     ],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    test_only_deps = [
-        "//third_party/java/guava/base",
-        "//third_party/java/guava:testlib",
-        "//third_party/java/truth",
-        "//third_party/java/junit",
-    ],
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
+        "//third_party/java/guava:testlib",
+        "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )
 
@@ -43,14 +39,14 @@ GenKtTests(
     name = "DoubleCheckCycleTest",
     srcs = ["DoubleCheckCycleTest.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    test_only_deps = [
+    deps = [
+        "//third_party/java/dagger",
+        "//third_party/java/guava:testlib",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
-        "//third_party/java/guava:testlib",
         "//third_party/java/guava/util/concurrent",
-        "//third_party/java/truth",
         "//third_party/java/junit",
-        "//:dagger_with_compiler",
+        "//third_party/java/truth",
     ],
 )
 
@@ -61,15 +57,13 @@ GenKtTests(
         "LongCycleTest.kt",
     ],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    test_only_deps = [
+    deps = [
+        "//third_party/java/dagger",
+        "//third_party/java/guava:testlib",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
-        "//third_party/java/guava:testlib",
-        "//third_party/java/truth",
         "//third_party/java/javapoet",
         "//third_party/java/junit",
-    ],
-    deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/truth",
     ],
 )

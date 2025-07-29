@@ -17,13 +17,12 @@
 package dagger.hilt.processor.internal.generatesrootinput;
 
 import static com.google.common.truth.Truth.assertThat;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
-import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler.Mode;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XRoundEnv;
 import androidx.room.compiler.processing.util.Source;
-import com.google.common.truth.Correspondence;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
@@ -43,7 +42,7 @@ public final class GeneratesRootInputProcessorTest {
   private static final int GENERATED_CLASSES = 5;
   private static final ClassName TEST_ANNOTATION = ClassName.get("test", "TestAnnotation");
 
-  private final List<XElement> elementsToWaitFor = new ArrayList<>();
+  private final List<String> elementsToWaitFor = new ArrayList<>();
   private int generatedClasses = 0;
 
   public final class TestAnnotationStep extends BaseProcessingStep {
@@ -57,7 +56,10 @@ public final class GeneratesRootInputProcessorTest {
     @Override
     public void postProcess(XProcessingEnv processingEnv, XRoundEnv round) {
       if (generatedClasses > 0) {
-        elementsToWaitFor.addAll(generatesRootInputs.getElementsToWaitFor(round));
+        elementsToWaitFor.addAll(
+            generatesRootInputs.getElementsToWaitFor(round).stream()
+                .map(element -> XElements.asTypeElement(element).getQualifiedName())
+                .collect(toImmutableList()));
       }
       if (generatedClasses < GENERATED_CLASSES) {
         TypeSpec typeSpec =
@@ -84,10 +86,6 @@ public final class GeneratesRootInputProcessorTest {
             subject -> {
               subject.hasErrorCount(0);
               assertThat(elementsToWaitFor)
-                  .comparingElementsUsing(
-                      Correspondence.<XElement, String>transforming(
-                          element -> XElements.asTypeElement(element).getQualifiedName(),
-                          "has qualified name of"))
                   .containsExactly("foo.Foo0", "foo.Foo1", "foo.Foo2", "foo.Foo3", "foo.Foo4")
                   .inOrder();
               elementsToWaitFor.clear();

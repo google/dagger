@@ -14,5 +14,3 @@
 #
 # Description:
 #   Dagger examples
-
-package(default_visibility = ["//:src"])

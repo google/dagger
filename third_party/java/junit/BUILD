@@ -24,3 +24,8 @@ java_library(
     exports = ["@maven//:junit_junit"],
     runtime_deps = ["//third_party/java/hamcrest"],
 )
+
+alias(
+    name = "junit-android",
+    actual = "@maven//:junit_junit",
+)

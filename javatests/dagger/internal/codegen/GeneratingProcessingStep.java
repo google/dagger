@@ -16,27 +16,30 @@
 
 package dagger.internal.codegen;
 
-import static androidx.room.compiler.processing.JavaPoetExtKt.addOriginatingElement;
+import static androidx.room.compiler.codegen.compat.XConverters.toJavaPoet;
 
+import androidx.room.compiler.codegen.CodeLanguage;
+import androidx.room.compiler.codegen.XFileSpec;
+import androidx.room.compiler.codegen.XTypeName;
+import androidx.room.compiler.codegen.XTypeSpec;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingStep;
 import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeSpec;
+import dagger.internal.codegen.xprocessing.XTypeSpecs;
 import java.util.Map;
 import java.util.Set;
 
 /** A simple {@link XProcessingStep} that generates one source file. */
 final class GeneratingProcessingStep implements XProcessingStep {
+  private static final CodeLanguage CODE_LANGUAGE = CodeLanguage.JAVA;
   private final String pkgName;
-  private final TypeSpec typeSpec;
+  private final XTypeSpec typeSpec;
 
-  // TODO(bcorso): Ideally we'd be able to pass in a Source rather than a TypeSpec for tests, but
+  // TODO(bcorso): Ideally we'd be able to pass in a Source rather than a XTypeSpec for tests, but
   // that would require XFiler supporting more generic writing of source files
-  GeneratingProcessingStep(String pkgName, TypeSpec typeSpec) {
+  GeneratingProcessingStep(String pkgName, XTypeSpec typeSpec) {
     this.pkgName = pkgName;
     this.typeSpec = typeSpec;
   }
@@ -52,13 +55,16 @@ final class GeneratingProcessingStep implements XProcessingStep {
   @Override
   public ImmutableSet<XElement> process(
       XProcessingEnv env, Map<String, ? extends Set<? extends XElement>> elementsByAnnotation) {
-    String generatedClassName = String.format("%s.%s", pkgName, typeSpec.name);
+    String generatedClassName = String.format("%s.%s", pkgName, toJavaPoet(typeSpec.getName()));
     if (env.findTypeElement(generatedClassName) == null) {
       // Add an arbitrary orginating element, otherwise XProcessing will output a warning in KSP.
-      TypeSpec.Builder builder = typeSpec.toBuilder();
-      addOriginatingElement(builder, env.requireTypeElement(TypeName.OBJECT));
-      env.getFiler()
-          .write(JavaFile.builder(pkgName, builder.build()).build(), XFiler.Mode.Isolating);
+      XTypeSpec generatedTypeSpec =
+          XTypeSpecs.toBuilder(typeSpec)
+              .addOriginatingElement(env.requireTypeElement(XTypeName.ANY_OBJECT))
+              .build();
+      XFileSpec.builder(pkgName, generatedTypeSpec)
+          .build()
+          .writeTo(CODE_LANGUAGE, env.getFiler(), XFiler.Mode.Isolating);
     }
     return ImmutableSet.of();
   }

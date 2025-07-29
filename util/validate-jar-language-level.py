@@ -97,7 +97,6 @@ def is_shaded_class(filename):
   # Ignore the shaded deps because we don't really control these classes.
   shaded_prefixes = [
       'dagger/spi/internal/shaded/',
-      'dagger/grpc/shaded/',
   ]
   for shaded_prefix in shaded_prefixes:
     if filename.startswith(shaded_prefix):

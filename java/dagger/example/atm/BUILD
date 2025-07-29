@@ -23,7 +23,7 @@ package(default_visibility = ["//:src"])
 java_library(
     name = "atm",
     srcs = glob(["*.java"]),
-    deps = ["//:dagger_with_compiler"],
+    deps = ["//third_party/java/dagger"],
 )
 
 java_binary(

@@ -21,7 +21,7 @@ plugins {
 
 android {
     compileSdkVersion 33
-    buildToolsVersion "33.0.0"
+    buildToolsVersion "33.0.1"
 
     flavorDimensions 'api', 'version'
     productFlavors {
@@ -47,6 +47,8 @@ android {
         minSdkVersion 16
         targetSdkVersion 33
     }
+
+    namespace = "simple.library"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11

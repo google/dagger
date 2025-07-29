@@ -28,10 +28,10 @@ GenJavaTests(
     name = "RawTypesComponentTest",
     srcs = ["RawTypesComponentTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
-    test_only_deps = [
+    deps = [
+        "//third_party/java/dagger",
         "//third_party/java/guava/collect",
-        "//third_party/java/truth",
         "//third_party/java/junit",
-        "//:dagger_with_compiler",
+        "//third_party/java/truth",
     ],
 )

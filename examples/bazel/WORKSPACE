@@ -41,8 +41,8 @@ load(
 
 android_sdk_repository(
     name = "androidsdk",
-    api_level = 32,
-    build_tools_version = "32.0.0",
+    api_level = 34,
+    build_tools_version = "34.0.0",
 )
 
 #############################
@@ -51,10 +51,13 @@ android_sdk_repository(
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+ROBOLECTRIC_VERSION = "4.11.1"
+
 http_archive(
     name = "robolectric",
-    strip_prefix = "robolectric-bazel-4.1",
-    urls = ["https://github.com/robolectric/robolectric-bazel/archive/4.1.tar.gz"],
+    sha256 = "1ea1cfe67848decf959316e80dd69af2bbaa359ae2195efe1366cbdf3e968356",
+    strip_prefix = "robolectric-bazel-%s" % ROBOLECTRIC_VERSION,
+    urls = ["https://github.com/robolectric/robolectric-bazel/releases/download/%s/robolectric-bazel-%s.tar.gz" % (ROBOLECTRIC_VERSION, ROBOLECTRIC_VERSION)],
 )
 
 load("@robolectric//bazel:robolectric.bzl", "robolectric_repositories")
@@ -84,8 +87,8 @@ maven_install(
         "androidx.test:runner:1.1.1",
         "com.google.truth:truth:1.0.1",
         "junit:junit:4.13",
-        "org.robolectric:robolectric:4.1",
-        "org.robolectric:annotations:4.1",
+        "org.robolectric:robolectric:%s" % ROBOLECTRIC_VERSION,
+        "org.robolectric:annotations:%s" % ROBOLECTRIC_VERSION,
     ],
     repositories = DAGGER_REPOSITORIES + HILT_ANDROID_REPOSITORIES,
 )

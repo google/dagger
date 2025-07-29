@@ -15,64 +15,61 @@
 # Description:
 #   Tests for the Dagger compiler/codegen
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_java//java:defs.bzl", "java_library")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenCompilerTests")
 
 package(default_visibility = ["//:src"])
+
+# TODO(bcorso): Move this into a subpackage.
+KT_LIB_NO_DAGGER_COMPILER_SRCS = [
+    "KotlinInjectedQualifier.kt",
+    "KotlinObjectWithMemberInjection.kt",
+]
 
 # These sources are purposely compiled without the Dagger compiler for certain tests.
 kt_jvm_library(
     name = "kt_lib_no_dagger_compiler",
-    srcs = [
-        "KotlinInjectedQualifier.kt",
-        "KotlinObjectWithMemberInjection.kt",
-    ],
+    srcs = KT_LIB_NO_DAGGER_COMPILER_SRCS,
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/main/java/dagger:core",
     ],
 )
 
-# These sources are purposely compiled without the Dagger compiler for certain tests.
-java_library(
-    name = "java_lib_no_dagger_compiler",
-    srcs = [
-        "ComponentProcessorTestClasses.java",
-        "InvalidInjectConstructor.java",
-    ],
-    deps = [
-        "//third_party/java/jsr330_inject",
-    ],
-)
+COMPILERS_SRCS = [
+    "CompilerMode.java",
+    "Compilers.java",
+    "ComponentCreatorTestHelper.java",
+    "DaggerModuleMethodSubject.java",
+    "GeneratingProcessingStep.java",
+    "JavaFileBuilder.java",
+    "TestUtils.java",
+    "GeneratedLines.java",
+    "GeneratingProcessor.java",
+]
 
-# TODO(bcorso): Move this into a subpackage.
+# TODO(bcorso): Move this into a dagger-testing/ package?
 java_library(
     name = "compilers",
-    srcs = [
-        "CompilerMode.java",
-        "Compilers.java",
-        "ComponentCreatorTestHelper.java",
-        "DaggerModuleMethodSubject.java",
-        "GeneratingProcessingStep.java",
-        "JavaFileBuilder.java",
-        "TestUtils.java",
-    ],
+    srcs = COMPILERS_SRCS,
     deps = [
-        "//java/dagger:core",
-        "//java/dagger/internal/codegen:package_info",
-        "//java/dagger/internal/codegen:processor",
-        "//java/dagger/internal/codegen/base",
-        "//java/dagger/internal/codegen/binding",
-        "//java/dagger/internal/codegen/xprocessing",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
-        "//java/dagger/producers",
+        "//dagger-compiler:xprocessing",
+        "//dagger-compiler/main/java/dagger/internal/codegen:package_info",
+        "//dagger-compiler/main/java/dagger/internal/codegen:processor",
+        "//dagger-compiler/main/java/dagger/internal/codegen/base",
+        "//dagger-compiler/main/java/dagger/internal/codegen/binding",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xpoet",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-producers/main/java/dagger/producers",
+        "//dagger-runtime/main/java/dagger:core",
         "//java/dagger/testing/compile",
+        "//third_party/java/auto:value_processor",
         "//third_party/java/compile_testing",
+        "//third_party/java/error_prone:annotations",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
-        "//third_party/java/javapoet",
         "//third_party/java/truth",
-        "@maven//:com_google_auto_value_auto_value",
     ],
 )
 
@@ -104,13 +101,12 @@ MEDIUM_TESTS = [
 
 DEPS = [
     ":compilers",
-    ":java_lib_no_dagger_compiler",
     ":kt_lib_no_dagger_compiler",
     "//third_party/java/guava/base",
     "//third_party/java/guava/collect",
     "//third_party/java/guava/util/concurrent",
     "//third_party/java/auto:value",
-    "@maven//:com_google_auto_value_auto_value",
+    "//third_party/java/auto:value_processor",
     "//third_party/java/auto:common",
     "//third_party/java/compile_testing",
     "//third_party/java/javapoet",
@@ -119,69 +115,54 @@ DEPS = [
     "//third_party/java/junit",
     "//third_party/java/mockito",
     "//third_party/java/truth",
-    "//java/dagger:core",
-    "//java/dagger/internal/codegen:package_info",
-    "//java/dagger/internal/codegen:processor",
-    "//java/dagger/internal/codegen/base",
-    "//java/dagger/internal/codegen/binding",
-    "//java/dagger/internal/codegen/bindinggraphvalidation",
-    "//java/dagger/internal/codegen/compileroption",
-    "//java/dagger/internal/codegen/extension",
-    "//java/dagger/internal/codegen/javac",
-    "//java/dagger/internal/codegen/javapoet",
-    "//java/dagger/internal/codegen/kotlin",
-    "//java/dagger/internal/codegen/langmodel",
-    "//java/dagger/internal/codegen/model",
-    "//java/dagger/internal/codegen/validation",
-    "//java/dagger/internal/codegen/writing",
-    "//java/dagger/internal/codegen/xprocessing",
-    "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
-    "//java/dagger/model/testing",
-    "//java/dagger/producers",
-    "//java/dagger/spi",
-    "//java/dagger/spi/model/testing",
+    "//dagger-runtime/main/java/dagger:core",
+    "//dagger-compiler/main/java/dagger/internal/codegen:package_info",
+    "//dagger-compiler/main/java/dagger/internal/codegen:processor",
+    "//dagger-compiler/main/java/dagger/internal/codegen/base",
+    "//dagger-compiler/main/java/dagger/internal/codegen/binding",
+    "//dagger-compiler/main/java/dagger/internal/codegen/bindinggraphvalidation",
+    "//dagger-compiler/main/java/dagger/internal/codegen/compileroption",
+    "//dagger-compiler/main/java/dagger/internal/codegen/javac",
+    "//dagger-compiler/main/java/dagger/internal/codegen/kotlin",
+    "//dagger-compiler/main/java/dagger/internal/codegen/model",
+    "//dagger-compiler/main/java/dagger/internal/codegen/validation",
+    "//dagger-compiler/main/java/dagger/internal/codegen/writing",
+    "//dagger-compiler:xprocessing",
+    "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xpoet",
+    "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+    "//dagger-producers/main/java/dagger/producers",
+    "//dagger-spi",
+    "//dagger-testing/main/java/dagger/model/testing",
+    "//dagger-testing/main/java/dagger/spi/model/testing",
     "//java/dagger/testing/compile",
     "//java/dagger/testing/golden",
 ]
 
-GenJavaTests(
+GenCompilerTests(
     name = "large_compiler_tests",
     srcs = LARGE_TESTS,
-    functional = False,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    plugins = ["//java/dagger/internal/codegen/bootstrap"],
+    plugins = ["//dagger-compiler/main/java/dagger/internal/codegen/bootstrap"],
     shard_count = 7,
     deps = DEPS,
 )
 
-GenJavaTests(
+GenCompilerTests(
     name = "medium_compiler_tests",
     srcs = MEDIUM_TESTS,
-    functional = False,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    plugins = ["//java/dagger/internal/codegen/bootstrap"],
+    plugins = ["//dagger-compiler/main/java/dagger/internal/codegen/bootstrap"],
     shard_count = 3,
     deps = DEPS,
 )
 
-GenJavaTests(
+GenCompilerTests(
     name = "compiler_tests",
     srcs = glob(
         ["*.java"],
-        exclude = [
-            "CompilerMode.java",
-            "Compilers.java",
-            "ComponentCreatorTestHelper.java",
-            "ComponentProcessorTestClasses.java",
-            "DaggerModuleMethodSubject.java",
-            "GeneratingProcessingStep.java",
-            "InvalidInjectConstructor.java",
-            "JavaFileBuilder.java",
-            "TestUtils.java",
-        ] + LARGE_TESTS + MEDIUM_TESTS,
+        exclude = KT_LIB_NO_DAGGER_COMPILER_SRCS + COMPILERS_SRCS + LARGE_TESTS + MEDIUM_TESTS,
     ),
-    functional = False,
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    plugins = ["//java/dagger/internal/codegen/bootstrap"],
+    plugins = ["//dagger-compiler/main/java/dagger/internal/codegen/bootstrap"],
     deps = DEPS,
 )

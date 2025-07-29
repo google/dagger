@@ -15,7 +15,7 @@
 # Description:
 #   Functional test code for Dagger-Android
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_java//java:defs.bzl", "java_library")
 load("//:test_defs.bzl", "GenJavaTests")
 
@@ -24,16 +24,13 @@ package(default_visibility = ["//:src"])
 GenJavaTests(
     name = "PropertyQualifierTest",
     srcs = ["PropertyQualifierTest.java"],
-    functional = True,
-    test_only_deps = [
+    deps = [
+        ":FooWithInjectedQualifier",
+        ":PropertyQualifierClasses",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
-    ],
-    deps = [
-        ":FooWithInjectedQualifier",
-        ":PropertyQualifierClasses",
     ],
 )
 
@@ -45,8 +42,8 @@ kt_jvm_library(
     deps = [
         ":FooWithInjectedQualifier",
         ":java_qualifier",
-        "//:dagger_with_compiler",
         "//javatests/dagger/functional/kotlin/processor:annotation",
+        "//third_party/java/dagger",
     ],
 )
 
@@ -55,7 +52,7 @@ kt_jvm_library(
     srcs = ["FooWithInjectedQualifier.kt"],
     deps = [
         ":java_qualifier",
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
     ],
 )
 
@@ -66,22 +63,19 @@ java_library(
         "JavaTestQualifierWithTarget.java",
     ],
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
     ],
 )
 
 GenJavaTests(
     name = "ObjectModuleTest",
     srcs = ["ObjectModuleTest.java"],
-    functional = True,
-    test_only_deps = [
+    deps = [
+        ":ObjectModuleClasses",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
-    ],
-    deps = [
-        ":ObjectModuleClasses",
     ],
 )
 
@@ -94,22 +88,19 @@ kt_jvm_library(
     # TODO(danysantiago): Remove 'plugins' once kt_jvm_library supports 'exported_plugins'.
     plugins = ["//javatests/dagger/functional/kotlin/processor:plugin"],
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
     ],
 )
 
 GenJavaTests(
     name = "DependsOnGeneratedCodeTest",
     srcs = ["DependsOnGeneratedCodeTest.java"],
-    functional = True,
-    test_only_deps = [
+    deps = [
+        ":DependsOnGeneratedCodeClasses",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
-    ],
-    deps = [
-        ":DependsOnGeneratedCodeClasses",
     ],
 )
 
@@ -119,23 +110,20 @@ kt_jvm_library(
     # TODO(danysantiago): Remove 'plugins' once kt_jvm_library supports 'exported_plugins'.
     plugins = ["//javatests/dagger/functional/kotlin/processor:plugin"],
     deps = [
-        "//:dagger_with_compiler",
         "//third_party/java/auto:factory",
+        "//third_party/java/dagger",
     ],
 )
 
 GenJavaTests(
     name = "CompanionModuleTest",
     srcs = ["CompanionModuleTest.java"],
-    functional = True,
-    test_only_deps = [
+    deps = [
+        ":CompanionModuleClasses",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
-    ],
-    deps = [
-        ":CompanionModuleClasses",
     ],
 )
 
@@ -145,6 +133,6 @@ kt_jvm_library(
     # TODO(danysantiago): Remove 'plugins' once kt_jvm_library supports 'exported_plugins'.
     plugins = ["//javatests/dagger/functional/kotlin/processor:plugin"],
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
     ],
 )

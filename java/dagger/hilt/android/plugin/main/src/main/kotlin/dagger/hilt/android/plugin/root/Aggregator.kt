@@ -128,6 +128,8 @@ private constructor(
             var originatingRootPackage: String? = null
             val originatingRootSimpleNames = mutableListOf<String>()
             lateinit var rootAnnotationClassName: Type
+            lateinit var rootComponentPackage: String
+            val rootComponentSimpleNames = mutableListOf<String>()
 
             override fun visit(name: String, value: Any?) {
               when (name) {
@@ -136,6 +138,7 @@ private constructor(
                 "originatingRoot" -> originatingRootClass = value as String
                 "originatingRootPackage" -> originatingRootPackage = value as String
                 "rootAnnotation" -> rootAnnotationClassName = (value as Type)
+                "rootComponentPackage" -> rootComponentPackage = value as String
                 else -> error("Unexpected annotation value: $name")
               }
               super.visit(name, value)
@@ -149,6 +152,7 @@ private constructor(
                   when (name) {
                     "rootSimpleNames" -> rootSimpleNames.add(value as String)
                     "originatingRootSimpleNames" -> originatingRootSimpleNames.add(value as String)
+                    "rootComponentSimpleNames" -> rootComponentSimpleNames.add(value as String)
                     else -> error("Unexpected annotation value: $name")
                   }
                   super.visit(passThroughValueName, value)
@@ -157,20 +161,23 @@ private constructor(
             }
 
             override fun visitEnd() {
-              val rootClassName = parseClassName(rootPackage, rootSimpleNames, rootClass)
+              val rootClassName = parseClassNameWithFallback(
+                rootPackage, rootSimpleNames, rootClass)
               val originatingRootClassName =
-                parseClassName(
+                parseClassNameWithFallback(
                   originatingRootPackage,
                   originatingRootSimpleNames,
                   originatingRootClass
                 )
+              val rootComponentName = parseClassName(rootComponentPackage, rootComponentSimpleNames)
 
               aggregatedRoots.add(
                 AggregatedRootIr(
                   fqName = annotatedClassName,
                   root = rootClassName,
                   originatingRoot = originatingRootClassName,
-                  rootAnnotation = rootAnnotationClassName.toClassName()
+                  rootAnnotation = rootAnnotationClassName.toClassName(),
+                  rootComponentName = rootComponentName,
                 )
               )
               super.visitEnd()
@@ -432,24 +439,28 @@ private constructor(
       return ClassName.get(packageName, shortNames.first(), *shortNames.drop(1).toTypedArray())
     }
 
-    fun parseClassName(
+    fun parseClassNameWithFallback(
       packageName: String?,
       simpleNames: List<String>,
-      fallbackCanonicalName: String
+      fallbackCanonicalName: String,
     ): ClassName {
       if (packageName != null) {
-        check(simpleNames.isNotEmpty())
-        return ClassName.get(
-          packageName,
-          simpleNames.first(),
-          *simpleNames.subList(1, simpleNames.size).toTypedArray()
-        )
+        return parseClassName(packageName, simpleNames)
       } else {
         // This is very unlikely, but if somehow an aggregated root is coming from a jar build with
         // a previous Dagger version before the package name attribute was introduced, we should
         // fallback to the old behavior of trying to guess at the name.
         return ClassName.bestGuess(fallbackCanonicalName)
       }
+    }
+
+    fun parseClassName(packageName: String, simpleNames: List<String>): ClassName {
+      check(simpleNames.isNotEmpty())
+        return ClassName.get(
+          packageName,
+          simpleNames.first(),
+          *simpleNames.subList(1, simpleNames.size).toTypedArray()
+        )
     }
   }
 }

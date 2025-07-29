@@ -33,6 +33,13 @@ public class ComponentRequirementFieldTest {
     return CompilerMode.TEST_PARAMETERS;
   }
 
+  private static final Source NON_TYPE_USE_NULLABLE =
+      CompilerTests.javaSource(
+          "test.Nullable", // force one-string-per-line format
+          "package test;",
+          "",
+          "public @interface Nullable {}");
+
   @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
 
   private final CompilerMode compilerMode;
@@ -65,6 +72,38 @@ public class ComponentRequirementFieldTest {
             "  }",
             "}");
     CompilerTests.daggerCompiler(component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
+  }
+
+  @Test
+  public void testBindsNullableInstance() throws Exception {
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  @Component.Factory",
+            "  interface Factory {",
+            "    TestComponent create(@BindsInstance @Nullable Bar arg);",
+            "}",
+            "}");
+    Source bar =
+        CompilerTests.javaSource(
+            "test.Bar", // force one-string-per-line format
+            "package test;",
+            "",
+            "interface Bar {}");
+    CompilerTests.daggerCompiler(component, bar, NON_TYPE_USE_NULLABLE)
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(
             subject -> {

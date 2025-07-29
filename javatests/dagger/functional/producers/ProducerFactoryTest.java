@@ -17,6 +17,7 @@
 package dagger.functional.producers;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
@@ -186,9 +187,11 @@ public class ProducerFactoryTest {
     order.verifyNoMoreInteractions();
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void nullComponentMonitorProvider() throws Exception {
-    SimpleProducerModule_StrFactory.create(executorProvider, null);
+    assertThrows(
+        NullPointerException.class,
+        () -> SimpleProducerModule_StrFactory.create(executorProvider, null));
   }
 
   private static <T> CancellableProducer<T> producerOfFuture(final ListenableFuture<T> future) {

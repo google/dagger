@@ -37,7 +37,6 @@ import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import javax.inject.Named;
 import javax.inject.Qualifier;
-import javax.inject.Singleton;
 
 @ProducerModule(includes = {
     SimpleBindingModule.ExecutorModule.class,
@@ -54,7 +53,6 @@ abstract class SimpleBindingModule {
   abstract Foo<? extends Number> bindFooOfNumbers(Foo<Integer> fooOfIntegers);
 
   @Binds
-  @Singleton
   @SomeQualifier
   abstract Foo<String> bindQualifiedFooOfStrings(FooOfStrings impl);
 

@@ -1,0 +1,46 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import java.util.List;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class InjectConstructor_Factory implements Factory<InjectConstructor> {
+  private final Provider<List<?>> objectsProvider;
+
+  private InjectConstructor_Factory(Provider<List<?>> objectsProvider) {
+    this.objectsProvider = objectsProvider;
+  }
+
+  @Override
+  public InjectConstructor get() {
+    return newInstance(objectsProvider.get());
+  }
+
+  public static InjectConstructor_Factory create(Provider<List<?>> objectsProvider) {
+    return new InjectConstructor_Factory(objectsProvider);
+  }
+
+  public static InjectConstructor newInstance(List<?> objects) {
+    return new InjectConstructor(objects);
+  }
+}

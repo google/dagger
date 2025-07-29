@@ -455,11 +455,10 @@ public final class ModuleValidationTest {
                   subject.hasErrorContaining(error).onSource(module).onLineContaining("// second");
                   break;
                 case KSP:
-                  // KSP doesn't support reporting errors on individual annotation values, so both
-                  // errors will be reported on the annotation itself.
+                  // TODO(b/381557487): KSP2 reports the error on the wrong line.
                   subject.hasErrorContaining(error)
                       .onSource(module)
-                      .onLineContaining("@" + moduleType.simpleName());
+                      .onLineContaining("includes = {");
                   break;
               }
             });

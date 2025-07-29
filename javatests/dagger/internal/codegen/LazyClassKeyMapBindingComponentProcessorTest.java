@@ -16,15 +16,14 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
+import static com.google.common.truth.TruthJUnit.assume;
 
+import androidx.room.compiler.processing.XProcessingEnv.Backend;
 import androidx.room.compiler.processing.util.Source;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import com.google.auto.value.processor.AutoAnnotationProcessor;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,11 +45,10 @@ public class LazyClassKeyMapBindingComponentProcessorTest {
     this.compilerMode = compilerMode;
   }
 
-  // Cannot convert to use ksp as this test relies on AutoAnnotationProcessor.
   @Test
   public void mapBindingsWithInaccessibleKeys() throws Exception {
-    JavaFileObject mapKeys =
-        JavaFileObjects.forSourceLines(
+    Source mapKeys =
+        CompilerTests.javaSource(
             "mapkeys.MapKeys",
             "package mapkeys;",
             "",
@@ -67,8 +65,8 @@ public class LazyClassKeyMapBindingComponentProcessorTest {
             "",
             "  interface Inaccessible {}",
             "}");
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
+    Source moduleFile =
+        CompilerTests.javaSource(
             "mapkeys.MapModule",
             "package mapkeys;",
             "",
@@ -109,8 +107,8 @@ public class LazyClassKeyMapBindingComponentProcessorTest {
             "  )",
             "  static int complexKeyWithInaccessibleAnnotationValue() { return 1; }",
             "}");
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -128,22 +126,22 @@ public class LazyClassKeyMapBindingComponentProcessorTest {
             "  Map<MapKeys.ComplexKey, Integer> complexKey();",
             "  Provider<Map<MapKeys.ComplexKey, Integer>> complexKeyProvider();",
             "}");
-    Compilation compilation =
-        Compilers.compilerWithOptions(compilerMode.javacopts())
-            .compile(mapKeys, moduleFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
-    assertThat(compilation)
-        .generatedSourceFile(
-            "mapkeys.MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey")
-        .hasSourceEquivalentTo(
-            goldenFileRule.goldenFile(
-                "mapkeys.MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey"));
-    assertThat(compilation)
-        .generatedSourceFile("mapkeys.MapModule_ClassKeyMapKey")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("mapkeys.MapModule_ClassKeyMapKey"));
+    CompilerTests.daggerCompiler(mapKeys, moduleFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .withAdditionalJavacProcessors(new AutoAnnotationProcessor())
+        .compile(
+          subject -> {
+              // TODO(b/264464791): There is no AutoAnnotationProcessor for KSP.
+              assume().that(CompilerTests.backend(subject)).isNotEqualTo(Backend.KSP);
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+              subject.generatedSource(
+                  goldenFileRule.goldenSource(
+                      "mapkeys.MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey"));
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("mapkeys.MapModule_ClassKeyMapKey"));
+            }
+        );
   }
 
   @Test
@@ -186,7 +184,11 @@ public class LazyClassKeyMapBindingComponentProcessorTest {
             "}");
     CompilerTests.daggerCompiler(fooBar, fooBar2, mapKeyBindingsModule, componentFile)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(subject -> subject.hasErrorCount(0));
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   @Test
@@ -271,5 +273,190 @@ public class LazyClassKeyMapBindingComponentProcessorTest {
     CompilerTests.daggerCompiler(fooBar, fooBar2, mapKeyBindingsModule, componentFile)
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void testProguardFile() throws Exception {
+    Source fooKey =
+        CompilerTests.javaSource(
+            "test.FooKey",
+            "package test;",
+            "",
+            "interface FooKey {}");
+    Source fooKeyModule =
+        CompilerTests.javaSource(
+            "test.FooKeyModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.LazyClassKey;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "public interface FooKeyModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @LazyClassKey(FooKey.class)",
+            "  static String provideString() { return \"\"; }",
+            "}");
+    CompilerTests.daggerCompiler(fooKey, fooKeyModule)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedTextResourceFileWithPath(
+                      "META-INF/proguard/test_FooKeyModule_LazyClassKeys.pro")
+                  .isEqualTo("-keep,allowobfuscation,allowshrinking class test.FooKey");
+            });
+  }
+
+  @Test
+  public void testProguardFile_nestedModule() throws Exception {
+    Source fooKey =
+        CompilerTests.javaSource(
+            "test.FooKey",
+            "package test;",
+            "",
+            "interface FooKey {}");
+    Source outerClass =
+        CompilerTests.javaSource(
+            "test.OuterClass",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.LazyClassKey;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "public interface OuterClass {",
+            "  @Module",
+            "  public interface FooKeyModule {",
+            "    @Provides",
+            "    @IntoMap",
+            "    @LazyClassKey(FooKey.class)",
+            "    static String provideString() { return \"\"; }",
+            "  }",
+            "}");
+    CompilerTests.daggerCompiler(fooKey, outerClass)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedTextResourceFileWithPath(
+                      "META-INF/proguard/test_OuterClass_FooKeyModule_LazyClassKeys.pro")
+                  .isEqualTo("-keep,allowobfuscation,allowshrinking class test.FooKey");
+            });
+  }
+
+  @Test
+  public void testProguardFile_multipleModules() throws Exception {
+    Source fooKey =
+        CompilerTests.javaSource(
+            "test.FooKey",
+            "package test;",
+            "",
+            "interface FooKey {}");
+    Source barKey =
+        CompilerTests.javaSource(
+            "test.BarKey",
+            "package test;",
+            "",
+            "interface BarKey {}");
+    Source fooKeyModule =
+        CompilerTests.javaSource(
+            "test.FooKeyModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.LazyClassKey;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "public interface FooKeyModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @LazyClassKey(FooKey.class)",
+            "  static String provideString() { return \"\"; }",
+            "}");
+    Source barKeyModule =
+        CompilerTests.javaSource(
+            "test.BarKeyModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.LazyClassKey;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "public interface BarKeyModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @LazyClassKey(BarKey.class)",
+            "  static String provideString() { return \"\"; }",
+            "}");
+    CompilerTests.daggerCompiler(fooKey, fooKeyModule, barKey, barKeyModule)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedTextResourceFileWithPath(
+                      "META-INF/proguard/test_FooKeyModule_LazyClassKeys.pro")
+                  .isEqualTo("-keep,allowobfuscation,allowshrinking class test.FooKey");
+              subject.generatedTextResourceFileWithPath(
+                      "META-INF/proguard/test_BarKeyModule_LazyClassKeys.pro")
+                  .isEqualTo("-keep,allowobfuscation,allowshrinking class test.BarKey");
+            });
+  }
+
+  @Test
+  public void testProguardFile_multipleKeys() throws Exception {
+    Source fooKey =
+        CompilerTests.javaSource(
+            "test.FooKey",
+            "package test;",
+            "",
+            "interface FooKey {}");
+    Source barKey =
+        CompilerTests.javaSource(
+            "test.BarKey",
+            "package test;",
+            "",
+            "interface BarKey {}");
+    Source fooKeyAndBarKeyModule =
+        CompilerTests.javaSource(
+            "test.FooKeyAndBarKeyModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.LazyClassKey;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "public interface FooKeyAndBarKeyModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @LazyClassKey(FooKey.class)",
+            "  static String provideFooKeyString() { return \"\"; }",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @LazyClassKey(BarKey.class)",
+            "  static String provideBarKeyString() { return \"\"; }",
+            "}");
+    CompilerTests.daggerCompiler(fooKey, barKey, fooKeyAndBarKeyModule)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedTextResourceFileWithPath(
+                      "META-INF/proguard/test_FooKeyAndBarKeyModule_LazyClassKeys.pro")
+                  .isEqualTo(
+                      "-keep,allowobfuscation,allowshrinking class test.FooKey\n"
+                          + "-keep,allowobfuscation,allowshrinking class test.BarKey");
+            });
   }
 }

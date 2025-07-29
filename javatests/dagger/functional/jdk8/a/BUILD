@@ -24,18 +24,17 @@ GenJavaTests(
         "OptionalBindingComponentsWithInaccessibleTypes.java",
         "OptionalBindingComponentsWithInaccessibleTypesTest.java",
     ],
+    gen_library_deps = [
+        "//javatests/dagger/functional/jdk8:optional_binding_components",
+    ],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    require_jdk7_syntax = False,
-    test_only_deps = [
+    deps = [
+        "//third_party/java/auto:value",
+        "//third_party/java/dagger",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
+        "//third_party/java/jsr305_annotations",
         "//third_party/java/junit",
         "//third_party/java/truth",
-    ],
-    deps = [
-        "//:dagger_with_compiler",
-        "//javatests/dagger/functional/jdk8:optional_binding_components",
-        "//third_party/java/auto:value",
-        "//third_party/java/jsr305_annotations",
     ],
 )

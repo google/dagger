@@ -17,6 +17,7 @@
 package dagger.functional.multibindings;
 
 import dagger.Component;
+import dagger.MembersInjector;
 import dagger.functional.multibindings.subpackage.ContributionsModule;
 import dagger.multibindings.StringKey;
 import java.util.Collection;
@@ -67,4 +68,8 @@ interface MultibindingComponent {
 
   @Named("complexQualifier")
   Map<String, CharSequence> maybeEmptyQualifiedMap();
+
+  Map<Class<?>, MembersInjector<?>> membersInjectorMap();
+
+  Set<MembersInjector<?>> membersInjectorSet();
 }

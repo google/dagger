@@ -15,6 +15,7 @@
 -->
 <module>
   <inherits name="javax.inject.Inject" />
-
+  <inherits name="jakarta.inject.Inject" />
+  <inherits name="org.jspecify.Jspecify" />
   <source path=""/>
 </module>

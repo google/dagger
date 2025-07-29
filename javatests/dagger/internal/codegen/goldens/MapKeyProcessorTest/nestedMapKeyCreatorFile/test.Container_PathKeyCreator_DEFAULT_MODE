@@ -1,0 +1,29 @@
+package test;
+
+import com.google.auto.value.AutoAnnotation;
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class Container_PathKeyCreator {
+  private Container_PathKeyCreator() {
+  }
+
+  @AutoAnnotation
+  public static Container.PathKey createPathKey(PathEnum value, String relativePath) {
+    return new AutoAnnotation_Container_PathKeyCreator_createPathKey(value, relativePath);
+  }
+}

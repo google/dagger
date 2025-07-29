@@ -1,0 +1,25 @@
+name: 'Gradle Build'
+description: 'Builds artifacts using Gradle.'
+
+runs:
+  using: "composite"
+  steps:
+  - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_GRADLE }}'
+    uses: actions/setup-java@v4
+    with:
+      distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
+      java-version: '${{ env.USE_JAVA_VERSION_FOR_GRADLE }}'
+  - name: 'Check out repository'
+    uses: actions/checkout@v4
+  - name: 'Cache Gradle files'
+    uses: actions/cache@v4
+    with:
+      path: |
+        ~/.gradle/caches
+        ~/.gradle/wrapper
+      key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+      restore-keys: |
+        ${{ runner.os }}-gradle-
+  - name: 'Build Gradle version'
+    run: ./util/build-gradle.sh
+    shell: bash

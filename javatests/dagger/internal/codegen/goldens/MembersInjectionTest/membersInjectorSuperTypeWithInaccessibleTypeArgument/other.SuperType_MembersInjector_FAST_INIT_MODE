@@ -1,0 +1,100 @@
+package other;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import java.util.List;
+import javax.annotation.processing.Generated;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class SuperType_MembersInjector<T> implements MembersInjector<SuperType<T>> {
+  private final Provider<T> tProvider;
+
+  private final Provider<List<T>> listTProvider;
+
+  private final Provider<List<? extends T>> listExtendsTProvider;
+
+  private final Provider<List<? extends T>[]> arrayListExtendsTProvider;
+
+  private final Provider<T> tProvider2;
+
+  private final Provider<List<T>> listTProvider2;
+
+  private final Provider<List<? extends T>> listExtendsTProvider2;
+
+  private final Provider<List<? extends T>[]> arrayListExtendsTProvider2;
+
+  private SuperType_MembersInjector(Provider<T> tProvider, Provider<List<T>> listTProvider,
+      Provider<List<? extends T>> listExtendsTProvider,
+      Provider<List<? extends T>[]> arrayListExtendsTProvider, Provider<T> tProvider2,
+      Provider<List<T>> listTProvider2, Provider<List<? extends T>> listExtendsTProvider2,
+      Provider<List<? extends T>[]> arrayListExtendsTProvider2) {
+    this.tProvider = tProvider;
+    this.listTProvider = listTProvider;
+    this.listExtendsTProvider = listExtendsTProvider;
+    this.arrayListExtendsTProvider = arrayListExtendsTProvider;
+    this.tProvider2 = tProvider2;
+    this.listTProvider2 = listTProvider2;
+    this.listExtendsTProvider2 = listExtendsTProvider2;
+    this.arrayListExtendsTProvider2 = arrayListExtendsTProvider2;
+  }
+
+  public static <T> MembersInjector<SuperType<T>> create(Provider<T> tProvider,
+      Provider<List<T>> listTProvider, Provider<List<? extends T>> listExtendsTProvider,
+      Provider<List<? extends T>[]> arrayListExtendsTProvider, Provider<T> tProvider2,
+      Provider<List<T>> listTProvider2, Provider<List<? extends T>> listExtendsTProvider2,
+      Provider<List<? extends T>[]> arrayListExtendsTProvider2) {
+    return new SuperType_MembersInjector<T>(tProvider, listTProvider, listExtendsTProvider, arrayListExtendsTProvider, tProvider2, listTProvider2, listExtendsTProvider2, arrayListExtendsTProvider2);
+  }
+
+  @Override
+  public void injectMembers(SuperType<T> instance) {
+    injectT(instance, tProvider.get());
+    injectListT(instance, listTProvider.get());
+    injectListExtendsT(instance, listExtendsTProvider.get());
+    injectArrayListExtendsT(instance, arrayListExtendsTProvider.get());
+    injectMethod(instance, tProvider2.get(), listTProvider2.get(), listExtendsTProvider2.get(), arrayListExtendsTProvider2.get());
+  }
+
+  @InjectedFieldSignature("other.SuperType.t")
+  public static <T> void injectT(SuperType<T> instance, T t) {
+    instance.t = t;
+  }
+
+  @InjectedFieldSignature("other.SuperType.listT")
+  public static <T> void injectListT(SuperType<T> instance, List<T> listT) {
+    instance.listT = listT;
+  }
+
+  @InjectedFieldSignature("other.SuperType.listExtendsT")
+  public static <T> void injectListExtendsT(SuperType<T> instance, List<? extends T> listExtendsT) {
+    instance.listExtendsT = listExtendsT;
+  }
+
+  @InjectedFieldSignature("other.SuperType.arrayListExtendsT")
+  public static <T> void injectArrayListExtendsT(SuperType<T> instance,
+      List<? extends T>[] arrayListExtendsT) {
+    instance.arrayListExtendsT = arrayListExtendsT;
+  }
+
+  public static <T> void injectMethod(SuperType<T> instance, T t, List<T> listT,
+      List<? extends T> listExtendsT, List<? extends T>[] arrayListExtendsT) {
+    instance.method(t, listT, listExtendsT, arrayListExtendsT);
+  }
+}

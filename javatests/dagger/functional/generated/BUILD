@@ -24,14 +24,12 @@ GenJavaTests(
     name = "generated",
     srcs = glob(["*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    test_only_deps = [
-        "//third_party/java/guava:testlib",
-        "//third_party/java/truth",
-        "//third_party/java/junit",
-    ],
     deps = [
-        "//:dagger_with_compiler",
         "//third_party/java/auto:factory",
         "//third_party/java/auto:value",
+        "//third_party/java/dagger",
+        "//third_party/java/guava:testlib",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )

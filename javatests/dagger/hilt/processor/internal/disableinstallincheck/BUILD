@@ -17,25 +17,23 @@
 
 load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
-package(default_visibility = ["//:src"])
-
 compiler_test(
     name = "DisableInstallInCheckProcessorErrorsTest",
     size = "small",
     srcs = ["DisableInstallInCheckProcessorErrorsTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/migration:disable_install_in_check",
-        "//:dagger_with_compiler",
+        "//hilt-core/main/java/dagger/hilt/migration:disable_install_in_check",
+        "//third_party/java/dagger",
         "//third_party/java/jsr250_annotations",
-        "//java/dagger/hilt:entry_point",
-        "//java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android/components",
+        "//hilt-core/main/java/dagger/hilt:entry_point",
+        "//hilt-core/main/java/dagger/hilt:install_in",
+        "//hilt-android/main/java/dagger/hilt/android/components",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/hilt/processor/internal/disableinstallincheck:processor_lib",
-        "//java/dagger/internal/codegen/xprocessing",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler:xprocessing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal/disableinstallincheck:processor_lib",
         "//third_party/java/junit",
     ],
 )

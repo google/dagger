@@ -44,9 +44,9 @@ attempt to delete the `build/` folder will also delete the bazel `BUILD` files.
             [download](https://developer.android.com/studio#command-tools)
             and unzip it first.
         *   Install the necessary components. For example, under Linux, run:
-            `$ANDROID_HOME/tools/bin/sdkmanager "platforms;android-32" "build-tools;32.0.0"`
+            `$ANDROID_HOME/tools/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"`
             *   If you skip this step, you will see an error similar to
-                `ERROR: missing input file '@androidsdk//:build-tools/32.0.0/aapt'`.
+                `ERROR: missing input file '@androidsdk//:build-tools/34.0.0/aapt'`.
             *   You may also need to run `bazel sync`.
 *   Run tests with `bazel test <target>`, or `bazel test //...` to run all
     tests.

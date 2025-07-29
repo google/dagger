@@ -16,17 +16,14 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static com.google.common.truth.TruthJUnit.assume;
 
+import androidx.room.compiler.processing.XProcessingEnv.Backend;
 import androidx.room.compiler.processing.util.Source;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import com.google.auto.value.processor.AutoAnnotationProcessor;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -158,8 +155,8 @@ public class MapBindingComponentProcessorTest {
 
   @Test
   public void mapBindingsWithInaccessibleKeys() throws Exception {
-    JavaFileObject mapKeys =
-        JavaFileObjects.forSourceLines(
+    Source mapKeys =
+        CompilerTests.javaSource(
             "mapkeys.MapKeys",
             "package mapkeys;",
             "",
@@ -183,8 +180,8 @@ public class MapBindingComponentProcessorTest {
             "",
             "  interface Inaccessible {}",
             "}");
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
+    Source moduleFile =
+        CompilerTests.javaSource(
             "mapkeys.MapModule",
             "package mapkeys;",
             "",
@@ -231,8 +228,8 @@ public class MapBindingComponentProcessorTest {
             "  )",
             "  static int complexKeyWithInaccessibleAnnotationValue() { return 1; }",
             "}");
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -253,20 +250,22 @@ public class MapBindingComponentProcessorTest {
             "  Map<MapKeys.ComplexKey, Integer> complexKey();",
             "  Provider<Map<MapKeys.ComplexKey, Integer>> complexKeyProvider();",
             "}");
-    Compilation compilation = daggerCompiler().compile(mapKeys, moduleFile, componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
-    assertThat(compilation)
-        .generatedSourceFile(
-            "mapkeys.MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey")
-        .hasSourceEquivalentTo(
-            goldenFileRule.goldenFile(
-                "mapkeys.MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey"));
-    assertThat(compilation)
-        .generatedSourceFile("mapkeys.MapModule_ClassKeyMapKey")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("mapkeys.MapModule_ClassKeyMapKey"));
+    CompilerTests.daggerCompiler(mapKeys, moduleFile, componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .withAdditionalJavacProcessors(new AutoAnnotationProcessor())
+        .compile(
+          subject -> {
+              // TODO(b/264464791): There is no AutoAnnotationProcessor for KSP.
+              assume().that(CompilerTests.backend(subject)).isNotEqualTo(Backend.KSP);
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+              subject.generatedSource(
+                  goldenFileRule.goldenSource(
+                      "mapkeys/MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey"));
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("mapkeys/MapModule_ClassKeyMapKey"));
+            }
+        );
   }
 
   @Test
@@ -356,93 +355,101 @@ public class MapBindingComponentProcessorTest {
 
   @Test
   public void mapBindingsWithWrappedKey() throws Exception {
-    JavaFileObject mapModuleOneFile =
-        JavaFileObjects
-            .forSourceLines("test.MapModuleOne",
-                "package test;",
-                "",
-                "import dagger.Module;",
-                "import dagger.Provides;",
-                "import dagger.multibindings.IntoMap;",
-                "",
-                "@Module",
-                "final class MapModuleOne {",
-                "  @Provides @IntoMap",
-                "  @WrappedClassKey(Integer.class) Handler provideAdminHandler() {",
-                "    return new AdminHandler();",
-                "  }",
-                "}");
-    JavaFileObject mapModuleTwoFile =
-        JavaFileObjects
-            .forSourceLines("test.MapModuleTwo",
-                "package test;",
-                "",
-                "import dagger.Module;",
-                "import dagger.Provides;",
-                "import dagger.multibindings.IntoMap;",
-                "",
-                "@Module",
-                "final class MapModuleTwo {",
-                "  @Provides @IntoMap",
-                "  @WrappedClassKey(Long.class) Handler provideLoginHandler() {",
-                "    return new LoginHandler();",
-                "  }",
-                "}");
-    JavaFileObject wrappedClassKeyFile = JavaFileObjects.forSourceLines("test.WrappedClassKey",
-        "package test;",
-        "import dagger.MapKey;",
-        "import java.lang.annotation.Retention;",
-        "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
-        "",
-        "@MapKey(unwrapValue = false)",
-        "@Retention(RUNTIME)",
-        "public @interface WrappedClassKey {",
-        "  Class<?> value();",
-        "}");
-    JavaFileObject handlerFile =
-        JavaFileObjects.forSourceLines("test.Handler", "package test;", "", "interface Handler {}");
-    JavaFileObject loginHandlerFile =
-        JavaFileObjects.forSourceLines(
+    Source mapModuleOneFile =
+        CompilerTests.javaSource(
+            "test.MapModuleOne",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "final class MapModuleOne {",
+            "  @Provides @IntoMap",
+            "  @WrappedClassKey(Integer.class) Handler provideAdminHandler() {",
+            "    return new AdminHandler();",
+            "  }",
+            "}");
+    Source mapModuleTwoFile =
+        CompilerTests.javaSource(
+            "test.MapModuleTwo",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "",
+            "@Module",
+            "final class MapModuleTwo {",
+            "  @Provides @IntoMap",
+            "  @WrappedClassKey(Long.class) Handler provideLoginHandler() {",
+            "    return new LoginHandler();",
+            "  }",
+            "}");
+    Source wrappedClassKeyFile =
+        CompilerTests.javaSource(
+            "test.WrappedClassKey",
+            "package test;",
+            "import dagger.MapKey;",
+            "import java.lang.annotation.Retention;",
+            "import static java.lang.annotation.RetentionPolicy.RUNTIME;",
+            "",
+            "@MapKey(unwrapValue = false)",
+            "@Retention(RUNTIME)",
+            "public @interface WrappedClassKey {",
+            "  Class<?> value();",
+            "}");
+    Source handlerFile =
+        CompilerTests.javaSource("test.Handler", "package test;", "", "interface Handler {}");
+    Source loginHandlerFile =
+        CompilerTests.javaSource(
             "test.LoginHandler",
             "package test;",
             "",
             "class LoginHandler implements Handler {",
             "  public LoginHandler() {}",
             "}");
-    JavaFileObject adminHandlerFile =
-        JavaFileObjects.forSourceLines(
+    Source adminHandlerFile =
+        CompilerTests.javaSource(
             "test.AdminHandler",
             "package test;",
             "",
             "class AdminHandler implements Handler {",
             "  public AdminHandler() {}",
             "}");
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.TestComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "import java.util.Map;",
-        "import javax.inject.Provider;",
-        "",
-        "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
-        "interface TestComponent {",
-        "  Provider<Map<WrappedClassKey, Provider<Handler>>> dispatcher();",
-        "}");
+    Source componentFile =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Map;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = {MapModuleOne.class, MapModuleTwo.class})",
+            "interface TestComponent {",
+            "  Provider<Map<WrappedClassKey, Provider<Handler>>> dispatcher();",
+            "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode.javacopts())
-            .compile(
-                mapModuleOneFile,
-                mapModuleTwoFile,
-                wrappedClassKeyFile,
-                handlerFile,
-                loginHandlerFile,
-                adminHandlerFile,
-                componentFile);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(
+            mapModuleOneFile,
+            mapModuleTwoFile,
+            wrappedClassKeyFile,
+            handlerFile,
+            loginHandlerFile,
+            adminHandlerFile,
+            componentFile)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .withAdditionalJavacProcessors(new AutoAnnotationProcessor())
+        .compile(
+          subject -> {
+              // TODO(b/264464791): There is no AutoAnnotationProcessor for KSP.
+              assume().that(CompilerTests.backend(subject)).isNotEqualTo(Backend.KSP);
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            }
+        );
   }
 
   @Test

@@ -1,0 +1,79 @@
+[versions]
+androidCompileSdk = "35"
+androidGradlePlugin = "8.9.2"
+androidMinSdk = "21"
+autoFactory = "1.0"
+autoService = "1.0"
+autoValue = "1.9"
+lint = "30.3.1"
+guava = "33.0.0-jre"
+gradleIncap = "0.2"
+jdk = "17"
+junit = "4.13"
+jvmTarget = "1.8"
+kotlin = "2.0.21"
+kotlinTarget = "1.9"
+ksp = "2.0.21-1.0.28"
+publish = "0.30.0"
+shadow = "8.3.5"
+truth = "1.4.0"
+
+[libraries]
+androidGradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "androidGradlePlugin" }
+androidx-annotations = { module = "androidx.annotation:annotation", version = "1.1.0" }
+androidx-activity = { module = "androidx.activity:activity", version = "1.5.1" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version = "1.3.1" }
+androidx-fragment = { module = "androidx.fragment:fragment", version = "1.5.1" }
+androidx-lint = { module = "androidx.lint:lint-gradle", version = "1.0.0-alpha04" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version = "1.2.1" }
+auto-common = { module = "com.google.auto:auto-common", version = "1.2.1" }
+auto-factory-annotations = { module = "com.google.auto.factory:auto-factory", version.ref = "autoFactory" }
+auto-factory-compiler = { module = "com.google.auto.factory:auto-factory", version.ref = "autoFactory" }
+auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoService" }
+auto-service-compiler = { module = "com.google.auto.service:auto-service", version.ref = "autoService" }
+auto-value-annotations = { module = "com.google.auto.value:auto-value-annotations", version.ref = "autoValue" }
+auto-value-compiler = { module = "com.google.auto.value:auto-value", version.ref = "autoValue" }
+binaryCompatibilityValidatorPlugin = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version = "0.17.0" }
+checkerFramework = { module = "org.checkerframework:checker-compat-qual", version = "2.5.3" }
+errorprone-annotations = { module = "com.google.errorprone:error_prone_annotations", version = "2.23.0" }
+findBugs = { module = "com.google.code.findbugs:jsr305", version = "3.0.1" }
+guava-jre = { module = "com.google.guava:guava", version.ref = "guava" }
+guava-failureAccess = { module = "com.google.guava:failureaccess", version = "1.0.1" }
+gradleIncap-annotations = { module = "net.ltgt.gradle.incap:incap", version.ref = "gradleIncap" }
+gradleIncap-compiler = { module = "net.ltgt.gradle.incap:incap-processor", version.ref = "gradleIncap" }
+javaFormatter = { module = "com.google.googlejavaformat:google-java-format", version = "1.5" }
+javaCompileTesting = { module = "com.google.testing.compile:compile-testing", version = "0.18" }
+jakarta-inject = { module = "jakarta.inject:jakarta.inject-api", version = "2.0.1" }
+javaPoet = { module = "com.squareup:javapoet", version = "1.13.0" }
+javax-inject = { module = "javax.inject:javax.inject", version = "1" }
+jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
+junit = { module = "junit:junit", version.ref = "junit" }
+kotlin-annotationProcessingEmbeddable = { module = "org.jetbrains.kotlin:kotlin-annotation-processing-embeddable", version.ref = "kotlin"  }
+kotlin-compilerEmbeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
+kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-metadataJvm = { module = "org.jetbrains.kotlin:kotlin-metadata-jvm", version.ref = "kotlin" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlinPoet = { module = "com.squareup:kotlinpoet", version = "1.11.0" }
+kotlinPoet-javaPoet = { module = "com.squareup:kotlinpoet-javapoet", version = "1.11.0" }
+ksp = { module = "com.google.devtools.ksp:symbol-processing", version.ref = "ksp" }
+ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+ksp-common = { module = "com.google.devtools.ksp:symbol-processing-common-deps", version.ref = "ksp" }
+ksp-embeddable = { module = "com.google.devtools.ksp:symbol-processing-aa-embeddable", version.ref = "ksp" }
+lint-api = { module = "com.android.tools.lint:lint-api", version.ref = "lint" }
+lint-checks = { module = "com.android.tools.lint:lint-checks", version.ref = "lint" }
+lint-tests = { module = "com.android.tools.lint:lint-tests", version.ref = "lint" }
+publishPlugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "publish" }
+robolectric = { module = "org.robolectric:robolectric", version = "4.14.1" }
+truth = { module = "com.google.truth:truth", version.ref = "truth" }
+shadowPlugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow" }
+
+[plugins]
+android-library = { id = "com.android.library" }
+binaryCompatibilityValidator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator" }
+daggerBuild = { id = "dagger.gradle.build" }
+kapt = { id = "org.jetbrains.kotlin.kapt" }
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+lint = { id = "com.android.lint", version.ref = "androidGradlePlugin" }
+publish = { id = "com.vanniktech.maven.publish", version.ref = "publish" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

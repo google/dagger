@@ -1,0 +1,92 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerBComponent {
+  private DaggerBComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  static final class Builder {
+    private NullableStringComponent nullableStringComponent;
+
+    private Builder() {
+    }
+
+    public Builder nullableStringComponent(NullableStringComponent nullableStringComponent) {
+      this.nullableStringComponent = Preconditions.checkNotNull(nullableStringComponent);
+      return this;
+    }
+
+    public BComponent build() {
+      Preconditions.checkBuilderRequirement(nullableStringComponent, NullableStringComponent.class);
+      return new BComponentImpl(nullableStringComponent);
+    }
+  }
+
+  private static final class BComponentImpl implements BComponent {
+    private final NullableStringComponent nullableStringComponent;
+
+    private final BComponentImpl bComponentImpl = this;
+
+    Provider<@Nullable String> nullableStringProvider;
+
+    BComponentImpl(NullableStringComponent nullableStringComponentParam) {
+      this.nullableStringComponent = nullableStringComponentParam;
+      initialize(nullableStringComponentParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final NullableStringComponent nullableStringComponentParam) {
+      this.nullableStringProvider = new SwitchingProvider<>(bComponentImpl, 0);
+    }
+
+    @Override
+    public B b() {
+      return new B(nullableStringProvider);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final BComponentImpl bComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
+        this.bComponentImpl = bComponentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // java.lang.String
+          return (T) bComponentImpl.nullableStringComponent.nullableString();
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}

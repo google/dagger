@@ -1,0 +1,45 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class FieldInjection_MembersInjector implements MembersInjector<FieldInjection> {
+  private final Provider<String> stringProvider;
+
+  private FieldInjection_MembersInjector(Provider<String> stringProvider) {
+    this.stringProvider = stringProvider;
+  }
+
+  public static MembersInjector<FieldInjection> create(Provider<String> stringProvider) {
+    return new FieldInjection_MembersInjector(stringProvider);
+  }
+
+  @Override
+  public void injectMembers(FieldInjection instance) {
+    injectString(instance, stringProvider.get());
+  }
+
+  @InjectedFieldSignature("test.FieldInjection.string")
+  public static void injectString(Object instance, @Nullable String string) {
+    ((FieldInjection) (instance)).string = string;
+  }
+}

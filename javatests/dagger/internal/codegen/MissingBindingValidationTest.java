@@ -32,6 +32,10 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class MissingBindingValidationTest {
+  private static final String JVM_SUPPRESS_WILDCARDS_MESSAGE =
+      "(For Kotlin sources, you may need to use '@JvmSuppressWildcards' or '@JvmWildcard' if you "
+          + "need to explicitly control the wildcards at a particular usage site.)";
+
   @Parameters(name = "{0}")
   public static ImmutableList<Object[]> parameters() {
     return CompilerMode.TEST_PARAMETERS;
@@ -289,6 +293,370 @@ public class MissingBindingValidationTest {
               subject.hasErrorContaining(
                   "Foo<? extends Number> cannot be provided "
                       + "without an @Provides-annotated method");
+            });
+  }
+
+  @Test
+  public void requestSimilarKey_withDifferentVariance() {
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Foo<Bar<String>> getFooBarString();",
+            "}");
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static Foo<? extends Bar<? extends String>> provideFooBarString() {",
+            "    return null;",
+            "  }",
+            "}");
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "interface Foo<T> {}");
+    Source bar =
+        CompilerTests.javaSource(
+            "test.Bar",
+            "package test;",
+            "",
+            "interface Bar<T> {}");
+    CompilerTests.daggerCompiler(component, module, foo, bar)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  String.join(
+                      "\n",
+                      "Foo<Bar<String>> cannot be provided without an @Provides-annotated method.",
+                      "",
+                      "    Foo<Bar<String>> is requested at",
+                      "        [TestComponent] TestComponent.getFooBarString()",
+                      "",
+                      "Note: A similar binding is provided in the following other components:",
+                      "    Foo<? extends Bar<? extends String>> is provided at:",
+                      "        [TestComponent] TestModule.provideFooBarString()",
+                      JVM_SUPPRESS_WILDCARDS_MESSAGE,
+                      "",
+                      "======================"));
+            });
+  }
+
+  @Test
+  public void requestSimilarKey_withRawTypeArgument() {
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Foo<Bar<Baz>> getFooBarBaz();",
+            "}");
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static Foo<Bar<Baz<String>>> provideFooBarBazString() {",
+            "    return null;",
+            "  }",
+            "}");
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "interface Foo<T> {}");
+    Source bar =
+        CompilerTests.javaSource(
+            "test.Bar",
+            "package test;",
+            "",
+            "interface Bar<T> {}");
+    Source baz =
+        CompilerTests.javaSource(
+            "test.Baz",
+            "package test;",
+            "",
+            "interface Baz<T> {}");
+    CompilerTests.daggerCompiler(component, module, foo, bar, baz)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  String.join(
+                      "\n",
+                      "Foo<Bar<Baz>> cannot be provided without an @Provides-annotated method.",
+                      "",
+                      "    Foo<Bar<Baz>> is requested at",
+                      "        [TestComponent] TestComponent.getFooBarBaz()",
+                      "",
+                      "Note: A similar binding is provided in the following other components:",
+                      "    Foo<Bar<Baz<String>>> is provided at:",
+                      "        [TestComponent] TestModule.provideFooBarBazString()",
+                      JVM_SUPPRESS_WILDCARDS_MESSAGE,
+                      "",
+                      "======================"));
+            });
+  }
+
+  @Test
+  public void requestSimilarKey_complexRawType() {
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.List;",
+            "import java.util.Map;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Map<List, Map<List, Map>> getRawComplex();",
+            "}");
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.List;",
+            "import java.util.Map;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static Map<List<String>, Map<List<String>, Map<String, String>>> provideComplex() {",
+            "    return null;",
+            "  }",
+            "}");
+    CompilerTests.daggerCompiler(component, module)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  String.join(
+                      "\n",
+                      "Map<List,Map<List,Map>> cannot be provided without an @Provides-annotated "
+                          + "method.",
+                      "",
+                      "    Map<List,Map<List,Map>> is requested at",
+                      "        [TestComponent] TestComponent.getRawComplex()",
+                      "",
+                      "Note: A similar binding is provided in the following other components:",
+                      "    Map<List<String>,Map<List<String>,Map<String,String>>> is provided at:",
+                      "        [TestComponent] TestModule.provideComplex()",
+                      JVM_SUPPRESS_WILDCARDS_MESSAGE,
+                      "",
+                      "======================"));
+            });
+  }
+
+  @Test
+  public void noSimilarKey_withRawTypeArgument() {
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Foo<Bar<Baz>> getFooBarBaz();",
+            "}");
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static Foo<Bar<Bar>> provideFooBarBar() {",
+            "    return null;",
+            "  }",
+            "}");
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "interface Foo<T> {}");
+    Source bar =
+        CompilerTests.javaSource(
+            "test.Bar",
+            "package test;",
+            "",
+            "interface Bar<T> {}");
+    Source baz =
+        CompilerTests.javaSource(
+            "test.Baz",
+            "package test;",
+            "",
+            "interface Baz<T> {}");
+    CompilerTests.daggerCompiler(component, module, foo, bar, baz)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  String.join(
+                      "\n",
+                      "Foo<Bar<Baz>> cannot be provided without an @Provides-annotated method.",
+                      "",
+                      "    Foo<Bar<Baz>> is requested at",
+                      "        [TestComponent] TestComponent.getFooBarBaz()",
+                      "",
+                      "======================"));
+            });
+  }
+
+  @Test
+  public void requestSimilarKey_differentQualifier() {
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Named;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  @Named(\"requested\") Foo getNamedRequestedFoo();",
+            "}");
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Named;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static @Named(\"provided\") Foo provideNamedProvidedFoo() {",
+            "    return null;",
+            "  }",
+            "}");
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "interface Foo {}");
+    CompilerTests.daggerCompiler(component, module, foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  String.join(
+                      "\n",
+                      "@Named(\"requested\") Foo cannot be provided without an @Provides-annotated "
+                          + "method.",
+                      "",
+                      "    @Named(\"requested\") Foo is requested at",
+                      "        [TestComponent] TestComponent.getNamedRequestedFoo()",
+                      "",
+                      "Note: A similar binding is provided in the following other components:",
+                      "    @Named(\"provided\") Foo is provided at:",
+                      "        [TestComponent] TestModule.provideNamedProvidedFoo()",
+                      JVM_SUPPRESS_WILDCARDS_MESSAGE,
+                      "",
+                      "======================"));
+            });
+  }
+
+  @Test
+  public void requestSimilarKey_withoutQualifier() {
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = TestModule.class)",
+            "interface TestComponent {",
+            "  Foo getFoo();",
+            "}");
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Named;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides",
+            "  static @Named(\"provided\") Foo provideNamedProvidedFoo() {",
+            "    return null;",
+            "  }",
+            "}");
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "interface Foo {}");
+    CompilerTests.daggerCompiler(component, module, foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  String.join(
+                      "\n",
+                      "Foo cannot be provided without an @Provides-annotated method.",
+                      "",
+                      "    Foo is requested at",
+                      "        [TestComponent] TestComponent.getFoo()",
+                      "",
+                      "Note: A similar binding is provided in the following other components:",
+                      "    @Named(\"provided\") Foo is provided at:",
+                      "        [TestComponent] TestModule.provideNamedProvidedFoo()",
+                      JVM_SUPPRESS_WILDCARDS_MESSAGE,
+                      "",
+                      "======================"));
             });
   }
 
@@ -1097,7 +1465,9 @@ public class MissingBindingValidationTest {
                       "        [Child1] Child1.getObject() [Parent → Child1]",
                       "",
                       "Note: Object is provided in the following other components:",
-                      "    [Child2] Child2Module.provideObject()"));
+                      "    [Child2] Child2Module.provideObject()",
+                      "",
+                      "======================"));
             });
   }
 
@@ -1218,7 +1588,9 @@ public class MissingBindingValidationTest {
                           + "[Parent → Child1 → RepeatedSub]",
                       "",
                       "Note: Object is provided in the following other components:",
-                      "    [Child2] Child2Module.provideObject(…)"));
+                      "    [Child2] Child2Module.provideObject(…)",
+                      "",
+                      "======================"));
             });
   }
 
@@ -1349,7 +1721,9 @@ public class MissingBindingValidationTest {
                       "        [Sub] Sub.getObject() [Parent → Child1 → Sub]",
                       "",
                       "Note: Object is provided in the following other components:",
-                      "    [Child2] Child2Module.provideObject(…)"));
+                      "    [Child2] Child2Module.provideObject(…)",
+                      "",
+                      "======================"));
             });
   }
 
@@ -1449,7 +1823,10 @@ public class MissingBindingValidationTest {
                           "",
                           "Note: A similar binding is provided in the following other components:",
                           "    Set<Bar> is provided at:",
-                          "        [MyComponent] Dagger-generated binding for Set<Bar>"))
+                          "        [MyComponent] Dagger-generated binding for Set<Bar>",
+                          JVM_SUPPRESS_WILDCARDS_MESSAGE,
+                          "",
+                          "======================"))
                   .onSource(component)
                   .onLineContaining("interface MyComponent");
             });
@@ -1519,7 +1896,10 @@ public class MissingBindingValidationTest {
                           "",
                           "Note: A similar binding is provided in the following other components:",
                           "    Set<Bar> is provided at:",
-                          "        [MyComponent] Dagger-generated binding for Set<Bar>"))
+                          "        [MyComponent] Dagger-generated binding for Set<Bar>",
+                          JVM_SUPPRESS_WILDCARDS_MESSAGE,
+                          "",
+                          "======================"))
                   .onSource(component)
                   .onLineContaining("interface MyComponent");
             });
@@ -1592,7 +1972,10 @@ public class MissingBindingValidationTest {
                           "",
                           "Note: A similar binding is provided in the following other components:",
                           "    Set<Bar> is provided at:",
-                          "        [MyComponent] Dagger-generated binding for Set<Bar>"))
+                          "        [MyComponent] Dagger-generated binding for Set<Bar>",
+                          JVM_SUPPRESS_WILDCARDS_MESSAGE,
+                          "",
+                          "======================"))
                   .onSource(component)
                   .onLineContaining("interface MyComponent");
             });
@@ -1654,7 +2037,10 @@ public class MissingBindingValidationTest {
                           "",
                           "Note: A similar binding is provided in the following other components:",
                           "    List<? extends Bar> is provided at:",
-                          "        [MyComponent] TestModule.provideBars()"))
+                          "        [MyComponent] TestModule.provideBars()",
+                          JVM_SUPPRESS_WILDCARDS_MESSAGE,
+                          "",
+                          "======================"))
                   .onSource(component)
                   .onLineContaining("interface MyComponent");
             });
@@ -1729,7 +2115,10 @@ public class MissingBindingValidationTest {
                           "",
                           "Note: A similar binding is provided in the following other components:",
                           "    Bar<Baz,Baz,Set<Baz>> is provided at:",
-                          "        [MyComponent] TestModule.provideBar()"))
+                          "        [MyComponent] TestModule.provideBar()",
+                          JVM_SUPPRESS_WILDCARDS_MESSAGE,
+                          "",
+                          "======================"))
                   .onSource(component)
                   .onLineContaining("interface MyComponent");
             });
@@ -1865,7 +2254,10 @@ public class MissingBindingValidationTest {
                       "",
                       "Note: A similar binding is provided in the following other components:",
                       "    Bar is provided at:",
-                      "        [MyComponent] TestModule.provideBar()"));
+                      "        [MyComponent] TestModule.provideBar()",
+                      JVM_SUPPRESS_WILDCARDS_MESSAGE,
+                      "",
+                      "======================"));
             });
   }
 
@@ -1922,5 +2314,219 @@ public class MissingBindingValidationTest {
               assertThat(diagnostics.get(0).getMsg())
                   .doesNotContain("bindings with similar types exists in the graph");
             });
+  }
+
+  // Regression test for b/367426609
+  @Test
+  public void failsWithMissingBindingInGrandchild() {
+    Source parent =
+        CompilerTests.javaSource(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = ParentModule.class)",
+            "interface Parent {",
+            "  Child child();",
+            "}");
+    Source child =
+        CompilerTests.javaSource(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  Grandchild grandchild();",
+            "}");
+    Source grandchild =
+        CompilerTests.javaSource(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules=GrandchildModule.class)",
+            "interface Grandchild {",
+            // Note: it's important that Qux is first to reproduce the error in b/367426609.
+            "  Qux getQux();",
+            "  Foo getFoo();",
+            "}");
+    Source parentModule =
+        CompilerTests.javaSource(
+            "test.ParentModule",
+            "package test;",
+            "",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Optional;",
+            "",
+            "@Module",
+            "interface ParentModule {",
+            "  @BindsOptionalOf",
+            "  String optionalString();",
+            "",
+            // depend on an @BindsOptionalOf to force re-resolution in subcomponents.
+            "  @Provides",
+            "  static Foo provideFoo(Optional<String> str, Qux qux) { return null; }",
+            "}");
+    Source childModule =
+        CompilerTests.javaSource(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface ChildModule {",
+            "  @Provides",
+            "  static Qux provideQux() { return null; }",
+            "}");
+    Source grandchildModule =
+        CompilerTests.javaSource(
+            "test.GrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface GrandchildModule {",
+            "  @Provides",
+            "  static String provideString() { return null; }",
+            "}");
+    Source foo =
+        CompilerTests.javaSource( // force one-string-per-line format
+            "test.Foo",
+            "package test;",
+            "",
+            "interface Foo {}");
+    Source bar =
+        CompilerTests.javaSource( // force one-string-per-line format
+            "test.Bar",
+            "package test;",
+            "",
+            "interface Bar {}");
+    Source qux =
+        CompilerTests.javaSource( // force one-string-per-line format
+            "test.Qux",
+            "package test;",
+            "",
+            "interface Qux {}");
+
+    CompilerTests.daggerCompiler(
+            parent, child, grandchild, parentModule, childModule, grandchildModule, foo, bar, qux)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  // Regression test for b/367426609
+  @Test
+  public void failsWithMissingBindingInGrandchild_dependencyTracePresent() {
+    Source parent =
+        CompilerTests.javaSource(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = ParentModule.class)",
+            "interface Parent {",
+            "  Child child();",
+            "}");
+    Source child =
+        CompilerTests.javaSource(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  Grandchild grandchild();",
+            "}");
+    Source grandchild =
+        CompilerTests.javaSource(
+            "test.Grandchild",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules=GrandchildModule.class)",
+            "interface Grandchild {",
+            "  Foo getFoo();",
+            "}");
+    Source parentModule =
+        CompilerTests.javaSource(
+            "test.ParentModule",
+            "package test;",
+            "",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Optional;",
+            "",
+            "@Module",
+            "interface ParentModule {",
+            "  @BindsOptionalOf",
+            "  String optionalString();",
+            "",
+            // depend on an @BindsOptionalOf to force re-resolution in subcomponents.
+            "  @Provides",
+            "  static Foo provideFoo(Optional<String> str, Qux qux) { return null; }",
+            "}");
+    Source childModule =
+        CompilerTests.javaSource(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface ChildModule {",
+            "  @Provides",
+            "  static Qux provideQux() { return null; }",
+            "}");
+    Source grandchildModule =
+        CompilerTests.javaSource(
+            "test.GrandchildModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface GrandchildModule {",
+            "  @Provides",
+            "  static String provideString() { return null; }",
+            "}");
+    Source foo =
+        CompilerTests.javaSource( // force one-string-per-line format
+            "test.Foo",
+            "package test;",
+            "",
+            "interface Foo {}");
+    Source bar =
+        CompilerTests.javaSource( // force one-string-per-line format
+            "test.Bar",
+            "package test;",
+            "",
+            "interface Bar {}");
+    Source qux =
+        CompilerTests.javaSource( // force one-string-per-line format
+            "test.Qux",
+            "package test;",
+            "",
+            "interface Qux {}");
+
+    CompilerTests.daggerCompiler(
+            parent, child, grandchild, parentModule, childModule, grandchildModule, foo, bar, qux)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 }

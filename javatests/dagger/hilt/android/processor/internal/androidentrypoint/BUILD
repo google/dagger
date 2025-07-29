@@ -16,21 +16,19 @@
 
 load("//java/dagger/testing/compile:macros.bzl", "compiler_test", "kt_compiler_test")
 
-package(default_visibility = ["//:src"])
-
 compiler_test(
     name = "ActivityGeneratorTest",
     srcs = ["ActivityGeneratorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:android_entry_point",
-        "@androidsdk//:platforms/android-32/android.jar",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
     ],
     resources = glob([
-        "goldens/ActivityGeneratorTest_*",
+        "goldens/ActivityGeneratorTest/**",
     ]),
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//java/dagger/testing/golden",
         "//third_party/java/junit",
     ],
@@ -40,16 +38,17 @@ compiler_test(
     name = "AndroidEntryPointProcessorTest",
     srcs = ["AndroidEntryPointProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android:android_entry_point",
-        "@androidsdk//:platforms/android-32/android.jar",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
     ],
     deps = [
-        "//java/dagger/hilt/android:android_entry_point",
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler:xprocessing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal:base_processor",
         "//third_party/java/guava/collect",
+        "//third_party/java/javapoet",
         "//third_party/java/junit",
     ],
 )
@@ -58,13 +57,13 @@ kt_compiler_test(
     name = "KotlinAndroidEntryPointProcessorTest",
     srcs = ["KotlinAndroidEntryPointProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android:android_entry_point",
-        "@androidsdk//:platforms/android-32/android.jar",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",

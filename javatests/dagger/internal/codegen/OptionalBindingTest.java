@@ -105,4 +105,74 @@ public class OptionalBindingTest {
                   .onLineContaining("interface Parent");
             });
   }
+
+  // Note: This is a regression test for an issue we ran into in CL/644086367, where an optional
+  // binding owned by a parent component is also requested by a child component which declares an
+  // additional @BindsOptionalOf declaration. In this case, we just want to make sure that the setup
+  // builds successfully.
+  @Test
+  public void cachedInParent_succeeds() {
+    Source parent =
+        CompilerTests.javaSource(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Optional;",
+            "",
+            "@Component(modules = ParentModule.class)",
+            "interface Parent {",
+            "  Optional<String> optionalString();",
+            "  Child child();",
+            "}");
+    Source parentModule =
+        CompilerTests.javaSource(
+            "test.ParentModule",
+            "package test;",
+            "",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import java.util.Optional;",
+            "",
+            "@Module",
+            "interface ParentModule {",
+            "  @BindsOptionalOf",
+            "  String optionalParentString();",
+            "",
+            "  @Provides",
+            "  static String provideString() {",
+            "    return \"\";",
+            "  }",
+            "}");
+    Source child =
+        CompilerTests.javaSource(
+            "test.Child",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "import java.util.Optional;",
+            "",
+            "@Subcomponent(modules = ChildModule.class)",
+            "interface Child {",
+            "  Optional<String> optionalString();",
+            "}");
+    Source childModule =
+        CompilerTests.javaSource(
+            "test.ChildModule",
+            "package test;",
+            "",
+            "import dagger.BindsOptionalOf;",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "interface ChildModule {",
+            "  @BindsOptionalOf",
+            "  String optionalChildString();",
+            "}");
+
+    CompilerTests.daggerCompiler(parent, parentModule, child, childModule)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
 }

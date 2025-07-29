@@ -5,7 +5,7 @@ runs:
   using: "composite"
   steps:
       - name: 'Check out repository'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: 'Cleanup caches'
         run: python ./util/cleanup-github-caches.py
         shell: bash

@@ -20,3 +20,8 @@ alias(
     name = "collect",
     actual = "//third_party/java/guava",
 )
+
+alias(
+    name = "collect-android",
+    actual = ":collect",
+)

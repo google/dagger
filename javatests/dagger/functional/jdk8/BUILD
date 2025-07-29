@@ -16,17 +16,17 @@
 #   Functional tests for Dagger that depend on Guava
 
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenJavaLibrary", "GenJavaTests")
 
 package(default_visibility = ["//:src"])
 
-java_library(
+GenJavaLibrary(
     name = "optional_binding_components",
     srcs = ["OptionalBindingComponents.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
-        "//:dagger_with_compiler",
         "//third_party/java/auto:value",
+        "//third_party/java/dagger",
         "//third_party/java/jsr305_annotations",
     ],
 )
@@ -35,19 +35,16 @@ java_library(
 GenJavaTests(
     name = "OptionalBindingComponentsEmptyTest",
     srcs = ["OptionalBindingComponentsEmptyTest.java"],
+    gen_library_deps = [":optional_binding_components"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    require_jdk7_syntax = False,
-    test_only_deps = [
-        ":optional_binding_components",
+    deps = [
+        "//third_party/java/auto:value",
+        "//third_party/java/dagger",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
+        "//third_party/java/jsr305_annotations",
         "//third_party/java/junit",
         "//third_party/java/truth",
-    ],
-    deps = [
-        "//:dagger_with_compiler",
-        "//third_party/java/auto:value",
-        "//third_party/java/jsr305_annotations",
     ],
 )
 
@@ -55,18 +52,15 @@ GenJavaTests(
 GenJavaTests(
     name = "OptionalBindingComponentsPresentTest",
     srcs = ["OptionalBindingComponentsPresentTest.java"],
+    gen_library_deps = [":optional_binding_components"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    require_jdk7_syntax = False,
-    test_only_deps = [
-        ":optional_binding_components",
+    deps = [
+        "//third_party/java/auto:value",
+        "//third_party/java/dagger",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
+        "//third_party/java/jsr305_annotations",
         "//third_party/java/junit",
         "//third_party/java/truth",
-    ],
-    deps = [
-        "//:dagger_with_compiler",
-        "//third_party/java/auto:value",
-        "//third_party/java/jsr305_annotations",
     ],
 )

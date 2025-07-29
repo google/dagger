@@ -1,0 +1,58 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import java.util.Collections;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+import other.UsesInaccessible;
+import other.UsesInaccessible_Factory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public UsesInaccessible usesInaccessible() {
+      return UsesInaccessible_Factory.newInstance((Map) (Collections.emptyMap()));
+    }
+  }
+}

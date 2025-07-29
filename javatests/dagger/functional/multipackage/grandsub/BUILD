@@ -33,6 +33,6 @@ GenJavaLibrary(
     ],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
     ],
 )

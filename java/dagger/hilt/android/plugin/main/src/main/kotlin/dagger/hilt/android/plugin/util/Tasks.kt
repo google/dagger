@@ -16,7 +16,10 @@
 
 package dagger.hilt.android.plugin.util
 
-import com.google.devtools.ksp.gradle.KspTaskJvm
+import com.android.build.api.variant.ComponentIdentity
+import com.google.devtools.ksp.gradle.KspAATask
+import com.google.devtools.ksp.gradle.KspTask
+import kotlin.reflect.KClass
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.compile.JavaCompile
@@ -25,17 +28,17 @@ import org.jetbrains.kotlin.gradle.internal.KaptTask
 
 internal fun addJavaTaskProcessorOptions(
   project: Project,
-  component: ComponentCompat,
+  variantIdentity: ComponentIdentity,
   produceArgProvider: (Task) -> CommandLineArgumentProvider
-) = project.tasks.withType(JavaCompile::class.java) { task ->
-  if (task.name == "compile${component.name.capitalize()}JavaWithJavac") {
+) = project.tasks.withType(JavaCompile::class.java).configureEach { task ->
+  if (task.name == "compile${variantIdentity.name.capitalize()}JavaWithJavac") {
     task.options.compilerArgumentProviders.add(produceArgProvider.invoke(task))
   }
 }
 
 internal fun addKaptTaskProcessorOptions(
   project: Project,
-  component: ComponentCompat,
+  variantIdentity: ComponentIdentity,
   produceArgProvider: (Task) -> CommandLineArgumentProvider
 ) = project.plugins.withId("kotlin-kapt") {
   checkClass("org.jetbrains.kotlin.gradle.internal.KaptTask") {
@@ -48,19 +51,21 @@ internal fun addKaptTaskProcessorOptions(
     sub-projects.
     """.trimIndent()
   }
-  project.tasks.withType(KaptTask::class.java) { task ->
-    if (task.name == "kapt${component.name.capitalize()}Kotlin" ||
+  project.tasks.withType(KaptTask::class.java).configureEach { task ->
+    if (task.name == "kapt${variantIdentity.name.capitalize()}Kotlin" ||
         // Task names in shared/src/AndroidMain in KMP projects has a platform suffix.
-        task.name == "kapt${component.name.capitalize()}KotlinAndroid") {
+        task.name == "kapt${variantIdentity.name.capitalize()}KotlinAndroid") {
       val argProvider = produceArgProvider.invoke(task)
       // TODO: Update once KT-58009 is fixed.
       try {
         // Because of KT-58009, we need to add a `listOf(argProvider)` instead
         // of `argProvider`.
+        @Suppress("DEPRECATION") // b/418799397
         task.annotationProcessorOptionProviders.add(listOf(argProvider))
       } catch (e: Throwable) {
         // Once KT-58009 is fixed, adding `listOf(argProvider)` will fail, we will
         // pass `argProvider` instead, which is the correct way.
+        @Suppress("DEPRECATION") // b/418799397
         task.annotationProcessorOptionProviders.add(argProvider)
       }
     }
@@ -69,10 +74,10 @@ internal fun addKaptTaskProcessorOptions(
 
 internal fun addKspTaskProcessorOptions(
   project: Project,
-  component: ComponentCompat,
+  variantIdentity: ComponentIdentity,
   produceArgProvider: (Task) -> CommandLineArgumentProvider
 ) = project.plugins.withId("com.google.devtools.ksp") {
-  checkClass("com.google.devtools.ksp.gradle.KspTaskJvm") {
+  check(kspOneTaskClass != null || kspTwoTaskClass != null) {
     """
     The KSP plugin was detected to be applied but its task class could not be found.
 
@@ -84,12 +89,24 @@ internal fun addKspTaskProcessorOptions(
     See https://github.com/google/dagger/issues/3965 for more details.
     """.trimIndent()
   }
-  project.tasks.withType(KspTaskJvm::class.java) { task ->
-    if (task.name == "ksp${component.name.capitalize()}Kotlin" ||
+  fun <T : Task> configureEach(
+    kclass: KClass<T>,
+    block: T.(CommandLineArgumentProvider) -> Unit
+  ) {
+    project.tasks.withType(kclass.java).configureEach { task ->
+      if (task.name == "ksp${variantIdentity.name.capitalize()}Kotlin" ||
         // Task names in shared/src/AndroidMain in KMP projects has a platform suffix.
-        task.name == "ksp${component.name.capitalize()}KotlinAndroid") {
-      task.commandLineArgumentProviders.add(produceArgProvider.invoke(task))
+        task.name == "ksp${variantIdentity.name.capitalize()}KotlinAndroid") {
+        val argProvider = produceArgProvider.invoke(task)
+        task.block(argProvider)
+      }
     }
+  }
+  if (kspOneTaskClass != null) {
+    configureEach(KspTask::class) { commandLineArgumentProviders.add(it) }
+  }
+  if (kspTwoTaskClass != null) {
+    configureEach(KspAATask::class) { commandLineArgumentProviders.add(it) }
   }
 }
 
@@ -101,10 +118,21 @@ private inline fun checkClass(fqn: String, msg: () -> String) {
   }
 }
 
-internal fun Task.isKspTask(): Boolean = try {
-  val kspTaskClass = Class.forName("com.google.devtools.ksp.gradle.KspTask")
-  kspTaskClass.isAssignableFrom(this::class.java)
-} catch (ex: ClassNotFoundException) {
-  false
-}
+private val kspOneTaskClass =
+  try {
+    Class.forName("com.google.devtools.ksp.gradle.KspTask")
+  } catch (ex: ClassNotFoundException) {
+    null
+  }
+
+private val kspTwoTaskClass =
+  try {
+    Class.forName("com.google.devtools.ksp.gradle.KspAATask")
+  } catch (ex: ClassNotFoundException) {
+    null
+  }
+
+internal fun Task.isKspTask() =
+  kspOneTaskClass?.isAssignableFrom(this::class.java) == true ||
+    kspTwoTaskClass?.isAssignableFrom(this::class.java) == true
 

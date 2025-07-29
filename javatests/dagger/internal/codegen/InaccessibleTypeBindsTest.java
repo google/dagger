@@ -16,15 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
-import java.util.Collection;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,16 +29,8 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class InaccessibleTypeBindsTest {
   @Parameters(name = "{0}")
-  public static Collection<Object[]> parameters() {
-    return ImmutableList.copyOf(
-        new Object[][] {
-            {CompilerMode.DEFAULT_MODE},
-            {CompilerMode.DEFAULT_JAVA7_MODE},
-            {CompilerMode.FAST_INIT_MODE},
-            // FastInit with Java7 is the mode that motivated this test, but do the other
-            // modes anyway for completeness.
-            {CompilerMode.FAST_INIT_JAVA7_MODE}
-        });
+  public static ImmutableList<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
   }
 
   @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
@@ -58,15 +45,15 @@ public class InaccessibleTypeBindsTest {
   // are handled from doing an assignment to the Provider<Foo> from DoubleCheck.provider(fooImpl).
   @Test
   public void scopedInaccessibleTypeBound() throws Exception {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
             "public interface Foo {",
             "}");
-    JavaFileObject fooImpl =
-        JavaFileObjects.forSourceLines(
+    Source fooImpl =
+        CompilerTests.javaSource(
             "other.FooImpl",
             "package other;",
             "",
@@ -76,8 +63,8 @@ public class InaccessibleTypeBindsTest {
             "final class FooImpl implements Foo {",
             "  @Inject FooImpl() {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "other.TestModule",
             "package other;",
             "",
@@ -92,8 +79,8 @@ public class InaccessibleTypeBindsTest {
             "  @Singleton",
             "  Foo bind(FooImpl impl);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -108,13 +95,13 @@ public class InaccessibleTypeBindsTest {
             "  Foo getFoo();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode)
-            .compile(foo, fooImpl, module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(foo, fooImpl, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   // Interface is accessible, but the impl is not. Used with a binds in a loop to see if there are
@@ -122,15 +109,15 @@ public class InaccessibleTypeBindsTest {
   // DelegateFactory.setDelegate(provider, new SwitchingProvider<FooImpl>(...));
   @Test
   public void inaccessibleTypeBoundInALoop() throws Exception {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
             "public interface Foo {",
             "}");
-    JavaFileObject fooImpl =
-        JavaFileObjects.forSourceLines(
+    Source fooImpl =
+        CompilerTests.javaSource(
             "other.FooImpl",
             "package other;",
             "",
@@ -143,8 +130,8 @@ public class InaccessibleTypeBindsTest {
             "}");
     // Use another entry point to make FooImpl be the first requested class, that way FooImpl's
     // provider is the one that is delegated.
-    JavaFileObject otherEntryPoint =
-        JavaFileObjects.forSourceLines(
+    Source otherEntryPoint =
+        CompilerTests.javaSource(
             "other.OtherEntryPoint",
             "package other;",
             "",
@@ -153,8 +140,8 @@ public class InaccessibleTypeBindsTest {
             "public final class OtherEntryPoint {",
             "  @Inject OtherEntryPoint(FooImpl impl) {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "other.TestModule",
             "package other;",
             "",
@@ -167,8 +154,8 @@ public class InaccessibleTypeBindsTest {
             "  @Binds",
             "  Foo bind(FooImpl impl);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -181,27 +168,27 @@ public class InaccessibleTypeBindsTest {
             "  OtherEntryPoint getOtherEntryPoint();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode)
-            .compile(foo, fooImpl, otherEntryPoint, module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(foo, fooImpl, otherEntryPoint, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 
   // Same as above but with the binding scoped.
   @Test
   public void inaccessibleTypeBoundInALoopScoped() throws Exception {
-    JavaFileObject foo =
-        JavaFileObjects.forSourceLines(
+    Source foo =
+        CompilerTests.javaSource(
             "test.Foo",
             "package test;",
             "",
             "public interface Foo {",
             "}");
-    JavaFileObject fooImpl =
-        JavaFileObjects.forSourceLines(
+    Source fooImpl =
+        CompilerTests.javaSource(
             "other.FooImpl",
             "package other;",
             "",
@@ -214,8 +201,8 @@ public class InaccessibleTypeBindsTest {
             "}");
     // Use another entry point to make FooImpl be the first requested class, that way FooImpl's
     // provider is the one that is delegated.
-    JavaFileObject otherEntryPoint =
-        JavaFileObjects.forSourceLines(
+    Source otherEntryPoint =
+        CompilerTests.javaSource(
             "other.OtherEntryPoint",
             "package other;",
             "",
@@ -224,8 +211,8 @@ public class InaccessibleTypeBindsTest {
             "public final class OtherEntryPoint {",
             "  @Inject OtherEntryPoint(FooImpl impl) {}",
             "}");
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "other.TestModule",
             "package other;",
             "",
@@ -240,8 +227,8 @@ public class InaccessibleTypeBindsTest {
             "  @Singleton",
             "  Foo bind(FooImpl impl);",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -256,12 +243,12 @@ public class InaccessibleTypeBindsTest {
             "  OtherEntryPoint getOtherEntryPoint();",
             "}");
 
-    Compilation compilation =
-        compilerWithOptions(compilerMode)
-            .compile(foo, fooImpl, otherEntryPoint, module, component);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile("test.DaggerTestComponent")
-        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+    CompilerTests.daggerCompiler(foo, fooImpl, otherEntryPoint, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
   }
 }

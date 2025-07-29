@@ -1,0 +1,81 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerBComponent {
+  private DaggerBComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  static final class Builder {
+    private ArrayComponent arrayComponent;
+
+    private Builder() {
+    }
+
+    public Builder arrayComponent(ArrayComponent arrayComponent) {
+      this.arrayComponent = Preconditions.checkNotNull(arrayComponent);
+      return this;
+    }
+
+    public BComponent build() {
+      Preconditions.checkBuilderRequirement(arrayComponent, ArrayComponent.class);
+      return new BComponentImpl(arrayComponent);
+    }
+  }
+
+  private static final class BComponentImpl implements BComponent {
+    private final BComponentImpl bComponentImpl = this;
+
+    Provider<String[]> stringsProvider;
+
+    BComponentImpl(ArrayComponent arrayComponentParam) {
+
+      initialize(arrayComponentParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final ArrayComponent arrayComponentParam) {
+      this.stringsProvider = new StringsProvider(arrayComponentParam);
+    }
+
+    @Override
+    public B b() {
+      return new B(stringsProvider);
+    }
+
+    private static final class StringsProvider implements Provider<String[]> {
+      private final ArrayComponent arrayComponent;
+
+      StringsProvider(ArrayComponent arrayComponent) {
+        this.arrayComponent = arrayComponent;
+      }
+
+      @Override
+      public String[] get() {
+        return Preconditions.checkNotNullFromComponent(arrayComponent.strings());
+      }
+    }
+  }
+}

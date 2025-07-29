@@ -148,7 +148,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
 
       android {
         compileSdkVersion 33
-        buildToolsVersion "33.0.0"
+        buildToolsVersion "33.0.1"
 
         defaultConfig {
           applicationId "hilt.simple"
@@ -160,6 +160,8 @@ class IncrementalProcessorTest(private val incapMode: String) {
             }
           }
         }
+
+        namespace = "simple"
 
         compileOptions {
             sourceCompatibility JavaVersion.VERSION_11
@@ -183,7 +185,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
         testImplementation 'junit:junit:4.12'
         testImplementation 'androidx.test.ext:junit:1.1.3'
         testImplementation 'androidx.test:runner:1.4.0'
-        testImplementation 'org.robolectric:robolectric:4.4'
+        testImplementation 'org.robolectric:robolectric:4.11.1'
         testImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
         testAnnotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
       }
@@ -244,17 +246,17 @@ class IncrementalProcessorTest(private val incapMode: String) {
     genAppInjectorDeps =
       File(
         projectRoot,
-        "$defaultGenSrcDir/hilt_aggregated_deps/_simple_SimpleApp_GeneratedInjector.java"
+        "$defaultGenSrcDir/hilt_aggregated_deps/_simple_SimpleApp_GeneratedInjector.java",
       )
     genActivityInjectorDeps1 =
       File(
         projectRoot,
-        "$defaultGenSrcDir/hilt_aggregated_deps/_simple_Activity1_GeneratedInjector.java"
+        "$defaultGenSrcDir/hilt_aggregated_deps/_simple_Activity1_GeneratedInjector.java",
       )
     genActivityInjectorDeps2 =
       File(
         projectRoot,
-        "$defaultGenSrcDir/hilt_aggregated_deps/_simple_Activity2_GeneratedInjector.java"
+        "$defaultGenSrcDir/hilt_aggregated_deps/_simple_Activity2_GeneratedInjector.java",
       )
     genModuleDeps1 =
       File(projectRoot, "$defaultGenSrcDir/hilt_aggregated_deps/_simple_Module1.java")
@@ -269,35 +271,35 @@ class IncrementalProcessorTest(private val incapMode: String) {
       File(
         projectRoot,
         testComponentTreeDepsGenSrcDir +
-          "/dagger/hilt/android/internal/testing/root/Test1_ComponentTreeDeps.java"
+          "/dagger/hilt/android/internal/testing/root/Test1_ComponentTreeDeps.java",
       )
     genTest2ComponentTreeDeps =
       File(
         projectRoot,
         testComponentTreeDepsGenSrcDir +
-          "/dagger/hilt/android/internal/testing/root/Test2_ComponentTreeDeps.java"
+          "/dagger/hilt/android/internal/testing/root/Test2_ComponentTreeDeps.java",
       )
     genTest1HiltComponents =
       File(
         projectRoot,
-        "$testRootGenSrcDir/dagger/hilt/android/internal/testing/root/Test1_HiltComponents.java"
+        "$testRootGenSrcDir/dagger/hilt/android/internal/testing/root/Test1_HiltComponents.java",
       )
     genTest2HiltComponents =
       File(
         projectRoot,
-        "$testRootGenSrcDir/dagger/hilt/android/internal/testing/root/Test2_HiltComponents.java"
+        "$testRootGenSrcDir/dagger/hilt/android/internal/testing/root/Test2_HiltComponents.java",
       )
     genTest1DaggerHiltApplicationComponent =
       File(
         projectRoot,
         testRootGenSrcDir +
-          "/dagger/hilt/android/internal/testing/root/DaggerTest1_HiltComponents_SingletonC.java"
+          "/dagger/hilt/android/internal/testing/root/DaggerTest1_HiltComponents_SingletonC.java",
       )
     genTest2DaggerHiltApplicationComponent =
       File(
         projectRoot,
         testRootGenSrcDir +
-          "/dagger/hilt/android/internal/testing/root/DaggerTest2_HiltComponents_SingletonC.java"
+          "/dagger/hilt/android/internal/testing/root/DaggerTest2_HiltComponents_SingletonC.java",
       )
 
     classSrcApp = File(projectRoot, "$defaultClassesDir/simple/SimpleApp.class")
@@ -319,17 +321,17 @@ class IncrementalProcessorTest(private val incapMode: String) {
     classGenAppInjectorDeps =
       File(
         projectRoot,
-        "$defaultClassesDir/hilt_aggregated_deps/_simple_SimpleApp_GeneratedInjector.class"
+        "$defaultClassesDir/hilt_aggregated_deps/_simple_SimpleApp_GeneratedInjector.class",
       )
     classGenActivityInjectorDeps1 =
       File(
         projectRoot,
-        "$defaultClassesDir/hilt_aggregated_deps/_simple_Activity1_GeneratedInjector.class"
+        "$defaultClassesDir/hilt_aggregated_deps/_simple_Activity1_GeneratedInjector.class",
       )
     classGenActivityInjectorDeps2 =
       File(
         projectRoot,
-        "$defaultClassesDir/hilt_aggregated_deps/_simple_Activity2_GeneratedInjector.class"
+        "$defaultClassesDir/hilt_aggregated_deps/_simple_Activity2_GeneratedInjector.class",
       )
     classGenModuleDeps1 =
       File(projectRoot, "$defaultClassesDir/hilt_aggregated_deps/_simple_Module1.class")
@@ -345,35 +347,35 @@ class IncrementalProcessorTest(private val incapMode: String) {
       File(
         projectRoot,
         testRootClassesDir +
-          "/dagger/hilt/android/internal/testing/root/Test1_ComponentTreeDeps.class"
+          "/dagger/hilt/android/internal/testing/root/Test1_ComponentTreeDeps.class",
       )
     classGenTest2ComponentTreeDeps =
       File(
         projectRoot,
         testRootClassesDir +
-          "/dagger/hilt/android/internal/testing/root/Test2_ComponentTreeDeps.class"
+          "/dagger/hilt/android/internal/testing/root/Test2_ComponentTreeDeps.class",
       )
     classGenTest1HiltComponents =
       File(
         projectRoot,
-        "$testRootClassesDir/dagger/hilt/android/internal/testing/root/Test1_HiltComponents.class"
+        "$testRootClassesDir/dagger/hilt/android/internal/testing/root/Test1_HiltComponents.class",
       )
     classGenTest2HiltComponents =
       File(
         projectRoot,
-        "$testRootClassesDir/dagger/hilt/android/internal/testing/root/Test2_HiltComponents.class"
+        "$testRootClassesDir/dagger/hilt/android/internal/testing/root/Test2_HiltComponents.class",
       )
     classGenTest1DaggerHiltApplicationComponent =
       File(
         projectRoot,
         testRootClassesDir +
-          "/dagger/hilt/android/internal/testing/root/DaggerTest1_HiltComponents_SingletonC.class"
+          "/dagger/hilt/android/internal/testing/root/DaggerTest1_HiltComponents_SingletonC.class",
       )
     classGenTest2DaggerHiltApplicationComponent =
       File(
         projectRoot,
         testRootClassesDir +
-          "/dagger/hilt/android/internal/testing/root/DaggerTest2_HiltComponents_SingletonC.class"
+          "/dagger/hilt/android/internal/testing/root/DaggerTest2_HiltComponents_SingletonC.class",
       )
   }
 
@@ -400,7 +402,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
         genModuleDeps2,
         genComponentTreeDeps,
         genHiltComponents,
-        genDaggerHiltApplicationComponent
+        genDaggerHiltApplicationComponent,
       )
     )
 
@@ -425,7 +427,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
         classGenModuleDeps2,
         classGenComponentTreeDeps,
         classGenHiltComponents,
-        classGenDaggerHiltApplicationComponent
+        classGenDaggerHiltApplicationComponent,
       )
     )
   }
@@ -445,7 +447,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
         super.onResume();
       }
       """
-        .trimIndent()
+        .trimIndent(),
     )
 
     val result = runIncrementalBuild()
@@ -464,7 +466,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genActivityInjector1,
           genActivityInjectorDeps1,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       } else {
         // * Root classes along with components are always re-generated (aggregated processor)
@@ -477,7 +479,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genActivityInjectorDeps1,
           genComponentTreeDeps,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
@@ -513,7 +515,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classGenActivityInjectorDeps1,
           classGenHiltComponents,
           classGenComponentTreeDeps,
-          classGenDaggerHiltApplicationComponent
+          classGenDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.CLASS, recompiledClassFiles)
@@ -531,7 +533,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
       """
       private void foo() { }
       """
-        .trimIndent()
+        .trimIndent(),
     )
 
     val result = runIncrementalBuild()
@@ -550,11 +552,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
       if (incapMode == ISOLATING_MODE) {
         // * Aggregating task did not run, no change in deps
         expect.that(result.task(aggregatingTaskName)!!.outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
-        listOf(
-          genHiltActivity1,
-          genActivityInjector1,
-          genActivityInjectorDeps1,
-        )
+        listOf(genHiltActivity1, genActivityInjector1, genActivityInjectorDeps1)
       } else {
         // * Root classes along with components are always re-generated (aggregated processor)
         listOf(
@@ -566,7 +564,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genActivityInjectorDeps1,
           genComponentTreeDeps,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
@@ -585,7 +583,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classSrcActivity1,
           classGenHiltActivity1,
           classGenActivityInjector1,
-          classGenActivityInjectorDeps1
+          classGenActivityInjectorDeps1,
         )
       } else {
         // * All aggregating processor gen sources are re-compiled
@@ -599,7 +597,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classGenActivityInjectorDeps1,
           classGenComponentTreeDeps,
           classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent
+          classGenDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.CLASS, recompiledClassFiles)
@@ -620,7 +618,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
         return 10.10;
       }
       """
-        .trimIndent()
+        .trimIndent(),
     )
 
     val result = runIncrementalBuild()
@@ -637,7 +635,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genHiltApp, // Re-generated because components got re-generated
           genModuleDeps1,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       } else {
         // * Root classes along with components are always re-generated (aggregated processor)
@@ -648,7 +646,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genModuleDeps1,
           genComponentTreeDeps,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
@@ -668,7 +666,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classGenHiltApp,
           classGenModuleDeps1,
           classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent
+          classGenDaggerHiltApplicationComponent,
         )
       } else {
         // * All aggregating processor gen sources are re-compiled
@@ -680,7 +678,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classGenModuleDeps1,
           classGenComponentTreeDeps,
           classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent
+          classGenDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.CLASS, recompiledClassFiles)
@@ -701,7 +699,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
         super.onCreate();
       }
       """
-        .trimIndent()
+        .trimIndent(),
     )
 
     val result = runIncrementalBuild()
@@ -719,7 +717,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genAppInjector,
           genAppInjectorDeps,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       } else {
         // * Root classes along with components are always re-generated (aggregated processor)
@@ -729,7 +727,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genAppInjectorDeps,
           genComponentTreeDeps,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
@@ -749,7 +747,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classGenAppInjector,
           classGenAppInjectorDeps,
           classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent
+          classGenDaggerHiltApplicationComponent,
         )
       } else {
         // * All aggregating processor gen sources are re-compiled
@@ -760,7 +758,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classGenAppInjectorDeps,
           classGenComponentTreeDeps,
           classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent
+          classGenDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.CLASS, recompiledClassFiles)
@@ -789,7 +787,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genHiltApp, // Re-generated because components got re-generated
           genComponentTreeDeps,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       } else {
         listOf(
@@ -798,7 +796,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genAppInjectorDeps,
           genComponentTreeDeps,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
@@ -811,7 +809,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
         classSrcActivity2,
         classGenHiltActivity2,
         classGenActivityInjector2,
-        classGenActivityInjectorDeps2
+        classGenActivityInjectorDeps2,
       )
     )
     val recompiledClassFiles =
@@ -820,7 +818,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classGenHiltApp,
           classGenComponentTreeDeps,
           classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent
+          classGenDaggerHiltApplicationComponent,
         )
       } else {
         listOf(
@@ -829,7 +827,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classGenAppInjectorDeps,
           classGenComponentTreeDeps,
           classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent
+          classGenDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.CLASS, recompiledClassFiles)
@@ -858,7 +856,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genHiltApp, // Re-generated because components got re-generated
           genComponentTreeDeps,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       } else {
         // * Root classes along with components are always re-generated (aggregated processor)
@@ -868,7 +866,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genAppInjectorDeps,
           genComponentTreeDeps,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
@@ -883,7 +881,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classGenHiltApp,
           classGenComponentTreeDeps,
           classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent
+          classGenDaggerHiltApplicationComponent,
         )
       } else {
         listOf(
@@ -892,7 +890,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classGenAppInjectorDeps,
           classGenComponentTreeDeps,
           classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent
+          classGenDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.CLASS, recompiledClassFiles)
@@ -936,7 +934,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           genAppInjectorDeps,
           genComponentTreeDeps,
           genHiltComponents,
-          genDaggerHiltApplicationComponent
+          genDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
@@ -951,7 +949,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           classGenAppInjectorDeps,
           classGenComponentTreeDeps,
           classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent
+          classGenDaggerHiltApplicationComponent,
         )
       }
     assertChangedFiles(FileType.CLASS, recompiledClassFiles)
@@ -1001,7 +999,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
       @Test
       public void newTest() { }
       """
-        .trimIndent()
+        .trimIndent(),
     )
 
     val result = runIncrementalTestBuild()
@@ -1012,10 +1010,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
 
     val regeneratedSourceFiles =
       if (incapMode == ISOLATING_MODE) {
-        listOf(
-          genTest1HiltComponents,
-          genTest1DaggerHiltApplicationComponent,
-        )
+        listOf(genTest1HiltComponents, genTest1DaggerHiltApplicationComponent)
       } else {
         listOf(
           genTest1ComponentTreeDeps,
@@ -1073,7 +1068,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
       """
       private void newMethod() { }
       """
-        .trimIndent()
+        .trimIndent(),
     )
 
     val result = runIncrementalTestBuild()

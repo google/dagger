@@ -121,6 +121,68 @@ class ViewModelProcessorTest {
   }
 
   @Test
+  fun verifyHasInjectConstructor() {
+    val myViewModel =
+      Source.java(
+        "dagger.hilt.android.test.MyViewModel",
+        """
+        package dagger.hilt.android.test;
+
+        import androidx.lifecycle.ViewModel;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
+
+        @HiltViewModel
+        class MyViewModel extends ViewModel {
+            MyViewModel(String s) { }
+        }
+        """
+          .trimIndent()
+      )
+
+    HiltCompilerTests.hiltCompiler(myViewModel)
+      .withAdditionalJavacProcessors(ViewModelProcessor())
+      .withAdditionalKspProcessors(KspViewModelProcessor.Provider())
+      .withProcessorOptions(ImmutableMap.of("dagger.hilt.enableAssistedInjectViewModels", "false"))
+      .compile { subject ->
+        subject.compilationDidFail()
+        subject.hasErrorCount(1)
+        subject.hasErrorContaining(
+          "@HiltViewModel annotated class should contain exactly one @Inject annotated constructor."
+        )
+      }
+  }
+
+  @Test
+  fun verifyJakartaInjectConstructorSucceeds() {
+    val myViewModel =
+      Source.java(
+        "dagger.hilt.android.test.MyViewModel",
+        """
+        package dagger.hilt.android.test;
+
+        import androidx.lifecycle.ViewModel;
+        import dagger.hilt.android.lifecycle.HiltViewModel;
+        import jakarta.inject.Inject;
+
+        @HiltViewModel
+        class MyViewModel extends ViewModel {
+            @Inject
+            MyViewModel(String s) { }
+        }
+        """
+          .trimIndent()
+      )
+
+    HiltCompilerTests.hiltCompiler(myViewModel)
+      .withAdditionalJavacProcessors(ViewModelProcessor())
+      .withAdditionalKspProcessors(KspViewModelProcessor.Provider())
+      .withProcessorOptions(ImmutableMap.of("dagger.hilt.enableAssistedInjectViewModels", "false"))
+      .compile { subject ->
+        subject.hasErrorCount(0)
+      }
+  }
+
+  @Test
   fun verifySingleAnnotatedConstructor() {
     val myViewModel =
       Source.java(

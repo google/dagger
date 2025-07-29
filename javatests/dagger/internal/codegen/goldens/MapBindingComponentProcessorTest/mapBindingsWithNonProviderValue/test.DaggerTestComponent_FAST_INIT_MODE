@@ -1,0 +1,114 @@
+package test;
+
+import com.google.common.collect.ImmutableMap;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private MapModuleOne mapModuleOne;
+
+    private MapModuleTwo mapModuleTwo;
+
+    private Builder() {
+    }
+
+    public Builder mapModuleOne(MapModuleOne mapModuleOne) {
+      this.mapModuleOne = Preconditions.checkNotNull(mapModuleOne);
+      return this;
+    }
+
+    public Builder mapModuleTwo(MapModuleTwo mapModuleTwo) {
+      this.mapModuleTwo = Preconditions.checkNotNull(mapModuleTwo);
+      return this;
+    }
+
+    public TestComponent build() {
+      if (mapModuleOne == null) {
+        this.mapModuleOne = new MapModuleOne();
+      }
+      if (mapModuleTwo == null) {
+        this.mapModuleTwo = new MapModuleTwo();
+      }
+      return new TestComponentImpl(mapModuleOne, mapModuleTwo);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final MapModuleOne mapModuleOne;
+
+    private final MapModuleTwo mapModuleTwo;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    Provider<Map<PathEnum, Handler>> mapOfPathEnumAndHandlerProvider;
+
+    TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+      this.mapModuleOne = mapModuleOneParam;
+      this.mapModuleTwo = mapModuleTwoParam;
+      initialize(mapModuleOneParam, mapModuleTwoParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final MapModuleOne mapModuleOneParam,
+        final MapModuleTwo mapModuleTwoParam) {
+      this.mapOfPathEnumAndHandlerProvider = new SwitchingProvider<>(testComponentImpl, 0);
+    }
+
+    @Override
+    public javax.inject.Provider<Map<PathEnum, Handler>> dispatcher() {
+      return mapOfPathEnumAndHandlerProvider;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // java.util.Map<test.PathEnum,test.Handler>
+          return (T) ImmutableMap.<PathEnum, Handler>of(PathEnum.ADMIN, MapModuleOne_ProvideAdminHandlerFactory.provideAdminHandler(testComponentImpl.mapModuleOne), PathEnum.LOGIN, MapModuleTwo_ProvideLoginHandlerFactory.provideLoginHandler(testComponentImpl.mapModuleTwo));
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,97 @@
+package test;
+
+import dagger.Lazy;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerSimpleComponent {
+  private DaggerSimpleComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static SimpleComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public SimpleComponent build() {
+      return new SimpleComponentImpl();
+    }
+  }
+
+  private static final class SimpleComponentImpl implements SimpleComponent {
+    private final SimpleComponentImpl simpleComponentImpl = this;
+
+    Provider<SomeInjectableType> someInjectableTypeProvider;
+
+    SimpleComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.someInjectableTypeProvider = new SwitchingProvider<>(simpleComponentImpl, 0);
+    }
+
+    @Override
+    public SomeInjectableType someInjectableType() {
+      return someInjectableTypeProvider.get();
+    }
+
+    @Override
+    public Lazy<SomeInjectableType> lazySomeInjectableType() {
+      return DoubleCheck.lazy(someInjectableTypeProvider);
+    }
+
+    @Override
+    public javax.inject.Provider<SomeInjectableType> someInjectableTypeProvider() {
+      return someInjectableTypeProvider;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final SimpleComponentImpl simpleComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(SimpleComponentImpl simpleComponentImpl, int id) {
+        this.simpleComponentImpl = simpleComponentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // test.SomeInjectableType
+          return (T) new SomeInjectableType();
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}

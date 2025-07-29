@@ -1,0 +1,45 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Preconditions;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class TestModule_ProvideWildcardListFactory implements Factory<Object> {
+  private final TestModule module;
+
+  private TestModule_ProvideWildcardListFactory(TestModule module) {
+    this.module = module;
+  }
+
+  @Override
+  public Object get() {
+    return provideWildcardList(module);
+  }
+
+  public static TestModule_ProvideWildcardListFactory create(Object module) {
+    return new TestModule_ProvideWildcardListFactory((TestModule) (module));
+  }
+
+  public static Object provideWildcardList(Object instance) {
+    return Preconditions.checkNotNullFromProvides(((TestModule) (instance)).provideWildcardList());
+  }
+}

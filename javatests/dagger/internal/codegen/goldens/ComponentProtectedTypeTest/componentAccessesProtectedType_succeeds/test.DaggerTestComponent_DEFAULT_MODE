@@ -1,0 +1,67 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+import test.sub.TestComponentBase_Dep_Factory;
+import test.sub.TestComponentBase_ProtectedType_Factory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  public static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl extends TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    @SuppressWarnings("rawtypes")
+    Provider protectedTypeProvider;
+
+    TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.protectedTypeProvider = DoubleCheck.provider(TestComponentBase_ProtectedType_Factory.create(TestComponentBase_Dep_Factory.create()));
+    }
+
+    @Override
+    test.sub.TestComponentBase.ProtectedType provideProtectedType() {
+      return (test.sub.TestComponentBase.ProtectedType) (protectedTypeProvider.get());
+    }
+  }
+}

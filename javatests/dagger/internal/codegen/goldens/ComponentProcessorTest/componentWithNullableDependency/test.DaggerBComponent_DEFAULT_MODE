@@ -1,0 +1,82 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerBComponent {
+  private DaggerBComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  static final class Builder {
+    private NullableStringComponent nullableStringComponent;
+
+    private Builder() {
+    }
+
+    public Builder nullableStringComponent(NullableStringComponent nullableStringComponent) {
+      this.nullableStringComponent = Preconditions.checkNotNull(nullableStringComponent);
+      return this;
+    }
+
+    public BComponent build() {
+      Preconditions.checkBuilderRequirement(nullableStringComponent, NullableStringComponent.class);
+      return new BComponentImpl(nullableStringComponent);
+    }
+  }
+
+  private static final class BComponentImpl implements BComponent {
+    private final BComponentImpl bComponentImpl = this;
+
+    Provider<String> nullableStringProvider;
+
+    BComponentImpl(NullableStringComponent nullableStringComponentParam) {
+
+      initialize(nullableStringComponentParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final NullableStringComponent nullableStringComponentParam) {
+      this.nullableStringProvider = new NullableStringProvider(nullableStringComponentParam);
+    }
+
+    @Override
+    public B b() {
+      return new B(nullableStringProvider);
+    }
+
+    private static final class NullableStringProvider implements Provider<String> {
+      private final NullableStringComponent nullableStringComponent;
+
+      NullableStringProvider(NullableStringComponent nullableStringComponent) {
+        this.nullableStringComponent = nullableStringComponent;
+      }
+
+      @Override
+      @Nullable
+      public String get() {
+        return nullableStringComponent.nullableString();
+      }
+    }
+  }
+}

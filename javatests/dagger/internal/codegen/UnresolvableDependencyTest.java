@@ -86,24 +86,24 @@ public final class UnresolvableDependencyTest {
                   subject.hasErrorCount(2);
                   break;
               }
-              // TODO(b/248552462): Javac and KSP should match once this bug is fixed.
-              boolean isJavac = CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC;
-              String trace = "\n  "
-                  + "\n  Dependency trace:"
-                  + "\n      => element (CLASS): test.Bar"
-                  + "\n      => element (CONSTRUCTOR): Bar(%1$s)"
-                  + "\n      => type (EXECUTABLE constructor): (%1$s)void"
-                  + "\n      => type (ERROR parameter type): %1$s";
               subject.hasErrorContaining(
-                  String.format(
-                      "InjectProcessingStep was unable to process 'Bar(%1$s)' because '%1$s' could "
-                          + "not be resolved." + trace,
-                      isJavac ? "UnresolvableDependency" : "error.NonExistentClass"));
+                  "InjectProcessingStep was unable to process 'Bar(UnresolvableDependency)' "
+                      + "because 'UnresolvableDependency' could not be resolved."
+                      + "\n  "
+                      + "\n  Dependency trace:"
+                      + "\n      => element (CLASS): test.Bar"
+                      + "\n      => element (CONSTRUCTOR): Bar(UnresolvableDependency)"
+                      + "\n      => type (EXECUTABLE constructor): (UnresolvableDependency)void"
+                      + "\n      => type (ERROR parameter type): UnresolvableDependency");
               subject.hasErrorContaining(
-                  String.format(
-                      "ComponentProcessingStep was unable to process 'test.FooComponent' because "
-                          + "'%1$s' could not be resolved." + trace,
-                      isJavac ? "UnresolvableDependency" : "error.NonExistentClass"));
+                  "ComponentProcessingStep was unable to process 'test.FooComponent' because "
+                      + "'UnresolvableDependency' could not be resolved."
+                      + "\n  "
+                      + "\n  Dependency trace:"
+                      + "\n      => element (CLASS): test.Bar"
+                      + "\n      => element (CONSTRUCTOR): Bar(UnresolvableDependency)"
+                      + "\n      => type (EXECUTABLE constructor): (UnresolvableDependency)void"
+                      + "\n      => type (ERROR parameter type): UnresolvableDependency");
 
               // Check that the stacktrace is not included in the error message by default.
               assertThat(subject.getCompilationResult().rawOutput())
@@ -128,6 +128,7 @@ public final class UnresolvableDependencyTest {
             });
   }
 
+  @org.junit.Ignore // TODO(bcorso): This is a known issue with JDK17.
   @Test
   public void referencesUnresolvableAnnotationOnType() {
     Source fooComponent =
@@ -181,26 +182,34 @@ public final class UnresolvableDependencyTest {
                   subject.hasErrorCount(2);
                   break;
               }
-              // TODO(b/248552462): Javac and KSP should match once this bug is fixed.
-              boolean isJavac = CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC;
-              String trace = "\n  "
-                  + "\n  Dependency trace:"
-                  + "\n      => element (CLASS): test.Bar"
-                  + "\n      => annotation: @UnresolvableAnnotation"
-                  + "\n      => type (ERROR annotation type): %1$s";
+              String errorType =
+                  CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP
+                      ? "error.NonExistentClass"
+                      : "UnresolvableAnnotation";
               subject.hasErrorContaining(
                   String.format(
                       "InjectProcessingStep was unable to process 'Bar(java.lang.String)' because "
-                          + "'%1$s' could not be resolved." + trace,
-                      isJavac ? "UnresolvableAnnotation" : "error.NonExistentClass"));
+                          + "'%1$s' could not be resolved."
+                          + "\n  "
+                          + "\n  Dependency trace:"
+                          + "\n      => element (CLASS): test.Bar"
+                          + "\n      => annotation: @UnresolvableAnnotation"
+                          + "\n      => type (ERROR annotation type): %1$s",
+                      errorType));
               subject.hasErrorContaining(
                   String.format(
                       "ComponentProcessingStep was unable to process 'test.FooComponent' because "
-                          + "'%1$s' could not be resolved." + trace,
-                      isJavac ? "UnresolvableAnnotation" : "error.NonExistentClass"));
+                          + "'%1$s' could not be resolved."
+                          + "\n  "
+                          + "\n  Dependency trace:"
+                          + "\n      => element (CLASS): test.Bar"
+                          + "\n      => annotation: @UnresolvableAnnotation"
+                          + "\n      => type (ERROR annotation type): %1$s",
+                      errorType));
             });
   }
 
+  @org.junit.Ignore // TODO(b/394093156): This is a known issue with JDK17.
   @Test
   public void referencesUnresolvableAnnotationOnTypeOnParameter() {
     Source fooComponent =
@@ -254,25 +263,26 @@ public final class UnresolvableDependencyTest {
                   subject.hasErrorCount(2);
                   break;
               }
-              // TODO(b/248552462): Javac and KSP should match once this bug is fixed.
-              boolean isJavac = CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC;
-              String trace = "\n  "
-                  + "\n  Dependency trace:"
-                  + "\n      => element (CLASS): test.Bar"
-                  + "\n      => element (CONSTRUCTOR): Bar(java.lang.String)"
-                  + "\n      => element (PARAMETER): dep"
-                  + "\n      => annotation: @UnresolvableAnnotation"
-                  + "\n      => type (ERROR annotation type): %1$s";
               subject.hasErrorContaining(
-                  String.format(
-                      "InjectProcessingStep was unable to process 'Bar(java.lang.String)' because "
-                          + "'%1$s' could not be resolved." + trace,
-                      isJavac ? "UnresolvableAnnotation" : "error.NonExistentClass"));
+                  "InjectProcessingStep was unable to process 'Bar(java.lang.String)' because "
+                      + "'UnresolvableAnnotation' could not be resolved."
+                      + "\n  "
+                      + "\n  Dependency trace:"
+                      + "\n      => element (CLASS): test.Bar"
+                      + "\n      => element (CONSTRUCTOR): Bar(java.lang.String)"
+                      + "\n      => element (PARAMETER): dep"
+                      + "\n      => annotation: @UnresolvableAnnotation"
+                      + "\n      => type (ERROR annotation type): UnresolvableAnnotation");
               subject.hasErrorContaining(
-                  String.format(
-                      "ComponentProcessingStep was unable to process 'test.FooComponent' because "
-                          + "'%1$s' could not be resolved." + trace,
-                      isJavac ? "UnresolvableAnnotation" : "error.NonExistentClass"));
+                  "ComponentProcessingStep was unable to process 'test.FooComponent' because "
+                      + "'UnresolvableAnnotation' could not be resolved."
+                      + "\n  "
+                      + "\n  Dependency trace:"
+                      + "\n      => element (CLASS): test.Bar"
+                      + "\n      => element (CONSTRUCTOR): Bar(java.lang.String)"
+                      + "\n      => element (PARAMETER): dep"
+                      + "\n      => annotation: @UnresolvableAnnotation"
+                      + "\n      => type (ERROR annotation type): UnresolvableAnnotation");
             });
   }
 }

@@ -1,0 +1,84 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import dagger.internal.SingleCheck;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    Provider<RegularScoped> regularScopedProvider;
+
+    Provider<ReusableScoped> reusableScopedProvider;
+
+    Provider<Object> reusableProvider;
+
+    Provider<Object> unscopedProvider;
+
+    TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.regularScopedProvider = DoubleCheck.provider(RegularScoped_Factory.create());
+      this.reusableScopedProvider = SingleCheck.provider(ReusableScoped_Factory.create());
+      this.reusableProvider = DoubleCheck.provider((Provider) (reusableScopedProvider));
+      this.unscopedProvider = DoubleCheck.provider((Provider) (Unscoped_Factory.create()));
+    }
+
+    @Override
+    public Object regular() {
+      return regularScopedProvider.get();
+    }
+
+    @Override
+    public Object reusable() {
+      return reusableProvider.get();
+    }
+
+    @Override
+    public Object unscoped() {
+      return unscopedProvider.get();
+    }
+  }
+}

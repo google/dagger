@@ -17,6 +17,7 @@
 package dagger.functional.factory;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -60,7 +61,7 @@ public final class FactoryBindsInstanceTest {
     }
   }
 
-  @Target({METHOD, PARAMETER})
+  @Target({METHOD, PARAMETER, FIELD})
   @Retention(RUNTIME)
   @interface Nullable {}
 

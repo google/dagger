@@ -110,7 +110,8 @@ public class KeyFactoryTest {
         processingEnv.requireTypeElement(QualifiedProvidesMethodModule.class.getCanonicalName());
     XMethodElement providesMethod = getOnlyElement(moduleElement.getDeclaredMethods());
     Key key = keyFactory.forProvidesMethod(providesMethod, moduleElement);
-    assertThat(key.qualifier().get().className()).isEqualTo(qualifierElement.getClassName());
+    assertThat(key.qualifier().get().xprocessing().getQualifiedName())
+        .isEqualTo(qualifierElement.getQualifiedName());
     assertThat(key.type().xprocessing().getTypeName()).isEqualTo(stringType.getTypeName());
     assertThat(key.toString())
         .isEqualTo(

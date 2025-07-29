@@ -25,6 +25,8 @@ import static dagger.internal.codegen.base.ComponentKind.SUBCOMPONENT;
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
 import static dagger.internal.codegen.binding.ErrorMessages.componentMessagesFor;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.util.CompilationResultSubject;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
@@ -164,10 +166,15 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              subject.hasErrorContaining(
+              String formattedList =
+                  formattedList(
+                      subject,
+                      "test.ChildComponent.Builder1",
+                      "test.ChildComponent.Builder2");
+              subject.hasErrorContainingMatch(
                       String.format(
                           componentMessagesFor(SUBCOMPONENT).moreThanOne(),
-                          process("[test.ChildComponent.Builder1, test.ChildComponent.Builder2]")))
+                          process(formattedList)))
                   .onSource(childComponentFile);
             });
   }
@@ -206,10 +213,15 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
         .compile(
             subject -> {
               subject.hasErrorCount(1);
-              subject.hasErrorContaining(
+              String formattedList =
+                  formattedList(
+                      subject,
+                      "test.ChildComponent.Builder",
+                      "test.ChildComponent.Factory");
+              subject.hasErrorContainingMatch(
                       String.format(
                           componentMessagesFor(SUBCOMPONENT).moreThanOne(),
-                          "[test.ChildComponent.Builder, test.ChildComponent.Factory]"))
+                          formattedList))
                   .onSource(childComponentFile);
             });
   }
@@ -1074,5 +1086,14 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
                           + "method(s): bar(). In order to provide type-safe access to these "
                           + "methods, override build() to return test.HasSupertype"));
             });
+  }
+
+  private static String formattedList(
+      CompilationResultSubject subject, String element1, String element2) {
+    return
+        CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP
+            // TODO(b/381556660): KSP2 reports the elements in arbitrary order so check both orders.
+            ? String.format("(\\[%s, %s\\]|\\[%s, %s\\])", element1, element2, element2, element1)
+            : String.format("\\[%s, %s\\]", element1, element2);
   }
 }

@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_android//rules:rules.bzl", "android_library", "android_local_test")
+load("//:build_defs.bzl", "TEST_MANIFEST_VALUES")
+
 package(default_visibility = ["//:src"])
 
 android_local_test(
     name = "UsesLocalComponentTestBindingsTest",
-    manifest_values = {
-        "minSdkVersion": "14",
-    },
+    manifest_values = TEST_MANIFEST_VALUES,
     deps = [
         "//javatests/dagger/hilt/android:shared_component_test_classes",
     ],
@@ -26,9 +27,7 @@ android_local_test(
 
 android_local_test(
     name = "UsesSharedComponent1Test",
-    manifest_values = {
-        "minSdkVersion": "14",
-    },
+    manifest_values = TEST_MANIFEST_VALUES,
     deps = [
         "//javatests/dagger/hilt/android:shared_component_test_classes",
     ],
@@ -38,11 +37,7 @@ android_library(
     name = "PackagePrivateConstructorTestClasses",
     srcs = ["PackagePrivateConstructorTestClasses.java"],
     deps = [
-        "@maven//:androidx_activity_activity",
-        "@maven//:androidx_fragment_fragment",
-        "@maven//:androidx_lifecycle_lifecycle_common",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
+        "//third_party/java/androidx/fragment",
     ],
 )
 

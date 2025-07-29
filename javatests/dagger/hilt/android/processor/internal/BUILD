@@ -16,21 +16,19 @@
 
 load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
-package(default_visibility = ["//:src"])
-
 compiler_test(
     name = "GeneratorsTest",
     srcs = ["GeneratorsTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android:android_entry_point",
-        "@androidsdk//:platforms/android-32/android.jar",
-        "@maven//:androidx_annotation_annotation",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
+        "//third_party/java/androidx/annotation",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler:xprocessing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/guava/base",
         "//third_party/java/junit",
         "//third_party/java/truth",

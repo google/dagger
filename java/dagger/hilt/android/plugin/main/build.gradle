@@ -15,6 +15,8 @@
  */
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
   id 'org.jetbrains.kotlin.jvm'
@@ -59,12 +61,16 @@ shadowJar {
 }
 
 dependencies {
-  shadowed project(':agp-wrapper-impl')
+  // Include the shared library containing the APIs in
+  // dagger.hilt.processor.internal.root.ir.
   shadowed fileTree(dir: 'libs', include: '*.jar')
-  implementation gradleApi()
+  // Use compile-only for other plugin dependencies to avoid brining those
+  // to projects that don't use them.
   compileOnly "com.android.tools.build:gradle:$agp_version"
   compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   compileOnly "com.google.devtools.ksp:symbol-processing-gradle-plugin:$ksp_version"
+
+  implementation gradleApi()
   implementation 'org.ow2.asm:asm:9.6'
   implementation "com.squareup:javapoet:1.13.0"
 
@@ -85,12 +91,16 @@ tasks.withType(PluginUnderTestMetadata.class).named("pluginUnderTestMetadata").c
   it.pluginClasspath.from(configurations.testPluginCompile)
 }
 
-compileKotlin {
-  kotlinOptions {
+kotlin {
+  compilerOptions {
+    apiVersion = KotlinVersion.KOTLIN_2_0
+    languageVersion = KotlinVersion.KOTLIN_2_0
+    coreLibrariesVersion = KotlinVersion.KOTLIN_2_0
+
     allWarningsAsErrors = true
-    freeCompilerArgs += [ "-opt-in=kotlin.ExperimentalStdlibApi" ]
-    jvmTarget = 11
+    freeCompilerArgs.add("-opt-in=kotlin.ExperimentalStdlibApi")
   }
+  jvmToolchain(17)
 }
 
 // Imports a shared library from the main project. The library and its classes
@@ -244,6 +254,12 @@ def addPomTemplate(pom) {
   pom.organization {
     name = 'Google, Inc.'
     url = 'https://www.google.com'
+  }
+  pom.developers {
+    developer {
+      organization = 'Google, Inc.'
+      organizationUrl = 'https://www.google.com'
+    }
   }
   pom.withXml {
     def projectNode = asNode()

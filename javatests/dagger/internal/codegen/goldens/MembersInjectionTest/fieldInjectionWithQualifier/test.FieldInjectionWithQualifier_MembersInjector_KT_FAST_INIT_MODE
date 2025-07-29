@@ -1,0 +1,59 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+import javax.inject.Named;
+
+@QualifierMetadata("javax.inject.Named")
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class FieldInjectionWithQualifier_MembersInjector implements MembersInjector<FieldInjectionWithQualifier> {
+  private final Provider<String> aProvider;
+
+  private final Provider<String> bProvider;
+
+  private FieldInjectionWithQualifier_MembersInjector(Provider<String> aProvider,
+      Provider<String> bProvider) {
+    this.aProvider = aProvider;
+    this.bProvider = bProvider;
+  }
+
+  public static MembersInjector<FieldInjectionWithQualifier> create(Provider<?> aProvider,
+      Provider<?> bProvider) {
+    return new FieldInjectionWithQualifier_MembersInjector((Provider<String>) (aProvider), (Provider<String>) (bProvider));
+  }
+
+  @Override
+  public void injectMembers(FieldInjectionWithQualifier instance) {
+    injectA(instance, aProvider.get());
+    injectB(instance, bProvider.get());
+  }
+
+  @InjectedFieldSignature("test.FieldInjectionWithQualifier.a")
+  @Named("A")
+  public static void injectA(Object instance, Object a) {
+    ((FieldInjectionWithQualifier) (instance)).a = (String) (a);
+  }
+
+  @InjectedFieldSignature("test.FieldInjectionWithQualifier.b")
+  @Named("B")
+  public static void injectB(Object instance, Object b) {
+    ((FieldInjectionWithQualifier) (instance)).b = (String) (b);
+  }
+}

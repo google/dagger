@@ -151,7 +151,7 @@ DEP_PKG_BLOCK = """
 <dependency>
   <groupId>{0}</groupId>
   <artifactId>{1}</artifactId>
-  <packaging>{2}</packaging>
+  <type>{2}</type>
   <version>{3}</version>
 </dependency>
 """.strip()

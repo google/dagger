@@ -16,15 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
-import static dagger.internal.codegen.TestUtils.endsWithMessage;
-
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
-import com.google.testing.compile.Compilation;
+import com.google.common.collect.ImmutableMap;
 import dagger.testing.compile.CompilerTests;
-import java.util.regex.Pattern;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -90,66 +85,87 @@ public class DependencyCycleValidationTest {
                           "\n",
                           "Found a dependency cycle:",
                           "    Outer.C is injected at",
-                          "        Outer.A(cParam)",
+                          "        [Outer.CComponent] Outer.A(cParam)",
                           "    Outer.A is injected at",
-                          "        Outer.B(aParam)",
+                          "        [Outer.CComponent] Outer.B(aParam)",
                           "    Outer.B is injected at",
-                          "        Outer.C(bParam)",
+                          "        [Outer.CComponent] Outer.C(bParam)",
                           "    Outer.C is injected at",
-                          "        Outer.A(cParam)",
+                          "        [Outer.CComponent] Outer.A(cParam)",
                           "    ...",
                           "",
                           "The cycle is requested via:",
                           "    Outer.C is requested at",
-                          "        Outer.CComponent.getC()"))
+                          "        [Outer.CComponent] Outer.CComponent.getC()"))
                   .onSource(SIMPLE_CYCLIC_DEPENDENCY)
                   .onLineContaining("interface CComponent");
             });
   }
 
-  // TODO(b/243720787): Requires CompilationResultSubject#hasErrorContainingMatch()
   @Test
   public void cyclicDependencyWithModuleBindingValidation() {
     // Cycle errors should not show a dependency trace to an entry point when doing full binding
     // graph validation. So ensure that the message doesn't end with "test.Outer.C is requested at
     // test.Outer.CComponent.getC()", as the previous test's message does.
-    Pattern moduleBindingValidationError =
-        endsWithMessage(
-            "Found a dependency cycle:",
-            "    Outer.C is injected at",
-            "        Outer.A(cParam)",
-            "    Outer.A is injected at",
-            "        Outer.B(aParam)",
-            "    Outer.B is injected at",
-            "        Outer.C(bParam)",
-            "    Outer.C is injected at",
-            "        Outer.A(cParam)",
-            "    ...",
-            "",
-            "======================",
-            "Full classname legend:",
-            "======================",
-            "Outer: test.Outer",
-            "========================",
-            "End of classname legend:",
-            "========================");
+    CompilerTests.daggerCompiler(SIMPLE_CYCLIC_DEPENDENCY)
+        .withProcessingOptions(
+            ImmutableMap.<String, String>builder()
+                .put("dagger.fullBindingGraphValidation", "ERROR")
+                .putAll(compilerMode.processorOptions())
+                .buildOrThrow())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject
+                  .hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    Outer.C is injected at",
+                          "        [Outer.MModule] Outer.A(cParam)",
+                          "    Outer.A is injected at",
+                          "        [Outer.MModule] Outer.B(aParam)",
+                          "    Outer.B is injected at",
+                          "        [Outer.MModule] Outer.C(bParam)",
+                          "    Outer.C is injected at",
+                          "        [Outer.MModule] Outer.A(cParam)",
+                          "    ...",
+                          "",
+                          "======================",
+                          "Full classname legend:",
+                          "======================",
+                          "Outer: test.Outer",
+                          "========================",
+                          "End of classname legend:",
+                          "========================"))
+                  .onSource(SIMPLE_CYCLIC_DEPENDENCY)
+                  .onLineContaining("interface MModule");
 
-    Compilation compilation =
-        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
-            .compile(SIMPLE_CYCLIC_DEPENDENCY.toJFO());
-    assertThat(compilation).failed();
-
-    assertThat(compilation)
-        .hadErrorContainingMatch(moduleBindingValidationError)
-        .inFile(SIMPLE_CYCLIC_DEPENDENCY.toJFO())
-        .onLineContaining("interface MModule");
-
-    assertThat(compilation)
-        .hadErrorContainingMatch(moduleBindingValidationError)
-        .inFile(SIMPLE_CYCLIC_DEPENDENCY.toJFO())
-        .onLineContaining("interface CComponent");
-
-    assertThat(compilation).hadErrorCount(2);
+              subject
+                  .hasErrorContaining(
+                      String.join(
+                          "\n",
+                          "Found a dependency cycle:",
+                          "    Outer.C is injected at",
+                          "        [Outer.CComponent] Outer.A(cParam)",
+                          "    Outer.A is injected at",
+                          "        [Outer.CComponent] Outer.B(aParam)",
+                          "    Outer.B is injected at",
+                          "        [Outer.CComponent] Outer.C(bParam)",
+                          "    Outer.C is injected at",
+                          "        [Outer.CComponent] Outer.A(cParam)",
+                          "    ...",
+                          "",
+                          "======================",
+                          "Full classname legend:",
+                          "======================",
+                          "Outer: test.Outer",
+                          "========================",
+                          "End of classname legend:",
+                          "========================"))
+                  .onSource(SIMPLE_CYCLIC_DEPENDENCY)
+                  .onLineContaining("interface CComponent");
+            });
   }
 
   @Test public void cyclicDependencyNotIncludingEntryPoint() {
@@ -196,20 +212,20 @@ public class DependencyCycleValidationTest {
                           "\n",
                           "Found a dependency cycle:",
                           "    Outer.C is injected at",
-                          "        Outer.A(cParam)",
+                          "        [Outer.DComponent] Outer.A(cParam)",
                           "    Outer.A is injected at",
-                          "        Outer.B(aParam)",
+                          "        [Outer.DComponent] Outer.B(aParam)",
                           "    Outer.B is injected at",
-                          "        Outer.C(bParam)",
+                          "        [Outer.DComponent] Outer.C(bParam)",
                           "    Outer.C is injected at",
-                          "        Outer.A(cParam)",
+                          "        [Outer.DComponent] Outer.A(cParam)",
                           "   ...",
                           "",
                           "The cycle is requested via:",
                           "    Outer.C is injected at",
-                          "        Outer.D(cParam)",
+                          "        [Outer.DComponent] Outer.D(cParam)",
                           "    Outer.D is requested at",
-                          "        Outer.DComponent.getD()"))
+                          "        [Outer.DComponent] Outer.DComponent.getD()"))
                   .onSource(component)
                   .onLineContaining("interface DComponent");
             });
@@ -268,20 +284,20 @@ public class DependencyCycleValidationTest {
                           "\n",
                           "Found a dependency cycle:",
                           "    Outer.C is injected at",
-                          "        Outer.CModule.c(c)",
+                          "        [Outer.CComponent] Outer.CModule.c(c)",
                           "    Map<String,Outer.C> is injected at",
-                          "        Outer.A(cMap)",
+                          "        [Outer.CComponent] Outer.A(cMap)",
                           "    Outer.A is injected at",
-                          "        Outer.B(aParam)",
+                          "        [Outer.CComponent] Outer.B(aParam)",
                           "    Outer.B is injected at",
-                          "        Outer.C(bParam)",
+                          "        [Outer.CComponent] Outer.C(bParam)",
                           "    Outer.C is injected at",
-                          "        Outer.CModule.c(c)",
+                          "        [Outer.CComponent] Outer.CModule.c(c)",
                           "   ...",
                           "",
                           "The cycle is requested via:",
                           "    Outer.C is requested at",
-                          "        Outer.CComponent.getC()"))
+                          "        [Outer.CComponent] Outer.CComponent.getC()"))
                   .onSource(component)
                   .onLineContaining("interface CComponent");
             });
@@ -338,20 +354,20 @@ public class DependencyCycleValidationTest {
                           "\n",
                           "Found a dependency cycle:",
                           "    Outer.C is injected at",
-                          "        Outer.CModule.c(c)",
+                          "        [Outer.CComponent] Outer.CModule.c(c)",
                           "    Set<Outer.C> is injected at",
-                          "        Outer.A(cSet)",
+                          "        [Outer.CComponent] Outer.A(cSet)",
                           "    Outer.A is injected at",
-                          "        Outer.B(aParam)",
+                          "        [Outer.CComponent] Outer.B(aParam)",
                           "    Outer.B is injected at",
-                          "        Outer.C(bParam)",
+                          "        [Outer.CComponent] Outer.C(bParam)",
                           "    Outer.C is injected at",
-                          "        Outer.CModule.c(c)",
+                          "        [Outer.CComponent] Outer.CModule.c(c)",
                           "   ...",
                           "",
                           "The cycle is requested via:",
                           "    Outer.C is requested at",
-                          "        Outer.CComponent.getC()"))
+                          "        [Outer.CComponent] Outer.CComponent.getC()"))
                   .onSource(component)
                   .onLineContaining("interface CComponent");
             });
@@ -403,20 +419,20 @@ public class DependencyCycleValidationTest {
                           "\n",
                           "Found a dependency cycle:",
                           "    Outer.C is injected at",
-                          "        Outer.A(cParam)",
+                          "        [Outer.DComponent] Outer.A(cParam)",
                           "    Outer.A is injected at",
-                          "        Outer.B(aParam)",
+                          "        [Outer.DComponent] Outer.B(aParam)",
                           "    Outer.B is injected at",
-                          "        Outer.C(bParam)",
+                          "        [Outer.DComponent] Outer.C(bParam)",
                           "    Outer.C is injected at",
-                          "        Outer.A(cParam)",
+                          "        [Outer.DComponent] Outer.A(cParam)",
                           "   ...",
                           "",
                           "The cycle is requested via:",
                           "    Provider<Outer.C> is injected at",
-                          "        Outer.D(cParam)",
+                          "        [Outer.DComponent] Outer.D(cParam)",
                           "    Outer.D is requested at",
-                          "        Outer.DComponent.getD()"))
+                          "        [Outer.DComponent] Outer.DComponent.getD()"))
                   .onSource(component)
                   .onLineContaining("interface DComponent");
             });
@@ -496,16 +512,16 @@ public class DependencyCycleValidationTest {
                           "\n",
                           "Found a dependency cycle:",
                           "    String is injected at",
-                          "        CycleModule.object(string)",
+                          "        [Child] CycleModule.object(string)",
                           "    Object is injected at",
-                          "        CycleModule.string(object)",
+                          "        [Child] CycleModule.string(object)",
                           "    String is injected at",
-                          "        CycleModule.object(string)",
+                          "        [Child] CycleModule.object(string)",
                           "    ...",
                           "",
                           "The cycle is requested via:",
                           "    String is requested at",
-                          "        Grandchild.entry()"))
+                          "        [Grandchild] Grandchild.entry()"))
                   .onSource(parent)
                   .onLineContaining("interface Parent");
             });
@@ -587,16 +603,16 @@ public class DependencyCycleValidationTest {
                           "\n",
                           "Found a dependency cycle:",
                           "    String is injected at",
-                          "        CycleModule.object(string)",
+                          "        [Child] CycleModule.object(string)",
                           "    Object is injected at",
-                          "        CycleModule.string(object)",
+                          "        [Child] CycleModule.string(object)",
                           "    String is injected at",
-                          "        CycleModule.object(string)",
+                          "        [Child] CycleModule.object(string)",
                           "    ...",
                           "",
                           "The cycle is requested via:",
                           "    String is requested at",
-                          "        Child.entry() [Parent → Child]"))
+                          "        [Child] Child.entry() [Parent → Child]"))
                   .onSource(parent)
                   .onLineContaining("interface Parent");
             });
@@ -647,16 +663,16 @@ public class DependencyCycleValidationTest {
                           "\n",
                           "Found a dependency cycle:",
                           "    Object is injected at",
-                          "        TestModule.bindQualified(unqualified)",
+                          "        [TestComponent] TestModule.bindQualified(unqualified)",
                           "    @SomeQualifier Object is injected at",
-                          "        TestModule.bindUnqualified(qualified)",
+                          "        [TestComponent] TestModule.bindUnqualified(qualified)",
                           "    Object is injected at",
-                          "        TestModule.bindQualified(unqualified)",
+                          "        [TestComponent] TestModule.bindQualified(unqualified)",
                           "    ...",
                           "",
                           "The cycle is requested via:",
                           "    Object is requested at",
-                          "        TestComponent.unqualified()"))
+                          "        [TestComponent] TestComponent.unqualified()"))
                   .onSource(component)
                   .onLineContaining("interface TestComponent");
             });
@@ -698,14 +714,14 @@ public class DependencyCycleValidationTest {
                           "\n",
                           "Found a dependency cycle:",
                           "    Object is injected at",
-                          "        TestModule.bindToSelf(sameKey)",
+                          "        [TestComponent] TestModule.bindToSelf(sameKey)",
                           "    Object is injected at",
-                          "        TestModule.bindToSelf(sameKey)",
+                          "        [TestComponent] TestModule.bindToSelf(sameKey)",
                           "    ...",
                           "",
                           "The cycle is requested via:",
                           "    Object is requested at",
-                          "        TestComponent.selfReferential()"))
+                          "        [TestComponent] TestComponent.selfReferential()"))
                   .onSource(component)
                   .onLineContaining("interface TestComponent");
             });
@@ -757,18 +773,18 @@ public class DependencyCycleValidationTest {
                           "\n",
                           "Found a dependency cycle:",
                           "    test.B is injected at",
-                          "        test.A.b",
+                          "        [CycleComponent] test.A.b",
                           "    test.A is injected at",
-                          "        test.B.a",
+                          "        [CycleComponent] test.B.a",
                           "    test.B is injected at",
-                          "        test.A.b",
+                          "        [CycleComponent] test.A.b",
                           "    ...",
                           "",
                           "The cycle is requested via:",
                           "    test.B is injected at",
-                          "        test.A.b",
+                          "        [CycleComponent] test.A.b",
                           "    test.A is injected at",
-                          "        CycleComponent.inject(test.A)"))
+                          "        [CycleComponent] CycleComponent.inject(test.A)"))
                   .onSource(component)
                   .onLineContaining("interface CycleComponent");
             });

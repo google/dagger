@@ -23,7 +23,19 @@ deploy_library() {
   shift 8
   local extra_maven_args=("$@")
 
-  bazel build --define=pom_version="$version_name" $library $pomfile
+  # Build everything together rather than multiple build commands to avoid cache
+  # evictions between builds. Otherwise, the output of the previous build can go
+  # missing by the time we get to the mvn command. This seems due to the flag
+  # experimental_disk_cache_gc_max_size in the bazelrc.
+  if [ -n "$srcjar" ] && [ -n "$javadoc" ] ; then
+    bazel build --define=pom_version="$version_name" \
+        $library \
+        $pomfile \
+        $srcjar \
+        $javadoc
+  else
+    bazel build --define=pom_version="$version_name" $library $pomfile
+  fi
 
   # Shade the library if shaded_rules exist
   if [[ ! -z "$shaded_rules" ]]; then
@@ -47,18 +59,16 @@ deploy_library() {
     "${module_name}"
 
   if [ -n "$srcjar" ] && [ -n "$javadoc" ] ; then
-    bazel build --define=pom_version="$version_name" \
-      $srcjar $javadoc
     mvn $mvn_goal \
-      -Dfile=$(bazel_output_file $library) \
-      -Djavadoc=$(bazel_output_file $javadoc) \
-      -DpomFile=$(bazel_output_file $pomfile) \
-      -Dsources=$(bazel_output_file $srcjar) \
+      "-Dfile=$(bazel_output_file $library)" \
+      "-Djavadoc=$(bazel_output_file $javadoc)" \
+      "-DpomFile=$(bazel_output_file $pomfile)" \
+      "-Dsources=$(bazel_output_file $srcjar)" \
       "${extra_maven_args[@]:+${extra_maven_args[@]}}"
   else
     mvn $mvn_goal \
-      -Dfile=$(bazel_output_file $library) \
-      -DpomFile=$(bazel_output_file $pomfile) \
+      "-Dfile=$(bazel_output_file $library)" \
+      "-DpomFile=$(bazel_output_file $pomfile)" \
       "${extra_maven_args[@]:+${extra_maven_args[@]}}"
   fi
 }

@@ -1,0 +1,43 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class Foo_Factory {
+  private final Provider<Bar> argProvider;
+
+  private Foo_Factory(Provider<Bar> argProvider) {
+    this.argProvider = argProvider;
+  }
+
+  public Object get(Object argProvider2) {
+    return newInstance(argProvider.get(), (Integer) (argProvider2));
+  }
+
+  public static Foo_Factory create(Provider<?> argProvider) {
+    return new Foo_Factory((Provider<Bar>) (argProvider));
+  }
+
+  public static Object newInstance(Object arg, Object argProvider) {
+    return new Foo((Bar) (arg), (Integer) (argProvider));
+  }
+}

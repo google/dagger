@@ -15,7 +15,7 @@
 # Description:
 #   Functional test code for Dagger-Android
 
-load("//:test_defs.bzl", "GenRobolectricTests")
+load("@rules_android//rules:rules.bzl", "android_library")
 
 package(default_visibility = ["//:src"])
 
@@ -29,41 +29,13 @@ android_library(
     manifest = "AndroidManifest.xml",
     resource_files = glob(["res/**"]),
     deps = [
-        "@maven//:androidx_activity_activity",
-        "@maven//:androidx_fragment_fragment",
-        "@maven//:androidx_lifecycle_lifecycle_common",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
-        "@maven//:androidx_appcompat_appcompat",
-        "@maven//:androidx_annotation_annotation",
-        "//:dagger_with_compiler",
-        "//:android",
-        "//:android-support",
+        "//third_party/java/androidx/fragment",
+        "//third_party/java/androidx/appcompat",
+        "//third_party/java/androidx/annotation",
+        "//third_party/java/dagger",
+        "//third_party/java/dagger:android",
+        "//third_party/java/dagger:android-support",
         # TODO(ronshapiro): figure out why strict deps is failing without this
         "//third_party/java/jsr250_annotations",
-    ],
-)
-
-GenRobolectricTests(
-    name = "functional_tests",
-    srcs = glob(["*Test.java"]),
-    manifest_values = {
-        "minSdkVersion": "14",
-    },
-    deps = [
-        ":functional",
-        "//:android",
-        "//:android-support",
-        "//:dagger_with_compiler",
-        "//third_party/java/truth",
-        "@maven//:androidx_activity_activity",
-        "@maven//:androidx_fragment_fragment",
-        "@maven//:androidx_lifecycle_lifecycle_common",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
-        "@maven//:androidx_test_core",
-        "@maven//:androidx_test_ext_junit",
-        "@maven//:junit_junit",
-        "@maven//:org_robolectric_robolectric",
     ],
 )

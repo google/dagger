@@ -11,8 +11,10 @@ on:
 env:
   USE_JAVA_DISTRIBUTION: 'zulu'
   USE_JAVA_VERSION: '11'
-  # This is required by AGP 8.3+.
-  USE_JAVA_VERSION_FOR_PLUGIN: '17'
+  # This is required by Gradle 8.0+.
+  USE_JAVA_VERSION_FOR_GRADLE_PLUGIN: '17'
+  # Required by JDK Toolchain Configuration
+  USE_JAVA_VERSION_FOR_GRADLE: '18'
   # The default Maven 3.9.0 has a regression so we manually install 3.8.7.
   # https://issues.apache.org/jira/browse/MNG-7679
   USE_MAVEN_VERSION: '3.8.7'
@@ -22,14 +24,14 @@ jobs:
     name: 'Validate Dagger version'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/prechecks
   bazel-build:
     name: 'Bazel build'
     needs: validate-latest-dagger-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/bazel-build
   bazel-test:
     name: 'Bazel tests'
@@ -38,28 +40,36 @@ jobs:
       group: large-runner-group
       labels: ubuntu-22.04-16core
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/bazel-test
+  gradle-build:
+    name: 'Gradle build'
+    runs-on:
+      group: large-runner-group
+      labels: ubuntu-22.04-16core
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/gradle-build
   artifact-verification-tests:
     name: 'Artifact verification tests'
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/artifact-verification-tests
   artifact-java-local-tests:
     name: 'Artifact Java local tests'
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/artifact-java-local-tests
   test-gradle-plugin:
     name: 'Test Hilt Gradle plugin'
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/test-gradle-plugin
   artifact-android-local-tests:
     name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
@@ -68,14 +78,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - agp: '7.0.0'
-            jdk: '11'
-          - agp: '7.1.2'
-            jdk: '11'
-          - agp: '8.1.0'
+          - agp: '8.1.1'
             jdk: '17'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/artifact-android-local-tests
         with:
           agp: '${{ matrix.agp }}'
@@ -93,7 +99,7 @@ jobs:
       matrix: # Run on 16 (PreL), 21 (L), and 26 (O).
         api-level: [16, 21, 26, 30]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/artifact-android-emulator-tests
         timeout-minutes: 35
         with:
@@ -111,19 +117,21 @@ jobs:
     ]
     if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
           java-version: '${{ env.USE_JAVA_VERSION }}'
-          server-id: sonatype-nexus-snapshots
+          server-id: sonatype-central-snapshots
           server-username: CI_DEPLOY_USERNAME
           server-password: CI_DEPLOY_PASSWORD
       - name: 'Check out repository'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: 'Cache local Maven repository'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.m2/repository
@@ -132,14 +140,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: 'Cache Bazel files'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
-          path: ~/.cache/bazel
+          path: ~/.cache/bazel_github # The bazel cache path set in .bazelrc.
           key: ${{ runner.os }}-bazel-build-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-bazel-build-
       - name: 'Cache Gradle files'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -157,19 +165,14 @@ jobs:
           util/deploy-all.sh \
             "deploy:deploy-file" \
             "HEAD-SNAPSHOT" \
-            "-DrepositoryId=sonatype-nexus-snapshots" \
-            "-Durl=https://oss.sonatype.org/content/repositories/snapshots"
+            "-DrepositoryId=sonatype-central-snapshots" \
+            "-Durl=https://central.sonatype.com/repository/maven-snapshots"
         shell: bash
         env:
           CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}
           CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
       - name: 'Clean bazel cache'
-        # According to the documentation, we should be able to exclude these via
-        # the actions/cache path, e.g. "!~/.cache/bazel/*/*/external/" but that
-        # doesn't seem to work.
-        run: |
-          rm -rf $(bazel info repository_cache)
-          rm -rf ~/.cache/bazel/*/*/external/
+        run: rm -rf $(bazel info repository_cache)
         shell: bash
   build-gradle-plugin-latest-agp:
     name: 'Build Hilt Gradle plugin against latest AGP version'
@@ -179,7 +182,7 @@ jobs:
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/build-gradle-plugin
         with:
           agp: '+'
@@ -196,5 +199,5 @@ jobs:
     ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/cleanup-caches

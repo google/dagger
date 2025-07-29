@@ -30,7 +30,7 @@ android {
         versionCode 1
         versionName "1.0"
     }
-
+    namespace "dagger.android.ksp"
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -47,6 +47,10 @@ android {
             java.srcDirs += sharedTestDir
         }
     }
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 dependencies {

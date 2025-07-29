@@ -23,14 +23,20 @@ alias(
     actual = "@maven//:com_google_auto_auto_common",
 )
 
+alias(
+    name = "value_processor",
+    actual = "@maven//:com_google_auto_value_auto_value",
+)
+
 java_plugin(
     name = "auto_value_processor",
     processor_class = "com.google.auto.value.processor.AutoValueProcessor",
+    visibility = ["//visibility:private"],
     deps = [
         ":common",
         ":service",
+        ":value_processor",
         "//third_party/java/guava",
-        "@maven//:com_google_auto_value_auto_value",
     ],
 )
 

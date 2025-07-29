@@ -1,0 +1,62 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import java.util.List;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerAComponent {
+  private DaggerAComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  static final class Builder {
+    private NestedNullableComponent nestedNullableComponent;
+
+    private Builder() {
+    }
+
+    public Builder nestedNullableComponent(NestedNullableComponent nestedNullableComponent) {
+      this.nestedNullableComponent = Preconditions.checkNotNull(nestedNullableComponent);
+      return this;
+    }
+
+    public AComponent build() {
+      Preconditions.checkBuilderRequirement(nestedNullableComponent, NestedNullableComponent.class);
+      return new AComponentImpl(nestedNullableComponent);
+    }
+  }
+
+  private static final class AComponentImpl implements AComponent {
+    private final NestedNullableComponent nestedNullableComponent;
+
+    private final AComponentImpl aComponentImpl = this;
+
+    AComponentImpl(NestedNullableComponent nestedNullableComponentParam) {
+      this.nestedNullableComponent = nestedNullableComponentParam;
+
+    }
+
+    @Override
+    public List<List<String>> nestedNullable() {
+      return nestedNullableComponent.nestedNullable();
+    }
+  }
+}

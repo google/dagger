@@ -17,19 +17,17 @@
 
 load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
-package(default_visibility = ["//:src"])
-
 compiler_test(
     name = "OriginatingElementProcessorTest",
     srcs = ["OriginatingElementProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/codegen:originating_element",
-        "@androidsdk//:platforms/android-32/android.jar",
-        "@maven//:androidx_annotation_annotation",
+        "//hilt-core/main/java/dagger/hilt/codegen:originating_element",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
+        "//third_party/java/androidx/annotation",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/compile_testing",
         "//third_party/java/junit",
         "//third_party/java/truth",

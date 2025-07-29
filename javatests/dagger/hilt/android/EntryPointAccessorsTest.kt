@@ -27,14 +27,18 @@ import com.google.common.truth.Truth
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.EntryPoint
+import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.components.FragmentComponent
+import dagger.hilt.android.components.FragmentRetainedComponent
 import dagger.hilt.android.components.ViewComponent
+import dagger.hilt.android.internal.managers.InternalFragmentRetainedComponent
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Inject
 import javax.inject.Qualifier
 import org.junit.Rule
 import org.junit.Test
@@ -55,24 +59,15 @@ class EntryPointAccessorsTest {
     const val VIEW_STRING = "VIEW_STRING"
   }
 
-  @get:Rule
-  var rule = HiltAndroidRule(this)
+  @get:Rule var rule = HiltAndroidRule(this)
 
-  @Qualifier
-  @Retention(AnnotationRetention.BINARY)
-  annotation class ApplicationLevel
+  @Qualifier @Retention(AnnotationRetention.BINARY) annotation class ApplicationLevel
 
-  @Qualifier
-  @Retention(AnnotationRetention.BINARY)
-  annotation class ActivityLevel
+  @Qualifier @Retention(AnnotationRetention.BINARY) annotation class ActivityLevel
 
-  @Qualifier
-  @Retention(AnnotationRetention.BINARY)
-  annotation class FragmentLevel
+  @Qualifier @Retention(AnnotationRetention.BINARY) annotation class FragmentLevel
 
-  @Qualifier
-  @Retention(AnnotationRetention.BINARY)
-  annotation class ViewLevel
+  @Qualifier @Retention(AnnotationRetention.BINARY) annotation class ViewLevel
 
   @Module
   @InstallIn(SingletonComponent::class)
@@ -117,50 +112,43 @@ class EntryPointAccessorsTest {
   @EntryPoint
   @InstallIn(SingletonComponent::class)
   internal interface ApplicationEntryPoint {
-    @ApplicationLevel
-    fun getString(): String
+    @ApplicationLevel fun getString(): String
   }
 
   @EntryPoint
   @InstallIn(ActivityComponent::class)
   internal interface ActivityEntryPoint {
-    @ActivityLevel
-    fun getString(): String
+    @ActivityLevel fun getString(): String
   }
 
   @EntryPoint
   @InstallIn(FragmentComponent::class)
   internal interface FragmentEntryPoint {
-    @FragmentLevel
-    fun getString(): String
+    @FragmentLevel fun getString(): String
   }
 
   @EntryPoint
   @InstallIn(ViewComponent::class)
   internal interface ViewEntryPoint {
-    @ViewLevel
-    fun getString(): String
+    @ViewLevel fun getString(): String
   }
 
   @Test
   fun testApplicationEntryPoint() {
     val app = getApplicationContext<HiltTestApplication>()
     val entryPoint = EntryPointAccessors.fromApplication<ApplicationEntryPoint>(app)
-    Truth.assertThat(entryPoint.getString())
-      .isEqualTo(APPLICATION_STRING)
+    Truth.assertThat(entryPoint.getString()).isEqualTo(APPLICATION_STRING)
 
     val activity = Robolectric.buildActivity(TestActivity::class.java).setup().get()
     val applicationEntryPoint = EntryPointAccessors.fromApplication<ApplicationEntryPoint>(activity)
-    Truth.assertThat(applicationEntryPoint.getString())
-      .isEqualTo(APPLICATION_STRING)
+    Truth.assertThat(applicationEntryPoint.getString()).isEqualTo(APPLICATION_STRING)
   }
 
   @Test
   fun testActivityEntryPoint() {
     val activity = Robolectric.buildActivity(TestActivity::class.java).setup().get()
     val entryPoint = EntryPointAccessors.fromActivity<ActivityEntryPoint>(activity)
-    Truth.assertThat(entryPoint.getString())
-      .isEqualTo(ACTIVITY_STRING)
+    Truth.assertThat(entryPoint.getString()).isEqualTo(ACTIVITY_STRING)
   }
 
   @Test
@@ -169,8 +157,7 @@ class EntryPointAccessorsTest {
     val fragment = TestFragment()
     activity.supportFragmentManager.beginTransaction().add(fragment, "").commitNow()
     val entryPoint = EntryPointAccessors.fromFragment<FragmentEntryPoint>(fragment)
-    Truth.assertThat(entryPoint.getString())
-      .isEqualTo(FRAGMENT_STRING)
+    Truth.assertThat(entryPoint.getString()).isEqualTo(FRAGMENT_STRING)
   }
 
   @Test
@@ -178,15 +165,15 @@ class EntryPointAccessorsTest {
     val activity = Robolectric.buildActivity(TestActivity::class.java).setup().get()
     val view = TestView(activity)
     val entryPoint = EntryPointAccessors.fromView<ViewEntryPoint>(view)
-    Truth.assertThat(entryPoint.getString())
-      .isEqualTo(VIEW_STRING)
+    Truth.assertThat(entryPoint.getString()).isEqualTo(VIEW_STRING)
   }
 
   @AndroidEntryPoint(FragmentActivity::class)
   class TestActivity : Hilt_EntryPointAccessorsTest_TestActivity()
 
   @AndroidEntryPoint(Fragment::class)
-  class TestFragment : Hilt_EntryPointAccessorsTest_TestFragment()
+  class TestFragment : Hilt_EntryPointAccessorsTest_TestFragment() {
+  }
 
   @AndroidEntryPoint(View::class)
   class TestView(context: Context) : Hilt_EntryPointAccessorsTest_TestView(context)

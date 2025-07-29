@@ -16,25 +16,55 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatMethodInUnannotatedClass;
-import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertThatModuleMethod;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import dagger.testing.compile.CompilerTests;
+import dagger.testing.compile.CompilerTests.DaggerCompiler;
 import dagger.testing.golden.GoldenFileRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class ModuleFactoryGeneratorTest {
 
-  private static final Source NULLABLE =
-        CompilerTests.javaSource(
-          "test.Nullable", "package test;", "public @interface Nullable {}");
+  private static final Source NON_TYPE_USE_NULLABLE =
+      CompilerTests.javaSource(
+          "test.Nullable", // force one-string-per-line format
+          "package test;",
+          "",
+          "public @interface Nullable {}");
+
+  @Parameters(name = "{0}")
+  public static ImmutableList<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public ModuleFactoryGeneratorTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
+  private DaggerModuleMethodSubject assertThatMethodInUnannotatedClass(String method) {
+    return DaggerModuleMethodSubject.Factory.assertThatMethodInUnannotatedClass(method)
+        .withProcessorOptions(compilerMode.processorOptions());
+  }
+
+  private DaggerModuleMethodSubject assertThatModuleMethod(String method) {
+    return DaggerModuleMethodSubject.Factory.assertThatModuleMethod(method)
+        .withProcessorOptions(compilerMode.processorOptions());
+  }
+
+  private DaggerCompiler daggerCompiler(Source... sources) {
+    return CompilerTests.daggerCompiler(sources)
+        .withProcessingOptions(compilerMode.processorOptions());
+  }
 
   @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
 
@@ -65,6 +95,25 @@ public class ModuleFactoryGeneratorTest {
   public void providesMethodReturnsProvider() {
     assertThatModuleMethod("@Provides Provider<String> provideProvider() {}")
         .hasError("@Provides methods must not return framework types");
+  }
+
+  @Test
+  public void providesMethodReturnsJakartaProvider() {
+    assertThatModuleMethod("@Provides jakarta.inject.Provider<String> provideProvider() {}")
+        .hasError("@Provides methods must not return framework types");
+  }
+
+  @Test
+  public void providesMethodReturnsDaggerInternalProvider() {
+    assertThatModuleMethod("@Provides dagger.internal.Provider<String> provideProvider() {}")
+        .hasError("@Provides methods must not return disallowed types");
+  }
+
+  @Test
+  public void providesIntoSetMethodReturnsDaggerInternalProvider() {
+    assertThatModuleMethod(
+        "@Provides @IntoSet dagger.internal.Provider<String> provideProvider() {}")
+        .hasError("@Provides methods must not return disallowed types");
   }
 
   @Test
@@ -108,10 +157,29 @@ public class ModuleFactoryGeneratorTest {
         .hasError("@Provides methods annotated with @ElementsIntoSet cannot return a raw Set");
   }
 
+  @Test public void providesElementsIntoSetMethodReturnsSetDaggerProvider() {
+    assertThatModuleMethod(
+        "@Provides @ElementsIntoSet Set<dagger.internal.Provider<String>> provideProvider() {}")
+        .hasError("@Provides methods must not return disallowed types");
+  }
+
   @Test public void providesMethodSetValuesNotASet() {
     assertThatModuleMethod(
             "@Provides @ElementsIntoSet List<String> provideStrings() { return null; }")
         .hasError("@Provides methods annotated with @ElementsIntoSet must return a Set");
+  }
+
+  @Test
+  public void bindsMethodReturnsProvider() {
+    assertThatModuleMethod("@Binds abstract Provider<Number> bindsProvider(Provider<Long> impl);")
+        .hasError("@Binds methods must not return framework types");
+  }
+
+  @Test
+  public void bindsMethodReturnsDaggerProvider() {
+    assertThatModuleMethod("@Binds abstract dagger.internal.Provider<Number> "
+        + "bindsProvider(dagger.internal.Provider<Long> impl);")
+        .hasError("@Binds methods must not return disallowed types");
   }
 
   @Test public void modulesWithTypeParamsMustBeAbstract() {
@@ -124,7 +192,7 @@ public class ModuleFactoryGeneratorTest {
             "",
             "@Module",
             "final class TestModule<A> {}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -212,7 +280,7 @@ public class ModuleFactoryGeneratorTest {
             ")",
             "class TestModule {}");
 
-    CompilerTests.daggerCompiler(module)
+    daggerCompiler(module)
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -243,7 +311,7 @@ public class ModuleFactoryGeneratorTest {
             "    return \"\";",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -267,7 +335,7 @@ public class ModuleFactoryGeneratorTest {
             "    return \"\";",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .withProcessingOptions(ImmutableMap.of("dagger.nullableValidation", "WARNING"))
         .compile(
             subject -> {
@@ -277,7 +345,8 @@ public class ModuleFactoryGeneratorTest {
             });
   }
 
-  @Test public void nullableProvides() {
+  @Test
+  public void nonTypeUseNullableProvides() {
     Source moduleFile =
         CompilerTests.javaSource(
             "test.TestModule",
@@ -290,12 +359,86 @@ public class ModuleFactoryGeneratorTest {
             "final class TestModule {",
             "  @Provides @Nullable String provideString() { return null; }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile, NULLABLE)
+    daggerCompiler(moduleFile, NON_TYPE_USE_NULLABLE)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
               subject.generatedSource(
                   goldenFileRule.goldenSource("test/TestModule_ProvideStringFactory"));
+            });
+  }
+
+  @Test
+  public void kotlinNullableProvides() {
+    Source moduleFile =
+        CompilerTests.kotlinSource(
+            "TestModule.kt",
+            "package test",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class TestModule {",
+            "  @Provides fun provideString(): String? { return null; }",
+            "}");
+    daggerCompiler(moduleFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              boolean isJavac = CompilerTests.backend(subject) == XProcessingEnv.Backend.JAVAC;
+              subject.generatedSource(
+                  CompilerTests.javaSource(
+                      "test.TestModule_ProvideStringFactory",
+                      "package test;",
+                      "",
+                      "import dagger.internal.DaggerGenerated;",
+                      "import dagger.internal.Factory;",
+                      "import dagger.internal.QualifierMetadata;",
+                      "import dagger.internal.ScopeMetadata;",
+                      "import javax.annotation.processing.Generated;",
+                      isJavac ? "import org.jetbrains.annotations.Nullable;\n" : "",
+                      "@ScopeMetadata",
+                      "@QualifierMetadata",
+                      "@DaggerGenerated",
+                      "@Generated(",
+                      "    value = \"dagger.internal.codegen.ComponentProcessor\",",
+                      "    comments = \"https://dagger.dev\"",
+                      ")",
+                      "@SuppressWarnings({",
+                      "    \"unchecked\",",
+                      "    \"rawtypes\",",
+                      "    \"KotlinInternal\",",
+                      "    \"KotlinInternalInJava\",",
+                      "    \"cast\",",
+                      "    \"deprecation\",",
+                      "    \"nullness:initialization.field.uninitialized\"",
+                      "})",
+                      "public final class TestModule_ProvideStringFactory implements"
+                          + " Factory<String> {",
+                      "  private final TestModule module;",
+                      "",
+                      "  private TestModule_ProvideStringFactory(TestModule module) {",
+                      "    this.module = module;",
+                      "  }",
+                      "",
+                      // TODO(b/368129744): KSP should output the @Nullable annotation after this
+                      // bug is fixed.
+                      isJavac ? "  @Override\n  @Nullable" : "  @Override",
+                      "  public String get() {",
+                      "    return provideString(module);",
+                      "  }",
+                      "",
+                      "  public static TestModule_ProvideStringFactory create(TestModule module) {",
+                      "    return new TestModule_ProvideStringFactory(module);",
+                      "  }",
+                      // TODO(b/368129744): KSP should output the @Nullable annotation after this
+                      // bug is fixed.
+                      isJavac ? "\n  @Nullable" : "",
+                      "  public static String provideString(TestModule instance) {",
+                      "    return instance.provideString();",
+                      "  }",
+                      "}"));
             });
   }
 
@@ -335,7 +478,7 @@ public class ModuleFactoryGeneratorTest {
             "    return new Object();",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(classXFile, moduleFile, QUALIFIER_A, QUALIFIER_B)
+    daggerCompiler(classXFile, moduleFile, QUALIFIER_A, QUALIFIER_B)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -344,7 +487,8 @@ public class ModuleFactoryGeneratorTest {
             });
   }
 
-  @Test public void providesSetElement() {
+  @Test
+  public void providesSetElement() {
     Source moduleFile =
         CompilerTests.javaSource(
             "test.TestModule",
@@ -361,7 +505,7 @@ public class ModuleFactoryGeneratorTest {
             "    return \"\";",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -389,7 +533,7 @@ public class ModuleFactoryGeneratorTest {
             "    return new ArrayList<>();",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -415,7 +559,7 @@ public class ModuleFactoryGeneratorTest {
             "    return null;",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -442,7 +586,7 @@ public class ModuleFactoryGeneratorTest {
         "    return \"\";",
         "  }",
         "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -479,7 +623,7 @@ public class ModuleFactoryGeneratorTest {
             "    return \"\";",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -530,7 +674,7 @@ public class ModuleFactoryGeneratorTest {
             "    return null;",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile).compile(subject -> subject.hasErrorCount(0));
+    daggerCompiler(moduleFile).compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
@@ -546,7 +690,7 @@ public class ModuleFactoryGeneratorTest {
             "  @Module private static final class PrivateModule {",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -572,7 +716,7 @@ public class ModuleFactoryGeneratorTest {
             "  @Provides fun provideInt(): Int = 1",
             "}");
 
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -596,7 +740,7 @@ public class ModuleFactoryGeneratorTest {
         "    }",
         "  }",
         "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -657,7 +801,7 @@ public class ModuleFactoryGeneratorTest {
         "@Module",
         "public final class OtherPublicModule {",
         "}");
-    CompilerTests.daggerCompiler(
+    daggerCompiler(
             publicModuleFile,
             badNonPublicModuleFile,
             okNonPublicModuleFile,
@@ -743,7 +887,7 @@ public class ModuleFactoryGeneratorTest {
         "  List<Number> numberList();",
         "  List<Integer> integerList();",
         "}");
-    CompilerTests.daggerCompiler(parent, numberChild, integerChild, component)
+    daggerCompiler(parent, numberChild, integerChild, component)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -790,7 +934,7 @@ public class ModuleFactoryGeneratorTest {
             "    return o.toString();",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -842,7 +986,7 @@ public class ModuleFactoryGeneratorTest {
         "    return \"foo\";",
         "  }",
         "}");
-    CompilerTests.daggerCompiler(moduleFile, QUALIFIER_A, QUALIFIER_B)
+    daggerCompiler(moduleFile, QUALIFIER_A, QUALIFIER_B)
         .compile(
             subject -> {
               // There are 2 errors -- 1 per qualifier.
@@ -876,17 +1020,25 @@ public class ModuleFactoryGeneratorTest {
             "    return \"foo\";",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile, QUALIFIER_A, QUALIFIER_B)
+    daggerCompiler(moduleFile, QUALIFIER_A, QUALIFIER_B)
         .compile(
             subject -> {
               // There are two errors -- 1 per qualifier.
               subject.hasErrorCount(2);
-              subject.hasErrorContaining("may not use more than one @Qualifier")
-                  .onSource(moduleFile)
-                  .onLine(10);
-              subject.hasErrorContaining("may not use more than one @Qualifier")
-                  .onSource(moduleFile)
-                  .onLine(11);
+              if (CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP) {
+                // TODO(b/381557487): KSP2 reports the error on the parameter instead of the
+                // the annotation.
+                subject.hasErrorContaining("may not use more than one @Qualifier")
+                    .onSource(moduleFile)
+                    .onLine(12);
+              } else {
+                subject.hasErrorContaining("may not use more than one @Qualifier")
+                    .onSource(moduleFile)
+                    .onLine(10);
+                subject.hasErrorContaining("may not use more than one @Qualifier")
+                    .onSource(moduleFile)
+                    .onLine(11);
+              }
             });
   }
 
@@ -907,7 +1059,7 @@ public class ModuleFactoryGeneratorTest {
             "    return \"foo\";",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile, QUALIFIER_A, QUALIFIER_B)
+    daggerCompiler(moduleFile, QUALIFIER_A, QUALIFIER_B)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -954,7 +1106,7 @@ public class ModuleFactoryGeneratorTest {
             "    return \"foo\";",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile, SCOPE_A, SCOPE_B)
+    daggerCompiler(moduleFile, SCOPE_A, SCOPE_B)
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -983,7 +1135,7 @@ public class ModuleFactoryGeneratorTest {
             "    return \"foo\";",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -1007,7 +1159,7 @@ public class ModuleFactoryGeneratorTest {
             "    return \"foo\";",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(moduleFile)
+    daggerCompiler(moduleFile)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -1034,7 +1186,7 @@ public class ModuleFactoryGeneratorTest {
             "  static boolean create() { return true; }",
             "}");
 
-    CompilerTests.daggerCompiler(module)
+    daggerCompiler(module)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1070,7 +1222,7 @@ public class ModuleFactoryGeneratorTest {
             "",
             "@interface NonScope {}");
 
-    CompilerTests.daggerCompiler(module, nonScope)
+    daggerCompiler(module, nonScope)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1106,7 +1258,7 @@ public class ModuleFactoryGeneratorTest {
             "",
             "@interface NonScope {}");
 
-    CompilerTests.daggerCompiler(module, nonScope)
+    daggerCompiler(module, nonScope)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1155,7 +1307,7 @@ public class ModuleFactoryGeneratorTest {
             "  String value();",
             "}");
 
-    CompilerTests.daggerCompiler(module, customScope, nonScope)
+    daggerCompiler(module, customScope, nonScope)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1209,7 +1361,7 @@ public class ModuleFactoryGeneratorTest {
             "",
             "@interface NonQualifier {}");
 
-    CompilerTests.daggerCompiler(module, methodQualifier, paramQualifier, nonQualifier)
+    daggerCompiler(module, methodQualifier, paramQualifier, nonQualifier)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1320,7 +1472,7 @@ public class ModuleFactoryGeneratorTest {
 
     Source bindsMethodAndInstanceProvidesMethodModuleFile =
         CompilerTests.javaSource("test.TestModule", moduleLines);
-    return CompilerTests.daggerCompiler(
+    return daggerCompiler(
         fooFile, fooImplFile, barFile, bazFile, bindsMethodAndInstanceProvidesMethodModuleFile);
   }
 }

@@ -1,0 +1,54 @@
+package other;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class Inaccessible_MembersInjector implements MembersInjector<Inaccessible> {
+  private final Provider<Foo> fooProvider;
+
+  private final Provider<Foo> fooProvider2;
+
+  private Inaccessible_MembersInjector(Provider<Foo> fooProvider, Provider<Foo> fooProvider2) {
+    this.fooProvider = fooProvider;
+    this.fooProvider2 = fooProvider2;
+  }
+
+  public static MembersInjector<Inaccessible> create(Provider<Foo> fooProvider,
+      Provider<Foo> fooProvider2) {
+    return new Inaccessible_MembersInjector(fooProvider, fooProvider2);
+  }
+
+  @Override
+  public void injectMembers(Inaccessible instance) {
+    injectFoo(instance, fooProvider.get());
+    injectMethod(instance, fooProvider2.get());
+  }
+
+  @InjectedFieldSignature("other.Inaccessible.foo")
+  public static void injectFoo(Object instance, Object foo) {
+    ((Inaccessible) (instance)).foo = (Foo) (foo);
+  }
+
+  public static void injectMethod(Object instance, Object foo) {
+    ((Inaccessible) (instance)).method((Foo) (foo));
+  }
+}

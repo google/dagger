@@ -17,13 +17,11 @@
 
 load("@rules_java//java:defs.bzl", "java_plugin")
 
-package(default_visibility = ["//:src"])
-
 java_plugin(
     name = "binding-graph-visualizer",
     srcs = glob(["*.java"]),
     deps = [
-        "//java/dagger/spi",
+        "//dagger-spi",
         "//third_party/java/auto:service",
         "//third_party/java/error_prone:annotations",
         "//third_party/java/guava/base",

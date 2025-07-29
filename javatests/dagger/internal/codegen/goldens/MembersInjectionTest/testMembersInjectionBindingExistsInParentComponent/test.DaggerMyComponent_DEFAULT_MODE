@@ -1,0 +1,103 @@
+package test;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import dagger.internal.DaggerGenerated;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class DaggerMyComponent {
+  private DaggerMyComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static MyComponent create() {
+    return new Builder().build();
+  }
+
+  public static final class Builder {
+    private Builder() {
+    }
+
+    public MyComponent build() {
+      return new MyComponentImpl();
+    }
+  }
+
+  private static final class MySubcomponentImpl implements MySubcomponent {
+    private final MyComponentImpl myComponentImpl;
+
+    private final MySubcomponentImpl mySubcomponentImpl = this;
+
+    MySubcomponentImpl(MyComponentImpl myComponentImpl) {
+      this.myComponentImpl = myComponentImpl;
+
+
+    }
+
+    Set<String> setOfString() {
+      return ImmutableSet.<String>of(MyComponentModule_ProvideStringFactory.provideString(), MySubcomponentModule_ProvideStringFactory.provideString());
+    }
+
+    Bar bar() {
+      return injectBar(Bar_Factory.newInstance());
+    }
+
+    @Override
+    public Foo foo() {
+      return new Foo(bar());
+    }
+
+    @CanIgnoreReturnValue
+    private Bar injectBar(Bar instance) {
+      Bar_MembersInjector.injectMultibindingStrings(instance, setOfString());
+      return instance;
+    }
+  }
+
+  private static final class MyComponentImpl implements MyComponent {
+    private final MyComponentImpl myComponentImpl = this;
+
+    MyComponentImpl() {
+
+
+    }
+
+    Set<String> setOfString() {
+      return ImmutableSet.<String>of(MyComponentModule_ProvideStringFactory.provideString());
+    }
+
+    @Override
+    public void inject(Bar bar) {
+      injectBar(bar);
+    }
+
+    @Override
+    public MySubcomponent subcomponent() {
+      return new MySubcomponentImpl(myComponentImpl);
+    }
+
+    @CanIgnoreReturnValue
+    private Bar injectBar(Bar instance) {
+      Bar_MembersInjector.injectMultibindingStrings(instance, setOfString());
+      return instance;
+    }
+  }
+}

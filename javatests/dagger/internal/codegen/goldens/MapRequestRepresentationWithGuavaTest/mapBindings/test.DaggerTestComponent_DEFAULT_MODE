@@ -1,0 +1,109 @@
+package test;
+
+import com.google.common.collect.ImmutableMap;
+import dagger.internal.DaggerGenerated;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class SubImpl implements Sub {
+    private final TestComponentImpl testComponentImpl;
+
+    private final SubImpl subImpl = this;
+
+    SubImpl(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+
+
+    }
+
+    @Override
+    public Map<Long, Long> longs() {
+      return ImmutableMap.<Long, Long>builderWithExpectedSize(6).put(0L, MapModule.provideLong0()).put(1L, MapModule.provideLong1()).put(2L, MapModule.provideLong2()).put(3L, SubcomponentMapModule.provideLong3()).put(4L, SubcomponentMapModule.provideLong4()).put(5L, SubcomponentMapModule.provideLong5()).build();
+    }
+
+    @Override
+    public Map<Long, Provider<Long>> providerLongs() {
+      return ImmutableMap.<Long, Provider<Long>>builderWithExpectedSize(6).put(0L, MapModule_ProvideLong0Factory.create()).put(1L, MapModule_ProvideLong1Factory.create()).put(2L, MapModule_ProvideLong2Factory.create()).put(3L, SubcomponentMapModule_ProvideLong3Factory.create()).put(4L, SubcomponentMapModule_ProvideLong4Factory.create()).put(5L, SubcomponentMapModule_ProvideLong5Factory.create()).build();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public Map<String, String> strings() {
+      return ImmutableMap.<String, String>of();
+    }
+
+    @Override
+    public Map<String, Provider<String>> providerStrings() {
+      return ImmutableMap.<String, Provider<String>>of();
+    }
+
+    @Override
+    public Map<Integer, Integer> ints() {
+      return ImmutableMap.<Integer, Integer>of(0, MapModule.provideInt());
+    }
+
+    @Override
+    public Map<Integer, Provider<Integer>> providerInts() {
+      return ImmutableMap.<Integer, Provider<Integer>>of(0, MapModule_ProvideIntFactory.create());
+    }
+
+    @Override
+    public Map<Long, Long> longs() {
+      return ImmutableMap.<Long, Long>of(0L, MapModule.provideLong0(), 1L, MapModule.provideLong1(), 2L, MapModule.provideLong2());
+    }
+
+    @Override
+    public Map<Long, Provider<Long>> providerLongs() {
+      return ImmutableMap.<Long, Provider<Long>>of(0L, MapModule_ProvideLong0Factory.create(), 1L, MapModule_ProvideLong1Factory.create(), 2L, MapModule_ProvideLong2Factory.create());
+    }
+
+    @Override
+    public Sub sub() {
+      return new SubImpl(testComponentImpl);
+    }
+  }
+}

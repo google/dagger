@@ -19,7 +19,7 @@ apply plugin: 'com.google.dagger.hilt.android'
 
 android {
     compileSdkVersion 33
-    buildToolsVersion "33.0.0"
+    buildToolsVersion "33.0.1"
 
     defaultConfig {
         minSdkVersion 16
@@ -27,6 +27,7 @@ android {
         testInstrumentationRunner "dagger.hilt.android.simple.uitest.TestRunner"
         missingDimensionStrategy 'tier', 'free'
     }
+    namespace "dagger.hilt.android.simple.uitest"
     targetProjectPath ':app'
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11

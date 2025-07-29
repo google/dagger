@@ -1,0 +1,57 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+import other.Subtype_Factory;
+import other.Supertype;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerRequestsSubtypeAsProvider {
+  private DaggerRequestsSubtypeAsProvider() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static RequestsSubtypeAsProvider create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public RequestsSubtypeAsProvider build() {
+      return new RequestsSubtypeAsProviderImpl();
+    }
+  }
+
+  private static final class RequestsSubtypeAsProviderImpl implements RequestsSubtypeAsProvider {
+    private final RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl = this;
+
+    RequestsSubtypeAsProviderImpl() {
+
+
+    }
+
+    @Override
+    public Provider<Supertype> supertypeProvider() {
+      return ((dagger.internal.Provider) (Subtype_Factory.create()));
+    }
+  }
+}

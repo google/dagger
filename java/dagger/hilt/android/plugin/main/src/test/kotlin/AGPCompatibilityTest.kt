@@ -88,10 +88,7 @@ class AGPCompatibilityTest(
     fun parameters() =
       listOf(
         // AGP 8.3 requires Gradle 8.4 and JDK 17.
-        arrayOf("8.3.0-alpha11", "8.4"),
-        arrayOf("7.2.0", "7.4.2"),
-        arrayOf("7.1.0", "7.4.2"),
-        arrayOf("7.0.0", "7.4.2"),
+        arrayOf("8.3.0", "8.4"),
       )
   }
 }

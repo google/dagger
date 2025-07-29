@@ -31,3 +31,8 @@ java_library(
         "//third_party/java/asm",
     ],
 )
+
+alias(
+    name = "truth-android",
+    actual = ":truth",
+)

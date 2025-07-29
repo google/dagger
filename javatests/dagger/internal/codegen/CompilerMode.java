@@ -28,15 +28,16 @@ import java.util.List;
 // TODO(bcorso): Consider moving the java version into its own separate enum.
 public enum CompilerMode {
   DEFAULT_MODE,
-  DEFAULT_JAVA7_MODE("-source", "7", "-target", "7"),
   FAST_INIT_MODE("-Adagger.fastInit=enabled"),
-  FAST_INIT_JAVA7_MODE("-Adagger.fastInit=enabled", "-source", "7", "-target", "7"),
   ;
 
   /** Returns the compiler modes as a list of parameters for parameterized tests */
   public static final ImmutableList<Object[]> TEST_PARAMETERS =
       ImmutableList.copyOf(
-          new Object[][] {{CompilerMode.DEFAULT_MODE}, {CompilerMode.FAST_INIT_MODE}});
+          new Object[][] {
+            {CompilerMode.DEFAULT_MODE},
+            {CompilerMode.FAST_INIT_MODE},
+          });
 
   private final ImmutableList<String> javacopts;
 

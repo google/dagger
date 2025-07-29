@@ -16,10 +16,12 @@
 
 package dagger.internal.codegen;
 
+import static dagger.internal.codegen.xprocessing.XFunSpecs.constructorBuilder;
+
+import androidx.room.compiler.codegen.XClassName;
+import androidx.room.compiler.codegen.XTypeSpec;
 import androidx.room.compiler.processing.util.Source;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeSpec;
-import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.xprocessing.XTypeSpecs;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
@@ -866,11 +868,11 @@ public class SubcomponentValidationTest {
             "interface ChildSupertype {",
             "  GeneratedInjectType generatedType();",
             "}");
-    TypeSpec generatedInjectType =
-        TypeSpec.classBuilder("GeneratedInjectType")
-            .addMethod(
-                MethodSpec.constructorBuilder()
-                    .addAnnotation(TypeNames.INJECT_JAVAX)
+    XTypeSpec generatedInjectType =
+        XTypeSpecs.classBuilder("GeneratedInjectType")
+            .addFunction(
+                constructorBuilder()
+                    .addAnnotation(XClassName.get("javax.inject", "Inject"))
                     .build())
             .build();
     CompilerTests.daggerCompiler(parent, child, childSupertype)

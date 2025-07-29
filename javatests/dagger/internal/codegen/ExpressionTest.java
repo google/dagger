@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+import static androidx.room.compiler.codegen.compat.XConverters.toJavaPoet;
 import static com.google.common.truth.Truth.assertThat;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.getPrimitiveIntType;
 
@@ -23,9 +24,10 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.google.testing.compile.CompilationRule;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import dagger.Component;
 import dagger.internal.codegen.javac.JavacPluginModule;
-import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.xprocessing.XExpression;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.junit.Before;
@@ -57,25 +59,27 @@ public class ExpressionTest {
   public void castTo() {
     XType subtype = type(Subtype.class);
     XType supertype = type(Supertype.class);
-    Expression expression = Expression.create(subtype, "new $T() {}", subtype.getTypeName());
+    XExpression expression =
+        XExpression.create(subtype, CodeBlock.of("new $T() {}", subtype.getTypeName()));
 
-    Expression castTo = expression.castTo(supertype);
+    XExpression castTo = expression.castTo(supertype);
 
     assertThat(castTo.type().getTypeName()).isEqualTo(supertype.getTypeName());
-    assertThat(castTo.codeBlock().toString())
+    assertThat(toJavaPoet(castTo.codeBlock()).toString())
         .isEqualTo(
             "(dagger.internal.codegen.ExpressionTest.Supertype) "
-                + "new dagger.internal.codegen.ExpressionTest.Subtype() {}");
+                + "(new dagger.internal.codegen.ExpressionTest.Subtype() {})");
   }
 
   @Test
   public void box() {
     XType primitiveInt = getPrimitiveIntType(processingEnv);
 
-    Expression primitiveExpression = Expression.create(primitiveInt, "5");
-    Expression boxedExpression = primitiveExpression.box();
+    XExpression primitiveExpression = XExpression.create(primitiveInt, CodeBlock.of("5"));
+    XExpression boxedExpression = primitiveExpression.box();
 
-    assertThat(boxedExpression.codeBlock().toString()).isEqualTo("(java.lang.Integer) 5");
+    assertThat(toJavaPoet(boxedExpression.codeBlock()).toString())
+        .isEqualTo("(java.lang.Integer) (5)");
     assertThat(boxedExpression.type().getTypeName()).isEqualTo(type(Integer.class).getTypeName());
   }
 

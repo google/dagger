@@ -17,6 +17,7 @@
 package dagger.functional.producers.builder;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -49,11 +50,14 @@ public final class ProductionComponentBuilderTest {
     assertThat(component.d().get()).isEqualTo(15.3);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void missingDepComponent() {
-    DaggerTestComponentWithBuilder.builder()
-        .strModule(new StringModule())
-        .build();
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            DaggerTestComponentWithBuilder.builder()
+                .strModule(new StringModule())
+                .build());
   }
 
   private static DepComponent depComponent(final double value) {

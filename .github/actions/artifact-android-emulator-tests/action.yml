@@ -10,9 +10,9 @@ runs:
   using: "composite"
   steps:
     - name: 'Check out repository'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: 'Cache Gradle files'
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -21,12 +21,12 @@ runs:
         restore-keys: |
           ${{ runner.os }}-gradle-
     - name: 'Download local snapshot for tests'
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
     - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
         java-version: '${{ env.USE_JAVA_VERSION }}'
@@ -38,7 +38,7 @@ runs:
         script: ./util/run-local-emulator-tests.sh
     - name: 'Upload test reports (API ${{ inputs.api-level }})'
       if: ${{ always() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: androidTests-report-api-${{ inputs.api-level }}
         path: ${{ github.workspace }}/**/build/reports/androidTests/connected/*

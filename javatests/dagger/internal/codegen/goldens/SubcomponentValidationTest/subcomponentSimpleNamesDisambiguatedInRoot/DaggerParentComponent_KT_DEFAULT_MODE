@@ -1,0 +1,84 @@
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerParentComponent {
+  private DaggerParentComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static ParentComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public ParentComponent build() {
+      return new ParentComponentImpl();
+    }
+  }
+
+  private static final class tdmltmt_SubImpl implements test.deep.many.levels.that.match.test.Sub {
+    private final ParentComponentImpl parentComponentImpl;
+
+    private final $_SubImpl _$_SubImpl;
+
+    private final tdmltmt_SubImpl _tdmltmt_SubImpl = this;
+
+    tdmltmt_SubImpl(ParentComponentImpl parentComponentImpl, $_SubImpl _$_SubImpl) {
+      this.parentComponentImpl = parentComponentImpl;
+      this._$_SubImpl = _$_SubImpl;
+
+
+    }
+  }
+
+  private static final class $_SubImpl implements Sub {
+    private final ParentComponentImpl parentComponentImpl;
+
+    private final $_SubImpl _$_SubImpl = this;
+
+    $_SubImpl(ParentComponentImpl parentComponentImpl) {
+      this.parentComponentImpl = parentComponentImpl;
+
+
+    }
+
+    @Override
+    public test.deep.many.levels.that.match.test.Sub newDeepSubcomponent() {
+      return new tdmltmt_SubImpl(parentComponentImpl, _$_SubImpl);
+    }
+  }
+
+  private static final class ParentComponentImpl implements ParentComponent {
+    private final ParentComponentImpl parentComponentImpl = this;
+
+    ParentComponentImpl() {
+
+
+    }
+
+    @Override
+    public Sub newSubcomponent() {
+      return new $_SubImpl(parentComponentImpl);
+    }
+  }
+}

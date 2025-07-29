@@ -9,7 +9,7 @@ java_library(
     name = "errorprone",
     srcs = glob(["*.java"]),
     deps = [
-        "//java/dagger:core",
+        "//dagger-runtime/main/java/dagger:core",
         "//third_party/java/error_prone:check_api",
         "//third_party/java/guava/collect",
     ],

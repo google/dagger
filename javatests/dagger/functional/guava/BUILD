@@ -24,10 +24,9 @@ GenJavaTests(
     name = "guava_tests",
     srcs = glob(["**/*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    require_jdk7_syntax = False,
     deps = [
-        "//:dagger_with_compiler",
         "//third_party/java/auto:value",
+        "//third_party/java/dagger",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/jsr305_annotations",

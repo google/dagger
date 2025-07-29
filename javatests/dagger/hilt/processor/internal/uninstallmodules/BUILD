@@ -17,21 +17,19 @@
 
 load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
-package(default_visibility = ["//:src"])
-
 compiler_test(
     name = "UninstallModulesProcessorTest",
     srcs = ["UninstallModulesProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android:android_entry_point",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-        "//java/dagger/hilt/android/testing:uninstall_modules",
-        "//java/dagger/hilt/migration:disable_install_in_check",
-        "@androidsdk//:platforms/android-32/android.jar",
-        "@maven//:androidx_annotation_annotation",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:uninstall_modules",
+        "//hilt-core/main/java/dagger/hilt/migration:disable_install_in_check",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
+        "//third_party/java/androidx/annotation",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/junit",
     ],
 )

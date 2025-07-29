@@ -16,19 +16,17 @@
 
 load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
-package(default_visibility = ["//:src"])
-
 compiler_test(
     name = "CustomTestApplicationProcessorTest",
     srcs = ["CustomTestApplicationProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt/android/testing:custom_test_application",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-        "//java/dagger/hilt/android:hilt_android_app",
-        "@androidsdk//:platforms/android-32/android.jar",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:custom_test_application",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//third_party/java/android/android_sdk_linux:android_runtime",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",

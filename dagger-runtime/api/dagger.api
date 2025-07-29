@@ -1,0 +1,282 @@
+public abstract interface annotation class dagger/Binds : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/BindsInstance : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/BindsOptionalOf : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/Component : java/lang/annotation/Annotation {
+	public abstract fun dependencies ()[Ljava/lang/Class;
+	public abstract fun modules ()[Ljava/lang/Class;
+}
+
+public abstract interface annotation class dagger/Component$Builder : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/Component$Factory : java/lang/annotation/Annotation {
+}
+
+public abstract interface class dagger/Lazy {
+	public abstract fun get ()Ljava/lang/Object;
+}
+
+public abstract interface annotation class dagger/MapKey : java/lang/annotation/Annotation {
+	public abstract fun unwrapValue ()Z
+}
+
+public abstract interface class dagger/MembersInjector {
+	public abstract fun injectMembers (Ljava/lang/Object;)V
+}
+
+public abstract interface annotation class dagger/Module : java/lang/annotation/Annotation {
+	public abstract fun includes ()[Ljava/lang/Class;
+	public abstract fun subcomponents ()[Ljava/lang/Class;
+}
+
+public abstract interface annotation class dagger/Provides : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/Reusable : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/Subcomponent : java/lang/annotation/Annotation {
+	public abstract fun modules ()[Ljava/lang/Class;
+}
+
+public abstract interface annotation class dagger/Subcomponent$Builder : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/Subcomponent$Factory : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/assisted/Assisted : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/String;
+}
+
+public abstract interface annotation class dagger/assisted/AssistedFactory : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/assisted/AssistedInject : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/internal/Beta : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/internal/ComponentDefinitionType : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/Class;
+}
+
+public final class dagger/internal/DaggerCollections {
+	public static fun hasDuplicates (Ljava/util/List;)Z
+	public static fun newLinkedHashMapWithExpectedSize (I)Ljava/util/LinkedHashMap;
+	public static fun presizedList (I)Ljava/util/List;
+}
+
+public abstract interface annotation class dagger/internal/DaggerGenerated : java/lang/annotation/Annotation {
+}
+
+public final class dagger/internal/DelegateFactory : dagger/internal/Factory {
+	public fun <init> ()V
+	public fun get ()Ljava/lang/Object;
+	public static fun setDelegate (Ldagger/internal/Provider;Ldagger/internal/Provider;)V
+	public static fun setDelegate (Ljavax/inject/Provider;Ljavax/inject/Provider;)V
+	public fun setDelegatedProvider (Ldagger/internal/Provider;)V
+	public fun setDelegatedProvider (Ljavax/inject/Provider;)V
+}
+
+public final class dagger/internal/DoubleCheck : dagger/Lazy, dagger/internal/Provider {
+	public fun get ()Ljava/lang/Object;
+	public static fun lazy (Ldagger/internal/Provider;)Ldagger/Lazy;
+	public static fun lazy (Ljavax/inject/Provider;)Ldagger/Lazy;
+	public static fun provider (Ldagger/internal/Provider;)Ldagger/internal/Provider;
+	public static fun provider (Ljavax/inject/Provider;)Ljavax/inject/Provider;
+}
+
+public abstract interface class dagger/internal/Factory : dagger/internal/Provider {
+}
+
+public abstract interface annotation class dagger/internal/GwtIncompatible : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/internal/IdentifierNameString : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/internal/InjectedFieldSignature : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/String;
+}
+
+public final class dagger/internal/InstanceFactory : dagger/Lazy, dagger/internal/Factory {
+	public static fun create (Ljava/lang/Object;)Ldagger/internal/Factory;
+	public static fun createNullable (Ljava/lang/Object;)Ldagger/internal/Factory;
+	public fun get ()Ljava/lang/Object;
+}
+
+public abstract interface annotation class dagger/internal/KeepFieldType : java/lang/annotation/Annotation {
+}
+
+public final class dagger/internal/LazyClassKeyMap : java/util/Map {
+	public fun clear ()V
+	public fun containsKey (Ljava/lang/Object;)Z
+	public fun containsValue (Ljava/lang/Object;)Z
+	public fun entrySet ()Ljava/util/Set;
+	public fun get (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun isEmpty ()Z
+	public fun keySet ()Ljava/util/Set;
+	public static fun of (Ljava/util/Map;)Ljava/util/Map;
+	public fun put (Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun put (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun putAll (Ljava/util/Map;)V
+	public fun remove (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun size ()I
+	public fun values ()Ljava/util/Collection;
+}
+
+public class dagger/internal/LazyClassKeyMap$MapFactory : dagger/internal/Factory {
+	public synthetic fun get ()Ljava/lang/Object;
+	public fun get ()Ljava/util/Map;
+	public static fun of (Ldagger/internal/Factory;)Ldagger/internal/LazyClassKeyMap$MapFactory;
+}
+
+public class dagger/internal/LazyClassKeyMap$MapProviderFactory : dagger/internal/Factory {
+	public synthetic fun get ()Ljava/lang/Object;
+	public fun get ()Ljava/util/Map;
+	public static fun of (Ldagger/internal/Factory;)Ldagger/internal/LazyClassKeyMap$MapProviderFactory;
+}
+
+public final class dagger/internal/MapBuilder {
+	public fun build ()Ljava/util/Map;
+	public static fun newMapBuilder (I)Ldagger/internal/MapBuilder;
+	public fun put (Ljava/lang/Object;Ljava/lang/Object;)Ldagger/internal/MapBuilder;
+	public fun putAll (Ljava/util/Map;)Ldagger/internal/MapBuilder;
+}
+
+public final class dagger/internal/MapFactory {
+	public static fun builder (I)Ldagger/internal/MapFactory$Builder;
+	public static fun emptyMapProvider ()Ldagger/internal/Provider;
+	public synthetic fun get ()Ljava/lang/Object;
+	public fun get ()Ljava/util/Map;
+}
+
+public final class dagger/internal/MapFactory$Builder {
+	public fun build ()Ldagger/internal/MapFactory;
+	public synthetic fun put (Ljava/lang/Object;Ldagger/internal/Provider;)Ldagger/internal/AbstractMapFactory$Builder;
+	public fun put (Ljava/lang/Object;Ldagger/internal/Provider;)Ldagger/internal/MapFactory$Builder;
+	public fun put (Ljava/lang/Object;Ljavax/inject/Provider;)Ldagger/internal/MapFactory$Builder;
+	public synthetic fun putAll (Ldagger/internal/Provider;)Ldagger/internal/AbstractMapFactory$Builder;
+	public fun putAll (Ldagger/internal/Provider;)Ldagger/internal/MapFactory$Builder;
+	public fun putAll (Ljavax/inject/Provider;)Ldagger/internal/MapFactory$Builder;
+}
+
+public final class dagger/internal/MapProviderFactory : dagger/Lazy {
+	public static fun builder (I)Ldagger/internal/MapProviderFactory$Builder;
+	public synthetic fun get ()Ljava/lang/Object;
+	public fun get ()Ljava/util/Map;
+}
+
+public final class dagger/internal/MapProviderFactory$Builder {
+	public fun build ()Ldagger/internal/MapProviderFactory;
+	public synthetic fun put (Ljava/lang/Object;Ldagger/internal/Provider;)Ldagger/internal/AbstractMapFactory$Builder;
+	public fun put (Ljava/lang/Object;Ldagger/internal/Provider;)Ldagger/internal/MapProviderFactory$Builder;
+	public fun put (Ljava/lang/Object;Ljavax/inject/Provider;)Ldagger/internal/MapProviderFactory$Builder;
+	public synthetic fun putAll (Ldagger/internal/Provider;)Ldagger/internal/AbstractMapFactory$Builder;
+	public fun putAll (Ldagger/internal/Provider;)Ldagger/internal/MapProviderFactory$Builder;
+	public fun putAll (Ljavax/inject/Provider;)Ldagger/internal/MapProviderFactory$Builder;
+}
+
+public final class dagger/internal/MembersInjectors {
+	public static fun noOp ()Ldagger/MembersInjector;
+}
+
+public final class dagger/internal/Preconditions {
+	public static fun checkBuilderRequirement (Ljava/lang/Object;Ljava/lang/Class;)V
+	public static fun checkNotNull (Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun checkNotNull (Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+	public static fun checkNotNull (Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun checkNotNullFromComponent (Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun checkNotNullFromProvides (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class dagger/internal/Provider : jakarta/inject/Provider, javax/inject/Provider {
+}
+
+public final class dagger/internal/ProviderOfLazy : dagger/internal/Provider {
+	public static fun create (Ldagger/internal/Provider;)Ldagger/internal/Provider;
+	public static fun create (Ljavax/inject/Provider;)Ldagger/internal/Provider;
+	public fun get ()Ldagger/Lazy;
+	public synthetic fun get ()Ljava/lang/Object;
+}
+
+public final class dagger/internal/Providers {
+	public static fun asDaggerProvider (Ljavax/inject/Provider;)Ldagger/internal/Provider;
+}
+
+public abstract interface annotation class dagger/internal/QualifierMetadata : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ljava/lang/String;
+}
+
+public abstract interface annotation class dagger/internal/ScopeMetadata : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/String;
+}
+
+public final class dagger/internal/SetBuilder {
+	public fun add (Ljava/lang/Object;)Ldagger/internal/SetBuilder;
+	public fun addAll (Ljava/util/Collection;)Ldagger/internal/SetBuilder;
+	public fun build ()Ljava/util/Set;
+	public static fun newSetBuilder (I)Ldagger/internal/SetBuilder;
+}
+
+public final class dagger/internal/SetFactory : dagger/internal/Factory {
+	public static fun builder (II)Ldagger/internal/SetFactory$Builder;
+	public static fun empty ()Ldagger/internal/Factory;
+	public synthetic fun get ()Ljava/lang/Object;
+	public fun get ()Ljava/util/Set;
+}
+
+public final class dagger/internal/SetFactory$Builder {
+	public fun addCollectionProvider (Ldagger/internal/Provider;)Ldagger/internal/SetFactory$Builder;
+	public fun addCollectionProvider (Ljavax/inject/Provider;)Ldagger/internal/SetFactory$Builder;
+	public fun addProvider (Ldagger/internal/Provider;)Ldagger/internal/SetFactory$Builder;
+	public fun addProvider (Ljavax/inject/Provider;)Ldagger/internal/SetFactory$Builder;
+	public fun build ()Ldagger/internal/SetFactory;
+}
+
+public final class dagger/internal/SingleCheck : dagger/internal/Provider {
+	public fun get ()Ljava/lang/Object;
+	public static fun provider (Ldagger/internal/Provider;)Ldagger/internal/Provider;
+	public static fun provider (Ljavax/inject/Provider;)Ljavax/inject/Provider;
+}
+
+public abstract interface annotation class dagger/multibindings/ClassKey : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/Class;
+}
+
+public abstract interface annotation class dagger/multibindings/ElementsIntoSet : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/multibindings/IntKey : java/lang/annotation/Annotation {
+	public abstract fun value ()I
+}
+
+public abstract interface annotation class dagger/multibindings/IntoMap : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/multibindings/IntoSet : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/multibindings/LazyClassKey : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/Class;
+}
+
+public abstract interface annotation class dagger/multibindings/LongKey : java/lang/annotation/Annotation {
+	public abstract fun value ()J
+}
+
+public abstract interface annotation class dagger/multibindings/Multibinds : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/multibindings/StringKey : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/String;
+}
+

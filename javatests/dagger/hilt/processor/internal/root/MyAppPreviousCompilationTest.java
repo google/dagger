@@ -16,20 +16,14 @@
 
 package dagger.hilt.processor.internal.root;
 
-import static com.google.common.truth.Truth.assertThat;
-import static dagger.hilt.android.testing.compile.HiltCompilerTests.compileWithKapt;
 import static dagger.hilt.android.testing.compile.HiltCompilerTests.javaSource;
 
-import androidx.room.compiler.processing.util.DiagnosticMessage;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.util.List;
-import javax.tools.Diagnostic.Kind;
-import org.junit.Rule;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -42,18 +36,17 @@ public final class MyAppPreviousCompilationTest {
     return ImmutableList.copyOf(new Object[][] {{true}, {false}});
   }
 
-  @Rule public TemporaryFolder tempFolderRule = new TemporaryFolder();
-
   private final boolean disableCrossCompilationRootValidation;
 
   public MyAppPreviousCompilationTest(boolean disableCrossCompilationRootValidation) {
     this.disableCrossCompilationRootValidation = disableCrossCompilationRootValidation;
   }
 
-  private ImmutableMap<String, String> processorOptions() {
-    return ImmutableMap.of(
-        "dagger.hilt.disableCrossCompilationRootValidation",
-        Boolean.toString(disableCrossCompilationRootValidation));
+  private HiltCompilerTests.HiltCompiler hiltCompiler(Source... sources) {
+    return HiltCompilerTests.hiltCompiler(sources)
+        .withProcessorOptions(ImmutableMap.of(
+            "dagger.hilt.disableCrossCompilationRootValidation",
+            Boolean.toString(disableCrossCompilationRootValidation)));
   }
 
   @Test
@@ -68,13 +61,8 @@ public final class MyAppPreviousCompilationTest {
             "@HiltAndroidTest",
             "public class TestRoot {}");
 
-    // TODO(danysantiago): Add KSP test once b/288966076 is resolved.
     // This test case should succeed independent of disableCrossCompilationRootValidation.
-    compileWithKapt(
-        ImmutableList.of(testRoot),
-        processorOptions(),
-        tempFolderRule,
-        result -> assertThat(result.getSuccess()).isTrue());
+    hiltCompiler(testRoot).compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
@@ -90,24 +78,19 @@ public final class MyAppPreviousCompilationTest {
             "@HiltAndroidApp(Application.class)",
             "public class AppRoot extends Hilt_AppRoot {}");
 
-    // TODO(danysantiago): Add KSP test once b/288966076 is resolved.
-    compileWithKapt(
-        ImmutableList.of(appRoot),
-        processorOptions(),
-        tempFolderRule,
-        result -> {
+    hiltCompiler(appRoot).compile(
+        subject -> {
           if (disableCrossCompilationRootValidation) {
-            assertThat(result.getSuccess()).isTrue();
+            subject.hasErrorCount(0);
           } else {
-            List<DiagnosticMessage> errors = result.getDiagnostics().get(Kind.ERROR);
-            assertThat(errors).hasSize(1);
-            assertThat(errors.get(0).getMsg())
-                .contains(
-                    "Cannot process new app roots when there are app roots from a "
-                        + "previous compilation unit:"
-                        + "\n    App roots in previous compilation unit: "
-                        + "dagger.hilt.processor.internal.root.MyAppPreviousCompilation.MyApp"
-                        + "\n    App roots in this compilation unit: test.AppRoot");
+            subject.compilationDidFail();
+            subject.hasErrorCount(1);
+            subject.hasErrorContaining(
+                "Cannot process new app roots when there are app roots from a "
+                    + "previous compilation unit:"
+                    + "\n    App roots in previous compilation unit: "
+                    + "dagger.hilt.processor.internal.root.MyAppPreviousCompilation.MyApp"
+                    + "\n    App roots in this compilation unit: test.AppRoot");
           }
         });
   }

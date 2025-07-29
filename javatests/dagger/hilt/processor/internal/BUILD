@@ -15,6 +15,8 @@
 # Description:
 #   Tests for internal code for implementing Hilt processors.
 
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
 package(default_visibility = ["//:src"])
 
 java_test(
@@ -22,7 +24,7 @@ java_test(
     size = "small",
     srcs = ["ProcessorsTest.java"],
     deps = [
-        "//java/dagger/hilt/processor/internal:processors",
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal:processors",
         "//third_party/java/javapoet",
         "//third_party/java/junit",
         "//third_party/java/truth",

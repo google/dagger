@@ -20,9 +20,11 @@ import static com.google.common.truth.Truth.assertAbout;
 
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
 import com.google.common.truth.Truth;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.Module;
 import dagger.producers.ProducerModule;
 import dagger.testing.compile.CompilerTests;
@@ -30,6 +32,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /** A {@link Truth} subject for testing Dagger module methods. */
 final class DaggerModuleMethodSubject extends Subject {
@@ -67,18 +70,10 @@ final class DaggerModuleMethodSubject extends Subject {
   }
 
   private final String actual;
-  private final ImmutableList.Builder<String> imports =
-      new ImmutableList.Builder<String>()
-          .add(
-              // explicitly import Module so it's not ambiguous with java.lang.Module
-              "import dagger.Module;",
-              "import dagger.*;",
-              "import dagger.multibindings.*;",
-              "import dagger.producers.*;",
-              "import java.util.*;",
-              "import javax.inject.*;");
   private String declaration;
   private ImmutableList<Source> additionalSources = ImmutableList.of();
+  private final ImmutableList.Builder<String> additionalImports = ImmutableList.builder();
+  private final ImmutableMap.Builder<String, String> processorOptions = ImmutableMap.builder();
 
   private DaggerModuleMethodSubject(FailureMetadata failureMetadata, String subject) {
     super(failureMetadata, subject);
@@ -95,6 +90,7 @@ final class DaggerModuleMethodSubject extends Subject {
    * <li>{@code javax.inject.*}
    * </ul>
    */
+  @CanIgnoreReturnValue
   DaggerModuleMethodSubject importing(Class<?>... imports) {
     return importing(Arrays.asList(imports));
   }
@@ -109,10 +105,11 @@ final class DaggerModuleMethodSubject extends Subject {
    * <li>{@code javax.inject.*}
    * </ul>
    */
+  @CanIgnoreReturnValue
   DaggerModuleMethodSubject importing(List<? extends Class<?>> imports) {
     imports.stream()
         .map(clazz -> String.format("import %s;", clazz.getCanonicalName()))
-        .forEachOrdered(this.imports::add);
+        .forEachOrdered(additionalImports::add);
     return this;
   }
 
@@ -121,14 +118,28 @@ final class DaggerModuleMethodSubject extends Subject {
    * will be replaced with the name of the type, and the second with the method declaration, which
    * must be within paired braces.
    */
+  @CanIgnoreReturnValue
   DaggerModuleMethodSubject withDeclaration(String declaration) {
     this.declaration = declaration;
     return this;
   }
 
   /** Additional source files that must be compiled with the module. */
+  @CanIgnoreReturnValue
   DaggerModuleMethodSubject withAdditionalSources(Source... sources) {
     this.additionalSources = ImmutableList.copyOf(sources);
+    return this;
+  }
+
+  @CanIgnoreReturnValue
+  DaggerModuleMethodSubject withProcessorOptions(String key, String value) {
+    this.processorOptions.put(key, value);
+    return this;
+  }
+
+  @CanIgnoreReturnValue
+  DaggerModuleMethodSubject withProcessorOptions(Map<String, String> processorOptions) {
+    this.processorOptions.putAll(processorOptions);
     return this;
   }
 
@@ -141,6 +152,7 @@ final class DaggerModuleMethodSubject extends Subject {
     Source module = CompilerTests.javaSource("test.TestModule", source);
     CompilerTests.daggerCompiler(
             ImmutableList.<Source>builder().add(module).addAll(additionalSources).build())
+        .withProcessingOptions(processorOptions.buildOrThrow())
         .compile(
             subject ->
                 subject
@@ -165,7 +177,15 @@ final class DaggerModuleMethodSubject extends Subject {
     PrintWriter writer = new PrintWriter(stringWriter);
     writer.println("package test;");
     writer.println();
-    for (String importLine : imports.build()) {
+    // explicitly import Module so it's not ambiguous with java.lang.Module
+    writer.println("import dagger.Module;");
+    writer.println("import dagger.*;");
+    writer.println("import dagger.Provides;");
+    writer.println("import dagger.multibindings.*;");
+    writer.println("import dagger.producers.*;");
+    writer.println("import java.util.*;");
+    writer.println("import javax.inject.*;");
+    for (String importLine : additionalImports.build()) {
       writer.println(importLine);
     }
     writer.println();

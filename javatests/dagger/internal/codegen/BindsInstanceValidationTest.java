@@ -187,4 +187,28 @@ public class BindsInstanceValidationTest {
             });
   }
 
+  @Test
+  public void bindsInstanceDaggerProvider() {
+    Source bindsDaggerProvider =
+        CompilerTests.javaSource(
+            "test.BindsInstanceFrameworkType",
+            "package test;",
+            "",
+            "import dagger.BindsInstance;",
+            "import dagger.internal.Provider;",
+            "import dagger.producers.Producer;",
+            "",
+            "interface BindsInstanceFrameworkType {",
+            "  @BindsInstance void bindsProvider(Provider<Object> objectProvider);",
+            "}");
+    CompilerTests.daggerCompiler(bindsDaggerProvider)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("@BindsInstance parameters must not be disallowed types")
+                  .onSource(bindsDaggerProvider)
+                  .onLine(8);
+            });
+  }
 }

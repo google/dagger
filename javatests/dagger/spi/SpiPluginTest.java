@@ -101,7 +101,7 @@ public final class SpiPluginTest {
             message(
                 "[FailingPlugin] Bad Binding: @Inject test.Foo()",
                 "    test.Foo is requested at",
-                "        test.TestComponent.foo()"))
+                "        [test.TestComponent] test.TestComponent.foo()"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
   }
@@ -189,7 +189,7 @@ public final class SpiPluginTest {
             message(
                 "[FailingPlugin] Bad Dependency: test.TestComponent.entryPoint() (entry point)",
                 "    test.EntryPoint is requested at",
-                "        test.TestComponent.entryPoint()"))
+                "        [test.TestComponent] test.TestComponent.entryPoint()"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
     assertThat(compilationFactory.compilationWithErrorOnDependency("dup1"))
@@ -197,9 +197,9 @@ public final class SpiPluginTest {
             message(
                 "[FailingPlugin] Bad Dependency: test.EntryPoint(…, dup1, …)",
                 "    test.Duplicated is injected at",
-                "        test.EntryPoint(…, dup1, …)",
+                "        [test.TestComponent] test.EntryPoint(…, dup1, …)",
                 "    test.EntryPoint is requested at",
-                "        test.TestComponent.entryPoint()"))
+                "        [test.TestComponent] test.TestComponent.entryPoint()"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
     assertThat(compilationFactory.compilationWithErrorOnDependency("dup2"))
@@ -207,9 +207,9 @@ public final class SpiPluginTest {
             message(
                 "[FailingPlugin] Bad Dependency: test.EntryPoint(…, dup2)",
                 "    test.Duplicated is injected at",
-                "        test.EntryPoint(…, dup2)",
+                "        [test.TestComponent] test.EntryPoint(…, dup2)",
                 "    test.EntryPoint is requested at",
-                "        test.TestComponent.entryPoint()"))
+                "        [test.TestComponent] test.TestComponent.entryPoint()"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
 
@@ -220,11 +220,11 @@ public final class SpiPluginTest {
             message(
                 "[FailingPlugin] Bad Dependency: test.Foo(inFooDep)",
                 "    test.Duplicated is injected at",
-                "        test.Foo(inFooDep)",
+                "        [test.TestComponent] test.Foo(inFooDep)",
                 "    test.Foo is injected at",
-                "        test.EntryPoint(foo, …)",
+                "        [test.TestComponent] test.EntryPoint(foo, …)",
                 "    test.EntryPoint is requested at",
-                "        test.TestComponent.entryPoint()",
+                "        [test.TestComponent] test.TestComponent.entryPoint()",
                 "The following other entry points also depend on it:",
                 "    test.TestComponent.chain()"))
         .inFile(component)
@@ -284,7 +284,7 @@ public final class SpiPluginTest {
                 "[FailingPlugin] Bad Dependency: "
                     + "test.TestSubcomponent.childEntryPoint() (entry point)",
                 "    test.EntryPoint is requested at",
-                "        test.TestSubcomponent.childEntryPoint()"
+                "        [test.TestSubcomponent] test.TestSubcomponent.childEntryPoint()"
                     + " [test.TestComponent → test.TestSubcomponent]"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
@@ -297,9 +297,9 @@ public final class SpiPluginTest {
             message(
                 "[FailingPlugin] Bad Dependency: test.EntryPoint(foo)",
                 "    test.Foo is injected at",
-                "        test.EntryPoint(foo)",
+                "        [test.TestSubcomponent] test.EntryPoint(foo)",
                 "    test.EntryPoint is requested at",
-                "        test.TestSubcomponent.childEntryPoint() "
+                "        [test.TestSubcomponent] test.TestSubcomponent.childEntryPoint() "
                     + "[test.TestComponent → test.TestSubcomponent]"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
@@ -470,13 +470,13 @@ public final class SpiPluginTest {
             message(
                 "[FailingPlugin] Bad Binding: @Inject test.ExposedOnSubcomponent()",
                 "    test.ExposedOnSubcomponent is injected at",
-                "        test.Chain3(exposedOnSubcomponent)",
+                "        [test.TestComponent] test.Chain3(exposedOnSubcomponent)",
                 "    test.Chain3 is injected at",
-                "        test.Chain2(chain)",
+                "        [test.TestComponent] test.Chain2(chain)",
                 "    test.Chain2 is injected at",
-                "        test.Chain1(chain)",
+                "        [test.TestComponent] test.Chain1(chain)",
                 "    test.Chain1 is requested at",
-                "        test.TestComponent.chain()",
+                "        [test.TestComponent] test.TestComponent.chain()",
                 "The following other entry points also depend on it:",
                 "    test.TestSubcomponent.exposedOnSubcomponent() "
                     + "[test.TestComponent → test.TestSubcomponent]"))

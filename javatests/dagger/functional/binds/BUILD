@@ -43,8 +43,8 @@ GenJavaTests(
     ],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//:dagger_with_compiler",
         "//third_party/java/auto:factory",
+        "//third_party/java/dagger",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
@@ -55,7 +55,7 @@ GenJavaTests(
     srcs = ["BindsCollectionsWithoutMultibindingsTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
@@ -66,7 +66,7 @@ GenJavaTests(
     srcs = ["ScopedBindsTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
@@ -77,7 +77,7 @@ GenJavaTests(
     srcs = ["RecursiveBindsTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],

@@ -1,0 +1,90 @@
+public abstract interface annotation class dagger/hilt/DefineComponent : java/lang/annotation/Annotation {
+	public abstract fun parent ()Ljava/lang/Class;
+}
+
+public abstract interface annotation class dagger/hilt/DefineComponent$Builder : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/hilt/EntryPoint : java/lang/annotation/Annotation {
+}
+
+public final class dagger/hilt/EntryPoints {
+	public static fun get (Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
+}
+
+public abstract interface annotation class dagger/hilt/GeneratesRootInput : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/hilt/InstallIn : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ljava/lang/Class;
+}
+
+public abstract interface annotation class dagger/hilt/codegen/OriginatingElement : java/lang/annotation/Annotation {
+	public abstract fun topLevelClass ()Ljava/lang/Class;
+}
+
+public abstract interface class dagger/hilt/components/SingletonComponent {
+}
+
+public abstract interface class dagger/hilt/internal/GeneratedComponent {
+}
+
+public abstract interface class dagger/hilt/internal/GeneratedComponentManager {
+	public abstract fun generatedComponent ()Ljava/lang/Object;
+}
+
+public abstract interface class dagger/hilt/internal/GeneratedComponentManagerHolder : dagger/hilt/internal/GeneratedComponentManager {
+	public abstract fun componentManager ()Ldagger/hilt/internal/GeneratedComponentManager;
+}
+
+public final class dagger/hilt/internal/Preconditions {
+	public static fun checkArgument (ZLjava/lang/String;[Ljava/lang/Object;)V
+	public static fun checkNotNull (Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun checkNotNull (Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+	public static fun checkState (ZLjava/lang/String;[Ljava/lang/Object;)V
+}
+
+public abstract interface class dagger/hilt/internal/TestSingletonComponent : dagger/hilt/internal/GeneratedComponent {
+}
+
+public final class dagger/hilt/internal/UnsafeCasts {
+	public static fun unsafeCast (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface annotation class dagger/hilt/internal/aliasof/AliasOfPropagatedData : java/lang/annotation/Annotation {
+	public abstract fun alias ()Ljava/lang/Class;
+	public abstract fun defineComponentScopes ()[Ljava/lang/Class;
+}
+
+public abstract interface annotation class dagger/hilt/internal/definecomponent/DefineComponentClasses : java/lang/annotation/Annotation {
+	public abstract fun builder ()Ljava/lang/String;
+	public abstract fun component ()Ljava/lang/String;
+}
+
+public final class dagger/hilt/internal/definecomponent/DefineComponentNoParent {
+}
+
+public abstract interface annotation class dagger/hilt/internal/generatesrootinput/GeneratesRootInputPropagatedData : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/Class;
+}
+
+public abstract interface annotation class dagger/hilt/migration/AliasOf : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ljava/lang/Class;
+}
+
+public abstract interface annotation class dagger/hilt/migration/DisableInstallInCheck : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dagger/hilt/processor/internal/aggregateddeps/AggregatedDeps : java/lang/annotation/Annotation {
+	public abstract fun componentEntryPoints ()[Ljava/lang/String;
+	public abstract fun components ()[Ljava/lang/String;
+	public abstract fun entryPoints ()[Ljava/lang/String;
+	public abstract fun modules ()[Ljava/lang/String;
+	public abstract fun replaces ()[Ljava/lang/String;
+	public abstract fun test ()Ljava/lang/String;
+}
+
+public class dagger/hilt/processor/internal/definecomponent/codegen/_dagger_hilt_components_SingletonComponent {
+	public fun <init> ()V
+}
+

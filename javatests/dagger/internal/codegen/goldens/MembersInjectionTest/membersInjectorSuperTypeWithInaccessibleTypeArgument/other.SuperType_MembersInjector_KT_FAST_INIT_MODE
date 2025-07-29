@@ -1,0 +1,98 @@
+package other;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import java.util.List;
+import javax.annotation.processing.Generated;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class SuperType_MembersInjector<T> implements MembersInjector<SuperType<T>> {
+  private final Provider<T> tProvider;
+
+  private final Provider<List<T>> listTProvider;
+
+  private final Provider<List<? extends T>> listExtendsTProvider;
+
+  private final Provider<List<? extends T>[]> arrayListExtendsTProvider;
+
+  private final Provider<T> tProvider2;
+
+  private final Provider<List<T>> listTProvider2;
+
+  private final Provider<List<? extends T>> listExtendsTProvider2;
+
+  private final Provider<List<? extends T>[]> arrayListExtendsTProvider2;
+
+  private SuperType_MembersInjector(Provider<T> tProvider, Provider<List<T>> listTProvider,
+      Provider<List<? extends T>> listExtendsTProvider,
+      Provider<List<? extends T>[]> arrayListExtendsTProvider, Provider<T> tProvider2,
+      Provider<List<T>> listTProvider2, Provider<List<? extends T>> listExtendsTProvider2,
+      Provider<List<? extends T>[]> arrayListExtendsTProvider2) {
+    this.tProvider = tProvider;
+    this.listTProvider = listTProvider;
+    this.listExtendsTProvider = listExtendsTProvider;
+    this.arrayListExtendsTProvider = arrayListExtendsTProvider;
+    this.tProvider2 = tProvider2;
+    this.listTProvider2 = listTProvider2;
+    this.listExtendsTProvider2 = listExtendsTProvider2;
+    this.arrayListExtendsTProvider2 = arrayListExtendsTProvider2;
+  }
+
+  public static <T> MembersInjector<SuperType<T>> create(Provider<?> tProvider,
+      Provider<?> listTProvider, Provider<?> listExtendsTProvider,
+      Provider<?> arrayListExtendsTProvider, Provider<?> tProvider2, Provider<?> listTProvider2,
+      Provider<?> listExtendsTProvider2, Provider<?> arrayListExtendsTProvider2) {
+    return new SuperType_MembersInjector<T>((Provider<T>) (tProvider), (Provider<List<T>>) (listTProvider), (Provider<List<? extends T>>) (listExtendsTProvider), (Provider<List<? extends T>[]>) (arrayListExtendsTProvider), (Provider<T>) (tProvider2), (Provider<List<T>>) (listTProvider2), (Provider<List<? extends T>>) (listExtendsTProvider2), (Provider<List<? extends T>[]>) (arrayListExtendsTProvider2));
+  }
+
+  @Override
+  public void injectMembers(SuperType<T> instance) {
+    injectT(instance, tProvider.get());
+    injectListT(instance, listTProvider.get());
+    injectListExtendsT(instance, listExtendsTProvider.get());
+    injectArrayListExtendsT(instance, arrayListExtendsTProvider.get());
+    injectMethod(instance, tProvider2.get(), listTProvider2.get(), listExtendsTProvider2.get(), arrayListExtendsTProvider2.get());
+  }
+
+  @InjectedFieldSignature("other.SuperType.t")
+  public static <T> void injectT(Object instance, Object t) {
+    ((SuperType<T>) (instance)).t = (T) (t);
+  }
+
+  @InjectedFieldSignature("other.SuperType.listT")
+  public static <T> void injectListT(Object instance, Object listT) {
+    ((SuperType<T>) (instance)).listT = (List<T>) (listT);
+  }
+
+  @InjectedFieldSignature("other.SuperType.listExtendsT")
+  public static <T> void injectListExtendsT(Object instance, Object listExtendsT) {
+    ((SuperType<T>) (instance)).listExtendsT = (List<? extends T>) (listExtendsT);
+  }
+
+  @InjectedFieldSignature("other.SuperType.arrayListExtendsT")
+  public static <T> void injectArrayListExtendsT(Object instance, Object arrayListExtendsT) {
+    ((SuperType<T>) (instance)).arrayListExtendsT = (List<? extends T>[]) (arrayListExtendsT);
+  }
+
+  public static <T> void injectMethod(Object instance, Object t, Object listT, Object listExtendsT,
+      Object arrayListExtendsT) {
+    ((SuperType<T>) (instance)).method((T) (t), (List<T>) (listT), (List<? extends T>) (listExtendsT), (List<? extends T>[]) (arrayListExtendsT));
+  }
+}

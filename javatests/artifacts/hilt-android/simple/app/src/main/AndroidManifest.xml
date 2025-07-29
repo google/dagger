@@ -14,6 +14,7 @@
   ~ limitations under the License.
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
   package="dagger.hilt.android.simple">
 
   <application android:name=".SimpleApplication" android:label="@string/appName">
@@ -31,5 +32,11 @@
         android:theme="@style/Theme.AppCompat.Light"
         android:exported="false">
     </activity>
+    <!-- WM is brought due to andridx.hilt:hilt-work but we don't need it, disable it. -->
+     <provider
+        android:name="androidx.work.impl.WorkManagerInitializer"
+        android:authorities="${applicationId}.workmanager-init"
+        tools:node="remove">
+     </provider>
   </application>
 </manifest>

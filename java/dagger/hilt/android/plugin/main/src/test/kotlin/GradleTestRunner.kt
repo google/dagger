@@ -157,13 +157,15 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
 
         android {
           compileSdkVersion 33
-          buildToolsVersion "33.0.0"
+          buildToolsVersion "33.0.1"
 
           defaultConfig {
             ${ if (isAppProject) "applicationId \"plugin.test\"" else "" }
             minSdkVersion 21
             targetSdkVersion 33
           }
+
+          namespace = "minimal"
 
           compileOptions {
               sourceCompatibility JavaVersion.VERSION_11
@@ -254,7 +256,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
     // Finds a transformed file. The srcFilePath is relative to the app's package.
     fun getTransformedFile(srcFilePath: String): File {
       val parentDir =
-        File(projectRoot, "build/intermediates/asm_instrumented_project_classes/debug")
+        File(projectRoot, "build/intermediates/classes/debug/transformDebugClassesWithAsm/dirs")
       return File(parentDir, srcFilePath).also {
         if (!it.exists()) {
           error("Unable to find transformed class ${it.path}")

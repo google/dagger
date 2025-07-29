@@ -1,0 +1,58 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+
+@QualifierMetadata({
+    "test.FooBaseFieldQualifier",
+    "test.FooBaseMethodQualifier"
+})
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class FooBase_MembersInjector implements MembersInjector<FooBase> {
+  private final Provider<String> injectFieldProvider;
+
+  private final Provider<Float> fProvider;
+
+  private FooBase_MembersInjector(Provider<String> injectFieldProvider, Provider<Float> fProvider) {
+    this.injectFieldProvider = injectFieldProvider;
+    this.fProvider = fProvider;
+  }
+
+  public static MembersInjector<FooBase> create(Provider<String> injectFieldProvider,
+      Provider<Float> fProvider) {
+    return new FooBase_MembersInjector(injectFieldProvider, fProvider);
+  }
+
+  @Override
+  public void injectMembers(FooBase instance) {
+    injectInjectField(instance, injectFieldProvider.get());
+    injectInjectMethod(instance, fProvider.get());
+  }
+
+  @InjectedFieldSignature("test.FooBase.injectField")
+  @FooBaseFieldQualifier
+  public static void injectInjectField(Object instance, String injectField) {
+    ((FooBase) (instance)).injectField = injectField;
+  }
+
+  public static void injectInjectMethod(Object instance, float f) {
+    ((FooBase) (instance)).injectMethod(f);
+  }
+}

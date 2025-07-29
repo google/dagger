@@ -17,16 +17,20 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
-import static dagger.internal.codegen.javapoet.TypeNames.MEMBERS_INJECTOR;
-import static dagger.internal.codegen.javapoet.TypeNames.PROVIDER;
-import static dagger.internal.codegen.javapoet.TypeNames.membersInjectorOf;
-import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
+import static dagger.internal.codegen.xprocessing.XTypeNames.JAVAX_PROVIDER;
+import static dagger.internal.codegen.xprocessing.XTypeNames.MEMBERS_INJECTOR;
+import static dagger.internal.codegen.xprocessing.XTypeNames.javaxProviderOf;
+import static dagger.internal.codegen.xprocessing.XTypeNames.membersInjectorOf;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import com.google.testing.compile.CompilationRule;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.ParameterizedTypeName;
+import dagger.Component;
 import dagger.internal.codegen.binding.FrameworkField;
+import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.javac.JavacPluginModule;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,32 +44,42 @@ import org.junit.runners.JUnit4;
 public class FrameworkFieldTest {
   @Rule public CompilationRule compilationRule = new CompilationRule();
 
-  private ClassName xTypeName;
+  @Inject XProcessingEnv processingEnv;
+  @Inject CompilerOptions compilerOptions;
 
-  @Before public void setUp() {
-    xTypeName =
-        ClassName.get(compilationRule.getElements().getTypeElement(X.class.getCanonicalName()));
+  private XType type;
+
+  @Before
+  public void setUp() {
+    DaggerFrameworkFieldTest_TestComponent.builder()
+        .javacPluginModule(
+            new JavacPluginModule(compilationRule.getElements(), compilationRule.getTypes()))
+        .build()
+        .inject(this);
+    type = processingEnv.requireType(X.class.getCanonicalName());
   }
 
   @Test public void frameworkType() {
-    assertThat(FrameworkField.create(ParameterizedTypeName.get(PROVIDER, xTypeName), "test").type())
-        .isEqualTo(providerOf(xTypeName));
-    assertThat(
-            FrameworkField.create(ParameterizedTypeName.get(MEMBERS_INJECTOR, xTypeName), "test")
-                .type())
-        .isEqualTo(membersInjectorOf(xTypeName));
+    assertThat(FrameworkField.create("test", JAVAX_PROVIDER, type, compilerOptions).type())
+        .isEqualTo(javaxProviderOf(type.asTypeName()));
+    assertThat(FrameworkField.create("test", MEMBERS_INJECTOR, type, compilerOptions).type())
+        .isEqualTo(membersInjectorOf(type.asTypeName()));
   }
 
   @Test public void nameSuffix() {
-    assertThat(FrameworkField.create(ParameterizedTypeName.get(PROVIDER, xTypeName), "foo").name())
+    assertThat(FrameworkField.create("foo", JAVAX_PROVIDER, type, compilerOptions).name())
         .isEqualTo("fooProvider");
-    assertThat(
-            FrameworkField.create(ParameterizedTypeName.get(PROVIDER, xTypeName), "fooProvider")
-                .name())
+    assertThat(FrameworkField.create("fooProvider", JAVAX_PROVIDER, type, compilerOptions).name())
         .isEqualTo("fooProvider");
   }
 
   static final class X {
     @Inject X() {}
+  }
+
+  @Singleton
+  @Component(modules = JavacPluginModule.class)
+  interface TestComponent {
+    void inject(FrameworkFieldTest test);
   }
 }

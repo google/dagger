@@ -79,7 +79,7 @@ class MembersInjectTest {
   fun testNonRequestedMembersInjector() {
     val child = NonRequestedChild()
     val provider = Provider { "field!" }
-    val injector = NonRequestedChild_MembersInjector(provider)
+    val injector = NonRequestedChild_MembersInjector.create(provider)
     injector.injectMembers(child)
     assertThat(child.t).isEqualTo("field!")
   }

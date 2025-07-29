@@ -1,0 +1,94 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+import other.SuperType_MembersInjector;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class SubType_MembersInjector implements MembersInjector<SubType> {
+  @SuppressWarnings("rawtypes")
+  private final Provider tProvider;
+
+  @SuppressWarnings("rawtypes")
+  private final Provider listTProvider;
+
+  @SuppressWarnings("rawtypes")
+  private final Provider listExtendsTProvider;
+
+  @SuppressWarnings("rawtypes")
+  private final Provider arrayListExtendsTProvider;
+
+  @SuppressWarnings("rawtypes")
+  private final Provider tProvider2;
+
+  @SuppressWarnings("rawtypes")
+  private final Provider listTProvider2;
+
+  @SuppressWarnings("rawtypes")
+  private final Provider listExtendsTProvider2;
+
+  @SuppressWarnings("rawtypes")
+  private final Provider arrayListExtendsTProvider2;
+
+  private final Provider<Integer> iProvider;
+
+  private SubType_MembersInjector(@SuppressWarnings("rawtypes") Provider tProvider,
+      @SuppressWarnings("rawtypes") Provider listTProvider,
+      @SuppressWarnings("rawtypes") Provider listExtendsTProvider,
+      @SuppressWarnings("rawtypes") Provider arrayListExtendsTProvider,
+      @SuppressWarnings("rawtypes") Provider tProvider2,
+      @SuppressWarnings("rawtypes") Provider listTProvider2,
+      @SuppressWarnings("rawtypes") Provider listExtendsTProvider2,
+      @SuppressWarnings("rawtypes") Provider arrayListExtendsTProvider2,
+      Provider<Integer> iProvider) {
+    this.tProvider = tProvider;
+    this.listTProvider = listTProvider;
+    this.listExtendsTProvider = listExtendsTProvider;
+    this.arrayListExtendsTProvider = arrayListExtendsTProvider;
+    this.tProvider2 = tProvider2;
+    this.listTProvider2 = listTProvider2;
+    this.listExtendsTProvider2 = listExtendsTProvider2;
+    this.arrayListExtendsTProvider2 = arrayListExtendsTProvider2;
+    this.iProvider = iProvider;
+  }
+
+  public static MembersInjector<SubType> create(Provider<?> tProvider, Provider<?> listTProvider,
+      Provider<?> listExtendsTProvider, Provider<?> arrayListExtendsTProvider,
+      Provider<?> tProvider2, Provider<?> listTProvider2, Provider<?> listExtendsTProvider2,
+      Provider<?> arrayListExtendsTProvider2, Provider<?> iProvider) {
+    return new SubType_MembersInjector((Provider) (tProvider), (Provider) (listTProvider), (Provider) (listExtendsTProvider), (Provider) (arrayListExtendsTProvider), (Provider) (tProvider2), (Provider) (listTProvider2), (Provider) (listExtendsTProvider2), (Provider) (arrayListExtendsTProvider2), (Provider<Integer>) (iProvider));
+  }
+
+  @Override
+  public void injectMembers(SubType instance) {
+    SuperType_MembersInjector.injectT(instance, tProvider.get());
+    SuperType_MembersInjector.injectListT(instance, listTProvider.get());
+    SuperType_MembersInjector.injectListExtendsT(instance, listExtendsTProvider.get());
+    SuperType_MembersInjector.injectArrayListExtendsT(instance, arrayListExtendsTProvider.get());
+    SuperType_MembersInjector.injectMethod(instance, tProvider2.get(), listTProvider2.get(), listExtendsTProvider2.get(), arrayListExtendsTProvider2.get());
+    injectI(instance, iProvider.get());
+  }
+
+  @InjectedFieldSignature("test.SubType.i")
+  public static void injectI(Object instance, Object i) {
+    ((SubType) (instance)).i = (Integer) (i);
+  }
+}

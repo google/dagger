@@ -7,7 +7,7 @@ plugins {
 
 android {
     compileSdkVersion 33
-    buildToolsVersion "33.0.0"
+    buildToolsVersion "33.0.1"
 
     defaultConfig {
         minSdkVersion 16
@@ -15,6 +15,7 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    namespace "dagger.hilt.android.simpleKotlin.lib"
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11

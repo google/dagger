@@ -53,6 +53,13 @@
     <name>Google, Inc.</name>
     <url>https://www.google.com</url>
   </organization>
+
+  <developers>
+    <developer>
+      <organization>Google, Inc.</organization>
+      <organizationUrl>http://www.google.com</organizationUrl>
+    </developer>
+  </developers>
   <dependencies>
     {generated_bzl_deps}
   </dependencies>

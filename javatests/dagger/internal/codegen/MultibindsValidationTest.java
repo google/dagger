@@ -142,20 +142,6 @@ public class MultibindsValidationTest {
   }
 
   @Test
-  public void providerSet() {
-    assertThatModuleMethod("@Multibinds abstract Set<Provider<Object>> providerSet();")
-        .withDeclaration(moduleDeclaration)
-        .hasError("return type cannot use 'Provider' in the Set value type.");
-  }
-
-  @Test
-  public void producerSet() {
-    assertThatModuleMethod("@Multibinds abstract Set<Producer<Object>> producerSet();")
-        .withDeclaration(moduleDeclaration)
-        .hasError("return type cannot use 'Producer' in the Set value type.");
-  }
-
-  @Test
   public void producedSet() {
     assertThatModuleMethod("@Multibinds abstract Set<Produced<Object>> producedSet();")
         .withDeclaration(moduleDeclaration)

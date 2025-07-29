@@ -14,73 +14,57 @@
 # Description:
 #   Tests for internal code for implementing Hilt processors.
 
+load("@rules_android//rules:rules.bzl", "android_library", "android_local_test")
+load("//:build_defs.bzl", "TEST_MANIFEST_VALUES")
+
 package(default_visibility = ["//:src"])
 
 android_local_test(
     name = "TestInstallInFooTest",
     srcs = ["TestInstallInFooTest.java"],
     manifest = "AndroidManifest.xml",
-    manifest_values = {
-        "minSdkVersion": "15",
-        "targetSdkVersion": "27",
-    },
+    manifest_values = TEST_MANIFEST_VALUES,
     deps = [
         ":TestInstallInModules",
         "//:android_local_test_exports",
-        "//:dagger_with_compiler",
-        "//java/dagger/hilt/android:android_entry_point",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
+        "//hilt-android/main/java/dagger/hilt/android:android_entry_point",
+        "//third_party/java/androidx/fragment",
+        "//third_party/java/dagger",
+        "//third_party/java/junit",
+        "//third_party/java/robolectric",
         "//third_party/java/truth",
-        "@maven//:androidx_activity_activity",
-        "@maven//:androidx_fragment_fragment",
-        "@maven//:androidx_lifecycle_lifecycle_common",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
-        "@maven//:androidx_test_core",
-        "@maven//:androidx_test_ext_junit",
-        "@maven//:junit_junit",
-        "@maven//:org_robolectric_robolectric",
     ],
 )
 
 android_local_test(
     name = "TestInstallInBarTest",
     srcs = ["TestInstallInBarTest.java"],
-    manifest_values = {
-        "minSdkVersion": "15",
-        "targetSdkVersion": "27",
-    },
+    manifest_values = TEST_MANIFEST_VALUES,
     deps = [
         ":TestInstallInModules",
         "//:android_local_test_exports",
-        "//:dagger_with_compiler",
-        "//java/dagger/hilt/android/testing:hilt_android_test",
-        "//java/dagger/hilt/android/testing:uninstall_modules",
-        "//java/dagger/hilt/testing:test_install_in",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:uninstall_modules",
+        "//hilt-android-testing/main/java/dagger/hilt/testing:test_install_in",
+        "//third_party/java/dagger",
+        "//third_party/java/junit",
+        "//third_party/java/robolectric",
         "//third_party/java/truth",
-        "@maven//:androidx_test_core",
-        "@maven//:androidx_test_ext_junit",
-        "@maven//:junit_junit",
-        "@maven//:org_robolectric_robolectric",
     ],
 )
 
 android_local_test(
     name = "TestInstallInAppTest",
     srcs = ["TestInstallInAppTest.java"],
-    manifest_values = {
-        "minSdkVersion": "15",
-        "targetSdkVersion": "27",
-    },
+    manifest_values = TEST_MANIFEST_VALUES,
     deps = [
         ":TestInstallInApp",
         ":TestInstallInModules",
         "//:android_local_test_exports",
+        "//third_party/java/junit",
+        "//third_party/java/robolectric",
         "//third_party/java/truth",
-        "@maven//:androidx_test_core",
-        "@maven//:androidx_test_ext_junit",
-        "@maven//:junit_junit",
-        "@maven//:org_robolectric_robolectric",
     ],
 )
 
@@ -91,8 +75,8 @@ android_library(
     deps = [
         ":TestInstallInModules",
         "//:android_local_test_exports",
-        "//:dagger_with_compiler",
-        "//java/dagger/hilt/android:hilt_android_app",
+        "//hilt-android/main/java/dagger/hilt/android:hilt_android_app",
+        "//third_party/java/dagger",
     ],
 )
 
@@ -101,14 +85,10 @@ android_library(
     testonly = True,
     srcs = ["TestInstallInModules.java"],
     deps = [
-        "//:dagger_with_compiler",
-        "//java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android/components",
-        "//java/dagger/hilt/testing:test_install_in",
-        "@maven//:androidx_activity_activity",
-        "@maven//:androidx_fragment_fragment",
-        "@maven//:androidx_lifecycle_lifecycle_common",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
-        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
+        "//hilt-android-testing/main/java/dagger/hilt/testing:test_install_in",
+        "//hilt-android/main/java/dagger/hilt/android/components",
+        "//hilt-core/main/java/dagger/hilt:install_in",
+        "//third_party/java/androidx/fragment",
+        "//third_party/java/dagger",
     ],
 )

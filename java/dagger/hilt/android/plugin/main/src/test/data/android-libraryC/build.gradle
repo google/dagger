@@ -5,7 +5,7 @@ plugins {
 
 android {
     compileSdkVersion 33
-    buildToolsVersion "33.0.0"
+    buildToolsVersion "33.0.1"
 
     defaultConfig {
         minSdkVersion 21
@@ -17,6 +17,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+    namespace = "libc"
 }
 
 dependencies {

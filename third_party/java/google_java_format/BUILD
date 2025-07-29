@@ -28,3 +28,8 @@ java_library(
         "//third_party/java/guava",
     ],
 )
+
+alias(
+    name = "filer",
+    actual = ":google_java_format",
+)

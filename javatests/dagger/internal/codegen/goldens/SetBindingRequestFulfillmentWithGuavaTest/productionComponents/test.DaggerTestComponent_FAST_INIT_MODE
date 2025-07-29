@@ -1,0 +1,69 @@
+package test;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import dagger.internal.DaggerGenerated;
+import dagger.producers.internal.CancellationListener;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent, CancellationListener {
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl() {
+
+
+    }
+
+    Set<String> setOfString() {
+      return ImmutableSet.<String>copyOf(EmptySetModule_EmptySetFactory.emptySet());
+    }
+
+    @Override
+    public ListenableFuture<Set<String>> strings() {
+      return Futures.immediateFuture(setOfString());
+    }
+
+    @Override
+    public void onProducerFutureCancelled(boolean mayInterruptIfRunning) {
+
+
+    }
+  }
+}

@@ -1,4 +1,4 @@
-# Copyright (C) 202 The Dagger Authors.
+# Copyright (C) 2025 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Macros for building with Bazel.
-"""
+# Description:
+#    Macros for building with Bazel.
 
+load("@rules_java//java:defs.bzl", "java_library")
 load("//third_party/kotlin/build_extensions:rules.bzl", "kt_android_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 def compat_kt_android_library(name, **kwargs):
     bazel_kt_android_library(name, kwargs)
+
+def compat_kt_jvm_library(name, **kwargs):
+    bazel_kt_jvm_library(name, kwargs)
+
+def compat_java_library(name, **kwargs):
+    java_library(
+        name = name,
+        **kwargs
+    )
 
 def bazel_kt_android_library(name, kwargs):
     """A macro that wraps Bazel's kt_android_library.
@@ -38,7 +49,7 @@ def bazel_kt_android_library(name, kwargs):
         # Add the kotlin_stdlib, otherwise it will be missing from java-only projects.
         # We use deps rather than exports because exports isn't picked up by the pom file.
         # See https://github.com/google/dagger/issues/3119
-        required_deps = ["@maven//:org_jetbrains_kotlin_kotlin_stdlib"]
+        required_deps = ["//third_party/kotlin/kotlin:kotlin_stdlib"]
         kwargs["deps"] = kwargs.get("deps", []) + required_deps
 
     # TODO(b/203519416): Bazel's kt_android_library outputs its jars under a target
@@ -62,4 +73,25 @@ def bazel_kt_android_library(name, kwargs):
     native.alias(
         name = "lib{}-src.jar".format(name),
         actual = ":{}_internal_kt-sources.jar".format(name),
+    )
+
+def bazel_kt_jvm_library(name, kwargs):
+    """A macro that wraps Bazel's kt_jvm_library.
+
+    This macro wraps Bazel's kt_jvm_library to output the jars files
+    in the expected locations (https://github.com/bazelbuild/rules_kotlin/issues/324).
+
+    Args:
+      name: the name of the library.
+      kwargs: Additional arguments of the library.
+    """
+
+    kt_jvm_library(
+        name = name,
+        **kwargs
+    )
+
+    native.alias(
+        name = "lib{}-src.jar".format(name),
+        actual = ":{}-sources.jar".format(name),
     )

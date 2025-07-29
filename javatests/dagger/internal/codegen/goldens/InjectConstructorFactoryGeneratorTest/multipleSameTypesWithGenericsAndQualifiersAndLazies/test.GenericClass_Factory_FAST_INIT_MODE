@@ -1,0 +1,101 @@
+package test;
+
+import dagger.Lazy;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Factory;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata("test.QualifierA")
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class GenericClass_Factory<A, B> implements Factory<GenericClass<A, B>> {
+  private final Provider<A> aProvider;
+
+  private final Provider<A> a2Provider;
+
+  private final Provider<A> paProvider;
+
+  private final Provider<A> qaProvider;
+
+  private final Provider<A> laProvider;
+
+  private final Provider<String> sProvider;
+
+  private final Provider<String> s2Provider;
+
+  private final Provider<String> psProvider;
+
+  private final Provider<String> qsProvider;
+
+  private final Provider<String> lsProvider;
+
+  private final Provider<B> bProvider;
+
+  private final Provider<B> b2Provider;
+
+  private final Provider<B> pbProvider;
+
+  private final Provider<B> qbProvider;
+
+  private final Provider<B> lbProvider;
+
+  private GenericClass_Factory(Provider<A> aProvider, Provider<A> a2Provider,
+      Provider<A> paProvider, Provider<A> qaProvider, Provider<A> laProvider,
+      Provider<String> sProvider, Provider<String> s2Provider, Provider<String> psProvider,
+      Provider<String> qsProvider, Provider<String> lsProvider, Provider<B> bProvider,
+      Provider<B> b2Provider, Provider<B> pbProvider, Provider<B> qbProvider,
+      Provider<B> lbProvider) {
+    this.aProvider = aProvider;
+    this.a2Provider = a2Provider;
+    this.paProvider = paProvider;
+    this.qaProvider = qaProvider;
+    this.laProvider = laProvider;
+    this.sProvider = sProvider;
+    this.s2Provider = s2Provider;
+    this.psProvider = psProvider;
+    this.qsProvider = qsProvider;
+    this.lsProvider = lsProvider;
+    this.bProvider = bProvider;
+    this.b2Provider = b2Provider;
+    this.pbProvider = pbProvider;
+    this.qbProvider = qbProvider;
+    this.lbProvider = lbProvider;
+  }
+
+  @Override
+  public GenericClass<A, B> get() {
+    return newInstance(aProvider.get(), a2Provider.get(), paProvider, qaProvider.get(), DoubleCheck.lazy(laProvider), sProvider.get(), s2Provider.get(), psProvider, qsProvider.get(), DoubleCheck.lazy(lsProvider), bProvider.get(), b2Provider.get(), pbProvider, qbProvider.get(), DoubleCheck.lazy(lbProvider));
+  }
+
+  public static <A, B> GenericClass_Factory<A, B> create(Provider<A> aProvider,
+      Provider<A> a2Provider, Provider<A> paProvider, Provider<A> qaProvider,
+      Provider<A> laProvider, Provider<String> sProvider, Provider<String> s2Provider,
+      Provider<String> psProvider, Provider<String> qsProvider, Provider<String> lsProvider,
+      Provider<B> bProvider, Provider<B> b2Provider, Provider<B> pbProvider, Provider<B> qbProvider,
+      Provider<B> lbProvider) {
+    return new GenericClass_Factory<A, B>(aProvider, a2Provider, paProvider, qaProvider, laProvider, sProvider, s2Provider, psProvider, qsProvider, lsProvider, bProvider, b2Provider, pbProvider, qbProvider, lbProvider);
+  }
+
+  public static <A, B> GenericClass<A, B> newInstance(A a, A a2, javax.inject.Provider<A> pa, A qa,
+      Lazy<A> la, String s, String s2, javax.inject.Provider<String> ps, String qs, Lazy<String> ls,
+      B b, B b2, javax.inject.Provider<B> pb, B qb, Lazy<B> lb) {
+    return new GenericClass<A, B>(a, a2, pa, qa, la, s, s2, ps, qs, ls, b, b2, pb, qb, lb);
+  }
+}

@@ -25,6 +25,6 @@ GenJavaLibrary(
     srcs = glob(["*.java"]),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
     ],
 )

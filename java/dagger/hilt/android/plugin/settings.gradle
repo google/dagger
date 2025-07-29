@@ -16,9 +16,3 @@
 
 rootProject.name = 'hilt-gradle-plugin'
 include ':main'
-include ':agp-wrapper'
-include ':agp-wrapper-impl'
-include ':agp-wrapper-7-0'
-include ':agp-wrapper-7-1'
-include ':agp-wrapper-7-2'
-

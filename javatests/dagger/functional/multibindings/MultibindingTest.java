@@ -19,11 +19,13 @@ package dagger.functional.multibindings;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.auto.value.AutoAnnotation;
+import dagger.MembersInjector;
 import dagger.multibindings.ClassKey;
 import dagger.multibindings.StringKey;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Provider;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -181,6 +183,29 @@ public class MultibindingTest {
   public void maybeEmptyQualifiedMap() {
     assertThat(multibindingComponent.maybeEmptyQualifiedMap())
         .containsEntry("key", "qualified foo value");
+  }
+
+  @SuppressWarnings("unchecked")  // We know the single type in the set
+  @Test
+  public void membersInjectorSet() {
+    Set<MembersInjector<?>> injectors = multibindingComponent.membersInjectorSet();
+    assertThat(injectors).hasSize(1);
+    RequiresFieldInjection injected = new RequiresFieldInjection();
+    assertThat(injected.value).isNull();
+    ((MembersInjector<RequiresFieldInjection>) injectors.iterator().next()).injectMembers(injected);
+    assertThat(injected.value).isEqualTo("fieldInjectedValue");
+  }
+
+  @SuppressWarnings("unchecked")  // We know the single type in the map
+  @Test
+  public void membersInjectorMap() {
+    Map<Class<?>, MembersInjector<?>> injectors = multibindingComponent.membersInjectorMap();
+    assertThat(injectors).hasSize(1);
+    RequiresFieldInjection injected = new RequiresFieldInjection();
+    assertThat(injected.value).isNull();
+    ((MembersInjector<RequiresFieldInjection>) injectors.get(RequiresFieldInjection.class))
+        .injectMembers(injected);
+    assertThat(injected.value).isEqualTo("fieldInjectedValue");
   }
 
   @AutoAnnotation

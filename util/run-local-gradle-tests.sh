@@ -5,7 +5,6 @@ set -ex
 readonly GRADLE_PROJECTS=(
     "javatests/artifacts/dagger"
     "javatests/artifacts/dagger-ksp"
-    "javatests/artifacts/hilt-android/pluginMarker"
 )
 for project in "${GRADLE_PROJECTS[@]}"; do
     echo "Running gradle tests for $project"

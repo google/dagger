@@ -44,7 +44,7 @@ def getAdditionalTestDirs(String variant) {
 
 android {
     compileSdkVersion 33
-    buildToolsVersion "33.0.0"
+    buildToolsVersion "33.0.1"
 
     defaultConfig {
         applicationId "dagger.hilt.android.simple"
@@ -54,6 +54,7 @@ android {
         versionName "1.0"
         testInstrumentationRunner "dagger.hilt.android.simple.SimpleEmulatorTestRunner"
     }
+    namespace "dagger.hilt.android.simple"
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
@@ -108,11 +109,11 @@ dependencies {
 
   testImplementation 'com.google.truth:truth:1.0.1'
   testImplementation 'junit:junit:4.13'
-  testImplementation 'org.robolectric:robolectric:4.5-alpha-3'
+  testImplementation 'org.robolectric:robolectric:4.11.1'
   testImplementation 'androidx.core:core:1.3.2'
   testImplementation 'androidx.test.ext:junit:1.1.3'
   testImplementation 'androidx.test:runner:1.4.0'
-  testImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+  testImplementation 'androidx.test.espresso:espresso-core:3.5.1'
   testImplementation "com.google.dagger:hilt-android-testing:$dagger_version"
   testAnnotationProcessor "com.google.dagger:hilt-compiler:$dagger_version"
 
@@ -120,7 +121,7 @@ dependencies {
   androidTestImplementation 'junit:junit:4.13'
   androidTestImplementation 'androidx.test.ext:junit:1.1.3'
   androidTestImplementation 'androidx.test:runner:1.4.0'
-  androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+  androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
   androidTestImplementation "com.google.dagger:hilt-android-testing:$dagger_version"
   androidTestAnnotationProcessor "com.google.dagger:hilt-compiler:$dagger_version"
 

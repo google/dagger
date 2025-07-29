@@ -4,15 +4,15 @@ description: 'Tests the Hilt Gradle plugin.'
 runs:
   using: "composite"
   steps:
-    - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_PLUGIN }}'
-      uses: actions/setup-java@v3
+    - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_GRADLE_PLUGIN }}'
+      uses: actions/setup-java@v4
       with:
         distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
-        java-version: '${{ env.USE_JAVA_VERSION_FOR_PLUGIN }}'
+        java-version: '${{ env.USE_JAVA_VERSION_FOR_GRADLE_PLUGIN }}'
     - name: 'Check out repository'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: 'Cache local Maven repository'
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.m2/repository
@@ -21,14 +21,14 @@ runs:
         restore-keys: |
           ${{ runner.os }}-maven-
     - name: 'Cache Bazel files'
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
-        path: ~/.cache/bazel
+        path: ~/.cache/bazel_github # The bazel cache path set in .bazelrc.
         key: ${{ runner.os }}-bazel-build-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-bazel-build-
     - name: 'Cache Gradle files'
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: |
           ~/.gradle/caches
@@ -37,7 +37,7 @@ runs:
         restore-keys: |
           ${{ runner.os }}-gradle-
     - name: 'Download local snapshot for tests'
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
@@ -45,10 +45,5 @@ runs:
       run: ./java/dagger/hilt/android/plugin/gradlew -p java/dagger/hilt/android/plugin clean test  --continue --no-daemon --stacktrace
       shell: bash
     - name: 'Clean bazel cache'
-      # According to the documentation, we should be able to exclude these via
-      # the actions/cache path, e.g. "!~/.cache/bazel/*/*/external/" but that
-      # doesn't seem to work.
-      run: |
-        rm -rf $(bazel info repository_cache)
-        rm -rf ~/.cache/bazel/*/*/external/
+      run: rm -rf $(bazel info repository_cache)
       shell: bash

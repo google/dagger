@@ -7,6 +7,14 @@ readonly VERSION_NAME="$2"
 shift 2
 readonly EXTRA_MAVEN_ARGS=("$@")
 
+function shaded_rule() {
+  echo "$1,dagger.spi.internal.shaded.$1"
+}
+readonly _SHADED_RULES="\
+$(shaded_rule com.google.auto.common);\
+$(shaded_rule androidx.room);\
+$(shaded_rule com.squareup.kotlinpoet.javapoet)"
+
 # Builds and deploys the given artifacts to a configured maven goal.
 # @param {string} library the library to deploy.
 # @param {string} pomfile the pom file to deploy.
@@ -37,40 +45,40 @@ _deploy() {
 
 _deploy \
   "" \
-  java/dagger/hilt/android/artifact.aar \
-  java/dagger/hilt/android/pom.xml \
-  java/dagger/hilt/android/artifact-src.jar \
-  java/dagger/hilt/android/artifact-javadoc.jar \
+  hilt-android/artifact.aar \
+  hilt-android/pom.xml \
+  hilt-android/artifact-src.jar \
+  hilt-android/artifact-javadoc.jar \
   ""
 
 _deploy \
   "" \
-  java/dagger/hilt/android/testing/artifact.aar \
-  java/dagger/hilt/android/testing/pom.xml \
-  java/dagger/hilt/android/testing/artifact-src.jar \
-  java/dagger/hilt/android/testing/artifact-javadoc.jar \
+  hilt-android-testing/artifact.aar \
+  hilt-android-testing/pom.xml \
+  hilt-android-testing/artifact-src.jar \
+  hilt-android-testing/artifact-javadoc.jar \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.spi.internal.shaded.auto.common;androidx.room.compiler,dagger.spi.internal.shaded.androidx.room.compiler;kotlinx.metadata,dagger.spi.internal.shaded.kotlinx.metadata;androidx.room,dagger.spi.internal.shaded.androidx.room" \
-  java/dagger/hilt/processor/artifact.jar \
-  java/dagger/hilt/processor/pom.xml \
-  java/dagger/hilt/processor/artifact-src.jar \
-  java/dagger/hilt/processor/artifact-javadoc.jar \
+  "$_SHADED_RULES" \
+  hilt-compiler/artifact.jar \
+  hilt-compiler/pom.xml \
+  hilt-compiler/artifact-src.jar \
+  hilt-compiler/artifact-javadoc.jar \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.spi.internal.shaded.auto.common;androidx.room.compiler,dagger.spi.internal.shaded.androidx.room.compiler;kotlinx.metadata,dagger.spi.internal.shaded.kotlinx.metadata;androidx.room,dagger.spi.internal.shaded.androidx.room" \
-  java/dagger/hilt/android/processor/artifact.jar \
-  java/dagger/hilt/android/processor/pom.xml \
-  java/dagger/hilt/android/processor/artifact-src.jar \
-  java/dagger/hilt/android/processor/artifact-javadoc.jar \
+  "$_SHADED_RULES" \
+  hilt-compiler/legacy-artifact.jar \
+  hilt-compiler/legacy-pom.xml \
+  hilt-compiler/legacy-artifact-src.jar \
+  hilt-compiler/legacy-artifact-javadoc.jar \
   ""
 
 _deploy \
   "" \
-  java/dagger/hilt/artifact-core.jar \
-  java/dagger/hilt/pom.xml \
-  java/dagger/hilt/artifact-core-src.jar \
-  java/dagger/hilt/artifact-core-javadoc.jar \
+  hilt-core/artifact.jar \
+  hilt-core/pom.xml \
+  hilt-core/artifact-src.jar \
+  hilt-core/artifact-javadoc.jar \
   ""

@@ -1,3 +1,13 @@
+# Allows globs to match no files (this was the default before Bazel 7).
+# TODO(bcorso): Clean up globs that don't match any files.
+common --incompatible_disallow_empty_glob=False
+
+# Sets the disk cache directory and limit the max size. This is a new feature in
+# Bazel 7 that allows us to ensure we're under the 10GB limit for GitHub Actions
+# cache (without this flag a single bazel test will use over 10GB of cache).
+build --disk_cache=~/.cache/bazel_github
+build --experimental_disk_cache_gc_max_size=2G
+
 # Include debug info in the compiled jars
 build --javacopt=-g
 build --host_javacopt=-g
@@ -7,24 +17,16 @@ build --host_javacopt=-g
 build --javacopt="-Xep:BetaApi:OFF"
 build --host_javacopt="-Xep:BetaApi:OFF"
 
-# Note: This flag is required to prevent actions from clashing with each other
-# when reading/writing tmp files. Without this flag we get errors like:
-#
-#  Error: Cannot use file /tmp/hsperfdata_runner/12 because it is locked by
-#         another process
-#
-# This flag will be enabled by default in Bazel 7.0.0, but for now we enable it
-# manually. For more details: https://github.com/bazelbuild/bazel/issues/3236.
-build --incompatible_sandbox_hermetic_tmp
+# Sets the JDK for compiling sources.
+# TODO(b/394093156): Upgrade to JDK 21.
+build --java_language_version=17
+build --tool_java_language_version=17
+build --java_runtime_version=remotejdk_17
+build --tool_java_runtime_version=remotejdk_17
 
-# Sets the JDK for compiling sources and executing tests.
-build --java_language_version=18
-build --tool_java_language_version=18
-build --java_runtime_version=remotejdk_18
-build --tool_java_runtime_version=remotejdk_18
-
-# Default source/target versions.
+# Default source/target to 8 and disable associated deprecation warnings.
 build --javacopt="-source 8 -target 8"
+build --javacopt="-Xlint:-options"
 
 # Workaround for https://openjdk.java.net/jeps/411.
 # See https://github.com/bazelbuild/bazel/issues/14502#issuecomment-1018366245.

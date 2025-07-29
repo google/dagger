@@ -17,6 +17,9 @@
 package dagger.producers.internal;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.util.concurrent.Futures.immediateFuture;
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -24,9 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import dagger.internal.Provider;
 import dagger.producers.Producer;
@@ -112,9 +113,10 @@ public class AbstractProducesMethodProducerTest {
     return any(ListenableFuture.class);
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void monitor_null() throws Exception {
-    new DelegateProducer<>(null, Futures.immediateFuture(42));
+    assertThrows(
+        NullPointerException.class, () -> new DelegateProducer<>(null, immediateFuture(42)));
   }
 
   static final class DelegateProducer<T> extends AbstractProducesMethodProducer<Void, T> {
@@ -129,7 +131,7 @@ public class AbstractProducesMethodProducerTest {
           new Provider<Executor>() {
             @Override
             public Executor get() {
-              return MoreExecutors.directExecutor();
+              return directExecutor();
             }
           });
       this.delegate = delegate;
@@ -137,7 +139,7 @@ public class AbstractProducesMethodProducerTest {
 
     @Override
     protected ListenableFuture<Void> collectDependencies() {
-      return Futures.immediateFuture(null);
+      return immediateFuture(null);
     }
 
     @Override

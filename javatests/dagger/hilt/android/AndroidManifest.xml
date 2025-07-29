@@ -1,9 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="dagger.hilt.android">
-
-  <uses-sdk android:minSdkVersion="14" />
-
   <application>
     <activity
         android:name=".ActivityInjectedSavedStateViewModelTest$TestActivity"
@@ -94,11 +91,11 @@
         android:exported="false"
         tools:ignore="MissingClass"/>
     <activity
-        android:name=".ViewModelSavedStateOwnerTest$TestActivity"
+        android:name=".ViewModelSavedStateOwnerTest$ErrorTestActivity"
         android:exported="false"
         tools:ignore="MissingClass"/>
     <activity
-        android:name=".ViewModelSavedStateOwnerTest$ErrorTestActivity"
+        android:name=".ViewModelSavedStateOwnerTest$TestActivity"
         android:exported="false"
         tools:ignore="MissingClass"/>
     <activity

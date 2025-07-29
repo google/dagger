@@ -16,16 +16,20 @@
 
 package dagger.internal.codegen;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import dagger.testing.compile.CompilerTests;
+import dagger.testing.compile.CompilerTests.DaggerCompiler;
 import dagger.testing.golden.GoldenFileRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 // TODO(gak): add tests for generation in the default package.
 public final class InjectConstructorFactoryGeneratorTest {
   private static final Source QUALIFIER_A =
@@ -59,6 +63,22 @@ public final class InjectConstructorFactoryGeneratorTest {
 
   @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
 
+  @Parameters(name = "{0}")
+  public static ImmutableList<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public InjectConstructorFactoryGeneratorTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
+  private DaggerCompiler daggerCompiler(Source... sources) {
+    return CompilerTests.daggerCompiler(sources)
+        .withProcessingOptions(compilerMode.processorOptions());
+  }
+
   @Test public void injectOnPrivateConstructor() {
     Source file =
         CompilerTests.javaSource(
@@ -70,7 +90,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class PrivateConstructor {",
             "  @Inject private PrivateConstructor() {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -94,7 +114,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "    @Inject InnerClass() {}",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -117,7 +137,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "abstract class AbstractClass {",
             "  @Inject AbstractClass() {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -139,7 +159,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class GenericClass<T> {",
             "  @Inject GenericClass(T t) {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -162,7 +182,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             "  @Inject void register(B b) {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -181,7 +201,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class GenericClass<T> {",
             "  @Inject GenericClass() {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -200,7 +220,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class GenericClass<A, B> {",
             "  @Inject GenericClass(A a, B b) {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -222,11 +242,65 @@ public final class InjectConstructorFactoryGeneratorTest {
             "    C extends List<? super String>> {",
             "  @Inject GenericClass(A a, B b, C c) {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
               subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+            });
+  }
+
+  @Test
+  public void boundedGenerics_withPackagePrivateDependency() {
+    Source genericClass =
+        CompilerTests.javaSource(
+            "test.GenericClass",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import java.util.List;",
+            "",
+            "class GenericClass<A extends Bar> {",
+            "  @Inject GenericClass(A a, Bar bar) {}",
+            "}");
+    Source packagePrivateBar =
+        CompilerTests.javaSource(
+            "test.Bar",
+            "package test;",
+            "",
+            "interface Bar {}");
+    daggerCompiler(genericClass, packagePrivateBar)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+            });
+  }
+
+  @Test
+  public void packagePrivateDependency() {
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import java.util.List;",
+            "",
+            "class Foo {",
+            "  @Inject Foo(Bar bar) {}",
+            "}");
+    Source packagePrivateBar =
+        CompilerTests.javaSource(
+            "test.Bar",
+            "package test;",
+            "",
+            "interface Bar {}");
+    daggerCompiler(foo, packagePrivateBar)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/Foo_Factory"));
             });
   }
 
@@ -246,11 +320,50 @@ public final class InjectConstructorFactoryGeneratorTest {
             "                       @QualifierA String qs, Lazy<String> ls,",
             "                       B b, B b2, Provider<B> pb, @QualifierA B qb, Lazy<B> lb) {}",
             "}");
-    CompilerTests.daggerCompiler(file, QUALIFIER_A)
+    daggerCompiler(file, QUALIFIER_A)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
               subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+            });
+  }
+
+  @Test
+  public void inaccessibleMembersInjectorDependency() throws Exception {
+    Source superType =
+        CompilerTests.javaSource(
+            "other.SuperType",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class SuperType {",
+            "  @Inject InaccessibleType inaccessibleType;",
+            "}");
+    Source inaccessibleType =
+        CompilerTests.javaSource(
+            "other.InaccessibleType",
+            "package other;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "interface InaccessibleType {}");
+    Source subType =
+        CompilerTests.javaSource(
+            "test.SubType",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import other.SuperType;",
+            "",
+            "public class SubType extends SuperType {",
+            "  @Inject SubType() {}",
+            "}");
+    CompilerTests.daggerCompiler(superType, inaccessibleType, subType)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/SubType_Factory"));
             });
   }
 
@@ -267,7 +380,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "  TooManyInjectConstructors(int i) {}",
             "  @Inject TooManyInjectConstructors(String s) {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -296,18 +409,27 @@ public final class InjectConstructorFactoryGeneratorTest {
             "      @QualifierB",
             "      String s) {}",
             "}");
-    CompilerTests.daggerCompiler(file, QUALIFIER_A, QUALIFIER_B)
+    daggerCompiler(file, QUALIFIER_A, QUALIFIER_B)
         .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContaining(
-                      "A single dependency request may not use more than one @Qualifier")
-                  .onSource(file)
-                  .onLine(7);
-              subject.hasErrorContaining(
-                      "A single dependency request may not use more than one @Qualifier")
-                  .onSource(file)
-                  .onLine(8);
+              if (CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP) {
+                // TODO(b/381557487): KSP2 reports the error on the parameter instead of the
+                // the annotation.
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(9);
+              } else {
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(7);
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(8);
+              }
             });
   }
 
@@ -324,7 +446,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class MultipleScopeClass {",
             "  @Inject MultipleScopeClass() {}",
             "}");
-    CompilerTests.daggerCompiler(file, SCOPE_A, SCOPE_B)
+    daggerCompiler(file, SCOPE_A, SCOPE_B)
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -351,7 +473,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "  @QualifierB",
             "  MultipleScopeClass() {}",
             "}");
-    CompilerTests.daggerCompiler(file, QUALIFIER_A, QUALIFIER_B)
+    daggerCompiler(file, QUALIFIER_A, QUALIFIER_B)
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -377,7 +499,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class CheckedExceptionClass {",
             "  @Inject CheckedExceptionClass() throws Exception {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -399,7 +521,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class CheckedExceptionClass {",
             "  @Inject CheckedExceptionClass() throws Exception {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .withProcessingOptions(ImmutableMap.of("dagger.privateMemberValidation", "WARNING"))
         .compile(
             subject -> {
@@ -425,7 +547,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "    @Inject InnerClass() {}",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -448,7 +570,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "    @Inject InnerClass() {}",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .withProcessingOptions(ImmutableMap.of("dagger.privateMemberValidation", "WARNING"))
         .compile(
             subject -> {
@@ -475,7 +597,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "    }",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -500,7 +622,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "    }",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .withProcessingOptions(ImmutableMap.of("dagger.privateMemberValidation", "WARNING"))
         .compile(
             subject -> {
@@ -523,7 +645,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class FinalInjectField {",
             "  @Inject final String s;",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -544,7 +666,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class PrivateInjectField {",
             "  @Inject private String s;",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -565,7 +687,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class PrivateInjectField {",
             "  @Inject private String s;",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .withProcessingOptions(ImmutableMap.of("dagger.privateMemberValidation", "WARNING"))
         .compile(
             subject -> {
@@ -586,7 +708,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class StaticInjectField {",
             "  @Inject static String s;",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -607,7 +729,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class StaticInjectField {",
             "  @Inject static String s;",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .withProcessingOptions(ImmutableMap.of("dagger.staticMemberValidation", "WARNING"))
         .compile(
             subject -> {
@@ -631,7 +753,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "  @QualifierB",
             "  String s;",
             "}");
-    CompilerTests.daggerCompiler(file, QUALIFIER_A, QUALIFIER_B)
+    daggerCompiler(file, QUALIFIER_A, QUALIFIER_B)
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -657,7 +779,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "abstract class AbstractInjectMethod {",
             "  @Inject abstract void method();",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -678,7 +800,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class PrivateInjectMethod {",
             "  @Inject private void method(){}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -699,7 +821,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class PrivateInjectMethod {",
             "  @Inject private void method(){}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .withProcessingOptions(ImmutableMap.of("dagger.privateMemberValidation", "WARNING"))
         .compile(
             subject -> {
@@ -720,7 +842,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class StaticInjectMethod {",
             "  @Inject static void method(){}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -741,7 +863,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class StaticInjectMethod {",
             "  @Inject static void method(){}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .withProcessingOptions(ImmutableMap.of("dagger.staticMemberValidation", "WARNING"))
         .compile(
             subject -> {
@@ -762,7 +884,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "class AbstractInjectMethod {",
             "  @Inject <T> void method();",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -786,18 +908,27 @@ public final class InjectConstructorFactoryGeneratorTest {
             "      @QualifierB",
             "      String s) {}",
             "}");
-    CompilerTests.daggerCompiler(file, QUALIFIER_A, QUALIFIER_B)
+    daggerCompiler(file, QUALIFIER_A, QUALIFIER_B)
         .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContaining(
-                      "A single dependency request may not use more than one @Qualifier")
-                  .onSource(file)
-                  .onLine(7);
-              subject.hasErrorContaining(
-                      "A single dependency request may not use more than one @Qualifier")
-                  .onSource(file)
-                  .onLine(8);
+              if (CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP) {
+                // TODO(b/381557487): KSP2 reports the error on the parameter instead of the
+                // the annotation.
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(9);
+              } else {
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(7);
+                subject.hasErrorContaining(
+                        "A single dependency request may not use more than one @Qualifier")
+                    .onSource(file)
+                    .onLine(8);
+              }
             });
   }
 
@@ -813,7 +944,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "final class A {",
             "  @Inject A(Produced<String> str) {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -833,7 +964,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "final class A {",
             "  @Inject A(Producer<String> str) {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -853,7 +984,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "final class A {",
             "  @Inject Produced<String> str;",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -873,7 +1004,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "final class A {",
             "  @Inject Producer<String> str;",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -893,7 +1024,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "final class A {",
             "  @Inject void inject(Produced<String> str) {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -913,7 +1044,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "final class A {",
             "  @Inject void inject(Producer<String> str) {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(1);
@@ -932,7 +1063,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class InjectConstructor {",
         "  @Inject InjectConstructor(String s) {}",
         "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -952,7 +1083,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  @Inject AllInjections(String s) {}",
         "  @Inject void s(String s) {}",
         "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -972,7 +1103,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class InjectConstructor {",
         "  @Inject InjectConstructor(List<?> objects) {}",
         "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -997,7 +1128,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class InjectConstructor {",
         "  @Inject InjectConstructor(Factory factory) {}",
         "}");
-    CompilerTests.daggerCompiler(factoryFile, file)
+    daggerCompiler(factoryFile, file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1024,7 +1155,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "class InjectConstructor {",
         "  @Inject InjectConstructor(Outer.Factory factory) {}",
         "}");
-    CompilerTests.daggerCompiler(factoryFile, file)
+    daggerCompiler(factoryFile, file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1057,7 +1188,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "  @Inject InjectConstructor("
                 + "other.pkg.CommonName otherPackage, CommonName samePackage) {}",
             "}");
-    CompilerTests.daggerCompiler(samePackageInterface, differentPackageInterface, file)
+    daggerCompiler(samePackageInterface, differentPackageInterface, file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1077,7 +1208,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "final class SimpleType {",
             "  @Inject SimpleType() {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1102,7 +1233,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "    @Inject A a;",
             "  }",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1125,7 +1256,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "  @Inject",
             "  ScopedBinding() {}",
             "}");
-    CompilerTests.daggerCompiler(file)
+    daggerCompiler(file)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1170,7 +1301,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "  @Inject",
             "  ScopedBinding() {}",
             "}");
-    CompilerTests.daggerCompiler(scopedBinding, customScope, customAnnotation)
+    daggerCompiler(scopedBinding, customScope, customAnnotation)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
@@ -1253,7 +1384,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "package test;",
             "",
             "@interface NonQualifier {}");
-    CompilerTests.daggerCompiler(
+    daggerCompiler(
             someBinding,
             fieldQualifier,
             constructorParameterQualifier,
@@ -1330,7 +1461,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "  @Qualifier",
             "  @interface NestedQualifier {}",
             "}");
-    CompilerTests.daggerCompiler(
+    daggerCompiler(
             someBinding,
             qualifierWithValue,
             pkg1SameNameQualifier,
@@ -1435,7 +1566,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             "@Qualifier",
             "@interface FooBaseMethodQualifier {}");
-    CompilerTests.daggerCompiler(
+    daggerCompiler(
             foo,
             fooBase,
             fooFieldQualifier,

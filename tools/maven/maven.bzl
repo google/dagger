@@ -22,7 +22,7 @@ load(":pom_file.bzl", "pom_file")
 
 SHADED_MAVEN_DEPS = [
     "com.google.auto:auto-common",
-    "org.jetbrains.kotlinx:kotlinx-metadata-jvm",
+    "com.squareup:kotlinpoet-javapoet",
 ]
 
 def dagger_pom_file(name, targets, artifact_name, artifact_id, packaging = None, **kwargs):
@@ -292,6 +292,7 @@ def _gen_maven_artifact(
         # https://central.sonatype.org/pages/requirements.html#supply-javadoc-and-sources
         java_binary(
             name = name + "-javadoc",
+            create_executable = False,
         )
 
 def _src_jar(target):

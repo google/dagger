@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import dagger.testing.compile.CompilerTests;
+import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -55,6 +56,7 @@ public class InvalidInjectConstructorTest {
             "}");
     CompilerTests.daggerCompiler(component)
         .withProcessingOptions(compilerMode.processorOptions())
+        .withAdditionalClasspath(getInvalidInjectConstructorLib())
         .compile(
             subject -> {
               // subject.hasErrorCount(2);
@@ -89,6 +91,7 @@ public class InvalidInjectConstructorTest {
             "}");
     CompilerTests.daggerCompiler(component)
         .withProcessingOptions(compilerMode.processorOptions())
+        .withAdditionalClasspath(getInvalidInjectConstructorLib())
         .compile(
             subject -> {
               // subject.hasErrorCount(2);
@@ -103,5 +106,27 @@ public class InvalidInjectConstructorTest {
                   "InvalidInjectConstructor cannot be provided without an @Inject constructor or "
                       + "an @Provides-annotated method.");
             });
+  }
+
+  private ImmutableList<File> getInvalidInjectConstructorLib() {
+    // A class that invalidly declares 2 inject constructors.
+    Source source =
+        CompilerTests.javaSource(
+            "dagger.internal.codegen.InvalidInjectConstructor",
+            "package dagger.internal.codegen;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public final class InvalidInjectConstructor {",
+            "",
+            "  @Inject String str;",
+            "",
+            "  @Inject",
+            "  InvalidInjectConstructor() {}",
+            "",
+            "  @Inject",
+            "  InvalidInjectConstructor(String str) {}",
+            "}");
+    return CompilerTests.libraryCompiler(source).compile();
   }
 }

@@ -17,21 +17,20 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertThat;
+import static dagger.internal.codegen.xprocessing.XFunSpecs.constructorBuilder;
 import static org.junit.Assert.assertThrows;
 
+import androidx.room.compiler.codegen.XClassName;
+import androidx.room.compiler.codegen.XTypeSpec;
 import androidx.room.compiler.processing.util.CompilationResultSubject;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeSpec;
-import dagger.MembersInjector;
-import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.xprocessing.XTypeNames;
+import dagger.internal.codegen.xprocessing.XTypeSpecs;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import java.util.Collection;
-import javax.inject.Inject;
 import javax.tools.Diagnostic;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,21 +45,30 @@ public class ComponentProcessorTest {
     return CompilerMode.TEST_PARAMETERS;
   }
 
-  private static final TypeSpec GENERATED_INJECT_TYPE =
-      TypeSpec.classBuilder("GeneratedInjectType")
-          .addMethod(
-              MethodSpec.constructorBuilder()
-                  .addAnnotation(TypeNames.INJECT_JAVAX)
+  private static final Source NULLABLE =
+      CompilerTests.javaSource(
+          "test.Nullable", // force one-string-per-line format
+          "package test;",
+          "",
+          "public @interface Nullable {}");
+
+  private static final XTypeSpec GENERATED_INJECT_TYPE =
+      XTypeSpecs.classBuilder("GeneratedInjectType")
+          .addFunction(
+              constructorBuilder()
+                  .addAnnotation(XClassName.get("javax.inject", "Inject"))
                   .build())
           .build();
 
-  private static final TypeSpec GENERATED_QUALIFIER =
-      TypeSpec.annotationBuilder("GeneratedQualifier")
-          .addAnnotation(AnnotationSpec.builder(TypeNames.QUALIFIER_JAVAX).build())
+  private static final XTypeSpec GENERATED_QUALIFIER =
+      XTypeSpecs.annotationBuilder("GeneratedQualifier")
+          .addAnnotation(XClassName.get("javax.inject", "Qualifier"))
           .build();
 
-  private static final TypeSpec GENERATED_MODULE =
-      TypeSpec.classBuilder("GeneratedModule").addAnnotation(TypeNames.MODULE).build();
+  private static final XTypeSpec GENERATED_MODULE =
+      XTypeSpecs.classBuilder("GeneratedModule")
+          .addAnnotation(XTypeNames.MODULE)
+          .build();
 
 
   @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
@@ -777,6 +785,48 @@ public class ComponentProcessorTest {
   }
 
   @Test
+  public void componentWithNullableDependency() throws Exception {
+    Source bFile =
+        CompilerTests.javaSource(
+            "test.B",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Provider;",
+            "",
+            "final class B {",
+            "  @Inject B(Provider<String> a) {}",
+            "}");
+    Source nullableStringComponentFile =
+        CompilerTests.javaSource(
+            "test.NullableStringComponent",
+            "package test;",
+            "",
+            "interface NullableStringComponent {",
+            "  @Nullable String nullableString();",
+            "}");
+    Source bComponentFile =
+        CompilerTests.javaSource(
+            "test.BComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(dependencies = NullableStringComponent.class)",
+            "interface BComponent {",
+            "  B b();",
+            "}");
+
+    CompilerTests.daggerCompiler(nullableStringComponentFile, bFile, bComponentFile, NULLABLE)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerBComponent"));
+            });
+  }
+
+  @Test
   public void primitiveComponentDependency() throws Exception {
     Source bFile = CompilerTests.javaSource("test.B",
             "package test;",
@@ -1344,6 +1394,46 @@ public class ComponentProcessorTest {
    */
   @Test
   public void unprocessedMembersInjectorNotes() {
+    Source testClasses =
+        CompilerTests.javaSource(
+            "dagger.internal.codegen.ComponentProcessorTestClasses",
+            "package dagger.internal.codegen;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public final class ComponentProcessorTestClasses {",
+            "  public static final class NoInjectMemberNoConstructor {}",
+            "",
+            "  public static final class NoInjectMemberWithConstructor {",
+            "     @Inject",
+            "     NoInjectMemberWithConstructor() {}",
+            "  }",
+            "",
+            "  public abstract static class LocalInjectMemberNoConstructor {",
+            "    @Inject Object object;",
+            "  }",
+            "",
+            "  public static final class LocalInjectMemberWithConstructor {",
+            "    @SuppressWarnings(\"BadInject\") // Ignore this check as we want to test this case"
+                + " in particular.",
+            "    @Inject Object object;",
+            "",
+            "    @Inject",
+            "    LocalInjectMemberWithConstructor() {}",
+            "  }",
+            "",
+            "  public static final class ParentInjectMemberNoConstructor extends"
+                + " LocalInjectMemberNoConstructor {",
+            "  }",
+            "",
+            "  public static final class ParentInjectMemberWithConstructor",
+            "      extends LocalInjectMemberNoConstructor {",
+            "    @Inject",
+            "    ParentInjectMemberWithConstructor() {}",
+            "  }",
+            "",
+            "  private ComponentProcessorTestClasses() {}",
+            "}");
     Source component =
         CompilerTests.javaSource(
             "test.TestComponent",
@@ -1377,6 +1467,7 @@ public class ComponentProcessorTest {
             "  }",
             "}");
     CompilerTests.daggerCompiler(module, component)
+        .withAdditionalClasspath(CompilerTests.libraryCompiler(testClasses).compile())
         .withProcessingOptions(
             ImmutableMap.<String, String>builder()
                 .putAll(compilerMode.processorOptions())
@@ -1808,6 +1899,7 @@ public class ComponentProcessorTest {
             });
   }
 
+  @org.junit.Ignore // TODO(b/394093156): This is a known issue with JDK17.
   @Test
   public void justInTimeAtInjectConstructor_hasGeneratedQualifier() throws Exception {
     Source injected =
@@ -1863,6 +1955,7 @@ public class ComponentProcessorTest {
           });
   }
 
+  @org.junit.Ignore // TODO(b/394093156): This is a known issue with JDK17.
   @Test
   public void moduleHasGeneratedQualifier() throws Exception {
     Source module =

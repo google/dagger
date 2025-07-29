@@ -1,0 +1,50 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class Child_MembersInjector implements MembersInjector<Child> {
+  private final Provider<Foo> objectProvider;
+
+  private final Provider<Bar> objectProvider2;
+
+  private Child_MembersInjector(Provider<Foo> objectProvider, Provider<Bar> objectProvider2) {
+    this.objectProvider = objectProvider;
+    this.objectProvider2 = objectProvider2;
+  }
+
+  public static MembersInjector<Child> create(Provider<Foo> objectProvider,
+      Provider<Bar> objectProvider2) {
+    return new Child_MembersInjector(objectProvider, objectProvider2);
+  }
+
+  @Override
+  public void injectMembers(Child instance) {
+    Parent_MembersInjector.injectObject(instance, objectProvider.get());
+    injectObject(instance, objectProvider2.get());
+  }
+
+  @InjectedFieldSignature("test.Child.object")
+  public static void injectObject(Object instance, Object object) {
+    ((Child) (instance)).object = (Bar) (object);
+  }
+}

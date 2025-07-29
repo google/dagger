@@ -1,0 +1,45 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Preconditions;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata("javax.inject.Singleton")
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class MyModule_ProvideStringFactory implements Factory<String> {
+  private final MyModule module;
+
+  private MyModule_ProvideStringFactory(MyModule module) {
+    this.module = module;
+  }
+
+  @Override
+  public String get() {
+    return provideString(module);
+  }
+
+  public static MyModule_ProvideStringFactory create(MyModule module) {
+    return new MyModule_ProvideStringFactory(module);
+  }
+
+  public static String provideString(MyModule instance) {
+    return Preconditions.checkNotNullFromProvides(instance.provideString());
+  }
+}

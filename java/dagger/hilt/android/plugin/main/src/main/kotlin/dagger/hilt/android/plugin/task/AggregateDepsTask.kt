@@ -99,14 +99,13 @@ abstract class AggregateDepsTask @Inject constructor(
       val rootsToProcess = AggregatedRootIrValidator.rootsToProcess(
         isCrossCompilationRootValidationDisabled =
           parameters.crossCompilationRootValidationDisabled.get(),
-        processedRoots = aggregator.processedRoots,
+        processedRootSentinels = aggregator.processedRoots,
         aggregatedRoots = aggregator.aggregatedRoots
       )
       if (rootsToProcess.isEmpty()) {
         return
       }
       val componentTrees = ComponentTreeDepsIrCreator.components(
-        isTest = parameters.testEnvironment.get(),
         isSharedTestComponentsEnabled = true,
         aggregatedRoots = rootsToProcess,
         defineComponentDeps = aggregator.defineComponentDeps,

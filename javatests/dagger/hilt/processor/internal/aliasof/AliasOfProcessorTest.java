@@ -76,19 +76,18 @@ public final class AliasOfProcessorTest {
                 //   subject.hasErrorCount(1);
                 // }
                 subject.hasErrorContaining(
-                    "@DefineComponent test.ChildComponent, references invalid scope(s) annotated" 
+                    "@DefineComponent test.ChildComponent, references invalid scope(s) annotated"
                     + " with @AliasOf. @DefineComponent scopes cannot be aliases of other scopes:"
                     + " [@test.AliasScope]"));
   }
 
   @Test
-  public void fails_alisOfOnNonScope() {
+  public void fails_aliasOfOnNonScope() {
     Source scope =
         HiltCompilerTests.javaSource(
             "test.AliasScope",
             "package test;",
             "",
-            "import javax.inject.Scope;",
             "import javax.inject.Singleton;",
             "import dagger.hilt.migration.AliasOf;",
             "",
@@ -103,6 +102,24 @@ public final class AliasOfProcessorTest {
                   "AliasOf should only be used on scopes. However, it was found "
                       + "annotating test.AliasScope");
             });
+  }
+
+  @Test
+  public void succeeds_aliasOfJakartaScope() {
+    Source scope =
+        HiltCompilerTests.javaSource(
+            "test.AliasScope",
+            "package test;",
+            "",
+            "import jakarta.inject.Scope;",
+            "import javax.inject.Singleton;",
+            "import dagger.hilt.migration.AliasOf;",
+            "",
+            "@Scope",
+            "@AliasOf(Singleton.class)",
+            "public @interface AliasScope{}");
+
+    HiltCompilerTests.hiltCompiler(scope).compile(subject -> subject.hasErrorCount(0));
   }
 
   @Rule public TemporaryFolder tempFolderRule = new TemporaryFolder();

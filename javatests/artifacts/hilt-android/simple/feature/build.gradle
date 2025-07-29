@@ -21,7 +21,7 @@ apply plugin: 'com.google.dagger.hilt.android'
 
 android {
     compileSdkVersion 33
-    buildToolsVersion "33.0.0"
+    buildToolsVersion "33.0.1"
 
     defaultConfig {
         minSdkVersion 16
@@ -29,6 +29,7 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    namespace "dagger.hilt.android.simple.feature"
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
@@ -42,6 +43,10 @@ android {
             dimension "tier"
         }
     }
+}
+
+kotlin {
+    jvmToolchain(11)
 }
 
 kapt {

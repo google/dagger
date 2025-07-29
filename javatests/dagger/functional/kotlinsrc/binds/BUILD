@@ -22,8 +22,6 @@ load(
 )
 load("//:test_defs.bzl", "GenKtTests")
 
-package(default_visibility = ["//:src"])
-
 GenKtTests(
     name = "BindsTest",
     srcs = [
@@ -43,8 +41,8 @@ GenKtTests(
     ],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//:dagger_with_compiler",
         "//third_party/java/auto:factory",
+        "//third_party/java/dagger",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
@@ -55,7 +53,7 @@ GenKtTests(
     srcs = ["BindsCollectionsWithoutMultibindingsTest.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
@@ -66,7 +64,7 @@ GenKtTests(
     srcs = ["ScopedBindsTest.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],

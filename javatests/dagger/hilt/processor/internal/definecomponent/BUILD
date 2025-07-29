@@ -17,20 +17,18 @@
 
 load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
-package(default_visibility = ["//:src"])
-
 compiler_test(
     name = "DefineComponentProcessorTest",
     srcs = ["DefineComponentProcessorTest.java"],
     compiler_deps = [
-        "//java/dagger/hilt:entry_point",
-        "//java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android/components",
-        "//java/dagger/hilt/android/qualifiers",
+        "//hilt-core/main/java/dagger/hilt:entry_point",
+        "//hilt-core/main/java/dagger/hilt:install_in",
+        "//hilt-android/main/java/dagger/hilt/android/components",
+        "//hilt-android/main/java/dagger/hilt/android/qualifiers",
     ],
     deps = [
-        "//java/dagger/hilt/android/testing/compile",
-        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing/compile",
         "//third_party/java/junit",
     ],
 )

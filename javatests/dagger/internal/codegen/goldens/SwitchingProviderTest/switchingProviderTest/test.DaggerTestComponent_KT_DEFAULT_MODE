@@ -1,0 +1,555 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public Provider<Binding0> getBinding0Provider() {
+      return (Provider<Binding0>) ((Object) (Binding0_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding1> getBinding1Provider() {
+      return (Provider<Binding1>) ((Object) (Binding1_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding2> getBinding2Provider() {
+      return (Provider<Binding2>) ((Object) (Binding2_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding3> getBinding3Provider() {
+      return (Provider<Binding3>) ((Object) (Binding3_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding4> getBinding4Provider() {
+      return (Provider<Binding4>) ((Object) (Binding4_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding5> getBinding5Provider() {
+      return (Provider<Binding5>) ((Object) (Binding5_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding6> getBinding6Provider() {
+      return (Provider<Binding6>) ((Object) (Binding6_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding7> getBinding7Provider() {
+      return (Provider<Binding7>) ((Object) (Binding7_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding8> getBinding8Provider() {
+      return (Provider<Binding8>) ((Object) (Binding8_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding9> getBinding9Provider() {
+      return (Provider<Binding9>) ((Object) (Binding9_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding10> getBinding10Provider() {
+      return (Provider<Binding10>) ((Object) (Binding10_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding11> getBinding11Provider() {
+      return (Provider<Binding11>) ((Object) (Binding11_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding12> getBinding12Provider() {
+      return (Provider<Binding12>) ((Object) (Binding12_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding13> getBinding13Provider() {
+      return (Provider<Binding13>) ((Object) (Binding13_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding14> getBinding14Provider() {
+      return (Provider<Binding14>) ((Object) (Binding14_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding15> getBinding15Provider() {
+      return (Provider<Binding15>) ((Object) (Binding15_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding16> getBinding16Provider() {
+      return (Provider<Binding16>) ((Object) (Binding16_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding17> getBinding17Provider() {
+      return (Provider<Binding17>) ((Object) (Binding17_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding18> getBinding18Provider() {
+      return (Provider<Binding18>) ((Object) (Binding18_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding19> getBinding19Provider() {
+      return (Provider<Binding19>) ((Object) (Binding19_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding20> getBinding20Provider() {
+      return (Provider<Binding20>) ((Object) (Binding20_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding21> getBinding21Provider() {
+      return (Provider<Binding21>) ((Object) (Binding21_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding22> getBinding22Provider() {
+      return (Provider<Binding22>) ((Object) (Binding22_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding23> getBinding23Provider() {
+      return (Provider<Binding23>) ((Object) (Binding23_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding24> getBinding24Provider() {
+      return (Provider<Binding24>) ((Object) (Binding24_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding25> getBinding25Provider() {
+      return (Provider<Binding25>) ((Object) (Binding25_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding26> getBinding26Provider() {
+      return (Provider<Binding26>) ((Object) (Binding26_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding27> getBinding27Provider() {
+      return (Provider<Binding27>) ((Object) (Binding27_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding28> getBinding28Provider() {
+      return (Provider<Binding28>) ((Object) (Binding28_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding29> getBinding29Provider() {
+      return (Provider<Binding29>) ((Object) (Binding29_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding30> getBinding30Provider() {
+      return (Provider<Binding30>) ((Object) (Binding30_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding31> getBinding31Provider() {
+      return (Provider<Binding31>) ((Object) (Binding31_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding32> getBinding32Provider() {
+      return (Provider<Binding32>) ((Object) (Binding32_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding33> getBinding33Provider() {
+      return (Provider<Binding33>) ((Object) (Binding33_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding34> getBinding34Provider() {
+      return (Provider<Binding34>) ((Object) (Binding34_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding35> getBinding35Provider() {
+      return (Provider<Binding35>) ((Object) (Binding35_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding36> getBinding36Provider() {
+      return (Provider<Binding36>) ((Object) (Binding36_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding37> getBinding37Provider() {
+      return (Provider<Binding37>) ((Object) (Binding37_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding38> getBinding38Provider() {
+      return (Provider<Binding38>) ((Object) (Binding38_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding39> getBinding39Provider() {
+      return (Provider<Binding39>) ((Object) (Binding39_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding40> getBinding40Provider() {
+      return (Provider<Binding40>) ((Object) (Binding40_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding41> getBinding41Provider() {
+      return (Provider<Binding41>) ((Object) (Binding41_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding42> getBinding42Provider() {
+      return (Provider<Binding42>) ((Object) (Binding42_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding43> getBinding43Provider() {
+      return (Provider<Binding43>) ((Object) (Binding43_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding44> getBinding44Provider() {
+      return (Provider<Binding44>) ((Object) (Binding44_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding45> getBinding45Provider() {
+      return (Provider<Binding45>) ((Object) (Binding45_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding46> getBinding46Provider() {
+      return (Provider<Binding46>) ((Object) (Binding46_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding47> getBinding47Provider() {
+      return (Provider<Binding47>) ((Object) (Binding47_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding48> getBinding48Provider() {
+      return (Provider<Binding48>) ((Object) (Binding48_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding49> getBinding49Provider() {
+      return (Provider<Binding49>) ((Object) (Binding49_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding50> getBinding50Provider() {
+      return (Provider<Binding50>) ((Object) (Binding50_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding51> getBinding51Provider() {
+      return (Provider<Binding51>) ((Object) (Binding51_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding52> getBinding52Provider() {
+      return (Provider<Binding52>) ((Object) (Binding52_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding53> getBinding53Provider() {
+      return (Provider<Binding53>) ((Object) (Binding53_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding54> getBinding54Provider() {
+      return (Provider<Binding54>) ((Object) (Binding54_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding55> getBinding55Provider() {
+      return (Provider<Binding55>) ((Object) (Binding55_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding56> getBinding56Provider() {
+      return (Provider<Binding56>) ((Object) (Binding56_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding57> getBinding57Provider() {
+      return (Provider<Binding57>) ((Object) (Binding57_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding58> getBinding58Provider() {
+      return (Provider<Binding58>) ((Object) (Binding58_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding59> getBinding59Provider() {
+      return (Provider<Binding59>) ((Object) (Binding59_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding60> getBinding60Provider() {
+      return (Provider<Binding60>) ((Object) (Binding60_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding61> getBinding61Provider() {
+      return (Provider<Binding61>) ((Object) (Binding61_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding62> getBinding62Provider() {
+      return (Provider<Binding62>) ((Object) (Binding62_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding63> getBinding63Provider() {
+      return (Provider<Binding63>) ((Object) (Binding63_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding64> getBinding64Provider() {
+      return (Provider<Binding64>) ((Object) (Binding64_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding65> getBinding65Provider() {
+      return (Provider<Binding65>) ((Object) (Binding65_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding66> getBinding66Provider() {
+      return (Provider<Binding66>) ((Object) (Binding66_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding67> getBinding67Provider() {
+      return (Provider<Binding67>) ((Object) (Binding67_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding68> getBinding68Provider() {
+      return (Provider<Binding68>) ((Object) (Binding68_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding69> getBinding69Provider() {
+      return (Provider<Binding69>) ((Object) (Binding69_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding70> getBinding70Provider() {
+      return (Provider<Binding70>) ((Object) (Binding70_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding71> getBinding71Provider() {
+      return (Provider<Binding71>) ((Object) (Binding71_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding72> getBinding72Provider() {
+      return (Provider<Binding72>) ((Object) (Binding72_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding73> getBinding73Provider() {
+      return (Provider<Binding73>) ((Object) (Binding73_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding74> getBinding74Provider() {
+      return (Provider<Binding74>) ((Object) (Binding74_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding75> getBinding75Provider() {
+      return (Provider<Binding75>) ((Object) (Binding75_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding76> getBinding76Provider() {
+      return (Provider<Binding76>) ((Object) (Binding76_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding77> getBinding77Provider() {
+      return (Provider<Binding77>) ((Object) (Binding77_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding78> getBinding78Provider() {
+      return (Provider<Binding78>) ((Object) (Binding78_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding79> getBinding79Provider() {
+      return (Provider<Binding79>) ((Object) (Binding79_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding80> getBinding80Provider() {
+      return (Provider<Binding80>) ((Object) (Binding80_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding81> getBinding81Provider() {
+      return (Provider<Binding81>) ((Object) (Binding81_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding82> getBinding82Provider() {
+      return (Provider<Binding82>) ((Object) (Binding82_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding83> getBinding83Provider() {
+      return (Provider<Binding83>) ((Object) (Binding83_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding84> getBinding84Provider() {
+      return (Provider<Binding84>) ((Object) (Binding84_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding85> getBinding85Provider() {
+      return (Provider<Binding85>) ((Object) (Binding85_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding86> getBinding86Provider() {
+      return (Provider<Binding86>) ((Object) (Binding86_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding87> getBinding87Provider() {
+      return (Provider<Binding87>) ((Object) (Binding87_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding88> getBinding88Provider() {
+      return (Provider<Binding88>) ((Object) (Binding88_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding89> getBinding89Provider() {
+      return (Provider<Binding89>) ((Object) (Binding89_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding90> getBinding90Provider() {
+      return (Provider<Binding90>) ((Object) (Binding90_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding91> getBinding91Provider() {
+      return (Provider<Binding91>) ((Object) (Binding91_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding92> getBinding92Provider() {
+      return (Provider<Binding92>) ((Object) (Binding92_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding93> getBinding93Provider() {
+      return (Provider<Binding93>) ((Object) (Binding93_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding94> getBinding94Provider() {
+      return (Provider<Binding94>) ((Object) (Binding94_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding95> getBinding95Provider() {
+      return (Provider<Binding95>) ((Object) (Binding95_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding96> getBinding96Provider() {
+      return (Provider<Binding96>) ((Object) (Binding96_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding97> getBinding97Provider() {
+      return (Provider<Binding97>) ((Object) (Binding97_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding98> getBinding98Provider() {
+      return (Provider<Binding98>) ((Object) (Binding98_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding99> getBinding99Provider() {
+      return (Provider<Binding99>) ((Object) (Binding99_Factory.create()));
+    }
+
+    @Override
+    public Provider<Binding100> getBinding100Provider() {
+      return (Provider<Binding100>) ((Object) (Binding100_Factory.create()));
+    }
+  }
+}

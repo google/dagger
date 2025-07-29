@@ -20,8 +20,8 @@ package(default_visibility = ["//:src"])
 genrule(
     name = "import-shared-lib",
     srcs = [
-        "//java/dagger/hilt/processor/internal/root/ir",
-        "//java/dagger/hilt/processor/internal/optionvalues",
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal/root/ir",
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal/optionvalues",
     ],
     outs = ["processor-shared-lib.jar"],
     # Combine all the jar files by extracting them to the same dir and package them again.

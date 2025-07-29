@@ -1,0 +1,83 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.MapBuilder;
+import java.util.Collections;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public Map<String, String> strings() {
+      return Collections.<String, String>emptyMap();
+    }
+
+    @Override
+    public Map<String, Provider<String>> providerStrings() {
+      return Collections.<String, Provider<String>>emptyMap();
+    }
+
+    @Override
+    public Map<Integer, Integer> ints() {
+      return Collections.<Integer, Integer>singletonMap(0, MapModule.provideInt());
+    }
+
+    @Override
+    public Map<Integer, Provider<Integer>> providerInts() {
+      return Collections.<Integer, Provider<Integer>>singletonMap(0, MapModule_ProvideIntFactory.create());
+    }
+
+    @Override
+    public Map<Long, Long> longs() {
+      return MapBuilder.<Long, Long>newMapBuilder(3).put(0L, MapModule.provideLong0()).put(1L, MapModule.provideLong1()).put(2L, MapModule.provideLong2()).build();
+    }
+
+    @Override
+    public Map<Long, Provider<Long>> providerLongs() {
+      return MapBuilder.<Long, Provider<Long>>newMapBuilder(3).put(0L, MapModule_ProvideLong0Factory.create()).put(1L, MapModule_ProvideLong1Factory.create()).put(2L, MapModule_ProvideLong2Factory.create()).build();
+    }
+  }
+}

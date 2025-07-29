@@ -11,7 +11,7 @@ runs:
       with:
         access_token: ${{ github.token }}
     - name: 'Check out gh-pages repository'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: 'refs/heads/gh-pages'
         path: gh-pages
@@ -21,7 +21,7 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
     - name: 'Check out repository'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: 'Cleanup caches'
       run: python ./util/cleanup-github-caches.py
       shell: bash

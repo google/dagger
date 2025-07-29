@@ -29,7 +29,7 @@ bash $(dirname $0)/deploy-all.sh \
   "gpg:sign-and-deploy-file" \
   "$VERSION_NAME" \
   "-DrepositoryId=sonatype-nexus-staging" \
-  "-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
+  "-Durl=https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/" \
   "-Dgpg.keyname=${KEY}"
 
 # Note: we detach from head before making any sed changes to avoid commiting

@@ -1,0 +1,47 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class ParameterizedModule_ProvideNonGenericTypeWithDepsFactory implements Factory<String> {
+  private final Provider<Object> oProvider;
+
+  private ParameterizedModule_ProvideNonGenericTypeWithDepsFactory(Provider<Object> oProvider) {
+    this.oProvider = oProvider;
+  }
+
+  @Override
+  public String get() {
+    return provideNonGenericTypeWithDeps(oProvider.get());
+  }
+
+  public static ParameterizedModule_ProvideNonGenericTypeWithDepsFactory create(
+      Provider<Object> oProvider) {
+    return new ParameterizedModule_ProvideNonGenericTypeWithDepsFactory(oProvider);
+  }
+
+  public static String provideNonGenericTypeWithDeps(Object o) {
+    return Preconditions.checkNotNullFromProvides(ParameterizedModule.provideNonGenericTypeWithDeps(o));
+  }
+}

@@ -1,0 +1,180 @@
+package dagger.internal.codegen;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DelegateFactory;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    TestComponentImplShard testComponentImplShard;
+
+    TestComponentImplShard2 testComponentImplShard2;
+
+    private final TestComponentImpl testComponentImpl = this;
+
+    Provider<Binding7> binding7Provider;
+
+    Provider<Binding6> binding6Provider;
+
+    TestComponentImpl() {
+
+      initialize();
+      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
+      testComponentImplShard2 = new TestComponentImplShard2(testComponentImpl);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.binding7Provider = DoubleCheck.provider(Binding7_Factory.create());
+      this.binding6Provider = DoubleCheck.provider(Binding6_Factory.create(binding7Provider));
+    }
+
+    @Override
+    public Binding1 binding1() {
+      return testComponentImpl.testComponentImplShard2.binding1Provider.get();
+    }
+
+    @Override
+    public Binding2 binding2() {
+      return testComponentImpl.testComponentImplShard.binding2Provider.get();
+    }
+
+    @Override
+    public Binding3 binding3() {
+      return testComponentImpl.testComponentImplShard.binding3Provider.get();
+    }
+
+    @Override
+    public Binding4 binding4() {
+      return testComponentImpl.testComponentImplShard.binding4Provider.get();
+    }
+
+    @Override
+    public Binding5 binding5() {
+      return testComponentImpl.testComponentImplShard.binding5Provider.get();
+    }
+
+    @Override
+    public Binding6 binding6() {
+      return binding6Provider.get();
+    }
+
+    @Override
+    public Binding7 binding7() {
+      return binding7Provider.get();
+    }
+
+    @Override
+    public javax.inject.Provider<Binding1> providerBinding1() {
+      return testComponentImpl.testComponentImplShard2.binding1Provider;
+    }
+
+    @Override
+    public javax.inject.Provider<Binding2> providerBinding2() {
+      return testComponentImpl.testComponentImplShard.binding2Provider;
+    }
+
+    @Override
+    public javax.inject.Provider<Binding3> providerBinding3() {
+      return testComponentImpl.testComponentImplShard.binding3Provider;
+    }
+
+    @Override
+    public javax.inject.Provider<Binding4> providerBinding4() {
+      return testComponentImpl.testComponentImplShard.binding4Provider;
+    }
+
+    @Override
+    public javax.inject.Provider<Binding5> providerBinding5() {
+      return testComponentImpl.testComponentImplShard.binding5Provider;
+    }
+
+    @Override
+    public javax.inject.Provider<Binding6> providerBinding6() {
+      return binding6Provider;
+    }
+
+    @Override
+    public javax.inject.Provider<Binding7> providerBinding7() {
+      return binding7Provider;
+    }
+  }
+
+  private static final class TestComponentImplShard {
+    private final TestComponentImpl testComponentImpl;
+
+    Provider<Binding5> binding5Provider;
+
+    Provider<Binding2> binding2Provider;
+
+    Provider<Binding4> binding4Provider;
+
+    Provider<Binding3> binding3Provider;
+
+    TestComponentImplShard(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+      initialize();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.binding5Provider = DoubleCheck.provider(Binding5_Factory.create(testComponentImpl.binding6Provider));
+      this.binding2Provider = new DelegateFactory<>();
+      this.binding4Provider = DoubleCheck.provider(Binding4_Factory.create(binding5Provider, binding2Provider));
+      this.binding3Provider = DoubleCheck.provider(Binding3_Factory.create(binding4Provider));
+      DelegateFactory.setDelegate(binding2Provider, DoubleCheck.provider(Binding2_Factory.create(binding3Provider)));
+    }
+  }
+
+  private static final class TestComponentImplShard2 {
+    private final TestComponentImpl testComponentImpl;
+
+    Provider<Binding1> binding1Provider;
+
+    TestComponentImplShard2(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+      initialize();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.binding1Provider = DoubleCheck.provider(Binding1_Factory.create(testComponentImpl.testComponentImplShard.binding2Provider));
+    }
+  }
+}

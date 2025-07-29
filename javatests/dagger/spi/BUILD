@@ -15,25 +15,38 @@
 # Description:
 #   Tests for the Dagger SPI
 
+load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build_defs.bzl",
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenCompilerTests")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
+java_library(
+    name = "failing_plugin",
+    srcs = ["FailingPlugin.java"],
+    deps = [
+        "//dagger-spi",
+        "//third_party/java/auto:service",
+        "//third_party/java/guava/collect",
+    ],
+)
+
+GenCompilerTests(
     name = "spi_tests",
-    srcs = glob(["*.java"]),
-    functional = False,
+    srcs = glob(
+        ["*.java"],
+        exclude = ["FailingPlugin.java"],
+    ),
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//java/dagger:core",
-        "//java/dagger/internal/codegen:processor",
-        "//java/dagger/spi",
-        "//third_party/java/auto:service",
+        ":failing_plugin",
+        "//dagger-compiler/main/java/dagger/internal/codegen:processor",
+        "//dagger-runtime/main/java/dagger:core",
+        "//dagger-spi",
         "//third_party/java/compile_testing",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",

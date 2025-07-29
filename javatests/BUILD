@@ -14,5 +14,4 @@
 
 # Description:
 #   Tests for Dagger including both functional and compiler tests.
-
-package(default_visibility = ["//:src"])
+#

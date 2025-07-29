@@ -481,11 +481,14 @@ public class AssistedFactoryErrorsTest {
         .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContaining(
-                      "[test.Foo] Dagger does not support providing @AssistedInject types.")
+              subject
+                  .hasErrorContaining(
+                      "[test.Foo] Dagger does not support providing @AssistedInject types without a"
+                          + " qualifier.")
                   .onSource(module)
                   .onLine(10);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "[test.Foo.Factory] Dagger does not support providing @AssistedFactory "
                           + "types.")
                   .onSource(module)
@@ -536,11 +539,14 @@ public class AssistedFactoryErrorsTest {
         .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContaining(
-                      "[test.Foo] Dagger does not support providing @AssistedInject types.")
+              subject
+                  .hasErrorContaining(
+                      "[test.Foo] Dagger does not support providing @AssistedInject types without a"
+                          + " qualifier.")
                   .onSource(component)
                   .onLine(11);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "[test.Foo.Factory] Dagger does not support providing @AssistedFactory "
                           + "types.")
                   .onSource(component)
@@ -591,11 +597,14 @@ public class AssistedFactoryErrorsTest {
         .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContaining(
-                      "[test.Foo] Dagger does not support providing @AssistedInject types.")
+              subject
+                  .hasErrorContaining(
+                      "[test.Foo] Dagger does not support providing @AssistedInject types without a"
+                          + " qualifier.")
                   .onSource(component)
                   .onLine(10);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "[test.Foo.Factory] Dagger does not support providing @AssistedFactory "
                           + "types.")
                   .onSource(component)
@@ -644,11 +653,14 @@ public class AssistedFactoryErrorsTest {
         .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContaining(
-                      "[test.Foo] Dagger does not support providing @AssistedInject types.")
+              subject
+                  .hasErrorContaining(
+                      "[test.Foo] Dagger does not support providing @AssistedInject types without a"
+                          + " qualifier.")
                   .onSource(module)
                   .onLine(9);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "[test.Foo.Factory] Dagger does not support providing @AssistedFactory "
                           + "types.")
                   .onSource(module)
@@ -769,6 +781,32 @@ public class AssistedFactoryErrorsTest {
   }
 
   @Test
+  public void testInjectWithAssistedAnnotations() {
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import javax.inject.Inject;",
+            "",
+            "class Foo {",
+            "  @Inject",
+            "  Foo(@Assisted int i) {}",
+            "}");
+
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@Assisted parameters can only be used within an @AssistedInject-annotated "
+                      + "constructor");
+            });
+  }
+
+  @Test
   public void testAssistedInjectWithNoAssistedParametersIsNotInjectable() {
     Source foo =
         CompilerTests.javaSource(
@@ -868,17 +906,15 @@ public class AssistedFactoryErrorsTest {
         CompilerTests.daggerCompiler(foo, fooFactory, component)
             .withProcessingOptions(compilerMode.processorOptions());
 
-    if (compilerMode == CompilerMode.FAST_INIT_MODE) {
-      // TODO(bcorso): Remove once we fix inaccessible assisted factory imlementation for fastInit.
+      if (compilerMode == CompilerMode.FAST_INIT_MODE) {
+      // TODO(bcorso): Remove once we fix inaccessible assisted factory implementation for fastInit.
       daggerCompiler.compile(
-          subject -> {
-            // TODO(bcorso): We don't report the error count here because javac reports
-            // the error once, whereas ksp reports the error twice.
-            subject
-                .hasErrorContaining(
-                    "test.subpackage.InaccessibleFoo is not public in test.subpackage; cannot be "
-                        + "accessed from outside package");
-          });
+          subject ->
+              // TODO(bcorso): We don't report the error count here because javac reports
+              // the error once, whereas ksp reports the error twice.
+              subject.hasErrorContaining(
+                  "test.subpackage.InaccessibleFoo is not public in test.subpackage; cannot be "
+                      + "accessed from outside package"));
     } else {
       daggerCompiler.compile(subject -> subject.hasErrorCount(0));
     }
@@ -915,5 +951,53 @@ public class AssistedFactoryErrorsTest {
                   .onSource(foo)
                   .onLine(12);
             });
+  }
+
+  @Test
+  public void testAssistedFactoryMethod_withNullableReturnType_withJavaSource_succeeds() {
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedInject;",
+            "import dagger.assisted.AssistedFactory;",
+            "import javax.annotation.Nullable;",
+            "",
+            "class Foo {",
+            "  @AssistedInject",
+            "  Foo() {}",
+            "",
+            "  @AssistedFactory",
+            "  interface FooFactory {",
+            "    @Nullable Foo create();",
+            "  }",
+            "}");
+
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void testAssistedFactoryMethod_withNullableReturnType_withKotlinSource_succeeds() {
+    Source foo =
+        CompilerTests.kotlinSource(
+            "test.Foo.kt",
+            "package test",
+            "",
+            "import dagger.assisted.AssistedInject",
+            "import dagger.assisted.AssistedFactory",
+            "",
+            "class Foo @AssistedInject constructor() {",
+            "  @AssistedFactory",
+            "  interface FooFactory {",
+            "    fun create(): Foo?",
+            "  }",
+            "}");
+
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
   }
 }

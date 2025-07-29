@@ -18,8 +18,6 @@
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenKtTests")
 
-package(default_visibility = ["//:src"])
-
 GenKtTests(
     name = "generictypes",
     srcs = glob(["*.kt"]),
@@ -27,12 +25,10 @@ GenKtTests(
         "//javatests/dagger/functional/kotlinsrc/generictypes/subpackage",
     ],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
-    test_only_deps = [
-        "//third_party/java/guava/collect",
-        "//third_party/java/truth",
-        "//third_party/java/junit",
-    ],
     deps = [
-        "//:dagger_with_compiler",
+        "//third_party/java/dagger",
+        "//third_party/java/guava/collect",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )

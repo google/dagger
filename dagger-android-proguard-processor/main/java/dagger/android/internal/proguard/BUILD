@@ -18,8 +18,6 @@
 load("@rules_java//java:defs.bzl", "java_library", "java_plugin")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
 
-package(default_visibility = ["//:src"])
-
 java_library(
     name = "proguard-processor",
     srcs = [
@@ -50,6 +48,5 @@ java_plugin(
     name = "plugin",
     generates_api = 1,
     processor_class = "dagger.android.internal.proguard.ProguardProcessor",
-    visibility = ["//visibility:private"],
     deps = [":proguard-processor"],
 )

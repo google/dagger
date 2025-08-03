@@ -13,5 +13,3 @@
 # limitations under the License.
 
 # Starlark rules for generating Javadoc
-
-package(default_visibility = ["//:src"])

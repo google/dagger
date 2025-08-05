@@ -38,7 +38,7 @@ dependencies {
   compileOnly(libs.auto.common)
   compileOnly(files(project.findXProcessingJar()))
 
-  testImplementation(project(":dagger-producers"))
+  implementation(project(":dagger-producers"))
   testImplementation(project(":dagger-testing"))
 
   testImplementation(libs.junit)

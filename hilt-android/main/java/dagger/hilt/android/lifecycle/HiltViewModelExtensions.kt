@@ -31,7 +31,7 @@ import dagger.hilt.android.internal.lifecycle.HiltViewModelFactory
  * @param callback A creation callback that takes an assisted factory and returns a {@code
  *   ViewModel}.
  */
-fun <VMF> CreationExtras.withCreationCallback(callback: (VMF) -> ViewModel): CreationExtras =
+public fun <VMF> CreationExtras.withCreationCallback(callback: (VMF) -> ViewModel): CreationExtras =
   MutableCreationExtras(this).addCreationCallback(callback)
 
 /**
@@ -42,7 +42,7 @@ fun <VMF> CreationExtras.withCreationCallback(callback: (VMF) -> ViewModel): Cre
  *   ViewModel}.
  */
 @Suppress("UNCHECKED_CAST")
-fun <VMF> MutableCreationExtras.addCreationCallback(callback: (VMF) -> ViewModel): CreationExtras =
+public fun <VMF> MutableCreationExtras.addCreationCallback(callback: (VMF) -> ViewModel): CreationExtras =
   this.apply {
     this[HiltViewModelFactory.CREATION_CALLBACK_KEY] = { factory -> callback(factory as VMF) }
   }

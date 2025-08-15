@@ -34,7 +34,6 @@ gen_maven_artifact(
     artifact_target_maven_deps = [
         "androidx.activity:activity:aar",
         "androidx.annotation:annotation",
-        "androidx.annotation:annotation-jvm",
         "androidx.appcompat:appcompat:aar",
         "androidx.fragment:fragment:aar",
         "androidx.lifecycle:lifecycle-common",

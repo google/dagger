@@ -25,6 +25,13 @@ SHADED_MAVEN_DEPS = [
     "com.squareup:kotlinpoet-javapoet",
 ]
 
+EXCLUDED_MAVEN_DEPS = SHADED_MAVEN_DEPS + [
+    # Due to androidx.annotation:annotation being a redirtect to androidx.annotation:annotation-jvm,
+    # we exclude the transitive dep during validation as it will be required because the alias in
+    # third_party/java/androidx/annotation/BUILD.oss exports both.
+    "androidx.annotation:annotation-jvm",
+]
+
 def dagger_pom_file(name, targets, artifact_name, artifact_id, packaging = None, **kwargs):
     pom_file(
         name = name,
@@ -44,7 +51,7 @@ def dagger_pom_file(name, targets, artifact_name, artifact_id, packaging = None,
         # into the artifact itself using the gen_maven_artifact.shaded_deps or get it from
         # a transitive Dagger artifact as a dependency. In addition, the artifact must add
         # the shade rules in the deploy scripts, e.g. deploy-dagger.sh.
-        excluded_artifacts = SHADED_MAVEN_DEPS,
+        excluded_artifacts = EXCLUDED_MAVEN_DEPS,
         **kwargs
     )
 
@@ -337,8 +344,8 @@ def _validate_maven_deps_impl(ctx):
     actual_maven_deps = [_strip_artifact_version(artifact) for artifact in maven_nearest_artifacts]
     _validate_list(
         "artifact_target_maven_deps",
-        # Exclude shaded maven deps from this list since they're not actual dependencies.
-        [dep for dep in actual_maven_deps if dep not in SHADED_MAVEN_DEPS],
+        # Exclude certain maven deps (such as shaded deps since they're not actual dependencies).
+        [dep for dep in actual_maven_deps if dep not in EXCLUDED_MAVEN_DEPS],
         expected_maven_deps,
         ctx.attr.banned_maven_deps,
     )

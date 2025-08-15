@@ -33,7 +33,6 @@ gen_maven_artifact(
     artifact_target = "//dagger-android/main/java/dagger/android:android",
     artifact_target_maven_deps = [
         "androidx.annotation:annotation",
-        "androidx.annotation:annotation-jvm",
         "com.google.dagger:dagger",
         "com.google.dagger:dagger-lint-aar",
     ],

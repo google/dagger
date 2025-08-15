@@ -18,9 +18,15 @@ load("@rules_java//java:defs.bzl", "java_library")
 
 package(default_visibility = ["//:src"])
 
+# Alias target for androidx.annotation
+# Ideally libraries could directly depend on @maven//:androidx_annotation_annotation but:
+# 1. Directly depending on annotation doesn't work since it contains no classes,
+# and results in missing symbol errors.
+# 2. Directly depending on annotation-jvm doesn't work since that can result in
+# duplicate class errors when transitive dependencies depend on older versions
+# of androidx.annotation
 java_library(
     name = "annotation",
-    # TODO(bcorso): Why do we need both of these?
     exports = [
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_annotation_annotation_jvm",

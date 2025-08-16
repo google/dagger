@@ -109,6 +109,10 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       registerTransform(CopyTransform::class.java) { spec ->
         // Java/Kotlin library projects offer an artifact of type 'jar'.
         spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "jar")
+        spec.from.attribute(LIBRARY_ELEMENTS_ATTRIBUTE, "jar")
+        spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, DAGGER_ARTIFACT_TYPE_VALUE)
+      }
+      registerTransform(CopyTransform::class.java) { spec ->
         // Android library projects (with or without Kotlin) offer an artifact of type
         // 'android-classes', which AGP can offer as a jar.
         spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "android-classes")
@@ -442,6 +446,9 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
 
   companion object {
     private val ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String::class.java)
+    private val LIBRARY_ELEMENTS_ATTRIBUTE =
+      Attribute.of("org.gradle.libraryelements", String::class.java)
+
     const val DAGGER_ARTIFACT_TYPE_VALUE = "jar-for-dagger"
     const val AGGREGATED_HILT_ARTIFACT_TYPE_VALUE = "aggregated-jar-for-hilt"
 

@@ -16,18 +16,64 @@
 
 package dagger.hilt.android.plugin.util
 
-@Suppress("DEPRECATION") // Older variant API is deprecated
-internal fun getKaptConfigName(variant: com.android.build.gradle.api.BaseVariant)
-  = getConfigName(variant, "kapt")
+import com.android.build.api.variant.AndroidTest
+import com.android.build.api.variant.TestVariant
+import com.android.build.api.variant.Variant
 
 @Suppress("DEPRECATION") // Older variant API is deprecated
-internal fun getKspConfigName(variant: com.android.build.gradle.api.BaseVariant)
-  = getConfigName(variant, "ksp")
+internal fun getKaptConfigName(variant: com.android.build.gradle.api.BaseVariant) =
+  getConfigName(prefix = "kapt", variant = variant)
 
 @Suppress("DEPRECATION") // Older variant API is deprecated
-internal fun getConfigName(
+internal fun getKspConfigName(variant: com.android.build.gradle.api.BaseVariant) =
+  getConfigName(prefix = "ksp", variant = variant)
+
+@Suppress("DEPRECATION") // Older variant API is deprecated
+private fun getConfigName(
+  prefix: String,
+  mode: VariantNameMode = VariantNameMode.FULL,
   variant: com.android.build.gradle.api.BaseVariant,
-  prefix: String
+) =
+  getConfigName(
+    prefix = prefix,
+    mode = mode,
+    variantFullName = variant.name,
+    variantFlavorName = variant.flavorName,
+    isAndroidTest = variant is com.android.build.gradle.api.TestVariant,
+    isUnitTest = variant is com.android.build.gradle.api.UnitTestVariant,
+  )
+
+internal fun getKaptConfigNames(variant: Variant) =
+  VariantNameMode.entries.map { mode ->
+    getConfigName(prefix = "kapt", mode = mode, variant = variant)
+  }
+
+internal fun getKspConfigNames(variant: Variant) =
+  VariantNameMode.entries.map { mode ->
+    getConfigName(prefix = "ksp", mode = mode, variant = variant)
+  }
+
+private fun getConfigName(
+  prefix: String,
+  mode: VariantNameMode = VariantNameMode.FULL,
+  variant: Variant,
+) =
+  getConfigName(
+    prefix = prefix,
+    mode = mode,
+    variantFullName = variant.name,
+    variantFlavorName = variant.flavorName,
+    isAndroidTest = variant is AndroidTest,
+    isUnitTest = variant is TestVariant,
+  )
+
+private fun getConfigName(
+  prefix: String,
+  mode: VariantNameMode,
+  variantFullName: String,
+  variantFlavorName: String?,
+  isAndroidTest: Boolean,
+  isUnitTest: Boolean,
 ): String {
   // Config names don't follow the usual task name conventions:
   // <Variant Name>   -> <Config Name>
@@ -36,12 +82,30 @@ internal fun getConfigName(
   // debugUnitTest    -> <prefix>TestDebug
   // release          -> <prefix>Release
   // releaseUnitTest  -> <prefix>TestRelease
-  return when (variant) {
-    is com.android.build.gradle.api.TestVariant ->
-      "${prefix}AndroidTest${variant.name.substringBeforeLast("AndroidTest").capitalize()}"
-    is com.android.build.gradle.api.UnitTestVariant ->
-      "${prefix}Test${variant.name.substringBeforeLast("UnitTest").capitalize()}"
-    else ->
-      "${prefix}${variant.name.capitalize()}"
+  return buildString {
+    append(prefix)
+    if (isAndroidTest) {
+      append("AndroidTest")
+    } else if (isUnitTest) {
+      append("Test")
+    }
+    append(
+      when (mode) {
+        VariantNameMode.BASE -> ""
+        VariantNameMode.FLAVOR -> checkNotNull(variantFlavorName)
+        VariantNameMode.FULL ->
+          when {
+            isAndroidTest -> variantFullName.substringBeforeLast("AndroidTest")
+            isUnitTest -> variantFullName.substringBeforeLast("UnitTest")
+            else -> variantFullName
+          }
+      }.capitalize()
+    )
   }
+}
+
+private enum class VariantNameMode {
+  BASE,
+  FLAVOR,
+  FULL,
 }

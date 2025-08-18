@@ -21,17 +21,14 @@ import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
-import com.android.build.api.variant.Component
-import com.android.build.api.variant.HasAndroidTest
-import com.android.build.api.variant.HasUnitTest
+import com.android.build.api.variant.ApplicationVariant
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
+import com.android.build.api.variant.LibraryVariant
 import com.android.build.api.variant.TestAndroidComponentsExtension
-import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension
-import com.android.build.gradle.LibraryExtension
-import com.android.build.gradle.TestExtension
 import com.android.build.gradle.tasks.JdkImageInput
 import dagger.hilt.android.plugin.task.AggregateDepsTask
+import dagger.hilt.android.plugin.task.DependencyCheckTask
 import dagger.hilt.android.plugin.transform.AggregatedPackagesTransform
 import dagger.hilt.android.plugin.transform.AndroidEntryPointClassVisitor
 import dagger.hilt.android.plugin.transform.CopyTransform
@@ -41,7 +38,9 @@ import dagger.hilt.android.plugin.util.addKspTaskProcessorOptions
 import dagger.hilt.android.plugin.util.capitalize
 import dagger.hilt.android.plugin.util.forEachRootVariant
 import dagger.hilt.android.plugin.util.getKaptConfigName
+import dagger.hilt.android.plugin.util.getKaptConfigNames
 import dagger.hilt.android.plugin.util.getKspConfigName
+import dagger.hilt.android.plugin.util.getKspConfigNames
 import dagger.hilt.android.plugin.util.isKspTask
 import dagger.hilt.android.plugin.util.onAllVariants
 import dagger.hilt.processor.internal.optionvalues.GradleProjectType
@@ -81,7 +80,6 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
         // plugin to a non-android project.
         "The Hilt Android Gradle plugin can only be applied to an Android project."
       }
-      verifyDependencies(it)
     }
   }
 
@@ -101,6 +99,7 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
     configureBytecodeTransformASM(androidExtension)
     configureAggregatingTask(project, hiltExtension)
     configureProcessorFlags(project, hiltExtension, androidExtension)
+    configureDependencyValidation(project, hiltExtension, androidExtension)
   }
 
   // Configures Gradle dependency transforms.
@@ -410,33 +409,43 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
     }
   }
 
-  private fun verifyDependencies(project: Project) {
-    // If project is already failing, skip verification since dependencies might not be resolved.
-    if (project.state.failure != null) {
-      return
-    }
-    val dependencies =
-      project.configurations
-        .filterNot {
-          // Exclude plugin created config since plugin adds the deps to them.
-          it.name.startsWith("hiltAnnotationProcessor") || it.name.startsWith("hiltCompileOnly")
+  private fun configureDependencyValidation(
+    project: Project,
+    hiltExtension: HiltExtension,
+    androidExtension: AndroidComponentsExtension<*, *, *>,
+  ) {
+    androidExtension.onVariants { variant ->
+      if (hiltExtension.disableDependencyCheck) {
+        return@onVariants
+      }
+      // Only check applications and libraries, using Hilt in tests is optional
+      if (variant !is ApplicationVariant && variant !is LibraryVariant) {
+        return@onVariants
+      }
+
+      fun Configuration.getDependenciesIds() =
+        incoming.dependencies.filterIsInstance<ExternalDependency>().map { dependency ->
+          dependency.group to dependency.name
         }
-        .flatMap { configuration ->
-          configuration.dependencies.filterIsInstance<ExternalDependency>().map { dependency ->
-            dependency.group to dependency.name
-          }
+
+      variant.sources.java?.addGeneratedSourceDirectory(
+        project.tasks.register(
+          "hiltDependencyCheck${variant.name.capitalize()}",
+          DependencyCheckTask::class.java,
+        ) { checkTask ->
+          checkTask.runtimeDependencies = variant.compileConfiguration.getDependenciesIds()
+          checkTask.processorDependencies =
+            buildList {
+                add(variant.annotationProcessorConfiguration.name)
+                addAll(getKaptConfigNames(variant))
+                addAll(getKspConfigNames(variant))
+              }
+              .mapNotNull { configName -> project.configurations.findByName(configName) }
+              .flatMap { it.getDependenciesIds() }
         }
-        .toSet()
-    fun getMissingDepMsg(depCoordinate: String): String =
-      "The Hilt Android Gradle plugin is applied but no $depCoordinate dependency was found."
-    if (!dependencies.contains(LIBRARY_GROUP to "hilt-android")) {
-      error(getMissingDepMsg("$LIBRARY_GROUP:hilt-android"))
-    }
-    if (
-      !dependencies.contains(LIBRARY_GROUP to "hilt-android-compiler") &&
-        !dependencies.contains(LIBRARY_GROUP to "hilt-compiler")
-    ) {
-      error(getMissingDepMsg("$LIBRARY_GROUP:hilt-compiler"))
+      ) {
+        return@addGeneratedSourceDirectory it.outputDirectory
+      }
     }
   }
 

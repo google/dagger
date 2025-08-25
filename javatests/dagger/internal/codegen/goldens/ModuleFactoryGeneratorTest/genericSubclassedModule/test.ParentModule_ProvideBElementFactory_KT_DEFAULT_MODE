@@ -1,51 +1,48 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Preconditions;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Preconditions
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.CharSequence
+import kotlin.Comparable
+import kotlin.Number
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class ParentModule_ProvideBElementFactory<A extends CharSequence, B, C extends Number & Comparable<C>> implements Factory<Object> {
-  private final ParentModule<A, B, C> module;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class ParentModule_ProvideBElementFactory<A : CharSequence?, B, C> : Factory<Any?> where C : Number?, C : Comparable<C?>? {
+  private val module: ParentModule<A, B, C>
 
-  private final Provider<B> bProvider;
+  private val bProvider: Provider<B>
 
-  private ParentModule_ProvideBElementFactory(ParentModule<A, B, C> module, Provider<B> bProvider) {
-    this.module = module;
-    this.bProvider = bProvider;
+  private constructor(module: ParentModule<A, B, C>, bProvider: Provider<B>) {
+    this.module = module
+    this.bProvider = bProvider
   }
 
-  @Override
-  public Object get() {
-    return ParentModule_ProvideBElementFactory.<A, B, C>provideBElement(module, bProvider.get());
-  }
+  public override fun `get`(): Any? = provideBElement<A, B, C>(module, bProvider.get())
 
-  public static <A extends CharSequence, B, C extends Number & Comparable<C>> ParentModule_ProvideBElementFactory<A, B, C> create(
-      Object module, Provider<?> bProvider) {
-    return new ParentModule_ProvideBElementFactory<A, B, C>((ParentModule<A, B, C>) (module), (Provider<B>) (bProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun <A : CharSequence?, B, C> create(module: Any?, bProvider: Provider<*>): ParentModule_ProvideBElementFactory<A, B, C> where C : Number?, C : Comparable<C?>? = ParentModule_ProvideBElementFactory<A, B, C>((module) as ParentModule<A, B, C>, (bProvider) as Provider<B>)
 
-  public static <A extends CharSequence, B, C extends Number & Comparable<C>> Object provideBElement(
-      Object instance, Object b) {
-    return Preconditions.checkNotNullFromProvides(((ParentModule<A, B, C>) (instance)).provideBElement((B) (b)));
+    @JvmStatic
+    public fun <A : CharSequence?, B, C> provideBElement(instance: Any?, b: Any?): Any? where C : Number?, C : Comparable<C?>? = Preconditions.checkNotNullFromProvides(((instance) as ParentModule<A, B, C>).provideBElement((b) as B))
   }
 }

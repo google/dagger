@@ -1,42 +1,38 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class SimpleType_Factory implements Factory<Object> {
-  @Override
-  public Object get() {
-    return newInstance();
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class SimpleType_Factory : Factory<Any?> {
+  public override fun `get`(): Any? = newInstance()
+
+  private object InstanceHolder {
+    public val INSTANCE: SimpleType_Factory = SimpleType_Factory()
   }
 
-  public static SimpleType_Factory create() {
-    return InstanceHolder.INSTANCE;
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(): SimpleType_Factory = InstanceHolder.INSTANCE
 
-  public static Object newInstance() {
-    return new SimpleType();
-  }
-
-  private static final class InstanceHolder {
-    static final SimpleType_Factory INSTANCE = new SimpleType_Factory();
+    @JvmStatic
+    public fun newInstance(): Any? = SimpleType()
   }
 }

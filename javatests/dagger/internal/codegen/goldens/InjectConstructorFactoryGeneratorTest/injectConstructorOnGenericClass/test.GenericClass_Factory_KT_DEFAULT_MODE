@@ -1,45 +1,41 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class GenericClass_Factory<T> implements Factory<Object> {
-  private final Provider<T> tProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class GenericClass_Factory<T> : Factory<Any?> {
+  private val tProvider: Provider<T>
 
-  private GenericClass_Factory(Provider<T> tProvider) {
-    this.tProvider = tProvider;
+  private constructor(tProvider: Provider<T>) {
+    this.tProvider = tProvider
   }
 
-  @Override
-  public Object get() {
-    return GenericClass_Factory.<T>newInstance(tProvider.get());
-  }
+  public override fun `get`(): Any? = newInstance<T>(tProvider.get())
 
-  public static <T> GenericClass_Factory<T> create(Provider<?> tProvider) {
-    return new GenericClass_Factory<T>((Provider<T>) (tProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun <T> create(tProvider: Provider<*>): GenericClass_Factory<T> = GenericClass_Factory<T>((tProvider) as Provider<T>)
 
-  public static <T> Object newInstance(Object t) {
-    return new GenericClass<T>((T) (t));
+    @JvmStatic
+    public fun <T> newInstance(t: Any?): Any? = GenericClass<T>((t) as T)
   }
 }

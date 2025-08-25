@@ -1725,8 +1725,7 @@ public class ComponentProcessorTest {
               // TODO(bcorso): Replace with subject.succeededWithoutWarnings()
               subject.hasErrorCount(0);
               subject.hasWarningCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_NonNullableStringFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_NonNullableStringFactory");
               subject.generatedSource(
                   goldenFileRule.goldenSource("test/DaggerTestComponent"));
             });
@@ -1772,8 +1771,7 @@ public class ComponentProcessorTest {
               // TODO(bcorso): Replace with subject.succeededWithoutWarnings()
               subject.hasErrorCount(0);
               subject.hasWarningCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_PrimitiveIntegerFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_PrimitiveIntegerFactory");
               subject.generatedSource(
                   goldenFileRule.goldenSource("test/DaggerTestComponent"));
             });
@@ -2251,5 +2249,10 @@ public class ComponentProcessorTest {
     CompilerTests.daggerCompiler(component, module)
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
+    Source source = goldenFileRule.goldenSource(source);
+    subject.generatedSource(source);
   }
 }

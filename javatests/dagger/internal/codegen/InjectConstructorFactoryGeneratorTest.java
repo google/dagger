@@ -16,7 +16,9 @@
 
 package dagger.internal.codegen;
 
+
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.util.CompilationResultSubject;
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -163,7 +165,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+              assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
             });
   }
 
@@ -186,7 +188,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+              assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
             });
   }
 
@@ -205,7 +207,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+              assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
             });
   }
 
@@ -224,7 +226,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+              assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
             });
   }
 
@@ -246,12 +248,13 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+              assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
             });
   }
 
   @Test
   public void boundedGenerics_withPackagePrivateDependency() {
+
     Source genericClass =
         CompilerTests.javaSource(
             "test.GenericClass",
@@ -273,7 +276,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+              assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
             });
   }
 
@@ -331,12 +334,23 @@ public final class InjectConstructorFactoryGeneratorTest {
     daggerCompiler(component, usage, genericClass, foo, packagePrivateBar)
         .compile(
             subject -> {
-              // Note: In this case, when calling the factory the component will use the requested
-              // type, Foo, e.g. "GenericClass_Factory.<Foo>create()" since Foo is publicly
-              // accessible. It doesn't matter that the bound type, Bar, is package-private.
-              subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
-              subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
+              if (compilerMode.isKotlinCodegenEnabled()) {
+                // TODO(b/438765237): Currently, this fails at the declaration of the factory
+                // (rather than the call site) because the internal Bar is exposed in the public
+                // factory declaration:  "class GenericClass_Factory<T : Bar>".
+                // See b/438765237 for details on how we can support this case in the future.
+                subject.hasErrorCount(1);
+                subject.hasErrorContaining(
+                    "Bounds for type parameter, A, in class GenericClass<A extends Bar> must be "
+                        + "publicly accessible.");
+              } else {
+                // Note: In this case, when calling the factory the component will use the requested
+                // type, Foo, e.g. "GenericClass_Factory.<Foo>create()" since Foo is publicly
+                // accessible. It doesn't matter that the bound type, Bar, is package-private.
+                subject.hasErrorCount(0);
+                assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
+                subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
+              }
             });
   }
 
@@ -397,7 +411,7 @@ public final class InjectConstructorFactoryGeneratorTest {
               // factory with Kotlin codegen, the component will use the bound type, Bar, e.g.
               // "GenericClass_Factory.<Bar>create()" since Foo is not publicly accessible.
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+              assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
               subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
             });
   }
@@ -473,7 +487,7 @@ public final class InjectConstructorFactoryGeneratorTest {
               // "GenericClass_Factory.<Object, Bar<Object>>create()" since Foo is not publicly
               // accessible.
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+              assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
               subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
             });
   }
@@ -669,7 +683,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/Foo_Factory"));
+              assertSourceMatchesGolden(subject, "test/Foo_Factory");
             });
   }
 
@@ -693,7 +707,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/GenericClass_Factory"));
+              assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
             });
   }
 
@@ -728,11 +742,11 @@ public final class InjectConstructorFactoryGeneratorTest {
             "public class SubType extends SuperType {",
             "  @Inject SubType() {}",
             "}");
-    CompilerTests.daggerCompiler(superType, inaccessibleType, subType)
+    daggerCompiler(superType, inaccessibleType, subType)
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/SubType_Factory"));
+              assertSourceMatchesGolden(subject, "test/SubType_Factory");
             });
   }
 
@@ -1436,7 +1450,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/InjectConstructor_Factory"));
+              assertSourceMatchesGolden(subject, "test/InjectConstructor_Factory");
             });
   }
 
@@ -1456,7 +1470,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/AllInjections_Factory"));
+              assertSourceMatchesGolden(subject, "test/AllInjections_Factory");
             });
   }
 
@@ -1476,7 +1490,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/InjectConstructor_Factory"));
+              assertSourceMatchesGolden(subject, "test/InjectConstructor_Factory");
             });
   }
 
@@ -1501,7 +1515,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/InjectConstructor_Factory"));
+              assertSourceMatchesGolden(subject, "test/InjectConstructor_Factory");
             });
   }
 
@@ -1528,7 +1542,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/InjectConstructor_Factory"));
+              assertSourceMatchesGolden(subject, "test/InjectConstructor_Factory");
             });
   }
 
@@ -1561,7 +1575,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/InjectConstructor_Factory"));
+              assertSourceMatchesGolden(subject, "test/InjectConstructor_Factory");
             });
   }
 
@@ -1581,7 +1595,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/SimpleType_Factory"));
+              assertSourceMatchesGolden(subject, "test/SimpleType_Factory");
             });
   }
 
@@ -1606,7 +1620,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/OuterType_A_Factory"));
+              assertSourceMatchesGolden(subject, "test/OuterType_A_Factory");
             });
   }
 
@@ -1629,7 +1643,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/ScopedBinding_Factory"));
+              assertSourceMatchesGolden(subject, "test/ScopedBinding_Factory");
             });
   }
 
@@ -1674,7 +1688,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/ScopedBinding_Factory"));
+              assertSourceMatchesGolden(subject, "test/ScopedBinding_Factory");
             });
   }
 
@@ -1763,7 +1777,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/SomeBinding_Factory"));
+              assertSourceMatchesGolden(subject, "test/SomeBinding_Factory");
               subject.generatedSource(
                   goldenFileRule.goldenSource("test/SomeBinding_MembersInjector"));
             });
@@ -1839,7 +1853,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/SomeBinding_Factory"));
+              assertSourceMatchesGolden(subject, "test/SomeBinding_Factory");
               subject.generatedSource(
                   goldenFileRule.goldenSource("test/SomeBinding_MembersInjector"));
             });
@@ -1947,10 +1961,15 @@ public final class InjectConstructorFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/Foo_Factory"));
+              assertSourceMatchesGolden(subject, "test/Foo_Factory");
               subject.generatedSource(goldenFileRule.goldenSource("test/Foo_MembersInjector"));
-              subject.generatedSource(goldenFileRule.goldenSource("test/FooBase_Factory"));
+              assertSourceMatchesGolden(subject, "test/FooBase_Factory");
               subject.generatedSource(goldenFileRule.goldenSource("test/FooBase_MembersInjector"));
             });
+  }
+
+  private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
+    Source source = goldenFileRule.goldenSource(source);
+    subject.generatedSource(source);
   }
 }

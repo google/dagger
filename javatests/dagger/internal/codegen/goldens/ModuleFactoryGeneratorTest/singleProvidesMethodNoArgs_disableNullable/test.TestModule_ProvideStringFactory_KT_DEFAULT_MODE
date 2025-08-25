@@ -1,44 +1,40 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class TestModule_ProvideStringFactory implements Factory<String> {
-  private final TestModule module;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class TestModule_ProvideStringFactory : Factory<Any?> {
+  private val module: TestModule
 
-  private TestModule_ProvideStringFactory(TestModule module) {
-    this.module = module;
+  private constructor(module: TestModule) {
+    this.module = module
   }
 
-  @Override
-  public String get() {
-    return provideString(module);
-  }
+  public override fun `get`(): Any? = provideString(module)
 
-  public static TestModule_ProvideStringFactory create(TestModule module) {
-    return new TestModule_ProvideStringFactory(module);
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(module: Any?): TestModule_ProvideStringFactory = TestModule_ProvideStringFactory((module) as TestModule)
 
-  public static String provideString(TestModule instance) {
-    return instance.provideString();
+    @JvmStatic
+    public fun provideString(instance: Any?): Any? = ((instance) as TestModule).provideString()
   }
 }

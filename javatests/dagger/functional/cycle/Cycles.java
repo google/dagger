@@ -143,14 +143,20 @@ final class Cycles {
     A a();
 
     C c();
-    
+
     ChildCycleComponent child();
   }
-  
+
   @Module
   static class CycleModule {
     @Provides
-    static Object provideObjectWithCycle(@SuppressWarnings("unused") Provider<Object> object) {
+    static Object provideObjectWithCycle(
+        @SuppressWarnings("unused")
+        // TODO(b/438800095): This parameter was renamed from "object" to "obj" because "object" is
+        // a keyword in Kotlin (which will fail if Kotlin codegen is enabled). However, we should
+        // probably work around this on the codegen side rather than letting the compiler fail.
+        // See b/438800095 for more details.
+        Provider<Object> obj) {
       return "object";
     }
   }

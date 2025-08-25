@@ -45,6 +45,10 @@ public enum CompilerMode {
     this.javacopts = ImmutableList.copyOf(javacopts);
   }
 
+  public boolean isKotlinCodegenEnabled() {
+    return false;
+  }
+
   /**
    * Returns the javacopts as a map of key-value pairs.
    *

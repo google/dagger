@@ -1,43 +1,39 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Preconditions;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Preconditions
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class TestModule_NonNullableStringFactory implements Factory<Object> {
-  @Override
-  public Object get() {
-    return nonNullableString();
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class TestModule_NonNullableStringFactory : Factory<Any?> {
+  public override fun `get`(): Any? = nonNullableString()
+
+  private object InstanceHolder {
+    public val INSTANCE: TestModule_NonNullableStringFactory = TestModule_NonNullableStringFactory()
   }
 
-  public static TestModule_NonNullableStringFactory create() {
-    return InstanceHolder.INSTANCE;
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(): TestModule_NonNullableStringFactory = InstanceHolder.INSTANCE
 
-  public static Object nonNullableString() {
-    return Preconditions.checkNotNullFromProvides(TestModule.nonNullableString());
-  }
-
-  private static final class InstanceHolder {
-    static final TestModule_NonNullableStringFactory INSTANCE = new TestModule_NonNullableStringFactory();
+    @JvmStatic
+    public fun nonNullableString(): Any? = Preconditions.checkNotNullFromProvides(TestModule.nonNullableString())
   }
 }

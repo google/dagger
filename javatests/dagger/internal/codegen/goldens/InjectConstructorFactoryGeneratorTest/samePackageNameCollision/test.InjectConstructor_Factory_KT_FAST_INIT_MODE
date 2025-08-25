@@ -1,50 +1,44 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class InjectConstructor_Factory implements Factory<Object> {
-  private final Provider<other.pkg.CommonName> otherPackageProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class InjectConstructor_Factory : Factory<Any?> {
+  private val otherPackageProvider: Provider<other.pkg.CommonName?>
 
-  private final Provider<CommonName> samePackageProvider;
+  private val samePackageProvider: Provider<CommonName?>
 
-  private InjectConstructor_Factory(Provider<other.pkg.CommonName> otherPackageProvider,
-      Provider<CommonName> samePackageProvider) {
-    this.otherPackageProvider = otherPackageProvider;
-    this.samePackageProvider = samePackageProvider;
+  private constructor(otherPackageProvider: Provider<other.pkg.CommonName?>, samePackageProvider: Provider<CommonName?>) {
+    this.otherPackageProvider = otherPackageProvider
+    this.samePackageProvider = samePackageProvider
   }
 
-  @Override
-  public Object get() {
-    return newInstance(otherPackageProvider.get(), samePackageProvider.get());
-  }
+  public override fun `get`(): Any? = newInstance(otherPackageProvider.get(), samePackageProvider.get())
 
-  public static InjectConstructor_Factory create(Provider<?> otherPackageProvider,
-      Provider<?> samePackageProvider) {
-    return new InjectConstructor_Factory((Provider<other.pkg.CommonName>) (otherPackageProvider), (Provider<CommonName>) (samePackageProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(otherPackageProvider: Provider<*>, samePackageProvider: Provider<*>): InjectConstructor_Factory = InjectConstructor_Factory((otherPackageProvider) as Provider<other.pkg.CommonName?>, (samePackageProvider) as Provider<CommonName?>)
 
-  public static Object newInstance(Object otherPackage, Object samePackage) {
-    return new InjectConstructor((other.pkg.CommonName) (otherPackage), (CommonName) (samePackage));
+    @JvmStatic
+    public fun newInstance(otherPackage: Any?, samePackage: Any?): Any? = InjectConstructor((otherPackage) as other.pkg.CommonName?, (samePackage) as CommonName?)
   }
 }

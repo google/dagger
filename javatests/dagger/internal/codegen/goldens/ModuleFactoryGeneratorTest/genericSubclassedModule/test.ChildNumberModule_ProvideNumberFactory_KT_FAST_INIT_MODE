@@ -1,45 +1,41 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Preconditions;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Preconditions
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class ChildNumberModule_ProvideNumberFactory implements Factory<Object> {
-  private final ChildNumberModule module;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class ChildNumberModule_ProvideNumberFactory : Factory<Any?> {
+  private val module: ChildNumberModule
 
-  private ChildNumberModule_ProvideNumberFactory(ChildNumberModule module) {
-    this.module = module;
+  private constructor(module: ChildNumberModule) {
+    this.module = module
   }
 
-  @Override
-  public Object get() {
-    return provideNumber(module);
-  }
+  public override fun `get`(): Any? = provideNumber(module)
 
-  public static ChildNumberModule_ProvideNumberFactory create(Object module) {
-    return new ChildNumberModule_ProvideNumberFactory((ChildNumberModule) (module));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(module: Any?): ChildNumberModule_ProvideNumberFactory = ChildNumberModule_ProvideNumberFactory((module) as ChildNumberModule)
 
-  public static Object provideNumber(Object instance) {
-    return Preconditions.checkNotNullFromProvides(((ChildNumberModule) (instance)).provideNumber());
+    @JvmStatic
+    public fun provideNumber(instance: Any?): Any? = Preconditions.checkNotNullFromProvides(((instance) as ChildNumberModule).provideNumber())
   }
 }

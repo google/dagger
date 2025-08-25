@@ -1,60 +1,69 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Float
+import kotlin.Int
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
-@QualifierMetadata("test.FooConstructorQualifier")
+@QualifierMetadata(value = ["test.FooConstructorQualifier"])
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class Foo_Factory implements Factory<Object> {
-  private final Provider<Integer> iProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class Foo_Factory : Factory<Any?> {
+  private val iProvider: Provider<Int>
 
-  private final Provider<String> injectFieldProvider;
+  private val injectFieldProvider: Provider<String?>
 
-  private final Provider<String> injectFieldProvider2;
+  private val injectFieldProvider2: Provider<String?>
 
-  private final Provider<Float> fProvider;
+  private val fProvider: Provider<Float>
 
-  private Foo_Factory(Provider<Integer> iProvider, Provider<String> injectFieldProvider,
-      Provider<String> injectFieldProvider2, Provider<Float> fProvider) {
-    this.iProvider = iProvider;
-    this.injectFieldProvider = injectFieldProvider;
-    this.injectFieldProvider2 = injectFieldProvider2;
-    this.fProvider = fProvider;
+  private constructor(
+    iProvider: Provider<Int>,
+    injectFieldProvider: Provider<String?>,
+    injectFieldProvider2: Provider<String?>,
+    fProvider: Provider<Float>,
+  ) {
+    this.iProvider = iProvider
+    this.injectFieldProvider = injectFieldProvider
+    this.injectFieldProvider2 = injectFieldProvider2
+    this.fProvider = fProvider
   }
 
-  @Override
-  public Object get() {
-    Object instance = newInstance(iProvider.get());
+  public override fun `get`(): Any? {
+    var instance: Any? = newInstance(iProvider.get())
     FooBase_MembersInjector.injectInjectField(instance, injectFieldProvider.get());
     Foo_MembersInjector.injectInjectField(instance, injectFieldProvider2.get());
     Foo_MembersInjector.injectInjectMethod(instance, fProvider.get());
-    return instance;
+    return instance
   }
 
-  public static Foo_Factory create(Provider<?> iProvider, Provider<?> injectFieldProvider,
-      Provider<?> injectFieldProvider2, Provider<?> fProvider) {
-    return new Foo_Factory((Provider<Integer>) (iProvider), (Provider<String>) (injectFieldProvider), (Provider<String>) (injectFieldProvider2), (Provider<Float>) (fProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(
+      iProvider: Provider<*>,
+      injectFieldProvider: Provider<*>,
+      injectFieldProvider2: Provider<*>,
+      fProvider: Provider<*>,
+    ): Foo_Factory = Foo_Factory((iProvider) as Provider<Int>, (injectFieldProvider) as Provider<String?>, (injectFieldProvider2) as Provider<String?>, (fProvider) as Provider<Float>)
 
-  public static Object newInstance(Object i) {
-    return new Foo((int) (i));
+    @JvmStatic
+    public fun newInstance(i: Any?): Any? = Foo((i) as Int)
   }
 }

@@ -1,43 +1,41 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Int
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class Foo_Factory {
-  private final Provider<Bar> argProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class Foo_Factory {
+  private val argProvider: Provider<Bar?>
 
-  private Foo_Factory(Provider<Bar> argProvider) {
-    this.argProvider = argProvider;
+  private constructor(argProvider: Provider<Bar?>) {
+    this.argProvider = argProvider
   }
 
-  public Object get(Object argProvider2) {
-    return newInstance(argProvider.get(), (Integer) (argProvider2));
-  }
+  public fun `get`(argProvider2: Any?): Any? = newInstance(argProvider.get(), (argProvider2) as Int?)
 
-  public static Foo_Factory create(Provider<?> argProvider) {
-    return new Foo_Factory((Provider<Bar>) (argProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(argProvider: Provider<*>): Foo_Factory = Foo_Factory((argProvider) as Provider<Bar?>)
 
-  public static Object newInstance(Object arg, Object argProvider) {
-    return new Foo((Bar) (arg), (Integer) (argProvider));
+    @JvmStatic
+    public fun newInstance(arg: Any?, argProvider: Any?): Any? = Foo((arg) as Bar?, (argProvider) as Int?)
   }
 }

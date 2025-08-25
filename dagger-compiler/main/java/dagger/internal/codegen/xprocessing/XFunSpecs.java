@@ -395,6 +395,28 @@ public final class XFunSpecs {
       return this;
     }
 
+    @CanIgnoreReturnValue
+    public Builder addLocalVal(String name, XTypeName typeName, String format, Object... args) {
+      return addLocalVal(name, typeName, XCodeBlock.of(format, args));
+    }
+
+    @CanIgnoreReturnValue
+    public Builder addLocalVal(String name, XTypeName typeName, XCodeBlock initialization) {
+      bodyBuilder.add(XCodeBlocks.ofLocalVal(name, typeName, initialization));
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder addLocalVar(String name, XTypeName typeName, String format, Object... args) {
+      return addLocalVar(name, typeName, XCodeBlock.of(format, args));
+    }
+
+    @CanIgnoreReturnValue
+    public Builder addLocalVar(String name, XTypeName typeName, XCodeBlock initialization) {
+      bodyBuilder.add(XCodeBlocks.ofLocalVar(name, typeName, initialization));
+      return this;
+    }
+
     /** Builds the method and returns an {@link XFunSpec}. */
     public XFunSpec build() {
       // TODO(bcorso): XPoet currently doesn't have a way to set default visibility (e.g.

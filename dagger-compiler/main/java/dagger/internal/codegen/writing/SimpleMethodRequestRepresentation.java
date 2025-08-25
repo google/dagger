@@ -24,6 +24,7 @@ import static dagger.internal.codegen.xprocessing.Accessibility.isElementAccessi
 import static dagger.internal.codegen.xprocessing.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.xprocessing.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.xprocessing.XCodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.xprocessing.XCodeBlocks.staticReferenceOf;
 import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.isPreJava8SourceVersion;
@@ -103,24 +104,15 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
             ProvisionMethod.invokeArguments(
                 binding,
                 request -> dependencyArgument(request, requestingClass).codeBlock(),
-                this::assistedArgument));
+                this::assistedParameterUsage));
     XElement bindingElement = binding.bindingElement().get();
-    XTypeElement bindingTypeElement = binding.bindingTypeElement().get();
     XCodeBlock invocation;
     if (isConstructor(bindingElement)) {
       invocation = XCodeBlock.ofNewInstance(constructorTypeName(requestingClass), "%L", arguments);
     } else if (isMethod(bindingElement)) {
-      XCodeBlock module;
-      Optional<XCodeBlock> requiredModuleInstance = moduleReference(requestingClass);
-      if (requiredModuleInstance.isPresent()) {
-        module = requiredModuleInstance.get();
-      } else if (bindingTypeElement.isKotlinObject() && !bindingTypeElement.isCompanionObject()) {
-        // Call through the singleton instance.
-        // See: https://kotlinlang.org/docs/reference/java-to-kotlin-interop.html#static-methods
-        module = XCodeBlock.of("%T.INSTANCE", bindingTypeElement.asClassName());
-      } else {
-        module = XCodeBlock.of("%T", bindingTypeElement.asClassName());
-      }
+      XTypeElement moduleTypeElement = binding.bindingTypeElement().get();
+      XCodeBlock module =
+          moduleInstance(requestingClass).orElse(staticReferenceOf(moduleTypeElement));
       invocation =
           XCodeBlock.of("%L.%L(%L)", module, asMethod(bindingElement).getJvmName(), arguments);
     } else {
@@ -143,14 +135,14 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
         ProvisionMethod.invoke(
             binding,
             request -> dependencyArgument(request, requestingClass).codeBlock(),
-            this::assistedArgument,
+            this::assistedParameterUsage,
             requestingClass,
-            moduleReference(requestingClass),
+            moduleInstance(requestingClass),
             compilerOptions),
         requestingClass);
   }
 
-  private XCodeBlock assistedArgument(XExecutableParameterElement assistedParameter) {
+  private XCodeBlock assistedParameterUsage(XExecutableParameterElement assistedParameter) {
     return XCodeBlock.of(
         "%N", shardImplementation.getUniqueFieldNameForAssistedParam(assistedParameter));
   }
@@ -178,7 +170,7 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
     return membersInjectionMethods.getInjectExpression(binding.key(), instance, requestingClass);
   }
 
-  private Optional<XCodeBlock> moduleReference(XClassName requestingClass) {
+  private Optional<XCodeBlock> moduleInstance(XClassName requestingClass) {
     return binding.requiresModuleInstance()
         ? binding
             .contributingModule()

@@ -1,47 +1,42 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Preconditions;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Preconditions
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class ParameterizedModule_ProvideNonGenericTypeWithDepsFactory implements Factory<Object> {
-  private final Provider<Object> oProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class ParameterizedModule_ProvideNonGenericTypeWithDepsFactory : Factory<Any?> {
+  private val oProvider: Provider<Any?>
 
-  private ParameterizedModule_ProvideNonGenericTypeWithDepsFactory(Provider<Object> oProvider) {
-    this.oProvider = oProvider;
+  private constructor(oProvider: Provider<Any?>) {
+    this.oProvider = oProvider
   }
 
-  @Override
-  public Object get() {
-    return provideNonGenericTypeWithDeps(oProvider.get());
-  }
+  public override fun `get`(): Any? = provideNonGenericTypeWithDeps(oProvider.get())
 
-  public static ParameterizedModule_ProvideNonGenericTypeWithDepsFactory create(
-      Provider<?> oProvider) {
-    return new ParameterizedModule_ProvideNonGenericTypeWithDepsFactory((Provider<Object>) (oProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(oProvider: Provider<*>): ParameterizedModule_ProvideNonGenericTypeWithDepsFactory = ParameterizedModule_ProvideNonGenericTypeWithDepsFactory((oProvider) as Provider<Any?>)
 
-  public static Object provideNonGenericTypeWithDeps(Object o) {
-    return Preconditions.checkNotNullFromProvides(ParameterizedModule.provideNonGenericTypeWithDeps((Object) (o)));
+    @JvmStatic
+    public fun provideNonGenericTypeWithDeps(o: Any?): Any? = Preconditions.checkNotNullFromProvides(ParameterizedModule.provideNonGenericTypeWithDeps((o) as Any?))
   }
 }

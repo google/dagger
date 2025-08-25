@@ -74,8 +74,12 @@ public abstract class SourceFileGenerator<T> {
   public void generate(T input) {
     for (XTypeSpec type : topLevelTypes(input)) {
        buildFile(input, XTypeSpecs.toBuilder(type))
-           .writeTo(CodeLanguage.JAVA, filer, XFiler.Mode.Isolating);
+           .writeTo(codeLanguage(), filer, XFiler.Mode.Isolating);
     }
+  }
+
+  public CodeLanguage codeLanguage() {
+    return CodeLanguage.JAVA;
   }
 
   private XFileSpec buildFile(T input, XTypeSpec.Builder typeSpecBuilder) {

@@ -1,44 +1,36 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class GenericClass_Factory<T> implements Factory<Object> {
-  @Override
-  public Object get() {
-    return GenericClass_Factory.<T>newInstance();
-  }
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class GenericClass_Factory<T> : Factory<Any?> {
+  private constructor()
 
-  @SuppressWarnings("unchecked")
-  public static <T> GenericClass_Factory<T> create() {
-    return InstanceHolder.INSTANCE;
-  }
+  public override fun `get`(): Any? = newInstance<T>()
 
-  public static <T> Object newInstance() {
-    return new GenericClass<T>();
-  }
+  public companion object {
+    @JvmStatic
+    public fun <T> create(): GenericClass_Factory<T> = GenericClass_Factory<T>()
 
-  private static final class InstanceHolder {
-    @SuppressWarnings("rawtypes")
-    static final GenericClass_Factory INSTANCE = new GenericClass_Factory();
+    @JvmStatic
+    public fun <T> newInstance(): Any? = GenericClass<T>()
   }
 }

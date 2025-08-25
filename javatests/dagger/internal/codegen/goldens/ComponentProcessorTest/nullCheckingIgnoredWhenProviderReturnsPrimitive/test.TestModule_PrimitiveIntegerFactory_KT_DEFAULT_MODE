@@ -1,42 +1,39 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Int
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class TestModule_PrimitiveIntegerFactory implements Factory<Object> {
-  @Override
-  public Object get() {
-    return primitiveInteger();
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class TestModule_PrimitiveIntegerFactory : Factory<Any?> {
+  public override fun `get`(): Any? = primitiveInteger()
+
+  private object InstanceHolder {
+    public val INSTANCE: TestModule_PrimitiveIntegerFactory = TestModule_PrimitiveIntegerFactory()
   }
 
-  public static TestModule_PrimitiveIntegerFactory create() {
-    return InstanceHolder.INSTANCE;
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(): TestModule_PrimitiveIntegerFactory = InstanceHolder.INSTANCE
 
-  public static int primitiveInteger() {
-    return TestModule.primitiveInteger();
-  }
-
-  private static final class InstanceHolder {
-    static final TestModule_PrimitiveIntegerFactory INSTANCE = new TestModule_PrimitiveIntegerFactory();
+    @JvmStatic
+    public fun primitiveInteger(): Int = TestModule.primitiveInteger()
   }
 }

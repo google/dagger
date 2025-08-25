@@ -1,45 +1,41 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Factory;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import dagger.internal.ScopeMetadata;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class GenericClass_Factory<A extends Bar> implements Factory<Object> {
-  private final Provider<A> aProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class GenericClass_Factory<A : Bar?> : Factory<Any?> {
+  private val aProvider: Provider<A>
 
-  private GenericClass_Factory(Provider<A> aProvider) {
-    this.aProvider = aProvider;
+  private constructor(aProvider: Provider<A>) {
+    this.aProvider = aProvider
   }
 
-  @Override
-  public Object get() {
-    return GenericClass_Factory.<A>newInstance(aProvider.get());
-  }
+  public override fun `get`(): Any? = newInstance<A>(aProvider.get())
 
-  public static <A extends Bar> GenericClass_Factory<A> create(Provider<?> aProvider) {
-    return new GenericClass_Factory<A>((Provider<A>) (aProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun <A : Bar?> create(aProvider: Provider<*>): GenericClass_Factory<A> = GenericClass_Factory<A>((aProvider) as Provider<A>)
 
-  public static <A extends Bar> Object newInstance(Object a) {
-    return new GenericClass<A>((A) (a));
+    @JvmStatic
+    public fun <A : Bar?> newInstance(a: Any?): Any? = GenericClass<A>((a) as A)
   }
 }

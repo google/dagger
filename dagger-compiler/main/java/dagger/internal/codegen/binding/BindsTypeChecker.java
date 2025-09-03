@@ -17,13 +17,15 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.extension.DaggerCollectors.onlyElement;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XElements.toStableString;
 import static dagger.internal.codegen.xprocessing.XProcessingEnvs.getUnboundedWildcardType;
 import static dagger.internal.codegen.xprocessing.XTypes.isAssignableTo;
 import static dagger.internal.codegen.xprocessing.XTypes.rewrapType;
 
 import androidx.room.compiler.codegen.XTypeName;
+import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
@@ -87,12 +89,26 @@ public final class BindsTypeChecker {
   }
 
   private ImmutableList<XType> methodParameterTypes(XType type, String methodName) {
-    return ImmutableList.copyOf(
+    ImmutableList<XMethodElement> methods =
         XTypeElements.getAllMethods(type.getTypeElement()).stream()
             .filter(method -> methodName.contentEquals(getSimpleName(method)))
-            .collect(onlyElement())
-            .asMemberOf(type)
-            .getParameterTypes());
+            .collect(toImmutableList());
+    if (methods.size() != 1) {
+      // TODO(bcorso): This check can be removed (and rely on Iterables.getOnlyElement() below) once
+      // https://github.com/google/dagger/issues/3450#issuecomment-3108716712 is fixed. For now, we
+      // use a more verbose, custom error message with more information to make it easier to debug.
+      throw new IllegalStateException(
+          "Expected exactly one factory method for " + toStableString(type.getTypeElement())
+              + " but found: "
+              + methods.stream()
+                  .map(
+                      method ->
+                          toStableString(method.getEnclosingElement())
+                              + "#"
+                              + toStableString(method))
+                  .collect(toImmutableList()));
+    }
+    return ImmutableList.copyOf(getOnlyElement(methods).asMemberOf(type).getParameterTypes());
   }
 
   private XType methodParameterType(XType type, String methodName) {

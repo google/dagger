@@ -22,6 +22,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.toStableString;
 
 import androidx.room.compiler.codegen.XParameterSpec;
 import androidx.room.compiler.processing.XConstructorElement;
@@ -54,7 +55,22 @@ import java.util.Optional;
 public final class AssistedInjectionAnnotations {
   /** Returns the factory method for the given factory {@link XTypeElement}. */
   public static XMethodElement assistedFactoryMethod(XTypeElement factory) {
-    return getOnlyElement(assistedFactoryMethods(factory));
+    ImmutableSet<XMethodElement> factoryMethods = assistedFactoryMethods(factory);
+    if (factoryMethods.size() != 1) {
+      // TODO(bcorso): This check can be removed (and rely on Iterables.getOnlyElement() below) once
+      // https://github.com/google/dagger/issues/3450#issuecomment-3108716712 is fixed. For now, we
+      // use a more verbose, custom error message with more information to make it easier to debug.
+      throw new IllegalStateException(
+          "Expected exactly one factory method for " + toStableString(factory) + " but found: "
+              + factoryMethods.stream()
+                  .map(
+                      method ->
+                          toStableString(method.getEnclosingElement())
+                              + "#"
+                              + toStableString(method))
+                  .collect(toImmutableList()));
+    }
+    return getOnlyElement(factoryMethods);
   }
 
   /** Returns the list of abstract factory methods for the given factory {@link XTypeElement}. */

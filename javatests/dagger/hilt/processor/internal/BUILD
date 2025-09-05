@@ -17,8 +17,6 @@
 
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
 
-package(default_visibility = ["//:src"])
-
 java_test(
     name = "ProcessorsTest",
     size = "small",

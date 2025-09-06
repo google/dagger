@@ -15,8 +15,6 @@
 # Description:
 #   A library that wraps the Dagger API to make DI usage and testing easier.
 
-package(default_visibility = ["//:src"])
-
 filegroup(
     name = "hilt_processing_filegroup",
     srcs = [

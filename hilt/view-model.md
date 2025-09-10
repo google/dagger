@@ -95,7 +95,7 @@ A `@ViewModelScoped` type will make it so that a single instance of the scoped
 type is provided across all dependencies injected into the Hilt View Model.
 Other instances of a `ViewModel` that requests the scoped instance will receive
 a different instance. Scoping to the `ViewModelComponent` allows for flexible
-and granular scope since View Models surive configuration changes and their
+and granular scope since View Models survive configuration changes and their
 lifecycle is controlled by the activity or fragment. If a single instance needs
 to be shared across various View Models then it should be scoped using either
 `@ActivityRetainedScoped` or `@Singleton`.

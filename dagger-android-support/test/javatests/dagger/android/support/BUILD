@@ -18,8 +18,6 @@
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenRobolectricTests")
 
-package(default_visibility = ["//:src"])
-
 GenRobolectricTests(
     name = "android-support-tests",
     srcs = glob(["*.java"]),

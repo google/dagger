@@ -23,8 +23,6 @@ load(
     "JAVA_RELEASE_MIN",
 )
 
-package(default_visibility = ["//:src"])
-
 java_test(
     name = "ProducedTest",
     srcs = ["ProducedTest.java"],

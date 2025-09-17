@@ -206,6 +206,7 @@ def _GenTestsWithVariants(
     # Ensure that the source code is compatible with the minimum supported Java version.
     javacopts = javacopts + JAVA_RELEASE_MIN
 
+    generated_tests = []
     for variant in _VARIANTS:
         suffix = "_" + variant.backend + "_" + variant.codegen
         variant_javacopts = [_JAVACOPTS[variant.backend], _JAVACOPTS[variant.codegen]]
@@ -239,13 +240,14 @@ def _GenTestsWithVariants(
             test_deps.append(supporting_files_name)
 
         for test_file in test_files:
-            test_name = test_file.rsplit(".", 1)[0]
+            test_name = test_file.rsplit(".", 1)[0] + suffix
             test_srcs = [test_file]
+            generated_tests.append(test_name)
 
             _GenTestWithVariant(
                 library_rule_type = variant_library_rule_type,
                 test_rule_type = variant_test_rule_type,
-                name = test_name + suffix,
+                name = test_name,
                 srcs = test_srcs,
                 tags = tags,
                 deps = test_deps + variant_deps,
@@ -255,6 +257,13 @@ def _GenTestsWithVariants(
                 jvm_flags = jvm_flags,
                 test_kwargs = test_kwargs,
             )
+
+    # Define the test_suite target with the base name
+    native.test_suite(
+        name = name,
+        tests = generated_tests,
+        tags = ["manual"],  # don't run this suite with /... or :all
+    )
 
 def _GenLibraryWithVariant(
         library_rule_type,

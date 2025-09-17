@@ -636,4 +636,79 @@ public class MultibindingTest {
               subject.hasErrorContaining("Set<? extends Provider<MyInterface>> cannot be provided");
             });
   }
+
+  // TODO: b/445738448 - consider whether we should actually allow providing/requesting MutableSet
+  // for multibindings. The underlying set is immutable anyway, so trying to mutate it will fail.
+  @Test
+  public void testMultibindingMutableSetWithKotlinSource() {
+    Source component =
+        CompilerTests.kotlinSource(
+            "test.TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "",
+            "@Component(modules = [TestModule::class])",
+            "interface TestComponent {",
+            "  fun usage(): Usage",
+            "  fun getMutableSet(): MutableSet<Foo>",
+            "}");
+    Source usage =
+        CompilerTests.kotlinSource(
+            "test.Usage.kt",
+            "package test",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "class Usage @Inject constructor(mutableSet: MutableSet<Foo>)");
+    Source module =
+        CompilerTests.kotlinSource(
+            "test.TestModule.kt",
+            "@file:Suppress(\"INLINE_FROM_HIGHER_PLATFORM\")", // Required to use TODO()
+            "package test",
+            "",
+            "import dagger.Binds",
+            "import dagger.Module",
+            "import dagger.Provides",
+            "import dagger.multibindings.ElementsIntoSet",
+            "import dagger.multibindings.IntoSet",
+            "import dagger.multibindings.Multibinds",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Multibinds",
+            "  fun multibinds(): MutableSet<Foo>",
+            "",
+            "  @Binds",
+            "  @IntoSet",
+            "  fun bindIntoSet(impl: FooImpl): Foo",
+            "",
+            "  companion object {",
+            "    @Provides",
+            "    @IntoSet",
+            "    fun provideIntoSet(): Foo = TODO()",
+            "",
+            "    @Provides",
+            "    @ElementsIntoSet",
+            "    fun provideElementsIntoSet(): MutableSet<Foo> = TODO()",
+            "  }",
+            "}");
+    Source foo =
+        CompilerTests.kotlinSource(
+            "test.Foo.kt",
+            "package test",
+            "",
+            "interface Foo");
+    Source fooImpl =
+        CompilerTests.kotlinSource(
+            "test.FooImpl.kt",
+            "package test",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "class FooImpl @Inject constructor() : Foo");
+
+    CompilerTests.daggerCompiler(component, module, usage, foo, fooImpl)
+        .compile(subject -> subject.hasErrorCount(0));
+  }
 }

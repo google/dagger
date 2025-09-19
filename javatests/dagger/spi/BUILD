@@ -23,8 +23,6 @@ load(
 )
 load("//:test_defs.bzl", "GenCompilerTests")
 
-package(default_visibility = ["//:src"])
-
 java_library(
     name = "failing_plugin",
     srcs = ["FailingPlugin.java"],

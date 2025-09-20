@@ -30,6 +30,7 @@ java_library(
         "//dagger-compiler:model",
         "//dagger-compiler:validation",
         "//dagger-compiler:xprocessing",
+        "//dagger-producers/main/java/dagger/producers",
         "//dagger-runtime/main/java/dagger:core",
         "//third_party/java/auto:service",
         "//third_party/java/error_prone:annotations",

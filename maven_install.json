@@ -28,10 +28,7 @@
     "org.eclipse.sisu:org.eclipse.sisu.inject:0.3.0": "org.eclipse.sisu:org.eclipse.sisu.inject:0.3.2",
     "org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.0": "org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.2",
     "org.mockito:mockito-core:4.3.1": "org.mockito:mockito-core:5.4.0",
-    "org.objenesis:objenesis:1.0": "org.objenesis:objenesis:3.3",
-    "org.ow2.asm:asm-commons:9.6": "org.ow2.asm:asm-commons:9.7.1",
-    "org.ow2.asm:asm-tree:9.6": "org.ow2.asm:asm-tree:9.7.1",
-    "org.ow2.asm:asm:9.6": "org.ow2.asm:asm:9.7.1"
+    "org.objenesis:objenesis:1.0": "org.objenesis:objenesis:3.3"
   },
   "artifacts": {
     "androidx.activity:activity-ktx:aar": {

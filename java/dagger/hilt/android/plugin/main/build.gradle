@@ -71,7 +71,7 @@ dependencies {
   compileOnly "com.google.devtools.ksp:symbol-processing-gradle-plugin:$ksp_version"
 
   implementation gradleApi()
-  implementation 'org.ow2.asm:asm:9.6'
+  implementation 'org.ow2.asm:asm:9.8'
   implementation "com.squareup:javapoet:1.13.0"
 
   testImplementation gradleTestKit()

@@ -12,8 +12,8 @@ injecting fields. In this case, you can use
 [`@CustomInject`](https://dagger.dev/api/latest/dagger/hilt/android/migration/CustomInject.html)
 to control if/when the application is injected.
 
-When you annotate your `@HiltAndroidApp` application class with
-`@CustomInject`, the injection no longer happens in `onCreate`. You can then use
+When you annotate your `@HiltAndroidApp` application class with `@CustomInject`,
+the injection no longer happens in `onCreate`. You can then use
 [`CustomInjection`](https://dagger.dev/api/latest/dagger/hilt/android/migration/CustomInjection.html)
 to inject your application at a time of your choosing.
 

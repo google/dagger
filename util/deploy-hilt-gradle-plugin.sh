@@ -11,6 +11,7 @@ readonly EXTRA_MAVEN_ARGS=("$@")
 _deploy_plugin() {
   local plugindir=java/dagger/hilt/android/plugin
   ./$plugindir/gradlew -p $plugindir --no-daemon clean \
+    --configuration-cache \
     publishAllPublicationsToMavenRepository -PPublishVersion="$VERSION_NAME"
   local outdir=$plugindir/main/buildOut/repo/com/google/dagger/hilt-android-gradle-plugin/$VERSION_NAME
   local markerOutDir=$plugindir/main/buildOut/repo/com/google/dagger/hilt/android/com.google.dagger.hilt.android.gradle.plugin/$VERSION_NAME

@@ -41,8 +41,11 @@ runs:
       with:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
-    - name: 'Build and test Hilt Gradle plugin'
-      run: ./java/dagger/hilt/android/plugin/gradlew -p java/dagger/hilt/android/plugin clean test  --continue --no-daemon --stacktrace
+    - name: 'Build Hilt Gradle plugin'
+      run: ./java/dagger/hilt/android/plugin/gradlew -p java/dagger/hilt/android/plugin clean assemble  --continue --no-daemon --stacktrace --configuration-cache
+      shell: bash
+    - name: 'Test Hilt Gradle plugin'
+      run: ./java/dagger/hilt/android/plugin/gradlew -p java/dagger/hilt/android/plugin test  --continue --no-daemon --stacktrace --configuration-cache
       shell: bash
     - name: 'Clean bazel cache'
       run: rm -rf $(bazel info repository_cache)

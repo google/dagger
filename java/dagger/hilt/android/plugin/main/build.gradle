@@ -106,7 +106,10 @@ kotlin {
 // Imports a shared library from the main project. The library and its classes
 // will be shadowed in the plugin's artifact.
 tasks.register("importSharedLib").configure {
-  def outputDir = file("${project.projectDir}/libs")
+  inputs.property('projectDir', project.projectDir)
+  inputs.property('buildFile', project.buildFile)
+
+  def outputDir = file("${projectDir}/libs")
   outputs.dir(outputDir)
   doLast {
     def buildCmd = 'bazel'
@@ -131,7 +134,7 @@ tasks.register("importSharedLib").configure {
     }
     buildResult.assertNormalExitValue()
     // Find shared lib Jar in build directory.
-    def genFilesDir = findGenFilesParent(project.buildFile.parentFile)
+    def genFilesDir = findGenFilesParent(buildFile.parentFile)
     if (genFilesDir == null) {
       throw new GradleException("Couldn't find build folder '$buildDir'")
     }

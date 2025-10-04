@@ -82,14 +82,16 @@ public abstract class SubcomponentDeclaration extends Declaration {
 
       ImmutableSet.Builder<SubcomponentDeclaration> declarations = ImmutableSet.builder();
       for (XTypeElement subcomponent : moduleAnnotation.subcomponents()) {
-        declarations.add(
-            new AutoValue_SubcomponentDeclaration(
-                Optional.of(subcomponentAttribute),
-                Optional.of(module),
-                keyFactory.forSubcomponentCreator(
-                    getSubcomponentCreator(subcomponent).get().getType()),
-                subcomponent,
-                moduleAnnotation));
+        getSubcomponentCreator(subcomponent)
+            .ifPresent(
+                creator ->
+                    declarations.add(
+                        new AutoValue_SubcomponentDeclaration(
+                            Optional.of(subcomponentAttribute),
+                            Optional.of(module),
+                            keyFactory.forSubcomponentCreator(creator.getType()),
+                            subcomponent,
+                            moduleAnnotation)));
       }
       return declarations.build();
     }

@@ -206,3 +206,8 @@ Component                       | Default Bindings
 
 [^2]: The `Application` binding is available using either `@ApplicationContext
     Context` or `Application`.
+[^3]: `@ActivityRetainedSavedState SavedStateHandle`must be used with
+    `@OptIn(UnstableApi.class)`. This binding relies on an experimental
+    implementation to lazily create `SavedStateHandle`, which should be safe
+    to rely on, but it is still possible that a future release may remove the
+    binding if a bug is uncovered.

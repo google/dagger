@@ -136,7 +136,7 @@ maven.install(
         "com.google.googlejavaformat:google-java-format:1.5",
         "com.google.guava:failureaccess:1.0.1",
         "com.google.guava:guava-beta-checker:1.0",
-        "com.google.protobuf:protobuf-java:4.29.3",
+        "com.google.protobuf:protobuf-java:4.32.1",
         "com.squareup:javapoet:1.13.0",
         "com.squareup:kotlinpoet:1.11.0",
         "com.squareup:kotlinpoet-javapoet:1.11.0",

@@ -18,19 +18,84 @@ package dagger.functional.producers;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.base.Ascii;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
+import dagger.producers.ProducerModule;
+import dagger.producers.Produces;
+import dagger.producers.Production;
+import dagger.producers.ProductionComponent;
+import java.util.List;
+import java.util.concurrent.Executor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class DependentTest {
+  @ProductionComponent(
+    modules = {ExecutorModule.class, DependentProducerModule.class},
+    dependencies = {DependedComponent.class, DependedProductionComponent.class}
+  )
+  interface DependentComponent {
+    ListenableFuture<List<String>> greetings();
+  }
+
+  @ProducerModule
+  static final class DependentProducerModule {
+    @Produces
+    ListenableFuture<List<String>> greetings(Integer numGreetings, String greeting) {
+      List<String> greetings = ImmutableList.of(
+          String.valueOf(numGreetings), greeting, Ascii.toUpperCase(greeting));
+      return Futures.immediateFuture(greetings);
+    }
+  }
+
+  @Component(modules = DependedModule.class)
+  interface DependedComponent {
+    String getGreeting();
+  }
+
+  @Module
+  static final class DependedModule {
+    @Provides
+    String provideGreeting() {
+      return "Hello world!";
+    }
+  }
+
+  @ProductionComponent(modules = {ExecutorModule.class, DependedProducerModule.class})
+  interface DependedProductionComponent {
+    ListenableFuture<Integer> numGreetings();
+  }
+
+  @Module
+  static final class ExecutorModule {
+    @Provides
+    @Production
+    Executor executor() {
+      return MoreExecutors.directExecutor();
+    }
+  }
+
+  @ProducerModule
+  static final class DependedProducerModule {
+    @Produces
+    int produceNumberOfGreetings() {
+      return 2;
+    }
+  }
+
   @Test public void dependentComponent() throws Exception {
     DependentComponent dependentComponent =
-        DaggerDependentComponent.builder()
-            .dependedProductionComponent(DaggerDependedProductionComponent.create())
-            .dependedComponent(DaggerDependedComponent.create())
+        DaggerDependentTest_DependentComponent.builder()
+            .dependedProductionComponent(DaggerDependentTest_DependedProductionComponent.create())
+            .dependedComponent(DaggerDependentTest_DependedComponent.create())
             .build();
     assertThat(dependentComponent).isNotNull();
     assertThat(dependentComponent.greetings().get()).containsExactly(
@@ -38,12 +103,13 @@ public class DependentTest {
   }
 
   @Test public void reuseBuilderWithDependentComponent() throws Exception {
-    DaggerDependentComponent.Builder dependentComponentBuilder = DaggerDependentComponent.builder();
+    DaggerDependentTest_DependentComponent.Builder dependentComponentBuilder =
+        DaggerDependentTest_DependentComponent.builder();
 
     DependentComponent componentUsingComponents =
         dependentComponentBuilder
-            .dependedProductionComponent(DaggerDependedProductionComponent.create())
-            .dependedComponent(DaggerDependedComponent.create())
+            .dependedProductionComponent(DaggerDependentTest_DependedProductionComponent.create())
+            .dependedComponent(DaggerDependentTest_DependedComponent.create())
             .build();
 
     DependentComponent componentUsingJavaImpls = dependentComponentBuilder

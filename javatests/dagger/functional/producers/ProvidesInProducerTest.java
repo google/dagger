@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Dagger Authors.
+ * Copyright (C) 2025 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 
 package dagger.functional.producers;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import dagger.Provides;
@@ -24,10 +27,19 @@ import dagger.producers.Produces;
 import dagger.producers.Production;
 import dagger.producers.ProductionComponent;
 import java.util.concurrent.Executor;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-final class ProvidesInProducerModule {
+@RunWith(JUnit4.class)
+public final class ProvidesInProducerTest {
+  @ProductionComponent(modules = TestModule.class)
+  interface TestComponent {
+    ListenableFuture<String> string();
+  }
+
   @ProducerModule
-  static class OnlyModule {
+  static class TestModule {
     @Provides
     @Production
     static Executor provideExecutor() {
@@ -40,8 +52,10 @@ final class ProvidesInProducerModule {
     }
   }
 
-  @ProductionComponent(modules = OnlyModule.class)
-  interface C {
-    ListenableFuture<String> string();
+  @Test
+  public void compileTest() throws Exception {
+    TestComponent component = DaggerProvidesInProducerTest_TestComponent.create();
+    assertThat(component.string().isDone()).isTrue();
+    assertThat(Futures.getDone(component.string())).isEqualTo("produced");
   }
 }

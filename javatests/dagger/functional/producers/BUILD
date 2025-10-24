@@ -25,16 +25,39 @@ load("//:test_defs.bzl", "GenJavaTests")
 package(default_visibility = ["//:src"])
 
 GenJavaTests(
-    name = "producers-functional-tests",
-    srcs = glob(["**/*.java"]),
+    name = "ComponentDependenciesTest",
+    srcs = ["ComponentDependenciesTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
-        "//third_party/java/auto:value",
+        "//third_party/java/dagger:producers",
+        "//third_party/java/guava/util/concurrent",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+GenJavaTests(
+    name = "DependentTest",
+    srcs = ["DependentTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
         "//third_party/java/dagger:producers",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/guava/util/concurrent",
-        "//third_party/java/jsr305_annotations",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+GenJavaTests(
+    name = "ProducerFactoryTest",
+    srcs = ["ProducerFactoryTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
+        "//third_party/java/dagger:producers",
+        "//third_party/java/guava/collect",
+        "//third_party/java/guava/util/concurrent",
         "//third_party/java/jsr330_inject",
         "//third_party/java/junit",
         "//third_party/java/mockito",
@@ -42,4 +65,41 @@ GenJavaTests(
     ],
 )
 
-test_suite(name = "AllTests")
+GenJavaTests(
+    name = "SimpleTest",
+    srcs = ["SimpleTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
+        "//third_party/java/dagger:producers",
+        "//third_party/java/guava/util/concurrent",
+        "//third_party/java/jsr330_inject",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+GenJavaTests(
+    name = "GenericComponentTest",
+    srcs = ["GenericComponentTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
+        "//third_party/java/dagger:producers",
+        "//third_party/java/guava/util/concurrent",
+        "//third_party/java/jsr330_inject",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+GenJavaTests(
+    name = "ProvidesInProducerTest",
+    srcs = ["ProvidesInProducerTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
+        "//third_party/java/dagger:producers",
+        "//third_party/java/guava/util/concurrent",
+        "//third_party/java/jsr330_inject",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)

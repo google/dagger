@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.validation;
+package dagger.internal.codegen.base;
 
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -33,7 +33,6 @@ import com.google.common.graph.Traverser;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import java.util.Optional;
-import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 
 /** A collection of issues to report for source code. */
@@ -157,7 +156,7 @@ public final class ValidationReport {
     }
 
     @CanIgnoreReturnValue
-    Builder addItems(Iterable<Item> newItems) {
+    public Builder addItems(Iterable<Item> newItems) {
       items.addAll(newItems);
       return this;
     }
@@ -187,22 +186,22 @@ public final class ValidationReport {
     }
 
     @CanIgnoreReturnValue
-    Builder addWarning(String message) {
+    public Builder addWarning(String message) {
       return addWarning(message, subject);
     }
 
     @CanIgnoreReturnValue
-    Builder addWarning(String message, XElement element) {
+    public Builder addWarning(String message, XElement element) {
       return addItem(message, WARNING, element);
     }
 
     @CanIgnoreReturnValue
-    Builder addWarning(String message, XElement element, XAnnotation annotation) {
+    public Builder addWarning(String message, XElement element, XAnnotation annotation) {
       return addItem(message, WARNING, element, annotation);
     }
 
     @CanIgnoreReturnValue
-    Builder addWarning(
+    public Builder addWarning(
         String message,
         XElement element,
         XAnnotation annotation,
@@ -211,22 +210,22 @@ public final class ValidationReport {
     }
 
     @CanIgnoreReturnValue
-    Builder addNote(String message) {
+    public Builder addNote(String message) {
       return addNote(message, subject);
     }
 
     @CanIgnoreReturnValue
-    Builder addNote(String message, XElement element) {
+    public Builder addNote(String message, XElement element) {
       return addItem(message, NOTE, element);
     }
 
     @CanIgnoreReturnValue
-    Builder addNote(String message, XElement element, XAnnotation annotation) {
+    public Builder addNote(String message, XElement element, XAnnotation annotation) {
       return addItem(message, NOTE, element, annotation);
     }
 
     @CanIgnoreReturnValue
-    Builder addNote(
+    public Builder addNote(
         String message,
         XElement element,
         XAnnotation annotation,
@@ -235,17 +234,17 @@ public final class ValidationReport {
     }
 
     @CanIgnoreReturnValue
-    Builder addItem(String message, Kind kind, XElement element) {
+    public Builder addItem(String message, Kind kind, XElement element) {
       return addItem(message, kind, element, Optional.empty(), Optional.empty());
     }
 
     @CanIgnoreReturnValue
-    Builder addItem(String message, Kind kind, XElement element, XAnnotation annotation) {
+    public Builder addItem(String message, Kind kind, XElement element, XAnnotation annotation) {
       return addItem(message, kind, element, Optional.of(annotation), Optional.empty());
     }
 
     @CanIgnoreReturnValue
-    Builder addItem(
+    public Builder addItem(
         String message,
         Kind kind,
         XElement element,
@@ -275,7 +274,7 @@ public final class ValidationReport {
      * If called, then {@link #isClean()} will return {@code false} even if there are no error items
      * in the report.
      */
-    void markDirty() {
+    public void markDirty() {
       this.markedDirty = true;
     }
 

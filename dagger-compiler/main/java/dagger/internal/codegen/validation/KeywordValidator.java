@@ -23,6 +23,7 @@ import static javax.lang.model.SourceVersion.isKeyword;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XTypeElement;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import javax.inject.Inject;
 

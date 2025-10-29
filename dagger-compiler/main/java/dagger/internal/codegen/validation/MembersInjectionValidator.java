@@ -27,6 +27,7 @@ import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XType;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.xprocessing.XTypes;
 import javax.inject.Inject;

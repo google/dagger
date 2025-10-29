@@ -24,7 +24,7 @@ import androidx.room3.compiler.processing.XProcessingStep;
 import androidx.room3.compiler.processing.XTypeElement;
 import androidx.room3.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableSet;
-import dagger.internal.codegen.validation.ValidationReport;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.testing.compile.CompilerTests;
 import java.util.Map;
 import java.util.Set;

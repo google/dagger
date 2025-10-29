@@ -31,6 +31,7 @@ import androidx.room3.compiler.processing.XTypeElement;
 import androidx.room3.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import java.util.Optional;

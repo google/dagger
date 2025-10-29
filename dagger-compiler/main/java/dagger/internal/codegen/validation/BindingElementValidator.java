@@ -38,6 +38,7 @@ import com.google.errorprone.annotations.FormatMethod;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.FrameworkTypes;
 import dagger.internal.codegen.base.SetType;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.model.Scope;
 import dagger.internal.codegen.xprocessing.XElements;

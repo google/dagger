@@ -36,6 +36,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ObjectArrays;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.ErrorMessages;
 import dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;

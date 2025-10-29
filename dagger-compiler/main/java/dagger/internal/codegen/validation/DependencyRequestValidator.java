@@ -45,6 +45,7 @@ import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.FrameworkTypes;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.RequestKinds;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.model.RequestKind;

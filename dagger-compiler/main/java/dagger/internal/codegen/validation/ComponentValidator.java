@@ -65,6 +65,7 @@ import dagger.internal.codegen.base.ComponentAnnotation;
 import dagger.internal.codegen.base.ComponentKind;
 import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ModuleKind;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.DependencyRequestFactory;
 import dagger.internal.codegen.binding.ErrorMessages;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;

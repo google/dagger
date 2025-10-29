@@ -25,11 +25,10 @@ import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.SourceFileGenerator;
-import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.validation.ComponentCreatorValidator;
 import dagger.internal.codegen.validation.ComponentValidator;
-import dagger.internal.codegen.validation.ValidationReport;
 import java.util.Set;
 import javax.inject.Inject;
 

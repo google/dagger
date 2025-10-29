@@ -29,6 +29,7 @@ import androidx.room3.compiler.processing.XExecutableElement;
 import androidx.room3.compiler.processing.XExecutableParameterElement;
 import androidx.room3.compiler.processing.XTypeElement;
 import dagger.internal.codegen.base.ClearableCache;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import java.util.HashMap;

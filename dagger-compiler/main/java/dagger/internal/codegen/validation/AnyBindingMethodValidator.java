@@ -29,6 +29,7 @@ import androidx.room3.compiler.processing.XMethodElement;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.ClearableCache;
+import dagger.internal.codegen.base.ValidationReport;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;

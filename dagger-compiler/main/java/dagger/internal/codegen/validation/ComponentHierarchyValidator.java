@@ -38,6 +38,7 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.base.ModuleKind;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.InjectionAnnotations;

@@ -18,13 +18,13 @@ package dagger.internal.codegen.bindinggraphvalidation;
 
 import static dagger.internal.codegen.model.BindingKind.INJECTION;
 
+import dagger.internal.codegen.base.ValidationReport;
+import dagger.internal.codegen.base.ValidationReport.Item;
 import dagger.internal.codegen.model.Binding;
 import dagger.internal.codegen.model.BindingGraph;
 import dagger.internal.codegen.model.DiagnosticReporter;
 import dagger.internal.codegen.validation.InjectValidator;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
-import dagger.internal.codegen.validation.ValidationReport;
-import dagger.internal.codegen.validation.ValidationReport.Item;
 import javax.inject.Inject;
 
 /** Validates bindings from {@code @Inject}-annotated constructors. */

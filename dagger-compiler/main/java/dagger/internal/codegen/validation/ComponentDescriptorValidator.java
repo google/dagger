@@ -52,6 +52,7 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.base.DaggerSuperficialValidation;
+import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;

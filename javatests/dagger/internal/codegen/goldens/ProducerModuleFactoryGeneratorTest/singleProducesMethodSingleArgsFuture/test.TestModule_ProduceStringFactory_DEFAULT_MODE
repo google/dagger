@@ -1,0 +1,58 @@
+package test;
+
+import com.google.common.util.concurrent.ListenableFuture;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Provider;
+import dagger.producers.Producer;
+import dagger.producers.internal.AbstractProducesMethodProducer;
+import dagger.producers.internal.Producers;
+import dagger.producers.monitoring.ProducerToken;
+import dagger.producers.monitoring.ProductionComponentMonitor;
+import java.util.concurrent.Executor;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "FutureReturnValueIgnored",
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class TestModule_ProduceStringFactory extends AbstractProducesMethodProducer<Integer, String> {
+  private final TestModule module;
+
+  private final Producer<Integer> iProducer;
+
+  private TestModule_ProduceStringFactory(TestModule module, Provider<Executor> executorProvider,
+      Provider<ProductionComponentMonitor> productionComponentMonitorProvider,
+      Producer<Integer> iProducer) {
+    super(productionComponentMonitorProvider, ProducerToken.create(TestModule_ProduceStringFactory.class), executorProvider);
+    this.module = module;
+    this.iProducer = Producers.nonCancellationPropagatingViewOf(iProducer);
+  }
+
+  @Override
+  protected ListenableFuture<Integer> collectDependencies() {
+    return iProducer.get();
+  }
+
+  @Override
+  public ListenableFuture<String> callProducesMethod(Integer i) {
+    return module.produceString(i);
+  }
+
+  public static TestModule_ProduceStringFactory create(TestModule module,
+      Provider<Executor> executorProvider,
+      Provider<ProductionComponentMonitor> productionComponentMonitorProvider,
+      Producer<Integer> iProducer) {
+    return new TestModule_ProduceStringFactory(module, executorProvider, productionComponentMonitorProvider, iProducer);
+  }
+}

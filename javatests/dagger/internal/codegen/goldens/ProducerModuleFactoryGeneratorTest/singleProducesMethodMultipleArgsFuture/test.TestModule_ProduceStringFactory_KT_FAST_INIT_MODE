@@ -1,0 +1,65 @@
+package test;
+
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Provider;
+import dagger.producers.Producer;
+import dagger.producers.internal.AbstractProducesMethodProducer;
+import dagger.producers.internal.Producers;
+import dagger.producers.monitoring.ProducerToken;
+import dagger.producers.monitoring.ProductionComponentMonitor;
+import java.util.List;
+import java.util.concurrent.Executor;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "FutureReturnValueIgnored",
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class TestModule_ProduceStringFactory extends AbstractProducesMethodProducer<List<Object>, String> {
+  private final TestModule module;
+
+  private final Producer<Integer> iProducer;
+
+  private final Producer<Long> lProducer;
+
+  private TestModule_ProduceStringFactory(TestModule module, Provider<Executor> executorProvider,
+      Provider<ProductionComponentMonitor> productionComponentMonitorProvider,
+      Producer<Integer> iProducer, Producer<Long> lProducer) {
+    super(productionComponentMonitorProvider, ProducerToken.create(TestModule_ProduceStringFactory.class), executorProvider);
+    this.module = module;
+    this.iProducer = Producers.nonCancellationPropagatingViewOf(iProducer);
+    this.lProducer = Producers.nonCancellationPropagatingViewOf(lProducer);
+  }
+
+  @Override
+  protected ListenableFuture<List<Object>> collectDependencies() {
+    final ListenableFuture<Integer> iFuture = iProducer.get();
+    final ListenableFuture<Long> lFuture = lProducer.get();
+    return Futures.<Object>allAsList(iFuture, lFuture);
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public ListenableFuture<String> callProducesMethod(List<Object> args) {
+    return module.produceString((Integer) (args.get(0)), (Long) (args.get(1)));
+  }
+
+  public static TestModule_ProduceStringFactory create(Object module, Provider<?> executorProvider,
+      Provider<?> productionComponentMonitorProvider, Producer<?> iProducer,
+      Producer<?> lProducer) {
+    return new TestModule_ProduceStringFactory((TestModule) (module), (Provider<Executor>) (executorProvider), (Provider<ProductionComponentMonitor>) (productionComponentMonitorProvider), (Producer<Integer>) (iProducer), (Producer<Long>) (lProducer));
+  }
+}

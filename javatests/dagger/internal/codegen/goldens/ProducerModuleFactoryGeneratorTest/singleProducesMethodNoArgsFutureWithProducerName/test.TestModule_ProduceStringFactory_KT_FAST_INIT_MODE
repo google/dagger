@@ -44,9 +44,8 @@ public final class TestModule_ProduceStringFactory extends AbstractProducesMetho
     return module.produceString();
   }
 
-  public static TestModule_ProduceStringFactory create(TestModule module,
-      Provider<Executor> executorProvider,
-      Provider<ProductionComponentMonitor> productionComponentMonitorProvider) {
-    return new TestModule_ProduceStringFactory(module, executorProvider, productionComponentMonitorProvider);
+  public static TestModule_ProduceStringFactory create(Object module, Provider<?> executorProvider,
+      Provider<?> productionComponentMonitorProvider) {
+    return new TestModule_ProduceStringFactory((TestModule) (module), (Provider<Executor>) (executorProvider), (Provider<ProductionComponentMonitor>) (productionComponentMonitorProvider));
   }
 }

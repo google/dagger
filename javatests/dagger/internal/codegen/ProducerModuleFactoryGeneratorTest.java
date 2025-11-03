@@ -419,6 +419,68 @@ public class ProducerModuleFactoryGeneratorTest {
             });
   }
 
+  @Test public void singleProducesMethodSingleArgsFuture() {
+    Source moduleFile =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import com.google.common.util.concurrent.ListenableFuture;",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "",
+            "@ProducerModule",
+            "final class TestModule {",
+            "  @Produces ListenableFuture<String> produceString(Integer i) {",
+            "    return null;",
+            "  }",
+            "",
+            "  @Produces ListenableFuture<Integer> produceInt() {",
+            "    return null;",
+            "  }",
+            "}");
+    daggerCompiler(moduleFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/TestModule_ProduceStringFactory"));
+            });
+  }
+
+  @Test public void singleProducesMethodMultipleArgsFuture() {
+    Source moduleFile =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import com.google.common.util.concurrent.ListenableFuture;",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "",
+            "@ProducerModule",
+            "final class TestModule {",
+            "  @Produces ListenableFuture<String> produceString(Integer i, Long l) {",
+            "    return null;",
+            "  }",
+            "",
+            "  @Produces ListenableFuture<Integer> produceInt() {",
+            "    return null;",
+            "  }",
+            "",
+            "  @Produces ListenableFuture<Long> produceLong() {",
+            "    return null;",
+            "  }",
+            "}");
+    daggerCompiler(moduleFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("test/TestModule_ProduceStringFactory"));
+            });
+  }
+
   @Test
   public void singleProducesMethodNoArgsFutureWithProducerName() {
     Source moduleFile =
@@ -438,7 +500,11 @@ public class ProducerModuleFactoryGeneratorTest {
             "  }",
             "}");
     daggerCompiler(moduleFile)
-        .withProcessingOptions(ImmutableMap.of("dagger.writeProducerNameInToken", "ENABLED"))
+        .withProcessingOptions(
+            ImmutableMap.<String, String>builder()
+                .putAll(compilerMode.processorOptions())
+                .put("dagger.writeProducerNameInToken", "ENABLED")
+                .buildOrThrow())
         .compile(
             subject -> {
               subject.hasErrorCount(0);

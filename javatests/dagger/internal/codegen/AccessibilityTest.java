@@ -36,7 +36,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-@SuppressWarnings("unused") // contains a variety things used by the compilation rule for testing
+@SuppressWarnings({
+  "unused",
+  "JUnit4TestNotRun"
+}) // contains a variety things used by the compilation rule for testing
 public class AccessibilityTest {
   /* test data */
   public AccessibilityTest() {}

@@ -97,6 +97,7 @@ MEDIUM_TESTS = [
     "ProductionComponentProcessorTest.java",
     "ProductionGraphValidationTest.java",
     "SubcomponentValidationTest.java",
+    "KeywordValidatorTest.java",
 ]
 
 DEPS = [

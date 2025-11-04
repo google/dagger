@@ -26,7 +26,6 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.getSubcom
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.validation.KeywordValidator.validateNoJavaKeyword;
 import static dagger.internal.codegen.validation.ModuleValidator.ModuleMethodKind.ABSTRACT_DECLARATION;
 import static dagger.internal.codegen.validation.ModuleValidator.ModuleMethodKind.INSTANCE_BINDING;
 import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
@@ -180,7 +179,6 @@ public final class ModuleValidator {
 
     validateKotlinObjectDoesNotInheritInstanceBindingMethods(module, moduleKind, builder);
     validateDaggerAndroidProcessorRequirements(module, builder);
-    validateNoJavaKeyword(module, builder);
 
     if (bindingMethods.stream()
         .map(ModuleMethodKind::ofMethod)

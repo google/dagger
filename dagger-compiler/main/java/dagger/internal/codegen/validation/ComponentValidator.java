@@ -35,7 +35,6 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.enclosedA
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.builderMethodRequiresNoArgs;
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.validation.KeywordValidator.validateNoJavaKeyword;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
@@ -100,7 +99,6 @@ public final class ComponentValidator implements ClearableCache {
   private final DependencyRequestFactory dependencyRequestFactory;
   private final DaggerSuperficialValidation superficialValidation;
   private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
-  private final KeywordValidator keywordValidator;
 
   @Inject
   ComponentValidator(
@@ -110,8 +108,7 @@ public final class ComponentValidator implements ClearableCache {
       MembersInjectionValidator membersInjectionValidator,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFactory dependencyRequestFactory,
-      DaggerSuperficialValidation superficialValidation,
-      KeywordValidator keywordValidator) {
+      DaggerSuperficialValidation superficialValidation) {
     this.moduleValidator = moduleValidator;
     this.creatorValidator = creatorValidator;
     this.dependencyRequestValidator = dependencyRequestValidator;
@@ -119,7 +116,6 @@ public final class ComponentValidator implements ClearableCache {
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.superficialValidation = superficialValidation;
-    this.keywordValidator = keywordValidator;
   }
 
   @Override
@@ -179,13 +175,8 @@ public final class ComponentValidator implements ClearableCache {
       validateComponentDependencies();
       validateReferencedModules();
       validateSubcomponents();
-      validateComponentName();
 
       return report.build();
-    }
-
-    private void validateComponentName() {
-      validateNoJavaKeyword(component, report);
     }
 
     private String moreThanOneComponentAnnotationError() {
@@ -249,7 +240,6 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private void validateComponentMethods() {
-      keywordValidator.validateMethodsName(component, report);
       getAllUnimplementedMethods(component).stream()
           .map(ComponentMethodValidator::new)
           .forEachOrdered(ComponentMethodValidator::validateMethod);

@@ -250,10 +250,6 @@ final class ComponentCreatorImplementationFactory {
       XFunSpecs.Builder builder = setterMethodBuilder(requirement);
       XParameterSpec parameter = getOnlyElement(builder.getParameters());
       builder
-          .addAnnotation(XTypeNames.DEPRECATED)
-          .addJavadoc(
-              "@deprecated This module is declared, but an instance is not used in the component. "
-                  + "This method is a no-op. For more, see https://dagger.dev/unused-modules.\n")
           .addStatement(
               "%T.checkNotNull(%N)",
               XTypeNames.DAGGER_PRECONDITIONS,

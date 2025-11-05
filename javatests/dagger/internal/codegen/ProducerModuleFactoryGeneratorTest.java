@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import androidx.room3.compiler.processing.util.CompilationResultSubject;
 import androidx.room3.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -414,8 +415,7 @@ public class ProducerModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_ProduceStringFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_ProduceStringFactory");
             });
   }
 
@@ -443,8 +443,7 @@ public class ProducerModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_ProduceStringFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_ProduceStringFactory");
             });
   }
 
@@ -476,8 +475,7 @@ public class ProducerModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_ProduceStringFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_ProduceStringFactory");
             });
   }
 
@@ -508,8 +506,7 @@ public class ProducerModuleFactoryGeneratorTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/TestModule_ProduceStringFactory"));
+              assertSourceMatchesGolden(subject, "test/TestModule_ProduceStringFactory");
             });
   }
 
@@ -539,6 +536,11 @@ public class ProducerModuleFactoryGeneratorTest {
         .hasError(
             "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, or Produced<T> "
                 + "when T is a wildcard type such as ? extends java.lang.Number");
+  }
+
+  private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
+    Source source = goldenFileRule.goldenSource(goldenName);
+    subject.generatedSource(source);
   }
 
   @Qualifier

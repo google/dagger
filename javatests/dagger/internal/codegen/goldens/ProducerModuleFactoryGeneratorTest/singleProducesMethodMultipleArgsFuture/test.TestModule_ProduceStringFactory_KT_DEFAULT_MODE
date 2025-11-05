@@ -1,65 +1,69 @@
-package test;
+package test
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.Provider;
-import dagger.producers.Producer;
-import dagger.producers.internal.AbstractProducesMethodProducer;
-import dagger.producers.internal.Producers;
-import dagger.producers.monitoring.ProducerToken;
-import dagger.producers.monitoring.ProductionComponentMonitor;
-import java.util.List;
-import java.util.concurrent.Executor;
-import javax.annotation.processing.Generated;
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Provider
+import dagger.producers.Producer
+import dagger.producers.`internal`.AbstractProducesMethodProducer
+import dagger.producers.`internal`.Producers
+import dagger.producers.monitoring.ProducerToken
+import dagger.producers.monitoring.ProductionComponentMonitor
+import java.util.concurrent.Executor
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Int
+import kotlin.Long
+import kotlin.Suppress
+import kotlin.collections.List
+import kotlin.jvm.JvmStatic
 
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "FutureReturnValueIgnored",
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class TestModule_ProduceStringFactory extends AbstractProducesMethodProducer<List<Object>, Object> {
-  private final TestModule module;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class TestModule_ProduceStringFactory : AbstractProducesMethodProducer<List<Any>, Any?> {
+  private val module: TestModule
 
-  private final Producer<Integer> iProducer;
+  private val iProducer: Producer<Int?>
 
-  private final Producer<Long> lProducer;
+  private val lProducer: Producer<Long?>
 
-  private TestModule_ProduceStringFactory(TestModule module, Provider<Executor> executorProvider,
-      Provider<ProductionComponentMonitor> productionComponentMonitorProvider,
-      Producer<Integer> iProducer, Producer<Long> lProducer) {
-    super(productionComponentMonitorProvider, ProducerToken.create(TestModule_ProduceStringFactory.class), executorProvider);
-    this.module = module;
-    this.iProducer = Producers.nonCancellationPropagatingViewOf(iProducer);
-    this.lProducer = Producers.nonCancellationPropagatingViewOf(lProducer);
+  private constructor(
+    module: TestModule,
+    executorProvider: Provider<Executor>,
+    productionComponentMonitorProvider: Provider<ProductionComponentMonitor>,
+    iProducer: Producer<Int?>,
+    lProducer: Producer<Long?>,
+  ) : super(productionComponentMonitorProvider, ProducerToken.create(TestModule_ProduceStringFactory::class.java), executorProvider) {
+    this.module = module
+    this.iProducer = Producers.nonCancellationPropagatingViewOf(iProducer)
+    this.lProducer = Producers.nonCancellationPropagatingViewOf(lProducer)
   }
 
-  @Override
-  protected ListenableFuture<List<Object>> collectDependencies() {
-    final ListenableFuture<Integer> iFuture = iProducer.get();
-    final ListenableFuture<Long> lFuture = lProducer.get();
-    return Futures.allAsList(iFuture, lFuture);
+  protected override fun collectDependencies(): ListenableFuture<List<Any>> {
+    val iFuture: ListenableFuture<Int?> = iProducer.get()
+    val lFuture: ListenableFuture<Long?> = lProducer.get()
+    return Futures.allAsList(iFuture, lFuture)
   }
 
-  @Override
-  @SuppressWarnings("unchecked")
-  public ListenableFuture<Object> callProducesMethod(List<Object> args) {
-    return (ListenableFuture<Object>) ((Object) (module.produceString((Integer) (args.get(0)), (Long) (args.get(1)))));
-  }
+  @Suppress(names = ["UNCHECKED_CAST"])
+  public override fun callProducesMethod(args: List<Any>): ListenableFuture<Any?> = ((module.produceString((args.get(0)) as Int?, (args.get(1)) as Long?)) as Any) as ListenableFuture<Any?>
 
-  public static TestModule_ProduceStringFactory create(Object module, Provider<?> executorProvider,
-      Provider<?> productionComponentMonitorProvider, Producer<?> iProducer,
-      Producer<?> lProducer) {
-    return new TestModule_ProduceStringFactory((TestModule) (module), (Provider<Executor>) (executorProvider), (Provider<ProductionComponentMonitor>) (productionComponentMonitorProvider), (Producer<Integer>) (iProducer), (Producer<Long>) (lProducer));
+  public companion object {
+    @JvmStatic
+    public fun create(
+      module: Any?,
+      executorProvider: Provider<*>,
+      productionComponentMonitorProvider: Provider<*>,
+      iProducer: Producer<*>,
+      lProducer: Producer<*>,
+    ): TestModule_ProduceStringFactory = TestModule_ProduceStringFactory((module) as TestModule, (executorProvider) as Provider<Executor>, (productionComponentMonitorProvider) as Provider<ProductionComponentMonitor>, (iProducer) as Producer<Int?>, (lProducer) as Producer<Long?>)
   }
 }

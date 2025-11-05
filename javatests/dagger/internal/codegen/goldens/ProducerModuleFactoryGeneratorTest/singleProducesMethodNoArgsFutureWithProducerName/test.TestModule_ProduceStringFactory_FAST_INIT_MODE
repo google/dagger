@@ -36,7 +36,7 @@ public final class TestModule_ProduceStringFactory extends AbstractProducesMetho
 
   @Override
   protected ListenableFuture<Void> collectDependencies() {
-    return Futures.<Void>immediateFuture(null);
+    return Futures.immediateFuture(null);
   }
 
   @Override

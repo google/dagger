@@ -27,6 +27,7 @@ import static dagger.internal.codegen.writing.GwtCompatibility.gwtIncompatibleAn
 import static dagger.internal.codegen.writing.InjectionMethods.copyFrameworkParameter;
 import static dagger.internal.codegen.writing.InjectionMethods.copyParameter;
 import static dagger.internal.codegen.xprocessing.Accessibility.isTypeAccessibleFromPublicApi;
+import static dagger.internal.codegen.xprocessing.NullableTypeNames.asNullableTypeName;
 import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.Suppression.FUTURE_RETURN_VALUE_IGNORED;
 import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.suppressWarnings;
@@ -113,7 +114,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
             .superclass(
                 XTypeNames.ABSTRACT_PRODUCES_METHOD_PRODUCER.parametrizedBy(
                     callProducesMethodParameter(binding).getType(),
-                    binding.contributedType().asTypeName()))
+                    contributedTypeName(binding)))
             .addModifiers(PUBLIC, FINAL)
             .addTypeVariableNames(bindingTypeElementTypeVariableNames(binding))
             .addProperties(
@@ -152,11 +153,12 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
         constructorBuilder()
             .addModifiers(PRIVATE)
             .addParameters(constructorParameters(binding, factoryFields));
-    constructorBuilder.addStatement(
-        "super(%N, %L, %N)",
-        factoryFields.monitorField,
-        producerTokenConstruction(generatedClassNameForBinding(binding), binding),
-        factoryFields.executorField);
+    constructorBuilder
+        .callSuperConstructor(
+            "%N, %L, %N",
+            factoryFields.monitorField,
+            producerTokenConstruction(generatedClassNameForBinding(binding), binding),
+            factoryFields.executorField);
     factoryFields.getAll().stream()
         // The executor and monitor fields belong to the super class so they don't need a field
         // assignment here.
@@ -260,24 +262,24 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
   // }
   public XFunSpec collectDependenciesMethod(
       ProductionBinding binding, FactoryFields factoryFields) {
+    XTypeName returnTypeName = listenableFutureOf(callProducesMethodParameter(binding).getType());
     XFunSpecs.Builder methodBuilder =
-        methodBuilder("collectDependencies").isOverride(true).addModifiers(PROTECTED);
+        methodBuilder("collectDependencies")
+            .isOverride(true)
+            .addModifiers(PROTECTED)
+            .returns(returnTypeName);
     ImmutableList<DependencyRequest> asyncDependencies = asyncDependencies(binding);
     switch (asyncDependencies.size()) {
       case 0:
         return methodBuilder
-            .returns(listenableFutureOf(XTypeNames.UNIT_VOID_CLASS))
-            .addStatement(
-                "return %T.<%T>immediateFuture(null)",
-                XTypeNames.FUTURES, XTypeNames.UNIT_VOID_CLASS)
+            .addStatement("return %T.immediateFuture(null)", XTypeNames.FUTURES)
             .build();
       case 1: {
         DependencyRequest asyncDependency = getOnlyElement(asyncDependencies);
-          XPropertySpec asyncDependencyField = factoryFields.get(asyncDependency);
-          return methodBuilder
-              .returns(listenableFutureOf(asyncDependencyType(asyncDependency)))
-              .addStatement("return %L", producedCodeBlock(asyncDependency, asyncDependencyField))
-              .build();
+        XPropertySpec asyncDependencyField = factoryFields.get(asyncDependency);
+        XCodeBlock returnCodeBlock =
+            XCodeBlock.of("%L", producedCodeBlock(asyncDependency, asyncDependencyField));
+        return methodBuilder.addStatement("return %L", returnCodeBlock).build();
       }
       default:
         XCodeBlock.Builder argAssignments = XCodeBlock.builder();
@@ -292,11 +294,11 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
               /* assignExprArgs...= */ producedCodeBlock(asyncDependency, asyncDependencyField));
         }
         return methodBuilder
-            .returns(listenableFutureOf(listOf(XTypeName.ANY_OBJECT)))
             .addCode(argAssignments.build())
             .addStatement(
-                "return %T.<%T>allAsList(%L)",
-                XTypeNames.FUTURES, XTypeName.ANY_OBJECT, makeParametersCodeBlock(argNames.build()))
+                "return %T.allAsList(%L)",
+                XTypeNames.FUTURES,
+                makeParametersCodeBlock(argNames.build()))
             .build();
     }
   }
@@ -326,11 +328,12 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
   //   return module.producesFoo((Bar) args.get(0), (Baz) args.get(1));
   // }
   private XFunSpec callProducesMethod(ProductionBinding binding, FactoryFields factoryFields) {
-    XTypeName contributedTypeName = binding.contributedType().asTypeName();
+    XTypeName contributedTypeName = contributedTypeName(binding);
+    XTypeName returnTypeName = listenableFutureOf(contributedTypeName);
     XParameterSpec parameter = callProducesMethodParameter(binding);
     XFunSpecs.Builder methodBuilder =
         methodBuilder("callProducesMethod")
-            .returns(listenableFutureOf(contributedTypeName))
+            .returns(returnTypeName)
             .isOverride(true)
             .addModifiers(PUBLIC)
             .addExceptions(asMethod(binding.bindingElement().get()).getThrownTypes())
@@ -339,17 +342,15 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
     ImmutableList.Builder<XCodeBlock> parameterCodeBlocks = ImmutableList.builder();
     for (DependencyRequest dependency : binding.explicitDependencies()) {
       if (isAsyncDependency(dependency)) {
+        String parameterName = parameter.getName(); // SUPPRESS_GET_NAME_CHECK
+        XTypeName dependencyType = asyncDependencyType(dependency);
         if (asyncDependencies.size() > 1) {
-          XTypeName dependencyType = asyncDependencyType(dependency);
           int argIndex = asyncDependencies.indexOf(dependency);
-          parameterCodeBlocks.add(
-              XCodeBlock.ofCast(
-                  dependencyType,
-                  XCodeBlock.of(
-                      "%N.get(%L)", parameter.getName(), argIndex))); // SUPPRESS_GET_NAME_CHECK
+          XCodeBlock dependencyCodeBlock = XCodeBlock.of("%N.get(%L)", parameterName, argIndex);
+          parameterCodeBlocks.add(XCodeBlock.ofCast(dependencyType, dependencyCodeBlock));
         } else {
-          parameterCodeBlocks.add(
-              XCodeBlock.of("%N", parameter.getName())); // SUPPRESS_GET_NAME_CHECK
+          XCodeBlock dependencyCodeBlock = XCodeBlock.of("%N", parameterName);
+          parameterCodeBlocks.add(dependencyCodeBlock);
         }
       } else {
         parameterCodeBlocks.add(
@@ -370,33 +371,34 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
             getSimpleName(binding.bindingElement().get()),
             makeParametersCodeBlock(parameterCodeBlocks.build()));
 
+    XCodeBlock returnCodeBlock;
     switch (ProductionKind.fromProducesMethod(asMethod(binding.bindingElement().get()))) {
       case IMMEDIATE:
-        methodBuilder.addStatement(
-            "return %T.<%T>immediateFuture(%L)",
-            XTypeNames.FUTURES, contributedTypeName, moduleCodeBlock);
+        returnCodeBlock = XCodeBlock.of("%T.immediateFuture(%L)", XTypeNames.FUTURES, moduleCodeBlock);
         break;
       case FUTURE:
-        methodBuilder.addStatement("return %L", moduleCodeBlock);
+        returnCodeBlock = XCodeBlock.of("%L", moduleCodeBlock);
         break;
       case SET_OF_FUTURE:
-        methodBuilder.addStatement("return %T.allAsSet(%L)", XTypeNames.PRODUCERS, moduleCodeBlock);
+        returnCodeBlock = XCodeBlock.of("%T.allAsSet(%L)", XTypeNames.PRODUCERS, moduleCodeBlock);
         break;
+      default:
+        throw new AssertionError();
     }
-    return methodBuilder.build();
+    return methodBuilder.addStatement("return %L", returnCodeBlock).build();
   }
 
   private XParameterSpec callProducesMethodParameter(ProductionBinding binding) {
     ImmutableList<DependencyRequest> asyncDependencies = asyncDependencies(binding);
     switch (asyncDependencies.size()) {
       case 0:
-        return XParameterSpecs.of("ignoredVoidArg", XTypeNames.UNIT_VOID_CLASS);
+        return XParameterSpecs.of(
+            "ignoredVoidArg", XTypeNames.UNIT_VOID_CLASS.copy(/* nullable= */ true));
       case 1:
         DependencyRequest asyncDependency = getOnlyElement(asyncDependencies);
         String argName = getSimpleName(asyncDependency.requestElement().get().xprocessing());
-        return XParameterSpecs.of(
-            argName.equals("module") ? "moduleArg" : argName,
-            asyncDependencyType(asyncDependency));
+        XTypeName parameterType = asyncDependencyType(asyncDependency);
+        return XParameterSpecs.of(argName.equals("module") ? "moduleArg" : argName, parameterType);
       default:
         return XParameterSpecs.of("args", listOf(XTypeName.ANY_OBJECT));
     }
@@ -418,7 +420,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
                     "%s#%s",
                     binding.bindingTypeElement().get().getClassName(),
                     getSimpleName(binding.bindingElement().get())))
-            : XCodeBlock.of("%T.class", generatedTypeName);
+            : XCodeBlock.ofJavaClassLiteral(generatedTypeName);
     return XCodeBlock.of("%T.create(%L)", XTypeNames.PRODUCER_TOKEN, producerTokenArgs);
   }
 
@@ -447,6 +449,15 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
       default:
         throw new AssertionError();
     }
+  }
+
+
+  private XTypeName contributedTypeName(ProductionBinding binding) {
+    XTypeName typeName =
+        isTypeAccessibleFromPublicApi(binding.contributedType(), compilerOptions)
+            ? binding.contributedType().asTypeName()
+            : XTypeName.ANY_OBJECT.copy(/* nullable= */ true);
+    return asNullableTypeName(typeName, binding.nullability(), compilerOptions);
   }
 
   /** Represents the available fields in the generated factory class. */

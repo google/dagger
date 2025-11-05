@@ -100,6 +100,11 @@ public final class XFunSpecs {
     }
 
     private final Kind kind;
+    private final List<XCodeBlock> javadocs = new ArrayList<>();
+    private final List<XParameterSpec> parameters = new ArrayList<>();
+    private final List<XAnnotationSpec> annotations = new ArrayList<>();
+    private final List<XTypeName> typeVariableNames = new ArrayList<>();
+    private final List<XTypeName> exceptionNames = new ArrayList<>();
     private final XCodeBlock.Builder bodyBuilder = XCodeBlock.builder();
     private String name;
     private VisibilityModifier visibility = null;
@@ -109,11 +114,7 @@ public final class XFunSpecs {
     private boolean isOverride = false;
     private boolean isVarArgs = false;
     private XTypeName returnType = null;
-    private final List<XCodeBlock> javadocs = new ArrayList<>();
-    private final List<XParameterSpec> parameters = new ArrayList<>();
-    private final List<XAnnotationSpec> annotations = new ArrayList<>();
-    private final List<XTypeName> typeVariableNames = new ArrayList<>();
-    private final List<XTypeName> exceptionNames = new ArrayList<>();
+    private XCodeBlock superConstructorParametersCodeBlock = null;
 
     Builder(Kind kind) {
       this.kind = kind;
@@ -358,6 +359,17 @@ public final class XFunSpecs {
       return this;
     }
 
+    @CanIgnoreReturnValue
+    public Builder callSuperConstructor(XCodeBlock superConstructorParametersCodeBlock) {
+      this.superConstructorParametersCodeBlock = superConstructorParametersCodeBlock;
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder callSuperConstructor(String format, Object... args) {
+      return callSuperConstructor(XCodeBlock.of(format, args));
+    }
+
     /** Begins a control flow block. */
     @CanIgnoreReturnValue
     public Builder beginControlFlow(String controlFlow, Object... args) {
@@ -456,6 +468,12 @@ public final class XFunSpecs {
       for (XCodeBlock javadoc : javadocs) {
         // TODO(bcorso): Handle the KotlinPoet side of this implementation.
         toJavaPoet(builder).addJavadoc(toJavaPoet(javadoc));
+      }
+
+      if (superConstructorParametersCodeBlock != null) {
+        toJavaPoet(builder).addStatement("super($L)", toJavaPoet(superConstructorParametersCodeBlock));
+        toKotlinPoet(builder)
+            .callSuperConstructor(toKotlinPoet(superConstructorParametersCodeBlock));
       }
 
       XCodeBlock body = bodyBuilder.build();

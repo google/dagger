@@ -28,7 +28,7 @@ import javax.annotation.processing.Generated;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class TestModule_ProduceStringFactory extends AbstractProducesMethodProducer<List<Object>, String> {
+public final class TestModule_ProduceStringFactory extends AbstractProducesMethodProducer<List<Object>, Object> {
   private final TestModule module;
 
   private final Producer<Integer> iProducer;
@@ -48,13 +48,13 @@ public final class TestModule_ProduceStringFactory extends AbstractProducesMetho
   protected ListenableFuture<List<Object>> collectDependencies() {
     final ListenableFuture<Integer> iFuture = iProducer.get();
     final ListenableFuture<Long> lFuture = lProducer.get();
-    return Futures.<Object>allAsList(iFuture, lFuture);
+    return Futures.allAsList(iFuture, lFuture);
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  public ListenableFuture<String> callProducesMethod(List<Object> args) {
-    return module.produceString((Integer) (args.get(0)), (Long) (args.get(1)));
+  public ListenableFuture<Object> callProducesMethod(List<Object> args) {
+    return (ListenableFuture<Object>) ((Object) (module.produceString((Integer) (args.get(0)), (Long) (args.get(1)))));
   }
 
   public static TestModule_ProduceStringFactory create(Object module, Provider<?> executorProvider,

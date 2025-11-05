@@ -14,8 +14,7 @@
   ~ limitations under the License.
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:tools="http://schemas.android.com/tools"
-  package="dagger.hilt.android.simple">
+  xmlns:tools="http://schemas.android.com/tools">
 
   <application android:name=".SimpleApplication" android:label="@string/appName">
     <activity

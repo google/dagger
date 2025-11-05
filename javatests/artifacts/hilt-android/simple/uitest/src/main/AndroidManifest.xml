@@ -15,6 +15,5 @@
   ~ limitations under the License.
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="dagger.hilt.android.simple.uitest">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 </manifest>

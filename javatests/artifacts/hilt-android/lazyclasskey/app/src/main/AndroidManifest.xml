@@ -14,9 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="hilt.lazyclasskey">
-  <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34"/>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <application android:name=".FlowerApp"
       android:taskAffinity=""
       android:theme="@style/Theme.AppCompat.Light.NoActionBar"

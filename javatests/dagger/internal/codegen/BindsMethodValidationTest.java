@@ -427,6 +427,291 @@ public class BindsMethodValidationTest {
             });
   }
 
+  @Test
+  public void javaKeywordAsProvidesMethodName_failsWithExpectedError() throws Exception {
+    Source moduleSrc =
+        CompilerTests.kotlinSource(
+            "test/MyModule.kt",
+            "package test",
+            "",
+            "import dagger.Module",
+            "import dagger.Provides",
+            "",
+            "@Module",
+            "class MyModule {",
+            "  @Provides fun int(): Int = 3", // Offending function name
+            "}");
+    CompilerTests.daggerCompiler(moduleSrc)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  subject
+                      .hasErrorContaining("The name 'int' cannot be used because")
+                      .onSource(moduleSrc)
+                      .onLineContaining("fun int()");
+                  break;
+                default:
+                  subject.hasErrorCount(0);
+                  break;
+              }
+            });
+  }
+
+  @Test
+  public void javaKeywordAsProvidesMethodParameterName_doesNotFail() {
+    Source moduleSrc =
+        CompilerTests.kotlinSource(
+            "test/MyModule.kt",
+            "package test",
+            "",
+            "import dagger.Module",
+            "import dagger.Provides",
+            "",
+            "@Module",
+            "class MyModule {",
+            "  @Provides fun myInt(int: Int): Int = ",
+            "    if (int == 3) 3 else 4", // Offending parameter name
+            "}");
+    CompilerTests.daggerCompiler(moduleSrc).compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void javaKeywordAsComponentName_failsWithExpectedError() {
+    Source componentSrc =
+        CompilerTests.kotlinSource(
+            "test/MyComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "",
+            "@Component",
+            "interface default {}", // "default" is a Java keyword
+            "");
+
+    CompilerTests.daggerCompiler(componentSrc)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  subject
+                      .hasErrorContaining("The name 'default' cannot be used because")
+                      .onSource(componentSrc)
+                      .onLineContaining("interface default");
+                  break;
+                default:
+                  subject.hasErrorCount(0);
+                  break;
+              }
+            });
+  }
+
+  @Test
+  public void javaKeywordAsDependencyKeyType_failsWithExpectedError() {
+    Source componentSrc =
+        CompilerTests.kotlinSource(
+            "test/TestComponent.kt",
+            "package test",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "class MyClass @Inject constructor(def: `goto`) {}", // "goto" is a Java
+            // keyword
+            "",
+            "class `goto` {}",
+            "");
+
+    CompilerTests.daggerCompiler(componentSrc)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  subject
+                      .hasErrorContaining("The name 'goto' cannot be used because")
+                      .onSource(componentSrc)
+                      .onLineContaining("def: `goto`");
+                  break;
+                default:
+                  subject.hasErrorCount(0);
+                  break;
+              }
+            });
+  }
+
+  @Test
+  public void javaKeywordAsInjectFieldName_failsWithExpectedError() {
+    Source componentSrc =
+        CompilerTests.kotlinSource(
+            "test/TestComponent.kt",
+            "package test",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "class MyClass {",
+            "  @Inject lateinit var `volatile`: String", // "volatile" is a Java keyword"
+            "}",
+            "");
+
+    CompilerTests.daggerCompiler(componentSrc)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  subject
+                      .hasErrorContaining("The name 'volatile' cannot be used because")
+                      .onSource(componentSrc)
+                      .onLineContaining("lateinit var `volatile`");
+                  break;
+                default:
+                  subject.hasErrorCount(0);
+                  break;
+              }
+            });
+  }
+
+  @Test
+  public void javaKeywordAsModuleName_failsWithExpectedError() {
+    Source moduleSrc =
+        CompilerTests.kotlinSource(
+            "test/MyModule.kt",
+            "package test",
+            "",
+            "import dagger.Module",
+            "",
+            "@Module",
+            "class `finally` {}", // "finally" is a Java keyword
+            "");
+
+    CompilerTests.daggerCompiler(moduleSrc)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  subject
+                      .hasErrorContaining("The name 'finally' cannot be used because")
+                      .onSource(moduleSrc)
+                      .onLineContaining("class `finally` {}");
+                  break;
+                default:
+                  subject.hasErrorCount(0);
+                  break;
+              }
+            });
+  }
+
+  @Test
+  public void javaKeywordAsInjectMethodName_failsWithExpectedError() {
+    Source moduleSrc =
+        CompilerTests.kotlinSource(
+            "test/TestComponent.kt",
+            "package test",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "class MyClass {",
+            "  @Inject fun `transient`() {}", // Keyword method name
+            "}");
+
+    CompilerTests.daggerCompiler(moduleSrc)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  subject
+                      .hasErrorContaining("The name 'transient' cannot be used because")
+                      .onSource(moduleSrc)
+                      .onLineContaining("fun `transient`()");
+                  break;
+                default:
+                  subject.hasErrorCount(0);
+                  break;
+              }
+            });
+  }
+
+  @Test
+  public void javaKeywordAsInjectMethodParameterName_doesNotFail() {
+    Source moduleSrc =
+        CompilerTests.kotlinSource(
+            "test/TestComponent.kt",
+            "package test",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "class MyClass {",
+            "  @Inject fun myTransient(transient: Boolean) {}", // Keyword transient parameter name
+            "}");
+
+    CompilerTests.daggerCompiler(moduleSrc).compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void javaKeywordAsComponentMemberMethodName_failsWithExpectedError() {
+    Source componentSrc =
+        CompilerTests.kotlinSource(
+            "test/TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "import dagger.Provides",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  fun int(): Integer", // Keyword parameter name "int"
+            "}");
+    CompilerTests.daggerCompiler(componentSrc)
+        .compile(
+            subject -> {
+              subject
+                  .hasErrorContaining("The name 'int' cannot be used because")
+                  .onSource(componentSrc);
+            });
+  }
+
+  @Test
+  public void javaKeywordAsComponentCreatorMethodName_failsWithExpectedError() {
+    Source componentSrc =
+        CompilerTests.kotlinSource(
+            "test/TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  fun myInt(): Int",
+            "",
+            "  @Component.Builder",
+            "  interface Builder {",
+            "    fun int(@BindsInstance param: Int): Builder",
+            "    fun build(): TestComponent",
+            "  }",
+            "}");
+    CompilerTests.daggerCompiler(componentSrc)
+        .compile(
+            subject -> {
+              subject
+                  .hasErrorContaining("The name 'int' cannot be used because")
+                  .onSource(componentSrc);
+            });
+  }
+
+  @Test
+  public void javaKeywordAsParameterName_doesNotFail() {
+    Source componentSrc =
+        CompilerTests.kotlinSource(
+            "test/TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  fun myInt(int: Integer): Integer", // Keyword parameter name "int"
+            "}");
+    CompilerTests.daggerCompiler(componentSrc).compile(subject -> subject.hasErrorCount(0));
+  }
+
   private DaggerModuleMethodSubject assertThatMethod(String method) {
     return assertThatModuleMethod(method).withDeclaration(moduleDeclaration);
   }

@@ -42,3 +42,28 @@ kt_compiler_test(
         "//third_party/java/truth",
     ],
 )
+
+kt_compiler_test(
+    name = "ComponentValidationKtTest",
+    srcs = ["ComponentValidationKtTest.java"],
+    compiler_deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen:package_info",
+        "//dagger-compiler/main/java/dagger/internal/codegen:processor",
+        "//dagger-compiler/main/java/dagger/internal/codegen/base",
+        "//dagger-compiler/main/java/dagger/internal/codegen/binding",
+        "//dagger-compiler/main/java/dagger/internal/codegen/bindinggraphvalidation",
+        "//dagger-compiler/main/java/dagger/internal/codegen/compileroption",
+        "//dagger-compiler/main/java/dagger/internal/codegen/validation",
+        "//dagger-compiler/main/java/dagger/internal/codegen/writing",
+        "//dagger-producers/main/java/dagger/producers",
+        "//dagger-runtime/main/java/dagger:core",
+        "//dagger-testing/main/java/dagger/model/testing",
+        "//dagger-spi",
+    ],
+    deps = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
+        "//third_party/java/guava/collect",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)

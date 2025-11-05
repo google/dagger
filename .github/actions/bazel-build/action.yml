@@ -4,11 +4,11 @@ description: 'Builds artifacts and creates the Dagger local snapshots.'
 runs:
   using: "composite"
   steps:
-    - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
+    - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_BAZEL }}'
       uses: actions/setup-java@v4
       with:
         distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
-        java-version: '${{ env.USE_JAVA_VERSION }}'
+        java-version: '${{ env.USE_JAVA_VERSION_FOR_BAZEL }}'
     - name: 'Check out repository'
       uses: actions/checkout@v4
     - name: 'Cache Bazel files'

@@ -4,11 +4,11 @@ description: 'Tests the Hilt Gradle plugin.'
 runs:
   using: "composite"
   steps:
-    - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_GRADLE_PLUGIN }}'
+    - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_GRADLE }}'
       uses: actions/setup-java@v4
       with:
         distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
-        java-version: '${{ env.USE_JAVA_VERSION_FOR_GRADLE_PLUGIN }}'
+        java-version: '${{ env.USE_JAVA_VERSION_FOR_GRADLE }}'
     - name: 'Check out repository'
       uses: actions/checkout@v4
     - name: 'Cache local Maven repository'
@@ -42,7 +42,7 @@ runs:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
     - name: 'Build and test Hilt Gradle plugin'
-      run: ./java/dagger/hilt/android/plugin/gradlew -p java/dagger/hilt/android/plugin clean test  --continue --no-daemon --stacktrace
+      run: AGP_VERSION=${{ env.USE_AGP_VERSION }} ./java/dagger/hilt/android/plugin/gradlew -p java/dagger/hilt/android/plugin clean test  --continue --no-daemon --stacktrace
       shell: bash
     - name: 'Clean bazel cache'
       run: rm -rf $(bazel info repository_cache)

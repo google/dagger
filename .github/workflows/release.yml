@@ -13,12 +13,10 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
+  USE_AGP_VERSION: '8.13.0'
   USE_JAVA_DISTRIBUTION: 'zulu'
-  USE_JAVA_VERSION: '11'
-  # This is required by Gradle 8.0+.
-  USE_JAVA_VERSION_FOR_GRADLE_PLUGIN: '17'
-  # Required by JDK Toolchain Configuration
-  USE_JAVA_VERSION_FOR_GRADLE: '18'
+  USE_JAVA_VERSION_FOR_BAZEL: '21'
+  USE_JAVA_VERSION_FOR_GRADLE: '21'
   DAGGER_RELEASE_VERSION: "${{ github.event.inputs.dagger_release_version }}"
   # The default Maven 3.9.0 has a regression so we manually install 3.8.7.
   # https://issues.apache.org/jira/browse/MNG-7679
@@ -71,20 +69,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/test-gradle-plugin
   artifact-android-local-tests:
-    name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
+    name: 'Artifact Android local tests'
     needs: bazel-build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - agp: '8.4.2'
-            jdk: '17'
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/artifact-android-local-tests
-        with:
-          agp: '${{ matrix.agp }}'
-          jdk: '${{ matrix.jdk }}'
   publish-artifacts:
     name: 'Publish Artifact'
     needs: [
@@ -98,11 +88,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
+      - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_BAZEL }}'
         uses: actions/setup-java@v4
         with:
           distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
-          java-version: '${{ env.USE_JAVA_VERSION }}'
+          java-version: '${{ env.USE_JAVA_VERSION_FOR_BAZEL }}'
           server-id: sonatype-central-staging
           server-username: CI_DEPLOY_USERNAME
           server-password: CI_DEPLOY_PASSWORD

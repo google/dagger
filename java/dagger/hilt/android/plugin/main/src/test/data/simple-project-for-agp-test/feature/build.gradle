@@ -20,12 +20,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 36
     namespace "simple.library"
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 34
+        targetSdkVersion 36
     }
 
     namespace = "simple.library"

@@ -22,11 +22,11 @@ plugins {
 
 android {
     namespace 'dagger.android.ksp'
-    compileSdkVersion 34
+    compileSdkVersion 36
     defaultConfig {
         applicationId 'dagger.android.ksp'
         minSdk 16
-        targetSdk 33
+        targetSdk 36
         versionCode 1
         versionName "1.0"
     }

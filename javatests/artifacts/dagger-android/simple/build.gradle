@@ -16,7 +16,7 @@
 
 buildscript {
     ext {
-        agp_version = System.getenv('AGP_VERSION') ?: "8.4.2"
+        agp_version = System.getenv('AGP_VERSION')
     }
     repositories {
         google()

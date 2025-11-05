@@ -138,7 +138,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
           mavenCentral()
         }
         dependencies {
-          classpath 'com.android.tools.build:gradle:8.4.2'
+          classpath 'com.android.tools.build:gradle:8.13.0'
         }
       }
 
@@ -148,13 +148,13 @@ class IncrementalProcessorTest(private val incapMode: String) {
       }
 
       android {
-        compileSdkVersion 34
-        buildToolsVersion "34.0.0"
+        compileSdkVersion 36
+        buildToolsVersion "36.0.0"
 
         defaultConfig {
           applicationId "hilt.simple"
           minSdkVersion 21
-          targetSdkVersion 34
+          targetSdkVersion 36
           javaCompileOptions {
             annotationProcessorOptions {
                 arguments += ["dagger.hilt.shareTestComponents" : "true"]

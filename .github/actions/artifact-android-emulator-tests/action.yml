@@ -25,11 +25,11 @@ runs:
       with:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
-    - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
+    - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_GRADLE }}'
       uses: actions/setup-java@v4
       with:
         distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
-        java-version: '${{ env.USE_JAVA_VERSION }}'
+        java-version: '${{ env.USE_JAVA_VERSION_FOR_GRADLE }}'
     - name: 'Gradle Android emulator tests (API ${{ inputs.api-level }})'
       uses: reactivecircus/android-emulator-runner@v2
       with:

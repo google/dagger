@@ -1,21 +1,6 @@
 name: 'Artifact Android local tests'
 description: 'Runs Android local tests on the Dagger LOCAL-SNAPSHOT artifacts.'
 
-inputs:
-  agp:
-    description: 'The version of AGP to test with.'
-    required: true
-    type: choice
-    options:
-      - '8.4.2'
-  jdk:
-    description: 'The version of JDK to test with.'
-    required: true
-    type: choice
-    options:
-      - '11'
-      - '17'
-
 runs:
   using: "composite"
   steps:
@@ -35,17 +20,17 @@ runs:
       with:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
-    - name: 'Install Java ${{ inputs.jdk }}'
+    - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_GRADLE }}'
       uses: actions/setup-java@v4
       with:
         distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
-        java-version: '${{ inputs.jdk }}'
-    - name: 'Gradle Android local tests (AGP ${{ inputs.agp }})'
-      run: ./util/run-local-gradle-android-tests.sh "${{ inputs.agp }}"
+        java-version: '${{ env.USE_JAVA_VERSION_FOR_GRADLE }}'
+    - name: 'Gradle Android local tests (AGP ${{ env.USE_AGP_VERSION }})'
+      run: ./util/run-local-gradle-android-tests.sh "${{ env.USE_AGP_VERSION }}"
       shell: bash
-    - name: 'Upload test reports (AGP ${{ inputs.agp }})'
+    - name: 'Upload test reports (AGP ${{ env.USE_AGP_VERSION }})'
       if: ${{ always() }}
       uses: actions/upload-artifact@v4
       with:
-        name: tests-reports-agp-${{ inputs.agp }}
+        name: tests-reports-agp-${{ env.USE_AGP_VERSION }}
         path: ${{ github.workspace }}/**/build/reports/tests/*

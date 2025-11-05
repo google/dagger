@@ -17,7 +17,7 @@
 buildscript {
     ext {
         hilt_version = 'LOCAL-SNAPSHOT'
-        agp_version = "8.1.1"
+        agp_version = System.getenv('AGP_VERSION')
         kotlin_version = "2.2.0"
     }
     repositories {

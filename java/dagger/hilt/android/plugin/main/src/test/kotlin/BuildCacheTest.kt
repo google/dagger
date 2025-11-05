@@ -83,6 +83,7 @@ class BuildCacheTest(private val enableAggregatingTask: Boolean) {
     val cacheableTasks: List<String> =
       mutableListOf<String>().apply {
         add(":compileDebugJavaWithJavac")
+        add(":compileDebugNavigationResources")
         add(":compressDebugAssets")
         add(":desugarDebugFileDependencies")
         add(":extractDeepLinksDebug")
@@ -103,6 +104,7 @@ class BuildCacheTest(private val enableAggregatingTask: Boolean) {
         add(":parseDebugLocalResources")
         add(":processDebugMainManifest")
         add(":processDebugManifestForPackage")
+        add(":processDebugNavigationResources")
         add(":transformDebugClassesWithAsm")
       }
 

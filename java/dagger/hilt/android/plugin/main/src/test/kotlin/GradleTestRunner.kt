@@ -144,7 +144,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
             mavenCentral()
           }
           dependencies {
-            classpath 'com.android.tools.build:gradle:8.4.2'
+            classpath 'com.android.tools.build:gradle:8.13.0'
             ${pluginClasspaths.joinToString(separator = "\n") { "classpath '$it'" }}
           }
         }
@@ -156,13 +156,13 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
         }
 
         android {
-          compileSdkVersion 34
-          buildToolsVersion "34.0.0"
+          compileSdkVersion 36
+          buildToolsVersion "36.0.0"
 
           defaultConfig {
             ${ if (isAppProject) "applicationId \"plugin.test\"" else "" }
             minSdkVersion 21
-            targetSdkVersion 34
+            targetSdkVersion 36
           }
 
           namespace = "minimal"

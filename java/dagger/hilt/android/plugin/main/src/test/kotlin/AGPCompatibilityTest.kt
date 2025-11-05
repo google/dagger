@@ -82,10 +82,6 @@ class AGPCompatibilityTest(private val agpVersion: String, private val gradleVer
   companion object {
     @JvmStatic
     @Parameterized.Parameters(name = "agpVersion = {0}, gradleVersion = {1}")
-    fun parameters() =
-      listOf(
-        // AGP 8.4 requires Gradle 8.6 and JDK 17.
-        arrayOf("8.4.2", "8.6")
-      )
+    fun parameters() = listOf(arrayOf(/* agpVersion = */ "8.13.0", /* gradleVersion = */ "9.2.0"))
   }
 }

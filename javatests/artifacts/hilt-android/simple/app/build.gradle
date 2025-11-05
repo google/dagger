@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.gradle.util.VersionNumber
+import org.gradle.util.GradleVersion
 
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.dagger.hilt.android'
@@ -28,12 +28,12 @@ def getAdditionalTestDirs(String variant) {
         'test': []
     ]
     def suffix = '-agp-'
-    def agpVersion = VersionNumber.parse(agp_version)
+    def agpVersion = GradleVersion.version(agp_version)
     file("${getProjectDir().absolutePath}/src").eachFile { file ->
         int indexOf = file.name.indexOf(suffix)
         if (file.isDirectory() && indexOf != -1) {
             def dirAgpVersion =
-                VersionNumber.parse(file.name.substring(indexOf + suffix.length()))
+                GradleVersion.version(file.name.substring(indexOf + suffix.length()))
             if (agpVersion >= dirAgpVersion) {
                 testDirs[file.name.substring(0, indexOf)].add("src/${file.name}/java")
             }
@@ -43,13 +43,13 @@ def getAdditionalTestDirs(String variant) {
 }
 
 android {
-    compileSdkVersion 34
-    buildToolsVersion "34.0.0"
+    compileSdkVersion 36
+    buildToolsVersion "36.0.0"
 
     defaultConfig {
         applicationId "dagger.hilt.android.simple"
         minSdkVersion 16
-        targetSdkVersion 34
+        targetSdkVersion 36
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "dagger.hilt.android.simple.SimpleEmulatorTestRunner"

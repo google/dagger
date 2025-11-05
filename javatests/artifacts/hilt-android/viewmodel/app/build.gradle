@@ -22,11 +22,11 @@ plugins {
 android {
 
     namespace 'dagger.hilt.viewmodel'
-    compileSdkVersion 34
+    compileSdkVersion 36
     defaultConfig {
         applicationId 'dagger.hilt.viewmodel'
         minSdk 16
-        targetSdk 33
+        targetSdk 36
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

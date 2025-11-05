@@ -16,6 +16,6 @@ pushd examples/maven && mvn compile && popd
 
 # Run local gradle tests
 util/run-local-gradle-tests.sh
-util/run-local-gradle-android-tests.sh "8.1.1"
+util/run-local-gradle-android-tests.sh "8.13.0"
 
 # TODO: this script is not up-to-date with Dagger github actions

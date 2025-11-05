@@ -33,4 +33,6 @@ dependencies {
   testImplementation 'junit:junit:4.13'
 }
 
-mainClassName = 'app.SimpleApplication'
+application {
+  mainClass.set('app.SimpleApplication')
+}

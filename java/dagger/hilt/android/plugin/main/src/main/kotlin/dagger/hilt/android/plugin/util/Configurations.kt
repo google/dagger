@@ -16,6 +16,31 @@
 
 package dagger.hilt.android.plugin.util
 
+import com.android.build.api.variant.AndroidTest
+import com.android.build.api.variant.Component
+import com.android.build.api.variant.UnitTest
+
+internal fun getKaptConfigName(variant: Component) = getConfigName(variant, "kapt")
+
+internal fun getKspConfigName(variant: Component) = getConfigName(variant, "ksp")
+
+internal fun getConfigName(variant: Component, prefix: String? = null): String {
+  // Config names don't follow the usual task name conventions:
+  // <Variant Name>   -> <Config Name>
+  // debug            -> <prefix>Debug
+  // debugAndroidTest -> <prefix>AndroidTestDebug
+  // debugUnitTest    -> <prefix>TestDebug
+  // release          -> <prefix>Release
+  // releaseUnitTest  -> <prefix>TestRelease
+  return when (variant) {
+    is AndroidTest -> "androidTest${variant.name.substringBeforeLast("AndroidTest").capitalize()}"
+    is UnitTest -> "test${variant.name.substringBeforeLast("UnitTest").capitalize()}"
+    else -> variant.name
+  }.let { name ->
+    prefix?.let { "$prefix${name.capitalize()}" } ?: name
+  }
+}
+
 @Suppress("DEPRECATION") // Older variant API is deprecated
 internal fun getKaptConfigName(variant: com.android.build.gradle.api.BaseVariant)
   = getConfigName(variant, "kapt")

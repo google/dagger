@@ -42,6 +42,7 @@ import dagger.hilt.android.plugin.util.getKaptConfigName
 import dagger.hilt.android.plugin.util.getKspConfigName
 import dagger.hilt.android.plugin.util.isKspTask
 import dagger.hilt.android.plugin.util.onAllVariants
+import dagger.hilt.android.plugin.util.onRootVariants
 import dagger.hilt.processor.internal.optionvalues.GradleProjectType
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -125,62 +126,48 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
     }
 
   private fun HiltPluginEnvironment.configureCompileClasspath() {
-    legacyAndroidExtension.forEachRootVariant { variant ->
-      configureVariantCompileClasspath(variant)
-    }
-  }
-
-  private fun HiltPluginEnvironment.configureVariantCompileClasspath(
-    @Suppress("DEPRECATION") variant: com.android.build.gradle.api.BaseVariant,
-  ) {
-    if (!isExperimentalClasspathAggregationEnabled()) {
-      // Option is not enabled, don't configure compile classpath. Note that the option can't be
-      // checked earlier (before iterating over the variants) since it would have been too early for
-      // the value to be populated from the build file.
-      return
-    }
-
-    if (project.isGradleSyncRunning()) {
-      // Do not configure compile classpath when AndroidStudio is building the model (syncing)
-      // otherwise it will cause a freeze.
-      return
-    }
-
-    @Suppress("DEPRECATION") // Older variant API is deprecated
-    val runtimeConfiguration =
-      if (variant is com.android.build.gradle.api.TestVariant) {
-        // For Android test variants, the tested runtime classpath is used since the test app has
-        // tested dependencies removed.
-        variant.testedVariant.runtimeConfiguration
-      } else {
-        variant.runtimeConfiguration
+    androidExtension.onRootVariants { variant, testedVariant ->
+      if (!isExperimentalClasspathAggregationEnabled()) {
+        // Option is not enabled, don't configure compile classpath. Note that the option can't be
+        // checked earlier (before iterating over the variants) since it would have been too early for
+        // the value to be populated from the build file.
+        return@onRootVariants
       }
-    val artifactView =
-      runtimeConfiguration.incoming.artifactView { view ->
-        view.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, DAGGER_ARTIFACT_TYPE_VALUE)
-        view.componentFilter { identifier ->
-          // Filter out the project's classes from the aggregated view since this can cause
-          // issues with Kotlin internal members visibility. b/178230629
-          if (identifier is ProjectComponentIdentifier) {
-            identifier.projectName != project.name
-          } else {
-            true
+
+      if (project.isGradleSyncRunning()) {
+        // Do not configure compile classpath when AndroidStudio is building the model (syncing)
+        // otherwise it will cause a freeze.
+        return@onRootVariants
+      }
+
+      // Note: When it exists, the testedVariant runtime classpath is used since the variant
+      // runtime classpath has the tested dependencies removed in these cases.
+      val artifactView =
+        (testedVariant ?: variant).runtimeConfiguration.incoming.artifactView { view ->
+          view.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, DAGGER_ARTIFACT_TYPE_VALUE)
+          view.componentFilter { identifier ->
+            // Filter out the project's classes from the aggregated view since this can cause
+            // issues with Kotlin internal members visibility. b/178230629
+            if (identifier is ProjectComponentIdentifier) {
+              identifier.projectName != project.name
+            } else {
+              true
+            }
           }
         }
-      }
 
-    val compileOnlyConfigName = "${getConfigName(variant)}CompileOnly"
-    project.dependencies.add(compileOnlyConfigName, artifactView.files)
+      project.dependencies.add("${getConfigName(variant)}CompileOnly", artifactView.files)
+    }
   }
 
   private fun HiltPluginEnvironment.configureBytecodeTransformASM() {
-    androidExtension.onAllVariants { variantComponent ->
-      variantComponent.instrumentation.transformClassesWith(
+    androidExtension.onAllVariants { variant, _ ->
+      variant.instrumentation.transformClassesWith(
         classVisitorFactoryImplClass = AndroidEntryPointClassVisitor.Factory::class.java,
         scope = InstrumentationScope.PROJECT,
         instrumentationParamsConfig = {},
       )
-      variantComponent.instrumentation.setAsmFramesComputationMode(
+      variant.instrumentation.setAsmFramesComputationMode(
         FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
       )
     }
@@ -225,7 +212,7 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
 
     val hiltAnnotationProcessorConfiguration =
       project.configurations.create("hiltAnnotationProcessor${variant.name.capitalize()}").also {
-        config ->
+          config ->
         config.description = "Hilt annotation processor classpath for '${variant.name}'"
         config.isCanBeConsumed = false
         config.isCanBeResolved = true
@@ -251,13 +238,13 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
 
     fun getInputClasspath(artifactAttributeValue: String) =
       buildList<Configuration> {
-          @Suppress("DEPRECATION") // Older variant API is deprecated
-          if (variant is com.android.build.gradle.api.TestVariant) {
-            add(variant.testedVariant.runtimeConfiguration)
-          }
-          add(variant.runtimeConfiguration)
-          add(hiltCompileConfiguration)
+        @Suppress("DEPRECATION") // Older variant API is deprecated
+        if (variant is com.android.build.gradle.api.TestVariant) {
+          add(variant.testedVariant.runtimeConfiguration)
         }
+        add(variant.runtimeConfiguration)
+        add(hiltCompileConfiguration)
+      }
         .map { configuration ->
           configuration.incoming
             .artifactView { view ->
@@ -277,8 +264,8 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
         @Suppress("DEPRECATION") // Older variant API is deprecated
         it.testEnvironment.set(
           variant is com.android.build.gradle.api.TestVariant ||
-            variant is com.android.build.gradle.api.UnitTestVariant ||
-            androidExtension is com.android.build.gradle.TestExtension
+              variant is com.android.build.gradle.api.UnitTestVariant ||
+              androidExtension is com.android.build.gradle.TestExtension
         )
         it.crossCompilationRootValidationDisabled.set(!isCrossCompilationRootValidationEnabled())
         it.asmApiVersion.set(Opcodes.ASM9)
@@ -346,7 +333,7 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
         else -> error("Hilt plugin does not know how to configure '$androidExtension'")
       }
 
-    androidExtension.onAllVariants { variantComponent ->
+    androidExtension.onAllVariants { variant, _ ->
       // Pass annotation processor flags via a CommandLineArgumentProvider so that plugin
       // options defined in the extension are populated from the user's build file.
       val argsProducer: (Task) -> CommandLineArgumentProvider = { task ->
@@ -357,9 +344,9 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
           disableCrossCompilationRootValidation = !isCrossCompilationRootValidationEnabled()
         )
       }
-      addJavaTaskProcessorOptions(project, variantComponent, argsProducer)
-      addKaptTaskProcessorOptions(project, variantComponent, argsProducer)
-      addKspTaskProcessorOptions(project, variantComponent, argsProducer)
+      addJavaTaskProcessorOptions(project, variant, argsProducer)
+      addKaptTaskProcessorOptions(project, variant, argsProducer)
+      addKspTaskProcessorOptions(project, variant, argsProducer)
     }
   }
 
@@ -387,7 +374,7 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
     }
     if (
       !dependencies.contains(LIBRARY_GROUP to "hilt-android-compiler") &&
-        !dependencies.contains(LIBRARY_GROUP to "hilt-compiler")
+      !dependencies.contains(LIBRARY_GROUP to "hilt-compiler")
     ) {
       error(getMissingDepMsg("$LIBRARY_GROUP:hilt-compiler"))
     }

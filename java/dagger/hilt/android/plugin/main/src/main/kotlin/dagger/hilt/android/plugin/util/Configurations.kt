@@ -27,7 +27,7 @@ internal fun getKspConfigName(variant: com.android.build.gradle.api.BaseVariant)
 @Suppress("DEPRECATION") // Older variant API is deprecated
 internal fun getConfigName(
   variant: com.android.build.gradle.api.BaseVariant,
-  prefix: String
+  prefix: String? = null,
 ): String {
   // Config names don't follow the usual task name conventions:
   // <Variant Name>   -> <Config Name>
@@ -38,10 +38,11 @@ internal fun getConfigName(
   // releaseUnitTest  -> <prefix>TestRelease
   return when (variant) {
     is com.android.build.gradle.api.TestVariant ->
-      "${prefix}AndroidTest${variant.name.substringBeforeLast("AndroidTest").capitalize()}"
+      "androidTest${variant.name.substringBeforeLast("AndroidTest").capitalize()}"
     is com.android.build.gradle.api.UnitTestVariant ->
-      "${prefix}Test${variant.name.substringBeforeLast("UnitTest").capitalize()}"
-    else ->
-      "${prefix}${variant.name.capitalize()}"
+      "test${variant.name.substringBeforeLast("UnitTest").capitalize()}"
+    else -> variant.name
+  }.let { name ->
+    prefix?.let { "$prefix${name.capitalize()}" } ?: name
   }
 }

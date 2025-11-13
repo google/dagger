@@ -25,7 +25,6 @@ import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedInjectionType;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
-import static dagger.internal.codegen.validation.KeywordValidator.validateNoJavaKeyword;
 import static dagger.internal.codegen.xprocessing.XElements.asField;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
@@ -168,9 +167,6 @@ final class DependencyRequestValidator {
         return;
       }
       XType keyType = extractKeyType(requestType);
-      if (isDeclared(keyType)) {
-        validateNoJavaKeyword(keyType.getTypeElement(), report);
-      }
       if (qualifiers.isEmpty() && isDeclared(keyType)) {
         XTypeElement typeElement = keyType.getTypeElement();
         if (isAssistedInjectionType(typeElement)) {

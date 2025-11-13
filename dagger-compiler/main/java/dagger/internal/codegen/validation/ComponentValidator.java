@@ -35,7 +35,6 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.enclosedA
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.builderMethodRequiresNoArgs;
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.validation.KeywordValidator.validateNoJavaKeyword;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
@@ -100,7 +99,6 @@ public final class ComponentValidator implements ClearableCache {
   private final DependencyRequestFactory dependencyRequestFactory;
   private final DaggerSuperficialValidation superficialValidation;
   private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
-  private final KeywordValidator keywordValidator;
 
   @Inject
   ComponentValidator(
@@ -110,8 +108,7 @@ public final class ComponentValidator implements ClearableCache {
       MembersInjectionValidator membersInjectionValidator,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFactory dependencyRequestFactory,
-      DaggerSuperficialValidation superficialValidation,
-      KeywordValidator keywordValidator) {
+      DaggerSuperficialValidation superficialValidation) {
     this.moduleValidator = moduleValidator;
     this.creatorValidator = creatorValidator;
     this.dependencyRequestValidator = dependencyRequestValidator;
@@ -119,7 +116,6 @@ public final class ComponentValidator implements ClearableCache {
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.superficialValidation = superficialValidation;
-    this.keywordValidator = keywordValidator;
   }
 
   @Override
@@ -168,7 +164,7 @@ public final class ComponentValidator implements ClearableCache {
         // the remaining checks will likely just output unhelpful noise in such cases.
         return report.addError(invalidTypeError(), component).build();
       }
-      validateFields();
+      superficialValidation.validateTypeOf(component);
       validateUseOfCancellationPolicy();
       validateIsAbstractType();
       validateCreators();
@@ -179,13 +175,8 @@ public final class ComponentValidator implements ClearableCache {
       validateComponentDependencies();
       validateReferencedModules();
       validateSubcomponents();
-      validateComponentName();
 
       return report.build();
-    }
-
-    private void validateComponentName() {
-      validateNoJavaKeyword(component, report);
     }
 
     private String moreThanOneComponentAnnotationError() {
@@ -214,18 +205,6 @@ public final class ComponentValidator implements ClearableCache {
           componentKind().annotation().getSimpleName());
     }
 
-    private void validateFields() {
-      component.getDeclaredMethods().stream()
-          .filter(method -> method.isKotlinPropertySetter() && method.isAbstract())
-          .forEach(
-              method ->
-                  report.addError(
-                      String.format(
-                          "Cannot use 'abstract var' property in a component declaration to get a"
-                              + " binding. Use 'val' or 'fun' instead: %s",
-                          method.getPropertyName())));
-    }
-
     private void validateCreators() {
       ImmutableSet<XTypeElement> creators =
           enclosedAnnotatedTypes(component, creatorAnnotationsFor(componentAnnotation()));
@@ -249,7 +228,6 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private void validateComponentMethods() {
-      keywordValidator.validateMethodsName(component, report);
       getAllUnimplementedMethods(component).stream()
           .map(ComponentMethodValidator::new)
           .forEachOrdered(ComponentMethodValidator::validateMethod);
@@ -271,6 +249,7 @@ public final class ComponentValidator implements ClearableCache {
       }
 
       void validateMethod() {
+        superficialValidation.validateTypeOf(method);
         validateNoTypeVariables();
 
         // abstract methods are ones we have to implement, so they each need to be validated
@@ -437,6 +416,16 @@ public final class ComponentValidator implements ClearableCache {
         if (!(isVoid(returnType) || returnType.isSameType(parameterType))) {
           report.addError(
               "Members injection methods may only return the injected type or void.", method);
+        }
+        if (method.isKotlinPropertySetter()) {
+          // Kotlin "var" properties result in a setter method like "#setFoo(Foo)" which act like
+          // members injection methods in a Dagger component. However, this is rarely what a user
+          // actually intends when using "var" so we just ban it.
+          report.addError(
+              String.format(
+                  "Cannot use 'abstract var' property in a component declaration to get a"
+                      + " binding. Use 'val' or 'fun' instead: %s",
+                  method.getPropertyName()));
         }
       }
 

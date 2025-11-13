@@ -23,7 +23,6 @@ import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedInjectionType;
 import static dagger.internal.codegen.binding.MapKeys.getMapKeys;
-import static dagger.internal.codegen.validation.KeywordValidator.validateNoJavaKeyword;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeVariable;
@@ -148,18 +147,7 @@ public abstract class BindingElementValidator<E extends XElement> {
       checkMultibindingAnnotations();
       checkScopes();
       checkAdditionalProperties();
-      checkNoJavaKeywords();
-      // TODO(emjich): Add check for Kotlin keywords if useKotlinCodegen flag is true
       return report.build();
-    }
-
-    /**
-     * Adds an error if the element has a name that is a Java keyword.
-     *
-     * <p>This is not allowed because Dagger currently generates Java code for KSP.
-     */
-    protected void checkNoJavaKeywords() {
-      validateNoJavaKeyword(element, report);
     }
 
     /** Check any additional properties of the element. Does nothing by default. */

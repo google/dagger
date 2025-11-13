@@ -67,6 +67,7 @@ public final class BindsInstanceMethodValidator
         report.addError(
             "@BindsInstance methods should have exactly one parameter for the bound type");
       }
+      superficialValidation.validateElement(method);
       XTypeElement enclosingTypeElement = getEnclosingTypeElement(method);
       moduleAnnotation(enclosingTypeElement, superficialValidation)
           .ifPresent(moduleAnnotation -> report.addError(didYouMeanBinds(moduleAnnotation)));

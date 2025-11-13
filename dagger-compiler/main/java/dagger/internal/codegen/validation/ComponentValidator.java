@@ -425,7 +425,8 @@ public final class ComponentValidator implements ClearableCache {
               String.format(
                   "Cannot use 'abstract var' property in a component declaration to get a"
                       + " binding. Use 'val' or 'fun' instead: %s",
-                  method.getPropertyName()));
+                  method.getPropertyName()),
+              method);
         }
       }
 

@@ -21,7 +21,15 @@ package(default_visibility = ["//:src"])
 
 android_library(
     name = "builders",
-    srcs = glob(["*.java"]),
+    srcs = [
+        "ActivityComponentBuilder.java",
+        "ActivityRetainedComponentBuilder.java",
+        "FragmentComponentBuilder.java",
+        "ServiceComponentBuilder.java",
+        "ViewComponentBuilder.java",
+        "ViewModelComponentBuilder.java",
+        "ViewWithFragmentComponentBuilder.java",
+    ],
     deps = [
         "//hilt-android/main/java/dagger/hilt/android:view_model_lifecycle",
         "//hilt-android/main/java/dagger/hilt/android/components",

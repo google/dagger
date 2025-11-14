@@ -130,14 +130,3 @@ GenKtTests(
         "//third_party/java/truth",
     ],
 )
-
-GenKtTests(
-    name = "AssistedFactoryWithJavaKeyWordNamesTest",
-    srcs = ["AssistedFactoryWithJavaKeyWordNamesTest.kt"],
-    javacopts = DOCLINT_HTML_AND_SYNTAX,
-    deps = [
-        "//third_party/java/dagger",
-        "//third_party/java/junit",
-        "//third_party/java/truth",
-    ],
-)

@@ -114,11 +114,16 @@ public final class DaggerSuperficialValidation {
 
   private final boolean isStrictValidationEnabled;
   private final XProcessingEnv processingEnv;
+  private final KeywordValidator keywordValidator;
 
   @Inject
-  DaggerSuperficialValidation(XProcessingEnv processingEnv, CompilerOptions compilerOptions) {
+  DaggerSuperficialValidation(
+      XProcessingEnv processingEnv,
+      CompilerOptions compilerOptions,
+      KeywordValidator keywordValidator) {
     this.processingEnv = processingEnv;
     this.isStrictValidationEnabled = compilerOptions.strictSuperficialValidation();
+    this.keywordValidator = keywordValidator;
   }
 
   /**
@@ -133,20 +138,22 @@ public final class DaggerSuperficialValidation {
     try {
       // In XProcessing, there is no generic way to get an element "asType" so we break this down
       // differently for different element kinds.
+      String kindName = Ascii.toLowerCase(getKindName(element));
       if (isTypeElement(element)) {
-        validateType(Ascii.toLowerCase(getKindName(element)), asTypeElement(element).getType());
+        validateType(kindName, asTypeElement(element).getType());
       } else if (isVariableElement(element)) {
-        validateType(
-            Ascii.toLowerCase(getKindName(element)) + " type", asVariable(element).getType());
+        validateType(kindName + " type", asVariable(element).getType());
       } else if (isExecutable(element)) {
         validateExecutableType(asExecutable(element).getExecutableType());
       } else if (isEnumEntry(element)) {
-        validateType(
-            Ascii.toLowerCase(getKindName(element)),
-            asEnumEntry(element).getEnumTypeElement().getType());
+        validateType(kindName, asEnumEntry(element).getEnumTypeElement().getType());
       }
     } catch (RuntimeException exception) {
       throw ValidationException.from(exception).append(element);
+    }
+    ValidationReport report = keywordValidator.validateJavaKeyword(element);
+    if (!report.isClean()) {
+      throw new ValidationException.JavaKeywordErrorType(report);
     }
   }
 
@@ -536,6 +543,19 @@ public final class DaggerSuperficialValidation {
 
       public String getErrorTypeName() {
         return errorTypeName;
+      }
+    }
+
+    /** A {@link ValidationException} that originated from a Java keyword error type. */
+    public static final class JavaKeywordErrorType extends ValidationException {
+      private final ValidationReport report;
+
+      public JavaKeywordErrorType(ValidationReport report) {
+        this.report = report;
+      }
+
+      public ValidationReport getReport() {
+        return report;
       }
     }
 

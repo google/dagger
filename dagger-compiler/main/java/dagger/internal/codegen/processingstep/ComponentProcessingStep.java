@@ -72,11 +72,6 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
   }
 
   @Override
-  protected boolean requiresPreValidation() {
-    return false;
-  }
-
-  @Override
   public Set<XClassName> annotationClassNames() {
     return union(allComponentAnnotations(), allCreatorAnnotations());
   }

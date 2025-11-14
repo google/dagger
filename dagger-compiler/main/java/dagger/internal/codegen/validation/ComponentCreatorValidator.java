@@ -36,7 +36,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ObjectArrays;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.ComponentCreatorAnnotation;
-import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.ErrorMessages;
 import dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages;
@@ -54,14 +53,13 @@ public final class ComponentCreatorValidator implements ClearableCache {
 
   private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
   private final MethodSignatureFormatter methodSignatureFormatter;
-  private final DaggerSuperficialValidation superficialValidation;
+  private final KeywordValidator keywordValidator;
 
   @Inject
   ComponentCreatorValidator(
-      MethodSignatureFormatter methodSignatureFormatter,
-      DaggerSuperficialValidation superficialValidation) {
+      MethodSignatureFormatter methodSignatureFormatter, KeywordValidator keywordValidator) {
     this.methodSignatureFormatter = methodSignatureFormatter;
-    this.superficialValidation = superficialValidation;
+    this.keywordValidator = keywordValidator;
   }
 
   @Override
@@ -150,6 +148,9 @@ public final class ComponentCreatorValidator implements ClearableCache {
         return report.build();
       }
 
+      // Validate methods names for a JavaKeyword.
+      keywordValidator.validateMethodsName(creator, report);
+
       switch (annotation.creatorKind()) {
         case FACTORY:
           validateFactory();
@@ -216,7 +217,6 @@ public final class ComponentCreatorValidator implements ClearableCache {
     private void validateBuilder() {
       XMethodElement buildMethod = null;
       for (XMethodElement method : getAllUnimplementedMethods(creator)) {
-        superficialValidation.validateTypeOf(method);
         switch (method.getParameters().size()) {
           case 0: // If this is potentially a build() method, validate it returns the correct type.
             if (validateFactoryMethodReturnType(method)) {

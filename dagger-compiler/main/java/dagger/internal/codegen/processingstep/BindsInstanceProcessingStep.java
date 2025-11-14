@@ -46,11 +46,6 @@ final class BindsInstanceProcessingStep extends TypeCheckingProcessingStep<XElem
   }
 
   @Override
-  protected boolean requiresPreValidation() {
-    return false;
-  }
-
-  @Override
   public ImmutableSet<XClassName> annotationClassNames() {
     return ImmutableSet.of(XTypeNames.BINDS_INSTANCE);
   }

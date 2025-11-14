@@ -24,6 +24,7 @@ import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConst
 import static dagger.internal.codegen.binding.SourceFiles.factoryNameForElement;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.validation.KeywordValidator.validateNoJavaKeyword;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isEffectivelyPrivate;
@@ -349,6 +350,7 @@ public final class InjectValidator implements ClearableCache {
             "Dagger injector does not have access to kotlin protected fields", fieldElement);
       }
 
+      validateNoJavaKeyword(fieldElement, builder);
       validateDependencyRequest(builder, fieldElement);
 
       return builder.build();
@@ -357,6 +359,9 @@ public final class InjectValidator implements ClearableCache {
     private ValidationReport validateMethod(XMethodElement methodElement) {
       superficialValidation.validateTypeOf(methodElement);
       ValidationReport.Builder builder = ValidationReport.about(methodElement);
+
+      validateNoJavaKeyword(methodElement, builder);
+
       if (methodElement.isAbstract()) {
         builder.addError("Methods with @Inject may not be abstract", methodElement);
       }

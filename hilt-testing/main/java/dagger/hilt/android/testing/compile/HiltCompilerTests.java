@@ -59,6 +59,7 @@ import dagger.hilt.processor.internal.uninstallmodules.UninstallModulesProcessor
 import dagger.internal.codegen.ComponentProcessor;
 import dagger.internal.codegen.KspComponentProcessor;
 import dagger.testing.compile.CompilerTests;
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -113,7 +114,10 @@ public final class HiltCompilerTests {
 
   /** Returns a {@link Compiler} instance with the given sources. */
   public static HiltCompiler hiltCompiler(ImmutableCollection<Source> sources) {
-    return HiltCompiler.builder().sources(sources).build();
+    return HiltCompiler.builder()
+        .additionalClasspath(ImmutableList.of())
+        .sources(sources)
+        .build();
   }
 
   public static Compiler compiler(Processor... extraProcessors) {
@@ -233,6 +237,9 @@ public final class HiltCompilerTests {
     /** Returns the annotation processors options. */
     abstract ImmutableMap<String, String> processorOptions();
 
+    /** Returns extra files for the classpath. */
+    abstract ImmutableCollection<File> additionalClasspath();
+
     /** Returns the extra Javac processors. */
     abstract ImmutableCollection<Processor> additionalJavacProcessors();
 
@@ -275,8 +282,66 @@ public final class HiltCompilerTests {
       return toBuilder().javacArguments(arguments).build();
     }
 
+    /** Returns a new {@link HiltCompiler} instance with the additional files in the classpath. */
+    public HiltCompiler withAdditionalClasspath(ImmutableCollection<File> libs) {
+      return toBuilder().additionalClasspath(libs).build();
+    }
+
     /** Returns a builder with the current values of this {@link Compiler} as default. */
     abstract Builder toBuilder();
+
+    /**
+     * Compiles the sources with Javac/KAPT and returns the list of generated files.
+     *
+     * <p>This is useful for compiling a set of sources in a separate compilation step that can be
+     * passed in as the classpath of a subsequent compilation.
+     */
+    public ImmutableList<File> compileFilesWithJavac() {
+      return compileFiles(XProcessingEnv.Backend.JAVAC);
+    }
+
+    /**
+     * Compiles the sources with KSP and returns the list of generated files.
+     *
+     * <p>This is useful for compiling a set of sources in a separate compilation step that can be
+     * passed in as the classpath of a subsequent compilation.
+     */
+    public ImmutableList<File> compileFilesWithKsp() {
+      return compileFiles(XProcessingEnv.Backend.KSP);
+    }
+
+    private ImmutableList<File> compileFiles(XProcessingEnv.Backend backend) {
+      // TODO(bcorso): We can't run both Javac and KSP processors since any generated sources would
+      // cause a conflict since they would be generated for both Javac and KSP. As a temporary
+      // solution, we only pass the processors that match the backend, but this isn't really correct
+      // since both backends still run and not passing the processors could cause errors. Long term,
+      // we should change the XProcessingTesting API to take the backend as input and only compile
+      // for a single backend.
+      ImmutableList<Processor> javacProcessors;
+      ImmutableList<SymbolProcessorProvider> symbolProcessorProviders;
+      switch (backend) {
+        case JAVAC:
+          javacProcessors = mergedJavacProcessors();
+          symbolProcessorProviders = ImmutableList.of();
+          break;
+        case KSP:
+          javacProcessors = ImmutableList.of();
+          symbolProcessorProviders = mergedKspProcessors();
+          break;
+        default:
+          throw new IllegalArgumentException("Unsupported backend: " + backend);
+      }
+      return ImmutableList.copyOf(
+          ProcessorTestExtKt.compileFiles(
+              /* sources= */ sources().asList(),
+              /* classpath= */ mergedClasspath(),
+              /* options= */ processorOptions(),
+              /* annotationProcessors= */ javacProcessors,
+              /* symbolProcessorProviders= */ symbolProcessorProviders,
+              /* javacArguments= */ DEFAULT_JAVAC_OPTIONS,
+              /* kotlincArguments= */ DEFAULT_KOTLINC_OPTIONS,
+              /* includeSystemClasspath= */ true));
+    }
 
     public void compile(Consumer<CompilationResultSubject> onCompilationResult) {
       compileInternal(onCompilationResult, DEFAULT_KOTLINC_OPTIONS);
@@ -287,33 +352,52 @@ public final class HiltCompilerTests {
         ImmutableList<String> kotlincArguments) {
       ProcessorTestExtKt.runProcessorTest(
           sources().asList(),
-          /* classpath= */ ImmutableList.of(CompilerTests.compilerDepsJar()),
+          /* classpath= */ mergedClasspath(),
           /* options= */ processorOptions(),
-          /* javacArguments= */
-          ImmutableList.<String>builder()
-              .addAll(DEFAULT_JAVAC_OPTIONS)
-              .addAll(javacArguments())
-              .build(),
+          /* javacArguments= */ mergedJavacArguments(),
           /* kotlincArguments= */ kotlincArguments,
           /* config= */ HiltProcessingEnvConfigs.CONFIGS,
-          /* javacProcessors= */ ImmutableList.<Processor>builder()
-              .addAll(mergeProcessors(defaultProcessors(), additionalJavacProcessors()))
-              .addAll(
-                  processingSteps().stream()
-                      .map(HiltCompilerProcessors.JavacProcessor::new)
-                      .collect(toImmutableList()))
-              .build(),
-          /* symbolProcessorProviders= */ ImmutableList.<SymbolProcessorProvider>builder()
-              .addAll(mergeProcessors(kspDefaultProcessors(), additionalKspProcessors()))
-              .addAll(
-                  processingSteps().stream()
-                      .map(HiltCompilerProcessors.KspProcessor.Provider::new)
-                      .collect(toImmutableList()))
-              .build(),
+          /* javacProcessors= */ mergedJavacProcessors(),
+          /* symbolProcessorProviders= */ mergedKspProcessors(),
+          /* onCompilationResult= */
           result -> {
             onCompilationResult.accept(result);
             return null;
           });
+    }
+
+    private ImmutableList<File> mergedClasspath() {
+      return ImmutableList.<File>builder()
+          .add(CompilerTests.compilerDepsJar())
+          .addAll(additionalClasspath())
+          .build();
+    }
+
+    private ImmutableList<String> mergedJavacArguments() {
+      return ImmutableList.<String>builder()
+          .addAll(DEFAULT_JAVAC_OPTIONS)
+          .addAll(javacArguments())
+          .build();
+    }
+
+    private ImmutableList<Processor> mergedJavacProcessors() {
+      return ImmutableList.<Processor>builder()
+          .addAll(mergeProcessors(defaultProcessors(), additionalJavacProcessors()))
+          .addAll(
+              processingSteps().stream()
+                  .map(HiltCompilerProcessors.JavacProcessor::new)
+                  .collect(toImmutableList()))
+          .build();
+    }
+
+    private ImmutableList<SymbolProcessorProvider> mergedKspProcessors() {
+      return ImmutableList.<SymbolProcessorProvider>builder()
+          .addAll(mergeProcessors(kspDefaultProcessors(), additionalKspProcessors()))
+          .addAll(
+              processingSteps().stream()
+                  .map(HiltCompilerProcessors.KspProcessor.Provider::new)
+                  .collect(toImmutableList()))
+          .build();
     }
 
     private static <T> ImmutableList<T> mergeProcessors(
@@ -330,6 +414,7 @@ public final class HiltCompilerTests {
     public abstract static class Builder {
       abstract Builder sources(ImmutableCollection<Source> sources);
       abstract Builder processorOptions(ImmutableMap<String, String> processorOptions);
+      abstract Builder additionalClasspath(ImmutableCollection<File> additionalClasspath);
       abstract Builder additionalJavacProcessors(ImmutableCollection<Processor> processors);
       abstract Builder additionalKspProcessors(
           ImmutableCollection<SymbolProcessorProvider> processors);

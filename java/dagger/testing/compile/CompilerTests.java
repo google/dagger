@@ -177,6 +177,8 @@ public final class CompilerTests {
     }
   }
 
+  // TODO(bcorso): Remove this and replace with
+  // DaggerCompiler.compileFilesWithJavac()/compileFilesWithKsp().
   /** Used to compile regular java or kotlin sources into a library artifact. */
   @AutoValue
   public abstract static class LibraryCompiler {
@@ -291,20 +293,87 @@ public final class CompilerTests {
           /* javacArguments= */ DEFAULT_JAVAC_OPTIONS,
           /* kotlincArguments= */ DEFAULT_KOTLINC_OPTIONS,
           /* config= */ PROCESSING_ENV_CONFIG,
-          /* javacProcessors= */ mergeProcessors(
-              ImmutableList.of(
-                  ComponentProcessor.withTestPlugins(bindingGraphPlugins()),
-                  new CompilerProcessors.JavacProcessor(processingSteps())),
-              additionalJavacProcessors()),
-          /* symbolProcessorProviders= */ mergeProcessors(
-              ImmutableList.of(
-                  KspComponentProcessor.Provider.withTestPlugins(bindingGraphPlugins()),
-                  new CompilerProcessors.KspProcessor.Provider(processingSteps())),
-              additionalKspProcessors()),
+          /* javacProcessors= */ mergedJavacProcessors(),
+          /* symbolProcessorProviders= */ mergedKspProcessors(),
           result -> {
             onCompilationResult.accept(result);
             return null;
           });
+    }
+
+    /**
+     * Compiles the sources with Javac/KAPT and returns the list of generated files.
+     *
+     * <p>This is useful for compiling a set of sources in a separate compilation step that can be
+     * passed in as the classpath of a subsequent compilation.
+     */
+    public ImmutableList<File> compileFilesWithJavac() {
+      return compileFiles(XProcessingEnv.Backend.JAVAC);
+    }
+
+    /**
+     * Compiles the sources with KSP and returns the list of generated files.
+     *
+     * <p>This is useful for compiling a set of sources in a separate compilation step that can be
+     * passed in as the classpath of a subsequent compilation.
+     */
+    public ImmutableList<File> compileFilesWithKsp() {
+      return compileFiles(XProcessingEnv.Backend.KSP);
+    }
+
+    public ImmutableList<File> compileFiles(XProcessingEnv.Backend backend) {
+      // TODO(bcorso): We can't run both Javac and KSP processors since any generated sources would
+      // cause a conflict since they would be generated for both Javac and KSP. As a temporary
+      // solution, we only pass the processors that match the backend, but this isn't really correct
+      // since both backends still run and not passing the processors could cause errors. Long term,
+      // we should change the XProcessingTesting API to take the backend as input and only compile
+      // for a single backend.
+      ImmutableList<Processor> javacProcessors;
+      ImmutableList<SymbolProcessorProvider> symbolProcessorProviders;
+      switch (backend) {
+        case JAVAC:
+          javacProcessors = mergedJavacProcessors();
+          symbolProcessorProviders = ImmutableList.of();
+          break;
+        case KSP:
+          javacProcessors = ImmutableList.of();
+          symbolProcessorProviders = mergedKspProcessors();
+          break;
+        default:
+          throw new IllegalArgumentException("Unsupported backend: " + backend);
+      }
+      return ImmutableList.copyOf(
+          ProcessorTestExtKt.compileFiles(
+              /* sources= */ sources().asList(),
+              /* classpath= */ additionalClasspath(),
+              /* options= */ processorOptions(),
+              /* annotationProcessors= */ javacProcessors,
+              // TODO(bcorso): We can't run both Javac and KSP processors since any generated
+              // sources would cause a conflict since they would be generated for both Javac and
+              // KSP. Instead, we should change the XProcessingTesting API to compileFilesWithJavac
+              // and compileFilesWithKsp when compiling to get the class files. As a temporary
+              // solution, we're just not passing in any KSP processors, but that can cause
+              // breakages because KSP will still run just without any processors.
+              /* symbolProcessorProviders= */ symbolProcessorProviders,
+              /* javacArguments= */ DEFAULT_JAVAC_OPTIONS,
+              /* kotlincArguments= */ DEFAULT_KOTLINC_OPTIONS,
+              /* includeSystemClasspath= */ true));
+    }
+
+    private ImmutableList<Processor> mergedJavacProcessors() {
+      return mergeProcessors(
+          ImmutableList.of(
+              ComponentProcessor.withTestPlugins(bindingGraphPlugins()),
+              new CompilerProcessors.JavacProcessor(processingSteps())),
+          additionalJavacProcessors());
+    }
+
+    private ImmutableList<SymbolProcessorProvider> mergedKspProcessors() {
+      return mergeProcessors(
+          ImmutableList.of(
+              KspComponentProcessor.Provider.withTestPlugins(bindingGraphPlugins()),
+              new CompilerProcessors.KspProcessor.Provider(processingSteps())),
+          additionalKspProcessors());
     }
 
     private static <T> ImmutableList<T> mergeProcessors(

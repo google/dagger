@@ -106,6 +106,8 @@ abstract class TypeCheckingProcessingStep<E extends XElement> implements XProces
               } catch (ValidationException.KnownErrorType e) {
                 deferredElements.add(element);
                 cacheErrorMessage(knownErrorTypeErrorMessage(element, e), e);
+              } catch (ValidationException.JavaKeywordErrorType e) {
+                e.getReport().printMessagesTo(messager);
               } catch (ValidationException.UnknownErrorType e) {
                 deferredElements.add(element);
                 cacheErrorMessage(unknownErrorTypeErrorMessage(element, e), e);

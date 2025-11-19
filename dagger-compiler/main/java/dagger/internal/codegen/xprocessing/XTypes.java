@@ -42,6 +42,7 @@ import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
 import androidx.room3.compiler.processing.XTypeVariableType;
+import androidx.room3.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
 import com.squareup.javapoet.ArrayTypeName;
@@ -348,7 +349,13 @@ public final class XTypes {
   /** Returns {@code true} if the given type is a primitive type. */
   public static boolean isPrimitive(XType type) {
     // TODO(bcorso): Consider representing this as an actual type in XProcessing.
-    return type.getTypeName().isPrimitive();
+    switch (XConverters.getProcessingEnv(type).getBackend()) {
+      case JAVAC:
+        return XConverters.toJavac(type).getKind().isPrimitive();
+      case KSP:
+        return type.getTypeName().isPrimitive();
+    }
+    return false;
   }
 
   /** Returns {@code true} if the given type has type parameters. */

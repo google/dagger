@@ -21,24 +21,31 @@ import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.xprocessing.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.xprocessing.XCodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XFunSpecs.methodBuilder;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XCodeBlock;
+import androidx.room3.compiler.codegen.XFunSpec;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import com.google.common.collect.ImmutableSet;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.binding.KeyVariableNamer;
 import dagger.internal.codegen.binding.MultiboundSetBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.xprocessing.XCodeBlocks;
 import dagger.internal.codegen.xprocessing.XExpression;
 import dagger.internal.codegen.xprocessing.XTypeNames;
+import javax.lang.model.element.Modifier;
 
 /** A binding expression for multibound sets. */
 final class SetRequestRepresentation extends RequestRepresentation {
@@ -47,6 +54,7 @@ final class SetRequestRepresentation extends RequestRepresentation {
   private final ComponentRequestRepresentations componentRequestRepresentations;
   private final CompilerOptions compilerOptions;
   private final XProcessingEnv processingEnv;
+  private final ShardImplementation shard;
 
   @AssistedInject
   SetRequestRepresentation(
@@ -58,6 +66,7 @@ final class SetRequestRepresentation extends RequestRepresentation {
       XProcessingEnv processingEnv) {
     this.binding = binding;
     this.graph = graph;
+    this.shard = componentImplementation.shardImplementation(binding);
     this.componentRequestRepresentations = componentRequestRepresentations;
     this.compilerOptions = compilerOptions;
     this.processingEnv = processingEnv;
@@ -65,6 +74,9 @@ final class SetRequestRepresentation extends RequestRepresentation {
 
   @Override
   XExpression getDependencyExpression(XClassName requestingClass) {
+    // TODO(b/460400653): This might cause a double wrap when we call to getDependencyExpression
+    // on a single element set. It would be good to get rid of that double wrapping, but solving
+    // this properly may require rethinking our current API.
     // TODO(ronshapiro): We should also make an ImmutableSet version of SetFactory
     boolean isImmutableSetAvailable = isImmutableSetAvailable();
     // TODO(ronshapiro, gak): Use Sets.immutableEnumSet() if it's available?
@@ -102,33 +114,73 @@ final class SetRequestRepresentation extends RequestRepresentation {
                     .build());
           }
         }
-        // fall through
+      // fall through
       default:
-        XCodeBlock.Builder instantiation = XCodeBlock.builder();
-        instantiation
-            .add("%T.", isImmutableSetAvailable ? XTypeNames.IMMUTABLE_SET : XTypeNames.SET_BUILDER)
-            .add(maybeTypeParameter(requestingClass));
-        if (isImmutableSetBuilderWithExpectedSizeAvailable()) {
-          instantiation.add("builderWithExpectedSize(%L)", binding.dependencies().size());
-        } else if (isImmutableSetAvailable) {
-          instantiation.add("builder()");
-        } else {
-          instantiation.add("newSetBuilder(%L)", binding.dependencies().size());
-        }
-        // TODO(b/430348351): We should avoid arbitrarily long chaining of methods like this
-        // because it can cause StackOverflow in javac when building the AST for this generated
-        // code. To fix this, we would need to ban direct inlining of the Set expression and wrap
-        // the builder creation in a method that splits the chain into separate statements.
+        String builderName = "setBuilder";
+        XCodeBlock.Builder builderMethodCalls = XCodeBlock.builder();
         for (DependencyRequest dependency : binding.dependencies()) {
           String builderMethod = isSingleValue(dependency) ? "add" : "addAll";
-          instantiation.add(
-              ".%L(%L)", builderMethod, getContributionExpression(dependency, requestingClass));
+          builderMethodCalls.addStatement(
+              "%N.%N(%L)",
+              builderName, builderMethod, getContributionExpression(dependency, requestingClass));
         }
-        instantiation.add(".build()");
-        return XExpression.create(
-            isImmutableSetAvailable ? immutableSetType() : binding.key().type().xprocessing(),
-            instantiation.build());
+
+        String methodName =
+            shard.getUniqueMethodName(KeyVariableNamer.name(binding.key()) + "Builder");
+        XTypeName returnType =
+            isImmutableSetAvailable ? XTypeNames.IMMUTABLE_SET : XTypeNames.JAVA_UTIL_SET;
+        XTypeName builderType =
+            isImmutableSetAvailable ? XTypeNames.IMMUTABLE_SET_BUILDER : XTypeNames.SET_BUILDER;
+        XFunSpec methodSpec =
+            methodBuilder(methodName)
+                .addModifiers(
+                    !shard.isShardClassPrivate()
+                        ? ImmutableSet.of(Modifier.PRIVATE)
+                        : ImmutableSet.of())
+                .returns(returnType)
+                .addCode(
+                    XCodeBlock.builder()
+                        .addStatement(
+                            "%T %N = %L",
+                            builderType,
+                            builderName,
+                            setBuilderInvocation(requestingClass, isImmutableSetAvailable))
+                        .add(builderMethodCalls.build())
+                        .addStatement("return %N.build()", builderName)
+                        .build())
+                .build();
+        shard.addMethod(MethodSpecKind.PRIVATE_METHOD, methodSpec);
+        XType expressionType =
+            isImmutableSetAvailable ? immutableSetType() : binding.key().type().xprocessing();
+        boolean isSameClass = requestingClass.equals(shard.name());
+        XCodeBlock codeBlock =
+            isSameClass
+                ? XCodeBlock.of("%N()", methodName) // Call method directly
+                : XCodeBlock.of(
+                    "%L.%N()",
+                    shard.shardFieldReference(), methodName); // Call method on shard field
+
+        return XExpression.create(expressionType, codeBlock);
     }
+  }
+
+  private XCodeBlock setBuilderInvocation(
+      XClassName requestingClass, boolean isImmutableSetAvailable) {
+    XCodeBlock.Builder builder = XCodeBlock.builder();
+    XCodeBlock typeParam = maybeTypeParameter(requestingClass);
+
+    if (isImmutableSetAvailable) {
+      builder.add("%T.", XTypeNames.IMMUTABLE_SET).add(typeParam);
+      if (isImmutableSetBuilderWithExpectedSizeAvailable()) {
+        builder.add("builderWithExpectedSize(%L)", binding.dependencies().size());
+      } else {
+        builder.add("builder()");
+      }
+    } else {
+      builder.add("%T.", XTypeNames.SET_BUILDER).add(typeParam);
+      builder.add("newSetBuilder(%L)", binding.dependencies().size());
+    }
+    return builder.build();
   }
 
   private XType immutableSetType() {

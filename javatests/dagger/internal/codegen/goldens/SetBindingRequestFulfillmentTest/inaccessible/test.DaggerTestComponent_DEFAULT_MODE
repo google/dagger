@@ -52,8 +52,14 @@ final class DaggerTestComponent {
 
     }
 
+    Set setOfInaccessible2Builder() {
+      SetBuilder setBuilder = SetBuilder.newSetBuilder(1);
+      setBuilder.addAll(TestModule_EmptySetFactory.emptySet());
+      return setBuilder.build();
+    }
+
     Set setOfInaccessible2() {
-      return SetBuilder.newSetBuilder(1).addAll(TestModule_EmptySetFactory.emptySet()).build();
+      return setOfInaccessible2Builder();
     }
 
     @Override

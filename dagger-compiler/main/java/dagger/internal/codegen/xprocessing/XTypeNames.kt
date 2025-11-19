@@ -27,15 +27,15 @@ import com.squareup.javapoet.ArrayTypeName as JArrayTypeName
 import com.squareup.javapoet.ClassName as JClassName
 import com.squareup.javapoet.ParameterizedTypeName as JParameterizedTypeName
 import com.squareup.javapoet.TypeName as JTypeName
-import com.squareup.javapoet.WildcardTypeName as JWildcardTypeName
 import com.squareup.javapoet.TypeVariableName as JTypeVariableName
+import com.squareup.javapoet.WildcardTypeName as JWildcardTypeName
 import com.squareup.kotlinpoet.ANY
 import com.squareup.kotlinpoet.ClassName as KClassName
 import com.squareup.kotlinpoet.ParameterizedTypeName as KParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.TypeName as KTypeName
-import com.squareup.kotlinpoet.WildcardTypeName as KWildcardTypeName
 import com.squareup.kotlinpoet.TypeVariableName as KTypeVariableName
+import com.squareup.kotlinpoet.WildcardTypeName as KWildcardTypeName
 
 /** Common names and convenience methods for XPoet {@link XTypeName} usage. */
 @OptIn(com.squareup.kotlinpoet.javapoet.KotlinPoetJavaPoetPreview::class)
@@ -183,16 +183,17 @@ object XTypeNames {
   @JvmField
   val UNSUPPORTED_OPERATION_EXCEPTION = XClassName.get("java.lang", "UnsupportedOperationException")
   @JvmField
-  val DEPRECATED = toXPoet(
-    JClassName.get("java.lang", "Deprecated"),
-    KClassName("kotlin", "Deprecated")
-  )
-  @JvmField val CAN_IGNORE_RETURN_VALUE =
-   XClassName.get("com.google.errorprone.annotations", "CanIgnoreReturnValue")
+  val DEPRECATED =
+    toXPoet(JClassName.get("java.lang", "Deprecated"), KClassName("kotlin", "Deprecated"))
+  @JvmField
+  val CAN_IGNORE_RETURN_VALUE =
+    XClassName.get("com.google.errorprone.annotations", "CanIgnoreReturnValue")
 
   @JvmField val KOTLIN_METADATA = XClassName.get("kotlin", "Metadata")
   @JvmField val IMMUTABLE_MAP = XClassName.get("com.google.common.collect", "ImmutableMap")
   @JvmField val IMMUTABLE_SET = XClassName.get("com.google.common.collect", "ImmutableSet")
+  @JvmField
+  val IMMUTABLE_SET_BUILDER = XClassName.get("com.google.common.collect", "ImmutableSet.Builder")
   @JvmField
   val MORE_EXECUTORS = XClassName.get("com.google.common.util.concurrent", "MoreExecutors")
   @JvmField val FUTURES = XClassName.get("com.google.common.util.concurrent", "Futures")
@@ -222,9 +223,13 @@ object XTypeNames {
   @JvmField val JAVAX_PROVIDER = XClassName.get("javax.inject", "Provider")
 
   @JvmStatic fun singletonTypeNames() = setOf(JAVAX_SINGLETON, JAKARTA_SINGLETON)
+
   @JvmStatic fun scopeTypeNames() = setOf(JAVAX_SCOPE, JAKARTA_SCOPE)
+
   @JvmStatic fun injectTypeNames() = setOf(JAVAX_INJECT, JAKARTA_INJECT)
+
   @JvmStatic fun qualifierTypeNames() = setOf(JAVAX_QUALIFIER, JAKARTA_QUALIFIER)
+
   @JvmStatic fun providerTypeNames() = setOf(JAVAX_PROVIDER, JAKARTA_PROVIDER)
 
   @JvmStatic
@@ -300,8 +305,7 @@ object XTypeNames {
   }
 
   /** Returns `true` if the raw type is equal to the given `className`. */
-  @JvmStatic
-  fun XTypeName.isTypeOf(className: XClassName) = this.rawTypeName == className
+  @JvmStatic fun XTypeName.isTypeOf(className: XClassName) = this.rawTypeName == className
 
   /** Returns `true` if the raw type is equal to any of the given `classNames`. */
   @JvmStatic
@@ -318,10 +322,7 @@ object XTypeNames {
     // TODO(b/427261839): Normally, we would just cast to XClassName, but that currently doesn't
     // work in XProcessing due to b/427261839. Instead, we cast the JavaPoet and KotlinPoet
     // representations separately and create a new XClassName from the result.
-    return toXPoet(
-      toJavaPoet() as JClassName,
-      toKotlinPoet() as KClassName,
-    )
+    return toXPoet(toJavaPoet() as JClassName, toKotlinPoet() as KClassName)
   }
 
   /**
@@ -348,26 +349,26 @@ object XTypeNames {
   }
 
   /** The default [KTypeName] returned by xprocessing APIs when the backend is not KSP. */
-  internal val UNAVAILABLE_KTYPE_NAME =
-      KClassName("androidx.room3.compiler.codegen", "Unavailable")
+  internal val UNAVAILABLE_KTYPE_NAME = KClassName("androidx.room3.compiler.codegen", "Unavailable")
 
-  @JvmStatic
-  fun XTypeName.unwrap(): XTypeName = getParameterizedTypeArgument(0)
+  @JvmStatic fun XTypeName.unwrap(): XTypeName = getParameterizedTypeArgument(0)
 
   // TODO(b/448510944): We shouldn't need to reach into the JavaPoet/KotlinPoet internals once this
   // bug is fixed.
   @JvmStatic
   fun XTypeName.getParameterizedTypeArgument(index: Int): XTypeName {
     return toXPoet(
-      jTypeName = when (val jTypeName = toJavaPoet()) {
-        is JParameterizedTypeName -> jTypeName.typeArguments[index]
-        else -> error("Expected a parameterized type name but got $jTypeName")
-      },
-      kTypeName = when (val kTypeName = toKotlinPoet()) {
-        UNAVAILABLE_KTYPE_NAME -> kTypeName
-        is KParameterizedTypeName -> kTypeName.typeArguments[index]
-        else -> error("Expected a parameterized type name but got $kTypeName")
-      }
+      jTypeName =
+        when (val jTypeName = toJavaPoet()) {
+          is JParameterizedTypeName -> jTypeName.typeArguments[index]
+          else -> error("Expected a parameterized type name but got $jTypeName")
+        },
+      kTypeName =
+        when (val kTypeName = toKotlinPoet()) {
+          UNAVAILABLE_KTYPE_NAME -> kTypeName
+          is KParameterizedTypeName -> kTypeName.typeArguments[index]
+          else -> error("Expected a parameterized type name but got $kTypeName")
+        },
     )
   }
 
@@ -384,14 +385,14 @@ object XTypeNames {
     }
     return when (this) {
       is JClassName -> false
-      is JParameterizedTypeName -> typeArguments.any {
-        it.boundsHasSelfReference(typeParametersMap)
-      }
-      is JWildcardTypeName -> if (!lowerBounds.isEmpty()) {
-        lowerBounds.first().boundsHasSelfReference(typeParametersMap)
-      } else {
-        upperBounds.first().boundsHasSelfReference(typeParametersMap)
-      }
+      is JParameterizedTypeName ->
+        typeArguments.any { it.boundsHasSelfReference(typeParametersMap) }
+      is JWildcardTypeName ->
+        if (!lowerBounds.isEmpty()) {
+          lowerBounds.first().boundsHasSelfReference(typeParametersMap)
+        } else {
+          upperBounds.first().boundsHasSelfReference(typeParametersMap)
+        }
       is JArrayTypeName -> componentType.boundsHasSelfReference(typeParametersMap)
       is JTypeVariableName -> {
         if (bounds.isEmpty()) {
@@ -400,10 +401,7 @@ object XTypeNames {
         if (!typeParametersMap.contains(this)) {
           // Initialize the map to true so that we can catch cycles before a real value is assigned.
           typeParametersMap.put(this, true)
-          typeParametersMap.put(
-            this,
-            bounds.any { it.boundsHasSelfReference(typeParametersMap) }
-          )
+          typeParametersMap.put(this, bounds.any { it.boundsHasSelfReference(typeParametersMap) })
         }
         typeParametersMap.get(this)!!
       }
@@ -415,7 +413,7 @@ object XTypeNames {
   fun XTypeName.replaceTypeVariablesWithBounds() =
     toXPoet(
       toJavaPoet().replaceTypeVariablesWithBounds(mutableMapOf()),
-      toKotlinPoet().replaceTypeVariablesWithBounds(mutableMapOf())
+      toKotlinPoet().replaceTypeVariablesWithBounds(mutableMapOf()),
     )
 
   private val JCYCLIC_BOUNDS_SENTINEL = JClassName.get("", "JCYCLIC_BOUNDS_SENTINEL")
@@ -428,21 +426,21 @@ object XTypeNames {
     }
     return when (this) {
       is JClassName -> this
-      is JParameterizedTypeName -> JParameterizedTypeName.get(
-        rawType,
-        *typeArguments.map {
-          it.replaceTypeVariablesWithBounds(typeParametersMap)
-        }.toTypedArray()
-      )
-      is JWildcardTypeName -> if (!lowerBounds.isEmpty()) {
-        JWildcardTypeName.supertypeOf(
-          lowerBounds.first().replaceTypeVariablesWithBounds(typeParametersMap)
+      is JParameterizedTypeName ->
+        JParameterizedTypeName.get(
+          rawType,
+          *typeArguments.map { it.replaceTypeVariablesWithBounds(typeParametersMap) }.toTypedArray(),
         )
-      } else {
-        JWildcardTypeName.subtypeOf(
-          upperBounds.first().replaceTypeVariablesWithBounds(typeParametersMap)
-        )
-      }
+      is JWildcardTypeName ->
+        if (!lowerBounds.isEmpty()) {
+          JWildcardTypeName.supertypeOf(
+            lowerBounds.first().replaceTypeVariablesWithBounds(typeParametersMap)
+          )
+        } else {
+          JWildcardTypeName.subtypeOf(
+            upperBounds.first().replaceTypeVariablesWithBounds(typeParametersMap)
+          )
+        }
       is JArrayTypeName ->
         JArrayTypeName.of(componentType.replaceTypeVariablesWithBounds(typeParametersMap))
       is JTypeVariableName -> {
@@ -474,20 +472,20 @@ object XTypeNames {
   ): KTypeName {
     return when (this) {
       is KClassName -> this
-      is KParameterizedTypeName -> rawType.parameterizedBy(
-        *typeArguments.map {
-          it.replaceTypeVariablesWithBounds(typeParametersMap)
-        }.toTypedArray()
-      )
-      is KWildcardTypeName -> if (!inTypes.isEmpty()) {
-        KWildcardTypeName.consumerOf(
-          inTypes.first().replaceTypeVariablesWithBounds(typeParametersMap)
+      is KParameterizedTypeName ->
+        rawType.parameterizedBy(
+          *typeArguments.map { it.replaceTypeVariablesWithBounds(typeParametersMap) }.toTypedArray()
         )
-      } else {
-        KWildcardTypeName.producerOf(
-          outTypes.first().replaceTypeVariablesWithBounds(typeParametersMap)
-        )
-      }
+      is KWildcardTypeName ->
+        if (!inTypes.isEmpty()) {
+          KWildcardTypeName.consumerOf(
+            inTypes.first().replaceTypeVariablesWithBounds(typeParametersMap)
+          )
+        } else {
+          KWildcardTypeName.producerOf(
+            outTypes.first().replaceTypeVariablesWithBounds(typeParametersMap)
+          )
+        }
       is KTypeVariableName -> {
         if (bounds.isEmpty()) {
           return ANY.copy(nullable = true)

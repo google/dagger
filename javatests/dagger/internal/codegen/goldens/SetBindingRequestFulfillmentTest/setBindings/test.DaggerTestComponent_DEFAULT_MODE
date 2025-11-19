@@ -49,9 +49,16 @@ final class DaggerTestComponent {
 
     }
 
+    Set setOfStringBuilder() {
+      SetBuilder setBuilder = SetBuilder.<String>newSetBuilder(2);
+      setBuilder.addAll(EmptySetModule_EmptySetFactory.emptySet());
+      setBuilder.add(SetModule_StringFactory.string());
+      return setBuilder.build();
+    }
+
     @Override
     public Set<String> strings() {
-      return SetBuilder.<String>newSetBuilder(2).addAll(EmptySetModule_EmptySetFactory.emptySet()).add(SetModule_StringFactory.string()).build();
+      return setOfStringBuilder();
     }
 
     @Override

@@ -146,7 +146,7 @@ final class DirectInstanceBindingRepresentation {
       case ASSISTED_INJECTION:
       case INJECTION:
       case PROVISION:
-        // These binding kinds satify a binding request with a component method or a private
+        // These binding kinds satisfy a binding request with a component method or a private
         // method when the requested binding has dependencies. The method will wrap the logic of
         // creating the binding instance. Without the encapsulation, we might see many levels of
         // nested instance creation code in a single statement to satisfy all dependencies of a

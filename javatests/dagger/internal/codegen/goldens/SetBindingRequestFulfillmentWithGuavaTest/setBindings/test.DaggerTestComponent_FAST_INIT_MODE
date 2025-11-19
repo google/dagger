@@ -1,6 +1,7 @@
 package test;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
 import dagger.internal.DaggerGenerated;
 import java.util.Set;
 import javax.annotation.processing.Generated;
@@ -48,9 +49,16 @@ final class DaggerTestComponent {
 
     }
 
+    ImmutableSet setOfStringBuilder() {
+      ImmutableSet.Builder setBuilder = ImmutableSet.<String>builderWithExpectedSize(2);
+      setBuilder.addAll(EmptySetModule_EmptySetFactory.emptySet());
+      setBuilder.add(SetModule_StringFactory.string());
+      return setBuilder.build();
+    }
+
     @Override
     public Set<String> strings() {
-      return ImmutableSet.<String>builderWithExpectedSize(2).addAll(EmptySetModule_EmptySetFactory.emptySet()).add(SetModule_StringFactory.string()).build();
+      return setOfStringBuilder();
     }
 
     @Override

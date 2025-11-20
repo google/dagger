@@ -58,6 +58,7 @@ public class ActivityComponentManager
     this.activity = activity;
     this.activityRetainedComponentManager =
         new ActivityRetainedComponentManager((ComponentActivity) activity);
+
   }
 
   @Override

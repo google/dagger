@@ -164,7 +164,6 @@ public final class ComponentValidator implements ClearableCache {
         // the remaining checks will likely just output unhelpful noise in such cases.
         return report.addError(invalidTypeError(), component).build();
       }
-      validateFields();
       superficialValidation.validateTypeOf(component);
       validateUseOfCancellationPolicy();
       validateIsAbstractType();
@@ -204,18 +203,6 @@ public final class ComponentValidator implements ClearableCache {
       return String.format(
           "@%s may only be applied to an interface or abstract class",
           componentKind().annotation().getSimpleName());
-    }
-
-    private void validateFields() {
-      component.getDeclaredMethods().stream()
-          .filter(method -> method.isKotlinPropertySetter() && method.isAbstract())
-          .forEach(
-              method ->
-                  report.addError(
-                      String.format(
-                          "Cannot use 'abstract var' property in a component declaration to get a"
-                              + " binding. Use 'val' or 'fun' instead: %s",
-                          method.getPropertyName())));
     }
 
     private void validateCreators() {
@@ -429,6 +416,17 @@ public final class ComponentValidator implements ClearableCache {
         if (!(isVoid(returnType) || returnType.isSameType(parameterType))) {
           report.addError(
               "Members injection methods may only return the injected type or void.", method);
+        }
+        if (method.isKotlinPropertySetter()) {
+          // Kotlin "var" properties result in a setter method like "#setFoo(Foo)" which act like
+          // members injection methods in a Dagger component. However, this is rarely what a user
+          // actually intends when using "var" so we just ban it.
+          report.addError(
+              String.format(
+                  "Cannot use 'abstract var' property in a component declaration to get a"
+                      + " binding. Use 'val' or 'fun' instead: %s",
+                  method.getPropertyName()),
+              method);
         }
       }
 

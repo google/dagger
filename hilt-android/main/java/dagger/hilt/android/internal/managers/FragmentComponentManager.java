@@ -16,7 +16,6 @@
 
 package dagger.hilt.android.internal.managers;
 
-import dagger.hilt.android.components.ActivityComponent;
 import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -26,9 +25,9 @@ import android.view.LayoutInflater;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
+import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.internal.builders.FragmentComponentBuilder;
 import dagger.hilt.internal.GeneratedComponentManager;
-import dagger.hilt.internal.GeneratedComponentManagerHolder;
 import dagger.hilt.internal.Preconditions;
 
 /**
@@ -42,7 +41,6 @@ import dagger.hilt.internal.Preconditions;
  *
  */
 public class FragmentComponentManager implements GeneratedComponentManager<Object> {
-
   /** Entrypoint for {@link FragmentComponentBuilder}. */
   @EntryPoint
   @InstallIn(ActivityComponent.class)
@@ -51,7 +49,6 @@ public class FragmentComponentManager implements GeneratedComponentManager<Objec
   }
 
   private volatile Object component;
-
   private final Object componentLock = new Object();
   private final Fragment fragment;
 
@@ -75,7 +72,7 @@ public class FragmentComponentManager implements GeneratedComponentManager<Objec
     Preconditions.checkNotNull(
         fragment.getHost(), "Hilt Fragments must be attached before creating the component.");
     Preconditions.checkState(
-        fragment.getHost() instanceof GeneratedComponentManagerHolder,
+        fragment.getHost() instanceof GeneratedComponentManager,
         "Hilt Fragments must be attached to an @AndroidEntryPoint Activity. Found: %s",
         fragment.getHost().getClass());
 

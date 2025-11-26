@@ -1,6 +1,7 @@
 package test;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import dagger.internal.DaggerGenerated;
 import java.util.Map;
 import javax.annotation.processing.Generated;
@@ -52,14 +53,36 @@ final class DaggerTestComponent {
 
     }
 
+    ImmutableMap mapOfLongAndLongBuilder() {
+      ImmutableMap.Builder mapBuilder = ImmutableMap.builderWithExpectedSize(6);
+      mapBuilder.put(0L, MapModule_ProvideLong0Factory.provideLong0());
+      mapBuilder.put(1L, MapModule_ProvideLong1Factory.provideLong1());
+      mapBuilder.put(2L, MapModule_ProvideLong2Factory.provideLong2());
+      mapBuilder.put(3L, SubcomponentMapModule_ProvideLong3Factory.provideLong3());
+      mapBuilder.put(4L, SubcomponentMapModule_ProvideLong4Factory.provideLong4());
+      mapBuilder.put(5L, SubcomponentMapModule_ProvideLong5Factory.provideLong5());
+      return mapBuilder.build();
+    }
+
+    ImmutableMap mapOfLongAndProviderOfLongBuilder() {
+      ImmutableMap.Builder mapBuilder = ImmutableMap.builderWithExpectedSize(6);
+      mapBuilder.put(0L, MapModule_ProvideLong0Factory.create());
+      mapBuilder.put(1L, MapModule_ProvideLong1Factory.create());
+      mapBuilder.put(2L, MapModule_ProvideLong2Factory.create());
+      mapBuilder.put(3L, SubcomponentMapModule_ProvideLong3Factory.create());
+      mapBuilder.put(4L, SubcomponentMapModule_ProvideLong4Factory.create());
+      mapBuilder.put(5L, SubcomponentMapModule_ProvideLong5Factory.create());
+      return mapBuilder.build();
+    }
+
     @Override
     public Map<Long, Long> longs() {
-      return (Map<Long, Long>) ((Object) (ImmutableMap.builderWithExpectedSize(6).put(0L, MapModule_ProvideLong0Factory.provideLong0()).put(1L, MapModule_ProvideLong1Factory.provideLong1()).put(2L, MapModule_ProvideLong2Factory.provideLong2()).put(3L, SubcomponentMapModule_ProvideLong3Factory.provideLong3()).put(4L, SubcomponentMapModule_ProvideLong4Factory.provideLong4()).put(5L, SubcomponentMapModule_ProvideLong5Factory.provideLong5()).build()));
+      return (Map<Long, Long>) ((Object) (mapOfLongAndLongBuilder()));
     }
 
     @Override
     public Map<Long, Provider<Long>> providerLongs() {
-      return (Map<Long, Provider<Long>>) ((Object) (ImmutableMap.builderWithExpectedSize(6).put(0L, MapModule_ProvideLong0Factory.create()).put(1L, MapModule_ProvideLong1Factory.create()).put(2L, MapModule_ProvideLong2Factory.create()).put(3L, SubcomponentMapModule_ProvideLong3Factory.create()).put(4L, SubcomponentMapModule_ProvideLong4Factory.create()).put(5L, SubcomponentMapModule_ProvideLong5Factory.create()).build()));
+      return (Map<Long, Provider<Long>>) ((Object) (mapOfLongAndProviderOfLongBuilder()));
     }
   }
 

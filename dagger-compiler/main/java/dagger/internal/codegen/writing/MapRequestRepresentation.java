@@ -26,13 +26,16 @@ import static dagger.internal.codegen.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.internal.codegen.xprocessing.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.xprocessing.XCodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XFunSpecs.methodBuilder;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XCodeBlock;
+import androidx.room3.compiler.codegen.XFunSpec;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
@@ -40,13 +43,17 @@ import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ContributionBinding;
+import dagger.internal.codegen.binding.KeyVariableNamer;
 import dagger.internal.codegen.binding.MapKeys;
 import dagger.internal.codegen.binding.MultiboundMapBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.model.BindingKind;
 import dagger.internal.codegen.model.DependencyRequest;
+import dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.xprocessing.XExpression;
 import dagger.internal.codegen.xprocessing.XTypeNames;
+import javax.lang.model.element.Modifier;
 
 /** A {@link RequestRepresentation} for multibound maps. */
 final class MapRequestRepresentation extends RequestRepresentation {
@@ -59,6 +66,7 @@ final class MapRequestRepresentation extends RequestRepresentation {
   private final ComponentRequestRepresentations componentRequestRepresentations;
   private final CompilerOptions compilerOptions;
   private final boolean useLazyClassKey;
+  private final ShardImplementation shard;
 
   @AssistedInject
   MapRequestRepresentation(
@@ -77,6 +85,7 @@ final class MapRequestRepresentation extends RequestRepresentation {
     this.dependencies =
         Maps.toMap(binding.dependencies(), dep -> graph.contributionBinding(dep.key()));
     this.useLazyClassKey = MapKeys.useLazyClassKey(binding, graph);
+    this.shard = componentImplementation.shardImplementation(binding);
   }
 
   @Override
@@ -96,6 +105,9 @@ final class MapRequestRepresentation extends RequestRepresentation {
   }
 
   private XExpression getUnderlyingMapExpression(XClassName requestingClass) {
+    // TODO(b/460400653): This might cause a double wrap when we call to getDependencyExpression
+    // on a single element map. It would be good to get rid of that double wrapping, but solving
+    // this properly may require rethinking our current API.
     // TODO(ronshapiro): We should also make an ImmutableMap version of MapFactory
     boolean isImmutableMapAvailable = isImmutableMapAvailable();
     // TODO(ronshapiro, gak): Use Maps.immutableEnumMap() if it's available?
@@ -122,30 +134,65 @@ final class MapRequestRepresentation extends RequestRepresentation {
                 "singletonMap(%L)",
                 keyAndValueExpression(getOnlyElement(dependencies.keySet()), requestingClass)));
       default:
-        XCodeBlock.Builder instantiation =
-            XCodeBlock.builder()
-                .add(
-                    "%T.",
-                    isImmutableMapAvailable ? XTypeNames.IMMUTABLE_MAP : XTypeNames.MAP_BUILDER)
-                .add(maybeTypeParameters(requestingClass));
-        if (isImmutableMapBuilderWithExpectedSizeAvailable()) {
-          instantiation.add("builderWithExpectedSize(%L)", dependencies.size());
-        } else if (isImmutableMapAvailable) {
-          instantiation.add("builder()");
-        } else {
-          instantiation.add("newMapBuilder(%L)", dependencies.size());
-        }
-        // TODO(b/430348351): We should avoid arbitrarily long chaining of methods like this
-        // because it can cause StackOverflow in javac when building the AST for this generated
-        // code. To fix this, we would need to ban direct inlining of the Map expression and wrap
-        // the builder creation in a method that splits the chain into separate statements.
+        String builderName = "mapBuilder";
+        XCodeBlock.Builder builderMethodCalls = XCodeBlock.builder();
         for (DependencyRequest dependency : dependencies.keySet()) {
-          instantiation.add(".put(%L)", keyAndValueExpression(dependency, requestingClass));
+          builderMethodCalls.addStatement(
+              "%N.put(%L)", builderName, keyAndValueExpression(dependency, requestingClass));
         }
-        return XExpression.create(
-            isImmutableMapAvailable ? immutableMapType() : binding.key().type().xprocessing(),
-            instantiation.add(".build()").build());
+
+        String methodName =
+            shard.getUniqueMethodName(KeyVariableNamer.name(binding.key()) + "Builder");
+        XTypeName returnType =
+            isImmutableMapAvailable ? XTypeNames.IMMUTABLE_MAP : XTypeNames.JAVA_UTIL_MAP;
+        XTypeName builderType =
+            isImmutableMapAvailable ? XTypeNames.IMMUTABLE_MAP_BUILDER : XTypeNames.MAP_BUILDER;
+        XFunSpec methodSpec =
+            methodBuilder(methodName)
+                .addModifiers(
+                    !shard.isShardClassPrivate()
+                        ? ImmutableSet.of(Modifier.PRIVATE)
+                        : ImmutableSet.of())
+                .returns(returnType)
+                .addCode(
+                    XCodeBlock.builder()
+                        .addStatement(
+                            "%T %N = %L",
+                            builderType, builderName, mapBuilderInvocation(requestingClass))
+                        .add(builderMethodCalls.build())
+                        .addStatement("return %N.build()", builderName)
+                        .build())
+                .build();
+        shard.addMethod(MethodSpecKind.PRIVATE_METHOD, methodSpec);
+        XType expressionType =
+            isImmutableMapAvailable ? immutableMapType() : binding.key().type().xprocessing();
+        boolean isSameClass = requestingClass.equals(shard.name());
+        XCodeBlock codeBlock =
+            isSameClass
+                ? XCodeBlock.of("%N()", methodName) // Call method directly
+                : XCodeBlock.of(
+                    "%L.%N()",
+                    shard.shardFieldReference(), methodName); // Call method on shard field
+        return XExpression.create(expressionType, codeBlock);
     }
+  }
+
+  private XCodeBlock mapBuilderInvocation(XClassName requestingClass) {
+    XCodeBlock.Builder builder = XCodeBlock.builder();
+    XCodeBlock typeParam = maybeTypeParameters(requestingClass);
+
+    if (isImmutableMapAvailable()) {
+      builder.add("%T.", XTypeNames.IMMUTABLE_MAP).add(typeParam);
+      if (isImmutableMapBuilderWithExpectedSizeAvailable()) {
+        builder.add("builderWithExpectedSize(%L)", dependencies.size());
+      } else {
+        builder.add("builder()");
+      }
+    } else {
+      builder.add("%T.", XTypeNames.MAP_BUILDER).add(typeParam);
+      builder.add("newMapBuilder(%L)", dependencies.size());
+    }
+    return builder.build();
   }
 
   private XType immutableMapType() {

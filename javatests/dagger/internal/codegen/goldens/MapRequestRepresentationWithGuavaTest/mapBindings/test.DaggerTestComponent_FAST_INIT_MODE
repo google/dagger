@@ -1,7 +1,6 @@
 package test;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Provider;
 import java.util.Map;
@@ -60,28 +59,6 @@ final class DaggerTestComponent {
 
     }
 
-    ImmutableMap mapOfLongAndLongBuilder() {
-      ImmutableMap.Builder mapBuilder = ImmutableMap.<Long, Long>builderWithExpectedSize(6);
-      mapBuilder.put(0L, testComponentImpl.provideLong0Provider.get());
-      mapBuilder.put(1L, testComponentImpl.provideLong1Provider.get());
-      mapBuilder.put(2L, testComponentImpl.provideLong2Provider.get());
-      mapBuilder.put(3L, provideLong3Provider.get());
-      mapBuilder.put(4L, provideLong4Provider.get());
-      mapBuilder.put(5L, provideLong5Provider.get());
-      return mapBuilder.build();
-    }
-
-    ImmutableMap mapOfLongAndProviderOfLongBuilder() {
-      ImmutableMap.Builder mapBuilder = ImmutableMap.<Long, javax.inject.Provider<Long>>builderWithExpectedSize(6);
-      mapBuilder.put(0L, testComponentImpl.provideLong0Provider);
-      mapBuilder.put(1L, testComponentImpl.provideLong1Provider);
-      mapBuilder.put(2L, testComponentImpl.provideLong2Provider);
-      mapBuilder.put(3L, provideLong3Provider);
-      mapBuilder.put(4L, provideLong4Provider);
-      mapBuilder.put(5L, provideLong5Provider);
-      return mapBuilder.build();
-    }
-
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.provideLong3Provider = new SwitchingProvider<>(testComponentImpl, subImpl, 0);
@@ -91,12 +68,12 @@ final class DaggerTestComponent {
 
     @Override
     public Map<Long, Long> longs() {
-      return mapOfLongAndLongBuilder();
+      return ImmutableMap.<Long, Long>builderWithExpectedSize(6).put(0L, testComponentImpl.provideLong0Provider.get()).put(1L, testComponentImpl.provideLong1Provider.get()).put(2L, testComponentImpl.provideLong2Provider.get()).put(3L, provideLong3Provider.get()).put(4L, provideLong4Provider.get()).put(5L, provideLong5Provider.get()).build();
     }
 
     @Override
     public Map<Long, javax.inject.Provider<Long>> providerLongs() {
-      return mapOfLongAndProviderOfLongBuilder();
+      return ImmutableMap.<Long, javax.inject.Provider<Long>>builderWithExpectedSize(6).put(0L, testComponentImpl.provideLong0Provider).put(1L, testComponentImpl.provideLong1Provider).put(2L, testComponentImpl.provideLong2Provider).put(3L, provideLong3Provider).put(4L, provideLong4Provider).put(5L, provideLong5Provider).build();
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

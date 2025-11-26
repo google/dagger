@@ -50,22 +50,6 @@ final class DaggerTestComponent {
 
     }
 
-    Map mapOfLongAndLongBuilder() {
-      MapBuilder mapBuilder = MapBuilder.<Long, Long>newMapBuilder(3);
-      mapBuilder.put(0L, MapModule.provideLong0());
-      mapBuilder.put(1L, MapModule.provideLong1());
-      mapBuilder.put(2L, MapModule.provideLong2());
-      return mapBuilder.build();
-    }
-
-    Map mapOfLongAndProviderOfLongBuilder() {
-      MapBuilder mapBuilder = MapBuilder.<Long, Provider<Long>>newMapBuilder(3);
-      mapBuilder.put(0L, MapModule_ProvideLong0Factory.create());
-      mapBuilder.put(1L, MapModule_ProvideLong1Factory.create());
-      mapBuilder.put(2L, MapModule_ProvideLong2Factory.create());
-      return mapBuilder.build();
-    }
-
     @Override
     public Map<String, String> strings() {
       return Collections.<String, String>emptyMap();
@@ -88,12 +72,12 @@ final class DaggerTestComponent {
 
     @Override
     public Map<Long, Long> longs() {
-      return mapOfLongAndLongBuilder();
+      return MapBuilder.<Long, Long>newMapBuilder(3).put(0L, MapModule.provideLong0()).put(1L, MapModule.provideLong1()).put(2L, MapModule.provideLong2()).build();
     }
 
     @Override
     public Map<Long, Provider<Long>> providerLongs() {
-      return mapOfLongAndProviderOfLongBuilder();
+      return MapBuilder.<Long, Provider<Long>>newMapBuilder(3).put(0L, MapModule_ProvideLong0Factory.create()).put(1L, MapModule_ProvideLong1Factory.create()).put(2L, MapModule_ProvideLong2Factory.create()).build();
     }
   }
 }

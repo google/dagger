@@ -59,22 +59,6 @@ final class DaggerTestComponent {
 
     }
 
-    Map mapOfLongAndLongBuilder() {
-      MapBuilder mapBuilder = MapBuilder.<Long, Long>newMapBuilder(3);
-      mapBuilder.put(0L, provideLong0Provider.get());
-      mapBuilder.put(1L, provideLong1Provider.get());
-      mapBuilder.put(2L, provideLong2Provider.get());
-      return mapBuilder.build();
-    }
-
-    Map mapOfLongAndProviderOfLongBuilder() {
-      MapBuilder mapBuilder = MapBuilder.<Long, javax.inject.Provider<Long>>newMapBuilder(3);
-      mapBuilder.put(0L, provideLong0Provider);
-      mapBuilder.put(1L, provideLong1Provider);
-      mapBuilder.put(2L, provideLong2Provider);
-      return mapBuilder.build();
-    }
-
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.provideIntProvider = new SwitchingProvider<>(testComponentImpl, 0);
@@ -105,12 +89,12 @@ final class DaggerTestComponent {
 
     @Override
     public Map<Long, Long> longs() {
-      return mapOfLongAndLongBuilder();
+      return MapBuilder.<Long, Long>newMapBuilder(3).put(0L, provideLong0Provider.get()).put(1L, provideLong1Provider.get()).put(2L, provideLong2Provider.get()).build();
     }
 
     @Override
     public Map<Long, javax.inject.Provider<Long>> providerLongs() {
-      return mapOfLongAndProviderOfLongBuilder();
+      return MapBuilder.<Long, javax.inject.Provider<Long>>newMapBuilder(3).put(0L, provideLong0Provider).put(1L, provideLong1Provider).put(2L, provideLong2Provider).build();
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

@@ -45,16 +45,10 @@ class SPIPluginTest(val backend: Backend) {
     }
     val processorConfig = when (backend) {
       Backend.JAVAC -> "annotationProcessor"
-      Backend.KAPT -> "kapt"
       Backend.KSP -> "ksp"
     }
-    if (backend == Backend.KAPT || backend == Backend.KSP) {
-      gradleRunner.addPluginId("kotlin-android")
-      if (backend == Backend.KAPT) {
-        gradleRunner.addPluginId("kotlin-kapt")
-      } else {
-        gradleRunner.addPluginId("com.google.devtools.ksp")
-      }
+    if (backend == Backend.KSP) {
+      gradleRunner.addPluginId("com.google.devtools.ksp")
       gradleRunner.addAdditionalClosure("""
       |kotlin {
       |  jvmToolchain(11)
@@ -99,10 +93,10 @@ class SPIPluginTest(val backend: Backend) {
   companion object {
     @JvmStatic
     @Parameterized.Parameters(name = "backend = {0}")
-    fun params() = listOf(Backend.JAVAC, Backend.KAPT, Backend.KSP)
+    fun params() = listOf(Backend.JAVAC, Backend.KSP)
 
     enum class Backend {
-      JAVAC, KAPT, KSP
+      JAVAC, KSP
     }
   }
 }

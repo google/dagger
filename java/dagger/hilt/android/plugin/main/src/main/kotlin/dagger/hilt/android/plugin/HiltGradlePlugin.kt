@@ -17,18 +17,21 @@
 package dagger.hilt.android.plugin
 
 import com.android.build.api.AndroidPluginVersion
+import com.android.build.api.artifact.ScopedArtifact
 import com.android.build.api.dsl.CommonExtension
 import com.android.build.api.dsl.CompileOptions
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+import com.android.build.api.variant.Component
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
+import com.android.build.api.variant.ScopedArtifacts
 import com.android.build.api.variant.TestAndroidComponentsExtension
-import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.api.AndroidBasePlugin
 import com.android.build.gradle.tasks.JdkImageInput
 import dagger.hilt.android.plugin.task.AggregateDepsTask
+import dagger.hilt.android.plugin.task.HiltCopyTask
 import dagger.hilt.android.plugin.transform.AggregatedPackagesTransform
 import dagger.hilt.android.plugin.transform.AndroidEntryPointClassVisitor
 import dagger.hilt.android.plugin.transform.CopyTransform
@@ -36,7 +39,6 @@ import dagger.hilt.android.plugin.util.addJavaTaskProcessorOptions
 import dagger.hilt.android.plugin.util.addKaptTaskProcessorOptions
 import dagger.hilt.android.plugin.util.addKspTaskProcessorOptions
 import dagger.hilt.android.plugin.util.capitalize
-import dagger.hilt.android.plugin.util.forEachRootVariant
 import dagger.hilt.android.plugin.util.getConfigName
 import dagger.hilt.android.plugin.util.getKaptConfigName
 import dagger.hilt.android.plugin.util.getKspConfigName
@@ -177,10 +179,10 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
   }
 
   private fun HiltPluginEnvironment.configureAggregatingTask() {
-    legacyAndroidExtension.forEachRootVariant { variant ->
+    androidExtension.onRootVariants { variant, testedVariant ->
       if (!isAggregatingTaskEnabled()) {
         // Option is not enabled, don't configure aggregating task.
-        return@forEachRootVariant
+        return@onRootVariants
       }
 
       // Both the AggregateDepsTask and the JavaCompileTask need the runtime configuration, which
@@ -190,18 +192,16 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       // the variant is androidTest. Note: These configurations should be filtered using
       // getHiltTransformedDependencies to only include what Hilt needs in the classpath.
       val configurations =
-        buildList<Configuration> {
-          @Suppress("DEPRECATION") // Older variant API is deprecated
-          if (variant is com.android.build.gradle.api.TestVariant) {
-            add(variant.testedVariant.runtimeConfiguration)
-          }
+        buildList {
+          testedVariant?.let { add(it.runtimeConfiguration) }
           add(variant.runtimeConfiguration)
-          add(createHiltCompileOnlyConfiguration(variant))
+          add(createHiltCompileOnlyConfiguration(variant, testedVariant))
         }
 
       val aggregatingTask =
         configureAggregateDepsTask(
           variant = variant,
+          testedVariant = testedVariant,
           classpath =
             project.files(
               getHiltTransformedDependencies(configurations, AGGREGATED_HILT_ARTIFACT_TYPE_VALUE)
@@ -211,6 +211,7 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       val javaCompileTask =
         configureJavaCompileTask(
           variant = variant,
+          testedVariant = testedVariant,
           sources = project.files(aggregatingTask.map { it.outputDir }),
           classpath =
             project.files(
@@ -218,20 +219,52 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
             ),
         )
 
-      val javaCompileOutput = project.files(javaCompileTask.map { it.destinationDirectory })
-      javaCompileOutput.builtBy(javaCompileTask)
-      variant.registerPostJavacGeneratedBytecode(javaCompileOutput)
+      project.files(javaCompileTask.map { it.destinationDirectory }).builtBy(javaCompileTask)
+      variant.artifacts
+        .forScope(ScopedArtifacts.Scope.PROJECT)
+        .use(javaCompileTask)
+        .toAppend(ScopedArtifact.CLASSES, JavaCompile::getDestinationDirectory)
     }
   }
 
   private fun HiltPluginEnvironment.createHiltCompileOnlyConfiguration(
-    @Suppress("DEPRECATION") variant: com.android.build.gradle.api.BaseVariant,
+    variant: Component,
+    testedVariant: Component?
   ): Configuration {
+    val hiltCopyTask =
+      project.tasks.register(
+        "hiltCopy${variant.name.capitalize()}",
+        HiltCopyTask::class.java
+      ) { task ->
+        task.from(task.classesJars)
+        task.from(task.classesDirectories)
+        task.from(task.testedClassesJars)
+        task.from(task.testedClassesDirectories)
+        task.into(project.buildDir("intermediates/hilt/copy/${variant.name}/"))
+      }
+
+      variant.artifacts
+        .forScope(ScopedArtifacts.Scope.PROJECT)
+        .use(hiltCopyTask)
+        .toGet(
+          type = ScopedArtifact.POST_COMPILATION_CLASSES,
+          inputJars = HiltCopyTask::classesJars,
+          inputDirectories = HiltCopyTask::classesDirectories
+        )
+
+    testedVariant?.artifacts
+      ?.forScope(ScopedArtifacts.Scope.PROJECT)
+      ?.use(hiltCopyTask)
+      ?.toGet(
+        type = ScopedArtifact.CLASSES,
+        inputJars = HiltCopyTask::testedClassesJars,
+        inputDirectories = HiltCopyTask::testedClassesDirectories
+      )
+
     return project.configurations.create("hiltCompileOnly${variant.name.capitalize()}").apply {
       description = "Hilt aggregated compile only dependencies for '${variant.name}'"
       isCanBeConsumed = false
       isCanBeResolved = true
-      isVisible = false
 
       // Add the JavaCompile task classpath and output dir to the config, the task's classpath
       // will contain:
@@ -241,14 +274,15 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       //  * Tested classes if the variant is androidTest
       // TODO(danysantiago): Revisit to support K2 compiler
       project.dependencies.apply {
-        add(name, project.files(variant.javaCompileProvider.map { it.classpath }))
-        add(name, project.files(variant.javaCompileProvider.map { it.destinationDirectory }))
+        add(name, project.files(hiltCopyTask.map { it.outputs.files }))
+        add(name, project.files(variant.compileClasspath))
       }
     }
   }
 
   private fun HiltPluginEnvironment.configureAggregateDepsTask(
-    @Suppress("DEPRECATION") variant: com.android.build.gradle.api.BaseVariant,
+    variant: Component,
+    testedVariant: Component?,
     classpath: ConfigurableFileCollection,
   ): TaskProvider<AggregateDepsTask> {
     return project.tasks.register(
@@ -257,11 +291,8 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
     ) {
       it.compileClasspath.setFrom(classpath)
       it.outputDir.set(project.buildDir("generated/hilt/component_trees/${variant.name}/"))
-      @Suppress("DEPRECATION") // Older variant API is deprecated
       it.testEnvironment.set(
-        variant is com.android.build.gradle.api.TestVariant ||
-            variant is com.android.build.gradle.api.UnitTestVariant ||
-            androidExtension is com.android.build.gradle.TestExtension
+        androidExtension is TestAndroidComponentsExtension || testedVariant != null
       )
       it.crossCompilationRootValidationDisabled.set(!isCrossCompilationRootValidationEnabled())
       it.asmApiVersion.set(Opcodes.ASM9)
@@ -269,7 +300,8 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
   }
 
   private fun HiltPluginEnvironment.configureJavaCompileTask(
-    @Suppress("DEPRECATION") variant: com.android.build.gradle.api.BaseVariant,
+    variant: Component,
+    testedVariant: Component?,
     sources: ConfigurableFileCollection,
     classpath: ConfigurableFileCollection,
   ): TaskProvider<JavaCompile> {
@@ -285,21 +317,17 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       // Configure the input classpath based on Java 9 compatibility, specifically for Java 9 the
       // android.jar is now included in the input classpath instead of the bootstrapClasspath.
       // See: com/android/build/gradle/tasks/JavaCompileUtils.kt
-      val mainBootstrapClasspath =
-        variant.javaCompileProvider.map { it.options.bootstrapClasspath ?: project.files() }.get()
+      val mainBootstrapClasspath = project.files(androidExtension.sdkComponents.bootClasspath)
       if (commonExtension.compileOptions.isJava9Compatible()) {
         compileTask.classpath = classpath.plus(mainBootstrapClasspath)
-        //  Copies argument providers from original task, which should contain the JdkImageInput
-        variant.javaCompileProvider.get().let { originalCompileTask ->
-          originalCompileTask.options.compilerArgumentProviders
-            .filter { it is HiltCommandLineArgumentProvider || it is JdkImageInput }
-            .forEach { compileTask.options.compilerArgumentProviders.add(it) }
-        }
         compileTask.options.compilerArgs.add("-XDstringConcat=inline")
       } else {
         compileTask.classpath = classpath
         compileTask.options.bootstrapClasspath = mainBootstrapClasspath
       }
+      variant.javaCompilation?.annotationProcessor?.argumentProviders
+        ?.filter { it is HiltCommandLineArgumentProvider || it is JdkImageInput }
+        ?.forEach { compileTask.options.compilerArgumentProviders.add(it) }
       compileTask.destinationDirectory.set(destinationDirectory)
       compileTask.options.apply {
         annotationProcessorPath = hiltAnnotationProcessorConfiguration
@@ -322,14 +350,13 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
   }
 
   private fun HiltPluginEnvironment.configureHiltAnnotationProcessorConfiguration(
-    @Suppress("DEPRECATION") variant: com.android.build.gradle.api.BaseVariant,
+    variant: Component,
   ): Configuration {
     val configName = "hiltAnnotationProcessor${variant.name.capitalize()}"
     return project.configurations.create(configName).apply {
       description = "Hilt annotation processor classpath for '${variant.name}'"
       isCanBeConsumed = false
       isCanBeResolved = true
-      isVisible = false
       // Add user annotation processor configuration, so that SPI plugins and other processors
       // are discoverable.
       val apConfigurations: List<Configuration> = buildList {
@@ -462,10 +489,6 @@ private class HiltPluginEnvironment(
             "version 8.4.0 or higher (found ${it.pluginVersion})."
       }
     } ?: error("Could not find the Android Gradle Plugin (AGP) components extension.")
-
-  val legacyAndroidExtension =
-    project.extensions.findByType(BaseExtension::class.java)
-      ?: error("Could not find the Android Gradle Plugin (AGP) base extension.")
 
   val commonExtension =
     project.extensions.findByType(CommonExtension::class.java)

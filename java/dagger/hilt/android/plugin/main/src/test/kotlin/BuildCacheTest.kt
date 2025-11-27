@@ -87,12 +87,13 @@ class BuildCacheTest(private val enableAggregatingTask: Boolean) {
         add(":compressDebugAssets")
         add(":desugarDebugFileDependencies")
         add(":extractDeepLinksDebug")
-        add(":generateDebugResValues")
+        add(":generateDebugRFile")
         add(":generateDebugResources")
-        // When aggregating task is enabled, the plugin adds two more tasks that should be
+        // When aggregating task is enabled, the plugin adds three more tasks that should be
         // cacheable.
         if (enableAggregatingTask) {
           add(":hiltAggregateDepsDebug")
+          add(":hiltCopyDebug")
           add(":hiltJavaCompileDebug")
         }
         add(":javaPreCompileDebug")

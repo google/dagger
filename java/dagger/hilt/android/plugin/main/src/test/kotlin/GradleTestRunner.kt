@@ -144,7 +144,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
             mavenCentral()
           }
           dependencies {
-            classpath 'com.android.tools.build:gradle:8.13.0'
+            classpath 'com.android.tools.build:gradle:9.0.0-beta02'
             ${pluginClasspaths.joinToString(separator = "\n") { "classpath '$it'" }}
           }
         }
@@ -219,7 +219,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
         writeText(
           """
         <?xml version="1.0" encoding="utf-8"?>
-        <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="minimal">
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android">
             <application
                 android:name="${appClassName ?: "android.app.Application"}"
                 android:theme="@style/Theme.AppCompat.Light.DarkActionBar">

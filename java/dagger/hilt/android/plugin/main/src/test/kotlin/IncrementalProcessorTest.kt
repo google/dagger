@@ -416,7 +416,6 @@ class IncrementalProcessorTest(private val incapMode: String) {
         classSrcActivity2,
         classSrcModule1,
         classSrcModule2,
-        classGenHiltApp,
         classGenHiltActivity1,
         classGenHiltActivity2,
         classGenAppInjector,
@@ -427,9 +426,6 @@ class IncrementalProcessorTest(private val incapMode: String) {
         classGenActivityInjectorDeps2,
         classGenModuleDeps1,
         classGenModuleDeps2,
-        classGenComponentTreeDeps,
-        classGenHiltComponents,
-        classGenDaggerHiltApplicationComponent,
       )
     )
   }
@@ -498,12 +494,9 @@ class IncrementalProcessorTest(private val incapMode: String) {
       if (incapMode == ISOLATING_MODE) {
         listOf(
           classSrcActivity1,
-          classGenHiltApp,
           classGenHiltActivity1,
           classGenActivityInjector1,
           classGenActivityInjectorDeps1,
-          classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent,
         )
       } else {
         // * All aggregating processor gen sources are re-compiled
@@ -665,10 +658,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
       if (incapMode == ISOLATING_MODE) {
         listOf(
           classSrcModule1,
-          classGenHiltApp,
           classGenModuleDeps1,
-          classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent,
         )
       } else {
         // * All aggregating processor gen sources are re-compiled
@@ -745,11 +735,8 @@ class IncrementalProcessorTest(private val incapMode: String) {
       if (incapMode == ISOLATING_MODE) {
         listOf(
           classSrcApp,
-          classGenHiltApp,
           classGenAppInjector,
           classGenAppInjectorDeps,
-          classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent,
         )
       } else {
         // * All aggregating processor gen sources are re-compiled
@@ -783,14 +770,9 @@ class IncrementalProcessorTest(private val incapMode: String) {
     val regeneratedSourceFiles =
       if (incapMode == ISOLATING_MODE) {
         // * Aggregating task ran due to a change in dep
-        expect.that(result.task(aggregatingTaskName)!!.outcome).isEqualTo(TaskOutcome.SUCCESS)
+        expect.that(result.task(aggregatingTaskName)!!.outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
         // * Components are re-generated since there was a change in dep
-        listOf(
-          genHiltApp, // Re-generated because components got re-generated
-          genComponentTreeDeps,
-          genHiltComponents,
-          genDaggerHiltApplicationComponent,
-        )
+        listOf()
       } else {
         listOf(
           genHiltApp,
@@ -816,12 +798,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
     )
     val recompiledClassFiles =
       if (incapMode == ISOLATING_MODE) {
-        listOf(
-          classGenHiltApp,
-          classGenComponentTreeDeps,
-          classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent,
-        )
+        listOf()
       } else {
         listOf(
           classGenHiltApp,
@@ -852,14 +829,9 @@ class IncrementalProcessorTest(private val incapMode: String) {
     val regeneratedSourceFiles =
       if (incapMode == ISOLATING_MODE) {
         // * Aggregating task ran due to a change in dep
-        expect.that(result.task(aggregatingTaskName)!!.outcome).isEqualTo(TaskOutcome.SUCCESS)
+        expect.that(result.task(aggregatingTaskName)!!.outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
         // * Components are re-generated since there was a change in dep
-        listOf(
-          genHiltApp, // Re-generated because components got re-generated
-          genComponentTreeDeps,
-          genHiltComponents,
-          genDaggerHiltApplicationComponent,
-        )
+        listOf()
       } else {
         // * Root classes along with components are always re-generated (aggregated processor)
         listOf(
@@ -879,12 +851,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
     assertDeletedFiles(listOf(classSrcModule2, classGenModuleDeps2))
     val recompiledClassFiles =
       if (incapMode == ISOLATING_MODE) {
-        listOf(
-          classGenHiltApp,
-          classGenComponentTreeDeps,
-          classGenHiltComponents,
-          classGenDaggerHiltApplicationComponent,
-        )
+        listOf()
       } else {
         listOf(
           classGenHiltApp,
@@ -977,12 +944,6 @@ class IncrementalProcessorTest(private val incapMode: String) {
       listOf(
         classSrcTest1,
         classSrcTest2,
-        classGenTest1ComponentTreeDeps,
-        classGenTest2ComponentTreeDeps,
-        classGenTest1HiltComponents,
-        classGenTest2HiltComponents,
-        classGenTest1DaggerHiltApplicationComponent,
-        classGenTest2DaggerHiltApplicationComponent,
       )
     )
   }
@@ -1040,8 +1001,6 @@ class IncrementalProcessorTest(private val incapMode: String) {
       if (incapMode == ISOLATING_MODE) {
         listOf(
           classSrcTest1,
-          classGenTest1HiltComponents,
-          classGenTest1DaggerHiltApplicationComponent,
         )
       } else {
         listOf(

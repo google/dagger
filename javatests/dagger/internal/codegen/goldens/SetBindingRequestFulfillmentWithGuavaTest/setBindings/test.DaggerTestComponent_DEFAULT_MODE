@@ -1,7 +1,6 @@
 package test;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSet.Builder;
 import dagger.internal.DaggerGenerated;
 import java.util.Set;
 import javax.annotation.processing.Generated;

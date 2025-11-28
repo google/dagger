@@ -52,14 +52,36 @@ final class DaggerTestComponent {
 
     }
 
+    ImmutableMap mapOfLongAndLongBuilder() {
+      ImmutableMap.Builder mapBuilder = ImmutableMap.<Long, Long>builderWithExpectedSize(6);
+      mapBuilder.put(0L, MapModule.provideLong0());
+      mapBuilder.put(1L, MapModule.provideLong1());
+      mapBuilder.put(2L, MapModule.provideLong2());
+      mapBuilder.put(3L, SubcomponentMapModule.provideLong3());
+      mapBuilder.put(4L, SubcomponentMapModule.provideLong4());
+      mapBuilder.put(5L, SubcomponentMapModule.provideLong5());
+      return mapBuilder.build();
+    }
+
+    ImmutableMap mapOfLongAndProviderOfLongBuilder() {
+      ImmutableMap.Builder mapBuilder = ImmutableMap.<Long, Provider<Long>>builderWithExpectedSize(6);
+      mapBuilder.put(0L, MapModule_ProvideLong0Factory.create());
+      mapBuilder.put(1L, MapModule_ProvideLong1Factory.create());
+      mapBuilder.put(2L, MapModule_ProvideLong2Factory.create());
+      mapBuilder.put(3L, SubcomponentMapModule_ProvideLong3Factory.create());
+      mapBuilder.put(4L, SubcomponentMapModule_ProvideLong4Factory.create());
+      mapBuilder.put(5L, SubcomponentMapModule_ProvideLong5Factory.create());
+      return mapBuilder.build();
+    }
+
     @Override
     public Map<Long, Long> longs() {
-      return ImmutableMap.<Long, Long>builderWithExpectedSize(6).put(0L, MapModule.provideLong0()).put(1L, MapModule.provideLong1()).put(2L, MapModule.provideLong2()).put(3L, SubcomponentMapModule.provideLong3()).put(4L, SubcomponentMapModule.provideLong4()).put(5L, SubcomponentMapModule.provideLong5()).build();
+      return mapOfLongAndLongBuilder();
     }
 
     @Override
     public Map<Long, Provider<Long>> providerLongs() {
-      return ImmutableMap.<Long, Provider<Long>>builderWithExpectedSize(6).put(0L, MapModule_ProvideLong0Factory.create()).put(1L, MapModule_ProvideLong1Factory.create()).put(2L, MapModule_ProvideLong2Factory.create()).put(3L, SubcomponentMapModule_ProvideLong3Factory.create()).put(4L, SubcomponentMapModule_ProvideLong4Factory.create()).put(5L, SubcomponentMapModule_ProvideLong5Factory.create()).build();
+      return mapOfLongAndProviderOfLongBuilder();
     }
   }
 

@@ -191,9 +191,11 @@ object XTypeNames {
 
   @JvmField val KOTLIN_METADATA = XClassName.get("kotlin", "Metadata")
   @JvmField val IMMUTABLE_MAP = XClassName.get("com.google.common.collect", "ImmutableMap")
+  @JvmField
+  val IMMUTABLE_MAP_BUILDER = XClassName.get("com.google.common.collect", "ImmutableMap", "Builder")
   @JvmField val IMMUTABLE_SET = XClassName.get("com.google.common.collect", "ImmutableSet")
   @JvmField
-  val IMMUTABLE_SET_BUILDER = XClassName.get("com.google.common.collect", "ImmutableSet.Builder")
+  val IMMUTABLE_SET_BUILDER = XClassName.get("com.google.common.collect", "ImmutableSet", "Builder")
   @JvmField
   val MORE_EXECUTORS = XClassName.get("com.google.common.util.concurrent", "MoreExecutors")
   @JvmField val FUTURES = XClassName.get("com.google.common.util.concurrent", "Futures")

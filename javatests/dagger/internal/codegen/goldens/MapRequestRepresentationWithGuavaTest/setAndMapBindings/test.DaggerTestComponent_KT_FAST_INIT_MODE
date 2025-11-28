@@ -1,0 +1,101 @@
+package test;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import dagger.internal.DaggerGenerated;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestSubcomponentImpl implements TestSubcomponent {
+    private final TestComponentImpl testComponentImpl;
+
+    private final TestSubcomponentImpl testSubcomponentImpl = this;
+
+    TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
+      this.testComponentImpl = testComponentImpl;
+
+
+    }
+
+    ImmutableMap mapOfIntegerAndIntegerBuilder() {
+      ImmutableMap.Builder mapBuilder = ImmutableMap.builderWithExpectedSize(6);
+      mapBuilder.put(0, MapModule_ProvideInt0Factory.provideInt0());
+      mapBuilder.put(1, MapModule_ProvideInt1Factory.provideInt1());
+      mapBuilder.put(2, MapModule_ProvideInt2Factory.provideInt2());
+      mapBuilder.put(3, MapModule_ProvideInt3Factory.provideInt3());
+      mapBuilder.put(4, SubcomponentModule_ProvideInt4Factory.provideInt4());
+      mapBuilder.put(5, SubcomponentModule_ProvideInt5Factory.provideInt5());
+      return mapBuilder.build();
+    }
+
+    @Override
+    public Map<Integer, Integer> intMap() {
+      return (Map<Integer, Integer>) ((Object) (mapOfIntegerAndIntegerBuilder()));
+    }
+
+    @Override
+    public Set<Integer> intSet() {
+      return (Set<Integer>) ((Object) (ImmutableSet.of(MapModule_ProvideIntSet0Factory.provideIntSet0(), MapModule_ProvideIntSet1Factory.provideIntSet1(), MapModule_ProvideIntSet2Factory.provideIntSet2(), MapModule_ProvideIntSet3Factory.provideIntSet3(), SubcomponentModule_ProvideIntSet4Factory.provideIntSet4(), SubcomponentModule_ProvideIntSet5Factory.provideIntSet5())));
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl() {
+
+
+    }
+
+    @Override
+    public Map<Integer, Integer> intMap() {
+      return (Map<Integer, Integer>) ((Object) (ImmutableMap.of(0, MapModule_ProvideInt0Factory.provideInt0(), 1, MapModule_ProvideInt1Factory.provideInt1(), 2, MapModule_ProvideInt2Factory.provideInt2(), 3, MapModule_ProvideInt3Factory.provideInt3())));
+    }
+
+    @Override
+    public Set<Integer> intSet() {
+      return (Set<Integer>) ((Object) (ImmutableSet.of(MapModule_ProvideIntSet0Factory.provideIntSet0(), MapModule_ProvideIntSet1Factory.provideIntSet1(), MapModule_ProvideIntSet2Factory.provideIntSet2(), MapModule_ProvideIntSet3Factory.provideIntSet3())));
+    }
+
+    @Override
+    public TestSubcomponent testSubcomponent() {
+      return new TestSubcomponentImpl(testComponentImpl);
+    }
+  }
+}

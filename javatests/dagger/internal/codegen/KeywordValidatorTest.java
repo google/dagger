@@ -402,4 +402,34 @@ public final class KeywordValidatorTest {
             "}");
     CompilerTests.daggerCompiler(source).compile(subject -> subject.hasErrorCount(0));
   }
+
+  @Test
+  public void javaKeywordAsPackageName_failsWithExpectedError() {
+    Source componentSrc =
+        CompilerTests.kotlinSource(
+            "test/TestComponent.kt",
+            "package test.default",
+            "",
+            "import dagger.Component",
+            "",
+            "@Component",
+            "interface TestComponent {}" // "default" is a Java keyword
+            );
+    CompilerTests.daggerCompiler(componentSrc)
+        .compile(
+            subject -> {
+              switch (CompilerTests.backend(subject)) {
+                case KSP:
+                  subject
+                      .hasErrorContaining(
+                          "The name 'default' cannot be used as a package name because")
+                      .onSource(componentSrc);
+                  break;
+                case JAVAC:
+                  // JAVAC does not generate stubs for this case, thus no error is reported.
+                  subject.hasErrorCount(0);
+                  break;
+              }
+            });
+  }
 }

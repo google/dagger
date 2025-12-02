@@ -24,6 +24,7 @@ import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
 import static dagger.internal.codegen.xprocessing.XElements.asField;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asMethodParameter;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.isExecutable;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
@@ -31,6 +32,8 @@ import static javax.lang.model.SourceVersion.isKeyword;
 
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeElement;
+import com.google.common.base.Splitter;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -57,6 +60,7 @@ public final class KeywordValidator {
     if (isTypeElement(element)) {
       keywordFromName(getSimpleName(element))
           .ifPresent(keyword -> report.addError(javaKeywordErrorMessage(keyword), element));
+      validatePackageName(asTypeElement(element), report);
       // For KAPT We need to validate the Kotlin metadata methods name for type elements.
       // TODO(emjich): Re-enable this validation once we figure out how to avoid false positives.
       // As of now, we are seeing false positives for this validation because KAPT stubs do not
@@ -82,6 +86,19 @@ public final class KeywordValidator {
       validateJavaKeywordType(asMethodParameter(element).getType(), report);
     }
     return report.build();
+  }
+
+  private void validatePackageName(XTypeElement element, ValidationReport.Builder report) {
+    String packageName = element.getPackageName();
+    if (packageName == null) {
+      return;
+    }
+    Iterable<String> names = Splitter.on('.').split(packageName);
+    for (String name : names) {
+      keywordFromName(name)
+          .ifPresent(
+              keyword -> report.addError(javaKeywordInPackageErrorMessage(keyword), element));
+    }
   }
 
   private void validateJavaKeywordType(@Nullable XType type, ValidationReport.Builder report) {
@@ -116,6 +133,13 @@ public final class KeywordValidator {
     return String.format(
         "The name '%s' cannot be used because it is a Java keyword."
             + " Please use a different name.",
+        keyword);
+  }
+
+  private String javaKeywordInPackageErrorMessage(String keyword) {
+    return String.format(
+        "The name '%s' cannot be used as a package name because it is a Java keyword."
+            + " Please use a different package name.",
         keyword);
   }
 }

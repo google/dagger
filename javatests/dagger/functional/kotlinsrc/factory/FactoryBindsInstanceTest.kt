@@ -56,7 +56,7 @@ class FactoryBindsInstanceTest {
   fun nullableBindsInstance_doesNotFailOnNull() {
     val component =
       DaggerFactoryBindsInstanceTest_NullableBindsInstanceComponent.factory().create(null)
-    assertThat(component.string()).isEqualTo(null)
+    assertThat(component.string()).isNull()
   }
 
   @Component

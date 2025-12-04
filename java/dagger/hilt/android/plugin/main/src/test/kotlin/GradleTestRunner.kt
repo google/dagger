@@ -219,7 +219,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
         writeText(
           """
         <?xml version="1.0" encoding="utf-8"?>
-        <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="minimal">
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android">
             <application
                 android:name="${appClassName ?: "android.app.Application"}"
                 android:theme="@style/Theme.AppCompat.Light.DarkActionBar">

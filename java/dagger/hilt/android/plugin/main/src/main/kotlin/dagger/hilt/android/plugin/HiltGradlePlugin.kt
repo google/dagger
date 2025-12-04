@@ -231,7 +231,6 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       description = "Hilt aggregated compile only dependencies for '${variant.name}'"
       isCanBeConsumed = false
       isCanBeResolved = true
-      isVisible = false
 
       // Add the JavaCompile task classpath and output dir to the config, the task's classpath
       // will contain:
@@ -329,7 +328,7 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       description = "Hilt annotation processor classpath for '${variant.name}'"
       isCanBeConsumed = false
       isCanBeResolved = true
-      isVisible = false
+
       // Add user annotation processor configuration, so that SPI plugins and other processors
       // are discoverable.
       val apConfigurations: List<Configuration> = buildList {

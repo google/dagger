@@ -24,7 +24,6 @@ java_library(
         "@maven//:com_google_googlejavaformat_google_java_format",
     ],
     runtime_deps = [
-        "//third_party/java/error_prone:error_prone_javac",
         "//third_party/java/guava",
     ],
 )

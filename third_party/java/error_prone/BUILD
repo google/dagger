@@ -26,11 +26,6 @@ java_library(
     exports = ["@maven//:com_google_errorprone_error_prone_annotations"],
 )
 
-alias(
-    name = "error_prone_javac",
-    actual = "@maven//:com_google_errorprone_javac_shaded",
-)
-
 java_library(
     name = "check_api",
     exports = [
@@ -39,7 +34,6 @@ java_library(
     ],
     runtime_deps = [
         ":annotations",
-        ":error_prone_javac",
         "//third_party/java/checker_framework:dataflow",
         "//third_party/java/diffutils",
         "//third_party/java/jsr305_annotations",

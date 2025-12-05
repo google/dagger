@@ -51,9 +51,9 @@ interface ProcessingEnvironmentModule {
 
   @Provides
   static XFiler filer(CompilerOptions compilerOptions, XProcessingEnv xProcessingEnv) {
-    return compilerOptions.headerCompilation() || !compilerOptions.formatGeneratedSource()
+    return !compilerOptions.formatGeneratedSource()
         ? xProcessingEnv.getFiler()
         : XConverters.toXProcessing(
-            new FormattingFiler(XConverters.toJavac(xProcessingEnv.getFiler())), xProcessingEnv);
+            FormattingFiler.create(XConverters.toJavac(xProcessingEnv)), xProcessingEnv);
   }
 }

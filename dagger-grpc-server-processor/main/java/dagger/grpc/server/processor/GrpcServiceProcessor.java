@@ -84,7 +84,7 @@ public class GrpcServiceProcessor extends BasicAnnotationProcessor implements Pr
     JavaFile javaFile = grpcServiceTypeWriter.javaFile();
     ClassName outputClassName = ClassName.get(javaFile.packageName, javaFile.typeSpec.name);
     try {
-      javaFile.writeTo(new FormattingFiler(processingEnv.getFiler()));
+      javaFile.writeTo(FormattingFiler.create(processingEnv));
     } catch (IOException e) {
       processingEnv
           .getMessager()

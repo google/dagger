@@ -52,7 +52,7 @@ grpc-netty = { module = "io.grpc:grpc-netty", version.ref = "grpc" }
 grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
 guava-jre = { module = "com.google.guava:guava", version.ref = "guava" }
 guava-failureAccess = { module = "com.google.guava:failureaccess", version = "1.0.1" }
-javaFormatter = { module = "com.google.googlejavaformat:google-java-format", version = "1.5" }
+javaFormatter = { module = "com.google.googlejavaformat:google-java-format", version = "1.33.0" }
 javaCompileTesting = { module = "com.google.testing.compile:compile-testing", version = "0.18" }
 jakarta-inject = { module = "jakarta.inject:jakarta.inject-api", version = "2.0.1" }
 javaPoet = { module = "com.squareup:javapoet", version = "1.13.0" }

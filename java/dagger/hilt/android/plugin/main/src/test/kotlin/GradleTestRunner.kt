@@ -144,7 +144,8 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
             mavenCentral()
           }
           dependencies {
-            classpath 'com.android.tools.build:gradle:8.13.0'
+            classpath 'com.android.tools.build:gradle:$AGP_VERSION'
+            classpath 'com.android.legacy-kapt:com.android.legacy-kapt.gradle.plugin:$AGP_VERSION'
             ${pluginClasspaths.joinToString(separator = "\n") { "classpath '$it'" }}
           }
         }
@@ -183,13 +184,14 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
         }
 
         dependencies {
-          implementation(platform('org.jetbrains.kotlin:kotlin-bom:1.8.0'))
+          implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.2.0'))
           ${dependencies.joinToString(separator = "\n")}
         }
 
         hilt {
           ${hiltOptions.joinToString(separator = "\n")}
         }
+
         ${additionalClosures.joinToString(separator = "\n")}
         """
             .trimIndent()
@@ -263,5 +265,9 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
         }
       }
     }
+  }
+
+  companion object {
+    const val AGP_VERSION = "9.0.0-beta02"
   }
 }

@@ -169,6 +169,23 @@ public final class dagger/internal/MapFactory$Builder {
 	public fun putAll (Ljavax/inject/Provider;)Ldagger/internal/MapFactory$Builder;
 }
 
+public final class dagger/internal/MapLazyFactory {
+	public static fun builder (I)Ldagger/internal/MapLazyFactory$Builder;
+	public static fun emptyMapProvider ()Ldagger/internal/Provider;
+	public synthetic fun get ()Ljava/lang/Object;
+	public fun get ()Ljava/util/Map;
+}
+
+public final class dagger/internal/MapLazyFactory$Builder {
+	public fun build ()Ldagger/internal/MapLazyFactory;
+	public synthetic fun put (Ljava/lang/Object;Ldagger/internal/Provider;)Ldagger/internal/AbstractMapFactory$Builder;
+	public fun put (Ljava/lang/Object;Ldagger/internal/Provider;)Ldagger/internal/MapLazyFactory$Builder;
+	public fun put (Ljava/lang/Object;Ljavax/inject/Provider;)Ldagger/internal/MapLazyFactory$Builder;
+	public synthetic fun putAll (Ldagger/internal/Provider;)Ldagger/internal/AbstractMapFactory$Builder;
+	public fun putAll (Ldagger/internal/Provider;)Ldagger/internal/MapLazyFactory$Builder;
+	public fun putAll (Ljavax/inject/Provider;)Ldagger/internal/MapLazyFactory$Builder;
+}
+
 public final class dagger/internal/MapProviderFactory : dagger/Lazy {
 	public static fun builder (I)Ldagger/internal/MapProviderFactory$Builder;
 	public synthetic fun get ()Ljava/lang/Object;
@@ -183,6 +200,23 @@ public final class dagger/internal/MapProviderFactory$Builder {
 	public synthetic fun putAll (Ldagger/internal/Provider;)Ldagger/internal/AbstractMapFactory$Builder;
 	public fun putAll (Ldagger/internal/Provider;)Ldagger/internal/MapProviderFactory$Builder;
 	public fun putAll (Ljavax/inject/Provider;)Ldagger/internal/MapProviderFactory$Builder;
+}
+
+public final class dagger/internal/MapProviderLazyFactory {
+	public static fun builder (I)Ldagger/internal/MapProviderLazyFactory$Builder;
+	public static fun emptyMapProvider ()Ldagger/internal/Provider;
+	public synthetic fun get ()Ljava/lang/Object;
+	public fun get ()Ljava/util/Map;
+}
+
+public final class dagger/internal/MapProviderLazyFactory$Builder {
+	public fun build ()Ldagger/internal/MapProviderLazyFactory;
+	public synthetic fun put (Ljava/lang/Object;Ldagger/internal/Provider;)Ldagger/internal/AbstractMapFactory$Builder;
+	public fun put (Ljava/lang/Object;Ldagger/internal/Provider;)Ldagger/internal/MapProviderLazyFactory$Builder;
+	public fun put (Ljava/lang/Object;Ljavax/inject/Provider;)Ldagger/internal/MapProviderLazyFactory$Builder;
+	public synthetic fun putAll (Ldagger/internal/Provider;)Ldagger/internal/AbstractMapFactory$Builder;
+	public fun putAll (Ldagger/internal/Provider;)Ldagger/internal/MapProviderLazyFactory$Builder;
+	public fun putAll (Ljavax/inject/Provider;)Ldagger/internal/MapProviderLazyFactory$Builder;
 }
 
 public final class dagger/internal/MembersInjectors {

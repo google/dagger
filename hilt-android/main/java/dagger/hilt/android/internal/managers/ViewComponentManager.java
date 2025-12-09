@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.internal.managers;
 
+import dagger.hilt.android.components.ActivityComponent;
 import android.content.Context;
 import android.content.ContextWrapper;
 import androidx.fragment.app.Fragment;
@@ -27,7 +28,6 @@ import androidx.lifecycle.LifecycleOwner;
 import dagger.hilt.EntryPoint;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
-import dagger.hilt.android.components.ActivityComponent;
 import dagger.hilt.android.components.FragmentComponent;
 import dagger.hilt.android.internal.Contexts;
 import dagger.hilt.android.internal.builders.ViewComponentBuilder;
@@ -45,6 +45,7 @@ import dagger.hilt.internal.Preconditions;
  * because even the injector interface type is not a valid type if we have a hilt base class.
  */
 public final class ViewComponentManager implements GeneratedComponentManager<Object> {
+
   /** Entrypoint for {@link ViewWithFragmentComponentBuilder}. */
   @EntryPoint
   @InstallIn(FragmentComponent.class)
@@ -60,6 +61,7 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
   }
 
   private volatile Object component;
+
   private final Object componentLock = new Object();
   private final boolean hasFragmentBindings;
   private final View view;
@@ -82,8 +84,7 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
   }
 
   private Object createComponent() {
-    GeneratedComponentManager<?> componentManager =
-        getParentComponentManager(/*allowMissing=*/ false);
+    Object componentManager = getParentComponentManager(/* allowMissing= */ false);
     if (hasFragmentBindings) {
       return EntryPoints.get(componentManager, ViewWithFragmentComponentBuilderEntryPoint.class)
           .viewWithFragmentComponentBuilder()

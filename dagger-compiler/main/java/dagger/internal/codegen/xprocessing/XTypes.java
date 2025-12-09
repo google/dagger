@@ -311,7 +311,17 @@ public final class XTypes {
     return type.isNone() || isVoid(type);
   }
 
-  /** Returns {@code true} if the given type is a declared type. */
+  /**
+   * Returns {@code true} if the given type is a wildcard type.
+   *
+   * <p>In Java, this represents {@code ?} and {@code ? extends/super Foo}.
+   *
+   * <p>In Kotlin, this represents {@code *} or {@code out/in Foo}.
+   *
+   * <p>Note: in Kotlin this only considers variance at the usage site. It does not consider
+   * implicit variance. For example, the type argument of `List<Foo>` is not a considered a wildcard
+   * by this method even though the type parameter of `List` is declared as `out T`.
+   */
   public static boolean isWildcard(XType type) {
     XProcessingEnv.Backend backend = getProcessingEnv(type).getBackend();
     switch (backend) {
@@ -320,8 +330,7 @@ public final class XTypes {
         // calling XType.getTypeName() too early caches an incorrect type name.
         return toJavac(type).getKind().equals(TypeKind.WILDCARD);
       case KSP:
-        // TODO(bcorso): Consider representing this as an actual type in XProcessing.
-        return type.getTypeName() instanceof WildcardTypeName;
+        return type.isStar() || type.extendsBound() != null;
     }
     throw new AssertionError("Unexpected backend: " + backend);
   }

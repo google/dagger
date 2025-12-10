@@ -373,8 +373,8 @@ final class Generators {
 
   // protected void inject() {
   //   if (!injected) {
-  //     generatedComponent().inject$CLASS(($CLASS) this);
   //     injected = true;
+  //     generatedComponent().inject$CLASS(($CLASS) this);
   //   }
   // }
   private static void addInjectAndMaybeOptionalInjectMethod(

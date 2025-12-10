@@ -171,7 +171,7 @@ public abstract class ComponentCreatorDescriptor {
             XElements.toStableString(factoryMethod),
             XElements.toStableString(method));
         factoryMethod = method;
-      } else {
+      } else if (method.getParameters().size() == 1) {
         XExecutableParameterElement parameter = getOnlyElement(method.getParameters());
         XType parameterType = getOnlyElement(resolvedMethodType.getParameterTypes());
         setterMethods.put(

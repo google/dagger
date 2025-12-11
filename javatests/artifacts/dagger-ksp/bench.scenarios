@@ -1,0 +1,43 @@
+// Benchmark scenarios for comparing KAPT vs KSP performance in Dagger
+// Run with: gradle-profiler --benchmark --scenario-file bench.scenarios kaptBuild kspBuild
+
+kaptBuild {
+    title = "Dagger KAPT Build"
+    tasks = ["clean", ":kotlin-app:compileKotlin"]
+    gradle-args = ["-Dscan.tag.DaggerKapt", "--rerun-tasks"]
+    run-using = tooling-api
+    daemon = warm
+    warm-ups = 2
+    iterations = 3
+}
+
+kspBuild {
+    title = "Dagger KSP Build"
+    tasks = ["clean", ":kotlin-app:compileKotlin"]
+    gradle-args = ["-Dscan.tag.DaggerKsp", "--rerun-tasks"]
+    run-using = tooling-api
+    daemon = warm
+    warm-ups = 2
+    iterations = 3
+}
+
+// With profiling enabled
+kaptProfile {
+    title = "Dagger KAPT Build (Profiled)"
+    tasks = [":kotlin-app:compileKotlin"]
+    gradle-args = ["-Dscan.tag.DaggerKapt", "--rerun-tasks"]
+    run-using = tooling-api
+    daemon = warm
+    warm-ups = 1
+    iterations = 2
+}
+
+kspProfile {
+    title = "Dagger KSP Build (Profiled)"
+    tasks = [":kotlin-app:compileKotlin"]
+    gradle-args = ["-Dscan.tag.DaggerKsp", "--rerun-tasks"]
+    run-using = tooling-api
+    daemon = warm
+    warm-ups = 1
+    iterations = 2
+}

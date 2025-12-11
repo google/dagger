@@ -17,9 +17,6 @@
 package dagger.functional.kotlinsrc.multibindings
 
 import com.google.common.truth.Truth.assertThat
-import dagger.Lazy
-import dagger.functional.kotlinsrc.multibindings.LazyMaps.TestComponent
-import javax.inject.Provider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -35,6 +32,11 @@ class LazyMapsTest {
     assertThat(firstGet).isEqualTo("value-1")
     assertThat(firstGet).isSameInstanceAs(laziesMap["key"]!!.get())
     assertThat(component.mapOfLazy()["key"]!!.get()).isEqualTo("value-2")
+
+    val bindsGet = laziesMap["binds-key"]!!.get()
+    assertThat(bindsGet).isEqualTo("value-3")
+    assertThat(bindsGet).isSameInstanceAs(laziesMap["binds-key"]!!.get())
+    assertThat(component.mapOfLazy()["binds-key"]!!.get()).isEqualTo("value-4")
   }
 
   @Test

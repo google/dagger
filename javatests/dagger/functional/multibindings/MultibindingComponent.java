@@ -17,6 +17,7 @@
 package dagger.functional.multibindings;
 
 import dagger.Component;
+import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.functional.multibindings.subpackage.ContributionsModule;
 import dagger.multibindings.StringKey;
@@ -34,6 +35,7 @@ interface MultibindingComponent {
   Map<String, String> map();
   Map<String, String[]> mapOfArrays();
   Map<String, Provider<String>> mapOfProviders();
+  Map<String, Lazy<String>> mapOfLazies();
   Set<String> mapKeys();
   Collection<String> mapValues();
   Set<Integer> set();

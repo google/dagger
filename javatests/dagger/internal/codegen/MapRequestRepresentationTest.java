@@ -200,6 +200,50 @@ public class MapRequestRepresentationTest {
         .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerParent"));
   }
 
+  @Test
+  public void lazyMaps() throws Exception {
+    JavaFileObject module =
+        JavaFileObjects.forSourceLines(
+            "test.LazyMaps",
+            "package test;",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoMap;",
+            "import dagger.multibindings.StringKey;",
+            "",
+            "class LazyMaps {",
+            "  @Module",
+            "  abstract static class TestModule {",
+            "    @Provides @IntoMap @StringKey(\"key0\") static Integer int0() { return 0; };",
+            "    @Provides @IntoMap @StringKey(\"key1\") static Integer int1() { return 1; };",
+            "    @Provides @IntoMap @StringKey(\"key2\") static Integer int2() { return 2; };",
+            "  }",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import dagger.Lazy;",
+            "import dagger.Module;",
+            "import java.util.Map;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component(modules = LazyMaps.TestModule.class)",
+            "interface TestComponent {",
+            "  Map<String, Lazy<Integer>> mapOfLazy();",
+            "  Map<String, Provider<Lazy<Integer>>> mapOfProviderOfLazy();",
+            "  Provider<Map<String, Lazy<Integer>>> providerOfMapOfLazy();",
+            "  Provider<Map<String, Provider<Lazy<Integer>>>> providerOfMapOfProviderOfLazy();",
+            "}");
+    Compilation compilation = daggerCompilerWithoutGuava().compile(module, component);
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .hasSourceEquivalentTo(goldenFileRule.goldenFile("test.DaggerTestComponent"));
+  }
+
   private Compiler daggerCompilerWithoutGuava() {
     return compilerWithOptions(compilerMode.javacopts())
         .withClasspath(CLASS_PATH_WITHOUT_GUAVA_OPTION);

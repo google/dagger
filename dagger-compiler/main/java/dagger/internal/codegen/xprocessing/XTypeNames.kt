@@ -101,6 +101,9 @@ object XTypeNames {
   @JvmField val MAP_BUILDER = XClassName.get("dagger.internal", "MapBuilder")
   @JvmField val MAP_FACTORY = XClassName.get("dagger.internal", "MapFactory")
   @JvmField val MAP_PROVIDER_FACTORY = XClassName.get("dagger.internal", "MapProviderFactory")
+  @JvmField val MAP_LAZY_FACTORY = XClassName.get("dagger.internal", "MapLazyFactory")
+  @JvmField
+  val MAP_PROVIDER_LAZY_FACTORY = XClassName.get("dagger.internal", "MapProviderLazyFactory")
   @JvmField val MEMBERS_INJECTOR = XClassName.get("dagger", "MembersInjector")
   @JvmField val MEMBERS_INJECTORS = XClassName.get("dagger.internal", "MembersInjectors")
   @JvmField val DAGGER_PROVIDER = XClassName.get("dagger.internal", "Provider")

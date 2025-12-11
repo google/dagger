@@ -21,6 +21,8 @@ import static androidx.room3.compiler.codegen.compat.XConverters.toXPoet;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.SourceFiles.generatedMonitoringModuleName;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XTypeNames.LAZY;
+import static dagger.internal.codegen.xprocessing.XTypeNames.providerTypeNames;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XTypeName;
@@ -353,15 +355,32 @@ final class ComponentDeclarations {
         && !(getOnlyElement(parameterizedTypeName.typeArguments) instanceof WildcardTypeName);
   }
 
+  /**
+   * Returns the given {@code typeName} with any framework type wrappers removed.
+   *
+   * <p>For example, if {@code frameworkTypeNames} contains {@code Produced}, then {@code
+   * Produced<Foo>} is unwrapped to {@code Foo}. And if {@code Provider<Lazy<Foo>>} is encountered,
+   * we unwrap the {@code Provider} and {@code Lazy} layers and return {@code Foo}.
+   */
   private static TypeName unwrapFrameworkTypeName(
       TypeName typeName, ImmutableSet<XClassName> frameworkTypeNames) {
-    if (typeName instanceof ParameterizedTypeName) {
-      ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) typeName;
-      if (frameworkTypeNames.contains(toXPoet(parameterizedTypeName.rawType))) {
-        typeName = getOnlyElement(parameterizedTypeName.typeArguments);
-      }
+    if (!(typeName instanceof ParameterizedTypeName)) {
+      return typeName;
     }
-    return typeName;
+    ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) typeName;
+    XClassName rawType = toXPoet(parameterizedTypeName.rawType);
+    if (!frameworkTypeNames.contains(rawType)) {
+      return typeName;
+    }
+    // If we have a framework type, unwrap it.
+    TypeName unwrappedTypeName = getOnlyElement(parameterizedTypeName.typeArguments);
+
+    // Account for Provider<Lazy<T>>:
+    // If we just unwrapped Provider<T> and T is Lazy<U>, we need to unwrap Lazy<U> as well.
+    if (providerTypeNames().contains(rawType)) {
+      return unwrapFrameworkTypeName(unwrappedTypeName, ImmutableSet.of(LAZY));
+    }
+    return unwrappedTypeName;
   }
 
   /**

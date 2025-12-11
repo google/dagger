@@ -52,6 +52,8 @@ public final class FrameworkTypes {
 
   public static final ImmutableSet<XClassName> MAP_VALUE_FRAMEWORK_TYPES =
       ImmutableSet.<XClassName>builder()
+          .add(XTypeNames.PROVIDER_OF_LAZY)
+          .add(XTypeNames.LAZY)
           .addAll(providerTypeNames())
           .add(XTypeNames.PRODUCED)
           .add(XTypeNames.PRODUCER)

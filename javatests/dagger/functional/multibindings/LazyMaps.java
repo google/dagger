@@ -16,6 +16,7 @@
 
 package dagger.functional.multibindings;
 
+import dagger.Binds;
 import dagger.Component;
 import dagger.Lazy;
 import dagger.Module;
@@ -49,17 +50,15 @@ class LazyMaps {
 
     @Provides
     @IntoMap
-    @StringKey("key")
-    static Lazy<String> mapContribution(Lazy<String> lazy) {
-      return lazy;
+    @StringKey("provides-key")
+    static String providesValue(String string) {
+      return string;
     }
 
-    /* TODO(b/65118638) Replace once @Binds @IntoMap Lazy<T> methods work properly.
     @Binds
     @IntoMap
     @StringKey("binds-key")
-    abstract Lazy<String> mapContributionAsBinds(Lazy<String> lazy);
-    */
+    abstract String bindsValue(String string);
   }
 
   @Singleton

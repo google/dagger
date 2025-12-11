@@ -1,0 +1,162 @@
+package test;
+
+import com.google.common.collect.ImmutableMap;
+import dagger.Lazy;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.MapLazyFactory;
+import dagger.internal.MapProviderLazyFactory;
+import dagger.internal.Provider;
+import dagger.internal.ProviderOfLazy;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    /**
+      * {@code Provider<java.util.concurrent.atomic.AtomicInteger>}
+      */
+    Provider<?> provideAtomicIntegerProvider;
+
+    /**
+      * {@code Provider<String>}
+      */
+    Provider<?> provideStringProvider;
+
+    /**
+      * {@code Provider<String>}
+      */
+    Provider<?> string0Provider;
+
+    /**
+      * {@code Provider<String>}
+      */
+    Provider<?> string1Provider;
+
+    /**
+      * {@code Provider<String>}
+      */
+    Provider<?> string2Provider;
+
+    /**
+      * {@code Provider<Map<String, Lazy<String>>>}
+      */
+    Provider<?> mapOfStringAndLazyOfStringProvider;
+
+    /**
+      * {@code Provider<?>}
+      */
+    Provider<?> mapOfStringAndProviderOfLazyOfStringProvider;
+
+    TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    Object string() {
+      return LazyMaps_TestModule_ProvideStringFactory.provideString(provideAtomicIntegerProvider.get());
+    }
+
+    Object string0() {
+      return LazyMaps_TestModule_String0Factory.string0(string());
+    }
+
+    Object string1() {
+      return LazyMaps_TestModule_String1Factory.string1(string());
+    }
+
+    Object string2() {
+      return LazyMaps_TestModule_String2Factory.string2(string());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.provideAtomicIntegerProvider = DoubleCheck.provider(LazyMaps_TestModule_ProvideAtomicIntegerFactory.create());
+      this.provideStringProvider = LazyMaps_TestModule_ProvideStringFactory.create(provideAtomicIntegerProvider);
+      this.string0Provider = LazyMaps_TestModule_String0Factory.create(provideStringProvider);
+      this.string1Provider = LazyMaps_TestModule_String1Factory.create(provideStringProvider);
+      this.string2Provider = LazyMaps_TestModule_String2Factory.create(provideStringProvider);
+      this.mapOfStringAndLazyOfStringProvider = mapOfStringAndLazyOfStringBuilder();
+      this.mapOfStringAndProviderOfLazyOfStringProvider = mapOfStringAndProviderOfLazyOfStringBuilder();
+    }
+
+    MapLazyFactory<Object, Object> mapOfStringAndLazyOfStringBuilder() {
+      MapLazyFactory.Builder<Object, Object> builder = MapLazyFactory.builder(3);
+      builder.put("key0", (Provider<Object>) (string0Provider));
+      builder.put("key1", (Provider<Object>) (string1Provider));
+      builder.put("key2", (Provider<Object>) (string2Provider));
+      return builder.build();
+    }
+
+    MapProviderLazyFactory<Object, Object> mapOfStringAndProviderOfLazyOfStringBuilder() {
+      MapProviderLazyFactory.Builder<Object, Object> builder = MapProviderLazyFactory.builder(3);
+      builder.put("key0", (Provider<Object>) (string0Provider));
+      builder.put("key1", (Provider<Object>) (string1Provider));
+      builder.put("key2", (Provider<Object>) (string2Provider));
+      return builder.build();
+    }
+
+    @Override
+    public Map<String, String> mapOfString() {
+      return (Map<String, String>) ((Object) (ImmutableMap.of("key0", string0(), "key1", string1(), "key2", string2())));
+    }
+
+    @Override
+    public Map<String, Lazy<String>> mapOfLazy() {
+      return (Map<String, Lazy<String>>) ((Object) (ImmutableMap.of("key0", DoubleCheck.lazy(string0Provider), "key1", DoubleCheck.lazy(string1Provider), "key2", DoubleCheck.lazy(string2Provider))));
+    }
+
+    @Override
+    public Map<String, javax.inject.Provider<Lazy<String>>> mapOfProviderOfLazy() {
+      return (Map<String, javax.inject.Provider<Lazy<String>>>) ((Object) (ImmutableMap.of("key0", ProviderOfLazy.create(string0Provider), "key1", ProviderOfLazy.create(string1Provider), "key2", ProviderOfLazy.create(string2Provider))));
+    }
+
+    @Override
+    public javax.inject.Provider<Map<String, Lazy<String>>> providerOfMapOfLazy() {
+      return (javax.inject.Provider<Map<String, Lazy<String>>>) ((Object) (mapOfStringAndLazyOfStringProvider));
+    }
+
+    @Override
+    public javax.inject.Provider<Map<String, javax.inject.Provider<Lazy<String>>>> providerOfMapOfProviderOfLazy(
+        ) {
+      return (javax.inject.Provider<Map<String, javax.inject.Provider<Lazy<String>>>>) ((Object) (mapOfStringAndProviderOfLazyOfStringProvider));
+    }
+  }
+}

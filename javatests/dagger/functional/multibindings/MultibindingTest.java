@@ -19,6 +19,7 @@ package dagger.functional.multibindings;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.auto.value.AutoAnnotation;
+import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.multibindings.ClassKey;
 import dagger.multibindings.StringKey;
@@ -59,6 +60,14 @@ public class MultibindingTest {
     assertThat(mapOfProviders).hasSize(2);
     assertThat(mapOfProviders.get("foo").get()).isEqualTo("foo value");
     assertThat(mapOfProviders.get("bar").get()).isEqualTo("bar value");
+  }
+
+  @Test
+  public void mapOfLazies() {
+    Map<String, Lazy<String>> mapOfLazies = multibindingComponent.mapOfLazies();
+    assertThat(mapOfLazies).hasSize(2);
+    assertThat(mapOfLazies.get("foo").get()).isEqualTo("foo value");
+    assertThat(mapOfLazies.get("bar").get()).isEqualTo("bar value");
   }
 
   @Test public void mapKeysAndValues() {

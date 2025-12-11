@@ -90,6 +90,9 @@ final class MapRequestRepresentation extends RequestRepresentation {
 
   @Override
   XExpression getDependencyExpression(XClassName requestingClass) {
+    // TODO(b/467104887): Revisit how DependencyRequests are generated for Map<K, Lazy<V>> and
+    // Provider<Map<K, Lazy<V>>> to ensure consistent handling of Provider wrapping. See bug for more
+    // details on the observed differences between direct and Provider-based map injections.
     XExpression dependencyExpression = getUnderlyingMapExpression(requestingClass);
     // LazyClassKey is backed with a string map, therefore needs to be wrapped.
     if (useLazyClassKey) {

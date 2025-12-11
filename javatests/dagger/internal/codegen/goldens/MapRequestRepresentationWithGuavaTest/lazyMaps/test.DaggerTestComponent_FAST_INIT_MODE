@@ -1,0 +1,146 @@
+package test;
+
+import com.google.common.collect.ImmutableMap;
+import dagger.Lazy;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import dagger.internal.ProviderOfLazy;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    Provider<AtomicInteger> provideAtomicIntegerProvider;
+
+    Provider<String> string0Provider;
+
+    Provider<String> string1Provider;
+
+    Provider<String> string2Provider;
+
+    Provider<Map<String, Lazy<String>>> mapOfStringAndLazyOfStringProvider;
+
+    Provider mapOfStringAndProviderOfLazyOfStringProvider;
+
+    TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    String string() {
+      return LazyMaps_TestModule_ProvideStringFactory.provideString(provideAtomicIntegerProvider.get());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.provideAtomicIntegerProvider = DoubleCheck.provider(new SwitchingProvider<AtomicInteger>(testComponentImpl, 1));
+      this.string0Provider = new SwitchingProvider<>(testComponentImpl, 0);
+      this.string1Provider = new SwitchingProvider<>(testComponentImpl, 2);
+      this.string2Provider = new SwitchingProvider<>(testComponentImpl, 3);
+      this.mapOfStringAndLazyOfStringProvider = new SwitchingProvider<>(testComponentImpl, 4);
+      this.mapOfStringAndProviderOfLazyOfStringProvider = new SwitchingProvider<>(testComponentImpl, 5);
+    }
+
+    @Override
+    public Map<String, String> mapOfString() {
+      return ImmutableMap.<String, String>of("key0", string0Provider.get(), "key1", string1Provider.get(), "key2", string2Provider.get());
+    }
+
+    @Override
+    public Map<String, Lazy<String>> mapOfLazy() {
+      return mapOfStringAndLazyOfStringProvider.get();
+    }
+
+    @Override
+    public Map<String, javax.inject.Provider<Lazy<String>>> mapOfProviderOfLazy() {
+      return (Map<String, javax.inject.Provider<Lazy<String>>>) (mapOfStringAndProviderOfLazyOfStringProvider.get());
+    }
+
+    @Override
+    public javax.inject.Provider<Map<String, Lazy<String>>> providerOfMapOfLazy() {
+      return mapOfStringAndLazyOfStringProvider;
+    }
+
+    @Override
+    public javax.inject.Provider<Map<String, javax.inject.Provider<Lazy<String>>>> providerOfMapOfProviderOfLazy(
+        ) {
+      return mapOfStringAndProviderOfLazyOfStringProvider;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final TestComponentImpl testComponentImpl;
+
+      private final int id;
+
+      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+        this.testComponentImpl = testComponentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // java.util.Map<java.lang.String,java.lang.String> test.LazyMaps.TestModule#string0
+          return (T) LazyMaps_TestModule_String0Factory.string0(testComponentImpl.string());
+
+          case 1: // java.util.concurrent.atomic.AtomicInteger
+          return (T) LazyMaps_TestModule_ProvideAtomicIntegerFactory.provideAtomicInteger();
+
+          case 2: // java.util.Map<java.lang.String,java.lang.String> test.LazyMaps.TestModule#string1
+          return (T) LazyMaps_TestModule_String1Factory.string1(testComponentImpl.string());
+
+          case 3: // java.util.Map<java.lang.String,java.lang.String> test.LazyMaps.TestModule#string2
+          return (T) LazyMaps_TestModule_String2Factory.string2(testComponentImpl.string());
+
+          case 4: // java.util.Map<java.lang.String,dagger.Lazy<java.lang.String>>
+          return (T) ImmutableMap.<String, Lazy<String>>of("key0", DoubleCheck.lazy(testComponentImpl.string0Provider), "key1", DoubleCheck.lazy(testComponentImpl.string1Provider), "key2", DoubleCheck.lazy(testComponentImpl.string2Provider));
+
+          case 5: // java.util.Map<java.lang.String,javax.inject.Provider<dagger.Lazy<java.lang.String>>>
+          return (T) ImmutableMap.<String, javax.inject.Provider<Lazy<String>>>of("key0", ProviderOfLazy.create(testComponentImpl.string0Provider), "key1", ProviderOfLazy.create(testComponentImpl.string1Provider), "key2", ProviderOfLazy.create(testComponentImpl.string2Provider));
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}

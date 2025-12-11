@@ -276,8 +276,16 @@ public final class SourceFiles {
     MapType mapType = MapType.from(binding.key());
     switch (binding.bindingType()) {
       case PROVISION:
-        return mapType.valuesAreProvider()
-            ? XTypeNames.MAP_PROVIDER_FACTORY : XTypeNames.MAP_FACTORY;
+        if (mapType.valuesAreProviderOfLazy()) {
+          return XTypeNames.MAP_PROVIDER_LAZY_FACTORY;
+        }
+        if (mapType.valuesAreLazy()) {
+          return XTypeNames.MAP_LAZY_FACTORY;
+        }
+        if (mapType.valuesAreProvider()) {
+          return XTypeNames.MAP_PROVIDER_FACTORY;
+        }
+        return XTypeNames.MAP_FACTORY;
       case PRODUCTION:
         return mapType.valuesAreFrameworkType()
             ? mapType.valuesAreTypeOf(XTypeNames.PRODUCER)

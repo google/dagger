@@ -172,14 +172,6 @@ public final class JakartaProviderTest {
     @LazyClassKey(Bar.class)
     abstract Bar bindBarIntoClassMap(Bar bar);
 
-    // TODO(b/65118638): Use @Binds @IntoMap Lazy<T> once that works properly.
-    @Provides
-    @IntoMap
-    @StringKey("bar")
-    static Lazy<Bar> provideLazyIntoMap(Lazy<Bar> bar) {
-      return bar;
-    }
-
     // Manually provide two Provider maps to make sure they don't conflict.
     @Provides
     static Map<Long, Provider<Long>> manuallyProvidedJakartaMap() {

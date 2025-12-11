@@ -53,12 +53,16 @@ public final class MapType {
     return new MapType(type);
   }
 
-  // TODO(b/28555349): support PROVIDER_OF_LAZY here too
   // TODO(b/376124787): We could consolidate this with a similar list in FrameworkTypes
   // if we had a better way to go from RequestKind to framework class name or vice versa
   /** The valid framework request kinds allowed on a multibinding map value. */
   private static final ImmutableSet<RequestKind> VALID_FRAMEWORK_REQUEST_KINDS =
-      ImmutableSet.of(RequestKind.PROVIDER, RequestKind.PRODUCER, RequestKind.PRODUCED);
+      ImmutableSet.of(
+          RequestKind.PROVIDER,
+          RequestKind.PRODUCER,
+          RequestKind.PRODUCED,
+          RequestKind.LAZY,
+          RequestKind.PROVIDER_OF_LAZY);
 
   private final XType type;
 
@@ -124,6 +128,16 @@ public final class MapType {
     return providerTypeNames().stream().anyMatch(this::valuesAreTypeOf);
   }
 
+  /** Returns {@code true} if the raw type of {@link #valueType()} is a lazy type. */
+  public boolean valuesAreLazy() {
+    return valueRequestKind().equals(RequestKind.LAZY);
+  }
+
+  /** Returns {@code true} if the raw type of {@link #valueType()} is a provider of lazy type. */
+  public boolean valuesAreProviderOfLazy() {
+    return valueRequestKind().equals(RequestKind.PROVIDER_OF_LAZY);
+  }
+
   /**
    * Returns the map's {@link #valueType()} without any wrapping framework type, if one exists.
    *
@@ -145,6 +159,9 @@ public final class MapType {
   }
 
   public XTypeName unwrappedFrameworkValueTypeName() {
+    if (valueRequestKind().equals(RequestKind.PROVIDER_OF_LAZY)) {
+      return unwrap(unwrap(valueTypeName()));
+    }
     return valuesAreFrameworkType() ? unwrap(valueTypeName()) : valueTypeName();
   }
 
@@ -158,11 +175,6 @@ public final class MapType {
     RequestKind requestKind = RequestKinds.getRequestKind(valueType());
     if (VALID_FRAMEWORK_REQUEST_KINDS.contains(requestKind)) {
       return requestKind;
-    } else if (requestKind == RequestKind.PROVIDER_OF_LAZY) {
-      // This is kind of a weird case. We don't support Map<K, Lazy<V>>, so we also don't support
-      // Map<K, Provider<Lazy<V>>> directly. However, if the user bound that themselves, we don't
-      // want that to get confused as a normal instance request, so return PROVIDER here.
-      return RequestKind.PROVIDER;
     } else {
       // Not all RequestKinds are supported, so if there's a map value that matches an unsupported
       // RequestKind, just treat it like it is a normal instance request.

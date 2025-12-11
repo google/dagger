@@ -34,11 +34,16 @@ public class LazyMapsTest {
     TestComponent component = DaggerLazyMaps_TestComponent.create();
     Map<String, Lazy<String>> laziesMap = component.mapOfLazy();
 
-    String firstGet = laziesMap.get("key").get();
+    String firstGet = laziesMap.get("provides-key").get();
     assertThat(firstGet).isEqualTo("value-1");
-    assertThat(firstGet).isSameInstanceAs(laziesMap.get("key").get());
+    assertThat(firstGet).isSameInstanceAs(laziesMap.get("provides-key").get());
 
-    assertThat(component.mapOfLazy().get("key").get()).isEqualTo("value-2");
+    assertThat(component.mapOfLazy().get("provides-key").get()).isEqualTo("value-2");
+
+    String bindsGet = laziesMap.get("binds-key").get();
+    assertThat(bindsGet).isEqualTo("value-3");
+    assertThat(bindsGet).isSameInstanceAs(laziesMap.get("binds-key").get());
+    assertThat(component.mapOfLazy().get("binds-key").get()).isEqualTo("value-4");
   }
 
   @Test
@@ -46,7 +51,16 @@ public class LazyMapsTest {
     TestComponent component = DaggerLazyMaps_TestComponent.create();
     Map<String, Provider<Lazy<String>>> providersOfLaziesMap = component.mapOfProviderOfLazy();
 
-    assertThat(providersOfLaziesMap.get("key").get().get())
-        .isNotEqualTo(providersOfLaziesMap.get("key").get().get());
+    assertThat(providersOfLaziesMap.get("provides-key").get().get())
+        .isNotEqualTo(providersOfLaziesMap.get("provides-key").get().get());
+  }
+
+  @Test
+  public void providerOfMapOfLaziesReturnsSameLazy() {
+    TestComponent component = DaggerLazyMaps_TestComponent.create();
+    Provider<Map<String, Lazy<String>>> providerOfMap = component.providerForMapOfLazy();
+
+    assertThat(providerOfMap.get().get("binds-key").get())
+        .isNotEqualTo(providerOfMap.get().get("binds-key").get());
   }
 }

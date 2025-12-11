@@ -16,6 +16,7 @@
 
 package dagger.functional.kotlinsrc.multibindings
 
+import dagger.Binds
 import dagger.Component
 import dagger.Lazy
 import dagger.Module
@@ -34,31 +35,34 @@ import javax.inject.Singleton
  */
 class LazyMaps {
   @Module
-  internal object TestModule {
-    @Provides @Singleton fun provideAtomicInteger(): AtomicInteger = AtomicInteger()
+  abstract class TestModule {
 
-    @Provides
-    fun provideString(atomicInteger: AtomicInteger): String =
-      "value-${atomicInteger.incrementAndGet()}"
+    @Module
+    companion object {
+      @Provides @Singleton fun provideAtomicInteger(): AtomicInteger = AtomicInteger()
 
-    /* TODO(b/65118638) Replace once @Binds @IntoMap Lazy<T> methods work properly.
+      @Provides
+      fun provideString(atomicInteger: AtomicInteger): String =
+        "value-${atomicInteger.incrementAndGet()}"
+
+      @Provides @IntoMap @StringKey("key") fun mapContribution(string: String): String = string
+    }
+
     @Binds
     @IntoMap
     @StringKey("binds-key")
-    abstract Lazy<String> mapContributionAsBinds(Lazy<String> lazy);
-    */
-    @Provides
-    @IntoMap
-    @StringKey("key")
-    fun mapContribution(lazy: Lazy<String>): Lazy<String> = lazy
+    abstract fun mapContributionAsBinds(string: String): String
   }
 
   @Singleton
   @Component(modules = [TestModule::class])
   interface TestComponent {
     fun mapOfLazy(): Map<String, Lazy<String>>
+
     fun mapOfProviderOfLazy(): Map<String, Provider<Lazy<String>>>
+
     fun providerForMapOfLazy(): Provider<Map<String, Lazy<String>>>
+
     fun providerForMapOfProviderOfLazy(): Provider<Map<String, Provider<Lazy<String>>>>
   }
 }

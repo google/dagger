@@ -144,6 +144,9 @@ public final class InjectValidator implements ClearableCache {
     private final Diagnostic.Kind staticMemberDiagnosticKind;
     private final Map<XTypeElement, ValidationReport> provisionReports = new HashMap<>();
     private final Map<XTypeElement, ValidationReport> membersInjectionReports = new HashMap<>();
+    // Cache for expensive KSP API calls to improve performance
+    private final Map<XTypeElement, ImmutableSet<XFieldElement>> declaredFieldsCache = new HashMap<>();
+    private final Map<XTypeElement, ImmutableSet<XMethodElement>> declaredMethodsCache = new HashMap<>();
 
     InternalValidator(
         Diagnostic.Kind privateMemberDiagnosticKind, Diagnostic.Kind staticMemberDiagnosticKind) {
@@ -154,6 +157,8 @@ public final class InjectValidator implements ClearableCache {
     void clearCache() {
       provisionReports.clear();
       membersInjectionReports.clear();
+      declaredFieldsCache.clear();
+      declaredMethodsCache.clear();
     }
 
     ValidationReport validate(XTypeElement typeElement) {
@@ -419,7 +424,8 @@ public final class InjectValidator implements ClearableCache {
       // left in limbo. Find an appropriate way to display the error message in that case.
       ValidationReport.Builder builder = ValidationReport.about(typeElement);
       boolean hasInjectedMembers = false;
-      for (XFieldElement field : typeElement.getDeclaredFields()) {
+      // Use cached getDeclaredFields() to avoid expensive repeated KSP API calls
+      for (XFieldElement field : getCachedDeclaredFields(typeElement)) {
         if (InjectionAnnotations.hasInjectAnnotation(field)) {
           hasInjectedMembers = true;
           ValidationReport report = validateField(field);
@@ -428,7 +434,8 @@ public final class InjectValidator implements ClearableCache {
           }
         }
       }
-      for (XMethodElement method : typeElement.getDeclaredMethods()) {
+      // Use cached getDeclaredMethods() to avoid expensive repeated KSP API calls
+      for (XMethodElement method : getCachedDeclaredMethods(typeElement)) {
         if (InjectionAnnotations.hasInjectAnnotation(method)) {
           hasInjectedMembers = true;
           ValidationReport report = validateMethod(method);
@@ -489,6 +496,18 @@ public final class InjectValidator implements ClearableCache {
 
     private boolean processedInPreviousRoundOrCompilationUnit(XTypeElement membersInjectedType) {
       return processingEnv.findTypeElement(membersInjectorNameForType(membersInjectedType)) != null;
+    }
+
+    /** Returns cached declared fields to avoid expensive repeated KSP API calls. */
+    private ImmutableSet<XFieldElement> getCachedDeclaredFields(XTypeElement typeElement) {
+      return declaredFieldsCache.computeIfAbsent(
+          typeElement, type -> ImmutableSet.copyOf(type.getDeclaredFields()));
+    }
+
+    /** Returns cached declared methods to avoid expensive repeated KSP API calls. */
+    private ImmutableSet<XMethodElement> getCachedDeclaredMethods(XTypeElement typeElement) {
+      return declaredMethodsCache.computeIfAbsent(
+          typeElement, type -> ImmutableSet.copyOf(type.getDeclaredMethods()));
     }
   }
 }

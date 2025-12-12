@@ -27,6 +27,7 @@ buildscript {
     }
     dependencies {
         classpath "com.android.tools.build:gradle:$agp_version"
+        classpath "com.android.legacy-kapt:com.android.legacy-kapt.gradle.plugin:$agp_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.google.devtools.ksp:symbol-processing-gradle-plugin:$ksp_version"
         classpath 'com.google.dagger:hilt-android-gradle-plugin:LOCAL-SNAPSHOT'

@@ -195,9 +195,10 @@ public final class dagger/hilt/android/internal/lifecycle/RetainedLifecycleImpl 
 public class dagger/hilt/android/internal/managers/ActivityComponentManager : dagger/hilt/internal/GeneratedComponentManager {
 	protected final field activity Landroid/app/Activity;
 	public fun <init> (Landroid/app/Activity;)V
+	public final fun clearSavedStateHandleHolders ()V
 	protected fun createComponent ()Ljava/lang/Object;
 	public fun generatedComponent ()Ljava/lang/Object;
-	public final fun getSavedStateHandleHolder ()Ldagger/hilt/android/internal/managers/SavedStateHandleHolder;
+	public final fun initSavedStateHandleHolders ()V
 }
 
 public abstract interface class dagger/hilt/android/internal/managers/ActivityComponentManager$ActivityComponentBuilderEntryPoint {

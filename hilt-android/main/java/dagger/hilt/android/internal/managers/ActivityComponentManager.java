@@ -54,6 +54,9 @@ public class ActivityComponentManager
   private final GeneratedComponentManager<ActivityRetainedComponent>
       activityRetainedComponentManager;
 
+  // This field is only accessed from the UI thread.
+  private SavedStateHandleHolder activitySavedStateHandleHolder;
+
   public ActivityComponentManager(Activity activity) {
     this.activity = activity;
     this.activityRetainedComponentManager =
@@ -73,10 +76,21 @@ public class ActivityComponentManager
     return component;
   }
 
-  public final SavedStateHandleHolder getSavedStateHandleHolder() {
+  public final void initSavedStateHandleHolders() {
     // This will only be used on base activity that extends ComponentActivity.
-    return ((ActivityRetainedComponentManager) activityRetainedComponentManager)
-        .getSavedStateHandleHolder();
+    activitySavedStateHandleHolder =
+        ((ActivityRetainedComponentManager) activityRetainedComponentManager)
+            .getSavedStateHandleHolder();
+    if (activitySavedStateHandleHolder.isInvalid()) {
+      activitySavedStateHandleHolder.setExtras(
+          ((ComponentActivity) activity).getDefaultViewModelCreationExtras());
+    }
+  }
+
+  public final void clearSavedStateHandleHolders() {
+    if (activitySavedStateHandleHolder != null) {
+      activitySavedStateHandleHolder.clear();
+    }
   }
 
   protected Object createComponent() {

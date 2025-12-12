@@ -28,7 +28,6 @@ import androidx.room3.compiler.processing.XTypeParameterElement;
 import com.google.common.base.CaseFormat;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
@@ -58,11 +57,6 @@ public final class ActivityGenerator {
       this.signature = MethodSignature.of(methodName, parameterTypes);
     }
   }
-
-  private static final FieldSpec SAVED_STATE_HANDLE_HOLDER_FIELD =
-      FieldSpec.builder(AndroidClassNames.SAVED_STATE_HANDLE_HOLDER, "savedStateHandleHolder")
-          .addModifiers(Modifier.PRIVATE)
-          .build();
 
   private final XProcessingEnv env;
   private final AndroidEntryPointMetadata metadata;
@@ -96,8 +90,7 @@ public final class ActivityGenerator {
       builder.addMethod(init());
       if (!metadata.overridesAndroidEntryPointClass()) {
         builder
-            .addField(SAVED_STATE_HANDLE_HOLDER_FIELD)
-            .addMethod(initSavedStateHandleHolderMethod())
+            .addMethod(initSavedStateHandleHoldersMethod())
             .addMethod(onCreateComponentActivity())
             .addMethod(onDestroyComponentActivity());
       }
@@ -177,7 +170,7 @@ public final class ActivityGenerator {
   // @Override
   // public void onCreate(Bundle bundle) {
   //   super.onCreate(savedInstanceState);
-  //   initSavedStateHandleHolder();
+  //   componentManager().initSavedStateHandleHolders();
   // }
   //
   private MethodSpec onCreateComponentActivity() {
@@ -210,29 +203,20 @@ public final class ActivityGenerator {
         .addModifiers(XElements.getModifiers(nearestSuperClassMethod))
         .addParameter(parameterBuilder.build())
         .addStatement("super.onCreate(savedInstanceState)")
-        .addStatement("initSavedStateHandleHolder()")
+        .addStatement("initSavedStateHandleHolders()")
         .build();
   }
 
-  // private void initSavedStateHandleHolder() {
-  //   savedStateHandleHolder = componentManager().getSavedStateHandleHolder();
-  //   if (savedStateHandleHolder.isInvalid()) {
-  //     savedStateHandleHolder.setExtras(getDefaultViewModelCreationExtras());
-  //   }
+  // private void initSavedStateHandleHolders() {
+  //   componentManager().initSavedStateHandleHolders();
   // }
-  private MethodSpec initSavedStateHandleHolderMethod() {
-    MethodSpec.Builder builder = MethodSpec.methodBuilder("initSavedStateHandleHolder")
-        .addModifiers(Modifier.PRIVATE);
+  private MethodSpec initSavedStateHandleHoldersMethod() {
+    MethodSpec.Builder builder =
+        MethodSpec.methodBuilder("initSavedStateHandleHolders").addModifiers(Modifier.PRIVATE);
     if (metadata.allowsOptionalInjection()) {
       builder.beginControlFlow("if (optionalInjectParentUsesHilt(optionalInjectGetParent()))");
     }
-    builder
-        .addStatement(
-            "$N = componentManager().getSavedStateHandleHolder()", SAVED_STATE_HANDLE_HOLDER_FIELD)
-        .beginControlFlow("if ($N.isInvalid())", SAVED_STATE_HANDLE_HOLDER_FIELD)
-        .addStatement(
-            "$N.setExtras(getDefaultViewModelCreationExtras())", SAVED_STATE_HANDLE_HOLDER_FIELD)
-        .endControlFlow();
+    builder.addStatement("componentManager().initSavedStateHandleHolders()");
     if (metadata.allowsOptionalInjection()) {
       builder.endControlFlow();
     }
@@ -251,9 +235,7 @@ public final class ActivityGenerator {
   // @Override
   // public void onDestroy() {
   //   super.onDestroy();
-  //   if (savedStateHandleHolder != null) {
-  //     savedStateHandleHolder.clear();
-  //   }
+  //   componentManager().clearSavedStateHandleHolders();
   // }
   private MethodSpec onDestroyComponentActivity() {
     XMethodElement nearestSuperClassMethod =
@@ -270,9 +252,7 @@ public final class ActivityGenerator {
         .addAnnotation(Override.class)
         .addModifiers(XElements.getModifiers(nearestSuperClassMethod))
         .addStatement("super.onDestroy()")
-        .beginControlFlow("if ($N != null)", SAVED_STATE_HANDLE_HOLDER_FIELD)
-        .addStatement("$N.clear()", SAVED_STATE_HANDLE_HOLDER_FIELD)
-        .endControlFlow()
+        .addStatement("componentManager().clearSavedStateHandleHolders()")
         .build();
   }
 

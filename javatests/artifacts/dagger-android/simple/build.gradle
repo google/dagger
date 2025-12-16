@@ -47,3 +47,6 @@ allprojects {
         }
     }
 }
+
+// Instrumentation tests: Combines test reports for all modules
+apply plugin: 'android-reporting'

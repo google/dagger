@@ -26,11 +26,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
 
-@RunWith(Parameterized::class)
-class TransformTest(val backend: Backend) {
+class TransformTest {
+
   @get:Rule
   val testProjectDir = TemporaryFolder()
 
@@ -38,11 +36,11 @@ class TransformTest(val backend: Backend) {
 
   @Before
   fun setup() {
-    gradleRunner = GradleTestRunner(testProjectDir).apply {
-      addSrc(
-        srcPath = "minimal/MainActivity.java",
-        srcContent =
-          """
+    gradleRunner = GradleTestRunner(testProjectDir)
+    gradleRunner.addSrc(
+      srcPath = "minimal/MainActivity.java",
+      srcContent =
+        """
         package minimal;
 
         import android.os.Bundle;
@@ -56,30 +54,21 @@ class TransformTest(val backend: Backend) {
           }
         }
         """.trimIndent()
-      )
-      addDependencies(
-        "implementation 'androidx.appcompat:appcompat:1.1.0'",
-        "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      )
-      when (backend) {
-        Backend.JAVAC -> {
-          addDependencies("annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'")
-        }
-        Backend.KAPT -> {
-          addPluginId("com.android.legacy-kapt")
-          addDependencies("kapt 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'")
-        }
-        Backend.KSP -> {
-          addPluginId("com.google.devtools.ksp")
-          addDependencies("ksp 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'")
-        }
-      }
-    }
+    )
   }
 
   // Simple functional test to verify transformation.
   @Test
   fun testAssemble() {
+    gradleRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
+    )
+    gradleRunner.addActivities(
+      "<activity android:name=\".MainActivity\"/>"
+    )
+
     val result = gradleRunner.build()
     val assembleTask = result.getTask(":assembleDebug")
     Assert.assertEquals(TaskOutcome.SUCCESS, assembleTask.outcome)
@@ -109,6 +98,12 @@ class TransformTest(val backend: Backend) {
   // Verify correct transformation is done on nested classes.
   @Test
   fun testAssemble_nestedClass() {
+    gradleRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
+    )
+
     gradleRunner.addSrc(
       srcPath = "minimal/TopClass.java",
       srcContent =
@@ -139,6 +134,12 @@ class TransformTest(val backend: Backend) {
   // Verify transformation ignores abstract methods.
   @Test
   fun testAssemble_abstractMethod() {
+    gradleRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
+    )
+
     gradleRunner.addSrc(
       srcPath = "minimal/AbstractActivity.java",
       srcContent =
@@ -169,6 +170,12 @@ class TransformTest(val backend: Backend) {
   // Verify transformation ignores native methods.
   @Test
   fun testAssemble_nativeMethod() {
+    gradleRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
+    )
+
     gradleRunner.addSrc(
       srcPath = "minimal/SimpleActivity.java",
       srcContent =
@@ -199,6 +206,12 @@ class TransformTest(val backend: Backend) {
   // Verifies the transformation is applied incrementally when a class to be transformed is updated.
   @Test
   fun testTransform_incrementalClass() {
+    gradleRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
+    )
+
     val srcFile = gradleRunner.addSrc(
       srcPath = "minimal/OtherActivity.java",
       srcContent =
@@ -256,6 +269,12 @@ class TransformTest(val backend: Backend) {
   // directory.
   @Test
   fun testTransform_incrementalDir() {
+    gradleRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
+    )
+
     gradleRunner.addSrcPackage("ui/")
 
     gradleRunner.build().let {
@@ -293,6 +312,12 @@ class TransformTest(val backend: Backend) {
   // See: https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.7.9
   @Test
   fun testTransform_genericSuperclass() {
+    gradleRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
+    )
+
     gradleRunner.addSrc(
       srcPath = "minimal/BaseActivity.java",
       srcContent =
@@ -370,14 +395,7 @@ class TransformTest(val backend: Backend) {
   }
 
   companion object {
-    const val TRANSFORM_TASK_NAME = ":transformDebugClassesWithAsm"
-
-    @JvmStatic
-    @Parameterized.Parameters(name = "backend = {0}")
-    fun params() = listOf(Backend.JAVAC, Backend.KAPT, Backend.KSP)
-
-    enum class Backend {
-      JAVAC, KAPT, KSP
-    }
+    const val TRANSFORM_TASK_NAME =
+      ":transformDebugClassesWithAsm"
   }
 }

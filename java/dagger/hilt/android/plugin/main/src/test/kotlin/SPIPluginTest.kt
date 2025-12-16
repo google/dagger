@@ -49,8 +49,9 @@ class SPIPluginTest(val backend: Backend) {
       Backend.KSP -> "ksp"
     }
     if (backend == Backend.KAPT || backend == Backend.KSP) {
+      gradleRunner.addPluginId("kotlin-android")
       if (backend == Backend.KAPT) {
-        gradleRunner.addPluginId("com.android.legacy-kapt")
+        gradleRunner.addPluginId("kotlin-kapt")
       } else {
         gradleRunner.addPluginId("com.google.devtools.ksp")
       }

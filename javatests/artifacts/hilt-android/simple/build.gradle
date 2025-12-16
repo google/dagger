@@ -27,7 +27,7 @@ buildscript {
     }
     dependencies {
         classpath "com.android.tools.build:gradle:$agp_version"
-        classpath "com.android.legacy-kapt:com.android.legacy-kapt.gradle.plugin:$agp_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.google.dagger:hilt-android-gradle-plugin:$dagger_version"
     }
 }
@@ -64,3 +64,6 @@ subprojects {
         }
     }
 }
+
+// Instrumentation tests: Combines test reports for all modules
+apply plugin: 'android-reporting'

@@ -221,7 +221,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
       "build/intermediates/javac/debugUnitTest/compileDebugUnitTestJavaWithJavac/classes"
     fun getRootClassesDir(variant: String) =
       if (incapMode == ISOLATING_MODE) {
-        "build/intermediates/classes/$variant/hiltJavaCompile${variant.capitalize()}/"
+        "build/intermediates/hilt/component_classes/$variant/"
       } else {
         "build/intermediates/javac/$variant/compile${variant.capitalize()}JavaWithJavac/classes"
       }

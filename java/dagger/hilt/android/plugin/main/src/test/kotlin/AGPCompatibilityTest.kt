@@ -82,11 +82,6 @@ class AGPCompatibilityTest(private val agpVersion: String, private val gradleVer
   companion object {
     @JvmStatic
     @Parameterized.Parameters(name = "agpVersion = {0}, gradleVersion = {1}")
-    fun parameters() = listOf(
-      arrayOf(
-        /* agpVersion = */ "9.0.0-beta05",
-        /* gradleVersion = */ "9.2.0"
-      )
-    )
+    fun parameters() = listOf(arrayOf(/* agpVersion = */ "8.13.0", /* gradleVersion = */ "9.2.0"))
   }
 }

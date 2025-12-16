@@ -40,3 +40,34 @@ internal fun getConfigName(variant: Component, prefix: String? = null): String {
     prefix?.let { "$prefix${name.capitalize()}" } ?: name
   }
 }
+
+@Suppress("DEPRECATION") // Older variant API is deprecated
+internal fun getKaptConfigName(variant: com.android.build.gradle.api.BaseVariant)
+  = getConfigName(variant, "kapt")
+
+@Suppress("DEPRECATION") // Older variant API is deprecated
+internal fun getKspConfigName(variant: com.android.build.gradle.api.BaseVariant)
+  = getConfigName(variant, "ksp")
+
+@Suppress("DEPRECATION") // Older variant API is deprecated
+internal fun getConfigName(
+  variant: com.android.build.gradle.api.BaseVariant,
+  prefix: String? = null,
+): String {
+  // Config names don't follow the usual task name conventions:
+  // <Variant Name>   -> <Config Name>
+  // debug            -> <prefix>Debug
+  // debugAndroidTest -> <prefix>AndroidTestDebug
+  // debugUnitTest    -> <prefix>TestDebug
+  // release          -> <prefix>Release
+  // releaseUnitTest  -> <prefix>TestRelease
+  return when (variant) {
+    is com.android.build.gradle.api.TestVariant ->
+      "androidTest${variant.name.substringBeforeLast("AndroidTest").capitalize()}"
+    is com.android.build.gradle.api.UnitTestVariant ->
+      "test${variant.name.substringBeforeLast("UnitTest").capitalize()}"
+    else -> variant.name
+  }.let { name ->
+    prefix?.let { "$prefix${name.capitalize()}" } ?: name
+  }
+}

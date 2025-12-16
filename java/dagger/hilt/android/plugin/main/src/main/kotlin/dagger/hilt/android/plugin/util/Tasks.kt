@@ -40,7 +40,7 @@ internal fun addKaptTaskProcessorOptions(
   project: Project,
   variantIdentity: ComponentIdentity,
   produceArgProvider: (Task) -> CommandLineArgumentProvider
-) = project.plugins.withId("com.android.legacy-kapt") {
+) = project.plugins.withId("kotlin-kapt") {
   checkClass("org.jetbrains.kotlin.gradle.internal.KaptTask") {
     """
     The KAPT plugin was detected to be applied but its task class could not be found.
@@ -135,3 +135,4 @@ private val kspTwoTaskClass =
 internal fun Task.isKspTask() =
   kspOneTaskClass?.isAssignableFrom(this::class.java) == true ||
     kspTwoTaskClass?.isAssignableFrom(this::class.java) == true
+

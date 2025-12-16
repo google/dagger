@@ -87,7 +87,7 @@ class BuildCacheTest(private val enableAggregatingTask: Boolean) {
         add(":compressDebugAssets")
         add(":desugarDebugFileDependencies")
         add(":extractDeepLinksDebug")
-        add(":generateDebugRFile")
+        add(":generateDebugResValues")
         add(":generateDebugResources")
         // When aggregating task is enabled, the plugin adds two more tasks that should be
         // cacheable.

@@ -144,8 +144,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
             mavenCentral()
           }
           dependencies {
-            classpath 'com.android.tools.build:gradle:$AGP_VERSION'
-            classpath 'com.android.legacy-kapt:com.android.legacy-kapt.gradle.plugin:$AGP_VERSION'
+            classpath 'com.android.tools.build:gradle:8.13.0'
             ${pluginClasspaths.joinToString(separator = "\n") { "classpath '$it'" }}
           }
         }
@@ -184,14 +183,13 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
         }
 
         dependencies {
-          implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.2.0'))
+          implementation(platform('org.jetbrains.kotlin:kotlin-bom:1.8.0'))
           ${dependencies.joinToString(separator = "\n")}
         }
 
         hilt {
           ${hiltOptions.joinToString(separator = "\n")}
         }
-
         ${additionalClosures.joinToString(separator = "\n")}
         """
             .trimIndent()
@@ -205,11 +203,9 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
       tempFolder.newFile("gradle.properties").apply {
         writeText(
           """
+        android.useAndroidX=true
         // TODO(b/296583777): See if there's a better way to fix the OOM error.
         org.gradle.jvmargs=-XX:MaxMetaspaceSize=1g
-
-        # TODO: Remove once https://github.com/google/ksp/issues/2729 is fixed.
-        android.disallowKotlinSourceSets=false
         """
             .trimIndent()
         )
@@ -267,9 +263,5 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
         }
       }
     }
-  }
-
-  companion object {
-    const val AGP_VERSION = "9.0.0-beta05"
   }
 }

@@ -17,14 +17,13 @@
 import dagger.hilt.android.plugin.task.ImportSharedLibTask
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
   id 'org.jetbrains.kotlin.jvm'
   id 'java-gradle-plugin'
   id 'maven-publish'
-  id 'com.github.johnrengelman.shadow'
+  id 'com.gradleup.shadow'
 }
 
 configurations {
@@ -69,6 +68,7 @@ dependencies {
   // Use compile-only for other plugin dependencies to avoid brining those
   // to projects that don't use them.
   compileOnly "com.android.tools.build:gradle:$agp_version"
+  compileOnly "com.android.legacy-kapt:com.android.legacy-kapt.gradle.plugin:$agp_version"
   compileOnly "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   compileOnly "com.google.devtools.ksp:symbol-processing-gradle-plugin:$ksp_version"
 
@@ -81,6 +81,7 @@ dependencies {
   testImplementation 'com.google.truth:truth:1.0.1'
   testImplementation 'org.javassist:javassist:3.26.0-GA'
   testPluginCompile "com.android.tools.build:gradle:$agp_version"
+  testPluginCompile "com.android.legacy-kapt:com.android.legacy-kapt.gradle.plugin:$agp_version"
   testPluginCompile "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
   testPluginCompile "com.google.devtools.ksp:symbol-processing-gradle-plugin:$ksp_version"
 }
@@ -110,18 +111,19 @@ kotlin {
 tasks.register("importSharedLib", ImportSharedLibTask) {
     outputDir.set(file("${project.projectDir}/libs"))
 }
-tasks.getByName('compileKotlin').dependsOn('importSharedLib')
+tasks.named('compileKotlin').configure { it.dependsOn('importSharedLib') }
 
 // Task that generates a top-level property containing the version of the
 // project so that it can be used in code and at runtime.
-def pluginVersionOutDir = file("$buildDir/generated/source/plugin-version/")
+def pluginVersionOutDir =
+    project.layout.buildDirectory.map {file("$it/generated/source/plugin-version/") }
 tasks.register("generatePluginVersionSource").configure {
   def version = getPublishVersion()
   inputs.property('version', version)
   outputs.dir(pluginVersionOutDir)
   doLast {
     def versionFile =
-      file("$pluginVersionOutDir/dagger/hilt/android/plugin/Version.kt")
+      file("${pluginVersionOutDir.get()}/dagger/hilt/android/plugin/Version.kt")
     versionFile.parentFile.mkdirs()
     versionFile.text = """
       // Generated file. Do not edit!
@@ -132,14 +134,14 @@ tasks.register("generatePluginVersionSource").configure {
   }
 }
 sourceSets.main.java.srcDir pluginVersionOutDir
-tasks.getByName('compileKotlin').dependsOn('generatePluginVersionSource')
+tasks.named('compileKotlin').configure { it.dependsOn('generatePluginVersionSource') }
 
 // Create sources Jar from main kotlin sources
 tasks.register("sourcesJar", Jar).configure {
   group = JavaBasePlugin.DOCUMENTATION_GROUP
   description = "Assembles sources JAR"
   archiveClassifier.set("sources")
-  from(sourceSets["main"].allSource)
+  from(sourceSets.named("main").map { it.allSource })
   dependsOn('generatePluginVersionSource')
 }
 
@@ -153,7 +155,7 @@ tasks.register("javadocJar", Jar).configure {
 }
 
 // Disable Gradle metadata publication.
-tasks.withType(GenerateModuleMetadata) {
+tasks.withType(GenerateModuleMetadata).configureEach {
   enabled = false
 }
 
@@ -254,7 +256,7 @@ def getPublishVersion() {
   return (publishVersion != null) ? publishVersion : "LOCAL-SNAPSHOT"
 }
 
-def checkJarFile(File jarFile, String... allowedPrefixes) {
+static def checkJarFile(File jarFile, String... allowedPrefixes) {
   def zip = new ZipFile(jarFile)
   try {
     Enumeration<ZipEntry> list = zip.entries()

@@ -10,7 +10,7 @@ readonly EXTRA_MAVEN_ARGS=("$@")
 # Builds and deploy the Gradle plugin.
 _deploy_plugin() {
   local plugindir=java/dagger/hilt/android/plugin
-  AGP_VERSION="8.13.0" ./$plugindir/gradlew -p $plugindir --no-daemon clean \
+  AGP_VERSION="9.0.0-beta05" ./$plugindir/gradlew -p $plugindir --no-daemon clean \
     publishAllPublicationsToMavenRepository -PPublishVersion="$VERSION_NAME"
   local outdir=$plugindir/main/buildOut/repo/com/google/dagger/hilt-android-gradle-plugin/$VERSION_NAME
   local markerOutDir=$plugindir/main/buildOut/repo/com/google/dagger/hilt/android/com.google.dagger.hilt.android.gradle.plugin/$VERSION_NAME

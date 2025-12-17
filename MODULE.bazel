@@ -2,7 +2,7 @@ bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "rules_java", version = "8.6.0")
 bazel_dep(name = "rules_jvm_external", version = "6.7")
 bazel_dep(name = "rules_android", version = "0.6.0")
-bazel_dep(name = "rules_kotlin", version = "2.1.9", repo_name = "io_bazel_rules_kotlin")
+bazel_dep(name = "rules_kotlin", version = "2.2.1", repo_name = "io_bazel_rules_kotlin")
 bazel_dep(name = "rules_robolectric", version = "4.14.1.2", repo_name = "robolectric")
 bazel_dep(name = "protobuf", version = "29.0", repo_name = "com_google_protobuf")
 
@@ -46,9 +46,9 @@ GRPC_VERSION = "1.2.0"
 
 INCAP_VERSION = "0.2"
 
-KOTLIN_VERSION = "2.2.20"
+KOTLIN_VERSION = "2.3.0"
 
-KSP_VERSION = KOTLIN_VERSION + "-2.0.3"
+KSP_VERSION = "2.3.4"
 
 MAVEN_VERSION = "3.3.3"
 

@@ -2,12 +2,9 @@ package test;
 
 import dagger.Lazy;
 import dagger.internal.DaggerGenerated;
-import dagger.internal.DoubleCheck;
-import dagger.internal.MapBuilder;
 import dagger.internal.MapLazyFactory;
 import dagger.internal.MapProviderLazyFactory;
 import dagger.internal.Provider;
-import dagger.internal.ProviderOfLazy;
 import java.util.Map;
 import javax.annotation.processing.Generated;
 
@@ -59,29 +56,13 @@ final class DaggerTestComponent {
 
     }
 
-    Map mapOfStringAndLazyOfIntegerBuilder() {
-      MapBuilder mapBuilder = MapBuilder.<String, Lazy<Integer>>newMapBuilder(3);
-      mapBuilder.put("key0", DoubleCheck.lazy(LazyMaps_TestModule_Int0Factory.create()));
-      mapBuilder.put("key1", DoubleCheck.lazy(LazyMaps_TestModule_Int1Factory.create()));
-      mapBuilder.put("key2", DoubleCheck.lazy(LazyMaps_TestModule_Int2Factory.create()));
-      return mapBuilder.build();
-    }
-
-    Map mapOfStringAndProviderOfLazyOfIntegerBuilder() {
-      MapBuilder mapBuilder = MapBuilder.<String, javax.inject.Provider<Lazy<Integer>>>newMapBuilder(3);
-      mapBuilder.put("key0", ProviderOfLazy.create(LazyMaps_TestModule_Int0Factory.create()));
-      mapBuilder.put("key1", ProviderOfLazy.create(LazyMaps_TestModule_Int1Factory.create()));
-      mapBuilder.put("key2", ProviderOfLazy.create(LazyMaps_TestModule_Int2Factory.create()));
-      return mapBuilder.build();
-    }
-
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.mapOfStringAndLazyOfIntegerProvider = mapOfStringAndLazyOfIntegerBuilder2();
-      this.mapOfStringAndProviderOfLazyOfIntegerProvider = mapOfStringAndProviderOfLazyOfIntegerBuilder2();
+      this.mapOfStringAndLazyOfIntegerProvider = mapOfStringAndLazyOfIntegerBuilder();
+      this.mapOfStringAndProviderOfLazyOfIntegerProvider = mapOfStringAndProviderOfLazyOfIntegerBuilder();
     }
 
-    MapLazyFactory<String, Integer> mapOfStringAndLazyOfIntegerBuilder2() {
+    MapLazyFactory<String, Integer> mapOfStringAndLazyOfIntegerBuilder() {
       MapLazyFactory.Builder<String, Integer> builder = MapLazyFactory.builder(3);
       builder.put("key0", LazyMaps_TestModule_Int0Factory.create());
       builder.put("key1", LazyMaps_TestModule_Int1Factory.create());
@@ -89,7 +70,7 @@ final class DaggerTestComponent {
       return builder.build();
     }
 
-    MapProviderLazyFactory<String, Integer> mapOfStringAndProviderOfLazyOfIntegerBuilder2() {
+    MapProviderLazyFactory<String, Integer> mapOfStringAndProviderOfLazyOfIntegerBuilder() {
       MapProviderLazyFactory.Builder<String, Integer> builder = MapProviderLazyFactory.builder(3);
       builder.put("key0", LazyMaps_TestModule_Int0Factory.create());
       builder.put("key1", LazyMaps_TestModule_Int1Factory.create());
@@ -99,12 +80,12 @@ final class DaggerTestComponent {
 
     @Override
     public Map<String, Lazy<Integer>> mapOfLazy() {
-      return mapOfStringAndLazyOfIntegerBuilder();
+      return mapOfStringAndLazyOfIntegerProvider.get();
     }
 
     @Override
     public Map<String, javax.inject.Provider<Lazy<Integer>>> mapOfProviderOfLazy() {
-      return mapOfStringAndProviderOfLazyOfIntegerBuilder();
+      return (Map<String, javax.inject.Provider<Lazy<Integer>>>) (mapOfStringAndProviderOfLazyOfIntegerProvider.get());
     }
 
     @Override

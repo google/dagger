@@ -50,10 +50,6 @@ public final class DaggerTestComponent {
 
     }
 
-    Foo foo() {
-      return new Foo(new Bar());
-    }
-
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.fooProvider = Foo_Factory.create(Bar_Factory.create());
@@ -61,7 +57,7 @@ public final class DaggerTestComponent {
 
     @Override
     public SomeEntryPoint someEntryPoint() {
-      return new SomeEntryPoint(foo(), fooProvider);
+      return new SomeEntryPoint(fooProvider.get(), fooProvider);
     }
   }
 }

@@ -2421,7 +2421,24 @@ public class MissingBindingValidationTest {
     CompilerTests.daggerCompiler(
             parent, child, grandchild, parentModule, childModule, grandchildModule, foo, bar, qux)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(subject -> subject.hasErrorCount(0));
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  String.join(
+                      "\n",
+                      "Qux cannot be provided without an @Provides-annotated method.",
+                      "",
+                      "    Qux is injected at",
+                      "        [Parent] ParentModule.provideFoo(…, qux)",
+                      "    Foo is requested at",
+                      "        [Grandchild] Grandchild.getFoo() [Parent → Child → Grandchild]",
+                      "",
+                      "Note: Qux is provided in the following other components:",
+                      "    [Child] ChildModule.provideQux()",
+                      "",
+                      "======================"));
+            });
   }
 
   // Regression test for b/367426609
@@ -2527,7 +2544,24 @@ public class MissingBindingValidationTest {
     CompilerTests.daggerCompiler(
             parent, child, grandchild, parentModule, childModule, grandchildModule, foo, bar, qux)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(subject -> subject.hasErrorCount(0));
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  String.join(
+                      "\n",
+                      "Qux cannot be provided without an @Provides-annotated method.",
+                      "",
+                      "    Qux is injected at",
+                      "        [Parent] ParentModule.provideFoo(…, qux)",
+                      "    Foo is requested at",
+                      "        [Grandchild] Grandchild.getFoo() [Parent → Child → Grandchild]",
+                      "",
+                      "Note: Qux is provided in the following other components:",
+                      "    [Child] ChildModule.provideQux()",
+                      "",
+                      "======================"));
+            });
   }
 
   @Test

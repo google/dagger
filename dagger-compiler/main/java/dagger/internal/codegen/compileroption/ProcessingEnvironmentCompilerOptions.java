@@ -342,7 +342,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
     GENERATED_CLASS_EXTENDS_COMPONENT,
 
-    USE_BINDING_GRAPH_FIX,
+    USE_BINDING_GRAPH_FIX(ENABLED),
 
     USE_FRAMEWORK_TYPE_IN_MAP_MULTIBINDING_CONTRIBUTION_KEY,
 

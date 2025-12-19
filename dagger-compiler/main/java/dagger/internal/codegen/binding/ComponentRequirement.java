@@ -99,15 +99,6 @@ public abstract class ComponentRequirement {
   }
 
   /**
-   * An override for the requirement's null policy. If set, this is used as the null policy instead
-   * of the default behavior in {@link #nullPolicy}.
-   *
-   * <p>Some implementations' null policy can be determined upon construction (e.g., for binding
-   * instances), but others' require Elements which must wait until {@link #nullPolicy} is called.
-   */
-  abstract Optional<NullPolicy> overrideNullPolicy();
-
-  /**
    * The nullability of the requirement. If set, this is used to determine the nullability of the
    * requirement's type.
    */
@@ -118,21 +109,7 @@ public abstract class ComponentRequirement {
   private Nullability nullability = Nullability.NOT_NULLABLE;
 
   /** The requirement's null policy. */
-  public NullPolicy nullPolicy() {
-    if (overrideNullPolicy().isPresent()) {
-      return overrideNullPolicy().get();
-    }
-    switch (kind()) {
-      case MODULE:
-        return componentCanMakeNewInstances(typeElement())
-            ? NullPolicy.NEW
-            : requiresAPassedInstance() ? NullPolicy.THROW : NullPolicy.ALLOW;
-      case DEPENDENCY:
-      case BOUND_INSTANCE:
-        return NullPolicy.THROW;
-    }
-    throw new AssertionError();
-  }
+  public abstract NullPolicy nullPolicy();
 
   /**
    * Returns true if the passed {@link ComponentRequirement} requires a passed instance in order to
@@ -205,12 +182,16 @@ public abstract class ComponentRequirement {
 
   public static ComponentRequirement forDependency(XType type) {
     checkArgument(isDeclared(checkNotNull(type)));
-    return create(Kind.DEPENDENCY, type);
+    return create(Kind.DEPENDENCY, type, NullPolicy.THROW);
   }
 
   public static ComponentRequirement forModule(XType type) {
     checkArgument(isDeclared(checkNotNull(type)));
-    return create(Kind.MODULE, type);
+    NullPolicy nullPolicy =
+        componentCanMakeNewInstances(type.getTypeElement())
+            ? NullPolicy.NEW
+            : requiresModuleInstance(type.getTypeElement()) ? NullPolicy.THROW : NullPolicy.ALLOW;
+    return create(Kind.MODULE, type, nullPolicy);
   }
 
   public static ComponentRequirement forBoundInstance(BoundInstanceBinding binding) {
@@ -224,17 +205,17 @@ public abstract class ComponentRequirement {
     return create(
         Kind.BOUND_INSTANCE,
         key.type().xprocessing(),
-        nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
+        nullable ? NullPolicy.ALLOW : NullPolicy.THROW,
         Optional.of(key),
         nullability,
         getSimpleName(elementForVariableName));
   }
 
-  private static ComponentRequirement create(Kind kind, XType type) {
+  private static ComponentRequirement create(Kind kind, XType type, NullPolicy nullPolicy) {
     return create(
         kind,
         type,
-        /* overrideNullPolicy= */ Optional.empty(),
+        nullPolicy,
         /* key= */ Optional.empty(),
         Nullability.NOT_NULLABLE,
         simpleVariableName(type.getTypeElement().asClassName()));
@@ -243,13 +224,13 @@ public abstract class ComponentRequirement {
   private static ComponentRequirement create(
       Kind kind,
       XType type,
-      Optional<NullPolicy> overrideNullPolicy,
+      NullPolicy nullPolicy,
       Optional<Key> key,
       Nullability nullability,
       String variableName) {
     ComponentRequirement requirement =
         new AutoValue_ComponentRequirement(
-            kind, XTypes.equivalence().wrap(type), overrideNullPolicy, key, variableName);
+            kind, XTypes.equivalence().wrap(type), nullPolicy, key, variableName);
     requirement.nullability = nullability;
     return requirement;
   }

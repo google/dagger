@@ -178,7 +178,7 @@ public final class XCodeBlocks {
 
   public static XCodeBlock ofJavaClassLiteral(XTypeName typeName) {
     XCodeBlock.Builder builder = XCodeBlock.builder();
-    toJavaPoet(builder).add("$T.class", toJavaPoet(typeName));
+    toJavaPoet(builder).add("$T.class", toJavaPoet(typeName).withoutAnnotations());
     toKotlinPoet(builder).add("%T::class.java", toKotlinPoet(typeName));
     return builder.build();
   }

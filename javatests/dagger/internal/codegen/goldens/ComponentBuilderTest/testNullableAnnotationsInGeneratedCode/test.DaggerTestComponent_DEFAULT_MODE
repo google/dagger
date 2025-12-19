@@ -1,0 +1,73 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Preconditions;
+import javax.annotation.processing.Generated;
+import org.jspecify.annotations.Nullable;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static TestComponent.Builder builder() {
+    return new Builder();
+  }
+
+  private static final class Builder implements TestComponent.Builder {
+    private @Nullable Boolean setBoxedPrimitive;
+
+    private String setUnboxed;
+
+    private @Nullable Boolean setUnboxedPrimitive;
+
+    @Override
+    public Builder setBoxedPrimitive(Boolean boxedPrimitive) {
+      this.setBoxedPrimitive = Preconditions.checkNotNull(boxedPrimitive);
+      return this;
+    }
+
+    @Override
+    public Builder setUnboxed(String unboxed) {
+      this.setUnboxed = Preconditions.checkNotNull(unboxed);
+      return this;
+    }
+
+    @Override
+    public Builder setUnboxedPrimitive(boolean unboxedPrimitive) {
+      this.setUnboxedPrimitive = Preconditions.checkNotNull(unboxedPrimitive);
+      return this;
+    }
+
+    @Override
+    public TestComponent build() {
+      Preconditions.checkBuilderRequirement(setBoxedPrimitive, Boolean.class);
+      Preconditions.checkBuilderRequirement(setUnboxed, String.class);
+      Preconditions.checkBuilderRequirement(setUnboxedPrimitive, Boolean.class);
+      return new TestComponentImpl(setBoxedPrimitive, setUnboxed, setUnboxedPrimitive);
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    TestComponentImpl(Boolean setBoxedPrimitiveParam, String setUnboxedParam,
+        Boolean setUnboxedPrimitiveParam) {
+
+
+    }
+  }
+}

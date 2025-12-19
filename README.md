@@ -271,7 +271,7 @@ Notes:
         information on how to select appropriately, and the [Android Gradle
         plugin documentation][gradle-api-implementation-android] for Android
         projects.
--   For Kotlin projects, use [`kapt`] in place of `annotationProcessor`.
+-   For Kotlin projects, use [`KSP`] in place of `annotationProcessor`.
 
 If you're using the [Android Databinding library][databinding], you may want to
 increase the number of errors that `javac` will print. When Dagger prints an
@@ -332,7 +332,7 @@ See [the CONTRIBUTING.md docs][Building Dagger].
 [GitHub Issues]: https://github.com/google/dagger/issues
 [gradle-api-implementation]: https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_separation
 [gradle-api-implementation-android]: https://developer.android.com/studio/build/dependencies#dependency_configurations
-[`kapt`]: https://kotlinlang.org/docs/reference/kapt.html
+[`KSP`]: https://kotlinlang.org/docs/ksp-overview.html
 [latestapi]: https://dagger.dev/api/latest/
 [mavenbadge-svg]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger/badge.svg
 [mavencentral]: https://search.maven.org/artifact/com.google.dagger/dagger

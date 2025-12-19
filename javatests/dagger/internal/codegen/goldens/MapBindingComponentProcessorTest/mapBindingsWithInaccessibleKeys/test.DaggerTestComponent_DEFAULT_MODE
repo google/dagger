@@ -1,11 +1,13 @@
 package test;
 
+import com.google.common.collect.ImmutableMap;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.MapFactory;
 import dagger.internal.Provider;
 import java.util.Map;
 import javax.annotation.processing.Generated;
 import mapkeys.MapKeys;
+import mapkeys.MapModule;
 import mapkeys.MapModule_ClassKeyFactory;
 import mapkeys.MapModule_ClassKeyMapKey;
 import mapkeys.MapModule_ComplexKeyWithInaccessibleAnnotationValueFactory;
@@ -68,6 +70,10 @@ final class DaggerTestComponent {
 
     }
 
+    Map mapOfPackagePrivateEnumAndInteger() {
+      return ImmutableMap.of(MapModule_EnumKeyMapKey.create(), MapModule.enumKey());
+    }
+
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.mapOfClassOfAndIntegerProvider = mapOfClassOfAndIntegerBuilder();
@@ -97,7 +103,7 @@ final class DaggerTestComponent {
 
     @Override
     public Map<Class<?>, Integer> classKey() {
-      return mapOfClassOfAndIntegerProvider.get();
+      return ImmutableMap.<Class<?>, Integer>of(MapModule_ClassKeyMapKey.create(), MapModule.classKey());
     }
 
     @Override
@@ -107,7 +113,7 @@ final class DaggerTestComponent {
 
     @Override
     public Object inaccessibleEnum() {
-      return mapOfPackagePrivateEnumAndIntegerProvider.get();
+      return mapOfPackagePrivateEnumAndInteger();
     }
 
     @Override
@@ -117,7 +123,7 @@ final class DaggerTestComponent {
 
     @Override
     public Map<MapKeys.ComplexKey, Integer> complexKey() {
-      return mapOfComplexKeyAndIntegerProvider.get();
+      return ImmutableMap.<MapKeys.ComplexKey, Integer>of(MapModule_ComplexKeyWithInaccessibleValueMapKey.create(), MapModule.complexKeyWithInaccessibleValue(), MapModule_ComplexKeyWithInaccessibleArrayValueMapKey.create(), MapModule.complexKeyWithInaccessibleArrayValue(), MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey.create(), MapModule.complexKeyWithInaccessibleAnnotationValue());
     }
 
     @Override

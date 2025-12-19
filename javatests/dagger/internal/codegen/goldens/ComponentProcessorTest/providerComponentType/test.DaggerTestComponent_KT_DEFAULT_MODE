@@ -43,14 +43,18 @@ public final class DaggerTestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
     /**
-      * {@code Provider<Foo>}
-      */
+     * {@code Provider<Foo>}
+     */
     Provider<?> fooProvider;
 
     TestComponentImpl() {
 
       initialize();
 
+    }
+
+    Object foo() {
+      return Foo_Factory.newInstance(Bar_Factory.newInstance());
     }
 
     @SuppressWarnings("unchecked")
@@ -60,7 +64,7 @@ public final class DaggerTestComponent {
 
     @Override
     public SomeEntryPoint someEntryPoint() {
-      return (SomeEntryPoint) ((Object) (SomeEntryPoint_Factory.newInstance(fooProvider.get(), fooProvider)));
+      return (SomeEntryPoint) ((Object) (SomeEntryPoint_Factory.newInstance(foo(), fooProvider)));
     }
   }
 }

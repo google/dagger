@@ -26,7 +26,6 @@ import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.DelegateBinding;
-import dagger.internal.codegen.model.DependencyRequest;
 import dagger.internal.codegen.model.RequestKind;
 import dagger.internal.codegen.writing.ComponentImplementation.CompilerMode;
 
@@ -81,8 +80,6 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
     }
 
     switch (binding.kind()) {
-      case SUBCOMPONENT_CREATOR:
-        return true;
       case MEMBERS_INJECTOR:
         // Currently, we always use a framework instance for MembersInjectors, e.g.
         // InstanceFactory.create(Foo_MembersInjector.create(...)).
@@ -97,19 +94,9 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
             "Assisted injection binding shouldn't be requested with an instance request.");
       default:
         // We don't need to use Provider#get() if there's no caching, so use a direct instance.
-        // However, if there's no caching needed but we already have a framework instance requested
-        // for this binding, we can reuse that framework instance by calling Provider#get() instead
-        // of generating a direct instance.
-        // TODO(emjich): To be even more accurate, we should consider delegate bindings here
-        // too. For example, if we have:
-        //   @Binds Foo -> @Binds FooIntermediate -> @Provides FooImpl
-        // Then we technically should be checking all of bindings for hasFrameworkRequest,
-        // e.g. if someone requests a Provider<Foo> we should be able to reuse that same
-        // provider for FooIntermediate and FooImpl since they are all just delegates of
-        // each other.
-        return !needsCaching(binding, graph)
-            && !(graph.topLevelBindingGraph().hasFrameworkRequest(binding)
-                && bindingHasDependencies(binding, graph));
+        // TODO(bcorso): This can be optimized in cases where we know a Provider field already
+        // exists, in which case even if it's not scoped we might as well call Provider#get().
+        return !needsCaching(binding, graph);
     }
   }
 
@@ -127,26 +114,6 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
       return isBindsScopeStrongerThanDependencyScope((DelegateBinding) binding, graph);
     }
     return true;
-  }
-
-  /**
-   * Returns {@code true} if {@code binding} has dependencies.
-   *
-   * <p>If {@code binding} is a {@code DELEGATE}, it is only considered to have dependencies if the
-   * binding it delegates to has dependencies. Otherwise, a binding has dependencies if {@code
-   * binding.dependencies()} is not empty.
-   */
-  private static boolean bindingHasDependencies(ContributionBinding binding, BindingGraph graph) {
-    if (binding.dependencies().isEmpty()) {
-      return false;
-    }
-    if (!binding.kind().equals(DELEGATE)) {
-      return true;
-    }
-    return binding.dependencies().stream()
-        .map(DependencyRequest::key)
-        .map(graph::contributionBinding)
-        .anyMatch(b -> bindingHasDependencies(b, graph));
   }
 
   @AssistedFactory

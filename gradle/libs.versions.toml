@@ -14,8 +14,9 @@ jdk = "17"
 junit = "4.13"
 jvmTarget = "1.8"
 kotlin = "2.2.20"
+kotlinMetadata = "2.3.0"
 kotlinTarget = "1.9"
-ksp = "2.2.20-2.0.3"
+ksp = "2.4.3"
 publish = "0.30.0"
 shadow = "8.3.5"
 truth = "1.4.0"
@@ -62,7 +63,7 @@ junit = { module = "junit:junit", version.ref = "junit" }
 kotlin-annotationProcessingEmbeddable = { module = "org.jetbrains.kotlin:kotlin-annotation-processing-embeddable", version.ref = "kotlin"  }
 kotlin-compilerEmbeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-kotlin-metadataJvm = { module = "org.jetbrains.kotlin:kotlin-metadata-jvm", version.ref = "kotlin" }
+kotlin-metadataJvm = { module = "org.jetbrains.kotlin:kotlin-metadata-jvm", version.ref = "kotlinMetadata" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlinPoet = { module = "com.squareup:kotlinpoet", version = "1.11.0" }
 kotlinPoet-javaPoet = { module = "com.squareup:kotlinpoet-javapoet", version = "1.11.0" }

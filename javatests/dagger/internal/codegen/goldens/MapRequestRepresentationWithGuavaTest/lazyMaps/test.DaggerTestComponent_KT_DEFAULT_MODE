@@ -7,7 +7,6 @@ import dagger.internal.DoubleCheck;
 import dagger.internal.MapLazyFactory;
 import dagger.internal.MapProviderLazyFactory;
 import dagger.internal.Provider;
-import dagger.internal.ProviderOfLazy;
 import java.util.Map;
 import javax.annotation.processing.Generated;
 
@@ -90,22 +89,6 @@ final class DaggerTestComponent {
 
     }
 
-    Object string() {
-      return LazyMaps_TestModule_ProvideStringFactory.provideString(provideAtomicIntegerProvider.get());
-    }
-
-    Object string0() {
-      return LazyMaps_TestModule_String0Factory.string0(string());
-    }
-
-    Object string1() {
-      return LazyMaps_TestModule_String1Factory.string1(string());
-    }
-
-    Object string2() {
-      return LazyMaps_TestModule_String2Factory.string2(string());
-    }
-
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.provideAtomicIntegerProvider = DoubleCheck.provider(LazyMaps_TestModule_ProvideAtomicIntegerFactory.create());
@@ -135,17 +118,17 @@ final class DaggerTestComponent {
 
     @Override
     public Map<String, String> mapOfString() {
-      return (Map<String, String>) ((Object) (ImmutableMap.of("key0", string0(), "key1", string1(), "key2", string2())));
+      return (Map<String, String>) ((Object) (ImmutableMap.of("key0", string0Provider.get(), "key1", string1Provider.get(), "key2", string2Provider.get())));
     }
 
     @Override
     public Map<String, Lazy<String>> mapOfLazy() {
-      return (Map<String, Lazy<String>>) ((Object) (ImmutableMap.of("key0", DoubleCheck.lazy(string0Provider), "key1", DoubleCheck.lazy(string1Provider), "key2", DoubleCheck.lazy(string2Provider))));
+      return (Map<String, Lazy<String>>) ((Object) (mapOfStringAndLazyOfStringProvider.get()));
     }
 
     @Override
     public Map<String, javax.inject.Provider<Lazy<String>>> mapOfProviderOfLazy() {
-      return (Map<String, javax.inject.Provider<Lazy<String>>>) ((Object) (ImmutableMap.of("key0", ProviderOfLazy.create(string0Provider), "key1", ProviderOfLazy.create(string1Provider), "key2", ProviderOfLazy.create(string2Provider))));
+      return (Map<String, javax.inject.Provider<Lazy<String>>>) ((Object) ((Map<String, javax.inject.Provider<Lazy<String>>>) (mapOfStringAndProviderOfLazyOfStringProvider.get())));
     }
 
     @Override

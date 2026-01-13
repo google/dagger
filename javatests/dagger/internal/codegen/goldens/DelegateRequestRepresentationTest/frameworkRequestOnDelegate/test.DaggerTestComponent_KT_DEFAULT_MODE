@@ -1,0 +1,76 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Provider;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new TestComponentImpl();
+    }
+  }
+
+  private static final class TestComponentImpl implements TestComponent {
+    private final TestComponentImpl testComponentImpl = this;
+
+    /**
+      * {@code Provider<String>}
+      */
+    Provider<?> provideStringProvider;
+
+    TestComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.provideStringProvider = TestModule_ProvideStringFactory.create(Dep_Factory.create());
+    }
+
+    @Override
+    public javax.inject.Provider<String> stringProvider() {
+      return (javax.inject.Provider<String>) ((Object) (provideStringProvider));
+    }
+
+    @Override
+    public CharSequence charSequence() {
+      return (CharSequence) ((Object) (provideStringProvider.get()));
+    }
+
+    @Override
+    public Object object() {
+      return (Object) ((Object) (provideStringProvider.get()));
+    }
+  }
+}

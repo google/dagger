@@ -96,17 +96,20 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
         throw new IllegalStateException(
             "Assisted injection binding shouldn't be requested with an instance request.");
       default:
-        // We don't need to use Provider#get() if there's no caching, so use a direct instance.
+        // We don't need to use {@code Provider#get()} if there's no caching, so use a direct
+        // instance.
         // However, if there's no caching needed but we already have a framework instance requested
-        // for this binding, we can reuse that framework instance by calling Provider#get() instead
-        // of generating a direct instance.
-        // TODO(emjich): To be even more accurate, we should consider delegate bindings here
-        // too. For example, if we have:
-        //   @Binds Foo -> @Binds FooIntermediate -> @Provides FooImpl
-        // Then we technically should be checking all of bindings for hasFrameworkRequest,
-        // e.g. if someone requests a Provider<Foo> we should be able to reuse that same
-        // provider for FooIntermediate and FooImpl since they are all just delegates of
-        // each other.
+        // for this binding (or any binding that delegates to it), we can reuse that framework
+        // instance by calling {@code Provider#get()} instead of generating a direct instance.
+        // Note: Unscoped delegate bindings (e.g. @Binds) are optimized to use a direct instance
+        // expression which recursively delegates to the binding representation of their
+        // dependency. However, this optimization stops at the first scoped binding in the
+        // chain because that binding must be accessed through a caching provider. For
+        // example, in the binding chain:
+        //   @Binds Foo -> @Scoped @Binds FooIntermediate -> @Provides FooImpl
+        // an instance request for {@code Foo} will be expressed as
+        // {@code fooIntermediateProvider.get()} rather than digging deeper to
+        // {@code fooImplProvider.get()}.
         return !needsCaching(binding, graph)
             && !(graph.topLevelBindingGraph().hasFrameworkRequest(binding)
                 && bindingHasDependencies(binding, graph));

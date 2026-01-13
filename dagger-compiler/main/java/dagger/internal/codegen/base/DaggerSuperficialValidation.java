@@ -202,7 +202,7 @@ public final class DaggerSuperficialValidation {
    * Validates the type of the given annotation.
    *
    * <p>The annotation is assumed to be annotating the given element, but this is not checked. The
-   * element is only in the error message if a {@link ValidatationException} is thrown.
+   * element is only in the error message if a {@link ValidationException} is thrown.
    *
    * <p>Note: this method does not validate annotation values. This method is useful if you care
    * about the annotation's annotations (e.g. to check for {@code Scope} or {@code Qualifier}). In

@@ -42,10 +42,9 @@ runs:
     - name: 'Run Bazel tests'
       run: bazel test --test_output=errors //...
       shell: bash
-    # TODO(b/394347290): Re-enable once we've fixed the example to work with Bazel 7.
-    # - name: 'Run Bazel examples'
-    #  run: cd examples/bazel; bazel test --test_output=errors //...
-    #  shell: bash
+    - name: 'Run Bazel examples'
+      run: cd examples/bazel; bazel test --test_output=errors //...
+      shell: bash
     - name: 'Clean bazel cache'
       run: rm -rf $(bazel info repository_cache)
       shell: bash

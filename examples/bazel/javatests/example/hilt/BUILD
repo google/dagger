@@ -29,7 +29,7 @@ android_local_test(
         "@maven//:com_google_truth_truth",
         "@maven//:org_robolectric_annotations",
         "@maven//:org_robolectric_robolectric",
-        "@robolectric//bazel:android-all",
+        "@rules_robolectric//bazel:android-all",
     ],
 )
 
@@ -50,6 +50,6 @@ android_local_test(
         "@maven//:com_google_truth_truth",
         "@maven//:org_robolectric_annotations",
         "@maven//:org_robolectric_robolectric",
-        "@robolectric//bazel:android-all",
+        "@rules_robolectric//bazel:android-all",
     ],
 )

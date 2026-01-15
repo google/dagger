@@ -14,7 +14,7 @@ dependencies {
   annotationProcessor 'com.google.dagger:hilt-compiler:{{site.daggerVersion}}'
 
   // For instrumentation tests
-  androidTestImplementation  'com.google.dagger:hilt-android-testing:{{site.daggerVersion}}'
+  androidTestImplementation 'com.google.dagger:hilt-android-testing:{{site.daggerVersion}}'
   androidTestAnnotationProcessor 'com.google.dagger:hilt-compiler:{{site.daggerVersion}}'
 
   // For local unit tests
@@ -25,21 +25,77 @@ dependencies {
 
 ## Using Hilt with Kotlin
 
-If using Kotlin, then apply the
-[kapt plugin](https://kotlinlang.org/docs/reference/kapt.html) and declare the
-compiler dependency using `kapt` instead of `annotationProcessor`.
+If using Kotlin, you have the choice of using either
+[KSP](https://kotlinlang.org/docs/ksp-overview.html) or
+[kapt](https://kotlinlang.org/docs/kapt.html).
 
-Additionally configure kapt to correct error types by setting
+If using KSP, then apply the
+[KSP plugin](https://kotlinlang.org/docs/ksp-quickstart.html) in your root
+`build.gradle` file.
+
+Otherwise if using `kapt`, then apply the
+[kapt plugin](https://kotlinlang.org/docs/reference/kapt.html) in your root
+`build.gradle` file.
+
+<!-- Even though this is switching between ksp and kapt, reuse the code selector
+     as Java/Kotlin because otherwise nothing will be selected when the code
+     selection is Java or Kotlin -->
+<div class="c-codeselector__button c-codeselector__button_java">KSP</div>
+<div class="c-codeselector__button c-codeselector__button_kotlin">kapt</div>
+```groovy
+plugins {
+    // Choose an appropriate version to replace the X.X.X
+    id 'com.google.devtools.ksp' version 'X.X.X' apply false
+}
+```
+{: .c-codeselector__code .c-codeselector__code_java }
+```groovy
+plugins {
+    // Choose an appropriate version to replace the X.X.X
+    id 'org.jetbrains.kotlin.kapt' version 'X.X.X' apply false
+}
+```
+{: .c-codeselector__code .c-codeselector__code_kotlin }
+
+Then declare the Hilt compiler dependency using `ksp` or `kapt` respectively
+instead of `annotationProcessor`.
+
+Additionally if using `kapt`, configure it to correct error types by setting
 [`correctErrorTypes`](https://kotlinlang.org/docs/reference/kapt.html#non-existent-type-correction)
 to true.
 
+<div class="c-codeselector__button c-codeselector__button_java">KSP</div>
+<div class="c-codeselector__button c-codeselector__button_kotlin">kapt</div>
 ```groovy
+plugins {
+  id 'com.google.devtools.ksp'
+}
+
+dependencies {
+  implementation 'com.google.dagger:hilt-android:{{site.daggerVersion}}'
+  ksp 'com.google.dagger:hilt-compiler:{{site.daggerVersion}}'
+
+  // For instrumentation tests
+  androidTestImplementation 'com.google.dagger:hilt-android-testing:{{site.daggerVersion}}'
+  kspAndroidTest 'com.google.dagger:hilt-compiler:{{site.daggerVersion}}'
+
+  // For local unit tests
+  testImplementation 'com.google.dagger:hilt-android-testing:{{site.daggerVersion}}'
+  kspTest 'com.google.dagger:hilt-compiler:{{site.daggerVersion}}'
+}
+```
+{: .c-codeselector__code .c-codeselector__code_java }
+```groovy
+plugins {
+  id 'org.jetbrains.kotlin.kapt'
+}
+
 dependencies {
   implementation 'com.google.dagger:hilt-android:{{site.daggerVersion}}'
   kapt 'com.google.dagger:hilt-compiler:{{site.daggerVersion}}'
 
   // For instrumentation tests
-  androidTestImplementation  'com.google.dagger:hilt-android-testing:{{site.daggerVersion}}'
+  androidTestImplementation 'com.google.dagger:hilt-android-testing:{{site.daggerVersion}}'
   kaptAndroidTest 'com.google.dagger:hilt-compiler:{{site.daggerVersion}}'
 
   // For local unit tests
@@ -51,6 +107,7 @@ kapt {
  correctErrorTypes true
 }
 ```
+{: .c-codeselector__code .c-codeselector__code_kotlin }
 
 ## Hilt Gradle plugin {#hilt-gradle-plugin}
 

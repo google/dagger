@@ -87,12 +87,10 @@ jobs:
     # can take a while to run
     if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     needs: bazel-build
-    # It's recommended to run emulator tests on macOS
-    # See https://github.com/marketplace/actions/android-emulator-runner
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     strategy:
-      matrix: # Run on 16 (PreL), 21 (L), and 26 (O).
-        api-level: [16, 21, 26, 30]
+      matrix:
+        api-level: [23, 26, 30]
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/artifact-android-emulator-tests

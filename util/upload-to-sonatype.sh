@@ -14,7 +14,7 @@ upload_to_sonatype() {
   local response=$(curl -s --header "$header" -X GET $staging_url/search/repositories?ip=any&profile_id=com.google.dagger)
 
   # Filter to get the list of open repositories.
-  local open_repositories=$(echo $response | jq '.repositories | map(select(.state = "open"))')
+  local open_repositories=$(echo $response | jq '.repositories | map(select(.state == "open"))')
   local open_repositories_count=$(echo $open_repositories | jq length)
 
   # Fail if there is not exactly 1 open repository.

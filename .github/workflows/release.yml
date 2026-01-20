@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
-  USE_AGP_VERSION: '8.13.0'
+  USE_AGP_VERSION: '9.0.0'
   USE_JAVA_DISTRIBUTION: 'zulu'
   USE_JAVA_VERSION_FOR_BAZEL: '21'
   USE_JAVA_VERSION_FOR_GRADLE: '21'

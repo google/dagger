@@ -1,7 +1,7 @@
 buildscript {
   ext {
     kotlin_version = "2.2.0"
-    agp_version = System.getenv('AGP_VERSION')
+    agp_version = System.getenv('AGP_VERSION') ?: "9.0.0"
     ksp_version = "$kotlin_version-2.0.2"
     pluginArtifactId = 'hilt-android-gradle-plugin'
     pluginId = 'com.google.dagger.hilt.android'
@@ -12,7 +12,7 @@ plugins {
   id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
   id 'java-gradle-plugin'
   id 'maven-publish'
-  id 'com.github.johnrengelman.shadow' version '8.1.1'
+  id 'com.gradleup.shadow' version '9.2.2'
   id 'org.jetbrains.kotlin.android' version "$kotlin_version" apply false
 }
 
@@ -24,10 +24,10 @@ allprojects {
 }
 
 // Avoids conflict with BUILD file
-project.buildDir = 'buildOut'
+project.layout.buildDirectory.set(file('buildOut'))
 
-subprojects {
-    project.buildDir = 'buildOut'
+subprojects {subproject ->
+    subproject.layout.buildDirectory.set(file('buildOut'))
     afterEvaluate {
         dependencies {
             // This is needed to align older versions of kotlin-stdlib.

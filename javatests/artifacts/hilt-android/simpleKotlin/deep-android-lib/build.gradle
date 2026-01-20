@@ -1,7 +1,6 @@
 plugins {
     id 'com.android.library'
-    id 'kotlin-android'
-    id 'kotlin-kapt'
+    id 'com.android.legacy-kapt'
     id 'com.google.devtools.ksp'
     id 'com.google.dagger.hilt.android'
 }
@@ -22,9 +21,6 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = '11'
     }
     lintOptions {
         checkReleaseBuilds = false

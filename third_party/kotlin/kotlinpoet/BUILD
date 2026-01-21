@@ -18,5 +18,10 @@ package(default_visibility = ["//:src"])
 
 alias(
     name = "kotlinpoet",
-    actual = "@maven//:com_squareup_kotlinpoet",
+    actual = "@maven//:com_squareup_kotlinpoet_jvm",
+)
+
+alias(
+    name = "interop-ksp",
+    actual = "@maven//:com_squareup_kotlinpoet_ksp",
 )

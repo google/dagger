@@ -45,6 +45,7 @@ java_library(
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
         "//third_party/kotlin/kotlinpoet",
+        "//third_party/kotlin/kotlinpoet:interop-ksp",
     ],
 )
 

@@ -19,6 +19,9 @@ package dagger.internal.codegen.xprocessing;
 import static androidx.room3.compiler.codegen.compat.XConverters.toJavaPoet;
 import static androidx.room3.compiler.codegen.compat.XConverters.toKotlinPoet;
 import static androidx.room3.compiler.codegen.compat.XConverters.toXPoet;
+import static androidx.room3.compiler.processing.compat.XConverters.getProcessingEnv;
+import static androidx.room3.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room3.compiler.processing.compat.XConverters.toKS;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -28,12 +31,14 @@ import androidx.room3.compiler.codegen.XCodeBlock;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.JavaPoetExtKt;
 import androidx.room3.compiler.processing.XAnnotation;
+import androidx.room3.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.kotlinpoet.ksp.AnnotationsKt;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -41,18 +46,32 @@ import java.util.Set;
 
 /** Static factories to create {@link AnnotationSpec}s. */
 public final class XAnnotationSpecs {
-  public static XAnnotationSpec of(XAnnotation annotation) {
-    return toXPoet(
-        JavaPoetExtKt.toAnnotationSpec(annotation, /* includeDefaultValues= */ false),
-        // TODO(b/411661393): Add support for annotation values. For now, the KotlinPoet
-        // implementation only copies the class name and ignores the annotation values.
-        com.squareup.kotlinpoet.AnnotationSpec
-            .builder(toKotlinPoet(XAnnotations.asClassName(annotation)))
-            .build());
-  }
-
   public static XAnnotationSpec of(XClassName className) {
     return builder(className).build();
+  }
+
+  public static XAnnotationSpec of(XAnnotation annotation) {
+    return of(annotation, /* includeDefaultValues= */ false);
+  }
+
+  public static XAnnotationSpec of(XAnnotation annotation, boolean includeDefaultValues) {
+    return toXPoet(
+        JavaPoetExtKt.toAnnotationSpec(annotation, includeDefaultValues),
+        toKAnnotationSpec(annotation, includeDefaultValues));
+  }
+
+  @SuppressWarnings("StatementSwitchToExpressionSwitch") // Dagger targets Java 8 source.
+  private static com.squareup.kotlinpoet.AnnotationSpec toKAnnotationSpec(
+      XAnnotation annotation, boolean includeDefaultValues) {
+    XProcessingEnv processingEnv = getProcessingEnv(annotation);
+    switch (processingEnv.getBackend()) {
+      case JAVAC:
+        return com.squareup.kotlinpoet.AnnotationSpec.Companion.get(toJavac(annotation));
+      case KSP:
+        return AnnotationsKt.toAnnotationSpec(
+            toKS(annotation), /* omitDefaultValues= */ !includeDefaultValues);
+    }
+    throw new AssertionError("Unsupported backend: " + processingEnv.getBackend());
   }
 
   /** Values for an {@link SuppressWarnings} annotation. */

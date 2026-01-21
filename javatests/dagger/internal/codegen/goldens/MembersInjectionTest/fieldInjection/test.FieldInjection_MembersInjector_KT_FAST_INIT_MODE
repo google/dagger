@@ -24,7 +24,7 @@ import javax.annotation.processing.Generated;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class FieldInjection_MembersInjector implements MembersInjector<FieldInjection> {
+public final class FieldInjection_MembersInjector implements MembersInjector<Object> {
   private final Provider<String> stringProvider;
 
   private final Provider<String> stringProvider2;
@@ -39,13 +39,13 @@ public final class FieldInjection_MembersInjector implements MembersInjector<Fie
   }
 
   @Override
-  public void injectMembers(FieldInjection instance) {
+  public void injectMembers(Object instance) {
     injectString(instance, stringProvider.get());
     injectLazyString(instance, DoubleCheck.lazy(stringProvider2));
     injectStringProvider(instance, stringProvider3);
   }
 
-  public static MembersInjector<FieldInjection> create(Provider<?> stringProvider,
+  public static MembersInjector<Object> create(Provider<?> stringProvider,
       Provider<?> stringProvider2, Provider<?> stringProvider3) {
     return new FieldInjection_MembersInjector((Provider<String>) (stringProvider), (Provider<String>) (stringProvider2), (Provider<String>) (stringProvider3));
   }

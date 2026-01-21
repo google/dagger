@@ -23,7 +23,7 @@ import other.SuperType_MembersInjector;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class SubType_MembersInjector implements MembersInjector<SubType> {
+public final class SubType_MembersInjector implements MembersInjector<Object> {
   @SuppressWarnings("rawtypes")
   private final Provider tProvider;
 
@@ -71,7 +71,7 @@ public final class SubType_MembersInjector implements MembersInjector<SubType> {
   }
 
   @Override
-  public void injectMembers(SubType instance) {
+  public void injectMembers(Object instance) {
     SuperType_MembersInjector.<Object>injectT(instance, tProvider.get());
     SuperType_MembersInjector.<Object>injectListT(instance, listTProvider.get());
     SuperType_MembersInjector.<Object>injectListExtendsT(instance, listExtendsTProvider.get());
@@ -80,7 +80,7 @@ public final class SubType_MembersInjector implements MembersInjector<SubType> {
     injectI(instance, iProvider.get());
   }
 
-  public static MembersInjector<SubType> create(Provider<?> tProvider, Provider<?> listTProvider,
+  public static MembersInjector<Object> create(Provider<?> tProvider, Provider<?> listTProvider,
       Provider<?> listExtendsTProvider, Provider<?> arrayListExtendsTProvider,
       Provider<?> tProvider2, Provider<?> listTProvider2, Provider<?> listExtendsTProvider2,
       Provider<?> arrayListExtendsTProvider2, Provider<?> iProvider) {

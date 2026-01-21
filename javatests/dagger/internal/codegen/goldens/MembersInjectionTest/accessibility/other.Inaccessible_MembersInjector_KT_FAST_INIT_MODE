@@ -22,7 +22,7 @@ import javax.annotation.processing.Generated;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class Inaccessible_MembersInjector implements MembersInjector<Inaccessible> {
+public final class Inaccessible_MembersInjector implements MembersInjector<Object> {
   private final Provider<Foo> fooProvider;
 
   private final Provider<Foo> fooProvider2;
@@ -33,13 +33,12 @@ public final class Inaccessible_MembersInjector implements MembersInjector<Inacc
   }
 
   @Override
-  public void injectMembers(Inaccessible instance) {
+  public void injectMembers(Object instance) {
     injectFoo(instance, fooProvider.get());
     injectMethod(instance, fooProvider2.get());
   }
 
-  public static MembersInjector<Inaccessible> create(Provider<?> fooProvider,
-      Provider<?> fooProvider2) {
+  public static MembersInjector<Object> create(Provider<?> fooProvider, Provider<?> fooProvider2) {
     return new Inaccessible_MembersInjector((Provider<Foo>) (fooProvider), (Provider<Foo>) (fooProvider2));
   }
 

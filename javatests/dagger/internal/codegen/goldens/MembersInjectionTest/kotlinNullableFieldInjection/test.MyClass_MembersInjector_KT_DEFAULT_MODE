@@ -22,7 +22,7 @@ import javax.annotation.processing.Generated;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class MyClass_MembersInjector implements MembersInjector<MyClass> {
+public final class MyClass_MembersInjector implements MembersInjector<Object> {
   private final Provider<String> nullableStringProvider;
 
   private final Provider<Object> nullableObjectProvider;
@@ -34,12 +34,12 @@ public final class MyClass_MembersInjector implements MembersInjector<MyClass> {
   }
 
   @Override
-  public void injectMembers(MyClass instance) {
+  public void injectMembers(Object instance) {
     injectNullableString(instance, nullableStringProvider.get());
     injectNullableObject(instance, nullableObjectProvider.get());
   }
 
-  public static MembersInjector<MyClass> create(Provider<?> nullableStringProvider,
+  public static MembersInjector<Object> create(Provider<?> nullableStringProvider,
       Provider<?> nullableObjectProvider) {
     return new MyClass_MembersInjector((Provider<String>) (nullableStringProvider), (Provider<Object>) (nullableObjectProvider));
   }

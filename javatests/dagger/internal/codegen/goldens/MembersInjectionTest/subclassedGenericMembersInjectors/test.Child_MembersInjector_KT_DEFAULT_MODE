@@ -22,7 +22,7 @@ import javax.annotation.processing.Generated;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class Child_MembersInjector<T> implements MembersInjector<Child<T>> {
+public final class Child_MembersInjector<T> implements MembersInjector<Object> {
   private final Provider<T> xProvider;
 
   private final Provider<A> yProvider;
@@ -43,7 +43,7 @@ public final class Child_MembersInjector<T> implements MembersInjector<Child<T>>
   }
 
   @Override
-  public void injectMembers(Child<T> instance) {
+  public void injectMembers(Object instance) {
     Parent_MembersInjector.<T, Object>injectX(instance, xProvider.get());
     Parent_MembersInjector.<T, Object>injectY(instance, yProvider.get());
     Parent_MembersInjector.<T, Object>injectA2(instance, a2Provider.get());
@@ -51,7 +51,7 @@ public final class Child_MembersInjector<T> implements MembersInjector<Child<T>>
     Child_MembersInjector.<T>injectT(instance, tProvider.get());
   }
 
-  public static <T> MembersInjector<Child<T>> create(Provider<?> xProvider, Provider<?> yProvider,
+  public static <T> MembersInjector<Object> create(Provider<?> xProvider, Provider<?> yProvider,
       Provider<?> a2Provider, Provider<?> aProvider, Provider<?> tProvider) {
     return new Child_MembersInjector<T>((Provider<T>) (xProvider), (Provider<A>) (yProvider), (Provider<A2>) (a2Provider), (Provider<A>) (aProvider), (Provider<T>) (tProvider));
   }

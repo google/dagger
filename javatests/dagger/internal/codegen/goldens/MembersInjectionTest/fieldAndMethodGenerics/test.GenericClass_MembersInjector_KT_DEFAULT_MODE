@@ -22,7 +22,7 @@ import javax.annotation.processing.Generated;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class GenericClass_MembersInjector<A, B> implements MembersInjector<GenericClass<A, B>> {
+public final class GenericClass_MembersInjector<A, B> implements MembersInjector<Object> {
   private final Provider<A> aProvider;
 
   private final Provider<B> bProvider;
@@ -33,12 +33,12 @@ public final class GenericClass_MembersInjector<A, B> implements MembersInjector
   }
 
   @Override
-  public void injectMembers(GenericClass<A, B> instance) {
+  public void injectMembers(Object instance) {
     GenericClass_MembersInjector.<A, B>injectA(instance, aProvider.get());
     GenericClass_MembersInjector.<A, B>injectRegister(instance, bProvider.get());
   }
 
-  public static <A, B> MembersInjector<GenericClass<A, B>> create(Provider<?> aProvider,
+  public static <A, B> MembersInjector<Object> create(Provider<?> aProvider,
       Provider<?> bProvider) {
     return new GenericClass_MembersInjector<A, B>((Provider<A>) (aProvider), (Provider<B>) (bProvider));
   }

@@ -25,7 +25,7 @@ import javax.annotation.processing.Generated;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class SomeBinding_MembersInjector implements MembersInjector<SomeBinding> {
+public final class SomeBinding_MembersInjector implements MembersInjector<Object> {
   private final Provider<String> injectFieldProvider;
 
   private final Provider<Float> fProvider;
@@ -37,12 +37,12 @@ public final class SomeBinding_MembersInjector implements MembersInjector<SomeBi
   }
 
   @Override
-  public void injectMembers(SomeBinding instance) {
+  public void injectMembers(Object instance) {
     injectInjectField(instance, injectFieldProvider.get());
     injectInjectMethod(instance, fProvider.get());
   }
 
-  public static MembersInjector<SomeBinding> create(Provider<?> injectFieldProvider,
+  public static MembersInjector<Object> create(Provider<?> injectFieldProvider,
       Provider<?> fProvider) {
     return new SomeBinding_MembersInjector((Provider<String>) (injectFieldProvider), (Provider<Float>) (fProvider));
   }

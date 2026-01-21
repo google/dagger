@@ -129,7 +129,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
             .addModifiers(PUBLIC, FINAL)
             .addTypeVariableNames(typeParameters)
             .addAnnotation(qualifierMetadataAnnotation(binding))
-            .addSuperinterface(membersInjectorOf(binding.key().type().xprocessing().asTypeName()))
+            .addSuperinterface(membersInjectorOf(membersInjectedTypeName(binding)))
             .addProperties(frameworkFields.values())
             .addFunction(constructor(frameworkFields))
             .addFunction(createMethod(binding, frameworkFields))
@@ -276,7 +276,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
         methodBuilder("create")
             .addModifiers(PUBLIC, STATIC)
             .addTypeVariableNames(bindingTypeElementTypeVariableNames(binding))
-            .returns(membersInjectorOf(binding.key().type().xprocessing().asTypeName()));
+            .returns(membersInjectorOf(membersInjectedTypeName(binding)));
 
     ImmutableList.Builder<XCodeBlock> arguments = ImmutableList.builder();
     frameworkFields
@@ -314,7 +314,6 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
   private XFunSpec injectMembersMethod(
       MembersInjectionBinding binding,
       ImmutableMap<DependencyRequest, XPropertySpec> frameworkFields) {
-    XType instanceType = binding.key().type().xprocessing();
     ImmutableMap<DependencyRequest, XCodeBlock> dependencyCodeBlocks =
         sourceFiles.frameworkFieldUsages(binding.dependencies(), frameworkFields);
     XCodeBlock invokeInjectionSites =
@@ -322,13 +321,13 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
             binding,
             membersInjectorNameForType(binding.membersInjectedType()),
             XCodeBlock.of("instance"),
-            instanceType,
+            binding.key().type().xprocessing(),
             dependencyCodeBlocks::get,
             compilerOptions);
     return methodBuilder("injectMembers")
         .addModifiers(PUBLIC)
         .isOverride(true)
-        .addParameter("instance", instanceType.asTypeName())
+        .addParameter("instance", membersInjectedTypeName(binding))
         .addCode(invokeInjectionSites)
         .build();
   }
@@ -350,6 +349,13 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
         .distinct()
         .forEach(qualifier -> builder.addArrayMember("value", "%S", qualifier));
     return builder.build();
+  }
+
+  private XTypeName membersInjectedTypeName(MembersInjectionBinding binding) {
+    XType membersInjectedType = binding.key().type().xprocessing();
+    return isTypeAccessibleFromPublicApi(membersInjectedType, compilerOptions)
+        ? membersInjectedType.asTypeName()
+        : XTypeName.ANY_OBJECT;
   }
 
   private static ImmutableMap<DependencyRequest, XPropertySpec> frameworkFields(

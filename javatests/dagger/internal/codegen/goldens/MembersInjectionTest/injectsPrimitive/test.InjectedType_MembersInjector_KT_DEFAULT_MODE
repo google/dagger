@@ -22,7 +22,7 @@ import javax.annotation.processing.Generated;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class InjectedType_MembersInjector implements MembersInjector<InjectedType> {
+public final class InjectedType_MembersInjector implements MembersInjector<Object> {
   private final Provider<Integer> primitiveIntProvider;
 
   private final Provider<Integer> boxedIntProvider;
@@ -34,12 +34,12 @@ public final class InjectedType_MembersInjector implements MembersInjector<Injec
   }
 
   @Override
-  public void injectMembers(InjectedType instance) {
+  public void injectMembers(Object instance) {
     injectPrimitiveInt(instance, primitiveIntProvider.get());
     injectBoxedInt(instance, boxedIntProvider.get());
   }
 
-  public static MembersInjector<InjectedType> create(Provider<?> primitiveIntProvider,
+  public static MembersInjector<Object> create(Provider<?> primitiveIntProvider,
       Provider<?> boxedIntProvider) {
     return new InjectedType_MembersInjector((Provider<Integer>) (primitiveIntProvider), (Provider<Integer>) (boxedIntProvider));
   }

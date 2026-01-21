@@ -22,7 +22,7 @@ import javax.annotation.processing.Generated;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class C_MembersInjector implements MembersInjector<C> {
+public final class C_MembersInjector implements MembersInjector<Object> {
   private final Provider<String> valueCProvider;
 
   private C_MembersInjector(Provider<String> valueCProvider) {
@@ -30,11 +30,11 @@ public final class C_MembersInjector implements MembersInjector<C> {
   }
 
   @Override
-  public void injectMembers(C instance) {
+  public void injectMembers(Object instance) {
     injectValueC(instance, valueCProvider.get());
   }
 
-  public static MembersInjector<C> create(Provider<?> valueCProvider) {
+  public static MembersInjector<Object> create(Provider<?> valueCProvider) {
     return new C_MembersInjector((Provider<String>) (valueCProvider));
   }
 

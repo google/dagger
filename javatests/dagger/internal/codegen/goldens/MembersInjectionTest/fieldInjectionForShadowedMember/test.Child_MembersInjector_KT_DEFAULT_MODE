@@ -22,7 +22,7 @@ import javax.annotation.processing.Generated;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class Child_MembersInjector implements MembersInjector<Child> {
+public final class Child_MembersInjector implements MembersInjector<Object> {
   private final Provider<Foo> objectProvider;
 
   private final Provider<Bar> objectProvider2;
@@ -33,12 +33,12 @@ public final class Child_MembersInjector implements MembersInjector<Child> {
   }
 
   @Override
-  public void injectMembers(Child instance) {
+  public void injectMembers(Object instance) {
     Parent_MembersInjector.injectObject(instance, objectProvider.get());
     injectObject(instance, objectProvider2.get());
   }
 
-  public static MembersInjector<Child> create(Provider<?> objectProvider,
+  public static MembersInjector<Object> create(Provider<?> objectProvider,
       Provider<?> objectProvider2) {
     return new Child_MembersInjector((Provider<Foo>) (objectProvider), (Provider<Bar>) (objectProvider2));
   }

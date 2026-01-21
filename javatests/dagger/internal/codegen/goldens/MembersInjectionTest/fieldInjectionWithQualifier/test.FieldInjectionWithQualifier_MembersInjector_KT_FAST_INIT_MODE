@@ -23,7 +23,7 @@ import javax.inject.Named;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class FieldInjectionWithQualifier_MembersInjector implements MembersInjector<FieldInjectionWithQualifier> {
+public final class FieldInjectionWithQualifier_MembersInjector implements MembersInjector<Object> {
   private final Provider<String> aProvider;
 
   private final Provider<String> bProvider;
@@ -35,13 +35,12 @@ public final class FieldInjectionWithQualifier_MembersInjector implements Member
   }
 
   @Override
-  public void injectMembers(FieldInjectionWithQualifier instance) {
+  public void injectMembers(Object instance) {
     injectA(instance, aProvider.get());
     injectB(instance, bProvider.get());
   }
 
-  public static MembersInjector<FieldInjectionWithQualifier> create(Provider<?> aProvider,
-      Provider<?> bProvider) {
+  public static MembersInjector<Object> create(Provider<?> aProvider, Provider<?> bProvider) {
     return new FieldInjectionWithQualifier_MembersInjector((Provider<String>) (aProvider), (Provider<String>) (bProvider));
   }
 

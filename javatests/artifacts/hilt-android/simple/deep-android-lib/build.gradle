@@ -23,4 +23,6 @@ android {
 dependencies {
     implementation "com.google.dagger:hilt-android:$dagger_version"
     annotationProcessor "com.google.dagger:hilt-compiler:$dagger_version"
+
+    androidTestImplementation 'androidx.test:runner:1.4.0'
 }

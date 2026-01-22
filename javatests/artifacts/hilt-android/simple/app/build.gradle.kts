@@ -126,11 +126,11 @@ android {
         checkReleaseBuilds = false
     }
     sourceSets {
-        named("test").map {
-            it.java.directories.addAll(getAdditionalTestDirs("test"))
+        named("test").configure {
+            java.srcDirs(getAdditionalTestDirs("test"))
         }
-        named("androidTest").map {
-            it.java.directories.addAll(getAdditionalTestDirs("androidTest"))
+        named("androidTest").configure {
+            java.srcDirs(getAdditionalTestDirs("androidTest"))
         }
     }
     flavorDimensions += "tier"

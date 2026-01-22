@@ -47,4 +47,6 @@ dependencies {
     implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'
     kaptWithKapt 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
     kspWithKsp 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
+
+    androidTestImplementation 'androidx.test:runner:1.4.0'
 }

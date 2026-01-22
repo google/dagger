@@ -66,4 +66,6 @@ dependencies {
     testImplementation 'androidx.test:runner:1.4.0'
     testImplementation "com.google.dagger:hilt-android-testing:$dagger_version"
     testAnnotationProcessor "com.google.dagger:hilt-compiler:$dagger_version"
+
+    androidTestImplementation 'androidx.test:runner:1.4.0'
 }

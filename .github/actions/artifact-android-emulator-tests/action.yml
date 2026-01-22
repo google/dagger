@@ -43,6 +43,8 @@ runs:
         api-level: ${{ inputs.api-level }}
         target: google_apis
         script: ./util/run-local-emulator-tests.sh
+      env:
+        AGP_VERSION: '${{ env.USE_AGP_VERSION }}'
     - name: 'Upload test reports (API ${{ inputs.api-level }})'
       if: ${{ always() }}
       uses: actions/upload-artifact@v4

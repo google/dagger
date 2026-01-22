@@ -13,7 +13,6 @@ gen
 build
 buildOut
 out
-lib
 
 target
 pom.xml.*

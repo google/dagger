@@ -615,7 +615,8 @@ class FooTest {
 ```
 {: .c-codeselector__code .c-codeselector__code_kotlin }
 
-[`@HiltAndroidApp`]: https://dagger.dev/api/latest/dagger/hilt/android/HiltAndroidApp.html
+<!-- disableFinding(LINK_UNUSED_ID) -->
+
 [`@HiltAndroidTest`]: https://dagger.dev/api/latest/dagger/hilt/android/testing/HiltAndroidTest.html
 [`HiltAndroidRule`]: https://dagger.dev/api/latest/dagger/hilt/android/testing/HiltAndroidRule.html
 [`HiltTestApplication`]: https://dagger.dev/api/latest/dagger/hilt/android/testing/HiltTestApplication.html

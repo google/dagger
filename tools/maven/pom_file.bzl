@@ -169,7 +169,7 @@ def _pom_file(ctx):
         # Only remove '@aar' if it is the ending part.
         # Format: group:artifact:version@aar -> group:artifact:version
         if parts[2].endswith("@aar"):
-            parts[2] = parts[2].strip("@aar")
+            parts[2] = parts[2].removesuffix("@aar")
         if ":".join(parts[0:2]) in ctx.attr.excluded_artifacts:
             continue
         if len(parts) == 3:

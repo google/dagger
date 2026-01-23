@@ -43,14 +43,14 @@ local_path_override(
     path = "../../",
 )
 
-ROBOLECTRIC_VERSION = "4.11.1"
+ROBOLECTRIC_VERSION = "4.16"
 
 bazel_dep(
     name = "rules_robolectric",
     version = ROBOLECTRIC_VERSION,
 )
 
-RULES_JVM_EXTERNAL_TAG = "4.4.2"
+RULES_JVM_EXTERNAL_TAG = "6.9"
 
 bazel_dep(
     name = "rules_jvm_external",

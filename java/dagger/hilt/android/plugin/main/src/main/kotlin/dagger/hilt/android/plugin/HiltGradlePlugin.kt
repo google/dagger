@@ -482,9 +482,9 @@ private class HiltPluginEnvironment(
 ) {
   val androidExtension =
     project.extensions.findByType(AndroidComponentsExtension::class.java)?.also {
-      check(it.pluginVersion >= AndroidPluginVersion(8, 4)) {
+      check(it.pluginVersion >= AndroidPluginVersion(9, 0)) {
         "The Hilt Android Gradle plugin is only compatible with Android Gradle plugin (AGP) " +
-            "version 8.4.0 or higher (found ${it.pluginVersion})."
+          "version 9.0.0 or higher (found ${it.pluginVersion})."
       }
     } ?: error("Could not find the Android Gradle Plugin (AGP) components extension.")
 

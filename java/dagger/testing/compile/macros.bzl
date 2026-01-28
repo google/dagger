@@ -13,7 +13,8 @@
 # limitations under the License.
 """Macros for building compiler tests."""
 
-load("@rules_java//java:defs.bzl", "java_binary", "java_test")
+load("@rules_java//java:defs.bzl", "java_test")
+load("@rules_java//java:java_single_jar.bzl", "java_single_jar")
 load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 def compiler_test(name, size = "large", compiler_deps = None, **kwargs):
@@ -35,13 +36,13 @@ def compiler_test(name, size = "large", compiler_deps = None, **kwargs):
 
     # This JAR is loaded at runtime and contains the dependencies used by the compiler during tests.
     # We separate these dependencies from the java_test dependencies to avoid 1 version violations.
-    java_binary(
+    java_single_jar(
         name = name + "_compiler_deps",
         testonly = 1,
         tags = ["notap"],
         visibility = ["//visibility:private"],
-        main_class = "Object.class",
-        runtime_deps = compiler_deps,
+        deps = compiler_deps,
+        output = name + "_compiler_deps_deploy.jar",
     )
 
     # Add the compiler deps jar, generated above, to the test's data.

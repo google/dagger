@@ -114,9 +114,8 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
   private fun HiltPluginEnvironment.configureDependencyTransforms() =
     project.dependencies.apply {
       registerTransform(CopyTransform::class.java) { spec ->
-        //  Android library projects (with or without Kotlin) offer an artifact of type 'jar',
-        // meanwhile Java/Kotlin library projects offer an artifact of type 'jar'.
-        spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "jar")
+        // AGP has transforms from jar to android-classes for Java/Kotlin/Android libraries.
+        spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "android-classes")
         spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, DAGGER_ARTIFACT_TYPE_VALUE)
       }
       registerTransform(CopyTransform::class.java) { spec ->

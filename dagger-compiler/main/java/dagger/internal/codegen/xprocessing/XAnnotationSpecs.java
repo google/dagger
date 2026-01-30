@@ -41,18 +41,22 @@ import java.util.Set;
 
 /** Static factories to create {@link AnnotationSpec}s. */
 public final class XAnnotationSpecs {
+  public static XAnnotationSpec of(XClassName className) {
+    return builder(className).build();
+  }
+
   public static XAnnotationSpec of(XAnnotation annotation) {
+    return of(annotation, /* includeDefaultValues= */ false);
+  }
+
+  public static XAnnotationSpec of(XAnnotation annotation, boolean includeDefaultValues) {
     return toXPoet(
-        JavaPoetExtKt.toAnnotationSpec(annotation, /* includeDefaultValues= */ false),
+        JavaPoetExtKt.toAnnotationSpec(annotation, includeDefaultValues),
         // TODO(b/411661393): Add support for annotation values. For now, the KotlinPoet
         // implementation only copies the class name and ignores the annotation values.
         com.squareup.kotlinpoet.AnnotationSpec
             .builder(toKotlinPoet(XAnnotations.asClassName(annotation)))
             .build());
-  }
-
-  public static XAnnotationSpec of(XClassName className) {
-    return builder(className).build();
   }
 
   /** Values for an {@link SuppressWarnings} annotation. */

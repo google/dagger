@@ -15,6 +15,7 @@ junit = "4.13"
 jvmTarget = "1.8"
 kotlin = "2.2.20"
 kotlinTarget = "1.9"
+kotlinPoet = "1.11.0"
 ksp = "2.2.20-2.0.3"
 publish = "0.30.0"
 shadow = "8.3.5"
@@ -64,8 +65,8 @@ kotlin-compilerEmbeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-emb
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-metadataJvm = { module = "org.jetbrains.kotlin:kotlin-metadata-jvm", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
-kotlinPoet = { module = "com.squareup:kotlinpoet", version = "1.11.0" }
-kotlinPoet-javaPoet = { module = "com.squareup:kotlinpoet-javapoet", version = "1.11.0" }
+kotlinPoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinPoet" }
+kotlinPoet-javaPoet = { module = "com.squareup:kotlinpoet-javapoet", version.ref = "kotlinPoet" }
 ksp = { module = "com.google.devtools.ksp:symbol-processing", version.ref = "ksp" }
 ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 ksp-common = { module = "com.google.devtools.ksp:symbol-processing-common-deps", version.ref = "ksp" }

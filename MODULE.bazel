@@ -50,6 +50,8 @@ INCAP_VERSION = "0.2"
 
 KOTLIN_VERSION = "2.2.20"
 
+KOTLINPOET_VERSION = "1.11.0"
+
 KSP_VERSION = KOTLIN_VERSION + "-2.0.3"
 
 MAVEN_VERSION = "3.3.3"
@@ -141,8 +143,8 @@ maven.install(
         "com.google.guava:guava-beta-checker:1.0",
         "com.google.protobuf:protobuf-java:4.32.1",
         "com.squareup:javapoet:1.13.0",
-        "com.squareup:kotlinpoet:1.11.0",
-        "com.squareup:kotlinpoet-javapoet:1.11.0",
+        "com.squareup:kotlinpoet:%s" % KOTLINPOET_VERSION,
+        "com.squareup:kotlinpoet-javapoet:%s" % KOTLINPOET_VERSION,
         "io.github.java-diff-utils:java-diff-utils:4.11",
         "io.grpc:grpc-context:%s" % GRPC_VERSION,
         "io.grpc:grpc-core:%s" % GRPC_VERSION,

@@ -1,45 +1,46 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class FieldInjection_MembersInjector implements MembersInjector<Object> {
-  private final Provider<String> stringProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class FieldInjection_MembersInjector : MembersInjector<Any> {
+  private val stringProvider: Provider<String?>
 
-  private FieldInjection_MembersInjector(Provider<String> stringProvider) {
+  private constructor(stringProvider: Provider<String?>) {
     this.stringProvider = stringProvider;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
+  public override fun injectMembers(instance: Any) {
     injectString(instance, stringProvider.get());
   }
 
-  public static MembersInjector<Object> create(Provider<?> stringProvider) {
-    return new FieldInjection_MembersInjector((Provider<String>) (stringProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(stringProvider: Provider<*>): MembersInjector<Any> = FieldInjection_MembersInjector((stringProvider) as Provider<String?>)
 
-  @InjectedFieldSignature("test.FieldInjection.string")
-  public static void injectString(Object instance, @Nullable Object string) {
-    ((FieldInjection) (instance)).string = (String) (string);
+    @InjectedFieldSignature(value = "test.FieldInjection.string")
+    @JvmStatic
+    public fun injectString(instance: Any?, @Nullable string: Any?) {
+      ((instance) as FieldInjection).string = (string) as String?
+    }
   }
 }

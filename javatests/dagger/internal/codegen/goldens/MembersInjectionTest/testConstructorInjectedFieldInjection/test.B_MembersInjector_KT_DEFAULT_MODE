@@ -1,45 +1,46 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class B_MembersInjector implements MembersInjector<Object> {
-  private final Provider<String> valueBProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class B_MembersInjector : MembersInjector<Any> {
+  private val valueBProvider: Provider<String?>
 
-  private B_MembersInjector(Provider<String> valueBProvider) {
+  private constructor(valueBProvider: Provider<String?>) {
     this.valueBProvider = valueBProvider;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
+  public override fun injectMembers(instance: Any) {
     injectValueB(instance, valueBProvider.get());
   }
 
-  public static MembersInjector<Object> create(Provider<?> valueBProvider) {
-    return new B_MembersInjector((Provider<String>) (valueBProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(valueBProvider: Provider<*>): MembersInjector<Any> = B_MembersInjector((valueBProvider) as Provider<String?>)
 
-  @InjectedFieldSignature("test.B.valueB")
-  public static void injectValueB(Object instance, Object valueB) {
-    ((B) (instance)).valueB = (String) (valueB);
+    @InjectedFieldSignature(value = "test.B.valueB")
+    @JvmStatic
+    public fun injectValueB(instance: Any?, valueB: Any?) {
+      ((instance) as B).valueB = (valueB) as String?
+    }
   }
 }

@@ -1778,8 +1778,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             subject -> {
               subject.hasErrorCount(0);
               assertSourceMatchesGolden(subject, "test/SomeBinding_Factory");
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/SomeBinding_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/SomeBinding_MembersInjector");
             });
   }
 
@@ -1854,8 +1853,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             subject -> {
               subject.hasErrorCount(0);
               assertSourceMatchesGolden(subject, "test/SomeBinding_Factory");
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/SomeBinding_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/SomeBinding_MembersInjector");
             });
   }
 
@@ -1962,9 +1960,9 @@ public final class InjectConstructorFactoryGeneratorTest {
             subject -> {
               subject.hasErrorCount(0);
               assertSourceMatchesGolden(subject, "test/Foo_Factory");
-              subject.generatedSource(goldenFileRule.goldenSource("test/Foo_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/Foo_MembersInjector");
               assertSourceMatchesGolden(subject, "test/FooBase_Factory");
-              subject.generatedSource(goldenFileRule.goldenSource("test/FooBase_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/FooBase_MembersInjector");
             });
   }
 

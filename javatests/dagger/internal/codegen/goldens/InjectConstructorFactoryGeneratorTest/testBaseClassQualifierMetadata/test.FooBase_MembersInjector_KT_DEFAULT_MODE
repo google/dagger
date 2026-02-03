@@ -1,58 +1,60 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Float
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
-@QualifierMetadata({
+@QualifierMetadata(value = [
     "test.FooBaseFieldQualifier",
     "test.FooBaseMethodQualifier"
-})
+])
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class FooBase_MembersInjector implements MembersInjector<Object> {
-  private final Provider<String> injectFieldProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class FooBase_MembersInjector : MembersInjector<Any> {
+  private val injectFieldProvider: Provider<String?>
 
-  private final Provider<Float> fProvider;
+  private val fProvider: Provider<Float>
 
-  private FooBase_MembersInjector(Provider<String> injectFieldProvider, Provider<Float> fProvider) {
+  private constructor(injectFieldProvider: Provider<String?>, fProvider: Provider<Float>) {
     this.injectFieldProvider = injectFieldProvider;
     this.fProvider = fProvider;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
+  public override fun injectMembers(instance: Any) {
     injectInjectField(instance, injectFieldProvider.get());
     injectInjectMethod(instance, fProvider.get());
   }
 
-  public static MembersInjector<Object> create(Provider<?> injectFieldProvider,
-      Provider<?> fProvider) {
-    return new FooBase_MembersInjector((Provider<String>) (injectFieldProvider), (Provider<Float>) (fProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(injectFieldProvider: Provider<*>, fProvider: Provider<*>): MembersInjector<Any> = FooBase_MembersInjector((injectFieldProvider) as Provider<String?>, (fProvider) as Provider<Float>)
 
-  @InjectedFieldSignature("test.FooBase.injectField")
-  @FooBaseFieldQualifier
-  public static void injectInjectField(Object instance, Object injectField) {
-    ((FooBase) (instance)).injectField = (String) (injectField);
-  }
+    @InjectedFieldSignature(value = "test.FooBase.injectField")
+    @FooBaseFieldQualifier
+    @JvmStatic
+    public fun injectInjectField(instance: Any?, injectField: Any?) {
+      ((instance) as FooBase).injectField = (injectField) as String?
+    }
 
-  public static void injectInjectMethod(Object instance, Object f) {
-    ((FooBase) (instance)).injectMethod((float) (f));
+    @JvmStatic
+    public fun injectInjectMethod(instance: Any?, f: Any?) {
+      ((instance) as FooBase).injectMethod((f) as Float)
+    }
   }
 }

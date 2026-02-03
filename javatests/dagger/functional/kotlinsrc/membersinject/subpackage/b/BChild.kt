@@ -24,12 +24,14 @@ open class BChild : AParent() {
   @Inject internal lateinit var aChildField: BInternalObject
   private var aChildMethod: APublicObject? = null
 
+  // Note: In the Java source version of this code we use protected; however, in the Kotlin source
+  // version we use public since Kotlin protected wouldn't allow access to the generated code.
   @Inject
-  protected open fun aChildMethod(aChildMethod: APublicObject) {
+  open fun aChildMethod(aChildMethod: APublicObject) {
     this.aChildMethod = aChildMethod
   }
 
-  protected override fun aParentMethod(aParentMethod: APublicObject) {
+  override fun aParentMethod(aParentMethod: APublicObject) {
     super.aParentMethod(aParentMethod)
   }
 

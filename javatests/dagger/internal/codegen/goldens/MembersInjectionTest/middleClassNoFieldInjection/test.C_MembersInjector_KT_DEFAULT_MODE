@@ -1,45 +1,46 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class C_MembersInjector implements MembersInjector<Object> {
-  private final Provider<String> valueCProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class C_MembersInjector : MembersInjector<Any> {
+  private val valueCProvider: Provider<String?>
 
-  private C_MembersInjector(Provider<String> valueCProvider) {
+  private constructor(valueCProvider: Provider<String?>) {
     this.valueCProvider = valueCProvider;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
+  public override fun injectMembers(instance: Any) {
     injectValueC(instance, valueCProvider.get());
   }
 
-  public static MembersInjector<Object> create(Provider<?> valueCProvider) {
-    return new C_MembersInjector((Provider<String>) (valueCProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(valueCProvider: Provider<*>): MembersInjector<Any> = C_MembersInjector((valueCProvider) as Provider<String?>)
 
-  @InjectedFieldSignature("test.C.valueC")
-  public static void injectValueC(Object instance, Object valueC) {
-    ((C) (instance)).valueC = (String) (valueC);
+    @InjectedFieldSignature(value = "test.C.valueC")
+    @JvmStatic
+    public fun injectValueC(instance: Any?, valueC: Any?) {
+      ((instance) as C).valueC = (valueC) as String?
+    }
   }
 }

@@ -253,8 +253,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/GenericClass_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/GenericClass_MembersInjector");
             });
   }
 
@@ -311,7 +310,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/Child_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/Child_MembersInjector");
             });
   }
 
@@ -335,8 +334,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/FieldInjection_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/FieldInjection_MembersInjector");
             });
   }
 
@@ -359,8 +357,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/FieldInjection_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/FieldInjection_MembersInjector");
             });
   }
 
@@ -385,8 +382,8 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/FieldInjectionWithQualifier_MembersInjector"));
+              assertSourceMatchesGolden(
+                  subject, "test/FieldInjectionWithQualifier_MembersInjector");
             });
   }
 
@@ -411,8 +408,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/MethodInjection_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/MethodInjection_MembersInjector");
             });
   }
 
@@ -438,8 +434,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/MixedMemberInjection_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/MixedMemberInjection_MembersInjector");
             });
   }
 
@@ -461,8 +456,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/AllInjections_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/AllInjections_MembersInjector");
             });
   }
 
@@ -488,7 +482,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/B_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/B_MembersInjector");
             });
   }
 
@@ -519,8 +513,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/OuterType_B_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/OuterType_B_MembersInjector");
             });
   }
 
@@ -561,8 +554,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/OuterType_B_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/OuterType_B_MembersInjector");
             });
   }
 
@@ -607,7 +599,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSourceFileWithPath("test/foo_MembersInjector.java");
+              assertGeneratedSourceFileWithPath(subject, "test/foo_MembersInjector");
             });
   }
 
@@ -670,8 +662,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/Child_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/Child_MembersInjector");
             });
   }
 
@@ -1146,8 +1137,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("test/InjectedType_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/InjectedType_MembersInjector");
               assertSourceMatchesGolden(subject, "test/InjectedType_Factory");
             });
   }
@@ -1204,8 +1194,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("other/Inaccessible_MembersInjector"));
+              assertSourceMatchesGolden(subject, "other/Inaccessible_MembersInjector");
               subject.generatedSource(
                   goldenFileRule.goldenSource("test/DaggerTestComponent"));
             });
@@ -1374,11 +1363,11 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/A_MembersInjector"));
-              subject.generatedSource(goldenFileRule.goldenSource("test/C_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/A_MembersInjector");
+              assertSourceMatchesGolden(subject, "test/C_MembersInjector");
 
               try {
-                subject.generatedSourceFileWithPath("test/B_MembersInjector");
+                assertGeneratedSourceFileWithPath(subject, "test/B_MembersInjector");
                 // Can't throw an assertion error since it would be caught.
                 throw new IllegalStateException("Test generated a B_MembersInjector");
               } catch (AssertionError expected) {}
@@ -1417,8 +1406,8 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/A_MembersInjector"));
-              subject.generatedSource(goldenFileRule.goldenSource("test/B_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/A_MembersInjector");
+              assertSourceMatchesGolden(subject, "test/B_MembersInjector");
             });
   }
 
@@ -1593,7 +1582,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              Source expectedSource = goldenFileRule.goldenSource("test/MyClass_MembersInjector");
+              Source expectedSource = goldenSource("test/MyClass_MembersInjector");
               subject.generatedSource(
                   CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP
                       ? stripJetbrainsNullable(expectedSource)
@@ -1661,8 +1650,7 @@ public class MembersInjectionTest {
         .compile(
             subject -> {
               subject.hasErrorCount(0);
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("other/SuperType_MembersInjector"));
+              assertSourceMatchesGolden(subject, "other/SuperType_MembersInjector");
             });
     Source inaccessibleType =
         CompilerTests.javaSource(
@@ -1691,36 +1679,36 @@ public class MembersInjectionTest {
             subject -> {
               // TODO(b/424791197): Once this bug is fixed, there should be no errors.
               subject.hasErrorCount(5);
-              subject.generatedSource(goldenFileRule.goldenSource("test/SubType_MembersInjector"));
+              assertSourceMatchesGolden(subject, "test/SubType_MembersInjector");
               subject.hasErrorContaining(
                       "method injectT in class other.SuperType_MembersInjector<T> cannot be"
                           + " applied to given types")
-                  .onSource(goldenFileRule.goldenSource("test/SubType_MembersInjector"))
+                  .onSource(goldenSource("test/SubType_MembersInjector"))
                   .onLineContaining("SuperType_MembersInjector.injectT(instance, tProvider.get())");
               subject.hasErrorContaining(
                       "method injectListT in class other.SuperType_MembersInjector<T> cannot be"
                           + " applied to given types")
-                  .onSource(goldenFileRule.goldenSource("test/SubType_MembersInjector"))
+                  .onSource(goldenSource("test/SubType_MembersInjector"))
                   .onLineContaining(
                       "SuperType_MembersInjector.injectListT(instance, listTProvider.get())");
               subject.hasErrorContaining(
                       "method injectListExtendsT in class other.SuperType_MembersInjector<T> cannot"
                           + " be applied to given types")
-                  .onSource(goldenFileRule.goldenSource("test/SubType_MembersInjector"))
+                  .onSource(goldenSource("test/SubType_MembersInjector"))
                   .onLineContaining(
                       "SuperType_MembersInjector.injectListExtendsT("
                           + "instance, listExtendsTProvider.get())");
               subject.hasErrorContaining(
                       "method injectArrayListExtendsT in class other.SuperType_MembersInjector<T>"
                           + " cannot be applied to given types")
-                  .onSource(goldenFileRule.goldenSource("test/SubType_MembersInjector"))
+                  .onSource(goldenSource("test/SubType_MembersInjector"))
                   .onLineContaining(
                       "SuperType_MembersInjector.injectArrayListExtendsT("
                           + "instance, arrayListExtendsTProvider.get())");
               subject.hasErrorContaining(
                       "method injectMethod in class other.SuperType_MembersInjector<T> cannot"
                           + " be applied to given types")
-                  .onSource(goldenFileRule.goldenSource("test/SubType_MembersInjector"))
+                  .onSource(goldenSource("test/SubType_MembersInjector"))
                   .onLineContaining(
                       "SuperType_MembersInjector.injectMethod("
                           + "instance, "
@@ -1732,16 +1720,24 @@ public class MembersInjectionTest {
   }
 
   private Source stripJetbrainsNullable(Source source) {
-    return CompilerTests.javaSource(
-        ((Source.JavaSource) source).getQName(),
-        source
-            .getContents()
-            .replace("@Nullable ", "")
-            .replace("import org.jetbrains.annotations.Nullable;\n", ""));
+    return CompilerTests.transformContent(
+        source,
+        content ->
+            content
+                .replace("@Nullable ", "")
+                .replaceAll("import org.jetbrains.annotations.Nullable;?\n", ""));
+  }
+
+  private void assertGeneratedSourceFileWithPath(
+      CompilationResultSubject subject, String goldenName) {
+    subject.generatedSourceFileWithPath(goldenName + ".java");
   }
 
   private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
-    Source source = goldenFileRule.goldenSource(goldenName);
-    subject.generatedSource(source);
+    subject.generatedSource(goldenSource(goldenName));
+  }
+
+  private Source goldenSource(String goldenName) {
+    return goldenFileRule.goldenSource(goldenName);
   }
 }

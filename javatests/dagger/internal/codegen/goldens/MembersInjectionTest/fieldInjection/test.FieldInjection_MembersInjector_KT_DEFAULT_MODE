@@ -1,67 +1,77 @@
-package test;
+package test
 
-import dagger.Lazy;
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.DoubleCheck;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
+import dagger.Lazy
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.DoubleCheck
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+import dagger.`internal`.Provider as InternalProvider
+import javax.inject.Provider as InjectProvider
 
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class FieldInjection_MembersInjector implements MembersInjector<Object> {
-  private final Provider<String> stringProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class FieldInjection_MembersInjector : MembersInjector<Any> {
+  private val stringProvider: InternalProvider<String?>
 
-  private final Provider<String> stringProvider2;
+  private val stringProvider2: InternalProvider<String?>
 
-  private final Provider<String> stringProvider3;
+  private val stringProvider3: InternalProvider<String?>
 
-  private FieldInjection_MembersInjector(Provider<String> stringProvider,
-      Provider<String> stringProvider2, Provider<String> stringProvider3) {
+  private constructor(
+    stringProvider: InternalProvider<String?>,
+    stringProvider2: InternalProvider<String?>,
+    stringProvider3: InternalProvider<String?>,
+  ) {
     this.stringProvider = stringProvider;
     this.stringProvider2 = stringProvider2;
     this.stringProvider3 = stringProvider3;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
+  public override fun injectMembers(instance: Any) {
     injectString(instance, stringProvider.get());
     injectLazyString(instance, DoubleCheck.lazy(stringProvider2));
     injectStringProvider(instance, stringProvider3);
   }
 
-  public static MembersInjector<Object> create(Provider<?> stringProvider,
-      Provider<?> stringProvider2, Provider<?> stringProvider3) {
-    return new FieldInjection_MembersInjector((Provider<String>) (stringProvider), (Provider<String>) (stringProvider2), (Provider<String>) (stringProvider3));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(
+      stringProvider: InternalProvider<*>,
+      stringProvider2: InternalProvider<*>,
+      stringProvider3: InternalProvider<*>,
+    ): MembersInjector<Any> = FieldInjection_MembersInjector((stringProvider) as InternalProvider<String?>, (stringProvider2) as InternalProvider<String?>, (stringProvider3) as InternalProvider<String?>)
 
-  @InjectedFieldSignature("test.FieldInjection.string")
-  public static void injectString(Object instance, Object string) {
-    ((FieldInjection) (instance)).string = (String) (string);
-  }
+    @InjectedFieldSignature(value = "test.FieldInjection.string")
+    @JvmStatic
+    public fun injectString(instance: Any?, string: Any?) {
+      ((instance) as FieldInjection).string = (string) as String?
+    }
 
-  @InjectedFieldSignature("test.FieldInjection.lazyString")
-  public static void injectLazyString(Object instance, Object lazyString) {
-    ((FieldInjection) (instance)).lazyString = (Lazy<String>) (lazyString);
-  }
+    @InjectedFieldSignature(value = "test.FieldInjection.lazyString")
+    @JvmStatic
+    public fun injectLazyString(instance: Any?, lazyString: Any?) {
+      ((instance) as FieldInjection).lazyString = (lazyString) as Lazy<String?>?
+    }
 
-  @InjectedFieldSignature("test.FieldInjection.stringProvider")
-  public static void injectStringProvider(Object instance, Object stringProvider) {
-    ((FieldInjection) (instance)).stringProvider = (javax.inject.Provider<String>) (stringProvider);
+    @InjectedFieldSignature(value = "test.FieldInjection.stringProvider")
+    @JvmStatic
+    public fun injectStringProvider(instance: Any?, stringProvider: Any?) {
+      ((instance) as FieldInjection).stringProvider = (stringProvider) as InjectProvider<String?>?
+    }
   }
 }

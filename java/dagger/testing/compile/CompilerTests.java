@@ -117,11 +117,17 @@ public final class CompilerTests {
   /** Returns a new {@link Source} with the content transformed by the given function. */
   public static Source transformContent(
       Source source, Function<String, String> contentTransformer) {
-    return Source.Companion.java(
-        // Remove the extension from the file name so that the file name.
-        source.getRelativePath()
-            .substring(0, source.getRelativePath().lastIndexOf('.')),
-        contentTransformer.apply(source.getContents()));
+    if (source instanceof Source.KotlinSource) {
+      return Source.Companion.kotlin(
+          source.getRelativePath(),
+          contentTransformer.apply(source.getContents()));
+    } else if (source instanceof Source.JavaSource) {
+      return Source.Companion.java(
+          ((Source.JavaSource) source).getQName(),
+          contentTransformer.apply(source.getContents()));
+    } else {
+      throw new AssertionError("Unexpected source type.");
+    }
   }
 
   /** Returns a {@link Compiler} instance with the given sources. */

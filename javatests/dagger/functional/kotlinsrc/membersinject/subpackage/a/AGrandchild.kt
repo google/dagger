@@ -28,12 +28,14 @@ class AGrandchild : BChild() {
     this.aGrandchildMethod = aGrandchildMethod
   }
 
+  // Note: In the Java source version of this code we use protected; however, in the Kotlin source
+  // version we use public since Kotlin protected wouldn't allow access to the generated code.
   @Inject
-  protected override fun aParentMethod(aParentMethod: APublicObject) {
+  override fun aParentMethod(aParentMethod: APublicObject) {
     super.aParentMethod(aParentMethod)
   }
 
-  protected override fun aChildMethod(aChildMethod: APublicObject) {
+  override fun aChildMethod(aChildMethod: APublicObject) {
     super.aChildMethod(aChildMethod)
   }
 

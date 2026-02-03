@@ -1,72 +1,84 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class MixedMemberInjection_MembersInjector implements MembersInjector<Object> {
-  private final Provider<String> stringProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class MixedMemberInjection_MembersInjector : MembersInjector<Any> {
+  private val stringProvider: Provider<String?>
 
-  private final Provider<Object> objectProvider;
+  private val objectProvider: Provider<Any?>
 
-  private final Provider<String> sProvider;
+  private val sProvider: Provider<String?>
 
-  private final Provider<Object> oProvider;
+  private val oProvider: Provider<Any?>
 
-  private MixedMemberInjection_MembersInjector(Provider<String> stringProvider,
-      Provider<Object> objectProvider, Provider<String> sProvider, Provider<Object> oProvider) {
+  private constructor(
+    stringProvider: Provider<String?>,
+    objectProvider: Provider<Any?>,
+    sProvider: Provider<String?>,
+    oProvider: Provider<Any?>,
+  ) {
     this.stringProvider = stringProvider;
     this.objectProvider = objectProvider;
     this.sProvider = sProvider;
     this.oProvider = oProvider;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
+  public override fun injectMembers(instance: Any) {
     injectString(instance, stringProvider.get());
     injectObject(instance, objectProvider.get());
     injectSetString(instance, sProvider.get());
     injectSetObject(instance, oProvider.get());
   }
 
-  public static MembersInjector<Object> create(Provider<?> stringProvider,
-      Provider<?> objectProvider, Provider<?> sProvider, Provider<?> oProvider) {
-    return new MixedMemberInjection_MembersInjector((Provider<String>) (stringProvider), (Provider<Object>) (objectProvider), (Provider<String>) (sProvider), (Provider<Object>) (oProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(
+      stringProvider: Provider<*>,
+      objectProvider: Provider<*>,
+      sProvider: Provider<*>,
+      oProvider: Provider<*>,
+    ): MembersInjector<Any> = MixedMemberInjection_MembersInjector((stringProvider) as Provider<String?>, (objectProvider) as Provider<Any?>, (sProvider) as Provider<String?>, (oProvider) as Provider<Any?>)
 
-  @InjectedFieldSignature("test.MixedMemberInjection.string")
-  public static void injectString(Object instance, Object string) {
-    ((MixedMemberInjection) (instance)).string = (String) (string);
-  }
+    @InjectedFieldSignature(value = "test.MixedMemberInjection.string")
+    @JvmStatic
+    public fun injectString(instance: Any?, string: Any?) {
+      ((instance) as MixedMemberInjection).string = (string) as String?
+    }
 
-  @InjectedFieldSignature("test.MixedMemberInjection.object")
-  public static void injectObject(Object instance, Object object) {
-    ((MixedMemberInjection) (instance)).object = (Object) (object);
-  }
+    @InjectedFieldSignature(value = "test.MixedMemberInjection.object")
+    @JvmStatic
+    public fun injectObject(instance: Any?, `object`: Any?) {
+      ((instance) as MixedMemberInjection).`object` = (`object`) as Any?
+    }
 
-  public static void injectSetString(Object instance, Object s) {
-    ((MixedMemberInjection) (instance)).setString((String) (s));
-  }
+    @JvmStatic
+    public fun injectSetString(instance: Any?, s: Any?) {
+      ((instance) as MixedMemberInjection).setString((s) as String?)
+    }
 
-  public static void injectSetObject(Object instance, Object o) {
-    ((MixedMemberInjection) (instance)).setObject((Object) (o));
+    @JvmStatic
+    public fun injectSetObject(instance: Any?, o: Any?) {
+      ((instance) as MixedMemberInjection).setObject((o) as Any?)
+    }
   }
 }

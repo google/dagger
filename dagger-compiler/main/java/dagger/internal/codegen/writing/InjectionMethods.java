@@ -440,7 +440,7 @@ final class InjectionMethods {
             nullability,
             compilerOptions));
     return isTypeNameAccessible
-        ? XCodeBlock.of("%L", name)
-        : XCodeBlock.ofCast(typeName, XCodeBlock.of("%L", name));
+        ? XCodeBlock.of("%N", name)
+        : XCodeBlock.ofCast(typeName, XCodeBlock.of("%N", name));
   }
 }

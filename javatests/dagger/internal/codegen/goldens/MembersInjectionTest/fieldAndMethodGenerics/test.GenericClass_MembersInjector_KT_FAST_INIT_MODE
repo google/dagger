@@ -1,54 +1,54 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class GenericClass_MembersInjector<A, B> implements MembersInjector<Object> {
-  private final Provider<A> aProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class GenericClass_MembersInjector<A, B> : MembersInjector<Any> {
+  private val aProvider: Provider<A>
 
-  private final Provider<B> bProvider;
+  private val bProvider: Provider<B>
 
-  private GenericClass_MembersInjector(Provider<A> aProvider, Provider<B> bProvider) {
+  private constructor(aProvider: Provider<A>, bProvider: Provider<B>) {
     this.aProvider = aProvider;
     this.bProvider = bProvider;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
-    GenericClass_MembersInjector.<A, B>injectA(instance, aProvider.get());
-    GenericClass_MembersInjector.<A, B>injectRegister(instance, bProvider.get());
+  public override fun injectMembers(instance: Any) {
+    injectA<A, B>(instance, aProvider.get());
+    injectRegister<A, B>(instance, bProvider.get());
   }
 
-  public static <A, B> MembersInjector<Object> create(Provider<?> aProvider,
-      Provider<?> bProvider) {
-    return new GenericClass_MembersInjector<A, B>((Provider<A>) (aProvider), (Provider<B>) (bProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun <A, B> create(aProvider: Provider<*>, bProvider: Provider<*>): MembersInjector<Any> = GenericClass_MembersInjector<A, B>((aProvider) as Provider<A>, (bProvider) as Provider<B>)
 
-  @InjectedFieldSignature("test.GenericClass.a")
-  public static <A, B> void injectA(Object instance, Object a) {
-    ((GenericClass<A, B>) (instance)).a = (A) (a);
-  }
+    @InjectedFieldSignature(value = "test.GenericClass.a")
+    @JvmStatic
+    public fun <A, B> injectA(instance: Any?, a: Any?) {
+      ((instance) as GenericClass<A, B>).a = (a) as A
+    }
 
-  public static <A, B> void injectRegister(Object instance, Object b) {
-    ((GenericClass<A, B>) (instance)).register((B) (b));
+    @JvmStatic
+    public fun <A, B> injectRegister(instance: Any?, b: Any?) {
+      ((instance) as GenericClass<A, B>).register((b) as B)
+    }
   }
 }

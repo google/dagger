@@ -42,6 +42,7 @@ import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XFunSpecs.constructorBuilder;
+import static dagger.internal.codegen.xprocessing.XFunSpecs.getMethodReferenceName;
 import static dagger.internal.codegen.xprocessing.XFunSpecs.methodBuilder;
 import static dagger.internal.codegen.xprocessing.XTypeElements.typeVariableNames;
 import static dagger.internal.codegen.xprocessing.XTypeNames.factoryOf;
@@ -409,7 +410,8 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
     }
     XCodeBlock arguments =
         copyParameters(builder, parameterNameSet, method.getParameters(), compilerOptions);
-    XCodeBlock invocation = XCodeBlock.of("%L.%N(%L)", module, referenceName(method), arguments);
+    XCodeBlock invocation =
+        XCodeBlock.of("%L.%N(%L)", module, getMethodReferenceName(method), arguments);
 
     Nullability nullability = Nullability.of(method);
     return builder
@@ -417,24 +419,6 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
         .returns(contributedTypeName(binding))
         .addStatement("return %L", maybeWrapInCheckForNull(binding, invocation))
         .build();
-  }
-
-  /**
-   * Returns the name that should be used to reference the given binding method.
-   *
-   * <p>To ensure we properly handle internal visibility, we handle the reference differently
-   * depending on whether we're generating Java or Kotlin.
-   *
-   * <p>When generating Java, we use the (mangled) JVM name rather than the source name because Java
-   * sources do not have access to the source name of an internal element (even if they're in the
-   * same build unit).
-   *
-   * <p>When generating Kotlin, we use the source name rather than the JVM name because Kotlin
-   * sources do not have access to the (mangled) JVM name of an internal element, which should be
-   * fine since the generated factory should always be in the same build unit as the binding method.
-   */
-  private String referenceName(XMethodElement method) {
-    return method.getJvmName();
   }
 
   private XCodeBlock maybeWrapInCheckForNull(ProvisionBinding binding, XCodeBlock codeBlock) {

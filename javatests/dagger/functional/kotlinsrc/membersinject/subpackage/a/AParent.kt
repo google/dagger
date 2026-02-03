@@ -22,8 +22,10 @@ open class AParent {
   @Inject internal lateinit var aParentField: AInternalObject
   private var aParentMethod: APublicObject? = null
 
+  // Note: In the Java source version of this code we use protected; however, in the Kotlin source
+  // version we use public since Kotlin protected wouldn't allow access to the generated code.
   @Inject
-  protected open fun aParentMethod(aParentMethod: APublicObject) {
+  open fun aParentMethod(aParentMethod: APublicObject) {
     this.aParentMethod = aParentMethod
   }
 

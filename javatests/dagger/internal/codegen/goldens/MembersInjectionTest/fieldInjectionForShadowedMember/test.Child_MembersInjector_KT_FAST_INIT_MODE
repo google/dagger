@@ -1,50 +1,49 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class Child_MembersInjector implements MembersInjector<Object> {
-  private final Provider<Foo> objectProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class Child_MembersInjector : MembersInjector<Any> {
+  private val objectProvider: Provider<Foo?>
 
-  private final Provider<Bar> objectProvider2;
+  private val objectProvider2: Provider<Bar?>
 
-  private Child_MembersInjector(Provider<Foo> objectProvider, Provider<Bar> objectProvider2) {
+  private constructor(objectProvider: Provider<Foo?>, objectProvider2: Provider<Bar?>) {
     this.objectProvider = objectProvider;
     this.objectProvider2 = objectProvider2;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
+  public override fun injectMembers(instance: Any) {
     Parent_MembersInjector.injectObject(instance, objectProvider.get());
     injectObject(instance, objectProvider2.get());
   }
 
-  public static MembersInjector<Object> create(Provider<?> objectProvider,
-      Provider<?> objectProvider2) {
-    return new Child_MembersInjector((Provider<Foo>) (objectProvider), (Provider<Bar>) (objectProvider2));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(objectProvider: Provider<*>, objectProvider2: Provider<*>): MembersInjector<Any> = Child_MembersInjector((objectProvider) as Provider<Foo?>, (objectProvider2) as Provider<Bar?>)
 
-  @InjectedFieldSignature("test.Child.object")
-  public static void injectObject(Object instance, Object object) {
-    ((Child) (instance)).object = (Bar) (object);
+    @InjectedFieldSignature(value = "test.Child.object")
+    @JvmStatic
+    public fun injectObject(instance: Any?, `object`: Any?) {
+      ((instance) as Child).`object` = (`object`) as Bar?
+    }
   }
 }

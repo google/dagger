@@ -42,6 +42,7 @@ import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XFunSpecs.constructorBuilder;
+import static dagger.internal.codegen.xprocessing.XFunSpecs.getMethodReferenceName;
 import static dagger.internal.codegen.xprocessing.XFunSpecs.methodBuilder;
 import static dagger.internal.codegen.xprocessing.XTypeElements.typeVariableNames;
 import static dagger.internal.codegen.xprocessing.XTypeNames.membersInjectorOf;
@@ -181,7 +182,9 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
     XCodeBlock instance = copyInstance(builder, parameterNameSet, enclosingType.getType());
     XCodeBlock arguments =
         copyParameters(builder, parameterNameSet, method.getParameters(), compilerOptions);
-    return builder.addStatement("%L.%N(%L)", instance, method.getJvmName(), arguments).build();
+    return builder
+        .addStatement("%L.%N(%L)", instance, getMethodReferenceName(method), arguments)
+        .build();
   }
 
   // Example:

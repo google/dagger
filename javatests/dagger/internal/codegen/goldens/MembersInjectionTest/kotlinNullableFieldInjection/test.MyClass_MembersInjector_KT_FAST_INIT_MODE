@@ -1,56 +1,56 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class MyClass_MembersInjector implements MembersInjector<Object> {
-  private final Provider<String> nullableStringProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class MyClass_MembersInjector : MembersInjector<Any> {
+  private val nullableStringProvider: Provider<String?>
 
-  private final Provider<Object> nullableObjectProvider;
+  private val nullableObjectProvider: Provider<Any?>
 
-  private MyClass_MembersInjector(Provider<String> nullableStringProvider,
-      Provider<Object> nullableObjectProvider) {
+  private constructor(nullableStringProvider: Provider<String?>, nullableObjectProvider: Provider<Any?>) {
     this.nullableStringProvider = nullableStringProvider;
     this.nullableObjectProvider = nullableObjectProvider;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
+  public override fun injectMembers(instance: Any) {
     injectNullableString(instance, nullableStringProvider.get());
     injectNullableObject(instance, nullableObjectProvider.get());
   }
 
-  public static MembersInjector<Object> create(Provider<?> nullableStringProvider,
-      Provider<?> nullableObjectProvider) {
-    return new MyClass_MembersInjector((Provider<String>) (nullableStringProvider), (Provider<Object>) (nullableObjectProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(nullableStringProvider: Provider<*>, nullableObjectProvider: Provider<*>): MembersInjector<Any> = MyClass_MembersInjector((nullableStringProvider) as Provider<String?>, (nullableObjectProvider) as Provider<Any?>)
 
-  @InjectedFieldSignature("test.MyClass.nullableString")
-  public static void injectNullableString(Object instance, Object nullableString) {
-    ((MyClass) (instance)).nullableString = (String) (nullableString);
-  }
+    @InjectedFieldSignature(value = "test.MyClass.nullableString")
+    @JvmStatic
+    public fun injectNullableString(instance: Any?, nullableString: Any?) {
+      ((instance) as MyClass).nullableString = (nullableString) as String?
+    }
 
-  @InjectedFieldSignature("test.MyClass.nullableObject")
-  public static void injectNullableObject(Object instance, Object nullableObject) {
-    ((MyClass) (instance)).nullableObject = (Object) (nullableObject);
+    @InjectedFieldSignature(value = "test.MyClass.nullableObject")
+    @JvmStatic
+    public fun injectNullableObject(instance: Any?, nullableObject: Any?) {
+      ((instance) as MyClass).nullableObject = (nullableObject) as Any?
+    }
   }
 }

@@ -48,6 +48,20 @@ import javax.lang.model.element.Modifier;
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XFunSpec} helper methods. */
 public final class XFunSpecs {
+  /**
+   * Returns the name to use when referencing the given method based on the language of the
+   * generated code.
+   *
+   * <p>When referencing a method from a generated Java source, the method's JVM name is used. When
+   * referencing a method from a generated Kotlin source, the method's source name is used. This is
+   * particularly important for cases when a Kotlin method is annotated with {@code @JvmName} or has
+   * internal visibility since the source name won't be available to Java and the JVM name won't be
+   * available to Kotlin.
+   */
+  @SuppressWarnings("deprecation")
+  public static String getMethodReferenceName(XMethodElement method) {
+    return method.getJvmName();
+  }
 
   /** Returns a {@link Builder} that overrides the given method. */
   public static Builder overriding(

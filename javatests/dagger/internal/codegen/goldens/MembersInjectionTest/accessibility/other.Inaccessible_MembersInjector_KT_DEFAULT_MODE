@@ -1,53 +1,54 @@
-package other;
+package other
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class Inaccessible_MembersInjector implements MembersInjector<Object> {
-  private final Provider<Foo> fooProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class Inaccessible_MembersInjector : MembersInjector<Any> {
+  private val fooProvider: Provider<Foo?>
 
-  private final Provider<Foo> fooProvider2;
+  private val fooProvider2: Provider<Foo?>
 
-  private Inaccessible_MembersInjector(Provider<Foo> fooProvider, Provider<Foo> fooProvider2) {
+  private constructor(fooProvider: Provider<Foo?>, fooProvider2: Provider<Foo?>) {
     this.fooProvider = fooProvider;
     this.fooProvider2 = fooProvider2;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
+  public override fun injectMembers(instance: Any) {
     injectFoo(instance, fooProvider.get());
     injectMethod(instance, fooProvider2.get());
   }
 
-  public static MembersInjector<Object> create(Provider<?> fooProvider, Provider<?> fooProvider2) {
-    return new Inaccessible_MembersInjector((Provider<Foo>) (fooProvider), (Provider<Foo>) (fooProvider2));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(fooProvider: Provider<*>, fooProvider2: Provider<*>): MembersInjector<Any> = Inaccessible_MembersInjector((fooProvider) as Provider<Foo?>, (fooProvider2) as Provider<Foo?>)
 
-  @InjectedFieldSignature("other.Inaccessible.foo")
-  public static void injectFoo(Object instance, Object foo) {
-    ((Inaccessible) (instance)).foo = (Foo) (foo);
-  }
+    @InjectedFieldSignature(value = "other.Inaccessible.foo")
+    @JvmStatic
+    public fun injectFoo(instance: Any?, foo: Any?) {
+      ((instance) as Inaccessible).foo = (foo) as Foo?
+    }
 
-  public static void injectMethod(Object instance, Object foo) {
-    ((Inaccessible) (instance)).method((Foo) (foo));
+    @JvmStatic
+    public fun injectMethod(instance: Any?, foo: Any?) {
+      ((instance) as Inaccessible).method((foo) as Foo?)
+    }
   }
 }

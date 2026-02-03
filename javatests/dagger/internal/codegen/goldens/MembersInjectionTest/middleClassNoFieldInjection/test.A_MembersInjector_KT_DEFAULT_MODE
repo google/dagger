@@ -1,50 +1,50 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class A_MembersInjector implements MembersInjector<Object> {
-  private final Provider<String> valueCProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class A_MembersInjector : MembersInjector<Any> {
+  private val valueCProvider: Provider<String?>
 
-  private final Provider<String> valueAProvider;
+  private val valueAProvider: Provider<String?>
 
-  private A_MembersInjector(Provider<String> valueCProvider, Provider<String> valueAProvider) {
+  private constructor(valueCProvider: Provider<String?>, valueAProvider: Provider<String?>) {
     this.valueCProvider = valueCProvider;
     this.valueAProvider = valueAProvider;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
+  public override fun injectMembers(instance: Any) {
     C_MembersInjector.injectValueC(instance, valueCProvider.get());
     injectValueA(instance, valueAProvider.get());
   }
 
-  public static MembersInjector<Object> create(Provider<?> valueCProvider,
-      Provider<?> valueAProvider) {
-    return new A_MembersInjector((Provider<String>) (valueCProvider), (Provider<String>) (valueAProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(valueCProvider: Provider<*>, valueAProvider: Provider<*>): MembersInjector<Any> = A_MembersInjector((valueCProvider) as Provider<String?>, (valueAProvider) as Provider<String?>)
 
-  @InjectedFieldSignature("test.A.valueA")
-  public static void injectValueA(Object instance, Object valueA) {
-    ((A) (instance)).valueA = (String) (valueA);
+    @InjectedFieldSignature(value = "test.A.valueA")
+    @JvmStatic
+    public fun injectValueA(instance: Any?, valueA: Any?) {
+      ((instance) as A).valueA = (valueA) as String?
+    }
   }
 }

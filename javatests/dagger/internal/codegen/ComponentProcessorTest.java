@@ -1479,7 +1479,8 @@ public class ComponentProcessorTest {
               subject.hasWarningCount(0);
 
               String generatedFileTemplate =
-                  "dagger/internal/codegen/ComponentProcessorTestClasses_%s_MembersInjector.java";
+                  "dagger/internal/codegen/ComponentProcessorTestClasses_%s_MembersInjector"
+                      + (compilerMode.isKotlinCodegenEnabled() ? ".kt" : ".java");
               String noteTemplate =
                   "Generating a MembersInjector for "
                       + "dagger.internal.codegen.ComponentProcessorTestClasses.%s.";

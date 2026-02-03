@@ -1,58 +1,59 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
-import javax.inject.Named;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import javax.inject.Named
+import kotlin.Any
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
-@QualifierMetadata("javax.inject.Named")
+@QualifierMetadata(value = ["javax.inject.Named"])
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class FieldInjectionWithQualifier_MembersInjector implements MembersInjector<Object> {
-  private final Provider<String> aProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class FieldInjectionWithQualifier_MembersInjector : MembersInjector<Any> {
+  private val aProvider: Provider<String?>
 
-  private final Provider<String> bProvider;
+  private val bProvider: Provider<String?>
 
-  private FieldInjectionWithQualifier_MembersInjector(Provider<String> aProvider,
-      Provider<String> bProvider) {
+  private constructor(aProvider: Provider<String?>, bProvider: Provider<String?>) {
     this.aProvider = aProvider;
     this.bProvider = bProvider;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
+  public override fun injectMembers(instance: Any) {
     injectA(instance, aProvider.get());
     injectB(instance, bProvider.get());
   }
 
-  public static MembersInjector<Object> create(Provider<?> aProvider, Provider<?> bProvider) {
-    return new FieldInjectionWithQualifier_MembersInjector((Provider<String>) (aProvider), (Provider<String>) (bProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(aProvider: Provider<*>, bProvider: Provider<*>): MembersInjector<Any> = FieldInjectionWithQualifier_MembersInjector((aProvider) as Provider<String?>, (bProvider) as Provider<String?>)
 
-  @InjectedFieldSignature("test.FieldInjectionWithQualifier.a")
-  @Named("A")
-  public static void injectA(Object instance, Object a) {
-    ((FieldInjectionWithQualifier) (instance)).a = (String) (a);
-  }
+    @InjectedFieldSignature(value = "test.FieldInjectionWithQualifier.a")
+    @Named(`value` = "A")
+    @JvmStatic
+    public fun injectA(instance: Any?, a: Any?) {
+      ((instance) as FieldInjectionWithQualifier).a = (a) as String?
+    }
 
-  @InjectedFieldSignature("test.FieldInjectionWithQualifier.b")
-  @Named("B")
-  public static void injectB(Object instance, Object b) {
-    ((FieldInjectionWithQualifier) (instance)).b = (String) (b);
+    @InjectedFieldSignature(value = "test.FieldInjectionWithQualifier.b")
+    @Named(`value` = "B")
+    @JvmStatic
+    public fun injectB(instance: Any?, b: Any?) {
+      ((instance) as FieldInjectionWithQualifier).b = (b) as String?
+    }
   }
 }

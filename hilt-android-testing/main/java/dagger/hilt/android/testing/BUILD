@@ -49,7 +49,18 @@ android_library(
     ],
     exports = [
         ":hilt_android_rule",
+        ":hilt_android_test_codegen_exports",
         ":hilt_test_application",
+    ],
+    deps = [
+        "//hilt-core/main/java/dagger/hilt:generates_root_input",
+    ],
+)
+
+android_library(
+    name = "hilt_android_test_codegen_exports",
+    testonly = 1,
+    exports = [
         ":on_component_ready_runner",
         ":package_info",
         "//hilt-android-testing/main/java/dagger/hilt/android/internal/testing:early_test_singleton_component_creator",
@@ -80,9 +91,6 @@ android_library(
         "//third_party/java/android/android_sdk_linux/extras/android/compatibility/multidex",
         "//third_party/java/androidx/annotation",
         "//third_party/java/dagger",
-    ],
-    deps = [
-        "//hilt-core/main/java/dagger/hilt:generates_root_input",
     ],
 )
 

@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.xprocessing.NullableTypeNames.appendTypeUseNullable;
 import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.xprocessing.XCodeBlocks.concat;
@@ -32,6 +33,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room3.compiler.codegen.XAnnotationSpec;
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XCodeBlock;
 import androidx.room3.compiler.codegen.XFunSpec;
@@ -75,7 +77,6 @@ final class SwitchingProviders {
   private static final int MAX_CASES_PER_SWITCH = 100;
 
   private static final long MAX_CASES_PER_CLASS = MAX_CASES_PER_SWITCH * MAX_CASES_PER_SWITCH;
-  private static final XTypeName typeVariable = XTypeNames.getTypeVariableName("T");
 
   /**
    * Maps a {@link Key} to an instance of a {@link SwitchingProviderBuilder}. Each group of {@code
@@ -87,6 +88,7 @@ final class SwitchingProviders {
   private final ShardImplementation shardImplementation;
   private final CompilerOptions compilerOptions;
   private final XProcessingEnv processingEnv;
+  private final XTypeName typeVariable;
 
   SwitchingProviders(
       ShardImplementation shardImplementation,
@@ -95,6 +97,14 @@ final class SwitchingProviders {
     this.shardImplementation = checkNotNull(shardImplementation);
     this.compilerOptions = checkNotNull(compilerOptions);
     this.processingEnv = checkNotNull(processingEnv);
+    this.typeVariable =
+        XTypeName.getTypeVariableName(
+            "T",
+            ImmutableList.of(
+                appendTypeUseNullable(
+                    XTypeName.ANY_OBJECT,
+                    XAnnotationSpec.of(XTypeNames.JSPECIFY_NULLABLE),
+                    compilerOptions)));
   }
 
   /** Returns the framework instance creation expression for an inner switching provider class. */

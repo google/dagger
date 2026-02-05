@@ -178,6 +178,7 @@ object XTypeNames {
   @JvmField val PRODUCTION_SCOPE = XClassName.get("dagger.producers", "ProductionScope")
 
   // Other classnames
+  @JvmField val JSPECIFY_NULLABLE = XClassName.get("org.jspecify.annotations", "Nullable")
   @JvmField val EXECUTOR = XClassName.get("java.util.concurrent", "Executor")
   @JvmField val ASSERTION_ERROR = XClassName.get("java.lang", "AssertionError")
   @JvmField val ERROR = XClassName.get("java.lang", "Error")

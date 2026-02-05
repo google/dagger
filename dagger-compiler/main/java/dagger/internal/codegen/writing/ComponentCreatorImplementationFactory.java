@@ -32,8 +32,6 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import androidx.room3.compiler.codegen.XAnnotationSpec;
-import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XCodeBlock;
 import androidx.room3.compiler.codegen.XFunSpec;
 import androidx.room3.compiler.codegen.XParameterSpec;
@@ -65,8 +63,6 @@ import javax.lang.model.element.Modifier;
 
 /** Factory for creating {@link ComponentCreatorImplementation} instances. */
 final class ComponentCreatorImplementationFactory {
-  private static final XAnnotationSpec JSPECIFY_NULLABLE =
-      XAnnotationSpec.of(XClassName.get("org.jspecify.annotations", "Nullable"));
 
   private final CompilerOptions compilerOptions;
   private final ComponentImplementation componentImplementation;

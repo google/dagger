@@ -67,7 +67,7 @@ final class DaggerBComponent {
       return new B(nullableStringProvider);
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingProvider<T extends @org.jspecify.annotations.Nullable Object> implements Provider<T> {
       private final BComponentImpl bComponentImpl;
 
       private final int id;

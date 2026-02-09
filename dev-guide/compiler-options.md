@@ -10,13 +10,13 @@ redirect_from:
 In v2.55, Dagger introduced a rewrite of its core binding graph creation logic
 that fixes many subtle bugs that have plague the previous version. However,
 these fixes also come with a behavior change (see details below), so we've
-introduced a flag to ease the migration to the new behavior. To enable the
-fixes, pass the following compiler option:
+introduced a flag to ease the migration to the new behavior. This was enabled
+by default in v2.58. To disable the fixes, pass the following compiler option:
 
-`-Adagger.useBindingGraphFix=ENABLED`.
+`-Adagger.useBindingGraphFix=disabled`
 
-In a future release, we will enable this flag by default, and remove the flag
-entirely once users have had a chance to migrate.
+In a future release, we will remove this flag entirely once users have had a
+chance to migrate.
 
 ### Background
 

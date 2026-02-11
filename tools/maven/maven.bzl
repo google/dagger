@@ -428,6 +428,7 @@ def _package_android_library_impl(ctx):
             proguardSpec = ctx.file.proguardSpec.path if ctx.file.proguardSpec else "none",
             outputFile = ctx.outputs.aar.path,
         ),
+        mnemonic = "DaggerPackageAndroidLib",
     )
 
 _package_android_library = rule(
@@ -488,6 +489,7 @@ def _package_r8_and_proguard_rule_impl(ctx):
             proguardSpec = ctx.file.proguardSpec.path if ctx.file.proguardSpec else "none",
             outputFile = ctx.outputs.jar.path,
         ),
+        mnemonic = "DaggerPackageR8AndProguard",
     )
 
 _package_r8_and_proguard_rule = rule(

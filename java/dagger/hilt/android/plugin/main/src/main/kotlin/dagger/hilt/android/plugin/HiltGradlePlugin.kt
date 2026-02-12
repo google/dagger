@@ -30,6 +30,8 @@ import com.android.build.api.variant.ScopedArtifacts
 import com.android.build.api.variant.TestAndroidComponentsExtension
 import com.android.build.gradle.api.AndroidBasePlugin
 import com.android.build.gradle.tasks.JdkImageInput
+import dagger.hilt.android.plugin.rules.HiltArtifactCompatibilityRule
+import dagger.hilt.android.plugin.rules.HiltArtifactDisambiguationRule
 import dagger.hilt.android.plugin.task.AggregateDepsTask
 import dagger.hilt.android.plugin.task.HiltSyncTask
 import dagger.hilt.android.plugin.transform.AggregatedPackagesTransform
@@ -102,6 +104,7 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
     val hiltExtension =
       project.extensions.create(HiltExtension::class.java, "hilt", HiltExtensionImpl::class.java)
     HiltPluginEnvironment(project, hiltExtension).apply {
+      configureCompatibilityRules()
       configureDependencyTransforms()
       configureCompileClasspath()
       configureBytecodeTransformASM()
@@ -113,20 +116,36 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
   // Configures Gradle dependency transforms.
   private fun HiltPluginEnvironment.configureDependencyTransforms() =
     project.dependencies.apply {
+      /**
+       * NOTE: 'CopyTransform' is intentionally used for directories to create 'Path Asymmetry.'
+       *
+       * In AGP 9.0+, if we use a 'Pure Rules' approach (making both android-classes and directories
+       * compatible via AttributeCompatibilityRule), Gradle discovers two competing transformation
+       * chains for every JAR artifact:
+       * 1. jar -> IdentityTransform -> android-classes-jar -> [Rule] hilt-all-classes
+       * 2. jar -> UnzipTransform -> directory -> [Rule] hilt-all-classes
+       *
+       * Both chains have the same length, thus giving Multiple transformation chains error. And
+       * disambiguation rules don't help choosing one over the other.
+       *
+       * The solution is to make the 'directory' chain one step more complex than the
+       * 'android-classes' chain.
+       *
+       * By using a 'CopyTransform' for directories and EXCLUDING 'directory' from the
+       * CompatibilityRules, we ensure that the 'Unzip' path is one step more complex than the
+       * android-classes path. This asymmetry allows Gradle to prioritize the Identity/Rule path for
+       * JARs and avoids the ambiguity error, while still providing a dedicated gateway for local
+       * project directories. The chains would look like:
+       * 1. jar -> IdentityTransform -> android-classes-jar -> [Rule] hilt-all-classes (preferred)
+       * 2. jar -> UnzipTransform -> directory -> CopyTransform -> hilt-all-classes
+       */
       registerTransform(CopyTransform::class.java) { spec ->
-        // AGP has transforms from jar to android-classes for Java/Kotlin/Android libraries.
-        spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "android-classes")
-        spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, DAGGER_ARTIFACT_TYPE_VALUE)
-      }
-      registerTransform(CopyTransform::class.java) { spec ->
-        // File Collection dependencies might be an artifact of type 'directory', e.g. when
-        // adding as a dep the destination directory of the JavaCompile task.
         spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, "directory")
-        spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, DAGGER_ARTIFACT_TYPE_VALUE)
+        spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, HILT_ALL_CLASSES_ARTIFACT_TYPE_VALUE)
       }
       registerTransform(AggregatedPackagesTransform::class.java) { spec ->
-        spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, DAGGER_ARTIFACT_TYPE_VALUE)
-        spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, AGGREGATED_HILT_ARTIFACT_TYPE_VALUE)
+        spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, HILT_ALL_CLASSES_ARTIFACT_TYPE_VALUE)
+        spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, HILT_METADATA_CLASSES_ARTIFACT_TYPE_VALUE)
       }
     }
 
@@ -149,7 +168,7 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       // runtime classpath has the tested dependencies removed in these cases.
       val artifactView =
         (testedVariant ?: variant).runtimeConfiguration.incoming.artifactView { view ->
-          view.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, DAGGER_ARTIFACT_TYPE_VALUE)
+          view.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, HILT_ALL_CLASSES_ARTIFACT_TYPE_VALUE)
           view.componentFilter { identifier ->
             // Filter out the project's classes from the aggregated view since this can cause
             // issues with Kotlin internal members visibility. b/178230629
@@ -208,7 +227,10 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
           testedVariant = testedVariant,
           classpath =
             project.files(
-              getHiltTransformedDependencies(configurations, AGGREGATED_HILT_ARTIFACT_TYPE_VALUE)
+              getHiltTransformedDependencies(
+                configurations,
+                HILT_METADATA_CLASSES_ARTIFACT_TYPE_VALUE,
+              )
             ),
         )
 
@@ -219,7 +241,7 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
           sources = project.files(aggregatingTask.map { it.outputDir }),
           classpath =
             project.files(
-              getHiltTransformedDependencies(configurations, DAGGER_ARTIFACT_TYPE_VALUE)
+              getHiltTransformedDependencies(configurations, HILT_ALL_CLASSES_ARTIFACT_TYPE_VALUE)
             ),
         )
 
@@ -398,6 +420,15 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
     }
   }
 
+  private fun HiltPluginEnvironment.configureCompatibilityRules() {
+    project.dependencies.attributesSchema { schema ->
+      schema.attribute(ARTIFACT_TYPE_ATTRIBUTE) { attribute ->
+        attribute.compatibilityRules.add(HiltArtifactCompatibilityRule::class.java)
+        attribute.disambiguationRules.add(HiltArtifactDisambiguationRule::class.java)
+      }
+    }
+  }
+
   private fun verifyDependencies(project: Project) {
     // If project is already failing, skip verification since dependencies might not be resolved.
     if (project.state.failure != null) {
@@ -430,8 +461,10 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
 
   companion object {
     private val ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String::class.java)
-    const val DAGGER_ARTIFACT_TYPE_VALUE = "jar-for-dagger"
-    const val AGGREGATED_HILT_ARTIFACT_TYPE_VALUE = "aggregated-jar-for-hilt"
+    /** Includes all classes from `android-classes` and `directory` artifacts. */
+    const val HILT_ALL_CLASSES_ARTIFACT_TYPE_VALUE = "hilt-all-classes"
+    /** A filtered view of hilt-all-classes that only includes the Hilt metadata. */
+    const val HILT_METADATA_CLASSES_ARTIFACT_TYPE_VALUE = "hilt-metadata-classes"
 
     const val LIBRARY_GROUP = "com.google.dagger"
 

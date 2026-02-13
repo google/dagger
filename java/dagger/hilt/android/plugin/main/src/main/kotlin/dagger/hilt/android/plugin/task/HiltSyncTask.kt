@@ -16,24 +16,20 @@
 
 package dagger.hilt.android.plugin.task
 
+import org.gradle.api.DefaultTask
 import org.gradle.api.file.Directory
 import org.gradle.api.file.RegularFile
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.Classpath
-import org.gradle.api.tasks.Sync
 import org.gradle.work.DisableCachingByDefault
 
 @DisableCachingByDefault(because = "Not worth caching")
-abstract class HiltSyncTask : Sync() {
-  @get:Classpath
-  abstract val classesDirectories: ListProperty<Directory>
+abstract class HiltSyncTask : DefaultTask() {
+  @get:Classpath abstract val classesDirectories: ListProperty<Directory>
 
-  @get:Classpath
-  abstract val classesJars: ListProperty<RegularFile>
+  @get:Classpath abstract val classesJars: ListProperty<RegularFile>
 
-  @get:Classpath
-  abstract val testedClassesDirectories: ListProperty<Directory>
+  @get:Classpath abstract val testedClassesDirectories: ListProperty<Directory>
 
-  @get:Classpath
-  abstract val testedClassesJars: ListProperty<RegularFile>
+  @get:Classpath abstract val testedClassesJars: ListProperty<RegularFile>
 }

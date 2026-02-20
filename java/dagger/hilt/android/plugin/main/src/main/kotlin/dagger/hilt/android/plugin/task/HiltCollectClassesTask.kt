@@ -24,7 +24,7 @@ import org.gradle.api.tasks.Classpath
 import org.gradle.work.DisableCachingByDefault
 
 @DisableCachingByDefault(because = "Not worth caching")
-abstract class HiltSyncTask : DefaultTask() {
+abstract class HiltCollectClassesTask : DefaultTask() {
   @get:Classpath abstract val classesDirectories: ListProperty<Directory>
 
   @get:Classpath abstract val classesJars: ListProperty<RegularFile>

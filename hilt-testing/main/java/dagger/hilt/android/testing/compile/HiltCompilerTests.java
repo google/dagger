@@ -76,7 +76,7 @@ public final class HiltCompilerTests {
   private static final ImmutableList<String> DEFAULT_KOTLINC_OPTIONS =
       ImmutableList.of(
           "-jvm-target=11",
-          "-Xjvm-default=all",
+          "-jvm-default=no-compatibility",
           "-P",
           "plugin:org.jetbrains.kotlin.kapt3:correctErrorTypes=true");
 

@@ -94,25 +94,56 @@ Classes that lack `@Inject` annotations cannot be constructed by Dagger.
 
 ### Satisfying Dependencies
 
-By default, Dagger satisfies each dependency by constructing an instance of the
-requested type as described above. When you request a `CoffeeMaker`, it'll
-obtain one by calling `new CoffeeMaker()` and setting its injectable fields.
+Dagger dependencies are satisfied by declaring bindings. These bindings tell
+Dagger how to create new instances of a dependency. The two most common ways to
+declare bindings are using `@Inject`-annotated constructors and `@Module`
+binding methods.
 
-But `@Inject` doesn't work everywhere:
+#### @Inject bindings
 
-  * Interfaces can't be constructed.
-  * Third-party classes can't be annotated.
-  * Configurable objects must be configured!
+Annotating a class's constructor with `@Inject` is the simplest way to define a
+binding for a particular type. The `@Inject`-annotated constructor tells Dagger
+to use the class's constructor when creating new instances of the class. For
+example, if the `CoffeeMaker` class has an `@Inject`-annotated constructor,
+Dagger will obtain an instance of it by calling `new CoffeeMaker()`.
 
-For these cases where `@Inject` is insufficient or awkward, use an
-[`@Provides`][Provides]-annotated method to satisfy a dependency. The method's
-return type defines which dependency it satisfies.
+#### @Module bindings
+
+However, `@Inject` doesn't work everywhere:
+
+*   Interfaces don't have constructors.
+*   Third-party classes can't be annotated.
+*   Configurable objects must be configured!
+
+For these cases where `@Inject` is insufficient or awkward, Dagger uses
+**modules** -- classes that contain binding declarations via binding methods.
+All binding methods must belong to a module, which is a class annotated with
+[`@Module`][Module]. By convention, module classes are named with a `Module`
+suffix.
+
+```java
+@Module
+final class HeaterModule {
+
+  /* binding methods go here */
+
+}
+```
+
+##### @Provides
+
+Use an [`@Provides`][Provides]-annotated method to satisfy a dependency. The
+method's return type defines which dependency it satisfies. By convention,
+`@Provides` methods are named with a `provide` prefix.
 
 For example, `provideHeater()` is invoked whenever a `Heater` is required:
 
 ```java
-@Provides static Heater provideHeater() {
-  return new ElectricHeater();
+@Module
+class HeaterModule {
+  @Provides static Heater provideHeater() {
+    return new ElectricHeater();
+  }
 }
 ```
 
@@ -121,29 +152,23 @@ For example, since `ElectricHeater` has an `@Inject` constructor, the above
 method could be written instead as:
 
 ```java
-@Provides static Heater provideHeater(ElectricHeater heater) {
-  return heater;
+@Module
+class HeaterModule {
+  @Provides static Heater provideHeater(ElectricHeater heater) {
+    return heater;
+  }
 }
 ```
 
 This way Dagger takes care of instantiating `ElectricHeater`, and the
-`@Provides` method is only used to alias it to the type `Heater`.
+`@Provides` method is only used to bind `Heater` to `ElectricHeater`.
 
-In this particular case, we can simplify things further using an `@Binds`
-method to define the alias. Unlike `@Provides`, an `@Binds` method is abstract,
-and has no implementation:
+##### @Binds
 
-```java
-@Binds Heater bindHeater(ElectricHeater impl);
-```
-
-**Note**: Using `@Binds` is the preferred way to define an alias because Dagger only
-needs the module at compile time, and can avoid class loading the module at
-runtime.
-{: .c-callouts__note }
-
-Finally, all `@Provides` and `@Binds` methods must belong to a module. These are
-just classes that have an [`@Module`][Module] annotation.
+In this particular case, we can simplify things further using an `@Binds` method
+to declare that binding. Unlike `@Provides`, an `@Binds` method is abstract, and
+has no implementation. By convention, `@Binds` methods are named with a `bind`
+prefix.
 
 ```java
 @Module
@@ -152,8 +177,24 @@ interface HeaterModule {
 }
 ```
 
-Note that in Kotlin, `@Provides` methods can also be declared in the companion
-object of an `@Module` class.
+**Note**: Using `@Binds` is the preferred way to declare this kind of binding
+because Dagger only needs the module at compile time, and can avoid class
+loading the module at runtime. {: .c-callouts__note }
+
+If you have both static `@Provides` and abstract `@Binds` methods, you can put
+them both into the same module using an abstract class or interface:
+
+```java
+@Module
+interface HeaterModule {
+  @Binds fun bindHeater(impl: ElectricHeater): Heater
+
+  @Provides static fun provideElectricHeater() = ElectricHeater()
+}
+```
+
+In Kotlin, you can get a similar result by putting the `@Binds` methods in an
+interface and the `@Provides` methods into its companion object:
 
 ```kotlin
 @Module
@@ -165,10 +206,6 @@ interface HeaterModule {
   }
 }
 ```
-
-By convention, `@Provides` methods are named with a `provide` prefix, `@Binds`
-methods are named with `bind` prefix and module classes are named with a
-`Module` suffix.
 
 ### Building the Graph
 
@@ -309,8 +346,8 @@ interface CoffeeShop {
 ```
 
 Components may have multiple scope annotations applied. This declares that they
-are all aliases to the same scope, and so that component may include scoped
-bindings with any of the scopes it declares.
+all refer to the same scope, and so that component may include scoped bindings
+with any of the scopes it declares.
 
 ### Reusable scope
 

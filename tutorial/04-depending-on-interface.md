@@ -17,7 +17,21 @@ CommandRouter(Command command) {
 ```
 
 But now Dagger doesn't know how to get an instance of `Command`. If you try to
-compile, Dagger reports an error. Since `Command` is an _interface_ and can't
+compile, Dagger reports an error:
+
+```
+interface CommandRouterFactory {
+^
+
+  [Dagger/MissingBinding] Command cannot be provided without an @Provides-annotated method.
+
+      Command is injected at
+          [CommandRouterFactory] CommandRouter(command)
+      CommandRouter is requested at
+          [CommandRouterFactory] CommandRouterFactory.router()
+```
+
+Since `Command` is an _interface_ and can't
 have an [`@Inject`] constructor, we need to give Dagger more information.
 
 To do that, we can write a method annotated with [`@Binds`]:

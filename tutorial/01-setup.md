@@ -90,8 +90,8 @@ final class CommandRouter {
 
   private Result invalidCommand(String input) {
     System.out.println(
-        String.format("couldn't understand \"%s\". please
-        try again.", input));
+        String.format("couldn't understand \"%s\". please try again.",
+          input));
     return Result.invalid();
   }
 
@@ -105,15 +105,17 @@ final class CommandRouter {
 Finally, we'll create a main method:
 
 ```java
-class CommandLineAtm {
+final class CommandLineAtm {
   public static void main(String[] args) {
-    Scanner scanner = new Scanner(System.in);
+    Scanner scanner = new Scanner(System.in, UTF_8);
     CommandRouter commandRouter = new CommandRouter();
 
     while (scanner.hasNextLine()) {
       Result unused = commandRouter.route(scanner.nextLine());
     }
   }
+
+  private CommandLineAtm() {}
 }
 ```
 

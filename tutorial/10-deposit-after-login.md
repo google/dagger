@@ -84,7 +84,11 @@ interface Command {
 `CommandProcessor` is marked with [`@Singleton`] to ensure that only one
 `CommandRouter` stack is created.
 
-We can rename our [`@Component`] to `CommandProcessorFactory`.
+Since we're changing from only creating a single `CommandRouter` at the root to
+creating a `CommandProcessor`, we'll rename the component to match.
+We can rename our root [`@Component`] from `CommandRouterFactory` to
+`CommandProcessorFactory`, and have it provide our new `CommandProcessor`.
+
 Now it looks like this:
 
 ```java
@@ -172,15 +176,23 @@ There are a few things that are happening here. Let's break it down:
     _another component_ will make the [`@Subcomponent.Factory`] available there.
     That's our bridge between the two components.
 
-We need to include `UserCommandsRouter.InstallationModule` in our [`@Component`]
-annotation:
+Now that we've moved `UserCommandsModule` to the `UserCommandsRouter`
+subcomponent, we need to remove it from the root `CommandProcessorFactory` and
+install `UserCommandsRouter.InstallationModule` instead.
+
+We do this because those commands should only be available after login. If they
+were in the root component, they'd be available immediately. This also shows up
+as a technical dependency: `DepositCommand` needs an `Account`, which is only
+available in the subcomponent (which is itself created after login).
 
 ```java
 @Singleton
 @Component(
     modules = {
-      ...
+      LoginCommandModule.class,
+      HelloWorldModule.class,
       UserCommandsRouter.InstallationModule.class,
+      SystemOutModule.class
     })
 interface CommandProcessorFactory {
   CommandProcessor commandProcessor();

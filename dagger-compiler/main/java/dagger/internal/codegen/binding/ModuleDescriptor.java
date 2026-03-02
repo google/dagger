@@ -152,7 +152,7 @@ public abstract class ModuleDescriptor {
                 if (moduleMethod.hasAnnotation(XTypeNames.PRODUCES)) {
                   bindings.add(bindingFactory.producesMethodBinding(moduleMethod, moduleElement));
                 }
-                if (moduleMethod.hasAnnotation(XTypeNames.BINDS)) {
+                if (DelegateBinding.hasDelegateAnnotation(moduleMethod)) {
                   delegates.add(
                       bindingDelegateDeclarationFactory.create(moduleMethod, moduleElement));
                 }

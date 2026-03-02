@@ -554,13 +554,15 @@ public class ProductionGraphValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContaining(
+              subject
+                  .hasErrorContaining(
                       "strings is annotated with more than one of (dagger.Provides, "
                           + "dagger.producers.Produces, dagger.Binds, "
                           + "dagger.multibindings.Multibinds, dagger.BindsOptionalOf)")
                   .onSource(badModule)
                   .onLine(12);
-              subject.hasErrorContaining("test.BadModule has errors")
+              subject
+                  .hasErrorContaining("test.BadModule has errors")
                   .onSource(badComponent)
                   .onLine(7);
             });

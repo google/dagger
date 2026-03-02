@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import androidx.room3.compiler.processing.XMethodElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
@@ -24,6 +25,7 @@ import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.model.BindingKind;
 import dagger.internal.codegen.model.DependencyRequest;
 import dagger.internal.codegen.xprocessing.Nullability;
+import dagger.internal.codegen.xprocessing.XTypeNames;
 import java.util.Optional;
 
 /** A binding for a {@link BindingKind#DELEGATE}. */
@@ -47,6 +49,11 @@ public abstract class DelegateBinding extends ContributionBinding {
   @Override
   public boolean requiresModuleInstance() {
     return false;
+  }
+
+  public static boolean hasDelegateAnnotation(XMethodElement method) {
+    return method.hasAnnotation(XTypeNames.BINDS)
+        ;
   }
 
   @Override

@@ -31,14 +31,18 @@ import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.ContributionType.HasContributionType;
 import dagger.internal.codegen.model.DaggerAnnotation;
 import dagger.internal.codegen.model.DependencyRequest;
-import dagger.internal.codegen.xprocessing.XTypeNames;
 import java.util.Optional;
 import javax.inject.Inject;
 
-/** The declaration for a delegate binding established by a {@link Binds} method. */
+/**
+ * The declaration for a delegate binding established by a {@link Binds}
+ * <!-- copybara:strip_begin -->
+ * or {@link Alias}
+ * <!-- copybara:strip_end -->
+ * method.
+ */
 @AutoValue
-public abstract class DelegateDeclaration extends Declaration
-    implements HasContributionType {
+public abstract class DelegateDeclaration extends Declaration implements HasContributionType {
   abstract DependencyRequest delegateRequest();
 
   // Note: We're using DaggerAnnotation instead of XAnnotation for its equals/hashcode
@@ -64,20 +68,20 @@ public abstract class DelegateDeclaration extends Declaration
       this.dependencyRequestFactory = dependencyRequestFactory;
     }
 
-    public DelegateDeclaration create(XMethodElement bindsMethod, XTypeElement contributingModule) {
-      checkArgument(bindsMethod.hasAnnotation(XTypeNames.BINDS));
-      XMethodType resolvedMethod = bindsMethod.asMemberOf(contributingModule.getType());
+    public DelegateDeclaration create(XMethodElement method, XTypeElement contributingModule) {
+      checkArgument(DelegateBinding.hasDelegateAnnotation(method));
+      XMethodType resolvedMethod = method.asMemberOf(contributingModule.getType());
       DependencyRequest delegateRequest =
           dependencyRequestFactory.forRequiredResolvedVariable(
-              Iterables.getOnlyElement(bindsMethod.getParameters()),
+              Iterables.getOnlyElement(method.getParameters()),
               Iterables.getOnlyElement(resolvedMethod.getParameterTypes()));
       return new AutoValue_DelegateDeclaration(
-          ContributionType.fromBindingElement(bindsMethod),
-          keyFactory.forBindsMethod(bindsMethod, contributingModule),
-          Optional.<XElement>of(bindsMethod),
+          ContributionType.fromBindingElement(method),
+          keyFactory.forDelegateDeclaration(method, contributingModule),
+          Optional.<XElement>of(method),
           Optional.of(contributingModule),
           delegateRequest,
-          getMapKey(bindsMethod).map(DaggerAnnotation::from));
+          getMapKey(method).map(DaggerAnnotation::from));
     }
   }
 }

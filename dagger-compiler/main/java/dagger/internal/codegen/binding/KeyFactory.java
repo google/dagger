@@ -36,7 +36,6 @@ import androidx.room3.compiler.processing.XMethodType;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
-import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.FrameworkTypes;
@@ -138,9 +137,8 @@ public final class KeyFactory {
     return forBindingMethod(method, contributingModule, Optional.of(XTypeNames.PRODUCER));
   }
 
-  /** Returns the key bound by a {@link Binds} method. */
-  Key forBindsMethod(XMethodElement method, XTypeElement contributingModule) {
-    checkArgument(method.hasAnnotation(XTypeNames.BINDS));
+  Key forDelegateDeclaration(XMethodElement method, XTypeElement contributingModule) {
+    checkArgument(DelegateBinding.hasDelegateAnnotation(method));
     return forBindingMethod(method, contributingModule, Optional.empty());
   }
 

@@ -148,8 +148,6 @@ public final class ClassNames {
 
   // TODO(erichang): Move these class names out when we factor out the android portion
   public static final ClassName APPLICATION = get("android.app", "Application");
-  public static final ClassName MULTI_DEX_APPLICATION =
-      get("androidx.multidex", "MultiDexApplication");
   public static final ClassName ANDROID_ENTRY_POINT =
       get("dagger.hilt.android", "AndroidEntryPoint");
   public static final ClassName HILT_ANDROID_APP =

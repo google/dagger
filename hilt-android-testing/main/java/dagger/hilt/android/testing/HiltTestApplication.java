@@ -16,7 +16,7 @@
 
 package dagger.hilt.android.testing;
 
-import androidx.multidex.MultiDexApplication;
+import android.app.Application;
 import dagger.hilt.android.internal.testing.TestApplicationComponentManager;
 import dagger.hilt.android.internal.testing.TestApplicationComponentManagerHolder;
 import dagger.hilt.internal.GeneratedComponentManager;
@@ -24,7 +24,7 @@ import dagger.hilt.internal.GeneratedComponentManager;
 /**
  * An application that can be used for Android instrumentation or Robolectric tests using Hilt.
  */
-public final class HiltTestApplication extends MultiDexApplication
+public final class HiltTestApplication extends Application
     implements GeneratedComponentManager<Object>, TestApplicationComponentManagerHolder {
 
   // This field is initialized lazily to avoid pulling the generated component into the main dex. We

@@ -88,7 +88,6 @@ android_library(
         "//hilt-core/main/java/dagger/hilt/internal:test_singleton_component",
         "//hilt-core/main/java/dagger/hilt/migration:disable_install_in_check",
         "//third_party/android/androidx_test/core",
-        "//third_party/java/android/android_sdk_linux/extras/android/compatibility/multidex",
         "//third_party/java/androidx/annotation",
         "//third_party/java/dagger",
     ],
@@ -118,7 +117,6 @@ android_library(
         "//hilt-android-testing/main/java/dagger/hilt/android/internal/testing:test_application_component_manager",
         "//hilt-android-testing/main/java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
         "//hilt-core/main/java/dagger/hilt/internal:component_manager",
-        "//third_party/java/android/android_sdk_linux/extras/android/compatibility/multidex",
     ],
 )
 

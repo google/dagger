@@ -82,7 +82,7 @@ public final class dagger/hilt/android/testing/HiltAndroidRule : org/junit/rules
 public abstract interface annotation class dagger/hilt/android/testing/HiltAndroidTest : java/lang/annotation/Annotation {
 }
 
-public final class dagger/hilt/android/testing/HiltTestApplication : androidx/multidex/MultiDexApplication, dagger/hilt/android/internal/testing/TestApplicationComponentManagerHolder, dagger/hilt/internal/GeneratedComponentManager {
+public final class dagger/hilt/android/testing/HiltTestApplication : android/app/Application, dagger/hilt/android/internal/testing/TestApplicationComponentManagerHolder, dagger/hilt/internal/GeneratedComponentManager {
 	public fun <init> ()V
 	public final fun componentManager ()Ldagger/hilt/internal/GeneratedComponentManager;
 	public final fun generatedComponent ()Ljava/lang/Object;

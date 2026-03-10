@@ -85,7 +85,7 @@ abstract class TestRootMetadata {
   static TestRootMetadata of(XProcessingEnv env, XElement element) {
 
     XTypeElement testElement = XElements.asTypeElement(element);
-    XTypeElement baseElement = env.requireTypeElement(ClassNames.MULTI_DEX_APPLICATION);
+    XTypeElement baseElement = env.requireTypeElement(ClassNames.APPLICATION);
 
     ProcessorErrors.checkState(
         !element.hasAnnotation(ClassNames.ANDROID_ENTRY_POINT),

@@ -46,8 +46,6 @@ public final class AndroidClassNames {
   public static final ClassName CALL_SUPER = get("androidx.annotation", "CallSuper");
   public static final ClassName MAIN_THREAD = get("androidx.annotation", "MainThread");
   public static final ClassName NULLABLE = get("androidx.annotation", "Nullable");
-  public static final ClassName MULTI_DEX_APPLICATION =
-      get("androidx.multidex", "MultiDexApplication");
 
   public static final ClassName ATTRIBUTE_SET = get("android.util", "AttributeSet");
   public static final ClassName LAYOUT_INFLATER = get("android.view", "LayoutInflater");

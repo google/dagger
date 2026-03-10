@@ -17,7 +17,6 @@ dependencies {
   api(libs.androidx.fragment)
   api(libs.androidx.lifecycle.viewmodel)
   api(libs.androidx.lifecycle.viewmodel.savedstate)
-  api(libs.androidx.multidex)
   api(libs.androidx.savedstate)
   api(libs.androidx.test.core)
   api(libs.junit)

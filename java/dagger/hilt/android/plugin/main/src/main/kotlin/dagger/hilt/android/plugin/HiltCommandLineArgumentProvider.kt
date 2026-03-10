@@ -20,39 +20,38 @@ import dagger.hilt.processor.internal.optionvalues.GradleProjectType
 import org.gradle.api.tasks.Input
 import org.gradle.process.CommandLineArgumentProvider
 
-/**
- * Plugin configured annotation processor options provider.
- */
+/** Plugin configured annotation processor options provider. */
 internal class HiltCommandLineArgumentProvider(
-  @get:Input
-  val forKsp: Boolean,
-  @get:Input
-  val projectType: GradleProjectType,
-  @get:Input
-  val enableAggregatingTask: Boolean,
-  @get:Input
-  val disableCrossCompilationRootValidation: Boolean
-): CommandLineArgumentProvider {
+  @get:Input val forKsp: Boolean,
+  @get:Input val projectType: GradleProjectType,
+  @get:Input val enableAggregatingTask: Boolean,
+  @get:Input val disableCrossCompilationRootValidation: Boolean,
+  @get:Input val enableFastInit: Boolean,
+) : CommandLineArgumentProvider {
 
   private val prefix = if (forKsp) "" else "-A"
 
-  override fun asArguments() = buildMap {
-    // Enable Dagger's fast-init, the best mode for Hilt.
-    put("dagger.fastInit", "enabled")
-    // Disable @AndroidEntryPoint superclass validation.
-    put("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
-    // Report project type for root validation.
-    put("dagger.hilt.android.internal.projectType", projectType.toString())
+  override fun asArguments() =
+    buildMap {
+        // Enable Dagger's fast-init, the best mode for Hilt.
+        if (enableFastInit) {
+          put("dagger.fastInit", "enabled")
+        }
+        // Disable @AndroidEntryPoint superclass validation.
+        put("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
+        // Report project type for root validation.
+        put("dagger.hilt.android.internal.projectType", projectType.toString())
 
-    // Disable the aggregating processor if aggregating task is enabled.
-    if (enableAggregatingTask) {
-      put("dagger.hilt.internal.useAggregatingRootProcessor", "false")
-    }
-    // Disable cross compilation root validation.
-    // The plugin option duplicates the processor flag because it is an input of the
-    // aggregating task.
-    if (disableCrossCompilationRootValidation) {
-      put("dagger.hilt.disableCrossCompilationRootValidation", "true")
-    }
-  }.map { (key, value) -> "$prefix$key=$value" }
+        // Disable the aggregating processor if aggregating task is enabled.
+        if (enableAggregatingTask) {
+          put("dagger.hilt.internal.useAggregatingRootProcessor", "false")
+        }
+        // Disable cross compilation root validation.
+        // The plugin option duplicates the processor flag because it is an input of the
+        // aggregating task.
+        if (disableCrossCompilationRootValidation) {
+          put("dagger.hilt.disableCrossCompilationRootValidation", "true")
+        }
+      }
+      .map { (key, value) -> "$prefix$key=$value" }
 }

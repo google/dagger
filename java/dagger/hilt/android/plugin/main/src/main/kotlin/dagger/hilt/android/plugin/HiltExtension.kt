@@ -39,9 +39,11 @@ interface HiltExtension {
    *
    * This flag is not necessary when com.android.tools.build:gradle:4.2.0+ is used.
    */
-  @Deprecated("Since Hilt Android Gradle plugin requires the usage of the Android " +
+  @Deprecated(
+    "Since Hilt Android Gradle plugin requires the usage of the Android " +
       "Gradle plugin (AGP) version 7.0 or higher this option is no longer necessary and has no " +
-      "effect in the configuration.")
+      "effect in the configuration."
+  )
   var enableTransformForLocalTests: Boolean
 
   /**
@@ -66,9 +68,11 @@ interface HiltExtension {
 
 internal open class HiltExtensionImpl : HiltExtension {
   override var enableExperimentalClasspathAggregation: Boolean = false
-  @Deprecated("Since Hilt Android Gradle plugin requires the usage of the Android " +
+  @Deprecated(
+    "Since Hilt Android Gradle plugin requires the usage of the Android " +
       "Gradle plugin (AGP) version 7.0 or higher this option is no longer necessary and has no " +
-      "effect in the configuration.")
+      "effect in the configuration."
+  )
   override var enableTransformForLocalTests: Boolean = false
   override var enableAggregatingTask: Boolean = true
   override var disableCrossCompilationRootValidation: Boolean = false

@@ -353,7 +353,6 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
         if (commonExtension.compileOptions.isJava8Compatible()) {
           compilerArgs.add("-parameters")
         }
-        compilerArgs.add("-Adagger.fastInit=enabled")
         compilerArgs.add("-Adagger.hilt.internal.useAggregatingRootProcessor=false")
         compilerArgs.add("-Adagger.hilt.android.internal.disableAndroidSuperclassValidation=true")
         encoding = commonExtension.compileOptions.encoding
@@ -403,6 +402,19 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       }
 
     androidExtension.onAllVariants { variant, _ ->
+      // Error if the user is trying to set the fastInit flag via build file.
+      if (
+        variant.javaCompilation
+          ?.annotationProcessor
+          ?.arguments
+          ?.get()
+          ?.containsKey("dagger.fastInit") ?: false
+      ) {
+        error(
+          "[Hilt]: The flag 'dagger.fastInit' can only be set via command line. i.e. " +
+            "add '-Pdagger.fastInit=enabled' to your command line."
+        )
+      }
       // Pass annotation processor flags via a CommandLineArgumentProvider so that plugin
       // options defined in the extension are populated from the user's build file.
       val argsProducer: (Task) -> CommandLineArgumentProvider = { task ->
@@ -411,6 +423,7 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
           projectType = projectType,
           enableAggregatingTask = isAggregatingTaskEnabled(),
           disableCrossCompilationRootValidation = !isCrossCompilationRootValidationEnabled(),
+          enableFastInit = isFastInitEnabled(),
         )
       }
       addJavaTaskProcessorOptions(project, variant, argsProducer)
@@ -530,4 +543,16 @@ private class HiltPluginEnvironment(
 
   fun isCrossCompilationRootValidationEnabled() =
     !hiltExtension.disableCrossCompilationRootValidation
+
+  fun isFastInitEnabled(): Boolean {
+    // Always allow overriding from the command line.
+    val cmdOverride = project.findProperty("dagger.hilt.fastInit")?.toString()?.toBoolean()
+    if (cmdOverride != null) {
+      project.logger.info(
+        "[Hilt] Overriding dagger.hilt.fastInit to $cmdOverride from command line."
+      )
+      return cmdOverride
+    }
+    return true
+  }
 }

@@ -46,7 +46,6 @@ import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.model.Scope;
 import java.util.Collection;
-import java.util.Formatter;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -72,7 +71,6 @@ final class ComponentHierarchyValidator {
         componentDescriptor,
         Maps.toMap(componentDescriptor.moduleTypes(), constant(componentDescriptor.typeElement())));
     validateRepeatedScopedDeclarations(report, componentDescriptor, LinkedHashMultimap.create());
-
     if (compilerOptions.scopeCycleValidationType().diagnosticKind().isPresent()) {
       validateScopeHierarchy(
           report, componentDescriptor, LinkedHashMultimap.<ComponentDescriptor, Scope>create());
@@ -190,26 +188,25 @@ final class ComponentHierarchyValidator {
     }
     producerModulesByComponent.removeAll(componentDescriptor);
 
-
     SetMultimap<ComponentDescriptor, ModuleDescriptor> repeatedModules =
         Multimaps.filterValues(producerModulesByComponent, producerModules::contains);
     if (repeatedModules.isEmpty()) {
       return;
     }
 
-    StringBuilder error = new StringBuilder();
-    Formatter formatter = new Formatter(error);
-
-    formatter.format(
-        "%s repeats @ProducerModules:", componentDescriptor.typeElement().getQualifiedName());
+    StringBuilder error =
+        new StringBuilder()
+            .append(componentDescriptor.typeElement().getQualifiedName())
+            .append(" repeats @ProducerModules:");
 
     for (Map.Entry<ComponentDescriptor, Collection<ModuleDescriptor>> entry :
         repeatedModules.asMap().entrySet()) {
-      formatter.format("\n  %s also installs: ", entry.getKey().typeElement().getQualifiedName());
-      COMMA_SEPARATED_JOINER
-          .appendTo(
-              error,
-              Iterables.transform(entry.getValue(), m -> m.moduleElement().getQualifiedName()));
+      error
+          .append("\n  ")
+          .append(entry.getKey().typeElement().getQualifiedName())
+          .append(" also installs: ");
+      COMMA_SEPARATED_JOINER.appendTo(
+          error, Iterables.transform(entry.getValue(), m -> m.moduleElement().getQualifiedName()));
     }
 
     report.addError(error.toString());

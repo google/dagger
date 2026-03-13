@@ -402,18 +402,25 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       }
 
     androidExtension.onAllVariants { variant, _ ->
-      // Error if the user is trying to set the fastInit flag via build file.
-      if (
-        variant.javaCompilation
-          ?.annotationProcessor
-          ?.arguments
-          ?.get()
-          ?.containsKey("dagger.fastInit") ?: false
-      ) {
-        error(
-          "[Hilt]: The flag 'dagger.fastInit' can only be set via command line. i.e. " +
-            "add '-Pdagger.fastInit=enabled' to your command line."
-        )
+      val processorArgs =
+        variant.javaCompilation?.annotationProcessor?.arguments?.get() ?: emptyMap()
+      // Error if the user is trying to set plugin controlled properties via build file.
+      processorArgs.keys.forEach { arg ->
+        when (arg) {
+          "dagger.hilt.fastInit" ->
+            error(
+              "[Hilt]: The flag 'dagger.hilt.fastInit' can only be set via command line. i.e. " +
+                "add '-Pdagger.hilt.fastInit=enabled' to your command line."
+            )
+          "dagger.hilt.android.internal.disableAndroidSuperclassValidation",
+          "dagger.hilt.android.internal.projectType",
+          "dagger.hilt.internal.useAggregatingRootProcessor",
+          "dagger.hilt.disableCrossCompilationRootValidation" ->
+            error(
+              "[Hilt]: The flag '$arg' cannot be set via annotation processor options because " +
+                "it is controlled by the Hilt plugin."
+            )
+        }
       }
       // Pass annotation processor flags via a CommandLineArgumentProvider so that plugin
       // options defined in the extension are populated from the user's build file.

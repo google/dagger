@@ -78,6 +78,23 @@ a migration. To turn off this check, this flag can be used:
 
 `-Adagger.hilt.disableCrossCompilationRootValidation=true`.
 
+## Fast Init {#fast-init}
+
+Hilt ["Fast Init"][fast-init-link] is an optimization that improves
+startup performance by avoiding class loading during Hilt initialization. It is
+the recommended mode for android applications.
+
+If you are not using the Hilt Gradle plugin, see Dagger's
+[compiler options][compiler-options-link] for instructions on how
+to enable Fast Init.
+
+If you are using the Hilt Gradle plugin:
+
+  * FastInit is enabled by default.
+  * FastInit can only be disabling via the `dagger.hilt.fastInit` Gradle
+    property, e.g. via command line: `-Pdagger.hilt.fastInit=false`.
+  * Hilt will fail if you try to set the flag via Annotation Processing options.
+
 ## Runtime flags
 
 Runtime flags to control Hilt behavior for rollout of changes. These flags are
@@ -123,3 +140,6 @@ This flag used to be paired with a compiler option flag
 `dagger.hilt.android.useFragmentGetContextFix`, however, as of Dagger 2.40 this
 compiler option has now been removed and this behavior is only controlled via
 the runtime flag.
+
+[fast-init-link]: https://dagger.dev/compiler-options.html#fastinit-mode
+[compiler-options-link]: https://dagger.dev/compiler-options.html#fastinit-mode

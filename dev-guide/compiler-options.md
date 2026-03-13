@@ -65,7 +65,7 @@ broken by this change it can usually be fixed by just moving the module to the
 correct component. For example, we can fix the case above by installing the
 module into the `ActivityComponent` instead of the `SingletonComponent`:
 
-## fastInit mode
+## fastInit mode {#fast-init}
 
 You can choose to generate your Dagger [`@Component`]s in a mode that
 prioritizes fast initialization. Normally, the number of classes loaded when
@@ -95,9 +95,11 @@ leaks would always have the potential to have grow dependencies on the activity
 as the codebase changes (thereby leaking it in the default mode as well).
 
 To enable fastInit mode, pass the following option to javac when building your
-Dagger [`@Component`]: `-Adagger.fastInit=enabled`. Note that if you are using
-the Hilt Gradle Plugin in your project, fastInit mode will already be enabled by
-default.
+Dagger [`@Component`]: `-Adagger.fastInit=enabled`.
+
+**Note:** If you are using Hilt, fastInit mode is enabled by default but can be
+configured differently. See
+[Hilt Fast Init](https://dagger.dev/hilt/flags#fast-init) for more details.
 
 ## Turning on code formatting
 

@@ -24,15 +24,19 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.Arrays.stream;
 
+import androidx.room3.compiler.processing.XAnnotation;
+import androidx.room3.compiler.processing.XAnnotationValue;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XFiler.Mode;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XRoundEnv;
 import androidx.room3.compiler.processing.XTypeElement;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BadInputException;
 import dagger.hilt.processor.internal.BaseProcessingStep;
+import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsMetadata;
 import dagger.hilt.processor.internal.aliasof.AliasOfPropagatedDataMetadata;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentClassesMetadata;
@@ -51,6 +55,7 @@ import dagger.hilt.processor.internal.root.ir.InvalidRootsException;
 import dagger.hilt.processor.internal.root.ir.ProcessedRootSentinelIr;
 import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
 import dagger.internal.codegen.xprocessing.XElements;
+import java.util.Optional;
 import java.util.Set;
 
 /** Processor that outputs dagger components based on transitive build deps. */
@@ -136,6 +141,20 @@ public final class RootProcessingStep extends BaseProcessingStep {
         new ProcessedRootSentinelGenerator(rootElement, getMode()).generate();
       }
     }
+  }
+
+  private static Optional<String> getMultiprocessPackageName(XTypeElement rootElement) {
+    XAnnotation multiprocessAnnotation = rootElement.getAnnotation(ClassNames.MULTIPROCESS);
+    Preconditions.checkState(
+        multiprocessAnnotation != null,
+        "Root element %s does not have a @Multiprocess annotation.",
+        rootElement.getQualifiedName());
+    XAnnotationValue packageName = multiprocessAnnotation.get("packageName");
+    String packageNameString = packageName.asString();
+    if (packageNameString.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(packageNameString);
   }
 
   private ImmutableSet<AggregatedRootIr> rootsToProcess() {

@@ -19,8 +19,6 @@ package dagger.internal.codegen;
 import androidx.room3.compiler.processing.XFiler;
 import androidx.room3.compiler.processing.XMessager;
 import androidx.room3.compiler.processing.XProcessingEnv;
-import androidx.room3.compiler.processing.compat.XConverters;
-import com.google.googlejavaformat.java.filer.FormattingFiler;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
@@ -53,7 +51,9 @@ interface ProcessingEnvironmentModule {
   static XFiler filer(CompilerOptions compilerOptions, XProcessingEnv xProcessingEnv) {
     return !compilerOptions.formatGeneratedSource()
         ? xProcessingEnv.getFiler()
-        : XConverters.toXProcessing(
-            FormattingFiler.create(XConverters.toJavac(xProcessingEnv)), xProcessingEnv);
+        : androidx.room3.compiler.processing.compat.XConverters.toXProcessing(
+            com.google.googlejavaformat.java.filer.FormattingFiler.create(
+                androidx.room3.compiler.processing.compat.XConverters.toJavac(xProcessingEnv)),
+                xProcessingEnv);
   }
 }

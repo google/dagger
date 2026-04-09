@@ -17,6 +17,7 @@
 package dagger.internal.codegen.xprocessing;
 
 import static com.google.common.base.Preconditions.checkState;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XTypeName;
@@ -60,7 +61,8 @@ public final class XExpressionType {
 
   public XExpressionType unwrapType() {
     return optionalType.isPresent() && !XTypes.isRawParameterizedType(optionalType.get())
-        ? XExpressionType.create(XProcessingEnvs.unwrapType(optionalType.get()))
+        ? XExpressionType.create(
+            requireInvariantType(XProcessingEnvs.unwrapType(optionalType.get())))
         : XExpressionType.create(processingEnv.requireType(TypeName.OBJECT));
   }
 

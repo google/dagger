@@ -51,7 +51,7 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    Provider<Map<Class<?>, Integer>> mapOfClassOfAndIntegerProvider;
+    Provider<Map<Class<?>, Integer>> mapOfClassOfObjectAndIntegerProvider;
 
     @SuppressWarnings("rawtypes")
     Provider mapOfPackagePrivateEnumAndIntegerProvider;
@@ -66,19 +66,19 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.mapOfClassOfAndIntegerProvider = new SwitchingProvider<>(testComponentImpl, 0);
+      this.mapOfClassOfObjectAndIntegerProvider = new SwitchingProvider<>(testComponentImpl, 0);
       this.mapOfPackagePrivateEnumAndIntegerProvider = new SwitchingProvider<>(testComponentImpl, 1);
       this.mapOfComplexKeyAndIntegerProvider = new SwitchingProvider<>(testComponentImpl, 2);
     }
 
     @Override
     public Map<Class<?>, Integer> classKey() {
-      return mapOfClassOfAndIntegerProvider.get();
+      return mapOfClassOfObjectAndIntegerProvider.get();
     }
 
     @Override
     public javax.inject.Provider<Map<Class<?>, Integer>> classKeyProvider() {
-      return mapOfClassOfAndIntegerProvider;
+      return mapOfClassOfObjectAndIntegerProvider;
     }
 
     @Override

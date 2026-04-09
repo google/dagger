@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.isAbstract;
 import static dagger.internal.codegen.xprocessing.XElements.isStatic;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
@@ -105,9 +106,9 @@ public abstract class ContributionBinding extends Binding implements HasContribu
   public final XType contributedType() {
     switch (contributionType()) {
       case MAP:
-        return MapType.from(key()).unwrappedFrameworkValueType();
+        return requireInvariantType(MapType.from(key()).unwrappedFrameworkValueType());
       case SET:
-        return SetType.from(key()).elementType();
+        return requireInvariantType(SetType.from(key()).elementType());
       case SET_VALUES:
       case UNIQUE:
         return key().type().xprocessing();

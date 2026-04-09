@@ -27,7 +27,6 @@ import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
-import androidx.room3.compiler.processing.compat.XConverters;
 import com.squareup.javapoet.TypeName;
 import java.util.Optional;
 import javax.lang.model.SourceVersion;
@@ -80,24 +79,7 @@ public final class XProcessingEnvs {
 
   /** Returns a new unbounded wildcard type argument, i.e. {@code <?>}. */
   public static XType getUnboundedWildcardType(XProcessingEnv processingEnv) {
-    switch (processingEnv.getBackend()) {
-      case JAVAC:
-        return toXProcessing(
-            toJavac(processingEnv)
-                .getTypeUtils() // ALLOW_TYPES_ELEMENTS
-                .getWildcardType(null, null),
-            processingEnv);
-      case KSP:
-        // In KSP, the equivalent of an unbounded wildcard type is the star projection. However,
-        // there's currently no way to create a star projection type directly. Instead, we create a
-        // List<T> type, get its star projection, and then grab the type argument from that.
-        return XConverters.toXProcessing(
-                XConverters.toKS(processingEnv.requireType("java.util.List")).starProjection(),
-                processingEnv)
-            .getTypeArguments()
-            .get(0);
-    }
-    throw new AssertionError("Unexpected backend: " + processingEnv.getBackend());
+    return processingEnv.getWildcardType(null, null);
   }
 
   /**

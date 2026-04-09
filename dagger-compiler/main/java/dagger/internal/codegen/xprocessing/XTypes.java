@@ -29,6 +29,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.xprocessing.XTypes.asArray;
+import static dagger.internal.codegen.xprocessing.XTypes.checkTypePresent;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isNoType;
 import static java.util.stream.Collectors.joining;
@@ -45,6 +46,7 @@ import androidx.room3.compiler.processing.XTypeVariableType;
 import androidx.room3.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -240,7 +242,10 @@ public final class XTypes {
     if (isArray(type)) {
       checkTypePresent(asArray(type).getComponentType());
     } else if (isDeclared(type)) {
-      type.getTypeArguments().forEach(XTypes::checkTypePresent);
+      // To check if the type is present, we don't care about wildcards so strip them.
+      type.getTypeArguments().stream()
+          .map(XTypes::getInvariantType)
+          .forEach(XTypes::checkTypePresent);
     } else if (type.isError()) {
       throw new TypeNotPresentException(type.toString(), null);
     }
@@ -512,6 +517,44 @@ public final class XTypes {
   }
 
   /**
+   * Returns the type with any wildcard stripped, or the type itself if its not a wildcard type.
+   *
+   * <p>For {@code ? extends Foo}, this will return {@code Foo}.
+   *
+   * <p>For {@code ? super Foo}, this will return {@code Foo}.
+   *
+   * <p>For {@code ?}, this will return {@code Object}.
+   */
+  public static XType getInvariantType(XType typeArgument) {
+    return typeArgument.isStar()
+        ? objectElement(getProcessingEnv(typeArgument)).getType()
+        : typeArgument.extendsBoundOrSelf();
+  }
+
+  /**
+   * Returns the given invariant type, or throws an exception if the given type is a wildcard type.
+   *
+   * <p>For example, if {@code type} is {@code ? extends Number} this will return {@code Number}.
+   */
+  @CanIgnoreReturnValue
+  public static XType requireInvariantType(XType typeArgument) {
+    checkNotWildcard(typeArgument);
+    return typeArgument;
+  }
+
+  /**
+   * Throws an exception if the given type is a wildcard type.
+   *
+   * <p>For example, if {@code type} is {@code ? extends Number} this will throw an exception.
+   */
+  public static void checkNotWildcard(XType typeArgument) {
+    checkArgument(
+        !isWildcard(typeArgument),
+        "Type argument is a wildcard: %s",
+        typeArgument);
+  }
+
+  /**
    * Returns a string representation of {@link XType} that is independent of the backend
    * (javac/ksp).
    */
@@ -641,14 +684,15 @@ public final class XTypes {
 
   /** Returns {@code true} if the given type or any of its type arguments are type parameters. */
   public static boolean containsTypeParameter(XType type) {
+    checkNotWildcard(type);
     if (isTypeVariable(type)) {
       return true;
     } else if (isArray(type)) {
       return containsTypeParameter(asArray(type).getComponentType());
-    } else if (type.extendsBound() != null) {
-      return containsTypeParameter(type.extendsBound());
     } else {
-      return type.getTypeArguments().stream().anyMatch(XTypes::containsTypeParameter);
+      return type.getTypeArguments().stream()
+          .map(XTypes::getInvariantType)
+          .anyMatch(XTypes::containsTypeParameter);
     }
   }
 

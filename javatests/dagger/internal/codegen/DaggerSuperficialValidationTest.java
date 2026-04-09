@@ -383,8 +383,7 @@ public class DaggerSuperficialValidationTest {
                       "  => element (CLASS): test.TestClass",
                       "  => element (METHOD): extendsTest()",
                       "  => type (DECLARED return type): test.TestClass.Foo<? extends MissingType>",
-                      "  => type (WILDCARD type argument): ? extends MissingType",
-                      "  => type (ERROR extends bound type): MissingType"));
+                      "  => type (ERROR type argument): MissingType"));
         });
   }
 

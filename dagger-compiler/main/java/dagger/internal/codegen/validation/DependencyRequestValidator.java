@@ -32,6 +32,7 @@ import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isRawParameterizedType;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
@@ -166,7 +167,19 @@ final class DependencyRequestValidator {
         // will just be noise.
         return;
       }
-      XType keyType = extractKeyType(requestType);
+      XType keyTypeArgument = extractKeyType(requestType);
+      if (isWildcard(keyTypeArgument)) {
+        // TODO(ronshapiro): Explore creating this message using RequestKinds.
+        report.addError(
+            "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, "
+                + "or Produced<T> when T is a wildcard type such as "
+                + XTypes.toStableString(keyTypeArgument),
+            requestElement);
+        // If the requested type is a wildcard type then skip the remaining checks as they will just
+        // be noise.
+        return;
+      }
+      XType keyType = requireInvariantType(keyTypeArgument);
       if (qualifiers.isEmpty() && isDeclared(keyType)) {
         XTypeElement typeElement = keyType.getTypeElement();
         if (isAssistedInjectionType(typeElement)) {
@@ -186,27 +199,19 @@ final class DependencyRequestValidator {
               requestElement);
         }
       }
-      if (isWildcard(keyType)) {
-        // TODO(ronshapiro): Explore creating this message using RequestKinds.
-        report.addError(
-            "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, "
-                + "or Produced<T> when T is a wildcard type such as "
-                + XTypes.toStableString(keyType),
-            requestElement);
-      }
       if (isTypeOf(keyType, XTypeNames.MEMBERS_INJECTOR)) {
         if (keyType.getTypeArguments().isEmpty()) {
           report.addError("Cannot inject a raw MembersInjector", requestElement);
         } else {
           report.addSubreport(
               membersInjectionValidator.validateMembersInjectionRequest(
-                  requestElement, keyType.getTypeArguments().get(0)));
+                  requestElement, requireInvariantType(keyType.getTypeArguments().get(0))));
         }
       }
       if (MapType.isMap(keyType)) {
         MapType mapType = MapType.from(keyType);
-        if (!mapType.isRawType()) {
-          XType valueType = mapType.valueType();
+        if (!mapType.isRawType() && !isWildcard(mapType.valueType())) {
+          XType valueType = requireInvariantType(mapType.valueType());
           if (isMapValueFrameworkType(valueType) && isRawParameterizedType(valueType)) {
             report.addError(
                 "Dagger does not support injecting maps of raw framework types: "

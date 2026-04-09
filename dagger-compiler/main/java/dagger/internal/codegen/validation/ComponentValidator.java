@@ -170,7 +170,6 @@ public final class ComponentValidator implements ClearableCache {
       validateCreators();
       validateNoReusableAnnotation();
       validateComponentMethods();
-      validateNoConflictingEntryPoints();
       validateSubcomponentReferences();
       validateComponentDependencies();
       validateReferencedModules();
@@ -231,6 +230,25 @@ public final class ComponentValidator implements ClearableCache {
       getAllUnimplementedMethods(component).stream()
           .map(ComponentMethodValidator::new)
           .forEachOrdered(ComponentMethodValidator::validateMethod);
+
+      // Only validate conflicting component methods if the component methods themselves are valid.
+      if (report.build().isClean()) {
+        validateNoConflictingComponentMethods();
+      }
+    }
+
+    private void validateNoConflictingComponentMethods() {
+      // Collect entry point methods that are not overridden by others. If the "same" method is
+      // inherited from more than one supertype, each will be in the multimap.
+      SetMultimap<String, XMethodElement> entryPoints = HashMultimap.create();
+      XTypeElements.getAllMethods(component).stream()
+          .filter(method -> isEntryPoint(method, method.asMemberOf(component.getType())))
+          .forEach(
+              method -> addMethodUnlessOverridden(method, entryPoints.get(getSimpleName(method))));
+
+      asMap(entryPoints).values().stream()
+          .filter(methods -> distinctKeys(methods).size() > 1)
+          .forEach(this::reportConflictingEntryPoints);
     }
 
     private class ComponentMethodValidator {
@@ -436,20 +454,6 @@ public final class ComponentValidator implements ClearableCache {
                 + "subcomponent factory method. Dagger cannot implement this method",
             method);
       }
-    }
-
-    private void validateNoConflictingEntryPoints() {
-      // Collect entry point methods that are not overridden by others. If the "same" method is
-      // inherited from more than one supertype, each will be in the multimap.
-      SetMultimap<String, XMethodElement> entryPoints = HashMultimap.create();
-      XTypeElements.getAllMethods(component).stream()
-          .filter(method -> isEntryPoint(method, method.asMemberOf(component.getType())))
-          .forEach(
-              method -> addMethodUnlessOverridden(method, entryPoints.get(getSimpleName(method))));
-
-      asMap(entryPoints).values().stream()
-          .filter(methods -> distinctKeys(methods).size() > 1)
-          .forEach(this::reportConflictingEntryPoints);
     }
 
     private void reportConflictingEntryPoints(Collection<XMethodElement> methods) {

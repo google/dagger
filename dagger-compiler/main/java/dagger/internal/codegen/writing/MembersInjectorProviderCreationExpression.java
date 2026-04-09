@@ -19,6 +19,7 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.codegen.XCodeBlock;
 import androidx.room3.compiler.processing.XType;
@@ -53,7 +54,7 @@ final class MembersInjectorProviderCreationExpression
   @Override
   public XCodeBlock creationExpression() {
     XType membersInjectedType =
-        getOnlyElement(binding.key().type().xprocessing().getTypeArguments());
+        requireInvariantType(getOnlyElement(binding.key().type().xprocessing().getTypeArguments()));
 
     boolean castThroughRawType = false;
     XCodeBlock membersInjector;

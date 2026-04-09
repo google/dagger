@@ -24,9 +24,11 @@ import static dagger.internal.codegen.validation.BindingMethodValidator.Abstract
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
+import androidx.room3.compiler.processing.XType;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
@@ -96,11 +98,14 @@ class MultibindsMethodValidator extends BindingMethodValidator {
       } else if (isWildcard(mapType.valueType())) {
         report.addError(
             bindingMethods("return type cannot use a wildcard as the Map value type."));
-      } else if (isMapValueFrameworkType(mapType.valueType())) {
-        String frameworkTypeName = getSimpleName(mapType.valueType().getTypeElement());
-        report.addError(
-            bindingMethods(
-                "return type cannot use '%s' in the Map value type.", frameworkTypeName));
+      } else {
+        XType valueType = requireInvariantType(mapType.valueType());
+        if (isMapValueFrameworkType(valueType)) {
+          String frameworkTypeName = getSimpleName(valueType.getTypeElement());
+            report.addError(
+                bindingMethods(
+                    "return type cannot use '%s' in the Map value type.", frameworkTypeName));
+        }
       }
     }
 
@@ -109,11 +114,14 @@ class MultibindsMethodValidator extends BindingMethodValidator {
         report.addError(bindingMethods("return type cannot be a raw Set type"));
       } else if (isWildcard(setType.elementType())) {
         report.addError(bindingMethods("return type cannot use a wildcard as the Set value type."));
-      } else if (isSetValueFrameworkType(setType.elementType())) {
-        String frameworkTypeName = getSimpleName(setType.elementType().getTypeElement());
-        report.addError(
-            bindingMethods(
-                "return type cannot use '%s' in the Set value type.", frameworkTypeName));
+      } else {
+        XType elementType = requireInvariantType(setType.elementType());
+        if (isSetValueFrameworkType(elementType)) {
+          String frameworkTypeName = getSimpleName(elementType.getTypeElement());
+          report.addError(
+              bindingMethods(
+                  "return type cannot use '%s' in the Set value type.", frameworkTypeName));
+        }
       }
     }
   }

@@ -22,6 +22,8 @@ import static dagger.internal.codegen.xprocessing.XTypes.asArray;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 import static dagger.internal.codegen.xprocessing.XTypes.isRawParameterizedType;
+import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
@@ -104,7 +106,11 @@ final class MembersInjectionValidator {
 
   // TODO(dpb): Can this be inverted so it explicitly rejects wildcards or type variables?
   // This logic is hard to describe.
-  private boolean isResolvableTypeArgument(XType type) {
+  private boolean isResolvableTypeArgument(XType typeArgument) {
+    if (isWildcard(typeArgument)) {
+      return false;
+    }
+    XType type = requireInvariantType(typeArgument);
     return isDeclared(type)
         || (isArray(type) && isResolvableArrayComponentType(asArray(type).getComponentType()));
   }

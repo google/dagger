@@ -26,6 +26,7 @@ import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.xprocessing.XTypeNames.isFutureType;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
 
 import androidx.room3.compiler.codegen.XClassName;
@@ -112,7 +113,9 @@ public final class KeyFactory {
   Key forProductionComponentMethod(XMethodElement componentMethod) {
     XType returnType = componentMethod.getReturnType();
     XType keyType =
-        isFutureType(returnType) ? getOnlyElement(returnType.getTypeArguments()) : returnType;
+        isFutureType(returnType)
+            ? requireInvariantType(getOnlyElement(returnType.getTypeArguments()))
+            : returnType;
     return forMethod(componentMethod, keyType);
   }
 
@@ -157,12 +160,12 @@ public final class KeyFactory {
     XType returnType = methodType.getReturnType();
     if (frameworkClassName.isPresent() && frameworkClassName.get().equals(XTypeNames.PRODUCER)) {
       if (isFutureType(returnType)) {
-        returnType = getOnlyElement(returnType.getTypeArguments());
+        returnType = requireInvariantType(getOnlyElement(returnType.getTypeArguments()));
       } else if (contributionType.equals(ContributionType.SET_VALUES)
           && SetType.isSet(returnType)) {
         SetType setType = SetType.from(returnType);
-        if (isFutureType(setType.elementType())) {
-          returnType = setOf(unwrapType(setType.elementType()));
+        if (isFutureType(requireInvariantType(setType.elementType()))) {
+          returnType = setOf(requireInvariantType(unwrapType(setType.elementType())));
         }
       }
     }
@@ -344,6 +347,7 @@ public final class KeyFactory {
     }
 
     XType optionalValueType = OptionalType.from(key).valueType();
-    return Optional.of(key.withType(DaggerType.from(extractKeyType(optionalValueType))));
+    XType keyType = requireInvariantType(extractKeyType(optionalValueType));
+    return Optional.of(key.withType(DaggerType.from(keyType)));
   }
 }

@@ -27,6 +27,7 @@ import static dagger.internal.codegen.xprocessing.XElements.asMethodParameter;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.isExecutable;
+import static dagger.internal.codegen.xprocessing.XTypes.getInvariantType;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 import static javax.lang.model.SourceVersion.isKeyword;
 
@@ -113,11 +114,8 @@ public final class KeywordValidator {
     }
     // Checks the type arguments like `Foo` in `List<Foo>`
     for (XType typeArgument : type.getTypeArguments()) {
-      validateJavaKeywordType(typeArgument, report);
-    }
-    // Checks the wildcard bound types like `Foo` in `? extends Foo`
-    if (type.extendsBound() != null) {
-      validateJavaKeywordType(type.extendsBound(), report);
+      // Validation only depends on the type so we can strip the variance if it's present.
+      validateJavaKeywordType(getInvariantType(typeArgument), report);
     }
   }
 

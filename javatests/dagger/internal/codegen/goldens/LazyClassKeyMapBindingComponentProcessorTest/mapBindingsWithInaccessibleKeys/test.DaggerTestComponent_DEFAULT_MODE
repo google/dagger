@@ -54,7 +54,7 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    Provider<Map<Class<?>, Integer>> mapOfClassOfAndIntegerProvider;
+    Provider<Map<Class<?>, Integer>> mapOfClassOfObjectAndIntegerProvider;
 
     Provider<Map<MapKeys.ComplexKey, Integer>> mapOfComplexKeyAndIntegerProvider;
 
@@ -66,11 +66,11 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.mapOfClassOfAndIntegerProvider = mapOfClassOfAndIntegerBuilder();
+      this.mapOfClassOfObjectAndIntegerProvider = mapOfClassOfObjectAndIntegerBuilder();
       this.mapOfComplexKeyAndIntegerProvider = mapOfComplexKeyAndIntegerBuilder();
     }
 
-    LazyClassKeyMap.MapFactory<Integer> mapOfClassOfAndIntegerBuilder() {
+    LazyClassKeyMap.MapFactory<Integer> mapOfClassOfObjectAndIntegerBuilder() {
       MapFactory.Builder<String, Integer> builder = MapFactory.builder(1);
       builder.put(MapModule_ClassKey_LazyMapKey.lazyClassKeyName, MapModule_ClassKeyFactory.create());
       return LazyClassKeyMap.MapFactory.of(builder.build());
@@ -86,12 +86,12 @@ final class DaggerTestComponent {
 
     @Override
     public Map<Class<?>, Integer> classKey() {
-      return mapOfClassOfAndIntegerProvider.get();
+      return mapOfClassOfObjectAndIntegerProvider.get();
     }
 
     @Override
     public javax.inject.Provider<Map<Class<?>, Integer>> classKeyProvider() {
-      return mapOfClassOfAndIntegerProvider;
+      return mapOfClassOfObjectAndIntegerProvider;
     }
 
     @Override

@@ -18,6 +18,8 @@ package dagger.android.processor;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.android.processor.AndroidMapKeys.injectedTypeFromMapKey;
+import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static javax.tools.Diagnostic.Kind.ERROR;
@@ -123,15 +125,19 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
         .filter(requestedBinding -> requestedBinding.kind().equals(BindingKind.MULTIBOUND_MAP))
         .filter(
             requestedBinding -> {
-              XType valueType =
+              XType valueTypeArgument =
                   DaggerElements.toXProcessing(requestedBinding.key().type(), processingEnv)
                       .getTypeArguments()
                       .get(1);
+              if (isWildcard(valueTypeArgument)) {
+                return false;
+              }
+              XType valueType = requireInvariantType(valueTypeArgument);
               if (!XTypes.isTypeOf(valueType, XTypeNames.PROVIDER)
                   || !XTypes.isDeclared(valueType)) {
                 return false;
               }
-              XType providedType = valueType.getTypeArguments().get(0);
+              XType providedType = requireInvariantType(valueType.getTypeArguments().get(0));
               return XTypes.isTypeOf(providedType, XTypeNames.ANDROID_INJECTOR_FACTORY);
             });
   }

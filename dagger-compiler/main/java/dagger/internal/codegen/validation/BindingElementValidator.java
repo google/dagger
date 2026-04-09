@@ -26,6 +26,8 @@ import static dagger.internal.codegen.binding.MapKeys.getMapKeys;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeVariable;
+import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.processing.XAnnotation;
@@ -256,8 +258,10 @@ public abstract class BindingElementValidator<E extends XElement> {
         SetType setType = SetType.from(type);
         if (setType.isRawType()) {
           report.addError(elementsIntoSetRawSetMessage());
+        } else if (isWildcard(setType.elementType())) {
+          report.addError(badTypeMessage());
         } else {
-          checkSetValueFrameworkType(setType.elementType());
+          checkSetValueFrameworkType(requireInvariantType(setType.elementType()));
         }
       }
     }

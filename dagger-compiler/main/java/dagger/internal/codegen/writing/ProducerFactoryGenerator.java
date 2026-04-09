@@ -40,6 +40,7 @@ import static dagger.internal.codegen.xprocessing.XTypeNames.isFutureType;
 import static dagger.internal.codegen.xprocessing.XTypeNames.listOf;
 import static dagger.internal.codegen.xprocessing.XTypeNames.listenableFutureOf;
 import static dagger.internal.codegen.xprocessing.XTypeNames.producedOf;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
@@ -536,7 +537,8 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
         return FUTURE;
       } else if (ContributionType.fromBindingElement(producesMethod)
               .equals(ContributionType.SET_VALUES)
-          && isFutureType(SetType.from(producesMethod.getReturnType()).elementType())) {
+          && isFutureType(
+              requireInvariantType(SetType.from(producesMethod.getReturnType()).elementType()))) {
         return SET_OF_FUTURE;
       } else {
         return IMMEDIATE;

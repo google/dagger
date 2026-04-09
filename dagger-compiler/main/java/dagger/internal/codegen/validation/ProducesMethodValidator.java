@@ -22,6 +22,8 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsS
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.EXCEPTION;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
+import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
@@ -121,9 +123,13 @@ final class ProducesMethodValidator extends BindingMethodValidator {
         if (XTypes.isRawParameterizedType(type)) {
           report.addError("@Produces methods cannot return a raw ListenableFuture");
           return Optional.empty();
-        } else {
-          return Optional.of(getOnlyElement(type.getTypeArguments()));
         }
+        XType typeArgument = getOnlyElement(type.getTypeArguments());
+        if (isWildcard(typeArgument)) {
+          report.addError(badTypeMessage());
+          return Optional.empty();
+        }
+        return Optional.of(requireInvariantType(typeArgument));
       }
       return Optional.of(type);
     }

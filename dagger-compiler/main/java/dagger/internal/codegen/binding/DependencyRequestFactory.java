@@ -28,6 +28,7 @@ import static dagger.internal.codegen.model.RequestKind.INSTANCE;
 import static dagger.internal.codegen.model.RequestKind.MEMBERS_INJECTION;
 import static dagger.internal.codegen.model.RequestKind.PROVIDER;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
 
 import androidx.room3.compiler.processing.XAnnotation;
@@ -153,9 +154,10 @@ public final class DependencyRequestFactory {
     // Only a component production method can be a request for a ListenableFuture, so we
     // special-case it here.
     if (isTypeOf(type, XTypeNames.LISTENABLE_FUTURE)) {
+      XType keyType = requireInvariantType(unwrapType(type));
       return DependencyRequest.builder()
           .kind(FUTURE)
-          .key(keyFactory.forQualifiedType(qualifier, unwrapType(type)))
+          .key(keyFactory.forQualifiedType(qualifier, keyType))
           .requestElement(DaggerElement.from(productionMethod))
           .build();
     } else {
@@ -209,9 +211,10 @@ public final class DependencyRequestFactory {
   private DependencyRequest newDependencyRequest(
       XElement requestElement, XType type, Optional<XAnnotation> qualifier) {
     RequestKind requestKind = getRequestKind(type);
+    XType keyType = requireInvariantType(extractKeyType(type));
     return DependencyRequest.builder()
         .kind(requestKind)
-        .key(keyFactory.forQualifiedType(qualifier, extractKeyType(type)))
+        .key(keyFactory.forQualifiedType(qualifier, keyType))
         .requestElement(DaggerElement.from(requestElement))
         .isNullable(allowsNull(requestKind, Nullability.of(requestElement)))
         .build();

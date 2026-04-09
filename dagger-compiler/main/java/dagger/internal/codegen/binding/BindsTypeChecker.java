@@ -20,10 +20,10 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.toStableString;
-import static dagger.internal.codegen.xprocessing.XProcessingEnvs.getUnboundedWildcardType;
 import static dagger.internal.codegen.xprocessing.XTypes.isAssignableTo;
 import static dagger.internal.codegen.xprocessing.XTypes.rewrapType;
 
+import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
@@ -81,8 +81,9 @@ public final class BindsTypeChecker {
         // because Kotlin source may be using kotlin.collection.Set which does not include addAll().
         return methodParameterType(rewrapType(leftHandSide,  XTypeName.MUTABLE_SET), "addAll");
       case MAP:
-        XType parameterizedMapType =
-            processingEnv.getDeclaredType(mapElement(), unboundedWildcard(), leftHandSide);
+        // Note: the key type shouldn't actually matter here so just use Object.
+        XType keyType = processingEnv.requireType(XClassName.ANY_OBJECT);
+        XType parameterizedMapType = processingEnv.getDeclaredType(mapElement(), keyType, leftHandSide);
         return methodParameterTypes(parameterizedMapType, "put").get(1);
     }
     throw new AssertionError("Unknown contribution type: " + contributionType);
@@ -121,9 +122,5 @@ public final class BindsTypeChecker {
 
   private XTypeElement mapElement() {
     return processingEnv.requireTypeElement(XTypeName.MUTABLE_MAP);
-  }
-
-  private XType unboundedWildcard() {
-    return getUnboundedWildcardType(processingEnv);
   }
 }

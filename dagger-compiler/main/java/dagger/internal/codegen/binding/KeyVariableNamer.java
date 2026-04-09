@@ -30,6 +30,7 @@ import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.model.DependencyRequest;
 import dagger.internal.codegen.model.Key;
+import dagger.internal.codegen.xprocessing.XTypes;
 import java.util.Iterator;
 
 /**
@@ -73,7 +74,9 @@ public final class KeyVariableNamer {
       }
 
       builder.append(getSimpleName(element));
-      Iterator<? extends XType> argumentIterator = type.getTypeArguments().iterator();
+      // Note: the variance of the type argument does not influence the name so strip it.
+      Iterator<XType> argumentIterator =
+          type.getTypeArguments().stream().map(XTypes::getInvariantType).iterator();
       if (argumentIterator.hasNext()) {
         builder.append("Of");
         XType first = argumentIterator.next();

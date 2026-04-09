@@ -22,11 +22,11 @@ import static com.google.common.collect.Iterables.limit;
 import static com.google.common.collect.Iterables.skip;
 import static com.google.common.collect.Sets.newHashSetWithExpectedSize;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
-import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.extension.DaggerGraphs.shortestPath;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room3.compiler.processing.XType;
@@ -223,11 +223,18 @@ final class DependencyCycleValidator extends ValidationBindingGraphPlugin {
     }
     Node target = graph.network().incidentNodes(edge).target();
     if (target instanceof Binding && ((Binding) target).kind().equals(BindingKind.OPTIONAL)) {
-      /* For @BindsOptionalOf bindings, unwrap the type inside the Optional. If the unwrapped type
-       * breaks the cycle, so does the optional binding. */
-      XType optionalValueType = OptionalType.from(edge.dependencyRequest().key()).valueType();
-      RequestKind requestKind = getRequestKind(optionalValueType);
-      return breaksCycle(extractKeyType(optionalValueType), requestKind);
+      // For a type like Optional<Provider<Foo>>, we need to extract the key type, Foo. After
+      // unwrapping, also we require the unwrapped type to be invariant, e.g. neither
+      // Optional<? extends Provider<Foo>> nor Optional<Provider<? extends Foo>> are allowed.
+      XType keyType =
+          requireInvariantType(
+              extractKeyType(
+                  requireInvariantType(
+                      OptionalType.from(edge.dependencyRequest().key()).valueType())));
+
+      // For @BindsOptionalOf bindings, unwrap the type inside the Optional. If the unwrapped type
+      // breaks the cycle, so does the optional binding.
+      return breaksCycle(keyType, RequestKind.INSTANCE);
     }
     return false;
   }

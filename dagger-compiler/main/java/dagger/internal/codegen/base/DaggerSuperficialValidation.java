@@ -44,7 +44,6 @@ import static dagger.internal.codegen.xprocessing.XTypes.getKindName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeVariable;
-import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XTypeName;
@@ -249,6 +248,7 @@ public final class DaggerSuperficialValidation {
   }
 
   private void validateTypeHierarchy(String desc, XType type, Set<XTypeName> visited) {
+    checkNotNull(type);
     if (!visited.add(type.asTypeName())) {
       return;
     }
@@ -257,12 +257,12 @@ public final class DaggerSuperficialValidation {
       if (isArray(type)) {
         validateTypeHierarchy("array component type", asArray(type).getComponentType(), visited);
       } else if (isDeclared(type)) {
-        type.getTypeArguments()
+        type.getTypeArguments().stream()
+            // Validation only depends on the type so we can strip the variance if it's present.
+            .map(XTypes::getInvariantType)
             .forEach(typeArg -> validateTypeHierarchy("type argument", typeArg, visited));
         type.getSuperTypes()
             .forEach(supertype -> validateTypeHierarchy("supertype", supertype, visited));
-      } else if (isWildcard(type) && type.extendsBound() != null) {
-        validateTypeHierarchy("extends bound type", type.extendsBound(), visited);
       } else if (isTypeVariable(type)) {
         asTypeVariable(type)
             .getUpperBounds()
@@ -358,11 +358,10 @@ public final class DaggerSuperficialValidation {
             throw new ValidationException.KnownErrorType(type);
           }
         }
-        type.getTypeArguments().forEach(typeArg -> validateType("type argument", typeArg));
-      } else if (isWildcard(type)) {
-        if (type.extendsBound() != null) {
-          validateType("extends bound type", type.extendsBound());
-        }
+        type.getTypeArguments().stream()
+            // Validation only depends on the type so we can strip the variance if it's present.
+            .map(XTypes::getInvariantType)
+            .forEach(typeArg -> validateType("type argument", typeArg));
       } else if (isErrorKind(type)) {
         throw new ValidationException.KnownErrorType(type);
       }

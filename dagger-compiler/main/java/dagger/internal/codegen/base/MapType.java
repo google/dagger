@@ -110,7 +110,7 @@ public final class MapType {
    */
   public XTypeName valueTypeName() {
     checkState(!isRawType());
-    return XTypeNames.getParameterizedTypeArgument(typeName(), 1);
+    return XTypeNames.unwrapAtPosition(typeName(), 1);
   }
 
   /** Returns {@code true} if the raw type of {@link #valueType()} is {@code className}. */

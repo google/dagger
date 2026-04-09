@@ -357,12 +357,12 @@ object XTypeNames {
   /** The default [KTypeName] returned by xprocessing APIs when the backend is not KSP. */
   internal val UNAVAILABLE_KTYPE_NAME = KClassName("androidx.room3.compiler.codegen", "Unavailable")
 
-  @JvmStatic fun XTypeName.unwrap(): XTypeName = getParameterizedTypeArgument(0)
+  @JvmStatic fun XTypeName.unwrap(): XTypeName = unwrapAtPosition(0)
 
   // TODO(b/448510944): We shouldn't need to reach into the JavaPoet/KotlinPoet internals once this
   // bug is fixed.
   @JvmStatic
-  fun XTypeName.getParameterizedTypeArgument(index: Int): XTypeName {
+  fun XTypeName.unwrapAtPosition(index: Int): XTypeName {
     return toXPoet(
       jTypeName =
         when (val jTypeName = toJavaPoet()) {

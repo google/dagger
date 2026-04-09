@@ -20,6 +20,8 @@ import static dagger.internal.codegen.base.ComponentAnnotation.allComponentAndCr
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isRawParameterizedType;
+import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XType;
@@ -71,7 +73,7 @@ public final class Keys {
     // Otherwise the type argument may be a wildcard (or other type), and we can't
     // resolve that to actual types.
     for (XType arg : type.getTypeArguments()) {
-      if (!isDeclared(arg)) {
+      if (isWildcard(arg) || !isDeclared(requireInvariantType(arg))) {
         return false;
       }
     }

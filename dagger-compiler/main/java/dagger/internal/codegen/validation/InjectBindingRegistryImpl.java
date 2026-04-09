@@ -33,6 +33,7 @@ import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingType
 import static dagger.internal.codegen.xprocessing.XTypes.erasedTypeName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.nonObjectSuperclass;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
 
 import androidx.room3.compiler.codegen.XClassName;
@@ -402,7 +403,8 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
       return Optional.empty();
     }
     Key membersInjectionKey =
-        keyFactory.forMembersInjectedType(unwrapType(key.type().xprocessing()));
+        keyFactory.forMembersInjectedType(
+            requireInvariantType(unwrapType(key.type().xprocessing())));
     return getOrFindMembersInjectionBinding(membersInjectionKey)
         .map(binding -> bindingFactory.membersInjectorBinding(key, binding));
   }

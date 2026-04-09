@@ -266,80 +266,38 @@ needs it, i.e. has a dependency key of that constructor's class.
 
 ## Resolution: Construction of the Graph
 
-Dagger constructs a bipartite graph for each component.
+Dagger constructs a directed graph for each component.
 
-The *nodes* of the graph are:
+The graph consists of:
 
--   bindings and entry points of the component
--   binding keys and dependency keys of those bindings, and all entry point
-    keys.
+-   **bindings** and **entry points** of the component;
+-   **keys**: binding keys, dependency keys, and entry point keys.
+
+The **resolution of keys** is modeled by grouping each binding within the key
+that it satisfies.
 
 The *edges* of the graph are directed edges consisting of:
 
--   for each binding, an edge from its dependency keys to the binding; this
+-   for each binding, an edge from the binding to its dependency keys; this
     models **dependencies of bindings**;
--   for each entry point, an edge from the entry point's key to the entry point;
-    this models **dependencies of entry points**;
--   for each key, an edge from any binding that has this key as its binding key,
-    to the key itself; this models **resolution of keys**.
+-   for each entry point, an edge from the entry point to its key; this models
+    **dependencies of entry points**.
 
 The graph is **well-formed** if:
 
--   every key node has exactly one inbound edge;
+-   every key contains exactly one binding;
 -   there are no cycles, with the following exception: if a cycle contains an
     edge representing a dependency key whose type was wrapped in `Provider` or
     `Lazy`, then it is permitted.
 
-If a key node has zero inbound edges, it is a **missing binding**; if it has
-more than one inbound edge, it is a **duplicate binding**.
+If a key contains zero bindings, it is a **missing binding**; if it contains
+more than one binding, it is a **duplicate binding**.
 
-The above example component generates the following graph. The key nodes are
-light red, the binding nodes are light blue, and the entry point nodes are light
-green.
+The above example component generates the following graph. The keys are
+represented as light red boxes, the bindings are light blue nodes within them,
+and the entry points are light green nodes.
 
-```dot
-digraph d_front_back {
-  rankdir="LR";
-  graph [size="9;9", style=invis, ranksep=2]
-  node [ style=filled, nodesep=0.2 ]
-  edge [ weight=1.2 ]
-
-  subgraph cluster_bindings {
-    rank=same;
-    "M\#v()" [ color="lightblue" ];
-    "M\#foo()" [ color="lightblue" ];
-    "M\#bar()" [ color="lightblue" ];
-    "N\#y()" [ color="lightblue" ];
-    "BarImpl()" [ color="lightblue" ];
-    "X()" [ color="lightblue" ];
-    "C#foo" [ color="lightgreen" ];
-    "C#bar" [ color="lightgreen" ];
-  }
-  subgraph cluster_keys {
-    rank=same;
-    X [ color="mistyrose" ];
-    "@Blue Y" [ color="mistyrose" ];
-    int [ color="mistyrose" ];
-    Foo [ color="mistyrose" ];
-    Bar [ color="mistyrose" ];
-    BarImpl [ color="mistyrose" ];
-  }
-  X -> "M\#foo()"
-  int -> "M\#foo()"
-  BarImpl -> "M\#bar()"
-  X -> "N\#y()"
-  "@Blue Y" -> "BarImpl()"
-  int -> "BarImpl()"
-  Foo -> "C#foo"
-  Bar -> "C#bar"
-  "X()" -> X
-  "N\#y()" -> "@Blue Y"
-  "M\#v()" -> int
-  "M\#foo()" -> Foo
-  "M\#bar()" -> Bar
-  "BarImpl()" -> BarImpl
-}
-```
+![Construction graph](construction-graph.png)
 
 ## Code Generation and Runtime
 

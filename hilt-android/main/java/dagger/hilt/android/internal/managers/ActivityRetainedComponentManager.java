@@ -39,7 +39,8 @@ import dagger.hilt.components.SingletonComponent;
 import dagger.hilt.internal.GeneratedComponentManager;
 
 /** A manager for the creation of components that survives activity configuration changes. */
-final class ActivityRetainedComponentManager
+final
+class ActivityRetainedComponentManager
     implements GeneratedComponentManager<ActivityRetainedComponent> {
 
   /** Entry point for {@link ActivityRetainedComponentBuilder}. */
@@ -90,7 +91,7 @@ final class ActivityRetainedComponentManager
   @Nullable private volatile ActivityRetainedComponent component;
   private final Object componentLock = new Object();
 
-  ActivityRetainedComponentManager(ComponentActivity activity) {
+  protected ActivityRetainedComponentManager(ComponentActivity activity) {
     this.viewModelStoreOwner = activity;
     this.context = activity;
   }
@@ -138,7 +139,7 @@ final class ActivityRetainedComponentManager
         .getSavedStateHandleHolder();
   }
 
-  private ActivityRetainedComponent createComponent() {
+  protected ActivityRetainedComponent createComponent() {
     return getViewModelProvider(viewModelStoreOwner, context)
         .get(ActivityRetainedComponentViewModel.class)
         .getComponent();

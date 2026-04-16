@@ -29,6 +29,7 @@ import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XCodeBlock;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.Binding;
@@ -43,7 +44,7 @@ final class StaticMemberSelects {
   /** A {@link MemberSelect} for a factory of an empty map. */
   static MemberSelect emptyMapFactory(MultiboundMapBinding binding) {
     BindingType bindingType = binding.bindingType();
-    ImmutableList<XType> typeParameters =
+    ImmutableList<XTypeArgument> typeParameters =
         ImmutableList.copyOf(binding.key().type().xprocessing().getTypeArguments());
     return bindingType.equals(BindingType.PRODUCTION)
         ? new ParameterizedStaticMethod(
@@ -90,7 +91,8 @@ final class StaticMemberSelects {
     if (isDeclared(keyType)) {
       ImmutableList<XTypeName> typeVariables = bindingTypeElementTypeVariableNames(binding);
       if (!typeVariables.isEmpty()) {
-        ImmutableList<XType> typeArguments = ImmutableList.copyOf(keyType.getTypeArguments());
+        ImmutableList<XTypeArgument> typeArguments =
+            ImmutableList.copyOf(keyType.getTypeArguments());
         return new ParameterizedStaticMethod(
             factoryName, typeArguments, XCodeBlock.of("create()"), XTypeNames.FACTORY);
       }
@@ -115,13 +117,13 @@ final class StaticMemberSelects {
   }
 
   private static final class ParameterizedStaticMethod extends MemberSelect {
-    private final ImmutableList<XType> typeParameters;
+    private final ImmutableList<XTypeArgument> typeParameters;
     private final XCodeBlock methodCodeBlock;
     private final XClassName rawReturnType;
 
     ParameterizedStaticMethod(
         XClassName owningClass,
-        ImmutableList<XType> typeParameters,
+        ImmutableList<XTypeArgument> typeParameters,
         XCodeBlock methodCodeBlock,
         XClassName rawReturnType) {
       super(owningClass, true);
@@ -140,7 +142,7 @@ final class StaticMemberSelects {
         return XCodeBlock.of(
             "%T.<%L>%L",
             owningClass(),
-            typeParameters.stream().map(XCodeBlocks::type).collect(toParametersCodeBlock()),
+            typeParameters.stream().map(XCodeBlocks::typeName).collect(toParametersCodeBlock()),
             methodCodeBlock);
       } else {
         XCodeBlock expression = XCodeBlock.of("%T.%L", owningClass(), methodCodeBlock);

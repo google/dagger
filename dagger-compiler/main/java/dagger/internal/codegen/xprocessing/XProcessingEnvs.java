@@ -26,6 +26,7 @@ import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.squareup.javapoet.TypeName;
 import java.util.Optional;
@@ -78,7 +79,7 @@ public final class XProcessingEnvs {
   }
 
   /** Returns a new unbounded wildcard type argument, i.e. {@code <?>}. */
-  public static XType getUnboundedWildcardType(XProcessingEnv processingEnv) {
+  public static XTypeArgument getUnboundedWildcardType(XProcessingEnv processingEnv) {
     return processingEnv.getWildcardType(null, null);
   }
 
@@ -90,8 +91,8 @@ public final class XProcessingEnvs {
    * @throws IllegalArgumentException if {@code type} is not a declared type or has zero or more
    *     than one type arguments.
    */
-  public static XType unwrapType(XType type) {
-    XType unwrapped = unwrapTypeOrDefault(type, null);
+  public static XTypeArgument unwrapType(XType type) {
+    XTypeArgument unwrapped = unwrapTypeOrDefault(type, null);
     checkArgument(unwrapped != null, "%s is a raw type", type);
     return unwrapped;
   }
@@ -104,11 +105,13 @@ public final class XProcessingEnvs {
    * @throws IllegalArgumentException if {@code type} is not a declared type or has more than one
    *     type argument.
    */
-  public static XType unwrapTypeOrObject(XType type, XProcessingEnv processingEnv) {
-    return unwrapTypeOrDefault(type, processingEnv.requireType(TypeName.OBJECT));
+  public static XTypeArgument unwrapTypeOrObject(XType type, XProcessingEnv processingEnv) {
+    return unwrapTypeOrDefault(
+        type,
+        processingEnv.createTypeArgument(processingEnv.requireType(TypeName.OBJECT)));
   }
 
-  private static XType unwrapTypeOrDefault(XType type, XType defaultType) {
+  private static XTypeArgument unwrapTypeOrDefault(XType type, XTypeArgument defaultType) {
     XTypeElement typeElement = type.getTypeElement();
     checkArgument(
         !typeElement.getType().getTypeArguments().isEmpty(),

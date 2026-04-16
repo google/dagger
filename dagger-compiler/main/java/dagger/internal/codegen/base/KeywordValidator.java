@@ -33,6 +33,7 @@ import static javax.lang.model.SourceVersion.isKeyword;
 
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.base.Splitter;
 import java.util.Optional;
@@ -113,7 +114,7 @@ public final class KeywordValidator {
               keyword -> report.addError(javaKeywordErrorMessage(keyword), type.getTypeElement()));
     }
     // Checks the type arguments like `Foo` in `List<Foo>`
-    for (XType typeArgument : type.getTypeArguments()) {
+    for (XTypeArgument typeArgument : type.getTypeArguments()) {
       // Validation only depends on the type so we can strip the variance if it's present.
       validateJavaKeywordType(getInvariantType(typeArgument), report);
     }

@@ -32,7 +32,6 @@ import static dagger.internal.codegen.xprocessing.XTypes.isNoType;
 import static dagger.internal.codegen.xprocessing.XTypes.isNullType;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeVariable;
-import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XTypeName;
@@ -40,6 +39,7 @@ import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XMemberContainer;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import java.util.Optional;
 
@@ -73,13 +73,29 @@ public final class Accessibility {
   }
 
   /** Returns true if the given type can be referenced from any package. */
+  public static boolean isTypePubliclyAccessible(XTypeArgument typeArgument) {
+    return isTypeAccessibleFrom(typeArgument, Optional.empty());
+  }
+
+  /** Returns true if the given type can be referenced from any package. */
   public static boolean isTypePubliclyAccessible(XType type) {
     return isTypeAccessibleFrom(type, Optional.empty());
+  }
+
+  /** Returns true if the given type argument can be referenced from code in the given package. */
+  public static boolean isTypeAccessibleFrom(XTypeArgument typeArgument, String packageName) {
+    return isTypeAccessibleFrom(typeArgument, Optional.of(packageName));
   }
 
   /** Returns true if the given type can be referenced from code in the given package. */
   public static boolean isTypeAccessibleFrom(XType type, String packageName) {
     return isTypeAccessibleFrom(type, Optional.of(packageName));
+  }
+
+  private static boolean isTypeAccessibleFrom(
+      XTypeArgument typeArgument, Optional<String> packageName) {
+    // The accessibility of a type argument is the same as the accessibility of the type itself.
+    return isTypeAccessibleFrom(typeArgument.getType(), packageName);
   }
 
   private static boolean isTypeAccessibleFrom(XType type, Optional<String> packageName) {
@@ -97,8 +113,6 @@ public final class Accessibility {
       }
       return type.getTypeArguments().stream()
           .allMatch(typeArgument -> isTypeAccessibleFrom(typeArgument, packageName));
-    } else if (isWildcard(type)) {
-      return type.extendsBound() == null || isTypeAccessibleFrom(type.extendsBound(), packageName);
     }
     throw new AssertionError(String.format("%s should not be checked for accessibility", type));
   }

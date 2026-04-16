@@ -29,6 +29,7 @@ import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.xprocessing.XTypes;
@@ -106,7 +107,7 @@ final class MembersInjectionValidator {
 
   // TODO(dpb): Can this be inverted so it explicitly rejects wildcards or type variables?
   // This logic is hard to describe.
-  private boolean isResolvableTypeArgument(XType typeArgument) {
+  private boolean isResolvableTypeArgument(XTypeArgument typeArgument) {
     if (isWildcard(typeArgument)) {
       return false;
     }

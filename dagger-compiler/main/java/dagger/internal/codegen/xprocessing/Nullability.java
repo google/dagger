@@ -96,7 +96,8 @@ public abstract class Nullability {
       for (int i = 0; i < parameterizedTypeName.typeArguments.size(); i++) {
         typeArguments[i] =
             getAnnotatedTypeName(
-                type.getTypeArguments().get(i), parameterizedTypeName.typeArguments.get(i));
+                type.getTypeArguments().get(i).getType(),
+                parameterizedTypeName.typeArguments.get(i));
       }
       typeName = ParameterizedTypeName.get(parameterizedTypeName.rawType, typeArguments);
     }

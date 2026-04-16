@@ -32,12 +32,14 @@ import static dagger.internal.codegen.xprocessing.XTypeNames.providerTypeNames;
 import static dagger.internal.codegen.xprocessing.XTypes.checkTypePresent;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
+import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import com.google.common.collect.ImmutableMap;
 import dagger.internal.codegen.model.Binding;
 import dagger.internal.codegen.model.BindingGraph;
@@ -46,6 +48,7 @@ import dagger.internal.codegen.model.BindingGraph.DependencyEdge;
 import dagger.internal.codegen.model.BindingGraph.Node;
 import dagger.internal.codegen.model.RequestKind;
 import dagger.internal.codegen.xprocessing.XTypeNames;
+import dagger.internal.codegen.xprocessing.XTypes;
 
 /** Utility methods for {@link RequestKind}s. */
 public final class RequestKinds {
@@ -106,6 +109,11 @@ public final class RequestKinds {
           PRODUCER, XTypeNames.PRODUCER,
           PRODUCED, XTypeNames.PRODUCED);
 
+  /** Returns the {@link RequestKind} for the given {@code typeArgument}. */
+  public static RequestKind getRequestKind(XTypeArgument typeArgument) {
+    return getRequestKind(typeArgument.getType());
+  }
+
   /** Returns the {@link RequestKind} that matches the wrapping types (if any) of {@code type}. */
   public static RequestKind getRequestKind(XType type) {
     checkTypePresent(type);
@@ -131,6 +139,17 @@ public final class RequestKinds {
   }
 
   /**
+   * Unwraps the framework class(es) of {@code requestKind} from {@code typeArgument}.
+   * 
+   * <p>If {@code requestKind} is {@link RequestKind#INSTANCE}, this acts as an identity function.
+   *
+   * @see #extractKeyType(XType)
+   */
+  public static XType extractKeyType(XTypeArgument typeArgument) {
+    return extractKeyType(getRequestKind(typeArgument), requireInvariantType(typeArgument));
+  }
+
+  /**
    * Unwraps the framework class(es) of {@code requestKind} from {@code type}. If {@code
    * requestKind} is {@link RequestKind#INSTANCE}, this acts as an identity function.
    *
@@ -150,7 +169,36 @@ public final class RequestKinds {
       case PROVIDER_OF_LAZY:
         return extractKeyType(LAZY, extractKeyType(PROVIDER, type));
       default:
-        return unwrapType(type);
+        return requireInvariantType(XTypes.unwrapType(type));
+    }
+  }
+
+  /**
+   * Unwraps the framework class(es) of {@code requestKind} from {@code type} and returns the
+   * resulting type name.
+   *
+   * <p>Unlike {@link #extractKeyType(XType)}, this method returns a type name that may be a
+   * wildcard type, such as {@code ? extends Number}. This method should only be used during the
+   * validation stage. Once the key type is validated, use {@link #extractKeyType(XType)}, which
+   * guarantees that the extracted key is not a wildcard type.
+   *
+   * @throws TypeNotPresentException if {@code type} is an {@link javax.lang.model.type.ErrorType},
+   *     which may mean that the type will be generated in a later round of processing
+   * @throws IllegalArgumentException if {@code type} is not wrapped with {@code requestKind}'s
+   *     framework class(es).
+   */
+  public static XTypeName extractKeyTypeName(XType type) {
+    return extractKeyTypeName(getRequestKind(type), type.asTypeName());
+  }
+
+  private static XTypeName extractKeyTypeName(RequestKind requestKind, XTypeName typeName) {
+    switch (requestKind) {
+      case INSTANCE:
+        return typeName;
+      case PROVIDER_OF_LAZY:
+        return extractKeyTypeName(LAZY, extractKeyTypeName(PROVIDER, typeName));
+      default:
+        return XTypeNames.unwrap(typeName);
     }
   }
 

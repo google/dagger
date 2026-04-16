@@ -28,7 +28,7 @@ import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XCodeBlock;
 import androidx.room3.compiler.codegen.XPropertySpec;
 import androidx.room3.compiler.codegen.XTypeName;
-import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import dagger.internal.codegen.binding.BindingType;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkField;
@@ -167,7 +167,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       // factory type directly (i.e. Foo_Factory<T> instead of Provider<Foo<T>>).
       XTypeName[] typeParameters =
           binding.key().type().xprocessing().getTypeArguments().stream()
-              .map(XType::asTypeName)
+              .map(XTypeArgument::asTypeName)
               .toArray(XTypeName[]::new);
       fieldType =
           typeParameters.length == 0

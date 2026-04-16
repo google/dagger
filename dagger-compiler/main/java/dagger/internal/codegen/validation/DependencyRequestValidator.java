@@ -22,6 +22,7 @@ import static dagger.internal.codegen.base.FrameworkTypes.isDisallowedType;
 import static dagger.internal.codegen.base.FrameworkTypes.isFrameworkType;
 import static dagger.internal.codegen.base.FrameworkTypes.isMapValueFrameworkType;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
+import static dagger.internal.codegen.base.RequestKinds.extractKeyTypeName;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedInjectionType;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
@@ -34,6 +35,7 @@ import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
+import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XFieldElement;
@@ -167,19 +169,22 @@ final class DependencyRequestValidator {
         // will just be noise.
         return;
       }
-      XType keyTypeArgument = extractKeyType(requestType);
-      if (isWildcard(keyTypeArgument)) {
+      // TODO(b/448669378): use extractKeyTypeName when extracting because we need java variance
+      // information here to report the error correctly and extractKeyType can loose variance
+      // information when unwrapping.
+      XTypeName keyTypeName = extractKeyTypeName(requestType);
+      if (XTypeNames.isJavaWildcard(keyTypeName)) {
         // TODO(ronshapiro): Explore creating this message using RequestKinds.
         report.addError(
             "Dagger does not support injecting Provider<T>, Lazy<T>, Producer<T>, "
                 + "or Produced<T> when T is a wildcard type such as "
-                + XTypes.toStableString(keyTypeArgument),
+                + XTypes.toStableString(XTypes.unwrapType(requestType)),
             requestElement);
         // If the requested type is a wildcard type then skip the remaining checks as they will just
         // be noise.
         return;
       }
-      XType keyType = requireInvariantType(keyTypeArgument);
+      XType keyType = extractKeyType(requestType);
       if (qualifiers.isEmpty() && isDeclared(keyType)) {
         XTypeElement typeElement = keyType.getTypeElement();
         if (isAssistedInjectionType(typeElement)) {

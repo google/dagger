@@ -379,6 +379,9 @@ object XTypeNames {
   }
 
   @JvmStatic
+  fun XTypeName.isJavaWildcard(): Boolean = toJavaPoet() is JWildcardTypeName
+
+  @JvmStatic
   fun XTypeName.boundsHasSelfReference(): Boolean =
     // The result should be the same for both JavaPoet and KotlinPoet, so we only need to check one.
     toJavaPoet().boundsHasSelfReference(mutableMapOf())

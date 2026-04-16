@@ -23,6 +23,7 @@ import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import dagger.internal.codegen.xprocessing.XTypes;
@@ -65,7 +66,7 @@ public final class SetType {
   }
 
   /** Returns the element type. */
-  public XType elementType() {
+  public XTypeArgument elementType() {
     return unwrapType(type);
   }
 
@@ -80,7 +81,7 @@ public final class SetType {
    * @throws IllegalStateException if {@link #elementType()} is not a {@code WrappingClass<T>}
    */
   // TODO(b/202033221): Consider using stricter input type, e.g. FrameworkType.
-  public XType unwrappedElementType(XClassName wrappingClass) {
+  public XTypeArgument unwrappedElementType(XClassName wrappingClass) {
     checkArgument(
         elementsAreTypeOf(wrappingClass),
         "expected elements to be %s, but this type is %s",

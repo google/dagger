@@ -30,6 +30,7 @@ import androidx.room3.compiler.codegen.XParameterSpec;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.codegen.compat.XConverters;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.CodeBlock;
@@ -121,8 +122,12 @@ public final class XCodeBlocks {
     return XCodeBlock.ofCast(castTo, expression);
   }
 
-  public static XCodeBlock type(XType type) {
+  public static XCodeBlock typeName(XType type) {
     return XCodeBlock.of("%T", type.asTypeName());
+  }
+
+  public static XCodeBlock typeName(XTypeArgument typeArgument) {
+    return XCodeBlock.of("%T", typeArgument.asTypeName());
   }
 
   public static XCodeBlock staticReferenceOf(XTypeElement typeElement) {

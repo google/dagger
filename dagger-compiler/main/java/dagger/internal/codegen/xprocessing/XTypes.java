@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static androidx.room3.compiler.codegen.compat.XConverters.toJavaPoet;
 import static androidx.room3.compiler.processing.XTypeKt.isArray;
 import static androidx.room3.compiler.processing.XTypeKt.isVoid;
 import static androidx.room3.compiler.processing.compat.XConverters.getProcessingEnv;
@@ -41,8 +42,10 @@ import androidx.room3.compiler.processing.XExecutableType;
 import androidx.room3.compiler.processing.XMethodType;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import androidx.room3.compiler.processing.XTypeElement;
 import androidx.room3.compiler.processing.XTypeVariableType;
+import androidx.room3.compiler.processing.XVariance;
 import androidx.room3.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
@@ -286,6 +289,23 @@ public final class XTypes {
     return (XTypeVariableType) type;
   }
 
+  /**
+   * Returns {@code true} if {@code typeArgument} is invariant and the raw type of {@code
+   * typeArgument.getType()} is equal to {@code className}.
+   */
+  public static boolean isTypeOf(XTypeArgument typeArgument, XClassName className) {
+    return typeArgument.getVariance() == XVariance.INVARIANT
+        && isTypeOf(typeArgument.getType(), className);
+  }
+
+  /**
+   * Returns {@code true} if {@code typeArgument} is invariant and the raw type of {@code
+   * typeArgument.getType()} is equal to any of the given {@code classNames}.
+   */
+  public static boolean isTypeOf(XTypeArgument typeArgument, Collection<XClassName> classNames) {
+    return classNames.stream().anyMatch(className -> isTypeOf(typeArgument, className));
+  }
+
   /** Returns {@code true} if the raw type of {@code type} is equal to {@code className}. */
   public static boolean isTypeOf(XType type, XClassName className) {
     return isDeclared(type) && type.getTypeElement().asClassName().equals(className);
@@ -322,31 +342,28 @@ public final class XTypes {
    * <p>In Java, this represents {@code ?} and {@code ? extends/super Foo}.
    *
    * <p>In Kotlin, this represents {@code *} or {@code out/in Foo}.
-   *
-   * <p>Note: in Kotlin this only considers variance at the usage site. It does not consider
-   * implicit variance. For example, the type argument of `List<Foo>` is not a considered a wildcard
-   * by this method even though the type parameter of `List` is declared as `out T`.
    */
-  public static boolean isWildcard(XType type) {
-    XProcessingEnv.Backend backend = getProcessingEnv(type).getBackend();
+  public static boolean isWildcard(XTypeArgument typeArgument) {
+    return typeArgument.getVariance() != XVariance.INVARIANT;
+  }
+
+  public static boolean isJavaWildcard(XTypeArgument typeArgument) {
+    XProcessingEnv.Backend backend = getProcessingEnv(typeArgument).getBackend();
     switch (backend) {
       case JAVAC:
-        // In Javac, check the TypeKind directly. This also avoids a Javac bug (b/242569252) where
-        // calling XType.getTypeName() too early caches an incorrect type name.
-        return toJavac(type).getKind().equals(TypeKind.WILDCARD);
+        // This is cheaper than creating the XTypeName.
+        return toJavac(typeArgument).getKind() == TypeKind.WILDCARD;
       case KSP:
-        return type.isStar() || type.extendsBound() != null;
+        return XTypeNames.isJavaWildcard(typeArgument.asTypeName());
     }
-    throw new AssertionError("Unexpected backend: " + backend);
+    throw new AssertionError("Unexpected backend: " + backend); 
   }
 
   /** Returns {@code true} if the given type is a declared type. */
   public static boolean isDeclared(XType type) {
     // TODO(b/241477426): Due to a bug in XProcessing, array types accidentally get assigned an
     // invalid XTypeElement, so we check explicitly until this is fixed.
-    // TODO(b/242918001): Due to a bug in XProcessing, wildcard types accidentally get assigned an
-    // invalid XTypeElement, so we check explicitly until this is fixed.
-    return !isWildcard(type) && !isArray(type) && type.getTypeElement() != null;
+    return !isArray(type) && type.getTypeElement() != null;
   }
 
   /** Returns {@code true} if the given type is a type variable. */
@@ -473,13 +490,25 @@ public final class XTypes {
    * @throws IllegalArgumentException if {@code type} is not a declared type or has zero or more
    *     than one type arguments.
    */
-  public static XType unwrapType(XType type) {
-    XType unwrapped = unwrapTypeOrDefault(type, null);
+  public static XTypeArgument unwrapType(XTypeArgument typeArgument) {
+    return unwrapType(requireInvariantType(typeArgument));
+  }
+
+  /**
+   * Returns {@code type}'s single type argument.
+   *
+   * <p>For example, if {@code type} is {@code List<Number>} this will return {@code Number}.
+   *
+   * @throws IllegalArgumentException if {@code type} is not a declared type or has zero or more
+   *     than one type arguments.
+   */
+  public static XTypeArgument unwrapType(XType type) {
+    XTypeArgument unwrapped = unwrapTypeOrDefault(type, null);
     checkArgument(unwrapped != null, "%s is a raw type", type);
     return unwrapped;
   }
 
-  private static XType unwrapTypeOrDefault(XType type, XType defaultType) {
+  private static XTypeArgument unwrapTypeOrDefault(XType type, XTypeArgument defaultType) {
     // Check the type parameters of the element's XType since the input XType could be raw.
     checkArgument(isDeclared(type));
     XTypeElement typeElement = type.getTypeElement();
@@ -508,7 +537,7 @@ public final class XTypes {
         processingEnv.requireTypeElement(wrappingClassName.getCanonicalName());
     switch (type.getTypeArguments().size()) {
       case 0:
-        return processingEnv.getDeclaredType(wrappingType);
+        return wrappingType.getType();
       case 1:
         return processingEnv.getDeclaredType(wrappingType, getOnlyElement(type.getTypeArguments()));
       default:
@@ -525,10 +554,8 @@ public final class XTypes {
    *
    * <p>For {@code ?}, this will return {@code Object}.
    */
-  public static XType getInvariantType(XType typeArgument) {
-    return typeArgument.isStar()
-        ? objectElement(getProcessingEnv(typeArgument)).getType()
-        : typeArgument.extendsBoundOrSelf();
+  public static XType getInvariantType(XTypeArgument typeArgument) {
+    return typeArgument.getType();
   }
 
   /**
@@ -537,9 +564,9 @@ public final class XTypes {
    * <p>For example, if {@code type} is {@code ? extends Number} this will return {@code Number}.
    */
   @CanIgnoreReturnValue
-  public static XType requireInvariantType(XType typeArgument) {
+  public static XType requireInvariantType(XTypeArgument typeArgument) {
     checkNotWildcard(typeArgument);
-    return typeArgument;
+    return typeArgument.getType();
   }
 
   /**
@@ -547,11 +574,23 @@ public final class XTypes {
    *
    * <p>For example, if {@code type} is {@code ? extends Number} this will throw an exception.
    */
-  public static void checkNotWildcard(XType typeArgument) {
+  public static void checkNotWildcard(XTypeArgument typeArgument) {
     checkArgument(
-        !isWildcard(typeArgument),
+        !isWildcard(typeArgument) && !isJavaWildcard(typeArgument),
         "Type argument is a wildcard: %s",
         typeArgument);
+  }
+
+  /**
+   * Returns a string representation of {@link XTypeArgument} that is independent of the backend
+   * (javac/ksp).
+   */
+  public static String toStableString(XTypeArgument typeArgument) {
+    try {
+      return toStableString(toJavaPoet(typeArgument.asTypeName()));
+    } catch (TypeNotPresentException e) {
+      return e.typeName();
+    }
   }
 
   /**
@@ -609,11 +648,16 @@ public final class XTypes {
     }
   }
 
+  public static String getKindName(XTypeArgument typeArgument) {
+    if (typeArgument.getVariance() == XVariance.INVARIANT) {
+      return getKindName(typeArgument.getType());
+    }
+    return "WILDCARD";
+  }
+
   public static String getKindName(XType type) {
     if (isArray(type)) {
       return "ARRAY";
-    } else if (isWildcard(type)) {
-      return "WILDCARD";
     } else if (isTypeVariable(type)) {
       return "TYPEVAR";
     } else if (isVoid(type)) {
@@ -684,7 +728,6 @@ public final class XTypes {
 
   /** Returns {@code true} if the given type or any of its type arguments are type parameters. */
   public static boolean containsTypeParameter(XType type) {
-    checkNotWildcard(type);
     if (isTypeVariable(type)) {
       return true;
     } else if (isArray(type)) {

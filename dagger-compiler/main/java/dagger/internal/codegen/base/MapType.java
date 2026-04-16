@@ -26,6 +26,7 @@ import static dagger.internal.codegen.xprocessing.XTypes.unwrapType;
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.model.RequestKind;
@@ -85,7 +86,7 @@ public final class MapType {
    *
    * @throws IllegalStateException if {@link #isRawType()} is true.
    */
-  public XType keyType() {
+  public XTypeArgument keyType() {
     checkState(!isRawType());
     return type.getTypeArguments().get(0);
   }
@@ -98,7 +99,7 @@ public final class MapType {
   // TODO: b/448510944 - This is deprecated because using valueType() directly can lead to incorrect
   // variance. We should remove this method once all usages are migrated to valueTypeName().
   @Deprecated // Use valueTypeName() instead.
-  public XType valueType() {
+  public XTypeArgument valueType() {
     checkState(!isRawType());
     return type.getTypeArguments().get(1);
   }
@@ -154,7 +155,7 @@ public final class MapType {
   // lead to incorrect variance.  We should remove this method once all usages are migrated to
   // unwrappedFrameworkValueTypeAsTypeName().
   @Deprecated // Use unwrappedFrameworkValueTypeAsTypeName() instead.
-  public XType unwrappedFrameworkValueType() {
+  public XTypeArgument unwrappedFrameworkValueType() {
     return valuesAreFrameworkType() ? unwrapType(valueType()) : valueType();
   }
 

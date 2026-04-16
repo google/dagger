@@ -52,6 +52,7 @@ import androidx.room3.compiler.processing.XMessager;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -400,7 +401,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
           ? generatedFactoryClassName
           : generatedFactoryClassName.parametrizedBy(
                 assistedInjectType.getTypeArguments().stream()
-                    .map(XType::asTypeName)
+                    .map(XTypeArgument::asTypeName)
                     .collect(toImmutableList())
                     .toArray(new XTypeName[0]));
     }

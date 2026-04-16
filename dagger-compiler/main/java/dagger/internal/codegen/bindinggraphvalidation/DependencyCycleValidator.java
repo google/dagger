@@ -227,10 +227,9 @@ final class DependencyCycleValidator extends ValidationBindingGraphPlugin {
       // unwrapping, also we require the unwrapped type to be invariant, e.g. neither
       // Optional<? extends Provider<Foo>> nor Optional<Provider<? extends Foo>> are allowed.
       XType keyType =
-          requireInvariantType(
-              extractKeyType(
-                  requireInvariantType(
-                      OptionalType.from(edge.dependencyRequest().key()).valueType())));
+          extractKeyType(
+              requireInvariantType(
+                  OptionalType.from(edge.dependencyRequest().key()).valueType()));
 
       // For @BindsOptionalOf bindings, unwrap the type inside the Optional. If the unwrapped type
       // breaks the cycle, so does the optional binding.

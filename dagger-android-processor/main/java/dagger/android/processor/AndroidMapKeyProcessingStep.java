@@ -26,6 +26,7 @@ import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -150,6 +151,11 @@ final class AndroidMapKeyProcessingStep extends BaseProcessingStep {
               method,
               annotation);
     }
+  }
+
+  /** Returns a {@link XType} for {@code AndroidInjector.Factory<implementationType>}. */
+  private XType injectorFactoryOf(XTypeArgument implementationType) {
+    return processingEnv.getDeclaredType(factoryElement(), implementationType);
   }
 
   /** Returns a {@link XType} for {@code AndroidInjector.Factory<implementationType>}. */

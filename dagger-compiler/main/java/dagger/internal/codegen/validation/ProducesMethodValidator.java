@@ -28,6 +28,7 @@ import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.xprocessing.Nullability;
@@ -124,7 +125,7 @@ final class ProducesMethodValidator extends BindingMethodValidator {
           report.addError("@Produces methods cannot return a raw ListenableFuture");
           return Optional.empty();
         }
-        XType typeArgument = getOnlyElement(type.getTypeArguments());
+        XTypeArgument typeArgument = getOnlyElement(type.getTypeArguments());
         if (isWildcard(typeArgument)) {
           report.addError(badTypeMessage());
           return Optional.empty();

@@ -36,6 +36,7 @@ import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XMethodType;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import androidx.room3.compiler.processing.XTypeElement;
 import dagger.BindsOptionalOf;
 import dagger.internal.codegen.base.ContributionType;
@@ -73,14 +74,33 @@ public final class KeyFactory {
     this.injectionAnnotations = injectionAnnotations;
   }
 
-  private XType setOf(XType elementType) {
+  private XType setOf(XType type) {
+    return setOf(processingEnv.createTypeArgument(type));
+  }
+
+  private XType setOf(XTypeArgument typeArgument) {
     return processingEnv.getDeclaredType(
-        processingEnv.requireTypeElement(XTypeName.SET), elementType.boxed());
+        processingEnv.requireTypeElement(XTypeName.SET),
+        processingEnv.createTypeArgument(
+            typeArgument.getType().boxed(),
+            typeArgument.getVariance()));
   }
 
   private XType mapOf(XType keyType, XType valueType) {
+    return mapOf(
+        processingEnv.createTypeArgument(keyType),
+        processingEnv.createTypeArgument(valueType));
+  }
+
+  private XType mapOf(XTypeArgument keyTypeArgument, XTypeArgument valueTypeArgument) {
     return processingEnv.getDeclaredType(
-        processingEnv.requireTypeElement(XTypeName.MAP), keyType.boxed(), valueType.boxed());
+        processingEnv.requireTypeElement(XTypeName.MAP),
+        processingEnv.createTypeArgument(
+            keyTypeArgument.getType().boxed(),
+            keyTypeArgument.getVariance()),
+        processingEnv.createTypeArgument(
+            valueTypeArgument.getType().boxed(),
+            valueTypeArgument.getVariance()));
   }
 
   /**
@@ -99,11 +119,24 @@ public final class KeyFactory {
 
   /** Returns {@code Map<KeyType, FrameworkType<ValueType>>}. */
   private XType mapOfFrameworkType(XType keyType, XClassName frameworkClassName, XType valueType) {
+    return mapOfFrameworkType(
+        processingEnv.createTypeArgument(keyType),
+        frameworkClassName,
+        processingEnv.createTypeArgument(valueType));
+  }
+
+  /** Returns {@code Map<KeyType, FrameworkType<ValueType>>}. */
+  private XType mapOfFrameworkType(
+      XTypeArgument keyTypeArgument,
+      XClassName frameworkClassName,
+      XTypeArgument valueTypeArgument) {
     checkArgument(FrameworkTypes.MAP_VALUE_FRAMEWORK_TYPES.contains(frameworkClassName));
     return mapOf(
-        keyType,
-        processingEnv.getDeclaredType(
-            processingEnv.requireTypeElement(frameworkClassName), valueType.boxed()));
+        keyTypeArgument,
+        processingEnv.createTypeArgument(
+            processingEnv.getDeclaredType(
+                processingEnv.requireTypeElement(frameworkClassName),
+                valueTypeArgument.getType().boxed())));
   }
 
   Key forComponentMethod(XMethodElement componentMethod) {
@@ -328,8 +361,9 @@ public final class KeyFactory {
           // associated element.
           return key;
         }
-        XType wrappedValueType =
-            processingEnv.getDeclaredType(frameworkTypeElement, mapType.valueType());
+        XTypeArgument wrappedValueType =
+            processingEnv.createTypeArgument(
+                processingEnv.getDeclaredType(frameworkTypeElement, mapType.valueType()));
         return key.withType(DaggerType.from(mapOf(mapType.keyType(), wrappedValueType)));
       }
     }
@@ -346,8 +380,8 @@ public final class KeyFactory {
       return Optional.empty();
     }
 
-    XType optionalValueType = OptionalType.from(key).valueType();
-    XType keyType = requireInvariantType(extractKeyType(optionalValueType));
+    XTypeArgument optionalValueType = OptionalType.from(key).valueType();
+    XType keyType = extractKeyType(optionalValueType);
     return Optional.of(key.withType(DaggerType.from(keyType)));
   }
 }

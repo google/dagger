@@ -27,6 +27,7 @@ import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XCodeBlock;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableMap;
 import dagger.internal.codegen.model.Key;
@@ -142,7 +143,7 @@ public final class OptionalType {
   }
 
   /** The value type. */
-  public XType valueType() {
+  public XTypeArgument valueType() {
     return type.getTypeArguments().get(0);
   }
 

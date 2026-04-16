@@ -26,6 +26,7 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -125,7 +126,7 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
         .filter(requestedBinding -> requestedBinding.kind().equals(BindingKind.MULTIBOUND_MAP))
         .filter(
             requestedBinding -> {
-              XType valueTypeArgument =
+              XTypeArgument valueTypeArgument =
                   DaggerElements.toXProcessing(requestedBinding.key().type(), processingEnv)
                       .getTypeArguments()
                       .get(1);

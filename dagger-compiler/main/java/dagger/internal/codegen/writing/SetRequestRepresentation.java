@@ -29,6 +29,7 @@ import androidx.room3.compiler.codegen.XFunSpec;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import com.google.common.collect.ImmutableSet;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
@@ -224,7 +225,7 @@ final class SetRequestRepresentation extends RequestRepresentation {
   }
 
   private XCodeBlock maybeTypeParameter(XClassName requestingClass) {
-    XType elementType = SetType.from(binding.key()).elementType();
+    XTypeArgument elementType = SetType.from(binding.key()).elementType();
     return isTypeAccessibleFrom(elementType, requestingClass.getPackageName())
         ? XCodeBlock.of("<%T>", elementType.asTypeName())
         : XCodeBlock.of("");

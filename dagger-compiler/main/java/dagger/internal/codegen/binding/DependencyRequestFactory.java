@@ -211,7 +211,7 @@ public final class DependencyRequestFactory {
   private DependencyRequest newDependencyRequest(
       XElement requestElement, XType type, Optional<XAnnotation> qualifier) {
     RequestKind requestKind = getRequestKind(type);
-    XType keyType = requireInvariantType(extractKeyType(type));
+    XType keyType = extractKeyType(type);
     return DependencyRequest.builder()
         .kind(requestKind)
         .key(keyFactory.forQualifiedType(qualifier, keyType))

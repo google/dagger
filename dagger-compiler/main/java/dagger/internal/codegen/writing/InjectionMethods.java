@@ -47,6 +47,7 @@ import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XExecutableElement;
 import androidx.room3.compiler.processing.XExecutableParameterElement;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import androidx.room3.compiler.processing.XTypeElement;
 import androidx.room3.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableList;
@@ -304,14 +305,14 @@ final class InjectionMethods {
                 : binding.key().type().xprocessing());
     ImmutableList.Builder<XTypeName> builder = ImmutableList.builder();
     for (int i = 0; i < resolvedType.getTypeArguments().size(); i++) {
-      XType typeArgument = resolvedType.getTypeArguments().get(i);
+      XTypeArgument typeArgument = resolvedType.getTypeArguments().get(i);
       // If the type argument is publicly accessible, we can use it directly. Otherwise, we try to
       // use the bounds of the type variables. If neither of these are possible, we should have
       // failed earlier during the binding graph validation stage.
       if (isTypePubliclyAccessible(typeArgument)) {
         builder.add(typeArgument.asTypeName());
       } else {
-        XType unresolvedTypeArgument = unresolvedType.getTypeArguments().get(i);
+        XTypeArgument unresolvedTypeArgument = unresolvedType.getTypeArguments().get(i);
         builder.add(replaceTypeVariablesWithBounds(unresolvedTypeArgument.asTypeName()));
       }
     }

@@ -25,6 +25,7 @@ import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import androidx.room3.compiler.processing.XTypeElement;
 import dagger.internal.codegen.model.DaggerAnnotation;
 import dagger.internal.codegen.model.Key;
@@ -72,7 +73,7 @@ public final class Keys {
     // If the key has type arguments, validate that each type argument is declared.
     // Otherwise the type argument may be a wildcard (or other type), and we can't
     // resolve that to actual types.
-    for (XType arg : type.getTypeArguments()) {
+    for (XTypeArgument arg : type.getTypeArguments()) {
       if (isWildcard(arg) || !isDeclared(requireInvariantType(arg))) {
         return false;
       }

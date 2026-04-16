@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.bindinggraphvalidation;
 
-import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
 import static dagger.internal.codegen.base.Formatter.INDENT;
 import static dagger.internal.codegen.base.Keys.isValidImplicitProvisionKey;
@@ -26,10 +25,10 @@ import static dagger.internal.codegen.binding.DependencyRequestFormatter.DOUBLE_
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
-import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeArgument;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.binding.ComponentNodeImpl;
@@ -151,8 +150,6 @@ final class MissingBindingValidator extends ValidationBindingGraphPlugin {
   private String missingBindingErrorMessage(MissingBinding missingBinding, BindingGraph graph) {
     Key key = missingBinding.key();
     StringBuilder errorMessage = new StringBuilder();
-    // Wildcards should have already been checked by DependencyRequestValidator.
-    verify(!isWildcard(key.type().xprocessing()), "unexpected wildcard request: %s", key);
     // TODO(ronshapiro): replace "provided" with "satisfied"?
     errorMessage.append(key).append(" cannot be provided without ");
     if (isValidImplicitProvisionKey(key)) {
@@ -285,8 +282,8 @@ final class MissingBindingValidator extends ValidationBindingGraphPlugin {
       XType next = stack.pop();
       if (isDeclared(next)) {
         if (!skipTypeArguments) {
-          for (XType typeArgument : next.getTypeArguments()) {
-            stack.push(typeArgument.extendsBoundOrSelf());
+          for (XTypeArgument typeArgument : next.getTypeArguments()) {
+            stack.push(typeArgument.getType());
           }
         }
         return next.getTypeElement().getClassName();

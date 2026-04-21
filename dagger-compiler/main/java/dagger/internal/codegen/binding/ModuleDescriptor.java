@@ -153,8 +153,19 @@ public abstract class ModuleDescriptor {
                   bindings.add(bindingFactory.producesMethodBinding(moduleMethod, moduleElement));
                 }
                 if (DelegateBinding.hasDelegateAnnotation(moduleMethod)) {
-                  delegates.add(
-                      bindingDelegateDeclarationFactory.create(moduleMethod, moduleElement));
+                  if (moduleMethod.hasAnnotation(XTypeNames.BINDS)
+                      && moduleMethod.getParameters().isEmpty()) {
+                    // Parameterless @Binds methods are treated as explicit InjectionBindings
+                    // to avoid duplicate binding errors and cyclical dependencies that arise
+                    // if they were modeled as DelegateBindings on the same key as the @Inject
+                    // constructor.
+                    bindingFactory
+                        .explicitInjectionBinding(moduleMethod, moduleElement)
+                        .ifPresent(bindings::add);
+                  } else {
+                    delegates.add(
+                        bindingDelegateDeclarationFactory.create(moduleMethod, moduleElement));
+                  }
                 }
                 if (moduleMethod.hasAnnotation(XTypeNames.MULTIBINDS)) {
                   multibindingDeclarations.add(

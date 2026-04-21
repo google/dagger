@@ -20,11 +20,13 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsM
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.ALLOWS_SCOPING;
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeElement;
 import androidx.room3.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.ContributionType;
@@ -40,6 +42,7 @@ import javax.inject.Inject;
 final class BindsMethodValidator extends BindingMethodValidator {
   private final BindsTypeChecker bindsTypeChecker;
   private final DaggerSuperficialValidation superficialValidation;
+  private final InjectionAnnotations injectionAnnotations;
 
   @Inject
   BindsMethodValidator(
@@ -60,6 +63,7 @@ final class BindsMethodValidator extends BindingMethodValidator {
         injectionAnnotations);
     this.bindsTypeChecker = bindsTypeChecker;
     this.superficialValidation = superficialValidation;
+    this.injectionAnnotations = injectionAnnotations;
   }
 
   @Override
@@ -77,12 +81,16 @@ final class BindsMethodValidator extends BindingMethodValidator {
 
     @Override
     protected void checkParameters() {
-      if (method.getParameters().size() != 1) {
+      if (method.getParameters().size() > 1) {
         report.addError(
             bindingMethods(
-                "must have exactly one parameter, whose type is assignable to the return type"));
-      } else {
+                "may have at most one parameter."
+                    + " To bind an @Inject constructor, use a zero-parameter @Binds method."
+                    + " To bind an instance, use a one-parameter @Binds method."));
+      } else if (method.getParameters().size() == 1) {
         super.checkParameters();
+      } else { // Parameters size == 0
+        checkZeroParameterBinds();
       }
     }
 
@@ -115,6 +123,67 @@ final class BindsMethodValidator extends BindingMethodValidator {
       Nullability methodNullability = Nullability.of(method);
       if (parameterNullability.isNullable() != methodNullability.isNullable()) {
         report.addError("@Binds methods' nullability must match the nullability of its parameter");
+      }
+    }
+
+    private void checkZeroParameterBinds() {
+      ContributionType contributionType = ContributionType.fromBindingElement(method);
+      if (!contributionType.equals(ContributionType.UNIQUE)) {
+        report.addError(
+            "Parameterless @Binds methods cannot be used with multibinding annotations"
+                + " (@IntoSet, @ElementsIntoSet, @IntoMap).",
+            method);
+      }
+
+      if (!method.getAnnotationsAnnotatedWith(XTypeNames.MAP_KEY).isEmpty()) {
+        report.addError("Parameterless @Binds methods cannot have a @MapKey.", method);
+      }
+
+      XType returnType = method.getReturnType();
+      if (!isDeclared(returnType)) {
+        report.addError("Parameterless @Binds methods must return a declared type.", method);
+        return;
+      }
+      // Disallow parameterized types for parameterless @Binds.
+      // This feature is intended for making the @Inject binding of a concrete, non-generic
+      // class explicit to apply method-level annotations.
+      // Binding specific instantiations of generic types should be done with @Provides,
+      // which can properly handle dependencies related to the type parameters.
+      // Allowing generics here would lead to ambiguity in annotation scoping and
+      // dependency resolution.
+      if (!returnType.getTypeArguments().isEmpty()) {
+        report.addError("Parameterless @Binds methods cannot return a parameterized type.", method);
+        return;
+      }
+      XTypeElement returnTypeElement = returnType.getTypeElement();
+      if (returnTypeElement == null) {
+        report.addError("Parameterless @Binds methods must return a valid type.", method);
+        return;
+      }
+      if (!returnTypeElement.getTypeParameters().isEmpty()) {
+        report.addError(
+            "Parameterless @Binds methods cannot bind generic types with @Inject constructors.",
+            method);
+      }
+      if (injectionAnnotations.getQualifier(method).isPresent()) {
+        report.addError("Parameterless @Binds methods may not have qualifiers.", method);
+      }
+      if (injectionAnnotations.getScope(method).isPresent()) {
+        report.addError("Parameterless @Binds methods may not be scoped.", method);
+      }
+      if (injectionAnnotations.getScope(returnTypeElement).isPresent()) {
+        report.addError(
+            "Parameterless @Binds methods cannot bind types with scoped @Inject constructors.",
+            method);
+      }
+      if (returnTypeElement.getConstructors().stream()
+              .filter(InjectionAnnotations::hasInjectAnnotation)
+              .count()
+          != 1) {
+        report.addError(
+            "Parameterless @Binds methods must return a type with exactly one @Inject"
+                + " constructor.",
+            method);
       }
     }
 

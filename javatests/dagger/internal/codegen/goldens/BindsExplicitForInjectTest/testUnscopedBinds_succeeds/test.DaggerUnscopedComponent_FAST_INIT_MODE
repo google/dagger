@@ -1,0 +1,54 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerUnscopedComponent {
+  private DaggerUnscopedComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static UnscopedComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public UnscopedComponent build() {
+      return new UnscopedComponentImpl();
+    }
+  }
+
+  private static final class UnscopedComponentImpl implements UnscopedComponent {
+    private final UnscopedComponentImpl unscopedComponentImpl = this;
+
+    UnscopedComponentImpl() {
+
+
+    }
+
+    @Override
+    public Bar getBar() {
+      return new Bar();
+    }
+  }
+}

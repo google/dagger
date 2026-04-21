@@ -18,6 +18,7 @@ package dagger.internal.codegen.binding;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room3.compiler.processing.XMethodElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
@@ -30,7 +31,15 @@ import dagger.internal.codegen.model.DependencyRequest;
 import dagger.internal.codegen.xprocessing.Nullability;
 import java.util.Optional;
 
-/** A binding for a {@link BindingKind#INJECTION}. */
+/**
+ * A binding for a {@link BindingKind#INJECTION}.
+ *
+ * <p>This also represents parameterless {@code @Binds} methods, which are used to explicitly bind
+ * an {@link javax.inject.Inject}-annotated constructor. By treating these as {@link
+ * InjectionBinding}s rather than {@code DelegateBinding}s, we avoid issues with duplicate bindings
+ * and cyclical dependencies, as both the {@code @Binds} method and the {@code @Inject} constructor
+ * would otherwise have the same key.
+ */
 @CheckReturnValue
 @AutoValue
 public abstract class InjectionBinding extends ContributionBinding {
@@ -73,7 +82,15 @@ public abstract class InjectionBinding extends ContributionBinding {
   }
 
   @Override
+  public boolean requiresModuleInstance() {
+    return false;
+  }
+
+  @Override
   public abstract Builder toBuilder();
+
+  /** The element that declares this binding, used for parameterless {@code @Binds} methods. */
+  public abstract Optional<XMethodElement> declaringElement();
 
   @Memoized
   @Override
@@ -93,5 +110,7 @@ public abstract class InjectionBinding extends ContributionBinding {
     abstract Builder constructorDependencies(Iterable<DependencyRequest> constructorDependencies);
 
     abstract Builder injectionSites(ImmutableSortedSet<InjectionSite> injectionSites);
+
+    abstract Builder declaringElement(XMethodElement declaringElement);
   }
 }

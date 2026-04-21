@@ -172,7 +172,9 @@ public class BindsMethodValidationTest {
 
   @Test
   public void noParameters() {
-    assertThatMethod("@Binds abstract Object noParameters();").hasError("one parameter");
+    assertThatMethod("@Binds abstract Object noParameters();")
+        .hasError(
+            "Parameterless @Binds methods must return a type with exactly one @Inject constructor");
   }
 
   @Test

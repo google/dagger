@@ -53,6 +53,7 @@ import dagger.internal.codegen.xprocessing.Nullability;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 /** A factory for {@link Binding} objects. */
 public final class BindingFactory {
@@ -60,17 +61,21 @@ public final class BindingFactory {
   private final DependencyRequestFactory dependencyRequestFactory;
   private final InjectionSiteFactory injectionSiteFactory;
   private final InjectionAnnotations injectionAnnotations;
+  // We need a provider to avoid circular dependencies.
+  private final Provider<InjectBindingRegistry> injectBindingRegistryProvider;
 
   @Inject
   BindingFactory(
       KeyFactory keyFactory,
       DependencyRequestFactory dependencyRequestFactory,
       InjectionSiteFactory injectionSiteFactory,
-      InjectionAnnotations injectionAnnotations) {
+      InjectionAnnotations injectionAnnotations,
+      Provider<InjectBindingRegistry> injectBindingRegistryProvider) {
     this.keyFactory = keyFactory;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.injectionSiteFactory = injectionSiteFactory;
     this.injectionAnnotations = injectionAnnotations;
+    this.injectBindingRegistryProvider = injectBindingRegistryProvider;
   }
 
   /**
@@ -160,6 +165,47 @@ public final class BindingFactory {
                 ? Optional.of(assistedInjectionBinding(constructorElement, Optional.empty()))
                 : Optional.empty())
         .build();
+  }
+
+  /**
+   * Returns an {@link BindingKind#INJECTION} binding returned by a parameterless {@code @Binds}
+   * method.
+   *
+   * <p>Although these are {@code @Binds} methods, they are represented as {@link InjectionBinding}s
+   * rather than {@link DelegateBinding}s. This is because a parameterless {@code @Binds} method
+   * binds the return type to its {@code @Inject} constructor. If this were a {@link
+   * DelegateBinding}, both the delegate and the underlying {@code @Inject} binding would have the
+   * same key, leading to duplicate binding errors and cyclical dependency issues in both binding
+   * graph resolution and code generation. Representing it as an {@link InjectionBinding} allows us
+   * to augment the implicit injection binding with metadata from the {@code @Binds} method (e.g.,
+   * {@code contributingModule}) without creating duplicate keys.
+   *
+   * @param bindsMethod the parameterless {@code @Binds}-annotated method
+   * @param module the installed module that declares or inherits the method
+   */
+  public Optional<InjectionBinding> explicitInjectionBinding(
+      XMethodElement bindsMethod, XTypeElement module) {
+    checkArgument(bindsMethod.hasAnnotation(XTypeNames.BINDS));
+    checkArgument(bindsMethod.getParameters().isEmpty());
+    // Normally, we would use the input method as the binding element, but as in this case it is an
+    // Binds method that breaks assumptions for an InjectionBinding. Instead, we use the @Inject
+    // constructor as the binding element and expose the @Binds method via
+    // InjectionBinding#declaringElement().
+    // We call InjectBindingRegistry#getOrFindInjectionBinding() rather than calling
+    // BindingFactory#injectionBinding() directly because the former ensures that the binding is
+    // properly validated before returning the binding.
+    Key key = keyFactory.forDelegateDeclaration(bindsMethod, module); // Key from @Binds
+    return injectBindingRegistryProvider
+        .get()
+        .getOrFindInjectionBinding(key)
+        .map(
+            binding ->
+                ((InjectionBinding) binding)
+                    .toBuilder()
+                        .key(key)
+                        .contributingModule(module) // Mark as coming from module
+                        .declaringElement(bindsMethod)
+                        .build());
   }
 
   public AssistedFactoryBinding assistedFactoryBinding(

@@ -67,6 +67,15 @@ public final class DeclarationFormatter extends Formatter<Declaration> {
       return formatSubcomponentDeclaration((SubcomponentDeclaration) declaration);
     }
 
+    if (declaration instanceof InjectionBinding) {
+      InjectionBinding injectionBinding = (InjectionBinding) declaration;
+      if (injectionBinding.declaringElement().isPresent()) {
+        return methodSignatureFormatter.format(
+            injectionBinding.declaringElement().get(),
+            injectionBinding.contributingModule().map(XTypeElement::getType));
+      }
+    }
+
     if (declaration.bindingElement().isPresent()) {
       XElement bindingElement = declaration.bindingElement().get();
       if (isMethodParameter(bindingElement)) {

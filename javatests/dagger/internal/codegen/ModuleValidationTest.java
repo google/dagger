@@ -378,12 +378,11 @@ public final class ModuleValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContaining("test.BadModule has errors")
-                  .onSource(module)
-                  .onLine(5);
-              subject.hasErrorContaining(
-                      "@Binds methods must have exactly one parameter, whose type is "
-                          + "assignable to the return type")
+              subject.hasErrorContaining("test.BadModule has errors").onSource(module).onLine(5);
+              subject
+                  .hasErrorContaining(
+                      "Parameterless @Binds methods must return a type with exactly one @Inject"
+                          + " constructor")
                   .onSource(badModule)
                   .onLine(8);
             });

@@ -70,6 +70,7 @@ public abstract class DelegateDeclaration extends Declaration implements HasCont
 
     public DelegateDeclaration create(XMethodElement method, XTypeElement contributingModule) {
       checkArgument(DelegateBinding.hasDelegateAnnotation(method));
+      checkArgument(method.getParameters().size() == 1);
       XMethodType resolvedMethod = method.asMemberOf(contributingModule.getType());
       DependencyRequest delegateRequest =
           dependencyRequestFactory.forRequiredResolvedVariable(

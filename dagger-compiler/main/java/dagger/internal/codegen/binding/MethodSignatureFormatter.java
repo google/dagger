@@ -93,7 +93,7 @@ public final class MethodSignatureFormatter extends Formatter<XExecutableElement
 
   private String format(
       XExecutableElement method, Optional<XType> container, boolean includeReturnType) {
-    return container.isPresent()
+    return container.isPresent() && !getSimpleName(method).contentEquals("<init>")
         ? format(
             method,
             method.asMemberOf(container.get()),

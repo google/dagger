@@ -120,7 +120,7 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<XTypeElement
         generate(factoryGenerator, bindingFactory.providesMethodBinding(method, module));
       } else if (method.hasAnnotation(XTypeNames.PRODUCES)) {
         generate(producerFactoryGenerator, bindingFactory.producesMethodBinding(method, module));
-      } else if (method.hasAnnotation(XTypeNames.BINDS)) {
+      } else if (method.hasAnnotation(XTypeNames.BINDS) && !method.getParameters().isEmpty()) {
         inaccessibleMapKeyProxyGenerator.generate(bindsMethodBinding(module, method), messager);
       }
     }

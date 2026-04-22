@@ -17,7 +17,7 @@
 package dagger.producers.internal;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,11 +35,7 @@ public class AbstractProducerTest {
   @SuppressWarnings("CheckReturnValue")
   public void get_nullPointerException() {
     Producer<Object> producer = new DelegateProducer<>(null);
-    try {
-      producer.get();
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(NullPointerException.class, () -> producer.get());
   }
 
   @Test public void get() throws Exception {

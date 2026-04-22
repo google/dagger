@@ -17,7 +17,7 @@
 package dagger.android.support;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import android.app.Application;
 import android.os.Build;
@@ -40,12 +40,8 @@ public final class AndroidSupportInjectionTest {
     Fragment fragment = new Fragment();
     startFragment(fragment);
 
-    try {
-      AndroidSupportInjection.inject(fragment);
-      fail();
-    } catch (Exception e) {
-      assertThat(e).hasMessageThat().contains("No injector was found");
-    }
+    Exception e = assertThrows(Exception.class, () -> AndroidSupportInjection.inject(fragment));
+    assertThat(e).hasMessageThat().contains("No injector was found");
   }
 
   private static class ApplicationReturnsNull extends Application
@@ -62,22 +58,15 @@ public final class AndroidSupportInjectionTest {
     Fragment fragment = new Fragment();
     startFragment(fragment);
 
-    try {
-      AndroidSupportInjection.inject(fragment);
-      fail();
-    } catch (Exception e) {
-      assertThat(e).hasMessageThat().contains("androidInjector() returned null");
-    }
+    Exception e = assertThrows(Exception.class, () -> AndroidSupportInjection.inject(fragment));
+    assertThat(e).hasMessageThat().contains("androidInjector() returned null");
   }
 
   @Test
   public void injectFragment_nullInput() {
-    try {
-      AndroidSupportInjection.inject(null);
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e).hasMessageThat().contains("fragment");
-    }
+    NullPointerException e =
+        assertThrows(NullPointerException.class, () -> AndroidSupportInjection.inject(null));
+    assertThat(e).hasMessageThat().contains("fragment");
   }
 
   void startFragment(Fragment fragment) {

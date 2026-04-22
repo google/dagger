@@ -17,7 +17,7 @@
 package dagger.producers.internal;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import dagger.producers.Producer;
 import dagger.producers.Producers;
@@ -51,11 +51,7 @@ public final class MapProducerTest {
             // TODO(ronshapiro): remove the type parameter when we drop java7 support
             .put(42, Producers.<String>immediateFailedProducer(cause))
             .build();
-    try {
-      mapProducer.get().get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isSameInstanceAs(cause);
-    }
+    ExecutionException e = assertThrows(ExecutionException.class, () -> mapProducer.get().get());
+    assertThat(e).hasCauseThat().isSameInstanceAs(cause);
   }
 }

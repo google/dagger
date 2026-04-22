@@ -17,7 +17,7 @@
 package dagger.android;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import android.app.Activity;
 import android.os.Build;
@@ -86,11 +86,8 @@ public final class DispatchingAndroidInjectorTest {
             ImmutableMap.of(FooActivity.class, () -> null), ImmutableMap.of());
     FooActivity activity = Robolectric.setupActivity(FooActivity.class);
 
-    try {
-      dispatchingAndroidInjector.maybeInject(activity);
-      fail("Expected NullPointerException");
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(
+        NullPointerException.class, () -> dispatchingAndroidInjector.maybeInject(activity));
   }
 
   @Test
@@ -100,11 +97,9 @@ public final class DispatchingAndroidInjectorTest {
             ImmutableMap.of(FooActivity.class, BarInjector.Factory::new), ImmutableMap.of());
     FooActivity activity = Robolectric.setupActivity(FooActivity.class);
 
-    try {
-      dispatchingAndroidInjector.maybeInject(activity);
-      fail("Expected InvalidInjectorBindingException");
-    } catch (InvalidInjectorBindingException expected) {
-    }
+    assertThrows(
+        InvalidInjectorBindingException.class,
+        () -> dispatchingAndroidInjector.maybeInject(activity));
   }
 
   private static <T> DispatchingAndroidInjector<T> newDispatchingAndroidInjector(

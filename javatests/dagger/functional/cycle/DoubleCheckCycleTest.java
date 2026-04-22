@@ -20,7 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static java.lang.Thread.State.BLOCKED;
 import static java.lang.Thread.State.WAITING;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -147,12 +147,9 @@ public class DoubleCheckCycleTest {
             .build();
 
     assertThat(callCount.get()).isEqualTo(0);
-    try {
-      component.getReentrantObject();
-      fail("Expected IllegalStateException");
-    } catch (IllegalStateException e) {
-      assertThat(e).hasMessageThat().contains("Scoped provider was invoked recursively");
-    }
+    IllegalStateException e =
+        assertThrows(IllegalStateException.class, () -> component.getReentrantObject());
+    assertThat(e).hasMessageThat().contains("Scoped provider was invoked recursively");
     assertThat(callCount.get()).isEqualTo(2);
   }
 

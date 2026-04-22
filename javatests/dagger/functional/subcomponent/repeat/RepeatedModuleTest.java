@@ -17,7 +17,7 @@
 package dagger.functional.subcomponent.repeat;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -53,16 +53,15 @@ public final class RepeatedModuleTest {
   public void repeatedModuleBuilderThrowsInSubcomponent() {
     SubcomponentWithRepeatedModule.Builder childComponentBuilder =
         parentComponent.newChildComponentBuilder();
-    try {
-      childComponentBuilder.repeatedModule(new RepeatedModule());
-      fail();
-    } catch (UnsupportedOperationException expected) {
-      assertThat(expected)
-          .hasMessageThat()
-          .isEqualTo(
-              "dagger.functional.subcomponent.repeat.RepeatedModule cannot be set "
-                  + "because it is inherited from the enclosing component");
-    }
+    UnsupportedOperationException expected =
+        assertThrows(
+            UnsupportedOperationException.class,
+            () -> childComponentBuilder.repeatedModule(new RepeatedModule()));
+    assertThat(expected)
+        .hasMessageThat()
+        .isEqualTo(
+            "dagger.functional.subcomponent.repeat.RepeatedModule cannot be set "
+                + "because it is inherited from the enclosing component");
   }
 
   @Test
@@ -71,15 +70,14 @@ public final class RepeatedModuleTest {
         parentComponent.newChildComponentWithoutRepeatedModule();
     OtherSubcomponentWithRepeatedModule.Builder grandchildComponentBuilder =
         childComponent.newGrandchildBuilder();
-    try {
-      grandchildComponentBuilder.repeatedModule(new RepeatedModule());
-      fail();
-    } catch (UnsupportedOperationException expected) {
-      assertThat(expected)
-          .hasMessageThat()
-          .isEqualTo(
-              "dagger.functional.subcomponent.repeat.RepeatedModule cannot be set "
-                  + "because it is inherited from the enclosing component");
-    }
+    UnsupportedOperationException expected =
+        assertThrows(
+            UnsupportedOperationException.class,
+            () -> grandchildComponentBuilder.repeatedModule(new RepeatedModule()));
+    assertThat(expected)
+        .hasMessageThat()
+        .isEqualTo(
+            "dagger.functional.subcomponent.repeat.RepeatedModule cannot be set "
+                + "because it is inherited from the enclosing component");
   }
 }

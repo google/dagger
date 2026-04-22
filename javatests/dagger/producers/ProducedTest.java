@@ -17,7 +17,7 @@
 package dagger.producers;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.testing.EqualsTester;
 import java.util.concurrent.CancellationException;
@@ -40,12 +40,9 @@ public class ProducedTest {
 
   @Test public void failedProduced() {
     RuntimeException cause = new RuntimeException("monkey");
-    try {
-      Produced.failed(cause).get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isSameInstanceAs(cause);
-    }
+    ExecutionException e =
+        assertThrows(ExecutionException.class, () -> Produced.failed(cause).get());
+    assertThat(e).hasCauseThat().isSameInstanceAs(cause);
   }
 
   @Test public void producedEquivalence() {

@@ -17,7 +17,7 @@
 package dagger.producers.internal;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -94,12 +94,8 @@ public class ProducersTest {
     ListenableFuture<String> future = Futures.immediateFailedFuture(new RuntimeException("monkey"));
     ListenableFuture<Set<String>> setFuture = Producers.createFutureSingletonSet(future);
     assertThat(setFuture.isDone()).isTrue();
-    try {
-      setFuture.get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().hasMessageThat().isEqualTo("monkey");
-    }
+    ExecutionException e = assertThrows(ExecutionException.class, () -> setFuture.get());
+    assertThat(e).hasCauseThat().hasMessageThat().isEqualTo("monkey");
   }
 
   @Test
@@ -120,12 +116,8 @@ public class ProducersTest {
                 Futures.immediateFuture("monkey"),
                 Futures.<String>immediateFailedFuture(new RuntimeException("gorilla"))));
     assertThat(future.isDone()).isTrue();
-    try {
-      future.get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().hasMessageThat().isEqualTo("gorilla");
-    }
+    ExecutionException e = assertThrows(ExecutionException.class, () -> future.get());
+    assertThat(e).hasCauseThat().hasMessageThat().isEqualTo("gorilla");
   }
 
   @Test public void producerFromProvider_doesntCache() throws Exception {

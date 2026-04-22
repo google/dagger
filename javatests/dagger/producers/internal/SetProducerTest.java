@@ -17,7 +17,7 @@
 package dagger.producers.internal;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -52,12 +52,8 @@ public class SetProducerTest {
             .addProducer(Producers.<Integer>immediateProducer(null))
             .build();
     ListenableFuture<Set<Integer>> future = producer.get();
-    try {
-      future.get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isInstanceOf(NullPointerException.class);
-    }
+    ExecutionException e = assertThrows(ExecutionException.class, () -> future.get());
+    assertThat(e).hasCauseThat().isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -67,12 +63,8 @@ public class SetProducerTest {
             .addCollectionProducer(Producers.<Set<Integer>>immediateProducer(null))
             .build();
     ListenableFuture<Set<Integer>> future = producer.get();
-    try {
-      future.get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isInstanceOf(NullPointerException.class);
-    }
+    ExecutionException e = assertThrows(ExecutionException.class, () -> future.get());
+    assertThat(e).hasCauseThat().isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -84,11 +76,7 @@ public class SetProducerTest {
                 Producers.<Set<Integer>>immediateProducer(Collections.<Integer>singleton(null)))
             .build();
     ListenableFuture<Set<Integer>> future = producer.get();
-    try {
-      future.get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isInstanceOf(NullPointerException.class);
-    }
+    ExecutionException e = assertThrows(ExecutionException.class, () -> future.get());
+    assertThat(e).hasCauseThat().isInstanceOf(NullPointerException.class);
   }
 }

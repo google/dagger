@@ -17,7 +17,7 @@
 package dagger.functional.factory;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import dagger.Component;
 import org.junit.Test;
@@ -88,13 +88,12 @@ public final class FactoryImplicitModulesTest {
 
   @Test
   public void instantiableConcreteModule_withFactoryParameter_failsOnNull() {
-    try {
-      DaggerFactoryImplicitModulesTest_InstantiableConcreteModuleWithFactoryParameterComponent
-          .factory()
-          .create(null);
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(
+        NullPointerException.class,
+        () ->
+            DaggerFactoryImplicitModulesTest_InstantiableConcreteModuleWithFactoryParameterComponent
+                .factory()
+                .create(null));
   }
 
   @Component(modules = ConcreteModuleThatCouldBeAbstract.class)
@@ -142,13 +141,11 @@ public final class FactoryImplicitModulesTest {
     // It's possible that we shouldn't even allow such a parameter for a factory, since unlike a
     // builder, where the setter can just not be called, a factory doesn't give the option of not
     // passing *something* for the unused parameter.
-    try {
-      ConcreteModuleThatCouldBeAbstractWithFactoryParameterComponent component =
-          DaggerFactoryImplicitModulesTest_ConcreteModuleThatCouldBeAbstractWithFactoryParameterComponent
-              .factory()
-              .create(null);
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(
+        NullPointerException.class,
+        () ->
+            DaggerFactoryImplicitModulesTest_ConcreteModuleThatCouldBeAbstractWithFactoryParameterComponent
+                .factory()
+                .create(null));
   }
 }

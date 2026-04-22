@@ -19,7 +19,7 @@ package dagger.functional.producers;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.when;
@@ -420,13 +420,9 @@ public class ProducerFactoryTest {
 
     Throwable t = new RuntimeException("monkey");
     strFuture.setException(t);
-    try {
-      producer.get().get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isSameInstanceAs(t);
-      order.verify(monitor).failed(t);
-    }
+    ExecutionException e = assertThrows(ExecutionException.class, () -> producer.get().get());
+    assertThat(e).hasCauseThat().isSameInstanceAs(t);
+    order.verify(monitor).failed(t);
 
     order.verifyNoMoreInteractions();
   }
@@ -441,12 +437,8 @@ public class ProducerFactoryTest {
     order.verify(monitor).methodStarting();
     order.verify(monitor).methodFinished();
 
-    try {
-      producer.get().get();
-      fail();
-    } catch (ExecutionException e) {
-      order.verify(monitor).failed(e.getCause());
-    }
+    ExecutionException e = assertThrows(ExecutionException.class, () -> producer.get().get());
+    order.verify(monitor).failed(e.getCause());
 
     order.verifyNoMoreInteractions();
   }

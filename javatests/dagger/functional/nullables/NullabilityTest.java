@@ -17,7 +17,7 @@
 package dagger.functional.nullables;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import dagger.Component;
 import dagger.Module;
@@ -123,14 +123,10 @@ public class NullabilityTest {
         DaggerNullabilityTest_NullComponent.builder().nullModule(module).build();
 
     // Can't construct NullFoo because it depends on Number, and Number was null.
-    try {
-      component.nullFoo();
-      fail();
-    } catch (NullPointerException npe) {
-      assertThat(npe)
-          .hasMessageThat()
-          .isEqualTo("Cannot return null from a non-@Nullable @Provides method");
-    }
+    NullPointerException npe = assertThrows(NullPointerException.class, () -> component.nullFoo());
+    assertThat(npe)
+        .hasMessageThat()
+        .isEqualTo("Cannot return null from a non-@Nullable @Provides method");
 
     // set number to non-null so we can create
     module.numberValue = 1;
@@ -201,14 +197,10 @@ public class NullabilityTest {
     validate(false, component.string(), component.stringProvider(), component.numberProvider());
 
     // Also validate that the component's number() method fails
-    try {
-      component.number();
-      fail();
-    } catch (NullPointerException npe) {
-      assertThat(npe)
-          .hasMessageThat()
-          .isEqualTo("Cannot return null from a non-@Nullable component method");
-    }
+    NullPointerException npe = assertThrows(NullPointerException.class, () -> component.number());
+    assertThat(npe)
+        .hasMessageThat()
+        .isEqualTo("Cannot return null from a non-@Nullable component method");
   }
 
   private void validate(boolean fromProvides,
@@ -217,17 +209,13 @@ public class NullabilityTest {
       Provider<Number> numberProvider) {
     assertThat(string).isNull();
     assertThat(numberProvider).isNotNull();
-    try {
-      numberProvider.get();
-      fail();
-    } catch (NullPointerException npe) {
-      assertThat(npe)
-          .hasMessageThat()
-          .isEqualTo(
-              "Cannot return null from a non-@Nullable "
-                  + (fromProvides ? "@Provides" : "component")
-                  + " method");
-    }
+    NullPointerException npe = assertThrows(NullPointerException.class, () -> numberProvider.get());
+    assertThat(npe)
+        .hasMessageThat()
+        .isEqualTo(
+            "Cannot return null from a non-@Nullable "
+                + (fromProvides ? "@Provides" : "component")
+                + " method");
     assertThat(stringProvider.get()).isNull();
   }
 }

@@ -17,7 +17,7 @@
 package dagger.functional.factory;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import dagger.Component;
 import org.junit.Test;
@@ -47,10 +47,8 @@ public final class FactoryDependenciesTest {
 
   @Test
   public void dependency_failsOnNull() {
-    try {
-      DaggerFactoryDependenciesTest_DependencyComponent.factory().create(null);
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(
+        NullPointerException.class,
+        () -> DaggerFactoryDependenciesTest_DependencyComponent.factory().create(null));
   }
 }

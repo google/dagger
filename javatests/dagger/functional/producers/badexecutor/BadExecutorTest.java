@@ -17,7 +17,7 @@
 package dagger.functional.producers.badexecutor;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -55,32 +55,22 @@ public final class BadExecutorTest {
 
   @Test
   public void rejectNoArgMethod() throws Exception {
-    try {
-      component.noArgStr().get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isInstanceOf(RejectedExecutionException.class);
-    }
+    ExecutionException e = assertThrows(ExecutionException.class, () -> component.noArgStr().get());
+    assertThat(e).hasCauseThat().isInstanceOf(RejectedExecutionException.class);
   }
 
   @Test
   public void rejectSingleArgMethod() throws Exception {
-    try {
-      component.singleArgInt().get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isInstanceOf(RejectedExecutionException.class);
-    }
+    ExecutionException e =
+        assertThrows(ExecutionException.class, () -> component.singleArgInt().get());
+    assertThat(e).hasCauseThat().isInstanceOf(RejectedExecutionException.class);
   }
 
   @Test
   public void rejectSingleArgFromComponentDepMethod() throws Exception {
-    try {
-      component.singleArgBool().get();
-      fail();
-    } catch (ExecutionException e) {
-      assertThat(e).hasCauseThat().isInstanceOf(RejectedExecutionException.class);
-    }
+    ExecutionException e =
+        assertThrows(ExecutionException.class, () -> component.singleArgBool().get());
+    assertThat(e).hasCauseThat().isInstanceOf(RejectedExecutionException.class);
   }
 
   @Test

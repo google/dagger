@@ -17,7 +17,7 @@
 package dagger.functional.builderbinds;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import dagger.functional.builderbinds.TestComponent.Builder;
@@ -66,43 +66,33 @@ public final class BuilderBindsTest {
 
   @Test
   public void builderBindsNonNullableWithNull() {
-    try {
-      DaggerTestComponent.builder().count(5).l(10L).input(null);
-      fail("expected NullPointerException");
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(
+        NullPointerException.class,
+        () -> DaggerTestComponent.builder().count(5).l(10L).input(null));
   }
 
   @Test
   public void builderBindsPrimitiveNotSet() {
-    try {
-      TestComponent.Builder builder =
-          DaggerTestComponent.builder()
-              .l(10L)
-              .input("foo")
-              .nullableInput("bar")
-              .listOfString(ImmutableList.of());
-      builder.boundInSubtype(20);
-      builder.build();
-      fail("expected IllegalStateException");
-    } catch (IllegalStateException expected) {
-    }
+    TestComponent.Builder builder =
+        DaggerTestComponent.builder()
+            .l(10L)
+            .input("foo")
+            .nullableInput("bar")
+            .listOfString(ImmutableList.of());
+    builder.boundInSubtype(20);
+    assertThrows(IllegalStateException.class, () -> builder.build());
   }
 
   @Test
   public void builderBindsNonNullableNotSet() {
-    try {
-      TestComponent.Builder builder =
-          DaggerTestComponent.builder()
-              .count(5)
-              .l(10L)
-              .nullableInput("foo")
-              .listOfString(ImmutableList.of());
-      builder.boundInSubtype(20);
-      builder.build();
-      fail("expected IllegalStateException");
-    } catch (IllegalStateException expected) {
-    }
+    TestComponent.Builder builder =
+        DaggerTestComponent.builder()
+            .count(5)
+            .l(10L)
+            .nullableInput("foo")
+            .listOfString(ImmutableList.of());
+    builder.boundInSubtype(20);
+    assertThrows(IllegalStateException.class, () -> builder.build());
   }
 
   @Test

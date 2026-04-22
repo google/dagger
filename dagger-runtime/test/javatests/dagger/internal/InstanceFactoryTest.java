@@ -17,7 +17,7 @@
 package dagger.internal;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,10 +34,6 @@ public final class InstanceFactoryTest {
   }
 
   @Test public void create_throwsNullPointerException() {
-    try {
-      InstanceFactory.create(null);
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(NullPointerException.class, () -> InstanceFactory.create(null));
   }
 }

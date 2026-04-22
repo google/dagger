@@ -17,7 +17,7 @@
 package dagger.hilt.android;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import android.os.Build;
 import androidx.fragment.app.FragmentActivity;
@@ -69,18 +69,17 @@ public class ActivityRetainedClearedListenerTest {
       scenario.onActivity(testActivity::set);
       scenario.moveToState(State.DESTROYED);
 
-      try {
-        TestClearedListener callback = new TestClearedListener();
-        testActivity.get().activityRetainedLifecycle.addOnClearedListener(callback);
-        fail("An exception should have been thrown.");
-      } catch (IllegalStateException e) {
-        assertThat(e)
-            .hasMessageThat()
-            .contains(
-                "There was a race between the call to add/remove an OnClearedListener and "
-                    + "onCleared(). This can happen when posting to the Main thread from a "
-                    + "background thread, which is not supported.");
-      }
+      TestClearedListener callback = new TestClearedListener();
+      IllegalStateException e =
+          assertThrows(
+              IllegalStateException.class,
+              () -> testActivity.get().activityRetainedLifecycle.addOnClearedListener(callback));
+      assertThat(e)
+          .hasMessageThat()
+          .contains(
+              "There was a race between the call to add/remove an OnClearedListener and "
+                  + "onCleared(). This can happen when posting to the Main thread from a "
+                  + "background thread, which is not supported.");
     }
   }
 
@@ -92,18 +91,17 @@ public class ActivityRetainedClearedListenerTest {
       scenario.onActivity(testActivity::set);
       scenario.moveToState(State.DESTROYED);
 
-      try {
-        TestClearedListener callback = new TestClearedListener();
-        testActivity.get().activityRetainedLifecycle.removeOnClearedListener(callback);
-        fail("An exception should have been thrown.");
-      } catch (IllegalStateException e) {
-        assertThat(e)
-            .hasMessageThat()
-            .contains(
-                "There was a race between the call to add/remove an OnClearedListener and "
-                    + "onCleared(). This can happen when posting to the Main thread from a "
-                    + "background thread, which is not supported.");
-      }
+      TestClearedListener callback = new TestClearedListener();
+      IllegalStateException e =
+          assertThrows(
+              IllegalStateException.class,
+              () -> testActivity.get().activityRetainedLifecycle.removeOnClearedListener(callback));
+      assertThat(e)
+          .hasMessageThat()
+          .contains(
+              "There was a race between the call to add/remove an OnClearedListener and "
+                  + "onCleared(). This can happen when posting to the Main thread from a "
+                  + "background thread, which is not supported.");
     }
   }
 

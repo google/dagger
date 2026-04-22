@@ -17,7 +17,7 @@
 package dagger.internal;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -40,20 +40,12 @@ import org.junit.runners.JUnit4;
 public class DoubleCheckTest {
   @Test
   public void provider_nullPointerException() {
-    try {
-      DoubleCheck.provider(null);
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(NullPointerException.class, () -> DoubleCheck.provider(null));
   }
 
   @Test
   public void lazy_nullPointerException() {
-    try {
-      DoubleCheck.lazy(null);
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(NullPointerException.class, () -> DoubleCheck.lazy(null));
   }
 
   private static final Provider<Object> DOUBLE_CHECK_OBJECT_PROVIDER =
@@ -123,10 +115,7 @@ public class DoubleCheckTest {
         new AtomicReference<>();
     Provider<Object> doubleCheck = DoubleCheck.provider(() -> doubleCheckReference.get().get());
     doubleCheckReference.set(doubleCheck);
-    try {
-      doubleCheck.get();
-      fail();
-    } catch (StackOverflowError expected) {}
+    assertThrows(StackOverflowError.class, () -> doubleCheck.get());
   }
 
   @Test public void reentranceReturningSameInstance() {
@@ -155,10 +144,7 @@ public class DoubleCheckTest {
        return new Object();
      });
     doubleCheckReference.set(doubleCheck);
-    try {
-      doubleCheck.get();
-      fail();
-    } catch (IllegalStateException expected) {}
+    assertThrows(IllegalStateException.class, () -> doubleCheck.get());
   }
 
   @Test

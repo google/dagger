@@ -18,7 +18,7 @@ package dagger.functional.builder;
 
 import static com.google.common.truth.Truth.assertThat;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import dagger.Component;
 import dagger.Module;
@@ -491,11 +491,7 @@ public class BuilderTest {
         DaggerBuilderTest_TestComponentWithBuilderInterface.builder();
 
     // Make sure things fail if we don't set our required modules.
-    try {
-      builder.build();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    assertThrows(IllegalStateException.class, () -> builder.build());
 
     builder
         .intModule(new IntModuleIncludingDoubleAndFloat(1))
@@ -518,11 +514,7 @@ public class BuilderTest {
         TestComponentWithBuilderAbstractClass.builder();
 
     // Make sure things fail if we don't set our required modules.
-    try {
-      builder.build();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    assertThrows(IllegalStateException.class, () -> builder.build());
 
     builder
         .intModule(new IntModuleIncludingDoubleAndFloat(1))
@@ -545,11 +537,7 @@ public class BuilderTest {
         DaggerBuilderTest_TestComponentWithGenericBuilderInterface.builder();
 
     // Make sure things fail if we don't set our required modules.
-    try {
-      builder.build();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    assertThrows(IllegalStateException.class, () -> builder.build());
 
     builder
         .setM2(new IntModuleIncludingDoubleAndFloat(1))
@@ -572,11 +560,7 @@ public class BuilderTest {
         DaggerBuilderTest_TestComponentWithGenericBuilderAbstractClass.builder();
 
     // Make sure things fail if we don't set our required modules.
-    try {
-      builder.build();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    assertThrows(IllegalStateException.class, () -> builder.build());
 
     builder
         .setM2(new IntModuleIncludingDoubleAndFloat(1))
@@ -597,11 +581,7 @@ public class BuilderTest {
   public void subcomponents_interface() {
     ParentComponent parent = DaggerBuilderTest_ParentComponent.create();
     TestChildComponentWithBuilderInterface.Builder builder1 = parent.childInterfaceBuilder();
-    try {
-      builder1.build();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    assertThrows(IllegalStateException.class, () -> builder1.build());
 
     builder1
         .setM2(new IntModuleIncludingDoubleAndFloat(1))
@@ -622,11 +602,7 @@ public class BuilderTest {
     ParentComponent parent = DaggerBuilderTest_ParentComponent.create();
     TestChildComponentWithBuilderAbstractClass.Builder builder2 =
         parent.childAbstractClassBuilder();
-    try {
-      builder2.build();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    assertThrows(IllegalStateException.class, () -> builder2.build());
 
     builder2
         .setM2(new IntModuleIncludingDoubleAndFloat(10))

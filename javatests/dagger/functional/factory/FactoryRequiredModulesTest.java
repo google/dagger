@@ -17,7 +17,7 @@
 package dagger.functional.factory;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import dagger.Component;
 import org.junit.Test;
@@ -51,10 +51,10 @@ public final class FactoryRequiredModulesTest {
 
   @Test
   public void uninstantiableConcreteModule_failsOnNull() {
-    try {
-      DaggerFactoryRequiredModulesTest_UninstantiableConcreteModuleComponent.factory().create(null);
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(
+        NullPointerException.class,
+        () ->
+            DaggerFactoryRequiredModulesTest_UninstantiableConcreteModuleComponent.factory()
+                .create(null));
   }
 }

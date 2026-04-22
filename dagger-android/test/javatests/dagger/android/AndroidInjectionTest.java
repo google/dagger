@@ -17,7 +17,7 @@
 package dagger.android;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 import static org.robolectric.annotation.LooperMode.Mode.LEGACY;
 
 import android.app.Activity;
@@ -119,14 +119,10 @@ public final class AndroidInjectionTest {
   public void injectActivity_applicationDoesntImplementHasAndroidInjector() {
     Activity activity = Robolectric.setupActivity(Activity.class);
 
-    try {
-      AndroidInjection.inject(activity);
-      fail();
-    } catch (Exception e) {
-      assertThat(e)
-          .hasMessageThat()
-          .contains("Application does not implement dagger.android.HasAndroidInjector");
-    }
+    Exception e = assertThrows(Exception.class, () -> AndroidInjection.inject(activity));
+    assertThat(e)
+        .hasMessageThat()
+        .contains("Application does not implement dagger.android.HasAndroidInjector");
   }
 
   @Test
@@ -135,12 +131,8 @@ public final class AndroidInjectionTest {
     Activity activity = Robolectric.setupActivity(Activity.class);
     activity.getFragmentManager().beginTransaction().add(fragment, null).commit();
 
-    try {
-      AndroidInjection.inject(fragment);
-      fail();
-    } catch (Exception e) {
-      assertThat(e).hasMessageThat().contains("No injector was found");
-    }
+    Exception e = assertThrows(Exception.class, () -> AndroidInjection.inject(fragment));
+    assertThat(e).hasMessageThat().contains("No injector was found");
   }
 
   private static class ApplicationReturnsNull extends Application implements HasAndroidInjector {
@@ -155,12 +147,8 @@ public final class AndroidInjectionTest {
   public void activityInjector_returnsNull() {
     Activity activity = Robolectric.setupActivity(Activity.class);
 
-    try {
-      AndroidInjection.inject(activity);
-      fail();
-    } catch (Exception e) {
-      assertThat(e).hasMessageThat().contains("androidInjector() returned null");
-    }
+    Exception e = assertThrows(Exception.class, () -> AndroidInjection.inject(activity));
+    assertThat(e).hasMessageThat().contains("androidInjector() returned null");
   }
 
   @Test
@@ -170,31 +158,21 @@ public final class AndroidInjectionTest {
     Activity activity = Robolectric.setupActivity(Activity.class);
     activity.getFragmentManager().beginTransaction().add(fragment, null).commit();
 
-    try {
-      AndroidInjection.inject(fragment);
-      fail();
-    } catch (Exception e) {
-      assertThat(e).hasMessageThat().contains("androidInjector() returned null");
-    }
+    Exception e = assertThrows(Exception.class, () -> AndroidInjection.inject(fragment));
+    assertThat(e).hasMessageThat().contains("androidInjector() returned null");
   }
 
   @Test
   public void injectActivity_nullInput() {
-    try {
-      AndroidInjection.inject((Activity) null);
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e).hasMessageThat().contains("activity");
-    }
+    NullPointerException e =
+        assertThrows(NullPointerException.class, () -> AndroidInjection.inject((Activity) null));
+    assertThat(e).hasMessageThat().contains("activity");
   }
 
   @Test
   public void injectFragment_nullInput() {
-    try {
-      AndroidInjection.inject((Fragment) null);
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e).hasMessageThat().contains("fragment");
-    }
+    NullPointerException e =
+        assertThrows(NullPointerException.class, () -> AndroidInjection.inject((Fragment) null));
+    assertThat(e).hasMessageThat().contains("fragment");
   }
 }

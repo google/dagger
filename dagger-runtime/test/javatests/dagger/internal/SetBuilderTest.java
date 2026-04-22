@@ -16,7 +16,7 @@
 
 package dagger.internal;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import java.util.Arrays;
 import org.junit.Before;
@@ -35,28 +35,17 @@ public class SetBuilderTest {
 
   @Test
   public void addNull() {
-    try {
-      setBuilder.add(null);
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(NullPointerException.class, () -> setBuilder.add(null));
   }
 
   @Test
   public void addNullCollection() {
-    try {
-      setBuilder.addAll(null);
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(NullPointerException.class, () -> setBuilder.addAll(null));
   }
 
   @Test
   public void addNullElement() {
-    try {
-      setBuilder.addAll(Arrays.asList("hello", null, "world"));
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(
+        NullPointerException.class, () -> setBuilder.addAll(Arrays.asList("hello", null, "world")));
   }
 }

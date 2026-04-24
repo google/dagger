@@ -17,34 +17,32 @@
 package dagger.internal;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-@SuppressWarnings("unchecked")
 public class MapProviderFactoryTest {
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void nullKey() {
-    thrown.expect(NullPointerException.class);
-    MapProviderFactory.<String, Integer>builder(1).put(null, incrementingIntegerProvider(1));
+    MapProviderFactory.Builder<String, Integer> builder =
+        MapProviderFactory.<String, Integer>builder(1);
+    Provider<Integer> providerOfValue = incrementingIntegerProvider(1);
+    assertThrows(NullPointerException.class, () -> builder.put(null, providerOfValue));
   }
 
   @Test
   public void nullValue() {
-    thrown.expect(NullPointerException.class);
-    MapProviderFactory.<String, Integer>builder(1).put("Hello", null);
+    MapProviderFactory.Builder<String, Integer> builder =
+        MapProviderFactory.<String, Integer>builder(1);
+    assertThrows(NullPointerException.class, () -> builder.put("Hello", null));
   }
-
 
   @Test
   public void iterationOrder() {
@@ -54,14 +52,14 @@ public class MapProviderFactoryTest {
     Provider<Integer> p4 = incrementingIntegerProvider(40);
     Provider<Integer> p5 = incrementingIntegerProvider(50);
 
-    Factory<Map<String, Provider<Integer>>> factory = MapProviderFactory
-        .<String, Integer>builder(4)
-        .put("two", p2)
-        .put("one", p1)
-        .put("three", p3)
-        .put("one", p5)
-        .put("four", p4)
-        .build();
+    Factory<Map<String, Provider<Integer>>> factory =
+        MapProviderFactory.<String, Integer>builder(4)
+            .put("two", p2)
+            .put("one", p1)
+            .put("three", p3)
+            .put("one", p5)
+            .put("four", p4)
+            .build();
 
     Map<String, Provider<Integer>> expectedMap = new LinkedHashMap<>();
     expectedMap.put("two", p2);
@@ -73,7 +71,6 @@ public class MapProviderFactoryTest {
         .containsExactlyElementsIn(expectedMap.entrySet())
         .inOrder();
   }
-
 
   private static Provider<Integer> incrementingIntegerProvider(int seed) {
     return new AtomicInteger(seed)::getAndIncrement;

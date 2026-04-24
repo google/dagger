@@ -17,37 +17,32 @@
 package dagger.internal;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-@SuppressWarnings("unchecked")
 public class SetFactoryTest {
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void providerReturnsNull() {
     Factory<Set<Integer>> factory =
         SetFactory.<Integer>builder(0, 1).addCollectionProvider(() -> null).build();
-    thrown.expect(NullPointerException.class);
-    factory.get();
+    assertThrows(NullPointerException.class, () -> factory.get());
   }
 
   @Test
   public void providerReturnsNullSet() {
     Factory<Set<Integer>> factory =
         SetFactory.<Integer>builder(1, 0).addProvider(() -> null).build();
-    thrown.expect(NullPointerException.class);
-    factory.get();
+    assertThrows(NullPointerException.class, () -> factory.get());
   }
 
   @Test
@@ -55,8 +50,7 @@ public class SetFactoryTest {
     Set<Integer> set = new LinkedHashSet<>(Arrays.asList(1, null, 3));
     Factory<Set<Integer>> factory =
         SetFactory.<Integer>builder(0, 1).addCollectionProvider(() -> set).build();
-    thrown.expect(NullPointerException.class);
-    factory.get();
+    assertThrows(NullPointerException.class, () -> factory.get());
   }
 
   @Test

@@ -356,8 +356,9 @@ public final class Processors {
 
   /** Returns Qualifier annotated annotations found on an element. */
   public static ImmutableList<XAnnotation> getQualifierAnnotations(XElement element) {
-    return getMetadataUtil().getAnnotationsAnnotatedWithAnyOf(
-        element, ClassNames.QUALIFIER, ClassNames.JAKARTA_QUALIFIER);
+    return getMetadataUtil()
+        .getAnnotationsAnnotatedWithAnyOf(
+            element, ClassNames.QUALIFIER, ClassNames.JAKARTA_QUALIFIER);
   }
 
   /** Returns true if an element is annotated with {@literal @}Scope. */
@@ -382,7 +383,9 @@ public final class Processors {
     return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, upperCamel);
   }
 
-  /** @return copy of the given MethodSpec as {@link MethodSpec.Builder} with method body removed */
+  /**
+   * @return copy of the given MethodSpec as {@link MethodSpec.Builder} with method body removed
+   */
   public static MethodSpec.Builder copyMethodSpecWithoutBody(MethodSpec methodSpec) {
     MethodSpec.Builder builder;
 
@@ -390,8 +393,7 @@ public final class Processors {
       // Constructors cannot have return types
       builder = MethodSpec.constructorBuilder();
     } else {
-      builder = MethodSpec.methodBuilder(methodSpec.name)
-          .returns(methodSpec.returnType);
+      builder = MethodSpec.methodBuilder(methodSpec.name).returns(methodSpec.returnType);
     }
 
     return builder

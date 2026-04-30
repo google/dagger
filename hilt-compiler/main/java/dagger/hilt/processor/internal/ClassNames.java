@@ -77,26 +77,21 @@ public final class ClassNames {
 
   public static final ClassName ASSISTED_INJECT = get("dagger.assisted", "AssistedInject");
   public static final ClassName ASSISTED_FACTORY = get("dagger.assisted", "AssistedFactory");
-  public static final ClassName BINDS =
-      get("dagger", "Binds");
-  public static final ClassName BINDS_OPTIONAL_OF =
-      get("dagger", "BindsOptionalOf");
+  public static final ClassName BINDS = get("dagger", "Binds");
+  public static final ClassName BINDS_OPTIONAL_OF = get("dagger", "BindsOptionalOf");
   public static final ClassName MAP_KEY = get("dagger", "MapKey");
   public static final ClassName MODULE = get("dagger", "Module");
-  public static final ClassName MULTIBINDS =
-      get("dagger.multibindings", "Multibinds");
+  public static final ClassName MULTIBINDS = get("dagger.multibindings", "Multibinds");
   public static final ClassName INTO_MAP = get("dagger.multibindings", "IntoMap");
   public static final ClassName INTO_SET = get("dagger.multibindings", "IntoSet");
   public static final ClassName ELEMENTS_INTO_SET = get("dagger.multibindings", "ElementsIntoSet");
   public static final ClassName STRING_KEY = get("dagger.multibindings", "StringKey");
   public static final ClassName LAZY_CLASS_KEY = get("dagger.multibindings", "LazyClassKey");
-  public static final ClassName PROVIDES =
-      get("dagger", "Provides");
+  public static final ClassName PROVIDES = get("dagger", "Provides");
   public static final ClassName COMPONENT = get("dagger", "Component");
   public static final ClassName COMPONENT_BUILDER = get("dagger", "Component", "Builder");
   public static final ClassName SUBCOMPONENT = get("dagger", "Subcomponent");
-  public static final ClassName SUBCOMPONENT_BUILDER =
-      get("dagger", "Subcomponent", "Builder");
+  public static final ClassName SUBCOMPONENT_BUILDER = get("dagger", "Subcomponent", "Builder");
   public static final ClassName PRODUCTION_COMPONENT =
       get("dagger.producers", "ProductionComponent");
 
@@ -130,11 +125,9 @@ public final class ClassNames {
   public static final ClassName SERVICE_SCOPED = get("dagger.hilt.android.scopes", "ServiceScoped");
   public static final ClassName VIEW_SCOPED = get("dagger.hilt.android.scopes", "ViewScoped");
 
-  public static final ClassName INSTALL_IN =
-      get("dagger.hilt", "InstallIn");
+  public static final ClassName INSTALL_IN = get("dagger.hilt", "InstallIn");
   public static final ClassName TEST_INSTALL_IN = get("dagger.hilt.testing", "TestInstallIn");
-  public static final ClassName ENTRY_POINT =
-      get("dagger.hilt", "EntryPoint");
+  public static final ClassName ENTRY_POINT = get("dagger.hilt", "EntryPoint");
   public static final ClassName ENTRY_POINTS = get("dagger.hilt", "EntryPoints");
   public static final ClassName COMPONENT_ENTRY_POINT =
       get("dagger.hilt.internal", "ComponentEntryPoint");
@@ -150,8 +143,7 @@ public final class ClassNames {
   public static final ClassName APPLICATION = get("android.app", "Application");
   public static final ClassName ANDROID_ENTRY_POINT =
       get("dagger.hilt.android", "AndroidEntryPoint");
-  public static final ClassName HILT_ANDROID_APP =
-      get("dagger.hilt.android", "HiltAndroidApp");
+  public static final ClassName HILT_ANDROID_APP = get("dagger.hilt.android", "HiltAndroidApp");
   public static final ClassName CONTEXT = get("android.content", "Context");
   public static final ClassName APPLICATION_PROVIDER =
       get("androidx.test.core.app", "ApplicationProvider");

@@ -81,6 +81,22 @@ public final class MapType {
     return XTypes.isRawParameterizedType(type);
   }
 
+  public XTypeName keyTypeName() {
+    checkState(!isRawType());
+    return XTypeNames.getParameterizedTypeArguments(typeName()).get(0);
+  }
+
+  public XTypeName valueTypeName() {
+    checkState(!isRawType());
+    return XTypeNames.getParameterizedTypeArguments(typeName()).get(1);
+  }
+
+  public XTypeName unwrappedFrameworkValueTypeName() {
+    return valuesAreFrameworkType()
+        ? XTypeNames.getParameterizedTypeArguments(valueTypeName()).get(0)
+        : valueTypeName();
+  }
+
   /**
    * The map key type.
    *

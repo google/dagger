@@ -337,6 +337,15 @@ object XTypeNames {
    */
   // TODO(bcorso): Take in an XTypeName once we can check for XParameterizedTypeName in XPoet.
   @JvmStatic
+  fun getParameterizedTypeArguments(typeName: XTypeName): List<XTypeName> {
+    val javaPoet = typeName.toJavaPoet()
+    val kotlinPoet = typeName.toKotlinPoet()
+    val javaArgs = (javaPoet as? JParameterizedTypeName)?.typeArguments ?: emptyList()
+    val kotlinArgs = (kotlinPoet as? KParameterizedTypeName)?.typeArguments ?: emptyList()
+    return javaArgs.zip(kotlinArgs).map { (j, k) -> toXPoet(j, k) }
+  }
+
+  @JvmStatic
   fun rawJavaTypeName(typeName: JTypeName): JTypeName {
     return if (typeName is JParameterizedTypeName) {
       typeName.rawType

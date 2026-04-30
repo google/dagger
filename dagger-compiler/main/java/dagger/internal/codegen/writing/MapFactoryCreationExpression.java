@@ -166,7 +166,7 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
     if (useLazyClassKey) {
       return XTypeName.STRING;
     }
-    return MapType.from(binding.key()).keyType().asTypeName();
+    return MapType.from(binding.key()).keyTypeName();
   }
 
   private XTypeName valueTypeName() {

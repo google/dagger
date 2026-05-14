@@ -170,6 +170,23 @@ especially true when dealing with Kotlin sources, where wildcards must be
 interpreted indirectly from a number of factors other than the explicit variance
 at the use site.
 
+## Detect duplicate map multibinding contributions across component boundaries {#map-multibinding-duplicate-detection-fix}
+
+The `dagger.mapMultibindingDuplicateDetectionFix` flag fixes a bug in Dagger
+where duplicate multibinding map keys were allowed in certain situations.
+When the flag is enabled Dagger should enforce strict duplicate checking of map
+multibinding contributions (e.g., identical `@IntoMap` bindings) across
+component boundaries.
+
+By default, this flag is disabled, meaning Dagger preserves the legacy lenient
+behavior and ignores duplicate map key contributions across component
+boundaries.
+
+To opt-in to strict duplicate detection at compile time (for Maps), enable the
+flag by passing the following compiler option:
+
+`-Adagger.mapMultibindingDuplicateDetectionFix=ENABLED`
+
 <!-- References -->
 
 [`@Component`]: https://dagger.dev/api/latest/dagger/Component.html

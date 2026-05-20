@@ -236,20 +236,20 @@ CoffeeShop coffeeShop = DaggerCoffeeShop.builder()
     .build();
 ```
 
-_Note_: If your `@Component` is not a top-level type, the generated component's
-name will include its enclosing types' names, joined with an underscore. For
-example, this code:
-
-```java
-class Foo {
-  static class Bar {
-    @Component
-    interface BazComponent {}
-  }
-}
-```
-
-would generate a component named `DaggerFoo_Bar_BazComponent`.
+> **Note**: If your `@Component` is not a top-level type, the generated
+> component's name will include its enclosing types' names, joined with an
+> underscore. For example, this code:
+>
+> ```java
+> class Foo {
+>   static class Bar {
+>     @Component
+>     interface BazComponent {}
+>   }
+> }
+> ```
+>
+> would generate a component named `DaggerFoo_Bar_BazComponent`.
 
 Any module with an accessible default constructor can be elided as the builder
 will construct an instance automatically if none is set.  And for any module

@@ -31,6 +31,19 @@ java_test(
     ],
 )
 
+java_test(
+    name = "MethodSignatureTest",
+    size = "small",
+    srcs = ["MethodSignatureTest.java"],
+    deps = [
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal:method_signature",
+        "//third_party/java/guava/collect",
+        "//third_party/java/javapoet",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
 java_library(
     name = "generated_import",
     srcs = ["GeneratedImport.java"],

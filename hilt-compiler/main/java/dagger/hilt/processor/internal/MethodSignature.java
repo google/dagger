@@ -21,16 +21,16 @@ import static java.util.stream.Collectors.joining;
 
 import androidx.room3.compiler.processing.XExecutableElement;
 import androidx.room3.compiler.processing.XMethodElement;
-import androidx.room3.compiler.processing.XMethodType;
 import androidx.room3.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.xprocessing.XElements;
+import java.util.Objects;
 
 /** Represents the method signature needed to uniquely identify a method. */
-@AutoValue
 public abstract class MethodSignature {
   MethodSignature() {}
 
@@ -40,22 +40,20 @@ public abstract class MethodSignature {
 
   /** Creates a {@link MethodSignature} from a method name and parameter {@link TypeName}s */
   public static MethodSignature of(String methodName, TypeName... typeNames) {
-    return new AutoValue_MethodSignature(methodName, ImmutableList.copyOf(typeNames));
+    return new AutoValue_MethodSignature_TypeNameMethodSignature(
+        methodName, ImmutableList.copyOf(typeNames));
   }
 
   /** Creates a {@link MethodSignature} from a {@link MethodSpec} */
   public static MethodSignature of(MethodSpec method) {
-    return new AutoValue_MethodSignature(
+    return new AutoValue_MethodSignature_TypeNameMethodSignature(
         method.name, method.parameters.stream().map(p -> p.type).collect(toImmutableList()));
   }
 
   /** Creates a {@link MethodSignature} from an {@link XExecutableElement} */
   public static MethodSignature of(XExecutableElement executableElement) {
-    return new AutoValue_MethodSignature(
-        XElements.getSimpleName(executableElement),
-        executableElement.getParameters().stream()
-            .map(p -> p.getType().getTypeName())
-            .collect(toImmutableList()));
+    return new AutoValue_MethodSignature_ElementMethodSignature(
+        executableElement, executableElement.getEnclosingElement().getType());
   }
 
   /**
@@ -64,12 +62,27 @@ public abstract class MethodSignature {
    * <p>This version will resolve type parameters as declared by {@code enclosing}.
    */
   static MethodSignature ofDeclaredType(XMethodElement method, XType enclosing) {
-    XMethodType executableType = method.asMemberOf(enclosing);
-    return new AutoValue_MethodSignature(
-        XElements.getSimpleName(method),
-        executableType.getParameterTypes().stream()
-            .map(XType::getTypeName)
-            .collect(toImmutableList()));
+    return new AutoValue_MethodSignature_ElementMethodSignature(method, enclosing);
+  }
+
+  @Override
+  public final boolean equals(Object other) {
+    if (other == this) {
+      return true;
+    }
+    if (!(other instanceof MethodSignature)) {
+      return false;
+    }
+    MethodSignature that = (MethodSignature) other;
+    return Objects.equals(this.name(), that.name())
+        && Objects.equals(this.parameters(), that.parameters());
+  }
+
+  @Override
+  public final int hashCode() {
+    // Only hash the name to avoid expensive parameter resolution. This allows Set and Map lookups
+    // to be efficient, only calling equals() when the name matches.
+    return Objects.hashCode(name());
   }
 
   /** Returns a string in the format: METHOD_NAME(PARAM_TYPE1,PARAM_TYPE2,...) */
@@ -77,5 +90,34 @@ public abstract class MethodSignature {
   public final String toString() {
     return String.format(
         "%s(%s)", name(), parameters().stream().map(Object::toString).collect(joining(",")));
+  }
+
+  @AutoValue
+  abstract static class TypeNameMethodSignature extends MethodSignature {
+    @Override
+    public abstract String name();
+
+    @Override
+    public abstract ImmutableList<TypeName> parameters();
+  }
+
+  @AutoValue
+  abstract static class ElementMethodSignature extends MethodSignature {
+    abstract XExecutableElement executableElement();
+
+    abstract XType enclosingType();
+
+    @Override
+    public final String name() {
+      return XElements.getSimpleName(executableElement());
+    }
+
+    @Override
+    @Memoized
+    public ImmutableList<TypeName> parameters() {
+      return executableElement().asMemberOf(enclosingType()).getParameterTypes().stream()
+          .map(XType::getTypeName)
+          .collect(toImmutableList());
+    }
   }
 }

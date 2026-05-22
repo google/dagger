@@ -21,8 +21,8 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsM
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.EXCEPTION;
+import static dagger.internal.codegen.xprocessing.XTypes.isEffectivelyWildcard;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
-import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.processing.XMethodElement;
@@ -126,7 +126,7 @@ final class ProducesMethodValidator extends BindingMethodValidator {
           return Optional.empty();
         }
         XTypeArgument typeArgument = getOnlyElement(type.getTypeArguments());
-        if (isWildcard(typeArgument)) {
+        if (isEffectivelyWildcard(typeArgument)) {
           report.addError(badTypeMessage());
           return Optional.empty();
         }

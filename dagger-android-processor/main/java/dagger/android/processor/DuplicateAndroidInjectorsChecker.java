@@ -18,7 +18,7 @@ package dagger.android.processor;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.android.processor.AndroidMapKeys.injectedTypeFromMapKey;
-import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
+import static dagger.internal.codegen.xprocessing.XTypes.isEffectivelyWildcard;
 import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
@@ -130,7 +130,7 @@ public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugi
                   DaggerElements.toXProcessing(requestedBinding.key().type(), processingEnv)
                       .getTypeArguments()
                       .get(1);
-              if (isWildcard(valueTypeArgument)) {
+              if (isEffectivelyWildcard(valueTypeArgument)) {
                 return false;
               }
               XType valueType = requireInvariantType(valueTypeArgument);

@@ -20,9 +20,9 @@ import static androidx.room3.compiler.processing.XTypeKt.isArray;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.xprocessing.XTypes.asArray;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static dagger.internal.codegen.xprocessing.XTypes.isEffectivelyWildcard;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 import static dagger.internal.codegen.xprocessing.XTypes.isRawParameterizedType;
-import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.processing.XAnnotation;
@@ -108,7 +108,7 @@ final class MembersInjectionValidator {
   // TODO(dpb): Can this be inverted so it explicitly rejects wildcards or type variables?
   // This logic is hard to describe.
   private boolean isResolvableTypeArgument(XTypeArgument typeArgument) {
-    if (isWildcard(typeArgument)) {
+    if (isEffectivelyWildcard(typeArgument)) {
       return false;
     }
     XType type = requireInvariantType(typeArgument);

@@ -30,9 +30,9 @@ import static dagger.internal.codegen.xprocessing.XElements.asField;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static dagger.internal.codegen.xprocessing.XTypes.isEffectivelyWildcard;
 import static dagger.internal.codegen.xprocessing.XTypes.isRawParameterizedType;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
-import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.codegen.XTypeName;
@@ -215,7 +215,7 @@ final class DependencyRequestValidator {
       }
       if (MapType.isMap(keyType)) {
         MapType mapType = MapType.from(keyType);
-        if (!mapType.isRawType() && !isWildcard(mapType.valueType())) {
+        if (!mapType.isRawType() && !isEffectivelyWildcard(mapType.valueType())) {
           XType valueType = requireInvariantType(mapType.valueType());
           if (isMapValueFrameworkType(valueType) && isRawParameterizedType(valueType)) {
             report.addError(

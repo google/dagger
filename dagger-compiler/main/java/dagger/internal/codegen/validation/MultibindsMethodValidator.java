@@ -23,7 +23,7 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsS
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
-import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
+import static dagger.internal.codegen.xprocessing.XTypes.isEffectivelyWildcard;
 import static dagger.internal.codegen.xprocessing.XTypes.requireInvariantType;
 
 import androidx.room3.compiler.processing.XMethodElement;
@@ -92,10 +92,10 @@ class MultibindsMethodValidator extends BindingMethodValidator {
     private void checkMapType(MapType mapType) {
       if (mapType.isRawType()) {
         report.addError(bindingMethods("return type cannot be a raw Map type"));
-      } else if (isWildcard(mapType.keyType())) {
+      } else if (isEffectivelyWildcard(mapType.keyType())) {
         report.addError(
             bindingMethods("return type cannot use a wildcard as the Map key type."));
-      } else if (isWildcard(mapType.valueType())) {
+      } else if (isEffectivelyWildcard(mapType.valueType())) {
         report.addError(
             bindingMethods("return type cannot use a wildcard as the Map value type."));
       } else {
@@ -112,7 +112,7 @@ class MultibindsMethodValidator extends BindingMethodValidator {
     private void checkSetType(SetType setType) {
       if (setType.isRawType()) {
         report.addError(bindingMethods("return type cannot be a raw Set type"));
-      } else if (isWildcard(setType.elementType())) {
+      } else if (isEffectivelyWildcard(setType.elementType())) {
         report.addError(bindingMethods("return type cannot use a wildcard as the Set value type."));
       } else {
         XType elementType = requireInvariantType(setType.elementType());

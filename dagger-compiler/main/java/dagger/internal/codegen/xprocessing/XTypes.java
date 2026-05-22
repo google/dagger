@@ -337,26 +337,28 @@ public final class XTypes {
   }
 
   /**
-   * Returns {@code true} if the given type is a wildcard type.
+   * Returns {@code true} if the given type is effectively a wildcard type.
    *
    * <p>In Java, this represents {@code ?} and {@code ? extends/super Foo}.
    *
-   * <p>In Kotlin, this represents {@code *} or {@code out/in Foo}.
+   * <p>In Kotlin, this represents explicit (a.k.a. use-site) variance, e.g. {@code *} or
+   * {@code out/in Foo}, but also includes types with implicit/effective variance, e.g. based on the
+   * declaration site variance of the original type parameter that this type argument represents.
    */
-  public static boolean isWildcard(XTypeArgument typeArgument) {
-    return typeArgument.getVariance() != XVariance.INVARIANT;
-  }
-
-  public static boolean isJavaWildcard(XTypeArgument typeArgument) {
+  public static boolean isEffectivelyWildcard(XTypeArgument typeArgument) {
     XProcessingEnv.Backend backend = getProcessingEnv(typeArgument).getBackend();
     switch (backend) {
       case JAVAC:
         // This is cheaper than creating the XTypeName.
         return toJavac(typeArgument).getKind() == TypeKind.WILDCARD;
       case KSP:
-        return XTypeNames.isJavaWildcard(typeArgument.asTypeName());
+        // If the type argument has explicit (i.e. use-site) variance then we can return `true`
+        // immediately. Otherwise, we need to check the Java representation, which will calculate
+        // the "effective" variance by considering things like declaration site variance.
+        return typeArgument.getVariance() != XVariance.INVARIANT
+            || XTypeNames.isJavaWildcard(typeArgument.asTypeName());
     }
-    throw new AssertionError("Unexpected backend: " + backend); 
+    throw new AssertionError("Unexpected backend: " + backend);
   }
 
   /** Returns {@code true} if the given type is a declared type. */
@@ -576,7 +578,7 @@ public final class XTypes {
    */
   public static void checkNotWildcard(XTypeArgument typeArgument) {
     checkArgument(
-        !isWildcard(typeArgument) && !isJavaWildcard(typeArgument),
+        !isEffectivelyWildcard(typeArgument),
         "Type argument is a wildcard: %s",
         typeArgument);
   }

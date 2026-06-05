@@ -502,5 +502,11 @@ public final class Processors {
         && !element.isPublic();
   }
 
+  public static void checkNotErrorType(XType type) {
+    if (type.isError()) {
+      throw new ErrorTypeException("bad type", type.getTypeElement());
+    }
+  }
+
   private Processors() {}
 }

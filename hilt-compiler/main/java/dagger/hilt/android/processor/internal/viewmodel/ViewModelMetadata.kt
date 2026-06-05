@@ -83,6 +83,8 @@ private constructor(val viewModelElement: XTypeElement, val assistedFactory: XTy
           .getAsType(ASSISTED_FACTORY_VALUE)
       val assistedFactory = assistedFactoryType.typeElement!!
 
+      Processors.checkNotErrorType(assistedFactoryType)
+
       if (assistedFactoryType.asTypeName() != XTypeName.ANY_OBJECT) {
         ProcessorErrors.checkState(
           isAssistedInjectFeatureEnabled,

@@ -22,6 +22,8 @@ dependencies {
   implementation(libs.findBugs)
   implementation(libs.kotlin.stdlib)
 
+  compileOnly(libs.errorprone.annotations)
+
   annotationProcessor(project(":dagger-compiler", "unshaded"))
   annotationProcessor(project(":hilt-compiler", "unshaded"))
   annotationProcessor(libs.auto.common)

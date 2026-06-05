@@ -35,8 +35,11 @@ android_library(
         "//hilt-android/main/java/dagger/hilt/android/components",
         "//hilt-android/main/java/dagger/hilt/android/internal/managers:saved_state_handle_holder",
         "//hilt-core/main/java/dagger/hilt:define_component",
+        "//third_party/java/androidx/annotation",
         "//third_party/java/androidx/fragment",
+        "//third_party/java/androidx/lifecycle/viewmodel_savedstate",
         "//third_party/java/dagger",
+        "//third_party/java/error_prone:annotations",
     ],
 )
 

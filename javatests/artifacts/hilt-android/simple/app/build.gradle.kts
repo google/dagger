@@ -166,6 +166,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.2.0")
     implementation("com.google.dagger:hilt-android:$dagger_version")
     annotationProcessor("com.google.dagger:hilt-compiler:$dagger_version")
+    compileOnly("com.google.errorprone:error_prone_annotations:2.45.0")
 
     testImplementation("com.google.truth:truth:1.0.1")
     testImplementation("junit:junit:4.13")

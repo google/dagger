@@ -178,6 +178,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
 
       dependencies {
         implementation 'androidx.appcompat:appcompat:1.1.0'
+        implementation 'com.google.errorprone:error_prone_annotations:2.45.0'
         implementation 'com.google.dagger:dagger:LOCAL-SNAPSHOT'
         annotationProcessor 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'
         implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'

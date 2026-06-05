@@ -185,6 +185,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
 
         dependencies {
           implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.2.0'))
+          implementation 'com.google.errorprone:error_prone_annotations:2.45.0'
           ${dependencies.joinToString(separator = "\n")}
         }
 

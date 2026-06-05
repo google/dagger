@@ -90,6 +90,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.activity:activity-ktx:1.5.0'
+    implementation "com.google.errorprone:error_prone_annotations:2.45.0"
 
     implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'
     kaptWithKapt 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'

@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.internal.codegen.extension.DaggerStreams;
@@ -48,9 +49,9 @@ public final class AliasOfProcessingStep extends BaseProcessingStep {
     ProcessorErrors.checkState(
         Processors.isAnnotatedWithScope(element),
         element,
-        "%s should only be used on scopes." + " However, it was found annotating %s",
+        "%s should only be used on scopes. However, it was found annotating %s",
         annotation.simpleName(),
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
 
     XAnnotation xAnnotation = element.getAnnotation(ClassNames.ALIAS_OF);
 

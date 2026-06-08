@@ -121,12 +121,11 @@ public final class Processors {
     ProcessorErrors.checkState(
         values.size() >= 1,
         annotation.getTypeElement(),
-        () ->
-            String.format(
-                "@%s, '%s' class is invalid or missing: %s",
-                annotation.getName(),
-                key,
-                XAnnotations.toStableString(annotation)));
+        LazyString.of(
+            () ->
+                String.format(
+                    "@%s, '%s' class is invalid or missing: %s",
+                    annotation.getName(), key, XAnnotations.toStableString(annotation))));
 
     return values;
   }

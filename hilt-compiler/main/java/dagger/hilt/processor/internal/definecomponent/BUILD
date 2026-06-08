@@ -61,6 +61,7 @@ java_library(
         "//dagger-compiler:xprocessing",
         "//dagger-spi",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:classnames",
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal:lazy_string",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:processor_errors",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:processors",
         "//third_party/java/auto:value",
@@ -82,12 +83,11 @@ java_library(
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:aggregated_elements",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:classnames",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:component_descriptor",
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal:lazy_string",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:processor_errors",
-        "//hilt-compiler/main/java/dagger/hilt/processor/internal:processors",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal/root/ir",
         "//third_party/java/auto:value",
         "//third_party/java/guava/collect",
-        "//third_party/java/javapoet",
     ],
 )
 

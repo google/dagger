@@ -73,9 +73,12 @@ public final class AggregatedElements {
           "Expected element, %s, to be annotated with @%s, but only found: %s.",
           aggregatedElement.getName(),
           aggregatingAnnotation,
-          aggregatedElement.getAllAnnotations().stream()
-              .map(XAnnotations::toStableString)
-              .collect(toImmutableList()));
+          LazyString.of(
+              () ->
+                  aggregatedElement.getAllAnnotations().stream()
+                      .map(XAnnotations::toStableString)
+                      .collect(toImmutableList())
+                      .toString()));
     }
 
     return aggregatedElements;

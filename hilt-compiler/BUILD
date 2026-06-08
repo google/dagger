@@ -81,6 +81,7 @@ _ARTIFACT_TARGET_LIBS = [
     "//hilt-compiler/main/java/dagger/hilt/processor/internal/root/ir:ir",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal/uninstallmodules:processor_lib",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
+    "//hilt-compiler/main/java/dagger/hilt/processor/internal:lazy_string",
 ]
 
 _ARTIFACT_TARGET_MAVEN_DEPS = [

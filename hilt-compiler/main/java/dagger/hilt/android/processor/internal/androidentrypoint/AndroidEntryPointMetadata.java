@@ -44,6 +44,7 @@ import com.squareup.javapoet.TypeName;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
 import dagger.hilt.processor.internal.BadInputException;
 import dagger.hilt.processor.internal.Components;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtil;
@@ -220,10 +221,19 @@ public abstract class AndroidEntryPointMetadata {
     ProcessorErrors.checkState(
         hiltAnnotations.size() == 1,
         element,
-        () -> String.format(
-            "Expected exactly 1 of %s. Found: %s",
-            HILT_ANNOTATION_NAMES.stream().map(ClassName::canonicalName).collect(toImmutableSet()),
-            hiltAnnotations.stream().map(XAnnotations::toStableString).collect(toImmutableSet())));
+        "Expected exactly 1 of %s. Found: %s",
+        LazyString.of(
+            () ->
+                HILT_ANNOTATION_NAMES.stream()
+                    .map(ClassName::canonicalName)
+                    .collect(toImmutableSet())
+                    .toString()),
+        LazyString.of(
+            () ->
+                hiltAnnotations.stream()
+                    .map(XAnnotations::toStableString)
+                    .collect(toImmutableSet())
+                    .toString()));
 
     ClassName annotationClassName = getOnlyElement(hiltAnnotations).getClassName();
 
@@ -326,7 +336,15 @@ public abstract class AndroidEntryPointMetadata {
     ProcessorErrors.checkState(
         inheritanceTrace.add(baseElement),
         element,
-        cyclicInheritanceErrorMessage(inheritanceTrace, baseElement));
+        "Cyclic inheritance detected. Make sure the base class of @AndroidEntryPoint "
+            + "is not the annotated class itself or subclass of the annotated class.\n"
+            + "The cyclic inheritance structure: %s --> %s\n",
+        LazyString.of(
+            () ->
+                inheritanceTrace.stream()
+                    .map(XElements::toStableString)
+                    .collect(Collectors.joining(" --> "))),
+        LazyString.of(() -> XElements.toStableString(baseElement)));
     if (hasAndroidEntryPointMetadata(baseElement)) {
       AndroidEntryPointMetadata baseMetadata =
           AndroidEntryPointMetadata.of(baseElement, inheritanceTrace);
@@ -344,17 +362,7 @@ public abstract class AndroidEntryPointMetadata {
     return Optional.empty();
   }
 
-  private static String cyclicInheritanceErrorMessage(
-      LinkedHashSet<XElement> inheritanceTrace, XTypeElement cycleEntryPoint) {
-    return String.format(
-        "Cyclic inheritance detected. Make sure the base class of @AndroidEntryPoint "
-            + "is not the annotated class itself or subclass of the annotated class.\n"
-            + "The cyclic inheritance structure: %s --> %s\n",
-        inheritanceTrace.stream()
-            .map(XElements::toStableString)
-            .collect(Collectors.joining(" --> ")),
-        XElements.toStableString(cycleEntryPoint));
-  }
+
 
   /**
    * The Android type of the Android Entry Point element. Component splits (like with fragment
@@ -441,7 +449,7 @@ public abstract class AndroidEntryPointMetadata {
           Processors.isAssignableFrom(baseElement, AndroidClassNames.APPLICATION),
           element,
           "@HiltAndroidApp base class must extend Application. Found: %s",
-          XElements.toStableString(baseElement));
+          LazyString.of(() -> XElements.toStableString(baseElement)));
       return Type.APPLICATION;
     }
 
@@ -486,8 +494,9 @@ public abstract class AndroidEntryPointMetadata {
         baseMetadata.allowsOptionalInjection()
             || !element.hasAnnotation(AndroidClassNames.OPTIONAL_INJECT),
         element,
-        "@OptionalInject Hilt class cannot extend from a non-optional @AndroidEntryPoint base: %s",
-        XElements.toStableString(element));
+        "@OptionalInject Hilt class cannot extend from a non-optional"
+            + " @AndroidEntryPoint base: %s",
+        LazyString.of(() -> XElements.toStableString(element)));
   }
 
   private static void checkAnnotationsMatch(

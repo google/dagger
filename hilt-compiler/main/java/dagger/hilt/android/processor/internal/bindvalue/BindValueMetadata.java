@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.internal.codegen.xprocessing.XAnnotations;
@@ -106,7 +107,7 @@ abstract class BindValueMetadata {
           element,
           "@%s can only be used with fields. Found: %s",
           annotationClassName.simpleName(),
-          XElements.toStableString(element));
+          LazyString.of(() -> XElements.toStableString(element)));
 
       XFieldElement field = asField(element);
       Optional<XMethodElement> propertyGetter = Optional.ofNullable(field.getGetter());
@@ -116,14 +117,14 @@ abstract class BindValueMetadata {
             field,
             "@%s field getter cannot be private. Found: %s",
             annotationClassName.simpleName(),
-            XElements.toStableString(field));
+            LazyString.of(() -> XElements.toStableString(field)));
       } else {
         ProcessorErrors.checkState(
             !XElements.isPrivate(field),
             field,
             "@%s fields cannot be private. Found: %s",
             annotationClassName.simpleName(),
-            XElements.toStableString(field));
+            LazyString.of(() -> XElements.toStableString(field)));
       }
 
       ProcessorErrors.checkState(
@@ -131,7 +132,7 @@ abstract class BindValueMetadata {
           field,
           "@%s fields cannot be used with @Inject annotation. Found %s",
           annotationClassName.simpleName(),
-          XElements.toStableString(field));
+          LazyString.of(() -> XElements.toStableString(field)));
 
       ImmutableList<XAnnotation> qualifiers = Processors.getQualifierAnnotations(field);
       ProcessorErrors.checkState(
@@ -139,7 +140,12 @@ abstract class BindValueMetadata {
           field,
           "@%s fields cannot have more than one qualifier. Found %s",
           annotationClassName.simpleName(),
-          qualifiers.stream().map(XAnnotations::toStableString).collect(toImmutableList()));
+          LazyString.of(
+              () ->
+                  qualifiers.stream()
+                      .map(XAnnotations::toStableString)
+                      .collect(toImmutableList())
+                      .toString()));
 
       ImmutableList<XAnnotation> mapKeys = Processors.getMapKeyAnnotations(field);
       Optional<XAnnotation> optionalMapKeys;
@@ -148,7 +154,12 @@ abstract class BindValueMetadata {
             mapKeys.size() == 1,
             field,
             "@BindValueIntoMap fields must have exactly one @MapKey. Found %s",
-            mapKeys.stream().map(XAnnotations::toStableString).collect(toImmutableList()));
+            LazyString.of(
+                () ->
+                    mapKeys.stream()
+                        .map(XAnnotations::toStableString)
+                        .collect(toImmutableList())
+                        .toString()));
         optionalMapKeys = Optional.of(mapKeys.get(0));
       } else {
         ProcessorErrors.checkState(
@@ -165,7 +176,12 @@ abstract class BindValueMetadata {
           field,
           "@%s fields cannot be scoped. Found %s",
           annotationClassName.simpleName(),
-          scopes.stream().map(XAnnotations::toStableString).collect(toImmutableList()));
+          LazyString.of(
+              () ->
+                  scopes.stream()
+                      .map(XAnnotations::toStableString)
+                      .collect(toImmutableList())
+                      .toString()));
 
       return new AutoValue_BindValueMetadata_BindValueElement(
           field,

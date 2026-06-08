@@ -58,6 +58,7 @@ java_library(
         "ProcessorErrors.java",
     ],
     deps = [
+        ":lazy_string",
         "//dagger-compiler:xprocessing",
         "//third_party/java/error_prone:annotations",
         "//third_party/java/guava/base",
@@ -73,6 +74,7 @@ java_library(
     ],
     deps = [
         ":classnames",
+        ":lazy_string",
         ":processor_errors",
         "//dagger-compiler:xprocessing",
         "//dagger-spi",
@@ -127,11 +129,10 @@ java_library(
     ],
     deps = [
         ":classnames",
+        ":lazy_string",
         ":processor_errors",
-        ":processors",
         "//dagger-compiler:xprocessing",
         "//dagger-spi",
-        "//third_party/java/auto:common",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
     ],
@@ -176,6 +177,11 @@ java_library(
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
     ],
+)
+
+java_library(
+    name = "lazy_string",
+    srcs = ["LazyString.java"],
 )
 
 kt_jvm_library(

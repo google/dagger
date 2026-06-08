@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.internal.codegen.xprocessing.XElements;
 
@@ -41,8 +42,8 @@ public final class DisableInstallInCheckProcessingStep extends BaseProcessingSte
     ProcessorErrors.checkState(
         element.hasAnnotation(ClassNames.MODULE),
         element,
-        "@DisableInstallInCheck should only be used on modules. However, it was found annotating"
-            + " %s",
-        XElements.toStableString(element));
+        "@DisableInstallInCheck should only be used on modules. However, it was found"
+            + " annotating %s",
+        LazyString.of(() -> XElements.toStableString(element)));
   }
 }

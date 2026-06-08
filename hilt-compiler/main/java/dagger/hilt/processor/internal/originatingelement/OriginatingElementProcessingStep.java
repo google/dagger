@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.internal.codegen.xprocessing.XElements;
@@ -50,7 +51,7 @@ public final class OriginatingElementProcessingStep extends BaseProcessingStep {
         element,
         "@%s should only be used to annotate top-level types, but found: %s",
         annotation.simpleName(),
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
 
     XTypeElement topLevelClassElement =
         element

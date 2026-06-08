@@ -29,6 +29,7 @@ import androidx.room3.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentMetadatas.DefineComponentMetadata;
 import dagger.internal.codegen.xprocessing.XAnnotations;
@@ -68,10 +69,13 @@ public final class DefineComponentBuilderMetadatas {
         builder.hasAnnotation(ClassNames.DEFINE_COMPONENT_BUILDER),
         builder,
         "%s, expected to be annotated with @DefineComponent.Builder. Found: %s",
-        XElements.toStableString(builder),
-        builder.getAllAnnotations().stream()
-            .map(XAnnotations::toStableString)
-            .collect(toImmutableList()));
+        LazyString.of(() -> XElements.toStableString(builder)),
+        LazyString.of(
+            () ->
+                builder.getAllAnnotations().stream()
+                    .map(XAnnotations::toStableString)
+                    .collect(toImmutableList())
+                    .toString()));
     return getComponentType(builder, getBuildMethod(builder));
   }
 
@@ -80,17 +84,20 @@ public final class DefineComponentBuilderMetadatas {
         element.hasAnnotation(ClassNames.DEFINE_COMPONENT_BUILDER),
         element,
         "%s, expected to be annotated with @DefineComponent.Builder. Found: %s",
-        XElements.toStableString(element),
-        element.getAllAnnotations().stream()
-            .map(XAnnotations::toStableString)
-            .collect(toImmutableList()));
+        LazyString.of(() -> XElements.toStableString(element)),
+        LazyString.of(
+            () ->
+                element.getAllAnnotations().stream()
+                    .map(XAnnotations::toStableString)
+                    .collect(toImmutableList())
+                    .toString()));
 
     // TODO(bcorso): Allow abstract classes?
     ProcessorErrors.checkState(
         isTypeElement(element) && asTypeElement(element).isInterface(),
         element,
         "@DefineComponent.Builder is only allowed on interfaces. Found: %s",
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
     XTypeElement builder = asTypeElement(element);
 
     // TODO(bcorso): Allow extending interfaces?
@@ -98,17 +105,20 @@ public final class DefineComponentBuilderMetadatas {
         builder.getSuperInterfaces().isEmpty(),
         builder,
         "@DefineComponent.Builder %s, cannot extend a super class or interface. Found: %s",
-        XElements.toStableString(builder),
-        builder.getSuperInterfaces().stream()
-            .map(XTypes::toStableString)
-            .collect(toImmutableList()));
+        LazyString.of(() -> XElements.toStableString(builder)),
+        LazyString.of(
+            () ->
+                builder.getSuperInterfaces().stream()
+                    .map(XTypes::toStableString)
+                    .collect(toImmutableList())
+                    .toString()));
 
     // TODO(bcorso): Allow type parameters?
     ProcessorErrors.checkState(
         builder.getTypeParameters().isEmpty(),
         builder,
         "@DefineComponent.Builder %s, cannot have type parameters.",
-        XTypes.toStableString(builder.getType()));
+        LazyString.of(() -> XTypes.toStableString(builder.getType())));
 
     ImmutableList<XFieldElement> nonStaticFields =
         builder.getDeclaredFields().stream()
@@ -119,10 +129,13 @@ public final class DefineComponentBuilderMetadatas {
         nonStaticFields.isEmpty(),
         builder,
         "@DefineComponent.Builder %s, cannot have non-static fields. Found: %s",
-        XElements.toStableString(builder),
-        nonStaticFields.stream()
-            .map(XElements::toStableString)
-            .collect(toImmutableList()));
+        LazyString.of(() -> XElements.toStableString(builder)),
+        LazyString.of(
+            () ->
+                nonStaticFields.stream()
+                    .map(XElements::toStableString)
+                    .collect(toImmutableList())
+                    .toString()));
 
     XMethodElement buildMethod = getBuildMethod(builder);
     XType componentType = getComponentType(builder, buildMethod);
@@ -138,12 +151,15 @@ public final class DefineComponentBuilderMetadatas {
         nonStaticNonBuilderMethods.isEmpty(),
         nonStaticNonBuilderMethods,
         "@DefineComponent.Builder %s, all non-static methods must return %s or %s. Found: %s",
-        XElements.toStableString(builder),
-        XElements.toStableString(builder),
-        XTypes.toStableString(componentType),
-        nonStaticNonBuilderMethods.stream()
-            .map(XElements::toStableString)
-            .collect(toImmutableList()));
+        LazyString.of(() -> XElements.toStableString(builder)),
+        LazyString.of(() -> XElements.toStableString(builder)),
+        LazyString.of(() -> XTypes.toStableString(componentType)),
+        LazyString.of(
+            () ->
+                nonStaticNonBuilderMethods.stream()
+                    .map(XElements::toStableString)
+                    .collect(toImmutableList())
+                    .toString()));
 
     return new AutoValue_DefineComponentBuilderMetadatas_DefineComponentBuilderMetadata(
         builder,
@@ -161,12 +177,15 @@ public final class DefineComponentBuilderMetadatas {
     ProcessorErrors.checkState(
         buildMethods.size() == 1,
         builder,
-        "@DefineComponent.Builder %s, must have exactly 1 build method that takes no parameters. "
-            + "Found: %s",
-        XElements.toStableString(builder),
-        buildMethods.stream()
-            .map(XElements::toStableString)
-            .collect(toImmutableList()));
+        "@DefineComponent.Builder %s, must have exactly 1 build method that takes no"
+            + " parameters. Found: %s",
+        LazyString.of(() -> XElements.toStableString(builder)),
+        LazyString.of(
+            () ->
+                buildMethods.stream()
+                    .map(XElements::toStableString)
+                    .collect(toImmutableList())
+                    .toString()));
 
     return buildMethods.get(0);
   }
@@ -177,10 +196,11 @@ public final class DefineComponentBuilderMetadatas {
         isDeclared(componentType)
             && componentType.getTypeElement().hasAnnotation(ClassNames.DEFINE_COMPONENT),
         builder,
-        "@DefineComponent.Builder method, %s#%s, must return a @DefineComponent type. Found: %s",
-        XElements.toStableString(builder),
-        XElements.toStableString(buildMethod),
-        XTypes.toStableString(componentType));
+        "@DefineComponent.Builder method, %s#%s, must return a @DefineComponent type."
+            + " Found: %s",
+        LazyString.of(() -> XElements.toStableString(builder)),
+        LazyString.of(() -> XElements.toStableString(buildMethod)),
+        LazyString.of(() -> XTypes.toStableString(componentType)));
     return componentType;
   }
 

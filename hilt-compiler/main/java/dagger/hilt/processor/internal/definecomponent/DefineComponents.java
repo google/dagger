@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentBuilderMetadatas.DefineComponentBuilderMetadata;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentMetadatas.DefineComponentMetadata;
@@ -77,12 +78,15 @@ public final class DefineComponents {
           "Multiple @%s declarations are not allowed for @%s type, %s. Found: %s",
           ClassNames.DEFINE_COMPONENT_BUILDER,
           ClassNames.DEFINE_COMPONENT,
-          XElements.toStableString(component),
-          builderMultimap.get(componentMetadata).stream()
-              .map(DefineComponentBuilderMetadata::builder)
-              .map(XTypeElement::getQualifiedName)
-              .sorted()
-              .collect(toImmutableList()));
+          LazyString.of(() -> XElements.toStableString(component)),
+          LazyString.of(
+              () ->
+                  builderMultimap.get(componentMetadata).stream()
+                      .map(DefineComponentBuilderMetadata::builder)
+                      .map(XTypeElement::getQualifiedName)
+                      .sorted()
+                      .collect(toImmutableList())
+                      .toString()));
     }
 
     // Now that we know there is at most 1 builder per component, convert the Multimap to Map.

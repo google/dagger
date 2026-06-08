@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import java.util.List;
@@ -76,15 +77,18 @@ public final class GeneratesRootInputs {
       ProcessorErrors.checkState(
           annotation != null,
           element,
-          "Classes in package %s must be annotated with @%s: %s."
-              + " Found: %s. Files in this package are generated, did you add custom code in the"
+          "Classes in package %s must be annotated with @%s: %s. Found: %s. Files in"
+              + " this package are generated, did you add custom code in the"
               + " package? ",
           AGGREGATING_PACKAGE,
           ClassNames.GENERATES_ROOT_INPUT_PROPAGATED_DATA,
           element.getClassName().simpleName(),
-          element.getAllAnnotations().stream()
-              .map(XAnnotations::toStableString)
-              .collect(toImmutableSet()));
+          LazyString.of(
+              () ->
+                  element.getAllAnnotations().stream()
+                      .map(XAnnotations::toStableString)
+                      .collect(toImmutableSet())
+                      .toString()));
 
       XTypeElement value = annotation.getAsType("value").getTypeElement();
 

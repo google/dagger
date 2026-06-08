@@ -28,6 +28,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.internal.codegen.xprocessing.XElements;
@@ -59,7 +60,7 @@ abstract class CustomTestApplicationMetadata {
         element,
         "@%s should only be used on classes or interfaces but found: %s",
         ClassNames.CUSTOM_TEST_APPLICATION.simpleName(),
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
 
     XTypeElement baseAppElement = getBaseElement(element);
 
@@ -87,14 +88,20 @@ abstract class CustomTestApplicationMetadata {
           baseSuperclassElement.getDeclaredFields().stream()
               .filter(Processors::isAnnotatedWithInject)
               .collect(toImmutableList());
+      final XTypeElement finalBaseSuperclassElement = baseSuperclassElement;
       ProcessorErrors.checkState(
           injectFields.isEmpty(),
           element,
-          "@%s does not support application classes (or super classes) with @Inject fields. Found "
-              + "%s with @Inject fields %s.",
+          "@%s does not support application classes (or super classes) with @Inject"
+              + " fields. Found %s with @Inject fields %s.",
           ClassNames.CUSTOM_TEST_APPLICATION.simpleName(),
-          baseSuperclassElement.getClassName(),
-          injectFields.stream().map(XElements::toStableString).collect(toImmutableList()));
+          finalBaseSuperclassElement.getClassName(),
+          LazyString.of(
+              () ->
+                  injectFields.stream()
+                      .map(XElements::toStableString)
+                      .collect(toImmutableList())
+                      .toString()));
 
       ImmutableList<XExecutableElement> injectMethods =
           baseSuperclassElement.getDeclaredMethods().stream()
@@ -103,11 +110,16 @@ abstract class CustomTestApplicationMetadata {
       ProcessorErrors.checkState(
           injectMethods.isEmpty(),
           element,
-          "@%s does not support application classes (or super classes) with @Inject methods. Found "
-              + "%s with @Inject methods %s.",
+          "@%s does not support application classes (or super classes) with @Inject"
+              + " methods. Found %s with @Inject methods %s.",
           ClassNames.CUSTOM_TEST_APPLICATION.simpleName(),
-          baseSuperclassElement.getClassName(),
-          injectMethods.stream().map(XElements::toStableString).collect(toImmutableList()));
+          finalBaseSuperclassElement.getClassName(),
+          LazyString.of(
+              () ->
+                  injectMethods.stream()
+                      .map(XElements::toStableString)
+                      .collect(toImmutableList())
+                      .toString()));
 
       ImmutableList<XExecutableElement> injectConstructors =
           baseSuperclassElement.getConstructors().stream()
@@ -116,11 +128,16 @@ abstract class CustomTestApplicationMetadata {
       ProcessorErrors.checkState(
           injectConstructors.isEmpty(),
           element,
-          "@%s does not support application classes (or super classes) with @Inject constructors. "
-              + "Found %s with @Inject constructors %s.",
+          "@%s does not support application classes (or super classes) with @Inject"
+              + " constructors. Found %s with @Inject constructors %s.",
           ClassNames.CUSTOM_TEST_APPLICATION.simpleName(),
-          baseSuperclassElement.getClassName().canonicalName(),
-          injectConstructors.stream().map(XElements::toStableString).collect(toImmutableList()));
+          finalBaseSuperclassElement.getClassName().canonicalName(),
+          LazyString.of(
+              () ->
+                  injectConstructors.stream()
+                      .map(XElements::toStableString)
+                      .collect(toImmutableList())
+                      .toString()));
 
       baseSuperclassElement = baseSuperclassElement.getSuperClass().getTypeElement();
     }

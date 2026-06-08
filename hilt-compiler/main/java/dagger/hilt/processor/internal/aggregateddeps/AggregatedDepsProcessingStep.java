@@ -34,6 +34,7 @@ import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Components;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.internal.codegen.extension.DaggerStreams;
@@ -93,7 +94,7 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
         element,
         "@%s-annotated classes must also be annotated with @Module or @EntryPoint: %s",
         installInAnnotation.map(ClassName::simpleName).orElse("@InstallIn"),
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
 
     ProcessorErrors.checkState(
         !(isEntryPoint && isModule),
@@ -101,7 +102,7 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
         "@%s and @%s cannot be used on the same interface: %s",
         moduleAnnotation.map(ClassName::simpleName).orElse("@Module"),
         entryPointAnnotation.map(ClassName::simpleName).orElse("@EntryPoint"),
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
 
     if (isModule) {
       processModule(element, installInAnnotation, moduleAnnotation.get());
@@ -123,7 +124,7 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
         "%s is missing an @InstallIn annotation. If this was intentional, see"
             + " https://dagger.dev/hilt/flags#disable-install-in-check for how to disable this"
             + " check.",
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
 
     if (!installInAnnotation.isPresent()) {
       // Modules without @InstallIn or @TestInstallIn annotations don't need to be processed further
@@ -134,7 +135,7 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
         XElementKt.isTypeElement(element),
         element,
         "Only classes and interfaces can be annotated with @Module: %s",
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
 
     XTypeElement module = XElements.asTypeElement(element);
 
@@ -142,7 +143,7 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
         module.isClass() || module.isInterface() || module.isKotlinObject(),
         module,
         "Only classes and interfaces can be annotated with @Module: %s",
-        XElements.toStableString(module));
+        LazyString.of(() -> XElements.toStableString(module)));
 
     ProcessorErrors.checkState(
         Processors.isTopLevel(module)
@@ -150,10 +151,10 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
             || module.isAbstract()
             || module.getEnclosingElement().hasAnnotation(ClassNames.HILT_ANDROID_TEST),
         module,
-        "Nested @%s modules must be static unless they are directly nested within a test. "
-            + "Found: %s",
+        "Nested @%s modules must be static unless they are directly nested within a"
+            + " test. Found: %s",
         installInAnnotation.get().simpleName(),
-        XElements.toStableString(module));
+        LazyString.of(() -> XElements.toStableString(module)));
 
     // Check that if Dagger needs an instance of the module, Hilt can provide it automatically by
     // calling a visible empty constructor.
@@ -176,10 +177,13 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
         module,
         "Found unimplemented abstract methods, %s, in an abstract module, %s. "
             + "Did you forget to add a Dagger binding annotation (e.g. @Binds)?",
-        abstractMethodsWithMissingBinds.stream()
-            .map(XElements::toStableString)
-            .collect(DaggerStreams.toImmutableList()),
-        XElements.toStableString(module));
+        LazyString.of(
+            () ->
+                abstractMethodsWithMissingBinds.stream()
+                    .map(XElements::toStableString)
+                    .collect(DaggerStreams.toImmutableList())
+                    .toString()),
+        LazyString.of(() -> XElements.toStableString(module)));
 
     ImmutableList<XTypeElement> replacedModules = ImmutableList.of();
     if (module.hasAnnotation(ClassNames.TEST_INSTALL_IN)) {
@@ -211,9 +215,12 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
           // TODO(b/152801981): this should really error on the annotation value
           module,
           "@TestInstallIn#replaces() can only contain @InstallIn modules, but found: %s",
-          nonInstallInModules.stream()
-              .map(XElements::toStableString)
-              .collect(DaggerStreams.toImmutableList()));
+          LazyString.of(
+              () ->
+                  nonInstallInModules.stream()
+                      .map(XElements::toStableString)
+                      .collect(DaggerStreams.toImmutableList())
+                      .toString()));
 
       ImmutableList<XTypeElement> hiltWrapperModules =
           replacedModules.stream()
@@ -226,11 +233,14 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
           hiltWrapperModules.isEmpty(),
           // TODO(b/152801981): this should really error on the annotation value
           module,
-          "@TestInstallIn#replaces() cannot contain Hilt generated public wrapper modules, "
-              + "but found: %s. ",
-          hiltWrapperModules.stream()
-              .map(XElements::toStableString)
-              .collect(DaggerStreams.toImmutableList()));
+          "@TestInstallIn#replaces() cannot contain Hilt generated public wrapper modules,"
+              + " but found: %s. ",
+          LazyString.of(
+              () ->
+                  hiltWrapperModules.stream()
+                      .map(XElements::toStableString)
+                      .collect(DaggerStreams.toImmutableList())
+                      .toString()));
 
       if (!module.getPackageName().startsWith("dagger.hilt")) {
         // Prevent external users from overriding Hilt's internal modules. Technically, except for
@@ -246,9 +256,12 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
             // TODO(b/152801981): this should really error on the annotation value
             module,
             "@TestInstallIn#replaces() cannot contain internal Hilt modules, but found: %s. ",
-            hiltInternalModules.stream()
-                .map(XElements::toStableString)
-                .collect(DaggerStreams.toImmutableList()));
+            LazyString.of(
+                () ->
+                    hiltInternalModules.stream()
+                        .map(XElements::toStableString)
+                        .collect(DaggerStreams.toImmutableList())
+                        .toString()));
       }
 
       // Prevent users from uninstalling test-specific @InstallIn modules.
@@ -263,11 +276,14 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
           replacedTestSpecificInstallIn.isEmpty(),
           // TODO(b/152801981): this should really error on the annotation value
           module,
-          "@TestInstallIn#replaces() cannot replace test specific @InstallIn modules, but found: "
-              + "%s. Please remove the @InstallIn module manually rather than replacing it.",
-          replacedTestSpecificInstallIn.stream()
-              .map(XElements::toStableString)
-              .collect(DaggerStreams.toImmutableList()));
+          "@TestInstallIn#replaces() cannot replace test specific @InstallIn modules, but found:"
+              + " %s. Please remove the @InstallIn module manually rather than replacing it.",
+          LazyString.of(
+              () ->
+                  replacedTestSpecificInstallIn.stream()
+                      .map(XElements::toStableString)
+                      .collect(DaggerStreams.toImmutableList())
+                      .toString()));
     }
 
     generateAggregatedDeps(
@@ -285,7 +301,7 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
         element,
         "@%s %s must also be annotated with @InstallIn",
         entryPointAnnotation.simpleName(),
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
 
     ProcessorErrors.checkState(
         !element.hasAnnotation(ClassNames.TEST_INSTALL_IN),
@@ -297,7 +313,7 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
         element,
         "Only interfaces can be annotated with @%s: %s",
         entryPointAnnotation.simpleName(),
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
     XTypeElement entryPoint = XElements.asTypeElement(element);
 
     if (entryPointAnnotation.equals(ClassNames.EARLY_ENTRY_POINT)) {
@@ -366,7 +382,7 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
         usedAnnotations.size() == 1,
         element,
         "Only one of the following annotations can be used on %s: %s",
-        XElements.toStableString(element),
+        LazyString.of(() -> XElements.toStableString(element)),
         usedAnnotations);
 
     return Optional.of(getOnlyElement(usedAnnotations));

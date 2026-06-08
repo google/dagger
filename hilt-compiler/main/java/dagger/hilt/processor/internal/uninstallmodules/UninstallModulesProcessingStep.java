@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.internal.codegen.xprocessing.XAnnotations;
@@ -54,7 +55,7 @@ public final class UninstallModulesProcessingStep extends BaseProcessingStep {
         "@%s should only be used on test classes annotated with @%s, but found: %s",
         annotation.simpleName(),
         ClassNames.HILT_ANDROID_TEST.simpleName(),
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
 
     XTypeElement testElement = XElements.asTypeElement(element);
     ImmutableList<XTypeElement> uninstallModules =
@@ -81,9 +82,14 @@ public final class UninstallModulesProcessingStep extends BaseProcessingStep {
         invalidModules.isEmpty(),
         // TODO(b/152801981): Point to the annotation value rather than the annotated element.
         testElement,
-        "@UninstallModules should only include modules annotated with both @Module and @InstallIn, "
-            + "but found: %s.",
-        invalidModules.stream().map(XElements::toStableString).collect(toImmutableList()));
+        "@UninstallModules should only include modules annotated with both @Module and"
+            + " @InstallIn, but found: %s.",
+        LazyString.of(
+            () ->
+                invalidModules.stream()
+                    .map(XElements::toStableString)
+                    .collect(toImmutableList())
+                    .toString()));
   }
 
   private void checkModulesDontOriginateFromTest(

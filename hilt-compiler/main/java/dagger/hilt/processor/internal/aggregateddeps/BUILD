@@ -45,6 +45,7 @@ java_library(
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:classnames",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:compiler_options",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:components",
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal:lazy_string",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:processor_errors",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:processors",
         "//third_party/java/auto:service",

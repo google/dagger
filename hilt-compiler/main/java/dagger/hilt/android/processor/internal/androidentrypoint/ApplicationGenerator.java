@@ -36,6 +36,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
 import dagger.hilt.processor.internal.ComponentNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.internal.codegen.xprocessing.XElements;
@@ -115,9 +116,10 @@ public final class ApplicationGenerator {
         ProcessorErrors.checkState(
             customInjectMethod.isAbstract() && customInjectMethod.isProtected(),
             customInjectMethod,
-            "%s#%s, must have modifiers `abstract` and `protected` when using @CustomInject.",
-            XElements.toStableString(customInjectMethod.getEnclosingElement()),
-            XElements.toStableString(customInjectMethod));
+            "%s#%s, must have modifiers `abstract` and `protected` when using"
+                + " @CustomInject.",
+            LazyString.of(() -> XElements.toStableString(customInjectMethod.getEnclosingElement())),
+            LazyString.of(() -> XElements.toStableString(customInjectMethod)));
       }
     }
     return hasCustomInject;

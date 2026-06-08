@@ -32,6 +32,7 @@ import com.google.common.collect.ListMultimap;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Collection;
@@ -81,7 +82,7 @@ public final class BindValueProcessingStep extends BaseProcessingStep {
         "@%s can only be used within a class annotated with "
             + "@HiltAndroidTest. Found: %s",
         annotation.simpleName(),
-        XElements.toStableString(enclosingElement));
+        LazyString.of(() -> XElements.toStableString(enclosingElement)));
     testRootMap.put(asTypeElement(enclosingElement), element);
   }
 

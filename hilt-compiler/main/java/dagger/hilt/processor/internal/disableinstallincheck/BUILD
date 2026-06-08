@@ -41,6 +41,7 @@ java_library(
         "//dagger-compiler:xprocessing",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:base_processor",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:classnames",
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal:lazy_string",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:processor_errors",
         "//third_party/java/auto:service",
         "//third_party/java/guava/collect",

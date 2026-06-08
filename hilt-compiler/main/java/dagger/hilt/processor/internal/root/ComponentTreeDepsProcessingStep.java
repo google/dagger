@@ -35,6 +35,7 @@ import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ComponentNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsMetadata;
@@ -182,7 +183,7 @@ public final class ComponentTreeDepsProcessingStep extends BaseProcessingStep {
           testElement.isPublic(),
           testElement,
           "Hilt tests must be public, but found: %s",
-          XElements.toStableString(testElement));
+          LazyString.of(() -> XElements.toStableString(testElement)));
       new TestComponentDataGenerator(processingEnv(), metadataElement, rootMetadata, componentNames)
           .generate();
     }

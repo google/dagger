@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.internal.codegen.xprocessing.XElements;
 
@@ -47,9 +48,10 @@ public final class GeneratesRootInputProcessingStep extends BaseProcessingStep {
     ProcessorErrors.checkState(
         isTypeElement(element) && asTypeElement(element).isAnnotationClass(),
         element,
-        "%s should only annotate other annotations. However, it was found annotating %s",
+        "%s should only annotate other annotations. However, it was found annotating"
+            + " %s",
         annotation.simpleName(),
-        XElements.toStableString(element));
+        LazyString.of(() -> XElements.toStableString(element)));
 
     new GeneratesRootInputPropagatedDataGenerator(processingEnv(), asTypeElement(element))
         .generate();

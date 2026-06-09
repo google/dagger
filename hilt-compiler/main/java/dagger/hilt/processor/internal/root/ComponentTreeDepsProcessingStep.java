@@ -140,7 +140,7 @@ public final class ComponentTreeDepsProcessingStep extends BaseProcessingStep {
         // Generate a creator for the early entry point if there is a default component available
         // and there are early entry points.
         if (isDefaultRoot && !metadata.aggregatedEarlyEntryPointDeps().isEmpty()) {
-          EarlySingletonComponentCreatorGenerator.generate(processingEnv());
+          EarlySingletonComponentCreatorGenerator.generate(processingEnv(), root.element());
         }
 
         if (root.isTestRoot()) {

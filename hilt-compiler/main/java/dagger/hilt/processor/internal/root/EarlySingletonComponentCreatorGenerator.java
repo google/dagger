@@ -16,8 +16,10 @@
 
 package dagger.hilt.processor.internal.root;
 
+import androidx.room3.compiler.processing.JavaPoetExtKt;
 import androidx.room3.compiler.processing.XFiler.Mode;
 import androidx.room3.compiler.processing.XProcessingEnv;
+import androidx.room3.compiler.processing.XTypeElement;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -30,13 +32,12 @@ final class EarlySingletonComponentCreatorGenerator {
   private static final ClassName EARLY_SINGLETON_COMPONENT_CREATOR =
       ClassName.get("dagger.hilt.android.internal.testing", "EarlySingletonComponentCreator");
   private static final ClassName EARLY_SINGLETON_COMPONENT_CREATOR_IMPL =
-      ClassName.get(
-          "dagger.hilt.android.internal.testing", "EarlySingletonComponentCreatorImpl");
+      ClassName.get("dagger.hilt.android.internal.testing", "EarlySingletonComponentCreatorImpl");
   private static final ClassName DEFAULT_COMPONENT_IMPL =
       ClassName.get(
           "dagger.hilt.android.internal.testing.root", "DaggerDefault_HiltComponents_SingletonC");
 
-  static void generate(XProcessingEnv env) {
+  static void generate(XProcessingEnv env, XTypeElement originatingElement) {
     TypeSpec.Builder builder =
         TypeSpec.classBuilder(EARLY_SINGLETON_COMPONENT_CREATOR_IMPL)
             .superclass(EARLY_SINGLETON_COMPONENT_CREATOR)
@@ -53,6 +54,7 @@ final class EarlySingletonComponentCreatorGenerator {
                     .build());
 
     Processors.addGeneratedAnnotation(builder, env, ClassNames.ROOT_PROCESSOR.toString());
+    JavaPoetExtKt.addOriginatingElement(builder, originatingElement);
 
     env.getFiler()
         .write(

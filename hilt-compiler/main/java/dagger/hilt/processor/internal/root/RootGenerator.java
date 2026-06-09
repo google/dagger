@@ -118,7 +118,8 @@ final class RootGenerator {
                   metadata.scopes(componentDescriptor.component()),
                   ImmutableList.of(),
                   componentAnnotation(componentDescriptor),
-                  componentBuilder(componentDescriptor))
+                  componentBuilder(componentDescriptor),
+                  metadata.root().element())
               .typeSpecBuilder()
               .addModifiers(Modifier.STATIC)
               .build());

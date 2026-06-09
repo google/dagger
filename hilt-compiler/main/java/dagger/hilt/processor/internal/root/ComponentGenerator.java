@@ -19,8 +19,10 @@ package dagger.hilt.processor.internal.root;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static java.util.Comparator.comparing;
 
+import androidx.room3.compiler.processing.JavaPoetExtKt;
 import androidx.room3.compiler.processing.XFiler.Mode;
 import androidx.room3.compiler.processing.XProcessingEnv;
+import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.base.Joiner;
 import com.google.common.base.Utf8;
 import com.google.common.collect.ImmutableCollection;
@@ -57,6 +59,7 @@ final class ComponentGenerator {
   private final ImmutableList<AnnotationSpec> extraAnnotations;
   private final ClassName componentAnnotation;
   private final Optional<TypeSpec> componentBuilder;
+  private final XTypeElement rootElement;
 
   public ComponentGenerator(
       XProcessingEnv processingEnv,
@@ -67,7 +70,8 @@ final class ComponentGenerator {
       ImmutableCollection<ClassName> scopes,
       ImmutableList<AnnotationSpec> extraAnnotations,
       ClassName componentAnnotation,
-      Optional<TypeSpec> componentBuilder) {
+      Optional<TypeSpec> componentBuilder,
+      XTypeElement rootElement) {
     this.processingEnv = processingEnv;
     this.name = name;
     this.superclass = superclass;
@@ -77,6 +81,7 @@ final class ComponentGenerator {
     this.extraAnnotations = extraAnnotations;
     this.componentAnnotation = componentAnnotation;
     this.componentBuilder = componentBuilder;
+    this.rootElement = rootElement;
   }
 
   public TypeSpec.Builder typeSpecBuilder() throws IOException {
@@ -109,8 +114,8 @@ final class ComponentGenerator {
   /**
    * Adds entry points to the component.
    *
-   * See b/140979968. If the entry points exceed 65763 bytes, we have to partition them to avoid the
-   * limit. To be safe, we split at 60000 bytes.
+   * <p>See b/140979968. If the entry points exceed 65763 bytes, we have to partition them to avoid
+   * the limit. To be safe, we split at 60000 bytes.
    */
   private void addEntryPoints(TypeSpec.Builder builder) throws IOException {
     int currBytes = 0;
@@ -161,6 +166,7 @@ final class ComponentGenerator {
             .addSuperinterfaces(partition);
 
     Processors.addGeneratedAnnotation(builder, processingEnv, ClassNames.ROOT_PROCESSOR.toString());
+    JavaPoetExtKt.addOriginatingElement(builder, rootElement);
 
     processingEnv
         .getFiler()

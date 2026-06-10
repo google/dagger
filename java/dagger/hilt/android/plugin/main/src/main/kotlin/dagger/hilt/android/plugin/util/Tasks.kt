@@ -18,8 +18,6 @@ package dagger.hilt.android.plugin.util
 
 import com.android.build.api.variant.ComponentIdentity
 import com.google.devtools.ksp.gradle.KspAATask
-import com.google.devtools.ksp.gradle.KspTask
-import kotlin.reflect.KClass
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.compile.JavaCompile
@@ -29,86 +27,103 @@ import org.jetbrains.kotlin.gradle.internal.KaptTask
 internal fun addJavaTaskProcessorOptions(
   project: Project,
   variantIdentity: ComponentIdentity,
-  produceArgProvider: (Task) -> CommandLineArgumentProvider
-) = project.tasks.withType(JavaCompile::class.java).configureEach { task ->
-  if (task.name == "compile${variantIdentity.name.capitalize()}JavaWithJavac") {
-    task.options.compilerArgumentProviders.add(produceArgProvider.invoke(task))
+  produceArgProvider: (Task) -> CommandLineArgumentProvider,
+) =
+  project.tasks.withType(JavaCompile::class.java).configureEach { task ->
+    if (task.name == "compile${variantIdentity.name.capitalize()}JavaWithJavac") {
+      task.options.compilerArgumentProviders.add(produceArgProvider.invoke(task))
+    }
   }
-}
 
 internal fun addKaptTaskProcessorOptions(
   project: Project,
   variantIdentity: ComponentIdentity,
-  produceArgProvider: (Task) -> CommandLineArgumentProvider
-) = project.plugins.withId("com.android.legacy-kapt") {
-  checkClass("org.jetbrains.kotlin.gradle.internal.KaptTask") {
-    """
-    The KAPT plugin was detected to be applied but its task class could not be found.
+  produceArgProvider: (Task) -> CommandLineArgumentProvider,
+) =
+  project.plugins.withId("com.android.legacy-kapt") {
+    checkClass("org.jetbrains.kotlin.gradle.internal.KaptTask") {
+      """
+      The KAPT plugin was detected to be applied but its task class could not be found.
 
-    This is an indicator that the Hilt Gradle Plugin is using a different class loader because
-    it was declared at the root while KAPT was declared in a sub-project. To fix this, declare
-    both plugins in the same scope, i.e. either at the root (without applying them) or at the
-    sub-projects.
-    """.trimIndent()
-  }
-  project.tasks.withType(KaptTask::class.java).configureEach { task ->
-    if (task.name == "kapt${variantIdentity.name.capitalize()}Kotlin" ||
-        // Task names in shared/src/AndroidMain in KMP projects has a platform suffix.
-        task.name == "kapt${variantIdentity.name.capitalize()}KotlinAndroid") {
-      val argProvider = produceArgProvider.invoke(task)
-      // TODO: Update once KT-58009 is fixed.
-      try {
-        // Because of KT-58009, we need to add a `listOf(argProvider)` instead
-        // of `argProvider`.
-        @Suppress("DEPRECATION") // b/418799397
-        task.annotationProcessorOptionProviders.add(listOf(argProvider))
-      } catch (e: Throwable) {
-        // Once KT-58009 is fixed, adding `listOf(argProvider)` will fail, we will
-        // pass `argProvider` instead, which is the correct way.
-        @Suppress("DEPRECATION") // b/418799397
-        task.annotationProcessorOptionProviders.add(argProvider)
+      This is an indicator that the Hilt Gradle Plugin is using a different class loader because
+      it was declared at the root while KAPT was declared in a sub-project. To fix this, declare
+      both plugins in the same scope, i.e. either at the root (without applying them) or at the
+      sub-projects.
+      """
+        .trimIndent()
+    }
+    project.tasks.withType(KaptTask::class.java).configureEach { task ->
+      if (
+        task.name == "kapt${variantIdentity.name.capitalize()}Kotlin" ||
+          // Task names in shared/src/AndroidMain in KMP projects has a platform suffix.
+          task.name == "kapt${variantIdentity.name.capitalize()}KotlinAndroid"
+      ) {
+        val argProvider = produceArgProvider.invoke(task)
+        // TODO: Update once KT-58009 is fixed.
+        try {
+          // Because of KT-58009, we need to add a `listOf(argProvider)` instead
+          // of `argProvider`.
+          @Suppress("DEPRECATION") // b/418799397
+          task.annotationProcessorOptionProviders.add(listOf(argProvider))
+        } catch (e: Throwable) {
+          // Once KT-58009 is fixed, adding `listOf(argProvider)` will fail, we will
+          // pass `argProvider` instead, which is the correct way.
+          @Suppress("DEPRECATION") // b/418799397
+          task.annotationProcessorOptionProviders.add(argProvider)
+        }
       }
     }
   }
-}
 
 internal fun addKspTaskProcessorOptions(
   project: Project,
   variantIdentity: ComponentIdentity,
-  produceArgProvider: (Task) -> CommandLineArgumentProvider
-) = project.plugins.withId("com.google.devtools.ksp") {
-  check(kspOneTaskClass != null || kspTwoTaskClass != null) {
-    """
-    The KSP plugin was detected to be applied but its task class could not be found.
+  produceArgProvider: (Task) -> CommandLineArgumentProvider,
+) =
+  project.plugins.withId("com.google.devtools.ksp") {
+    check(kspOneTaskClass != null || kspTwoTaskClass != null) {
+      """
+      The KSP plugin was detected to be applied but its task class could not be found.
 
-    This is an indicator that the Hilt Gradle Plugin is using a different class loader because
-    it was declared at the root while KSP was declared in a sub-project. To fix this, declare
-    both plugins in the same scope, i.e. either at the root (without applying them) or at the
-    sub-projects.
+      This is an indicator that the Hilt Gradle Plugin is using a different class loader because
+      it was declared at the root while KSP was declared in a sub-project. To fix this, declare
+      both plugins in the same scope, i.e. either at the root (without applying them) or at the
+      sub-projects.
 
-    See https://github.com/google/dagger/issues/3965 for more details.
-    """.trimIndent()
-  }
-  fun <T : Task> configureEach(
-    kclass: KClass<T>,
-    block: T.(CommandLineArgumentProvider) -> Unit
-  ) {
-    project.tasks.withType(kclass.java).configureEach { task ->
-      if (task.name == "ksp${variantIdentity.name.capitalize()}Kotlin" ||
+      See https://github.com/google/dagger/issues/3965 for more details.
+      """
+        .trimIndent()
+    }
+    val variantName = variantIdentity.name.capitalize()
+    fun Task.matchesVariant() =
+      name == "ksp${variantName}Kotlin" ||
         // Task names in shared/src/AndroidMain in KMP projects has a platform suffix.
-        task.name == "ksp${variantIdentity.name.capitalize()}KotlinAndroid") {
-        val argProvider = produceArgProvider.invoke(task)
-        task.block(argProvider)
+        name == "ksp${variantName}KotlinAndroid"
+
+    if (kspOneTaskClass != null) {
+      project.tasks.withType(kspOneTaskClass).configureEach { task ->
+        if (task.matchesVariant()) {
+          val argProvider = produceArgProvider.invoke(task)
+          try {
+            val method = task.javaClass.getMethod("getCommandLineArgumentProviders")
+            val providers = method.invoke(task)
+            val addMethod = providers.javaClass.getMethod("add", Any::class.java)
+            addMethod.invoke(providers, argProvider)
+          } catch (e: Exception) {
+            throw RuntimeException("Failed to configure KSP1 task reflectively", e)
+          }
+        }
+      }
+    }
+    if (kspTwoTaskClass != null) {
+      project.tasks.withType(KspAATask::class.java).configureEach { task ->
+        if (task.matchesVariant()) {
+          val argProvider = produceArgProvider.invoke(task)
+          task.commandLineArgumentProviders.add(argProvider)
+        }
       }
     }
   }
-  if (kspOneTaskClass != null) {
-    configureEach(KspTask::class) { commandLineArgumentProviders.add(it) }
-  }
-  if (kspTwoTaskClass != null) {
-    configureEach(KspAATask::class) { commandLineArgumentProviders.add(it) }
-  }
-}
 
 private inline fun checkClass(fqn: String, msg: () -> String) {
   try {
@@ -118,16 +133,16 @@ private inline fun checkClass(fqn: String, msg: () -> String) {
   }
 }
 
-private val kspOneTaskClass =
+private val kspOneTaskClass: Class<out Task>? =
   try {
-    Class.forName("com.google.devtools.ksp.gradle.KspTask")
+    Class.forName("com.google.devtools.ksp.gradle.KspTask").asSubclass(Task::class.java)
   } catch (ex: ClassNotFoundException) {
     null
   }
 
-private val kspTwoTaskClass =
+private val kspTwoTaskClass: Class<out Task>? =
   try {
-    Class.forName("com.google.devtools.ksp.gradle.KspAATask")
+    Class.forName("com.google.devtools.ksp.gradle.KspAATask").asSubclass(Task::class.java)
   } catch (ex: ClassNotFoundException) {
     null
   }

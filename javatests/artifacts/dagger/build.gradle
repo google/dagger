@@ -17,8 +17,8 @@
 buildscript {
   ext {
     dagger_version = "LOCAL-SNAPSHOT"
-    kotlin_version = "2.2.0"
-    ksp_version = "$kotlin_version-2.0.2"
+    kotlin_version = "2.3.21"
+    ksp_version = "2.3.7"
     junit_version = "4.13"
     truth_version = "1.0.1"
   }

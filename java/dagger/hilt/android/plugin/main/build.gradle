@@ -96,9 +96,9 @@ tasks.withType(PluginUnderTestMetadata.class).named("pluginUnderTestMetadata").c
 
 kotlin {
   compilerOptions {
-    apiVersion = KotlinVersion.KOTLIN_2_0
-    languageVersion = KotlinVersion.KOTLIN_2_0
-    coreLibrariesVersion = "2.0.21"
+    apiVersion = KotlinVersion.KOTLIN_2_1
+    languageVersion = KotlinVersion.KOTLIN_2_1
+    coreLibrariesVersion = "2.1.0"
 
     allWarningsAsErrors = true
     freeCompilerArgs.add("-opt-in=kotlin.ExperimentalStdlibApi")

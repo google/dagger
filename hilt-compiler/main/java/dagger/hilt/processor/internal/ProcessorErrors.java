@@ -82,13 +82,6 @@ public final class ProcessorErrors {
     }
   }
 
-  public static void checkState(boolean expression, LazyString errorMessage) {
-    if (!expression) {
-      throw new BadInputException(errorMessage.toString());
-    }
-  }
-
-
   /**
    * Ensures the truth of an expression involving the state of the calling instance, but not
    * involving any parameters to the calling method.
@@ -156,15 +149,6 @@ public final class ProcessorErrors {
     }
   }
 
-  public static void checkState(
-      boolean expression, XElement badElement, LazyString errorMessage) {
-    Preconditions.checkNotNull(badElement);
-    if (!expression) {
-      throw new BadInputException(errorMessage.toString(), badElement);
-    }
-  }
-
-
   /**
    * Ensures the truth of an expression involving the state of the calling instance, but not
    * involving any parameters to the calling method.
@@ -197,38 +181,6 @@ public final class ProcessorErrors {
           String.format(errorMessageTemplate, errorMessageArgs), badElements);
     }
   }
-
-  /**
-   * Ensures the truth of an expression involving the state of the calling instance, but not
-   * involving any parameters to the calling method.
-   *
-   * @param expression a boolean expression
-   * @param badElements the elements that were at fault
-   * @param errorMessageSupplier the supplier to construct the exception message if the check fails
-   * @throws BadInputException if {@code expression} is false
-   */
-  public static void checkStateX(
-      boolean expression,
-      Collection<? extends XElement> badElements,
-      LazyString errorMessageSupplier) {
-    Preconditions.checkNotNull(badElements);
-    if (!expression) {
-      Preconditions.checkState(!badElements.isEmpty());
-      throw new BadInputException(errorMessageSupplier.toString(), badElements);
-    }
-  }
-
-  public static void checkStateX(
-      boolean expression,
-      Collection<? extends XElement> badElements,
-      Supplier<String> errorMessageSupplier) {
-    Preconditions.checkNotNull(badElements);
-    if (!expression) {
-      Preconditions.checkState(!badElements.isEmpty());
-      throw new BadInputException(errorMessageSupplier.get(), badElements);
-    }
-  }
-
 
   private ProcessorErrors() {}
 }

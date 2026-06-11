@@ -68,6 +68,8 @@ import dagger.internal.codegen.xprocessing.XElements;
 import dagger.internal.codegen.xprocessing.XExecutableTypes;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import dagger.internal.codegen.xprocessing.XTypes;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -646,7 +648,23 @@ public final class DaggerSuperficialValidation {
 
     @Override
     public String getMessage() {
-      return String.format("\n  Validation trace:\n    => %s", getTrace());
+      try {
+        return String.format("\n  Validation trace:\n    => %s", getTrace());
+      } catch (RuntimeException e) {
+        // TODO(b/522448305): Remove this workaround once the underlying KSP bug is fixed.
+        // Note: This block (if executed) will be loaded from a different class loader, and
+        // therefore Guava dependency is avoided in the implementation.
+        StringWriter stringWriter = new StringWriter();
+        try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
+          e.printStackTrace(printWriter);
+        }
+        return String.format(
+            "\n  Validation trace (incomplete due to %s):\n\n"
+                + "// Stack trace in message (start)\n"
+                + "%s"
+                + "// Stack trace in message (end)\n",
+            e.getClass().getSimpleName(), stringWriter.toString());
+      }
     }
 
     public String getTrace() {

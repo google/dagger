@@ -70,7 +70,7 @@ dependencies {
   androidTestAnnotationProcessor 'com.google.dagger:dagger-android-processor:LOCAL-SNAPSHOT'
 
   // To help us catch usages of Guava APIs for Java 8 in the '-jre' variant.
-  annotationProcessor'com.google.guava:guava:28.1-android'
-  testAnnotationProcessor'com.google.guava:guava:28.1-android'
-  androidTestAnnotationProcessor'com.google.guava:guava:28.1-android'
+  annotationProcessor'com.google.guava:guava:33.6.0-android'
+  testAnnotationProcessor'com.google.guava:guava:33.6.0-android'
+  androidTestAnnotationProcessor'com.google.guava:guava:33.6.0-android'
 }

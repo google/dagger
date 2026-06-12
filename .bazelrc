@@ -12,10 +12,10 @@ build --experimental_disk_cache_gc_max_size=2G
 build --javacopt=-g
 build --host_javacopt=-g
 
-# Disable The Guava Beta Checker.
+# Enable The Guava Beta Checker.
 # TODO(ronshapiro): explore how much work it would be to reenable this
-build --javacopt="-Xep:BetaApi:OFF"
-build --host_javacopt="-Xep:BetaApi:OFF"
+build --javacopt="-Xep:BetaApi:ERROR"
+build --host_javacopt="-Xep:BetaApi:ERROR"
 
 # Sets the JDK for compiling sources.
 # TODO(b/394093156): Upgrade to JDK 21.

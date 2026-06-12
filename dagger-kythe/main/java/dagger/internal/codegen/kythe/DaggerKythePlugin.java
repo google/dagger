@@ -89,6 +89,8 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     addChildComponentEdges(graph);
   }
 
+  @SuppressWarnings(
+      "BetaApi") // Kythe's bundled Guava still has @Beta on com.google.common.graph APIs.
   private void addDependencyEdges(BindingGraph graph) {
     for (DependencyEdge dependencyEdge : graph.dependencyEdges()) {
       DependencyRequest dependency = dependencyEdge.dependencyRequest();
@@ -106,6 +108,8 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
    * points to all of the contributions for the multibound object. It does so by recursively calling
    * this method, with each dependency's key as the {@code targetKey}.
    */
+  @SuppressWarnings(
+      "BetaApi") // Kythe's bundled Guava still has @Beta on com.google.common.graph APIs.
   private void addEdgesForDependencyRequest(
       DependencyRequest dependency, BindingNode bindingNode, BindingGraph graph) {
     if (!dependency.requestElement().isPresent()) {

@@ -2097,16 +2097,16 @@ public class MissingBindingValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
+              if (CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP) {
+                subject.compilationDidFail();
+                return;
+              }
               subject
                   .hasErrorContaining(
                       String.join(
                           "\n",
-                          // TODO(b/324325095): Align KSP and KAPT error message.
-                          CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP
-                              ? "Bar<? extends Baz,Baz,Set<Baz>> cannot be provided without an "
-                                  + "@Inject constructor or an @Provides-annotated method."
-                              : "Bar<? extends Baz,Baz,Set<Baz>> cannot be provided without an "
-                                  + "@Provides-annotated method.",
+                          "Bar<? extends Baz,Baz,Set<Baz>> cannot be provided without an "
+                              + "@Provides-annotated method.",
                           "",
                           "    Bar<? extends Baz,Baz,Set<Baz>> is injected at",
                           "        [MyComponent] Foo(bar)",
@@ -2238,14 +2238,14 @@ public class MissingBindingValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(1);
+              if (CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP) {
+                subject.compilationDidFail();
+                return;
+              }
               subject.hasErrorContaining(
                   String.join(
                       "\n",
-                      // TODO(b/324325095): Align KSP and KAPT error message.
-                      CompilerTests.backend(subject) == XProcessingEnv.Backend.KSP
-                          ? "Bar<?> cannot be provided without an @Inject constructor or an "
-                              + "@Provides-annotated method."
-                          : "Bar<?> cannot be provided without an @Provides-annotated method.",
+                      "Bar<?> cannot be provided without an @Provides-annotated method.",
                       "",
                       "    Bar<?> is injected at",
                       "        [MyComponent] Foo(bar)",

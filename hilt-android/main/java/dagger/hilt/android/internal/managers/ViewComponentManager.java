@@ -16,7 +16,6 @@
 
 package dagger.hilt.android.internal.managers;
 
-import dagger.hilt.android.components.ActivityComponent;
 import android.content.Context;
 import android.content.ContextWrapper;
 import androidx.fragment.app.Fragment;
@@ -34,6 +33,7 @@ import dagger.hilt.android.internal.builders.ViewComponentBuilder;
 import dagger.hilt.android.internal.builders.ViewWithFragmentComponentBuilder;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
+import java.lang.ref.WeakReference;
 
 /**
  * Do not use except in Hilt generated code!
@@ -86,6 +86,24 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
   private Object createComponent() {
     Object componentManager = getParentComponentManager(/* allowMissing= */ false);
     if (hasFragmentBindings) {
+      if (componentManager instanceof Fragment) {
+        final WeakReference<ViewComponentManager> managerRef = new WeakReference<>(this);
+        ((Fragment) componentManager)
+            .getLifecycle()
+            .addObserver(
+                new LifecycleEventObserver() {
+                  @Override
+                  public void onStateChanged(LifecycleOwner source, Lifecycle.Event event) {
+                    if (event == Lifecycle.Event.ON_DESTROY) {
+                      ViewComponentManager manager = managerRef.get();
+                      if (manager != null) {
+                        manager.component = null;
+                      }
+                      source.getLifecycle().removeObserver(this);
+                    }
+                  }
+                });
+      }
       return EntryPoints.get(componentManager, ViewWithFragmentComponentBuilderEntryPoint.class)
           .viewWithFragmentComponentBuilder()
           .view(view)
@@ -183,6 +201,7 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
               FragmentContextWrapper.this.fragment = null;
               FragmentContextWrapper.this.baseInflater = null;
               FragmentContextWrapper.this.inflater = null;
+              source.getLifecycle().removeObserver(this);
             }
           }
         };

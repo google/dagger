@@ -108,8 +108,8 @@ public abstract class ProducerMonitor {
    * scheduling the method on the executor, and if an input has failed and the producer will be
    * skipped, this method will be called before {@link #failed(Throwable)} is called.
    *
-   * <p>When multiple monitors are installed, the order that each monitor will call this method is
-   * unspecified, but will remain consistent throughout the course of the execution of a component.
+   * <p>When multiple monitors are installed, calls to this method will be in the same order as
+   * calls to {@link #requested()}.
    *
    * <p>This implementation is a no-op.
    */
@@ -119,7 +119,7 @@ public abstract class ProducerMonitor {
    * Called when the producer method is about to start executing. This will be called from the same
    * thread as the producer method itself.
    *
-   * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
+   * <p>When multiple monitors are installed, calls to this method will be in the same order as
    * calls to {@link #requested()}.
    *
    * <p>This implementation is a no-op.

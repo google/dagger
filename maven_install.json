@@ -693,9 +693,9 @@
     },
     "com.google.protobuf:protobuf-java": {
       "shasums": {
-        "jar": "442db5991a11974d72127353be7d7e7abdf8d943d83b16668cb2e336d7392f54"
+        "jar": "8c99e4d971338bafb0b0b1d1cea9b1bbb3dc9630eb9c25109e4c7c27bca832cb"
       },
-      "version": "4.29.3"
+      "version": "4.32.1"
     },
     "com.google.protobuf:protobuf-java-util": {
       "shasums": {

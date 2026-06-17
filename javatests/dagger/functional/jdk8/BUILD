@@ -64,3 +64,27 @@ GenJavaTests(
         "//third_party/java/truth",
     ],
 )
+
+GenJavaLibrary(
+    name = "type_use_nullability_classes",
+    srcs = ["TypeUseNullabilityClasses.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    deps = [
+        "//third_party/java/dagger",
+    ],
+)
+
+# TODO(b/203233586): Replace with GenJavaTest
+GenJavaTests(
+    name = "TypeUseNullabilityTest",
+    srcs = ["TypeUseNullabilityTest.java"],
+    gen_library_deps = [":type_use_nullability_classes"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + ["-Adagger.nullableTypeAnnotations=ENABLED"],
+    deps = [
+        "//third_party/java/dagger",
+        "//third_party/java/guava/base",
+        "//third_party/java/guava/collect",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)

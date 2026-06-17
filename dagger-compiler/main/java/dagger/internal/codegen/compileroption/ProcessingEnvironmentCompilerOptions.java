@@ -32,6 +32,7 @@ import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompil
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.IGNORE_PROVISION_KEY_WILDCARDS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.INCLUDE_STACKTRACE_WITH_DEFERRED_ERROR_MESSAGES;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.MAP_MULTIBINDING_DUPLICATE_DETECTION_FIX;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.NULLABLE_TYPE_ANNOTATIONS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.PLUGINS_VISIT_FULL_BINDING_GRAPHS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.STRICT_MULTIBINDING_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.STRICT_SUPERFICIAL_VALIDATION;
@@ -217,6 +218,11 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
+  public boolean nullableTypeAnnotations() {
+    return isEnabled(NULLABLE_TYPE_ANNOTATIONS);
+  }
+
+  @Override
   public int keysPerComponentShard(XTypeElement component) {
     if (options.containsKey(KEYS_PER_COMPONENT_SHARD)) {
       checkArgument(
@@ -357,7 +363,9 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
     VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES(ENABLED),
 
-    MAP_MULTIBINDING_DUPLICATE_DETECTION_FIX(DISABLED);
+    MAP_MULTIBINDING_DUPLICATE_DETECTION_FIX(DISABLED),
+
+    NULLABLE_TYPE_ANNOTATIONS;
 
     final FeatureStatus defaultValue;
 

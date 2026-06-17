@@ -18,6 +18,7 @@ package dagger.internal.codegen.xprocessing;
 
 import static androidx.room3.compiler.processing.XElementKt.isMethod;
 import static androidx.room3.compiler.processing.XElementKt.isVariableElement;
+import static androidx.room3.compiler.processing.compat.XConverters.getProcessingEnv;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
@@ -36,6 +37,7 @@ import com.google.common.collect.Sets;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import java.util.Optional;
 
 /**
@@ -57,8 +59,12 @@ public abstract class Nullability {
   public static Nullability of(XElement element) {
     ImmutableSet<XClassName> nonTypeUseNullableAnnotations = getNullableAnnotations(element);
     Optional<XType> type = getType(element);
-    ImmutableSet<XClassName> typeUseNullableAnnotations =
-    ImmutableSet.of();
+    ImmutableSet<XClassName> typeUseNullableAnnotations;
+    if (CompilerOptions.nullableTypeAnnotations(getProcessingEnv(element))) {
+      typeUseNullableAnnotations = type.map(Nullability::getNullableAnnotations).orElse(ImmutableSet.of());
+    } else {
+      typeUseNullableAnnotations = ImmutableSet.of();
+    }
     boolean isKotlinTypeNullable =
         // Note: Technically, it isn't possible for Java sources to have nullable types like in
         // Kotlin sources, but for some reason KSP treats certain types as nullable if they have a

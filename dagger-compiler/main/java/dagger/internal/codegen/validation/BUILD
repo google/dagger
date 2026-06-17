@@ -31,6 +31,7 @@ java_library(
         "//dagger-compiler/main/java/dagger/internal/codegen/kotlin",
         "//dagger-compiler/main/java/dagger/internal/codegen/model",
         "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:nullability",
         "//dagger-runtime/main/java/dagger:core",
         "//dagger-spi",
         "//third_party/java/auto:value",

@@ -16,7 +16,9 @@
 
 package dagger.internal.codegen.compileroption;
 
+import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XTypeElement;
+import com.google.common.base.Ascii;
 import javax.tools.Diagnostic;
 
 /** A collection of options that dictate how the compiler will run. */
@@ -168,4 +170,34 @@ public abstract class CompilerOptions {
    * boundaries at compile time (for Maps) and runtime (for Sets).
    */
   public abstract boolean mapMultibindingDuplicateDetectionFix();
+
+  /**
+   * Returns {@code true} if Dagger should also look for nullable type annotations.
+   *
+   * Note that when disabled, Dagger doesn't disallow usage of nullable type annotations. Instead,
+   * the behavior is simply that Dagger does not look for them, so types marked with nullable type
+   * annotations may appear to be non-nullable.
+   */
+  public abstract boolean nullableTypeAnnotations();
+
+  /**
+   * Returns {@code true} if Dagger should also look for nullable type annotations.
+   *
+   * @deprecated use {@link CompilerOptions#nullableTypeAnnotations()}. This method should only be
+   *     used for legacy code which requires accessing this flag from static methods that don't
+   *     easily have access to an instance of {@link CompilerOptions}.
+   */
+  @Deprecated
+  public static boolean nullableTypeAnnotations(XProcessingEnv processingEnv) {
+    String optionName =
+        ProcessingEnvironmentCompilerOptions.Feature.NULLABLE_TYPE_ANNOTATIONS.toString();
+    String defaultValue =
+        ProcessingEnvironmentCompilerOptions.Feature.NULLABLE_TYPE_ANNOTATIONS
+            .defaultValue().name();
+    String optionValue =
+        processingEnv.getOptions().containsKey(optionName)
+            ? processingEnv.getOptions().get(optionName)
+            : defaultValue;
+    return Ascii.equalsIgnoreCase(optionValue, FeatureStatus.ENABLED.name());
+  }
 }

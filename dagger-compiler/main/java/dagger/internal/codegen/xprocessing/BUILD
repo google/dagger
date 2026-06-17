@@ -20,6 +20,10 @@ load("//tools:bazel_compat.bzl", "compat_kt_jvm_library")
 
 package(default_visibility = ["//dagger-compiler:internal"])
 
+NULLABILITY_SRCS = [
+    "Nullability.java",
+]
+
 XPOET_SRCS = [
     "Accessibility.java",
     "NullableTypeNames.java",
@@ -34,9 +38,24 @@ XPOET_SRCS = [
 ]
 
 java_library(
+    name = "nullability",
+    srcs = NULLABILITY_SRCS,
+    deps = [
+        ":xprocessing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/compileroption",
+        "//dagger-spi",
+        "//third_party/java/auto:value",
+        "//third_party/java/guava/base",
+        "//third_party/java/guava/collect",
+        "//third_party/java/javapoet",
+    ],
+)
+
+java_library(
     name = "xpoet",
     srcs = XPOET_SRCS,
     deps = [
+        ":nullability",
         ":xprocessing",
         "//dagger-compiler/main/java/dagger/internal/codegen/compileroption",
         "//dagger-spi",
@@ -57,7 +76,7 @@ compat_kt_jvm_library(
             "*.java",
             "*.kt",
         ],
-        exclude = XPOET_SRCS,
+        exclude = XPOET_SRCS + NULLABILITY_SRCS,
     ),
     exports = [
         ":xprocessing-lib",

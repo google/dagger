@@ -187,6 +187,30 @@ flag by passing the following compiler option:
 
 `-Adagger.mapMultibindingDuplicateDetectionFix=ENABLED`
 
+## Nullable type annotations
+
+By default, Dagger does not support `@Nullable` annotations that bind to types
+instead of to the methods, parameters, or fields. These would be `@Nullable`
+annotations that use `@Target(ElementType.TYPE_USE)` in Java or
+`@Target(AnnotationTarget.TYPE)` in Kotlin.
+
+There is a bug that can cause type annotations to be lost across compilation
+boundaries in some versions of the JDK, so support for `@Nullable` type
+annotations is opt-in. If you opt in, you should use one of the following JDK
+versions:
+
+- JDK 17.0.19+ or JDK 21.0.8+ with the flag
+`-XDaddTypeAnnotationsToSymbol=true`.
+- JDK 25+ (technically 22+ but 25 is the earliest Long-Term Support release that
+has the fix by default)
+
+Other JDK versions will have the bug and so you should upgrade the JDK version
+before opting in.
+
+In order to opt in and enable the support, pass the following compiler option:
+
+`-Adagger.nullableTypeAnnotations=ENABLED`
+
 <!-- References -->
 
 [`@Component`]: https://dagger.dev/api/latest/dagger/Component.html

@@ -80,6 +80,7 @@ GenKtTests(
     name = "MapKeyWithDefaultTest",
     srcs = ["MapKeyWithDefaultTest.kt"],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    tags = ["disable-turbine-apt"],
     deps = [
         "//third_party/java/auto:value",
         "//third_party/java/dagger",

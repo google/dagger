@@ -90,7 +90,8 @@ def GenKtTests(
         gen_library_deps = None,
         plugins = None,
         javacopts = None,
-        shard_count = None):
+        shard_count = None,
+        tags = None):
     _GenTestsWithVariants(
         library_rule_type = kt_jvm_library,
         test_rule_type = kt_jvm_test,
@@ -101,6 +102,7 @@ def GenKtTests(
         plugins = plugins,
         javacopts = javacopts,
         shard_count = shard_count,
+        user_tags = tags,
     )
 
 def GenJavaLibrary(
@@ -178,7 +180,8 @@ def _GenTestsWithVariants(
         plugins,
         javacopts,
         shard_count,
-        test_kwargs = None):
+        test_kwargs = None,
+        user_tags = None):
     test_files = [src for src in srcs if _is_test(src)]
     supporting_files = [src for src in srcs if not _is_test(src)]
 
@@ -212,7 +215,7 @@ def _GenTestsWithVariants(
         variant_javacopts = [_JAVACOPTS[variant.backend], _JAVACOPTS[variant.codegen]]
         variant_library_rule_type = library_rule_type
         variant_test_rule_type = test_rule_type
-        tags = []
+        tags = list(user_tags or [])
         jvm_flags = []
 
         if variant.flavors:

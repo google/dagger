@@ -17,7 +17,9 @@
 package dagger.internal.codegen;
 
 import androidx.room3.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableList;
 import dagger.testing.compile.CompilerTests;
+import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -287,7 +289,21 @@ public class MembersInjectionValidationTest {
             "  @Named(\"TheString\")",
             "  String theString() { return \"\"; }",
             "}");
+    Source kotlinInjectedQualifier =
+        CompilerTests.kotlinSource(
+            "KotlinInjectedQualifier.kt",
+            "package dagger.internal.codegen",
+            "",
+            "import javax.inject.Inject",
+            "import javax.inject.Named",
+            "",
+            "class KotlinInjectedQualifier {",
+            "  @Inject",
+            "  @Named(\"TheString\")",
+            "  lateinit var qualifiedString: String",
+            "}");
     CompilerTests.daggerCompiler(component, module)
+        .withAdditionalClasspath(compileWithoutDagger(kotlinInjectedQualifier))
         .compile(
             subject -> {
               switch (CompilerTests.backend(subject)) {
@@ -319,7 +335,19 @@ public class MembersInjectionValidationTest {
             "interface TestComponent {",
             "  void inject(KotlinObjectWithMemberInjection injected);",
             "}");
+    Source kotlinObjectWithMemberInjection =
+        CompilerTests.kotlinSource(
+            "KotlinObjectWithMemberInjection.kt",
+            "package dagger.internal.codegen",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "object KotlinObjectWithMemberInjection {",
+            "  @Inject",
+            "  lateinit var property: String",
+            "}");
     CompilerTests.daggerCompiler(component, testModule)
+        .withAdditionalClasspath(compileWithoutDagger(kotlinObjectWithMemberInjection))
         .compile(
             subject -> {
               subject.hasErrorCount(3);
@@ -344,7 +372,19 @@ public class MembersInjectionValidationTest {
             "interface TestComponent {",
             "  void inject(KotlinObjectWithSetterMemberInjection injected);",
             "}");
+    Source kotlinObjectWithSetterMemberInjection =
+        CompilerTests.kotlinSource(
+            "KotlinObjectWithSetterMemberInjection.kt",
+            "package dagger.internal.codegen",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "object KotlinObjectWithSetterMemberInjection {",
+            "  @set:Inject",
+            "  lateinit var setterProperty: String",
+            "}");
     CompilerTests.daggerCompiler(component, testModule)
+        .withAdditionalClasspath(compileWithoutDagger(kotlinObjectWithSetterMemberInjection))
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -370,7 +410,21 @@ public class MembersInjectionValidationTest {
             "  void inject(KotlinClassWithMemberInjectedCompanion injected);",
             "  void injectCompanion(KotlinClassWithMemberInjectedCompanion.Companion injected);",
             "}");
+    Source kotlinClassWithMemberInjectedCompanion =
+        CompilerTests.kotlinSource(
+            "KotlinClassWithMemberInjectedCompanion.kt",
+            "package dagger.internal.codegen",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "class KotlinClassWithMemberInjectedCompanion {",
+            "  companion object {",
+            "    @Inject",
+            "    lateinit var property: String",
+            "  }",
+            "}");
     CompilerTests.daggerCompiler(component, testModule)
+        .withAdditionalClasspath(compileWithoutDagger(kotlinClassWithMemberInjectedCompanion))
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -394,7 +448,21 @@ public class MembersInjectionValidationTest {
             "interface TestComponent {",
             "  void inject(KotlinClassWithSetterMemberInjectedCompanion.Companion injected);",
             "}");
+    Source kotlinClassWithSetterMemberInjectedCompanion =
+        CompilerTests.kotlinSource(
+            "KotlinClassWithSetterMemberInjectedCompanion.kt",
+            "package dagger.internal.codegen",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "class KotlinClassWithSetterMemberInjectedCompanion {",
+            "  companion object {",
+            "    @set:Inject",
+            "    lateinit var setterProperty: String",
+            "  }",
+            "}");
     CompilerTests.daggerCompiler(component, testModule)
+        .withAdditionalClasspath(compileWithoutDagger(kotlinClassWithSetterMemberInjectedCompanion))
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -420,7 +488,21 @@ public class MembersInjectionValidationTest {
             "  void injectCompanion(KotlinClassWithMemberInjectedNamedCompanion.TheCompanion"
                 + " injected);",
             "}");
+    Source kotlinClassWithMemberInjectedNamedCompanion =
+        CompilerTests.kotlinSource(
+            "KotlinClassWithMemberInjectedNamedCompanion.kt",
+            "package dagger.internal.codegen",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "class KotlinClassWithMemberInjectedNamedCompanion {",
+            "  companion object TheCompanion {",
+            "    @Inject",
+            "    lateinit var property: String",
+            "  }",
+            "}");
     CompilerTests.daggerCompiler(component, testModule)
+        .withAdditionalClasspath(compileWithoutDagger(kotlinClassWithMemberInjectedNamedCompanion))
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -445,7 +527,22 @@ public class MembersInjectionValidationTest {
             "  void inject(",
             "      KotlinClassWithSetterMemberInjectedNamedCompanion.TheCompanion injected);",
             "}");
+    Source kotlinClassWithSetterMemberInjectedNamedCompanion =
+        CompilerTests.kotlinSource(
+            "KotlinClassWithSetterMemberInjectedNamedCompanion.kt",
+            "package dagger.internal.codegen",
+            "",
+            "import javax.inject.Inject",
+            "",
+            "class KotlinClassWithSetterMemberInjectedNamedCompanion {",
+            "  companion object TheCompanion {",
+            "    @set:Inject",
+            "    lateinit var setterProperty: String",
+            "  }",
+            "}");
     CompilerTests.daggerCompiler(component, testModule)
+        .withAdditionalClasspath(
+            compileWithoutDagger(kotlinClassWithSetterMemberInjectedNamedCompanion))
         .compile(
             subject -> {
               subject.hasErrorCount(2);
@@ -469,4 +566,8 @@ public class MembersInjectionValidationTest {
           "  @Provides",
           "  String theString() { return \"\"; }",
           "}");
+
+  private static ImmutableList<File> compileWithoutDagger(Source... sources) {
+    return CompilerTests.libraryCompiler(sources).compile();
+  }
 }

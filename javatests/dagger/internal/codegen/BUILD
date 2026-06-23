@@ -15,27 +15,11 @@
 # Description:
 #   Tests for the Dagger compiler/codegen
 
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_java//java:defs.bzl", "java_library")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
 load("//:test_defs.bzl", "GenCompilerTests")
 
 package(default_visibility = ["//:src"])
-
-# TODO(bcorso): Move this into a subpackage.
-KT_LIB_NO_DAGGER_COMPILER_SRCS = [
-    "KotlinInjectedQualifier.kt",
-    "KotlinObjectWithMemberInjection.kt",
-]
-
-# These sources are purposely compiled without the Dagger compiler for certain tests.
-kt_jvm_library(
-    name = "kt_lib_no_dagger_compiler",
-    srcs = KT_LIB_NO_DAGGER_COMPILER_SRCS,
-    deps = [
-        "//dagger-runtime/main/java/dagger:core",
-    ],
-)
 
 COMPILERS_SRCS = [
     "CompilerMode.java",
@@ -103,7 +87,6 @@ MEDIUM_TESTS = [
 
 DEPS = [
     ":compilers",
-    ":kt_lib_no_dagger_compiler",
     "//third_party/java/guava/base",
     "//third_party/java/guava/collect",
     "//third_party/java/guava/util/concurrent",
@@ -162,7 +145,7 @@ GenCompilerTests(
     name = "compiler_tests",
     srcs = glob(
         ["*.java"],
-        exclude = KT_LIB_NO_DAGGER_COMPILER_SRCS + COMPILERS_SRCS + LARGE_TESTS + MEDIUM_TESTS,
+        exclude = COMPILERS_SRCS + LARGE_TESTS + MEDIUM_TESTS,
     ),
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     plugins = ["//dagger-compiler/main/java/dagger/internal/codegen/bootstrap"],

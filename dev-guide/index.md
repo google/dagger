@@ -2,6 +2,7 @@
 layout: default
 title: Dagger
 redirect_from:
+
   - /users-guide
 ---
 
@@ -33,7 +34,7 @@ get the right behavior in each situation.
 ## Why Dagger 2 is Different
 
 [Dependency injection][DI] frameworks have existed for years with a whole
-variety of APIs for configuring and injecting.  So, why reinvent the wheel?
+variety of APIs for configuring and injecting. So, why reinvent the wheel?
 Dagger 2 is the first to **implement the full stack with generated code**. The
 guiding principle is to generate code that mimics the code that a user might
 have hand-written to ensure that dependency injection is as simple, traceable
@@ -50,8 +51,8 @@ For complete sample code that you can compile and run, see Dagger's
 ### Declaring Dependencies
 
 Dagger constructs instances of your application classes and satisfies their
-dependencies. It uses the [`javax.inject.Inject`] annotation to identify
-which constructors and fields it is interested in.
+dependencies. It uses the [`javax.inject.Inject`] annotation to identify which
+constructors and fields it is interested in.
 
 Use `@Inject` to annotate the constructor that Dagger should use to create
 instances of a class. When a new instance is requested, Dagger will obtain the
@@ -207,6 +208,49 @@ interface HeaterModule {
 }
 ```
 
+###### Parameterless @Binds
+
+In addition to delegating from one type to another (using a one-parameter
+`@Binds` method), `@Binds` can also be used with zero parameters to explicitly
+declare a binding for a class with an `@Inject` constructor.
+
+Normally, classes with `@Inject` constructors are implicitly discovered and
+bound by Dagger when requested. However, making the binding explicit via a
+parameterless `@Binds` method allows you to explicitly declare the binding in a
+module so that it cannot be overridden by other module bindings.
+
+**Example:**
+
+Suppose we have a `CoffeeMaker` class with an `@Inject` constructor:
+
+```java
+class CoffeeMaker {
+  @Inject
+  CoffeeMaker(Heater heater, Pump pump) { ... }
+}
+```
+
+You can explicitly declare this binding in a module using a zero-parameter
+`@Binds` method:
+
+```java
+@Module
+interface CoffeeMakerModule {
+  @Binds CoffeeMaker bindCoffeeMaker();
+}
+```
+
+**Constraints:**
+
+Parameterless `@Binds` comes with some additional constraints:
+
+*   The return type must be a non-generic class with exactly one `@Inject`
+    constructor.
+*   The `@Binds` method cannot be scoped or qualified, and the return type
+    cannot have a scoped `@Inject` constructor.
+*   The `@Binds` method cannot be used with multibinding annotations
+    (`@IntoSet`, `@ElementsIntoSet`, `@IntoMap`) or `@MapKey`.
+
 ### Building the Graph
 
 The `@Inject` and `@Provides`-annotated classes form a graph of objects, linked
@@ -252,12 +296,12 @@ CoffeeShop coffeeShop = DaggerCoffeeShop.builder()
 > would generate a component named `DaggerFoo_Bar_BazComponent`.
 
 Any module with an accessible default constructor can be elided as the builder
-will construct an instance automatically if none is set.  And for any module
+will construct an instance automatically if none is set. And for any module
 whose `@Provides` methods are all static, the implementation doesn't need an
-instance at all.  If all dependencies can be constructed without the user
-creating a dependency instance, then the generated implementation will also
-have a `create()` method that can be used to get a new instance without having
-to deal with the builder.
+instance at all. If all dependencies can be constructed without the user
+creating a dependency instance, then the generated implementation will also have
+a `create()` method that can be used to get a new instance without having to
+deal with the builder.
 
 ```java
 CoffeeShop coffeeShop = DaggerCoffeeShop.create();
@@ -289,7 +333,7 @@ $ java -cp ... coffee.CoffeeApp
 
 The example above shows how to construct a component with some of the more
 typical bindings, but there are a variety of mechanisms for contributing
-bindings to the graph.  The following are available as dependencies and may be
+bindings to the graph. The following are available as dependencies and may be
 used to generate a well-formed component:
 
 *   Those declared by `@Provides` methods within a `@Module` referenced directly
@@ -401,13 +445,13 @@ class CoffeeFilter {
 
 ### Lazy injections
 
-Sometimes you need an object to be instantiated lazily.  For any binding `T`,
-you can create a [`Lazy<T>`][Lazy] which defers instantiation until the first
-call to `Lazy<T>`'s `get()` method. If `T` is a singleton, then `Lazy<T>` will
-be the same instance for all injections within the `ObjectGraph`.  Otherwise,
-each injection site will get its own `Lazy<T>` instance.  Regardless, subsequent
-calls to any given instance of `Lazy<T>` will return the same underlying
-instance of `T`.
+Sometimes you need an object to be instantiated lazily. For any binding `T`, you
+can create a [`Lazy<T>`][Lazy] which defers instantiation until the first call
+to `Lazy<T>`'s `get()` method. If `T` is a singleton, then `Lazy<T>` will be the
+same instance for all injections within the `ObjectGraph`. Otherwise, each
+injection site will get its own `Lazy<T>` instance. Regardless, subsequent calls
+to any given instance of `Lazy<T>` will return the same underlying instance of
+`T`.
 
 ```java
 class GrindingCoffeeMaker {
@@ -425,9 +469,9 @@ class GrindingCoffeeMaker {
 ### Provider injections
 
 Sometimes you need multiple instances to be returned instead of just injecting a
-single value.  While you have several options (Factories, Builders, etc.), one
-option is to inject a [`Provider<T>`][Provider] instead of just `T`.  A
-`Provider<T>` invokes the _binding logic_ for `T` each time `.get()` is called.
+single value. While you have several options (Factories, Builders, etc.), one
+option is to inject a [`Provider<T>`][Provider] instead of just `T`. A
+`Provider<T>` invokes the *binding logic* for `T` each time `.get()` is called.
 If that binding logic is an `@Inject` constructor, a new instance will be
 created, but a `@Provides` method has no such guarantee.
 
@@ -603,13 +647,12 @@ When compiling it, `javac` rejects the missing binding:
 ```
 
 Fix the problem by adding an `@Provides`-annotated method for `Executor` to
-_any_ of the modules in the component.  While `@Inject`, `@Module` and
+*any* of the modules in the component. While `@Inject`, `@Module` and
 `@Provides` annotations are validated individually, all validation of the
-relationship between bindings happens at the `@Component` level.  Dagger 1
-relied strictly on `@Module`-level validation (which may or may not have
-reflected runtime behavior), but Dagger 2 elides such validation (and the
-accompanying configuration parameters on `@Module`) in favor of full graph
-validation.
+relationship between bindings happens at the `@Component` level. Dagger 1 relied
+strictly on `@Module`-level validation (which may or may not have reflected
+runtime behavior), but Dagger 2 elides such validation (and the accompanying
+configuration parameters on `@Module`) in favor of full graph validation.
 
 ### Compile-time Code Generation
 

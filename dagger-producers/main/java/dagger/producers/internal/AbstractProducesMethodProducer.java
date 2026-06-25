@@ -71,7 +71,13 @@ public abstract class AbstractProducesMethodProducer<D, T> extends AbstractProdu
   protected final ListenableFuture<T> compute() {
     monitor = monitorProvider.get().producerMonitorFor(token);
     monitor.requested();
-    ListenableFuture<T> result = Futures.transformAsync(collectDependencies(), this, this);
+    ListenableFuture<D> dependenciesFuture;
+    try {
+      dependenciesFuture = collectDependencies();
+    } finally {
+      monitor.dependenciesRequested();
+    }
+    ListenableFuture<T> result = Futures.transformAsync(dependenciesFuture, this, this);
     monitor.addCallbackTo(result);
     return result;
   }

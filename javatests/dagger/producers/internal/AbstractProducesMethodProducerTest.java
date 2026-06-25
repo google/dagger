@@ -76,6 +76,7 @@ public class AbstractProducesMethodProducerTest {
     assertThat(future.isDone()).isFalse();
     verify(monitor).ready();
     verify(monitor).requested();
+    verify(monitor).dependenciesRequested();
     verify(monitor).addCallbackTo(anyListenableFuture());
     verify(monitor).methodStarting();
     verify(monitor).methodFinished();
@@ -94,6 +95,7 @@ public class AbstractProducesMethodProducerTest {
     assertThat(future.isDone()).isFalse();
     verify(monitor).ready();
     verify(monitor).requested();
+    verify(monitor).dependenciesRequested();
     verify(monitor).addCallbackTo(anyListenableFuture());
     verify(monitor).methodStarting();
     verify(monitor).methodFinished();

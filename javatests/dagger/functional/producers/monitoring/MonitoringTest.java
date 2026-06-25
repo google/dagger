@@ -88,13 +88,16 @@ public final class MonitoringTest {
     inOrder.verify(callServer2Monitor).requested();
     inOrder.verify(callServer1Monitor).requested();
     inOrder.verify(requestDataMonitor).requested();
+    inOrder.verify(requestDataMonitor).dependenciesRequested();
     inOrder.verify(requestDataMonitor).ready();
     inOrder.verify(requestDataMonitor).methodStarting();
     inOrder.verify(requestDataMonitor).methodFinished();
     inOrder.verify(requestDataMonitor).succeeded("Hello, World!");
+    inOrder.verify(callServer1Monitor).dependenciesRequested();
     inOrder.verify(callServer1Monitor).ready();
     inOrder.verify(callServer1Monitor).methodStarting();
     inOrder.verify(callServer1Monitor).methodFinished();
+    inOrder.verify(callServer2Monitor).dependenciesRequested();
     verifyNoMoreInteractions(requestDataMonitor, callServer1Monitor, callServer2Monitor);
 
     server1Future.set("server 1 response");
@@ -133,13 +136,16 @@ public final class MonitoringTest {
     inOrder.verify(callServer2Monitor).requested();
     inOrder.verify(callServer1Monitor).requested();
     inOrder.verify(requestDataMonitor).requested();
+    inOrder.verify(requestDataMonitor).dependenciesRequested();
     inOrder.verify(requestDataMonitor).ready();
     inOrder.verify(requestDataMonitor).methodStarting();
     inOrder.verify(requestDataMonitor).methodFinished();
     inOrder.verify(requestDataMonitor).succeeded("Hello, World!");
+    inOrder.verify(callServer1Monitor).dependenciesRequested();
     inOrder.verify(callServer1Monitor).ready();
     inOrder.verify(callServer1Monitor).methodStarting();
     inOrder.verify(callServer1Monitor).methodFinished();
+    inOrder.verify(callServer2Monitor).dependenciesRequested();
     verifyNoMoreInteractions(requestDataMonitor, callServer1Monitor, callServer2Monitor);
 
     RuntimeException cause = new RuntimeException("monkey");

@@ -136,6 +136,15 @@ public final class Monitors {
     }
 
     @Override
+    public void dependenciesRequested() {
+      try {
+        delegate.dependenciesRequested();
+      } catch (RuntimeException e) {
+        logProducerMonitorMethodException(e, delegate, "dependenciesRequested");
+      }
+    }
+
+    @Override
     public void ready() {
       try {
         delegate.ready();
@@ -266,6 +275,17 @@ public final class Monitors {
           delegate.requested();
         } catch (RuntimeException e) {
           logProducerMonitorMethodException(e, delegate, "requested");
+        }
+      }
+    }
+
+    @Override
+    public void dependenciesRequested() {
+      for (ProducerMonitor delegate : delegates.reverse()) {
+        try {
+          delegate.dependenciesRequested();
+        } catch (RuntimeException e) {
+          logProducerMonitorMethodException(e, delegate, "dependenciesRequested");
         }
       }
     }

@@ -31,6 +31,8 @@ import dagger.producers.Produces;
  * <p>The lifecycle of the monitor, under normal conditions, is:
  * <ul>
  *   <li>{@link #requested()}
+ *   <li>{@link #dependenciesRequested()}
+ *   <li>{@link #ready()}
  *   <li>{@link #methodStarting()}
  *   <li>The method is called
  *   <li>{@link #methodFinished()}
@@ -58,6 +60,9 @@ import dagger.producers.Produces;
  *   <li>A requested
  *   <li>B requested
  *   <li>C requested
+ *   <li>C dependenciesRequested
+ *   <li>B dependenciesRequested
+ *   <li>A dependenciesRequested
  *   <li>C methodStarting
  *   <li>C methodFinished
  *   <li>C succeeded
@@ -101,6 +106,17 @@ public abstract class ProducerMonitor {
    * <p>This implementation is a no-op.
    */
   public void requested() {}
+
+  /**
+   * Called when all of the producer's dependencies have been requested. This will be called from
+   * the same thread as {@link #requested()}.
+   *
+   * <p>When multiple monitors are installed, calls to this method will be in the reverse order from
+   * calls to {@link #requested()}.
+   *
+   * <p>This implementation is a no-op.
+   */
+  public void dependenciesRequested() {}
 
   /**
    * Called when all of the producer's inputs are available. This is called regardless of whether

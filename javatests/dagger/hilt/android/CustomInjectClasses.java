@@ -26,11 +26,11 @@ import dagger.hilt.components.SingletonComponent;
 import javax.inject.Inject;
 
 /**
- * Classes for CustomInjectTest. This is in a separate build target because otherwise
- * robolectric does not recognize the application class as extending application due to order of
- * class generation.
+ * Classes for CustomInjectTest. This is in a separate build target because otherwise robolectric
+ * does not recognize the application class as extending application due to order of class
+ * generation.
  */
-final class CustomInjectClasses {
+public final class CustomInjectClasses {
 
   @Module
   @InstallIn(SingletonComponent.class)
@@ -43,7 +43,7 @@ final class CustomInjectClasses {
 
   @CustomInject
   @HiltAndroidApp(Application.class)
-  static final class TestApplication extends Hilt_CustomInjectClasses_TestApplication {
+  public static final class TestApplication extends Hilt_CustomInjectClasses_TestApplication {
 
     @Inject Integer intValue;
 

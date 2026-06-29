@@ -25,6 +25,7 @@ import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import com.android.build.api.variant.Component
+import com.android.build.api.variant.DynamicFeatureAndroidComponentsExtension
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.android.build.api.variant.ScopedArtifacts
 import com.android.build.api.variant.TestAndroidComponentsExtension
@@ -397,6 +398,9 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       when (androidExtension) {
         is ApplicationAndroidComponentsExtension -> GradleProjectType.APP
         is LibraryAndroidComponentsExtension -> GradleProjectType.LIBRARY
+        // Dynamic feature modules are treated as libraries since they cannot have a
+        // @HiltAndroidApp and cannot contribute to the main app's component tree.
+        is DynamicFeatureAndroidComponentsExtension -> GradleProjectType.LIBRARY
         is TestAndroidComponentsExtension -> GradleProjectType.TEST
         else -> error("Hilt plugin does not know how to configure '$androidExtension'")
       }

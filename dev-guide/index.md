@@ -188,9 +188,11 @@ them both into the same module using an abstract class or interface:
 ```java
 @Module
 interface HeaterModule {
-  @Binds fun bindHeater(impl: ElectricHeater): Heater
+  @Binds Heater bindHeater(ElectricHeater impl);
 
-  @Provides static fun provideElectricHeater() = ElectricHeater()
+  @Provides static ElectricHeater provideElectricHeater() {
+    return new ElectricHeater();
+  }
 }
 ```
 

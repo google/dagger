@@ -57,7 +57,6 @@ configurations.all {
 
 dependencies {
   implementation "com.google.dagger:hilt-android:$dagger_version"
-  implementation "com.google.errorprone:error_prone_annotations:2.45.0"
   annotationProcessor "com.google.dagger:hilt-compiler:$dagger_version"
 
   testImplementation 'com.google.truth:truth:1.0.1'

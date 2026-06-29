@@ -45,7 +45,6 @@ dependencies {
     implementation 'junit:junit:4.13'
     implementation 'androidx.test.ext:junit:1.1.3'
     implementation 'androidx.test:runner:1.4.0'
-    implementation "com.google.errorprone:error_prone_annotations:2.45.0"
 
     implementation "com.google.dagger:hilt-android:$dagger_version"
     implementation "com.google.dagger:hilt-android-testing:$dagger_version"

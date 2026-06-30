@@ -41,7 +41,8 @@ import com.google.devtools.ksp.processing.SymbolProcessorProvider;
  */
 public final class KspProguardProcessor extends KspBasicAnnotationProcessor {
   private static final XProcessingEnvConfig PROCESSING_ENV_CONFIG =
-      new XProcessingEnvConfig.Builder().build();
+      new XProcessingEnvConfig.Builder()
+          .build();
   private XProcessingEnv env;
 
   private KspProguardProcessor(SymbolProcessorEnvironment symbolProcessorEnvironment) {

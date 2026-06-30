@@ -63,7 +63,9 @@ public final class CompilerTests {
   // TODO(bcorso): Share this with
   // dagger-compiler/main/java/dagger/internal/codegen/DelegateComponentProcessor.java
   static final XProcessingEnvConfig PROCESSING_ENV_CONFIG =
-      new XProcessingEnvConfig.Builder().disableAnnotatedElementValidation(true).build();
+      new XProcessingEnvConfig.Builder()
+          .disableAnnotatedElementValidation(true)
+          .build();
 
   // TODO(bcorso): Share this with javatests/dagger/internal/codegen/Compilers.java
   private static final ImmutableMap<String, String> DEFAULT_PROCESSOR_OPTIONS =

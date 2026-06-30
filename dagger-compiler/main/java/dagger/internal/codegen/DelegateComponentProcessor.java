@@ -70,7 +70,9 @@ import javax.tools.Diagnostic.Kind;
 /** An implementation of Dagger's component processor that is shared between Javac and KSP. */
 final class DelegateComponentProcessor {
   static final XProcessingEnvConfig PROCESSING_ENV_CONFIG =
-      new XProcessingEnvConfig.Builder().disableAnnotatedElementValidation(true).build();
+      new XProcessingEnvConfig.Builder()
+          .disableAnnotatedElementValidation(true)
+          .build();
 
   @Inject InjectBindingRegistry injectBindingRegistry;
   @Inject SourceFileGenerator<ContributionBinding> factoryGenerator;

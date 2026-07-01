@@ -18,8 +18,10 @@ package dagger.internal.codegen;
 
 import androidx.room3.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
+import java.io.File;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -250,12 +252,7 @@ public class AssistedFactoryTest {
             "  Foo create(Integer arg);",
             "}");
 
-    Source bar =
-        CompilerTests.javaSource(
-            "test.Bar",
-            "package test;",
-            "",
-            "interface Bar {}");
+    Source bar = CompilerTests.javaSource("test.Bar", "package test;", "", "interface Bar {}");
 
     Source foo =
         CompilerTests.javaSource(
@@ -397,16 +394,8 @@ public class AssistedFactoryTest {
             "interface MySubcomponentAssistedFactory {",
             "  MyAssistedClass create(Bar bar, Foo foo);",
             "}");
-    Source foo =
-        CompilerTests.javaSource(
-            "test.Foo",
-            "package test;",
-            "final class Foo {}");
-    Source bar =
-        CompilerTests.javaSource(
-            "test.Bar",
-            "package test;",
-            "final class Bar {}");
+    Source foo = CompilerTests.javaSource("test.Foo", "package test;", "final class Foo {}");
+    Source bar = CompilerTests.javaSource("test.Bar", "package test;", "final class Bar {}");
     Source baz =
         CompilerTests.javaSource(
             "test.Baz",
@@ -433,5 +422,76 @@ public class AssistedFactoryTest {
               subject.hasErrorCount(0);
               subject.generatedSource(goldenFileRule.goldenSource("test/DaggerMyComponent"));
             });
+  }
+
+  // Verify that Dagger does not support consuming assisted factories from libraries
+  // compiled without Dagger's annotation processor.
+  @Test
+  public void testAssistedFactoryFromLibraryWithoutProcessor() {
+    Source libraryTarget =
+        CompilerTests.javaSource(
+            "test.LibraryTarget",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedFactory;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "public final class LibraryTarget {",
+            "  private final Dep dep;",
+            "  private final String assistedDep;",
+            "",
+            "  public static class Dep {",
+            "    @javax.inject.Inject",
+            "    public Dep() {}",
+            "  }",
+            "",
+            "  @AssistedInject",
+            "  LibraryTarget(Dep dep, @Assisted String assistedDep) {",
+            "    this.dep = dep;",
+            "    this.assistedDep = assistedDep;",
+            "  }",
+            "",
+            "  @AssistedFactory",
+            "  public interface Factory {",
+            "    LibraryTarget create(String assistedDep);",
+            "  }",
+            "}");
+
+    // Compile the library without Dagger's annotation processor. Because we use libraryCompiler()
+    // without registering Dagger's processor, no Dagger codegen (like the _Impl classes) is
+    // performed.
+    ImmutableList<File> libraryClasspath = CompilerTests.libraryCompiler(libraryTarget).compile();
+
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  LibraryTarget.Factory getFactory();",
+            "}");
+
+    CompilerTests.DaggerCompiler daggerCompiler =
+        CompilerTests.daggerCompiler(component)
+            .withAdditionalClasspath(libraryClasspath)
+            .withProcessingOptions(compilerMode.processorOptions());
+
+    if (compilerMode.isFastInitEnabled()) {
+      // TODO(b/529883325): This should fail to compile because Dagger does not support
+      // consuming assisted factories from libraries compiled without Dagger's processor.
+      daggerCompiler.compile(
+          subject -> {
+            subject.hasErrorCount(0);
+          });
+    } else {
+      daggerCompiler.compile(
+          subject -> {
+            subject.hasErrorContaining("LibraryTarget_Factory_Impl");
+          });
+    }
   }
 }

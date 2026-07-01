@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.base.Ascii;
 import com.google.common.base.Splitter;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -29,7 +30,7 @@ import java.util.List;
 public enum CompilerMode {
   DEFAULT_MODE,
   FAST_INIT_MODE("-Adagger.fastInit=enabled"),
-  ;
+;
 
   /** Returns the compiler modes as a list of parameters for parameterized tests */
   public static final ImmutableList<Object[]> TEST_PARAMETERS =
@@ -47,6 +48,11 @@ public enum CompilerMode {
 
   public boolean isKotlinCodegenEnabled() {
     return false;
+  }
+
+  public boolean isFastInitEnabled() {
+    return processorOptions().containsKey("dagger.fastInit")
+        && Ascii.equalsIgnoreCase(processorOptions().get("dagger.fastInit"), "ENABLED");
   }
 
   /**

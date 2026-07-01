@@ -27,8 +27,7 @@ import org.junit.rules.TemporaryFolder
  */
 class HiltGradlePluginTest {
 
-  @get:Rule
-  val testProjectDir = TemporaryFolder()
+  @get:Rule val testProjectDir = TemporaryFolder()
 
   lateinit var gradleRunner: GradleTestRunner
 
@@ -40,15 +39,14 @@ class HiltGradlePluginTest {
   // Verify plugin configuration fails when runtime dependency is missing but plugin is applied.
   @Test
   fun test_missingLibraryDep() {
-    gradleRunner.addDependencies(
-      "implementation 'androidx.appcompat:appcompat:1.1.0'"
-    )
+    gradleRunner.addDependencies("implementation 'androidx.appcompat:appcompat:1.1.0'")
 
     val result = gradleRunner.buildAndFail()
-    assertThat(result.getOutput()).contains(
-      "The Hilt Android Gradle plugin is applied but no " +
-        "com.google.dagger:hilt-android dependency was found."
-    )
+    assertThat(result.getOutput())
+      .contains(
+        "The Hilt Android Gradle plugin is applied but no " +
+          "com.google.dagger:hilt-android dependency was found."
+      )
   }
 
   // Verify plugin configuration fails when compiler dependency is missing but plugin is applied.
@@ -56,21 +54,20 @@ class HiltGradlePluginTest {
   fun test_missingCompilerDep() {
     gradleRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'",
-      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'"
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
     )
 
     val result = gradleRunner.buildAndFail()
-    assertThat(result.getOutput()).contains(
-      "The Hilt Android Gradle plugin is applied but no " +
-        "com.google.dagger:hilt-compiler dependency was found."
-    )
+    assertThat(result.getOutput())
+      .contains(
+        "The Hilt Android Gradle plugin is applied but no " +
+          "com.google.dagger:hilt-compiler dependency was found."
+      )
   }
 
   @Test
   fun test_non_application_project() {
-    gradleRunner.addHiltOption(
-      "enableAggregatingTask = true"
-    )
+    gradleRunner.addHiltOption("enableAggregatingTask = true")
     gradleRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'",
       "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
@@ -79,23 +76,89 @@ class HiltGradlePluginTest {
     gradleRunner.addSrc(
       srcPath = "minimal/MyApp.java",
       srcContent =
-          """
-          package minimal;
+        """
+        package minimal;
 
-          import android.app.Application;
+        import android.app.Application;
 
-          @dagger.hilt.android.HiltAndroidApp
-          public class MyApp extends Application { }
-          """.trimIndent()
+        @dagger.hilt.android.HiltAndroidApp
+        public class MyApp extends Application { }
+        """
+          .trimIndent(),
     )
     gradleRunner.setAppClassName(".MyApp")
     gradleRunner.setIsAppProject(false)
 
     val result = gradleRunner.buildAndFail()
-    assertThat(result.getOutput()).contains(
-      "Application class, minimal.MyApp, annotated with @HiltAndroidApp must be defined in a "
-          + "Gradle android application module (i.e. contains a build.gradle file with "
-          + "`plugins { id 'com.android.application' }`)."
+    assertThat(result.getOutput())
+      .contains(
+        "Application class, minimal.MyApp, annotated with @HiltAndroidApp must be defined in a " +
+          "Gradle android application module (i.e. contains a build.gradle file with " +
+          "`plugins { id 'com.android.application' }`)."
+      )
+  }
+
+  // Verify that compiler options configured by the Hilt plugin (using fastInit
+  // as a representative toggleable flag) are correctly propagated to the
+  // Hilt aggregation compilation task (hiltJavaCompile).
+  @Test
+  fun test_compilerOptionPropagation_fastInitDisabled() {
+    gradleRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'",
     )
+    gradleRunner.runAdditionalTasks("-Pdagger.hilt.fastInit=false")
+    gradleRunner.runAdditionalTasks("verifyHiltArgs")
+
+    gradleRunner.addAdditionalClosure(
+      """
+      tasks.register("verifyHiltArgs") {
+          doLast {
+              def hiltCompileTask = tasks.getByName("hiltJavaCompileDebug")
+              def args = []
+              hiltCompileTask.options.compilerArgumentProviders.each { provider ->
+                  args.addAll(provider.asArguments())
+              }
+              if (args.contains("-Adagger.fastInit=enabled")) {
+                  throw new GradleException("Expected fastInit to be disabled (absent), but args were: " + args)
+              }
+          }
+      }
+      """
+        .trimIndent()
+    )
+
+    gradleRunner.build()
+  }
+
+  @Test
+  fun test_compilerOptionPropagation_fastInitDefault() {
+    gradleRunner.addDependencies(
+      "implementation 'androidx.appcompat:appcompat:1.1.0'",
+      "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'",
+    )
+    gradleRunner.runAdditionalTasks("verifyHiltArgs")
+
+    gradleRunner.addAdditionalClosure(
+      """
+      tasks.register("verifyHiltArgs") {
+          doLast {
+              def hiltCompileTask = tasks.getByName("hiltJavaCompileDebug")
+              def args = []
+              hiltCompileTask.options.compilerArgumentProviders.each { provider ->
+                  args.addAll(provider.asArguments())
+              }
+              if (!args.contains("-Adagger.fastInit=enabled")) {
+                  throw new GradleException("Expected fastInit to be enabled by default, but args were: " + args)
+              }
+          }
+      }
+      """
+        .trimIndent()
+    )
+
+    gradleRunner.build()
   }
 }

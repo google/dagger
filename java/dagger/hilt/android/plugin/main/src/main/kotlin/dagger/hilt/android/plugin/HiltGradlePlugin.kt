@@ -44,7 +44,6 @@ import dagger.hilt.android.plugin.util.capitalize
 import dagger.hilt.android.plugin.util.getConfigName
 import dagger.hilt.android.plugin.util.getKaptConfigName
 import dagger.hilt.android.plugin.util.getKspConfigName
-import dagger.hilt.android.plugin.util.isKspTask
 import dagger.hilt.android.plugin.util.onAllVariants
 import dagger.hilt.android.plugin.util.onRootVariants
 import dagger.hilt.processor.internal.optionvalues.GradleProjectType
@@ -53,7 +52,6 @@ import javax.inject.Inject
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ExternalDependency
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
@@ -63,7 +61,6 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.process.CommandLineArgumentProvider
 import org.objectweb.asm.Opcodes
 
 /**
@@ -424,18 +421,21 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       }
       // Pass annotation processor flags via a CommandLineArgumentProvider so that plugin
       // options defined in the extension are populated from the user's build file.
-      val argsProducer: (Task) -> CommandLineArgumentProvider = { task ->
+      fun createArgsProvider(forKsp: Boolean) =
         HiltCommandLineArgumentProvider(
-          forKsp = task.isKspTask(),
+          forKsp = forKsp,
           projectType = projectType,
           enableAggregatingTask = isAggregatingTaskEnabled(),
           disableCrossCompilationRootValidation = !isCrossCompilationRootValidationEnabled(),
           enableFastInit = isFastInitEnabled(),
         )
-      }
-      addJavaTaskProcessorOptions(project, variant, argsProducer)
-      addKaptTaskProcessorOptions(project, variant, argsProducer)
-      addKspTaskProcessorOptions(project, variant, argsProducer)
+      val javaArgsProvider = createArgsProvider(false)
+      val kspArgsProvider = createArgsProvider(true)
+
+      addJavaTaskProcessorOptions(variant, javaArgsProvider)
+
+      addKaptTaskProcessorOptions(project, variant, javaArgsProvider)
+      addKspTaskProcessorOptions(project, variant, kspArgsProvider)
     }
   }
 
@@ -502,10 +502,9 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
         .reduce { accumulator, fileCollection -> accumulator + fileCollection }
     }
 
-    private fun Project.isGradleSyncRunning() =
-      gradleSyncProps.any { property ->
-        providers.gradleProperty(property).map { it.toBoolean() }.orElse(false).get()
-      }
+    private fun Project.isGradleSyncRunning() = gradleSyncProps.any { property ->
+      providers.gradleProperty(property).map { it.toBoolean() }.orElse(false).get()
+    }
 
     private fun Project.buildDir(dirName: String) = layout.buildDirectory.dir(dirName)
 

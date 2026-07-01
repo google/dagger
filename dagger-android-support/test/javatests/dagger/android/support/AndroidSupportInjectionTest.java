@@ -44,7 +44,7 @@ public final class AndroidSupportInjectionTest {
     assertThat(e).hasMessageThat().contains("No injector was found");
   }
 
-  private static class ApplicationReturnsNull extends Application
+  public static class ApplicationReturnsNull extends Application
       implements HasAndroidInjector {
     @Override
     public AndroidInjector<Object> androidInjector() {

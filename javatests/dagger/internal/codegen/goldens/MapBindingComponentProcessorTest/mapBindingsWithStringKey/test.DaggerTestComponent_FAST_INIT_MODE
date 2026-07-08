@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Preconditions;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import java.util.Map;
 import javax.annotation.processing.Generated;
 
@@ -85,9 +86,9 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize(final MapModuleOne mapModuleOneParam,
         final MapModuleTwo mapModuleTwoParam) {
-      this.provideAdminHandlerProvider = new SwitchingProvider<>(testComponentImpl, 1);
-      this.provideLoginHandlerProvider = new SwitchingProvider<>(testComponentImpl, 2);
-      this.mapOfStringAndProviderOfHandlerProvider = new SwitchingProvider<>(testComponentImpl, 0);
+      this.provideAdminHandlerProvider = new SwitchingPImpl<>(testComponentImpl, 1);
+      this.provideLoginHandlerProvider = new SwitchingPImpl<>(testComponentImpl, 2);
+      this.mapOfStringAndProviderOfHandlerProvider = new SwitchingPImpl<>(testComponentImpl, 0);
     }
 
     @Override
@@ -95,19 +96,24 @@ final class DaggerTestComponent {
       return mapOfStringAndProviderOfHandlerProvider;
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final TestComponentImpl testComponentImpl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+      SwitchingPImpl(TestComponentImpl testComponentImpl, int id) {
         this.testComponentImpl = testComponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // java.util.Map<java.lang.String,javax.inject.Provider<test.Handler>>
           return (T) ImmutableMap.<String, javax.inject.Provider<Handler>>of("Admin", testComponentImpl.provideAdminHandlerProvider, "Login", testComponentImpl.provideLoginHandlerProvider);

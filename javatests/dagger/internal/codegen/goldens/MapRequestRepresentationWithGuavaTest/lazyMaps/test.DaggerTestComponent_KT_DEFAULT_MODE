@@ -49,38 +49,38 @@ final class DaggerTestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
     /**
-      * {@code Provider<java.util.concurrent.atomic.AtomicInteger>}
-      */
+     * {@code Provider<java.util.concurrent.atomic.AtomicInteger>}
+     */
     Provider<?> provideAtomicIntegerProvider;
 
     /**
-      * {@code Provider<String>}
-      */
+     * {@code Provider<String>}
+     */
     Provider<?> provideStringProvider;
 
     /**
-      * {@code Provider<String>}
-      */
+     * {@code Provider<String>}
+     */
     Provider<?> string0Provider;
 
     /**
-      * {@code Provider<String>}
-      */
+     * {@code Provider<String>}
+     */
     Provider<?> string1Provider;
 
     /**
-      * {@code Provider<String>}
-      */
+     * {@code Provider<String>}
+     */
     Provider<?> string2Provider;
 
     /**
-      * {@code Provider<Map<String, Lazy<String>>>}
-      */
+     * {@code Provider<Map<String, Lazy<String>>>}
+     */
     Provider<?> mapOfStringAndLazyOfStringProvider;
 
     /**
-      * {@code Provider<?>}
-      */
+     * {@code Provider<?>}
+     */
     Provider<?> mapOfStringAndProviderOfLazyOfStringProvider;
 
     TestComponentImpl() {

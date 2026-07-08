@@ -25,6 +25,7 @@ import org.jspecify.annotations.Nullable;
  * A {@link Provider} implementation that memoizes the result of another {@link Provider} using
  * simple lazy initialization, not the double-checked lock pattern.
  */
+
 public final class SingleCheck<T extends @Nullable Object> implements Provider<T> {
   private static final Object UNINITIALIZED = new Object();
 
@@ -61,7 +62,10 @@ public final class SingleCheck<T extends @Nullable Object> implements Provider<T
   /** Returns a {@link Provider} that caches the value from the given delegate provider. */
   public static <T> Provider<T> provider(Provider<T> provider) {
     // If a scoped @Binds delegates to a scoped binding, don't cache the value again.
-    if (provider instanceof SingleCheck || provider instanceof DoubleCheck) {
+    if (provider instanceof SingleCheck
+        || provider instanceof DoubleCheck
+        || provider instanceof SingleCheckSwitchingProvider
+        || provider instanceof DoubleCheckSwitchingProvider) {
       return provider;
     }
     return new SingleCheck<T>(checkNotNull(provider));
@@ -76,3 +80,4 @@ public final class SingleCheck<T extends @Nullable Object> implements Provider<T
     return provider(asDaggerProvider(delegate));
   }
 }
+

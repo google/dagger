@@ -60,6 +60,7 @@ javadoc_library(
         "//dagger-spi:srcs",
         "//hilt-android:javadoc-srcs",
         "//hilt-android-testing:javadoc-srcs",
+        "//hilt-android-testing-manifest:javadoc-srcs",
         "//hilt-core:javadoc-srcs",
         "//java/dagger/hilt/android/plugin/main:srcs_filegroup",
     ],
@@ -83,5 +84,6 @@ javadoc_library(
         "//dagger-spi",
         "//hilt-android:artifact-lib",
         "//hilt-android-testing:artifact-lib",
+        "//hilt-android-testing-manifest:artifact-lib",
     ],
 )

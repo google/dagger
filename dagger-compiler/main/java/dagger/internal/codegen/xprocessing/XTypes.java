@@ -26,6 +26,7 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
@@ -784,6 +785,15 @@ public final class XTypes {
     protected Void defaultAction(TypeMirror e, Set<Element> visited) {
       return null;
     }
+  }
+
+  public static XTypeElement requireTypeElement(XType type) {
+    XTypeElement typeElement = type.getTypeElement();
+    checkNotNull(
+        typeElement,
+        "XType.getTypeElement() is required but got null for: %s",
+        toStableString(type));
+    return typeElement;
   }
 
   private XTypes() {}

@@ -43,47 +43,53 @@ nav:
       url: /dev-guide
       sidenav:
         - item:
-            name: Multibindings
-            url: /multibindings
+            name: Basic Usage
+            url: /basic-usage
         - item:
             name: Subcomponents
             url: /subcomponents
         - item:
-            name: Producers
-            url: /producers
+            name: Multibindings
+            url: /multibindings
         - item:
             name: Assisted Injection
             url: /assisted-injection
         - item:
+            name: Dagger SPI
+            url: /spi
+        - item:
             name: Testing
             url: /testing
-        - item:
-            name: SPI
-            url: /spi
         - item:
             name: Compiler Options
             url: /compiler-options
         - item:
-            name: Resources
-            url: /resources
-        - item:
             name: Versions
             url: /versions
         - item:
-            name: KSP
+            name: KSP Support
             url: /ksp
         - item:
-            name: FAQ
+            name: Resources
+            url: /resources
+        - item:
+            name: Frequently Asked Questions
             url: /faq
         - item:
-            name: Dagger 1 Migration
-            url: /dagger-1-migration
-        - item:
-            name: gRPC
-            url: /grpc
-        - item:
-            name: dagger.android
-            url: /android
+            name: Other
+            subgroup:
+              - item:
+                  name: Producers
+                  url: /producers
+              - item:
+                  name: gRPC
+                  url: /grpc
+              - item:
+                  name: gRPC Servers
+                  url: /grpc-servers
+              - item:
+                  name: dagger.android
+                  url: /android
   - item:
       name: Hilt
       url: /hilt

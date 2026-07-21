@@ -2,6 +2,7 @@
 layout: default
 title: Frequently Asked Questions
 redirect_from:
+
   - /faq
 ---
 
@@ -146,6 +147,12 @@ and [this blog post has a great walkthrough of how to set it up][m2e-apt].
 Whether you use Maven or Gradle with IntelliJ or Android Studio, the generated
 code should be available when you sync/build your project using the same tools
 as handwritten code. If you experience any weirdness, file a bug!
+
+## Migration
+
+### How do I migrate from Dagger 1?
+
+See the [Migrating from Dagger 1](dagger-1-migration.md) guide.
 
 <!-- References -->
 

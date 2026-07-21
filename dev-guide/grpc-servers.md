@@ -1,6 +1,8 @@
 ---
 layout: default
 title: gRPC servers with Dagger
+redirect_from:
+  - /grpc-servers
 ---
 
 ## gRPC servers without Dagger

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_android//rules:rules.bzl", "android_library")
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "define_kt_toolchain")
 load("//tools/javadoc:javadoc.bzl", "javadoc_library")
 

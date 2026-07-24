@@ -56,7 +56,6 @@ _ARTIFACT_TARGET_LIBS = [
     "//hilt-compiler/main/java/dagger/hilt/processor/internal:component_names",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal:components",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal:hilt_processing_env_configs",
-    "//hilt-compiler/main/java/dagger/hilt/processor/internal:method_signature",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal:processor_errors",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal:processors",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal/aggregateddeps:component_dependencies",

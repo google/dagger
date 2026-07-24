@@ -36,7 +36,7 @@ java_test(
     size = "small",
     srcs = ["MethodSignatureTest.java"],
     deps = [
-        "//hilt-compiler/main/java/dagger/hilt/processor/internal:method_signature",
+        "//dagger-compiler:xprocessing",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
         "//third_party/java/junit",

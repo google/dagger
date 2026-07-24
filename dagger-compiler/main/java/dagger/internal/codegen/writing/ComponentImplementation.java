@@ -81,13 +81,13 @@ import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.KeyVariableNamer;
-import dagger.internal.codegen.binding.MethodSignature;
 import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.model.BindingGraph.Node;
 import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.model.RequestKind;
 import dagger.internal.codegen.xprocessing.Accessibility;
+import dagger.internal.codegen.xprocessing.MethodSignature;
 import dagger.internal.codegen.xprocessing.XFunSpecs;
 import dagger.internal.codegen.xprocessing.XParameterSpecs;
 import dagger.internal.codegen.xprocessing.XPropertySpecs;
@@ -908,7 +908,9 @@ public final class ComponentImplementation {
               Stream.concat(
                       creatorComponentFields().stream().map(field -> XCodeBlock.of("%N", field)),
                       method.getParameters().stream()
-                          .map(param -> XCodeBlock.of("%N", param.getName()))) // SUPPRESS_GET_NAME_CHECK
+                          .map(
+                              param ->
+                                  XCodeBlock.of("%N", param.getName()))) // SUPPRESS_GET_NAME_CHECK
                   .collect(toParametersCodeBlock())));
 
       parent.get().getComponentShard().addMethod(COMPONENT_METHOD, method.build());
@@ -921,7 +923,7 @@ public final class ComponentImplementation {
       Set<MethodSignature> methodDescriptors = new HashSet<>();
       for (ComponentMethodDescriptor method : graph.entryPointMethods()) {
         MethodSignature signature =
-            MethodSignature.forComponentMethod(method, componentType, processingEnv);
+            MethodSignature.ofDeclaredType(method.methodElement(), componentType);
         if (methodDescriptors.add(signature)) {
           addMethod(
               COMPONENT_METHOD,

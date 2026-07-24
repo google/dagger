@@ -71,7 +71,6 @@ java_library(
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:classnames",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:component_names",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:lazy_string",
-        "//hilt-compiler/main/java/dagger/hilt/processor/internal:method_signature",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:processor_errors",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:processors",
         "//third_party/java/guava/base",

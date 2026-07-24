@@ -58,7 +58,6 @@ java_library(
         "ProcessorErrors.java",
     ],
     deps = [
-        ":lazy_string",
         "//dagger-compiler:xprocessing",
         "//third_party/java/error_prone:annotations",
         "//third_party/java/guava/base",
@@ -86,20 +85,6 @@ java_library(
 )
 
 java_library(
-    name = "method_signature",
-    srcs = [
-        "MethodSignature.java",
-    ],
-    deps = [
-        "//dagger-compiler:xprocessing",
-        "//dagger-spi",
-        "//third_party/java/auto:value",
-        "//third_party/java/guava/collect",
-        "//third_party/java/javapoet",
-    ],
-)
-
-java_library(
     name = "classnames",
     srcs = [
         "ClassNames.java",
@@ -116,8 +101,6 @@ java_library(
     ],
     deps = [
         ":processors",
-        "//third_party/java/guava/base",
-        "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
     ],
 )

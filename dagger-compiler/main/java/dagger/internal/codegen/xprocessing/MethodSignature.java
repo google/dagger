@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.processor.internal;
+package dagger.internal.codegen.xprocessing;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static java.util.stream.Collectors.joining;
@@ -27,30 +27,34 @@ import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
-import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Objects;
 
 /** Represents the method signature needed to uniquely identify a method. */
 public abstract class MethodSignature {
-  MethodSignature() {}
+  protected MethodSignature() {}
 
-  abstract String name();
+  public abstract String name();
 
-  abstract ImmutableList<TypeName> parameters();
+  public abstract ImmutableList<TypeName> parameters();
 
-  /** Creates a {@link MethodSignature} from a method name and parameter {@link TypeName}s */
+  /** Creates a {@link MethodSignature} from a method name and parameter {@link TypeName}s. */
   public static MethodSignature of(String methodName, TypeName... typeNames) {
+    return of(methodName, ImmutableList.copyOf(typeNames));
+  }
+
+  /** Creates a {@link MethodSignature} from a method name and parameter {@link TypeName}s. */
+  public static MethodSignature of(String methodName, Iterable<? extends TypeName> typeNames) {
     return new AutoValue_MethodSignature_TypeNameMethodSignature(
         methodName, ImmutableList.copyOf(typeNames));
   }
 
-  /** Creates a {@link MethodSignature} from a {@link MethodSpec} */
+  /** Creates a {@link MethodSignature} from a {@link MethodSpec}. */
   public static MethodSignature of(MethodSpec method) {
     return new AutoValue_MethodSignature_TypeNameMethodSignature(
         method.name, method.parameters.stream().map(p -> p.type).collect(toImmutableList()));
   }
 
-  /** Creates a {@link MethodSignature} from an {@link XExecutableElement} */
+  /** Creates a {@link MethodSignature} from an {@link XExecutableElement}. */
   public static MethodSignature of(XExecutableElement executableElement) {
     return new AutoValue_MethodSignature_ElementMethodSignature(
         executableElement, executableElement.getEnclosingElement().getType());
@@ -61,7 +65,7 @@ public abstract class MethodSignature {
    *
    * <p>This version will resolve type parameters as declared by {@code enclosing}.
    */
-  static MethodSignature ofDeclaredType(XMethodElement method, XType enclosing) {
+  public static MethodSignature ofDeclaredType(XMethodElement method, XType enclosing) {
     return new AutoValue_MethodSignature_ElementMethodSignature(method, enclosing);
   }
 

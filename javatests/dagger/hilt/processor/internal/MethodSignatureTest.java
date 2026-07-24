@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
+import dagger.internal.codegen.xprocessing.MethodSignature;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -39,10 +40,11 @@ public final class MethodSignatureTest {
 
   @Test
   public void testOfMethodSpec() {
-    MethodSpec method = MethodSpec.methodBuilder("bar")
-        .addParameter(ParameterSpec.builder(TypeName.INT, "x").build())
-        .addParameter(ParameterSpec.builder(TypeName.DOUBLE, "y").build())
-        .build();
+    MethodSpec method =
+        MethodSpec.methodBuilder("bar")
+            .addParameter(ParameterSpec.builder(TypeName.INT, "x").build())
+            .addParameter(ParameterSpec.builder(TypeName.DOUBLE, "y").build())
+            .build();
     MethodSignature signature = MethodSignature.of(method);
     assertThat(signature.name()).isEqualTo("bar");
     assertThat(signature.parameters()).containsExactly(TypeName.INT, TypeName.DOUBLE).inOrder();

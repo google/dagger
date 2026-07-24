@@ -49,8 +49,8 @@ import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
-import dagger.internal.codegen.binding.MethodSignature;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.xprocessing.MethodSignature;
 import dagger.internal.codegen.xprocessing.XFunSpecs;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import dagger.internal.codegen.xprocessing.XTypeSpecs;
@@ -72,14 +72,12 @@ import javax.inject.Inject;
  * normal step. Method bodies are omitted as Turbine ignores them entirely.
  */
 final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescriptor> {
-  private final XProcessingEnv processingEnv;
   private final CompilerOptions compilerOptions;
 
   @Inject
   ComponentHjarGenerator(
       XFiler filer, XProcessingEnv processingEnv, CompilerOptions compilerOptions) {
     super(filer, processingEnv);
-    this.processingEnv = processingEnv;
     this.compilerOptions = compilerOptions;
   }
 
@@ -150,7 +148,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
           .filter(
               method ->
                   methodSignatures.add(
-                      MethodSignature.forComponentMethod(method, componentType, processingEnv)))
+                      MethodSignature.ofDeclaredType(method.methodElement(), componentType)))
           .forEach(
               method ->
                   generatedComponent.addFunction(

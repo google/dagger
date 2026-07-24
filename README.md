@@ -335,7 +335,7 @@ See [the CONTRIBUTING.md docs][Building Dagger].
 [`kapt`]: https://kotlinlang.org/docs/reference/kapt.html
 [latestapi]: https://dagger.dev/api/latest/
 [mavenbadge-svg]: https://maven-badges.herokuapp.com/maven-central/com.google.dagger/dagger/badge.svg
-[mavencentral]: https://search.maven.org/artifact/com.google.dagger/dagger
+[mavencentral]: https://central.sonatype.com/artifact/com.google.dagger/dagger
 [project]: http://github.com/google/dagger/
 [proposal]: https://github.com/square/dagger/issues/366
 [square]: http://github.com/square/dagger/

@@ -17,8 +17,9 @@
 package dagger.hilt.processor.internal.optionvalues;
 
 /**
- * Valid Gradle project type values. Note that we exclude 'com.android.feature' as Hilt doesn't
- * support it for now.
+ * Valid Gradle project type values. Note that 'com.android.dynamic-feature' (formerly
+ * 'com.android.feature') is supported in a limited capacity -- dynamic feature modules are
+ * treated as libraries and can only contribute test-specific graphs, not the main app graph.
  */
 public enum GradleProjectType {
   /** Project type is not set, e.g. Hilt Gradle Plugin not applied. */

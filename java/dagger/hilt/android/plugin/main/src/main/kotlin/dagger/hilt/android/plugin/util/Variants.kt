@@ -19,6 +19,7 @@ package dagger.hilt.android.plugin.util
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import com.android.build.api.variant.Component
+import com.android.build.api.variant.DynamicFeatureAndroidComponentsExtension
 import com.android.build.api.variant.HasAndroidTest
 import com.android.build.api.variant.HasUnitTest
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
@@ -39,6 +40,9 @@ internal fun AndroidComponentsExtension<*, *, *>.onRootVariants(
     // For a library project, only the androidTest and unitTest variant are configured since
     // Hilt components are not generated in a library.
     is LibraryAndroidComponentsExtension -> onTestVariants(block)
+    // Dynamic feature modules behave like libraries for Hilt purposes. They cannot contribute
+    // bindings to the main app graph, but they can create test-specific graphs.
+    is DynamicFeatureAndroidComponentsExtension -> onTestVariants(block)
     is TestAndroidComponentsExtension -> onVariants { block(it, null) }
     else -> error("Hilt plugin does not know how to configure '$this'")
   }

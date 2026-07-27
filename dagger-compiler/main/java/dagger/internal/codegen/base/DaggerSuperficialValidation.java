@@ -265,6 +265,22 @@ public final class DaggerSuperficialValidation {
             .forEach(typeArg -> validateTypeHierarchy("type argument", typeArg, visited));
         type.getSuperTypes()
             .forEach(supertype -> validateTypeHierarchy("supertype", supertype, visited));
+
+        // XType.getSuperTypes() misses some error types due to a bug in Javac that causes error
+        // types to be excluded from the supertype list (b/444278301). To work around this, we
+        // additionally check XTypeElement.getSuperClass() and XTypeElement.getSuperInterfaces()
+        // to ensure we catch them.
+        // TODO(b/444278301): Remove this workaround once this Javac bug is fixed.
+        XTypeElement typeElement = type.getTypeElement();
+        if (typeElement != null) {
+          if (typeElement.getSuperClass() != null) {
+            validateTypeHierarchy("supertype", typeElement.getSuperClass(), visited);
+          }
+          typeElement
+              .getSuperInterfaces()
+              .forEach(
+                  superInterface -> validateTypeHierarchy("supertype", superInterface, visited));
+        }
       } else if (isTypeVariable(type)) {
         asTypeVariable(type)
             .getUpperBounds()
@@ -617,6 +633,7 @@ public final class DaggerSuperficialValidation {
               Ascii.toLowerCase(getKindName(type)),
               XExecutableTypes.toStableString(type)));
     }
+
     /**
      * Appends a message for the given annotation and returns this instance of {@link
      * ValidationException}

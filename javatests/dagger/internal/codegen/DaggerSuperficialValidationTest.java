@@ -653,11 +653,6 @@ public class DaggerSuperficialValidationTest {
             "class Foo : MissingType"),
         (processingEnv, superficialValidation) -> {
           XTypeElement foo = processingEnv.findTypeElement("test.Foo");
-          if (processingEnv.getBackend() == XProcessingEnv.Backend.JAVAC) {
-            // TODO: b/444278301 - Javac's model is missing the error types.
-            superficialValidation.validateTypeHierarchyOf("type", foo, foo.getType());
-            return;
-          }
           ValidationException exception =
               assertThrows(
                   ValidationException.KnownErrorType.class,
@@ -686,11 +681,6 @@ public class DaggerSuperficialValidationTest {
             "interface Foo : MissingType"),
         (processingEnv, superficialValidation) -> {
           XTypeElement foo = processingEnv.findTypeElement("test.Foo");
-          if (processingEnv.getBackend() == XProcessingEnv.Backend.JAVAC) {
-            // TODO: b/444278301 - Javac's model is missing the error types.
-            superficialValidation.validateTypeHierarchyOf("type", foo, foo.getType());
-            return;
-          }
           ValidationException exception =
               assertThrows(
                   ValidationException.KnownErrorType.class,
@@ -723,12 +713,6 @@ public class DaggerSuperficialValidationTest {
             "class Baz : MissingType {}"),
         (processingEnv, superficialValidation) -> {
           XTypeElement foo = processingEnv.findTypeElement("test.Foo");
-          if (isKAPT(processingEnv)) {
-            // https://youtrack.jetbrains.com/issue/KT-34193/Kapt-CorrectErrorTypes-doesnt-work-for-generics
-            // There's no way to work around this bug in KAPT so validation doesn't catch this case.
-            superficialValidation.validateTypeHierarchyOf("type", foo, foo.getType());
-            return;
-          }
           ValidationException exception =
               assertThrows(
                   ValidationException.KnownErrorType.class,
@@ -772,13 +756,6 @@ public class DaggerSuperficialValidationTest {
         (processingEnv, superficialValidation) -> {
           XTypeElement outerElement = processingEnv.findTypeElement("test.Outer");
           XMethodElement getFooMethod = outerElement.getDeclaredMethods().get(0);
-          if (isKAPT(processingEnv)) {
-            // https://youtrack.jetbrains.com/issue/KT-34193/Kapt-CorrectErrorTypes-doesnt-work-for-generics
-            // There's no way to work around this bug in KAPT so validation doesn't catch this case.
-            superficialValidation.validateTypeHierarchyOf(
-                "return type", getFooMethod, getFooMethod.getReturnType());
-            return;
-          }
           ValidationException exception =
               assertThrows(
                   ValidationException.KnownErrorType.class,

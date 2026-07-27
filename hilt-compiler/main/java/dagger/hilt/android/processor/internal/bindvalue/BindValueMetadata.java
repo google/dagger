@@ -19,6 +19,7 @@ package dagger.hilt.android.processor.internal.bindvalue;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.xprocessing.XElements.asField;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
@@ -69,18 +70,17 @@ abstract class BindValueMetadata {
    * @return a new BindValueMetadata instance.
    */
   static BindValueMetadata create(
-      XTypeElement testElement, Collection<XElement> bindValueElements) {
-
-    ImmutableSet.Builder<BindValueElement> elements = ImmutableSet.builder();
-    for (XElement element : bindValueElements) {
-      elements.add(BindValueElement.create(element));
-    }
-
-    return new AutoValue_BindValueMetadata(testElement, elements.build());
+      XTypeElement testElement, Collection<BindValueElement> bindValueElements) {
+    return new AutoValue_BindValueMetadata(testElement, ImmutableSet.copyOf(bindValueElements));
   }
 
   @AutoValue
   abstract static class BindValueElement {
+
+    abstract XTypeElement testElement();
+
+    abstract XTypeElement enclosingElement();
+
     abstract XFieldElement fieldElement();
 
     abstract ClassName annotationName();
@@ -101,6 +101,30 @@ abstract class BindValueMetadata {
               + " @BindElementsIntoSet, @BindValueIntoSet. Found: %s",
           bindValues.stream().map(m -> "@" + m.simpleName()).collect(toImmutableList()));
       ClassName annotationClassName = getOnlyElement(bindValues);
+
+      ProcessorErrors.checkState(
+          XElementKt.isTypeElement(element.getEnclosingElement()),
+          element.getEnclosingElement(),
+          "@%s can only be used within a class. Found: %s",
+          annotationClassName.simpleName(),
+          LazyString.of(() -> XElements.toStableString(element.getEnclosingElement())));
+      XTypeElement enclosingElement = asTypeElement(element.getEnclosingElement());
+
+      XTypeElement testElement = enclosingElement;
+      // Restrict BindValue to the direct test class (e.g. not allowed in a base test class) because
+      // otherwise generated BindValue modules from the base class will not associate with the
+      // correct test class. This would make the modules apply globally which would be a weird
+      // difference since just moving a declaration to the parent would change whether the module is
+      // limited to the test that declares it to global.
+      ProcessorErrors.checkState(
+          testElement.isClass()
+              && (testElement.hasAnnotation(ClassNames.HILT_ANDROID_TEST)
+              ),
+          testElement,
+          "@%s can only be used within a class annotated with "
+              + "@HiltAndroidTest. Found: %s",
+          annotationClassName.simpleName(),
+          LazyString.of(() -> XElements.toStableString(testElement)));
 
       ProcessorErrors.checkState(
           XElementKt.isField(element),
@@ -184,6 +208,8 @@ abstract class BindValueMetadata {
                       .toString()));
 
       return new AutoValue_BindValueMetadata_BindValueElement(
+          testElement,
+          enclosingElement,
           field,
           annotationClassName,
           qualifiers.isEmpty()

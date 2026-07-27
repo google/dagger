@@ -16,31 +16,29 @@
 
 package dagger.hilt.android.processor.internal.bindvalue;
 
-import static androidx.room3.compiler.processing.XElementKt.isTypeElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XRoundEnv;
 import androidx.room3.compiler.processing.XTypeElement;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimaps;
 import com.squareup.javapoet.ClassName;
+import dagger.hilt.android.processor.internal.bindvalue.BindValueMetadata.BindValueElement;
 import dagger.hilt.processor.internal.BaseProcessingStep;
-import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.LazyString;
-import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.internal.codegen.xprocessing.XElements;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Provides a test's @BindValue fields to the SINGLETON component. */
 public final class BindValueProcessingStep extends BaseProcessingStep {
-
   private static final ImmutableSet<ClassName> SUPPORTED_ANNOTATIONS =
       ImmutableSet.<ClassName>builder()
           .addAll(BindValueMetadata.BIND_VALUE_ANNOTATIONS)
@@ -49,7 +47,8 @@ public final class BindValueProcessingStep extends BaseProcessingStep {
           .addAll(BindValueMetadata.BIND_VALUE_INTO_MAP_ANNOTATIONS)
           .build();
 
-  private final ListMultimap<XTypeElement, XElement> testRootMap = ArrayListMultimap.create();
+  private final List<BindValueElement> bindValueElements = new ArrayList<>();
+  private final Set<XElement> processedElements = new HashSet<>();
 
   public BindValueProcessingStep(XProcessingEnv env) {
     super(env);
@@ -62,34 +61,23 @@ public final class BindValueProcessingStep extends BaseProcessingStep {
 
   @Override
   protected void preProcess(XProcessingEnv env, XRoundEnv round) {
-    testRootMap.clear();
+    bindValueElements.clear();
+    processedElements.clear();
   }
 
   @Override
   public void processEach(ClassName annotation, XElement element) {
-    XElement enclosingElement = element.getEnclosingElement();
-    // Restrict BindValue to the direct test class (e.g. not allowed in a base test class) because
-    // otherwise generated BindValue modules from the base class will not associate with the
-    // correct test class. This would make the modules apply globally which would be a weird
-    // difference since just moving a declaration to the parent would change whether the module is
-    // limited to the test that declares it to global.
-    ProcessorErrors.checkState(
-        isTypeElement(enclosingElement)
-            && asTypeElement(enclosingElement).isClass()
-            && (enclosingElement.hasAnnotation(ClassNames.HILT_ANDROID_TEST)
-            ),
-        enclosingElement,
-        "@%s can only be used within a class annotated with "
-            + "@HiltAndroidTest. Found: %s",
-        annotation.simpleName(),
-        LazyString.of(() -> XElements.toStableString(enclosingElement)));
-    testRootMap.put(asTypeElement(enclosingElement), element);
+    if (processedElements.add(element)) {
+      bindValueElements.add(BindValueElement.create(element));
+    }
   }
 
   @Override
   protected void postProcess(XProcessingEnv env, XRoundEnv round) throws Exception {
     // Generate a module for each testing class with a @BindValue field.
-    for (Map.Entry<XTypeElement, Collection<XElement>> e : testRootMap.asMap().entrySet()) {
+    ImmutableMap<XTypeElement, Collection<BindValueElement>> testRootMap =
+        Multimaps.index(bindValueElements, BindValueElement::testElement).asMap();
+    for (Map.Entry<XTypeElement, Collection<BindValueElement>> e : testRootMap.entrySet()) {
       BindValueMetadata metadata = BindValueMetadata.create(e.getKey(), e.getValue());
       new BindValueGenerator(processingEnv(), metadata).generate();
     }

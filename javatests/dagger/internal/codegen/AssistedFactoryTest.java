@@ -103,6 +103,55 @@ public class AssistedFactoryTest {
   }
 
   @Test
+  public void testAssistedFactory_nullableAssistedParam() throws Exception {
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "import javax.annotation.Nullable;",
+            "",
+            "class Foo {",
+            "  @AssistedInject",
+            "  Foo(@Assisted @Nullable String str) {}",
+            "}");
+
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "test.FooFactory",
+            "package test;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "interface FooFactory {",
+            "  Foo create(String factoryStr);",
+            "}");
+
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  FooFactory fooFactory();",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
+  }
+
+  @Test
   public void testAssistedFactoryCycle() throws Exception {
     Source foo =
         CompilerTests.javaSource(

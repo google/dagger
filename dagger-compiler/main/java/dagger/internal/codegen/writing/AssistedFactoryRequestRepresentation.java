@@ -97,7 +97,9 @@ final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
         XTypeSpecs.anonymousClassBuilder()
             .addFunction(
                 overridingWithoutParameters(factoryMethod, factoryType, compilerOptions)
-                    .addParameters(assistedFactoryParameterSpecs(binding, shardImplementation))
+                    .addParameters(
+                        assistedFactoryParameterSpecs(
+                            binding, shardImplementation, compilerOptions))
                     .addStatement(
                         "return %L",
                         requiresCast(returnType, shardImplementation.name())

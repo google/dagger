@@ -22,6 +22,8 @@ import androidx.room3.compiler.processing.XProcessingEnvConfig;
 public final class HiltProcessingEnvConfigs {
   public static final XProcessingEnvConfig CONFIGS =
       new XProcessingEnvConfig.Builder()
+          // TODO: b/526607713 - Remove this once we properly handle property annotations in KSP.
+          .includePropertyAnnotationsInFields(true)
           // In Hilt we disable the default element validation because we would otherwise run into a
           // cycle where our Hilt processors are waiting on the "Hilt_Foo" classes to be generated
           // before processing "Foo", but "Hilt_Foo" can't be generated until "Foo" is processed.

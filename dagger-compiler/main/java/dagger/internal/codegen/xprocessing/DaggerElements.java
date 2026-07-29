@@ -19,6 +19,7 @@ package dagger.internal.codegen.xprocessing;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
+import androidx.room3.compiler.processing.XTypeElement;
 import androidx.room3.compiler.processing.compat.XConverters;
 import com.google.devtools.ksp.symbol.KSClassDeclaration;
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration;
@@ -27,12 +28,11 @@ import com.google.devtools.ksp.symbol.KSValueParameter;
 import dagger.spi.model.DaggerElement;
 import dagger.spi.model.DaggerProcessingEnv;
 import dagger.spi.model.DaggerType;
+import dagger.spi.model.DaggerTypeElement;
 
 /** Convert Dagger model types to XProcessing types. */
 public final class DaggerElements {
-  public static XElement toXProcessing(
-      DaggerElement element, DaggerProcessingEnv daggerProcessingEnv) {
-    XProcessingEnv processingEnv = toXProcessing(daggerProcessingEnv);
+  public static XElement toXProcessing(DaggerElement element, XProcessingEnv processingEnv) {
     switch (element.backend()) {
       case JAVAC:
         return XConverters.toXProcessing(element.javac(), processingEnv);
@@ -53,8 +53,7 @@ public final class DaggerElements {
         String.format("Backend %s not supported yet.", element.backend()));
   }
 
-  public static XType toXProcessing(DaggerType type, DaggerProcessingEnv daggerProcessingEnv) {
-    XProcessingEnv processingEnv = toXProcessing(daggerProcessingEnv);
+  public static XType toXProcessing(DaggerType type, XProcessingEnv processingEnv) {
     switch (type.backend()) {
       case JAVAC:
         return XConverters.toXProcessing(type.javac(), processingEnv);
@@ -64,6 +63,25 @@ public final class DaggerElements {
     throw new IllegalStateException(String.format("Backend %s not supported yet.", type.backend()));
   }
 
+  public static XTypeElement toXProcessing(
+      DaggerTypeElement element, XProcessingEnv processingEnv) {
+    switch (element.backend()) {
+      case JAVAC:
+        return XConverters.toXProcessing(element.javac(), processingEnv);
+      case KSP:
+        return XConverters.toXProcessing(element.ksp(), processingEnv);
+    }
+    throw new IllegalStateException(
+        String.format("Backend %s not supported yet.", element.backend()));
+  }
+
+  /**
+   * Returns a new {@link XProcessingEnv} for the given {@link DaggerProcessingEnv}.
+   *
+   * <p>Callers should invoke this method once per processing round and pass the resulting {@link
+   * XProcessingEnv} to the other {@code toXProcessing} methods so that element and type wrappers
+   * are cached across conversions within the round.
+   */
   public static XProcessingEnv toXProcessing(DaggerProcessingEnv processingEnv) {
     switch (processingEnv.backend()) {
       case JAVAC:

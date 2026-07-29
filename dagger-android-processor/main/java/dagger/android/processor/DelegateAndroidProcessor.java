@@ -28,6 +28,8 @@ import javax.inject.Singleton;
 final class DelegateAndroidProcessor {
   static final XProcessingEnvConfig PROCESSING_ENV_CONFIG =
       new XProcessingEnvConfig.Builder()
+          // TODO: b/526607713 - Remove this once we properly handle property annotations in KSP.
+          .includePropertyAnnotationsInFields(true)
           .build();
   static final String FLAG_EXPERIMENTAL_USE_STRING_KEYS =
       "dagger.android.experimentalUseStringKeys";

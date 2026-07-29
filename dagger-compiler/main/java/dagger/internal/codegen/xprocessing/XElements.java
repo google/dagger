@@ -20,6 +20,7 @@ import static androidx.room3.compiler.processing.XElementKt.isConstructor;
 import static androidx.room3.compiler.processing.XElementKt.isField;
 import static androidx.room3.compiler.processing.XElementKt.isMethod;
 import static androidx.room3.compiler.processing.XElementKt.isMethodParameter;
+import static androidx.room3.compiler.processing.XElementKt.isProperty;
 import static androidx.room3.compiler.processing.XElementKt.isTypeElement;
 import static androidx.room3.compiler.processing.XElementKt.isVariableElement;
 import static androidx.room3.compiler.processing.compat.XConverters.getProcessingEnv;
@@ -45,6 +46,7 @@ import androidx.room3.compiler.processing.XHasModifiers;
 import androidx.room3.compiler.processing.XMemberContainer;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
+import androidx.room3.compiler.processing.XPropertyElement;
 import androidx.room3.compiler.processing.XTypeElement;
 import androidx.room3.compiler.processing.XTypeParameterElement;
 import androidx.room3.compiler.processing.XVariableElement;
@@ -252,6 +254,11 @@ public final class XElements {
   public static XFieldElement asField(XElement element) {
     checkState(isField(element));
     return (XFieldElement) element;
+  }
+
+  public static XPropertyElement asProperty(XElement element) {
+    checkState(isProperty(element));
+    return (XPropertyElement) element;
   }
 
   public static XEnumEntry asEnumEntry(XElement element) {

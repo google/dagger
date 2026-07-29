@@ -25,6 +25,7 @@ import static java.util.stream.Collectors.toList;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room3.compiler.processing.XAnnotation;
+import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeArgument;
 import com.google.auto.service.AutoService;
@@ -56,11 +57,19 @@ import java.util.stream.Stream;
  */
 @AutoService(BindingGraphPlugin.class)
 public final class DuplicateAndroidInjectorsChecker implements BindingGraphPlugin {
-  private DaggerProcessingEnv processingEnv;
+  private DaggerProcessingEnv daggerProcessingEnv;
+  private XProcessingEnv processingEnv;
 
   @Override
-  public void init(DaggerProcessingEnv processingEnv, Map<String, String> options) {
-    this.processingEnv = processingEnv;
+  public void init(DaggerProcessingEnv daggerProcessingEnv, Map<String, String> options) {
+    this.daggerProcessingEnv = daggerProcessingEnv;
+  }
+
+  @Override
+  public void onProcessingRoundBegin() {
+    // The XProcessingEnv must be reconstructed each round to ensure it uses the Resolver from the
+    // current round.
+    this.processingEnv = DaggerElements.toXProcessing(daggerProcessingEnv);
   }
 
   @Override

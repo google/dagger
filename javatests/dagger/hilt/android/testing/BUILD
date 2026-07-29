@@ -88,6 +88,23 @@ android_local_test(
 )
 
 android_local_test(
+    name = "BindValueInStaticFieldTest",
+    size = "small",
+    srcs = ["BindValueInStaticFieldTest.java"],
+    manifest_values = TEST_MANIFEST_VALUES,
+    deps = [
+        "//:android_local_test_exports",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:bind_value",
+        "//hilt-android-testing/main/java/dagger/hilt/android/testing:hilt_android_test",
+        "//hilt-core/main/java/dagger/hilt:entry_point",
+        "//hilt-core/main/java/dagger/hilt:install_in",
+        "//third_party/java/dagger",
+        "//third_party/java/guava/collect",
+        "//third_party/java/truth",
+    ],
+)
+
+android_local_test(
     name = "TestRootModulesTest",
     size = "small",
     srcs = ["TestRootModulesTest.java"],

@@ -101,7 +101,6 @@ abstract class BindValueMetadata {
               + " @BindElementsIntoSet, @BindValueIntoSet. Found: %s",
           bindValues.stream().map(m -> "@" + m.simpleName()).collect(toImmutableList()));
       ClassName annotationClassName = getOnlyElement(bindValues);
-
       ProcessorErrors.checkState(
           XElementKt.isTypeElement(element.getEnclosingElement()),
           element.getEnclosingElement(),
@@ -110,7 +109,10 @@ abstract class BindValueMetadata {
           LazyString.of(() -> XElements.toStableString(element.getEnclosingElement())));
       XTypeElement enclosingElement = asTypeElement(element.getEnclosingElement());
 
-      XTypeElement testElement = enclosingElement;
+      XTypeElement testElement =
+          enclosingElement.isCompanionObject()
+              ? enclosingElement.getEnclosingTypeElement()
+              : enclosingElement;
       // Restrict BindValue to the direct test class (e.g. not allowed in a base test class) because
       // otherwise generated BindValue modules from the base class will not associate with the
       // correct test class. This would make the modules apply globally which would be a weird

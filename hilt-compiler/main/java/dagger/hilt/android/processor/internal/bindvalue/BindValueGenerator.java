@@ -129,17 +129,29 @@ final class BindValueGenerator {
             .addModifiers(Modifier.STATIC)
             .returns(bindValue.fieldElement().getType().getTypeName());
 
-    if (XElements.isStatic(bindValue.fieldElement())) {
-      builder.addStatement("return $T.$L", testClassName, bindValue.fieldElement().getName());
+    CodeBlock receiver;
+    if (bindValue.enclosingElement().isCompanionObject()) {
+      // For properties in a Kotlin companion object the location of the field/getter in the KAPT
+      // stub file depends on whether the property is marked with @JvmField:
+      // - With @JvmField a static field is placed in the companion object's enclosing class.
+      // - Without @JvmField a getter method is placed in the companion object class itself.
+      receiver =
+          bindValue.getterElement().isPresent()
+              ? CodeBlock.of("$T.Companion", testClassName)
+              : CodeBlock.of("$T", testClassName);
+    } else if (XElements.isStatic(bindValue.fieldElement())) {
+      receiver = CodeBlock.of("$T", testClassName);
     } else {
-      builder
-          .addParameter(testClassName, "test")
-          .addStatement(
-              "return $L",
-              bindValue.getterElement().isPresent()
-                  ? CodeBlock.of("test.$L()", bindValue.getterElement().get().getJvmName())
-                  : CodeBlock.of("test.$L", bindValue.fieldElement().getName()));
+      builder.addParameter(testClassName, "test");
+      receiver = CodeBlock.of("test");
     }
+
+    builder.addStatement(
+        "return $L.$L",
+        receiver,
+        bindValue.getterElement().isPresent()
+            ? bindValue.getterElement().get().getJvmName() + "()"
+            : bindValue.fieldElement().getName());
 
     ClassName annotationClassName = bindValue.annotationName();
     if (BindValueMetadata.BIND_VALUE_INTO_MAP_ANNOTATIONS.contains(annotationClassName)) {

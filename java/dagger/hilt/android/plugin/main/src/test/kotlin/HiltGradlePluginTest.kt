@@ -15,6 +15,7 @@
  */
 
 import com.google.common.truth.Truth.assertThat
+import java.io.File
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -160,5 +161,50 @@ class HiltGradlePluginTest {
     )
 
     gradleRunner.build()
+  }
+
+  @Test
+  fun test_kmp_android_library() {
+    val projectFolder = testProjectDir.root
+    File(projectFolder, "build.gradle").writeText(
+      """
+      plugins {
+        id 'org.jetbrains.kotlin.multiplatform' version '2.1.0'
+        id 'com.android.kotlin.multiplatform.library' version '9.0.0'
+        id 'com.google.devtools.ksp'
+        id 'com.google.dagger.hilt.android'
+      }
+
+      kotlin {
+        androidLibrary {
+          namespace 'minimal.kmp'
+          compileSdk 35
+          minSdk 21
+        }
+      }
+
+      allprojects {
+        repositories {
+          mavenLocal()
+          google()
+          mavenCentral()
+        }
+      }
+
+      dependencies {
+        add("androidMainImplementation", "com.google.dagger:hilt-android:LOCAL-SNAPSHOT")
+        add("ksp", "com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT")
+        add("androidMainImplementation", "javax.inject:javax.inject:1")
+      }
+      """.trimIndent()
+    )
+    val result = org.gradle.testkit.runner.GradleRunner.create()
+      .withProjectDir(projectFolder)
+      .withArguments("assemble")
+      .withPluginClasspath()
+      .forwardOutput()
+      .build()
+
+    assertThat(result.output).contains("BUILD SUCCESSFUL")
   }
 }

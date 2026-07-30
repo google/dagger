@@ -21,6 +21,7 @@ import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import com.android.build.api.variant.Component
 import com.android.build.api.variant.HasAndroidTest
 import com.android.build.api.variant.HasUnitTest
+import com.android.build.api.variant.KotlinMultiplatformAndroidComponentsExtension
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.android.build.api.variant.TestAndroidComponentsExtension
 import com.android.build.api.variant.Variant
@@ -39,6 +40,7 @@ internal fun AndroidComponentsExtension<*, *, *>.onRootVariants(
     // For a library project, only the androidTest and unitTest variant are configured since
     // Hilt components are not generated in a library.
     is LibraryAndroidComponentsExtension -> onTestVariants(block)
+    is KotlinMultiplatformAndroidComponentsExtension -> onTestVariants(block)
     is TestAndroidComponentsExtension -> onVariants { block(it, null) }
     else -> error("Hilt plugin does not know how to configure '$this'")
   }

@@ -25,6 +25,7 @@ import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension
 import com.android.build.api.variant.Component
+import com.android.build.api.variant.KotlinMultiplatformAndroidComponentsExtension
 import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import com.android.build.api.variant.ScopedArtifacts
 import com.android.build.api.variant.TestAndroidComponentsExtension
@@ -58,6 +59,7 @@ import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
@@ -82,6 +84,11 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       }
     }
     project.plugins.withType(AndroidBasePlugin::class.java) {
+      if (configured.compareAndSet(false, true)) {
+        configureHilt(project)
+      }
+    }
+    project.plugins.withId("com.android.kotlin.multiplatform.library") {
       if (configured.compareAndSet(false, true)) {
         configureHilt(project)
       }
@@ -329,10 +336,16 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       // android.jar is now included in the input classpath instead of the bootstrapClasspath.
       // See: com/android/build/gradle/tasks/JavaCompileUtils.kt
       val mainBootstrapClasspath = project.files(androidExtension.sdkComponents.bootClasspath)
-      if (commonExtension.compileOptions.isJava9Compatible()) {
+      if (isJava9Compatible()) {
         compileTask.classpath = classpath.plus(mainBootstrapClasspath)
         //  Copies argument providers from original task, which should contain the JdkImageInput
-        variant.javaCompilation
+        val javaCompilation =
+          if (isKmpProject) {
+            null
+          } else {
+            variant.javaCompilation
+          }
+        javaCompilation
           ?.annotationProcessor
           ?.argumentProviders
           ?.filter { it is HiltCommandLineArgumentProvider || it is JdkImageInput }
@@ -347,17 +360,17 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
         generatedSourceOutputDirectory.set(
           project.buildDir("generated/hilt/component_sources/${variant.name}/")
         )
-        if (commonExtension.compileOptions.isJava8Compatible()) {
+        if (isJava8Compatible()) {
           compilerArgs.add("-parameters")
         }
         compilerArgs.add("-Adagger.hilt.internal.useAggregatingRootProcessor=false")
         compilerArgs.add("-Adagger.hilt.android.internal.disableAndroidSuperclassValidation=true")
-        encoding = commonExtension.compileOptions.encoding
+        encoding = this@configureJavaCompileTask.encoding
       }
       compileTask.sourceCompatibility =
-        commonExtension.compileOptions.sourceCompatibility.toString()
+        this@configureJavaCompileTask.sourceCompatibility.toString()
       compileTask.targetCompatibility =
-        commonExtension.compileOptions.targetCompatibility.toString()
+        this@configureJavaCompileTask.targetCompatibility.toString()
     }
   }
 
@@ -394,31 +407,12 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       when (androidExtension) {
         is ApplicationAndroidComponentsExtension -> GradleProjectType.APP
         is LibraryAndroidComponentsExtension -> GradleProjectType.LIBRARY
+        is KotlinMultiplatformAndroidComponentsExtension -> GradleProjectType.LIBRARY
         is TestAndroidComponentsExtension -> GradleProjectType.TEST
         else -> error("Hilt plugin does not know how to configure '$androidExtension'")
       }
 
     androidExtension.onAllVariants { variant, _ ->
-      val processorArgs =
-        variant.javaCompilation?.annotationProcessor?.arguments?.get() ?: emptyMap()
-      // Error if the user is trying to set plugin controlled properties via build file.
-      processorArgs.keys.forEach { arg ->
-        when (arg) {
-          "dagger.hilt.fastInit" ->
-            error(
-              "[Hilt]: The flag 'dagger.hilt.fastInit' can only be set via command line. i.e. " +
-                "add '-Pdagger.hilt.fastInit=enabled' to your command line."
-            )
-          "dagger.hilt.android.internal.disableAndroidSuperclassValidation",
-          "dagger.hilt.android.internal.projectType",
-          "dagger.hilt.internal.useAggregatingRootProcessor",
-          "dagger.hilt.disableCrossCompilationRootValidation" ->
-            error(
-              "[Hilt]: The flag '$arg' cannot be set via annotation processor options because " +
-                "it is controlled by the Hilt plugin."
-            )
-        }
-      }
       // Pass annotation processor flags via a CommandLineArgumentProvider so that plugin
       // options defined in the extension are populated from the user's build file.
       fun createArgsProvider(forKsp: Boolean) =
@@ -432,10 +426,32 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
       val javaArgsProvider = createArgsProvider(false)
       val kspArgsProvider = createArgsProvider(true)
 
-      addJavaTaskProcessorOptions(variant, javaArgsProvider)
-
       addKaptTaskProcessorOptions(project, variant, javaArgsProvider)
       addKspTaskProcessorOptions(project, variant, kspArgsProvider)
+
+      if (!isKmpProject) {
+        val processorArgs =
+          variant.javaCompilation?.annotationProcessor?.arguments?.get() ?: emptyMap()
+        // Error if the user is trying to set plugin controlled properties via build file.
+        processorArgs.keys.forEach { arg ->
+          when (arg) {
+            "dagger.hilt.fastInit" ->
+              error(
+                "[Hilt]: The flag 'dagger.hilt.fastInit' can only be set via command line. i.e. " +
+                  "add '-Pdagger.hilt.fastInit=enabled' to your command line."
+              )
+            "dagger.hilt.android.internal.disableAndroidSuperclassValidation",
+            "dagger.hilt.android.internal.projectType",
+            "dagger.hilt.internal.useAggregatingRootProcessor",
+            "dagger.hilt.disableCrossCompilationRootValidation" ->
+              error(
+                "[Hilt]: The flag '$arg' cannot be set via annotation processor options because " +
+                  "it is controlled by the Hilt plugin."
+              )
+          }
+        }
+        addJavaTaskProcessorOptions(variant, javaArgsProvider)
+      }
     }
   }
 
@@ -508,12 +524,6 @@ class HiltGradlePlugin @Inject constructor(private val providers: ProviderFactor
 
     private fun Project.buildDir(dirName: String) = layout.buildDirectory.dir(dirName)
 
-    private fun CompileOptions.isJava9Compatible() =
-      JavaVersion.current().isJava9Compatible && targetCompatibility.isJava9Compatible
-
-    private fun CompileOptions.isJava8Compatible() =
-      JavaVersion.current().isJava8Compatible && targetCompatibility.isJava8Compatible
-
     private val gradleSyncProps by lazy {
       listOf(
         "android.injected.build.model.v2",
@@ -528,17 +538,61 @@ private class HiltPluginEnvironment(
   val project: Project,
   private val hiltExtension: HiltExtension,
 ) {
-  val androidExtension =
-    project.extensions.findByType(AndroidComponentsExtension::class.java)?.also {
-      check(it.pluginVersion >= AndroidPluginVersion(9, 0)) {
-        "The Hilt Android Gradle plugin is only compatible with Android Gradle plugin (AGP) " +
-          "version 9.0.0 or higher (found ${it.pluginVersion})."
-      }
-    } ?: error("Could not find the Android Gradle Plugin (AGP) components extension.")
+  val androidExtension: AndroidComponentsExtension<*, *, *> =
+    (project.extensions.findByType(AndroidComponentsExtension::class.java)
+      ?: project.extensions.findByType(KotlinMultiplatformAndroidComponentsExtension::class.java))
+      ?.also {
+        check(it.pluginVersion >= AndroidPluginVersion(9, 0)) {
+          "The Hilt Android Gradle plugin is only compatible with Android Gradle plugin (AGP) " +
+            "version 9.0.0 or higher (found ${it.pluginVersion})."
+        }
+      } ?: error("Could not find the Android Gradle Plugin (AGP) components extension.")
 
-  val commonExtension =
+  val isKmpProject: Boolean =
+    androidExtension is KotlinMultiplatformAndroidComponentsExtension
+
+  private val commonExtension by lazy {
     project.extensions.findByType(CommonExtension::class.java)
       ?: error("Could not find the Android Gradle Plugin (AGP) common extension.")
+  }
+
+  private val javaPluginExtension by lazy {
+    project.extensions.findByType(JavaPluginExtension::class.java)
+      ?: error(
+        "Could not find JavaPluginExtension. Please ensure Java compatibility is configured " +
+          "(e.g., via kotlin.jvmToolchain(...))."
+      )
+  }
+
+  val targetCompatibility: JavaVersion by lazy {
+    if (isKmpProject) {
+      javaPluginExtension.targetCompatibility
+    } else {
+      commonExtension.compileOptions.targetCompatibility
+    }
+  }
+
+  val sourceCompatibility: JavaVersion by lazy {
+    if (isKmpProject) {
+      javaPluginExtension.sourceCompatibility
+    } else {
+      commonExtension.compileOptions.sourceCompatibility
+    }
+  }
+
+  val encoding: String by lazy {
+    if (isKmpProject) {
+      "UTF-8"
+    } else {
+      commonExtension.compileOptions.encoding
+    }
+  }
+
+  fun isJava8Compatible(): Boolean =
+    JavaVersion.current().isJava8Compatible && targetCompatibility.isJava8Compatible
+
+  fun isJava9Compatible(): Boolean =
+    JavaVersion.current().isJava9Compatible && targetCompatibility.isJava9Compatible
 
   // The enableAggregatingTask option already includes classpath aggregation in a more efficient
   // way so there's no need to enable this option if enableAggregatingTask is already enabled.

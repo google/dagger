@@ -543,4 +543,67 @@ public class AssistedFactoryTest {
           });
     }
   }
+
+  @Test
+  public void testPublicGenericAssistedFactoryWithPackagePrivateTypeArguments() {
+    Source foo =
+        CompilerTests.javaSource(
+            "pkg.a.Foo",
+            "package pkg.a;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedFactory;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "public class Foo<T> {",
+            "  @AssistedInject",
+            "  Foo(@Assisted T arg) {}",
+            "",
+            "  @AssistedFactory",
+            "  public interface Factory<T> {",
+            "    Foo<T> create(T arg);",
+            "  }",
+            "}");
+
+    Source bar =
+        CompilerTests.javaSource(
+            "pkg.b.PackagePrivateBar", "package pkg.b;", "", "class PackagePrivateBar {}");
+
+    Source client =
+        CompilerTests.javaSource(
+            "pkg.b.Client",
+            "package pkg.b;",
+            "",
+            "import javax.inject.Inject;",
+            "import pkg.a.Foo;",
+            "",
+            "public class Client {",
+            "  @Inject",
+            "  Client(Foo.Factory<PackagePrivateBar> factory) {}",
+            "}");
+
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import pkg.b.Client;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  Client getClient();",
+            "}");
+
+    CompilerTests.DaggerCompiler daggerCompiler =
+        CompilerTests.daggerCompiler(foo, bar, client, component)
+            .withProcessingOptions(compilerMode.processorOptions());
+
+    // TODO(b/532992111): Fix javac visibility errors when using generic @AssistedFactory interfaces
+    // across packages with package-private type arguments.
+    daggerCompiler.compile(
+        subject -> {
+          subject.hasErrorContaining("PackagePrivateBar");
+        });
+  }
 }

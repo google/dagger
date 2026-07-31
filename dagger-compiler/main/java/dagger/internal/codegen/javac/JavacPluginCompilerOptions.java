@@ -143,7 +143,7 @@ final class JavacPluginCompilerOptions extends CompilerOptions {
 
   @Override
   public boolean mapMultibindingDuplicateDetectionFix() {
-    return false;
+    return true;
   }
 
   @Override

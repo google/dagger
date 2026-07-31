@@ -60,25 +60,16 @@ public class PrivateTopLevelClassTest {
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(
             subject -> {
-              switch (CompilerTests.backend(subject)) {
-                case JAVAC:
-                  // TODO: b/539661501 - This should fail once this bug is fixed.
-                  subject.hasErrorCount(0);
-                  break;
-                case KSP:
-                  subject.hasErrorCount(2);
-                  subject
-                      .hasErrorContaining("Dagger does not support injection into private classes")
-                      .onSource(src)
-                      .onLineContaining("private class Foo");
-                  subject
-                      .hasErrorContaining(
-                          "Foo cannot be provided without an @Inject constructor or an"
-                              + " @Provides-annotated method")
-                      .onSource(src)
-                      .onLineContaining("interface TestComponent");
-                  break;
-              }
+              subject.hasErrorCount(2);
+              subject
+                  .hasErrorContaining("Dagger does not support injection into private classes")
+                  .onSource(src)
+                  .onLineContaining("private class Foo");
+              subject
+                  .hasErrorContaining(
+                      "Foo cannot be provided without an @Inject constructor or an"
+                          + " @Provides-annotated method")
+                  .onSource(src);
             });
   }
 }

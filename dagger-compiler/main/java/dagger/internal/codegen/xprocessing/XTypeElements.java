@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.xprocessing.XElements.isPrivate;
 import static java.util.stream.Collectors.joining;
 import static kotlin.streams.jdk8.StreamsKt.asStream;
 
@@ -50,7 +51,7 @@ public final class XTypeElements {
     /** Returns the visibility of the given {@link XTypeElement}. */
     private static Visibility of(XTypeElement element) {
       checkNotNull(element);
-      if (element.isPrivate()) {
+      if (isPrivate(element)) {
         return Visibility.PRIVATE;
       } else if (element.isPublic()) {
         return Visibility.PUBLIC;
@@ -88,7 +89,7 @@ public final class XTypeElements {
   /** Returns all non-private, non-static methods in {@code type}. */
   public static ImmutableList<XMethodElement> getAllNonPrivateInstanceMethods(XTypeElement type) {
     return getAllMethods(type).stream()
-        .filter(method -> !method.isPrivate() && !method.isStatic())
+        .filter(method -> !isPrivate(method) && !method.isStatic())
         .collect(toImmutableList());
   }
 
@@ -110,7 +111,7 @@ public final class XTypeElements {
     if (method.isPublic() || method.isProtected()) {
       return true;
     }
-    if (method.isPrivate()) {
+    if (isPrivate(method)) {
       return false;
     }
     return method

@@ -17,6 +17,7 @@
 package dagger.internal.codegen.validation;
 
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
+import static dagger.internal.codegen.xprocessing.XElements.isPrivate;
 import static dagger.internal.codegen.xprocessing.XMethodElements.getEnclosingTypeElement;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
 import static dagger.internal.codegen.xprocessing.XTypes.isSubtype;
@@ -189,7 +190,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
 
     /** Adds an error if the method is private. */
     private void checkNotPrivate() {
-      if (method.isPrivate()) {
+      if (isPrivate(method)) {
         report.addError(bindingMethods("cannot be private"));
       }
     }

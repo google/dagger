@@ -25,6 +25,7 @@ import static dagger.internal.codegen.binding.SourceFiles.factoryNameForElement;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.isPrivate;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isEffectivelyPrivate;
 import static dagger.internal.codegen.xprocessing.XTypes.isSubtype;
@@ -213,7 +214,7 @@ public final class InjectValidator implements ClearableCache {
             "No @Inject or @AssistedInject annotation found: " + constructorElement);
       }
 
-      if (constructorElement.isPrivate()) {
+      if (isPrivate(constructorElement)) {
         builder.addError(
             "Dagger does not support injection into private constructors", constructorElement);
       }
@@ -328,7 +329,7 @@ public final class InjectValidator implements ClearableCache {
         builder.addError("@Inject fields may not be final", fieldElement);
       }
 
-      if (fieldElement.isPrivate()) {
+      if (isPrivate(fieldElement)) {
         builder.addItem(
             "Dagger does not support injection into private fields",
             privateMemberDiagnosticKind,
@@ -361,7 +362,7 @@ public final class InjectValidator implements ClearableCache {
         builder.addError("Methods with @Inject may not be abstract", methodElement);
       }
 
-      if (methodElement.isPrivate()) {
+      if (isPrivate(methodElement)) {
         builder.addItem(
             "Dagger does not support injection into private methods",
             privateMemberDiagnosticKind,

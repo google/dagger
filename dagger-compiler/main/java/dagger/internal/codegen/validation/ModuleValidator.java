@@ -31,6 +31,7 @@ import static dagger.internal.codegen.validation.ModuleValidator.ModuleMethodKin
 import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
+import static dagger.internal.codegen.xprocessing.XElements.isPrivate;
 import static dagger.internal.codegen.xprocessing.XTypeElements.hasTypeParameters;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isEffectivelyPrivate;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isEffectivelyPublic;
@@ -538,7 +539,7 @@ public final class ModuleValidator {
 
   private void validateModuleVisibility(
       XTypeElement moduleElement, ModuleKind moduleKind, ValidationReport.Builder reportBuilder) {
-    if (moduleElement.isPrivate() || moduleElement.isKtPrivate()) {
+    if (isPrivate(moduleElement)) {
       reportBuilder.addError("Modules cannot be private.", moduleElement);
     } else if (isEffectivelyPrivate(moduleElement)) {
       reportBuilder.addError("Modules cannot be enclosed in private types.", moduleElement);

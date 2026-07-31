@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
+import static dagger.internal.codegen.xprocessing.XElements.isPrivate;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isNested;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
@@ -254,6 +255,6 @@ public abstract class ComponentRequirement {
 
   private static boolean hasVisibleDefaultConstructor(XTypeElement typeElement) {
     return typeElement.getConstructors().stream()
-        .anyMatch(constructor -> !constructor.isPrivate() && constructor.getParameters().isEmpty());
+        .anyMatch(constructor -> !isPrivate(constructor) && constructor.getParameters().isEmpty());
   }
 }

@@ -179,7 +179,8 @@ public final class XElements {
   }
 
   public static boolean isPrivate(XElement element) {
-    return asHasModifiers(element).isPrivate();
+    XHasModifiers modifiers = asHasModifiers(element);
+    return modifiers.isPrivate() || modifiers.isKtPrivate();
   }
 
   public static boolean isInternal(XElement element) {

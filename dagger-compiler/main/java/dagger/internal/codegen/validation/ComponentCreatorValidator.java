@@ -20,6 +20,7 @@ import static androidx.room3.compiler.processing.XTypeKt.isVoid;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.ComponentCreatorAnnotation.getCreatorAnnotations;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
+import static dagger.internal.codegen.xprocessing.XElements.isPrivate;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
 import static dagger.internal.codegen.xprocessing.XTypeElements.hasTypeParameters;
@@ -197,7 +198,7 @@ public final class ComponentCreatorValidator implements ClearableCache {
         report.addError(messages.generics());
         isClean = false;
       }
-      if (creator.isPrivate()) {
+      if (isPrivate(creator)) {
         report.addError(messages.isPrivate());
         isClean = false;
       }

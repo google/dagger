@@ -12,6 +12,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
+permissions:
+  contents: read
+
 env:
   USE_AGP_VERSION: '9.0.0'
   USE_JAVA_DISTRIBUTION: 'zulu'
@@ -29,14 +32,18 @@ jobs:
     name: 'Validate Dagger version'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/prechecks
   bazel-build:
     name: 'Bazel build'
     needs: validate-latest-dagger-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/bazel-build
   bazel-test:
     name: 'Bazel tests'
@@ -45,35 +52,45 @@ jobs:
       group: large-runner-group
       labels: ubuntu-22.04-16core
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/bazel-test
   artifact-verification-tests:
     name: 'Artifact verification tests'
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/artifact-verification-tests
   artifact-java-local-tests:
     name: 'Artifact Java local tests'
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/artifact-java-local-tests
   test-gradle-plugin:
     name: 'Test Hilt Gradle plugin'
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/test-gradle-plugin
   artifact-android-local-tests:
     name: 'Artifact Android local tests'
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/artifact-android-local-tests
   publish-artifacts:
     name: 'Publish Artifact'
@@ -89,7 +106,7 @@ jobs:
       contents: write
     steps:
       - name: 'Install Java ${{ env.USE_JAVA_VERSION_FOR_BAZEL }}'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
           java-version: '${{ env.USE_JAVA_VERSION_FOR_BAZEL }}'
@@ -99,9 +116,11 @@ jobs:
           gpg-private-key: ${{ secrets.CI_GPG_PRIVATE_KEY }}
           gpg-passphrase: CI_GPG_PASSPHRASE
       - name: 'Check out repository'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: 'Cache local Maven repository'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             ~/.m2/repository
@@ -110,14 +129,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: 'Cache Bazel files'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cache/bazel_github # The bazel cache path set in .bazelrc.
           key: ${{ runner.os }}-bazel-build-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-bazel-build-
       - name: 'Cache Gradle files'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             ~/.gradle/caches
@@ -129,7 +148,7 @@ jobs:
         run: |
           util/deploy-all.sh \
             "gpg:sign-and-deploy-file" \
-            "${{ env.DAGGER_RELEASE_VERSION }}" \
+            "${DAGGER_RELEASE_VERSION}" \
             "-DrepositoryId=sonatype-central-staging" \
             "-Durl=https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/"
         shell: bash
@@ -148,10 +167,10 @@ jobs:
             git config --global user.name "Dagger Team"
         shell: bash
       - name: 'Publish tagged release'
-        run: util/publish-tagged-release.sh ${{ env.DAGGER_RELEASE_VERSION }}
+        run: util/publish-tagged-release.sh ${DAGGER_RELEASE_VERSION}
         shell: bash
       - name: 'Publish tagged docs'
-        run: util/publish-tagged-docs.sh ${{ env.DAGGER_RELEASE_VERSION }}
+        run: util/publish-tagged-docs.sh ${DAGGER_RELEASE_VERSION}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}

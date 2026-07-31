@@ -2,6 +2,7 @@
 layout: default
 title: Multibindings
 redirect_from:
+
   - /multibindings
 ---
 
@@ -84,6 +85,11 @@ As with any other binding, in addition to depending on a multibound `Set<Foo>`,
 you can also depend on `Provider<Set<Foo>>` or `Lazy<Set<Foo>>`. You cannot,
 however, depend on `Set<Provider<Foo>>`.
 
+Multiple bindings can contribute duplicate elements to the same multibound set.
+Duplicate contributions are allowed; following standard `java.util.Set`
+behavior, only the first of the duplicate elements added is kept and subsequent
+duplicates are dropped, without causing any compile-time or runtime errors.
+
 To contribute to a qualified multibound set, annotate each `@Provides` method
 with the qualifier:
 
@@ -110,11 +116,12 @@ Dagger lets you use multibindings to contribute entries to an injectable map as
 long as the map keys are known at compile time.
 
 To contribute an entry to a multibound map, add a method to a module that
-returns the value and is annotated with [`@IntoMap`] and with
-another custom annotation that specifies the map key for that entry. Keys must
-be unique, and any collision within a Map will result in a compile-time error.
-To contribute an entry to a qualified multibound map, annotate each `@IntoMap`
-method with the qualifier.
+returns the value and is annotated with [`@IntoMap`] and with another custom
+annotation that specifies the map key for that entry. Keys must be unique.
+Unlike Set multibindings, duplicate keys are not allowed in Map multibindings;
+any collision within a Map will result in a compile-time error. To contribute an
+entry to a qualified multibound map, annotate each `@IntoMap` method with the
+qualifier.
 
 Then you can inject either the map itself (`Map<K, V>`) or a map containing
 value providers (`Map<K, Provider<V>>`). The latter is useful for various

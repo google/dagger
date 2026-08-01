@@ -26,6 +26,7 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
@@ -190,9 +191,9 @@ public final class XTypes {
             .isSubtype(toJavac(type1), toJavac(type2));
       case KSP:
         if (isPrimitive(type1) || isPrimitive(type2)) {
-            // For primitive types we can't just check isAssignableTo since auto-boxing means boxed
-            // types are assignable to primitive (and vice versa) though neither are subtypes.
-            return type1.isSameType(type2);
+          // For primitive types we can't just check isAssignableTo since auto-boxing means boxed
+          // types are assignable to primitive (and vice versa) though neither are subtypes.
+          return type1.isSameType(type2);
         }
         return isAssignableTo(type1, type2);
     }
@@ -207,7 +208,8 @@ public final class XTypes {
         // The implementation used for KSP should technically also work in Javac but we avoid it to
         // avoid any possible regressions in Javac.
         return toXProcessing(
-                toJavac(processingEnv).getTypeUtils() // ALLOW_TYPES_ELEMENTS
+                toJavac(processingEnv)
+                    .getTypeUtils() // ALLOW_TYPES_ELEMENTS
                     .erasure(toJavac(type)),
                 processingEnv)
             .getTypeName();
@@ -323,7 +325,8 @@ public final class XTypes {
   public static boolean isNullType(XType type) {
     XProcessingEnv.Backend backend = getProcessingEnv(type).getBackend();
     switch (backend) {
-      case JAVAC: return toJavac(type).getKind().equals(TypeKind.NULL);
+      case JAVAC:
+        return toJavac(type).getKind().equals(TypeKind.NULL);
       // AFAICT, there's no way to actually get a "null" type in KSP's model
       case KSP:
         return false;
@@ -341,8 +344,8 @@ public final class XTypes {
    *
    * <p>In Java, this represents {@code ?} and {@code ? extends/super Foo}.
    *
-   * <p>In Kotlin, this represents explicit (a.k.a. use-site) variance, e.g. {@code *} or
-   * {@code out/in Foo}, but also includes types with implicit/effective variance, e.g. based on the
+   * <p>In Kotlin, this represents explicit (a.k.a. use-site) variance, e.g. {@code *} or {@code
+   * out/in Foo}, but also includes types with implicit/effective variance, e.g. based on the
    * declaration site variance of the original type parameter that this type argument represents.
    */
   public static boolean isEffectivelyWildcard(XTypeArgument typeArgument) {
@@ -578,9 +581,7 @@ public final class XTypes {
    */
   public static void checkNotWildcard(XTypeArgument typeArgument) {
     checkArgument(
-        !isEffectivelyWildcard(typeArgument),
-        "Type argument is a wildcard: %s",
-        typeArgument);
+        !isEffectivelyWildcard(typeArgument), "Type argument is a wildcard: %s", typeArgument);
   }
 
   /**
@@ -614,8 +615,7 @@ public final class XTypes {
     if (typeName instanceof ClassName) {
       return ((ClassName) typeName).canonicalName();
     } else if (typeName instanceof ArrayTypeName) {
-      return String.format(
-          "%s[]", toStableString(((ArrayTypeName) typeName).componentType));
+      return String.format("%s[]", toStableString(((ArrayTypeName) typeName).componentType));
     } else if (typeName instanceof ParameterizedTypeName) {
       ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) typeName;
       return String.format(
@@ -686,8 +686,8 @@ public final class XTypes {
   }
 
   /**
-   * Iterates through the various types referenced within the given {@code type} and resolves it
-   * if needed.
+   * Iterates through the various types referenced within the given {@code type} and resolves it if
+   * needed.
    */
   public static void resolveIfNeeded(XType type) {
     if (getProcessingEnv(type).getBackend() == XProcessingEnv.Backend.JAVAC) {
@@ -702,13 +702,14 @@ public final class XTypes {
    * Returns the given {@code superTypeElement} as a member of the given {@code subType}.
    *
    * <p>For example, if we have {@code class A<T> : B<Foo, List<T>>} and {@code class B<T1, T2>}:
+   *
    * <ul>
    *   <li>{@code asMemberOf(b, b)} gives {@code B<T1, T2>}.
    *   <li>{@code asMemberOf(b, a)} gives {@code B<Foo, List<T>>}.
    * </ul>
    *
-   * @throws IllegalArgumentException if {@code superTypeElement} is not a supertype of
-   *   {@code subType}.
+   * @throws IllegalArgumentException if {@code superTypeElement} is not a supertype of {@code
+   *     subType}.
    */
   public static XType asMemberOf(XTypeElement superTypeElement, XType subType) {
     if (superTypeElement.equals(subType.getTypeElement())) {
@@ -724,8 +725,7 @@ public final class XTypes {
     throw new IllegalArgumentException(
         String.format(
             "%s is not a super type of %s",
-            XElements.toStableString(superTypeElement),
-            XTypes.toStableString(subType)));
+            XElements.toStableString(superTypeElement), XTypes.toStableString(subType)));
   }
 
   /** Returns {@code true} if the given type or any of its type arguments are type parameters. */
@@ -784,6 +784,15 @@ public final class XTypes {
     protected Void defaultAction(TypeMirror e, Set<Element> visited) {
       return null;
     }
+  }
+
+  public static XTypeElement requireTypeElement(XType type) {
+    XTypeElement typeElement = type.getTypeElement();
+    checkNotNull(
+        typeElement,
+        "XType.getTypeElement() is required but got null for: %s",
+        toStableString(type));
+    return typeElement;
   }
 
   private XTypes() {}

@@ -111,6 +111,8 @@ android_library(
     srcs = [
         "HiltTestApplication.java",
     ],
+    exports_manifest = 1,
+    manifest = "AndroidManifest_hilttestapplication.xml",
     deps = [
         ":on_component_ready_runner",
         ":package_info",

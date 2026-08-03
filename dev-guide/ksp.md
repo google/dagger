@@ -31,15 +31,15 @@ The main steps are:
 ```kotlin
 plugins {
   // STEP 1: Apply the Kotlin JVM (or Kotlin Android plugin)
-  id "org.jetbrains.kotlin.jvm" version "1.9.0"
+  id "org.jetbrains.kotlin.jvm" version "1.9.23"
   // STEP 2: Apply the KSP plugin
-  id "com.google.devtools.ksp" version "1.9.0-1.0.12"
+  id "com.google.devtools.ksp" version "1.9.23-1.0.20"
 }
 
 // STEP 3: Change compiler dependencies from 'kapt' to 'ksp' configuration.
 dependencies {
-  ksp "com.google.dagger:dagger-compiler:2.48" // Dagger compiler
-  ksp "com.google.dagger:hilt-compiler:2.48"   // Hilt compiler
+  ksp "com.google.dagger:dagger-compiler:2.51.1" // Dagger compiler
+  ksp "com.google.dagger:hilt-compiler:2.51.1"   // Hilt compiler
 }
 ```
 

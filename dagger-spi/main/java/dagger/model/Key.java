@@ -36,8 +36,16 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.NoType;
+import javax.lang.model.type.PrimitiveType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
+import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
+import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * A {@linkplain TypeMirror type} and an optional {@linkplain javax.inject.Qualifier qualifier} that
@@ -161,13 +169,130 @@ public abstract class Key {
         null);
   }
 
+  /**
+   * Returns a string representation of the given {@link TypeMirror} with all {@code TYPE_USE}
+   * annotations stripped.
+   *
+   * <p>Type-use annotations do not affect Dagger's key resolution, and omitting them ensures
+   * stability of conformance test allowlists (avoiding test churn when annotations are added or
+   * removed).
+   */
+  private static String unannotatedTypeToString(TypeMirror type) {
+    UnannotatedTypeVisitor visitor = new UnannotatedTypeVisitor();
+    type.accept(visitor, null);
+    return visitor.toString();
+  }
+
+  private static final class UnannotatedTypeVisitor extends SimpleTypeVisitor8<Void, Void> {
+    private final StringBuilder sb = new StringBuilder();
+
+    @Override
+    public String toString() {
+      return sb.toString();
+    }
+
+    @Override
+    public Void visitDeclared(DeclaredType t, Void aVoid) {
+      TypeMirror enclosing = t.getEnclosingType();
+      if (enclosing.getKind() == TypeKind.DECLARED) {
+        enclosing.accept(this, null);
+        sb.append('.').append(t.asElement().getSimpleName());
+      } else {
+        TypeElement element = (TypeElement) t.asElement();
+        sb.append(element.getQualifiedName());
+      }
+      List<? extends TypeMirror> typeArguments = t.getTypeArguments();
+      if (!typeArguments.isEmpty()) {
+        sb.append('<');
+        for (int i = 0; i < typeArguments.size(); i++) {
+          if (i > 0) {
+            sb.append(',');
+          }
+          typeArguments.get(i).accept(this, null);
+        }
+        sb.append('>');
+      }
+      return null;
+    }
+
+    @Override
+    public Void visitArray(ArrayType t, Void aVoid) {
+      t.getComponentType().accept(this, null);
+      sb.append("[]");
+      return null;
+    }
+
+    @Override
+    public Void visitPrimitive(PrimitiveType t, Void aVoid) {
+      sb.append(primitiveName(t));
+      return null;
+    }
+
+    @Override
+    public Void visitTypeVariable(TypeVariable t, Void aVoid) {
+      sb.append(t.asElement().getSimpleName());
+      return null;
+    }
+
+    @Override
+    public Void visitWildcard(WildcardType t, Void aVoid) {
+      sb.append('?');
+      TypeMirror extendsBound = t.getExtendsBound();
+      if (extendsBound != null) {
+        sb.append(" extends ");
+        extendsBound.accept(this, null);
+      }
+      TypeMirror superBound = t.getSuperBound();
+      if (superBound != null) {
+        sb.append(" super ");
+        superBound.accept(this, null);
+      }
+      return null;
+    }
+
+    @Override
+    public Void visitNoType(NoType t, Void aVoid) {
+      sb.append(t.toString());
+      return null;
+    }
+
+    @Override
+    protected Void defaultAction(TypeMirror e, Void aVoid) {
+      sb.append(e.toString());
+      return null;
+    }
+
+    private static String primitiveName(PrimitiveType t) {
+      switch (t.getKind()) {
+        case BOOLEAN:
+          return "boolean";
+        case BYTE:
+          return "byte";
+        case SHORT:
+          return "short";
+        case INT:
+          return "int";
+        case LONG:
+          return "long";
+        case CHAR:
+          return "char";
+        case FLOAT:
+          return "float";
+        case DOUBLE:
+          return "double";
+        default:
+          throw new IllegalArgumentException("not a primitive: " + t);
+      }
+    }
+  }
+
   @Override
   public final String toString() {
     return Joiner.on(' ')
         .skipNulls()
         .join(
             qualifier().map(Key::stableAnnotationMirrorToString).orElse(null),
-            type(),
+            unannotatedTypeToString(type()),
             multibindingContributionIdentifier().orElse(null));
   }
 

@@ -17,7 +17,6 @@
 package dagger.hilt.android.testing.compile;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static java.util.stream.Collectors.toMap;
 
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.util.CompilationResultSubject;
@@ -125,14 +124,8 @@ public final class HiltCompilerTests {
   }
 
   public static Compiler compiler(Collection<? extends Processor> extraProcessors) {
-    Map<Class<?>, Processor> processors =
-        defaultProcessors().stream()
-            .collect(toMap((Processor e) -> e.getClass(), (Processor e) -> e));
-
-    // Adds extra processors, and allows overriding any processors of the same class.
-    extraProcessors.forEach(processor -> processors.put(processor.getClass(), processor));
-
-    return CompilerTests.compiler().withProcessors(processors.values());
+    return CompilerTests.compiler()
+        .withProcessors(CompilerTests.mergeProcessors(defaultProcessors(), extraProcessors));
   }
 
   public static void compileWithKapt(
@@ -382,7 +375,7 @@ public final class HiltCompilerTests {
 
     private ImmutableList<Processor> mergedJavacProcessors() {
       return ImmutableList.<Processor>builder()
-          .addAll(mergeProcessors(defaultProcessors(), additionalJavacProcessors()))
+          .addAll(CompilerTests.mergeProcessors(defaultProcessors(), additionalJavacProcessors()))
           .addAll(
               processingSteps().stream()
                   .map(HiltCompilerProcessors.JavacProcessor::new)
@@ -392,21 +385,12 @@ public final class HiltCompilerTests {
 
     private ImmutableList<SymbolProcessorProvider> mergedKspProcessors() {
       return ImmutableList.<SymbolProcessorProvider>builder()
-          .addAll(mergeProcessors(kspDefaultProcessors(), additionalKspProcessors()))
+          .addAll(CompilerTests.mergeProcessors(kspDefaultProcessors(), additionalKspProcessors()))
           .addAll(
               processingSteps().stream()
                   .map(HiltCompilerProcessors.KspProcessor.Provider::new)
                   .collect(toImmutableList()))
           .build();
-    }
-
-    private static <T> ImmutableList<T> mergeProcessors(
-        Collection<T> defaultProcessors, Collection<T> extraProcessors) {
-      Map<Class<?>, T> processors =
-          defaultProcessors.stream().collect(toMap((T e) -> e.getClass(), (T e) -> e));
-      // Adds extra processors, and allows overriding any processors of the same class.
-      extraProcessors.forEach(processor -> processors.put(processor.getClass(), processor));
-      return ImmutableList.copyOf(processors.values());
     }
 
     /** Used to build a {@link HiltCompiler}. */

@@ -386,16 +386,6 @@ public final class CompilerTests {
           additionalKspProcessors());
     }
 
-    private static <T> ImmutableList<T> mergeProcessors(
-        Collection<T> defaultProcessors, Collection<T> extraProcessors) {
-      Map<Class<?>, T> processors =
-          defaultProcessors.stream()
-              .collect(toMap(Object::getClass, (T e) -> e, (p1, p2) -> p2, HashMap::new));
-      // Adds extra processors, and allows overriding any processors of the same class.
-      extraProcessors.forEach(processor -> processors.put(processor.getClass(), processor));
-      return ImmutableList.copyOf(processors.values());
-    }
-
     /** Used to build a {@link DaggerCompiler}. */
     @AutoValue.Builder
     public abstract static class Builder {
@@ -415,6 +405,23 @@ public final class CompilerTests {
           ImmutableCollection<Supplier<BindingGraphPlugin>> bindingGraphPluginSuppliers);
       abstract DaggerCompiler build();
     }
+  }
+
+  /**
+   * Merges {@code extraProcessors} with {@code defaultProcessors}.
+   *
+   * <p>If {@code extraProcessors} contains a processor that is the same class as a processor in
+   * {@code defaultProcessors}, the processor from {@code extraProcessors} will override the default
+   * processor.
+   */
+  public static <T> ImmutableList<T> mergeProcessors(
+      Collection<? extends T> defaultProcessors, Collection<? extends T> extraProcessors) {
+    Map<Class<?>, T> processors =
+        defaultProcessors.stream()
+            .collect(toMap(Object::getClass, (T e) -> e, (p1, p2) -> p2, HashMap::new));
+    // Adds extra processors, and allows overriding any processors of the same class.
+    extraProcessors.forEach(processor -> processors.put(processor.getClass(), processor));
+    return ImmutableList.copyOf(processors.values());
   }
 
   /** Returns the {@plainlink File jar file} containing the compiler deps. */

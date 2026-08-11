@@ -55,6 +55,7 @@ kt_compiler_test(
     resources = glob(["goldens/ViewModelValidationPluginTest/**"]),
     deps = [
         ":test_utils",
+        "//dagger-compiler:processor",
         "//dagger-compiler:xprocessing",
         "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//hilt-compiler/main/java/dagger/hilt/android/processor/internal/viewmodel:processor_lib",
@@ -86,6 +87,7 @@ kt_compiler_test(
     resources = glob(["goldens/ViewModelValidationPluginWithAssistedInjectTest/**"]),
     deps = [
         ":test_utils",
+        "//dagger-compiler:processor",
         "//dagger-compiler:xprocessing",
         "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//hilt-compiler/main/java/dagger/hilt/android/processor/internal/viewmodel:processor_lib",

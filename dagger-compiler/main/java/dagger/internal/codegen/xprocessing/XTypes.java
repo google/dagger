@@ -27,14 +27,12 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.xprocessing.XTypes.asArray;
 import static dagger.internal.codegen.xprocessing.XTypes.checkTypePresent;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isNoType;
-import static java.util.stream.Collectors.joining;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.processing.XArrayType;
@@ -52,11 +50,11 @@ import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ArrayTypeName;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
+import dagger.internal.codegen.extension.DaggerTypeNames;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
@@ -611,43 +609,8 @@ public final class XTypes {
     }
   }
 
-  private static String toStableString(TypeName typeName) {
-    if (typeName instanceof ClassName) {
-      return ((ClassName) typeName).canonicalName();
-    } else if (typeName instanceof ArrayTypeName) {
-      return String.format("%s[]", toStableString(((ArrayTypeName) typeName).componentType));
-    } else if (typeName instanceof ParameterizedTypeName) {
-      ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) typeName;
-      return String.format(
-          "%s<%s>",
-          parameterizedTypeName.rawType,
-          parameterizedTypeName.typeArguments.stream()
-              .map(XTypes::toStableString)
-              // We purposely don't use a space after the comma to for backwards compatibility with
-              // usages that depended on the previous TypeMirror#toString() implementation.
-              .collect(joining(",")));
-    } else if (typeName instanceof WildcardTypeName) {
-      WildcardTypeName wildcardTypeName = (WildcardTypeName) typeName;
-      // Wildcard types have exactly 1 upper bound.
-      TypeName upperBound = getOnlyElement(wildcardTypeName.upperBounds);
-      if (!upperBound.equals(TypeName.OBJECT)) {
-        // Wildcards with non-Object upper bounds can't have lower bounds.
-        checkState(wildcardTypeName.lowerBounds.isEmpty());
-        return String.format("? extends %s", toStableString(upperBound));
-      }
-      if (!wildcardTypeName.lowerBounds.isEmpty()) {
-        // Wildcard types can have at most 1 lower bound.
-        TypeName lowerBound = getOnlyElement(wildcardTypeName.lowerBounds);
-        return String.format("? super %s", toStableString(lowerBound));
-      }
-      // If the upper bound is Object and there is no lower bound then just use "?".
-      return "?";
-    } else if (typeName instanceof TypeVariableName) {
-      return ((TypeVariableName) typeName).name;
-    } else {
-      // For all other types (e.g. primitive types) just use the TypeName's toString()
-      return typeName.toString();
-    }
+  public static String toStableString(TypeName typeName) {
+    return DaggerTypeNames.toStableString(typeName);
   }
 
   public static String getKindName(XTypeArgument typeArgument) {

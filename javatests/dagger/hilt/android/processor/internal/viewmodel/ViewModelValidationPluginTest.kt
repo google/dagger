@@ -20,6 +20,8 @@ import androidx.room3.compiler.processing.ExperimentalProcessingApi
 import androidx.room3.compiler.processing.util.Source
 import com.google.common.collect.ImmutableList
 import dagger.hilt.android.testing.compile.HiltCompilerTests
+import dagger.internal.codegen.ComponentProcessor
+import dagger.internal.codegen.KspComponentProcessor
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -30,8 +32,14 @@ class ViewModelValidationPluginTest {
 
   private fun testCompiler(vararg sources: Source): HiltCompilerTests.HiltCompiler =
     HiltCompilerTests.hiltCompiler(ImmutableList.copyOf(sources))
-      .withBindingGraphPlugins(::ViewModelValidationPlugin)
-      .withProcessingSteps(::ViewModelProcessingStep)
+      .withAdditionalJavacProcessors(
+        ComponentProcessor.withTestPlugins(ViewModelValidationPlugin()),
+        ViewModelProcessor()
+      )
+      .withAdditionalKspProcessors(
+        KspComponentProcessor.Provider.withTestPlugins(ViewModelValidationPlugin()),
+        KspViewModelProcessor.Provider()
+      )
 
   private val hiltAndroidApp =
     """

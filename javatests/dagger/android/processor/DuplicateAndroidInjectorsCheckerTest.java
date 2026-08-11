@@ -17,6 +17,8 @@
 package dagger.android.processor;
 
 import androidx.room3.compiler.processing.util.Source;
+import dagger.internal.codegen.ComponentProcessor;
+import dagger.internal.codegen.KspComponentProcessor;
 import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -86,7 +88,10 @@ public final class DuplicateAndroidInjectorsCheckerTest {
             "}");
 
     CompilerTests.daggerCompiler(activity, injectorFactory, module, component)
-        .withBindingGraphPlugins(DuplicateAndroidInjectorsChecker::new)
+        .withAdditionalJavacProcessors(
+            ComponentProcessor.withTestPlugins(new DuplicateAndroidInjectorsChecker()))
+        .withAdditionalKspProcessors(
+            KspComponentProcessor.Provider.withTestPlugins(new DuplicateAndroidInjectorsChecker()))
         .compile(
             subject -> {
               subject.compilationDidFail();

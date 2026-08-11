@@ -401,10 +401,8 @@ public final class CompilerTests {
 
       abstract Builder processingStepSuppliers(
           ImmutableCollection<Supplier<XProcessingStep>> processingStepSuppliers);
-
       abstract Builder bindingGraphPluginSuppliers(
           ImmutableCollection<Supplier<BindingGraphPlugin>> bindingGraphPluginSuppliers);
-
       abstract DaggerCompiler build();
     }
   }
@@ -418,17 +416,6 @@ public final class CompilerTests {
    */
   public static <T> ImmutableList<T> mergeProcessors(
       Collection<? extends T> defaultProcessors, Collection<? extends T> extraProcessors) {
-    for (T processor : extraProcessors) {
-      if (processor instanceof ComponentProcessor) {
-        throw new IllegalArgumentException(
-            "ComponentProcessor is already included. To add plugins, use"
-                + " withBindingGraphPlugins() instead.");
-      } else if (processor instanceof KspComponentProcessor.Provider) {
-        throw new IllegalArgumentException(
-            "KspComponentProcessor.Provider is already included. To add plugins, use"
-                + " withBindingGraphPlugins() instead.");
-      }
-    }
     Map<Class<?>, T> processors =
         defaultProcessors.stream()
             .collect(toMap(Object::getClass, (T e) -> e, (p1, p2) -> p2, HashMap::new));

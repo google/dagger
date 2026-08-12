@@ -33,32 +33,33 @@ public interface BindingGraphValidationModule {
   static ImmutableSet<ValidationBindingGraphPlugin> providePlugins(
       CompositeBindingGraphPlugin.Factory factory,
       CompilerOptions compilerOptions,
-      DependencyCycleValidator validation1,
-      DependsOnProductionExecutorValidator validation2,
-      DuplicateBindingsValidator validation3,
-      IncompatiblyScopedBindingsValidator validation4,
-      InjectBindingValidator validation5,
-      MapMultibindingValidator validation6,
-      MissingBindingValidator validation7,
-      NullableBindingValidator validation8,
-      ProvisionDependencyOnProducerBindingValidator validation9,
-      InvalidProductionBindingScopeValidator validation10,
-      SetMultibindingValidator validation11,
-    SubcomponentFactoryMethodValidator validation12) {
+      DependencyCycleValidator dependencyCycleValidator,
+      DependsOnProductionExecutorValidator dependsOnProductionExecutorValidator,
+      DuplicateBindingsValidator duplicateBindingsValidator,
+      IncompatiblyScopedBindingsValidator incompatiblyScopedBindingsValidator,
+      InjectBindingValidator injectBindingValidator,
+      MapMultibindingValidator mapMultibindingValidator,
+      MissingBindingValidator missingBindingValidator,
+      NullableBindingValidator nullableBindingValidator,
+      ProvisionDependencyOnProducerBindingValidator provisionDependencyOnProducerBindingValidator,
+      InvalidProductionBindingScopeValidator invalidProductionBindingScopeValidator,
+      SetMultibindingValidator setMultibindingValidator,
+    SubcomponentFactoryMethodValidator subcomponentFactoryMethodValidator) {
     ImmutableSet.Builder<ValidationBindingGraphPlugin> builder =
         ImmutableSet.<ValidationBindingGraphPlugin>builder()
-            .add(validation1)
-            .add(validation2)
-            .add(validation3)
-            .add(validation4)
-            .add(validation5)
-            .add(validation6)
-            .add(validation7)
-            .add(validation8)
-            .add(validation9)
-            .add(validation10)
-            .add(validation11)
-            .add(validation12);
+            .add(dependencyCycleValidator)
+            .add(dependsOnProductionExecutorValidator)
+            .add(duplicateBindingsValidator)
+            .add(incompatiblyScopedBindingsValidator)
+            .add(injectBindingValidator)
+            .add(mapMultibindingValidator)
+            .add(missingBindingValidator)
+            .add(nullableBindingValidator)
+            .add(provisionDependencyOnProducerBindingValidator)
+            .add(invalidProductionBindingScopeValidator)
+            .add(setMultibindingValidator)
+            .add(subcomponentFactoryMethodValidator);
+
     if (compilerOptions.experimentalDaggerErrorMessages()) {
       return ImmutableSet.of(factory.create(builder.build()));
     } else {

@@ -216,26 +216,19 @@ class MyApplication : MultiDexApplication()
 
 ### Aggregating Task {#aggregating-task}
 
-The Hilt Gradle plugin offers an option for performing Hilt's classpath
-aggregation in a dedicated Gradle task. This allows the Hilt annotation
-processors to be
+The Hilt Gradle plugin performs Hilt's classpath aggregation in a dedicated
+Gradle task. This allows the Hilt annotation processors to be
 [isolating](https://docs.gradle.org/current/userguide/java_plugin.html#isolating_annotation_processors)
 so they are only invoked when necessary. This reduces incremental compilation
 times by reducing how often an incremental change causes a rebuild of the Dagger
-components. Enabling this option also enables
+components. The aggregating task also enables
 [sharing test components](flags.md#sharing-test-components) and
-[classpath aggregation](#classpath-aggregation). Note that this option replaces
+[classpath aggregation](#classpath-aggregation). Note that this replaces
 `enableExperimentalClasspathAggregation` since it has the same benefits without
 any of its caveats.
 
-To enable the aggregating task, apply the following configuration in your
-Android module's `build.gradle`:
-
-```
-hilt {
-    enableAggregatingTask = true
-}
-```
+`enableAggregatingTask` is enabled by default, so you no longer need to set it
+explicitly in your module's `build.gradle`.
 
 ### Applying other processor arguments {#applying-other-processor-arguments}
 

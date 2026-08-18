@@ -59,12 +59,9 @@ import dagger.internal.codegen.base.ComponentCreatorAnnotation;
 import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ModuleKind;
 import dagger.internal.codegen.base.ValidationReport;
-import dagger.internal.codegen.binding.BindingGraphFactory;
-import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
-import dagger.internal.codegen.model.BindingGraph;
 import dagger.internal.codegen.model.Scope;
 import dagger.internal.codegen.xprocessing.XElements;
 import dagger.internal.codegen.xprocessing.XTypeNames;
@@ -111,9 +108,6 @@ public final class ModuleValidator {
 
   private final AnyBindingMethodValidator anyBindingMethodValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
-  private final ComponentDescriptor.Factory componentDescriptorFactory;
-  private final BindingGraphFactory bindingGraphFactory;
-  private final BindingGraphValidator bindingGraphValidator;
   private final InjectionAnnotations injectionAnnotations;
   private final DaggerSuperficialValidation superficialValidation;
   private final XProcessingEnv processingEnv;
@@ -124,17 +118,11 @@ public final class ModuleValidator {
   ModuleValidator(
       AnyBindingMethodValidator anyBindingMethodValidator,
       MethodSignatureFormatter methodSignatureFormatter,
-      ComponentDescriptor.Factory componentDescriptorFactory,
-      BindingGraphFactory bindingGraphFactory,
-      BindingGraphValidator bindingGraphValidator,
       InjectionAnnotations injectionAnnotations,
       DaggerSuperficialValidation superficialValidation,
       XProcessingEnv processingEnv) {
     this.anyBindingMethodValidator = anyBindingMethodValidator;
     this.methodSignatureFormatter = methodSignatureFormatter;
-    this.componentDescriptorFactory = componentDescriptorFactory;
-    this.bindingGraphFactory = bindingGraphFactory;
-    this.bindingGraphValidator = bindingGraphValidator;
     this.injectionAnnotations = injectionAnnotations;
     this.superficialValidation = superficialValidation;
     this.processingEnv = processingEnv;
@@ -213,11 +201,6 @@ public final class ModuleValidator {
         .filter(XTypeElement::isCompanionObject)
         .collect(toOptional())
         .ifPresent(companionModule -> validateCompanionModule(companionModule, builder));
-
-    if (builder.build().isClean()
-        && bindingGraphValidator.shouldDoFullBindingGraphValidation(module)) {
-      validateModuleBindings(module, builder);
-    }
 
     return builder.build();
   }
@@ -631,19 +614,6 @@ public final class ModuleValidator {
     if (!companionBindingMethods.isEmpty() && companionModule.isPrivate()) {
       builder.addError(
           "A Companion Module with binding methods cannot be private.", companionModule);
-    }
-  }
-
-  private void validateModuleBindings(XTypeElement module, ValidationReport.Builder report) {
-    BindingGraph bindingGraph =
-        bindingGraphFactory
-            .create(componentDescriptorFactory.moduleComponentDescriptor(module), true)
-            .topLevelBindingGraph();
-    if (!bindingGraphValidator.isValid(bindingGraph)) {
-      // Since the validator uses a DiagnosticReporter to report errors, the ValdiationReport won't
-      // have any Items for them. We have to tell the ValidationReport that some errors were
-      // reported for the subject.
-      report.markDirty();
     }
   }
 

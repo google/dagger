@@ -18,6 +18,7 @@ package dagger.internal.codegen;
 
 import androidx.room3.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
 import org.junit.Rule;
@@ -302,6 +303,54 @@ public class SwitchingProviderTest {
               subject.hasErrorCount(0);
               subject.hasWarningCount(0);
               subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+            });
+  }
+
+  @Test
+  public void customCasesPerSwitchingProviderSwitch() throws Exception {
+    ImmutableList.Builder<Source> sources = ImmutableList.builder();
+    StringBuilder entryPoints = new StringBuilder();
+    for (int i = 0; i <= 10; i++) {
+      String bindingName = "Binding" + i;
+      sources.add(
+          CompilerTests.javaSource(
+              "test." + bindingName,
+              "package test;",
+              "",
+              "import javax.inject.Inject;",
+              "",
+              "final class " + bindingName + " {",
+              "  @Inject",
+              "  " + bindingName + "() {}",
+              "}"));
+      entryPoints.append(String.format("  Provider<%1$s> get%1$sProvider();\n", bindingName));
+    }
+
+    sources.add(
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            entryPoints.toString(),
+            "}"));
+
+    ImmutableMap<String, String> options =
+        ImmutableMap.<String, String>builder()
+            .putAll(compilerMode.processorOptions())
+            .put("dagger.casesPerSwitchingProviderSwitch", "5")
+            .buildOrThrow();
+
+    CompilerTests.daggerCompiler(sources.build())
+        .withProcessingOptions(options)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(0);
             });
   }
 }

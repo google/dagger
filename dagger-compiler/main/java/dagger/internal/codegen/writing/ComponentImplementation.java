@@ -1149,7 +1149,7 @@ public final class ComponentImplementation {
     if (graph.componentDescriptor().hasCreator()) {
       return graph.componentRequirements().asList();
     } else if (graph.factoryMethod().isPresent()) {
-      return graph.factoryMethodParameters().keySet().asList();
+      return graph.factoryMethodRequirements().asList();
     } else {
       throw new AssertionError(
           "Expected either a component creator or factory method but found neither.");

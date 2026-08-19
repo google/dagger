@@ -60,6 +60,14 @@ _deploy \
   ""
 
 _deploy \
+  "" \
+  hilt-android-testing-manifest/artifact.aar \
+  hilt-android-testing-manifest/pom.xml \
+  hilt-android-testing-manifest/artifact-src.jar \
+  hilt-android-testing-manifest/artifact-javadoc.jar \
+  ""
+
+_deploy \
   "$_SHADED_RULES" \
   hilt-compiler/artifact.jar \
   hilt-compiler/pom.xml \

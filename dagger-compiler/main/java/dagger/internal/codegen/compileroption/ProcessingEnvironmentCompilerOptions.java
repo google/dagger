@@ -78,6 +78,8 @@ import javax.tools.Diagnostic;
 public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   // EnumOption<T> doesn't support integer inputs so just doing this as a 1-off for now.
   private static final String KEYS_PER_COMPONENT_SHARD = "dagger.keysPerComponentShard";
+  private static final String CASES_PER_SWITCHING_PROVIDER_SWITCH =
+      "dagger.casesPerSwitchingProviderSwitch";
 
   private final XProcessingEnv processingEnv;
 
@@ -231,6 +233,14 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
       return Integer.parseInt(options.get(KEYS_PER_COMPONENT_SHARD));
     }
     return super.keysPerComponentShard(component);
+  }
+
+  @Override
+  public int casesPerSwitchingProviderSwitch() {
+    if (options.containsKey(CASES_PER_SWITCHING_PROVIDER_SWITCH)) {
+      return Integer.parseInt(options.get(CASES_PER_SWITCHING_PROVIDER_SWITCH));
+    }
+    return super.casesPerSwitchingProviderSwitch();
   }
 
   private boolean isEnabled(KeyOnlyOption keyOnlyOption) {
@@ -467,6 +477,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
                 .flatMap(CommandLineOption::allNames)
                 .collect(toImmutableSet()))
         .add(KEYS_PER_COMPONENT_SHARD)
+        .add(CASES_PER_SWITCHING_PROVIDER_SWITCH)
         .build();
   }
 

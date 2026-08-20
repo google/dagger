@@ -145,6 +145,17 @@ public abstract class CompilerOptions {
   }
 
   /**
+   * Each switch size is fixed at 100 cases each and put in its own method. This is to limit the
+   * size of the methods so that we don't reach the "huge" method size limit for Android that will
+   * prevent it from being AOT compiled in some versions of Android (b/77652521). This generally
+   * starts to happen around 1500 cases, but we are choosing 100 to be safe.
+   */
+  // TODO(bcorso): Include a proguard_spec in the Dagger library to prevent inlining these methods?
+  public int casesPerSwitchingProviderSwitch() {
+    return 100;
+  }
+
+  /**
    * This option enables a fix to an issue where Dagger previously would erroneously allow
    * multibinding contributions in a component to have dependencies on child components. This will
    * eventually become the default and enforced.

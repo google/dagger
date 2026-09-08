@@ -2,6 +2,7 @@ package test;
 
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -55,7 +56,7 @@ public final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.fooProvider = new SwitchingProvider<>(testComponentImpl, 0);
+      this.fooProvider = new SwitchingPImpl<>(testComponentImpl, 0);
     }
 
     @Override
@@ -63,19 +64,24 @@ public final class DaggerTestComponent {
       return (SomeEntryPoint) ((Object) (SomeEntryPoint_Factory.newInstance(fooProvider.get(), fooProvider)));
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final TestComponentImpl testComponentImpl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+      SwitchingPImpl(TestComponentImpl testComponentImpl, int id) {
         this.testComponentImpl = testComponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // test.Foo
           return (T) Foo_Factory.newInstance(Bar_Factory.newInstance());

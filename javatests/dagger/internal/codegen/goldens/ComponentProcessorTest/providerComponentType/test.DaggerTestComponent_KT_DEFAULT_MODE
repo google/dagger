@@ -43,8 +43,8 @@ public final class DaggerTestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
     /**
-      * {@code Provider<Foo>}
-      */
+     * {@code Provider<Foo>}
+     */
     Provider<?> fooProvider;
 
     TestComponentImpl() {

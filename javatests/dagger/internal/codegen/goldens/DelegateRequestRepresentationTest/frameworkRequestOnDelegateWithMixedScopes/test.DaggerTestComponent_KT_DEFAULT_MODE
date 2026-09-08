@@ -44,13 +44,13 @@ final class DaggerTestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
     /**
-      * {@code Provider<String>}
-      */
+     * {@code Provider<String>}
+     */
     Provider<?> provideStringProvider;
 
     /**
-      * {@code Provider<CharSequence>}
-      */
+     * {@code Provider<CharSequence>}
+     */
     Provider<?> charSequenceProvider;
 
     TestComponentImpl() {

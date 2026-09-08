@@ -1,8 +1,9 @@
 package dagger.internal.codegen;
 
 import dagger.internal.DaggerGenerated;
-import dagger.internal.DoubleCheck;
+import dagger.internal.DoubleCheckSwitchingProvider;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -47,6 +48,8 @@ final class DaggerTestComponent {
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
+    private SwitchingPImpl<Object> sharedSwitchingProvider;
+
     Provider<Binding1> binding1Provider;
 
     Provider<Binding2> binding2Provider;
@@ -60,8 +63,9 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.binding1Provider = DoubleCheck.provider(new SwitchingProvider<Binding1>(testComponentImpl, testSubcomponentImpl, 0));
-      this.binding2Provider = DoubleCheck.provider(new SwitchingProvider<Binding2>(testComponentImpl, testSubcomponentImpl, 1));
+      this.sharedSwitchingProvider = new SwitchingPImpl<>(testComponentImpl, testSubcomponentImpl, -1);
+      this.binding1Provider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
+      this.binding2Provider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 1);
     }
 
     @Override
@@ -94,23 +98,28 @@ final class DaggerTestComponent {
       return testSubcomponentImpl.testSubcomponentImplShard.binding3Provider;
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final TestComponentImpl testComponentImpl;
 
       private final TestSubcomponentImpl testSubcomponentImpl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl,
-          TestSubcomponentImpl testSubcomponentImpl, int id) {
+      SwitchingPImpl(TestComponentImpl testComponentImpl, TestSubcomponentImpl testSubcomponentImpl,
+          int id) {
         this.testComponentImpl = testComponentImpl;
         this.testSubcomponentImpl = testSubcomponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // dagger.internal.codegen.Binding1
           return (T) new Binding1();
@@ -143,6 +152,8 @@ final class DaggerTestComponent {
 
     private final TestSubcomponentImpl testSubcomponentImpl;
 
+    private SwitchingPImpl<Object> sharedSwitchingProvider;
+
     Provider<Binding3> binding3Provider;
 
     TestSubcomponentImplShard(TestComponentImpl testComponentImpl,
@@ -154,26 +165,32 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.binding3Provider = DoubleCheck.provider(new SwitchingProvider<Binding3>(testComponentImpl, testSubcomponentImpl, 0));
+      this.sharedSwitchingProvider = new SwitchingPImpl<>(testComponentImpl, testSubcomponentImpl, -1);
+      this.binding3Provider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final TestComponentImpl testComponentImpl;
 
       private final TestSubcomponentImpl testSubcomponentImpl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl,
-          TestSubcomponentImpl testSubcomponentImpl, int id) {
+      SwitchingPImpl(TestComponentImpl testComponentImpl, TestSubcomponentImpl testSubcomponentImpl,
+          int id) {
         this.testComponentImpl = testComponentImpl;
         this.testSubcomponentImpl = testSubcomponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // dagger.internal.codegen.Binding3
           return (T) new Binding3();

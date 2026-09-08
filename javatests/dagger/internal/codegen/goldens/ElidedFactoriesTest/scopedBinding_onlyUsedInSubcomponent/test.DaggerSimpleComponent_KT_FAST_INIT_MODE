@@ -1,8 +1,9 @@
 package test;
 
 import dagger.internal.DaggerGenerated;
-import dagger.internal.DoubleCheck;
+import dagger.internal.DoubleCheckSwitchingProvider;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -60,6 +61,8 @@ final class DaggerSimpleComponent {
   private static final class SimpleComponentImpl implements SimpleComponent {
     private final SimpleComponentImpl simpleComponentImpl = this;
 
+    private SwitchingPImpl<Object> sharedSwitchingProvider;
+
     /**
      * {@code Provider<ScopedType>}
      */
@@ -73,7 +76,8 @@ final class DaggerSimpleComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.scopedTypeProvider = DoubleCheck.provider(new SwitchingProvider<>(simpleComponentImpl, 0));
+      this.sharedSwitchingProvider = new SwitchingPImpl<>(simpleComponentImpl, -1);
+      this.scopedTypeProvider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
     }
 
     @Override
@@ -81,19 +85,24 @@ final class DaggerSimpleComponent {
       return new SubImpl(simpleComponentImpl);
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final SimpleComponentImpl simpleComponentImpl;
 
       private final int id;
 
-      SwitchingProvider(SimpleComponentImpl simpleComponentImpl, int id) {
+      SwitchingPImpl(SimpleComponentImpl simpleComponentImpl, int id) {
         this.simpleComponentImpl = simpleComponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // test.ScopedType
           return (T) ScopedType_Factory.newInstance();

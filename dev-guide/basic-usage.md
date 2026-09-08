@@ -7,7 +7,18 @@ redirect_from:
 
 We'll demonstrate dependency injection and Dagger by building a coffee maker.
 For complete sample code that you can compile and run, see Dagger's
-[coffee example][Coffee Maker Examples].
+[coffee example][Coffee Maker Examples]. Complete sample code for the coffee
+maker is available with multiple build tools (Gradle, Bazel, Maven) in Dagger's
+examples repository.
+
+For developers who want a step-by-step progressive guide to Dagger concepts,
+refer to the interactive [Dagger Tutorial].
+
+**Note:** For Android developers, while Dagger core examples are plain JVM
+console applications, developers using Android Studio for Android app
+development should refer to [Hilt] and Google's official
+[Android Dependency Injection Guide] for Android lifecycle integration and
+Jetpack support. {: .c-callouts__note }
 
 ## Declaring Dependencies
 
@@ -636,6 +647,7 @@ the [README][installation] for more information.
 <!-- References -->
 
 [Android Application]: http://developer.android.com/reference/android/app/Application.html
+[Android Dependency Injection Guide]: https://developer.android.com/training/dependency-injection
 [Annotation Processor]: http://docs.oracle.com/javase/6/docs/api/javax/annotation/processing/package-summary.html
 [`@BindsOptionalOf`]: https://dagger.dev/api/latest/dagger/BindsOptionalOf.html
 [BindsInstance]: https://dagger.dev/api/latest/dagger/BindsInstance.html
@@ -644,9 +656,11 @@ the [README][installation] for more information.
 [Component#dependencies]: https://dagger.dev/api/latest/dagger/Component.html#dependencies--
 [Component#provision-methods]: https://dagger.dev/api/latest/dagger/Component.html#provision-methods
 [Component]: https://dagger.dev/api/latest/dagger/Component.html
+[Dagger Tutorial]: https://dagger.dev/tutorial/
 [Documented]: http://docs.oracle.com/javase/7/docs/api/java/lang/annotation/Documented.html
 [installation]: https://github.com/google/dagger/blob/master/README.md#installation
 [guava-optional]: https://guava.dev/releases/27.0-jre/api/docs/com/google/common/base/Optional.html
+[Hilt]: https://dagger.dev/hilt/
 [`javax.inject.Inject`]: http://docs.oracle.com/javaee/7/api/javax/inject/Inject.html
 [jdk-optional]: https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
 [Lazy]: https://dagger.dev/api/latest/dagger/Lazy.html

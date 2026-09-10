@@ -34,11 +34,11 @@ dependencies {
 ```
 
 For additional build performance improvements, you can also try adding the
-following to your `gradle.properties` file:
-
-```text
-ksp.experimental.psi.resolution=true
-```
+experimental KSP flag, [`ksp.experimental.psi.resolution=true`](https://github.com/google/ksp#reference-table),
+to your `gradle.properties` file. This flag enables KSP's experimental PSI
+resolution, which prefers a cheaper PSI-based resolution, and only falls back
+to more expensive symbol-based resolution via the [Kotlin Analysis API](https://kotlin.github.io/analysis-api/index_md.html)
+when necessary (e.g. see https://github.com/google/ksp/issues/2816).
 
 ## New Dagger SPI plugin (with KSP support)
 

@@ -3,14 +3,8 @@ layout: default
 title: Dagger KSP
 ---
 
-**Warning:** Dagger's KSP support is currently in alpha.
-{: .c-callouts__warning }
-
-## Requirements
-
-  * Dagger `2.48` (or above)
-  * Kotlin `1.9.0` (or above)
-  * KSP `1.9.0-1.0.12` (or above)
+**Note:** Dagger's KSP support is stable as of Dagger `2.60+` and KSP `2.3.9+`.
+{: .c-callouts__note }
 
 ## Setup
 
@@ -23,24 +17,27 @@ A general guide for migrating Gradle processors from KAPT to KSP can be found at
 
 The main steps are:
 
-  1. Apply the [Kotlin JVM plugin](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.jvm)
-     (or [Kotlin Android plugin](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.android))
-  2. Apply the [KSP plugin](https://central.sonatype.com/artifact/com.google.devtools.ksp/com.google.devtools.ksp.gradle.plugin).
-  3. Change the compiler dependency configurations from `kapt` to `ksp`.
+  1. Apply the [KSP plugin](https://central.sonatype.com/artifact/com.google.devtools.ksp/com.google.devtools.ksp.gradle.plugin).
+  2. Change the compiler dependency configurations from `kapt` to `ksp`.
 
 ```kotlin
 plugins {
-  // STEP 1: Apply the Kotlin JVM (or Kotlin Android plugin)
-  id "org.jetbrains.kotlin.jvm" version "1.9.0"
-  // STEP 2: Apply the KSP plugin
-  id "com.google.devtools.ksp" version "1.9.0-1.0.12"
+  // STEP 1: Apply the KSP plugin (v2.3.9+)
+  id "com.google.devtools.ksp" version "2.3.9"
 }
 
-// STEP 3: Change compiler dependencies from 'kapt' to 'ksp' configuration.
+// STEP 2: Change Dagger/Hilt compiler dependencies (v2.60+) to the ksp configuration.
 dependencies {
-  ksp "com.google.dagger:dagger-compiler:2.48" // Dagger compiler
-  ksp "com.google.dagger:hilt-compiler:2.48"   // Hilt compiler
+  ksp "com.google.dagger:dagger-compiler:2.60.1" // Dagger compiler
+  ksp "com.google.dagger:hilt-compiler:2.60.1"   // Hilt compiler
 }
+```
+
+For additional build performance improvements, you can also try adding the
+following to your `gradle.properties` file:
+
+```text
+ksp.experimental.psi.resolution=true
 ```
 
 ## New Dagger SPI plugin (with KSP support)
@@ -89,7 +86,7 @@ need to be migrated to KSP.
 For example, if you're using the `androidx.hilt:hilt-compiler`, it should also
 be migrated to use the `ksp` configuration. KSP support for
 `androidx.hilt:hilt-compiler` is available in version
-[1.1.x](https://developer.android.com/jetpack/androidx/releases/hilt#1.1.0-alpha01).
+[1.4.x](https://developer.android.com/jetpack/androidx/releases/hilt#version_14_2).
 
 Note that even if another processor is not directly related to Dagger/Hilt, it
 will still need to be migrated to KSP if its generated type needs to be

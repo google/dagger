@@ -68,6 +68,11 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<XType
     return union(rootComponentAnnotations(), rootComponentCreatorAnnotations());
   }
 
+  @Override
+  protected boolean requiresPreValidation() {
+    return false;
+  }
+
   // TODO(ronshapiro): Validation might not even be necessary. We should measure it and figure out
   // if it's worth seeing if removing it will still work. We could potentially add a new catch
   // clause for any exception that's not TypeNotPresentException and ignore the component entirely

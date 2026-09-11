@@ -45,6 +45,7 @@ HILT_ANDROID_ARTIFACTS = [
     "com.google.dagger:dagger-compiler:" + _VERSION,
     "com.google.dagger:hilt-android:" + _VERSION,
     "com.google.dagger:hilt-android-testing:" + _VERSION,
+    "com.google.dagger:hilt-android-testing-manifest:" + _VERSION,
     "com.google.dagger:hilt-android-compiler:" + _VERSION,
     "com.google.dagger:hilt-core:" + _VERSION,
 ]
@@ -283,6 +284,19 @@ def hilt_android_rules(repo_name = "@maven"):
             ":hilt-android",
             "%s//:androidx_test_core" % repo_name,  # For ApplicationProvider
             "%s//:com_google_dagger_hilt_android_testing" % repo_name,
+        ],
+    )
+
+    # https://github.com/bazelbuild/buildtools/blob/master/WARNINGS.md#native-android
+    # buildifier: disable=native-android
+    native.android_library(
+        name = "hilt-android-testing-manifest",
+        testonly = 1,
+        visibility = ["//visibility:public"],
+        exports = [
+            ":hilt-android",
+            "%s//:androidx_activity_activity" % repo_name,
+            "%s//:com_google_dagger_hilt_android_testing_manifest" % repo_name,
         ],
     )
 

@@ -18,7 +18,7 @@ _validate_jar() {
   if [[ $artifact_id == "dagger-gwt" ]]; then
      python $(dirname $0)/validate-jar-entry-prefixes.py \
         $artifact_jar "dagger/,META-INF/,javax/inject/Inject.gwt.xml,jakarta/inject/Inject.gwt.xml,org/jspecify/Jspecify.gwt.xml"
-  elif [[ $artifact_id == "hilt-android" ]]; then
+  elif [[ $artifact_id == "hilt-android" || $artifact_id == "hilt-android-testing-manifest" ]]; then
      python $(dirname $0)/validate-jar-entry-prefixes.py \
         $artifact_jar "dagger/,META-INF/,hilt_aggregated_deps/"
   else
@@ -46,6 +46,7 @@ _validate_jar "dagger-lint-aar" "aar" $JDK8
 _validate_jar "hilt-core" "jar" $JDK8
 _validate_jar "hilt-android" "aar" $JDK8
 _validate_jar "hilt-android-testing" "aar" $JDK8
+_validate_jar "hilt-android-testing-manifest" "aar" $JDK8
 
 # Processor artifacts
 _validate_jar "dagger-spi" "jar" $JDK8

@@ -136,7 +136,7 @@ public abstract class Key {
     /** Returns the module containing the multibinding method. */
     public abstract String contributingModule();
 
-    /** Returns the multibinding method that defines teh multibinding contribution. */
+    /** Returns the multibinding method that defines the multibinding contribution. */
     public abstract String bindingMethod();
 
     /**

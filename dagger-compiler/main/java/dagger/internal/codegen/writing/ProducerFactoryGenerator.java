@@ -32,6 +32,7 @@ import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.Suppression.F
 import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.xprocessing.XAnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.xprocessing.XCodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.xprocessing.XCodeBlocks.staticReferenceOf;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XFunSpecs.constructorBuilder;
@@ -367,15 +368,16 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
         XCodeBlock.of(
             "%L.%N(%L)",
             factoryFields.moduleField.isPresent()
-                ? factoryFields.moduleField.get().getName() // SUPPRESS_GET_NAME_CHECK
-                : XCodeBlock.of("%T", binding.bindingTypeElement().get().asClassName()),
+                ? XCodeBlock.of("%N", factoryFields.moduleField.get())
+                : staticReferenceOf(binding.bindingTypeElement().get()),
             getSimpleName(binding.bindingElement().get()),
             makeParametersCodeBlock(parameterCodeBlocks.build()));
 
     XCodeBlock returnCodeBlock;
     switch (ProductionKind.fromProducesMethod(asMethod(binding.bindingElement().get()))) {
       case IMMEDIATE:
-        returnCodeBlock = XCodeBlock.of("%T.immediateFuture(%L)", XTypeNames.FUTURES, moduleCodeBlock);
+        returnCodeBlock =
+            XCodeBlock.of("%T.immediateFuture(%L)", XTypeNames.FUTURES, moduleCodeBlock);
         break;
       case FUTURE:
         returnCodeBlock = XCodeBlock.of("%L", moduleCodeBlock);

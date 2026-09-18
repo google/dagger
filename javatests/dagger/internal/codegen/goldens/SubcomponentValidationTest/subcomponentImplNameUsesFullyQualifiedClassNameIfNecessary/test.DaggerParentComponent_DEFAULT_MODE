@@ -35,50 +35,50 @@ final class DaggerParentComponent {
     }
 
     public ParentComponent build() {
-      return new ParentComponentImpl();
+      return new Impl();
     }
   }
 
   private static final class F_SubImpl implements E.F.Sub {
-    private final ParentComponentImpl parentComponentImpl;
+    private final Impl impl;
 
     private final F_SubImpl f_SubImpl = this;
 
-    F_SubImpl(ParentComponentImpl parentComponentImpl) {
-      this.parentComponentImpl = parentComponentImpl;
+    F_SubImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
   }
 
   private static final class F2_SubImpl implements top2.a.b.c.d.E.F.Sub {
-    private final ParentComponentImpl parentComponentImpl;
+    private final Impl impl;
 
     private final F2_SubImpl f2_SubImpl = this;
 
-    F2_SubImpl(ParentComponentImpl parentComponentImpl) {
-      this.parentComponentImpl = parentComponentImpl;
+    F2_SubImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
   }
 
-  private static final class ParentComponentImpl implements ParentComponent {
-    private final ParentComponentImpl parentComponentImpl = this;
+  private static final class Impl implements ParentComponent {
+    private final Impl impl = this;
 
-    ParentComponentImpl() {
+    Impl() {
 
 
     }
 
     @Override
     public E.F.Sub top1() {
-      return new F_SubImpl(parentComponentImpl);
+      return new F_SubImpl(impl);
     }
 
     @Override
     public top2.a.b.c.d.E.F.Sub top2() {
-      return new F2_SubImpl(parentComponentImpl);
+      return new F2_SubImpl(impl);
     }
   }
 }

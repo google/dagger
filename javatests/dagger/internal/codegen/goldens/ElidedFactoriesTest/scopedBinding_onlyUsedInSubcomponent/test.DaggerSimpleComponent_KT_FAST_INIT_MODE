@@ -36,36 +36,36 @@ final class DaggerSimpleComponent {
     }
 
     public SimpleComponent build() {
-      return new SimpleComponentImpl();
+      return new Impl();
     }
   }
 
   private static final class SubImpl implements Sub {
-    private final SimpleComponentImpl simpleComponentImpl;
+    private final Impl impl;
 
     private final SubImpl subImpl = this;
 
-    SubImpl(SimpleComponentImpl simpleComponentImpl) {
-      this.simpleComponentImpl = simpleComponentImpl;
+    SubImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
 
     @Override
     public DependsOnScoped dependsOnScoped() {
-      return (DependsOnScoped) ((Object) (DependsOnScoped_Factory.newInstance(simpleComponentImpl.scopedTypeProvider.get())));
+      return (DependsOnScoped) ((Object) (DependsOnScoped_Factory.newInstance(impl.scopedTypeProvider.get())));
     }
   }
 
-  private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+  private static final class Impl implements SimpleComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<ScopedType>}
      */
     Provider<?> scopedTypeProvider;
 
-    SimpleComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -73,21 +73,21 @@ final class DaggerSimpleComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.scopedTypeProvider = DoubleCheck.provider(new SwitchingProvider<>(simpleComponentImpl, 0));
+      this.scopedTypeProvider = DoubleCheck.provider(new SwitchingProvider<>(impl, 0));
     }
 
     @Override
     public Sub sub() {
-      return new SubImpl(simpleComponentImpl);
+      return new SubImpl(impl);
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final SimpleComponentImpl simpleComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(SimpleComponentImpl simpleComponentImpl, int id) {
-        this.simpleComponentImpl = simpleComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 

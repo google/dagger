@@ -40,14 +40,14 @@ final class DaggerMyComponent {
     }
 
     public MyComponent build() {
-      return new MyComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class MyComponentImpl implements MyComponent {
-    private final MyComponentImpl myComponentImpl = this;
+  private static final class Impl implements MyComponent {
+    private final Impl impl = this;
 
-    MyComponentImpl() {
+    Impl() {
 
 
     }

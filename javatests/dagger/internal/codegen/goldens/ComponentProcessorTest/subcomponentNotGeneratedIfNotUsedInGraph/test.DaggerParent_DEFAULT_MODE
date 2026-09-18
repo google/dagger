@@ -34,14 +34,14 @@ final class DaggerParent {
     }
 
     public Parent build() {
-      return new ParentImpl();
+      return new Impl();
     }
   }
 
-  private static final class ParentImpl implements Parent {
-    private final ParentImpl parentImpl = this;
+  private static final class Impl implements Parent {
+    private final Impl impl = this;
 
-    ParentImpl() {
+    Impl() {
 
 
     }

@@ -2,8 +2,9 @@ package test;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.DaggerGenerated;
-import dagger.internal.DoubleCheck;
+import dagger.internal.DoubleCheckSwitchingProvider;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -77,6 +78,8 @@ final class DaggerParentComponent {
   private static final class ParentComponentImpl implements ParentComponent {
     private final ParentComponentImpl parentComponentImpl = this;
 
+    private SwitchingPImpl<Object> sharedSwitchingProvider;
+
     Provider<Dep1> dep1Provider;
 
     Provider<Dep2> dep2Provider;
@@ -89,8 +92,9 @@ final class DaggerParentComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.dep1Provider = DoubleCheck.provider(new SwitchingProvider<Dep1>(parentComponentImpl, 0));
-      this.dep2Provider = DoubleCheck.provider(new SwitchingProvider<Dep2>(parentComponentImpl, 1));
+      this.sharedSwitchingProvider = new SwitchingPImpl<>(parentComponentImpl, -1);
+      this.dep1Provider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
+      this.dep2Provider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 1);
     }
 
     @Override
@@ -120,19 +124,24 @@ final class DaggerParentComponent {
       return instance2;
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final ParentComponentImpl parentComponentImpl;
 
       private final int id;
 
-      SwitchingProvider(ParentComponentImpl parentComponentImpl, int id) {
+      SwitchingPImpl(ParentComponentImpl parentComponentImpl, int id) {
         this.parentComponentImpl = parentComponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // test.Dep1
           return (T) parentComponentImpl.injectDep1(Dep1_Factory.newInstance());

@@ -87,6 +87,13 @@ object XTypeNames {
 
   @JvmField val DELEGATE_FACTORY = XClassName.get("dagger.internal", "DelegateFactory")
   @JvmField val DOUBLE_CHECK = XClassName.get("dagger.internal", "DoubleCheck")
+  @JvmField val SWITCHING_PROVIDER = XClassName.get("dagger.internal", "SwitchingProvider")
+  @JvmField
+  val DOUBLE_CHECK_SWITCHING_PROVIDER =
+    XClassName.get("dagger.internal", "DoubleCheckSwitchingProvider")
+  @JvmField
+  val SINGLE_CHECK_SWITCHING_PROVIDER =
+    XClassName.get("dagger.internal", "SingleCheckSwitchingProvider")
   @JvmField val DAGGER_PRECONDITIONS = XClassName.get("dagger.internal", "Preconditions")
 
   // TODO(b/404613325): Figure out what to do for calls like java.util.Collections.<T>emptyList()
@@ -378,8 +385,7 @@ object XTypeNames {
     )
   }
 
-  @JvmStatic
-  fun XTypeName.isJavaWildcard(): Boolean = toJavaPoet() is JWildcardTypeName
+  @JvmStatic fun XTypeName.isJavaWildcard(): Boolean = toJavaPoet() is JWildcardTypeName
 
   @JvmStatic
   fun XTypeName.boundsHasSelfReference(): Boolean =

@@ -3,6 +3,7 @@ package test;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Preconditions;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -59,7 +60,7 @@ final class DaggerBComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize(final NullableStringComponent nullableStringComponentParam) {
-      this.nullableStringProvider = new SwitchingProvider<>(bComponentImpl, 0);
+      this.nullableStringProvider = new SwitchingPImpl<>(bComponentImpl, 0);
     }
 
     @Override
@@ -67,19 +68,24 @@ final class DaggerBComponent {
       return new B(nullableStringProvider);
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final BComponentImpl bComponentImpl;
 
       private final int id;
 
-      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
+      SwitchingPImpl(BComponentImpl bComponentImpl, int id) {
         this.bComponentImpl = bComponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // java.lang.String
           return (T) bComponentImpl.nullableStringComponent.nullableString();

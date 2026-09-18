@@ -1,8 +1,9 @@
 package test;
 
 import dagger.internal.DaggerGenerated;
-import dagger.internal.DoubleCheck;
+import dagger.internal.DoubleCheckSwitchingProvider;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import dagger.producers.internal.CancellationListener;
 import javax.annotation.processing.Generated;
 
@@ -67,6 +68,8 @@ final class DaggerParent {
   private static final class ParentImpl implements Parent, CancellationListener {
     private final ParentImpl parentImpl = this;
 
+    private SwitchingPImpl<Object> sharedSwitchingProvider;
+
     Provider<ProductionScoped> productionScopedProvider;
 
     ParentImpl() {
@@ -77,7 +80,8 @@ final class DaggerParent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.productionScopedProvider = DoubleCheck.provider(new SwitchingProvider<ProductionScoped>(parentImpl, 0));
+      this.sharedSwitchingProvider = new SwitchingPImpl<>(parentImpl, -1);
+      this.productionScopedProvider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
     }
 
     @Override
@@ -91,19 +95,24 @@ final class DaggerParent {
 
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final ParentImpl parentImpl;
 
       private final int id;
 
-      SwitchingProvider(ParentImpl parentImpl, int id) {
+      SwitchingPImpl(ParentImpl parentImpl, int id) {
         this.parentImpl = parentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // test.ProductionScoped
           return (T) new ProductionScoped();

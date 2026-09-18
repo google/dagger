@@ -26,6 +26,7 @@ import org.jspecify.annotations.Nullable;
  * A {@link Lazy} and {@link Provider} implementation that memoizes the value returned from a
  * delegate using the double-check idiom described in Item 71 of <i>Effective Java 2</i>.
  */
+
 public final class DoubleCheck<T extends @Nullable Object> implements Provider<T>, Lazy<T> {
   private static final Object UNINITIALIZED = new Object();
 
@@ -80,7 +81,7 @@ public final class DoubleCheck<T extends @Nullable Object> implements Provider<T
   public static <T extends @Nullable Object> dagger.internal.Provider<T> provider(
       dagger.internal.Provider<T> delegate) {
     checkNotNull(delegate);
-    if (delegate instanceof DoubleCheck) {
+    if (delegate instanceof DoubleCheck || delegate instanceof DoubleCheckSwitchingProvider) {
       /* This should be a rare case, but if we have a scoped @Binds that delegates to a scoped
        * binding, we shouldn't cache the value again. */
       return delegate;
@@ -121,3 +122,4 @@ public final class DoubleCheck<T extends @Nullable Object> implements Provider<T
     return lazy(asDaggerProvider(provider));
   }
 }
+

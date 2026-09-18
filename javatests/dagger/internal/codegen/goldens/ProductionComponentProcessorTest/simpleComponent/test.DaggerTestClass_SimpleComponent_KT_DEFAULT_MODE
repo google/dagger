@@ -64,12 +64,12 @@ final class DaggerTestClass_SimpleComponent {
       if (bModule == null) {
         this.bModule = new TestClass.BModule();
       }
-      return new SimpleComponentImpl(aModule, bModule);
+      return new Impl(aModule, bModule);
     }
   }
 
-  private static final class SimpleComponentImpl implements TestClass.SimpleComponent, CancellationListener {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+  private static final class Impl implements TestClass.SimpleComponent, CancellationListener {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<java.util.concurrent.Executor>}
@@ -111,7 +111,7 @@ final class DaggerTestClass_SimpleComponent {
      */
     Producer<?> aEntryPoint;
 
-    SimpleComponentImpl(TestClass.AModule aModuleParam, TestClass.BModule bModuleParam) {
+    Impl(TestClass.AModule aModuleParam, TestClass.BModule bModuleParam) {
 
       initialize(aModuleParam, bModuleParam);
 
@@ -122,7 +122,7 @@ final class DaggerTestClass_SimpleComponent {
         final TestClass.BModule bModuleParam) {
       this.executorProvider = TestClass_BModule_ExecutorFactory.create(bModuleParam);
       this.productionImplementationExecutorProvider = DoubleCheck.provider((Provider) (executorProvider));
-      this.simpleComponentProvider = InstanceFactory.create((TestClass.SimpleComponent) (simpleComponentImpl));
+      this.simpleComponentProvider = InstanceFactory.create((TestClass.SimpleComponent) (impl));
       this.monitorProvider = DoubleCheck.provider(TestClass_SimpleComponent_MonitoringModule_MonitorFactory.create(simpleComponentProvider, SetFactory.<ProductionComponentMonitor.Factory>empty()));
       this.bProvider = TestClass_BModule_BFactory.create(bModuleParam, TestClass_C_Factory.create());
       this.bProducer = Producers.producerFromProvider(bProvider);

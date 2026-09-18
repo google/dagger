@@ -282,7 +282,7 @@ public final class MultiTestRoot1Test {
         .hasMessageThat()
         .isEqualTo(
             "Cannot cast dagger.hilt.android.internal.testing.root."
-                + "DaggerMultiTestRoot1Test_HiltComponents_SingletonC$SingletonCImpl"
+                + "DaggerMultiTestRoot1Test_HiltComponents_SingletonC$Impl"
                 + " to dagger.hilt.android.MultiTestRoot2Test$BarEntryPoint");
   }
 

@@ -49,16 +49,16 @@ final class DaggerBComponent {
     public BComponent build() {
       Preconditions.checkBuilderRequirement(aComponent, AComponent.class);
       Preconditions.checkBuilderRequirement(aComponent2, pkg2.AComponent.class);
-      return new BComponentImpl(aComponent, aComponent2);
+      return new Impl(aComponent, aComponent2);
     }
   }
 
-  private static final class BComponentImpl implements BComponent {
+  private static final class Impl implements BComponent {
     private final AComponent aComponent;
 
     private final pkg2.AComponent aComponent2;
 
-    private final BComponentImpl bComponentImpl = this;
+    private final Impl impl = this;
 
     /**
      * {@code Provider<pkg1.A>}
@@ -70,7 +70,7 @@ final class DaggerBComponent {
      */
     Provider<?> aProvider2;
 
-    BComponentImpl(AComponent aComponentParam, pkg2.AComponent aComponentParam2) {
+    Impl(AComponent aComponentParam, pkg2.AComponent aComponentParam2) {
       this.aComponent = aComponentParam;
       this.aComponent2 = aComponentParam2;
       initialize(aComponentParam, aComponentParam2);
@@ -80,8 +80,8 @@ final class DaggerBComponent {
     @SuppressWarnings("unchecked")
     private void initialize(final AComponent aComponentParam,
         final pkg2.AComponent aComponentParam2) {
-      this.aProvider = new SwitchingProvider<>(bComponentImpl, 0);
-      this.aProvider2 = new SwitchingProvider<>(bComponentImpl, 1);
+      this.aProvider = new SwitchingProvider<>(impl, 0);
+      this.aProvider2 = new SwitchingProvider<>(impl, 1);
     }
 
     @Override
@@ -90,12 +90,12 @@ final class DaggerBComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final BComponentImpl bComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
-        this.bComponentImpl = bComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -104,10 +104,10 @@ final class DaggerBComponent {
       public T get() {
         switch (id) {
           case 0: // pkg1.A
-          return (T) Preconditions.checkNotNullFromComponent(bComponentImpl.aComponent.a());
+          return (T) Preconditions.checkNotNullFromComponent(impl.aComponent.a());
 
           case 1: // pkg2.A
-          return (T) Preconditions.checkNotNullFromComponent(bComponentImpl.aComponent2.a());
+          return (T) Preconditions.checkNotNullFromComponent(impl.aComponent2.a());
 
           default: throw new AssertionError(id);
         }

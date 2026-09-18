@@ -47,40 +47,40 @@ final class DaggerParent {
       if (parentModule == null) {
         this.parentModule = new ParentModule();
       }
-      return new ParentImpl(parentModule);
+      return new Impl(parentModule);
     }
   }
 
   private static final class ChildImpl implements Child {
-    private final ParentImpl parentImpl;
+    private final Impl impl;
 
     private final ChildImpl childImpl = this;
 
-    ChildImpl(ParentImpl parentImpl) {
-      this.parentImpl = parentImpl;
+    ChildImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
 
     @Override
     public Map<String, Object> objectMap() {
-      return ImmutableMap.<String, Object>of("parent key", ParentModule_ParentKeyObjectFactory.parentKeyObject(parentImpl.parentModule));
+      return ImmutableMap.<String, Object>of("parent key", ParentModule_ParentKeyObjectFactory.parentKeyObject(impl.parentModule));
     }
   }
 
-  private static final class ParentImpl implements Parent {
+  private static final class Impl implements Parent {
     private final ParentModule parentModule;
 
-    private final ParentImpl parentImpl = this;
+    private final Impl impl = this;
 
-    ParentImpl(ParentModule parentModuleParam) {
+    Impl(ParentModule parentModuleParam) {
       this.parentModule = parentModuleParam;
 
     }
 
     @Override
     public Child child() {
-      return new ChildImpl(parentImpl);
+      return new ChildImpl(impl);
     }
   }
 }

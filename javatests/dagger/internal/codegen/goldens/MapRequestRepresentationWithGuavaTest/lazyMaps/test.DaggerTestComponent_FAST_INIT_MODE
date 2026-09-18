@@ -41,12 +41,12 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl implements TestComponent {
+    private final Impl impl = this;
 
     Provider<AtomicInteger> provideAtomicIntegerProvider;
 
@@ -60,7 +60,7 @@ final class DaggerTestComponent {
 
     Provider mapOfStringAndProviderOfLazyOfStringProvider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -72,12 +72,12 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.provideAtomicIntegerProvider = DoubleCheck.provider(new SwitchingProvider<AtomicInteger>(testComponentImpl, 1));
-      this.string0Provider = new SwitchingProvider<>(testComponentImpl, 0);
-      this.string1Provider = new SwitchingProvider<>(testComponentImpl, 2);
-      this.string2Provider = new SwitchingProvider<>(testComponentImpl, 3);
-      this.mapOfStringAndLazyOfStringProvider = new SwitchingProvider<>(testComponentImpl, 4);
-      this.mapOfStringAndProviderOfLazyOfStringProvider = new SwitchingProvider<>(testComponentImpl, 5);
+      this.provideAtomicIntegerProvider = DoubleCheck.provider(new SwitchingProvider<AtomicInteger>(impl, 1));
+      this.string0Provider = new SwitchingProvider<>(impl, 0);
+      this.string1Provider = new SwitchingProvider<>(impl, 2);
+      this.string2Provider = new SwitchingProvider<>(impl, 3);
+      this.mapOfStringAndLazyOfStringProvider = new SwitchingProvider<>(impl, 4);
+      this.mapOfStringAndProviderOfLazyOfStringProvider = new SwitchingProvider<>(impl, 5);
     }
 
     @Override
@@ -107,12 +107,12 @@ final class DaggerTestComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -121,22 +121,22 @@ final class DaggerTestComponent {
       public T get() {
         switch (id) {
           case 0: // java.util.Map<java.lang.String,java.lang.String> test.LazyMaps.TestModule#string0
-          return (T) LazyMaps_TestModule_String0Factory.string0(testComponentImpl.string());
+          return (T) LazyMaps_TestModule_String0Factory.string0(impl.string());
 
           case 1: // java.util.concurrent.atomic.AtomicInteger
           return (T) LazyMaps_TestModule_ProvideAtomicIntegerFactory.provideAtomicInteger();
 
           case 2: // java.util.Map<java.lang.String,java.lang.String> test.LazyMaps.TestModule#string1
-          return (T) LazyMaps_TestModule_String1Factory.string1(testComponentImpl.string());
+          return (T) LazyMaps_TestModule_String1Factory.string1(impl.string());
 
           case 3: // java.util.Map<java.lang.String,java.lang.String> test.LazyMaps.TestModule#string2
-          return (T) LazyMaps_TestModule_String2Factory.string2(testComponentImpl.string());
+          return (T) LazyMaps_TestModule_String2Factory.string2(impl.string());
 
           case 4: // java.util.Map<java.lang.String,dagger.Lazy<java.lang.String>>
-          return (T) ImmutableMap.<String, Lazy<String>>of("key0", DoubleCheck.lazy(testComponentImpl.string0Provider), "key1", DoubleCheck.lazy(testComponentImpl.string1Provider), "key2", DoubleCheck.lazy(testComponentImpl.string2Provider));
+          return (T) ImmutableMap.<String, Lazy<String>>of("key0", DoubleCheck.lazy(impl.string0Provider), "key1", DoubleCheck.lazy(impl.string1Provider), "key2", DoubleCheck.lazy(impl.string2Provider));
 
           case 5: // java.util.Map<java.lang.String,javax.inject.Provider<dagger.Lazy<java.lang.String>>>
-          return (T) ImmutableMap.<String, javax.inject.Provider<Lazy<String>>>of("key0", ProviderOfLazy.create(testComponentImpl.string0Provider), "key1", ProviderOfLazy.create(testComponentImpl.string1Provider), "key2", ProviderOfLazy.create(testComponentImpl.string2Provider));
+          return (T) ImmutableMap.<String, javax.inject.Provider<Lazy<String>>>of("key0", ProviderOfLazy.create(impl.string0Provider), "key1", ProviderOfLazy.create(impl.string1Provider), "key2", ProviderOfLazy.create(impl.string2Provider));
 
           default: throw new AssertionError(id);
         }

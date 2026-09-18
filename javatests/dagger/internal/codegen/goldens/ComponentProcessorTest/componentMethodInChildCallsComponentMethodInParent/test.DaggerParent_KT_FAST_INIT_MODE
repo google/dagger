@@ -36,36 +36,36 @@ final class DaggerParent {
     }
 
     public Parent build() {
-      return new ParentImpl();
+      return new Impl();
     }
   }
 
   private static final class ChildImpl implements Child {
-    private final ParentImpl parentImpl;
+    private final Impl impl;
 
     private final ChildImpl childImpl = this;
 
-    ChildImpl(ParentImpl parentImpl) {
-      this.parentImpl = parentImpl;
+    ChildImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
 
     @Override
     public String string() {
-      return (String) ((Object) (parentImpl.string()));
+      return (String) ((Object) (impl.string()));
     }
   }
 
-  private static final class ParentImpl implements Parent {
-    private final ParentImpl parentImpl = this;
+  private static final class Impl implements Parent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<java.lang.Number>}
      */
     Provider<?> numberProvider;
 
-    ParentImpl() {
+    Impl() {
 
       initialize();
 
@@ -73,7 +73,7 @@ final class DaggerParent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.numberProvider = DoubleCheck.provider(new SwitchingProvider<>(parentImpl, 0));
+      this.numberProvider = DoubleCheck.provider(new SwitchingProvider<>(impl, 0));
     }
 
     @Override
@@ -83,16 +83,16 @@ final class DaggerParent {
 
     @Override
     public Child child() {
-      return new ChildImpl(parentImpl);
+      return new ChildImpl(impl);
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final ParentImpl parentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(ParentImpl parentImpl, int id) {
-        this.parentImpl = parentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 

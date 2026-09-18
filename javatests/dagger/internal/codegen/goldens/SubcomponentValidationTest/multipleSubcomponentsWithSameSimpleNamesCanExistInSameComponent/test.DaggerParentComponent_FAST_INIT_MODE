@@ -35,12 +35,12 @@ final class DaggerParentComponent {
     }
 
     public ParentComponent build() {
-      return new ParentComponentImpl();
+      return new Impl();
     }
   }
 
   private static final class ts_SubImpl implements Sub {
-    private final ParentComponentImpl parentComponentImpl;
+    private final Impl impl;
 
     private final F_SubImpl f_SubImpl;
 
@@ -48,8 +48,8 @@ final class DaggerParentComponent {
 
     private final ts_SubImpl _ts_SubImpl = this;
 
-    ts_SubImpl(ParentComponentImpl parentComponentImpl, F_SubImpl f_SubImpl, B_SubImpl b_SubImpl) {
-      this.parentComponentImpl = parentComponentImpl;
+    ts_SubImpl(Impl impl, F_SubImpl f_SubImpl, B_SubImpl b_SubImpl) {
+      this.impl = impl;
       this.f_SubImpl = f_SubImpl;
       this.b_SubImpl = b_SubImpl;
 
@@ -58,14 +58,14 @@ final class DaggerParentComponent {
   }
 
   private static final class B_SubImpl implements Bar.Sub {
-    private final ParentComponentImpl parentComponentImpl;
+    private final Impl impl;
 
     private final F_SubImpl f_SubImpl;
 
     private final B_SubImpl b_SubImpl = this;
 
-    B_SubImpl(ParentComponentImpl parentComponentImpl, F_SubImpl f_SubImpl) {
-      this.parentComponentImpl = parentComponentImpl;
+    B_SubImpl(Impl impl, F_SubImpl f_SubImpl) {
+      this.impl = impl;
       this.f_SubImpl = f_SubImpl;
 
 
@@ -73,55 +73,55 @@ final class DaggerParentComponent {
 
     @Override
     public Sub newSubcomponentInSubpackage() {
-      return new ts_SubImpl(parentComponentImpl, f_SubImpl, b_SubImpl);
+      return new ts_SubImpl(impl, f_SubImpl, b_SubImpl);
     }
   }
 
   private static final class F_SubImpl implements Foo.Sub {
-    private final ParentComponentImpl parentComponentImpl;
+    private final Impl impl;
 
     private final F_SubImpl f_SubImpl = this;
 
-    F_SubImpl(ParentComponentImpl parentComponentImpl) {
-      this.parentComponentImpl = parentComponentImpl;
+    F_SubImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
 
     @Override
     public Bar.Sub newBarSubcomponent() {
-      return new B_SubImpl(parentComponentImpl, f_SubImpl);
+      return new B_SubImpl(impl, f_SubImpl);
     }
   }
 
   private static final class NoConflictImpl implements NoConflict {
-    private final ParentComponentImpl parentComponentImpl;
+    private final Impl impl;
 
     private final NoConflictImpl noConflictImpl = this;
 
-    NoConflictImpl(ParentComponentImpl parentComponentImpl) {
-      this.parentComponentImpl = parentComponentImpl;
+    NoConflictImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
   }
 
-  private static final class ParentComponentImpl implements ParentComponent {
-    private final ParentComponentImpl parentComponentImpl = this;
+  private static final class Impl implements ParentComponent {
+    private final Impl impl = this;
 
-    ParentComponentImpl() {
+    Impl() {
 
 
     }
 
     @Override
     public Foo.Sub newInstanceSubcomponent() {
-      return new F_SubImpl(parentComponentImpl);
+      return new F_SubImpl(impl);
     }
 
     @Override
     public NoConflict newNoConflictSubcomponent() {
-      return new NoConflictImpl(parentComponentImpl);
+      return new NoConflictImpl(impl);
     }
   }
 }

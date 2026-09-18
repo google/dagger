@@ -40,21 +40,21 @@ final class DaggerBComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(intComponent, IntComponent.class);
-      return new BComponentImpl(intComponent);
+      return new Impl(intComponent);
     }
   }
 
-  private static final class BComponentImpl implements BComponent {
+  private static final class Impl implements BComponent {
     private final IntComponent intComponent;
 
-    private final BComponentImpl bComponentImpl = this;
+    private final Impl impl = this;
 
     /**
      * {@code Provider<Integer>}
      */
     Provider<?> iProvider;
 
-    BComponentImpl(IntComponent intComponentParam) {
+    Impl(IntComponent intComponentParam) {
       this.intComponent = intComponentParam;
       initialize(intComponentParam);
 
@@ -62,7 +62,7 @@ final class DaggerBComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize(final IntComponent intComponentParam) {
-      this.iProvider = new SwitchingProvider<>(bComponentImpl, 0);
+      this.iProvider = new SwitchingProvider<>(impl, 0);
     }
 
     @Override
@@ -71,12 +71,12 @@ final class DaggerBComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final BComponentImpl bComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
-        this.bComponentImpl = bComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -85,7 +85,7 @@ final class DaggerBComponent {
       public T get() {
         switch (id) {
           case 0: // java.lang.Integer
-          return (T) (Integer) (bComponentImpl.intComponent.i());
+          return (T) (Integer) (impl.intComponent.i());
 
           default: throw new AssertionError(id);
         }

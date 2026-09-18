@@ -38,19 +38,19 @@ public final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class TestComponentImpl extends TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl extends TestComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<test.sub.TestComponentBase.ProtectedType>}
      */
     Provider<?> protectedTypeProvider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
 

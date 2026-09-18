@@ -38,19 +38,19 @@ public final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class TestComponentImpl extends TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl extends TestComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<test.sub.TestComponentBase.ProtectedType>}
      */
     Provider<?> protectedTypeProvider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -58,7 +58,7 @@ public final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.protectedTypeProvider = DoubleCheck.provider(new SwitchingProvider<>(testComponentImpl, 0));
+      this.protectedTypeProvider = DoubleCheck.provider(new SwitchingProvider<>(impl, 0));
     }
 
     @Override
@@ -67,12 +67,12 @@ public final class DaggerTestComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 

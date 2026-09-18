@@ -73,18 +73,18 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl implements TestComponent {
+    private final Impl impl = this;
 
     Provider<Optional<Present>> optionalOfPresentProvider;
 
     Provider<Optional<Absent>> optionalOfAbsentProvider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
 

@@ -40,19 +40,19 @@ final class DaggerBComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(intComponent, IntComponent.class);
-      return new BComponentImpl(intComponent);
+      return new Impl(intComponent);
     }
   }
 
-  private static final class BComponentImpl implements BComponent {
-    private final BComponentImpl bComponentImpl = this;
+  private static final class Impl implements BComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<Integer>}
      */
     Provider<?> iProvider;
 
-    BComponentImpl(IntComponent intComponentParam) {
+    Impl(IntComponent intComponentParam) {
 
       initialize(intComponentParam);
 

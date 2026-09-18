@@ -34,14 +34,14 @@ public final class DaggerPublicComponent {
     }
 
     public PublicComponent build() {
-      return new PublicComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class PublicComponentImpl implements PublicComponent {
-    private final PublicComponentImpl publicComponentImpl = this;
+  private static final class Impl implements PublicComponent {
+    private final Impl impl = this;
 
-    PublicComponentImpl() {
+    Impl() {
 
 
     }

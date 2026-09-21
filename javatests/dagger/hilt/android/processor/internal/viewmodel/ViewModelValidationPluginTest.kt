@@ -30,8 +30,6 @@ class ViewModelValidationPluginTest {
 
   private fun testCompiler(vararg sources: Source): HiltCompilerTests.HiltCompiler =
     HiltCompilerTests.hiltCompiler(ImmutableList.copyOf(sources))
-      .withBindingGraphPlugins(::ViewModelValidationPlugin)
-      .withProcessingSteps(::ViewModelProcessingStep)
 
   private val hiltAndroidApp =
     """

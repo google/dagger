@@ -31,8 +31,6 @@ class ViewModelValidationPluginWithAssistedInjectTest {
 
   private fun testCompiler(vararg sources: Source): HiltCompilerTests.HiltCompiler =
     HiltCompilerTests.hiltCompiler(ImmutableList.copyOf(sources))
-      .withBindingGraphPlugins(::ViewModelValidationPlugin)
-      .withProcessingSteps(::ViewModelProcessingStep)
       .withProcessorOptions(ImmutableMap.of("dagger.hilt.enableAssistedInjectViewModels", "true"))
 
   private val hiltAndroidApp =

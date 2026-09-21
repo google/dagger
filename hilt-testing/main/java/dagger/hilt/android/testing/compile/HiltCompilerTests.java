@@ -35,6 +35,9 @@ import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPoin
 import dagger.hilt.android.processor.internal.androidentrypoint.KspAndroidEntryPointProcessor;
 import dagger.hilt.android.processor.internal.customtestapplication.CustomTestApplicationProcessor;
 import dagger.hilt.android.processor.internal.customtestapplication.KspCustomTestApplicationProcessor;
+import dagger.hilt.android.processor.internal.viewmodel.KspViewModelProcessor;
+import dagger.hilt.android.processor.internal.viewmodel.ViewModelProcessor;
+import dagger.hilt.android.processor.internal.viewmodel.ViewModelValidationPlugin;
 import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.hilt.processor.internal.HiltProcessingEnvConfigs;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessor;
@@ -128,7 +131,7 @@ public final class HiltCompilerTests {
   public static Compiler compiler(Collection<? extends Processor> extraProcessors) {
     return CompilerTests.compiler()
         .withProcessors(
-            CompilerTests.mergeProcessors(defaultProcessors(ImmutableList.of()), extraProcessors));
+            CompilerTests.mergeProcessors(defaultProcessors(defaultPlugins()), extraProcessors));
   }
 
   public static void compileWithKapt(
@@ -173,12 +176,16 @@ public final class HiltCompilerTests {
                 /* javacArguments= */ DEFAULT_JAVAC_OPTIONS,
                 /* kotlincArguments= */ DEFAULT_KOTLINC_OPTIONS,
                 /* kaptProcessors= */ ImmutableList.<Processor>builder()
-                    .addAll(defaultProcessors(ImmutableList.of()))
+                    .addAll(defaultProcessors(defaultPlugins()))
                     .addAll(additionalProcessors)
                     .build(),
                 /* symbolProcessorProviders= */ ImmutableList.of(),
                 /* processorOptions= */ processorOptions));
     onCompilationResult.accept(result);
+  }
+
+  private static ImmutableList<BindingGraphPlugin> defaultPlugins() {
+    return ImmutableList.of(new ViewModelValidationPlugin());
   }
 
   private static ImmutableList<Processor> defaultProcessors(
@@ -195,7 +202,8 @@ public final class HiltCompilerTests {
         new GeneratesRootInputProcessor(),
         new OriginatingElementProcessor(),
         new RootProcessor(),
-        new UninstallModulesProcessor());
+        new UninstallModulesProcessor(),
+        new ViewModelProcessor());
   }
 
   private static ImmutableList<SymbolProcessorProvider> kspDefaultProcessors(
@@ -213,7 +221,8 @@ public final class HiltCompilerTests {
         new KspGeneratesRootInputProcessor.Provider(),
         new KspOriginatingElementProcessor.Provider(),
         new KspRootProcessor.Provider(),
-        new KspUninstallModulesProcessor.Provider());
+        new KspUninstallModulesProcessor.Provider(),
+        new KspViewModelProcessor.Provider());
   }
 
   /** Used to compile Hilt sources and inspect the compiled results. */
@@ -250,7 +259,11 @@ public final class HiltCompilerTests {
 
     /** Returns the {@link BindingGraphPlugin}s. */
     private ImmutableList<BindingGraphPlugin> bindingGraphPlugins() {
-      return bindingGraphPluginSuppliers().stream().map(Supplier::get).collect(toImmutableList());
+      return ImmutableList.<BindingGraphPlugin>builder()
+          .addAll(defaultPlugins())
+          .addAll(
+              bindingGraphPluginSuppliers().stream().map(Supplier::get).collect(toImmutableList()))
+          .build();
     }
 
     /** Returns the command-line options */

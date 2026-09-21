@@ -32,6 +32,8 @@ java_library(
         "//dagger-spi",
         "//hilt-compiler/main/java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
         "//hilt-compiler/main/java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
+        "//hilt-compiler/main/java/dagger/hilt/android/processor/internal/viewmodel:processor_lib",
+        "//hilt-compiler/main/java/dagger/hilt/android/processor/internal/viewmodel:validation_plugin_lib",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:base_processor",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:hilt_processing_env_configs",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",

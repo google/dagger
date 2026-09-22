@@ -33,7 +33,6 @@ import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.squareup.kotlinpoet.KModifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -76,9 +75,7 @@ public final class XTypeSpecs {
   }
 
   public static XTypeSpec.Builder toBuilder(XTypeSpec typeSpec) {
-    return toXPoet(
-        toJavaPoet(typeSpec).toBuilder(),
-        toKotlinPoet(typeSpec).toBuilder());
+    return toXPoet(toJavaPoet(typeSpec).toBuilder(), toKotlinPoet(typeSpec).toBuilder());
   }
 
   /** Builds an {@link XTypeSpec} in a way that is more similar to the JavaPoet API. */
@@ -364,20 +361,17 @@ public final class XTypeSpecs {
           break;
         case INTERFACE:
           // TODO(bcorso): Add support for interfaces in XPoet.
-          builder = toXPoet(
-              com.squareup.javapoet.TypeSpec.interfaceBuilder(name),
-              com.squareup.kotlinpoet.TypeSpec.interfaceBuilder(name));
-          if (isOpen) {
-            toKotlinPoet(builder).addModifiers(KModifier.OPEN);
-          } else {
-            toJavaPoet(builder).addModifiers(Modifier.FINAL);
-          }
+          builder =
+              toXPoet(
+                  com.squareup.javapoet.TypeSpec.interfaceBuilder(name),
+                  com.squareup.kotlinpoet.TypeSpec.interfaceBuilder(name));
           break;
         case ANNOTATION:
           // TODO(bcorso): Add support for annotations in XPoet.
-          builder = toXPoet(
-              com.squareup.javapoet.TypeSpec.annotationBuilder(name),
-              com.squareup.kotlinpoet.TypeSpec.annotationBuilder(name));
+          builder =
+              toXPoet(
+                  com.squareup.javapoet.TypeSpec.annotationBuilder(name),
+                  com.squareup.kotlinpoet.TypeSpec.annotationBuilder(name));
           break;
         case OBJECT:
           builder = XTypeSpec.objectBuilder(name);

@@ -35,6 +35,7 @@ import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isNoType;
 
 import androidx.room3.compiler.codegen.XClassName;
+import androidx.room3.compiler.processing.XTypeKt;
 import androidx.room3.compiler.processing.XArrayType;
 import androidx.room3.compiler.processing.XConstructorType;
 import androidx.room3.compiler.processing.XExecutableType;
@@ -203,14 +204,7 @@ public final class XTypes {
     XProcessingEnv processingEnv = getProcessingEnv(type);
     switch (processingEnv.getBackend()) {
       case JAVAC:
-        // The implementation used for KSP should technically also work in Javac but we avoid it to
-        // avoid any possible regressions in Javac.
-        return toXProcessing(
-                toJavac(processingEnv)
-                    .getTypeUtils() // ALLOW_TYPES_ELEMENTS
-                    .erasure(toJavac(type)),
-                processingEnv)
-            .getTypeName();
+        return type.getRawType().getTypeName();
       case KSP:
         // In KSP, we have to derive the erased TypeName ourselves.
         return erasedTypeName(type.getTypeName());
@@ -351,7 +345,7 @@ public final class XTypes {
     switch (backend) {
       case JAVAC:
         // This is cheaper than creating the XTypeName.
-        return toJavac(typeArgument).getKind() == TypeKind.WILDCARD;
+        return typeArgument.getVariance() != XVariance.INVARIANT;
       case KSP:
         // If the type argument has explicit (i.e. use-site) variance then we can return `true`
         // immediately. Otherwise, we need to check the Java representation, which will calculate
@@ -371,8 +365,7 @@ public final class XTypes {
 
   /** Returns {@code true} if the given type is a type variable. */
   public static boolean isTypeVariable(XType type) {
-    // TODO(bcorso): Consider representing this as an actual type in XProcessing.
-    return type.getTypeName() instanceof TypeVariableName;
+    return XTypeKt.isTypeVariable(type);
   }
 
   /** Returns {@code true} if {@code type1} is equivalent to {@code type2}. */

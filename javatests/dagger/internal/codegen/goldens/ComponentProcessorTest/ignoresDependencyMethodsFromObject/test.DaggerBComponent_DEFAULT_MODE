@@ -39,16 +39,16 @@ final class DaggerBComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(aComponent, AComponent.class);
-      return new BComponentImpl(aComponent);
+      return new Impl(aComponent);
     }
   }
 
-  private static final class BComponentImpl implements BComponent {
+  private static final class Impl implements BComponent {
     private final AComponent aComponent;
 
-    private final BComponentImpl bComponentImpl = this;
+    private final Impl impl = this;
 
-    BComponentImpl(AComponent aComponentParam) {
+    Impl(AComponent aComponentParam) {
       this.aComponent = aComponentParam;
 
     }

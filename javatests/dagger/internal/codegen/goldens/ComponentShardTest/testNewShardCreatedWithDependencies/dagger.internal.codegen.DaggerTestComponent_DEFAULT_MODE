@@ -41,25 +41,25 @@ final class DaggerTestComponent {
 
     public TestComponent build() {
       Preconditions.checkBuilderRequirement(dependency, Dependency.class);
-      return new TestComponentImpl(dependency);
+      return new Impl(dependency);
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    TestComponentImplShard testComponentImplShard;
+  private static final class Impl implements TestComponent {
+    ImplShard implShard;
 
     private final Dependency dependency;
 
-    private final TestComponentImpl testComponentImpl = this;
+    private final Impl impl = this;
 
     Provider<Binding1> binding1Provider;
 
     Provider<Binding2> binding2Provider;
 
-    TestComponentImpl(Dependency dependencyParam) {
+    Impl(Dependency dependencyParam) {
       this.dependency = dependencyParam;
       initialize(dependencyParam);
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl, dependencyParam);
+      implShard = new ImplShard(impl, dependencyParam);
     }
 
     @SuppressWarnings("unchecked")
@@ -95,7 +95,7 @@ final class DaggerTestComponent {
 
     @Override
     public javax.inject.Provider<Binding3> providerBinding3() {
-      return testComponentImpl.testComponentImplShard.binding3Provider;
+      return impl.implShard.binding3Provider;
     }
 
     private static final class Binding3Provider implements Provider<Binding3> {
@@ -112,19 +112,19 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
+  private static final class ImplShard {
+    private final Impl impl;
 
     Provider<Binding3> binding3Provider;
 
-    TestComponentImplShard(TestComponentImpl testComponentImpl, Dependency dependencyParam) {
-      this.testComponentImpl = testComponentImpl;
+    ImplShard(Impl impl, Dependency dependencyParam) {
+      this.impl = impl;
       initialize(dependencyParam);
     }
 
     @SuppressWarnings("unchecked")
     private void initialize(final Dependency dependencyParam) {
-      this.binding3Provider = new TestComponentImpl.Binding3Provider(testComponentImpl.dependency);
+      this.binding3Provider = new Impl.Binding3Provider(impl.dependency);
     }
   }
 }

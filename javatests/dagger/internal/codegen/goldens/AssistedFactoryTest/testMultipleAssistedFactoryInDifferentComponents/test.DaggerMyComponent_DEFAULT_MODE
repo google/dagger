@@ -35,12 +35,12 @@ final class DaggerMyComponent {
     }
 
     public MyComponent build() {
-      return new MyComponentImpl();
+      return new Impl();
     }
   }
 
   private static final class MySubcomponentImpl implements MySubcomponent {
-    private final MyComponentImpl myComponentImpl;
+    private final Impl impl;
 
     private final MySubcomponentImpl mySubcomponentImpl = this;
 
@@ -48,8 +48,8 @@ final class DaggerMyComponent {
 
     Provider<MySubcomponentAssistedFactory> mySubcomponentAssistedFactoryProvider;
 
-    MySubcomponentImpl(MyComponentImpl myComponentImpl) {
-      this.myComponentImpl = myComponentImpl;
+    MySubcomponentImpl(Impl impl) {
+      this.impl = impl;
 
       initialize();
 
@@ -67,14 +67,14 @@ final class DaggerMyComponent {
     }
   }
 
-  private static final class MyComponentImpl implements MyComponent {
-    private final MyComponentImpl myComponentImpl = this;
+  private static final class Impl implements MyComponent {
+    private final Impl impl = this;
 
     MyAssistedClass_Factory myAssistedClassProvider;
 
     Provider<MyComponentAssistedFactory> myComponentAssistedFactoryProvider;
 
-    MyComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -93,7 +93,7 @@ final class DaggerMyComponent {
 
     @Override
     public MySubcomponent mySubcomponent() {
-      return new MySubcomponentImpl(myComponentImpl);
+      return new MySubcomponentImpl(impl);
     }
   }
 }

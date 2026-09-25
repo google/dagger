@@ -37,19 +37,19 @@ final class DaggerSimpleComponent {
     }
 
     public SimpleComponent build() {
-      return new SimpleComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+  private static final class Impl implements SimpleComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<SomeInjectableType>}
      */
     Provider<?> someInjectableTypeProvider;
 
-    SimpleComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -57,7 +57,7 @@ final class DaggerSimpleComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.someInjectableTypeProvider = DoubleCheck.provider(new SwitchingProvider<>(simpleComponentImpl, 0));
+      this.someInjectableTypeProvider = DoubleCheck.provider(new SwitchingProvider<>(impl, 0));
     }
 
     @Override
@@ -76,12 +76,12 @@ final class DaggerSimpleComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final SimpleComponentImpl simpleComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(SimpleComponentImpl simpleComponentImpl, int id) {
-        this.simpleComponentImpl = simpleComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 

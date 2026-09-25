@@ -37,57 +37,57 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    TestComponentImplShard testComponentImplShard;
+  private static final class Impl implements TestComponent {
+    ImplShard implShard;
 
-    TestComponentImplShard2 testComponentImplShard2;
+    ImplShard2 implShard2;
 
-    private final TestComponentImpl testComponentImpl = this;
+    private final Impl impl = this;
 
     Provider<Binding7> binding7Provider;
 
     Provider<Binding6> binding6Provider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
-      testComponentImplShard2 = new TestComponentImplShard2(testComponentImpl);
+      implShard = new ImplShard(impl);
+      implShard2 = new ImplShard2(impl);
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.binding7Provider = DoubleCheck.provider(new SwitchingProvider<Binding7>(testComponentImpl, 1));
-      this.binding6Provider = DoubleCheck.provider(new SwitchingProvider<Binding6>(testComponentImpl, 0));
+      this.binding7Provider = DoubleCheck.provider(new SwitchingProvider<Binding7>(impl, 1));
+      this.binding6Provider = DoubleCheck.provider(new SwitchingProvider<Binding6>(impl, 0));
     }
 
     @Override
     public Binding1 binding1() {
-      return testComponentImpl.testComponentImplShard2.binding1Provider.get();
+      return impl.implShard2.binding1Provider.get();
     }
 
     @Override
     public Binding2 binding2() {
-      return testComponentImpl.testComponentImplShard.binding2Provider.get();
+      return impl.implShard.binding2Provider.get();
     }
 
     @Override
     public Binding3 binding3() {
-      return testComponentImpl.testComponentImplShard.binding3Provider.get();
+      return impl.implShard.binding3Provider.get();
     }
 
     @Override
     public Binding4 binding4() {
-      return testComponentImpl.testComponentImplShard.binding4Provider.get();
+      return impl.implShard.binding4Provider.get();
     }
 
     @Override
     public Binding5 binding5() {
-      return testComponentImpl.testComponentImplShard.binding5Provider.get();
+      return impl.implShard.binding5Provider.get();
     }
 
     @Override
@@ -102,27 +102,27 @@ final class DaggerTestComponent {
 
     @Override
     public javax.inject.Provider<Binding1> providerBinding1() {
-      return testComponentImpl.testComponentImplShard2.binding1Provider;
+      return impl.implShard2.binding1Provider;
     }
 
     @Override
     public javax.inject.Provider<Binding2> providerBinding2() {
-      return testComponentImpl.testComponentImplShard.binding2Provider;
+      return impl.implShard.binding2Provider;
     }
 
     @Override
     public javax.inject.Provider<Binding3> providerBinding3() {
-      return testComponentImpl.testComponentImplShard.binding3Provider;
+      return impl.implShard.binding3Provider;
     }
 
     @Override
     public javax.inject.Provider<Binding4> providerBinding4() {
-      return testComponentImpl.testComponentImplShard.binding4Provider;
+      return impl.implShard.binding4Provider;
     }
 
     @Override
     public javax.inject.Provider<Binding5> providerBinding5() {
-      return testComponentImpl.testComponentImplShard.binding5Provider;
+      return impl.implShard.binding5Provider;
     }
 
     @Override
@@ -136,12 +136,12 @@ final class DaggerTestComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -150,7 +150,7 @@ final class DaggerTestComponent {
       public T get() {
         switch (id) {
           case 0: // dagger.internal.codegen.Binding6
-          return (T) new Binding6(testComponentImpl.binding7Provider.get());
+          return (T) new Binding6(impl.binding7Provider.get());
 
           case 1: // dagger.internal.codegen.Binding7
           return (T) new Binding7();
@@ -161,8 +161,8 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
+  private static final class ImplShard {
+    private final Impl impl;
 
     Provider<Binding5> binding5Provider;
 
@@ -172,27 +172,27 @@ final class DaggerTestComponent {
 
     Provider<Binding3> binding3Provider;
 
-    TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    ImplShard(Impl impl) {
+      this.impl = impl;
       initialize();
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.binding5Provider = DoubleCheck.provider(new SwitchingProvider<Binding5>(testComponentImpl, 3));
+      this.binding5Provider = DoubleCheck.provider(new SwitchingProvider<Binding5>(impl, 3));
       this.binding2Provider = new DelegateFactory<>();
-      this.binding4Provider = DoubleCheck.provider(new SwitchingProvider<Binding4>(testComponentImpl, 2));
-      this.binding3Provider = DoubleCheck.provider(new SwitchingProvider<Binding3>(testComponentImpl, 1));
-      DelegateFactory.setDelegate(binding2Provider, DoubleCheck.provider(new SwitchingProvider<Binding2>(testComponentImpl, 0)));
+      this.binding4Provider = DoubleCheck.provider(new SwitchingProvider<Binding4>(impl, 2));
+      this.binding3Provider = DoubleCheck.provider(new SwitchingProvider<Binding3>(impl, 1));
+      DelegateFactory.setDelegate(binding2Provider, DoubleCheck.provider(new SwitchingProvider<Binding2>(impl, 0)));
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -201,16 +201,16 @@ final class DaggerTestComponent {
       public T get() {
         switch (id) {
           case 0: // dagger.internal.codegen.Binding2
-          return (T) new Binding2(testComponentImpl.testComponentImplShard.binding3Provider.get());
+          return (T) new Binding2(impl.implShard.binding3Provider.get());
 
           case 1: // dagger.internal.codegen.Binding3
-          return (T) new Binding3(testComponentImpl.testComponentImplShard.binding4Provider.get());
+          return (T) new Binding3(impl.implShard.binding4Provider.get());
 
           case 2: // dagger.internal.codegen.Binding4
-          return (T) new Binding4(testComponentImpl.testComponentImplShard.binding5Provider.get(), testComponentImpl.testComponentImplShard.binding2Provider);
+          return (T) new Binding4(impl.implShard.binding5Provider.get(), impl.implShard.binding2Provider);
 
           case 3: // dagger.internal.codegen.Binding5
-          return (T) new Binding5(testComponentImpl.binding6Provider.get());
+          return (T) new Binding5(impl.binding6Provider.get());
 
           default: throw new AssertionError(id);
         }
@@ -218,28 +218,28 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImplShard2 {
-    private final TestComponentImpl testComponentImpl;
+  private static final class ImplShard2 {
+    private final Impl impl;
 
     Provider<Binding1> binding1Provider;
 
-    TestComponentImplShard2(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    ImplShard2(Impl impl) {
+      this.impl = impl;
       initialize();
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.binding1Provider = DoubleCheck.provider(new SwitchingProvider<Binding1>(testComponentImpl, 0));
+      this.binding1Provider = DoubleCheck.provider(new SwitchingProvider<Binding1>(impl, 0));
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -248,7 +248,7 @@ final class DaggerTestComponent {
       public T get() {
         switch (id) {
           case 0: // dagger.internal.codegen.Binding1
-          return (T) new Binding1(testComponentImpl.testComponentImplShard.binding2Provider.get());
+          return (T) new Binding1(impl.implShard.binding2Provider.get());
 
           default: throw new AssertionError(id);
         }

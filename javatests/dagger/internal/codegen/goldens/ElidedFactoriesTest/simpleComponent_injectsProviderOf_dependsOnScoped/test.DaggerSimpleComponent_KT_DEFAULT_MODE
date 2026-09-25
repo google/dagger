@@ -36,12 +36,12 @@ final class DaggerSimpleComponent {
     }
 
     public SimpleComponent build() {
-      return new SimpleComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+  private static final class Impl implements SimpleComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<ScopedType>}
@@ -53,7 +53,7 @@ final class DaggerSimpleComponent {
      */
     Provider<?> dependsOnScopedProvider;
 
-    SimpleComponentImpl() {
+    Impl() {
 
       initialize();
 

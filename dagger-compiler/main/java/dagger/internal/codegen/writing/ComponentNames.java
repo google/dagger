@@ -172,6 +172,10 @@ public final class ComponentNames {
     UniqueNameSet nameSet = new UniqueNameSet();
     ImmutableMap.Builder<ComponentPath, String> uniqueNames = ImmutableMap.builder();
     for (ComponentPath componentPath : componentsWithConflictingNames) {
+      if (componentPath.atRoot()) {
+        uniqueNames.put(componentPath, simpleName(componentPath));
+        continue;
+      }
       String simpleName = simpleName(componentPath);
       String basePrefix = uniquingPrefix(componentPath);
       uniqueNames.put(
@@ -181,7 +185,9 @@ public final class ComponentNames {
   }
 
   private static String simpleName(ComponentPath componentPath) {
-    return getSimpleName(componentPath.currentComponent().xprocessing());
+    return componentPath.atRoot()
+        ? ""
+        : getSimpleName(componentPath.currentComponent().xprocessing());
   }
 
   /** Returns a prefix that could make the component's simple name more unique. */

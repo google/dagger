@@ -152,4 +152,33 @@ public class DoubleCheckTest {
     Factory<Object> factory = InstanceFactory.create(new Object());
     assertThat(DoubleCheck.lazy(factory)).isSameInstanceAs(factory);
   }
+
+  @Test
+  public void doubleWrapping_switchingProvider() {
+    Provider<Object> switchingProvider =
+        DoubleCheckSwitchingProvider.provider(id -> new Object(), 0);
+    assertThat(DoubleCheck.provider(switchingProvider)).isSameInstanceAs(switchingProvider);
+  }
+
+  @Test
+  public void getWithSwitchingProviderAsProvider() {
+    AtomicInteger integer = new AtomicInteger();
+    SwitchingProvider<Integer> switchingProvider =
+        new SwitchingProvider<Integer>() {
+          @Override
+          public Integer get(int id) {
+            return integer.getAndIncrement() + id;
+          }
+
+          @Override
+          public Integer get() {
+            return get(3);
+          }
+        };
+    Provider<Integer> provider = DoubleCheck.provider((Provider<Integer>) switchingProvider);
+    assertThat(provider.get()).isEqualTo(3);
+    assertThat(provider.get()).isEqualTo(3);
+    assertThat(provider.get()).isEqualTo(3);
+  }
 }
+

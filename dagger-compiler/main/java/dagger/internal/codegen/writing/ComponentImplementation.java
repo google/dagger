@@ -496,7 +496,7 @@ public final class ComponentImplementation {
 
     private ShardImplementation(XClassName name) {
       this.name = name;
-      this.switchingProviders = new SwitchingProviders(this, compilerOptions, processingEnv);
+      this.switchingProviders = new SwitchingProviders(this, compilerOptions);
       if (graph.componentDescriptor().isProduction()) {
         claimMethodName(CANCELLATION_LISTENER_METHOD_NAME);
       }

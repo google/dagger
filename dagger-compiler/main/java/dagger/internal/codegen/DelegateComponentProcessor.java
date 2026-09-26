@@ -241,7 +241,8 @@ final class DelegateComponentProcessor {
       SourceFileGenerator<T> generator,
       CompilerOptions compilerOptions,
       XProcessingEnv processingEnv) {
-    return compilerOptions.headerCompilation()
+    // TODO(b/414394222): Header mode is not yet supported with Kotlin codegen.
+    return compilerOptions.headerCompilation() && !compilerOptions.useKotlinCodegen()
         ? SourceFileHjarGenerator.wrap(generator, processingEnv)
         : generator;
   }

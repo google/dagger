@@ -1,0 +1,12 @@
+public final class dagger/hilt/android/testing/HiltComponentActivity {
+	public fun <init> ()V
+	public synthetic fun getDefaultViewModelProviderFactory ()Landroidx/lifecycle/ViewModelProvider$Factory;
+}
+
+public abstract interface class dagger/hilt/android/testing/HiltComponentActivity_GeneratedInjector {
+	public abstract fun injectHiltComponentActivity (Ldagger/hilt/android/testing/HiltComponentActivity;)V
+}
+
+public class hilt_aggregated_deps/_dagger_hilt_android_testing_HiltComponentActivity_GeneratedInjector {
+	public fun <init> ()V
+}

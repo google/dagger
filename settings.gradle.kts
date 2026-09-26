@@ -56,6 +56,8 @@ includeProject(":hilt-android", "hilt-android")
 
 includeProject(":hilt-android-testing", "hilt-android-testing")
 
+includeProject(":hilt-android-testing-manifest", "hilt-android-testing-manifest")
+
 includeProject(":hilt-compiler", "hilt-compiler")
 
 includeProject(":hilt-core", "hilt-core")

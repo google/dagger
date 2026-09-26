@@ -2,6 +2,7 @@
 layout: default
 title: Compiler Options
 redirect_from:
+
   - /compiler-options
 ---
 
@@ -201,6 +202,7 @@ versions:
 
 - JDK 17.0.19+ or JDK 21.0.8+ with the flag
 `-XDaddTypeAnnotationsToSymbol=true`.
+
 - JDK 25+ (technically 22+ but 25 is the earliest Long-Term Support release that
 has the fix by default)
 
@@ -210,6 +212,33 @@ before opting in.
 In order to opt in and enable the support, pass the following compiler option:
 
 `-Adagger.nullableTypeAnnotations=ENABLED`
+
+## strictAssistedInjectValidation
+
+The `dagger.strictAssistedInjectValidation` option controls whether Dagger
+strictly validates that `@AssistedInject` classes and `@AssistedFactory`
+interfaces from library dependencies were processed by Dagger's annotation
+processor.
+
+In `fastInit` mode, consuming `@AssistedInject` classes from library
+dependencies compiled without Dagger's processor was able to compile by pure
+chance due to inline generation optimizations. In classic mode, however, such
+libraries failed compilation.
+
+When strict validation is enabled, Dagger enforces parity between compilation
+modes and reports an explicit compilation error if an `@AssistedInject` or
+`@AssistedFactory` dependency did not run Dagger's annotation processor.
+
+By default, this flag is `ENABLED`. We strongly recommend applying Dagger's
+annotation processor to any library modules defining `@AssistedInject`
+constructors or `@AssistedFactory` interfaces, and keeping this flag enabled to
+maintain consistent behavior across all compilation modes and to prevent subtle
+errors when consuming library dependencies.
+
+If necessary as a last resort for legacy compatibility, the flag can be
+disabled:
+
+`-Adagger.strictAssistedInjectValidation=DISABLED`
 
 <!-- References -->
 

@@ -104,7 +104,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
         checkState(!binding.unresolved().isPresent());
         XType type = binding.key().type().xprocessing();
         if (!isDeclared(type)
-                || injectValidator.validateWhenGeneratingCode(type.getTypeElement()).isClean()) {
+            || injectValidator.validateWhenGeneratingCode(type.getTypeElement()).isClean()) {
           generator.generate(binding);
         }
         materializedBindingKeys.add(binding.key());
@@ -137,6 +137,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
           return;
         }
       }
+
       tryToCacheBinding(binding);
 
       @SuppressWarnings("unchecked")
@@ -150,10 +151,10 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
      * bindings, this will try to generate the unresolved version of the binding.
      */
     void tryToGenerateBinding(B binding, boolean isCalledFromInjectProcessor) {
-      if (shouldGenerateBinding(binding)) {
+      if (shouldGenerateBinding(binding, isCalledFromInjectProcessor)) {
         bindingsRequiringGeneration.offer(binding);
         if (compilerOptions.warnIfInjectionFactoryNotGeneratedUpstream()
-                && !isCalledFromInjectProcessor) {
+            && !isCalledFromInjectProcessor) {
           messager.printMessage(
               Kind.NOTE,
               String.format(
@@ -167,7 +168,22 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     }
 
     /** Returns true if the binding needs to be generated. */
-    private boolean shouldGenerateBinding(B binding) {
+    private boolean shouldGenerateBinding(B binding, boolean isCalledFromInjectProcessor) {
+      // Historically, when compiling in fastInit mode, Dagger generated missing _Factory classes
+      // on-the-fly during component compilation (!isCalledFromInjectProcessor). Because @Inject
+      // and @AssistedInject share binding handling, this allowed @AssistedInject classes from
+      // compiler-unprocessed library dependencies to compile by chance.
+      //
+      // When strict validation is enabled, we prevent on-the-fly generation for @AssistedInject
+      // classes from dependencies (classes not processed in the current compilation unit). By
+      // returning false here, the _Factory class is not generated, allowing
+      // StrictAssistedInjectValidator to catch the missing class during graph validation and
+      // report a clear compilation error advising the user to apply Dagger to the library.
+      if (compilerOptions.strictAssistedInjectValidation()
+          && binding instanceof AssistedInjectionBinding
+          && !isCalledFromInjectProcessor) {
+        return false;
+      }
       if (binding instanceof MembersInjectionBinding) {
         MembersInjectionBinding membersInjectionBinding = (MembersInjectionBinding) binding;
         // Empty members injection bindings are special and don't need source files.
@@ -178,8 +194,8 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
         // constructor are unused.
         boolean hasInjectConstructor =
             !(injectedConstructors(membersInjectionBinding.membersInjectedType()).isEmpty()
-                && assistedInjectedConstructors(
-                    membersInjectionBinding.membersInjectedType()).isEmpty());
+                && assistedInjectedConstructors(membersInjectionBinding.membersInjectedType())
+                    .isEmpty());
         if (!membersInjectionBinding.hasLocalInjectionSites() && !hasInjectConstructor) {
           return false;
         }
@@ -198,9 +214,12 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
           || binding.bindingTypeElement().get().getType().getTypeArguments().isEmpty()) {
         Key key = binding.key();
         Binding previousValue = bindingsByKey.put(key, binding);
-        checkState(previousValue == null || binding.equals(previousValue),
+        checkState(
+            previousValue == null || binding.equals(previousValue),
             "couldn't register %s. %s was already registered for %s",
-            binding, previousValue, key);
+            binding,
+            previousValue,
+            key);
       }
     }
   }
@@ -239,9 +258,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   public Optional<ContributionBinding> tryRegisterInjectConstructor(
       XConstructorElement constructorElement) {
     return tryRegisterConstructor(
-        constructorElement,
-        Optional.empty(),
-        /* isCalledFromInjectProcessor= */ true);
+        constructorElement, Optional.empty(), /* isCalledFromInjectProcessor= */ true);
   }
 
   @CanIgnoreReturnValue
@@ -291,10 +308,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     // TODO(b/204116636): Add a test for this once we're able to test kotlin sources.
     // TODO(b/204208307): Add validation for KAPT to test if this came from a top-level field.
     if (!isTypeElement(fieldElement.getEnclosingElement())) {
-      messager.printMessage(
-          Kind.ERROR,
-          "@Inject fields must be enclosed in a type.",
-          fieldElement);
+      messager.printMessage(Kind.ERROR, "@Inject fields must be enclosed in a type.", fieldElement);
     }
     return tryRegisterMembersInjectedType(
         asTypeElement(fieldElement.getEnclosingElement()),
@@ -308,9 +322,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     // TODO(b/204208307): Add validation for KAPT to test if this came from a top-level method.
     if (!isTypeElement(methodElement.getEnclosingElement())) {
       messager.printMessage(
-          Kind.ERROR,
-          "@Inject methods must be enclosed in a type.",
-          methodElement);
+          Kind.ERROR, "@Inject methods must be enclosed in a type.", methodElement);
     }
     return tryRegisterMembersInjectedType(
         asTypeElement(methodElement.getEnclosingElement()),
@@ -320,9 +332,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
 
   @CanIgnoreReturnValue
   private Optional<MembersInjectionBinding> tryRegisterMembersInjectedType(
-      XTypeElement typeElement,
-      Optional<XType> resolvedType,
-      boolean isCalledFromInjectProcessor) {
+      XTypeElement typeElement, Optional<XType> resolvedType, boolean isCalledFromInjectProcessor) {
     // Validating here shouldn't have a performance penalty because the validator caches its reports
     ValidationReport report = injectValidator.validateForMembersInjection(typeElement);
     report.printMessagesTo(messager);
@@ -369,16 +379,13 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     }
 
     return Stream.concat(
-            injectedConstructors(element).stream(),
-            assistedInjectedConstructors(element).stream())
+            injectedConstructors(element).stream(), assistedInjectedConstructors(element).stream())
         // We're guaranteed that there's at most 1 @Inject constructors from above validation.
         .collect(toOptional())
         .flatMap(
             constructor ->
                 tryRegisterConstructor(
-                    constructor,
-                    Optional.of(type),
-                    /* isCalledFromInjectProcessor= */ false));
+                    constructor, Optional.of(type), /* isCalledFromInjectProcessor= */ false));
   }
 
   @CanIgnoreReturnValue

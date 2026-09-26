@@ -25,9 +25,11 @@ import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XTypeNames.injectTypeNames;
 
 import androidx.room3.compiler.codegen.XClassName;
+import androidx.room3.compiler.processing.XConstructorElement;
 import androidx.room3.compiler.processing.XElement;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import dagger.internal.codegen.binding.AssistedElementsRegistry;
 import dagger.internal.codegen.binding.InjectBindingRegistry;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import java.util.Set;
@@ -42,11 +44,15 @@ import javax.inject.Inject;
 // SuperficialInjectValidator rather than SuperficialValidator.
 final class InjectProcessingStep extends TypeCheckingProcessingStep<XElement> {
   private final InjectBindingRegistry injectBindingRegistry;
+  private final AssistedElementsRegistry processedElementsRegistry;
   private final Set<XElement> processedElements = Sets.newHashSet();
 
   @Inject
-  InjectProcessingStep(InjectBindingRegistry injectBindingRegistry) {
+  InjectProcessingStep(
+      InjectBindingRegistry injectBindingRegistry,
+      AssistedElementsRegistry processedElementsRegistry) {
     this.injectBindingRegistry = injectBindingRegistry;
+    this.processedElementsRegistry = processedElementsRegistry;
   }
 
   @Override
@@ -74,7 +80,11 @@ final class InjectProcessingStep extends TypeCheckingProcessingStep<XElement> {
     }
 
     if (isConstructor(injectElement)) {
-      injectBindingRegistry.tryRegisterInjectConstructor(asConstructor(injectElement));
+      XConstructorElement constructor = asConstructor(injectElement);
+      injectBindingRegistry.tryRegisterInjectConstructor(constructor);
+      if (constructor.hasAnnotation(XTypeNames.ASSISTED_INJECT)) {
+        processedElementsRegistry.registerAssistedInjectClass(constructor.getEnclosingElement());
+      }
     } else if (isField(injectElement)) {
       injectBindingRegistry.tryRegisterInjectField(asField(injectElement));
     } else if (isMethod(injectElement)) {

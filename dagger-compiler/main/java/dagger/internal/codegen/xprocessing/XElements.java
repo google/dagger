@@ -364,9 +364,9 @@ public final class XElements {
                         .collect(joining(",")))
                 + (tooManyParameters ? ", ..." : ""));
       } else if (isEnumEntry(element)
-                     || isField(element)
-                     || isMethodParameter(element)
-                     || isTypeParameter(element)) {
+          || isField(element)
+          || isMethodParameter(element)
+          || isTypeParameter(element)) {
         return getSimpleName(element);
       }
       return element.toString();

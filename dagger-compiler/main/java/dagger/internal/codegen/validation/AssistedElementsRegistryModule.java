@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Dagger Authors.
+ * Copyright (C) 2026 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package dagger.internal.codegen.validation;
 
 import dagger.Binds;
 import dagger.Module;
-import dagger.internal.codegen.binding.InjectBindingRegistry;
+import dagger.internal.codegen.binding.AssistedElementsRegistry;
 
-/** Binds the {@link InjectBindingRegistry} implementation. */
-@Module(includes = AssistedElementsRegistryModule.class)
-public interface InjectBindingRegistryModule {
+/** Binds the {@link AssistedElementsRegistry} implementation. */
+@Module
+public interface AssistedElementsRegistryModule {
   @Binds
-  InjectBindingRegistry injectBindingRegistry(InjectBindingRegistryImpl impl);
+  AssistedElementsRegistry assistedElementsRegistry(AssistedElementsRegistryImpl impl);
 }

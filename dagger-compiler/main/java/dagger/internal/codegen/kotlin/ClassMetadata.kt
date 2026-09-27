@@ -22,16 +22,11 @@ import kotlin.Metadata
 import kotlin.metadata.KmClass
 import kotlin.metadata.KmProperty
 import kotlin.metadata.jvm.KotlinClassMetadata
-import kotlin.metadata.jvm.fieldSignature
 import kotlin.metadata.jvm.syntheticMethodForAnnotations
 
 /** Container classes for kotlin metadata types. */
 class ClassMetadata private constructor(private val kmClass: KmClass) {
-  val propertiesBySignature =
-      kmClass.properties
-          .filter { it.fieldSignature != null }
-          .map { PropertyMetadata(it) }
-          .associateBy { it.fieldSignature }
+  val propertiesByName = kmClass.properties.map { PropertyMetadata(it) }.associateBy { it.name }
 
   companion object {
     /** Parse Kotlin class metadata from a given type element. */
@@ -48,9 +43,6 @@ class ClassMetadata private constructor(private val kmClass: KmClass) {
 
 class PropertyMetadata(private val kmProperty: KmProperty) {
   val name = kmProperty.name
-
-  /** Returns the JVM field descriptor of the backing field of this property. */
-  val fieldSignature = kmProperty.fieldSignature?.toString()
 
   /** Returns JVM method descriptor of the synthetic method for property annotations. */
   val methodForAnnotationsSignature = kmProperty.syntheticMethodForAnnotations?.toString()

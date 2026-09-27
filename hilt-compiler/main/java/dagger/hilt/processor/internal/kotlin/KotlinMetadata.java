@@ -16,7 +16,9 @@
 
 package dagger.hilt.processor.internal.kotlin;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room3.compiler.processing.XFieldElement;
 import androidx.room3.compiler.processing.XMethodElement;
@@ -24,7 +26,6 @@ import androidx.room3.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableMap;
-import dagger.internal.codegen.extension.DaggerCollectors;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,11 +36,6 @@ import javax.annotation.Nullable;
 /** Data class of a TypeElement and its Kotlin metadata. */
 @AutoValue
 abstract class KotlinMetadata {
-  // Kotlin suffix for fields that are for a delegated property.
-  // See:
-  // https://github.com/JetBrains/kotlin/blob/master/core/compiler.common.jvm/src/org/jetbrains/kotlin/load/java/JvmAbi.kt#L32
-  private static final String DELEGATED_PROPERTY_NAME_SUFFIX = "$delegate";
-
   // Map that associates field elements with its Kotlin synthetic method for annotations.
   private final Map<XFieldElement, Optional<MethodForAnnotations>> elementFieldAnnotationMethodMap =
       new HashMap<>();
@@ -84,25 +80,7 @@ abstract class KotlinMetadata {
   }
 
   private PropertyMetadata findProperty(XFieldElement field) {
-    String fieldDescriptor = field.getJvmDescriptor();
-    if (classMetadata().getPropertiesBySignature().containsKey(fieldDescriptor)) {
-      return classMetadata().getPropertiesBySignature().get(fieldDescriptor);
-    } else {
-      // Fallback to finding property by name, see: https://youtrack.jetbrains.com/issue/KT-35124
-      final String propertyName = getPropertyNameFromField(field);
-      return classMetadata().getPropertiesBySignature().values().stream()
-          .filter(property -> propertyName.contentEquals(property.getName())) // SUPPRESS_GET_NAME_CHECK
-          .collect(DaggerCollectors.onlyElement());
-    }
-  }
-
-  private static String getPropertyNameFromField(XFieldElement field) {
-    String name = XElements.getSimpleName(field);
-    if (name.endsWith(DELEGATED_PROPERTY_NAME_SUFFIX)) {
-      return name.substring(0, name.length() - DELEGATED_PROPERTY_NAME_SUFFIX.length());
-    } else {
-      return name;
-    }
+    return checkNotNull(classMetadata().getPropertiesByName().get(getSimpleName(field.getOwner())));
   }
 
   /** Parse Kotlin class metadata from a given type element. */

@@ -739,15 +739,18 @@ public class DuplicateBindingsValidationTest {
                       "    @Provides Object test.B.BModule.abConflict()");
               if (fullBindingGraphValidation) {
                 subject.hasErrorCount(2);
-                subject.hasErrorContaining("test.A.AModule has errors")
+                subject
+                    .hasErrorContaining(errorMessage)
                     .onSource(aComponent)
-                    .onLineContaining("@Component(");
-                subject.hasErrorContaining(errorMessage)
+                    .onLineContaining("interface A {");
+                subject
+                    .hasErrorContaining(errorMessage)
                     .onSource(aComponent)
                     .onLineContaining("class AModule");
               } else {
                 subject.hasErrorCount(1);
-                subject.hasErrorContaining(errorMessage)
+                subject
+                    .hasErrorContaining(errorMessage)
                     .onSource(aComponent)
                     .onLineContaining("interface A {");
               }
@@ -834,15 +837,18 @@ public class DuplicateBindingsValidationTest {
                       "    @Provides Object test.C.CModule.acConflict()");
               if (fullBindingGraphValidation) {
                 subject.hasErrorCount(2);
-                subject.hasErrorContaining("test.A.AModule has errors")
+                subject
+                    .hasErrorContaining(errorMessage)
                     .onSource(aComponent)
-                    .onLineContaining("@Component(");
-                subject.hasErrorContaining(errorMessage)
+                    .onLineContaining("interface A {");
+                subject
+                    .hasErrorContaining(errorMessage)
                     .onSource(aComponent)
                     .onLineContaining("class AModule");
               } else {
                 subject.hasErrorCount(1);
-                subject.hasErrorContaining(errorMessage)
+                subject
+                    .hasErrorContaining(errorMessage)
                     .onSource(aComponent)
                     .onLineContaining("interface A {");
               }
@@ -923,16 +929,23 @@ public class DuplicateBindingsValidationTest {
                       "    @Provides Object test.B.BModule.bcConflict()",
                       "    @Provides Object test.C.CModule.bcConflict()");
               if (fullBindingGraphValidation) {
-                subject.hasErrorCount(2);
-                subject.hasErrorContaining("test.B.BModule has errors")
+                subject.hasErrorCount(3);
+                subject
+                    .hasErrorContaining(errorMessage)
+                    .onSource(aComponent)
+                    .onLineContaining("interface A {");
+                subject
+                    .hasErrorContaining(errorMessage)
                     .onSource(bComponent)
-                    .onLineContaining("@Subcomponent(modules = B.BModule.class)");
-                subject.hasErrorContaining(errorMessage)
+                    .onLineContaining("interface B {");
+                subject
+                    .hasErrorContaining(errorMessage)
                     .onSource(bComponent)
                     .onLineContaining("class BModule");
               } else {
                 subject.hasErrorCount(1);
-                subject.hasErrorContaining(errorMessage)
+                subject
+                    .hasErrorContaining(errorMessage)
                     .onSource(aComponent)
                     .onLineContaining("interface A {");
               }

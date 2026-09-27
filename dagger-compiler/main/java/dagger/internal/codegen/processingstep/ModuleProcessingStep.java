@@ -25,13 +25,16 @@ import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.BindingFactory;
+import dagger.internal.codegen.binding.BindingGraph;
+import dagger.internal.codegen.binding.BindingGraphFactory;
+import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.DelegateDeclaration;
 import dagger.internal.codegen.binding.ProductionBinding;
+import dagger.internal.codegen.validation.BindingGraphValidator;
 import dagger.internal.codegen.validation.ModuleValidator;
 import dagger.internal.codegen.writing.InaccessibleMapKeyProxyGenerator;
 import dagger.internal.codegen.writing.ModuleGenerator;
@@ -52,7 +55,9 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<XTypeElement
   private final SourceFileGenerator<XTypeElement> moduleConstructorProxyGenerator;
   private final InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator;
   private final DelegateDeclaration.Factory delegateDeclarationFactory;
-  private final Set<XTypeElement> processedModuleElements = Sets.newLinkedHashSet();
+  private final ComponentDescriptor.Factory componentDescriptorFactory;
+  private final BindingGraphFactory bindingGraphFactory;
+  private final BindingGraphValidator bindingGraphValidator;
 
   @Inject
   ModuleProcessingStep(
@@ -62,7 +67,10 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<XTypeElement
       SourceFileGenerator<ProductionBinding> producerFactoryGenerator,
       @ModuleGenerator SourceFileGenerator<XTypeElement> moduleConstructorProxyGenerator,
       InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator,
-      DelegateDeclaration.Factory delegateDeclarationFactory) {
+      DelegateDeclaration.Factory delegateDeclarationFactory,
+      ComponentDescriptor.Factory componentDescriptorFactory,
+      BindingGraphFactory bindingGraphFactory,
+      BindingGraphValidator bindingGraphValidator) {
     this.moduleValidator = moduleValidator;
     this.bindingFactory = bindingFactory;
     this.factoryGenerator = factoryGenerator;
@@ -70,6 +78,9 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<XTypeElement
     this.moduleConstructorProxyGenerator = moduleConstructorProxyGenerator;
     this.inaccessibleMapKeyProxyGenerator = inaccessibleMapKeyProxyGenerator;
     this.delegateDeclarationFactory = delegateDeclarationFactory;
+    this.componentDescriptorFactory = componentDescriptorFactory;
+    this.bindingGraphFactory = bindingGraphFactory;
+    this.bindingGraphValidator = bindingGraphValidator;
   }
 
   @Override
@@ -91,9 +102,6 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<XTypeElement
 
   @Override
   protected void process(XTypeElement module, ImmutableSet<XClassName> annotations) {
-    if (processedModuleElements.contains(module)) {
-      return;
-    }
     // For backwards compatibility, we allow a companion object to be annotated with @Module even
     // though it's no longer required. However, we skip processing the companion object itself
     // because it will now be processed when processing the companion object's enclosing class.
@@ -104,14 +112,23 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<XTypeElement
     }
     ValidationReport report = moduleValidator.validate(module);
     report.printMessagesTo(messager);
-    if (report.isClean()) {
-      generateForMethodsIn(module);
-      module.getEnclosedTypeElements().stream()
-          .filter(XTypeElement::isCompanionObject)
-          .collect(toOptional())
-          .ifPresent(this::generateForMethodsIn);
+    if (!report.isClean()) {
+      return;
     }
-    processedModuleElements.add(module);
+    if (bindingGraphValidator.shouldDoFullBindingGraphValidation(module)) {
+      BindingGraph bindingGraph =
+          bindingGraphFactory.create(
+              componentDescriptorFactory.moduleComponentDescriptor(module),
+              /* createFullBindingGraph= */ true);
+      if (!bindingGraphValidator.isValid(bindingGraph.topLevelBindingGraph())) {
+        return;
+      }
+    }
+    generateForMethodsIn(module);
+    module.getEnclosedTypeElements().stream()
+        .filter(XTypeElement::isCompanionObject)
+        .collect(toOptional())
+        .ifPresent(this::generateForMethodsIn);
   }
 
   private void generateForMethodsIn(XTypeElement module) {

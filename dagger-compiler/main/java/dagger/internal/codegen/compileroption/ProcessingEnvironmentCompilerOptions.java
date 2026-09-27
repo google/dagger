@@ -34,6 +34,7 @@ import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompil
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.MAP_MULTIBINDING_DUPLICATE_DETECTION_FIX;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.NULLABLE_TYPE_ANNOTATIONS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.PLUGINS_VISIT_FULL_BINDING_GRAPHS;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.STRICT_ASSISTED_INJECT_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.STRICT_MULTIBINDING_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.STRICT_SUPERFICIAL_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.USE_BINDING_GRAPH_FIX;
@@ -78,6 +79,8 @@ import javax.tools.Diagnostic;
 public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   // EnumOption<T> doesn't support integer inputs so just doing this as a 1-off for now.
   private static final String KEYS_PER_COMPONENT_SHARD = "dagger.keysPerComponentShard";
+  private static final String CASES_PER_SWITCHING_PROVIDER_SWITCH =
+      "dagger.casesPerSwitchingProviderSwitch";
 
   private final XProcessingEnv processingEnv;
 
@@ -203,6 +206,11 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
+  public boolean strictAssistedInjectValidation() {
+    return isEnabled(STRICT_ASSISTED_INJECT_VALIDATION);
+  }
+
+  @Override
   public boolean generatedClassExtendsComponent() {
     return isEnabled(GENERATED_CLASS_EXTENDS_COMPONENT);
   }
@@ -231,6 +239,14 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
       return Integer.parseInt(options.get(KEYS_PER_COMPONENT_SHARD));
     }
     return super.keysPerComponentShard(component);
+  }
+
+  @Override
+  public int casesPerSwitchingProviderSwitch() {
+    if (options.containsKey(CASES_PER_SWITCHING_PROVIDER_SWITCH)) {
+      return Integer.parseInt(options.get(CASES_PER_SWITCHING_PROVIDER_SWITCH));
+    }
+    return super.casesPerSwitchingProviderSwitch();
   }
 
   private boolean isEnabled(KeyOnlyOption keyOnlyOption) {
@@ -365,6 +381,8 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
     MAP_MULTIBINDING_DUPLICATE_DETECTION_FIX(ENABLED),
 
+    STRICT_ASSISTED_INJECT_VALIDATION(ENABLED),
+
     NULLABLE_TYPE_ANNOTATIONS;
 
     final FeatureStatus defaultValue;
@@ -467,6 +485,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
                 .flatMap(CommandLineOption::allNames)
                 .collect(toImmutableSet()))
         .add(KEYS_PER_COMPONENT_SHARD)
+        .add(CASES_PER_SWITCHING_PROVIDER_SWITCH)
         .build();
   }
 

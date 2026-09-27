@@ -24,6 +24,7 @@ import static dagger.internal.codegen.xprocessing.XElements.isStatic;
 
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
+import androidx.room3.compiler.processing.XExecutableParameterElement;
 import androidx.room3.compiler.processing.XFieldElement;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XTypeElement;
@@ -148,6 +149,8 @@ public final class KotlinMetadataUtil {
 
   public boolean containsConstructorWithDefaultParam(XTypeElement typeElement) {
     return hasMetadata(typeElement)
-        && metadataFactory.create(typeElement).containsConstructorWithDefaultParam();
+        && typeElement.getConstructors().stream()
+            .flatMap(constructor -> constructor.getParameters().stream())
+            .anyMatch(XExecutableParameterElement::getHasDefaultValue);
   }
 }

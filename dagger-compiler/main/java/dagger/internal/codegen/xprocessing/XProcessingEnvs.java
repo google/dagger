@@ -18,11 +18,11 @@ package dagger.internal.codegen.xprocessing;
 
 import static androidx.room3.compiler.processing.compat.XConverters.getProcessingEnv;
 import static androidx.room3.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room3.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 
 import androidx.room3.compiler.codegen.XClassName;
+import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
@@ -31,7 +31,6 @@ import androidx.room3.compiler.processing.XTypeElement;
 import com.squareup.javapoet.TypeName;
 import java.util.Optional;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.type.TypeKind;
 
 /** A utility class for {@link XProcessingEnvs} helper methods. */
 // TODO(bcorso): Consider moving these methods into XProcessing library.
@@ -122,11 +121,7 @@ public final class XProcessingEnvs {
 
   /** Returns a primitive int {@link XType}. */
   public static XType getPrimitiveIntType(XProcessingEnv processingEnv) {
-    return toXProcessing(
-        toJavac(processingEnv)
-            .getTypeUtils() // ALLOW_TYPES_ELEMENTS
-            .getPrimitiveType(TypeKind.INT),
-        processingEnv);
+    return processingEnv.requireType(XTypeName.PRIMITIVE_INT);
   }
 
   /** Returns the type this method is enclosed in. */

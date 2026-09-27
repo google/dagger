@@ -17,6 +17,7 @@
 package dagger.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.extension.DaggerTypeNames.toStableString;
 import static java.util.stream.Collectors.joining;
 
 import com.google.auto.common.AnnotationMirrors;
@@ -29,6 +30,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.TypeName;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -167,7 +169,7 @@ public abstract class Key {
         .skipNulls()
         .join(
             qualifier().map(Key::stableAnnotationMirrorToString).orElse(null),
-            type(),
+            toStableString(TypeName.get(type())),
             multibindingContributionIdentifier().orElse(null));
   }
 

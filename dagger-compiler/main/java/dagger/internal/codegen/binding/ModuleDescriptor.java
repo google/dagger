@@ -23,7 +23,6 @@ import static com.google.common.collect.Collections2.transform;
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
-import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
@@ -53,6 +52,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -111,6 +111,8 @@ public abstract class ModuleDescriptor {
     private final OptionalBindingDeclaration.Factory optionalBindingDeclarationFactory;
     private final DaggerSuperficialValidation superficialValidation;
     private final Map<XTypeElement, ModuleDescriptor> cache = new HashMap<>();
+    private final Map<XTypeElement, ImmutableSet<XTypeElement>> includedModulesCache =
+        new HashMap<>();
     private final Set<XTypeElement> implicitlyIncludedModules = new LinkedHashSet<>();
 
     @Inject
@@ -178,9 +180,7 @@ public abstract class ModuleDescriptor {
                 }
               });
 
-      moduleElement.getEnclosedTypeElements().stream()
-          .filter(XTypeElement::isCompanionObject)
-          .collect(toOptional())
+      Optional.ofNullable(moduleElement.getCompanionObject())
           .ifPresent(companionModule -> collectCompanionModuleBindings(companionModule, bindings));
 
       return new AutoValue_ModuleDescriptor(
@@ -231,8 +231,10 @@ public abstract class ModuleDescriptor {
     }
 
     private ImmutableSet<XTypeElement> includedModules(ModuleDescriptor moduleDescriptor) {
-      return ImmutableSet.copyOf(
-          collectIncludedModules(new LinkedHashSet<>(), moduleDescriptor.moduleElement()));
+      return reentrantComputeIfAbsent(
+          includedModulesCache,
+          moduleDescriptor.moduleElement(),
+          el -> ImmutableSet.copyOf(collectIncludedModules(new LinkedHashSet<>(), el)));
     }
 
     @CanIgnoreReturnValue
@@ -287,6 +289,7 @@ public abstract class ModuleDescriptor {
     @Override
     public void clearCache() {
       cache.clear();
+      includedModulesCache.clear();
     }
   }
 }

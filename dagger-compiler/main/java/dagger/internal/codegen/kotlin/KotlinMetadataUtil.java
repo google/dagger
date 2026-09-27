@@ -16,16 +16,12 @@
 
 package dagger.internal.codegen.kotlin;
 
-import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XFieldElement;
-import androidx.room3.compiler.processing.XTypeElement;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import javax.inject.Inject;
@@ -52,15 +48,15 @@ public final class KotlinMetadataUtil {
    *
    * <p>Note that this method only looks for additional annotations in the synthetic property
    * method, if any, of a Kotlin property and not for annotations in its backing field.
+   *
+   * <p>Callers should first check {@link #isMissingSyntheticPropertyForAnnotations}, since this
+   * method returns an empty set if the synthetic method is missing.
    */
   public ImmutableSet<XAnnotation> getSyntheticPropertyAnnotations(
       XFieldElement fieldElement, XClassName annotationType) {
-    return metadataFactory
-        .create(fieldElement)
-        .getSyntheticAnnotationMethod(fieldElement)
-        .map(methodElement -> methodElement.getAnnotationsAnnotatedWith(annotationType))
-        .map(ImmutableSet::copyOf)
-        .orElse(ImmutableSet.of());
+    // XPropertyElement's annotations are the annotations on the property's synthetic
+    // `$annotations` method, which XProcessing already resolves using the Kotlin metadata.
+    return ImmutableSet.copyOf(fieldElement.getOwner().getAnnotationsAnnotatedWith(annotationType));
   }
 
   /**
@@ -70,21 +66,5 @@ public final class KotlinMetadataUtil {
    */
   public boolean isMissingSyntheticPropertyForAnnotations(XFieldElement fieldElement) {
     return metadataFactory.create(fieldElement).isMissingSyntheticAnnotationMethod(fieldElement);
-  }
-
-  /**
-   * Returns a map mapping all method signatures within the given class element, including methods
-   * that it inherits from its ancestors, to their method names.
-   */
-  public ImmutableMap<String, String> getAllMethodNamesBySignature(XTypeElement element) {
-    checkState(
-        hasMetadata(element), "Can not call getAllMethodNamesBySignature for non-Kotlin class");
-    return metadataFactory.create(element)
-        .classMetadata()
-        .getFunctionsBySignature().values().stream()
-        .collect(
-            toImmutableMap(
-                FunctionMetadata::getSignature,
-                FunctionMetadata::getName)); // SUPPRESS_GET_NAME_CHECK
   }
 }

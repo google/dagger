@@ -27,8 +27,9 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room3.compiler.processing.XExecutableElement;
-import androidx.room3.compiler.processing.XExecutableParameterElement;
+import androidx.room3.compiler.processing.XExecutableType;
 import androidx.room3.compiler.processing.XMethodElement;
+import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -405,18 +406,16 @@ public abstract class BindingGraph {
   }
 
   /**
-   * Returns a map between the {@linkplain ComponentRequirement component requirement} and the
-   * corresponding {@link XExecutableParameterElement} for each module parameter in the {@linkplain
+   * Returns the {@link ComponentRequirement}s for each module parameter in the {@linkplain
    * BindingGraph#factoryMethod factory method}.
    */
   // TODO(dpb): Consider disallowing modules if none of their bindings are used.
-  public final ImmutableMap<ComponentRequirement, XExecutableParameterElement>
-      factoryMethodParameters() {
-    return factoryMethod().get().getParameters().stream()
-        .collect(
-            toImmutableMap(
-                parameter -> ComponentRequirement.forModule(parameter.getType()),
-                parameter -> parameter));
+  public final ImmutableSet<ComponentRequirement> factoryMethodRequirements() {
+    XType parentType = componentPath().parentComponent().xprocessing().getType();
+    XExecutableType resolvedFactoryMethod = factoryMethod().get().asMemberOf(parentType);
+    return resolvedFactoryMethod.getParameterTypes().stream()
+        .map(ComponentRequirement::forModule)
+        .collect(toImmutableSet());
   }
 
   /**
@@ -443,7 +442,7 @@ public abstract class BindingGraph {
                     || requiredModules.contains(requirement.typeElement()))
         .forEach(requirements::add);
     if (factoryMethod().isPresent()) {
-      requirements.addAll(factoryMethodParameters().keySet());
+      requirements.addAll(factoryMethodRequirements());
     }
     return requirements.build();
   }

@@ -54,19 +54,6 @@ abstract class KotlinMetadata {
         .collect(toImmutableMap(XMethodElement::getJvmDescriptor, Function.identity()));
   }
 
-  /** Gets the synthetic method for annotations of a given field element. */
-  Optional<XMethodElement> getSyntheticAnnotationMethod(XFieldElement fieldElement) {
-    return getAnnotationMethod(fieldElement)
-        .map(
-            methodForAnnotations -> {
-              if (methodForAnnotations == MethodForAnnotations.MISSING) {
-                throw new IllegalStateException(
-                    "Method for annotations is missing for " + fieldElement);
-              }
-              return methodForAnnotations.method();
-            });
-  }
-
   /**
    * Returns true if the synthetic method for annotations is missing. This can occur when inspecting
    * the Kotlin metadata of a property from another compilation unit.

@@ -140,12 +140,14 @@ public final class FullBindingGraphValidationTest {
         .compile(
             subject -> {
               subject.hasErrorCount(2);
-              subject.hasErrorContainingMatch(MODULE_WITH_ERRORS_MESSAGE.pattern())
+              subject
+                  .hasErrorContainingMatch(MODULE_WITH_ERRORS_MESSAGE.pattern())
                   .onSource(MODULE_WITH_ERRORS)
                   .onLineContaining("interface ModuleWithErrors");
-              subject.hasErrorContaining("ModuleWithErrors has errors")
+              subject
+                  .hasErrorContainingMatch(INCLUDES_MODULE_WITH_ERRORS_MESSAGE.pattern())
                   .onSource(INCLUDES_MODULE_WITH_ERRORS)
-                  .onLineContaining("ModuleWithErrors.class");
+                  .onLineContaining("interface IncludesModuleWithErrors");
             });
   }
 

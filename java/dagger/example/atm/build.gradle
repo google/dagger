@@ -23,6 +23,12 @@ repositories {
   mavenCentral()
 }
 
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(11)
+  }
+}
+
 sourceSets {
   main {
     java {
@@ -32,11 +38,13 @@ sourceSets {
 }
 
 dependencies {
-  implementation 'com.google.dagger:dagger:2.23.2'
-  annotationProcessor 'com.google.dagger:dagger-compiler:2.23.2'
+  implementation 'com.google.dagger:dagger:2.60.1'
+  annotationProcessor 'com.google.dagger:dagger-compiler:2.60.1'
 }
 
-mainClassName = 'dagger.example.atm.CommandLineAtm'
+application {
+  mainClass = 'dagger.example.atm.CommandLineAtm'
+}
 
 // Run with: `gradle run -q --console=plain`
 run {

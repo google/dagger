@@ -27,16 +27,15 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.xprocessing.XTypes.asArray;
 import static dagger.internal.codegen.xprocessing.XTypes.checkTypePresent;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isNoType;
-import static java.util.stream.Collectors.joining;
 
 import androidx.room3.compiler.codegen.XClassName;
+import androidx.room3.compiler.processing.XTypeKt;
 import androidx.room3.compiler.processing.XArrayType;
 import androidx.room3.compiler.processing.XConstructorType;
 import androidx.room3.compiler.processing.XExecutableType;
@@ -52,11 +51,11 @@ import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ArrayTypeName;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
+import dagger.internal.codegen.extension.DaggerTypeNames;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
@@ -205,14 +204,7 @@ public final class XTypes {
     XProcessingEnv processingEnv = getProcessingEnv(type);
     switch (processingEnv.getBackend()) {
       case JAVAC:
-        // The implementation used for KSP should technically also work in Javac but we avoid it to
-        // avoid any possible regressions in Javac.
-        return toXProcessing(
-                toJavac(processingEnv)
-                    .getTypeUtils() // ALLOW_TYPES_ELEMENTS
-                    .erasure(toJavac(type)),
-                processingEnv)
-            .getTypeName();
+        return type.getRawType().getTypeName();
       case KSP:
         // In KSP, we have to derive the erased TypeName ourselves.
         return erasedTypeName(type.getTypeName());
@@ -353,7 +345,7 @@ public final class XTypes {
     switch (backend) {
       case JAVAC:
         // This is cheaper than creating the XTypeName.
-        return toJavac(typeArgument).getKind() == TypeKind.WILDCARD;
+        return typeArgument.getVariance() != XVariance.INVARIANT;
       case KSP:
         // If the type argument has explicit (i.e. use-site) variance then we can return `true`
         // immediately. Otherwise, we need to check the Java representation, which will calculate
@@ -373,8 +365,7 @@ public final class XTypes {
 
   /** Returns {@code true} if the given type is a type variable. */
   public static boolean isTypeVariable(XType type) {
-    // TODO(bcorso): Consider representing this as an actual type in XProcessing.
-    return type.getTypeName() instanceof TypeVariableName;
+    return XTypeKt.isTypeVariable(type);
   }
 
   /** Returns {@code true} if {@code type1} is equivalent to {@code type2}. */
@@ -611,43 +602,8 @@ public final class XTypes {
     }
   }
 
-  private static String toStableString(TypeName typeName) {
-    if (typeName instanceof ClassName) {
-      return ((ClassName) typeName).canonicalName();
-    } else if (typeName instanceof ArrayTypeName) {
-      return String.format("%s[]", toStableString(((ArrayTypeName) typeName).componentType));
-    } else if (typeName instanceof ParameterizedTypeName) {
-      ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) typeName;
-      return String.format(
-          "%s<%s>",
-          parameterizedTypeName.rawType,
-          parameterizedTypeName.typeArguments.stream()
-              .map(XTypes::toStableString)
-              // We purposely don't use a space after the comma to for backwards compatibility with
-              // usages that depended on the previous TypeMirror#toString() implementation.
-              .collect(joining(",")));
-    } else if (typeName instanceof WildcardTypeName) {
-      WildcardTypeName wildcardTypeName = (WildcardTypeName) typeName;
-      // Wildcard types have exactly 1 upper bound.
-      TypeName upperBound = getOnlyElement(wildcardTypeName.upperBounds);
-      if (!upperBound.equals(TypeName.OBJECT)) {
-        // Wildcards with non-Object upper bounds can't have lower bounds.
-        checkState(wildcardTypeName.lowerBounds.isEmpty());
-        return String.format("? extends %s", toStableString(upperBound));
-      }
-      if (!wildcardTypeName.lowerBounds.isEmpty()) {
-        // Wildcard types can have at most 1 lower bound.
-        TypeName lowerBound = getOnlyElement(wildcardTypeName.lowerBounds);
-        return String.format("? super %s", toStableString(lowerBound));
-      }
-      // If the upper bound is Object and there is no lower bound then just use "?".
-      return "?";
-    } else if (typeName instanceof TypeVariableName) {
-      return ((TypeVariableName) typeName).name;
-    } else {
-      // For all other types (e.g. primitive types) just use the TypeName's toString()
-      return typeName.toString();
-    }
+  public static String toStableString(TypeName typeName) {
+    return DaggerTypeNames.toStableString(typeName);
   }
 
   public static String getKindName(XTypeArgument typeArgument) {

@@ -17,7 +17,6 @@
 package dagger.hilt.android.testing.compile;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static java.util.stream.Collectors.toMap;
 
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.util.CompilationResultSubject;
@@ -36,6 +35,9 @@ import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPoin
 import dagger.hilt.android.processor.internal.androidentrypoint.KspAndroidEntryPointProcessor;
 import dagger.hilt.android.processor.internal.customtestapplication.CustomTestApplicationProcessor;
 import dagger.hilt.android.processor.internal.customtestapplication.KspCustomTestApplicationProcessor;
+import dagger.hilt.android.processor.internal.viewmodel.KspViewModelProcessor;
+import dagger.hilt.android.processor.internal.viewmodel.ViewModelProcessor;
+import dagger.hilt.android.processor.internal.viewmodel.ViewModelValidationPlugin;
 import dagger.hilt.processor.internal.BaseProcessingStep;
 import dagger.hilt.processor.internal.HiltProcessingEnvConfigs;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessor;
@@ -58,6 +60,7 @@ import dagger.hilt.processor.internal.uninstallmodules.KspUninstallModulesProces
 import dagger.hilt.processor.internal.uninstallmodules.UninstallModulesProcessor;
 import dagger.internal.codegen.ComponentProcessor;
 import dagger.internal.codegen.KspComponentProcessor;
+import dagger.spi.model.BindingGraphPlugin;
 import dagger.testing.compile.CompilerTests;
 import java.io.File;
 import java.util.Arrays;
@@ -66,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.processing.Processor;
 import org.junit.rules.TemporaryFolder;
 
@@ -125,14 +129,9 @@ public final class HiltCompilerTests {
   }
 
   public static Compiler compiler(Collection<? extends Processor> extraProcessors) {
-    Map<Class<?>, Processor> processors =
-        defaultProcessors().stream()
-            .collect(toMap((Processor e) -> e.getClass(), (Processor e) -> e));
-
-    // Adds extra processors, and allows overriding any processors of the same class.
-    extraProcessors.forEach(processor -> processors.put(processor.getClass(), processor));
-
-    return CompilerTests.compiler().withProcessors(processors.values());
+    return CompilerTests.compiler()
+        .withProcessors(
+            CompilerTests.mergeProcessors(defaultProcessors(defaultPlugins()), extraProcessors));
   }
 
   public static void compileWithKapt(
@@ -177,7 +176,7 @@ public final class HiltCompilerTests {
                 /* javacArguments= */ DEFAULT_JAVAC_OPTIONS,
                 /* kotlincArguments= */ DEFAULT_KOTLINC_OPTIONS,
                 /* kaptProcessors= */ ImmutableList.<Processor>builder()
-                    .addAll(defaultProcessors())
+                    .addAll(defaultProcessors(defaultPlugins()))
                     .addAll(additionalProcessors)
                     .build(),
                 /* symbolProcessorProviders= */ ImmutableList.of(),
@@ -185,12 +184,17 @@ public final class HiltCompilerTests {
     onCompilationResult.accept(result);
   }
 
-  static ImmutableList<Processor> defaultProcessors() {
+  private static ImmutableList<BindingGraphPlugin> defaultPlugins() {
+    return ImmutableList.of(new ViewModelValidationPlugin());
+  }
+
+  private static ImmutableList<Processor> defaultProcessors(
+      ImmutableCollection<BindingGraphPlugin> bindingGraphPlugins) {
     return ImmutableList.of(
         new AggregatedDepsProcessor(),
         new AliasOfProcessor(),
         new AndroidEntryPointProcessor(),
-        new ComponentProcessor(),
+        ComponentProcessor.withTestPlugins(bindingGraphPlugins),
         new ComponentTreeDepsProcessor(),
         new CustomTestApplicationProcessor(),
         new DefineComponentProcessor(),
@@ -198,16 +202,18 @@ public final class HiltCompilerTests {
         new GeneratesRootInputProcessor(),
         new OriginatingElementProcessor(),
         new RootProcessor(),
-        new UninstallModulesProcessor());
+        new UninstallModulesProcessor(),
+        new ViewModelProcessor());
   }
 
-  private static ImmutableList<SymbolProcessorProvider> kspDefaultProcessors() {
+  private static ImmutableList<SymbolProcessorProvider> kspDefaultProcessors(
+      ImmutableCollection<BindingGraphPlugin> bindingGraphPlugins) {
     // TODO(bcorso): Add the rest of the KSP processors here.
     return ImmutableList.of(
         new KspAggregatedDepsProcessor.Provider(),
         new KspAliasOfProcessor.Provider(),
         new KspAndroidEntryPointProcessor.Provider(),
-        new KspComponentProcessor.Provider(),
+        KspComponentProcessor.Provider.withTestPlugins(bindingGraphPlugins),
         new KspComponentTreeDepsProcessor.Provider(),
         new KspCustomTestApplicationProcessor.Provider(),
         new KspDefineComponentProcessor.Provider(),
@@ -215,7 +221,8 @@ public final class HiltCompilerTests {
         new KspGeneratesRootInputProcessor.Provider(),
         new KspOriginatingElementProcessor.Provider(),
         new KspRootProcessor.Provider(),
-        new KspUninstallModulesProcessor.Provider());
+        new KspUninstallModulesProcessor.Provider(),
+        new KspViewModelProcessor.Provider());
   }
 
   /** Used to compile Hilt sources and inspect the compiled results. */
@@ -228,6 +235,7 @@ public final class HiltCompilerTests {
           .additionalJavacProcessors(ImmutableList.of())
           .additionalKspProcessors(ImmutableList.of())
           .processingSteps(ImmutableList.of())
+          .bindingGraphPluginSuppliers(ImmutableList.of())
           .javacArguments(ImmutableList.of());
     }
 
@@ -246,6 +254,18 @@ public final class HiltCompilerTests {
     /** Returns the extra KSP processors. */
     abstract ImmutableCollection<SymbolProcessorProvider> additionalKspProcessors();
 
+    /** Returns the {@link BindingGraphPlugin} suppliers. */
+    abstract ImmutableCollection<Supplier<BindingGraphPlugin>> bindingGraphPluginSuppliers();
+
+    /** Returns the {@link BindingGraphPlugin}s. */
+    private ImmutableList<BindingGraphPlugin> bindingGraphPlugins() {
+      return ImmutableList.<BindingGraphPlugin>builder()
+          .addAll(defaultPlugins())
+          .addAll(
+              bindingGraphPluginSuppliers().stream().map(Supplier::get).collect(toImmutableList()))
+          .build();
+    }
+
     /** Returns the command-line options */
     abstract ImmutableCollection<String> javacArguments();
 
@@ -260,6 +280,10 @@ public final class HiltCompilerTests {
     public HiltCompiler withProcessingSteps(
         Function<XProcessingEnv, BaseProcessingStep>... mapping) {
       return toBuilder().processingSteps(ImmutableList.copyOf(mapping)).build();
+    }
+
+    public HiltCompiler withBindingGraphPlugins(Supplier<BindingGraphPlugin>... suppliers) {
+      return toBuilder().bindingGraphPluginSuppliers(ImmutableList.copyOf(suppliers)).build();
     }
 
     /** Returns a new {@link HiltCompiler} instance with the additional Javac processors. */
@@ -382,7 +406,9 @@ public final class HiltCompilerTests {
 
     private ImmutableList<Processor> mergedJavacProcessors() {
       return ImmutableList.<Processor>builder()
-          .addAll(mergeProcessors(defaultProcessors(), additionalJavacProcessors()))
+          .addAll(
+              CompilerTests.mergeProcessors(
+                  defaultProcessors(bindingGraphPlugins()), additionalJavacProcessors()))
           .addAll(
               processingSteps().stream()
                   .map(HiltCompilerProcessors.JavacProcessor::new)
@@ -392,21 +418,14 @@ public final class HiltCompilerTests {
 
     private ImmutableList<SymbolProcessorProvider> mergedKspProcessors() {
       return ImmutableList.<SymbolProcessorProvider>builder()
-          .addAll(mergeProcessors(kspDefaultProcessors(), additionalKspProcessors()))
+          .addAll(
+              CompilerTests.mergeProcessors(
+                  kspDefaultProcessors(bindingGraphPlugins()), additionalKspProcessors()))
           .addAll(
               processingSteps().stream()
                   .map(HiltCompilerProcessors.KspProcessor.Provider::new)
                   .collect(toImmutableList()))
           .build();
-    }
-
-    private static <T> ImmutableList<T> mergeProcessors(
-        Collection<T> defaultProcessors, Collection<T> extraProcessors) {
-      Map<Class<?>, T> processors =
-          defaultProcessors.stream().collect(toMap((T e) -> e.getClass(), (T e) -> e));
-      // Adds extra processors, and allows overriding any processors of the same class.
-      extraProcessors.forEach(processor -> processors.put(processor.getClass(), processor));
-      return ImmutableList.copyOf(processors.values());
     }
 
     /** Used to build a {@link HiltCompiler}. */
@@ -422,6 +441,9 @@ public final class HiltCompilerTests {
 
       abstract Builder processingSteps(
           ImmutableCollection<Function<XProcessingEnv, BaseProcessingStep>> processingSteps);
+
+      abstract Builder bindingGraphPluginSuppliers(
+          ImmutableCollection<Supplier<BindingGraphPlugin>> bindingGraphPluginSuppliers);
 
       abstract HiltCompiler build();
     }

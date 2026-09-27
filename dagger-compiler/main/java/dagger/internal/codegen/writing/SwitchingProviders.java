@@ -67,20 +67,8 @@ import java.util.stream.Stream;
  */
 final class SwitchingProviders {
   /**
-   * Each switch size is fixed at 100 cases each and put in its own method. This is to limit the
-   * size of the methods so that we don't reach the "huge" method size limit for Android that will
-   * prevent it from being AOT compiled in some versions of Android (b/77652521). This generally
-   * starts to happen around 1500 cases, but we are choosing 100 to be safe.
-   */
-  // TODO(bcorso): Include a proguard_spec in the Dagger library to prevent inlining these methods?
-  // TODO(ronshapiro): Consider making this configurable via a flag.
-  private static final int MAX_CASES_PER_SWITCH = 100;
-
-  private static final long MAX_CASES_PER_CLASS = MAX_CASES_PER_SWITCH * MAX_CASES_PER_SWITCH;
-
-  /**
    * Maps a {@link Key} to an instance of a {@link SwitchingProviderBuilder}. Each group of {@code
-   * MAX_CASES_PER_CLASS} keys will share the same instance.
+   * maxCasesPerClass} keys will share the same instance.
    */
   private final Map<Key, SwitchingProviderBuilder> switchingProviderBuilders =
       new LinkedHashMap<>();
@@ -89,6 +77,8 @@ final class SwitchingProviders {
   private final CompilerOptions compilerOptions;
   private final XProcessingEnv processingEnv;
   private final XTypeName typeVariable;
+  private final int maxCasesPerSwitch;
+  private final long maxCasesPerClass;
 
   SwitchingProviders(
       ShardImplementation shardImplementation,
@@ -97,6 +87,8 @@ final class SwitchingProviders {
     this.shardImplementation = checkNotNull(shardImplementation);
     this.compilerOptions = checkNotNull(compilerOptions);
     this.processingEnv = checkNotNull(processingEnv);
+    this.maxCasesPerSwitch = compilerOptions.casesPerSwitchingProviderSwitch();
+    this.maxCasesPerClass = (long) maxCasesPerSwitch * maxCasesPerSwitch;
     this.typeVariable =
         XTypeName.getTypeVariableName(
             "T",
@@ -121,7 +113,7 @@ final class SwitchingProviders {
   }
 
   private SwitchingProviderBuilder getSwitchingProviderBuilder() {
-    if (switchingProviderBuilders.size() % MAX_CASES_PER_CLASS == 0) {
+    if (switchingProviderBuilders.size() % maxCasesPerClass == 0) {
       String name = shardImplementation.getUniqueClassName("SwitchingProvider");
       SwitchingProviderBuilder switchingProviderBuilder =
           new SwitchingProviderBuilder(shardImplementation.name().nestedClass(name));
@@ -217,7 +209,7 @@ final class SwitchingProviders {
     private ImmutableList<XFunSpec> getMethods() {
       ImmutableList<XCodeBlock> switchCodeBlockPartitions = switchCodeBlockPartitions();
       if (switchCodeBlockPartitions.size() == 1) {
-        // The case amount does not exceed MAX_CASES_PER_SWITCH, so no need for extra get methods.
+        // The case amount does not exceed maxCasesPerSwitch, so no need for extra get methods.
         return ImmutableList.of(
             methodBuilder("get")
                 .isOverride(true)
@@ -234,7 +226,7 @@ final class SwitchingProviders {
               .isOverride(true)
               .addModifiers(PUBLIC)
               .returns(typeVariable)
-              .beginControlFlow("switch (id / %L)", MAX_CASES_PER_SWITCH);
+              .beginControlFlow("switch (id / %L)", maxCasesPerSwitch);
 
       ImmutableList.Builder<XFunSpec> getMethods = ImmutableList.builder();
       for (int i = 0; i < switchCodeBlockPartitions.size(); i++) {
@@ -258,7 +250,7 @@ final class SwitchingProviders {
     }
 
     private ImmutableList<XCodeBlock> switchCodeBlockPartitions() {
-      return Lists.partition(ImmutableList.copyOf(switchCases.values()), MAX_CASES_PER_SWITCH)
+      return Lists.partition(ImmutableList.copyOf(switchCases.values()), maxCasesPerSwitch)
           .stream()
           .map(
               partitionCases ->

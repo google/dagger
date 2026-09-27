@@ -426,6 +426,9 @@ public final class DaggerSuperficialValidation {
   private ImmutableList<XType> getTypeVariables(XExecutableType executableType) {
     switch (processingEnv.getBackend()) {
       case JAVAC:
+        if (isMethodType(executableType)) {
+          return ImmutableList.copyOf(asMethodType(executableType).getTypeVariables());
+        }
         return toJavac(executableType).getTypeVariables().stream()
             .map(typeVariable -> toXProcessing(typeVariable, processingEnv))
             .collect(toImmutableList());

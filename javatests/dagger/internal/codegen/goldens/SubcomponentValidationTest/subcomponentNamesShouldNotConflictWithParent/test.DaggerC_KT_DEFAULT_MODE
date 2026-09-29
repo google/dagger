@@ -34,33 +34,33 @@ final class DaggerC {
     }
 
     public C build() {
-      return new t_CImpl();
+      return new Impl();
     }
   }
 
-  private static final class F_CImpl implements Foo.C {
-    private final t_CImpl _t_CImpl;
+  private static final class CImpl implements Foo.C {
+    private final Impl impl;
 
-    private final F_CImpl f_CImpl = this;
+    private final CImpl cImpl = this;
 
-    F_CImpl(t_CImpl _t_CImpl) {
-      this._t_CImpl = _t_CImpl;
+    CImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
   }
 
-  private static final class t_CImpl implements C {
-    private final t_CImpl _t_CImpl = this;
+  private static final class Impl implements C {
+    private final Impl impl = this;
 
-    t_CImpl() {
+    Impl() {
 
 
     }
 
     @Override
     public Foo.C newInstanceC() {
-      return new F_CImpl(_t_CImpl);
+      return new CImpl(impl);
     }
   }
 }

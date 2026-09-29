@@ -37,24 +37,24 @@ final class DaggerParent {
     }
 
     public Parent build() {
-      return new ParentImpl();
+      return new Impl();
     }
   }
 
   private static final class ChildImpl implements Child, CancellationListener {
-    private final ParentImpl parentImpl;
+    private final Impl impl;
 
     private final ChildImpl childImpl = this;
 
-    ChildImpl(ParentImpl parentImpl) {
-      this.parentImpl = parentImpl;
+    ChildImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
 
     @Override
     public ProductionScoped productionScoped() {
-      return (ProductionScoped) ((Object) (parentImpl.productionScopedProvider.get()));
+      return (ProductionScoped) ((Object) (impl.productionScopedProvider.get()));
     }
 
     @Override
@@ -64,15 +64,15 @@ final class DaggerParent {
     }
   }
 
-  private static final class ParentImpl implements Parent, CancellationListener {
-    private final ParentImpl parentImpl = this;
+  private static final class Impl implements Parent, CancellationListener {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<ProductionScoped>}
      */
     Provider<?> productionScopedProvider;
 
-    ParentImpl() {
+    Impl() {
 
       initialize();
 
@@ -80,12 +80,12 @@ final class DaggerParent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.productionScopedProvider = DoubleCheck.provider(new SwitchingProvider<>(parentImpl, 0));
+      this.productionScopedProvider = DoubleCheck.provider(new SwitchingProvider<>(impl, 0));
     }
 
     @Override
     public Child child() {
-      return new ChildImpl(parentImpl);
+      return new ChildImpl(impl);
     }
 
     @Override
@@ -95,12 +95,12 @@ final class DaggerParent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final ParentImpl parentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(ParentImpl parentImpl, int id) {
-        this.parentImpl = parentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 

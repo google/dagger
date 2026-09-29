@@ -40,12 +40,12 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl implements TestComponent {
+    private final Impl impl = this;
 
     Provider<Integer> int0Provider;
 
@@ -57,7 +57,7 @@ final class DaggerTestComponent {
 
     Provider mapOfStringAndProviderOfLazyOfIntegerProvider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -65,27 +65,27 @@ final class DaggerTestComponent {
 
     Map mapOfStringAndLazyOfIntegerBuilder() {
       MapBuilder mapBuilder = MapBuilder.<String, Lazy<Integer>>newMapBuilder(3);
-      mapBuilder.put("key0", DoubleCheck.lazy(testComponentImpl.int0Provider));
-      mapBuilder.put("key1", DoubleCheck.lazy(testComponentImpl.int1Provider));
-      mapBuilder.put("key2", DoubleCheck.lazy(testComponentImpl.int2Provider));
+      mapBuilder.put("key0", DoubleCheck.lazy(impl.int0Provider));
+      mapBuilder.put("key1", DoubleCheck.lazy(impl.int1Provider));
+      mapBuilder.put("key2", DoubleCheck.lazy(impl.int2Provider));
       return mapBuilder.build();
     }
 
     Map mapOfStringAndProviderOfLazyOfIntegerBuilder() {
       MapBuilder mapBuilder = MapBuilder.<String, javax.inject.Provider<Lazy<Integer>>>newMapBuilder(3);
-      mapBuilder.put("key0", ProviderOfLazy.create(testComponentImpl.int0Provider));
-      mapBuilder.put("key1", ProviderOfLazy.create(testComponentImpl.int1Provider));
-      mapBuilder.put("key2", ProviderOfLazy.create(testComponentImpl.int2Provider));
+      mapBuilder.put("key0", ProviderOfLazy.create(impl.int0Provider));
+      mapBuilder.put("key1", ProviderOfLazy.create(impl.int1Provider));
+      mapBuilder.put("key2", ProviderOfLazy.create(impl.int2Provider));
       return mapBuilder.build();
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.int0Provider = new SwitchingProvider<>(testComponentImpl, 1);
-      this.int1Provider = new SwitchingProvider<>(testComponentImpl, 2);
-      this.int2Provider = new SwitchingProvider<>(testComponentImpl, 3);
-      this.mapOfStringAndLazyOfIntegerProvider = new SwitchingProvider<>(testComponentImpl, 0);
-      this.mapOfStringAndProviderOfLazyOfIntegerProvider = new SwitchingProvider<>(testComponentImpl, 4);
+      this.int0Provider = new SwitchingProvider<>(impl, 1);
+      this.int1Provider = new SwitchingProvider<>(impl, 2);
+      this.int2Provider = new SwitchingProvider<>(impl, 3);
+      this.mapOfStringAndLazyOfIntegerProvider = new SwitchingProvider<>(impl, 0);
+      this.mapOfStringAndProviderOfLazyOfIntegerProvider = new SwitchingProvider<>(impl, 4);
     }
 
     @Override
@@ -110,12 +110,12 @@ final class DaggerTestComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -124,7 +124,7 @@ final class DaggerTestComponent {
       public T get() {
         switch (id) {
           case 0: // java.util.Map<java.lang.String,dagger.Lazy<java.lang.Integer>>
-          return (T) testComponentImpl.mapOfStringAndLazyOfIntegerBuilder();
+          return (T) impl.mapOfStringAndLazyOfIntegerBuilder();
 
           case 1: // java.util.Map<java.lang.String,java.lang.Integer> test.LazyMaps.TestModule#int0
           return (T) LazyMaps_TestModule_Int0Factory.int0();
@@ -136,7 +136,7 @@ final class DaggerTestComponent {
           return (T) LazyMaps_TestModule_Int2Factory.int2();
 
           case 4: // java.util.Map<java.lang.String,javax.inject.Provider<dagger.Lazy<java.lang.Integer>>>
-          return (T) testComponentImpl.mapOfStringAndProviderOfLazyOfIntegerBuilder();
+          return (T) impl.mapOfStringAndProviderOfLazyOfIntegerBuilder();
 
           default: throw new AssertionError(id);
         }

@@ -48,18 +48,18 @@ final class DaggerTestComponent {
     public TestComponent build() {
       Preconditions.checkBuilderRequirement(i, Integer.class);
       Preconditions.checkBuilderRequirement(list, List.class);
-      return new TestComponentImpl(i, list);
+      return new Impl(i, list);
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
+  private static final class Impl implements TestComponent {
     private final Integer i;
 
     private final List<String> list;
 
-    private final TestComponentImpl testComponentImpl = this;
+    private final Impl impl = this;
 
-    TestComponentImpl(Integer iParam, List<String> listParam) {
+    Impl(Integer iParam, List<String> listParam) {
       this.i = iParam;
       this.list = listParam;
 

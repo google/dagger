@@ -37,19 +37,19 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl implements TestComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<FooFactory>}
      */
     Provider<?> fooFactoryProvider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -62,7 +62,7 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.fooFactoryProvider = new DelegateFactory<>();
-      DelegateFactory.setDelegate((Provider<Object>) (fooFactoryProvider), (Provider<Object>) (SingleCheck.provider(new SwitchingProvider<>(testComponentImpl, 0))));
+      DelegateFactory.setDelegate((Provider<Object>) (fooFactoryProvider), (Provider<Object>) (SingleCheck.provider(new SwitchingProvider<>(impl, 0))));
     }
 
     @Override
@@ -71,12 +71,12 @@ final class DaggerTestComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -88,7 +88,7 @@ final class DaggerTestComponent {
           return (T) new FooFactory() {
             @Override
             public Foo create(String str) {
-              return (Foo) (Foo_Factory.newInstance(str, testComponentImpl.bar()));
+              return (Foo) (Foo_Factory.newInstance(str, impl.bar()));
             }
           };
 

@@ -37,16 +37,16 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    TestComponentImplShard testComponentImplShard;
+  private static final class Impl implements TestComponent {
+    ImplShard implShard;
 
-    TestComponentImplShard2 testComponentImplShard2;
+    ImplShard2 implShard2;
 
-    private final TestComponentImpl testComponentImpl = this;
+    private final Impl impl = this;
 
     /**
      * {@code Provider<Binding7>}
@@ -58,11 +58,11 @@ final class DaggerTestComponent {
      */
     Provider<?> binding6Provider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
-      testComponentImplShard = new TestComponentImplShard(testComponentImpl);
-      testComponentImplShard2 = new TestComponentImplShard2(testComponentImpl);
+      implShard = new ImplShard(impl);
+      implShard2 = new ImplShard2(impl);
     }
 
     @SuppressWarnings("unchecked")
@@ -73,27 +73,27 @@ final class DaggerTestComponent {
 
     @Override
     public Binding1 binding1() {
-      return (Binding1) ((Object) (testComponentImpl.testComponentImplShard2.binding1Provider.get()));
+      return (Binding1) ((Object) (impl.implShard2.binding1Provider.get()));
     }
 
     @Override
     public Binding2 binding2() {
-      return (Binding2) ((Object) (testComponentImpl.testComponentImplShard.binding2Provider.get()));
+      return (Binding2) ((Object) (impl.implShard.binding2Provider.get()));
     }
 
     @Override
     public Binding3 binding3() {
-      return (Binding3) ((Object) (testComponentImpl.testComponentImplShard.binding3Provider.get()));
+      return (Binding3) ((Object) (impl.implShard.binding3Provider.get()));
     }
 
     @Override
     public Binding4 binding4() {
-      return (Binding4) ((Object) (testComponentImpl.testComponentImplShard.binding4Provider.get()));
+      return (Binding4) ((Object) (impl.implShard.binding4Provider.get()));
     }
 
     @Override
     public Binding5 binding5() {
-      return (Binding5) ((Object) (testComponentImpl.testComponentImplShard.binding5Provider.get()));
+      return (Binding5) ((Object) (impl.implShard.binding5Provider.get()));
     }
 
     @Override
@@ -108,27 +108,27 @@ final class DaggerTestComponent {
 
     @Override
     public javax.inject.Provider<Binding1> providerBinding1() {
-      return (javax.inject.Provider<Binding1>) ((Object) (testComponentImpl.testComponentImplShard2.binding1Provider));
+      return (javax.inject.Provider<Binding1>) ((Object) (impl.implShard2.binding1Provider));
     }
 
     @Override
     public javax.inject.Provider<Binding2> providerBinding2() {
-      return (javax.inject.Provider<Binding2>) ((Object) (testComponentImpl.testComponentImplShard.binding2Provider));
+      return (javax.inject.Provider<Binding2>) ((Object) (impl.implShard.binding2Provider));
     }
 
     @Override
     public javax.inject.Provider<Binding3> providerBinding3() {
-      return (javax.inject.Provider<Binding3>) ((Object) (testComponentImpl.testComponentImplShard.binding3Provider));
+      return (javax.inject.Provider<Binding3>) ((Object) (impl.implShard.binding3Provider));
     }
 
     @Override
     public javax.inject.Provider<Binding4> providerBinding4() {
-      return (javax.inject.Provider<Binding4>) ((Object) (testComponentImpl.testComponentImplShard.binding4Provider));
+      return (javax.inject.Provider<Binding4>) ((Object) (impl.implShard.binding4Provider));
     }
 
     @Override
     public javax.inject.Provider<Binding5> providerBinding5() {
-      return (javax.inject.Provider<Binding5>) ((Object) (testComponentImpl.testComponentImplShard.binding5Provider));
+      return (javax.inject.Provider<Binding5>) ((Object) (impl.implShard.binding5Provider));
     }
 
     @Override
@@ -142,8 +142,8 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImplShard {
-    private final TestComponentImpl testComponentImpl;
+  private static final class ImplShard {
+    private final Impl impl;
 
     /**
      * {@code Provider<Binding5>}
@@ -165,14 +165,14 @@ final class DaggerTestComponent {
      */
     Provider<?> binding3Provider;
 
-    TestComponentImplShard(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    ImplShard(Impl impl) {
+      this.impl = impl;
       initialize();
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.binding5Provider = DoubleCheck.provider(Binding5_Factory.create(testComponentImpl.binding6Provider));
+      this.binding5Provider = DoubleCheck.provider(Binding5_Factory.create(impl.binding6Provider));
       this.binding2Provider = new DelegateFactory<>();
       this.binding4Provider = DoubleCheck.provider(Binding4_Factory.create(binding5Provider, binding2Provider));
       this.binding3Provider = DoubleCheck.provider(Binding3_Factory.create(binding4Provider));
@@ -180,22 +180,22 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImplShard2 {
-    private final TestComponentImpl testComponentImpl;
+  private static final class ImplShard2 {
+    private final Impl impl;
 
     /**
      * {@code Provider<Binding1>}
      */
     Provider<?> binding1Provider;
 
-    TestComponentImplShard2(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    ImplShard2(Impl impl) {
+      this.impl = impl;
       initialize();
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.binding1Provider = DoubleCheck.provider(Binding1_Factory.create(testComponentImpl.testComponentImplShard.binding2Provider));
+      this.binding1Provider = DoubleCheck.provider(Binding1_Factory.create(impl.implShard.binding2Provider));
     }
   }
 }

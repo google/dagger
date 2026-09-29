@@ -32,19 +32,19 @@ final class DaggerParentComponent {
     }
 
     public ParentComponent build() {
-      return new ParentComponentImpl();
+      return new Impl();
     }
   }
 
   private static final class tdmltmt_SubImpl implements test.deep.many.levels.that.match.test.Sub {
-    private final ParentComponentImpl parentComponentImpl;
+    private final Impl impl;
 
     private final $_SubImpl _$_SubImpl;
 
     private final tdmltmt_SubImpl _tdmltmt_SubImpl = this;
 
-    tdmltmt_SubImpl(ParentComponentImpl parentComponentImpl, $_SubImpl _$_SubImpl) {
-      this.parentComponentImpl = parentComponentImpl;
+    tdmltmt_SubImpl(Impl impl, $_SubImpl _$_SubImpl) {
+      this.impl = impl;
       this._$_SubImpl = _$_SubImpl;
 
 
@@ -52,33 +52,33 @@ final class DaggerParentComponent {
   }
 
   private static final class $_SubImpl implements Sub {
-    private final ParentComponentImpl parentComponentImpl;
+    private final Impl impl;
 
     private final $_SubImpl _$_SubImpl = this;
 
-    $_SubImpl(ParentComponentImpl parentComponentImpl) {
-      this.parentComponentImpl = parentComponentImpl;
+    $_SubImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
 
     @Override
     public test.deep.many.levels.that.match.test.Sub newDeepSubcomponent() {
-      return new tdmltmt_SubImpl(parentComponentImpl, _$_SubImpl);
+      return new tdmltmt_SubImpl(impl, _$_SubImpl);
     }
   }
 
-  private static final class ParentComponentImpl implements ParentComponent {
-    private final ParentComponentImpl parentComponentImpl = this;
+  private static final class Impl implements ParentComponent {
+    private final Impl impl = this;
 
-    ParentComponentImpl() {
+    Impl() {
 
 
     }
 
     @Override
     public Sub newSubcomponent() {
-      return new $_SubImpl(parentComponentImpl);
+      return new $_SubImpl(impl);
     }
   }
 }

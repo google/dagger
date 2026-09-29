@@ -36,14 +36,14 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
   private static final class TestSubcomponentImpl implements TestSubcomponent {
     TestSubcomponentImplShard testSubcomponentImplShard;
 
-    private final TestComponentImpl testComponentImpl;
+    private final Impl impl;
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
@@ -51,11 +51,11 @@ final class DaggerTestComponent {
 
     Provider<Binding2> binding2Provider;
 
-    TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    TestSubcomponentImpl(Impl impl) {
+      this.impl = impl;
 
       initialize();
-      testSubcomponentImplShard = new TestSubcomponentImplShard(testComponentImpl, testSubcomponentImpl);
+      testSubcomponentImplShard = new TestSubcomponentImplShard(impl, testSubcomponentImpl);
     }
 
     @SuppressWarnings("unchecked")
@@ -95,30 +95,29 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl implements TestComponent {
+    private final Impl impl = this;
 
-    TestComponentImpl() {
+    Impl() {
 
 
     }
 
     @Override
     public TestSubcomponent subcomponent() {
-      return new TestSubcomponentImpl(testComponentImpl);
+      return new TestSubcomponentImpl(impl);
     }
   }
 
   private static final class TestSubcomponentImplShard {
-    private final TestComponentImpl testComponentImpl;
+    private final Impl impl;
 
     private final TestSubcomponentImpl testSubcomponentImpl;
 
     Provider<Binding3> binding3Provider;
 
-    TestSubcomponentImplShard(TestComponentImpl testComponentImpl,
-        TestSubcomponentImpl testSubcomponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    TestSubcomponentImplShard(Impl impl, TestSubcomponentImpl testSubcomponentImpl) {
+      this.impl = impl;
       this.testSubcomponentImpl = testSubcomponentImpl;
       initialize();
     }

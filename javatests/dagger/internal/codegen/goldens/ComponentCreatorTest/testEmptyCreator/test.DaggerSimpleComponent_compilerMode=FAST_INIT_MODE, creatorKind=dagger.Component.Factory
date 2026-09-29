@@ -32,14 +32,14 @@ final class DaggerSimpleComponent {
   private static final class Factory implements SimpleComponent.Factory {
     @Override
     public SimpleComponent createComponent() {
-      return new SimpleComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+  private static final class Impl implements SimpleComponent {
+    private final Impl impl = this;
 
-    SimpleComponentImpl() {
+    Impl() {
 
 
     }

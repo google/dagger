@@ -28,14 +28,14 @@ final class DaggerTestComponent {
   private static final class Factory implements TestComponent.Factory {
     @Override
     public TestComponent create(Bar arg) {
-      return new TestComponentImpl(arg);
+      return new Impl(arg);
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl implements TestComponent {
+    private final Impl impl = this;
 
-    TestComponentImpl(Bar argParam) {
+    Impl(Bar argParam) {
 
 
     }

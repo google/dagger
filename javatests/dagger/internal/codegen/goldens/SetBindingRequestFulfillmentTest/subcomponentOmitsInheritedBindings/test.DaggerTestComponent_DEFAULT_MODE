@@ -36,17 +36,17 @@ final class DaggerParent {
     }
 
     public Parent build() {
-      return new ParentImpl();
+      return new Impl();
     }
   }
 
   private static final class ChildImpl implements Child {
-    private final ParentImpl parentImpl;
+    private final Impl impl;
 
     private final ChildImpl childImpl = this;
 
-    ChildImpl(ParentImpl parentImpl) {
-      this.parentImpl = parentImpl;
+    ChildImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
@@ -57,17 +57,17 @@ final class DaggerParent {
     }
   }
 
-  private static final class ParentImpl implements Parent {
-    private final ParentImpl parentImpl = this;
+  private static final class Impl implements Parent {
+    private final Impl impl = this;
 
-    ParentImpl() {
+    Impl() {
 
 
     }
 
     @Override
     public Child child() {
-      return new ChildImpl(parentImpl);
+      return new ChildImpl(impl);
     }
   }
 }

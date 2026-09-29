@@ -48,12 +48,12 @@ final class DaggerTestComponent {
       if (parentModule == null) {
         this.parentModule = new ParentModule();
       }
-      return new TestComponentImpl(parentModule);
+      return new Impl(parentModule);
     }
   }
 
   private static final class TestSubcomponentImpl implements TestSubcomponent {
-    private final TestComponentImpl testComponentImpl;
+    private final Impl impl;
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
@@ -61,8 +61,8 @@ final class DaggerTestComponent {
 
     Provider<Object> reliesOnMultibindingProvider;
 
-    TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    TestSubcomponentImpl(Impl impl) {
+      this.impl = impl;
 
       initialize();
 
@@ -71,7 +71,7 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.setOfObjectProvider = setOfObjectBuilder();
-      this.reliesOnMultibindingProvider = ParentModule_ReliesOnMultibindingFactory.create(testComponentImpl.parentModule, setOfObjectProvider);
+      this.reliesOnMultibindingProvider = ParentModule_ReliesOnMultibindingFactory.create(impl.parentModule, setOfObjectProvider);
     }
 
     SetFactory<Object> setOfObjectBuilder() {
@@ -87,16 +87,16 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
+  private static final class Impl implements TestComponent {
     private final ParentModule parentModule;
 
-    private final TestComponentImpl testComponentImpl = this;
+    private final Impl impl = this;
 
     Provider<Set<Object>> setOfObjectProvider;
 
     Provider<Object> reliesOnMultibindingProvider;
 
-    TestComponentImpl(ParentModule parentModuleParam) {
+    Impl(ParentModule parentModuleParam) {
       this.parentModule = parentModuleParam;
       initialize(parentModuleParam);
 
@@ -121,7 +121,7 @@ final class DaggerTestComponent {
 
     @Override
     public TestSubcomponent subcomponent() {
-      return new TestSubcomponentImpl(testComponentImpl);
+      return new TestSubcomponentImpl(impl);
     }
   }
 }

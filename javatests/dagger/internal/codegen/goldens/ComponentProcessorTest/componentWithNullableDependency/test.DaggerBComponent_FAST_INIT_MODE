@@ -40,18 +40,18 @@ final class DaggerBComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(nullableStringComponent, NullableStringComponent.class);
-      return new BComponentImpl(nullableStringComponent);
+      return new Impl(nullableStringComponent);
     }
   }
 
-  private static final class BComponentImpl implements BComponent {
+  private static final class Impl implements BComponent {
     private final NullableStringComponent nullableStringComponent;
 
-    private final BComponentImpl bComponentImpl = this;
+    private final Impl impl = this;
 
     Provider<String> nullableStringProvider;
 
-    BComponentImpl(NullableStringComponent nullableStringComponentParam) {
+    Impl(NullableStringComponent nullableStringComponentParam) {
       this.nullableStringComponent = nullableStringComponentParam;
       initialize(nullableStringComponentParam);
 
@@ -59,7 +59,7 @@ final class DaggerBComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize(final NullableStringComponent nullableStringComponentParam) {
-      this.nullableStringProvider = new SwitchingProvider<>(bComponentImpl, 0);
+      this.nullableStringProvider = new SwitchingProvider<>(impl, 0);
     }
 
     @Override
@@ -68,12 +68,12 @@ final class DaggerBComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final BComponentImpl bComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
-        this.bComponentImpl = bComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -82,7 +82,7 @@ final class DaggerBComponent {
       public T get() {
         switch (id) {
           case 0: // java.lang.String
-          return (T) bComponentImpl.nullableStringComponent.nullableString();
+          return (T) impl.nullableStringComponent.nullableString();
 
           default: throw new AssertionError(id);
         }

@@ -35,14 +35,14 @@ final class DaggerOuterType_SimpleComponent {
     }
 
     public OuterType.SimpleComponent build() {
-      return new SimpleComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class SimpleComponentImpl implements OuterType.SimpleComponent {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+  private static final class Impl implements OuterType.SimpleComponent {
+    private final Impl impl = this;
 
-    SimpleComponentImpl() {
+    Impl() {
 
 
     }

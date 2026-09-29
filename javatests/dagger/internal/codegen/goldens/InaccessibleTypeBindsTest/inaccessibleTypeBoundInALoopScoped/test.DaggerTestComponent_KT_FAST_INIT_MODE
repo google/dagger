@@ -40,12 +40,12 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl implements TestComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<Foo>}
@@ -57,7 +57,7 @@ final class DaggerTestComponent {
      */
     Provider<?> fooImplProvider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -70,7 +70,7 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.bindProvider = new DelegateFactory<>();
-      this.fooImplProvider = new SwitchingProvider<>(testComponentImpl, 0);
+      this.fooImplProvider = new SwitchingProvider<>(impl, 0);
       DelegateFactory.setDelegate((Provider<Object>) (bindProvider), (Provider<Object>) (DoubleCheck.provider((Provider) (fooImplProvider))));
     }
 
@@ -80,12 +80,12 @@ final class DaggerTestComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -94,7 +94,7 @@ final class DaggerTestComponent {
       public T get() {
         switch (id) {
           case 0: // other.FooImpl
-          return (T) FooImpl_Factory.newInstance(testComponentImpl.bindProvider);
+          return (T) FooImpl_Factory.newInstance(impl.bindProvider);
 
           default: throw new AssertionError(id);
         }

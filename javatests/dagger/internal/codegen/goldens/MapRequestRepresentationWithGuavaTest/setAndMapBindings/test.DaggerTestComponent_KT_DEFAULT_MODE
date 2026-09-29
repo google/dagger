@@ -38,17 +38,17 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
   private static final class TestSubcomponentImpl implements TestSubcomponent {
-    private final TestComponentImpl testComponentImpl;
+    private final Impl impl;
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
-    TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    TestSubcomponentImpl(Impl impl) {
+      this.impl = impl;
 
 
     }
@@ -75,10 +75,10 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl implements TestComponent {
+    private final Impl impl = this;
 
-    TestComponentImpl() {
+    Impl() {
 
 
     }
@@ -95,7 +95,7 @@ final class DaggerTestComponent {
 
     @Override
     public TestSubcomponent testSubcomponent() {
-      return new TestSubcomponentImpl(testComponentImpl);
+      return new TestSubcomponentImpl(impl);
     }
   }
 }

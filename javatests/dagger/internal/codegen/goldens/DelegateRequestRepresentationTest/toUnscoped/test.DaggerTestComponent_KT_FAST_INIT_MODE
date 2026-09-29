@@ -37,12 +37,12 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl implements TestComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<RegularScoped>}
@@ -54,7 +54,7 @@ final class DaggerTestComponent {
      */
     Provider<?> reusableScopedProvider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -62,8 +62,8 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.regularScopedProvider = DoubleCheck.provider(new SwitchingProvider<>(testComponentImpl, 0));
-      this.reusableScopedProvider = SingleCheck.provider(new SwitchingProvider<>(testComponentImpl, 1));
+      this.regularScopedProvider = DoubleCheck.provider(new SwitchingProvider<>(impl, 0));
+      this.reusableScopedProvider = SingleCheck.provider(new SwitchingProvider<>(impl, 1));
     }
 
     @Override
@@ -82,12 +82,12 @@ final class DaggerTestComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 

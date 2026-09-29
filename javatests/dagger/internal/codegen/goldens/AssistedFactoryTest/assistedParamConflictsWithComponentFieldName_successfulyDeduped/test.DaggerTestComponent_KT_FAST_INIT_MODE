@@ -36,12 +36,12 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl implements TestComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<Bar>}
@@ -53,7 +53,7 @@ final class DaggerTestComponent {
      */
     Provider<?> fooFactoryProvider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -61,8 +61,8 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.barProvider = new SwitchingProvider<>(testComponentImpl, 1);
-      this.fooFactoryProvider = SingleCheck.provider(new SwitchingProvider<>(testComponentImpl, 0));
+      this.barProvider = new SwitchingProvider<>(impl, 1);
+      this.fooFactoryProvider = SingleCheck.provider(new SwitchingProvider<>(impl, 0));
     }
 
     @Override
@@ -71,12 +71,12 @@ final class DaggerTestComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -87,8 +87,8 @@ final class DaggerTestComponent {
           case 0: // test.FooFactory
           return (T) new FooFactory() {
             @Override
-            public Foo create(String testComponentImpl2) {
-              return (Foo) (Foo_Factory.newInstance(testComponentImpl2, testComponentImpl.barProvider));
+            public Foo create(String testComponentImpl) {
+              return (Foo) (Foo_Factory.newInstance(testComponentImpl, impl.barProvider));
             }
           };
 

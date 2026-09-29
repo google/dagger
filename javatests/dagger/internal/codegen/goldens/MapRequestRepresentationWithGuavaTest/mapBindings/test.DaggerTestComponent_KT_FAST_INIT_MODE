@@ -37,12 +37,12 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new Impl();
     }
   }
 
   private static final class SubImpl implements Sub {
-    private final TestComponentImpl testComponentImpl;
+    private final Impl impl;
 
     private final SubImpl subImpl = this;
 
@@ -61,8 +61,8 @@ final class DaggerTestComponent {
      */
     Provider<?> provideLong5Provider;
 
-    SubImpl(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    SubImpl(Impl impl) {
+      this.impl = impl;
 
       initialize();
 
@@ -70,9 +70,9 @@ final class DaggerTestComponent {
 
     ImmutableMap mapOfLongAndLongBuilder() {
       ImmutableMap.Builder mapBuilder = ImmutableMap.builderWithExpectedSize(6);
-      mapBuilder.put(0L, testComponentImpl.provideLong0Provider.get());
-      mapBuilder.put(1L, testComponentImpl.provideLong1Provider.get());
-      mapBuilder.put(2L, testComponentImpl.provideLong2Provider.get());
+      mapBuilder.put(0L, impl.provideLong0Provider.get());
+      mapBuilder.put(1L, impl.provideLong1Provider.get());
+      mapBuilder.put(2L, impl.provideLong2Provider.get());
       mapBuilder.put(3L, provideLong3Provider.get());
       mapBuilder.put(4L, provideLong4Provider.get());
       mapBuilder.put(5L, provideLong5Provider.get());
@@ -81,9 +81,9 @@ final class DaggerTestComponent {
 
     ImmutableMap mapOfLongAndProviderOfLongBuilder() {
       ImmutableMap.Builder mapBuilder = ImmutableMap.builderWithExpectedSize(6);
-      mapBuilder.put(0L, testComponentImpl.provideLong0Provider);
-      mapBuilder.put(1L, testComponentImpl.provideLong1Provider);
-      mapBuilder.put(2L, testComponentImpl.provideLong2Provider);
+      mapBuilder.put(0L, impl.provideLong0Provider);
+      mapBuilder.put(1L, impl.provideLong1Provider);
+      mapBuilder.put(2L, impl.provideLong2Provider);
       mapBuilder.put(3L, provideLong3Provider);
       mapBuilder.put(4L, provideLong4Provider);
       mapBuilder.put(5L, provideLong5Provider);
@@ -92,9 +92,9 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.provideLong3Provider = new SwitchingProvider<>(testComponentImpl, subImpl, 0);
-      this.provideLong4Provider = new SwitchingProvider<>(testComponentImpl, subImpl, 1);
-      this.provideLong5Provider = new SwitchingProvider<>(testComponentImpl, subImpl, 2);
+      this.provideLong3Provider = new SwitchingProvider<>(impl, subImpl, 0);
+      this.provideLong4Provider = new SwitchingProvider<>(impl, subImpl, 1);
+      this.provideLong5Provider = new SwitchingProvider<>(impl, subImpl, 2);
     }
 
     @Override
@@ -108,14 +108,14 @@ final class DaggerTestComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final SubImpl subImpl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, SubImpl subImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, SubImpl subImpl, int id) {
+        this.impl = impl;
         this.subImpl = subImpl;
         this.id = id;
       }
@@ -139,8 +139,8 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class Impl implements TestComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<Integer>}
@@ -162,7 +162,7 @@ final class DaggerTestComponent {
      */
     Provider<?> provideLong2Provider;
 
-    TestComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -170,10 +170,10 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.provideIntProvider = new SwitchingProvider<>(testComponentImpl, 0);
-      this.provideLong0Provider = new SwitchingProvider<>(testComponentImpl, 1);
-      this.provideLong1Provider = new SwitchingProvider<>(testComponentImpl, 2);
-      this.provideLong2Provider = new SwitchingProvider<>(testComponentImpl, 3);
+      this.provideIntProvider = new SwitchingProvider<>(impl, 0);
+      this.provideLong0Provider = new SwitchingProvider<>(impl, 1);
+      this.provideLong1Provider = new SwitchingProvider<>(impl, 2);
+      this.provideLong2Provider = new SwitchingProvider<>(impl, 3);
     }
 
     @Override
@@ -208,16 +208,16 @@ final class DaggerTestComponent {
 
     @Override
     public Sub sub() {
-      return new SubImpl(testComponentImpl);
+      return new SubImpl(impl);
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 

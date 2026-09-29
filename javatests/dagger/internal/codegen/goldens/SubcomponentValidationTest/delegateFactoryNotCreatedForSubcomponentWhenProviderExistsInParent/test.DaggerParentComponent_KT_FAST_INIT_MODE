@@ -37,29 +37,29 @@ final class DaggerParentComponent {
     }
 
     public ParentComponent build() {
-      return new ParentComponentImpl();
+      return new Impl();
     }
   }
 
   private static final class ChildComponentImpl implements ChildComponent {
     private final ChildModule childModule;
 
-    private final ParentComponentImpl parentComponentImpl;
+    private final Impl impl;
 
     private final ChildComponentImpl childComponentImpl = this;
 
-    ChildComponentImpl(ParentComponentImpl parentComponentImpl) {
-      this.parentComponentImpl = parentComponentImpl;
+    ChildComponentImpl(Impl impl) {
+      this.impl = impl;
       this.childModule = new ChildModule();
 
     }
 
     Object needsDep1() {
-      return NeedsDep1_Factory.newInstance(parentComponentImpl.dep1Provider.get());
+      return NeedsDep1_Factory.newInstance(impl.dep1Provider.get());
     }
 
     Object a() {
-      return injectA(A_Factory.newInstance(needsDep1(), parentComponentImpl.dep1Provider.get(), parentComponentImpl.dep2Provider.get()));
+      return injectA(A_Factory.newInstance(needsDep1(), impl.dep1Provider.get(), impl.dep2Provider.get()));
     }
 
     @Override
@@ -74,8 +74,8 @@ final class DaggerParentComponent {
     }
   }
 
-  private static final class ParentComponentImpl implements ParentComponent {
-    private final ParentComponentImpl parentComponentImpl = this;
+  private static final class Impl implements ParentComponent {
+    private final Impl impl = this;
 
     /**
      * {@code Provider<Dep1>}
@@ -87,7 +87,7 @@ final class DaggerParentComponent {
      */
     Provider<?> dep2Provider;
 
-    ParentComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -95,8 +95,8 @@ final class DaggerParentComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.dep1Provider = DoubleCheck.provider(new SwitchingProvider<>(parentComponentImpl, 0));
-      this.dep2Provider = DoubleCheck.provider(new SwitchingProvider<>(parentComponentImpl, 1));
+      this.dep1Provider = DoubleCheck.provider(new SwitchingProvider<>(impl, 0));
+      this.dep2Provider = DoubleCheck.provider(new SwitchingProvider<>(impl, 1));
     }
 
     @Override
@@ -111,7 +111,7 @@ final class DaggerParentComponent {
 
     @Override
     public ChildComponent childComponent() {
-      return new ChildComponentImpl(parentComponentImpl);
+      return new ChildComponentImpl(impl);
     }
 
     @CanIgnoreReturnValue
@@ -127,12 +127,12 @@ final class DaggerParentComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final ParentComponentImpl parentComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(ParentComponentImpl parentComponentImpl, int id) {
-        this.parentComponentImpl = parentComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -141,10 +141,10 @@ final class DaggerParentComponent {
       public T get() {
         switch (id) {
           case 0: // test.Dep1
-          return (T) parentComponentImpl.injectDep1(Dep1_Factory.newInstance());
+          return (T) impl.injectDep1(Dep1_Factory.newInstance());
 
           case 1: // test.Dep2
-          return (T) parentComponentImpl.injectDep2(Dep2_Factory.newInstance());
+          return (T) impl.injectDep2(Dep2_Factory.newInstance());
 
           default: throw new AssertionError(id);
         }

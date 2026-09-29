@@ -36,18 +36,18 @@ final class DaggerSimpleComponent {
     }
 
     public SimpleComponent build() {
-      return new SimpleComponentImpl();
+      return new Impl();
     }
   }
 
-  private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+  private static final class Impl implements SimpleComponent {
+    private final Impl impl = this;
 
     Provider<ScopedType> scopedTypeProvider;
 
     Provider<DependsOnScoped> dependsOnScopedProvider;
 
-    SimpleComponentImpl() {
+    Impl() {
 
       initialize();
 
@@ -55,8 +55,8 @@ final class DaggerSimpleComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.scopedTypeProvider = DoubleCheck.provider(new SwitchingProvider<ScopedType>(simpleComponentImpl, 1));
-      this.dependsOnScopedProvider = new SwitchingProvider<>(simpleComponentImpl, 0);
+      this.scopedTypeProvider = DoubleCheck.provider(new SwitchingProvider<ScopedType>(impl, 1));
+      this.dependsOnScopedProvider = new SwitchingProvider<>(impl, 0);
     }
 
     @Override
@@ -65,12 +65,12 @@ final class DaggerSimpleComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final SimpleComponentImpl simpleComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(SimpleComponentImpl simpleComponentImpl, int id) {
-        this.simpleComponentImpl = simpleComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -79,7 +79,7 @@ final class DaggerSimpleComponent {
       public T get() {
         switch (id) {
           case 0: // test.DependsOnScoped
-          return (T) new DependsOnScoped(simpleComponentImpl.scopedTypeProvider.get());
+          return (T) new DependsOnScoped(impl.scopedTypeProvider.get());
 
           case 1: // test.ScopedType
           return (T) new ScopedType();

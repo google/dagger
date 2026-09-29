@@ -40,18 +40,18 @@ final class DaggerBComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(aComponent, AComponent.class);
-      return new BComponentImpl(aComponent);
+      return new Impl(aComponent);
     }
   }
 
-  private static final class BComponentImpl implements BComponent {
+  private static final class Impl implements BComponent {
     private final AComponent aComponent;
 
-    private final BComponentImpl bComponentImpl = this;
+    private final Impl impl = this;
 
     Provider<A> aProvider;
 
-    BComponentImpl(AComponent aComponentParam) {
+    Impl(AComponent aComponentParam) {
       this.aComponent = aComponentParam;
       initialize(aComponentParam);
 
@@ -59,7 +59,7 @@ final class DaggerBComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize(final AComponent aComponentParam) {
-      this.aProvider = new SwitchingProvider<>(bComponentImpl, 0);
+      this.aProvider = new SwitchingProvider<>(impl, 0);
     }
 
     @Override
@@ -68,12 +68,12 @@ final class DaggerBComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final BComponentImpl bComponentImpl;
+      private final Impl impl;
 
       private final int id;
 
-      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
-        this.bComponentImpl = bComponentImpl;
+      SwitchingProvider(Impl impl, int id) {
+        this.impl = impl;
         this.id = id;
       }
 
@@ -82,7 +82,7 @@ final class DaggerBComponent {
       public T get() {
         switch (id) {
           case 0: // test.A
-          return (T) Preconditions.checkNotNullFromComponent(bComponentImpl.aComponent.a());
+          return (T) Preconditions.checkNotNullFromComponent(impl.aComponent.a());
 
           default: throw new AssertionError(id);
         }

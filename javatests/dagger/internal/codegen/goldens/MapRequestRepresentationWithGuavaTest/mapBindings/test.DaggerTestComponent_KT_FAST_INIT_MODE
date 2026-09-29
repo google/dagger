@@ -3,6 +3,7 @@ package test;
 import com.google.common.collect.ImmutableMap;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import java.util.Map;
 import javax.annotation.processing.Generated;
 
@@ -92,9 +93,9 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.provideLong3Provider = new SwitchingProvider<>(testComponentImpl, subImpl, 0);
-      this.provideLong4Provider = new SwitchingProvider<>(testComponentImpl, subImpl, 1);
-      this.provideLong5Provider = new SwitchingProvider<>(testComponentImpl, subImpl, 2);
+      this.provideLong3Provider = new SwitchingPImpl<>(testComponentImpl, subImpl, 0);
+      this.provideLong4Provider = new SwitchingPImpl<>(testComponentImpl, subImpl, 1);
+      this.provideLong5Provider = new SwitchingPImpl<>(testComponentImpl, subImpl, 2);
     }
 
     @Override
@@ -107,22 +108,27 @@ final class DaggerTestComponent {
       return (Map<Long, javax.inject.Provider<Long>>) ((Object) (mapOfLongAndProviderOfLongBuilder()));
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final TestComponentImpl testComponentImpl;
 
       private final SubImpl subImpl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, SubImpl subImpl, int id) {
+      SwitchingPImpl(TestComponentImpl testComponentImpl, SubImpl subImpl, int id) {
         this.testComponentImpl = testComponentImpl;
         this.subImpl = subImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // java.util.Map<java.lang.Long,java.lang.Long> test.SubcomponentMapModule#provideLong3
           return (T) (Long) (SubcomponentMapModule_ProvideLong3Factory.provideLong3());
@@ -170,10 +176,10 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.provideIntProvider = new SwitchingProvider<>(testComponentImpl, 0);
-      this.provideLong0Provider = new SwitchingProvider<>(testComponentImpl, 1);
-      this.provideLong1Provider = new SwitchingProvider<>(testComponentImpl, 2);
-      this.provideLong2Provider = new SwitchingProvider<>(testComponentImpl, 3);
+      this.provideIntProvider = new SwitchingPImpl<>(testComponentImpl, 0);
+      this.provideLong0Provider = new SwitchingPImpl<>(testComponentImpl, 1);
+      this.provideLong1Provider = new SwitchingPImpl<>(testComponentImpl, 2);
+      this.provideLong2Provider = new SwitchingPImpl<>(testComponentImpl, 3);
     }
 
     @Override
@@ -211,19 +217,24 @@ final class DaggerTestComponent {
       return new SubImpl(testComponentImpl);
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final TestComponentImpl testComponentImpl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+      SwitchingPImpl(TestComponentImpl testComponentImpl, int id) {
         this.testComponentImpl = testComponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // java.util.Map<java.lang.Integer,java.lang.Integer> test.MapModule#provideInt
           return (T) (Integer) (MapModule_ProvideIntFactory.provideInt());

@@ -43,4 +43,36 @@ public class SingleCheckTest {
     assertThat(provider.get()).isEqualTo(0);
     assertThat(provider.get()).isEqualTo(0);
   }
+
+  @Test
+  public void doubleWrapping_switchingProvider() {
+    Provider<Object> singleCheckSwitching =
+        SingleCheckSwitchingProvider.provider(id -> new Object(), 0);
+    Provider<Object> doubleCheckSwitching =
+        DoubleCheckSwitchingProvider.provider(id -> new Object(), 0);
+    assertThat(SingleCheck.provider(singleCheckSwitching)).isSameInstanceAs(singleCheckSwitching);
+    assertThat(SingleCheck.provider(doubleCheckSwitching)).isSameInstanceAs(doubleCheckSwitching);
+  }
+
+  @Test
+  public void getWithSwitchingProviderAsProvider() {
+    AtomicInteger integer = new AtomicInteger();
+    SwitchingProvider<Integer> switchingProvider =
+        new SwitchingProvider<Integer>() {
+          @Override
+          public Integer get(int id) {
+            return integer.getAndIncrement() + id;
+          }
+
+          @Override
+          public Integer get() {
+            return get(3);
+          }
+        };
+    Provider<Integer> provider = SingleCheck.provider((Provider<Integer>) switchingProvider);
+    assertThat(provider.get()).isEqualTo(3);
+    assertThat(provider.get()).isEqualTo(3);
+    assertThat(provider.get()).isEqualTo(3);
+  }
 }
+

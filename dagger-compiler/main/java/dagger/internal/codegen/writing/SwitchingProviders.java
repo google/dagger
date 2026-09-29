@@ -27,7 +27,6 @@ import static dagger.internal.codegen.xprocessing.XCodeBlocks.concat;
 import static dagger.internal.codegen.xprocessing.XCodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.xprocessing.XFunSpecs.constructorBuilder;
 import static dagger.internal.codegen.xprocessing.XFunSpecs.methodBuilder;
-import static dagger.internal.codegen.xprocessing.XTypeNames.daggerProviderOf;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -37,9 +36,9 @@ import androidx.room3.compiler.codegen.XAnnotationSpec;
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XCodeBlock;
 import androidx.room3.compiler.codegen.XFunSpec;
+import androidx.room3.compiler.codegen.XPropertySpec;
 import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.codegen.XTypeSpec;
-import androidx.room3.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import dagger.internal.codegen.binding.ContributionBinding;
@@ -49,7 +48,6 @@ import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.internal.codegen.xprocessing.XFunSpecs;
-import dagger.internal.codegen.xprocessing.XProcessingEnvs;
 import dagger.internal.codegen.xprocessing.XPropertySpecs;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import dagger.internal.codegen.xprocessing.XTypeSpecs;
@@ -75,18 +73,13 @@ final class SwitchingProviders {
 
   private final ShardImplementation shardImplementation;
   private final CompilerOptions compilerOptions;
-  private final XProcessingEnv processingEnv;
   private final XTypeName typeVariable;
   private final int maxCasesPerSwitch;
   private final long maxCasesPerClass;
 
-  SwitchingProviders(
-      ShardImplementation shardImplementation,
-      CompilerOptions compilerOptions,
-      XProcessingEnv processingEnv) {
+  SwitchingProviders(ShardImplementation shardImplementation, CompilerOptions compilerOptions) {
     this.shardImplementation = checkNotNull(shardImplementation);
     this.compilerOptions = checkNotNull(compilerOptions);
-    this.processingEnv = checkNotNull(processingEnv);
     this.maxCasesPerSwitch = compilerOptions.casesPerSwitchingProviderSwitch();
     this.maxCasesPerClass = (long) maxCasesPerSwitch * maxCasesPerSwitch;
     this.typeVariable =
@@ -114,7 +107,7 @@ final class SwitchingProviders {
 
   private SwitchingProviderBuilder getSwitchingProviderBuilder() {
     if (switchingProviderBuilders.size() % maxCasesPerClass == 0) {
-      String name = shardImplementation.getUniqueClassName("SwitchingProvider");
+      String name = shardImplementation.getUniqueClassName("SwitchingPImpl");
       SwitchingProviderBuilder switchingProviderBuilder =
           new SwitchingProviderBuilder(shardImplementation.name().nestedClass(name));
       shardImplementation.addTypeSupplier(switchingProviderBuilder::build);
@@ -130,6 +123,7 @@ final class SwitchingProviders {
     private final Map<Integer, XCodeBlock> switchCases = new TreeMap<>();
     private final Map<Key, Integer> switchIds = new HashMap<>();
     private final XClassName switchingProviderType;
+    private XPropertySpec sharedSwitchingProviderProperty;
 
     SwitchingProviderBuilder(XClassName switchingProviderType) {
       this.switchingProviderType = checkNotNull(switchingProviderType);
@@ -144,32 +138,62 @@ final class SwitchingProviders {
         switchCases.put(
             switchId, createSwitchCaseCodeBlock(key, unscopedInstanceRequestRepresentation));
       }
-      return XCodeBlock.of(
-          "new %T<%L>(%L, %L)",
-          switchingProviderType,
-          maybeTypeParameter(binding),
-          shardImplementation.componentFieldsByImplementation().values().stream()
-              .map(field -> XCodeBlock.of("%N", field))
-              .collect(toParametersCodeBlock()),
-          switchIds.get(key));
+      int id = switchIds.get(key);
+
+      if (isWrapped(binding)) {
+        return XCodeBlock.of(
+            "%T.provider(%N, %L)",
+            switchingProviderWrapper(binding),
+            getOrCreateSharedSwitchingProvider(),
+            id);
+      } else {
+        return XCodeBlock.of(
+            "new %T<>(%L, %L)", switchingProviderType, getComponentFieldsCodeBlock(), id);
+      }
     }
 
-    private XCodeBlock maybeTypeParameter(ContributionBinding binding) {
-      // Add the type parameter explicitly when the binding is scoped because Java can't
-      // resolve the type when wrapped. For example, the following will error:
-      //   fooProvider = DoubleCheck.provider(new SwitchingProvider<>(1));
-      return (binding.scope().isPresent()
-              || binding.kind().equals(BindingKind.ASSISTED_FACTORY)
-              || XProcessingEnvs.isPreJava8SourceVersion(processingEnv))
-          ? XCodeBlock.of("%T", shardImplementation.accessibleTypeName(binding.contributedType()))
-          : XCodeBlock.of("");
+    private XPropertySpec getOrCreateSharedSwitchingProvider() {
+      if (sharedSwitchingProviderProperty == null) {
+        String fieldName = shardImplementation.getUniqueFieldName("sharedSwitchingProvider");
+        XCodeBlock args = XCodeBlock.of("%L, -1", getComponentFieldsCodeBlock());
+        sharedSwitchingProviderProperty =
+            XPropertySpecs.builder(
+                    fieldName, switchingProviderType.parametrizedBy(XTypeName.ANY_OBJECT))
+                .addModifiers(PRIVATE)
+                .build();
+        shardImplementation.addField(
+            ComponentImplementation.FieldSpecKind.FRAMEWORK_FIELD, sharedSwitchingProviderProperty);
+        shardImplementation.addInitialization(
+            XCodeBlock.of(
+                "this.%N = new %T<>(%L);",
+                sharedSwitchingProviderProperty,
+                switchingProviderType,
+                args));
+      }
+      return sharedSwitchingProviderProperty;
+    }
+
+    private XClassName switchingProviderWrapper(ContributionBinding binding) {
+      return binding.scope().isPresent() && !binding.scope().get().isReusable()
+          ? XTypeNames.DOUBLE_CHECK_SWITCHING_PROVIDER
+          : XTypeNames.SINGLE_CHECK_SWITCHING_PROVIDER;
+    }
+
+    private boolean isWrapped(ContributionBinding binding) {
+      return binding.scope().isPresent() || binding.kind().equals(BindingKind.ASSISTED_FACTORY);
+    }
+
+    private XCodeBlock getComponentFieldsCodeBlock() {
+      return shardImplementation.componentFieldsByImplementation().values().stream()
+          .map(field -> XCodeBlock.of("%N", field))
+          .collect(toParametersCodeBlock());
     }
 
     private XCodeBlock createSwitchCaseCodeBlock(
         Key key, RequestRepresentation unscopedInstanceRequestRepresentation) {
       // TODO(bcorso): Try to delay calling getDependencyExpression() until we are writing out the
       // SwitchingProvider because calling it here makes FrameworkFieldInitializer think there's a
-      // cycle when initializing SwitchingProviders which adds an uncessary DelegateFactory.
+      // cycle when initializing SwitchingProviders which adds an unnecessary DelegateFactory.
       XCodeBlock instanceCodeBlock =
           unscopedInstanceRequestRepresentation
               .getDependencyExpression(switchingProviderType)
@@ -188,7 +212,7 @@ final class SwitchingProviders {
           XTypeSpecs.classBuilder(switchingProviderType)
               .addModifiers(PRIVATE, FINAL, STATIC)
               .addTypeVariable(typeVariable)
-              .addSuperinterface(daggerProviderOf(typeVariable))
+              .addSuperinterface(XTypeNames.SWITCHING_PROVIDER.parametrizedBy(typeVariable))
               .addFunctions(getMethods());
 
       // The SwitchingProvider constructor lists all component parameters first and switch id last.
@@ -199,7 +223,8 @@ final class SwitchingProviders {
           .forEach(
               field -> {
                 builder.addProperty(field);
-                constructor.addParameter(field.getName(), field.getType()); // SUPPRESS_GET_NAME_CHECK
+                constructor.addParameter(
+                    field.getName(), field.getType()); // SUPPRESS_GET_NAME_CHECK
                 constructor.addStatement("this.%1N = %1N", field);
               });
 
@@ -208,16 +233,30 @@ final class SwitchingProviders {
 
     private ImmutableList<XFunSpec> getMethods() {
       ImmutableList<XCodeBlock> switchCodeBlockPartitions = switchCodeBlockPartitions();
+      ImmutableList.Builder<XFunSpec> getMethods = ImmutableList.builder();
+
+      // Add the no-arg get() method for Provider interface
+      getMethods.add(
+          methodBuilder("get")
+              .isOverride(true)
+              .addModifiers(PUBLIC)
+              .returns(typeVariable)
+              .addStatement("return get(id)")
+              .build());
+
       if (switchCodeBlockPartitions.size() == 1) {
         // The case amount does not exceed maxCasesPerSwitch, so no need for extra get methods.
-        return ImmutableList.of(
-            methodBuilder("get")
-                .isOverride(true)
-                .addModifiers(PUBLIC)
-                .addAnnotation(suppressWarnings(UNCHECKED))
-                .returns(typeVariable)
-                .addCode(getOnlyElement(switchCodeBlockPartitions))
-                .build());
+        return getMethods
+            .add(
+                methodBuilder("get")
+                    .isOverride(true)
+                    .addModifiers(PUBLIC)
+                    .addParameter("id", XTypeName.PRIMITIVE_INT)
+                    .addAnnotation(suppressWarnings(UNCHECKED))
+                    .returns(typeVariable)
+                    .addCode(getOnlyElement(switchCodeBlockPartitions))
+                    .build())
+            .build();
       }
 
       // This is the main public "get" method that will route to private getter methods.
@@ -225,20 +264,21 @@ final class SwitchingProviders {
           methodBuilder("get")
               .isOverride(true)
               .addModifiers(PUBLIC)
+              .addParameter("id", XTypeName.PRIMITIVE_INT)
               .returns(typeVariable)
               .beginControlFlow("switch (id / %L)", maxCasesPerSwitch);
 
-      ImmutableList.Builder<XFunSpec> getMethods = ImmutableList.builder();
       for (int i = 0; i < switchCodeBlockPartitions.size(); i++) {
         XFunSpec method =
             methodBuilder("get" + i)
                 .addModifiers(PRIVATE)
+                .addParameter("id", XTypeName.PRIMITIVE_INT)
                 .addAnnotation(suppressWarnings(UNCHECKED))
                 .returns(typeVariable)
                 .addCode(switchCodeBlockPartitions.get(i))
                 .build();
         getMethods.add(method);
-        routerMethod.addStatement("case %L: return %N()", i, method);
+        routerMethod.addStatement("case %L: return %N(id)", i, method);
       }
 
       routerMethod

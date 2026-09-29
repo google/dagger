@@ -4,6 +4,7 @@ import dagger.Lazy;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.DoubleCheck;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -57,7 +58,7 @@ final class DaggerSimpleComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.someInjectableTypeProvider = new SwitchingProvider<>(simpleComponentImpl, 0);
+      this.someInjectableTypeProvider = new SwitchingPImpl<>(simpleComponentImpl, 0);
     }
 
     @Override
@@ -75,19 +76,24 @@ final class DaggerSimpleComponent {
       return (javax.inject.Provider<SomeInjectableType>) ((Object) (someInjectableTypeProvider));
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final SimpleComponentImpl simpleComponentImpl;
 
       private final int id;
 
-      SwitchingProvider(SimpleComponentImpl simpleComponentImpl, int id) {
+      SwitchingPImpl(SimpleComponentImpl simpleComponentImpl, int id) {
         this.simpleComponentImpl = simpleComponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // test.SomeInjectableType
           return (T) SomeInjectableType_Factory.newInstance();

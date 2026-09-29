@@ -2,8 +2,9 @@ package dagger.internal.codegen;
 
 import dagger.internal.DaggerGenerated;
 import dagger.internal.DelegateFactory;
-import dagger.internal.DoubleCheck;
+import dagger.internal.DoubleCheckSwitchingProvider;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -48,6 +49,8 @@ final class DaggerTestComponent {
 
     private final TestComponentImpl testComponentImpl = this;
 
+    private SwitchingPImpl<Object> sharedSwitchingProvider;
+
     /**
      * {@code Provider<Binding7>}
      */
@@ -67,8 +70,9 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.binding7Provider = DoubleCheck.provider(new SwitchingProvider<>(testComponentImpl, 1));
-      this.binding6Provider = DoubleCheck.provider(new SwitchingProvider<>(testComponentImpl, 0));
+      this.sharedSwitchingProvider = new SwitchingPImpl<>(testComponentImpl, -1);
+      this.binding7Provider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 1);
+      this.binding6Provider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
     }
 
     @Override
@@ -141,19 +145,24 @@ final class DaggerTestComponent {
       return (javax.inject.Provider<Binding7>) ((Object) (binding7Provider));
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final TestComponentImpl testComponentImpl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+      SwitchingPImpl(TestComponentImpl testComponentImpl, int id) {
         this.testComponentImpl = testComponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // dagger.internal.codegen.Binding6
           return (T) Binding6_Factory.newInstance(testComponentImpl.binding7Provider.get());
@@ -169,6 +178,8 @@ final class DaggerTestComponent {
 
   private static final class TestComponentImplShard {
     private final TestComponentImpl testComponentImpl;
+
+    private SwitchingPImpl<Object> sharedSwitchingProvider;
 
     /**
      * {@code Provider<Binding5>}
@@ -197,26 +208,32 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.binding5Provider = DoubleCheck.provider(new SwitchingProvider<>(testComponentImpl, 3));
+      this.sharedSwitchingProvider = new SwitchingPImpl<>(testComponentImpl, -1);
+      this.binding5Provider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 3);
       this.binding2Provider = new DelegateFactory<>();
-      this.binding4Provider = DoubleCheck.provider(new SwitchingProvider<>(testComponentImpl, 2));
-      this.binding3Provider = DoubleCheck.provider(new SwitchingProvider<>(testComponentImpl, 1));
-      DelegateFactory.setDelegate((Provider<Object>) (binding2Provider), (Provider<Object>) (DoubleCheck.provider(new SwitchingProvider<>(testComponentImpl, 0))));
+      this.binding4Provider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 2);
+      this.binding3Provider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 1);
+      DelegateFactory.setDelegate((Provider<Object>) (binding2Provider), (Provider<Object>) (DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0)));
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final TestComponentImpl testComponentImpl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+      SwitchingPImpl(TestComponentImpl testComponentImpl, int id) {
         this.testComponentImpl = testComponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // dagger.internal.codegen.Binding2
           return (T) Binding2_Factory.newInstance(testComponentImpl.testComponentImplShard.binding3Provider.get());
@@ -239,6 +256,8 @@ final class DaggerTestComponent {
   private static final class TestComponentImplShard2 {
     private final TestComponentImpl testComponentImpl;
 
+    private SwitchingPImpl<Object> sharedSwitchingProvider;
+
     /**
      * {@code Provider<Binding1>}
      */
@@ -251,22 +270,28 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.binding1Provider = DoubleCheck.provider(new SwitchingProvider<>(testComponentImpl, 0));
+      this.sharedSwitchingProvider = new SwitchingPImpl<>(testComponentImpl, -1);
+      this.binding1Provider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final TestComponentImpl testComponentImpl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
+      SwitchingPImpl(TestComponentImpl testComponentImpl, int id) {
         this.testComponentImpl = testComponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // dagger.internal.codegen.Binding1
           return (T) Binding1_Factory.newInstance(testComponentImpl.testComponentImplShard.binding2Provider.get());

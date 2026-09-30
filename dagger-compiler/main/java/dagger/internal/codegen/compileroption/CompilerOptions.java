@@ -204,6 +204,14 @@ public abstract class CompilerOptions {
   public abstract boolean nullableTypeAnnotations();
 
   /**
+   * Returns {@code true} if strict validation for @AssistedInject and @AssistedFactory is enabled.
+   *
+   * <p>If enabled, Dagger will fail compilation if these annotations are used in a library module
+   * that did not run the Dagger annotation processor.
+   */
+  public abstract boolean strictAssistedInjectValidation();
+
+  /**
    * Returns {@code true} if Dagger should also look for nullable type annotations.
    *
    * @deprecated use {@link CompilerOptions#nullableTypeAnnotations()}. This method should only be

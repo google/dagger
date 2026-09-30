@@ -7,32 +7,29 @@ redirect_from:
 
 ## useBindingGraphFix
 
+Note: This flag was removed in v2.61 and the new binding graph is now mandatory.
+
 In v2.55, Dagger introduced a rewrite of its core binding graph creation logic
-that fixes many subtle bugs that have plague the previous version. However,
-these fixes also come with a behavior change (see details below), so we've
-introduced a flag to ease the migration to the new behavior. This was enabled
-by default in v2.58. To disable the fixes, pass the following compiler option:
-
-`-Adagger.useBindingGraphFix=disabled`
-
-In a future release, we will remove this flag entirely once users have had a
-chance to migrate.
+that fixed many subtle bugs that plagued the previous version. However,
+these fixes also came with a behavior change (see details below), so we
+introduced a flag to ease the migration to the new behavior
+(`-Adagger.useBindingGraphFix=enabled/disabled`). This flag was introduced with
+default "disabled" in v2.55, changed to default "enabled" in v2.58, and removed
+along with the legacy binding graph in v2.61.
 
 ### Background
 
-In the last few years, Dagger has seen a number of subtle bugs which have led to
-incorrect binding graphs (e.g. missing multibindings), nonsensical error
-messages (e.g. dependency traces that don't match the reported error), and
-difficult to reproduce issues (e.g. issues that depend on the order of bindings
-in the user's code). The root cause of these bugs stemmed from issues in the
-[`LegacyBindingGraphFactory`] which is responsible for iterating through the
-bindings of a component and creating the binding graph. To fix these bugs, we've
-rewritten the core logic to be more robust (e.g. replacing custom iteration
-logic with standard graph data structures and algorithms). However, enabling
-these fixes also comes with a behavior change that could affect some users in
-rare cases.
-
-[`LegacyBindingGraphFactory`]:(https://github.com/google/dagger/blob/master/dagger-compiler/main/java/dagger/internal/codegen/binding/LegacyBindingGraphFactory.java)
+The legacy binding graph had a number of subtle bugs which led to incorrect
+binding graphs (e.g. missing multibindings), nonsensical error messages (e.g.
+dependency traces that don't match the reported error), and difficult to
+reproduce issues (e.g. issues that depend on the order of bindings in the user's
+code). The root cause of these bugs stemmed from issues in the legacy binding
+graph implementation which was responsible for iterating through the bindings of
+a component and creating the binding graph. To fix these bugs, we rewrote the
+core logic to be more robust (e.g. replacing custom iteration logic with
+standard graph data structures and algorithms). Enabling these fixes also came
+with a behavior change that could affect users in rare cases, so we initially
+included a rollout flag.
 
 ### Behavior changes
 

@@ -38,16 +38,16 @@ final class DaggerSimpleComponent {
     @Override
     public SimpleComponent build() {
       Preconditions.checkBuilderRequirement(i, Integer.class);
-      return new SimpleComponentImpl(i);
+      return new ComponentImpl(i);
     }
   }
 
-  private static final class SimpleComponentImpl implements SimpleComponent {
+  private static final class ComponentImpl implements SimpleComponent {
     private final Integer i;
 
-    private final SimpleComponentImpl simpleComponentImpl = this;
+    private final ComponentImpl componentImpl = this;
 
-    SimpleComponentImpl(Integer iParam) {
+    ComponentImpl(Integer iParam) {
       this.i = iParam;
 
     }

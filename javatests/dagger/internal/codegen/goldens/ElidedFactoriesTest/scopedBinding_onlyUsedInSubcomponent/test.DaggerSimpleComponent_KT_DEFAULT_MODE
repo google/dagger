@@ -36,36 +36,36 @@ final class DaggerSimpleComponent {
     }
 
     public SimpleComponent build() {
-      return new SimpleComponentImpl();
+      return new ComponentImpl();
     }
   }
 
   private static final class SubImpl implements Sub {
-    private final SimpleComponentImpl simpleComponentImpl;
+    private final ComponentImpl componentImpl;
 
     private final SubImpl subImpl = this;
 
-    SubImpl(SimpleComponentImpl simpleComponentImpl) {
-      this.simpleComponentImpl = simpleComponentImpl;
+    SubImpl(ComponentImpl componentImpl) {
+      this.componentImpl = componentImpl;
 
 
     }
 
     @Override
     public DependsOnScoped dependsOnScoped() {
-      return (DependsOnScoped) ((Object) (DependsOnScoped_Factory.newInstance(simpleComponentImpl.scopedTypeProvider.get())));
+      return (DependsOnScoped) ((Object) (DependsOnScoped_Factory.newInstance(componentImpl.scopedTypeProvider.get())));
     }
   }
 
-  private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+  private static final class ComponentImpl implements SimpleComponent {
+    private final ComponentImpl componentImpl = this;
 
     /**
      * {@code Provider<ScopedType>}
      */
     Provider<?> scopedTypeProvider;
 
-    SimpleComponentImpl() {
+    ComponentImpl() {
 
       initialize();
 
@@ -78,7 +78,7 @@ final class DaggerSimpleComponent {
 
     @Override
     public Sub sub() {
-      return new SubImpl(simpleComponentImpl);
+      return new SubImpl(componentImpl);
     }
   }
 }

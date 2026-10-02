@@ -36,12 +36,12 @@ final class DaggerSimpleComponent {
     }
 
     public SimpleComponent build() {
-      return new SimpleComponentImpl();
+      return new ComponentImpl();
     }
   }
 
-  private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+  private static final class ComponentImpl implements SimpleComponent {
+    private final ComponentImpl componentImpl = this;
 
     /**
      * {@code Provider<ScopedType>}
@@ -53,7 +53,7 @@ final class DaggerSimpleComponent {
      */
     Provider<?> dependsOnScopedProvider;
 
-    SimpleComponentImpl() {
+    ComponentImpl() {
 
       initialize();
 
@@ -61,8 +61,8 @@ final class DaggerSimpleComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.scopedTypeProvider = DoubleCheck.provider(new SwitchingProvider<>(simpleComponentImpl, 1));
-      this.dependsOnScopedProvider = new SwitchingProvider<>(simpleComponentImpl, 0);
+      this.scopedTypeProvider = DoubleCheck.provider(new SwitchingProvider<>(componentImpl, 1));
+      this.dependsOnScopedProvider = new SwitchingProvider<>(componentImpl, 0);
     }
 
     @Override
@@ -71,12 +71,12 @@ final class DaggerSimpleComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final SimpleComponentImpl simpleComponentImpl;
+      private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProvider(SimpleComponentImpl simpleComponentImpl, int id) {
-        this.simpleComponentImpl = simpleComponentImpl;
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
+        this.componentImpl = componentImpl;
         this.id = id;
       }
 
@@ -85,7 +85,7 @@ final class DaggerSimpleComponent {
       public T get() {
         switch (id) {
           case 0: // test.DependsOnScoped
-          return (T) DependsOnScoped_Factory.newInstance(simpleComponentImpl.scopedTypeProvider.get());
+          return (T) DependsOnScoped_Factory.newInstance(componentImpl.scopedTypeProvider.get());
 
           case 1: // test.ScopedType
           return (T) ScopedType_Factory.newInstance();

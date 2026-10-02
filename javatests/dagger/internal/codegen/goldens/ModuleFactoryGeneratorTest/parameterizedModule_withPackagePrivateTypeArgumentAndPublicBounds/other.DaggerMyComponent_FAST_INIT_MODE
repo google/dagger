@@ -51,16 +51,16 @@ final class DaggerMyComponent {
       if (concreteModule == null) {
         this.concreteModule = new ConcreteModule();
       }
-      return new MyComponentImpl(concreteModule);
+      return new ComponentImpl(concreteModule);
     }
   }
 
-  private static final class MyComponentImpl implements MyComponent {
+  private static final class ComponentImpl implements MyComponent {
     private final ConcreteModule concreteModule;
 
-    private final MyComponentImpl myComponentImpl = this;
+    private final ComponentImpl componentImpl = this;
 
-    MyComponentImpl(ConcreteModule concreteModuleParam) {
+    ComponentImpl(ConcreteModule concreteModuleParam) {
       this.concreteModule = concreteModuleParam;
 
     }

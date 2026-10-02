@@ -40,21 +40,21 @@ final class DaggerBComponent {
 
     public BComponent build() {
       Preconditions.checkBuilderRequirement(arrayComponent, ArrayComponent.class);
-      return new BComponentImpl(arrayComponent);
+      return new ComponentImpl(arrayComponent);
     }
   }
 
-  private static final class BComponentImpl implements BComponent {
+  private static final class ComponentImpl implements BComponent {
     private final ArrayComponent arrayComponent;
 
-    private final BComponentImpl bComponentImpl = this;
+    private final ComponentImpl componentImpl = this;
 
     /**
      * {@code Provider<java.lang.String[]>}
      */
     Provider<?> stringsProvider;
 
-    BComponentImpl(ArrayComponent arrayComponentParam) {
+    ComponentImpl(ArrayComponent arrayComponentParam) {
       this.arrayComponent = arrayComponentParam;
       initialize(arrayComponentParam);
 
@@ -62,7 +62,7 @@ final class DaggerBComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize(final ArrayComponent arrayComponentParam) {
-      this.stringsProvider = new SwitchingProvider<>(bComponentImpl, 0);
+      this.stringsProvider = new SwitchingProvider<>(componentImpl, 0);
     }
 
     @Override
@@ -71,12 +71,12 @@ final class DaggerBComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final BComponentImpl bComponentImpl;
+      private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProvider(BComponentImpl bComponentImpl, int id) {
-        this.bComponentImpl = bComponentImpl;
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
+        this.componentImpl = componentImpl;
         this.id = id;
       }
 
@@ -85,7 +85,7 @@ final class DaggerBComponent {
       public T get() {
         switch (id) {
           case 0: // java.lang.String[]
-          return (T) Preconditions.checkNotNullFromComponent(bComponentImpl.arrayComponent.strings());
+          return (T) Preconditions.checkNotNullFromComponent(componentImpl.arrayComponent.strings());
 
           default: throw new AssertionError(id);
         }

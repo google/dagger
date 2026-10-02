@@ -40,14 +40,14 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new ComponentImpl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent, CancellationListener {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class ComponentImpl implements TestComponent, CancellationListener {
+    private final ComponentImpl componentImpl = this;
 
-    TestComponentImpl() {
+    ComponentImpl() {
 
 
     }

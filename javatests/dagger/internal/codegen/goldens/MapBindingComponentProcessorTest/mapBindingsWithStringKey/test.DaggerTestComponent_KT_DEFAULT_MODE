@@ -58,12 +58,12 @@ final class DaggerTestComponent {
       if (mapModuleTwo == null) {
         this.mapModuleTwo = new MapModuleTwo();
       }
-      return new TestComponentImpl(mapModuleOne, mapModuleTwo);
+      return new ComponentImpl(mapModuleOne, mapModuleTwo);
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class ComponentImpl implements TestComponent {
+    private final ComponentImpl componentImpl = this;
 
     /**
      * {@code Provider<Handler>}
@@ -80,7 +80,7 @@ final class DaggerTestComponent {
      */
     Provider<?> mapOfStringAndProviderOfHandlerProvider;
 
-    TestComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
+    ComponentImpl(MapModuleOne mapModuleOneParam, MapModuleTwo mapModuleTwoParam) {
 
       initialize(mapModuleOneParam, mapModuleTwoParam);
 

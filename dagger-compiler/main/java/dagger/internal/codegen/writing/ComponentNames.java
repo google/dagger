@@ -224,7 +224,12 @@ public final class ComponentNames {
   }
 
   private static String simpleName(ComponentPath componentPath) {
-    return getSimpleName(componentPath.currentComponent().xprocessing());
+    // The root component implementation is named "ComponentImpl" (i.e. "Component" + "Impl") rather
+    // than "<ComponentName>Impl" to keep generated inner class names short and avoid hitting the
+    // 255-character filename limit.
+    return componentPath.atRoot()
+        ? "Component"
+        : getSimpleName(componentPath.currentComponent().xprocessing());
   }
 
   /** Returns a prefix that could make the component's simple name more unique. */

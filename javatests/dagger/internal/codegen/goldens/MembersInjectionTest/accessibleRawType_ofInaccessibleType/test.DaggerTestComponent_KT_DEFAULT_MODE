@@ -41,19 +41,19 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new ComponentImpl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class ComponentImpl implements TestComponent {
+    private final ComponentImpl componentImpl = this;
 
     /**
      * {@code Provider<java.util.List<other.Inaccessible>>}
      */
     Provider<?> inaccessiblesProvider;
 
-    TestComponentImpl() {
+    ComponentImpl() {
 
       initialize();
 

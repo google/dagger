@@ -26,6 +26,7 @@ public class ParameterizedModule_ProvideMapStringNumberFactory : Factory<Any?> {
   public override fun `get`(): Any? = provideMapStringNumber()
 
   private object InstanceHolder {
+    @JvmStatic
     public val INSTANCE: ParameterizedModule_ProvideMapStringNumberFactory =
         ParameterizedModule_ProvideMapStringNumberFactory()
   }

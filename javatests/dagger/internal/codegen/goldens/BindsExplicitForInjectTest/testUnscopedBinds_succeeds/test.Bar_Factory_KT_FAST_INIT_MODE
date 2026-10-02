@@ -25,6 +25,7 @@ public class Bar_Factory : Factory<Any?> {
   public override fun `get`(): Any? = newInstance()
 
   private object InstanceHolder {
+    @JvmStatic
     public val INSTANCE: Bar_Factory = Bar_Factory()
   }
 

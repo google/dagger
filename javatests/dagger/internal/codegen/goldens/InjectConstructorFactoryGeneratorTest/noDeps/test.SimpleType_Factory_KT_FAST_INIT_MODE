@@ -25,6 +25,7 @@ public class SimpleType_Factory : Factory<Any?> {
   public override fun `get`(): Any? = newInstance()
 
   private object InstanceHolder {
+    @JvmStatic
     public val INSTANCE: SimpleType_Factory = SimpleType_Factory()
   }
 

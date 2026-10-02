@@ -145,7 +145,7 @@ public final class XTypeSpecs {
       return this;
     }
 
-    /** Sets the originating element of the type. */
+    /** Adds a Javadoc comment to the type. */
     @CanIgnoreReturnValue
     public Builder addJavadoc(String format, Object... args) {
       javadocs.add(XCodeBlock.of(format, args));
@@ -309,7 +309,7 @@ public final class XTypeSpecs {
       return this;
     }
 
-    /** Adds the given annotation name to the type. */
+    /** Adds the given nested type to the type. */
     @CanIgnoreReturnValue
     public Builder addType(XTypeSpec type) {
       types.add(type);
@@ -425,30 +425,32 @@ public final class XTypeSpecs {
       properties.forEach(builder::addProperty);
       functions.forEach(builder::addFunction);
 
-      if (kind == Kind.OBJECT) {
-        // For object classes "static" functions/properties are just normal functions/properties.
-        staticFunctions.forEach(builder::addFunction);
-        staticProperties.forEach(builder::addProperty);
-      } else {
-        // For non-object classes, we need to create a companion object and add the "static"
+      if (!staticFunctions.isEmpty() || !staticProperties.isEmpty()) {
+        // For object classes "static" functions/properties are just normal functions/properties,
+        // whereas for non-object classes we need to create a companion object and add the "static"
         // functions/properties to the companion object instead.
-        if (!staticFunctions.isEmpty() || !staticProperties.isEmpty()) {
-          XTypeSpec.Builder companionObjectBuilder = XTypeSpec.companionObjectBuilder();
-          for (XFunSpec staticFunction : staticFunctions) {
-            toJavaPoet(builder).addMethod(toJavaPoet(staticFunction));
-            companionObjectBuilder.addFunction(
-                staticFunction.toBuilder()
-                    .addAnnotation(XAnnotationSpec.of(XTypeNames.JVM_STATIC))
-                    .build());
-          }
-          for (XPropertySpec staticProperty : staticProperties) {
-            toJavaPoet(builder).addField(toJavaPoet(staticProperty));
-            companionObjectBuilder.addProperty(
-                staticProperty.toBuilder()
-                    .addAnnotation(XAnnotationSpec.of(XTypeNames.JVM_STATIC))
-                    .build());
-          }
-          toKotlinPoet(builder).addType(toKotlinPoet(companionObjectBuilder).build());
+        XTypeSpec.Builder kotlinObjectBuilder =
+            kind == Kind.OBJECT ? builder : XTypeSpec.companionObjectBuilder();
+        for (XFunSpec staticFunction : staticFunctions) {
+          toJavaPoet(builder).addMethod(toJavaPoet(staticFunction));
+          toKotlinPoet(kotlinObjectBuilder)
+              .addFunction(
+                  toKotlinPoet(
+                      staticFunction.toBuilder()
+                          .addAnnotation(XAnnotationSpec.of(XTypeNames.JVM_STATIC))
+                          .build()));
+        }
+        for (XPropertySpec staticProperty : staticProperties) {
+          toJavaPoet(builder).addField(toJavaPoet(staticProperty));
+          toKotlinPoet(kotlinObjectBuilder)
+              .addProperty(
+                  toKotlinPoet(
+                      staticProperty.toBuilder()
+                          .addAnnotation(XAnnotationSpec.of(XTypeNames.JVM_STATIC))
+                          .build()));
+        }
+        if (kind != Kind.OBJECT) {
+          toKotlinPoet(builder).addType(toKotlinPoet(kotlinObjectBuilder).build());
         }
       }
 

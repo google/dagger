@@ -26,6 +26,7 @@ public class TestModule_NonNullableStringFactory : Factory<Any?> {
   public override fun `get`(): Any? = nonNullableString()
 
   private object InstanceHolder {
+    @JvmStatic
     public val INSTANCE: TestModule_NonNullableStringFactory = TestModule_NonNullableStringFactory()
   }
 

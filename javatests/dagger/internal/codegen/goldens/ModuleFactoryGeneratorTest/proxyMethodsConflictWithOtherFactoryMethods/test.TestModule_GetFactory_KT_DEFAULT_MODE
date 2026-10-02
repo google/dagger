@@ -26,6 +26,7 @@ public class TestModule_GetFactory : Factory<Any?> {
   public override fun `get`(): Any? = proxyGet()
 
   private object InstanceHolder {
+    @JvmStatic
     public val INSTANCE: TestModule_GetFactory = TestModule_GetFactory()
   }
 

@@ -25,6 +25,7 @@ public class OuterType_A_Factory : Factory<Any?> {
   public override fun `get`(): Any? = newInstance()
 
   private object InstanceHolder {
+    @JvmStatic
     public val INSTANCE: OuterType_A_Factory = OuterType_A_Factory()
   }
 

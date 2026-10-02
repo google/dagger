@@ -26,6 +26,7 @@ public class TestModule_PrimitiveIntegerFactory : Factory<Any?> {
   public override fun `get`(): Any? = primitiveInteger()
 
   private object InstanceHolder {
+    @JvmStatic
     public val INSTANCE: TestModule_PrimitiveIntegerFactory = TestModule_PrimitiveIntegerFactory()
   }
 

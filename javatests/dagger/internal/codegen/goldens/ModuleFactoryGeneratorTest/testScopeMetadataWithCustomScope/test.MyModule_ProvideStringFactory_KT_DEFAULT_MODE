@@ -26,6 +26,7 @@ public class MyModule_ProvideStringFactory : Factory<Any?> {
   public override fun `get`(): Any? = provideString()
 
   private object InstanceHolder {
+    @JvmStatic
     public val INSTANCE: MyModule_ProvideStringFactory = MyModule_ProvideStringFactory()
   }
 

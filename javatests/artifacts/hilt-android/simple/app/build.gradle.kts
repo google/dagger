@@ -168,6 +168,7 @@ dependencies {
   androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
   androidTestImplementation("com.google.dagger:hilt-android-testing:$dagger_version")
   androidTestAnnotationProcessor("com.google.dagger:hilt-compiler:$dagger_version")
+  debugImplementation("com.google.dagger:hilt-android-testing-manifest:$dagger_version")
 
   // To help us catch usages of Guava APIs for Java 8 in the '-jre' variant.
   annotationProcessor("com.google.guava:guava:33.6.0-android")

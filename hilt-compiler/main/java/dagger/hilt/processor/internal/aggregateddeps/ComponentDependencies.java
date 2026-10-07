@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room3.compiler.processing.XProcessingEnv;
-import androidx.room3.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -41,7 +40,7 @@ public abstract class ComponentDependencies {
    * Returns the modules (including both test and non-test modules) for a component, without any
    * filtering.
    */
-  public abstract ImmutableSetMultimap<ClassName, XTypeElement> modules();
+  public abstract ImmutableSetMultimap<ClassName, ClassName> modules();
 
   /** Returns the test modules for a component, without any filtering. */
   public abstract ImmutableSetMultimap<ClassName, ClassName> testModules();
@@ -50,17 +49,17 @@ public abstract class ComponentDependencies {
   public abstract ImmutableSetMultimap<ClassName, ClassName> entryPoints();
 
   /** Returns the component entry point associated with the given a component. */
-  public abstract ImmutableSetMultimap<ClassName, XTypeElement> componentEntryPoints();
+  public abstract ImmutableSetMultimap<ClassName, ClassName> componentEntryPoints();
 
   @AutoValue.Builder
   abstract static class Builder {
-    abstract ImmutableSetMultimap.Builder<ClassName, XTypeElement> modulesBuilder();
+    abstract ImmutableSetMultimap.Builder<ClassName, ClassName> modulesBuilder();
 
     abstract ImmutableSetMultimap.Builder<ClassName, ClassName> testModulesBuilder();
 
     abstract ImmutableSetMultimap.Builder<ClassName, ClassName> entryPointsBuilder();
 
-    abstract ImmutableSetMultimap.Builder<ClassName, XTypeElement> componentEntryPointsBuilder();
+    abstract ImmutableSetMultimap.Builder<ClassName, ClassName> componentEntryPointsBuilder();
 
     abstract ComponentDependencies build();
   }
@@ -101,7 +100,7 @@ public abstract class ComponentDependencies {
         switch (metadata.dependencyType()) {
           case MODULE:
             if (!uninstalledModules.contains(metadata.dependencyName())) {
-              componentDependencies.modulesBuilder().put(componentName, metadata.dependency());
+              componentDependencies.modulesBuilder().put(componentName, metadata.dependencyName());
               if (metadata.testName().isPresent()) {
                 componentDependencies
                     .testModulesBuilder()
@@ -117,7 +116,7 @@ public abstract class ComponentDependencies {
           case COMPONENT_ENTRY_POINT:
             componentDependencies
                 .componentEntryPointsBuilder()
-                .put(componentName, metadata.dependency());
+                .put(componentName, metadata.dependencyName());
             break;
         }
       }

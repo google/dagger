@@ -88,8 +88,8 @@ public final class RootMetadata {
     return deps;
   }
 
-  public ImmutableSet<XTypeElement> modules(ClassName componentName) {
-    return deps.modules().get(componentName).stream().collect(toImmutableSet());
+  public ImmutableSet<ClassName> modules(ClassName componentName) {
+    return deps.modules().get(componentName);
   }
 
   public ImmutableSet<TypeName> entryPoints(ClassName componentName) {
@@ -115,9 +115,10 @@ public final class RootMetadata {
    * about and are specifically handled in the codegen.
    */
   public ImmutableSet<XTypeElement> modulesThatDaggerCannotConstruct(ClassName componentName) {
-    return modules(componentName).stream()
+    return deps.testModules().get(componentName).stream()
+        .filter(module -> !module.equals(APPLICATION_CONTEXT_MODULE))
+        .map(env::requireTypeElement)
         .filter(module -> !daggerCanConstruct(module))
-        .filter(module -> !APPLICATION_CONTEXT_MODULE.equals(module.getClassName()))
         .collect(toImmutableSet());
   }
 
@@ -143,8 +144,11 @@ public final class RootMetadata {
     // Only test modules in the application component can be missing default constructor
     for (ComponentDescriptor componentDescriptor : componentTree.getComponentDescriptors()) {
       ClassName componentName = componentDescriptor.component();
+      if (root.isTestRoot() && componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
+        continue;
+      }
       for (XTypeElement extraModule : modulesThatDaggerCannotConstruct(componentName)) {
-        if (root.isTestRoot() && !componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
+        if (root.isTestRoot()) {
           env.getMessager()
               .printMessage(
                   Diagnostic.Kind.ERROR,
@@ -152,7 +156,7 @@ public final class RootMetadata {
                       + "static provision methods or have a visible, no-arg constructor. Found: "
                       + extraModule.getQualifiedName(),
                   root.originatingRootElement());
-        } else if (!root.isTestRoot()) {
+        } else {
           env.getMessager()
               .printMessage(
                   Diagnostic.Kind.ERROR,

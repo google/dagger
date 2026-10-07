@@ -98,10 +98,7 @@ final class RootGenerator {
     for (ComponentDescriptor componentDescriptor : componentTree.getComponentDescriptors()) {
       ImmutableSet<ClassName> modules =
           ImmutableSet.<ClassName>builder()
-              .addAll(
-                  metadata.modules(componentDescriptor.component()).stream()
-                      .map(XTypeElement::getClassName)
-                      .collect(toImmutableSet()))
+              .addAll(metadata.modules(componentDescriptor.component()))
               .addAll(
                   componentTree.childrenOf(componentDescriptor).stream()
                       .map(subcomponentBuilderModules::get)

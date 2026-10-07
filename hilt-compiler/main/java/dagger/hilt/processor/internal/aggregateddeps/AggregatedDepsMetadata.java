@@ -52,9 +52,6 @@ public abstract class AggregatedDepsMetadata {
   /** Returns the name of the aggregating element. */
   public abstract ClassName name();
 
-  /** Returns the aggregating element. */
-  public abstract XTypeElement aggregatingElement();
-
   public abstract Optional<ClassName> testName();
 
   public abstract ImmutableSet<ClassName> componentNames();
@@ -62,8 +59,6 @@ public abstract class AggregatedDepsMetadata {
   abstract DependencyType dependencyType();
 
   public abstract ClassName dependencyName();
-
-  public abstract XTypeElement dependency();
 
   public abstract ImmutableSet<ClassName> replacedDependencies();
 
@@ -119,7 +114,6 @@ public abstract class AggregatedDepsMetadata {
             env);
     return new AutoValue_AggregatedDepsMetadata(
         element.getClassName(),
-        element,
         getTestName(annotation.getAnnotationValue("test"), env),
         getComponentNames(annotation.getAnnotationValue("components"), env),
         getDependencyType(
@@ -127,7 +121,6 @@ public abstract class AggregatedDepsMetadata {
             annotation.getAnnotationValue("entryPoints"),
             annotation.getAnnotationValue("componentEntryPoints")),
         dependency.getClassName(),
-        dependency,
         getReplacedDependencies(annotation.getAnnotationValue("replaces"), env));
   }
 

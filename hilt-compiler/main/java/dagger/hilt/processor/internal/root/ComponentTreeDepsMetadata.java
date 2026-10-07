@@ -102,18 +102,18 @@ abstract class ComponentTreeDepsMetadata {
   }
 
   /** Returns all modules included in a component tree deps. */
-  public ImmutableSet<XTypeElement> modules() {
+  public ImmutableSet<ClassName> modules() {
     return AggregatedDepsMetadata.from(aggregatedDeps()).stream()
         .filter(AggregatedDepsMetadata::isModule)
-        .map(AggregatedDepsMetadata::dependency)
+        .map(AggregatedDepsMetadata::dependencyName)
         .collect(toImmutableSet());
   }
 
   /** Returns all entry points included in a component tree deps. */
-  public ImmutableSet<XTypeElement> entrypoints() {
+  public ImmutableSet<ClassName> entrypoints() {
     return AggregatedDepsMetadata.from(aggregatedDeps()).stream()
         .filter(dependency -> !dependency.isModule())
-        .map(AggregatedDepsMetadata::dependency)
+        .map(AggregatedDepsMetadata::dependencyName)
         .collect(toImmutableSet());
   }
 

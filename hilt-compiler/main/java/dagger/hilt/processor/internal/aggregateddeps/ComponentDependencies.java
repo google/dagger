@@ -37,8 +37,14 @@ public abstract class ComponentDependencies {
     return new AutoValue_ComponentDependencies.Builder();
   }
 
-  /** Returns the modules for a component, without any filtering. */
+  /**
+   * Returns the modules (including both test and non-test modules) for a component, without any
+   * filtering.
+   */
   public abstract ImmutableSetMultimap<ClassName, XTypeElement> modules();
+
+  /** Returns the test modules for a component, without any filtering. */
+  public abstract ImmutableSetMultimap<ClassName, ClassName> testModules();
 
   /** Returns the entry points associated with the given a component. */
   public abstract ImmutableSetMultimap<ClassName, ClassName> entryPoints();
@@ -49,6 +55,8 @@ public abstract class ComponentDependencies {
   @AutoValue.Builder
   abstract static class Builder {
     abstract ImmutableSetMultimap.Builder<ClassName, XTypeElement> modulesBuilder();
+
+    abstract ImmutableSetMultimap.Builder<ClassName, ClassName> testModulesBuilder();
 
     abstract ImmutableSetMultimap.Builder<ClassName, ClassName> entryPointsBuilder();
 
@@ -94,6 +102,11 @@ public abstract class ComponentDependencies {
           case MODULE:
             if (!uninstalledModules.contains(metadata.dependencyName())) {
               componentDependencies.modulesBuilder().put(componentName, metadata.dependency());
+              if (metadata.testName().isPresent()) {
+                componentDependencies
+                    .testModulesBuilder()
+                    .put(componentName, metadata.dependencyName());
+              }
             }
             break;
           case ENTRY_POINT:

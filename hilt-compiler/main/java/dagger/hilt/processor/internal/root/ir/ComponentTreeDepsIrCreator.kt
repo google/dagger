@@ -31,48 +31,48 @@ private constructor(
 ) {
   private fun prodComponents(): Set<ComponentTreeDepsIr> {
     val componentTreeDeps = mutableSetOf<ComponentTreeDepsIr>()
-    aggregatedRoots.filter { !it.isTestRoot }.forEach { aggregatedRoot ->
-      componentTreeDeps.add(ComponentTreeDepsIr(
-          name = ComponentTreeDepsNameGenerator().generate(aggregatedRoot.root),
-          rootDeps = setOf(aggregatedRoot.fqName),
-          defineComponentDeps = defineComponentDeps.map { it.fqName }.toSet(),
-          aliasOfDeps = aliasOfDeps.map { it.fqName }.toSet(),
-          aggregatedDeps =
-            // @AggregatedDeps with non-empty replaces are from @TestInstallIn and should not be
-            // installed in production components
-            aggregatedDeps.filter { it.replaces.isEmpty() }.map { it.fqName }.toSet(),
-          uninstallModulesDeps = emptySet(),
-          earlyEntryPointDeps = emptySet(),
-      ))
-    }
+    aggregatedRoots
+      .filter { !it.isTestRoot }
+      .forEach { aggregatedRoot ->
+        componentTreeDeps.add(
+          ComponentTreeDepsIr(
+            name = ComponentTreeDepsNameGenerator().generate(aggregatedRoot.originatingRoot),
+            rootDeps = setOf(aggregatedRoot.fqName),
+            defineComponentDeps = defineComponentDeps.map { it.fqName }.toSet(),
+            aliasOfDeps = aliasOfDeps.map { it.fqName }.toSet(),
+            aggregatedDeps =
+              // @AggregatedDeps with non-empty replaces are from @TestInstallIn and should not be
+              // installed in production components
+              aggregatedDeps.filter { it.replaces.isEmpty() }.map { it.fqName }.toSet(),
+            uninstallModulesDeps = emptySet(),
+            earlyEntryPointDeps = emptySet(),
+          )
+        )
+      }
     return componentTreeDeps
   }
 
   private fun testComponents(): Set<ComponentTreeDepsIr> {
     val rootsUsingSharedComponent = rootsUsingSharedComponent(aggregatedRoots)
-    val aggregatedRootsByRoot = aggregatedRoots.filter { it.isTestRoot }.associateBy { it.root }
+    val aggregatedRootsByRoot =
+      aggregatedRoots.filter { it.isTestRoot }.associateBy { it.originatingRoot }
     val aggregatedDepsByRoot =
       aggregatedDepsByRoot(
         aggregatedRoots = aggregatedRoots,
         rootsUsingSharedComponent = rootsUsingSharedComponent,
-        hasEarlyEntryPoints = aggregatedEarlyEntryPointDeps.isNotEmpty()
+        hasEarlyEntryPoints = aggregatedEarlyEntryPointDeps.isNotEmpty(),
       )
-    val uninstallModuleDepsByRoot =
-      aggregatedUninstallModulesDeps.associate { it.test to it.fqName }
+    val uninstallModuleDepsByRoot = aggregatedUninstallModulesDeps.associate {
+      it.test to it.fqName
+    }
     return mutableSetOf<ComponentTreeDepsIr>().apply {
       aggregatedDepsByRoot.keys.forEach { root ->
         val isDefaultRoot = root == DEFAULT_ROOT_CLASS_NAME
         val isEarlyEntryPointRoot = isDefaultRoot && aggregatedEarlyEntryPointDeps.isNotEmpty()
-        // We want to base the generated name on the user written root rather than a generated root.
-        val rootName =
-          if (isDefaultRoot) {
-            DEFAULT_ROOT_CLASS_NAME
-          } else if (aggregatedRootsByRoot.containsKey(root)) {
-            aggregatedRootsByRoot.getValue(root).originatingRoot
-          } else {
-            // If it isn't contained in the map of roots, it is a production root and can be skipped
-            return@forEach
-          }
+        if (!isDefaultRoot && !aggregatedRootsByRoot.containsKey(root)) {
+          // If it isn't contained in the map of roots, it is a production root and can be skipped
+          return@forEach
+        }
         val componentNameGenerator =
           if (isSharedTestComponentsEnabled) {
             ComponentTreeDepsNameGenerator(
@@ -84,7 +84,7 @@ private constructor(
           }
         add(
           ComponentTreeDepsIr(
-            name = componentNameGenerator.generate(rootName),
+            name = componentNameGenerator.generate(root),
             rootDeps =
               // Non-default component: the root
               // Shared component: all roots sharing the component
@@ -104,7 +104,7 @@ private constructor(
                 aggregatedEarlyEntryPointDeps.map { it.fqName }.toSet()
               } else {
                 emptySet()
-              }
+              },
           )
         )
       }
@@ -122,7 +122,7 @@ private constructor(
       }
     return roots
       .filter { it.isTestRoot && it.allowsSharingComponent }
-      .map { it.root }
+      .map { it.originatingRoot }
       .filter { !hasLocalModuleDependencies.contains(it.canonicalName()) }
       .toSet()
   }
@@ -130,7 +130,7 @@ private constructor(
   private fun aggregatedDepsByRoot(
     aggregatedRoots: Set<AggregatedRootIr>,
     rootsUsingSharedComponent: Set<ClassName>,
-    hasEarlyEntryPoints: Boolean
+    hasEarlyEntryPoints: Boolean,
   ): Map<ClassName, Set<ClassName>> {
     val testDepsByRoot =
       aggregatedDeps
@@ -144,36 +144,46 @@ private constructor(
         .groupBy(keySelector = { it.test }, valueTransform = { it.fqName })
     val result = mutableMapOf<ClassName, LinkedHashSet<ClassName>>()
     aggregatedRoots.forEach { aggregatedRoot ->
-      if (!rootsUsingSharedComponent.contains(aggregatedRoot.root)) {
-        result.getOrPut(aggregatedRoot.root) { linkedSetOf() }.apply {
-          addAll(globalModules)
-          addAll(globalEntryPointsByComponent.values.flatten())
-          addAll(testDepsByRoot.getOrElse(aggregatedRoot.root.canonicalName()) { emptyList() })
-        }
+      if (!rootsUsingSharedComponent.contains(aggregatedRoot.originatingRoot)) {
+        result
+          .getOrPut(aggregatedRoot.originatingRoot) { linkedSetOf() }
+          .apply {
+            addAll(globalModules)
+            addAll(globalEntryPointsByComponent.values.flatten())
+            addAll(
+              testDepsByRoot.getOrElse(aggregatedRoot.originatingRoot.canonicalName()) {
+                emptyList()
+              }
+            )
+          }
       }
     }
     // Add the Default/EarlyEntryPoint root if necessary.
     if (rootsUsingSharedComponent.isNotEmpty()) {
-      result.getOrPut(DEFAULT_ROOT_CLASS_NAME) { linkedSetOf() }.apply {
-        addAll(globalModules)
-        addAll(globalEntryPointsByComponent.values.flatten())
-        addAll(
-          rootsUsingSharedComponent.flatMap {
-            testDepsByRoot.getOrElse(it.canonicalName()) { emptyList() }
-          }
-        )
-      }
-    } else if (hasEarlyEntryPoints) {
-      result.getOrPut(DEFAULT_ROOT_CLASS_NAME) { linkedSetOf() }.apply {
-        addAll(globalModules)
-        addAll(
-          globalEntryPointsByComponent.entries
-            .filterNot { (component, _) ->
-              component == SINGLETON_COMPONENT_CLASS_NAME.canonicalName()
+      result
+        .getOrPut(DEFAULT_ROOT_CLASS_NAME) { linkedSetOf() }
+        .apply {
+          addAll(globalModules)
+          addAll(globalEntryPointsByComponent.values.flatten())
+          addAll(
+            rootsUsingSharedComponent.flatMap {
+              testDepsByRoot.getOrElse(it.canonicalName()) { emptyList() }
             }
-            .flatMap { (_, entryPoints) -> entryPoints }
-        )
-      }
+          )
+        }
+    } else if (hasEarlyEntryPoints) {
+      result
+        .getOrPut(DEFAULT_ROOT_CLASS_NAME) { linkedSetOf() }
+        .apply {
+          addAll(globalModules)
+          addAll(
+            globalEntryPointsByComponent.entries
+              .filterNot { (component, _) ->
+                component == SINGLETON_COMPONENT_CLASS_NAME.canonicalName()
+              }
+              .flatMap { (_, entryPoints) -> entryPoints }
+          )
+        }
     }
     return result
   }
@@ -184,22 +194,25 @@ private constructor(
    */
   private class ComponentTreeDepsNameGenerator(
     private val destinationPackage: String? = null,
-    private val otherRootNames: Collection<ClassName> = emptySet()
+    private val otherRootNames: Collection<ClassName> = emptySet(),
   ) {
     private val simpleNameMap: Map<ClassName, String> by lazy {
       mutableMapOf<ClassName, String>().apply {
-        otherRootNames.groupBy { it.enclosedName() }.values.forEach { conflictingRootNames ->
-          if (conflictingRootNames.size == 1) {
-            // If there's only 1 root there's nothing to disambiguate so return the simple name.
-            put(conflictingRootNames.first(), conflictingRootNames.first().enclosedName())
-          } else {
-            // There are conflicting simple names, so disambiguate them with a unique prefix.
-            // We keep them small to fix https://github.com/google/dagger/issues/421.
-            // Sorted in order to guarantee determinism if this is invoked by different processors.
-            val usedNames = mutableSetOf<String>()
-            conflictingRootNames.sorted().forEach { rootClassName ->
-              val basePrefix =
-                rootClassName.let { className ->
+        otherRootNames
+          .groupBy { it.enclosedName() }
+          .values
+          .forEach { conflictingRootNames ->
+            if (conflictingRootNames.size == 1) {
+              // If there's only 1 root there's nothing to disambiguate so return the simple name.
+              put(conflictingRootNames.first(), conflictingRootNames.first().enclosedName())
+            } else {
+              // There are conflicting simple names, so disambiguate them with a unique prefix.
+              // We keep them small to fix https://github.com/google/dagger/issues/421.
+              // Sorted in order to guarantee determinism if this is invoked by different
+              // processors.
+              val usedNames = mutableSetOf<String>()
+              conflictingRootNames.sorted().forEach { rootClassName ->
+                val basePrefix = rootClassName.let { className ->
                   val containerName = className.enclosingClassName()?.enclosedName() ?: ""
                   if (containerName.isNotEmpty() && containerName[0].isUpperCase()) {
                     // If parent element looks like a class, use its initials as a prefix.
@@ -212,15 +225,15 @@ private constructor(
                     }
                   }
                 }
-              var uniqueName = basePrefix
-              var differentiator = 2
-              while (!usedNames.add(uniqueName)) {
-                uniqueName = basePrefix + differentiator++
+                var uniqueName = basePrefix
+                var differentiator = 2
+                while (!usedNames.add(uniqueName)) {
+                  uniqueName = basePrefix + differentiator++
+                }
+                put(rootClassName, "${uniqueName}_${rootClassName.enclosedName()}")
               }
-              put(rootClassName, "${uniqueName}_${rootClassName.enclosedName()}")
             }
           }
-        }
       }
     }
 
@@ -231,7 +244,7 @@ private constructor(
             rootName.enclosedName()
           } else {
             simpleNameMap.getValue(rootName)
-          }
+          },
         )
         .append("_ComponentTreeDeps")
 
@@ -252,7 +265,8 @@ private constructor(
       aggregatedUninstallModulesDeps: Set<AggregatedUninstallModulesIr>,
       aggregatedEarlyEntryPointDeps: Set<AggregatedEarlyEntryPointIr>,
     ): Set<ComponentTreeDepsIr> {
-      val creator = ComponentTreeDepsIrCreator(
+      val creator =
+        ComponentTreeDepsIrCreator(
           isSharedTestComponentsEnabled,
           // TODO(bcorso): Consider creating a common interface for fqName so that we can sort these
           // using a shared method rather than repeating the sorting logic.
@@ -261,8 +275,8 @@ private constructor(
           aliasOfDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
           aggregatedDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
           aggregatedUninstallModulesDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
-          aggregatedEarlyEntryPointDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet()
-      )
+          aggregatedEarlyEntryPointDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
+        )
 
       // AggregatedRootIrValidator should enforce rules on the roots, so just handle both prod and
       // test roots.

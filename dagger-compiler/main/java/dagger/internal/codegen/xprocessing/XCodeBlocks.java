@@ -188,6 +188,61 @@ public final class XCodeBlocks {
     return builder.build();
   }
 
+  /** Returns a language-specific code block for a newly created array. */
+  public static XCodeBlock ofNewArray(XTypeName componentTypeName, XCodeBlock values) {
+    XCodeBlock.Builder builder = XCodeBlock.builder();
+    toJavaPoet(builder).add("new $T[] {$L}", toJavaPoet(componentTypeName), toJavaPoet(values));
+    toKotlinPoet(builder)
+        .add("%L(%L)", kotlinArrayFactory(componentTypeName), toKotlinPoet(values));
+    return builder.build();
+  }
+
+  private static String kotlinArrayFactory(XTypeName componentTypeName) {
+    if (componentTypeName.equals(XTypeName.PRIMITIVE_BOOLEAN)) {
+      return "booleanArrayOf";
+    } else if (componentTypeName.equals(XTypeName.PRIMITIVE_BYTE)) {
+      return "byteArrayOf";
+    } else if (componentTypeName.equals(XTypeName.PRIMITIVE_CHAR)) {
+      return "charArrayOf";
+    } else if (componentTypeName.equals(XTypeName.PRIMITIVE_DOUBLE)) {
+      return "doubleArrayOf";
+    } else if (componentTypeName.equals(XTypeName.PRIMITIVE_FLOAT)) {
+      return "floatArrayOf";
+    } else if (componentTypeName.equals(XTypeName.PRIMITIVE_INT)) {
+      return "intArrayOf";
+    } else if (componentTypeName.equals(XTypeName.PRIMITIVE_LONG)) {
+      return "longArrayOf";
+    } else if (componentTypeName.equals(XTypeName.PRIMITIVE_SHORT)) {
+      return "shortArrayOf";
+    } else {
+      return "arrayOf";
+    }
+  }
+
+  /** Returns a language-specific code block for a byte constant. */
+  public static XCodeBlock ofByte(byte byteValue) {
+    XCodeBlock.Builder builder = XCodeBlock.builder();
+    toJavaPoet(builder).add("(byte) $L", byteValue);
+    toKotlinPoet(builder).add(byteValue < 0 ? "(%L).toByte()" : "%L.toByte()", byteValue);
+    return builder.build();
+  }
+
+  /** Returns a language-specific code block for a double constant. */
+  public static XCodeBlock ofDouble(double doubleValue) {
+    XCodeBlock.Builder builder = XCodeBlock.builder();
+    toJavaPoet(builder).add("$LD", doubleValue);
+    toKotlinPoet(builder).add("%L", doubleValue);
+    return builder.build();
+  }
+
+  /** Returns a language-specific code block for a short constant. */
+  public static XCodeBlock ofShort(short shortValue) {
+    XCodeBlock.Builder builder = XCodeBlock.builder();
+    toJavaPoet(builder).add("(short) $L", shortValue);
+    toKotlinPoet(builder).add(shortValue < 0 ? "(%L).toShort()" : "%L.toShort()", shortValue);
+    return builder.build();
+  }
+
   public static XCodeBlock ofLocalVal(
       String name, XTypeName typeName, String format, Object... args) {
     return ofLocalVal(name, typeName, XCodeBlock.of(format, args));

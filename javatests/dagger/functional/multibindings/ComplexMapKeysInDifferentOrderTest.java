@@ -82,8 +82,7 @@ public final class ComplexMapKeysInDifferentOrderTest {
                 1,
                 2,
                 new NestKey[] {
-                  new AutoAnnotation_ComplexMapKeysInDifferentOrderTest_ComplexMapKeyCreator_createNestKey(
-                      0, "")
+                  nestKey(0, "")
                 }),
             3);
     assertThat(map).containsEntry(mapKey(5, 4, new NestKey[] {}), 6);
@@ -92,5 +91,10 @@ public final class ComplexMapKeysInDifferentOrderTest {
   @AutoAnnotation
   static ComplexMapKey mapKey(int i, int j, NestKey[] nestKeys) {
     return new AutoAnnotation_ComplexMapKeysInDifferentOrderTest_mapKey(i, j, nestKeys);
+  }
+
+  @AutoAnnotation
+  static NestKey nestKey(int i, String j) {
+    return new AutoAnnotation_ComplexMapKeysInDifferentOrderTest_nestKey(i, j);
   }
 }

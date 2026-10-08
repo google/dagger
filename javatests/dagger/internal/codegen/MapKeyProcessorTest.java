@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.truth.TruthJUnit.assume;
 
 import androidx.room3.compiler.processing.XProcessingEnv.Backend;
+import androidx.room3.compiler.processing.util.CompilationResultSubject;
 import androidx.room3.compiler.processing.util.Source;
 import com.google.auto.value.processor.AutoAnnotationProcessor;
 import dagger.testing.compile.CompilerTests;
@@ -43,6 +44,16 @@ public class MapKeyProcessorTest {
 
   public MapKeyProcessorTest(CompilerMode compilerMode) {
     this.compilerMode = compilerMode;
+  }
+
+  private void assumeMapKeySupported(Backend backend) {
+    // TODO(b/264464791): There is no AutoAnnotationProcessor for KSP when generating Java.
+    assume().that(backend != Backend.KSP).isTrue();
+  }
+
+  private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
+    Source source = goldenFileRule.goldenSource(goldenName);
+    subject.generatedSource(source);
   }
 
   @Test
@@ -73,10 +84,9 @@ public class MapKeyProcessorTest {
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(
             subject -> {
-              // TODO(b/264464791): There is no AutoAnnotationProcessor for KSP.
-              assume().that(CompilerTests.backend(subject)).isNotEqualTo(Backend.KSP);
+              assumeMapKeySupported(CompilerTests.backend(subject));
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/PathKeyCreator"));
+              assertSourceMatchesGolden(subject, "test/PathKeyCreator");
             });
   }
 
@@ -108,10 +118,9 @@ public class MapKeyProcessorTest {
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(
             subject -> {
-              // TODO(b/264464791): There is no AutoAnnotationProcessor for KSP.
-              assume().that(CompilerTests.backend(subject)).isNotEqualTo(Backend.KSP);
+              assumeMapKeySupported(CompilerTests.backend(subject));
               subject.hasErrorCount(0);
-              subject.generatedSource(goldenFileRule.goldenSource("test/Container_PathKeyCreator"));
+              assertSourceMatchesGolden(subject, "test/Container_PathKeyCreator");
             });
   }
 
@@ -176,9 +185,118 @@ public class MapKeyProcessorTest {
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(
             subject -> {
-              // TODO(b/264464791): There is no AutoAnnotationProcessor for KSP.
-              assume().that(CompilerTests.backend(subject)).isNotEqualTo(Backend.KSP);
+              assumeMapKeySupported(CompilerTests.backend(subject));
               subject.hasErrorCount(0);
+            });
+  }
+
+  @Test
+  public void complexLiteralsKey() {
+    Source complexKey =
+        CompilerTests.kotlinSource(
+            "ComplexLiteralsKey.kt",
+            "package test",
+            "",
+            "import dagger.MapKey",
+            "import kotlin.reflect.KClass",
+            "",
+            "@MapKey(unwrapValue = false)",
+            "annotation class ComplexLiteralsKey(",
+            "  val clazz: KClass<*>,",
+            "  val clazzArray: Array<KClass<*>>,",
+            "  val intArray: IntArray,",
+            "  val byteVal: Byte,",
+            "  val shortVal: Short",
+            ")");
+    Source module =
+        CompilerTests.kotlinSource(
+            "FooModule.kt",
+            "package test",
+            "",
+            "import dagger.Module",
+            "import dagger.Provides",
+            "import dagger.multibindings.IntoMap",
+            "",
+            "@Module",
+            "class FooModule {",
+            "  @IntoMap",
+            "  @ComplexLiteralsKey(",
+            "    clazz = String::class,",
+            "    clazzArray = [String::class, Any::class],",
+            "    intArray = [1, 2],",
+            "    byteVal = (-3).toByte(),",
+            "    shortVal = (-4).toShort()",
+            "  )",
+            "  @Provides",
+            "  fun provideString(): String = \"hello\"",
+            "}");
+    Source component =
+        CompilerTests.kotlinSource(
+            "MyComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "",
+            "@Component(modules = [FooModule::class])",
+            "interface MyComponent {",
+            "  fun getFoo(): Map<ComplexLiteralsKey, String>",
+            "}");
+    CompilerTests.daggerCompiler(complexKey, module, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .withAdditionalJavacProcessors(new AutoAnnotationProcessor())
+        .compile(
+            subject -> {
+              assumeMapKeySupported(CompilerTests.backend(subject));
+              subject.hasErrorCount(0);
+              assertSourceMatchesGolden(subject, "test/ComplexLiteralsKeyCreator");
+            });
+  }
+
+  @Test
+  public void nestedAnnotations() {
+    Source outerKey =
+        CompilerTests.kotlinSource(
+            "OuterKey.kt",
+            "package test",
+            "",
+            "import dagger.MapKey",
+            "",
+            "@MapKey(unwrapValue = false)",
+            "annotation class OuterKey(val nested: NestedKey)",
+            "",
+            "annotation class NestedKey(val value: String)");
+    CompilerTests.daggerCompiler(outerKey)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .withAdditionalJavacProcessors(new AutoAnnotationProcessor())
+        .compile(
+            subject -> {
+              assumeMapKeySupported(CompilerTests.backend(subject));
+              subject.hasErrorCount(0);
+              assertSourceMatchesGolden(subject, "test/OuterKeyCreator");
+            });
+  }
+
+  @Test
+  public void unwrappedMapKey_withNestedAnnotation() {
+    Source unwrappedKey =
+        CompilerTests.kotlinSource(
+            "UnwrappedOuterKey.kt",
+            "package test",
+            "",
+            "import dagger.MapKey",
+            "",
+            "@MapKey(unwrapValue = true)",
+            "annotation class UnwrappedOuterKey(val nested: NestedKey)",
+            "",
+            "annotation class NestedKey(val value: String)");
+    CompilerTests.daggerCompiler(unwrappedKey)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .withAdditionalJavacProcessors(new AutoAnnotationProcessor())
+        .compile(
+            subject -> {
+              assumeMapKeySupported(CompilerTests.backend(subject));
+              subject.hasErrorCount(0);
+              assertSourceMatchesGolden(subject, "test/UnwrappedOuterKeyCreator");
             });
   }
 }

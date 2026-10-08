@@ -1,0 +1,32 @@
+package test
+
+import dagger.`internal`.DaggerGenerated
+import java.lang.Class
+import javax.`annotation`.processing.Generated
+import kotlin.Array
+import kotlin.Byte
+import kotlin.IntArray
+import kotlin.Short
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public object ComplexLiteralsKeyCreator {
+  @JvmStatic
+  public fun createComplexLiteralsKey(
+    clazz: Class<*>,
+    clazzArray: Array<Class<*>>,
+    intArray: IntArray,
+    byteVal: Byte,
+    shortVal: Short,
+  ): ComplexLiteralsKey = ComplexLiteralsKey(clazz = clazz.kotlin, clazzArray = clazzArray.map { it.kotlin }.toTypedArray(), intArray = intArray, byteVal = byteVal, shortVal = shortVal)
+}

@@ -27,7 +27,6 @@ import static dagger.internal.codegen.xprocessing.XFunSpecs.methodBuilder;
 import static dagger.internal.codegen.xprocessing.XTypes.asArray;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 import static dagger.internal.codegen.xprocessing.XTypes.rewrapType;
-import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -84,8 +83,11 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement
   private static final XClassName AUTO_ANNOTATION =
       XClassName.get("com.google.auto.value", "AutoAnnotation");
 
+
   @Inject
-  AnnotationCreatorGenerator(XFiler filer, XProcessingEnv processingEnv) {
+  AnnotationCreatorGenerator(
+      XFiler filer,
+      XProcessingEnv processingEnv) {
     super(filer, processingEnv);
   }
 
@@ -98,9 +100,9 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement
   public ImmutableList<XTypeSpec> topLevelTypes(XTypeElement annotationType) {
     XClassName generatedTypeName = getAnnotationCreatorClassName(annotationType);
     XTypeSpecs.Builder annotationCreatorBuilder =
-        XTypeSpecs.classBuilder(generatedTypeName)
-            .addModifiers(PUBLIC, FINAL)
-            .addFunction(constructorBuilder().addModifiers(PRIVATE).build());
+        XTypeSpecs.objectBuilder(generatedTypeName).addModifiers(PUBLIC);
+
+    annotationCreatorBuilder.addFunction(constructorBuilder().addModifiers(PRIVATE).build());
 
     for (XTypeElement annotationElement : annotationsToCreate(annotationType)) {
       annotationCreatorBuilder.addFunction(buildCreateMethod(generatedTypeName, annotationElement));
@@ -113,25 +115,27 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement
     String createMethodName = createMethodName(annotationElement);
     XFunSpecs.Builder createMethod =
         methodBuilder(createMethodName)
-            .addAnnotation(AUTO_ANNOTATION)
             .addModifiers(PUBLIC, STATIC)
             .returns(annotationElement.getType().asTypeName());
+
+    createMethod.addAnnotation(AUTO_ANNOTATION);
 
     ImmutableList.Builder<XCodeBlock> parameters = ImmutableList.builder();
     for (XMethodElement annotationMember : annotationElement.getDeclaredMethods()) {
       String parameterName = getSimpleName(annotationMember);
-      XTypeName parameterType = maybeRewrapKClass(annotationMember.getReturnType()).asTypeName();
+      XType returnType = annotationMember.getReturnType();
+      XTypeName parameterType = maybeRewrapKClass(returnType).asTypeName();
       createMethod.addParameter(parameterName, parameterType);
       parameters.add(XCodeBlock.of("%N", parameterName));
     }
 
-    XClassName autoAnnotationClass =
-        generatedTypeName.peerClass(
-            "AutoAnnotation_" + generatedTypeName.getSimpleName() + "_" + createMethodName);
+    XClassName targetClass =
+            generatedTypeName.peerClass(
+                "AutoAnnotation_" + generatedTypeName.getSimpleName() + "_" + createMethodName);
     createMethod.addStatement(
         "return %L",
         XCodeBlock.ofNewInstance(
-            autoAnnotationClass, "%L", makeParametersCodeBlock(parameters.build())));
+            targetClass, "%L", makeParametersCodeBlock(parameters.build())));
     return createMethod.build();
   }
 

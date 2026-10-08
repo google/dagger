@@ -250,12 +250,12 @@ class MultibindingTest {
 
 @MapKey(unwrapValue = true) internal annotation class UnwrappedAnnotationKey(val value: StringKey)
 
-internal class NestedAnnotationContainer {
+class NestedAnnotationContainer {
   @MapKey(unwrapValue = false) annotation class NestedWrappedKey(val value: KClass<*>)
 }
 
 @MapKey(unwrapValue = false)
-internal annotation class WrappedAnnotationKey(
+annotation class WrappedAnnotationKey(
   val value: StringKey,
   val integers: IntArray,
   val annotations: Array<ClassKey>,

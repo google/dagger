@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.xprocessing.XElements.isInternal;
 import static dagger.internal.codegen.xprocessing.XElements.isPrivate;
 import static java.util.stream.Collectors.joining;
 import static kotlin.streams.jdk8.StreamsKt.asStream;
@@ -128,6 +129,18 @@ public final class XTypeElements {
 
   public static boolean isEffectivelyPrivate(XTypeElement element) {
     return allVisibilities(element).contains(Visibility.PRIVATE);
+  }
+
+  public static boolean isEffectivelyInternal(XTypeElement element) {
+    checkNotNull(element);
+    XTypeElement current = element;
+    while (current != null) {
+      if (isInternal(current)) {
+        return true;
+      }
+      current = current.getEnclosingTypeElement();
+    }
+    return false;
   }
 
   public static boolean isJvmClass(XTypeElement element) {

@@ -1,0 +1,25 @@
+package test
+
+import dagger.`internal`.DaggerGenerated
+import javax.`annotation`.processing.Generated
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public object OuterKeyCreator {
+  @JvmStatic
+  public fun createOuterKey(nested: NestedKey): OuterKey = OuterKey(nested = nested)
+
+  @JvmStatic
+  public fun createNestedKey(`value`: String): NestedKey = NestedKey(`value` = `value`)
+}

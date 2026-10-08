@@ -24,4 +24,6 @@ public final class NestedAnnotationContainer {
   @interface NestedWrappedKey {
     Class<?> value();
   }
+  
+  private NestedAnnotationContainer() {}
 }

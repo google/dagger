@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.validation;
 
+
 import androidx.room3.compiler.processing.XAnnotationKt;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
@@ -32,24 +33,37 @@ public final class MapKeyValidator {
   private final XProcessingEnv processingEnv;
 
   @Inject
-  MapKeyValidator(XProcessingEnv processingEnv) {
+  MapKeyValidator(
+      XProcessingEnv processingEnv) {
     this.processingEnv = processingEnv;
   }
 
   public ValidationReport validate(XTypeElement element) {
     ValidationReport.Builder builder = ValidationReport.about(element);
-    List<XMethodElement> members = element.getDeclaredMethods();
-    if (members.isEmpty()) {
+    if (element.getDeclaredMethods().isEmpty()) {
       builder.addError("Map key annotations must have members", element);
     } else if (XAnnotationKt.get(
         element.getAnnotation(XTypeNames.MAP_KEY), "unwrapValue", Boolean.class)) {
-      if (members.size() > 1) {
-        builder.addError(
-            "Map key annotations with unwrapped values must have exactly one member", element);
-      } else if (XTypeKt.isArray(members.get(0).getReturnType())) {
-        builder.addError("Map key annotations with unwrapped values cannot use arrays", element);
-      }
-    } else if (autoAnnotationIsMissing()) {
+      validateUnwrappedValue(element, builder);
+    } else {
+      validateWrappedValue(element, builder);
+    }
+    return builder.build();
+  }
+
+  private void validateUnwrappedValue(XTypeElement element, ValidationReport.Builder builder) {
+    List<XMethodElement> members = element.getDeclaredMethods();
+    if (members.size() > 1) {
+      builder.addError(
+          "Map key annotations with unwrapped values must have exactly one member", element);
+    } else if (XTypeKt.isArray(members.get(0).getReturnType())) {
+      builder.addError("Map key annotations with unwrapped values cannot use arrays", element);
+    }
+  }
+
+  private void validateWrappedValue(XTypeElement element, ValidationReport.Builder builder) {
+    if (autoAnnotationIsMissing()
+        ) {
       builder.addError(
           "@AutoAnnotation is a necessary dependency if @MapKey(unwrapValue = false). Add a "
               + "dependency for the annotation, "
@@ -57,7 +71,6 @@ public final class MapKeyValidator {
               + "and the annotation processor, "
               + "\"com.google.auto.value:auto-value:<current version>\"");
     }
-    return builder.build();
   }
 
   private boolean autoAnnotationIsMissing() {

@@ -1,0 +1,30 @@
+package test;
+
+import com.google.auto.value.AutoAnnotation;
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class ComplexLiteralsKeyCreator {
+  private ComplexLiteralsKeyCreator() {
+  }
+
+  @AutoAnnotation
+  public static ComplexLiteralsKey createComplexLiteralsKey(Class<?> clazz, Class<?>[] clazzArray,
+      int[] intArray, byte byteVal, short shortVal) {
+    return new AutoAnnotation_ComplexLiteralsKeyCreator_createComplexLiteralsKey(clazz, clazzArray, intArray, byteVal, shortVal);
+  }
+}

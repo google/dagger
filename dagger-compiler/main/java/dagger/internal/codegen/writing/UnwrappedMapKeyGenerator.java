@@ -55,8 +55,12 @@ import javax.inject.Inject;
 public final class UnwrappedMapKeyGenerator extends AnnotationCreatorGenerator {
 
   @Inject
-  UnwrappedMapKeyGenerator(XFiler filer, XProcessingEnv processingEnv) {
-    super(filer, processingEnv);
+  UnwrappedMapKeyGenerator(
+      XFiler filer,
+      XProcessingEnv processingEnv) {
+    super(
+        filer,
+        processingEnv);
   }
 
   @Override

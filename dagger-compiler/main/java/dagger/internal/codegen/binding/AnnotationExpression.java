@@ -28,10 +28,12 @@ import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XCodeBlock;
+import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XAnnotationValue;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
+import dagger.internal.codegen.xprocessing.XCodeBlocks;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 
 /**
@@ -95,15 +97,16 @@ public final class AnnotationExpression {
   XCodeBlock getValueExpression(XAnnotationValue value) {
     if (isArray(value.getValueType())) {
       XType componentType = asArray(value.getValueType()).getComponentType();
-      return XCodeBlock.of(
-          "new %T[] {%L}",
+      XTypeName componentTypeName =
           // TODO(b/264464791): The KClass -> Class swap can be removed once this bug is fixed.
           isTypeOf(componentType, XTypeNames.KCLASS)
               ? XTypeNames.CLASS
-              : componentType.getRawType().asTypeName(),
+              : componentType.getRawType().asTypeName();
+      XCodeBlock values =
           value.asAnnotationValueList().stream()
               .map(this::getValueExpression)
-              .collect(toParametersCodeBlock()));
+              .collect(toParametersCodeBlock());
+      return XCodeBlocks.ofNewArray(componentTypeName, values);
     } else if (value.hasEnumValue()) {
       return XCodeBlock.of(
           "%T.%L",
@@ -111,22 +114,22 @@ public final class AnnotationExpression {
     } else if (value.hasAnnotationValue()) {
       return getAnnotationInstanceExpression(value.asAnnotation());
     } else if (value.hasTypeValue()) {
-      return XCodeBlock.of("%T.class", value.asType().getTypeElement().asClassName());
+      return XCodeBlocks.ofJavaClassLiteral(value.asType().getTypeElement().asClassName());
     } else if (value.hasStringValue()) {
       return XCodeBlock.of("%S", value.asString());
     } else if (value.hasByteValue()) {
-      return XCodeBlock.of("(byte) %L", value.asByte());
+      return XCodeBlocks.ofByte(value.asByte());
     } else if (value.hasCharValue()) {
       // TODO(bcorso): Replace when https://github.com/square/javapoet/issues/698 is fixed.
       return XCodeBlock.of("%L", characterLiteralWithSingleQuotes(value.asChar()));
     } else if (value.hasDoubleValue()) {
-      return XCodeBlock.of("%LD", value.asDouble());
+      return XCodeBlocks.ofDouble(value.asDouble());
     } else if (value.hasFloatValue()) {
       return XCodeBlock.of("%LF", value.asFloat());
     } else if (value.hasLongValue()) {
       return XCodeBlock.of("%LL", value.asLong());
     } else if (value.hasShortValue()) {
-      return XCodeBlock.of("(short) %L", value.asShort());
+      return XCodeBlocks.ofShort(value.asShort());
     } else {
       return XCodeBlock.of("%L", value.getValue());
     }

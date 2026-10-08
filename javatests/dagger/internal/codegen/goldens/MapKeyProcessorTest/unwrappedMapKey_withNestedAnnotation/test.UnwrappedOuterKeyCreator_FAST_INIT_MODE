@@ -1,0 +1,29 @@
+package test;
+
+import com.google.auto.value.AutoAnnotation;
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class UnwrappedOuterKeyCreator {
+  private UnwrappedOuterKeyCreator() {
+  }
+
+  @AutoAnnotation
+  public static NestedKey createNestedKey(String value) {
+    return new AutoAnnotation_UnwrappedOuterKeyCreator_createNestedKey(value);
+  }
+}

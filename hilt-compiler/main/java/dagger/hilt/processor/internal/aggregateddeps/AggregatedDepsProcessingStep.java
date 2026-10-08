@@ -162,7 +162,8 @@ public final class AggregatedDepsProcessingStep extends BaseProcessingStep {
         // Skip ApplicationContextModule, since Hilt manages this module internally.
         ClassNames.APPLICATION_CONTEXT_MODULE.equals(module.getClassName())
             || !Processors.requiresModuleInstance(module)
-            || Processors.hasVisibleEmptyConstructor(module),
+            || Processors.hasVisibleEmptyConstructor(module)
+            ,
         module,
         "Modules that need to be instantiated by Hilt must have a visible, empty constructor.");
 

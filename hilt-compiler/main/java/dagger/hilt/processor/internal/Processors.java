@@ -431,10 +431,7 @@ public final class Processors {
     return constructors.isEmpty()
         || constructors.stream()
             .filter(constructor -> constructor.getParameters().isEmpty())
-            .anyMatch(
-                constructor ->
-                    !constructor.isPrivate()
-                        );
+            .anyMatch(constructor -> !constructor.isPrivate());
   }
 
   private static boolean isBindingMethod(XExecutableElement method) {

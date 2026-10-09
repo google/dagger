@@ -26,7 +26,8 @@ import kotlin.metadata.jvm.syntheticMethodForAnnotations
 
 /** Container classes for kotlin metadata types. */
 class ClassMetadata private constructor(private val kmClass: KmClass) {
-  val propertiesByName = kmClass.properties.map { PropertyMetadata(it) }.associateBy { it.name }
+  val propertiesByName: Map<String, PropertyMetadata> =
+    kmClass.properties.map { PropertyMetadata(it) }.associateBy { it.name }
 
   companion object {
     /** Parse Kotlin class metadata from a given type element. */
@@ -42,8 +43,8 @@ class ClassMetadata private constructor(private val kmClass: KmClass) {
 }
 
 class PropertyMetadata(private val kmProperty: KmProperty) {
-  val name = kmProperty.name
+  val name: String = kmProperty.name
 
   /** Returns JVM method descriptor of the synthetic method for property annotations. */
-  val methodForAnnotationsSignature = kmProperty.syntheticMethodForAnnotations?.toString()
+  val methodForAnnotationsSignature: String? = kmProperty.syntheticMethodForAnnotations?.toString()
 }

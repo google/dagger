@@ -64,11 +64,13 @@ class TestMemberInjectedClassWithQualifier {
   val noBackingFieldProperty: Int
     get() = 0
 
-  val delegatedProperty by lazy { "" }
+  val delegatedProperty: String by lazy { "" }
 
-  val generatedTypeProperty = dagger.functional.kotlin.GeneratedType()
+  val generatedTypeProperty: GeneratedType = dagger.functional.kotlin.GeneratedType()
 
-  val generatedTypeDelegatedProperty by lazy { dagger.functional.kotlin.GeneratedType() }
+  val generatedTypeDelegatedProperty: GeneratedType by lazy {
+    dagger.functional.kotlin.GeneratedType()
+  }
 }
 
 data class TestDataA(val data: String)
@@ -82,4 +84,6 @@ data class TestDataB(val data: String)
   AnnotationTarget.FIELD,
   AnnotationTarget.PROPERTY_SETTER,
 )
-@Qualifier @Retention(AnnotationRetention.RUNTIME) annotation class KotlinTestQualifier
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class KotlinTestQualifier

@@ -22,7 +22,6 @@ import com.google.devtools.ksp.symbol.KSDeclaration
 import com.squareup.javapoet.ClassName
 import dagger.spi.model.DaggerAnnotation
 import dagger.spi.model.DaggerElement
-import dagger.spi.model.DaggerProcessingEnv
 import dagger.spi.model.DaggerProcessingEnv.Backend.JAVAC
 import dagger.spi.model.DaggerProcessingEnv.Backend.KSP
 import dagger.spi.model.DaggerType
@@ -34,24 +33,22 @@ fun DaggerType.hasAnnotation(className: ClassName): Boolean =
     KSP -> ksp().declaration.hasAnnotation(className.canonicalName())
   }
 
-fun KSDeclaration.hasAnnotation(annotationName: String): Boolean =
-  annotations.any {
-    it.annotationType.resolve().declaration.qualifiedName?.asString().equals(annotationName)
-  }
+fun KSDeclaration.hasAnnotation(annotationName: String): Boolean = annotations.any {
+  it.annotationType.resolve().declaration.qualifiedName?.asString().equals(annotationName)
+}
 
-fun DaggerElement.hasAnnotation(className: ClassName) =
+fun DaggerElement.hasAnnotation(className: ClassName): Boolean =
   when (checkNotNull(backend())) {
     JAVAC -> Processors.hasAnnotation(javac(), className)
     KSP -> ksp().hasAnnotation(className)
   }
 
-fun DaggerAnnotation.getQualifiedName() =
+fun DaggerAnnotation.getQualifiedName(): String =
   when (checkNotNull(backend())) {
     JAVAC -> MoreTypes.asTypeElement(javac().annotationType).qualifiedName.toString()
     KSP -> ksp().annotationType.resolve().declaration.qualifiedName!!.asString()
   }
 
-private fun KSAnnotated.hasAnnotation(className: ClassName) =
-  annotations.any {
-    it.annotationType.resolve().declaration.qualifiedName!!.asString() == className.canonicalName()
-  }
+private fun KSAnnotated.hasAnnotation(className: ClassName) = annotations.any {
+  it.annotationType.resolve().declaration.qualifiedName!!.asString() == className.canonicalName()
+}

@@ -125,6 +125,9 @@ public final class XElements {
     if (isField(element)) {
       return toKS(asField(element));
     }
+    if (isProperty(element)) {
+      return toKS(asProperty(element));
+    }
     if (isMethodParameter(element)) {
       return toKS(asMethodParameter(element));
     }
@@ -164,6 +167,8 @@ public final class XElements {
       return optionalClosestEnclosingTypeElement(asMethod(element).getEnclosingElement());
     } else if (isField(element)) {
       return optionalClosestEnclosingTypeElement(asField(element).getEnclosingElement());
+    } else if (isProperty(element)) {
+      return optionalClosestEnclosingTypeElement(asProperty(element).getEnclosingElement());
     } else if (isMethodParameter(element)) {
       return optionalClosestEnclosingTypeElement(asMethodParameter(element).getEnclosingElement());
     }

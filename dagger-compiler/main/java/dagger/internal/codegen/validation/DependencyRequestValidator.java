@@ -112,7 +112,7 @@ final class DependencyRequestValidator {
       if (!fieldElement.isStatic()
           && isTypeElement(fieldElement.getEnclosingElement())
           && metadataUtil.hasMetadata(fieldElement)
-          && metadataUtil.isMissingSyntheticPropertyForAnnotations(fieldElement)) {
+          && metadataUtil.isMissingSyntheticAnnotationMethod(fieldElement.getOwner())) {
         Optional<XTypeElement> membersInjector =
             Optional.ofNullable(
                 processingEnv.findTypeElement(

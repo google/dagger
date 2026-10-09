@@ -17,6 +17,8 @@
 package dagger.hilt.processor.internal.kotlin;
 
 import static androidx.room3.compiler.processing.XElementKt.isField;
+import static androidx.room3.compiler.processing.XElementKt.isProperty;
+import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asField;
@@ -24,8 +26,8 @@ import static dagger.internal.codegen.xprocessing.XElements.asField;
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XExecutableParameterElement;
-import androidx.room3.compiler.processing.XFieldElement;
 import androidx.room3.compiler.processing.XMethodElement;
+import androidx.room3.compiler.processing.XPropertyElement;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableList;
@@ -70,8 +72,8 @@ public final class KotlinMetadataUtil {
   }
 
   /**
-   * Returns the annotations on the given {@code element} annotated with any annotation in
-   * {@code annotationNames}.
+   * Returns the annotations on the given {@code element} annotated with any annotation in {@code
+   * annotationNames}.
    *
    * <p>Note: If the given {@code element} is a non-static field this method will return annotations
    * on both the backing field and the associated synthetic property (if one exists).
@@ -90,8 +92,13 @@ public final class KotlinMetadataUtil {
    * on both the backing field and the associated synthetic property (if one exists).
    */
   private ImmutableList<XAnnotation> getAnnotations(XElement element) {
+    checkArgument(!isProperty(element));
     ImmutableList<XAnnotation> annotations = ImmutableList.copyOf(element.getAllAnnotations());
-    ImmutableList<XAnnotation> syntheticAnnotations = getSyntheticPropertyAnnotations(element);
+    if (!isField(element)) {
+      return annotations;
+    }
+    ImmutableList<XAnnotation> syntheticAnnotations =
+        getSyntheticPropertyAnnotations(asField(element).getOwner());
     if (syntheticAnnotations.isEmpty()) {
       return annotations;
     }
@@ -101,9 +108,7 @@ public final class KotlinMetadataUtil {
     // TypeNotPresentException on annotation values with error types unless it has the same class
     // name as a synthetic annotation.
     ImmutableSet<ClassName> syntheticAnnotationClassNames =
-        syntheticAnnotations.stream()
-            .map(XAnnotations::getClassName)
-            .collect(toImmutableSet());
+        syntheticAnnotations.stream().map(XAnnotations::getClassName).collect(toImmutableSet());
     ImmutableSet<Equivalence.Wrapper<XAnnotation>> annotationEquivalenceWrappers =
         annotations.stream()
             .filter(annotation -> syntheticAnnotationClassNames.contains(annotation.getClassName()))
@@ -129,15 +134,12 @@ public final class KotlinMetadataUtil {
    * <p>Note that this method only looks for additional annotations in the synthetic property
    * method, if any, of a Kotlin property and not for annotations in its backing field.
    */
-  private ImmutableList<XAnnotation> getSyntheticPropertyAnnotations(XElement element) {
-    if (!isField(element)) {
-      return ImmutableList.of();
-    }
-    XFieldElement field = asField(element);
-    return hasMetadata(field)
+  private ImmutableList<XAnnotation> getSyntheticPropertyAnnotations(
+      XPropertyElement propertyElement) {
+    return hasMetadata(propertyElement)
         ? metadataFactory
-            .create(field)
-            .getSyntheticAnnotationMethod(field)
+            .create(propertyElement)
+            .getSyntheticAnnotationMethod(propertyElement)
             .map(XMethodElement::getAllAnnotations)
             .map(ImmutableList::copyOf)
             .orElse(ImmutableList.<XAnnotation>of())

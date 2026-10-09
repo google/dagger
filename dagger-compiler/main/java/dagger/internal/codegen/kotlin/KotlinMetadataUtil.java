@@ -21,7 +21,7 @@ import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingType
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
-import androidx.room3.compiler.processing.XFieldElement;
+import androidx.room3.compiler.processing.XPropertyElement;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import javax.inject.Inject;
@@ -49,14 +49,14 @@ public final class KotlinMetadataUtil {
    * <p>Note that this method only looks for additional annotations in the synthetic property
    * method, if any, of a Kotlin property and not for annotations in its backing field.
    *
-   * <p>Callers should first check {@link #isMissingSyntheticPropertyForAnnotations}, since this
-   * method returns an empty set if the synthetic method is missing.
+   * <p>Callers should first check {@link #isMissingSyntheticAnnotationMethod}, since this method
+   * returns an empty set if the synthetic method is missing.
    */
   public ImmutableSet<XAnnotation> getSyntheticPropertyAnnotations(
-      XFieldElement fieldElement, XClassName annotationType) {
+      XPropertyElement propertyElement, XClassName annotationType) {
     // XPropertyElement's annotations are the annotations on the property's synthetic
     // `$annotations` method, which XProcessing already resolves using the Kotlin metadata.
-    return ImmutableSet.copyOf(fieldElement.getOwner().getAnnotationsAnnotatedWith(annotationType));
+    return ImmutableSet.copyOf(propertyElement.getAnnotationsAnnotatedWith(annotationType));
   }
 
   /**
@@ -64,7 +64,9 @@ public final class KotlinMetadataUtil {
    * the Kotlin metadata of the property reports that it contains a synthetic method for annotations
    * but such method is not found since it is synthetic and ignored by the processor.
    */
-  public boolean isMissingSyntheticPropertyForAnnotations(XFieldElement fieldElement) {
-    return metadataFactory.create(fieldElement).isMissingSyntheticAnnotationMethod(fieldElement);
+  public boolean isMissingSyntheticAnnotationMethod(XPropertyElement propertyElement) {
+    return metadataFactory
+        .create(propertyElement)
+        .isMissingSyntheticAnnotationMethod(propertyElement);
   }
 }

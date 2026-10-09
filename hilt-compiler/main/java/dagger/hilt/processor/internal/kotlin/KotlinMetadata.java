@@ -20,8 +20,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
-import androidx.room3.compiler.processing.XFieldElement;
 import androidx.room3.compiler.processing.XMethodElement;
+import androidx.room3.compiler.processing.XPropertyElement;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -36,9 +36,9 @@ import javax.annotation.Nullable;
 /** Data class of a TypeElement and its Kotlin metadata. */
 @AutoValue
 abstract class KotlinMetadata {
-  // Map that associates field elements with its Kotlin synthetic method for annotations.
-  private final Map<XFieldElement, Optional<MethodForAnnotations>> elementFieldAnnotationMethodMap =
-      new HashMap<>();
+  // Map that associates property elements with its Kotlin synthetic method for annotations.
+  private final Map<XPropertyElement, Optional<MethodForAnnotations>>
+      elementPropertyAnnotationMethodMap = new HashMap<>();
 
   abstract XTypeElement typeElement();
 
@@ -50,26 +50,27 @@ abstract class KotlinMetadata {
         .collect(toImmutableMap(XMethodElement::getJvmDescriptor, Function.identity()));
   }
 
-  /** Gets the synthetic method for annotations of a given field element. */
-  Optional<XMethodElement> getSyntheticAnnotationMethod(XFieldElement fieldElement) {
-    return getAnnotationMethod(fieldElement)
+  /** Gets the synthetic method for annotations of a given property element. */
+  Optional<XMethodElement> getSyntheticAnnotationMethod(XPropertyElement propertyElement) {
+    return getAnnotationMethod(propertyElement)
         .map(
             methodForAnnotations -> {
               if (methodForAnnotations == MethodForAnnotations.MISSING) {
                 throw new IllegalStateException(
-                    "Method for annotations is missing for " + fieldElement);
+                    "Method for annotations is missing for " + propertyElement);
               }
               return XElements.asMethod(methodForAnnotations.method());
             });
   }
 
-  private Optional<MethodForAnnotations> getAnnotationMethod(XFieldElement fieldElement) {
-    return elementFieldAnnotationMethodMap.computeIfAbsent(
-        fieldElement, this::getAnnotationMethodUncached);
+  private Optional<MethodForAnnotations> getAnnotationMethod(XPropertyElement propertyElement) {
+    return elementPropertyAnnotationMethodMap.computeIfAbsent(
+        propertyElement, this::getAnnotationMethodUncached);
   }
 
-  private Optional<MethodForAnnotations> getAnnotationMethodUncached(XFieldElement fieldElement) {
-    return Optional.ofNullable(findProperty(fieldElement).getMethodForAnnotationsSignature())
+  private Optional<MethodForAnnotations> getAnnotationMethodUncached(
+      XPropertyElement propertyElement) {
+    return Optional.ofNullable(findProperty(propertyElement).getMethodForAnnotationsSignature())
         .map(
             signature ->
                 Optional.ofNullable(methodDescriptors().get(signature))
@@ -79,8 +80,8 @@ abstract class KotlinMetadata {
                     .orElse(MethodForAnnotations.MISSING));
   }
 
-  private PropertyMetadata findProperty(XFieldElement field) {
-    return checkNotNull(classMetadata().getPropertiesByName().get(getSimpleName(field.getOwner())));
+  private PropertyMetadata findProperty(XPropertyElement property) {
+    return checkNotNull(classMetadata().getPropertiesByName().get(getSimpleName(property)));
   }
 
   /** Parse Kotlin class metadata from a given type element. */

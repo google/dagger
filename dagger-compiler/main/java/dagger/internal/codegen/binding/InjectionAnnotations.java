@@ -364,7 +364,7 @@ public final class InjectionAnnotations {
    */
   private ImmutableSet<XAnnotation> getQualifiersForKotlinProperty(XFieldElement field) {
     // TODO(bcorso): Consider moving this to KotlinMetadataUtil
-    if (kotlinMetadataUtil.isMissingSyntheticPropertyForAnnotations(field)) {
+    if (kotlinMetadataUtil.isMissingSyntheticAnnotationMethod(field.getOwner())) {
       // If we detect that the synthetic method for annotations is missing, possibly due to the
       // element being from a compiled class, then find the MembersInjector that was generated
       // for the enclosing class and extract the qualifier information from it.
@@ -402,7 +402,9 @@ public final class InjectionAnnotations {
       return qualifierTypeNames().stream()
           .flatMap(
               qualifier ->
-                  kotlinMetadataUtil.getSyntheticPropertyAnnotations(field, qualifier).stream())
+                  kotlinMetadataUtil
+                      .getSyntheticPropertyAnnotations(field.getOwner(), qualifier)
+                      .stream())
           .collect(toImmutableSet());
     }
   }

@@ -87,8 +87,8 @@ jobs:
             ksp: '2.3.0'
           # Max Versions
           - java: '21'
-            kotlin: '2.3.21'
-            ksp: '2.3.11'
+            kotlin: '2.4.20'
+            ksp: '2.3.12'
     env:
       USE_JAVA_VERSION_FOR_GRADLE: ${{ matrix.java }}
       USE_KOTLIN_VERSION: ${{ matrix.kotlin }}
@@ -129,8 +129,8 @@ jobs:
           # Max Versions
           - agp: '9.0.0'
             java: '21'
-            kotlin: '2.3.21'
-            ksp: '2.3.11'
+            kotlin: '2.4.20'
+            ksp: '2.3.12'
     env:
       USE_AGP_VERSION: ${{ matrix.agp }}
       USE_JAVA_VERSION_FOR_GRADLE: ${{ matrix.java }}

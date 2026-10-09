@@ -28,6 +28,11 @@ buildscript {
         mavenLocal()
     }
     dependencies {
+        // TODO: Remove this override once AGP 9.2.0+ is used (AGP < 9.2.0 bundles R8 < 9.1.29,
+        // which cannot rewrite Kotlin 2.4+ metadata during D8 dexing).
+        if (GradleVersion.version(kotlin_version) >= GradleVersion.version("2.4.0")) {
+            classpath "com.android.tools:r8:9.1.56"
+        }
         classpath "com.android.tools.build:gradle:$agp_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:$ksp_version"

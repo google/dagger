@@ -34,14 +34,14 @@ final class DaggerUnscopedComponent {
     }
 
     public UnscopedComponent build() {
-      return new UnscopedComponentImpl();
+      return new ComponentImpl();
     }
   }
 
-  private static final class UnscopedComponentImpl implements UnscopedComponent {
-    private final UnscopedComponentImpl unscopedComponentImpl = this;
+  private static final class ComponentImpl implements UnscopedComponent {
+    private final ComponentImpl componentImpl = this;
 
-    UnscopedComponentImpl() {
+    ComponentImpl() {
 
 
     }

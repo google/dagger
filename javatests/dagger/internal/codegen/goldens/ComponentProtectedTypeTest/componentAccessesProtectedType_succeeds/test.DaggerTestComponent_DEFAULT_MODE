@@ -38,17 +38,17 @@ public final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new ComponentImpl();
     }
   }
 
-  private static final class TestComponentImpl extends TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class ComponentImpl extends TestComponent {
+    private final ComponentImpl componentImpl = this;
 
     @SuppressWarnings("rawtypes")
     Provider protectedTypeProvider;
 
-    TestComponentImpl() {
+    ComponentImpl() {
 
       initialize();
 

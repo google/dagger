@@ -32,14 +32,14 @@ final class DaggerSimpleComponent {
   private static final class Builder implements SimpleComponent.Builder {
     @Override
     public SimpleComponent build() {
-      return new SimpleComponentImpl();
+      return new ComponentImpl();
     }
   }
 
-  private static final class SimpleComponentImpl implements SimpleComponent {
-    private final SimpleComponentImpl simpleComponentImpl = this;
+  private static final class ComponentImpl implements SimpleComponent {
+    private final ComponentImpl componentImpl = this;
 
-    SimpleComponentImpl() {
+    ComponentImpl() {
 
 
     }

@@ -37,24 +37,24 @@ final class DaggerParent {
     }
 
     public Parent build() {
-      return new ParentImpl();
+      return new ComponentImpl();
     }
   }
 
   private static final class ChildImpl implements Child, CancellationListener {
-    private final ParentImpl parentImpl;
+    private final ComponentImpl componentImpl;
 
     private final ChildImpl childImpl = this;
 
-    ChildImpl(ParentImpl parentImpl) {
-      this.parentImpl = parentImpl;
+    ChildImpl(ComponentImpl componentImpl) {
+      this.componentImpl = componentImpl;
 
 
     }
 
     @Override
     public ProductionScoped productionScoped() {
-      return parentImpl.productionScopedProvider.get();
+      return componentImpl.productionScopedProvider.get();
     }
 
     @Override
@@ -64,12 +64,12 @@ final class DaggerParent {
     }
   }
 
-  private static final class ParentImpl implements Parent, CancellationListener {
-    private final ParentImpl parentImpl = this;
+  private static final class ComponentImpl implements Parent, CancellationListener {
+    private final ComponentImpl componentImpl = this;
 
     Provider<ProductionScoped> productionScopedProvider;
 
-    ParentImpl() {
+    ComponentImpl() {
 
       initialize();
 
@@ -77,12 +77,12 @@ final class DaggerParent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.productionScopedProvider = DoubleCheck.provider(new SwitchingProvider<ProductionScoped>(parentImpl, 0));
+      this.productionScopedProvider = DoubleCheck.provider(new SwitchingProvider<ProductionScoped>(componentImpl, 0));
     }
 
     @Override
     public Child child() {
-      return new ChildImpl(parentImpl);
+      return new ChildImpl(componentImpl);
     }
 
     @Override
@@ -92,12 +92,12 @@ final class DaggerParent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final ParentImpl parentImpl;
+      private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProvider(ParentImpl parentImpl, int id) {
-        this.parentImpl = parentImpl;
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
+        this.componentImpl = componentImpl;
         this.id = id;
       }
 

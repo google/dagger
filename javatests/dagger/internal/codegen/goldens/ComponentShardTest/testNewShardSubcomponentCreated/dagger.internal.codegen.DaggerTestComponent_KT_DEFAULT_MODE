@@ -36,14 +36,14 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new ComponentImpl();
     }
   }
 
   private static final class TestSubcomponentImpl implements TestSubcomponent {
     TestSubcomponentImplShard testSubcomponentImplShard;
 
-    private final TestComponentImpl testComponentImpl;
+    private final ComponentImpl componentImpl;
 
     private final TestSubcomponentImpl testSubcomponentImpl = this;
 
@@ -57,11 +57,11 @@ final class DaggerTestComponent {
      */
     Provider<?> binding2Provider;
 
-    TestSubcomponentImpl(TestComponentImpl testComponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+    TestSubcomponentImpl(ComponentImpl componentImpl) {
+      this.componentImpl = componentImpl;
 
       initialize();
-      testSubcomponentImplShard = new TestSubcomponentImplShard(testComponentImpl, testSubcomponentImpl);
+      testSubcomponentImplShard = new TestSubcomponentImplShard(componentImpl, testSubcomponentImpl);
     }
 
     @SuppressWarnings("unchecked")
@@ -101,22 +101,22 @@ final class DaggerTestComponent {
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class ComponentImpl implements TestComponent {
+    private final ComponentImpl componentImpl = this;
 
-    TestComponentImpl() {
+    ComponentImpl() {
 
 
     }
 
     @Override
     public TestSubcomponent subcomponent() {
-      return new TestSubcomponentImpl(testComponentImpl);
+      return new TestSubcomponentImpl(componentImpl);
     }
   }
 
   private static final class TestSubcomponentImplShard {
-    private final TestComponentImpl testComponentImpl;
+    private final ComponentImpl componentImpl;
 
     private final TestSubcomponentImpl testSubcomponentImpl;
 
@@ -125,9 +125,9 @@ final class DaggerTestComponent {
      */
     Provider<?> binding3Provider;
 
-    TestSubcomponentImplShard(TestComponentImpl testComponentImpl,
+    TestSubcomponentImplShard(ComponentImpl componentImpl,
         TestSubcomponentImpl testSubcomponentImpl) {
-      this.testComponentImpl = testComponentImpl;
+      this.componentImpl = componentImpl;
       this.testSubcomponentImpl = testSubcomponentImpl;
       initialize();
     }

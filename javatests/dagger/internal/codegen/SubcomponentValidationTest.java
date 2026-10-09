@@ -935,10 +935,10 @@ public class SubcomponentValidationTest {
             "  Dep dep();",
             "",
             "  @Subcomponent",
-            "  interface ParentComponentImpl extends ParentSub2 {",
+            "  interface ComponentImpl extends ParentSub2 {",
             "    @Subcomponent.Builder",
             "    interface Builder {",
-            "      ParentComponentImpl build();",
+            "      ComponentImpl build();",
             "    }",
             "  }",
             "}");
@@ -959,10 +959,10 @@ public class SubcomponentValidationTest {
             "  ParentSub1.Sub.Builder sub1Builder();",
             "",
             "  // Tests when a subcomponent's supertype (`ParentSub2`) encloses a type",
-            "  // (`ParentComponentImpl`) that conflicts with the root component's default",
-            "  // implementation name (`ParentComponentImpl`), forcing it to be disambiguated to",
-            "  // `t_ParentComponentImpl`.",
-            "  ParentSub2.ParentComponentImpl.Builder sub2Builder();",
+            "  // (`ComponentImpl`) that conflicts with the root component's default",
+            "  // implementation name (`ComponentImpl`), forcing it to be disambiguated to",
+            "  // `t_ComponentImpl`.",
+            "  ParentSub2.ComponentImpl.Builder sub2Builder();",
             "}");
     CompilerTests.daggerCompiler(dep, parentSub1, parentSub2, parent)
         .withProcessingOptions(compilerMode.processorOptions())
@@ -974,7 +974,7 @@ public class SubcomponentValidationTest {
                   .contains("class PS1_SubImpl");
               subject
                   .generatedSourceFileWithPath("test/DaggerParentComponent.java")
-                  .contains("class t_ParentComponentImpl");
+                  .contains("class t_ComponentImpl");
             });
   }
 }

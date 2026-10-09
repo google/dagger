@@ -32,16 +32,16 @@ final class DaggerTestComponent {
   private static final class Builder implements TestComponent.Builder {
     @Override
     public TestComponent build() {
-      return new TestComponentImpl(new TestModule());
+      return new ComponentImpl(new TestModule());
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
+  private static final class ComponentImpl implements TestComponent {
     private final TestModule testModule;
 
-    private final TestComponentImpl testComponentImpl = this;
+    private final ComponentImpl componentImpl = this;
 
-    TestComponentImpl(TestModule testModuleParam) {
+    ComponentImpl(TestModule testModuleParam) {
       this.testModule = testModuleParam;
 
     }

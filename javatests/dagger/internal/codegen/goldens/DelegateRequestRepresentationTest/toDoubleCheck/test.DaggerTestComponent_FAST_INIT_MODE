@@ -37,12 +37,12 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      return new TestComponentImpl();
+      return new ComponentImpl();
     }
   }
 
-  private static final class TestComponentImpl implements TestComponent {
-    private final TestComponentImpl testComponentImpl = this;
+  private static final class ComponentImpl implements TestComponent {
+    private final ComponentImpl componentImpl = this;
 
     Provider<RegularScoped> regularScopedProvider;
 
@@ -54,7 +54,7 @@ final class DaggerTestComponent {
 
     Provider<Object> unscopedProvider2;
 
-    TestComponentImpl() {
+    ComponentImpl() {
 
       initialize();
 
@@ -62,10 +62,10 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.regularScopedProvider = DoubleCheck.provider(new SwitchingProvider<RegularScoped>(testComponentImpl, 0));
-      this.reusableScopedProvider = SingleCheck.provider(new SwitchingProvider<ReusableScoped>(testComponentImpl, 1));
+      this.regularScopedProvider = DoubleCheck.provider(new SwitchingProvider<RegularScoped>(componentImpl, 0));
+      this.reusableScopedProvider = SingleCheck.provider(new SwitchingProvider<ReusableScoped>(componentImpl, 1));
       this.reusableProvider = DoubleCheck.provider((Provider) (reusableScopedProvider));
-      this.unscopedProvider = new SwitchingProvider<>(testComponentImpl, 2);
+      this.unscopedProvider = new SwitchingProvider<>(componentImpl, 2);
       this.unscopedProvider2 = DoubleCheck.provider((Provider) (unscopedProvider));
     }
 
@@ -85,12 +85,12 @@ final class DaggerTestComponent {
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
-      private final TestComponentImpl testComponentImpl;
+      private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProvider(TestComponentImpl testComponentImpl, int id) {
-        this.testComponentImpl = testComponentImpl;
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
+        this.componentImpl = componentImpl;
         this.id = id;
       }
 

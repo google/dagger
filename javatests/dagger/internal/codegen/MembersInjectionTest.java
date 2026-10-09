@@ -1750,19 +1750,19 @@ public class MembersInjectionTest {
             "",
             "@Component",
             "interface TestComponent {",
-            "  // The parameter name `testComponentImpl` matches the default name of the root",
+            "  // The parameter name `componentImpl` matches the default name of the root",
             "  // component's self-reference field, forcing the field to be disambiguated to",
-            "  // `testComponentImpl2` so it is not shadowed when accessing `testComponentImplShard`.",
-            "  void inject(InjectedType testComponentImpl);",
+            "  // `componentImpl2` so it is not shadowed when accessing `componentImplShard`.",
+            "  void inject(InjectedType componentImpl);",
             "}");
     CompilerTests.daggerCompiler(dep, injectedType, component)
         .withProcessingOptions(
             ImmutableMap.<String, String>builder()
                 .putAll(compilerMode.processorOptions())
                 // Setting `keysPerComponentShard` to 1 forces `InjectedType`'s members-injection
-                // method onto a separate shard (`TestComponentImplShard`), which requires
-                // `TestComponentImpl.inject(...)` to reference the shard via the component's
-                // self-reference field (`testComponentImpl2.testComponentImplShard`).
+                // method onto a separate shard (`ComponentImplShard`), which requires
+                // `ComponentImpl.inject(...)` to reference the shard via the component's
+                // self-reference field (`componentImpl2.componentImplShard`).
                 .put("dagger.keysPerComponentShard", "1")
                 .buildOrThrow())
         .compile(
@@ -1771,8 +1771,7 @@ public class MembersInjectionTest {
               subject
                   .generatedSourceFileWithPath("dagger/internal/codegen/DaggerTestComponent.java")
                   .contains(
-                      "testComponentImpl2.testComponentImplShard.injectInjectedType("
-                          + "testComponentImpl)");
+                      "componentImpl2.componentImplShard.injectInjectedType(componentImpl)");
             });
   }
 

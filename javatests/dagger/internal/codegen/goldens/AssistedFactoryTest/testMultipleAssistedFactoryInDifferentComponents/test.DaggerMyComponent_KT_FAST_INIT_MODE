@@ -2,7 +2,8 @@ package test;
 
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Provider;
-import dagger.internal.SingleCheck;
+import dagger.internal.SingleCheckSwitchingProvider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -45,6 +46,8 @@ final class DaggerMyComponent {
 
     private final MySubcomponentImpl mySubcomponentImpl = this;
 
+    private SwitchingPImpl<Object> sharedSwitchingProvider;
+
     /**
      * {@code Provider<MySubcomponentAssistedFactory>}
      */
@@ -59,7 +62,8 @@ final class DaggerMyComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.mySubcomponentAssistedFactoryProvider = SingleCheck.provider(new SwitchingProvider<>(myComponentImpl, mySubcomponentImpl, 0));
+      this.sharedSwitchingProvider = new SwitchingPImpl<>(myComponentImpl, mySubcomponentImpl, -1);
+      this.mySubcomponentAssistedFactoryProvider = SingleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
     }
 
     @Override
@@ -67,14 +71,14 @@ final class DaggerMyComponent {
       return (MySubcomponentAssistedFactory) ((Object) (mySubcomponentAssistedFactoryProvider.get()));
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final MyComponentImpl myComponentImpl;
 
       private final MySubcomponentImpl mySubcomponentImpl;
 
       private final int id;
 
-      SwitchingProvider(MyComponentImpl myComponentImpl, MySubcomponentImpl mySubcomponentImpl,
+      SwitchingPImpl(MyComponentImpl myComponentImpl, MySubcomponentImpl mySubcomponentImpl,
           int id) {
         this.myComponentImpl = myComponentImpl;
         this.mySubcomponentImpl = mySubcomponentImpl;
@@ -82,8 +86,13 @@ final class DaggerMyComponent {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // test.MySubcomponentAssistedFactory
           return (T) new MySubcomponentAssistedFactory() {
@@ -102,6 +111,8 @@ final class DaggerMyComponent {
   private static final class MyComponentImpl implements MyComponent {
     private final MyComponentImpl myComponentImpl = this;
 
+    private SwitchingPImpl<Object> sharedSwitchingProvider;
+
     /**
      * {@code Provider<MyComponentAssistedFactory>}
      */
@@ -115,7 +126,8 @@ final class DaggerMyComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.myComponentAssistedFactoryProvider = SingleCheck.provider(new SwitchingProvider<>(myComponentImpl, 0));
+      this.sharedSwitchingProvider = new SwitchingPImpl<>(myComponentImpl, -1);
+      this.myComponentAssistedFactoryProvider = SingleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
     }
 
     @Override
@@ -128,19 +140,24 @@ final class DaggerMyComponent {
       return new MySubcomponentImpl(myComponentImpl);
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final MyComponentImpl myComponentImpl;
 
       private final int id;
 
-      SwitchingProvider(MyComponentImpl myComponentImpl, int id) {
+      SwitchingPImpl(MyComponentImpl myComponentImpl, int id) {
         this.myComponentImpl = myComponentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // test.MyComponentAssistedFactory
           return (T) new MyComponentAssistedFactory() {

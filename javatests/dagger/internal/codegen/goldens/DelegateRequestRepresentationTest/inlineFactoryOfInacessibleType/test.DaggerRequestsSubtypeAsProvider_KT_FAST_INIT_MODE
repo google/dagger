@@ -2,6 +2,7 @@ package test;
 
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 import other.Subtype_Factory;
 import other.Supertype;
@@ -57,7 +58,7 @@ final class DaggerRequestsSubtypeAsProvider {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.subtypeProvider = new SwitchingProvider<>(requestsSubtypeAsProviderImpl, 0);
+      this.subtypeProvider = new SwitchingPImpl<>(requestsSubtypeAsProviderImpl, 0);
     }
 
     @Override
@@ -65,19 +66,24 @@ final class DaggerRequestsSubtypeAsProvider {
       return (javax.inject.Provider<Supertype>) ((Object) (subtypeProvider));
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingPImpl<T> implements SwitchingProvider<T> {
       private final RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl;
 
       private final int id;
 
-      SwitchingProvider(RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl, int id) {
+      SwitchingPImpl(RequestsSubtypeAsProviderImpl requestsSubtypeAsProviderImpl, int id) {
         this.requestsSubtypeAsProviderImpl = requestsSubtypeAsProviderImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // other.Subtype
           return (T) Subtype_Factory.newInstance();

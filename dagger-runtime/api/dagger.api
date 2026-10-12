@@ -94,6 +94,11 @@ public final class dagger/internal/DoubleCheck : dagger/Lazy, dagger/internal/Pr
 	public static fun provider (Ljavax/inject/Provider;)Ljavax/inject/Provider;
 }
 
+public final class dagger/internal/DoubleCheckSwitchingProvider : dagger/Lazy, dagger/internal/Provider {
+	public fun get ()Ljava/lang/Object;
+	public static fun provider (Ldagger/internal/SwitchingProvider;I)Ldagger/internal/Provider;
+}
+
 public abstract interface class dagger/internal/Factory : dagger/internal/Provider {
 }
 
@@ -280,6 +285,16 @@ public final class dagger/internal/SingleCheck : dagger/internal/Provider {
 	public fun get ()Ljava/lang/Object;
 	public static fun provider (Ldagger/internal/Provider;)Ldagger/internal/Provider;
 	public static fun provider (Ljavax/inject/Provider;)Ljavax/inject/Provider;
+}
+
+public final class dagger/internal/SingleCheckSwitchingProvider : dagger/internal/Provider {
+	public fun get ()Ljava/lang/Object;
+	public static fun provider (Ldagger/internal/SwitchingProvider;I)Ldagger/internal/Provider;
+}
+
+public abstract interface class dagger/internal/SwitchingProvider : dagger/internal/Provider {
+	public abstract fun get (I)Ljava/lang/Object;
+	public fun get ()Ljava/lang/Object;
 }
 
 public abstract interface annotation class dagger/multibindings/ClassKey : java/lang/annotation/Annotation {

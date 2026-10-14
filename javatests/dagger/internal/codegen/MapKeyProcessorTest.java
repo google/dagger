@@ -191,6 +191,136 @@ public class MapKeyProcessorTest {
   }
 
   @Test
+  public void privateMapKeyInKotlin_fails() {
+    Source privateKey =
+        CompilerTests.kotlinSource(
+            "PrivateKey.kt",
+            "package test",
+            "",
+            "import dagger.MapKey",
+            "",
+            "@MapKey(unwrapValue = true)",
+            "private annotation class PrivateKey(val value: String)");
+    CompilerTests.daggerCompiler(privateKey)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("@MapKey annotations cannot be private");
+            });
+  }
+
+  @Test
+  public void nestedMapKeyInPrivateContainerInKotlin_fails() {
+    Source nestedInPrivateContainer =
+        CompilerTests.kotlinSource(
+            "Outer.kt",
+            "package test",
+            "",
+            "import dagger.MapKey",
+            "",
+            "class Outer {",
+            "  private class Container {",
+            "    @MapKey(unwrapValue = true)",
+            "    annotation class NestedKey(val value: String)",
+            "  }",
+            "}");
+    CompilerTests.daggerCompiler(nestedInPrivateContainer)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("@MapKey annotations cannot be private");
+            });
+  }
+
+  @Test
+  public void privateUnwrappedMapKeyInJava_succeeds() {
+    Source privateUnwrappedKey =
+        CompilerTests.javaSource(
+            "test.Outer",
+            "package test;",
+            "",
+            "import dagger.MapKey;",
+            "",
+            "public class Outer {",
+            "  @MapKey(unwrapValue = true)",
+            "  private @interface PrivateUnwrappedKey {",
+            "    String value();",
+            "  }",
+            "}");
+    CompilerTests.daggerCompiler(privateUnwrappedKey)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void internalUnwrappedMapKey_fails() {
+    Source internalUnwrappedKey =
+        CompilerTests.kotlinSource(
+            "InternalUnwrappedKey.kt",
+            "package test",
+            "",
+            "import dagger.MapKey",
+            "",
+            "@MapKey(unwrapValue = true)",
+            "internal annotation class InternalUnwrappedKey(val value: String)");
+    CompilerTests.daggerCompiler(internalUnwrappedKey)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("@MapKey annotations cannot be internal");
+            });
+  }
+
+  @Test
+  public void internalWrappedMapKey_fails() {
+    Source internalWrappedKey =
+        CompilerTests.kotlinSource(
+            "InternalWrappedKey.kt",
+            "package test",
+            "",
+            "import dagger.MapKey",
+            "",
+            "@MapKey(unwrapValue = false)",
+            "internal annotation class InternalWrappedKey(val value: String)");
+    CompilerTests.daggerCompiler(internalWrappedKey)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .withAdditionalJavacProcessors(new AutoAnnotationProcessor())
+        .compile(
+            subject -> {
+              assumeMapKeySupported(CompilerTests.backend(subject));
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("@MapKey annotations cannot be internal");
+            });
+  }
+
+  @Test
+  public void nestedMapKeyInInternalContainer_fails() {
+    Source nestedInInternalContainer =
+        CompilerTests.kotlinSource(
+            "Container.kt",
+            "package test",
+            "",
+            "import dagger.MapKey",
+            "",
+            "internal class Container {",
+            "  @MapKey(unwrapValue = false)",
+            "  annotation class NestedKey(val value: String)",
+            "}");
+    CompilerTests.daggerCompiler(nestedInInternalContainer)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .withAdditionalJavacProcessors(new AutoAnnotationProcessor())
+        .compile(
+            subject -> {
+              assumeMapKeySupported(CompilerTests.backend(subject));
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("@MapKey annotations cannot be internal");
+            });
+  }
+
+  @Test
   public void complexLiteralsKey() {
     Source complexKey =
         CompilerTests.kotlinSource(

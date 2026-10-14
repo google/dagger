@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen.validation;
 
+import static dagger.internal.codegen.xprocessing.XTypeElements.isEffectivelyInternal;
+import static dagger.internal.codegen.xprocessing.XTypeElements.isEffectivelyPrivate;
 
 import androidx.room3.compiler.processing.XAnnotationKt;
 import androidx.room3.compiler.processing.XMethodElement;
@@ -40,6 +42,11 @@ public final class MapKeyValidator {
 
   public ValidationReport validate(XTypeElement element) {
     ValidationReport.Builder builder = ValidationReport.about(element);
+    if (isEffectivelyPrivate(element) && element.isFromKotlin()) {
+      builder.addError("@MapKey annotations cannot be private", element);
+    } else if (isEffectivelyInternal(element)) {
+      builder.addError("@MapKey annotations cannot be internal", element);
+    }
     if (element.getDeclaredMethods().isEmpty()) {
       builder.addError("Map key annotations must have members", element);
     } else if (XAnnotationKt.get(

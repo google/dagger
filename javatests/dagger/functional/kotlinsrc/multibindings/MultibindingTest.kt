@@ -238,17 +238,17 @@ class MultibindingTest {
   }
 }
 
-@MapKey(unwrapValue = true) internal annotation class BooleanKey(val value: Boolean)
+@MapKey(unwrapValue = true) annotation class BooleanKey(val value: Boolean)
 
-@MapKey(unwrapValue = true) internal annotation class ByteKey(val value: Byte)
+@MapKey(unwrapValue = true) annotation class ByteKey(val value: Byte)
 
-@MapKey(unwrapValue = true) internal annotation class CharKey(val value: Char)
+@MapKey(unwrapValue = true) annotation class CharKey(val value: Char)
 
-@MapKey(unwrapValue = true) internal annotation class NumberClassKey(val value: KClass<out Number>)
+@MapKey(unwrapValue = true) annotation class NumberClassKey(val value: KClass<out Number>)
 
-@MapKey(unwrapValue = true) internal annotation class ShortKey(val value: Short)
+@MapKey(unwrapValue = true) annotation class ShortKey(val value: Short)
 
-@MapKey(unwrapValue = true) internal annotation class UnwrappedAnnotationKey(val value: StringKey)
+@MapKey(unwrapValue = true) annotation class UnwrappedAnnotationKey(val value: StringKey)
 
 class NestedAnnotationContainer {
   @MapKey(unwrapValue = false) annotation class NestedWrappedKey(val value: KClass<*>)

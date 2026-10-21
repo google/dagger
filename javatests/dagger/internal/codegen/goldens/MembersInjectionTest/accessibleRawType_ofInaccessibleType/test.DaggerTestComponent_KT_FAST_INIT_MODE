@@ -2,8 +2,9 @@ package test;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.DaggerGenerated;
-import dagger.internal.DoubleCheck;
+import dagger.internal.DoubleCheckSwitchingProvider;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 import other.InaccessiblesModule_InaccessiblesFactory;
 import other.UsesInaccessibles;
@@ -48,6 +49,8 @@ final class DaggerTestComponent {
   private static final class ComponentImpl implements TestComponent {
     private final ComponentImpl componentImpl = this;
 
+    private SwitchingProviderImpl<Object> sharedSwitchingProvider;
+
     /**
      * {@code Provider<java.util.List<other.Inaccessible>>}
      */
@@ -61,7 +64,8 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.inaccessiblesProvider = DoubleCheck.provider(new SwitchingProvider<>(componentImpl, 0));
+      this.sharedSwitchingProvider = new SwitchingProviderImpl<>(componentImpl, -1);
+      this.inaccessiblesProvider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
     }
 
     @Override
@@ -75,19 +79,24 @@ final class DaggerTestComponent {
       return instance;
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProvider(ComponentImpl componentImpl, int id) {
+      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // java.util.List<other.Inaccessible>
           return (T) InaccessiblesModule_InaccessiblesFactory.inaccessibles();

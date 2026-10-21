@@ -3,6 +3,7 @@ package test;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.InstanceFactory;
 import dagger.internal.Provider;
+import dagger.internal.SwitchingProvider;
 import java.util.Optional;
 import javax.annotation.processing.Generated;
 
@@ -71,7 +72,7 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.optionalOfPresentProvider = new SwitchingProvider<>(componentImpl, 0);
+      this.optionalOfPresentProvider = new SwitchingProviderImpl<>(componentImpl, 0);
       this.optionalOfAbsentProvider = absentJdkOptionalProvider();
     }
 
@@ -85,19 +86,24 @@ final class DaggerTestComponent {
       return optionalOfAbsentProvider;
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProvider(ComponentImpl componentImpl, int id) {
+      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // java.util.Optional<test.Present>
           return (T) Optional.of(TestModule_PFactory.p());

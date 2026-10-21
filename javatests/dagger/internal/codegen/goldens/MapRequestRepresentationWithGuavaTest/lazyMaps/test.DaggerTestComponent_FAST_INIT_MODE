@@ -4,8 +4,10 @@ import com.google.common.collect.ImmutableMap;
 import dagger.Lazy;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.DoubleCheck;
+import dagger.internal.DoubleCheckSwitchingProvider;
 import dagger.internal.Provider;
 import dagger.internal.ProviderOfLazy;
+import dagger.internal.SwitchingProvider;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.processing.Generated;
@@ -48,6 +50,8 @@ final class DaggerTestComponent {
   private static final class ComponentImpl implements TestComponent {
     private final ComponentImpl componentImpl = this;
 
+    private SwitchingProviderImpl<Object> sharedSwitchingProvider;
+
     Provider<AtomicInteger> provideAtomicIntegerProvider;
 
     Provider<String> string0Provider;
@@ -72,12 +76,13 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.provideAtomicIntegerProvider = DoubleCheck.provider(new SwitchingProvider<AtomicInteger>(componentImpl, 1));
-      this.string0Provider = new SwitchingProvider<>(componentImpl, 0);
-      this.string1Provider = new SwitchingProvider<>(componentImpl, 2);
-      this.string2Provider = new SwitchingProvider<>(componentImpl, 3);
-      this.mapOfStringAndLazyOfStringProvider = new SwitchingProvider<>(componentImpl, 4);
-      this.mapOfStringAndProviderOfLazyOfStringProvider = new SwitchingProvider<>(componentImpl, 5);
+      this.sharedSwitchingProvider = new SwitchingProviderImpl<>(componentImpl, -1);
+      this.provideAtomicIntegerProvider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 1);
+      this.string0Provider = new SwitchingProviderImpl<>(componentImpl, 0);
+      this.string1Provider = new SwitchingProviderImpl<>(componentImpl, 2);
+      this.string2Provider = new SwitchingProviderImpl<>(componentImpl, 3);
+      this.mapOfStringAndLazyOfStringProvider = new SwitchingProviderImpl<>(componentImpl, 4);
+      this.mapOfStringAndProviderOfLazyOfStringProvider = new SwitchingProviderImpl<>(componentImpl, 5);
     }
 
     @Override
@@ -106,19 +111,24 @@ final class DaggerTestComponent {
       return mapOfStringAndProviderOfLazyOfStringProvider;
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProvider(ComponentImpl componentImpl, int id) {
+      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // java.util.Map<java.lang.String,java.lang.String> test.LazyMaps.TestModule#string0
           return (T) LazyMaps_TestModule_String0Factory.string0(componentImpl.string());

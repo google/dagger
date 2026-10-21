@@ -1,9 +1,11 @@
 package test;
 
 import dagger.internal.DaggerGenerated;
-import dagger.internal.DoubleCheck;
+import dagger.internal.DoubleCheckSwitchingProvider;
 import dagger.internal.Provider;
 import dagger.internal.SingleCheck;
+import dagger.internal.SingleCheckSwitchingProvider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -44,6 +46,8 @@ final class DaggerTestComponent {
   private static final class ComponentImpl implements TestComponent {
     private final ComponentImpl componentImpl = this;
 
+    private SwitchingProviderImpl<Object> sharedSwitchingProvider;
+
     /**
      * {@code Provider<RegularScoped>}
      */
@@ -72,9 +76,10 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.regularScopedProvider = DoubleCheck.provider(new SwitchingProvider<>(componentImpl, 0));
-      this.reusableScopedProvider = SingleCheck.provider(new SwitchingProvider<>(componentImpl, 1));
-      this.unscopedProvider = new SwitchingProvider<>(componentImpl, 2);
+      this.sharedSwitchingProvider = new SwitchingProviderImpl<>(componentImpl, -1);
+      this.regularScopedProvider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
+      this.reusableScopedProvider = SingleCheckSwitchingProvider.provider(sharedSwitchingProvider, 1);
+      this.unscopedProvider = new SwitchingProviderImpl<>(componentImpl, 2);
       this.unscopedProvider2 = SingleCheck.provider((Provider) (unscopedProvider));
     }
 
@@ -93,19 +98,24 @@ final class DaggerTestComponent {
       return (Object) ((Object) (unscopedProvider2.get()));
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProvider(ComponentImpl componentImpl, int id) {
+      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // test.RegularScoped
           return (T) RegularScoped_Factory.newInstance();

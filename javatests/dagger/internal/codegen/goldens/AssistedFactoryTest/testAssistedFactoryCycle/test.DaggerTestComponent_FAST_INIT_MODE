@@ -3,7 +3,8 @@ package test;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.DelegateFactory;
 import dagger.internal.Provider;
-import dagger.internal.SingleCheck;
+import dagger.internal.SingleCheckSwitchingProvider;
+import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -46,6 +47,8 @@ final class DaggerTestComponent {
 
     Provider<FooFactory> fooFactoryProvider;
 
+    private SwitchingProviderImpl<Object> sharedSwitchingProvider;
+
     ComponentImpl() {
 
       initialize();
@@ -59,7 +62,8 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.fooFactoryProvider = new DelegateFactory<>();
-      DelegateFactory.setDelegate(fooFactoryProvider, SingleCheck.provider(new SwitchingProvider<FooFactory>(componentImpl, 0)));
+      this.sharedSwitchingProvider = new SwitchingProviderImpl<>(componentImpl, -1);
+      DelegateFactory.setDelegate(fooFactoryProvider, SingleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0));
     }
 
     @Override
@@ -67,19 +71,24 @@ final class DaggerTestComponent {
       return fooFactoryProvider.get();
     }
 
-    private static final class SwitchingProvider<T> implements Provider<T> {
+    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProvider(ComponentImpl componentImpl, int id) {
+      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      @SuppressWarnings("unchecked")
       public T get() {
+        return get(id);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get(int id) {
         switch (id) {
           case 0: // test.FooFactory
           return (T) new FooFactory() {

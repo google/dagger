@@ -51,6 +51,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.internal.codegen.xprocessing.XElements;
 import dagger.internal.codegen.xprocessing.XTypes;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
@@ -83,6 +84,35 @@ public final class Processors {
       AnnotationSpec aggregatingAnnotation,
       XTypeElement originatingElement,
       Class<?> generatorClass,
+      Mode mode) {
+    generateAggregatingClass(
+        aggregatingPackage,
+        aggregatingAnnotation,
+        originatingElement,
+        ClassName.get(generatorClass),
+        mode);
+  }
+
+  /** Generates the aggregating metadata class for an aggregating annotation. */
+  public static void generateAggregatingClass(
+      String aggregatingPackage,
+      AnnotationSpec aggregatingAnnotation,
+      XTypeElement originatingElement,
+      ClassName generatorClass) {
+    generateAggregatingClass(
+        aggregatingPackage,
+        aggregatingAnnotation,
+        originatingElement,
+        generatorClass,
+        Mode.Isolating);
+  }
+
+  /** Generates the aggregating metadata class for an aggregating annotation. */
+  public static void generateAggregatingClass(
+      String aggregatingPackage,
+      AnnotationSpec aggregatingAnnotation,
+      XTypeElement originatingElement,
+      ClassName generatorClass,
       Mode mode) {
     ClassName name =
         ClassName.get(aggregatingPackage, "_" + getFullEnclosedName(originatingElement));
@@ -447,6 +477,11 @@ public final class Processors {
   }
 
   public static void addGeneratedAnnotation(
+      TypeSpec.Builder typeSpecBuilder, XProcessingEnv env, ClassName generatorClass) {
+    addGeneratedAnnotation(typeSpecBuilder, env, generatorClass.toString());
+  }
+
+  public static void addGeneratedAnnotation(
       TypeSpec.Builder typeSpecBuilder, XProcessingEnv env, String generatorClass) {
     XTypeElement annotation = env.findGeneratedAnnotation();
     if (annotation != null) {
@@ -502,6 +537,18 @@ public final class Processors {
     if (type.isError()) {
       throw new ErrorTypeException("bad type", type.getTypeElement());
     }
+  }
+
+  /**
+   * Parses a reflection name (e.g. {@code com.example.Outer$Inner}) into a {@link ClassName}
+   * without using {@code ClassName.bestGuess}.
+   */
+  public static ClassName fromReflectionName(String reflectionName) {
+    int lastDot = reflectionName.lastIndexOf('.');
+    String packageName = lastDot == -1 ? "" : reflectionName.substring(0, lastDot);
+    String[] simpleNames = reflectionName.substring(lastDot + 1).split("\\$", -1);
+    return ClassName.get(
+        packageName, simpleNames[0], Arrays.copyOfRange(simpleNames, 1, simpleNames.length));
   }
 
   private Processors() {}

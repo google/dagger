@@ -86,7 +86,7 @@ class MultibindingTest {
         AutoAnnotationHolder.nestedWrappedKey(java.lang.Integer::class.java),
         "integer",
         AutoAnnotationHolder.nestedWrappedKey(java.lang.Long::class.java),
-        "long"
+        "long",
       )
   }
 
@@ -104,9 +104,9 @@ class MultibindingTest {
           AutoAnnotationHolder.testStringKey("foo"),
           intArrayOf(1, 2, 3),
           arrayOf(),
-          arrayOf(java.lang.Long::class.java, java.lang.Integer::class.java)
+          arrayOf(java.lang.Long::class.java, java.lang.Integer::class.java),
         ),
-        "wrapped foo annotation"
+        "wrapped foo annotation",
       )
   }
 
@@ -226,29 +226,29 @@ class MultibindingTest {
       value: StringKey,
       integers: IntArray,
       annotations: Array<ClassKey>,
-      classes: Array<Class<out Number>>
+      classes: Array<Class<out Number>>,
     ): WrappedAnnotationKey {
       return AutoAnnotation_MultibindingTest_AutoAnnotationHolder_testWrappedAnnotationKey(
         value,
         integers,
         annotations,
-        classes
+        classes,
       )
     }
   }
 }
 
-@MapKey(unwrapValue = true) internal annotation class BooleanKey(val value: Boolean)
+@MapKey(unwrapValue = true) annotation class BooleanKey(val value: Boolean)
 
-@MapKey(unwrapValue = true) internal annotation class ByteKey(val value: Byte)
+@MapKey(unwrapValue = true) annotation class ByteKey(val value: Byte)
 
-@MapKey(unwrapValue = true) internal annotation class CharKey(val value: Char)
+@MapKey(unwrapValue = true) annotation class CharKey(val value: Char)
 
-@MapKey(unwrapValue = true) internal annotation class NumberClassKey(val value: KClass<out Number>)
+@MapKey(unwrapValue = true) annotation class NumberClassKey(val value: KClass<out Number>)
 
-@MapKey(unwrapValue = true) internal annotation class ShortKey(val value: Short)
+@MapKey(unwrapValue = true) annotation class ShortKey(val value: Short)
 
-@MapKey(unwrapValue = true) internal annotation class UnwrappedAnnotationKey(val value: StringKey)
+@MapKey(unwrapValue = true) annotation class UnwrappedAnnotationKey(val value: StringKey)
 
 class NestedAnnotationContainer {
   @MapKey(unwrapValue = false) annotation class NestedWrappedKey(val value: KClass<*>)
@@ -259,42 +259,62 @@ annotation class WrappedAnnotationKey(
   val value: StringKey,
   val integers: IntArray,
   val annotations: Array<ClassKey>,
-  val classes: Array<KClass<out Number>>
+  val classes: Array<KClass<out Number>>,
 )
 
 @Component(
   modules = [MultibindingModule::class, MultibindsModule::class, ContributionsModule::class],
-  dependencies = [MultibindingDependency::class]
+  dependencies = [MultibindingDependency::class],
 )
 internal interface MultibindingComponent {
   fun map(): Map<String, String>
+
   fun mapOfArrays(): Map<String, Array<String>>
+
   fun mapOfProviders(): Map<String, Provider<String>>
+
   fun mapKeys(): Set<String>
+
   fun mapValues(): Collection<String>
+
   fun set(): Set<Int>
+
   fun nestedKeyMap(): Map<NestedAnnotationContainer.NestedWrappedKey, String>
+
   fun numberClassKeyMap(): Map<Class<out Number>, String>
+
   fun classKeyMap(): Map<Class<*>, String>
+
   fun longKeyMap(): Map<Long, String>
+
   fun integerKeyMap(): Map<Int, String>
+
   fun shortKeyMap(): Map<Short, String>
+
   fun byteKeyMap(): Map<Byte, String>
+
   fun booleanKeyMap(): Map<Boolean, String>
+
   fun characterKeyMap(): Map<Char, String>
+
   fun unwrappedAnnotationKeyMap(): Map<StringKey, String>
+
   fun wrappedAnnotationKeyMap(): Map<WrappedAnnotationKey, String>
 
   @Named("complexQualifier") fun complexQualifierStringSet(): Set<String>
+
   fun emptySet(): Set<Any>
 
   @Named("complexQualifier") fun emptyQualifiedSet(): Set<Any>
+
   fun emptyMap(): Map<String, Any>
 
   @Named("complexQualifier") fun emptyQualifiedMap(): Map<String, Any>
+
   fun maybeEmptySet(): Set<CharSequence>
 
   @Named("complexQualifier") fun maybeEmptyQualifiedSet(): Set<CharSequence>
+
   fun maybeEmptyMap(): Map<String, CharSequence>
 
   @Named("complexQualifier") fun maybeEmptyQualifiedMap(): Map<String, CharSequence>
@@ -316,9 +336,8 @@ internal object MultibindingModule {
   @Provides
   @IntoMap
   @StringKey("foo")
-  fun provideFooArrayValue(
-    @Suppress("UNUSED_PARAMETER") doubleDependency: Double
-  ): Array<String> = arrayOf("foo1", "foo2")
+  fun provideFooArrayValue(@Suppress("UNUSED_PARAMETER") doubleDependency: Double): Array<String> =
+    arrayOf("foo1", "foo2")
 
   @Provides
   @IntoMap
@@ -386,7 +405,7 @@ internal object MultibindingModule {
     value = StringKey("foo"),
     integers = [1, 2, 3],
     annotations = [],
-    classes = [java.lang.Long::class, java.lang.Integer::class]
+    classes = [java.lang.Long::class, java.lang.Integer::class],
   )
   fun valueForWrappedAnnotationKeyFoo(): String = "wrapped foo annotation"
 

@@ -34,6 +34,7 @@ java_library(
     exported_plugins = [
         "//hilt-compiler/main/java/dagger/hilt/processor/internal/aggregateddeps:plugin",
     ],
+    visibility = ["//third_party/java/dagger:test_install_in_users"],
     exports = [
         "//hilt-core/main/java/dagger/hilt/processor/internal/aggregateddeps:annotation",
     ],

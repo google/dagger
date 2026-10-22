@@ -2,7 +2,6 @@ package test;
 
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Provider;
-import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -257,123 +256,123 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.binding0Provider = new SwitchingProviderImpl<>(componentImpl, 0);
-      this.binding1Provider = new SwitchingProviderImpl<>(componentImpl, 1);
-      this.binding2Provider = new SwitchingProviderImpl<>(componentImpl, 2);
-      this.binding3Provider = new SwitchingProviderImpl<>(componentImpl, 3);
-      this.binding4Provider = new SwitchingProviderImpl<>(componentImpl, 4);
-      this.binding5Provider = new SwitchingProviderImpl<>(componentImpl, 5);
-      this.binding6Provider = new SwitchingProviderImpl<>(componentImpl, 6);
-      this.binding7Provider = new SwitchingProviderImpl<>(componentImpl, 7);
-      this.binding8Provider = new SwitchingProviderImpl<>(componentImpl, 8);
-      this.binding9Provider = new SwitchingProviderImpl<>(componentImpl, 9);
-      this.binding10Provider = new SwitchingProviderImpl<>(componentImpl, 10);
-      this.binding11Provider = new SwitchingProviderImpl<>(componentImpl, 11);
-      this.binding12Provider = new SwitchingProviderImpl<>(componentImpl, 12);
-      this.binding13Provider = new SwitchingProviderImpl<>(componentImpl, 13);
-      this.binding14Provider = new SwitchingProviderImpl<>(componentImpl, 14);
-      this.binding15Provider = new SwitchingProviderImpl<>(componentImpl, 15);
-      this.binding16Provider = new SwitchingProviderImpl<>(componentImpl, 16);
-      this.binding17Provider = new SwitchingProviderImpl<>(componentImpl, 17);
-      this.binding18Provider = new SwitchingProviderImpl<>(componentImpl, 18);
-      this.binding19Provider = new SwitchingProviderImpl<>(componentImpl, 19);
-      this.binding20Provider = new SwitchingProviderImpl<>(componentImpl, 20);
-      this.binding21Provider = new SwitchingProviderImpl<>(componentImpl, 21);
-      this.binding22Provider = new SwitchingProviderImpl<>(componentImpl, 22);
-      this.binding23Provider = new SwitchingProviderImpl<>(componentImpl, 23);
-      this.binding24Provider = new SwitchingProviderImpl<>(componentImpl, 24);
+      this.binding0Provider = new SwitchingProvider<>(componentImpl, 0);
+      this.binding1Provider = new SwitchingProvider<>(componentImpl, 1);
+      this.binding2Provider = new SwitchingProvider<>(componentImpl, 2);
+      this.binding3Provider = new SwitchingProvider<>(componentImpl, 3);
+      this.binding4Provider = new SwitchingProvider<>(componentImpl, 4);
+      this.binding5Provider = new SwitchingProvider<>(componentImpl, 5);
+      this.binding6Provider = new SwitchingProvider<>(componentImpl, 6);
+      this.binding7Provider = new SwitchingProvider<>(componentImpl, 7);
+      this.binding8Provider = new SwitchingProvider<>(componentImpl, 8);
+      this.binding9Provider = new SwitchingProvider<>(componentImpl, 9);
+      this.binding10Provider = new SwitchingProvider<>(componentImpl, 10);
+      this.binding11Provider = new SwitchingProvider<>(componentImpl, 11);
+      this.binding12Provider = new SwitchingProvider<>(componentImpl, 12);
+      this.binding13Provider = new SwitchingProvider<>(componentImpl, 13);
+      this.binding14Provider = new SwitchingProvider<>(componentImpl, 14);
+      this.binding15Provider = new SwitchingProvider<>(componentImpl, 15);
+      this.binding16Provider = new SwitchingProvider<>(componentImpl, 16);
+      this.binding17Provider = new SwitchingProvider<>(componentImpl, 17);
+      this.binding18Provider = new SwitchingProvider<>(componentImpl, 18);
+      this.binding19Provider = new SwitchingProvider<>(componentImpl, 19);
+      this.binding20Provider = new SwitchingProvider<>(componentImpl, 20);
+      this.binding21Provider = new SwitchingProvider<>(componentImpl, 21);
+      this.binding22Provider = new SwitchingProvider<>(componentImpl, 22);
+      this.binding23Provider = new SwitchingProvider<>(componentImpl, 23);
+      this.binding24Provider = new SwitchingProvider<>(componentImpl, 24);
     }
 
     @SuppressWarnings("unchecked")
     private void initialize2() {
-      this.binding25Provider = new SwitchingProviderImpl<>(componentImpl, 25);
-      this.binding26Provider = new SwitchingProviderImpl<>(componentImpl, 26);
-      this.binding27Provider = new SwitchingProviderImpl<>(componentImpl, 27);
-      this.binding28Provider = new SwitchingProviderImpl<>(componentImpl, 28);
-      this.binding29Provider = new SwitchingProviderImpl<>(componentImpl, 29);
-      this.binding30Provider = new SwitchingProviderImpl<>(componentImpl, 30);
-      this.binding31Provider = new SwitchingProviderImpl<>(componentImpl, 31);
-      this.binding32Provider = new SwitchingProviderImpl<>(componentImpl, 32);
-      this.binding33Provider = new SwitchingProviderImpl<>(componentImpl, 33);
-      this.binding34Provider = new SwitchingProviderImpl<>(componentImpl, 34);
-      this.binding35Provider = new SwitchingProviderImpl<>(componentImpl, 35);
-      this.binding36Provider = new SwitchingProviderImpl<>(componentImpl, 36);
-      this.binding37Provider = new SwitchingProviderImpl<>(componentImpl, 37);
-      this.binding38Provider = new SwitchingProviderImpl<>(componentImpl, 38);
-      this.binding39Provider = new SwitchingProviderImpl<>(componentImpl, 39);
-      this.binding40Provider = new SwitchingProviderImpl<>(componentImpl, 40);
-      this.binding41Provider = new SwitchingProviderImpl<>(componentImpl, 41);
-      this.binding42Provider = new SwitchingProviderImpl<>(componentImpl, 42);
-      this.binding43Provider = new SwitchingProviderImpl<>(componentImpl, 43);
-      this.binding44Provider = new SwitchingProviderImpl<>(componentImpl, 44);
-      this.binding45Provider = new SwitchingProviderImpl<>(componentImpl, 45);
-      this.binding46Provider = new SwitchingProviderImpl<>(componentImpl, 46);
-      this.binding47Provider = new SwitchingProviderImpl<>(componentImpl, 47);
-      this.binding48Provider = new SwitchingProviderImpl<>(componentImpl, 48);
-      this.binding49Provider = new SwitchingProviderImpl<>(componentImpl, 49);
+      this.binding25Provider = new SwitchingProvider<>(componentImpl, 25);
+      this.binding26Provider = new SwitchingProvider<>(componentImpl, 26);
+      this.binding27Provider = new SwitchingProvider<>(componentImpl, 27);
+      this.binding28Provider = new SwitchingProvider<>(componentImpl, 28);
+      this.binding29Provider = new SwitchingProvider<>(componentImpl, 29);
+      this.binding30Provider = new SwitchingProvider<>(componentImpl, 30);
+      this.binding31Provider = new SwitchingProvider<>(componentImpl, 31);
+      this.binding32Provider = new SwitchingProvider<>(componentImpl, 32);
+      this.binding33Provider = new SwitchingProvider<>(componentImpl, 33);
+      this.binding34Provider = new SwitchingProvider<>(componentImpl, 34);
+      this.binding35Provider = new SwitchingProvider<>(componentImpl, 35);
+      this.binding36Provider = new SwitchingProvider<>(componentImpl, 36);
+      this.binding37Provider = new SwitchingProvider<>(componentImpl, 37);
+      this.binding38Provider = new SwitchingProvider<>(componentImpl, 38);
+      this.binding39Provider = new SwitchingProvider<>(componentImpl, 39);
+      this.binding40Provider = new SwitchingProvider<>(componentImpl, 40);
+      this.binding41Provider = new SwitchingProvider<>(componentImpl, 41);
+      this.binding42Provider = new SwitchingProvider<>(componentImpl, 42);
+      this.binding43Provider = new SwitchingProvider<>(componentImpl, 43);
+      this.binding44Provider = new SwitchingProvider<>(componentImpl, 44);
+      this.binding45Provider = new SwitchingProvider<>(componentImpl, 45);
+      this.binding46Provider = new SwitchingProvider<>(componentImpl, 46);
+      this.binding47Provider = new SwitchingProvider<>(componentImpl, 47);
+      this.binding48Provider = new SwitchingProvider<>(componentImpl, 48);
+      this.binding49Provider = new SwitchingProvider<>(componentImpl, 49);
     }
 
     @SuppressWarnings("unchecked")
     private void initialize3() {
-      this.binding50Provider = new SwitchingProviderImpl<>(componentImpl, 50);
-      this.binding51Provider = new SwitchingProviderImpl<>(componentImpl, 51);
-      this.binding52Provider = new SwitchingProviderImpl<>(componentImpl, 52);
-      this.binding53Provider = new SwitchingProviderImpl<>(componentImpl, 53);
-      this.binding54Provider = new SwitchingProviderImpl<>(componentImpl, 54);
-      this.binding55Provider = new SwitchingProviderImpl<>(componentImpl, 55);
-      this.binding56Provider = new SwitchingProviderImpl<>(componentImpl, 56);
-      this.binding57Provider = new SwitchingProviderImpl<>(componentImpl, 57);
-      this.binding58Provider = new SwitchingProviderImpl<>(componentImpl, 58);
-      this.binding59Provider = new SwitchingProviderImpl<>(componentImpl, 59);
-      this.binding60Provider = new SwitchingProviderImpl<>(componentImpl, 60);
-      this.binding61Provider = new SwitchingProviderImpl<>(componentImpl, 61);
-      this.binding62Provider = new SwitchingProviderImpl<>(componentImpl, 62);
-      this.binding63Provider = new SwitchingProviderImpl<>(componentImpl, 63);
-      this.binding64Provider = new SwitchingProviderImpl<>(componentImpl, 64);
-      this.binding65Provider = new SwitchingProviderImpl<>(componentImpl, 65);
-      this.binding66Provider = new SwitchingProviderImpl<>(componentImpl, 66);
-      this.binding67Provider = new SwitchingProviderImpl<>(componentImpl, 67);
-      this.binding68Provider = new SwitchingProviderImpl<>(componentImpl, 68);
-      this.binding69Provider = new SwitchingProviderImpl<>(componentImpl, 69);
-      this.binding70Provider = new SwitchingProviderImpl<>(componentImpl, 70);
-      this.binding71Provider = new SwitchingProviderImpl<>(componentImpl, 71);
-      this.binding72Provider = new SwitchingProviderImpl<>(componentImpl, 72);
-      this.binding73Provider = new SwitchingProviderImpl<>(componentImpl, 73);
-      this.binding74Provider = new SwitchingProviderImpl<>(componentImpl, 74);
+      this.binding50Provider = new SwitchingProvider<>(componentImpl, 50);
+      this.binding51Provider = new SwitchingProvider<>(componentImpl, 51);
+      this.binding52Provider = new SwitchingProvider<>(componentImpl, 52);
+      this.binding53Provider = new SwitchingProvider<>(componentImpl, 53);
+      this.binding54Provider = new SwitchingProvider<>(componentImpl, 54);
+      this.binding55Provider = new SwitchingProvider<>(componentImpl, 55);
+      this.binding56Provider = new SwitchingProvider<>(componentImpl, 56);
+      this.binding57Provider = new SwitchingProvider<>(componentImpl, 57);
+      this.binding58Provider = new SwitchingProvider<>(componentImpl, 58);
+      this.binding59Provider = new SwitchingProvider<>(componentImpl, 59);
+      this.binding60Provider = new SwitchingProvider<>(componentImpl, 60);
+      this.binding61Provider = new SwitchingProvider<>(componentImpl, 61);
+      this.binding62Provider = new SwitchingProvider<>(componentImpl, 62);
+      this.binding63Provider = new SwitchingProvider<>(componentImpl, 63);
+      this.binding64Provider = new SwitchingProvider<>(componentImpl, 64);
+      this.binding65Provider = new SwitchingProvider<>(componentImpl, 65);
+      this.binding66Provider = new SwitchingProvider<>(componentImpl, 66);
+      this.binding67Provider = new SwitchingProvider<>(componentImpl, 67);
+      this.binding68Provider = new SwitchingProvider<>(componentImpl, 68);
+      this.binding69Provider = new SwitchingProvider<>(componentImpl, 69);
+      this.binding70Provider = new SwitchingProvider<>(componentImpl, 70);
+      this.binding71Provider = new SwitchingProvider<>(componentImpl, 71);
+      this.binding72Provider = new SwitchingProvider<>(componentImpl, 72);
+      this.binding73Provider = new SwitchingProvider<>(componentImpl, 73);
+      this.binding74Provider = new SwitchingProvider<>(componentImpl, 74);
     }
 
     @SuppressWarnings("unchecked")
     private void initialize4() {
-      this.binding75Provider = new SwitchingProviderImpl<>(componentImpl, 75);
-      this.binding76Provider = new SwitchingProviderImpl<>(componentImpl, 76);
-      this.binding77Provider = new SwitchingProviderImpl<>(componentImpl, 77);
-      this.binding78Provider = new SwitchingProviderImpl<>(componentImpl, 78);
-      this.binding79Provider = new SwitchingProviderImpl<>(componentImpl, 79);
-      this.binding80Provider = new SwitchingProviderImpl<>(componentImpl, 80);
-      this.binding81Provider = new SwitchingProviderImpl<>(componentImpl, 81);
-      this.binding82Provider = new SwitchingProviderImpl<>(componentImpl, 82);
-      this.binding83Provider = new SwitchingProviderImpl<>(componentImpl, 83);
-      this.binding84Provider = new SwitchingProviderImpl<>(componentImpl, 84);
-      this.binding85Provider = new SwitchingProviderImpl<>(componentImpl, 85);
-      this.binding86Provider = new SwitchingProviderImpl<>(componentImpl, 86);
-      this.binding87Provider = new SwitchingProviderImpl<>(componentImpl, 87);
-      this.binding88Provider = new SwitchingProviderImpl<>(componentImpl, 88);
-      this.binding89Provider = new SwitchingProviderImpl<>(componentImpl, 89);
-      this.binding90Provider = new SwitchingProviderImpl<>(componentImpl, 90);
-      this.binding91Provider = new SwitchingProviderImpl<>(componentImpl, 91);
-      this.binding92Provider = new SwitchingProviderImpl<>(componentImpl, 92);
-      this.binding93Provider = new SwitchingProviderImpl<>(componentImpl, 93);
-      this.binding94Provider = new SwitchingProviderImpl<>(componentImpl, 94);
-      this.binding95Provider = new SwitchingProviderImpl<>(componentImpl, 95);
-      this.binding96Provider = new SwitchingProviderImpl<>(componentImpl, 96);
-      this.binding97Provider = new SwitchingProviderImpl<>(componentImpl, 97);
-      this.binding98Provider = new SwitchingProviderImpl<>(componentImpl, 98);
-      this.binding99Provider = new SwitchingProviderImpl<>(componentImpl, 99);
+      this.binding75Provider = new SwitchingProvider<>(componentImpl, 75);
+      this.binding76Provider = new SwitchingProvider<>(componentImpl, 76);
+      this.binding77Provider = new SwitchingProvider<>(componentImpl, 77);
+      this.binding78Provider = new SwitchingProvider<>(componentImpl, 78);
+      this.binding79Provider = new SwitchingProvider<>(componentImpl, 79);
+      this.binding80Provider = new SwitchingProvider<>(componentImpl, 80);
+      this.binding81Provider = new SwitchingProvider<>(componentImpl, 81);
+      this.binding82Provider = new SwitchingProvider<>(componentImpl, 82);
+      this.binding83Provider = new SwitchingProvider<>(componentImpl, 83);
+      this.binding84Provider = new SwitchingProvider<>(componentImpl, 84);
+      this.binding85Provider = new SwitchingProvider<>(componentImpl, 85);
+      this.binding86Provider = new SwitchingProvider<>(componentImpl, 86);
+      this.binding87Provider = new SwitchingProvider<>(componentImpl, 87);
+      this.binding88Provider = new SwitchingProvider<>(componentImpl, 88);
+      this.binding89Provider = new SwitchingProvider<>(componentImpl, 89);
+      this.binding90Provider = new SwitchingProvider<>(componentImpl, 90);
+      this.binding91Provider = new SwitchingProvider<>(componentImpl, 91);
+      this.binding92Provider = new SwitchingProvider<>(componentImpl, 92);
+      this.binding93Provider = new SwitchingProvider<>(componentImpl, 93);
+      this.binding94Provider = new SwitchingProvider<>(componentImpl, 94);
+      this.binding95Provider = new SwitchingProvider<>(componentImpl, 95);
+      this.binding96Provider = new SwitchingProvider<>(componentImpl, 96);
+      this.binding97Provider = new SwitchingProvider<>(componentImpl, 97);
+      this.binding98Provider = new SwitchingProvider<>(componentImpl, 98);
+      this.binding99Provider = new SwitchingProvider<>(componentImpl, 99);
     }
 
     @SuppressWarnings("unchecked")
     private void initialize5() {
-      this.binding100Provider = new SwitchingProviderImpl<>(componentImpl, 100);
+      this.binding100Provider = new SwitchingProvider<>(componentImpl, 100);
     }
 
     @Override
@@ -881,23 +880,18 @@ final class DaggerTestComponent {
       return binding100Provider;
     }
 
-    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
+    private static final class SwitchingProvider<T> implements Provider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
-      @Override
-      public T get() {
-        return get(id);
-      }
-
       @SuppressWarnings("unchecked")
-      private T get0(int id) {
+      private T get0() {
         switch (id) {
           case 0: // test.Binding0
           return (T) new Binding0();
@@ -1204,7 +1198,7 @@ final class DaggerTestComponent {
       }
 
       @SuppressWarnings("unchecked")
-      private T get1(int id) {
+      private T get1() {
         switch (id) {
           case 100: // test.Binding100
           return (T) new Binding100();
@@ -1214,10 +1208,10 @@ final class DaggerTestComponent {
       }
 
       @Override
-      public T get(int id) {
+      public T get() {
         switch (id / 100) {
-          case 0: return get0(id);
-          case 1: return get1(id);
+          case 0: return get0();
+          case 1: return get1();
           default: throw new AssertionError(id);
         }
       }

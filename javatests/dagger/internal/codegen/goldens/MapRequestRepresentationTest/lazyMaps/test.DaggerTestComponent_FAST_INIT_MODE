@@ -6,7 +6,6 @@ import dagger.internal.DoubleCheck;
 import dagger.internal.MapBuilder;
 import dagger.internal.Provider;
 import dagger.internal.ProviderOfLazy;
-import dagger.internal.SwitchingProvider;
 import java.util.Map;
 import javax.annotation.processing.Generated;
 
@@ -82,11 +81,11 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.int0Provider = new SwitchingProviderImpl<>(componentImpl, 1);
-      this.int1Provider = new SwitchingProviderImpl<>(componentImpl, 2);
-      this.int2Provider = new SwitchingProviderImpl<>(componentImpl, 3);
-      this.mapOfStringAndLazyOfIntegerProvider = new SwitchingProviderImpl<>(componentImpl, 0);
-      this.mapOfStringAndProviderOfLazyOfIntegerProvider = new SwitchingProviderImpl<>(componentImpl, 4);
+      this.int0Provider = new SwitchingProvider<>(componentImpl, 1);
+      this.int1Provider = new SwitchingProvider<>(componentImpl, 2);
+      this.int2Provider = new SwitchingProvider<>(componentImpl, 3);
+      this.mapOfStringAndLazyOfIntegerProvider = new SwitchingProvider<>(componentImpl, 0);
+      this.mapOfStringAndProviderOfLazyOfIntegerProvider = new SwitchingProvider<>(componentImpl, 4);
     }
 
     @Override
@@ -110,24 +109,19 @@ final class DaggerTestComponent {
       return mapOfStringAndProviderOfLazyOfIntegerProvider;
     }
 
-    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
+    private static final class SwitchingProvider<T> implements Provider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      public T get() {
-        return get(id);
-      }
-
-      @Override
       @SuppressWarnings("unchecked")
-      public T get(int id) {
+      public T get() {
         switch (id) {
           case 0: // java.util.Map<java.lang.String,dagger.Lazy<java.lang.Integer>>
           return (T) componentImpl.mapOfStringAndLazyOfIntegerBuilder();

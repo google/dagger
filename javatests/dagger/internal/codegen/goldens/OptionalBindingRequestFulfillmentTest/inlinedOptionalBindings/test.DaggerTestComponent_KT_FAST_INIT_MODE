@@ -5,7 +5,6 @@ import dagger.Lazy;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Provider;
 import dagger.internal.ProviderOfLazy;
-import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 import other.DefinitelyNot;
 import other.Maybe;
@@ -62,7 +61,7 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.provideMaybeProvider = new SwitchingProviderImpl<>(componentImpl, 0);
+      this.provideMaybeProvider = new SwitchingProvider<>(componentImpl, 0);
     }
 
     @Override
@@ -85,24 +84,19 @@ final class DaggerTestComponent {
       return (Optional<javax.inject.Provider<Lazy<DefinitelyNot>>>) ((Object) (Optional.absent()));
     }
 
-    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
+    private static final class SwitchingProvider<T> implements Provider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      public T get() {
-        return get(id);
-      }
-
-      @Override
       @SuppressWarnings("unchecked")
-      public T get(int id) {
+      public T get() {
         switch (id) {
           case 0: // other.Maybe
           return (T) Maybe_MaybeModule_ProvideMaybeFactory.provideMaybe();

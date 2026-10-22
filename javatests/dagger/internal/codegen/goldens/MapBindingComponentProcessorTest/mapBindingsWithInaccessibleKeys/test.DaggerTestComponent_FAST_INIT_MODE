@@ -3,7 +3,6 @@ package test;
 import com.google.common.collect.ImmutableMap;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Provider;
-import dagger.internal.SwitchingProvider;
 import java.util.Map;
 import javax.annotation.processing.Generated;
 import mapkeys.MapKeys;
@@ -67,9 +66,9 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.mapOfClassOfObjectAndIntegerProvider = new SwitchingProviderImpl<>(componentImpl, 0);
-      this.mapOfPackagePrivateEnumAndIntegerProvider = new SwitchingProviderImpl<>(componentImpl, 1);
-      this.mapOfComplexKeyAndIntegerProvider = new SwitchingProviderImpl<>(componentImpl, 2);
+      this.mapOfClassOfObjectAndIntegerProvider = new SwitchingProvider<>(componentImpl, 0);
+      this.mapOfPackagePrivateEnumAndIntegerProvider = new SwitchingProvider<>(componentImpl, 1);
+      this.mapOfComplexKeyAndIntegerProvider = new SwitchingProvider<>(componentImpl, 2);
     }
 
     @Override
@@ -102,24 +101,19 @@ final class DaggerTestComponent {
       return mapOfComplexKeyAndIntegerProvider;
     }
 
-    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
+    private static final class SwitchingProvider<T> implements Provider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      public T get() {
-        return get(id);
-      }
-
-      @Override
       @SuppressWarnings("unchecked")
-      public T get(int id) {
+      public T get() {
         switch (id) {
           case 0: // java.util.Map<java.lang.Class<?>,java.lang.Integer>
           return (T) ImmutableMap.<Class<?>, Integer>of(MapModule_ClassKeyMapKey.create(), MapModule.classKey());

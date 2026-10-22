@@ -2,7 +2,6 @@ package test;
 
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Provider;
-import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -53,7 +52,7 @@ public final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.fooProvider = new SwitchingProviderImpl<>(componentImpl, 0);
+      this.fooProvider = new SwitchingProvider<>(componentImpl, 0);
     }
 
     @Override
@@ -61,24 +60,19 @@ public final class DaggerTestComponent {
       return new SomeEntryPoint(fooProvider.get(), fooProvider);
     }
 
-    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
+    private static final class SwitchingProvider<T> implements Provider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      public T get() {
-        return get(id);
-      }
-
-      @Override
       @SuppressWarnings("unchecked")
-      public T get(int id) {
+      public T get() {
         switch (id) {
           case 0: // test.Foo
           return (T) new Foo(new Bar());

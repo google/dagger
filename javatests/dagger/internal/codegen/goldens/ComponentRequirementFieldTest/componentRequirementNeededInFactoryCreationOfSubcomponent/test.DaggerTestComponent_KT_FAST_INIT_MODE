@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableSet;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Preconditions;
 import dagger.internal.Provider;
-import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 
 @DaggerGenerated
@@ -75,7 +74,7 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.reliesOnMultibindingProvider = new SwitchingProviderImpl<>(componentImpl, testSubcomponentImpl, 0);
+      this.reliesOnMultibindingProvider = new SwitchingProvider<>(componentImpl, testSubcomponentImpl, 0);
     }
 
     @Override
@@ -83,14 +82,14 @@ final class DaggerTestComponent {
       return (javax.inject.Provider<Object>) ((Object) (reliesOnMultibindingProvider));
     }
 
-    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
+    private static final class SwitchingProvider<T> implements Provider<T> {
       private final ComponentImpl componentImpl;
 
       private final TestSubcomponentImpl testSubcomponentImpl;
 
       private final int id;
 
-      SwitchingProviderImpl(ComponentImpl componentImpl, TestSubcomponentImpl testSubcomponentImpl,
+      SwitchingProvider(ComponentImpl componentImpl, TestSubcomponentImpl testSubcomponentImpl,
           int id) {
         this.componentImpl = componentImpl;
         this.testSubcomponentImpl = testSubcomponentImpl;
@@ -98,13 +97,8 @@ final class DaggerTestComponent {
       }
 
       @Override
-      public T get() {
-        return get(id);
-      }
-
-      @Override
       @SuppressWarnings("unchecked")
-      public T get(int id) {
+      public T get() {
         switch (id) {
           case 0: // java.lang.Object
           return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(componentImpl.parentModule, testSubcomponentImpl.setOfObject());
@@ -137,7 +131,7 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize(final ParentModule parentModuleParam) {
-      this.reliesOnMultibindingProvider = new SwitchingProviderImpl<>(componentImpl, 0);
+      this.reliesOnMultibindingProvider = new SwitchingProvider<>(componentImpl, 0);
     }
 
     @Override
@@ -150,24 +144,19 @@ final class DaggerTestComponent {
       return new TestSubcomponentImpl(componentImpl);
     }
 
-    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
+    private static final class SwitchingProvider<T> implements Provider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      public T get() {
-        return get(id);
-      }
-
-      @Override
       @SuppressWarnings("unchecked")
-      public T get(int id) {
+      public T get() {
         switch (id) {
           case 0: // java.lang.Object
           return (T) ParentModule_ReliesOnMultibindingFactory.reliesOnMultibinding(componentImpl.parentModule, componentImpl.setOfObject());

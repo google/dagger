@@ -1,9 +1,8 @@
 package test;
 
 import dagger.internal.DaggerGenerated;
-import dagger.internal.DoubleCheckSwitchingProvider;
+import dagger.internal.DoubleCheck;
 import dagger.internal.Provider;
-import dagger.internal.SwitchingProvider;
 import dagger.producers.internal.CancellationListener;
 import javax.annotation.processing.Generated;
 
@@ -68,8 +67,6 @@ final class DaggerParent {
   private static final class ComponentImpl implements Parent, CancellationListener {
     private final ComponentImpl componentImpl = this;
 
-    private SwitchingProviderImpl<Object> sharedSwitchingProvider;
-
     /**
      * {@code Provider<ProductionScoped>}
      */
@@ -83,8 +80,7 @@ final class DaggerParent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.sharedSwitchingProvider = new SwitchingProviderImpl<>(componentImpl, -1);
-      this.productionScopedProvider = DoubleCheckSwitchingProvider.provider(sharedSwitchingProvider, 0);
+      this.productionScopedProvider = DoubleCheck.provider(new SwitchingProvider<>(componentImpl, 0));
     }
 
     @Override
@@ -98,24 +94,19 @@ final class DaggerParent {
 
     }
 
-    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
+    private static final class SwitchingProvider<T> implements Provider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      public T get() {
-        return get(id);
-      }
-
-      @Override
       @SuppressWarnings("unchecked")
-      public T get(int id) {
+      public T get() {
         switch (id) {
           case 0: // test.ProductionScoped
           return (T) ProductionScoped_Factory.newInstance();

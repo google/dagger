@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Preconditions;
 import dagger.internal.Provider;
-import dagger.internal.SwitchingProvider;
 import java.util.Map;
 import javax.annotation.processing.Generated;
 
@@ -82,7 +81,7 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize(final MapModuleOne mapModuleOneParam,
         final MapModuleTwo mapModuleTwoParam) {
-      this.mapOfPathEnumAndHandlerProvider = new SwitchingProviderImpl<>(componentImpl, 0);
+      this.mapOfPathEnumAndHandlerProvider = new SwitchingProvider<>(componentImpl, 0);
     }
 
     @Override
@@ -90,24 +89,19 @@ final class DaggerTestComponent {
       return mapOfPathEnumAndHandlerProvider;
     }
 
-    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
+    private static final class SwitchingProvider<T> implements Provider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      public T get() {
-        return get(id);
-      }
-
-      @Override
       @SuppressWarnings("unchecked")
-      public T get(int id) {
+      public T get() {
         switch (id) {
           case 0: // java.util.Map<test.PathEnum,test.Handler>
           return (T) ImmutableMap.<PathEnum, Handler>of(PathEnum.ADMIN, MapModuleOne_ProvideAdminHandlerFactory.provideAdminHandler(componentImpl.mapModuleOne), PathEnum.LOGIN, MapModuleTwo_ProvideLoginHandlerFactory.provideLoginHandler(componentImpl.mapModuleTwo));

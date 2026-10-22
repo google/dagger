@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Preconditions;
 import dagger.internal.Provider;
-import dagger.internal.SwitchingProvider;
 import java.util.Map;
 import javax.annotation.processing.Generated;
 
@@ -86,9 +85,9 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize(final MapModuleOne mapModuleOneParam,
         final MapModuleTwo mapModuleTwoParam) {
-      this.provideAdminHandlerProvider = new SwitchingProviderImpl<>(componentImpl, 1);
-      this.provideLoginHandlerProvider = new SwitchingProviderImpl<>(componentImpl, 2);
-      this.mapOfWrappedClassKeyAndProviderOfHandlerProvider = new SwitchingProviderImpl<>(componentImpl, 0);
+      this.provideAdminHandlerProvider = new SwitchingProvider<>(componentImpl, 1);
+      this.provideLoginHandlerProvider = new SwitchingProvider<>(componentImpl, 2);
+      this.mapOfWrappedClassKeyAndProviderOfHandlerProvider = new SwitchingProvider<>(componentImpl, 0);
     }
 
     @Override
@@ -97,24 +96,19 @@ final class DaggerTestComponent {
       return mapOfWrappedClassKeyAndProviderOfHandlerProvider;
     }
 
-    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
+    private static final class SwitchingProvider<T> implements Provider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      public T get() {
-        return get(id);
-      }
-
-      @Override
       @SuppressWarnings("unchecked")
-      public T get(int id) {
+      public T get() {
         switch (id) {
           case 0: // java.util.Map<test.WrappedClassKey,javax.inject.Provider<test.Handler>>
           return (T) ImmutableMap.<WrappedClassKey, javax.inject.Provider<Handler>>of(WrappedClassKeyCreator.createWrappedClassKey(Integer.class), componentImpl.provideAdminHandlerProvider, WrappedClassKeyCreator.createWrappedClassKey(Long.class), componentImpl.provideLoginHandlerProvider);

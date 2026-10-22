@@ -3,7 +3,6 @@ package test;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.DoubleCheck;
 import dagger.internal.Provider;
-import dagger.internal.SwitchingProvider;
 import javax.annotation.processing.Generated;
 import other.FooImpl_Factory;
 
@@ -58,7 +57,7 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.fooImplProvider = new SwitchingProviderImpl<>(componentImpl, 0);
+      this.fooImplProvider = new SwitchingProvider<>(componentImpl, 0);
       this.bindProvider = DoubleCheck.provider((Provider) (fooImplProvider));
     }
 
@@ -67,24 +66,19 @@ final class DaggerTestComponent {
       return bindProvider.get();
     }
 
-    private static final class SwitchingProviderImpl<T> implements SwitchingProvider<T> {
+    private static final class SwitchingProvider<T> implements Provider<T> {
       private final ComponentImpl componentImpl;
 
       private final int id;
 
-      SwitchingProviderImpl(ComponentImpl componentImpl, int id) {
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
         this.componentImpl = componentImpl;
         this.id = id;
       }
 
       @Override
-      public T get() {
-        return get(id);
-      }
-
-      @Override
       @SuppressWarnings("unchecked")
-      public T get(int id) {
+      public T get() {
         switch (id) {
           case 0: // other.FooImpl
           return (T) FooImpl_Factory.newInstance();

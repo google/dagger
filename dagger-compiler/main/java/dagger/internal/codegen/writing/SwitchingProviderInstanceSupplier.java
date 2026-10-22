@@ -16,14 +16,18 @@
 
 package dagger.internal.codegen.writing;
 
+import androidx.room3.compiler.codegen.XCodeBlock;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
+import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.model.BindingKind;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.xprocessing.XTypeNames;
 
 /**
  * An object that initializes a framework-type component field for a binding using instances created
@@ -31,6 +35,7 @@ import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstan
  */
 final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSupplier {
   private final FrameworkInstanceSupplier frameworkInstanceSupplier;
+  private final CompilerOptions compilerOptions;
 
   @AssistedInject
   SwitchingProviderInstanceSupplier(
@@ -51,12 +56,31 @@ final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSuppli
             compilerOptions,
             componentImplementation,
             binding,
-            frameworkInstanceCreationExpression);
+            scope(binding, frameworkInstanceCreationExpression));
+    this.compilerOptions = compilerOptions;
   }
 
   @Override
   public MemberSelect memberSelect() {
     return frameworkInstanceSupplier.memberSelect();
+  }
+
+  private FrameworkInstanceCreationExpression scope(
+      Binding binding, FrameworkInstanceCreationExpression unscoped) {
+    // Caching assisted factory provider, so that there won't be new factory created for each
+    // provider.get() call.
+    if (!binding.scope().isPresent() && !binding.kind().equals(BindingKind.ASSISTED_FACTORY)) {
+      return unscoped;
+    }
+    return () ->
+        XCodeBlock.of(
+            "%T.provider(%L)",
+            binding.scope().isPresent()
+                ? (binding.scope().get().isReusable()
+                    ? XTypeNames.SINGLE_CHECK
+                    : XTypeNames.DOUBLE_CHECK)
+                : XTypeNames.SINGLE_CHECK,
+            unscoped.creationExpression());
   }
 
   @AssistedFactory

@@ -94,6 +94,15 @@ tasks.withType(PluginUnderTestMetadata.class).named("pluginUnderTestMetadata").c
   it.pluginClasspath.from(configurations.testPluginCompile)
 }
 
+test {
+  // Because TestKit tests resolve com.google.dagger:*:LOCAL-SNAPSHOT from mavenLocal() at
+  // runtime rather than through this project's dependencies block, Gradle does not include
+  // those artifacts in the test task's cache key by default. Without this input, changes to
+  // Dagger/Hilt reuse cached test results from a previous build, which can hide breakages
+  // until a later commit invalidates the cache.
+  inputs.dir(file("${repositories.mavenLocal().url}/com/google/dagger"))
+}
+
 kotlin {
   compilerOptions {
     apiVersion = KotlinVersion.KOTLIN_2_1

@@ -19,11 +19,17 @@ plugins {
   id 'application'
 }
 
-// Set the versions in a system property so that tests can access it.
 test {
-    systemProperty 'dagger_version', "$dagger_version"
-    systemProperty 'kotlin_version', "$kotlin_version"
-    systemProperty 'ksp_version', "$ksp_version"
+  // Because TestKit tests resolve com.google.dagger:*:LOCAL-SNAPSHOT from mavenLocal() at
+  // runtime rather than through this project's dependencies block, Gradle does not include
+  // those artifacts in the test task's cache key by default. Without this input, changes to
+  // Dagger/Hilt reuse cached test results from a previous build, which can hide breakages
+  // until a later commit invalidates the cache.
+  inputs.dir(file("${repositories.mavenLocal().url}/com/google/dagger"))
+  // Set the versions in a system property so that tests can access it.
+  systemProperty 'dagger_version', "$dagger_version"
+  systemProperty 'kotlin_version', "$kotlin_version"
+  systemProperty 'ksp_version', "$ksp_version"
 }
 
 dependencies {

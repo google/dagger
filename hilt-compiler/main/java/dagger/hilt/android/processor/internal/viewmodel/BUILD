@@ -50,6 +50,7 @@ kt_jvm_library(
         "//third_party/java/incap",
         "//third_party/java/javapoet",
         "//third_party/kotlin/kotlin_symbol_processing:symbol-processing-api",
+        "//third_party/kotlin/kotlinpoet:interop",
     ],
 )
 

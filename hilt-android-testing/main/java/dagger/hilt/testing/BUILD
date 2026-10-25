@@ -34,6 +34,10 @@ java_library(
     exported_plugins = [
         "//hilt-compiler/main/java/dagger/hilt/processor/internal/aggregateddeps:plugin",
     ],
+    visibility = [
+        "//:src",
+        "//third_party/java_src/android_app/dialer/javatests/com/android/dialer/incall/core/peer:__pkg__",
+    ],
     exports = [
         "//hilt-core/main/java/dagger/hilt/processor/internal/aggregateddeps:annotation",
     ],

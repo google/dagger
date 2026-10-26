@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.truth.TruthJUnit.assume;
 
 import androidx.room3.compiler.processing.XProcessingEnv.Backend;
+import androidx.room3.compiler.processing.util.CompilationResultSubject;
 import androidx.room3.compiler.processing.util.Source;
 import com.google.auto.value.processor.AutoAnnotationProcessor;
 import dagger.testing.compile.CompilerTests;
@@ -43,6 +44,11 @@ public class LazyClassKeyMapBindingComponentProcessorTest {
 
   public LazyClassKeyMapBindingComponentProcessorTest(CompilerMode compilerMode) {
     this.compilerMode = compilerMode;
+  }
+
+  private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
+    Source source = goldenFileRule.goldenSource(goldenName);
+    subject.generatedSource(source);
   }
 
   @Test
@@ -130,18 +136,16 @@ public class LazyClassKeyMapBindingComponentProcessorTest {
         .withProcessingOptions(compilerMode.processorOptions())
         .withAdditionalJavacProcessors(new AutoAnnotationProcessor())
         .compile(
-          subject -> {
-              // TODO(b/264464791): There is no AutoAnnotationProcessor for KSP.
+            subject -> {
+              // TODO(b/264464791): There is no AutoAnnotationProcessor for KSP when generating
+              // Java.
               assume().that(CompilerTests.backend(subject)).isNotEqualTo(Backend.KSP);
               subject.hasErrorCount(0);
               subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
-              subject.generatedSource(
-                  goldenFileRule.goldenSource(
-                      "mapkeys.MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey"));
-              subject.generatedSource(
-                  goldenFileRule.goldenSource("mapkeys.MapModule_ClassKeyMapKey"));
-            }
-        );
+              assertSourceMatchesGolden(
+                  subject, "mapkeys/MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey");
+              assertSourceMatchesGolden(subject, "mapkeys/MapModule_ClassKeyMapKey");
+            });
   }
 
   @Test

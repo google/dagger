@@ -33,6 +33,7 @@ import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.squareup.javapoet.MethodSpec;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -377,6 +378,10 @@ public final class XTypeSpecs {
           builder = XTypeSpec.objectBuilder(name);
           if (!isOpen) {
             toJavaPoet(builder).addModifiers(Modifier.FINAL);
+          }
+          if (visibility != VisibilityModifier.PRIVATE) {
+            toJavaPoet(builder)
+                .addMethod(MethodSpec.constructorBuilder().addModifiers(Modifier.PRIVATE).build());
           }
           break;
         case ANONYMOUS_CLASS:

@@ -22,12 +22,10 @@ import static dagger.internal.codegen.binding.AnnotationExpression.createMethodN
 import static dagger.internal.codegen.binding.AnnotationExpression.getAnnotationCreatorClassName;
 import static dagger.internal.codegen.xprocessing.XCodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
-import static dagger.internal.codegen.xprocessing.XFunSpecs.constructorBuilder;
 import static dagger.internal.codegen.xprocessing.XFunSpecs.methodBuilder;
 import static dagger.internal.codegen.xprocessing.XTypes.asArray;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 import static dagger.internal.codegen.xprocessing.XTypes.rewrapType;
-import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -101,8 +99,6 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement
     XClassName generatedTypeName = getAnnotationCreatorClassName(annotationType);
     XTypeSpecs.Builder annotationCreatorBuilder =
         XTypeSpecs.objectBuilder(generatedTypeName).addModifiers(PUBLIC);
-
-    annotationCreatorBuilder.addFunction(constructorBuilder().addModifiers(PRIVATE).build());
 
     for (XTypeElement annotationElement : annotationsToCreate(annotationType)) {
       annotationCreatorBuilder.addFunction(buildCreateMethod(generatedTypeName, annotationElement));

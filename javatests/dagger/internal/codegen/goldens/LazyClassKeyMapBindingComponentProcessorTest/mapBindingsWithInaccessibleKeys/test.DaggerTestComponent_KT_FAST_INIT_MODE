@@ -1,0 +1,124 @@
+package test;
+
+import com.google.common.collect.ImmutableMap;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.LazyClassKeyMap;
+import dagger.internal.Provider;
+import java.util.Map;
+import javax.annotation.processing.Generated;
+import mapkeys.MapKeys;
+import mapkeys.MapModule_ClassKeyFactory;
+import mapkeys.MapModule_ClassKey_LazyMapKey;
+import mapkeys.MapModule_ComplexKeyWithInaccessibleAnnotationValueFactory;
+import mapkeys.MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey;
+import mapkeys.MapModule_ComplexKeyWithInaccessibleArrayValueFactory;
+import mapkeys.MapModule_ComplexKeyWithInaccessibleArrayValueMapKey;
+import mapkeys.MapModule_ComplexKeyWithInaccessibleValueFactory;
+import mapkeys.MapModule_ComplexKeyWithInaccessibleValueMapKey;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new ComponentImpl();
+    }
+  }
+
+  private static final class ComponentImpl implements TestComponent {
+    private final ComponentImpl componentImpl = this;
+
+    /**
+      * {@code Provider<Map<Class<?>, Integer>>}
+      */
+    Provider<?> mapOfClassOfObjectAndIntegerProvider;
+
+    /**
+      * {@code Provider<Map<MapKeys.ComplexKey, Integer>>}
+      */
+    Provider<?> mapOfComplexKeyAndIntegerProvider;
+
+    ComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.mapOfClassOfObjectAndIntegerProvider = new SwitchingProvider<>(componentImpl, 0);
+      this.mapOfComplexKeyAndIntegerProvider = new SwitchingProvider<>(componentImpl, 1);
+    }
+
+    @Override
+    public Map<Class<?>, Integer> classKey() {
+      return (Map<Class<?>, Integer>) ((Object) (mapOfClassOfObjectAndIntegerProvider.get()));
+    }
+
+    @Override
+    public javax.inject.Provider<Map<Class<?>, Integer>> classKeyProvider() {
+      return (javax.inject.Provider<Map<Class<?>, Integer>>) ((Object) (mapOfClassOfObjectAndIntegerProvider));
+    }
+
+    @Override
+    public Map<MapKeys.ComplexKey, Integer> complexKey() {
+      return (Map<MapKeys.ComplexKey, Integer>) ((Object) (mapOfComplexKeyAndIntegerProvider.get()));
+    }
+
+    @Override
+    public javax.inject.Provider<Map<MapKeys.ComplexKey, Integer>> complexKeyProvider() {
+      return (javax.inject.Provider<Map<MapKeys.ComplexKey, Integer>>) ((Object) (mapOfComplexKeyAndIntegerProvider));
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final ComponentImpl componentImpl;
+
+      private final int id;
+
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
+        this.componentImpl = componentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // java.util.Map<java.lang.Class<?>,java.lang.Integer>
+          return (T) LazyClassKeyMap.<Object>of(ImmutableMap.of(MapModule_ClassKey_LazyMapKey.lazyClassKeyName, MapModule_ClassKeyFactory.classKey()));
+
+          case 1: // java.util.Map<mapkeys.MapKeys.ComplexKey,java.lang.Integer>
+          return (T) ImmutableMap.of(MapModule_ComplexKeyWithInaccessibleValueMapKey.create(), MapModule_ComplexKeyWithInaccessibleValueFactory.complexKeyWithInaccessibleValue(), MapModule_ComplexKeyWithInaccessibleArrayValueMapKey.create(), MapModule_ComplexKeyWithInaccessibleArrayValueFactory.complexKeyWithInaccessibleArrayValue(), MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey.create(), MapModule_ComplexKeyWithInaccessibleAnnotationValueFactory.complexKeyWithInaccessibleAnnotationValue());
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}

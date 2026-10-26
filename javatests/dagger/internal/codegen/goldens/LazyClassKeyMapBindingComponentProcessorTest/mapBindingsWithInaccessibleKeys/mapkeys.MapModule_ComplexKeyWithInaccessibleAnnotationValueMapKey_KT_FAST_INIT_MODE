@@ -1,0 +1,22 @@
+package mapkeys
+
+import dagger.`internal`.DaggerGenerated
+import java.lang.String
+import javax.`annotation`.processing.Generated
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public object MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey {
+  @JvmStatic
+  public fun create(): MapKeys.ComplexKey = MapKeys_ComplexKeyCreator.createComplexKey(arrayOf(String::class.java), String::class.java, MapKeys_ComplexKeyCreator.createLazyClassKey(MapKeys.Inaccessible::class.java))
+}

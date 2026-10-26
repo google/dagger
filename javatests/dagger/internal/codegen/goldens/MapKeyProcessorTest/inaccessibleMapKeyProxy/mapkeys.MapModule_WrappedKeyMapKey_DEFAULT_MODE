@@ -1,0 +1,27 @@
+package mapkeys;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class MapModule_WrappedKeyMapKey {
+  private MapModule_WrappedKeyMapKey() {
+  }
+
+  public static MapKeys.WrappedKey create() {
+    return MapKeys_WrappedKeyCreator.createWrappedKey(PackagePrivateTypes.Inaccessible.class);
+  }
+}

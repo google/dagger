@@ -299,4 +299,64 @@ public class MapKeyProcessorTest {
               assertSourceMatchesGolden(subject, "test/UnwrappedOuterKeyCreator");
             });
   }
+
+  @Test
+  public void inaccessibleMapKeyProxy() {
+    Source packagePrivateTypes =
+        CompilerTests.javaSource(
+            "mapkeys.PackagePrivateTypes",
+            "package mapkeys;",
+            "",
+            "class PackagePrivateTypes {",
+            "  interface Inaccessible {}",
+            "}");
+    Source mapKeys =
+        CompilerTests.kotlinSource(
+            "MapKeys.kt",
+            "package mapkeys",
+            "",
+            "import dagger.MapKey",
+            "import kotlin.reflect.KClass",
+            "",
+            "class MapKeys {",
+            "  @MapKey(unwrapValue = false)",
+            "  annotation class WrappedKey(val value: KClass<*>)",
+            "}");
+    Source module =
+        CompilerTests.kotlinSource(
+            "MapModule.kt",
+            "package mapkeys",
+            "",
+            "import dagger.Module",
+            "import dagger.Provides",
+            "import dagger.multibindings.ClassKey",
+            "import dagger.multibindings.IntoMap",
+            "import dagger.multibindings.LazyClassKey",
+            "",
+            "@Module",
+            "object MapModule {",
+            "  @Provides @IntoMap @ClassKey(PackagePrivateTypes.Inaccessible::class)",
+            "  @JvmStatic",
+            "  fun classKey(): Int = 1",
+            "",
+            "  @Provides @IntoMap @MapKeys.WrappedKey(PackagePrivateTypes.Inaccessible::class)",
+            "  @JvmStatic",
+            "  fun wrappedKey(): Int = 1",
+            "",
+            "  @Provides @IntoMap @LazyClassKey(PackagePrivateTypes.Inaccessible::class)",
+            "  @JvmStatic",
+            "  fun lazyClassKey(): Int = 1",
+            "}");
+    CompilerTests.daggerCompiler(packagePrivateTypes, mapKeys, module)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .withAdditionalJavacProcessors(new AutoAnnotationProcessor())
+        .compile(
+            subject -> {
+              assumeMapKeySupported(CompilerTests.backend(subject));
+              subject.hasErrorCount(0);
+              assertSourceMatchesGolden(subject, "mapkeys/MapModule_ClassKeyMapKey");
+              assertSourceMatchesGolden(subject, "mapkeys/MapModule_WrappedKeyMapKey");
+              assertSourceMatchesGolden(subject, "mapkeys/MapModule_LazyClassKeyMapKey");
+            });
+  }
 }

@@ -16,13 +16,11 @@
 
 package dagger.internal.codegen.writing;
 
-import static dagger.internal.codegen.xprocessing.XFunSpecs.constructorBuilder;
-import static dagger.internal.codegen.xprocessing.XTypeSpecs.classBuilder;
-import static javax.lang.model.element.Modifier.FINAL;
-import static javax.lang.model.element.Modifier.PRIVATE;
+import static dagger.internal.codegen.xprocessing.XTypeSpecs.objectBuilder;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import androidx.room3.compiler.codegen.XPropertySpec;
+import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.codegen.XTypeSpec;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XFiler;
@@ -46,7 +44,9 @@ public final class InaccessibleMapKeyProxyGenerator
   private final XProcessingEnv processingEnv;
 
   @Inject
-  InaccessibleMapKeyProxyGenerator(XProcessingEnv processingEnv, XFiler filer) {
+  InaccessibleMapKeyProxyGenerator(
+      XProcessingEnv processingEnv,
+      XFiler filer) {
     super(filer, processingEnv);
     this.processingEnv = processingEnv;
   }
@@ -63,9 +63,8 @@ public final class InaccessibleMapKeyProxyGenerator
         .map(
             method -> {
               XTypeSpecs.Builder builder =
-                  classBuilder(MapKeys.mapKeyProxyClassName(binding))
-                      .addModifiers(PUBLIC, FINAL)
-                      .addFunction(constructorBuilder().addModifiers(PRIVATE).build())
+                  objectBuilder(MapKeys.mapKeyProxyClassName(binding))
+                      .addModifiers(PUBLIC)
                       .addFunction(method);
               lazyClassKeyField(binding).ifPresent(builder::addProperty);
               return ImmutableList.of(builder.build());
@@ -83,9 +82,11 @@ public final class InaccessibleMapKeyProxyGenerator
         .mapKey()
         .filter(mapKey -> mapKey.getTypeElement().asClassName().equals(XTypeNames.LAZY_CLASS_KEY))
         .map(
-            mapKey ->
-                XPropertySpecs.builder("className", mapKey.getAsType("value").asTypeName())
-                    .addAnnotation(XTypeNames.KEEP_FIELD_TYPE)
-                    .build());
+            mapKey -> {
+              XTypeName typeName = mapKey.getAsType("value").asTypeName();
+              return XPropertySpecs.builder("className", typeName)
+                  .addAnnotation(XTypeNames.KEEP_FIELD_TYPE)
+                  .build();
+            });
   }
 }

@@ -1,0 +1,22 @@
+package mapkeys
+
+import dagger.`internal`.DaggerGenerated
+import java.lang.Class
+import javax.`annotation`.processing.Generated
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public object MapModule_ClassKeyMapKey {
+  @JvmStatic
+  public fun create(): Class<*> = PackagePrivateTypes.Inaccessible::class.java
+}

@@ -16,6 +16,7 @@
 
 package dagger.hilt.processor.internal.root;
 
+import static androidx.room3.compiler.processing.compat.XConverters.getProcessingEnv;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room3.compiler.processing.XAnnotation;
@@ -62,21 +63,6 @@ abstract class AggregatedRootMetadata {
     return RootType.of(rootElement());
   }
 
-  static ImmutableSet<AggregatedRootMetadata> from(XProcessingEnv env) {
-    return from(
-        AggregatedElements.from(
-            ClassNames.AGGREGATED_ROOT_PACKAGE, ClassNames.AGGREGATED_ROOT, env),
-        env);
-  }
-
-  /** Returns metadata for each aggregated element. */
-  public static ImmutableSet<AggregatedRootMetadata> from(
-      ImmutableSet<XTypeElement> aggregatedElements, XProcessingEnv env) {
-    return aggregatedElements.stream()
-        .map(aggregatedElement -> create(aggregatedElement, env))
-        .collect(toImmutableSet());
-  }
-
   public static AggregatedRootIr toIr(AggregatedRootMetadata metadata) {
     return new AggregatedRootIr(
         metadata.name(),
@@ -87,7 +73,17 @@ abstract class AggregatedRootMetadata {
         metadata.allowsSharingComponent());
   }
 
-  private static AggregatedRootMetadata create(XTypeElement element, XProcessingEnv env) {
+  static ImmutableSet<AggregatedRootMetadata> from(XProcessingEnv env) {
+    return AggregatedElements.from(
+            ClassNames.AGGREGATED_ROOT_PACKAGE, ClassNames.AGGREGATED_ROOT, env)
+        .stream()
+        .map(AggregatedRootMetadata::from)
+        .collect(toImmutableSet());
+  }
+
+  /** Returns metadata for the given aggregated element. */
+  public static AggregatedRootMetadata from(XTypeElement element) {
+    XProcessingEnv env = getProcessingEnv(element);
     XAnnotation annotation = element.getAnnotation(ClassNames.AGGREGATED_ROOT);
 
     XTypeElement rootElement = env.requireTypeElement(annotation.getAsString("root"));

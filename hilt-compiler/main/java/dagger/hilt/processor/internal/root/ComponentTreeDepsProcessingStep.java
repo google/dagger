@@ -38,14 +38,10 @@ import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
-import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsMetadata;
 import dagger.hilt.processor.internal.aggregateddeps.ComponentDependencies;
-import dagger.hilt.processor.internal.aliasof.AliasOfPropagatedDataMetadata;
 import dagger.hilt.processor.internal.aliasof.AliasOfs;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentClassesMetadata;
 import dagger.hilt.processor.internal.definecomponent.DefineComponents;
-import dagger.hilt.processor.internal.earlyentrypoint.AggregatedEarlyEntryPointMetadata;
-import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.io.IOException;
 import java.util.HashSet;
@@ -55,9 +51,11 @@ import java.util.Set;
 public final class ComponentTreeDepsProcessingStep extends BaseProcessingStep {
   private final Set<ClassName> componentTreeDepNames = new HashSet<>();
   private final Set<ClassName> processed = new HashSet<>();
+  private final RootMetadataCache cache;
 
-  public ComponentTreeDepsProcessingStep(XProcessingEnv env) {
+  ComponentTreeDepsProcessingStep(XProcessingEnv env, RootMetadataCache cache) {
     super(env);
+    this.cache = cache;
   }
 
   @Override
@@ -75,8 +73,7 @@ public final class ComponentTreeDepsProcessingStep extends BaseProcessingStep {
     ImmutableSet<ComponentTreeDepsMetadata> componentTreeDepsToProcess =
         componentTreeDepNames.stream()
             .filter(className -> !processed.contains(className))
-            .map(className -> processingEnv().requireTypeElement(className))
-            .map(element -> ComponentTreeDepsMetadata.from(element, processingEnv()))
+            .map(cache::getComponentTreeDeps)
             .collect(toImmutableSet());
 
     DefineComponents defineComponents = DefineComponents.create();
@@ -98,7 +95,9 @@ public final class ComponentTreeDepsProcessingStep extends BaseProcessingStep {
 
       boolean isDefaultRoot = ClassNames.DEFAULT_ROOT.equals(renamedRoot);
       ImmutableSet<Root> roots =
-          AggregatedRootMetadata.from(metadata.aggregatedRootDeps(), processingEnv()).stream()
+          metadata.aggregatedRootDeps().stream()
+              .map(processingEnv()::requireTypeElement)
+              .map(AggregatedRootMetadata::from)
               .map(AggregatedRootMetadata::rootElement)
               .map(rootElement -> Root.create(rootElement, processingEnv()))
               .collect(toImmutableSet());
@@ -114,7 +113,10 @@ public final class ComponentTreeDepsProcessingStep extends BaseProcessingStep {
 
       ImmutableSet<ComponentDescriptor> componentDescriptors =
           defineComponents.getComponentDescriptors(
-              DefineComponentClassesMetadata.from(metadata.defineComponentDeps()));
+              metadata.defineComponentDeps().stream()
+                  .map(processingEnv()::requireTypeElement)
+                  .map(DefineComponentClassesMetadata::from)
+                  .collect(toImmutableSet()));
 
       ComponentDescriptor rootComponentDescriptor =
           componentDescriptors.stream()
@@ -126,15 +128,13 @@ public final class ComponentTreeDepsProcessingStep extends BaseProcessingStep {
       ComponentDependencies deps =
           ComponentDependencies.from(
               componentDescriptors,
-              AggregatedDepsMetadata.from(metadata.aggregatedDeps()),
-              AggregatedUninstallModulesMetadata.from(metadata.aggregatedUninstallModulesDeps()),
-              AggregatedEarlyEntryPointMetadata.from(metadata.aggregatedEarlyEntryPointDeps()),
+              cache.getAggregatedDeps(metadata.aggregatedDeps()),
+              cache.getAggregatedUninstallModulesDeps(metadata.aggregatedUninstallModulesDeps()),
+              cache.getAggregatedEarlyEntryPointDeps(metadata.aggregatedEarlyEntryPointDeps()),
               processingEnv());
       AliasOfs aliasOfs =
           AliasOfs.create(
-              processingEnv(),
-              AliasOfPropagatedDataMetadata.from(metadata.aliasOfDeps()),
-              componentDescriptors);
+              processingEnv(), cache.getAliasOfDeps(metadata.aliasOfDeps()), componentDescriptors);
       RootMetadata rootMetadata = RootMetadata.create(root, tree, deps, aliasOfs, processingEnv());
 
       generateComponents(metadata, rootMetadata, componentNames);

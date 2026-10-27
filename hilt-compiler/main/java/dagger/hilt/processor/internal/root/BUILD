@@ -27,6 +27,7 @@ java_library(
         "EarlySingletonComponentCreatorGenerator.java",
         "RootFileFormatter.java",
         "RootGenerator.java",
+        "RootMetadataCache.java",
         "TestComponentDataGenerator.java",
     ],
     deps = [
@@ -47,6 +48,7 @@ java_library(
         "//hilt-compiler/main/java/dagger/hilt/processor/internal/aliasof:alias_ofs",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal/definecomponent:define_components",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal/earlyentrypoint:aggregated_early_entry_point_metadata",
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal/root/ir",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",

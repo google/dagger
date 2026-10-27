@@ -56,20 +56,15 @@ public abstract class DefineComponentClassesMetadata {
 
   /** Returns metadata for all aggregated elements in the aggregating package. */
   public static ImmutableSet<DefineComponentClassesMetadata> from(XProcessingEnv env) {
-    return from(
-        AggregatedElements.from(
-            ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE, ClassNames.DEFINE_COMPONENT_CLASSES, env));
-  }
-
-  /** Returns metadata for each aggregated element. */
-  public static ImmutableSet<DefineComponentClassesMetadata> from(
-      ImmutableSet<XTypeElement> aggregatedElements) {
-    return aggregatedElements.stream()
-        .map(aggregatedElement -> create(aggregatedElement))
+    return AggregatedElements.from(
+            ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE, ClassNames.DEFINE_COMPONENT_CLASSES, env)
+        .stream()
+        .map(DefineComponentClassesMetadata::from)
         .collect(toImmutableSet());
   }
 
-  private static DefineComponentClassesMetadata create(XTypeElement element) {
+  /** Returns metadata for the given aggregated element. */
+  public static DefineComponentClassesMetadata from(XTypeElement element) {
     XAnnotation annotation = element.getAnnotation(ClassNames.DEFINE_COMPONENT_CLASSES);
 
     String componentName = annotation.getAsString("component");

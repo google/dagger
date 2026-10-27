@@ -66,19 +66,6 @@ public abstract class AggregatedDepsMetadata {
     return dependencyType() == DependencyType.MODULE;
   }
 
-  /** Returns metadata for all aggregated elements in the aggregating package. */
-  public static ImmutableSet<AggregatedDepsMetadata> from(XProcessingEnv env) {
-    return from(AggregatedElements.from(AGGREGATED_DEPS_PACKAGE, ClassNames.AGGREGATED_DEPS, env));
-  }
-
-  /** Returns metadata for each aggregated element. */
-  public static ImmutableSet<AggregatedDepsMetadata> from(
-      ImmutableSet<XTypeElement> aggregatedElements) {
-    return aggregatedElements.stream()
-        .map(aggregatedElement -> create(aggregatedElement, getProcessingEnv(aggregatedElement)))
-        .collect(toImmutableSet());
-  }
-
   public static AggregatedDepsIr toIr(AggregatedDepsMetadata metadata) {
     return new AggregatedDepsIr(
         metadata.name(),
@@ -100,7 +87,17 @@ public abstract class AggregatedDepsMetadata {
             : null);
   }
 
-  private static AggregatedDepsMetadata create(XTypeElement element, XProcessingEnv env) {
+  /** Returns metadata for all aggregated elements in the aggregating package. */
+  public static ImmutableSet<AggregatedDepsMetadata> from(XProcessingEnv env) {
+    return AggregatedElements.from(AGGREGATED_DEPS_PACKAGE, ClassNames.AGGREGATED_DEPS, env)
+        .stream()
+        .map(AggregatedDepsMetadata::from)
+        .collect(toImmutableSet());
+  }
+
+  /** Returns metadata for the given aggregated element. */
+  public static AggregatedDepsMetadata from(XTypeElement element) {
+    XProcessingEnv env = getProcessingEnv(element);
     checkState(
         element.hasAnnotation(ClassNames.AGGREGATED_DEPS),
         "Missing @AggregatedDeps annotation on %s",

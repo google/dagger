@@ -21,7 +21,6 @@ import static dagger.hilt.processor.internal.AggregatedElements.unwrapProxies;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room3.compiler.processing.XAnnotation;
-import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
@@ -46,68 +45,63 @@ abstract class ComponentTreeDepsMetadata {
   abstract ClassName name();
 
   /** Returns the {@link dagger.hilt.internal.aggregatedroot.AggregatedRoot} deps. */
-  abstract ImmutableSet<XTypeElement> aggregatedRootDeps();
+  abstract ImmutableSet<ClassName> aggregatedRootDeps();
 
   /** Returns the {@link dagger.hilt.internal.definecomponent.DefineComponentClasses} deps. */
-  abstract ImmutableSet<XTypeElement> defineComponentDeps();
+  abstract ImmutableSet<ClassName> defineComponentDeps();
 
   /** Returns the {@link dagger.hilt.internal.aliasof.AliasOfPropagatedData} deps. */
-  abstract ImmutableSet<XTypeElement> aliasOfDeps();
+  abstract ImmutableSet<ClassName> aliasOfDeps();
 
   /** Returns the {@link dagger.hilt.internal.aggregateddeps.AggregatedDeps} deps. */
-  abstract ImmutableSet<XTypeElement> aggregatedDeps();
+  abstract ImmutableSet<ClassName> aggregatedDeps();
 
   /** Returns the {@link dagger.hilt.android.uninstallmodules.AggregatedUninstallModules} deps. */
-  abstract ImmutableSet<XTypeElement> aggregatedUninstallModulesDeps();
+  abstract ImmutableSet<ClassName> aggregatedUninstallModulesDeps();
 
   /** Returns the {@link dagger.hilt.android.earlyentrypoint.AggregatedEarlyEntryPoint} deps. */
-  abstract ImmutableSet<XTypeElement> aggregatedEarlyEntryPointDeps();
+  abstract ImmutableSet<ClassName> aggregatedEarlyEntryPointDeps();
 
-  static ComponentTreeDepsMetadata from(XTypeElement element, XProcessingEnv env) {
+
+  static ComponentTreeDepsMetadata from(ComponentTreeDepsIr ir) {
+    return create(
+        ir.getName(),
+        ImmutableSet.copyOf(ir.getRootDeps()),
+        ImmutableSet.copyOf(ir.getDefineComponentDeps()),
+        ImmutableSet.copyOf(ir.getAliasOfDeps()),
+        ImmutableSet.copyOf(ir.getAggregatedDeps()),
+        ImmutableSet.copyOf(ir.getUninstallModulesDeps()),
+        ImmutableSet.copyOf(ir.getEarlyEntryPointDeps()));
+  }
+
+  static ComponentTreeDepsMetadata from(XTypeElement element) {
     checkArgument(element.hasAnnotation(ClassNames.COMPONENT_TREE_DEPS));
     XAnnotation annotation = element.getAnnotation(ClassNames.COMPONENT_TREE_DEPS);
 
     return create(
         element.getClassName(),
-        unwrapProxies(XAnnotations.getAsTypeElementList(annotation, "rootDeps")),
-        unwrapProxies(XAnnotations.getAsTypeElementList(annotation, "defineComponentDeps")),
-        unwrapProxies(XAnnotations.getAsTypeElementList(annotation, "aliasOfDeps")),
-        unwrapProxies(XAnnotations.getAsTypeElementList(annotation, "aggregatedDeps")),
-        unwrapProxies(XAnnotations.getAsTypeElementList(annotation, "uninstallModulesDeps")),
-        unwrapProxies(XAnnotations.getAsTypeElementList(annotation, "earlyEntryPointDeps")));
+        getDeps(annotation, "rootDeps"),
+        getDeps(annotation, "defineComponentDeps"),
+        getDeps(annotation, "aliasOfDeps"),
+        getDeps(annotation, "aggregatedDeps"),
+        getDeps(annotation, "uninstallModulesDeps"),
+        getDeps(annotation, "earlyEntryPointDeps"));
   }
 
-  static ComponentTreeDepsMetadata from(ComponentTreeDepsIr ir, XProcessingEnv env) {
-    return create(
-        ir.getName(),
-        ir.getRootDeps().stream()
-            .map(it -> env.requireTypeElement(it.canonicalName()))
-            .collect(toImmutableSet()),
-        ir.getDefineComponentDeps().stream()
-            .map(it -> env.requireTypeElement(it.canonicalName()))
-            .collect(toImmutableSet()),
-        ir.getAliasOfDeps().stream()
-            .map(it -> env.requireTypeElement(it.canonicalName()))
-            .collect(toImmutableSet()),
-        ir.getAggregatedDeps().stream()
-            .map(it -> env.requireTypeElement(it.canonicalName()))
-            .collect(toImmutableSet()),
-        ir.getUninstallModulesDeps().stream()
-            .map(it -> env.requireTypeElement(it.canonicalName()))
-            .collect(toImmutableSet()),
-        ir.getEarlyEntryPointDeps().stream()
-            .map(it -> env.requireTypeElement(it.canonicalName()))
-            .collect(toImmutableSet()));
+  private static ImmutableSet<ClassName> getDeps(XAnnotation annotation, String valueName) {
+    return unwrapProxies(XAnnotations.getAsTypeElementList(annotation, valueName)).stream()
+        .map(XTypeElement::getClassName)
+        .collect(toImmutableSet());
   }
 
   static ComponentTreeDepsMetadata create(
       ClassName name,
-      ImmutableSet<XTypeElement> aggregatedRootDeps,
-      ImmutableSet<XTypeElement> defineComponentDeps,
-      ImmutableSet<XTypeElement> aliasOfDeps,
-      ImmutableSet<XTypeElement> aggregatedDeps,
-      ImmutableSet<XTypeElement> aggregatedUninstallModulesDeps,
-      ImmutableSet<XTypeElement> aggregatedEarlyEntryPointDeps) {
+      ImmutableSet<ClassName> aggregatedRootDeps,
+      ImmutableSet<ClassName> defineComponentDeps,
+      ImmutableSet<ClassName> aliasOfDeps,
+      ImmutableSet<ClassName> aggregatedDeps,
+      ImmutableSet<ClassName> aggregatedUninstallModulesDeps,
+      ImmutableSet<ClassName> aggregatedEarlyEntryPointDeps) {
     return new AutoValue_ComponentTreeDepsMetadata(
         name,
         aggregatedRootDeps,

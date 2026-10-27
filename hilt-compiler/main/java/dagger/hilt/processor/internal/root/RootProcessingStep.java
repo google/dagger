@@ -56,14 +56,16 @@ import java.util.Set;
 /** Processor that outputs dagger components based on transitive build deps. */
 public final class RootProcessingStep extends BaseProcessingStep {
 
+  private final RootMetadataCache cache;
   private boolean processed;
   // TODO(b/297889547) do not run preProcess and postProcess if supported annotation isn't present
   // in the environment.
   private boolean hasElementsToProcess = false;
   private GeneratesRootInputs generatesRootInputs;
 
-  public RootProcessingStep(XProcessingEnv env) {
+  RootProcessingStep(XProcessingEnv env, RootMetadataCache cache) {
     super(env);
+    this.cache = cache;
     generatesRootInputs = new GeneratesRootInputs(processingEnv());
   }
 
@@ -169,19 +171,19 @@ public final class RootProcessingStep extends BaseProcessingStep {
             .map(DefineComponentClassesMetadata::toIr)
             .collect(toImmutableSet());
     ImmutableSet<AliasOfPropagatedDataIr> aliasOfDeps =
-        AliasOfPropagatedDataMetadata.from(processingEnv()).stream()
+        cache.getAliasOfDeps().stream()
             .map(AliasOfPropagatedDataMetadata::toIr)
             .collect(toImmutableSet());
     ImmutableSet<AggregatedDepsIr> aggregatedDeps =
-        AggregatedDepsMetadata.from(processingEnv()).stream()
+        cache.getAggregatedDeps().stream()
             .map(AggregatedDepsMetadata::toIr)
             .collect(toImmutableSet());
     ImmutableSet<AggregatedUninstallModulesIr> aggregatedUninstallModulesDeps =
-        AggregatedUninstallModulesMetadata.from(processingEnv()).stream()
+        cache.getAggregatedUninstallModulesDeps().stream()
             .map(AggregatedUninstallModulesMetadata::toIr)
             .collect(toImmutableSet());
     ImmutableSet<AggregatedEarlyEntryPointIr> aggregatedEarlyEntryPointDeps =
-        AggregatedEarlyEntryPointMetadata.from(processingEnv()).stream()
+        cache.getAggregatedEarlyEntryPointDeps().stream()
             .map(AggregatedEarlyEntryPointMetadata::toIr)
             .collect(toImmutableSet());
 
@@ -194,8 +196,6 @@ public final class RootProcessingStep extends BaseProcessingStep {
             aggregatedDeps,
             aggregatedUninstallModulesDeps,
             aggregatedEarlyEntryPointDeps);
-    return componentTreeDeps.stream()
-        .map(it -> ComponentTreeDepsMetadata.from(it, processingEnv()))
-        .collect(toImmutableSet());
+    return componentTreeDeps.stream().map(cache::getComponentTreeDeps).collect(toImmutableSet());
   }
 }

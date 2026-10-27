@@ -49,27 +49,22 @@ public abstract class AliasOfPropagatedDataMetadata {
 
   abstract ClassName aliasName();
 
-  /** Returns metadata for all aggregated elements in the aggregating package. */
-  public static ImmutableSet<AliasOfPropagatedDataMetadata> from(XProcessingEnv env) {
-    return from(
-        AggregatedElements.from(
-            ClassNames.ALIAS_OF_PROPAGATED_DATA_PACKAGE, ClassNames.ALIAS_OF_PROPAGATED_DATA, env));
-  }
-
-  /** Returns metadata for each aggregated element. */
-  public static ImmutableSet<AliasOfPropagatedDataMetadata> from(
-      ImmutableSet<XTypeElement> aggregatedElements) {
-    return aggregatedElements.stream()
-        .map(AliasOfPropagatedDataMetadata::create)
-        .collect(toImmutableSet());
-  }
-
   public static AliasOfPropagatedDataIr toIr(AliasOfPropagatedDataMetadata metadata) {
     return new AliasOfPropagatedDataIr(
         metadata.name(), metadata.defineComponentScopeNames(), metadata.aliasName());
   }
 
-  private static AliasOfPropagatedDataMetadata create(XTypeElement element) {
+  /** Returns metadata for all aggregated elements in the aggregating package. */
+  public static ImmutableSet<AliasOfPropagatedDataMetadata> from(XProcessingEnv env) {
+    return AggregatedElements.from(
+            ClassNames.ALIAS_OF_PROPAGATED_DATA_PACKAGE, ClassNames.ALIAS_OF_PROPAGATED_DATA, env)
+        .stream()
+        .map(AliasOfPropagatedDataMetadata::from)
+        .collect(toImmutableSet());
+  }
+
+  /** Returns metadata for the given aggregated element. */
+  public static AliasOfPropagatedDataMetadata from(XTypeElement element) {
     XAnnotation annotation = element.getAnnotation(ClassNames.ALIAS_OF_PROPAGATED_DATA);
 
     // TODO(kuanyingchou) We can remove this once we have

@@ -42,30 +42,25 @@ public abstract class AggregatedEarlyEntryPointMetadata {
   /** Returns the element annotated with {@link dagger.hilt.android.EarlyEntryPoint}. */
   public abstract ClassName earlyEntryPointName();
 
-  /** Returns metadata for all aggregated elements in the aggregating package. */
-  public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(XProcessingEnv env) {
-    return from(
-        AggregatedElements.from(
-            ClassNames.AGGREGATED_EARLY_ENTRY_POINT_PACKAGE,
-            ClassNames.AGGREGATED_EARLY_ENTRY_POINT,
-            env));
-  }
-
-  /** Returns metadata for each aggregated element. */
-  public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(
-      ImmutableSet<XTypeElement> aggregatedElements) {
-    return aggregatedElements.stream()
-        .map(aggregatedElement -> create(aggregatedElement, getProcessingEnv(aggregatedElement)))
-        .collect(toImmutableSet());
-  }
-
   public static AggregatedEarlyEntryPointIr toIr(AggregatedEarlyEntryPointMetadata metadata) {
     return new AggregatedEarlyEntryPointIr(
         metadata.name(), metadata.earlyEntryPointName().canonicalName());
   }
 
-  private static AggregatedEarlyEntryPointMetadata create(
-      XTypeElement element, XProcessingEnv env) {
+  /** Returns metadata for all aggregated elements in the aggregating package. */
+  public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(XProcessingEnv env) {
+    return AggregatedElements.from(
+            ClassNames.AGGREGATED_EARLY_ENTRY_POINT_PACKAGE,
+            ClassNames.AGGREGATED_EARLY_ENTRY_POINT,
+            env)
+        .stream()
+        .map(AggregatedEarlyEntryPointMetadata::from)
+        .collect(toImmutableSet());
+  }
+
+  /** Returns metadata for the given aggregated element. */
+  public static AggregatedEarlyEntryPointMetadata from(XTypeElement element) {
+    XProcessingEnv env = getProcessingEnv(element);
     XAnnotation annotation = element.getAnnotation(ClassNames.AGGREGATED_EARLY_ENTRY_POINT);
 
     return new AutoValue_AggregatedEarlyEntryPointMetadata(

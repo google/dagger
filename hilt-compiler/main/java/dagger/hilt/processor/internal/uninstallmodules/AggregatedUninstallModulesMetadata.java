@@ -50,23 +50,6 @@ public abstract class AggregatedUninstallModulesMetadata {
    */
   public abstract ImmutableList<ClassName> uninstallModuleNames();
 
-  /** Returns metadata for all aggregated elements in the aggregating package. */
-  public static ImmutableSet<AggregatedUninstallModulesMetadata> from(XProcessingEnv env) {
-    return from(
-        AggregatedElements.from(
-            ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE,
-            ClassNames.AGGREGATED_UNINSTALL_MODULES,
-            env));
-  }
-
-  /** Returns metadata for each aggregated element. */
-  public static ImmutableSet<AggregatedUninstallModulesMetadata> from(
-      ImmutableSet<XTypeElement> aggregatedElements) {
-    return aggregatedElements.stream()
-        .map(aggregatedElement -> create(aggregatedElement, getProcessingEnv(aggregatedElement)))
-        .collect(toImmutableSet());
-  }
-
   public static AggregatedUninstallModulesIr toIr(AggregatedUninstallModulesMetadata metadata) {
     return new AggregatedUninstallModulesIr(
         metadata.name(),
@@ -76,8 +59,20 @@ public abstract class AggregatedUninstallModulesMetadata {
             .collect(Collectors.toList()));
   }
 
-  private static AggregatedUninstallModulesMetadata create(
-      XTypeElement element, XProcessingEnv env) {
+  /** Returns metadata for all aggregated elements in the aggregating package. */
+  public static ImmutableSet<AggregatedUninstallModulesMetadata> from(XProcessingEnv env) {
+    return AggregatedElements.from(
+            ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE,
+            ClassNames.AGGREGATED_UNINSTALL_MODULES,
+            env)
+        .stream()
+        .map(AggregatedUninstallModulesMetadata::from)
+        .collect(toImmutableSet());
+  }
+
+  /** Returns metadata for the given aggregated element. */
+  public static AggregatedUninstallModulesMetadata from(XTypeElement element) {
+    XProcessingEnv env = getProcessingEnv(element);
     XAnnotation annotationMirror = element.getAnnotation(ClassNames.AGGREGATED_UNINSTALL_MODULES);
 
     return new AutoValue_AggregatedUninstallModulesMetadata(

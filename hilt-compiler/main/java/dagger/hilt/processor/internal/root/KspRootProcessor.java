@@ -33,9 +33,10 @@ public final class KspRootProcessor extends KspBaseProcessingStepProcessor {
 
   @Override
   protected ImmutableList<BaseProcessingStep> getProcessingSteps() {
+    RootMetadataCache cache = new RootMetadataCache(getXProcessingEnv());
     return ImmutableList.of(
-        new RootProcessingStep(getXProcessingEnv()),
-        new ComponentTreeDepsProcessingStep(getXProcessingEnv()));
+        new RootProcessingStep(getXProcessingEnv(), cache),
+        new ComponentTreeDepsProcessingStep(getXProcessingEnv(), cache));
   }
 
   /** Provides the {@link KspRootProcessor}. */

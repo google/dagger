@@ -35,9 +35,10 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 public final class RootProcessor extends JavacBaseProcessingStepProcessor {
   @Override
   protected ImmutableList<BaseProcessingStep> getProcessingSteps() {
+    RootMetadataCache cache = new RootMetadataCache(getXProcessingEnv());
     return ImmutableList.of(
-        new RootProcessingStep(getXProcessingEnv()),
-        new ComponentTreeDepsProcessingStep(getXProcessingEnv()));
+        new RootProcessingStep(getXProcessingEnv(), cache),
+        new ComponentTreeDepsProcessingStep(getXProcessingEnv(), cache));
   }
 
   @Override

@@ -467,7 +467,8 @@ public abstract class AndroidEntryPointMetadata {
         return Type.SERVICE;
       } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.BROADCAST_RECEIVER)) {
         return Type.BROADCAST_RECEIVER;
-      } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.FRAGMENT)) {
+      } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.FRAGMENT)
+      ) {
         return Type.FRAGMENT;
       } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.VIEW)) {
         boolean withFragmentBindings =

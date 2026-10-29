@@ -1,0 +1,28 @@
+package test
+
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.IdentifierNameString
+import dagger.`internal`.KeepFieldType
+import javax.`annotation`.processing.Generated
+import kotlin.String
+import kotlin.Suppress
+import kotlin.jvm.JvmField
+
+@IdentifierNameString
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public object MapModule_ProvideNestedKey_LazyMapKey {
+  @KeepFieldType
+  private var keepFieldType: Outer.NestedKey? = null
+
+  @JvmField
+  public var lazyClassKeyName: String = "test.Outer${'$'}NestedKey"
+}

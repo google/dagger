@@ -16,11 +16,9 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room3.compiler.codegen.compat.XConverters.toJavaPoet;
 import static dagger.internal.codegen.binding.MapKeys.KEEP_FIELD_TYPE_FIELD;
 import static dagger.internal.codegen.binding.MapKeys.LAZY_CLASS_KEY_NAME_FIELD;
 import static dagger.internal.codegen.binding.MapKeys.lazyClassKeyProxyClassName;
-import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
@@ -32,6 +30,7 @@ import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XFiler;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
+import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.xprocessing.XPropertySpecs;
@@ -46,7 +45,9 @@ import javax.inject.Inject;
 public final class LazyMapKeyProxyGenerator extends SourceFileGenerator<XMethodElement> {
 
   @Inject
-  LazyMapKeyProxyGenerator(XFiler filer, XProcessingEnv processingEnv) {
+  LazyMapKeyProxyGenerator(
+      XFiler filer,
+      XProcessingEnv processingEnv) {
     super(filer, processingEnv);
   }
 
@@ -61,40 +62,42 @@ public final class LazyMapKeyProxyGenerator extends SourceFileGenerator<XMethodE
   }
 
   private XTypeSpec lazyClassKeyProxyTypeSpec(XMethodElement element) {
-    return XTypeSpecs.classBuilder(lazyClassKeyProxyClassName(element))
-        .addModifiers(PUBLIC, FINAL)
+    XTypeElement keyTypeElement =
+        element.getAnnotation(XTypeNames.LAZY_CLASS_KEY).getAsType("value").getTypeElement();
+    return XTypeSpecs.objectBuilder(lazyClassKeyProxyClassName(element))
+        .addModifiers(PUBLIC)
         .addAnnotation(XTypeNames.IDENTIFIER_NAME_STRING)
-        .addProperties(lazyClassKeyFields(element))
+        .addProperty(keepFieldTypeField(keyTypeElement))
+        .addProperty(lazyClassKeyField(keyTypeElement))
         .build();
   }
 
-  private static ImmutableList<XPropertySpec> lazyClassKeyFields(XMethodElement element) {
-    XClassName lazyClassMapKeyClassName =
-        element
-            .getAnnotation(toJavaPoet(XTypeNames.LAZY_CLASS_KEY))
-            .getAsType("value")
-            .getTypeElement()
-            .asClassName();
-    // Generate a string referencing the map key class name, and dagger will apply
-    // identifierrnamestring rule to it to make sure it is correctly obfuscated.
-    XPropertySpec lazyClassKeyField =
-        XPropertySpecs.builder(LAZY_CLASS_KEY_NAME_FIELD, XTypeName.STRING)
-            // TODO(b/217435141): Leave the field as non-final. We will apply
-            // @IdentifierNameString on the field, which doesn't work well with static final
-            // fields.
-            .addModifiers(STATIC, PUBLIC)
-            .initializer("%S", lazyClassMapKeyClassName.getReflectionName())
-            .build();
+  private XPropertySpec keepFieldTypeField(XTypeElement keyTypeElement) {
+    XClassName lazyClassMapKeyClassName = keyTypeElement.asClassName();
     // In proguard, we need to keep the classes referenced by @LazyClassKey, we do that by
     // generating a field referencing the type, and then applying @KeepFieldType to the
     // field. Here, we generate the field in the proxy class. For classes that are
     // accessible from the dagger component, we generate fields in LazyClassKeyProvider.
     // Note: the generated field should not be initialized to avoid class loading.
-    XPropertySpec keepFieldTypeField =
-        XPropertySpecs.builder(KEEP_FIELD_TYPE_FIELD, lazyClassMapKeyClassName)
-            .addModifiers(STATIC)
-            .addAnnotation(XTypeNames.KEEP_FIELD_TYPE)
-            .build();
-    return ImmutableList.of(keepFieldTypeField, lazyClassKeyField);
+    return XPropertySpecs.builder(KEEP_FIELD_TYPE_FIELD, lazyClassMapKeyClassName)
+        .addModifiers(STATIC)
+        .addAnnotation(XTypeNames.KEEP_FIELD_TYPE)
+        .build();
+  }
+
+  private XPropertySpec lazyClassKeyField(XTypeElement keyTypeElement) {
+    XClassName lazyClassMapKeyClassName = keyTypeElement.asClassName();
+    // Generate a string referencing the map key class name, and dagger will apply
+    // identifierrnamestring rule to it to make sure it is correctly obfuscated.
+    XPropertySpecs.Builder builder =
+        XPropertySpecs.builder(LAZY_CLASS_KEY_NAME_FIELD, XTypeName.STRING)
+            // TODO(b/217435141): Leave the field as non-final. In Java, a static final String
+            // initialized to a string literal is a compile-time constant (ConstantValue) that gets
+            // inlined into referencing classes (e.g. the component), which bypasses the
+            // @IdentifierNameString rule scoped to this proxy class.
+            .addModifiers(PUBLIC)
+            .initializer("%S", lazyClassMapKeyClassName.getReflectionName());
+    builder.addModifiers(STATIC);
+    return builder.build();
   }
 }

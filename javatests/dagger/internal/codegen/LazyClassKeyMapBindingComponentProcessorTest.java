@@ -52,6 +52,61 @@ public class LazyClassKeyMapBindingComponentProcessorTest {
   }
 
   @Test
+  public void lazyClassKeyProxy() throws Exception {
+    Source keys =
+        CompilerTests.kotlinSource(
+            "Keys.kt",
+            "package test",
+            "",
+            "internal class InternalFoo",
+            "",
+            "internal class GenericFoo<T, U>",
+            "",
+            "class Outer {",
+            "  internal class NestedKey",
+            "}");
+    Source module =
+        CompilerTests.kotlinSource(
+            "MapModule.kt",
+            "package test",
+            "",
+            "import dagger.Module",
+            "import dagger.Provides",
+            "import dagger.multibindings.IntoMap",
+            "import dagger.multibindings.LazyClassKey",
+            "",
+            "@Module",
+            "object MapModule {",
+            "  @Provides",
+            "  @IntoMap",
+            "  @LazyClassKey(InternalFoo::class)",
+            "  fun provideInternalFoo(): String = \"foo\"",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @LazyClassKey(GenericFoo::class)",
+            "  fun provideGenericFoo(): String = \"generic\"",
+            "",
+            "  @Provides",
+            "  @IntoMap",
+            "  @LazyClassKey(Outer.NestedKey::class)",
+            "  fun provideNestedKey(): String = \"nested\"",
+            "}");
+    CompilerTests.daggerCompiler(keys, module)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              assertSourceMatchesGolden(
+                  subject, "test/MapModule_ProvideInternalFoo_LazyMapKey");
+              assertSourceMatchesGolden(
+                  subject, "test/MapModule_ProvideGenericFoo_LazyMapKey");
+              assertSourceMatchesGolden(
+                  subject, "test/MapModule_ProvideNestedKey_LazyMapKey");
+            });
+  }
+
+  @Test
   public void mapBindingsWithInaccessibleKeys() throws Exception {
     Source mapKeys =
         CompilerTests.javaSource(

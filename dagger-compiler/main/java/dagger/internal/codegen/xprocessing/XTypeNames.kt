@@ -210,6 +210,7 @@ object XTypeNames {
   @JvmField val GUAVA_FUNCTION = XClassName.get("com.google.common.base", "Function")
   @JvmField val JDK_OPTIONAL = XClassName.get("java.util", "Optional")
   @JvmField val OVERRIDE = XClassName.get("java.lang", "Override")
+  @JvmField val JVM_FIELD = XClassName.get("kotlin.jvm", "JvmField")
   @JvmField val JVM_STATIC = XClassName.get("kotlin.jvm", "JvmStatic")
   @JvmField val CLASS = XClassName.get("java.lang", "Class")
   @JvmField val KCLASS = XClassName.get("kotlin.reflect", "KClass")

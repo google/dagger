@@ -104,7 +104,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
         checkState(!binding.unresolved().isPresent());
         XType type = binding.key().type().xprocessing();
         if (!isDeclared(type)
-                || injectValidator.validateWhenGeneratingCode(type.getTypeElement()).isClean()) {
+            || injectValidator.validateWhenGeneratingCode(type.getTypeElement()).isClean()) {
           generator.generate(binding);
         }
         materializedBindingKeys.add(binding.key());
@@ -137,6 +137,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
           return;
         }
       }
+
       tryToCacheBinding(binding);
 
       @SuppressWarnings("unchecked")
@@ -151,9 +152,26 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
      */
     void tryToGenerateBinding(B binding, boolean isCalledFromInjectProcessor) {
       if (shouldGenerateBinding(binding)) {
+        // Fallback factory generation during component processing is only intended for regular
+        // @Inject constructors, not @AssistedInject. Failing early here avoids the need to track
+        // it in a separate registy, at the cost of less information in the error message.
+        if (!isCalledFromInjectProcessor
+            && binding instanceof AssistedInjectionBinding
+            && compilerOptions.strictAssistedInjectValidation()) {
+          messager.printMessage(
+              Kind.ERROR,
+              String.format(
+                  "Dagger does not support generating @AssistedInject factories for classes in"
+                      + " dependencies. The @AssistedInject-annotated class %s is in a"
+                      + " dependency, but its factory %s was not found. Make sure the Dagger"
+                      + " annotation processor is applied to the library.",
+                  erasedTypeName(binding.key().type().xprocessing()),
+                  generatedClassNameForBinding(binding).getCanonicalName()));
+          return;
+        }
         bindingsRequiringGeneration.offer(binding);
         if (compilerOptions.warnIfInjectionFactoryNotGeneratedUpstream()
-                && !isCalledFromInjectProcessor) {
+            && !isCalledFromInjectProcessor) {
           messager.printMessage(
               Kind.NOTE,
               String.format(
@@ -178,8 +196,8 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
         // constructor are unused.
         boolean hasInjectConstructor =
             !(injectedConstructors(membersInjectionBinding.membersInjectedType()).isEmpty()
-                && assistedInjectedConstructors(
-                    membersInjectionBinding.membersInjectedType()).isEmpty());
+                && assistedInjectedConstructors(membersInjectionBinding.membersInjectedType())
+                    .isEmpty());
         if (!membersInjectionBinding.hasLocalInjectionSites() && !hasInjectConstructor) {
           return false;
         }
@@ -198,9 +216,12 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
           || binding.bindingTypeElement().get().getType().getTypeArguments().isEmpty()) {
         Key key = binding.key();
         Binding previousValue = bindingsByKey.put(key, binding);
-        checkState(previousValue == null || binding.equals(previousValue),
+        checkState(
+            previousValue == null || binding.equals(previousValue),
             "couldn't register %s. %s was already registered for %s",
-            binding, previousValue, key);
+            binding,
+            previousValue,
+            key);
       }
     }
   }
@@ -239,9 +260,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   public Optional<ContributionBinding> tryRegisterInjectConstructor(
       XConstructorElement constructorElement) {
     return tryRegisterConstructor(
-        constructorElement,
-        Optional.empty(),
-        /* isCalledFromInjectProcessor= */ true);
+        constructorElement, Optional.empty(), /* isCalledFromInjectProcessor= */ true);
   }
 
   @CanIgnoreReturnValue
@@ -291,10 +310,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     // TODO(b/204116636): Add a test for this once we're able to test kotlin sources.
     // TODO(b/204208307): Add validation for KAPT to test if this came from a top-level field.
     if (!isTypeElement(fieldElement.getEnclosingElement())) {
-      messager.printMessage(
-          Kind.ERROR,
-          "@Inject fields must be enclosed in a type.",
-          fieldElement);
+      messager.printMessage(Kind.ERROR, "@Inject fields must be enclosed in a type.", fieldElement);
     }
     return tryRegisterMembersInjectedType(
         asTypeElement(fieldElement.getEnclosingElement()),
@@ -308,9 +324,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     // TODO(b/204208307): Add validation for KAPT to test if this came from a top-level method.
     if (!isTypeElement(methodElement.getEnclosingElement())) {
       messager.printMessage(
-          Kind.ERROR,
-          "@Inject methods must be enclosed in a type.",
-          methodElement);
+          Kind.ERROR, "@Inject methods must be enclosed in a type.", methodElement);
     }
     return tryRegisterMembersInjectedType(
         asTypeElement(methodElement.getEnclosingElement()),
@@ -320,9 +334,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
 
   @CanIgnoreReturnValue
   private Optional<MembersInjectionBinding> tryRegisterMembersInjectedType(
-      XTypeElement typeElement,
-      Optional<XType> resolvedType,
-      boolean isCalledFromInjectProcessor) {
+      XTypeElement typeElement, Optional<XType> resolvedType, boolean isCalledFromInjectProcessor) {
     // Validating here shouldn't have a performance penalty because the validator caches its reports
     ValidationReport report = injectValidator.validateForMembersInjection(typeElement);
     report.printMessagesTo(messager);
@@ -369,16 +381,13 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     }
 
     return Stream.concat(
-            injectedConstructors(element).stream(),
-            assistedInjectedConstructors(element).stream())
+            injectedConstructors(element).stream(), assistedInjectedConstructors(element).stream())
         // We're guaranteed that there's at most 1 @Inject constructors from above validation.
         .collect(toOptional())
         .flatMap(
             constructor ->
                 tryRegisterConstructor(
-                    constructor,
-                    Optional.of(type),
-                    /* isCalledFromInjectProcessor= */ false));
+                    constructor, Optional.of(type), /* isCalledFromInjectProcessor= */ false));
   }
 
   @CanIgnoreReturnValue

@@ -123,7 +123,10 @@ java_library(
 java_library(
     name = "xprocessing",
     tags = ["maven_coordinates=" + ARTIFACT_COORDINATES],
-    exports = ["//dagger-compiler/main/java/dagger/internal/codegen/xprocessing"],
+    exports = [
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
+        "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing:xpoet",
+    ],
 )
 
 java_library(

@@ -16,36 +16,14 @@
 
 package dagger.internal.codegen.base;
 
-import static androidx.room3.compiler.codegen.compat.XConverters.toJavaPoet;
-import static com.squareup.javapoet.MethodSpec.constructorBuilder;
-import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.xprocessing.Accessibility.isElementAccessibleFrom;
-import static dagger.internal.codegen.xprocessing.XCodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
-import static javax.lang.model.element.Modifier.PRIVATE;
 
-import androidx.room3.compiler.codegen.XCodeBlock;
-import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.codegen.XTypeSpec;
-import androidx.room3.compiler.processing.XConstructorElement;
 import androidx.room3.compiler.processing.XElement;
-import androidx.room3.compiler.processing.XExecutableParameterElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
-import androidx.room3.compiler.processing.XType;
-import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeSpec;
-import dagger.internal.codegen.xprocessing.XTypeNames;
-import java.util.Optional;
-import javax.lang.model.element.Modifier;
+import dagger.internal.codegen.xprocessing.HjarGenerator;
 
 /**
  * A source file generator that only writes the relevant code necessary for Bazel to create a
@@ -76,148 +54,7 @@ public final class SourceFileHjarGenerator<T> extends SourceFileGenerator<T> {
   public ImmutableList<XTypeSpec> topLevelTypes(T input) {
     String packageName = closestEnclosingTypeElement(originatingElement(input)).getPackageName();
     return delegate.topLevelTypes(input).stream()
-        .map(completeType -> skeletonType(packageName,  toJavaPoet(completeType)))
+        .map(completeType -> HjarGenerator.strip(packageName, completeType, processingEnv))
         .collect(toImmutableList());
-  }
-
-  private XTypeSpec skeletonType(String packageName, TypeSpec completeType) {
-    boolean isOpen = !completeType.modifiers.contains(Modifier.FINAL);
-    XTypeSpec.Builder skeleton = XTypeSpec.Companion.classBuilder(completeType.name, isOpen);
-    toJavaPoet(skeleton)
-        .addSuperinterfaces(completeType.superinterfaces)
-        .addTypeVariables(completeType.typeVariables)
-        .addModifiers(completeType.modifiers.toArray(new Modifier[0]))
-        .addAnnotations(completeType.annotations);
-
-    if (!completeType.superclass.equals(ClassName.OBJECT)) {
-      toJavaPoet(skeleton).superclass(completeType.superclass);
-    }
-
-    completeType.methodSpecs.stream()
-        .filter(method -> !method.modifiers.contains(PRIVATE) || method.isConstructor())
-        .map(completeMethod -> skeletonMethod(packageName, completeType, completeMethod))
-        .forEach(method -> toJavaPoet(skeleton).addMethod(method));
-
-    completeType.fieldSpecs.stream()
-        .filter(field -> !field.modifiers.contains(PRIVATE))
-        .map(this::skeletonField)
-        .forEach(field -> toJavaPoet(skeleton).addField(field));
-
-    completeType.typeSpecs.stream()
-        .map(type -> skeletonType(packageName, type))
-        .forEach(skeleton::addType);
-
-    completeType.alwaysQualifiedNames
-        .forEach(names -> toJavaPoet(skeleton).alwaysQualify(names));
-
-    return skeleton.build();
-  }
-
-  private MethodSpec skeletonMethod(
-      String packageName, TypeSpec completeType, MethodSpec completeMethod) {
-    MethodSpec.Builder skeleton =
-        completeMethod.isConstructor()
-            ? constructorBuilder()
-            : methodBuilder(completeMethod.name).returns(completeMethod.returnType);
-
-    if (completeMethod.isConstructor()) {
-      getRequiredSuperCall(packageName, completeType)
-          .ifPresent(superCall -> skeleton.addStatement("$L", superCall));
-    } else if (!completeMethod.returnType.equals(toJavaPoet(XTypeName.UNIT_VOID))) {
-      skeleton.addStatement(
-          "return $L", toJavaPoet(getDefaultValueCodeBlock(completeMethod.returnType)));
-    }
-
-    return skeleton
-        .addModifiers(completeMethod.modifiers)
-        .addTypeVariables(completeMethod.typeVariables)
-        .addParameters(completeMethod.parameters)
-        .addExceptions(completeMethod.exceptions)
-        .varargs(completeMethod.varargs)
-        .addAnnotations(completeMethod.annotations)
-        .build();
-  }
-
-  private Optional<CodeBlock> getRequiredSuperCall(String packageName, TypeSpec completeType) {
-    if (completeType.superclass.equals(toJavaPoet(XTypeName.ANY_OBJECT))) {
-      return Optional.empty();
-    }
-
-    ClassName rawSuperClass = (ClassName) XTypeNames.rawJavaTypeName(completeType.superclass);
-    XTypeElement superTypeElement =
-        processingEnv.requireTypeElement(rawSuperClass.canonicalName());
-
-    ImmutableSet<XConstructorElement> accessibleConstructors =
-        superTypeElement.getConstructors().stream()
-            .filter(
-                constructor ->
-                    // isElementAccessibleFrom doesn't take protected into account so check manually
-                    constructor.isProtected()
-                        || isElementAccessibleFrom(constructor, packageName))
-            .collect(toImmutableSet());
-
-    // If there's an accessible default constructor we don't need to call super() manually.
-    if (accessibleConstructors.isEmpty()
-            || accessibleConstructors.stream()
-                .anyMatch(constructor -> constructor.getParameters().isEmpty())) {
-      return Optional.empty();
-    }
-
-    return Optional.of(
-        CodeBlock.of(
-            "super($L)",
-            toJavaPoet(
-                makeParametersCodeBlock(
-                    // We just choose the first constructor (it doesn't really matter since we're
-                    // just trying to ensure the constructor body compiles).
-                    accessibleConstructors.stream().findFirst().get().getParameters().stream()
-                        .map(XExecutableParameterElement::getType)
-                        .map(XType::getTypeName)
-                        .map(SourceFileHjarGenerator::getDefaultValueCodeBlock)
-                        .collect(toImmutableList())))));
-  }
-
-  /**
-   * Returns a {@link CodeBlock} containing the default value for the given {@code typeName}.
-   *
-   * <p>See https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html.
-   */
-  private static XCodeBlock getDefaultValueCodeBlock(TypeName typeName) {
-    if (typeName.isPrimitive()) {
-      if (typeName.equals(toJavaPoet(XTypeName.PRIMITIVE_BOOLEAN))) {
-        return XCodeBlock.of("false");
-      } else if (typeName.equals(toJavaPoet(XTypeName.PRIMITIVE_CHAR))) {
-        return XCodeBlock.of("'\u0000'");
-      } else if (typeName.equals(toJavaPoet(XTypeName.PRIMITIVE_BYTE))) {
-        return XCodeBlock.of("0");
-      } else if (typeName.equals(toJavaPoet(XTypeName.PRIMITIVE_SHORT))) {
-        return XCodeBlock.of("0");
-      } else if (typeName.equals(toJavaPoet(XTypeName.PRIMITIVE_INT))) {
-        return XCodeBlock.of("0");
-      } else if (typeName.equals(toJavaPoet(XTypeName.PRIMITIVE_LONG))) {
-        return XCodeBlock.of("0L");
-      } else if (typeName.equals(toJavaPoet(XTypeName.PRIMITIVE_FLOAT))) {
-        return XCodeBlock.of("0.0f");
-      } else if (typeName.equals(toJavaPoet(XTypeName.PRIMITIVE_DOUBLE))) {
-        return XCodeBlock.of("0.0d");
-      } else {
-        throw new AssertionError("Unexpected type: " + typeName);
-      }
-    }
-    return XCodeBlock.of("null");
-  }
-
-  private FieldSpec skeletonField(FieldSpec completeField) {
-    FieldSpec.Builder skeleton =
-        FieldSpec.builder(
-                completeField.type,
-                completeField.name,
-                completeField.modifiers.toArray(new Modifier[0]))
-            .addAnnotations(completeField.annotations);
-    if (completeField.modifiers.contains(Modifier.FINAL)) {
-      // Final fields must be initialized so use the default value.
-      skeleton.initializer(toJavaPoet(getDefaultValueCodeBlock(completeField.type)));
-    }
-    return skeleton.build();
   }
 }

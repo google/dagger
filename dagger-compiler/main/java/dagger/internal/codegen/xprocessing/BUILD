@@ -26,6 +26,7 @@ NULLABILITY_SRCS = [
 
 XPOET_SRCS = [
     "Accessibility.java",
+    "HjarGenerator.java",
     "NullableTypeNames.java",
     "XAnnotationSpecs.java",
     "XCodeBlocks.java",

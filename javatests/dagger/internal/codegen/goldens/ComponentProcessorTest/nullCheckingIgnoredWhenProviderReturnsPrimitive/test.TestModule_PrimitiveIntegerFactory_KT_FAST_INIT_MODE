@@ -8,6 +8,7 @@ import javax.`annotation`.processing.Generated
 import kotlin.Any
 import kotlin.Int
 import kotlin.Suppress
+import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
@@ -26,7 +27,7 @@ public class TestModule_PrimitiveIntegerFactory : Factory<Any?> {
   public override fun `get`(): Any? = primitiveInteger()
 
   private object InstanceHolder {
-    @JvmStatic
+    @JvmField
     public val INSTANCE: TestModule_PrimitiveIntegerFactory = TestModule_PrimitiveIntegerFactory()
   }
 

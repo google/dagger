@@ -34,6 +34,7 @@ import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.kotlinpoet.KModifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -447,12 +448,15 @@ public final class XTypeSpecs {
         }
         for (XPropertySpec staticProperty : staticProperties) {
           toJavaPoet(builder).addField(toJavaPoet(staticProperty));
+          XPropertySpec.Builder staticPropertyBuilder = staticProperty.toBuilder();
+          // @JvmField instructs the Kotlin compiler not to generate getters/setters and to expose
+          // the backing field directly. Since private properties don't expose getters/setters
+          // anyway, the annotation is redundant and explicitly disallowed by the Kotlin compiler.
+          if (!toKotlinPoet(staticProperty).getModifiers().contains(KModifier.PRIVATE)) {
+            staticPropertyBuilder.addAnnotation(XAnnotationSpec.of(XTypeNames.JVM_FIELD));
+          }
           toKotlinPoet(kotlinObjectBuilder)
-              .addProperty(
-                  toKotlinPoet(
-                      staticProperty.toBuilder()
-                          .addAnnotation(XAnnotationSpec.of(XTypeNames.JVM_STATIC))
-                          .build()));
+              .addProperty(toKotlinPoet(staticPropertyBuilder.build()));
         }
         if (kind != Kind.OBJECT) {
           toKotlinPoet(builder).addType(toKotlinPoet(kotlinObjectBuilder).build());

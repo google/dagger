@@ -7,6 +7,7 @@ import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
 import kotlin.Suppress
+import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 
 @ScopeMetadata(value = "javax.inject.Singleton")
@@ -25,7 +26,7 @@ public class ScopedBinding_Factory : Factory<Any?> {
   public override fun `get`(): Any? = newInstance()
 
   private object InstanceHolder {
-    @JvmStatic
+    @JvmField
     public val INSTANCE: ScopedBinding_Factory = ScopedBinding_Factory()
   }
 

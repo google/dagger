@@ -85,19 +85,17 @@ public final class LazyMapKeyProxyGenerator extends SourceFileGenerator<XMethodE
         .build();
   }
 
-  private XPropertySpec lazyClassKeyField(XTypeElement keyTypeElement) {
+  private static XPropertySpec lazyClassKeyField(XTypeElement keyTypeElement) {
     XClassName lazyClassMapKeyClassName = keyTypeElement.asClassName();
     // Generate a string referencing the map key class name, and dagger will apply
     // identifierrnamestring rule to it to make sure it is correctly obfuscated.
-    XPropertySpecs.Builder builder =
-        XPropertySpecs.builder(LAZY_CLASS_KEY_NAME_FIELD, XTypeName.STRING)
-            // TODO(b/217435141): Leave the field as non-final. In Java, a static final String
-            // initialized to a string literal is a compile-time constant (ConstantValue) that gets
-            // inlined into referencing classes (e.g. the component), which bypasses the
-            // @IdentifierNameString rule scoped to this proxy class.
-            .addModifiers(PUBLIC)
-            .initializer("%S", lazyClassMapKeyClassName.getReflectionName());
-    builder.addModifiers(STATIC);
-    return builder.build();
+    return XPropertySpecs.builder(LAZY_CLASS_KEY_NAME_FIELD, XTypeName.STRING)
+        // TODO(b/217435141): Leave the field as non-final. In Java, a static final String
+        // initialized to a string literal is a compile-time constant (ConstantValue) that gets
+        // inlined into referencing classes (e.g. the component), which bypasses the
+        // @IdentifierNameString rule scoped to this proxy class.
+        .addModifiers(PUBLIC, STATIC)
+        .initializer("%S", lazyClassMapKeyClassName.getReflectionName())
+        .build();
   }
 }

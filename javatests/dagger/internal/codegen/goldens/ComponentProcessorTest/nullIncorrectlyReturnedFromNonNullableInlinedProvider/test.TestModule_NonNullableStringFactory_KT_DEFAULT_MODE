@@ -8,6 +8,7 @@ import dagger.`internal`.ScopeMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
 import kotlin.Suppress
+import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 
 @ScopeMetadata
@@ -26,7 +27,7 @@ public class TestModule_NonNullableStringFactory : Factory<Any?> {
   public override fun `get`(): Any? = nonNullableString()
 
   private object InstanceHolder {
-    @JvmStatic
+    @JvmField
     public val INSTANCE: TestModule_NonNullableStringFactory = TestModule_NonNullableStringFactory()
   }
 

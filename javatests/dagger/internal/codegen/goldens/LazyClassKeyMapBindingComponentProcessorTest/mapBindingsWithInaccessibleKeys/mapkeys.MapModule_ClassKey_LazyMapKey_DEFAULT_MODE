@@ -1,9 +1,11 @@
 package mapkeys;
 
 import dagger.internal.DaggerGenerated;
+import dagger.internal.IdentifierNameString;
 import dagger.internal.KeepFieldType;
 import javax.annotation.processing.Generated;
 
+@IdentifierNameString
 @DaggerGenerated
 @Generated(
     value = "dagger.internal.codegen.ComponentProcessor",
@@ -18,14 +20,12 @@ import javax.annotation.processing.Generated;
     "deprecation",
     "nullness:initialization.field.uninitialized"
 })
-public final class MapModule_ClassKeyMapKey {
+public final class MapModule_ClassKey_LazyMapKey {
   @KeepFieldType
-  MapKeys.Inaccessible className;
+  static MapKeys.Inaccessible keepFieldType;
 
-  private MapModule_ClassKeyMapKey() {
-  }
+  public static String lazyClassKeyName = "mapkeys.MapKeys$Inaccessible";
 
-  public static Class<?> create() {
-    return MapKeys.Inaccessible.class;
+  private MapModule_ClassKey_LazyMapKey() {
   }
 }

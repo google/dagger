@@ -199,7 +199,7 @@ public class LazyClassKeyMapBindingComponentProcessorTest {
               subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
               assertSourceMatchesGolden(
                   subject, "mapkeys/MapModule_ComplexKeyWithInaccessibleAnnotationValueMapKey");
-              assertSourceMatchesGolden(subject, "mapkeys/MapModule_ClassKeyMapKey");
+              assertSourceMatchesGolden(subject, "mapkeys/MapModule_ClassKey_LazyMapKey");
             });
   }
 

@@ -16,11 +16,16 @@
 
 package dagger.internal.codegen.writing;
 
+import static dagger.internal.codegen.base.MapKeyAccessibility.isMapKeyPubliclyAccessible;
+import static dagger.internal.codegen.binding.MapKeys.directMapKeyExpression;
+import static dagger.internal.codegen.binding.MapKeys.mapKeyProxyClassName;
+import static dagger.internal.codegen.binding.MapKeys.mapKeyType;
+import static dagger.internal.codegen.xprocessing.XFunSpecs.methodBuilder;
 import static dagger.internal.codegen.xprocessing.XTypeSpecs.objectBuilder;
 import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.STATIC;
 
-import androidx.room3.compiler.codegen.XPropertySpec;
-import androidx.room3.compiler.codegen.XTypeName;
+import androidx.room3.compiler.codegen.XFunSpec;
 import androidx.room3.compiler.codegen.XTypeSpec;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XFiler;
@@ -28,10 +33,7 @@ import androidx.room3.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.ContributionBinding;
-import dagger.internal.codegen.binding.MapKeys;
-import dagger.internal.codegen.xprocessing.XPropertySpecs;
 import dagger.internal.codegen.xprocessing.XTypeNames;
-import dagger.internal.codegen.xprocessing.XTypeSpecs;
 import java.util.Optional;
 import javax.inject.Inject;
 
@@ -59,34 +61,29 @@ public final class InaccessibleMapKeyProxyGenerator
 
   @Override
   public ImmutableList<XTypeSpec> topLevelTypes(ContributionBinding binding) {
-    return MapKeys.mapKeyFactoryMethod(binding, processingEnv)
+    return mapKeyFactoryMethod(binding)
         .map(
-            method -> {
-              XTypeSpecs.Builder builder =
-                  objectBuilder(MapKeys.mapKeyProxyClassName(binding))
-                      .addModifiers(PUBLIC)
-                      .addFunction(method);
-              lazyClassKeyField(binding).ifPresent(builder::addProperty);
-              return ImmutableList.of(builder.build());
-            })
-        .orElse(ImmutableList.<XTypeSpec>of());
+            method ->
+                ImmutableList.of(
+                    objectBuilder(mapKeyProxyClassName(binding))
+                        .addModifiers(PUBLIC)
+                        .addFunction(method)
+                        .build()))
+        .orElse(ImmutableList.of());
   }
 
-  private Optional<XPropertySpec> lazyClassKeyField(ContributionBinding binding) {
-    // In proguard, we need to keep the classes referenced by @LazyClassKey, we do that by
-    // generating a field referencing the type, and then applying @KeepFieldType to the
-    // field. Here, we generate the field in the proxy class. For classes that are
-    // accessible from the dagger component, we generate fields in LazyClassKeyProvider.
-    // Note: the generated field should not be initialized to avoid class loading.
+  private Optional<XFunSpec> mapKeyFactoryMethod(ContributionBinding binding) {
     return binding
         .mapKey()
-        .filter(mapKey -> mapKey.getTypeElement().asClassName().equals(XTypeNames.LAZY_CLASS_KEY))
+        // @LazyClassKey usages are handled by LazyMapKeyProxyGenerator instead.
+        .filter(mapKey -> !mapKey.getTypeElement().asClassName().equals(XTypeNames.LAZY_CLASS_KEY))
+        .filter(mapKey -> !isMapKeyPubliclyAccessible(mapKey))
         .map(
-            mapKey -> {
-              XTypeName typeName = mapKey.getAsType("value").asTypeName();
-              return XPropertySpecs.builder("className", typeName)
-                  .addAnnotation(XTypeNames.KEEP_FIELD_TYPE)
-                  .build();
-            });
+            mapKey ->
+                methodBuilder("create")
+                    .addModifiers(PUBLIC, STATIC)
+                    .returns(mapKeyType(mapKey).asTypeName())
+                    .addStatement("return %L", directMapKeyExpression(mapKey, processingEnv))
+                    .build());
   }
 }

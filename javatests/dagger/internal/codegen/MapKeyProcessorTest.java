@@ -331,7 +331,6 @@ public class MapKeyProcessorTest {
             "import dagger.Provides",
             "import dagger.multibindings.ClassKey",
             "import dagger.multibindings.IntoMap",
-            "import dagger.multibindings.LazyClassKey",
             "",
             "@Module",
             "object MapModule {",
@@ -342,10 +341,6 @@ public class MapKeyProcessorTest {
             "  @Provides @IntoMap @MapKeys.WrappedKey(PackagePrivateTypes.Inaccessible::class)",
             "  @JvmStatic",
             "  fun wrappedKey(): Int = 1",
-            "",
-            "  @Provides @IntoMap @LazyClassKey(PackagePrivateTypes.Inaccessible::class)",
-            "  @JvmStatic",
-            "  fun lazyClassKey(): Int = 1",
             "}");
     CompilerTests.daggerCompiler(packagePrivateTypes, mapKeys, module)
         .withProcessingOptions(compilerMode.processorOptions())
@@ -356,7 +351,6 @@ public class MapKeyProcessorTest {
               subject.hasErrorCount(0);
               assertSourceMatchesGolden(subject, "mapkeys/MapModule_ClassKeyMapKey");
               assertSourceMatchesGolden(subject, "mapkeys/MapModule_WrappedKeyMapKey");
-              assertSourceMatchesGolden(subject, "mapkeys/MapModule_LazyClassKeyMapKey");
             });
   }
 }

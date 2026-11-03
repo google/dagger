@@ -76,8 +76,7 @@ public final class LazyMapKeyProxyGenerator extends SourceFileGenerator<XMethodE
     XClassName lazyClassMapKeyClassName = keyTypeElement.asClassName();
     // In proguard, we need to keep the classes referenced by @LazyClassKey, we do that by
     // generating a field referencing the type, and then applying @KeepFieldType to the
-    // field. Here, we generate the field in the proxy class. For classes that are
-    // accessible from the dagger component, we generate fields in LazyClassKeyProvider.
+    // field in the proxy class.
     // Note: the generated field should not be initialized to avoid class loading.
     return XPropertySpecs.builder(KEEP_FIELD_TYPE_FIELD, lazyClassMapKeyClassName)
         .addModifiers(STATIC)

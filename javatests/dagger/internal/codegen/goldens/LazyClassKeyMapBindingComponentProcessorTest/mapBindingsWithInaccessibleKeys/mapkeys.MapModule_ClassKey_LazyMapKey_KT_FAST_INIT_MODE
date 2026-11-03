@@ -1,12 +1,14 @@
 package mapkeys
 
 import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.IdentifierNameString
 import dagger.`internal`.KeepFieldType
-import java.lang.Class
 import javax.`annotation`.processing.Generated
+import kotlin.String
 import kotlin.Suppress
-import kotlin.jvm.JvmStatic
+import kotlin.jvm.JvmField
 
+@IdentifierNameString
 @DaggerGenerated
 @Generated(
   value = ["dagger.internal.codegen.ComponentProcessor"],
@@ -17,10 +19,10 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public object MapModule_ClassKeyMapKey {
+public object MapModule_ClassKey_LazyMapKey {
   @KeepFieldType
-  private var className: MapKeys.Inaccessible? = null
+  private var keepFieldType: MapKeys.Inaccessible? = null
 
-  @JvmStatic
-  public fun create(): Class<*> = MapKeys.Inaccessible::class.java
+  @JvmField
+  public var lazyClassKeyName: String = "mapkeys.MapKeys${'$'}Inaccessible"
 }

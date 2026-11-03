@@ -52,12 +52,12 @@ public final class SavedStateHandleHolder {
 
   public SavedStateHandle getSavedStateHandle() {
     ThreadUtil.ensureMainThread();
-    checkState(
-        isComponentActivity,
-        "Activity that does not extend ComponentActivity cannot use SavedStateHandle");
     if (handle != null) {
       return handle;
     }
+    checkState(
+        isComponentActivity,
+        "Activity that does not extend ComponentActivity cannot use SavedStateHandle");
     checkNotNull(
         extras,
         "The first access to SavedStateHandle should happen between super.onCreate() and"

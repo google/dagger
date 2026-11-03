@@ -34,6 +34,7 @@ import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompil
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.MAP_MULTIBINDING_DUPLICATE_DETECTION_FIX;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.NULLABLE_TYPE_ANNOTATIONS;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.PLUGINS_VISIT_FULL_BINDING_GRAPHS;
+import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.STRICT_ASSISTED_INJECT_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.STRICT_MULTIBINDING_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.STRICT_SUPERFICIAL_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.USE_BINDING_GRAPH_FIX;
@@ -202,6 +203,11 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   @Override
   public boolean strictSuperficialValidation() {
     return isEnabled(STRICT_SUPERFICIAL_VALIDATION);
+  }
+
+  @Override
+  public boolean strictAssistedInjectValidation() {
+    return isEnabled(STRICT_ASSISTED_INJECT_VALIDATION);
   }
 
   @Override
@@ -374,6 +380,8 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES(ENABLED),
 
     MAP_MULTIBINDING_DUPLICATE_DETECTION_FIX(ENABLED),
+
+    STRICT_ASSISTED_INJECT_VALIDATION(ENABLED),
 
     NULLABLE_TYPE_ANNOTATIONS;
 

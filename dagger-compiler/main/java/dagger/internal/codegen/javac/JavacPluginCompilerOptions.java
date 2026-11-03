@@ -150,4 +150,9 @@ final class JavacPluginCompilerOptions extends CompilerOptions {
   public boolean nullableTypeAnnotations() {
     return false;
   }
+
+  @Override
+  public boolean strictAssistedInjectValidation() {
+    return true;
+  }
 }

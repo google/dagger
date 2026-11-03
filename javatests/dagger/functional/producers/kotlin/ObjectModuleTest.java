@@ -54,4 +54,13 @@ public class ObjectModuleTest {
     assertThat(setFuture.get()).hasSize(1);
     assertThat(setFuture.get().iterator().next().getData()).isEqualTo(OBJECT_MODULE_SET_VALUE);
   }
+
+  @Test
+  @SuppressWarnings("KotlinInternal")
+  public void verifyInternalProductionComponentAndSubcomponent() throws Exception {
+    InternalProductionComponent component = DaggerInternalProductionComponent.create();
+    assertThat(component.getObjectModuleData().get().getData()).isEqualTo(OBJECT_MODULE_VALUE);
+    assertThat(component.subcomponent().getInterfaceCompanionObjectModuleData().get().getData())
+        .isEqualTo(INTERFACE_COMPANION_OBJECT_MODULE_VALUE);
+  }
 }

@@ -216,7 +216,6 @@ public final class XFunSpecs {
             visibility(VisibilityModifier.PROTECTED);
             break;
           case ABSTRACT:
-            isOpen(true);
             isAbstract(true);
             break;
           case STATIC:
@@ -458,7 +457,7 @@ public final class XFunSpecs {
               XFunSpec.builder(
                   name,
                   initialVisibility,
-                  isOpen,
+                  isOpen && !isAbstract,
                   isOverride,
                   /* addJavaNullabilityAnnotation= */ false);
           break;

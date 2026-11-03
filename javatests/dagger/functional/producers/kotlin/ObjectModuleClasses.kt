@@ -25,6 +25,7 @@ import dagger.producers.ProducerModule
 import dagger.producers.Produces
 import dagger.producers.Production
 import dagger.producers.ProductionComponent
+import dagger.producers.ProductionSubcomponent
 import java.util.concurrent.Executor
 import javax.inject.Named
 
@@ -125,4 +126,19 @@ data class TestData(val data: String)
 @Module
 object ExecutorModule {
   @Provides @Production fun executor(): Executor = MoreExecutors.directExecutor()
+}
+
+@ProductionComponent(modules = [ExecutorModule::class, TestKotlinObjectModule::class])
+internal interface InternalProductionComponent {
+  @Named(OBJECT_MODULE_VALUE) fun getObjectModuleData(): ListenableFuture<TestData>
+
+  fun subcomponent(): InternalOuter.EnclosedProductionSubcomponent
+}
+
+internal class InternalOuter {
+  @ProductionSubcomponent(modules = [TestInterfaceCompanionObjectModule::class])
+  interface EnclosedProductionSubcomponent {
+    @Named(INTERFACE_COMPANION_OBJECT_MODULE_VALUE)
+    fun getInterfaceCompanionObjectModuleData(): ListenableFuture<TestData>
+  }
 }

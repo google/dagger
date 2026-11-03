@@ -1,0 +1,42 @@
+package test;
+
+import dagger.Module;
+import dagger.Provides;
+import dagger.internal.DaggerGenerated;
+import dagger.multibindings.Multibinds;
+import dagger.producers.ProductionScope;
+import dagger.producers.monitoring.ProductionComponentMonitor;
+import dagger.producers.monitoring.internal.Monitors;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+import javax.inject.Provider;
+
+@Module
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+abstract class MyProductionSubcomponent_MonitoringModule {
+  private MyProductionSubcomponent_MonitoringModule() {
+  }
+
+  @Multibinds
+  abstract Set<ProductionComponentMonitor.Factory> setOfFactories();
+
+  @Provides
+  @ProductionScope
+  static ProductionComponentMonitor monitor(Provider<MyProductionSubcomponent> component,
+      Provider<Set<ProductionComponentMonitor.Factory>> factories) {
+    return Monitors.createMonitorForComponent(component, factories);
+  }
+}

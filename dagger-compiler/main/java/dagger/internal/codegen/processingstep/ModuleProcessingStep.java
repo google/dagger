@@ -133,6 +133,11 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<XTypeElement
 
   private void generateForMethodsIn(XTypeElement module) {
     for (XMethodElement method : module.getDeclaredMethods()) {
+      if (module.isCompanionObject() && method.hasAnnotation(XTypeNames.JVM_STATIC)) {
+        // Binding methods in companion objects with @JvmStatic are mirrored in the enclosing
+        // class, therefore we should ignore it or else it'll generate a duplicate factory.
+        continue;
+      }
       if (method.hasAnnotation(XTypeNames.PROVIDES)) {
         generate(factoryGenerator, bindingFactory.providesMethodBinding(method, module));
       } else if (method.hasAnnotation(XTypeNames.PRODUCES)) {

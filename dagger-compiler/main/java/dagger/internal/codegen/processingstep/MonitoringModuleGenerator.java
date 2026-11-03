@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.MonitoringModules;
 import dagger.internal.codegen.xprocessing.XTypeNames;
+import dagger.internal.codegen.xprocessing.XTypeSpecs;
 import javax.inject.Inject;
 
 /** Generates a monitoring module for use with production components. */
@@ -61,14 +62,14 @@ final class MonitoringModuleGenerator extends SourceFileGenerator<XTypeElement> 
   public ImmutableList<XTypeSpec> topLevelTypes(XTypeElement componentElement) {
     XClassName name = generatedMonitoringModuleName(componentElement);
     monitoringModules.add(name);
-    return ImmutableList.of(
+    XTypeSpecs.Builder builder =
         classBuilder(name)
             .addAnnotation(XTypeNames.MODULE)
             .addModifiers(ABSTRACT)
             .addFunction(privateConstructor())
             .addFunction(setOfFactories())
-            .addFunction(monitor(componentElement))
-            .build());
+            .addFunction(monitor(componentElement));
+    return ImmutableList.of(builder.build());
   }
 
   private XFunSpec privateConstructor() {

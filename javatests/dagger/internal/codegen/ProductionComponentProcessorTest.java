@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen;
 
-
+import androidx.room3.compiler.processing.util.CompilationResultSubject;
 import androidx.room3.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableMap;
 import dagger.testing.compile.CompilerTests;
@@ -59,6 +59,11 @@ public class ProductionComponentProcessorTest {
 
   public ProductionComponentProcessorTest(CompilerMode compilerMode) {
     this.compilerMode = compilerMode;
+  }
+
+  private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
+    Source source = goldenFileRule.goldenSource(goldenName);
+    subject.generatedSource(source);
   }
 
   @Test public void componentOnConcreteClass() {
@@ -305,6 +310,87 @@ public class ProductionComponentProcessorTest {
               subject.hasErrorCount(0);
               subject.generatedSource(
                   goldenFileRule.goldenSource("test/DaggerTestClass_SimpleComponent"));
+              assertSourceMatchesGolden(subject, "test/TestClass_SimpleComponent_MonitoringModule");
+            });
+  }
+
+  @Test
+  public void monitoringModule() {
+    Source module =
+        CompilerTests.kotlinSource(
+            "TestModules.kt",
+            "package test",
+            "",
+            "import com.google.common.util.concurrent.MoreExecutors",
+            "import dagger.Module",
+            "import dagger.Provides",
+            "import dagger.producers.ProducerModule",
+            "import dagger.producers.Produces",
+            "import dagger.producers.Production",
+            "import java.util.concurrent.Executor",
+            "",
+            "@Module",
+            "object TestExecutorModule {",
+            "  @Provides @Production fun executor(): Executor = MoreExecutors.directExecutor()",
+            "}",
+            "",
+            "@ProducerModule",
+            "object StringProducerModule {",
+            "  @Produces fun string(): String = \"hello\"",
+            "}",
+            "",
+            "@ProducerModule",
+            "object IntProducerModule {",
+            "  @Produces fun getInt(): Int = 42",
+            "}");
+    Source components =
+        CompilerTests.kotlinSource(
+            "TestComponents.kt",
+            "package test",
+            "",
+            "import com.google.common.util.concurrent.ListenableFuture",
+            "import dagger.producers.ProductionComponent",
+            "import dagger.producers.ProductionSubcomponent",
+            "",
+            "@ProductionComponent(",
+            "  modules = [TestExecutorModule::class, StringProducerModule::class]",
+            ")",
+            "interface MyProductionComponent {",
+            "  fun string(): ListenableFuture<String>",
+            "  fun subcomponent(): MyProductionSubcomponent",
+            "}",
+            "",
+            "@ProductionSubcomponent(modules = [IntProducerModule::class])",
+            "interface MyProductionSubcomponent {",
+            "  fun getInt(): ListenableFuture<Int>",
+            "}",
+            "",
+            "@ProductionComponent(",
+            "  modules = [TestExecutorModule::class, StringProducerModule::class]",
+            ")",
+            "internal interface InternalProductionComponent {",
+            "  fun string(): ListenableFuture<String>",
+            "  fun subcomponent(): Outer.EnclosedProductionSubcomponent",
+            "}",
+            "",
+            "internal class Outer {",
+            "  @ProductionSubcomponent(modules = [IntProducerModule::class])",
+            "  interface EnclosedProductionSubcomponent {",
+            "    fun getInt(): ListenableFuture<Int>",
+            "  }",
+            "}");
+
+    CompilerTests.daggerCompiler(module, components)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              assertSourceMatchesGolden(subject, "test/MyProductionComponent_MonitoringModule");
+              assertSourceMatchesGolden(subject, "test/MyProductionSubcomponent_MonitoringModule");
+              assertSourceMatchesGolden(
+                  subject, "test/InternalProductionComponent_MonitoringModule");
+              assertSourceMatchesGolden(
+                  subject, "test/Outer_EnclosedProductionSubcomponent_MonitoringModule");
             });
   }
 

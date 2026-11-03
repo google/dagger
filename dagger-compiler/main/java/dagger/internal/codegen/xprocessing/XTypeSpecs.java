@@ -234,7 +234,6 @@ public final class XTypeSpecs {
             visibility(VisibilityModifier.PROTECTED);
             break;
           case ABSTRACT:
-            isOpen(true);
             isAbstract(true);
             break;
           case STATIC:
@@ -359,7 +358,14 @@ public final class XTypeSpecs {
       XTypeSpec.Builder builder;
       switch (kind) {
         case CLASS:
-          builder = XTypeSpec.classBuilder(name, isOpen);
+          // TODO(b/579370817): Fix XTypeSpec.classBuilder/addAbstractModifier in XPoet so abstract
+          // classes don't get Modifier.FINAL in JavaPoet or KModifier.OPEN in KotlinPoet.
+          builder =
+              isAbstract
+                  ? toXPoet(
+                      com.squareup.javapoet.TypeSpec.classBuilder(name),
+                      com.squareup.kotlinpoet.TypeSpec.classBuilder(name))
+                  : XTypeSpec.classBuilder(name, isOpen);
           break;
         case INTERFACE:
           // TODO(bcorso): Add support for interfaces in XPoet.

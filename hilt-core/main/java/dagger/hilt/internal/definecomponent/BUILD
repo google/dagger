@@ -22,10 +22,7 @@ package(default_visibility = ["//:src"])
 java_library(
     name = "definecomponent",
     srcs = glob(["*.java"]),
-    visibility = [
-        "//hilt-core:__pkg__",
-        "//hilt-core/main/java/dagger/hilt:__pkg__",
-    ],
+    visibility = ["//hilt-core/main/java/dagger/hilt:__pkg__"],
 )
 
 filegroup(

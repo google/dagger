@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import static dagger.hilt.processor.internal.HiltCompilerOptions.isHeaderCompilation;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static kotlin.streams.jdk8.StreamsKt.asStream;
@@ -39,6 +40,7 @@ import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
+import dagger.internal.codegen.xprocessing.HjarGenerator;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.io.IOException;
 import java.util.stream.Stream;
@@ -93,10 +95,12 @@ public final class ApplicationGenerator {
         typeSpecBuilder.addMethod(onCreateMethod()).addMethod(injectionMethod());
     }
 
+    JavaFile javaFile =
+        JavaFile.builder(metadata.elementClassName().packageName(), typeSpecBuilder.build())
+            .build();
     env.getFiler()
         .write(
-            JavaFile.builder(metadata.elementClassName().packageName(), typeSpecBuilder.build())
-                .build(),
+            isHeaderCompilation(env) ? HjarGenerator.strip(javaFile, env) : javaFile,
             XFiler.Mode.Isolating);
   }
 

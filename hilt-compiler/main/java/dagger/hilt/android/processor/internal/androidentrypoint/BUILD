@@ -69,6 +69,7 @@ java_library(
         "//dagger-spi",
         "//hilt-compiler/main/java/dagger/hilt/android/processor/internal:android_classnames",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:classnames",
+        "//hilt-compiler/main/java/dagger/hilt/processor/internal:compiler_options",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:component_names",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:lazy_string",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:processor_errors",

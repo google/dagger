@@ -36,6 +36,11 @@ import javax.tools.Diagnostic.Kind;
 // TODO(danysantiago): Consider consolidating with Dagger compiler options logic.
 public final class HiltCompilerOptions {
 
+  /** Returns {@code true} if header compilation is enabled. */
+  public static boolean isHeaderCompilation(XProcessingEnv env) {
+    return env.getOptions().containsKey("experimental_turbine_hjar");
+  }
+
   /**
    * Returns {@code true} if the superclass validation is disabled for {@link
    * dagger.hilt.android.AndroidEntryPoint}-annotated classes.

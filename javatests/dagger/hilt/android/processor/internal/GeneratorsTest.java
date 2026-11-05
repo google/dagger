@@ -19,6 +19,7 @@ package dagger.hilt.android.processor.internal;
 import androidx.room3.compiler.processing.XProcessingEnv.Backend;
 import androidx.room3.compiler.processing.util.Source;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.StringSubject;
 import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import org.junit.Test;
@@ -730,6 +731,49 @@ public final class GeneratorsTest {
                       "@SuppressWarnings(\"deprecation\")",
                       "abstract class Hilt_MyService extends Service implements"
                           + " GeneratedComponentManagerHolder {"));
+            });
+  }
+
+  @Test
+  public void applicationGenerator_headerCompilation_stripsPrivateFieldsAndMethodBodies() {
+    Source myApplication =
+        HiltCompilerTests.javaSource(
+            "test.MyApplication",
+            "package test;",
+            "",
+            "import android.app.Application;",
+            "import dagger.hilt.android.HiltAndroidApp;",
+            "",
+            "@HiltAndroidApp(Application.class)",
+            "public class MyApplication extends Hilt_MyApplication {}");
+    HiltCompilerTests.hiltCompiler(myApplication)
+        .withProcessorOptions(ImmutableMap.of("experimental_turbine_hjar", ""))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              StringSubject stringSubject =
+                  subject.generatedSourceFileWithPath("test/Hilt_MyApplication.java");
+              stringSubject.doesNotContain("DaggerMyApplication_HiltComponents_SingletonC");
+              stringSubject.doesNotContain("new ApplicationComponentManager");
+              stringSubject.contains(
+                  JOINER.join(
+                      "  @Override",
+                      "  public final ApplicationComponentManager componentManager() {",
+                      "    return null;",
+                      "  }",
+                      "",
+                      "  @Override",
+                      "  public final Object generatedComponent() {",
+                      "    return null;",
+                      "  }",
+                      "",
+                      "  @CallSuper",
+                      "  @Override",
+                      "  public void onCreate() {",
+                      "  }",
+                      "",
+                      "  protected void hiltInternalInject() {",
+                      "  }"));
             });
   }
 }

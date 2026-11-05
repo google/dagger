@@ -18,6 +18,7 @@ package dagger.hilt.processor.internal.root;
 
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isCrossCompilationRootValidationDisabled;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.isHeaderCompilation;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isSharedTestComponentsEnabled;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
@@ -124,11 +125,22 @@ public final class RootProcessingStep extends BaseProcessingStep {
       if (rootsToProcess.isEmpty()) {
         return;
       }
-      // Generate an @ComponentTreeDeps for each unique component tree.
-      ComponentTreeDepsGenerator componentTreeDepsGenerator =
-          new ComponentTreeDepsGenerator(processingEnv(), getMode());
-      for (ComponentTreeDepsMetadata metadata : componentTreeDepsMetadatas(rootsToProcess)) {
-        componentTreeDepsGenerator.generate(metadata);
+      // In header compilation mode, we can skip generating @ComponentTreeDeps since the classes
+      // generated from it are only referenced within method bodies in this compilation unit, which
+      // are stripped in header jars.
+      ImmutableSet<AggregatedRootIr> rootsRequiringComponentGeneration = rootsToProcess;
+      if (isHeaderCompilation(processingEnv())) {
+        rootsRequiringComponentGeneration = ImmutableSet.of();
+      }
+
+      if (!rootsRequiringComponentGeneration.isEmpty()) {
+        // Generate an @ComponentTreeDeps for each unique component tree.
+        ComponentTreeDepsGenerator componentTreeDepsGenerator =
+            new ComponentTreeDepsGenerator(processingEnv(), getMode());
+        for (ComponentTreeDepsMetadata metadata :
+            componentTreeDepsMetadatas(rootsRequiringComponentGeneration)) {
+          componentTreeDepsGenerator.generate(metadata);
+        }
       }
 
       // Generate a sentinel for all processed roots.

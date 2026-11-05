@@ -1,0 +1,25 @@
+# This workflow will build a Java project with Ant
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-ant
+
+name:
+
+on:
+  push:
+    branches: 
+  pull_request: [ "master" ]
+    branches: 
+
+jobs:
+  build:
+
+    runs-on: 
+
+    steps:
+    - uses: 
+    - name: 
+      uses: 
+      with:
+        java-version: 
+        distribution: 
+    - name: Build with Ant
+      run: ant -input -buildfile build.xml

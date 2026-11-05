@@ -32,12 +32,9 @@ compat_kt_jvm_library(
         "//dagger-compiler/main/java/dagger/internal/codegen/xprocessing",
         "//dagger-runtime/main/java/dagger:core",
         "//dagger-spi",
-        "//third_party/java/auto:value",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
-        "//third_party/java/jsr305_annotations",
         "//third_party/java/jsr330_inject:jsr330_inject_without_dagger",
         "//third_party/kotlin/kotlin:kotlin_stdlib",
-        "//third_party/kotlin/kotlin_metadata_jvm",
     ],
 )

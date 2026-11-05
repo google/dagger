@@ -41,12 +41,8 @@ import javax.inject.Inject;
 /** Utility class for interacting with Kotlin Metadata. */
 public final class KotlinMetadataUtil {
 
-  private final KotlinMetadataFactory metadataFactory;
-
   @Inject
-  KotlinMetadataUtil(KotlinMetadataFactory metadataFactory) {
-    this.metadataFactory = metadataFactory;
-  }
+  KotlinMetadataUtil() {}
 
   /**
    * Returns {@code true} if this element has the Kotlin Metadata annotation or if it is enclosed in
@@ -136,14 +132,10 @@ public final class KotlinMetadataUtil {
    */
   private ImmutableList<XAnnotation> getSyntheticPropertyAnnotations(
       XPropertyElement propertyElement) {
-    if (hasMetadata(propertyElement)) {
-      checkState(
-          !metadataFactory
-              .create(propertyElement)
-              .isMissingSyntheticAnnotationMethod(propertyElement),
-          "Method for annotations is missing for %s",
-          propertyElement);
-    }
+    checkState(
+        !propertyElement.hasInaccessibleAnnotations(),
+        "Method for annotations is missing for %s",
+        propertyElement);
     return ImmutableList.copyOf(propertyElement.getAllAnnotations());
   }
 

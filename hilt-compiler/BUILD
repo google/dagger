@@ -93,7 +93,6 @@ _ARTIFACT_TARGET_MAVEN_DEPS = [
     "com.squareup:javapoet",
     "javax.inject:javax.inject",
     "net.ltgt.gradle.incap:incap",
-    "org.jetbrains.kotlin:kotlin-metadata-jvm",
     "org.jetbrains.kotlin:kotlin-stdlib",
 ]
 

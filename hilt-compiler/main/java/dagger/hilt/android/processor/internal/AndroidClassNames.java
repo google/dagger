@@ -137,5 +137,14 @@ public final class AndroidClassNames {
   public static final ClassName INJECT_VIA_ON_CONTEXT_AVAILABLE_LISTENER =
       get("dagger.hilt.android", "InjectViaOnContextAvailableListener");
 
+  // WorkManager-related class names
+  public static final ClassName LISTENABLE_WORKER = get("androidx.work", "ListenableWorker");
+  public static final ClassName WORKER_PARAMETERS = get("androidx.work", "WorkerParameters");
+  public static final ClassName HILT_WORKER = get("dagger.hilt.android.work", "HiltWorker");
+  public static final ClassName HILT_WORKER_MAP_QUALIFIER =
+      get("dagger.hilt.android.internal.work", "HiltWorkerMap");
+  public static final ClassName HILT_WORKER_KEYS_QUALIFIER =
+      get("dagger.hilt.android.internal.work", "HiltWorkerMap", "KeySet");
+
   private AndroidClassNames() {}
 }

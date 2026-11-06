@@ -18,13 +18,23 @@ package dagger.internal.codegen.binding;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.binding.SourceFiles.generatedProxyClassName;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.Accessibility.isElementAccessibleFrom;
+import static dagger.internal.codegen.xprocessing.Accessibility.isElementPubliclyAccessible;
+import static dagger.internal.codegen.xprocessing.Accessibility.isRawTypePubliclyAccessible;
+import static dagger.internal.codegen.xprocessing.Accessibility.isTypePubliclyAccessible;
+import static dagger.internal.codegen.xprocessing.NullableTypeNames.asNullableTypeName;
 import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.toStableString;
+import static dagger.internal.codegen.xprocessing.XTypes.containsTypeParameter;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
+import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XParameterSpec;
+import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.processing.XConstructorElement;
 import androidx.room3.compiler.processing.XConstructorType;
 import androidx.room3.compiler.processing.XElement;
@@ -43,7 +53,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
+import dagger.internal.codegen.base.UniqueNameSet;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.model.BindingKind;
+import dagger.internal.codegen.xprocessing.Accessibility;
+import dagger.internal.codegen.xprocessing.Nullability;
 import dagger.internal.codegen.xprocessing.XParameterSpecs;
 import dagger.internal.codegen.xprocessing.XTypeElements;
 import dagger.internal.codegen.xprocessing.XTypeNames;
@@ -61,7 +75,9 @@ public final class AssistedInjectionAnnotations {
       // https://github.com/google/dagger/issues/3450#issuecomment-3108716712 is fixed. For now, we
       // use a more verbose, custom error message with more information to make it easier to debug.
       throw new IllegalStateException(
-          "Expected exactly one factory method for " + toStableString(factory) + " but found: "
+          "Expected exactly one factory method for "
+              + toStableString(factory)
+              + " but found: "
               + factoryMethods.stream()
                   .map(
                       method ->
@@ -172,6 +188,11 @@ public final class AssistedInjectionAnnotations {
       XMethodType factoryMethodType = factoryMethod.asMemberOf(factoryType);
       XType assistedInjectType = factoryMethodType.getReturnType();
       XTypeElement assistedInjectElement = assistedInjectType.getTypeElement();
+      // Always match @Assisted parameters using the unresolved factory type, since a component's
+      // resolved factoryType may instantiate two distinct type parameters to the same type (e.g.
+      // FooFactory<Dep1, AssistedDep1> where both @Assisted parameters become AssistedDep1).
+      XMethodType unresolvedFactoryMethodType = factoryMethod.asMemberOf(factoryElement.getType());
+      XType unresolvedAssistedInjectType = unresolvedFactoryMethodType.getReturnType();
       return new AutoValue_AssistedInjectionAnnotations_AssistedFactoryMetadata(
           factoryElement,
           factoryType,
@@ -179,9 +200,10 @@ public final class AssistedInjectionAnnotations {
           factoryMethodType,
           assistedInjectElement,
           assistedInjectType,
-          AssistedInjectionAnnotations.assistedInjectAssistedParameters(assistedInjectType),
+          AssistedInjectionAnnotations.assistedInjectAssistedParameters(
+              unresolvedAssistedInjectType),
           AssistedInjectionAnnotations.assistedFactoryAssistedParameters(
-              factoryMethod, factoryMethodType));
+              factoryMethod, unresolvedFactoryMethodType));
     }
 
     public abstract XTypeElement factory();
@@ -220,6 +242,166 @@ public final class AssistedInjectionAnnotations {
         builder.put(assistedParameter, assistedParameter.element());
       }
       return builder.build();
+    }
+
+    /**
+     * Returns true if a standalone proxy file (e.g. {@code FooFactory_Proxy.java}) must be
+     * generated on disk for this assisted factory at factory compile-time.
+     *
+     * <p>A proxy file is generated if the factory interface, return type, or parameter raw types
+     * are non-public, ensuring future components in other packages can implement this factory
+     * without visibility errors.
+     */
+    @Memoized
+    public boolean needsToGenerateProxy() {
+      // We generate a proxy for any factory with type parameters, e.g. FooFactory<T>, since we
+      // don't know whether or not the user will request an inaccessible type, e.g.
+      // FooFactory<InaccessibleType>.
+      return !factory().getTypeParameters().isEmpty() || needsProxy(Optional.empty());
+    }
+
+    /**
+     * Returns true if a component generated in {@code accessingPackage} must use the generated
+     * proxy file instead of implementing the factory interface directly.
+     *
+     * <p>Even if a proxy file was generated on disk, a component does not need to use it if the
+     * component is in the same package as the factory and its raw types.
+     */
+    public boolean needsToUseProxy(String accessingPackage) {
+      return needsProxy(Optional.of(accessingPackage));
+    }
+
+    private boolean needsProxy(Optional<String> accessingPackage) {
+      if (!isTypeAccessible(factoryType(), accessingPackage)) {
+        return true;
+      }
+      if (!isAccessible(factoryMethod(), accessingPackage)) {
+        return true;
+      }
+      if (!isTypeAccessible(assistedInjectType(), accessingPackage)) {
+        return true;
+      }
+      for (XType paramType : factoryMethodType().getParameterTypes()) {
+        if (!isTypeAccessible(paramType, accessingPackage)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private static boolean isAccessible(XElement element, Optional<String> accessingPackage) {
+      return accessingPackage.isPresent()
+          ? isElementAccessibleFrom(element, accessingPackage.get())
+          : isElementPubliclyAccessible(element);
+    }
+
+    private static boolean isTypeAccessible(XType type, Optional<String> accessingPackage) {
+      return accessingPackage.isPresent()
+          ? Accessibility.isTypeAccessibleFrom(type, accessingPackage.get())
+          : isTypePubliclyAccessible(type);
+    }
+
+    /** Returns the class name of the generated proxy interface. */
+    @Memoized
+    public XClassName proxyClassName() {
+      return generatedProxyClassName(factory());
+    }
+
+    /** Returns the name of the proxy method, which matches the factory method name. */
+    @Memoized
+    public String proxyMethodName() {
+      return factoryMethod().getJvmName();
+    }
+
+    /**
+     * Returns the name of the proxy instance parameter of {@code createFactory}, chosen so that it
+     * doesn't clash with any of the factory method's parameter names.
+     */
+    @Memoized
+    public String proxyInstanceName() {
+      UniqueNameSet names = new UniqueNameSet();
+      factoryMethod().getParameters().stream()
+          .map(XExecutableParameterElement::getJvmName)
+          .forEach(names::claim);
+      return names.getUniqueName("proxy");
+    }
+
+    // TODO(b/578079423): Align proxy parameter types with *_Factory#newInstance parameter types
+    // when type parameters are used.
+    private static XTypeName proxyType(XType type) {
+      if (isTypePubliclyAccessible(type) && !containsTypeParameter(type)) {
+        return type.asTypeName();
+      } else if (isDeclared(type) && isRawTypePubliclyAccessible(type)) {
+        return type.getRawType().asTypeName();
+      }
+      return XTypeName.ANY_OBJECT;
+    }
+
+    /**
+     * Returns the return type name for the proxy method.
+     *
+     * <p>Only non-public types and types that contain type parameters are masked.
+     */
+    @Memoized
+    public XTypeName proxyReturnType() {
+      return proxyType(unresolvedFactoryMethodType().getReturnType());
+    }
+
+    /**
+     * Returns the {@link XParameterSpec}s for the proxy method using the factory method's parameter
+     * names.
+     */
+    public ImmutableList<XParameterSpec> proxyParameterSpecs(CompilerOptions compilerOptions) {
+      return proxyParameterSpecs(
+          factoryMethod().getParameters().stream()
+              .map(XExecutableParameterElement::getJvmName)
+              .collect(toImmutableList()),
+          compilerOptions);
+    }
+
+    /**
+     * Returns the {@link XParameterSpec}s for the proxy method using the given {@code
+     * parameterNames}.
+     *
+     * <p>Only non-public types and types that contain type parameters are masked.
+     */
+    public ImmutableList<XParameterSpec> proxyParameterSpecs(
+        List<String> parameterNames, CompilerOptions compilerOptions) {
+      List<XExecutableParameterElement> params = factoryMethod().getParameters();
+      List<XType> paramTypes = unresolvedFactoryMethodType().getParameterTypes();
+      checkArgument(parameterNames.size() == params.size());
+      ImmutableList.Builder<XParameterSpec> specs = ImmutableList.builder();
+      for (int i = 0; i < params.size(); i++) {
+        specs.add(
+            proxyParameterSpec(
+                parameterNames.get(i), params.get(i), paramTypes.get(i), compilerOptions));
+      }
+      return specs.build();
+    }
+
+    private static XParameterSpec proxyParameterSpec(
+        String name,
+        XExecutableParameterElement param,
+        XType paramType,
+        CompilerOptions compilerOptions) {
+      Nullability nullability = Nullability.of(param);
+      if (isTypePubliclyAccessible(paramType) && !containsTypeParameter(paramType)) {
+        return XParameterSpecs.of(name, paramType, nullability, compilerOptions);
+      }
+      XTypeName maskedTypeName =
+          asNullableTypeName(proxyType(paramType), nullability, compilerOptions);
+      return XParameterSpecs.builder(name, maskedTypeName)
+          .addAnnotationNames(nullability.nonTypeUseNullableAnnotations())
+          .build();
+    }
+
+    // The proxy method signature must be computed from the unresolved factory type (e.g.
+    // `FooFactory<T>`) rather than the component's resolved `factoryType()` (e.g.
+    // `FooFactory<String>`) so that the component's `@Override` implementation matches the
+    // `FooFactory_Proxy` interface generated on disk.
+    @Memoized
+    XMethodType unresolvedFactoryMethodType() {
+      return factoryMethod().asMemberOf(factory().getType());
     }
   }
 

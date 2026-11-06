@@ -29,6 +29,7 @@ import androidx.room3.compiler.processing.XMethodType;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
+import dagger.internal.codegen.binding.AssistedFactoryBinding;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedFactoryMetadata;
 import dagger.internal.codegen.binding.Binding;
@@ -55,6 +56,7 @@ final class AssistedInjectionParameters {
     AssistedFactoryMetadata metadata = AssistedFactoryMetadata.create(factory.getType());
     XMethodType factoryMethodType =
         metadata.factoryMethod().asMemberOf(binding.key().type().xprocessing());
+
     return assistedParameterSpecs(
         // Use the order of the parameters from the @AssistedFactory method but use the parameter
         // names of the @AssistedInject constructor.
@@ -64,6 +66,25 @@ final class AssistedInjectionParameters {
         factoryMethodType.getParameterTypes(),
         shardImplementation,
         compilerOptions);
+  }
+
+  /**
+   * Returns the list of assisted factory proxy parameters as {@link XParameterSpec}s.
+   *
+   * <p>If a parameter type is not accessible from {@code shardImplementation}, its type is replaced
+   * with {@link Object}.
+   */
+  public static ImmutableList<XParameterSpec> assistedFactoryProxyParameterSpecs(
+      AssistedFactoryBinding binding,
+      ShardImplementation shardImplementation,
+      CompilerOptions compilerOptions) {
+    AssistedFactoryMetadata metadata = binding.assistedFactoryMetadata();
+    ImmutableList<String> paramNames =
+        metadata.assistedFactoryAssistedParameters().stream()
+            .map(metadata.assistedInjectAssistedParametersMap()::get)
+            .map(shardImplementation::getUniqueFieldNameForAssistedParam)
+            .collect(toImmutableList());
+    return metadata.proxyParameterSpecs(paramNames, compilerOptions);
   }
 
   /**
@@ -98,7 +119,7 @@ final class AssistedInjectionParameters {
         assistedParameterSpecs.add(
             XParameterSpecs.of(
                 shardImplementation.getUniqueFieldNameForAssistedParam(paramElement),
-                paramType.asTypeName(),
+                paramType,
                 Nullability.of(paramElement),
                 compilerOptions));
       }

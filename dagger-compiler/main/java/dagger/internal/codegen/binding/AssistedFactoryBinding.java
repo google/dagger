@@ -21,6 +21,7 @@ import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.internal.codegen.base.ContributionType;
+import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedFactoryMetadata;
 import dagger.internal.codegen.model.BindingKind;
 import dagger.internal.codegen.model.DependencyRequest;
 import dagger.internal.codegen.model.Key;
@@ -56,14 +57,17 @@ public abstract class AssistedFactoryBinding extends ContributionBinding {
   @Memoized
   public ImmutableSet<DependencyRequest> dependencies() {
     return ImmutableSet.of(
-        DependencyRequest.builder()
-            .key(assistedInjectKey())
-            .kind(RequestKind.PROVIDER)
-            .build());
+        DependencyRequest.builder().key(assistedInjectKey()).kind(RequestKind.PROVIDER).build());
   }
 
   /** Returns the key for the associated {@code @AssistedInject} binding. */
   public abstract Key assistedInjectKey();
+
+  /** Returns the metadata for the assisted factory. */
+  @Memoized
+  public AssistedFactoryMetadata assistedFactoryMetadata() {
+    return AssistedFactoryMetadata.create(key().type().xprocessing());
+  }
 
   @Override
   public abstract Builder toBuilder();

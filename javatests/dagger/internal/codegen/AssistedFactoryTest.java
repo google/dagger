@@ -607,12 +607,616 @@ public class AssistedFactoryTest {
         CompilerTests.daggerCompiler(foo, bar, client, component)
             .withProcessingOptions(compilerMode.processorOptions());
 
-    // TODO(b/532992111): Fix javac visibility errors when using generic @AssistedFactory interfaces
-    // across packages with package-private type arguments.
-    daggerCompiler.compile(
-        subject -> {
-          subject.hasErrorContaining("PackagePrivateBar");
-        });
+    if (compilerMode.isFastInitEnabled()) {
+      daggerCompiler.compile(subject -> subject.hasErrorCount(0));
+    } else {
+      // TODO(b/532992111): Fix javac visibility errors when using generic @AssistedFactory
+      // interfaces across packages with package-private type arguments.
+      daggerCompiler.compile(subject -> subject.hasErrorContaining("PackagePrivateBar"));
+    }
+  }
+
+  @Test
+  public void testInaccessibleAssistedFactory() throws Exception {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "import java.util.List;",
+            "",
+            "class InaccessibleFoo {",
+            "  @AssistedInject",
+            "  InaccessibleFoo(",
+            "      @Assisted String str, @Assisted int i, @Assisted List<String> list) {}",
+            "}");
+
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "import java.util.List;",
+            "",
+            "@AssistedFactory",
+            "public interface InaccessibleFooFactory {",
+            "  InaccessibleFoo create(String str, int i, List<String> list);",
+            "}");
+
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.InaccessibleFooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  InaccessibleFooFactory fooFactory();",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("subpackage/InaccessibleFooFactory_Proxy"));
+            });
+  }
+
+  @Test
+  public void testInaccessibleAssistedFactory_withPublicReturnType() throws Exception {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.PublicFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "public class PublicFoo {",
+            "  @AssistedInject",
+            "  PublicFoo(@Assisted InaccessibleBar bar) {}",
+            "}");
+
+    Source bar =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleBar", "package subpackage;", "", "class InaccessibleBar {}");
+
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.FooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface FooFactory {",
+            "  PublicFoo create(InaccessibleBar bar);",
+            "}");
+
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.FooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  FooFactory fooFactory();",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, bar, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+              subject.generatedSource(goldenFileRule.goldenSource("subpackage/FooFactory_Proxy"));
+            });
+  }
+
+  @Test
+  public void testInaccessibleAssistedFactory_withTypeParameters() {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class InaccessibleFoo<T> {",
+            "  @AssistedInject",
+            "  InaccessibleFoo(@Assisted T arg) {}",
+            "}");
+
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface InaccessibleFooFactory<T> {",
+            "  InaccessibleFoo<T> create(T arg);",
+            "}");
+
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.InaccessibleFooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  InaccessibleFooFactory<String> fooFactory();",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void testInaccessibleAssistedFactory_withSelfReferencingTypeParameters() throws Exception {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class InaccessibleFoo<T extends Comparable<T>> {",
+            "  @AssistedInject",
+            "  InaccessibleFoo(@Assisted String str) {}",
+            "}");
+
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface InaccessibleFooFactory<T extends Comparable<T>> {",
+            "  InaccessibleFoo<T> create(String str);",
+            "}");
+
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.InaccessibleFooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  InaccessibleFooFactory<Integer> fooFactory();",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("subpackage/InaccessibleFooFactory_Proxy"));
+            });
+  }
+
+  @Test
+  public void testInaccessibleAssistedFactory_withMutuallyRecursiveTypeParameters() {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class InaccessibleFoo<T1 extends Comparable<T2>, T2 extends Comparable<T1>> {",
+            "  @AssistedInject",
+            "  InaccessibleFoo(@Assisted String str) {}",
+            "}");
+
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface InaccessibleFooFactory"
+                + "<T1 extends Comparable<T2>, T2 extends Comparable<T1>> {",
+            "  InaccessibleFoo<T1, T2> create(String str);",
+            "}");
+
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.InaccessibleFooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  InaccessibleFooFactory<Integer, Integer> fooFactory();",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void testInaccessibleAssistedFactory_withIntersectionTypeParameters() {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "import java.io.Serializable;",
+            "",
+            "class InaccessibleFoo<T extends Number & Serializable> {",
+            "  @AssistedInject",
+            "  InaccessibleFoo(@Assisted String str) {}",
+            "}");
+
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "import java.io.Serializable;",
+            "",
+            "@AssistedFactory",
+            "public interface InaccessibleFooFactory<T extends Number & Serializable> {",
+            "  InaccessibleFoo<T> create(String str);",
+            "}");
+
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.InaccessibleFooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  InaccessibleFooFactory<Integer> fooFactory();",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void testInaccessibleAssistedFactory_withParameterNamedProxy() throws Exception {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class InaccessibleFoo {",
+            "  @AssistedInject",
+            "  InaccessibleFoo(@Assisted String proxy) {}",
+            "}");
+
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface InaccessibleFooFactory {",
+            "  InaccessibleFoo create(String proxy);",
+            "}");
+
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.InaccessibleFooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  InaccessibleFooFactory fooFactory();",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(
+                  goldenFileRule.goldenSource("subpackage/InaccessibleFooFactory_Proxy"));
+            });
+  }
+
+  @Test
+  public void testInaccessibleTypeArgumentInParameter() throws Exception {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.PublicFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "import java.util.List;",
+            "",
+            "public class PublicFoo {",
+            "  @AssistedInject",
+            "  PublicFoo(@Assisted List<InaccessibleBar> bars) {}",
+            "}");
+    Source bar =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleBar", "package subpackage;", "", "class InaccessibleBar {}");
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.FooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "import java.util.List;",
+            "",
+            "@AssistedFactory",
+            "public interface FooFactory {",
+            "  PublicFoo create(List<InaccessibleBar> bars);",
+            "}");
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.FooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  FooFactory fooFactory();",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, bar, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+              subject.generatedSource(goldenFileRule.goldenSource("subpackage/FooFactory_Proxy"));
+            });
+  }
+
+  @Test
+  public void testInaccessibleTypeArgumentInReturnType() {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.PublicFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "public class PublicFoo<T> {",
+            "  @AssistedInject",
+            "  PublicFoo(@Assisted String str) {}",
+            "}");
+    Source bar =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleBar", "package subpackage;", "", "class InaccessibleBar {}");
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.FooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface FooFactory {",
+            "  PublicFoo<InaccessibleBar> create(String str);",
+            "}");
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.FooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  FooFactory fooFactory();",
+            "}");
+
+    CompilerTests.DaggerCompiler daggerCompiler =
+        CompilerTests.daggerCompiler(foo, bar, fooFactory, component)
+            .withProcessingOptions(compilerMode.processorOptions());
+
+    if (compilerMode.isFastInitEnabled()) {
+      daggerCompiler.compile(subject -> subject.hasErrorCount(0));
+    } else {
+      // TODO(b/532992111): Fix javac visibility errors in the component's assisted injection
+      // factory field (i.e. PublicFoo_Factory<InaccessibleBar>) by falling back to the raw type.
+      daggerCompiler.compile(subject -> subject.hasErrorContaining("InaccessibleBar"));
+    }
+  }
+
+  @Test
+  public void testInaccessibleAssistedFactoryMethod() {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.PublicFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "public class PublicFoo {",
+            "  @AssistedInject",
+            "  PublicFoo(@Assisted String str) {}",
+            "}");
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.FooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public abstract class FooFactory {",
+            "  abstract PublicFoo create(String str);",
+            "}");
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.FooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  FooFactory fooFactory();",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void testAssistedFactoryWithInheritedGenericMethodAndInaccessibleTypes() {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class InaccessibleFoo {",
+            "  @AssistedInject",
+            "  InaccessibleFoo(@Assisted InaccessibleBar bar) {}",
+            "}");
+    Source bar =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleBar", "package subpackage;", "", "class InaccessibleBar {}");
+    Source baseFactory =
+        CompilerTests.javaSource(
+            "subpackage.BaseFactory",
+            "package subpackage;",
+            "",
+            "public interface BaseFactory<F, B> {",
+            "  F create(B bar);",
+            "}");
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.FooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface FooFactory extends BaseFactory<InaccessibleFoo, InaccessibleBar> {}");
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.FooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  FooFactory fooFactory();",
+            "}");
+
+    CompilerTests.daggerCompiler(foo, bar, baseFactory, fooFactory, component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void testInaccessibleAssistedFactory_withBoundedTypeParameterInParameter() {
+    Source foo =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFoo",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.Assisted;",
+            "import dagger.assisted.AssistedInject;",
+            "",
+            "class InaccessibleFoo<T extends Number> {",
+            "  @AssistedInject",
+            "  InaccessibleFoo(@Assisted T arg) {}",
+            "}");
+    Source fooFactory =
+        CompilerTests.javaSource(
+            "subpackage.InaccessibleFooFactory",
+            "package subpackage;",
+            "",
+            "import dagger.assisted.AssistedFactory;",
+            "",
+            "@AssistedFactory",
+            "public interface InaccessibleFooFactory<T extends Number> {",
+            "  InaccessibleFoo<T> create(T arg);",
+            "}");
+    Source component =
+        CompilerTests.javaSource(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import subpackage.InaccessibleFooFactory;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  InaccessibleFooFactory<Integer> fooFactory();",
+            "}");
+
+    CompilerTests.DaggerCompiler daggerCompiler =
+        CompilerTests.daggerCompiler(foo, fooFactory, component)
+            .withProcessingOptions(compilerMode.processorOptions());
+
+    if (compilerMode == CompilerMode.FAST_INIT_MODE) {
+      // TODO(b/578079423): Align proxy parameter types with *_Factory#newInstance parameter
+      // types when type parameters are used.
+      daggerCompiler.compile(
+          subject ->
+              subject.hasErrorContaining(
+                  "method newInstance in class subpackage.InaccessibleFoo_Factory<T> cannot be"
+                      + " applied to given types"));
+    } else {
+      daggerCompiler.compile(subject -> subject.hasErrorCount(0));
+    }
   }
 
   @Test

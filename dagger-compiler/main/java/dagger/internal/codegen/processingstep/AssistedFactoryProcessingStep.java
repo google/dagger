@@ -35,7 +35,6 @@ import static dagger.internal.codegen.xprocessing.XTypeNames.daggerProviderOf;
 import static dagger.internal.codegen.xprocessing.XTypeNames.javaxProviderOf;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static java.util.stream.Collectors.joining;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -80,10 +79,8 @@ import javax.inject.Inject;
 /** An annotation processor for {@link dagger.assisted.AssistedFactory}-annotated types. */
 final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTypeElement> {
   private final XProcessingEnv processingEnv;
-
   @SuppressWarnings("HidingField")
   private final XMessager messager;
-
   private final XFiler filer;
   private final BindingFactory bindingFactory;
   private final MethodSignatureFormatter methodSignatureFormatter;
@@ -123,12 +120,8 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
     ValidationReport report = new AssistedFactoryValidator().validate(factory);
     report.printMessagesTo(messager);
     if (report.isClean()) {
-      AssistedFactoryBinding binding =
-          bindingFactory.assistedFactoryBinding(factory, Optional.empty());
-      new AssistedFactoryImplGenerator().generate(binding);
-      if (binding.assistedFactoryMetadata().needsToGenerateProxy()) {
-        new AssistedFactoryProxyGenerator().generate(binding);
-      }
+      new AssistedFactoryImplGenerator()
+          .generate(bindingFactory.assistedFactoryBinding(factory, Optional.empty()));
     }
   }
 
@@ -306,7 +299,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
         builder.superclass(factory.getType().asTypeName());
       }
 
-      AssistedFactoryMetadata metadata = binding.assistedFactoryMetadata();
+      AssistedFactoryMetadata metadata = AssistedFactoryMetadata.create(factory.getType());
       String delegateName = "delegateFactory";
       XTypeName delegateType = delegateFactoryTypeName(metadata.assistedInjectType());
       builder
@@ -323,7 +316,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
           // newer versions to break.
           .addFunction(
               staticCreateMethod(
-                  /* methodName= */ "create",
+                  /* methodName= */"create",
                   /* returnType= */ javaxProviderOf(accessibleFactoryTypeName(factory)),
                   generatedClassName,
                   metadata,
@@ -407,119 +400,10 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<XTy
       return assistedInjectType.getTypeArguments().isEmpty()
           ? generatedFactoryClassName
           : generatedFactoryClassName.parametrizedBy(
-              assistedInjectType.getTypeArguments().stream()
-                  .map(XTypeArgument::asTypeName)
-                  .collect(toImmutableList())
-                  .toArray(new XTypeName[0]));
-    }
-  }
-
-  /**
-   * Generates a proxy interface of the {@link dagger.assisted.AssistedFactory}-annotated class to
-   * bypass visibility issues.
-   */
-  private final class AssistedFactoryProxyGenerator
-      extends SourceFileGenerator<AssistedFactoryBinding> {
-    private static final String CREATE_FACTORY_METHOD_NAME = "createFactory";
-
-    AssistedFactoryProxyGenerator() {
-      super(filer, processingEnv);
-    }
-
-    @Override
-    public XElement originatingElement(AssistedFactoryBinding binding) {
-      return binding.bindingElement().get();
-    }
-
-    // Generates a proxy interface for the @AssistedFactory-annotated class
-    // to bypass visibility issues
-    //
-    // Example:
-    // public interface FooFactory_Proxy {
-    //   Foo create(String publicParam, Object packagePrivateParam);
-    //
-    //   public static Object createFactory(FooFactory_Proxy proxy) {
-    //     return new FooFactory() {
-    //       @Override
-    //       public Foo create(String publicParam, PackagePrivateParam packagePrivateParam) {
-    //         return (Foo) proxy.create(publicParam, packagePrivateParam);
-    //       }
-    //     };
-    //   }
-    // }
-    @Override
-    public ImmutableList<XTypeSpec> topLevelTypes(AssistedFactoryBinding binding) {
-      AssistedFactoryMetadata metadata = binding.assistedFactoryMetadata();
-      return ImmutableList.of(
-          XTypeSpecs.functionalInterfaceBuilder(metadata.proxyClassName())
-              .addModifiers(PUBLIC)
-              .addFunction(abstractProxyMethod(metadata))
-              .addFunction(createFactoryMethod(metadata))
-              .build());
-    }
-
-    // public abstract Foo create(String publicParam, Object packagePrivateParam);
-    private XFunSpec abstractProxyMethod(AssistedFactoryMetadata metadata) {
-      return methodBuilder(metadata.proxyMethodName())
-          .addModifiers(PUBLIC, ABSTRACT)
-          .returns(metadata.proxyReturnType())
-          .addParameters(metadata.proxyParameterSpecs(compilerOptions))
-          .build();
-    }
-
-    // public static <T> Object createFactory(FooFactory_Proxy proxy) {
-    //   return new FooFactory<T>() { ... };
-    // }
-    private XFunSpec createFactoryMethod(AssistedFactoryMetadata metadata) {
-      return methodBuilder(CREATE_FACTORY_METHOD_NAME)
-          .addModifiers(PUBLIC, STATIC)
-          .addTypeVariableNames(typeVariableNames(metadata.factory()))
-          .returns(XTypeName.ANY_OBJECT)
-          .addParameter(metadata.proxyInstanceName(), metadata.proxyClassName())
-          .addStatement("return %L", anonymousFactoryImpl(metadata))
-          .build();
-    }
-
-    // new FooFactory<T>() {
-    //   @Override
-    //   public Foo<T> create(T publicParam, PackagePrivateParam packagePrivateParam) {
-    //     return (Foo<T>) proxy.create(publicParam, packagePrivateParam);
-    //   }
-    // };
-    private XTypeSpec anonymousFactoryImpl(AssistedFactoryMetadata metadata) {
-      XTypeName factoryTypeName = metadata.factoryType().asTypeName();
-      XTypeSpecs.Builder builder = XTypeSpecs.anonymousClassBuilder();
-      if (metadata.factory().isInterface()) {
-        builder.addSuperinterface(factoryTypeName);
-      } else {
-        builder.superclass(factoryTypeName);
-      }
-      return builder.addFunction(factoryMethodImpl(metadata)).build();
-    }
-
-    // @Override
-    // public Foo create(String publicParam, PackagePrivateParam packagePrivateParam) {
-    //   return (Foo) proxy.create(publicParam, packagePrivateParam);
-    // }
-    private XFunSpec factoryMethodImpl(AssistedFactoryMetadata metadata) {
-      XTypeName returnTypeName = metadata.factoryMethodType().getReturnType().asTypeName();
-      XCodeBlock args =
-          metadata.factoryMethod().getParameters().stream()
-              .map(param -> XCodeBlock.of("%N", param.getJvmName()))
-              .collect(toParametersCodeBlock());
-      return overriding(metadata.factoryMethod(), metadata.factoryType(), compilerOptions)
-          .addStatement(
-              returnTypeName.equals(metadata.proxyReturnType())
-                  ? XCodeBlock.of(
-                      "return %N.%N(%L)",
-                      metadata.proxyInstanceName(), metadata.proxyMethodName(), args)
-                  : XCodeBlock.of(
-                      "return (%T) %N.%N(%L)",
-                      returnTypeName,
-                      metadata.proxyInstanceName(),
-                      metadata.proxyMethodName(),
-                      args))
-          .build();
+                assistedInjectType.getTypeArguments().stream()
+                    .map(XTypeArgument::asTypeName)
+                    .collect(toImmutableList())
+                    .toArray(new XTypeName[0]));
     }
   }
 }

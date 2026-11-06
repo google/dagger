@@ -20,16 +20,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedFactoryMethod;
 import static dagger.internal.codegen.writing.AssistedInjectionParameters.assistedFactoryParameterSpecs;
-import static dagger.internal.codegen.writing.AssistedInjectionParameters.assistedFactoryProxyParameterSpecs;
 import static dagger.internal.codegen.xprocessing.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
-import static dagger.internal.codegen.xprocessing.XFunSpecs.methodBuilder;
 import static dagger.internal.codegen.xprocessing.XFunSpecs.overridingWithoutParameters;
-import static javax.lang.model.element.Modifier.PUBLIC;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XCodeBlock;
-import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.codegen.XTypeSpec;
 import androidx.room3.compiler.processing.XMethodElement;
 import androidx.room3.compiler.processing.XType;
@@ -38,7 +34,6 @@ import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.AssistedFactoryBinding;
-import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedFactoryMetadata;
 import dagger.internal.codegen.binding.AssistedInjectionBinding;
 import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingGraph;
@@ -84,56 +79,9 @@ final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
         simpleMethodRequestRepresentationFactory
             .create((AssistedInjectionBinding) localBinding.get())
             .getDependencyExpression(requestingClass.peerClass(""));
-
-    ShardImplementation shardImplementation =
-        componentImplementation.shardImplementation(localBinding.get());
-    AssistedFactoryMetadata metadata = binding.assistedFactoryMetadata();
-
-    if (metadata.needsToUseProxy(shardImplementation.name().getPackageName())) {
-      return XExpression.create(
-          assistedInjectionExpression.type(),
-          XCodeBlock.of(
-              "%T.createFactory(%L)",
-              metadata.proxyClassName(),
-              anonymousProxyImpl(assistedInjectionExpression, metadata, shardImplementation)));
-    }
-
     return XExpression.create(
         assistedInjectionExpression.type(),
         XCodeBlock.of("%L", anonymousfactoryImpl(localBinding.get(), assistedInjectionExpression)));
-  }
-
-  private XTypeSpec anonymousProxyImpl(
-      XExpression assistedInjectionExpression,
-      AssistedFactoryMetadata metadata,
-      ShardImplementation shardImplementation) {
-    String proxyMethodName = metadata.proxyMethodName();
-    // The proxy method returns `proxyReturnType` (which is the unresolved assisted inject type,
-    // its raw type, or Object depending on public accessibility). If `proxyReturnType` is Object,
-    // no cast is needed. Otherwise, we need to cast `assistedInjectionExpression` to
-    // `proxyReturnType` when `requiresCast` is true (e.g. in Kotlin codegen where
-    // Foo_Factory.newInstance() returns Any).
-    XTypeName proxyReturnType = metadata.proxyReturnType();
-    XCodeBlock returnCodeBlock =
-        !proxyReturnType.equals(XTypeName.ANY_OBJECT)
-                && requiresCast(metadata.assistedInjectType(), shardImplementation.name())
-            ? XCodeBlock.ofCast(proxyReturnType, assistedInjectionExpression.codeBlock())
-            : assistedInjectionExpression.codeBlock();
-
-    XTypeSpecs.Builder builder =
-        XTypeSpecs.anonymousClassBuilder()
-            .addSuperinterface(metadata.proxyClassName())
-            .addFunction(
-                methodBuilder(proxyMethodName)
-                    .addModifiers(PUBLIC)
-                    .isOverride(true)
-                    .returns(proxyReturnType)
-                    .addParameters(
-                        assistedFactoryProxyParameterSpecs(
-                            binding, shardImplementation, compilerOptions))
-                    .addStatement("return %L", returnCodeBlock)
-                    .build());
-    return builder.build();
   }
 
   private XTypeSpec anonymousfactoryImpl(

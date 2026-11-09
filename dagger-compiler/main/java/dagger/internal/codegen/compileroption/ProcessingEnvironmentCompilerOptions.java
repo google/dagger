@@ -47,7 +47,6 @@ import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompil
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.DISABLE_INTER_COMPONENT_SCOPE_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.EXPLICIT_BINDING_CONFLICTS_WITH_INJECT;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.FULL_BINDING_GRAPH_VALIDATION;
-import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.MODULE_HAS_DIFFERENT_SCOPES_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.NULLABLE_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.PRIVATE_MEMBER_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Validation.STATIC_MEMBER_VALIDATION;
@@ -168,11 +167,6 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   @Override
   public boolean pluginsVisitFullBindingGraphs(XTypeElement component) {
     return isEnabled(PLUGINS_VISIT_FULL_BINDING_GRAPHS);
-  }
-
-  @Override
-  public Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind() {
-    return diagnosticKind(MODULE_HAS_DIFFERENT_SCOPES_VALIDATION);
   }
 
   @Override
@@ -428,12 +422,6 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
         return ImmutableList.of("dagger.moduleBindingValidation");
       }
     },
-
-    /**
-     * How to report conflicting scoped bindings when validating partial binding graphs associated
-     * with modules.
-     */
-    MODULE_HAS_DIFFERENT_SCOPES_VALIDATION(ERROR, WARNING),
 
     /**
      * How to report that an explicit binding in a subcomponent conflicts with an {@code @Inject}

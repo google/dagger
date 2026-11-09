@@ -85,8 +85,6 @@ public abstract class CompilerOptions {
    */
   public abstract boolean pluginsVisitFullBindingGraphs(XTypeElement element);
 
-  public abstract Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind();
-
   public abstract ValidationType explicitBindingConflictsWithInjectValidationType();
 
   public abstract boolean experimentalDaggerErrorMessages();

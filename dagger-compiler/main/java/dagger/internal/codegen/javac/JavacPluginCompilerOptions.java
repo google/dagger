@@ -97,11 +97,6 @@ final class JavacPluginCompilerOptions extends CompilerOptions {
   }
 
   @Override
-  public Diagnostic.Kind moduleHasDifferentScopesDiagnosticKind() {
-    return NOTE;
-  }
-
-  @Override
   public ValidationType explicitBindingConflictsWithInjectValidationType() {
     return NONE;
   }

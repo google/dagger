@@ -253,51 +253,38 @@ public class ScopingValidationTest {
                   .onSource(componentFile)
                   .onLineContaining("interface MyComponent");
             });
-
-    // The @Inject binding for ScopedType should not appear here, but the @Singleton binding should.
-    CompilerTests.daggerCompiler(componentFile, scopeFile, scopeWithAttribute, typeFile, moduleFile)
-        .withProcessingOptions(ImmutableMap.of("dagger.fullBindingGraphValidation", "ERROR"))
-        .compile(
-            subject -> {
-              subject.hasErrorCount(2);
-              subject.hasErrorContaining(
-                      String.join(
-                          "\n",
-                          "ScopedModule contains bindings with different scopes:",
-                          "    @Provides @PerTest String ScopedModule.string()",
-                          "",
-                          "    @Provides @Singleton float ScopedModule.floatingPoint()",
-                          "",
-                          // TODO(b/241293838): Remove dependency on backend once this bug is fixed.
-                          CompilerTests.backend(subject).equals(XProcessingEnv.Backend.JAVAC)
-                              ? "    @Provides @Per(MyComponent.class) boolean ScopedModule.bool()"
-                              : "    @Provides @Per(MyComponent) boolean ScopedModule.bool()"))
-                  .onSource(moduleFile)
-                  .onLineContaining("class ScopedModule");
-            });
   }
 
   @Test
-  public void fullBindingGraphValidationDoesNotReportForOneScope() {
-    CompilerTests.daggerCompiler(
-            CompilerTests.javaSource(
-                "test.TestModule",
-                "package test;",
-                "",
-                "import dagger.Module;",
-                "import dagger.Provides;",
-                "import javax.inject.Singleton;",
-                "",
-                "@Module",
-                "interface TestModule {",
-                "  @Provides @Singleton static Object object() { return \"object\"; }",
-                "  @Provides @Singleton static String string() { return \"string\"; }",
-                "  @Provides static int integer() { return 4; }",
-                "}"))
+  public void fullBindingGraphValidationDoesNotCheckModules() {
+    Source scopeFile =
+        CompilerTests.javaSource(
+            "test.PerTest",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "",
+            "@Scope",
+            "@interface PerTest {}");
+    Source moduleFile =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Module",
+            "interface TestModule {",
+            "  @Provides @Singleton static Object object() { return \"object\"; }",
+            "  @Provides @PerTest static String string() { return \"string\"; }",
+            "  @Provides static int integer() { return 4; }",
+            "}");
+    CompilerTests.daggerCompiler(scopeFile, moduleFile)
         .withProcessingOptions(
             ImmutableMap.<String, String>builder()
                 .put("dagger.fullBindingGraphValidation", "ERROR")
-                .put("dagger.moduleHasDifferentScopesValidation", "ERROR")
                 .buildOrThrow())
         .compile(
             subject -> {
@@ -401,7 +388,6 @@ public class ScopingValidationTest {
         .withProcessingOptions(
             ImmutableMap.<String, String>builder()
                 .put("dagger.fullBindingGraphValidation", "ERROR")
-                .put("dagger.moduleHasDifferentScopesValidation", "ERROR")
                 .buildOrThrow())
         .compile(
             subject -> {

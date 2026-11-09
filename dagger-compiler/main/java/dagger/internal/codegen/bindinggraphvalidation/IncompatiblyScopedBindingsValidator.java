@@ -27,7 +27,6 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 
 import dagger.internal.codegen.base.Scopes;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
-import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.model.Binding;
 import dagger.internal.codegen.model.BindingGraph;
 import dagger.internal.codegen.model.BindingGraph.ComponentNode;
@@ -35,7 +34,6 @@ import dagger.internal.codegen.model.DiagnosticReporter;
 import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
 import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import java.util.List;
-import java.util.Optional;
 import javax.inject.Inject;
 import javax.tools.Diagnostic;
 
@@ -45,16 +43,13 @@ import javax.tools.Diagnostic;
  */
 final class IncompatiblyScopedBindingsValidator extends ValidationBindingGraphPlugin {
   private final MethodSignatureFormatter methodSignatureFormatter;
-  private final CompilerOptions compilerOptions;
   private final DiagnosticMessageGenerator.Factory diagnosticMessageGeneratorFactory;
 
   @Inject
   IncompatiblyScopedBindingsValidator(
       MethodSignatureFormatter methodSignatureFormatter,
-      CompilerOptions compilerOptions,
       DiagnosticMessageGenerator.Factory diagnosticMessageGeneratorFactory) {
     this.methodSignatureFormatter = methodSignatureFormatter;
-    this.compilerOptions = compilerOptions;
     this.diagnosticMessageGeneratorFactory = diagnosticMessageGeneratorFactory;
   }
 
@@ -65,6 +60,10 @@ final class IncompatiblyScopedBindingsValidator extends ValidationBindingGraphPl
 
   @Override
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
+    if (!bindingGraph.rootComponentNode().isRealComponent()) {
+      // Scopes in a single module can be validated only when it is included from a component.
+      return;
+    }
     DiagnosticMessageGenerator diagnosticMessageGenerator =
         diagnosticMessageGeneratorFactory.create(bindingGraph);
     bindingGraph.bindings().stream()
@@ -76,18 +75,13 @@ final class IncompatiblyScopedBindingsValidator extends ValidationBindingGraphPl
 
   private static boolean hasIncompatibleScope(BindingGraph bindingGraph, Binding binding) {
     if (binding.scope().isEmpty()
-            || binding.scope().get().isReusable()
-            // @Inject bindings in module or subcomponent binding graphs will appear at the
-            // properly scoped ancestor component, so ignore them here.
-            || (binding.kind() == INJECTION && isSubcomponentOrModuleRoot(bindingGraph))) {
+        || binding.scope().get().isReusable()
+        // @Inject bindings in subcomponent binding graphs will appear at the
+        // properly scoped ancestor component, so ignore them here.
+        || (binding.kind() == INJECTION && bindingGraph.rootComponentNode().isSubcomponent())) {
       return false;
     }
     return !owningComponent(bindingGraph, binding).scopes().contains(binding.scope().get());
-  }
-
-  private static boolean isSubcomponentOrModuleRoot(BindingGraph bindingGraph) {
-    ComponentNode rootComponent = bindingGraph.rootComponentNode();
-     return rootComponent.isSubcomponent() || !rootComponent.isRealComponent();
   }
 
   private static ComponentNode owningComponent(BindingGraph bindingGraph, Binding binding) {
@@ -104,15 +98,7 @@ final class IncompatiblyScopedBindingsValidator extends ValidationBindingGraphPl
         new StringBuilder(
             componentNode.componentPath().currentComponent().xprocessing().getQualifiedName());
 
-    if (!componentNode.isRealComponent()) {
-      // If the "component" is really a module, it will have no scopes attached. We want to report
-      // if there is more than one scope in that component.
-      if (bindings.stream().map(Binding::scope).map(Optional::get).distinct().count() <= 1) {
-        return;
-      }
-      message.append(" contains bindings with different scopes:");
-      diagnosticKind = compilerOptions.moduleHasDifferentScopesDiagnosticKind();
-    } else if (componentNode.scopes().isEmpty()) {
+    if (componentNode.scopes().isEmpty()) {
       message.append(" (unscoped) may not reference scoped bindings:");
     } else {
       message

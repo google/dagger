@@ -95,7 +95,6 @@ java_library(
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:lazy_string",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:processor_errors",
         "//hilt-compiler/main/java/dagger/hilt/processor/internal:processors",
-        "//hilt-compiler/main/java/dagger/hilt/processor/internal/kotlin",
         "//third_party/java/auto:value",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",

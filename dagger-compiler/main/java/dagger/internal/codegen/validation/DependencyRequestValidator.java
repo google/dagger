@@ -49,7 +49,6 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.base.ValidationReport;
 import dagger.internal.codegen.binding.InjectionAnnotations;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.model.RequestKind;
 import dagger.internal.codegen.xprocessing.XTypeNames;
 import dagger.internal.codegen.xprocessing.XTypes;
@@ -61,18 +60,15 @@ final class DependencyRequestValidator {
   private final XProcessingEnv processingEnv;
   private final MembersInjectionValidator membersInjectionValidator;
   private final InjectionAnnotations injectionAnnotations;
-  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
   DependencyRequestValidator(
       XProcessingEnv processingEnv,
       MembersInjectionValidator membersInjectionValidator,
-      InjectionAnnotations injectionAnnotations,
-      KotlinMetadataUtil metadataUtil) {
+      InjectionAnnotations injectionAnnotations) {
     this.processingEnv = processingEnv;
     this.membersInjectionValidator = membersInjectionValidator;
     this.injectionAnnotations = injectionAnnotations;
-    this.metadataUtil = metadataUtil;
   }
 
   /**
@@ -111,8 +107,8 @@ final class DependencyRequestValidator {
       // so no need to get qualifier from kotlin metadata
       if (!fieldElement.isStatic()
           && isTypeElement(fieldElement.getEnclosingElement())
-          && metadataUtil.hasMetadata(fieldElement)
-          && metadataUtil.isMissingSyntheticAnnotationMethod(fieldElement.getOwner())) {
+          && fieldElement.getClosestMemberContainer().isFromKotlin()
+          && fieldElement.getOwner().hasInaccessibleAnnotations()) {
         Optional<XTypeElement> membersInjector =
             Optional.ofNullable(
                 processingEnv.findTypeElement(

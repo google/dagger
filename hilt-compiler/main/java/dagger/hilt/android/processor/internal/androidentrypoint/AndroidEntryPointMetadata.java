@@ -27,6 +27,7 @@ import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
 import androidx.room3.compiler.processing.XAnnotation;
 import androidx.room3.compiler.processing.XElement;
+import androidx.room3.compiler.processing.XExecutableParameterElement;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
@@ -47,8 +48,6 @@ import dagger.hilt.processor.internal.Components;
 import dagger.hilt.processor.internal.LazyString;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
-import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtil;
-import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.util.LinkedHashSet;
@@ -264,10 +263,9 @@ public abstract class AndroidEntryPointMetadata {
       // If this AndroidEntryPoint is a Kotlin class and its base type is also Kotlin and has
       // default values declared in its constructor then error out because for the short-form
       // usage of @AndroidEntryPoint the bytecode transformation will be done incorrectly.
-      KotlinMetadataUtil metadataUtil = KotlinMetadataUtils.getMetadataUtil();
       ProcessorErrors.checkState(
-          !metadataUtil.hasMetadata(androidEntryPointElement)
-              || !metadataUtil.containsConstructorWithDefaultParam(baseElement),
+          !androidEntryPointElement.isFromKotlin()
+              || !containsConstructorWithDefaultParam(baseElement),
           baseElement,
           "The base class, '%s', of the @AndroidEntryPoint, '%s', contains a constructor with "
               + "default parameters. This is currently not supported by the Gradle plugin. Either "
@@ -484,6 +482,13 @@ public abstract class AndroidEntryPointMetadata {
               + "View, Service, or BroadcastReceiver.",
           element);
     }
+  }
+
+  private static boolean containsConstructorWithDefaultParam(XTypeElement typeElement) {
+    return typeElement.isFromKotlin()
+        && typeElement.getConstructors().stream()
+            .flatMap(constructor -> constructor.getParameters().stream())
+            .anyMatch(XExecutableParameterElement::getHasDefaultValue);
   }
 
   private static void checkConsistentAnnotations(

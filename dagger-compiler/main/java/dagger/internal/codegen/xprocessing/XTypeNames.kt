@@ -192,8 +192,6 @@ object XTypeNames {
   @JvmField
   val CAN_IGNORE_RETURN_VALUE =
     XClassName.get("com.google.errorprone.annotations", "CanIgnoreReturnValue")
-
-  @JvmField val KOTLIN_METADATA = XClassName.get("kotlin", "Metadata")
   @JvmField val IMMUTABLE_MAP = XClassName.get("com.google.common.collect", "ImmutableMap")
   @JvmField
   val IMMUTABLE_MAP_BUILDER = XClassName.get("com.google.common.collect", "ImmutableMap", "Builder")
@@ -379,8 +377,7 @@ object XTypeNames {
     )
   }
 
-  @JvmStatic
-  fun XTypeName.isJavaWildcard(): Boolean = toJavaPoet() is JWildcardTypeName
+  @JvmStatic fun XTypeName.isJavaWildcard(): Boolean = toJavaPoet() is JWildcardTypeName
 
   @JvmStatic
   fun XTypeName.boundsHasSelfReference(): Boolean =

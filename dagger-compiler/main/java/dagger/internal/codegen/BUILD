@@ -40,7 +40,6 @@ java_library(
         "//dagger-compiler/main/java/dagger/internal/codegen/bindinggraphvalidation",
         "//dagger-compiler/main/java/dagger/internal/codegen/compileroption",
         "//dagger-compiler/main/java/dagger/internal/codegen/componentgenerator",
-        "//dagger-compiler/main/java/dagger/internal/codegen/kotlin",
         "//dagger-compiler/main/java/dagger/internal/codegen/processingstep",
         "//dagger-compiler/main/java/dagger/internal/codegen/validation",
         "//dagger-compiler/main/java/dagger/internal/codegen/writing",

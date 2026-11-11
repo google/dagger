@@ -77,7 +77,6 @@ java_library(
         ":processor_errors",
         "//dagger-compiler:xprocessing",
         "//dagger-spi",
-        "//hilt-compiler/main/java/dagger/hilt/processor/internal/kotlin",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",

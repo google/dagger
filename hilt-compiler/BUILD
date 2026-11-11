@@ -69,7 +69,6 @@ _ARTIFACT_TARGET_LIBS = [
     "//hilt-compiler/main/java/dagger/hilt/processor/internal/earlyentrypoint:processor_lib",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal/generatesrootinput:generates_root_inputs",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",
-    "//hilt-compiler/main/java/dagger/hilt/processor/internal/kotlin",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal/optionvalues:optionvalues",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal/originatingelement:processor_lib",
     "//hilt-compiler/main/java/dagger/hilt/processor/internal/root:component_tree_deps_processor_lib",
@@ -91,7 +90,6 @@ _ARTIFACT_TARGET_MAVEN_DEPS = [
     "com.google.guava:failureaccess",
     "com.google.guava:guava",
     "com.squareup:javapoet",
-    "javax.inject:javax.inject",
     "net.ltgt.gradle.incap:incap",
     "org.jetbrains.kotlin:kotlin-stdlib",
 ]

@@ -53,7 +53,6 @@ import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.DaggerSuperficialValidation;
 import dagger.internal.codegen.base.ElementFormatter;
 import dagger.internal.codegen.compileroption.CompilerOptions;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.model.DaggerAnnotation;
 import dagger.internal.codegen.model.Scope;
 import dagger.internal.codegen.xprocessing.XAnnotations;
@@ -65,18 +64,15 @@ import javax.inject.Inject;
 /** Utilities relating to annotations defined in the {@code javax.inject} package. */
 public final class InjectionAnnotations {
   private final XProcessingEnv processingEnv;
-  private final KotlinMetadataUtil kotlinMetadataUtil;
   private final DaggerSuperficialValidation superficialValidation;
   private final CompilerOptions compilerOptions;
 
   @Inject
   InjectionAnnotations(
       XProcessingEnv processingEnv,
-      KotlinMetadataUtil kotlinMetadataUtil,
       DaggerSuperficialValidation superficialValidation,
       CompilerOptions compilerOptions) {
     this.processingEnv = processingEnv;
-    this.kotlinMetadataUtil = kotlinMetadataUtil;
     this.superficialValidation = superficialValidation;
     this.compilerOptions = compilerOptions;
   }
@@ -363,8 +359,7 @@ public final class InjectionAnnotations {
    * annotation.
    */
   private ImmutableSet<XAnnotation> getQualifiersForKotlinProperty(XFieldElement field) {
-    // TODO(bcorso): Consider moving this to KotlinMetadataUtil
-    if (kotlinMetadataUtil.isMissingSyntheticAnnotationMethod(field.getOwner())) {
+    if (field.getOwner().hasInaccessibleAnnotations()) {
       // If we detect that the synthetic method for annotations is missing, possibly due to the
       // element being from a compiled class, then find the MembersInjector that was generated
       // for the enclosing class and extract the qualifier information from it.

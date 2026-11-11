@@ -1,5 +1,4 @@
 import dagger.gradle.build.SoftwareType
-import dagger.gradle.build.findBootstrapCompilerJar
 import dagger.gradle.build.findXProcessingJar
 
 plugins {
@@ -27,8 +26,6 @@ dependencies {
   implementation(libs.ksp.api)
   implementation(libs.kotlin.stdlib)
   implementation(libs.kotlinPoet.javaPoet)
-
-  kapt(files(project.findBootstrapCompilerJar()))
 
   // These dependencies are shaded into dagger-spi
   compileOnly(libs.auto.common)

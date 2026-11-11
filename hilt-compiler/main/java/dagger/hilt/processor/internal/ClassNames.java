@@ -215,8 +215,5 @@ public final class ClassNames {
   public static final ClassName ON_RECEIVE_BYTECODE_INJECTION_MARKER =
       get("dagger.hilt.android.internal", "OnReceiveBytecodeInjectionMarker");
 
-  // Kotlin-specific class names
-  public static final ClassName KOTLIN_METADATA = get("kotlin", "Metadata");
-
   private ClassNames() {}
 }

@@ -16,11 +16,16 @@
 
 package dagger.hilt.processor.internal;
 
+import static androidx.room3.compiler.processing.XElementKt.isField;
+import static androidx.room3.compiler.processing.XElementKt.isProperty;
 import static androidx.room3.compiler.processing.compat.XConverters.getProcessingEnv;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils.getMetadataUtil;
+import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XElements.asField;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import androidx.room3.compiler.processing.JavaPoetExtKt;
@@ -32,9 +37,11 @@ import androidx.room3.compiler.processing.XExecutableElement;
 import androidx.room3.compiler.processing.XFiler.Mode;
 import androidx.room3.compiler.processing.XHasModifiers;
 import androidx.room3.compiler.processing.XProcessingEnv;
+import androidx.room3.compiler.processing.XPropertyElement;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Equivalence;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -377,7 +384,7 @@ public final class Processors {
     // Normally, we wouldn't need to handle Kotlin metadata because map keys are typically used
     // only on methods. However, with @BindValueIntoMap, this can be used on fields so we need
     // to check annotations on the property as well, just like with qualifiers.
-    return getMetadataUtil().getAnnotationsAnnotatedWith(element, ClassNames.MAP_KEY);
+    return getAnnotationsAnnotatedWithAnyOf(element, ClassNames.MAP_KEY);
   }
 
   /** Returns true if an element is annotated with {@literal @}Inject. */
@@ -387,9 +394,70 @@ public final class Processors {
 
   /** Returns Qualifier annotated annotations found on an element. */
   public static ImmutableList<XAnnotation> getQualifierAnnotations(XElement element) {
-    return getMetadataUtil()
-        .getAnnotationsAnnotatedWithAnyOf(
-            element, ClassNames.QUALIFIER, ClassNames.JAKARTA_QUALIFIER);
+    return getAnnotationsAnnotatedWithAnyOf(
+        element, ClassNames.QUALIFIER, ClassNames.JAKARTA_QUALIFIER);
+  }
+
+  /**
+   * Returns the annotations on the given {@code element} annotated with any annotation in {@code
+   * annotationNames}.
+   *
+   * <p>Note: If the given {@code element} is a non-static field this method will return annotations
+   * on both the backing field and the associated synthetic property (if one exists).
+   */
+  private static ImmutableList<XAnnotation> getAnnotationsAnnotatedWithAnyOf(
+      XElement element, ClassName... annotationNames) {
+    return getAnnotations(element).stream()
+        .filter(annotation -> annotation.getTypeElement().hasAnyAnnotation(annotationNames))
+        .collect(toImmutableList());
+  }
+
+  /**
+   * Returns the annotations on the given {@code element}.
+   *
+   * <p>Note: If the given {@code element} is a non-static field this method will return annotations
+   * on both the backing field and the associated synthetic property (if one exists).
+   */
+  private static ImmutableList<XAnnotation> getAnnotations(XElement element) {
+    checkArgument(!isProperty(element));
+    ImmutableList<XAnnotation> annotations = ImmutableList.copyOf(element.getAllAnnotations());
+    if (!isField(element)) {
+      return annotations;
+    }
+    XPropertyElement propertyElement = asField(element).getOwner();
+    checkState(
+        !propertyElement.hasInaccessibleAnnotations(),
+        "Method for annotations is missing for %s",
+        propertyElement);
+    ImmutableList<XAnnotation> syntheticAnnotations =
+        ImmutableList.copyOf(propertyElement.getAllAnnotations());
+    if (syntheticAnnotations.isEmpty()) {
+      return annotations;
+    }
+    // Dedupe any annotation that appears on both the field and the property.
+    // Note: we reduce the number of annotations we have to dedupe by only checking equivalence on
+    // annotations that have the same class name as a synthetic annotation. This avoids hitting
+    // TypeNotPresentException on annotation values with error types unless it has the same class
+    // name as a synthetic annotation.
+    ImmutableSet<ClassName> syntheticAnnotationClassNames =
+        syntheticAnnotations.stream().map(XAnnotations::getClassName).collect(toImmutableSet());
+    ImmutableSet<Equivalence.Wrapper<XAnnotation>> annotationEquivalenceWrappers =
+        annotations.stream()
+            .filter(annotation -> syntheticAnnotationClassNames.contains(annotation.getClassName()))
+            .map(XAnnotations.equivalence()::wrap)
+            .collect(toImmutableSet());
+    ImmutableList<XAnnotation> uniqueSyntheticAnnotations =
+        syntheticAnnotations.stream()
+            .map(XAnnotations.equivalence()::wrap)
+            .filter(wrapper -> !annotationEquivalenceWrappers.contains(wrapper))
+            .map(Equivalence.Wrapper::get)
+            .collect(toImmutableList());
+    return uniqueSyntheticAnnotations.isEmpty()
+        ? annotations
+        : ImmutableList.<XAnnotation>builder()
+            .addAll(annotations)
+            .addAll(uniqueSyntheticAnnotations)
+            .build();
   }
 
   /** Returns true if an element is annotated with {@literal @}Scope. */

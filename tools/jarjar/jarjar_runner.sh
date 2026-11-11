@@ -50,12 +50,12 @@ done
 rm build-data.properties*
 rm META-INF/MANIFEST.MF*
 rm -rf META-INF/maven/
-duplicate_files="$(find * -type f -regex '.*~[0-9]*$')"
+duplicate_files="$(find ./* -type f -regex '.*~[0-9]*$')"
 if [[ -n "${duplicate_files}" ]]; then
   echo "Error: duplicate files in merged jar: ${duplicate_files}"
   exit 1
 fi
-"${JAVA_HOME}/bin/jar" cf combined.jar *
+"${JAVA_HOME}/bin/jar" cf combined.jar ./*
 
 popd &>/dev/null
 

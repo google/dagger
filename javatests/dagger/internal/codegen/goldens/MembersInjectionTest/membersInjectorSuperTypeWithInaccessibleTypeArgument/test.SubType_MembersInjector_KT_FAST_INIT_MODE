@@ -1,64 +1,58 @@
-package test;
+package test
 
-import dagger.MembersInjector;
-import dagger.internal.DaggerGenerated;
-import dagger.internal.InjectedFieldSignature;
-import dagger.internal.Provider;
-import dagger.internal.QualifierMetadata;
-import javax.annotation.processing.Generated;
-import other.SuperType_MembersInjector;
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Int
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+import other.SuperType_MembersInjector
 
 @QualifierMetadata
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class SubType_MembersInjector implements MembersInjector<Object> {
-  @SuppressWarnings("rawtypes")
-  private final Provider tProvider;
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class SubType_MembersInjector : MembersInjector<Any> {
+  private val tProvider: Provider<*>
 
-  @SuppressWarnings("rawtypes")
-  private final Provider listTProvider;
+  private val listTProvider: Provider<*>
 
-  @SuppressWarnings("rawtypes")
-  private final Provider listExtendsTProvider;
+  private val listExtendsTProvider: Provider<*>
 
-  @SuppressWarnings("rawtypes")
-  private final Provider arrayListExtendsTProvider;
+  private val arrayListExtendsTProvider: Provider<*>
 
-  @SuppressWarnings("rawtypes")
-  private final Provider tProvider2;
+  private val tProvider2: Provider<*>
 
-  @SuppressWarnings("rawtypes")
-  private final Provider listTProvider2;
+  private val listTProvider2: Provider<*>
 
-  @SuppressWarnings("rawtypes")
-  private final Provider listExtendsTProvider2;
+  private val listExtendsTProvider2: Provider<*>
 
-  @SuppressWarnings("rawtypes")
-  private final Provider arrayListExtendsTProvider2;
+  private val arrayListExtendsTProvider2: Provider<*>
 
-  private final Provider<Integer> iProvider;
+  private val iProvider: Provider<Int?>
 
-  private SubType_MembersInjector(@SuppressWarnings("rawtypes") Provider tProvider,
-      @SuppressWarnings("rawtypes") Provider listTProvider,
-      @SuppressWarnings("rawtypes") Provider listExtendsTProvider,
-      @SuppressWarnings("rawtypes") Provider arrayListExtendsTProvider,
-      @SuppressWarnings("rawtypes") Provider tProvider2,
-      @SuppressWarnings("rawtypes") Provider listTProvider2,
-      @SuppressWarnings("rawtypes") Provider listExtendsTProvider2,
-      @SuppressWarnings("rawtypes") Provider arrayListExtendsTProvider2,
-      Provider<Integer> iProvider) {
+  private constructor(
+    tProvider: Provider<*>,
+    listTProvider: Provider<*>,
+    listExtendsTProvider: Provider<*>,
+    arrayListExtendsTProvider: Provider<*>,
+    tProvider2: Provider<*>,
+    listTProvider2: Provider<*>,
+    listExtendsTProvider2: Provider<*>,
+    arrayListExtendsTProvider2: Provider<*>,
+    iProvider: Provider<Int?>,
+  ) {
     this.tProvider = tProvider;
     this.listTProvider = listTProvider;
     this.listExtendsTProvider = listExtendsTProvider;
@@ -70,25 +64,33 @@ public final class SubType_MembersInjector implements MembersInjector<Object> {
     this.iProvider = iProvider;
   }
 
-  @Override
-  public void injectMembers(Object instance) {
-    SuperType_MembersInjector.<Object>injectT(instance, tProvider.get());
-    SuperType_MembersInjector.<Object>injectListT(instance, listTProvider.get());
-    SuperType_MembersInjector.<Object>injectListExtendsT(instance, listExtendsTProvider.get());
-    SuperType_MembersInjector.<Object>injectArrayListExtendsT(instance, arrayListExtendsTProvider.get());
-    SuperType_MembersInjector.<Object>injectMethod(instance, tProvider2.get(), listTProvider2.get(), listExtendsTProvider2.get(), arrayListExtendsTProvider2.get());
+  public override fun injectMembers(instance: Any) {
+    SuperType_MembersInjector.injectT<Any?>(instance, tProvider.get());
+    SuperType_MembersInjector.injectListT<Any?>(instance, listTProvider.get());
+    SuperType_MembersInjector.injectListExtendsT<Any?>(instance, listExtendsTProvider.get());
+    SuperType_MembersInjector.injectArrayListExtendsT<Any?>(instance, arrayListExtendsTProvider.get());
+    SuperType_MembersInjector.injectMethod<Any?>(instance, tProvider2.get(), listTProvider2.get(), listExtendsTProvider2.get(), arrayListExtendsTProvider2.get());
     injectI(instance, iProvider.get());
   }
 
-  public static MembersInjector<Object> create(Provider<?> tProvider, Provider<?> listTProvider,
-      Provider<?> listExtendsTProvider, Provider<?> arrayListExtendsTProvider,
-      Provider<?> tProvider2, Provider<?> listTProvider2, Provider<?> listExtendsTProvider2,
-      Provider<?> arrayListExtendsTProvider2, Provider<?> iProvider) {
-    return new SubType_MembersInjector((Provider) (tProvider), (Provider) (listTProvider), (Provider) (listExtendsTProvider), (Provider) (arrayListExtendsTProvider), (Provider) (tProvider2), (Provider) (listTProvider2), (Provider) (listExtendsTProvider2), (Provider) (arrayListExtendsTProvider2), (Provider<Integer>) (iProvider));
-  }
+  public companion object {
+    @JvmStatic
+    public fun create(
+      tProvider: Provider<*>,
+      listTProvider: Provider<*>,
+      listExtendsTProvider: Provider<*>,
+      arrayListExtendsTProvider: Provider<*>,
+      tProvider2: Provider<*>,
+      listTProvider2: Provider<*>,
+      listExtendsTProvider2: Provider<*>,
+      arrayListExtendsTProvider2: Provider<*>,
+      iProvider: Provider<*>,
+    ): MembersInjector<Any> = SubType_MembersInjector((tProvider) as Provider<*>, (listTProvider) as Provider<*>, (listExtendsTProvider) as Provider<*>, (arrayListExtendsTProvider) as Provider<*>, (tProvider2) as Provider<*>, (listTProvider2) as Provider<*>, (listExtendsTProvider2) as Provider<*>, (arrayListExtendsTProvider2) as Provider<*>, (iProvider) as Provider<Int?>)
 
-  @InjectedFieldSignature("test.SubType.i")
-  public static void injectI(Object instance, Object i) {
-    ((SubType) (instance)).i = (Integer) (i);
+    @InjectedFieldSignature(value = "test.SubType.i")
+    @JvmStatic
+    public fun injectI(instance: Any?, i: Any?) {
+      ((instance) as SubType).i = (i) as Int?
+    }
   }
 }

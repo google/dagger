@@ -1,0 +1,27 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class Outer_TestModule_Proxy {
+  private Outer_TestModule_Proxy() {
+  }
+
+  public static Outer.TestModule newInstance() {
+    return new Outer.TestModule();
+  }
+}

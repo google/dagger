@@ -47,7 +47,8 @@ public class ModuleConstructorProxyGeneratorTest {
   }
 
   private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
-    subject.generatedSource(goldenFileRule.goldenSource(goldenName));
+    Source source = goldenFileRule.goldenSource(goldenName);
+    subject.generatedSource(source);
   }
 
   private static final Source COMPONENT =
@@ -81,12 +82,11 @@ public class ModuleConstructorProxyGeneratorTest {
             "}");
     CompilerTests.daggerCompiler(module, COMPONENT)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              assertSourceMatchesGolden(subject, "modules/TestModule_Proxy");
-              assertSourceMatchesGolden(subject, "test/DaggerTestComponent");
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "modules/TestModule_Proxy");
+          subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+        });
   }
 
   @Test
@@ -164,18 +164,17 @@ public class ModuleConstructorProxyGeneratorTest {
             "}");
     CompilerTests.daggerCompiler(module, COMPONENT)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              // In Java codegen an internal constructor is treated as public, so no proxy is
-              // needed and the component calls the constructor directly.
-              if (compilerMode.isKotlinCodegenEnabled()) {
-                assertSourceMatchesGolden(subject, "modules/TestModule_Proxy");
-              } else {
-                assertFileNotGenerated(subject, "modules/TestModule_Proxy.java");
-              }
-              assertSourceMatchesGolden(subject, "test/DaggerTestComponent");
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          // In Java codegen an internal constructor is treated as public, so no proxy is
+          // needed and the component calls the constructor directly.
+          if (compilerMode.isKotlinCodegenEnabled()) {
+            assertSourceMatchesGolden(subject, "modules/TestModule_Proxy");
+          } else {
+            assertFileNotGenerated(subject, "modules/TestModule_Proxy.java");
+          }
+          subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+        });
   }
 
   @Test
@@ -205,17 +204,17 @@ public class ModuleConstructorProxyGeneratorTest {
             "}");
     CompilerTests.daggerCompiler(module, component)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              // In Java codegen an internal class is treated as public, so no proxy is needed.
-              if (compilerMode.isKotlinCodegenEnabled()) {
-                assertSourceMatchesGolden(subject, "test/TestModule_Proxy");
-              } else {
-                assertFileNotGenerated(subject, "test/TestModule_Proxy.java");
-              }
-              assertSourceMatchesGolden(subject, "test/DaggerTestComponent");
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          // In Java codegen an internal class is treated as public, so no proxy is needed.
+          if (compilerMode.isKotlinCodegenEnabled()) {
+            // The proxy stays public, so newInstance() returns Any and the component casts it.
+            assertSourceMatchesGolden(subject, "test/TestModule_Proxy");
+          } else {
+            assertFileNotGenerated(subject, "test/TestModule_Proxy.java");
+          }
+          subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+        });
   }
 
   @Test
@@ -234,12 +233,11 @@ public class ModuleConstructorProxyGeneratorTest {
             "}");
     CompilerTests.daggerCompiler(module, COMPONENT)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              assertSourceMatchesGolden(subject, "modules/TestModule_Proxy");
-              assertSourceMatchesGolden(subject, "test/DaggerTestComponent");
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "modules/TestModule_Proxy");
+          subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+        });
   }
 
   @Test
@@ -271,17 +269,17 @@ public class ModuleConstructorProxyGeneratorTest {
             "}");
     CompilerTests.daggerCompiler(module, component)
         .withProcessingOptions(compilerMode.processorOptions())
-        .compile(
-            subject -> {
-              subject.hasErrorCount(0);
-              // In Java codegen an internal class is treated as public, so no proxy is needed.
-              if (compilerMode.isKotlinCodegenEnabled()) {
-                assertSourceMatchesGolden(subject, "test/Outer_TestModule_Proxy");
-              } else {
-                assertFileNotGenerated(subject, "test/Outer_TestModule_Proxy.java");
-              }
-              assertSourceMatchesGolden(subject, "test/DaggerTestComponent");
-            });
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          // In Java codegen an internal class is treated as public, so no proxy is needed.
+          if (compilerMode.isKotlinCodegenEnabled()) {
+            // The module is effectively internal, so newInstance() returns Any.
+            assertSourceMatchesGolden(subject, "test/Outer_TestModule_Proxy");
+          } else {
+            assertFileNotGenerated(subject, "test/Outer_TestModule_Proxy.java");
+          }
+          subject.generatedSource(goldenFileRule.goldenSource("test/DaggerTestComponent"));
+        });
   }
 
   private static void assertFileNotGenerated(CompilationResultSubject subject, String filePath) {

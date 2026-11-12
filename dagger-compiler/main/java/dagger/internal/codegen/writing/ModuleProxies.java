@@ -19,16 +19,16 @@ package dagger.internal.codegen.writing;
 import static dagger.internal.codegen.binding.ComponentRequirement.requiresModuleInstance;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
 import static dagger.internal.codegen.xprocessing.Accessibility.isElementAccessibleFrom;
-import static dagger.internal.codegen.xprocessing.XFunSpecs.constructorBuilder;
+import static dagger.internal.codegen.xprocessing.Accessibility.isElementPubliclyAccessible;
+import static dagger.internal.codegen.xprocessing.Accessibility.visibleDefaultConstructor;
 import static dagger.internal.codegen.xprocessing.XFunSpecs.methodBuilder;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isNested;
-import static javax.lang.model.element.Modifier.FINAL;
-import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XCodeBlock;
+import androidx.room3.compiler.codegen.XTypeName;
 import androidx.room3.compiler.codegen.XTypeSpec;
 import androidx.room3.compiler.processing.XConstructorElement;
 import androidx.room3.compiler.processing.XElement;
@@ -38,7 +38,6 @@ import androidx.room3.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.ModuleKind;
 import dagger.internal.codegen.base.SourceFileGenerator;
-import dagger.internal.codegen.xprocessing.Accessibility;
 import dagger.internal.codegen.xprocessing.XTypeSpecs;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -53,8 +52,11 @@ public final class ModuleProxies {
   public static final class ModuleConstructorProxyGenerator
       extends SourceFileGenerator<XTypeElement> {
 
+
     @Inject
-    ModuleConstructorProxyGenerator(XFiler filer, XProcessingEnv processingEnv) {
+    ModuleConstructorProxyGenerator(
+        XFiler filer,
+        XProcessingEnv processingEnv) {
       super(filer, processingEnv);
     }
 
@@ -72,13 +74,12 @@ public final class ModuleProxies {
     }
 
     private XTypeSpec buildProxy(XTypeElement moduleElement) {
-      return XTypeSpecs.classBuilder(constructorProxyTypeName(moduleElement))
-          .addModifiers(PUBLIC, FINAL)
-          .addFunction(constructorBuilder().addModifiers(PRIVATE).build())
+      return XTypeSpecs.objectBuilder(constructorProxyTypeName(moduleElement))
+          .addModifiers(PUBLIC)
           .addFunction(
               methodBuilder("newInstance")
                   .addModifiers(PUBLIC, STATIC)
-                  .returns(moduleElement.asClassName())
+                  .returns(newInstanceReturnType(moduleElement))
                   .addStatement(
                       "return %L", XCodeBlock.ofNewInstance(moduleElement.asClassName(), ""))
                   .build())
@@ -94,6 +95,29 @@ public final class ModuleProxies {
   }
 
   /**
+   * Returns the return type of the proxy's {@code newInstance()} method: the module type, or {@code
+   * Any} if the module type can't appear in the public Kotlin proxy's signature.
+   */
+  private static XTypeName newInstanceReturnType(XTypeElement moduleElement) {
+    return newInstanceReturnsAny(moduleElement)
+        ? XTypeName.ANY_OBJECT
+        : moduleElement.asClassName();
+  }
+
+  /**
+   * Returns {@code true} if the proxy's {@code newInstance()} returns {@code Any} instead of the
+   * module type.
+   *
+   * <p>A public Kotlin function can't expose a type that isn't public (e.g. an {@code internal} or
+   * Java package-private module, or one nested in such a class), so, like the Kotlin factories, the
+   * proxy returns {@code Any} and call sites cast the result back to the module type.
+   */
+  @SuppressWarnings("deprecation") // Static access to CompilerOptions.useKotlinCodegen.
+  private static boolean newInstanceReturnsAny(XTypeElement moduleElement) {
+    return false;
+  }
+
+  /**
    * The module constructor being proxied. A proxy is generated if it is not publicly accessible and
    * has no arguments. If an implicit reference to the enclosing class exists, or the module is
    * abstract, no proxy method can be generated.
@@ -102,15 +126,12 @@ public final class ModuleProxies {
       XTypeElement moduleElement) {
     ModuleKind.checkIsModule(moduleElement);
     if (!requiresModuleInstance(moduleElement)
-            || moduleElement.isAbstract()
-            || (isNested(moduleElement) && !moduleElement.isStatic())) {
+        || moduleElement.isAbstract()
+        || (isNested(moduleElement) && !moduleElement.isStatic())) {
       return Optional.empty();
     }
-    return moduleElement.getConstructors().stream()
-        .filter(constructor -> !Accessibility.isElementPubliclyAccessible(constructor))
-        .filter(constructor -> !constructor.isPrivate())
-        .filter(constructor -> constructor.getParameters().isEmpty())
-        .findAny();
+    return visibleDefaultConstructor(moduleElement)
+        .filter(constructor -> !isElementPubliclyAccessible(constructor));
   }
 
   /**
@@ -125,7 +146,13 @@ public final class ModuleProxies {
     XClassName constructorProxyClassName = constructorProxyTypeName(moduleElement);
     return nonPublicNullaryConstructor(moduleElement)
         .filter(constructor -> !isElementAccessibleFrom(constructor, packageName))
-        .map(constructor -> XCodeBlock.of("%T.newInstance()", constructorProxyClassName))
+        .map(
+            constructor -> {
+              XCodeBlock proxyCall = XCodeBlock.of("%T.newInstance()", constructorProxyClassName);
+              return newInstanceReturnsAny(moduleElement)
+                  ? XCodeBlock.ofCast(moduleElement.asClassName(), proxyCall)
+                  : proxyCall;
+            })
         .orElse(XCodeBlock.ofNewInstance(moduleElement.asClassName(), ""));
   }
 }

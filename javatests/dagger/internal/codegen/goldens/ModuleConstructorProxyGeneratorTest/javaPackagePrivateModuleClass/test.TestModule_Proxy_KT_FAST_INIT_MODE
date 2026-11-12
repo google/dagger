@@ -1,27 +1,22 @@
-package test;
+package test
 
-import dagger.internal.DaggerGenerated;
-import javax.annotation.processing.Generated;
+import dagger.`internal`.DaggerGenerated
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
 
 @DaggerGenerated
 @Generated(
-    value = "dagger.internal.codegen.ComponentProcessor",
-    comments = "https://dagger.dev"
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
 )
-@SuppressWarnings({
-    "unchecked",
-    "rawtypes",
-    "KotlinInternal",
-    "KotlinInternalInJava",
-    "cast",
-    "deprecation",
-    "nullness:initialization.field.uninitialized"
-})
-public final class TestModule_Proxy {
-  private TestModule_Proxy() {
-  }
-
-  public static TestModule newInstance() {
-    return new TestModule();
-  }
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public object TestModule_Proxy {
+  @JvmStatic
+  public fun newInstance(): Any = TestModule()
 }

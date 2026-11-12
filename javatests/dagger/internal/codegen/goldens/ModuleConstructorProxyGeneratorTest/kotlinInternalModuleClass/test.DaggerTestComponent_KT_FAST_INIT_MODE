@@ -43,7 +43,7 @@ public final class DaggerTestComponent {
 
     public TestComponent build() {
       if (testModule == null) {
-        this.testModule = TestModule_Proxy.newInstance();
+        this.testModule = (TestModule) (TestModule_Proxy.newInstance());
       }
       return new ComponentImpl(testModule);
     }

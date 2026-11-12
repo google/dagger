@@ -4,7 +4,6 @@ import dagger.internal.DaggerGenerated;
 import dagger.internal.Preconditions;
 import javax.annotation.processing.Generated;
 import modules.TestModule;
-import modules.TestModule_Proxy;
 import modules.TestModule_StringFactory;
 
 @DaggerGenerated
@@ -29,10 +28,6 @@ final class DaggerTestComponent {
     return new Builder();
   }
 
-  public static TestComponent create() {
-    return new Builder().build();
-  }
-
   static final class Builder {
     private TestModule testModule;
 
@@ -45,9 +40,7 @@ final class DaggerTestComponent {
     }
 
     public TestComponent build() {
-      if (testModule == null) {
-        this.testModule = TestModule_Proxy.newInstance();
-      }
+      Preconditions.checkBuilderRequirement(testModule, TestModule.class);
       return new ComponentImpl(testModule);
     }
   }

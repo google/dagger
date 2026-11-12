@@ -19,9 +19,9 @@ package dagger.internal.codegen.binding;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
+import static dagger.internal.codegen.xprocessing.Accessibility.hasVisibleDefaultConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
-import static dagger.internal.codegen.xprocessing.XElements.isPrivate;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isNested;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
@@ -251,10 +251,5 @@ public abstract class ComponentRequirement {
 
   private static boolean requiresEnclosingInstance(XTypeElement typeElement) {
     return isNested(typeElement) && !typeElement.isStatic();
-  }
-
-  private static boolean hasVisibleDefaultConstructor(XTypeElement typeElement) {
-    return typeElement.getConstructors().stream()
-        .anyMatch(constructor -> !isPrivate(constructor) && constructor.getParameters().isEmpty());
   }
 }

@@ -35,11 +35,13 @@ import static dagger.internal.codegen.xprocessing.XTypes.isTypeVariable;
 
 import androidx.room3.compiler.codegen.XClassName;
 import androidx.room3.compiler.codegen.XTypeName;
+import androidx.room3.compiler.processing.XConstructorElement;
 import androidx.room3.compiler.processing.XElement;
 import androidx.room3.compiler.processing.XMemberContainer;
 import androidx.room3.compiler.processing.XProcessingEnv;
 import androidx.room3.compiler.processing.XType;
 import androidx.room3.compiler.processing.XTypeArgument;
+import androidx.room3.compiler.processing.XTypeElement;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import java.util.Optional;
 
@@ -191,6 +193,25 @@ public final class Accessibility {
     } else {
       return XTypeName.ANY_OBJECT;
     }
+  }
+
+  /**
+   * Returns {@code true} if {@code typeElement} has a no-arg constructor that is not private and
+   * is not an uncallable Kotlin {@code protected} constructor.
+   */
+  public static boolean hasVisibleDefaultConstructor(XTypeElement typeElement) {
+    return visibleDefaultConstructor(typeElement).isPresent();
+  }
+
+  /**
+   * Returns the no-arg constructor of {@code typeElement} if it is not private and is not an
+   * uncallable Kotlin {@code protected} constructor.
+   */
+  public static Optional<XConstructorElement> visibleDefaultConstructor(XTypeElement typeElement) {
+    return typeElement.getConstructors().stream()
+        .filter(constructor -> constructor.getParameters().isEmpty())
+        .filter(constructor -> !isPrivate(constructor))
+        .findAny();
   }
 
   private Accessibility() {}

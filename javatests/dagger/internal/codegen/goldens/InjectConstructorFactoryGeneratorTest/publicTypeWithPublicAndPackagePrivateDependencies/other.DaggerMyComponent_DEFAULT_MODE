@@ -1,0 +1,69 @@
+package other;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+import test.Foo;
+import test.Foo_Factory;
+import test.GenericDep;
+import test.GenericDep_Factory;
+import test.PackagePrivateDep_Factory;
+import test.PublicDep;
+import test.PublicDep_Factory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerMyComponent {
+  private DaggerMyComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static MyComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public MyComponent build() {
+      return new ComponentImpl();
+    }
+  }
+
+  private static final class ComponentImpl implements MyComponent {
+    private final ComponentImpl componentImpl = this;
+
+    ComponentImpl() {
+
+
+    }
+
+    GenericDep<PublicDep> genericDepOfPublicDep() {
+      return GenericDep_Factory.newInstance(PublicDep_Factory.newInstance());
+    }
+
+    GenericDep genericDepOfPackagePrivateDep() {
+      return GenericDep_Factory.newInstance(PackagePrivateDep_Factory.newInstance());
+    }
+
+    @Override
+    public Foo foo() {
+      return Foo_Factory.newInstance(PublicDep_Factory.newInstance(), PackagePrivateDep_Factory.newInstance(), genericDepOfPublicDep(), (GenericDep) (genericDepOfPackagePrivateDep()));
+    }
+  }
+}

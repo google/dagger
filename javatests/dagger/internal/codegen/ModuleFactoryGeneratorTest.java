@@ -1251,7 +1251,7 @@ public class ModuleFactoryGeneratorTest {
             "",
             "interface Bar {}");
     daggerCompiler(component, usage, concreteModule, parameterizedModule, packagePrivateFoo, packagePrivateBar)
-        .compile(subject -> subject.hasErrorCount(0));
+    .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
@@ -1327,7 +1327,7 @@ public class ModuleFactoryGeneratorTest {
             "public interface Baz {}");
     daggerCompiler(
             component, usage, concreteModule, parameterizedModule, packagePrivateFoo, bar, baz)
-        .compile(subject -> subject.hasErrorCount(0));
+    .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
@@ -1396,7 +1396,94 @@ public class ModuleFactoryGeneratorTest {
             "",
             "public interface Bar<T> {}");
     daggerCompiler(component, usage, concreteModule, parameterizedModule, packagePrivateFoo, bar)
-        .compile(subject -> subject.hasErrorCount(0));
+    .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void providesGenericTypeWithPackagePrivateTypeArgument() {
+    Source component =
+        CompilerTests.javaSource(
+            "other.MyComponent",
+            "package other;",
+            "",
+            "import dagger.Component;",
+            "import test.MyModule;",
+            "import test.Usage;",
+            "",
+            "@Component(modules = {MyModule.class})",
+            "interface MyComponent {",
+            "  Usage usage();",
+            "}");
+    Source usage =
+        CompilerTests.javaSource(
+            "test.Usage",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class Usage {",
+            "  @Inject Usage(Foo<Bar> fooBar, Foo<PublicBar> fooPublicBar) {}",
+            "}");
+    Source myModule =
+        CompilerTests.javaSource(
+            "test.MyModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "public interface MyModule {",
+            "  @Provides",
+            "  static Foo<Bar> provideFooBar(Baz<Bar> bazBar, Bar bar) {",
+            "    return null;",
+            "  }",
+            "",
+            "  @Provides",
+            "  static Foo<PublicBar> provideFooPublicBar(",
+            "      Baz<PublicBar> bazPublicBar, PublicBar publicBar) {",
+            "    return null;",
+            "  }",
+            "}");
+    Source foo =
+        CompilerTests.javaSource("test.Foo", "package test;", "", "public interface Foo<T> {}");
+    Source baz =
+        CompilerTests.javaSource(
+            "test.Baz",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class Baz<T> {",
+            "  @Inject Baz(T t) {}",
+            "}");
+    Source packagePrivateBar =
+        CompilerTests.javaSource(
+            "test.Bar",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Bar {",
+            "  @Inject Bar() {}",
+            "}");
+    Source publicBar =
+        CompilerTests.javaSource(
+            "test.PublicBar",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class PublicBar {",
+            "  @Inject PublicBar() {}",
+            "}");
+    daggerCompiler(component, usage, myModule, foo, baz, packagePrivateBar, publicBar)
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "test/MyModule_ProvideFooBarFactory");
+          assertSourceMatchesGolden(subject, "test/MyModule_ProvideFooPublicBarFactory");
+          subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
+        });
   }
 
   private static final Source QUALIFIER_A =

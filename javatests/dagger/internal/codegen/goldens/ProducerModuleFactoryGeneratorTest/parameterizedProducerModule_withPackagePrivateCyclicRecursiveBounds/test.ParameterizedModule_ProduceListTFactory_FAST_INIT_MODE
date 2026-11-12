@@ -1,0 +1,60 @@
+package test;
+
+import com.google.common.util.concurrent.ListenableFuture;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Provider;
+import dagger.producers.Producer;
+import dagger.producers.internal.AbstractProducesMethodProducer;
+import dagger.producers.internal.Producers;
+import dagger.producers.monitoring.ProducerToken;
+import dagger.producers.monitoring.ProductionComponentMonitor;
+import java.util.List;
+import java.util.concurrent.Executor;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "FutureReturnValueIgnored",
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class ParameterizedModule_ProduceListTFactory<T extends Bar<T>> extends AbstractProducesMethodProducer<T, List<T>> {
+  private final ParameterizedModule<T> module;
+
+  private final Producer<T> tProducer;
+
+  private ParameterizedModule_ProduceListTFactory(ParameterizedModule<T> module,
+      Provider<Executor> executorProvider,
+      Provider<ProductionComponentMonitor> productionComponentMonitorProvider,
+      Producer<T> tProducer) {
+    super(productionComponentMonitorProvider, ProducerToken.create(ParameterizedModule_ProduceListTFactory.class), executorProvider);
+    this.module = module;
+    this.tProducer = Producers.nonCancellationPropagatingViewOf(tProducer);
+  }
+
+  @Override
+  protected ListenableFuture<T> collectDependencies() {
+    return tProducer.get();
+  }
+
+  @Override
+  public ListenableFuture<List<T>> callProducesMethod(T t) {
+    return module.produceListT(t);
+  }
+
+  public static <T extends Bar<T>> ParameterizedModule_ProduceListTFactory<T> create(
+      ParameterizedModule<T> module, Provider<Executor> executorProvider,
+      Provider<ProductionComponentMonitor> productionComponentMonitorProvider,
+      Producer<T> tProducer) {
+    return new ParameterizedModule_ProduceListTFactory<T>(module, executorProvider, productionComponentMonitorProvider, tProducer);
+  }
+}

@@ -1,0 +1,65 @@
+package test
+
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class Foo_Factory : Factory<Any?> {
+  private val publicDepProvider: Provider<PublicDep?>
+
+  private val packagePrivateDepProvider: Provider<PackagePrivateDep?>
+
+  private val genericPublicDepProvider: Provider<GenericDep<PublicDep?>?>
+
+  private val genericPackagePrivateDepProvider: Provider<GenericDep<PackagePrivateDep?>?>
+
+  private constructor(
+    publicDepProvider: Provider<PublicDep?>,
+    packagePrivateDepProvider: Provider<PackagePrivateDep?>,
+    genericPublicDepProvider: Provider<GenericDep<PublicDep?>?>,
+    genericPackagePrivateDepProvider: Provider<GenericDep<PackagePrivateDep?>?>,
+  ) {
+    this.publicDepProvider = publicDepProvider
+    this.packagePrivateDepProvider = packagePrivateDepProvider
+    this.genericPublicDepProvider = genericPublicDepProvider
+    this.genericPackagePrivateDepProvider = genericPackagePrivateDepProvider
+  }
+
+  public override fun `get`(): Any? = newInstance(publicDepProvider.get(), packagePrivateDepProvider.get(), genericPublicDepProvider.get(), genericPackagePrivateDepProvider.get())
+
+  public companion object {
+    @JvmStatic
+    public fun create(
+      publicDepProvider: Provider<*>,
+      packagePrivateDepProvider: Provider<*>,
+      genericPublicDepProvider: Provider<*>,
+      genericPackagePrivateDepProvider: Provider<*>,
+    ): Foo_Factory = Foo_Factory((publicDepProvider) as Provider<PublicDep?>, (packagePrivateDepProvider) as Provider<PackagePrivateDep?>, (genericPublicDepProvider) as Provider<GenericDep<PublicDep?>?>, (genericPackagePrivateDepProvider) as Provider<GenericDep<PackagePrivateDep?>?>)
+
+    @JvmStatic
+    public fun newInstance(
+      publicDep: Any?,
+      packagePrivateDep: Any?,
+      genericPublicDep: Any?,
+      genericPackagePrivateDep: Any?,
+    ): Any? = Foo((publicDep) as PublicDep?, (packagePrivateDep) as PackagePrivateDep?, (genericPublicDep) as GenericDep<PublicDep?>?, (genericPackagePrivateDep) as GenericDep<PackagePrivateDep?>?)
+  }
+}

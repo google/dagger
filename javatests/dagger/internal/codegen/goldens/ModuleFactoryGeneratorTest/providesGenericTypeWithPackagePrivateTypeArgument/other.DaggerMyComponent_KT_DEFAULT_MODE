@@ -1,0 +1,78 @@
+package other;
+
+import dagger.internal.DaggerGenerated;
+import javax.annotation.processing.Generated;
+import test.Bar_Factory;
+import test.Baz_Factory;
+import test.MyModule_ProvideFooBarFactory;
+import test.MyModule_ProvideFooPublicBarFactory;
+import test.PublicBar;
+import test.PublicBar_Factory;
+import test.Usage;
+import test.Usage_Factory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerMyComponent {
+  private DaggerMyComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static MyComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public MyComponent build() {
+      return new ComponentImpl();
+    }
+  }
+
+  private static final class ComponentImpl implements MyComponent {
+    private final ComponentImpl componentImpl = this;
+
+    ComponentImpl() {
+
+
+    }
+
+    Object bazOfBar() {
+      return Baz_Factory.<Object>newInstance(Bar_Factory.newInstance());
+    }
+
+    Object fooOfBar() {
+      return MyModule_ProvideFooBarFactory.provideFooBar(bazOfBar(), Bar_Factory.newInstance());
+    }
+
+    Object bazOfPublicBar() {
+      return Baz_Factory.<PublicBar>newInstance(PublicBar_Factory.newInstance());
+    }
+
+    Object fooOfPublicBar() {
+      return MyModule_ProvideFooPublicBarFactory.provideFooPublicBar(bazOfPublicBar(), PublicBar_Factory.newInstance());
+    }
+
+    @Override
+    public Usage usage() {
+      return (Usage) ((Object) (Usage_Factory.newInstance(fooOfBar(), fooOfPublicBar())));
+    }
+  }
+}

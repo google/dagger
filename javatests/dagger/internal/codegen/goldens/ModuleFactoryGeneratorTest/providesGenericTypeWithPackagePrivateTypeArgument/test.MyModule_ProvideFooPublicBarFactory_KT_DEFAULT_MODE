@@ -1,0 +1,45 @@
+package test
+
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.Preconditions
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class MyModule_ProvideFooPublicBarFactory : Factory<Any?> {
+  private val bazPublicBarProvider: Provider<Baz<PublicBar?>?>
+
+  private val publicBarProvider: Provider<PublicBar?>
+
+  private constructor(bazPublicBarProvider: Provider<Baz<PublicBar?>?>, publicBarProvider: Provider<PublicBar?>) {
+    this.bazPublicBarProvider = bazPublicBarProvider
+    this.publicBarProvider = publicBarProvider
+  }
+
+  public override fun `get`(): Any? = provideFooPublicBar(bazPublicBarProvider.get(), publicBarProvider.get())
+
+  public companion object {
+    @JvmStatic
+    public fun create(bazPublicBarProvider: Provider<*>, publicBarProvider: Provider<*>): MyModule_ProvideFooPublicBarFactory = MyModule_ProvideFooPublicBarFactory((bazPublicBarProvider) as Provider<Baz<PublicBar?>?>, (publicBarProvider) as Provider<PublicBar?>)
+
+    @JvmStatic
+    public fun provideFooPublicBar(bazPublicBar: Any?, publicBar: Any?): Any? = Preconditions.checkNotNullFromProvides(MyModule.provideFooPublicBar((bazPublicBar) as Baz<PublicBar?>?, (publicBar) as PublicBar?))
+  }
+}

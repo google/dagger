@@ -1,0 +1,55 @@
+package test
+
+import com.google.common.util.concurrent.ListenableFuture
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Provider
+import dagger.producers.Producer
+import dagger.producers.`internal`.AbstractProducesMethodProducer
+import dagger.producers.`internal`.Producers
+import dagger.producers.monitoring.ProducerToken
+import dagger.producers.monitoring.ProductionComponentMonitor
+import java.util.concurrent.Executor
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class ParameterizedModule_ProduceListTFactory<T : Bar<T?>?> : AbstractProducesMethodProducer<Any?, Any?> {
+  private val module: ParameterizedModule<T>
+
+  private val tProducer: Producer<T>
+
+  private constructor(
+    module: ParameterizedModule<T>,
+    executorProvider: Provider<Executor>,
+    productionComponentMonitorProvider: Provider<ProductionComponentMonitor>,
+    tProducer: Producer<T>,
+  ) : super(productionComponentMonitorProvider, ProducerToken.create(ParameterizedModule_ProduceListTFactory::class.java), executorProvider) {
+    this.module = module
+    this.tProducer = Producers.nonCancellationPropagatingViewOf(tProducer)
+  }
+
+  protected override fun collectDependencies(): ListenableFuture<Any?> = ((tProducer.get()) as Any) as ListenableFuture<Any?>
+
+  public override fun callProducesMethod(t: Any?): ListenableFuture<Any?> = ((module.produceListT((t) as T)) as Any) as ListenableFuture<Any?>
+
+  public companion object {
+    @JvmStatic
+    public fun <T : Bar<T?>?> create(
+      module: Any?,
+      executorProvider: Provider<*>,
+      productionComponentMonitorProvider: Provider<*>,
+      tProducer: Producer<*>,
+    ): ParameterizedModule_ProduceListTFactory<T> = ParameterizedModule_ProduceListTFactory<T>((module) as ParameterizedModule<T>, (executorProvider) as Provider<Executor>, (productionComponentMonitorProvider) as Provider<ProductionComponentMonitor>, (tProducer) as Producer<T>)
+  }
+}

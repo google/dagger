@@ -543,7 +543,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             "interface Bar {}");
     daggerCompiler(component, usage, genericClass, packagePrivateFoo, packagePrivateBar)
-        .compile(subject -> subject.hasErrorCount(0));
+    .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
@@ -603,7 +603,7 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             "public interface Baz {}");
     daggerCompiler(component, usage, genericClass, packagePrivateFoo, bar, baz)
-        .compile(subject -> subject.hasErrorCount(0));
+    .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
@@ -657,7 +657,95 @@ public final class InjectConstructorFactoryGeneratorTest {
             "",
             "public interface Bar<T> {}");
     daggerCompiler(component, usage, genericClass, packagePrivateFoo, bar)
-        .compile(subject -> subject.hasErrorCount(0));
+    .compile(subject -> subject.hasErrorCount(0));
+  }
+
+  @Test
+  public void boundedGenericClassWithNoDependencies() {
+    Source genericClass =
+        CompilerTests.javaSource(
+            "test.GenericClass",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class GenericClass<A extends Bar<A>> {",
+            "  @Inject GenericClass() {}",
+            "}");
+    Source packagePrivateBar =
+        CompilerTests.javaSource("test.Bar", "package test;", "", "interface Bar<T> {}");
+    daggerCompiler(genericClass, packagePrivateBar)
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "test/GenericClass_Factory");
+        });
+  }
+
+  @Test
+  public void publicTypeWithPublicAndPackagePrivateDependencies() {
+    Source component =
+        CompilerTests.javaSource(
+            "other.MyComponent",
+            "package other;",
+            "",
+            "import dagger.Component;",
+            "import test.Foo;",
+            "",
+            "@Component",
+            "interface MyComponent {",
+            "  Foo foo();",
+            "}");
+    Source foo =
+        CompilerTests.javaSource(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class Foo {",
+            "  @Inject Foo(",
+            "      PublicDep publicDep,",
+            "      PackagePrivateDep packagePrivateDep,",
+            "      GenericDep<PublicDep> genericPublicDep,",
+            "      GenericDep<PackagePrivateDep> genericPackagePrivateDep) {}",
+            "}");
+    Source publicDep =
+        CompilerTests.javaSource(
+            "test.PublicDep",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class PublicDep {",
+            "  @Inject PublicDep() {}",
+            "}");
+    Source packagePrivateDep =
+        CompilerTests.javaSource(
+            "test.PackagePrivateDep",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class PackagePrivateDep {",
+            "  @Inject PackagePrivateDep() {}",
+            "}");
+    Source genericDep =
+        CompilerTests.javaSource(
+            "test.GenericDep",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class GenericDep<T> {",
+            "  @Inject GenericDep(T t) {}",
+            "}");
+    daggerCompiler(component, foo, publicDep, packagePrivateDep, genericDep)
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "test/Foo_Factory");
+          assertSourceMatchesGolden(subject, "test/GenericDep_Factory");
+          subject.generatedSource(goldenFileRule.goldenSource("other/DaggerMyComponent"));
+        });
   }
 
   @Test

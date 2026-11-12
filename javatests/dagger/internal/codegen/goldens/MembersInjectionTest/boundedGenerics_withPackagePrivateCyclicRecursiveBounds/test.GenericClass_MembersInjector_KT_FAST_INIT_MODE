@@ -1,0 +1,54 @@
+package test
+
+import dagger.MembersInjector
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.InjectedFieldSignature
+import dagger.`internal`.Provider
+import dagger.`internal`.QualifierMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class GenericClass_MembersInjector<A : Bar<A?>?> : MembersInjector<Any> {
+  private val aProvider: Provider<A>
+
+  private val aProvider2: Provider<A>
+
+  private constructor(aProvider: Provider<A>, aProvider2: Provider<A>) {
+    this.aProvider = aProvider;
+    this.aProvider2 = aProvider2;
+  }
+
+  public override fun injectMembers(instance: Any) {
+    injectA<A>(instance, aProvider.get());
+    injectRegister<A>(instance, aProvider2.get());
+  }
+
+  public companion object {
+    @JvmStatic
+    public fun <A : Bar<A?>?> create(aProvider: Provider<*>, aProvider2: Provider<*>): MembersInjector<Any> = GenericClass_MembersInjector<A>((aProvider) as Provider<A>, (aProvider2) as Provider<A>)
+
+    @InjectedFieldSignature(value = "test.GenericClass.a")
+    @JvmStatic
+    public fun <A : Bar<A?>?> injectA(instance: Any?, a: Any?) {
+      ((instance) as GenericClass<A>).a = (a) as A
+    }
+
+    @JvmStatic
+    public fun <A : Bar<A?>?> injectRegister(instance: Any?, a: Any?) {
+      ((instance) as GenericClass<A>).register((a) as A)
+    }
+  }
+}

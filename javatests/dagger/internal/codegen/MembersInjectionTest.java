@@ -257,6 +257,33 @@ public class MembersInjectionTest {
             });
   }
 
+  @Test
+  public void boundedGenerics_withPackagePrivateCyclicRecursiveBounds() {
+    Source genericClass =
+        CompilerTests.javaSource(
+            "test.GenericClass",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class GenericClass<A extends Bar<A>> {",
+            "  @Inject A a;",
+            "",
+            "  GenericClass() {}",
+            "",
+            "  @Inject void register(A a) {}",
+            "}");
+    Source packagePrivateBar =
+        CompilerTests.javaSource("test.Bar", "package test;", "", "interface Bar<T> {}");
+
+    CompilerTests.daggerCompiler(genericClass, packagePrivateBar)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "test/GenericClass_MembersInjector");
+        });
+  }
+
   @Test public void subclassedGenericMembersInjectors() {
     Source a =
         CompilerTests.javaSource(

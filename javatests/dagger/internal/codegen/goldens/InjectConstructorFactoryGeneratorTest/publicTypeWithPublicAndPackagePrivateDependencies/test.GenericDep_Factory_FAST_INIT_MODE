@@ -1,0 +1,45 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class GenericDep_Factory<T> implements Factory<GenericDep<T>> {
+  private final Provider<T> tProvider;
+
+  private GenericDep_Factory(Provider<T> tProvider) {
+    this.tProvider = tProvider;
+  }
+
+  @Override
+  public GenericDep<T> get() {
+    return newInstance(tProvider.get());
+  }
+
+  public static <T> GenericDep_Factory<T> create(Provider<T> tProvider) {
+    return new GenericDep_Factory<T>(tProvider);
+  }
+
+  public static <T> GenericDep<T> newInstance(T t) {
+    return new GenericDep<T>(t);
+  }
+}

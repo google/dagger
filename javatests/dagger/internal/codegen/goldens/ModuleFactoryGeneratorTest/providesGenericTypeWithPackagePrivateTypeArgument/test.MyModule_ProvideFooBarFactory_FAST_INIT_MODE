@@ -1,0 +1,51 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class MyModule_ProvideFooBarFactory implements Factory<Foo<Bar>> {
+  private final Provider<Baz<Bar>> bazBarProvider;
+
+  private final Provider<Bar> barProvider;
+
+  private MyModule_ProvideFooBarFactory(Provider<Baz<Bar>> bazBarProvider,
+      Provider<Bar> barProvider) {
+    this.bazBarProvider = bazBarProvider;
+    this.barProvider = barProvider;
+  }
+
+  @Override
+  public Foo<Bar> get() {
+    return provideFooBar(bazBarProvider.get(), barProvider.get());
+  }
+
+  public static MyModule_ProvideFooBarFactory create(Provider<Baz<Bar>> bazBarProvider,
+      Provider<Bar> barProvider) {
+    return new MyModule_ProvideFooBarFactory(bazBarProvider, barProvider);
+  }
+
+  public static Foo<Bar> provideFooBar(Baz<Bar> bazBar, Object bar) {
+    return Preconditions.checkNotNullFromProvides(MyModule.provideFooBar(bazBar, (Bar) (bar)));
+  }
+}

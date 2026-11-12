@@ -1,0 +1,54 @@
+package test;
+
+import dagger.MembersInjector;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.InjectedFieldSignature;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import javax.annotation.processing.Generated;
+
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class GenericClass_MembersInjector<A extends Bar<A>> implements MembersInjector<GenericClass<A>> {
+  private final Provider<A> aProvider;
+
+  private final Provider<A> aProvider2;
+
+  private GenericClass_MembersInjector(Provider<A> aProvider, Provider<A> aProvider2) {
+    this.aProvider = aProvider;
+    this.aProvider2 = aProvider2;
+  }
+
+  @Override
+  public void injectMembers(GenericClass<A> instance) {
+    injectA(instance, aProvider.get());
+    injectRegister(instance, aProvider2.get());
+  }
+
+  public static <A extends Bar<A>> MembersInjector<GenericClass<A>> create(Provider<A> aProvider,
+      Provider<A> aProvider2) {
+    return new GenericClass_MembersInjector<A>(aProvider, aProvider2);
+  }
+
+  @InjectedFieldSignature("test.GenericClass.a")
+  public static <A extends Bar<A>> void injectA(Object instance, A a) {
+    ((GenericClass<A>) (instance)).a = a;
+  }
+
+  public static <A extends Bar<A>> void injectRegister(Object instance, A a) {
+    ((GenericClass<A>) (instance)).register(a);
+  }
+}

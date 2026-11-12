@@ -538,6 +538,33 @@ public class ProducerModuleFactoryGeneratorTest {
                 + "when T is a wildcard type such as ? extends java.lang.Number");
   }
 
+  @Test
+  public void parameterizedProducerModule_withPackagePrivateCyclicRecursiveBounds() {
+    Source moduleFile =
+        CompilerTests.javaSource(
+            "test.ParameterizedModule",
+            "package test;",
+            "",
+            "import com.google.common.util.concurrent.ListenableFuture;",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "import java.util.List;",
+            "",
+            "@ProducerModule",
+            "abstract class ParameterizedModule<T extends Bar<T>> {",
+            "  @Produces ListenableFuture<List<T>> produceListT(T t) {",
+            "    return null;",
+            "  }",
+            "}");
+    Source packagePrivateBar =
+        CompilerTests.javaSource("test.Bar", "package test;", "", "interface Bar<T> {}");
+    daggerCompiler(moduleFile, packagePrivateBar)
+        .compile(subject -> {
+          subject.hasErrorCount(0);
+          assertSourceMatchesGolden(subject, "test/ParameterizedModule_ProduceListTFactory");
+        });
+  }
+
   private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
     Source source = goldenFileRule.goldenSource(goldenName);
     subject.generatedSource(source);

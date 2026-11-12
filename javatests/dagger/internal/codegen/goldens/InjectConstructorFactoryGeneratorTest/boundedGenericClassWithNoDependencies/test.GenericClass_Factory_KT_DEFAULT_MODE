@@ -1,0 +1,36 @@
+package test
+
+import dagger.`internal`.DaggerGenerated
+import dagger.`internal`.Factory
+import dagger.`internal`.QualifierMetadata
+import dagger.`internal`.ScopeMetadata
+import javax.`annotation`.processing.Generated
+import kotlin.Any
+import kotlin.Suppress
+import kotlin.jvm.JvmStatic
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+  value = ["dagger.internal.codegen.ComponentProcessor"],
+  comments = "https://dagger.dev",
+)
+@Suppress(names = [
+    "UNCHECKED_CAST",
+    "USELESS_CAST",
+    "DEPRECATION"
+])
+public class GenericClass_Factory<A : Bar<A?>?> : Factory<Any?> {
+  private constructor()
+
+  public override fun `get`(): Any? = newInstance<A>()
+
+  public companion object {
+    @JvmStatic
+    public fun <A : Bar<A?>?> create(): GenericClass_Factory<A> = GenericClass_Factory<A>()
+
+    @JvmStatic
+    public fun <A : Bar<A?>?> newInstance(): Any? = GenericClass<A>()
+  }
+}

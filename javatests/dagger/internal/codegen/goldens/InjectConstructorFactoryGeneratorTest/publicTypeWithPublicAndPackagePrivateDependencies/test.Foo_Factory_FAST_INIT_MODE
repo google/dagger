@@ -1,0 +1,62 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Factory;
+import dagger.internal.Provider;
+import dagger.internal.QualifierMetadata;
+import dagger.internal.ScopeMetadata;
+import javax.annotation.processing.Generated;
+
+@ScopeMetadata
+@QualifierMetadata
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class Foo_Factory implements Factory<Foo> {
+  private final Provider<PublicDep> publicDepProvider;
+
+  private final Provider<PackagePrivateDep> packagePrivateDepProvider;
+
+  private final Provider<GenericDep<PublicDep>> genericPublicDepProvider;
+
+  private final Provider<GenericDep<PackagePrivateDep>> genericPackagePrivateDepProvider;
+
+  private Foo_Factory(Provider<PublicDep> publicDepProvider,
+      Provider<PackagePrivateDep> packagePrivateDepProvider,
+      Provider<GenericDep<PublicDep>> genericPublicDepProvider,
+      Provider<GenericDep<PackagePrivateDep>> genericPackagePrivateDepProvider) {
+    this.publicDepProvider = publicDepProvider;
+    this.packagePrivateDepProvider = packagePrivateDepProvider;
+    this.genericPublicDepProvider = genericPublicDepProvider;
+    this.genericPackagePrivateDepProvider = genericPackagePrivateDepProvider;
+  }
+
+  @Override
+  public Foo get() {
+    return newInstance(publicDepProvider.get(), packagePrivateDepProvider.get(), genericPublicDepProvider.get(), genericPackagePrivateDepProvider.get());
+  }
+
+  public static Foo_Factory create(Provider<PublicDep> publicDepProvider,
+      Provider<PackagePrivateDep> packagePrivateDepProvider,
+      Provider<GenericDep<PublicDep>> genericPublicDepProvider,
+      Provider<GenericDep<PackagePrivateDep>> genericPackagePrivateDepProvider) {
+    return new Foo_Factory(publicDepProvider, packagePrivateDepProvider, genericPublicDepProvider, genericPackagePrivateDepProvider);
+  }
+
+  public static Foo newInstance(PublicDep publicDep, Object packagePrivateDep,
+      GenericDep<PublicDep> genericPublicDep,
+      GenericDep<PackagePrivateDep> genericPackagePrivateDep) {
+    return new Foo(publicDep, (PackagePrivateDep) (packagePrivateDep), genericPublicDep, genericPackagePrivateDep);
+  }
+}

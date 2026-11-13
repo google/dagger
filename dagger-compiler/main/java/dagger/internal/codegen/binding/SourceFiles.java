@@ -169,6 +169,11 @@ public final class SourceFiles {
     }
   }
 
+  /** Returns the generated proxy name for an assisted factory. */
+  public static XClassName generatedProxyClassName(XTypeElement factory) {
+    return siblingClassName(factory, "_Proxy");
+  }
+
   /**
    * Returns the generated factory name for the given element.
    *

@@ -1,0 +1,98 @@
+package test;
+
+import dagger.internal.DaggerGenerated;
+import dagger.internal.Provider;
+import dagger.internal.SingleCheck;
+import javax.annotation.processing.Generated;
+import subpackage.FooFactory;
+import subpackage.FooFactory_Proxy;
+import subpackage.PublicFoo;
+import subpackage.PublicFoo_Factory;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+final class DaggerTestComponent {
+  private DaggerTestComponent() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static TestComponent create() {
+    return new Builder().build();
+  }
+
+  static final class Builder {
+    private Builder() {
+    }
+
+    public TestComponent build() {
+      return new ComponentImpl();
+    }
+  }
+
+  private static final class ComponentImpl implements TestComponent {
+    private final ComponentImpl componentImpl = this;
+
+    /**
+     * {@code Provider<FooFactory>}
+     */
+    Provider<?> fooFactoryProvider;
+
+    ComponentImpl() {
+
+      initialize();
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+      this.fooFactoryProvider = SingleCheck.provider(new SwitchingProvider<>(componentImpl, 0));
+    }
+
+    @Override
+    public FooFactory fooFactory() {
+      return (FooFactory) ((Object) (fooFactoryProvider.get()));
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final ComponentImpl componentImpl;
+
+      private final int id;
+
+      SwitchingProvider(ComponentImpl componentImpl, int id) {
+        this.componentImpl = componentImpl;
+        this.id = id;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public T get() {
+        switch (id) {
+          case 0: // subpackage.FooFactory
+          return (T) FooFactory_Proxy.createFactory(new FooFactory_Proxy() {
+            @Override
+            public PublicFoo create(Object bar) {
+              return (PublicFoo) (PublicFoo_Factory.newInstance(bar));
+            }
+          });
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}

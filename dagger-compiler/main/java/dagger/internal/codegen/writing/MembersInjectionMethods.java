@@ -127,8 +127,7 @@ final class MembersInjectionMethods {
             request ->
                 bindingExpressions
                     .getDependencyArgumentExpression(request, shardImplementation.name())
-                    .codeBlock(),
-            compilerOptions);
+                    .codeBlock());
     methodBuilder.addCode(invokeInjectionSites).addStatement("return %L", instance);
 
     XFunSpec method = methodBuilder.build();

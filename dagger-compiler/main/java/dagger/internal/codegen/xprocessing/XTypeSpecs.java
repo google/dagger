@@ -445,12 +445,15 @@ public final class XTypeSpecs {
             kind == Kind.OBJECT ? builder : XTypeSpec.companionObjectBuilder();
         for (XFunSpec staticFunction : staticFunctions) {
           toJavaPoet(builder).addMethod(toJavaPoet(staticFunction));
+          XFunSpec.Builder staticFunctionBuilder = staticFunction.toBuilder();
+          // @JvmStatic instructs the Kotlin compiler to generate an additional static method on
+          // the enclosing class for Java callers. Since private functions cannot be called from
+          // Java anyway, the annotation is unnecessary and adds an unused static bridge method.
+          if (!toKotlinPoet(staticFunction).getModifiers().contains(KModifier.PRIVATE)) {
+            staticFunctionBuilder.addAnnotation(XAnnotationSpec.of(XTypeNames.JVM_STATIC));
+          }
           toKotlinPoet(kotlinObjectBuilder)
-              .addFunction(
-                  toKotlinPoet(
-                      staticFunction.toBuilder()
-                          .addAnnotation(XAnnotationSpec.of(XTypeNames.JVM_STATIC))
-                          .build()));
+              .addFunction(toKotlinPoet(staticFunctionBuilder.build()));
         }
         for (XPropertySpec staticProperty : staticProperties) {
           toJavaPoet(builder).addField(toJavaPoet(staticProperty));

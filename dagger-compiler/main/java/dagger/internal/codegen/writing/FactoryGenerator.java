@@ -335,8 +335,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ContributionBind
               binding.key().type().xprocessing(),
               sourceFiles.frameworkFieldUsages(
                       binding.dependencies(), factoryFields.frameworkFields)
-                  ::get,
-              compilerOptions);
+                  ::get);
       getMethod
           .addLocalVar(instanceName, providedTypeName(binding), invokeNewInstance)
           .addCode(invokeInjectionSites)

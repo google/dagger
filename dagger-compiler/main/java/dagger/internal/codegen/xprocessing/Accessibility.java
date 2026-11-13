@@ -71,7 +71,7 @@ public final class Accessibility {
 
   /** Returns true if the given type can be referenced from any package. */
   public static boolean isTypePubliclyAccessible(XType type, CompilerOptions compilerOptions) {
-    return isTypePubliclyAccessible(type);
+    return isTypeAccessibleFrom(type, Optional.empty(), compilerOptions);
   }
 
   /** Returns true if the given type can be referenced from any package. */
@@ -90,8 +90,19 @@ public final class Accessibility {
   }
 
   /** Returns true if the given type can be referenced from code in the given package. */
+  public static boolean isTypeAccessibleFrom(
+      XType type, String packageName, CompilerOptions compilerOptions) {
+    return isTypeAccessibleFrom(type, Optional.of(packageName), compilerOptions);
+  }
+
+  /** Returns true if the given type can be referenced from code in the given package. */
   public static boolean isTypeAccessibleFrom(XType type, String packageName) {
     return isTypeAccessibleFrom(type, Optional.of(packageName));
+  }
+
+  private static boolean isTypeAccessibleFrom(
+      XType type, Optional<String> packageName, CompilerOptions compilerOptions) {
+    return isTypeAccessibleFrom(type, packageName);
   }
 
   private static boolean isTypeAccessibleFrom(

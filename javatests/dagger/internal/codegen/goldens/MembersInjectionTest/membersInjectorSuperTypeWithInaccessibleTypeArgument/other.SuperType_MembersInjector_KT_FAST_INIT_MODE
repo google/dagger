@@ -8,6 +8,7 @@ import dagger.`internal`.QualifierMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
 import kotlin.Array
+import kotlin.Nothing
 import kotlin.Suppress
 import kotlin.collections.MutableList
 import kotlin.jvm.JvmStatic
@@ -23,32 +24,32 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class SuperType_MembersInjector<T> : MembersInjector<Any> {
-  private val tProvider: Provider<T>
+public class SuperType_MembersInjector : MembersInjector<Any> {
+  private val tProvider: Provider<*>
 
-  private val listTProvider: Provider<MutableList<T?>?>
+  private val listTProvider: Provider<*>
 
-  private val listExtendsTProvider: Provider<MutableList<out T?>?>
+  private val listExtendsTProvider: Provider<*>
 
-  private val arrayListExtendsTProvider: Provider<Array<out MutableList<out T?>?>?>
+  private val arrayListExtendsTProvider: Provider<*>
 
-  private val tProvider2: Provider<T>
+  private val tProvider2: Provider<*>
 
-  private val listTProvider2: Provider<MutableList<T?>?>
+  private val listTProvider2: Provider<*>
 
-  private val listExtendsTProvider2: Provider<MutableList<out T?>?>
+  private val listExtendsTProvider2: Provider<*>
 
-  private val arrayListExtendsTProvider2: Provider<Array<out MutableList<out T?>?>?>
+  private val arrayListExtendsTProvider2: Provider<*>
 
   private constructor(
-    tProvider: Provider<T>,
-    listTProvider: Provider<MutableList<T?>?>,
-    listExtendsTProvider: Provider<MutableList<out T?>?>,
-    arrayListExtendsTProvider: Provider<Array<out MutableList<out T?>?>?>,
-    tProvider2: Provider<T>,
-    listTProvider2: Provider<MutableList<T?>?>,
-    listExtendsTProvider2: Provider<MutableList<out T?>?>,
-    arrayListExtendsTProvider2: Provider<Array<out MutableList<out T?>?>?>,
+    tProvider: Provider<*>,
+    listTProvider: Provider<*>,
+    listExtendsTProvider: Provider<*>,
+    arrayListExtendsTProvider: Provider<*>,
+    tProvider2: Provider<*>,
+    listTProvider2: Provider<*>,
+    listExtendsTProvider2: Provider<*>,
+    arrayListExtendsTProvider2: Provider<*>,
   ) {
     this.tProvider = tProvider;
     this.listTProvider = listTProvider;
@@ -61,16 +62,16 @@ public class SuperType_MembersInjector<T> : MembersInjector<Any> {
   }
 
   public override fun injectMembers(instance: Any) {
-    injectT<T>(instance, tProvider.get());
-    injectListT<T>(instance, listTProvider.get());
-    injectListExtendsT<T>(instance, listExtendsTProvider.get());
-    injectArrayListExtendsT<T>(instance, arrayListExtendsTProvider.get());
-    injectMethod<T>(instance, tProvider2.get(), listTProvider2.get(), listExtendsTProvider2.get(), arrayListExtendsTProvider2.get());
+    injectT(instance, tProvider.get());
+    injectListT(instance, listTProvider.get());
+    injectListExtendsT(instance, listExtendsTProvider.get());
+    injectArrayListExtendsT(instance, arrayListExtendsTProvider.get());
+    injectMethod(instance, tProvider2.get(), listTProvider2.get(), listExtendsTProvider2.get(), arrayListExtendsTProvider2.get());
   }
 
   public companion object {
     @JvmStatic
-    public fun <T> create(
+    public fun create(
       tProvider: Provider<*>,
       listTProvider: Provider<*>,
       listExtendsTProvider: Provider<*>,
@@ -79,34 +80,60 @@ public class SuperType_MembersInjector<T> : MembersInjector<Any> {
       listTProvider2: Provider<*>,
       listExtendsTProvider2: Provider<*>,
       arrayListExtendsTProvider2: Provider<*>,
-    ): MembersInjector<Any> = SuperType_MembersInjector<T>((tProvider) as Provider<T>, (listTProvider) as Provider<MutableList<T?>?>, (listExtendsTProvider) as Provider<MutableList<out T?>?>, (arrayListExtendsTProvider) as Provider<Array<out MutableList<out T?>?>?>, (tProvider2) as Provider<T>, (listTProvider2) as Provider<MutableList<T?>?>, (listExtendsTProvider2) as Provider<MutableList<out T?>?>, (arrayListExtendsTProvider2) as Provider<Array<out MutableList<out T?>?>?>)
+    ): MembersInjector<Any> = SuperType_MembersInjector((tProvider) as Provider<*>, (listTProvider) as Provider<*>, (listExtendsTProvider) as Provider<*>, (arrayListExtendsTProvider) as Provider<*>, (tProvider2) as Provider<*>, (listTProvider2) as Provider<*>, (listExtendsTProvider2) as Provider<*>, (arrayListExtendsTProvider2) as Provider<*>)
 
     @InjectedFieldSignature(value = "other.SuperType.t")
     @JvmStatic
-    public fun <T> injectT(instance: Any?, t: Any?) {
+    public fun injectT(instance: Any?, t: Any?) {
+      injectTInternal<Nothing>(instance, t)
+    }
+
+    private fun <T> injectTInternal(instance: Any?, t: Any?) {
       ((instance) as SuperType<T>).t = (t) as T
     }
 
     @InjectedFieldSignature(value = "other.SuperType.listT")
     @JvmStatic
-    public fun <T> injectListT(instance: Any?, listT: Any?) {
+    public fun injectListT(instance: Any?, listT: Any?) {
+      injectListTInternal<Nothing>(instance, listT)
+    }
+
+    private fun <T> injectListTInternal(instance: Any?, listT: Any?) {
       ((instance) as SuperType<T>).listT = (listT) as MutableList<T?>?
     }
 
     @InjectedFieldSignature(value = "other.SuperType.listExtendsT")
     @JvmStatic
-    public fun <T> injectListExtendsT(instance: Any?, listExtendsT: Any?) {
+    public fun injectListExtendsT(instance: Any?, listExtendsT: Any?) {
+      injectListExtendsTInternal<Nothing>(instance, listExtendsT)
+    }
+
+    private fun <T> injectListExtendsTInternal(instance: Any?, listExtendsT: Any?) {
       ((instance) as SuperType<T>).listExtendsT = (listExtendsT) as MutableList<out T?>?
     }
 
     @InjectedFieldSignature(value = "other.SuperType.arrayListExtendsT")
     @JvmStatic
-    public fun <T> injectArrayListExtendsT(instance: Any?, arrayListExtendsT: Any?) {
+    public fun injectArrayListExtendsT(instance: Any?, arrayListExtendsT: Any?) {
+      injectArrayListExtendsTInternal<Nothing>(instance, arrayListExtendsT)
+    }
+
+    private fun <T> injectArrayListExtendsTInternal(instance: Any?, arrayListExtendsT: Any?) {
       ((instance) as SuperType<T>).arrayListExtendsT = (arrayListExtendsT) as Array<out MutableList<out T?>?>?
     }
 
     @JvmStatic
-    public fun <T> injectMethod(
+    public fun injectMethod(
+      instance: Any?,
+      t: Any?,
+      listT: Any?,
+      listExtendsT: Any?,
+      arrayListExtendsT: Any?,
+    ) {
+      injectMethodInternal<Nothing>(instance, t, listT, listExtendsT, arrayListExtendsT)
+    }
+
+    private fun <T> injectMethodInternal(
       instance: Any?,
       t: Any?,
       listT: Any?,

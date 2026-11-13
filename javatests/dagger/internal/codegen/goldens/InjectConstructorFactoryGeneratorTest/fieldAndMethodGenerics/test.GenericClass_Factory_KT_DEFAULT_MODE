@@ -34,8 +34,8 @@ public class GenericClass_Factory<A, B> : Factory<Any?> {
 
   public override fun `get`(): Any? {
     var instance: Any? = newInstance<A, B>()
-    GenericClass_MembersInjector.injectA<A, B>(instance, aProvider.get());
-    GenericClass_MembersInjector.injectRegister<A, B>(instance, bProvider.get());
+    GenericClass_MembersInjector.injectA(instance, aProvider.get());
+    GenericClass_MembersInjector.injectRegister(instance, bProvider.get());
     return instance
   }
 

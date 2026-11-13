@@ -284,6 +284,28 @@ public class MembersInjectionTest {
         });
   }
 
+  @Test
+  public void genericClassWithInternalSuffixedInjectMembers_doesNotCollideWithInternalHelpers() {
+    Source genericClass =
+        CompilerTests.javaSource(
+            "test.GenericClass",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class GenericClass<A, B> {",
+            "  @Inject A a;",
+            "  @Inject A aInternal;",
+            "",
+            "  @Inject void register(B b) {}",
+            "  @Inject void registerInternal(B b) {}",
+            "}");
+
+    CompilerTests.daggerCompiler(genericClass)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
+
   @Test public void subclassedGenericMembersInjectors() {
     Source a =
         CompilerTests.javaSource(

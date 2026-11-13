@@ -199,35 +199,25 @@ final class InjectionMethods {
         XClassName generatedTypeName,
         XCodeBlock instanceCodeBlock,
         XType instanceType,
-        Function<DependencyRequest, XCodeBlock> dependencyUsage,
-        CompilerOptions compilerOptions) {
+        Function<DependencyRequest, XCodeBlock> dependencyUsage) {
       return injectionSites(binding).stream()
-          .map(
-              injectionSite -> {
-                XType injectSiteType = injectionSite.enclosingTypeElement().getType();
+          .map(injectionSite -> {
+            XType injectSiteType = injectionSite.enclosingTypeElement().getType();
 
-                // If instance has been declared as Object because it is not accessible from the
-                // component, but the injectionSite is in a supertype of instanceType that is
-                // publicly accessible, the InjectionSiteMethod will request the actual type and not
-                // Object as the first parameter. If so, cast to the supertype which is accessible
-                // from within generatedTypeName
-                XCodeBlock maybeCastedInstance =
-                    instanceType.asTypeName().equals(XTypeName.ANY_OBJECT)
-                            && isRawTypeAccessible(
-                                injectSiteType, generatedTypeName.getPackageName())
-                        ? XCodeBlock.ofCast(
-                            toXPoet(erasedTypeName(injectSiteType)), instanceCodeBlock)
-                        : instanceCodeBlock;
-                return XCodeBlock.of(
-                    "%L;",
-                    invoke(
-                        binding,
-                        injectionSite,
-                        generatedTypeName,
-                        maybeCastedInstance,
-                        dependencyUsage,
-                        compilerOptions));
-              })
+            // If instance has been declared as Object because it is not accessible from the
+            // component, but the injectionSite is in a supertype of instanceType that is
+            // publicly accessible, the InjectionSiteMethod will request the actual type and not
+            // Object as the first parameter. If so, cast to the supertype which is accessible
+            // from within generatedTypeName
+            XCodeBlock maybeCastedInstance =
+                instanceType.asTypeName().equals(XTypeName.ANY_OBJECT)
+                        && isRawTypeAccessible(injectSiteType, generatedTypeName.getPackageName())
+                    ? XCodeBlock.ofCast(toXPoet(erasedTypeName(injectSiteType)), instanceCodeBlock)
+                    : instanceCodeBlock;
+            return XCodeBlock.of(
+                "%L;",
+                invoke(injectionSite, generatedTypeName, maybeCastedInstance, dependencyUsage));
+          })
           .collect(toConcatenatedCodeBlock());
     }
 
@@ -236,12 +226,10 @@ final class InjectionMethods {
      * using the {@code dependencyUsage} function.
      */
     private static XCodeBlock invoke(
-        Binding binding,
         InjectionSite injectionSite,
         XClassName generatedTypeName,
         XCodeBlock instanceCodeBlock,
-        Function<DependencyRequest, XCodeBlock> dependencyUsage,
-        CompilerOptions compilerOptions) {
+        Function<DependencyRequest, XCodeBlock> dependencyUsage) {
       ImmutableList<XCodeBlock> arguments =
           ImmutableList.<XCodeBlock>builder()
               .add(instanceCodeBlock)
@@ -254,11 +242,7 @@ final class InjectionMethods {
       XClassName enclosingClass = membersInjectorNameForType(enclosingTypeElement);
       String methodName = membersInjectorMethodName(injectionSite);
       return invokeMethod(
-          methodName,
-          methodTypeArguments(binding, injectionSite, compilerOptions),
-          arguments,
-          enclosingClass,
-          generatedTypeName);
+          methodName, ImmutableList.of(), arguments, enclosingClass, generatedTypeName);
     }
 
     private static ImmutableSortedSet<InjectionSite> injectionSites(Binding binding) {
@@ -277,22 +261,10 @@ final class InjectionMethods {
 
   private static ImmutableList<XTypeName> methodTypeArguments(
       Binding binding, CompilerOptions compilerOptions) {
-    return methodTypeArguments(binding, Optional.empty(), compilerOptions);
-  }
-
-  private static ImmutableList<XTypeName> methodTypeArguments(
-      Binding binding, InjectionSite injectionSite, CompilerOptions compilerOptions) {
-    return methodTypeArguments(binding, Optional.of(injectionSite), compilerOptions);
-  }
-
-  private static ImmutableList<XTypeName> methodTypeArguments(
-      Binding binding, Optional<InjectionSite> injectionSite, CompilerOptions compilerOptions) {
     if (!requiresMethodTypeArguments(binding, compilerOptions)) {
       return ImmutableList.of();
     }
-    XTypeElement enclosingTypeElement =
-        injectionSite.map(InjectionSite::enclosingTypeElement)
-            .orElse(binding.bindingTypeElement().get());
+    XTypeElement enclosingTypeElement = binding.bindingTypeElement().get();
     if (enclosingTypeElement.getTypeParameters().isEmpty()) {
       return ImmutableList.of();
     }

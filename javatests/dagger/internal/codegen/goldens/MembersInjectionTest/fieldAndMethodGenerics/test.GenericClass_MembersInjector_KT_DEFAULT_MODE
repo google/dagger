@@ -7,6 +7,7 @@ import dagger.`internal`.Provider
 import dagger.`internal`.QualifierMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
+import kotlin.Nothing
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 
@@ -21,33 +22,41 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class GenericClass_MembersInjector<A, B> : MembersInjector<Any> {
-  private val aProvider: Provider<A>
+public class GenericClass_MembersInjector : MembersInjector<Any> {
+  private val aProvider: Provider<*>
 
-  private val bProvider: Provider<B>
+  private val bProvider: Provider<*>
 
-  private constructor(aProvider: Provider<A>, bProvider: Provider<B>) {
+  private constructor(aProvider: Provider<*>, bProvider: Provider<*>) {
     this.aProvider = aProvider;
     this.bProvider = bProvider;
   }
 
   public override fun injectMembers(instance: Any) {
-    injectA<A, B>(instance, aProvider.get());
-    injectRegister<A, B>(instance, bProvider.get());
+    injectA(instance, aProvider.get());
+    injectRegister(instance, bProvider.get());
   }
 
   public companion object {
     @JvmStatic
-    public fun <A, B> create(aProvider: Provider<*>, bProvider: Provider<*>): MembersInjector<Any> = GenericClass_MembersInjector<A, B>((aProvider) as Provider<A>, (bProvider) as Provider<B>)
+    public fun create(aProvider: Provider<*>, bProvider: Provider<*>): MembersInjector<Any> = GenericClass_MembersInjector((aProvider) as Provider<*>, (bProvider) as Provider<*>)
 
     @InjectedFieldSignature(value = "test.GenericClass.a")
     @JvmStatic
-    public fun <A, B> injectA(instance: Any?, a: Any?) {
+    public fun injectA(instance: Any?, a: Any?) {
+      injectAInternal<Nothing, Nothing>(instance, a)
+    }
+
+    private fun <A, B> injectAInternal(instance: Any?, a: Any?) {
       ((instance) as GenericClass<A, B>).a = (a) as A
     }
 
     @JvmStatic
-    public fun <A, B> injectRegister(instance: Any?, b: Any?) {
+    public fun injectRegister(instance: Any?, b: Any?) {
+      injectRegisterInternal<Nothing, Nothing>(instance, b)
+    }
+
+    private fun <A, B> injectRegisterInternal(instance: Any?, b: Any?) {
       ((instance) as GenericClass<A, B>).register((b) as B)
     }
   }

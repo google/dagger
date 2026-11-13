@@ -212,6 +212,7 @@ object XTypeNames {
   @JvmField val JVM_STATIC = XClassName.get("kotlin.jvm", "JvmStatic")
   @JvmField val CLASS = XClassName.get("java.lang", "Class")
   @JvmField val KCLASS = XClassName.get("kotlin.reflect", "KClass")
+  @JvmField val NOTHING: XClassName = XClassName.get("kotlin", "Nothing")
   @JvmField val UNIT_VOID_CLASS = XTypeName.UNIT_VOID.box()
 
   private val JAKARTA_SINGLETON = XClassName.get("jakarta.inject", "Singleton")

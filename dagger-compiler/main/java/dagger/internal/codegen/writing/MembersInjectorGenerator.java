@@ -135,23 +135,31 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
             .addFunction(constructor(frameworkFields))
             .addFunction(createMethod(binding, frameworkFields))
             .addFunction(injectMembersMethod(binding, frameworkFields))
-            .addFunctions(
-                binding.injectionSites().stream()
-                    .filter(
-                        site -> site.enclosingTypeElement().equals(binding.membersInjectedType()))
-                    .map(this::membersInjectionMethod)
-                    .collect(toImmutableList()));
+            .addFunctions(membersInjectionMethods(binding));
 
     gwtIncompatibleAnnotation(binding).ifPresent(injectorTypeBuilder::addAnnotation);
 
     return ImmutableList.of(injectorTypeBuilder.build());
   }
 
-  private XFunSpec membersInjectionMethod(InjectionSite injectionSite) {
+  private ImmutableList<XFunSpec> membersInjectionMethods(MembersInjectionBinding binding) {
+    ImmutableList<InjectionSite> injectionSites =
+        binding.injectionSites().stream()
+            .filter(site -> site.enclosingTypeElement().equals(binding.membersInjectedType()))
+            .collect(toImmutableList());
+    UniqueNameSet methodNameSet = new UniqueNameSet();
+    injectionSites.forEach(site -> methodNameSet.claim(membersInjectorMethodName(site)));
+    return injectionSites.stream()
+        .flatMap(site -> membersInjectionMethods(site, methodNameSet).stream())
+        .collect(toImmutableList());
+  }
+
+  private ImmutableList<XFunSpec> membersInjectionMethods(
+      InjectionSite injectionSite, UniqueNameSet methodNameSet) {
     String methodName = membersInjectorMethodName(injectionSite);
     switch (injectionSite.kind()) {
       case METHOD:
-        return methodInjectionMethod(asMethod(injectionSite.element()), methodName);
+        return methodInjectionMethods(asMethod(injectionSite.element()), methodName, methodNameSet);
       case FIELD:
         Optional<XAnnotation> qualifier =
             // methods for fields have a single dependency request
@@ -159,7 +167,8 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
                 .key()
                 .qualifier()
                 .map(DaggerAnnotation::xprocessing);
-        return fieldInjectionMethod(asField(injectionSite.element()), methodName, qualifier);
+        return fieldInjectionMethods(
+            asField(injectionSite.element()), methodName, qualifier, methodNameSet);
     }
     throw new AssertionError(injectionSite);
   }
@@ -169,22 +178,25 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
   // public static void injectMethod(Instance instance, Foo foo, Bar bar) {
   //   instance.injectMethod(foo, bar);
   // }
-  private XFunSpec methodInjectionMethod(XMethodElement method, String methodName) {
+  private ImmutableList<XFunSpec> methodInjectionMethods(
+      XMethodElement method, String methodName, UniqueNameSet methodNameSet) {
     XTypeElement enclosingType = asTypeElement(method.getEnclosingElement());
     XFunSpecs.Builder builder =
         methodBuilder(methodName)
-            .addModifiers(PUBLIC, STATIC)
             .varargs(method.isVarArgs())
-            .addTypeVariableNames(typeVariableNames(enclosingType))
             .addExceptions(method.getThrownTypes());
 
     UniqueNameSet parameterNameSet = new UniqueNameSet();
     XCodeBlock instance = copyInstance(builder, parameterNameSet, enclosingType.getType());
     XCodeBlock arguments =
         copyParameters(builder, parameterNameSet, method.getParameters(), compilerOptions);
-    return builder
-        .addStatement("%L.%N(%L)", instance, getMethodReferenceName(method), arguments)
-        .build();
+    return buildStaticInjectionMethods(
+        enclosingType,
+        methodName,
+        methodNameSet,
+        method.isVarArgs(),
+        builder,
+        XCodeBlock.of("%L.%N(%L)", instance, getMethodReferenceName(method), arguments));
   }
 
   // Example:
@@ -192,18 +204,19 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
   // public static void injectFoo(Instance instance, Foo foo) {
   //   instance.foo = foo;
   // }
-  private XFunSpec fieldInjectionMethod(
-      XFieldElement field, String methodName, Optional<XAnnotation> qualifier) {
+  private ImmutableList<XFunSpec> fieldInjectionMethods(
+      XFieldElement field,
+      String methodName,
+      Optional<XAnnotation> qualifier,
+      UniqueNameSet methodNameSet) {
     XTypeElement enclosingType = asTypeElement(field.getEnclosingElement());
 
     XFunSpecs.Builder builder =
         methodBuilder(methodName)
-            .addModifiers(PUBLIC, STATIC)
             .addAnnotation(
                 XAnnotationSpec.builder(XTypeNames.INJECTED_FIELD_SIGNATURE)
                     .addMember("value", "%S", memberInjectedFieldSignatureForVariable(field))
-                    .build())
-            .addTypeVariableNames(typeVariableNames(enclosingType));
+                    .build());
 
     qualifier.ifPresent(builder::addAnnotation);
 
@@ -211,7 +224,28 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
     XCodeBlock instance = copyInstance(builder, parameterNameSet, enclosingType.getType());
     XCodeBlock argument =
         copyParameters(builder, parameterNameSet, ImmutableList.of(field), compilerOptions);
-    return builder.addStatement("%L.%N = %L", instance, getSimpleName(field), argument).build();
+    return buildStaticInjectionMethods(
+        enclosingType,
+        methodName,
+        methodNameSet,
+        /* isVarArgs= */ false,
+        builder,
+        XCodeBlock.of("%L.%N = %L", instance, getSimpleName(field), argument));
+  }
+
+  private ImmutableList<XFunSpec> buildStaticInjectionMethods(
+      XTypeElement enclosingType,
+      String methodName,
+      UniqueNameSet methodNameSet,
+      boolean isVarArgs,
+      XFunSpecs.Builder builder,
+      XCodeBlock body) {
+    return ImmutableList.of(
+        builder
+            .addModifiers(PUBLIC, STATIC)
+            .addTypeVariableNames(typeVariableNames(enclosingType))
+            .addStatement("%L", body)
+            .build());
   }
 
   private XCodeBlock copyInstance(
@@ -325,8 +359,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
             membersInjectorNameForType(binding.membersInjectedType()),
             XCodeBlock.of("instance"),
             binding.key().type().xprocessing(),
-            dependencyCodeBlocks::get,
-            compilerOptions);
+            dependencyCodeBlocks::get);
     return methodBuilder("injectMembers")
         .addModifiers(PUBLIC)
         .isOverride(true)

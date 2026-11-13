@@ -64,7 +64,7 @@ final class DaggerTestComponent {
 
     @CanIgnoreReturnValue
     private Object injectSubtype(Object instance) {
-      Supertype_MembersInjector.<Object>injectT((Supertype) (instance), Foo_Factory.newInstance());
+      Supertype_MembersInjector.injectT((Supertype) (instance), Foo_Factory.newInstance());
       return instance;
     }
   }

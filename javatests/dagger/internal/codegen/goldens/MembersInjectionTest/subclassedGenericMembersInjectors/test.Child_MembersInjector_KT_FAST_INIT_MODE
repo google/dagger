@@ -7,6 +7,7 @@ import dagger.`internal`.Provider
 import dagger.`internal`.QualifierMetadata
 import javax.`annotation`.processing.Generated
 import kotlin.Any
+import kotlin.Nothing
 import kotlin.Suppress
 import kotlin.jvm.JvmStatic
 
@@ -21,8 +22,8 @@ import kotlin.jvm.JvmStatic
     "USELESS_CAST",
     "DEPRECATION"
 ])
-public class Child_MembersInjector<T> : MembersInjector<Any> {
-  private val xProvider: Provider<T>
+public class Child_MembersInjector : MembersInjector<Any> {
+  private val xProvider: Provider<*>
 
   private val yProvider: Provider<A?>
 
@@ -30,14 +31,14 @@ public class Child_MembersInjector<T> : MembersInjector<Any> {
 
   private val aProvider: Provider<A?>
 
-  private val tProvider: Provider<T>
+  private val tProvider: Provider<*>
 
   private constructor(
-    xProvider: Provider<T>,
+    xProvider: Provider<*>,
     yProvider: Provider<A?>,
     a2Provider: Provider<A2?>,
     aProvider: Provider<A?>,
-    tProvider: Provider<T>,
+    tProvider: Provider<*>,
   ) {
     this.xProvider = xProvider;
     this.yProvider = yProvider;
@@ -47,32 +48,40 @@ public class Child_MembersInjector<T> : MembersInjector<Any> {
   }
 
   public override fun injectMembers(instance: Any) {
-    Parent_MembersInjector.injectX<T, Any?>(instance, xProvider.get());
-    Parent_MembersInjector.injectY<T, Any?>(instance, yProvider.get());
-    Parent_MembersInjector.injectA2<T, Any?>(instance, a2Provider.get());
-    injectA<T>(instance, aProvider.get());
-    injectT<T>(instance, tProvider.get());
+    Parent_MembersInjector.injectX(instance, xProvider.get());
+    Parent_MembersInjector.injectY(instance, yProvider.get());
+    Parent_MembersInjector.injectA2(instance, a2Provider.get());
+    injectA(instance, aProvider.get());
+    injectT(instance, tProvider.get());
   }
 
   public companion object {
     @JvmStatic
-    public fun <T> create(
+    public fun create(
       xProvider: Provider<*>,
       yProvider: Provider<*>,
       a2Provider: Provider<*>,
       aProvider: Provider<*>,
       tProvider: Provider<*>,
-    ): MembersInjector<Any> = Child_MembersInjector<T>((xProvider) as Provider<T>, (yProvider) as Provider<A?>, (a2Provider) as Provider<A2?>, (aProvider) as Provider<A?>, (tProvider) as Provider<T>)
+    ): MembersInjector<Any> = Child_MembersInjector((xProvider) as Provider<*>, (yProvider) as Provider<A?>, (a2Provider) as Provider<A2?>, (aProvider) as Provider<A?>, (tProvider) as Provider<*>)
 
     @InjectedFieldSignature(value = "test.Child.a")
     @JvmStatic
-    public fun <T> injectA(instance: Any?, a: Any?) {
+    public fun injectA(instance: Any?, a: Any?) {
+      injectAInternal<Nothing>(instance, a)
+    }
+
+    private fun <T> injectAInternal(instance: Any?, a: Any?) {
       ((instance) as Child<T>).a = (a) as A?
     }
 
     @InjectedFieldSignature(value = "test.Child.t")
     @JvmStatic
-    public fun <T> injectT(instance: Any?, t: Any?) {
+    public fun injectT(instance: Any?, t: Any?) {
+      injectTInternal<Nothing>(instance, t)
+    }
+
+    private fun <T> injectTInternal(instance: Any?, t: Any?) {
       ((instance) as Child<T>).t = (t) as T
     }
   }

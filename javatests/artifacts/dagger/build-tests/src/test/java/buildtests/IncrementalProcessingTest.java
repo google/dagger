@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
+import org.gradle.testkit.runner.TaskOutcome;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -121,9 +122,107 @@ public class IncrementalProcessingTest {
             "DaggerMyComponent.java");
   }
 
+  // Regression test for https://github.com/google/dagger/issues/4878.
+  @Test
+  public void testIncrementalProcessingWithGeneratedAndroidInjectorModules() throws IOException {
+    File projectDir = tmpFolder.getRoot();
+    GradleModule.create(projectDir)
+        .addSettingsFile("include 'app'")
+        .addBuildFile(
+            "buildscript {",
+            "  ext {",
+            String.format("dagger_version = \"%s\"", System.getProperty("dagger_version")),
+            String.format("kotlin_version = \"%s\"", System.getProperty("kotlin_version")),
+            String.format("ksp_version = \"%s\"", System.getProperty("ksp_version")),
+            "  }",
+            "}",
+            "allprojects {",
+            "  repositories {",
+            "    mavenCentral()",
+            "    mavenLocal()",
+            "  }",
+            "}");
+
+    GradleModule appModule =
+        GradleModule.create(projectDir, "app")
+            .addBuildFile(
+                "plugins {",
+                "  id 'org.jetbrains.kotlin.jvm' version \"$kotlin_version\"",
+                "  id 'com.google.devtools.ksp' version \"$ksp_version\"",
+                "}",
+                // This JVM test only needs the classes in dagger-android's AAR.
+                "configurations { daggerAndroid }",
+                "def extractDaggerAndroid = tasks.register('extractDaggerAndroid', Copy) {",
+                "  from { zipTree(configurations.daggerAndroid.singleFile) }",
+                "  include 'classes.jar'",
+                "  into layout.buildDirectory.dir('dagger-android')",
+                "}",
+                "dependencies {",
+                "  implementation \"com.google.dagger:dagger:$dagger_version\"",
+                "  daggerAndroid \"com.google.dagger:dagger-android:$dagger_version@aar\"",
+                "  implementation files(layout.buildDirectory.file('dagger-android/classes.jar'))",
+                "      .builtBy(extractDaggerAndroid)",
+                "  ksp \"com.google.dagger:dagger-compiler:$dagger_version\"",
+                "  ksp \"com.google.dagger:dagger-android-processor:$dagger_version\"",
+                "}")
+            .addSrcFile(
+                "MainActivity.kt",
+                "package app",
+                "import javax.inject.Inject",
+                "class MainActivity { @Inject lateinit var dependency: Dependency }",
+                "class Dependency @Inject constructor()")
+            .addSrcFile(
+                "ActivityModule.kt",
+                "package app",
+                "import dagger.Module",
+                "import dagger.android.ContributesAndroidInjector",
+                "@Module",
+                "abstract class ActivityModule {",
+                "  @ContributesAndroidInjector abstract fun activity(): MainActivity",
+                "}")
+            // Two generated modules are required: keeping only the last origin loses one of them.
+            .addSrcFile(
+                "ServiceModule.kt",
+                "package app",
+                "import dagger.Module",
+                "import dagger.android.ContributesAndroidInjector",
+                "class Service",
+                "@Module",
+                "abstract class ServiceModule {",
+                "  @ContributesAndroidInjector abstract fun service(): Service",
+                "}");
+
+    String componentContent =
+        String.join(
+            "\n",
+            "package app",
+            "import dagger.Component",
+            "import dagger.Module",
+            "@Module(includes = [ActivityModule::class, ServiceModule::class])",
+            "class AppModule",
+            "@Component(modules = [AppModule::class])",
+            "interface MyComponent { fun dependency(): Dependency }");
+    appModule.addSrcFile("MyComponent.kt", componentContent);
+
+    BuildResult initialBuild = build(projectDir);
+    assertThat(initialBuild.task(":app:kspKotlin").getOutcome()).isEqualTo(TaskOutcome.SUCCESS);
+    Set<String> initialGeneratedFiles = getAllKspGeneratedFileNames(appModule.getDir());
+    assertThat(initialGeneratedFiles)
+        .containsAtLeast(
+            "ActivityModule_Activity.java", "ServiceModule_Service.java", "DaggerMyComponent.java");
+
+    // Leave both injector modules unchanged and regenerate only the component's source file.
+    appModule.addSrcFile(
+        "MyComponent.kt", componentContent.replace("dependency()", "dependency2()"));
+    BuildResult incrementalBuild = build(projectDir);
+    assertThat(incrementalBuild.task(":app:kspKotlin").getOutcome()).isEqualTo(TaskOutcome.SUCCESS);
+    assertThat(getAllKspGeneratedFileNames(appModule.getDir()))
+        .containsExactlyElementsIn(initialGeneratedFiles);
+  }
+
   private static BuildResult build(File projectDir) {
     return GradleRunner.create()
-        .withArguments("--stacktrace", "build")
+        .withArguments("--stacktrace", "--no-build-cache", "-Pksp.incremental=true", "build")
         .withProjectDir(projectDir)
         .build();
   }

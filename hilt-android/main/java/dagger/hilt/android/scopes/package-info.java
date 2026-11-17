@@ -17,6 +17,6 @@
 /**
  * This package contains Hilt's built-in Android {@link javax.inject.Scope} annotations.
  *
- * @see <a href="https://dagger.dev/hilt/components.md#component-lifetimes">Component Lifetimes</a>
+ * @see <a href="https://dagger.dev/hilt/components#component-lifetimes">Component Lifetimes</a>
  */
 package dagger.hilt.android.scopes;

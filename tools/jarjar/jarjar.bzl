@@ -23,7 +23,11 @@ def _jarjar_library(ctx):
         content = "\n".join(ctx.attr.rules),
     )
 
-    jar_files = depset(transitive = [jar.files for jar in ctx.attr.jars]).to_list()
+    jar_files = [
+        jar
+        for jar in depset(transitive = [jar.files for jar in ctx.attr.jars]).to_list()
+        if jar.extension == "jar"
+    ]
 
     command = """
         export JAVA_HOME="{java_home}"

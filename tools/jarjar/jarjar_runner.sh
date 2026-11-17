@@ -33,22 +33,24 @@ else
 fi
 
 # Concatenate similar files in META-INF that allow it.
-for meta_inf_pattern in services/.* ${MERGE_META_INF_FILES}; do
-  regex="META-INF/${meta_inf_pattern}${suffix}"
-  for file in $("${find[@]}" META-INF -regex "${regex}"); do
-    original="$(sed s/"~[0-9]*$"// <<< "${file}")"
-    if [[ "${file}" != "${original}" ]]; then
-      cat "${file}" >> "${original}"
-      rm "${file}"
-    fi
+if [[ -d META-INF ]]; then
+  for meta_inf_pattern in services/.* ${MERGE_META_INF_FILES}; do
+    regex="META-INF/${meta_inf_pattern}${suffix}"
+    for file in $("${find[@]}" META-INF -regex "${regex}"); do
+      original="$(sed s/"~[0-9]*$"// <<< "${file}")"
+      if [[ "${file}" != "${original}" ]]; then
+        cat "${file}" >> "${original}"
+        rm "${file}"
+      fi
+    done
   done
-done
+fi
 
 # build-data.properties is emitted by Bazel with target information that can
 # cause conflicts. Delete it since it doesn't make sense to keep in the merged
 # jar anyway.
-rm build-data.properties*
-rm META-INF/MANIFEST.MF*
+rm -f build-data.properties*
+rm -f META-INF/MANIFEST.MF*
 rm -rf META-INF/maven/
 duplicate_files="$(find ./* -type f -regex '.*~[0-9]*$')"
 if [[ -n "${duplicate_files}" ]]; then

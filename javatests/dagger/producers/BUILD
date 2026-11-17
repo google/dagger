@@ -26,6 +26,20 @@ load(
 package(default_visibility = ["//:src"])
 
 java_test(
+    name = "MonitorsTest",
+    srcs = ["monitoring/internal/MonitorsTest.java"],
+    javacopts = JAVA_RELEASE_MIN + DOCLINT_REFERENCES + DOCLINT_HTML_AND_SYNTAX,
+    test_class = "dagger.producers.monitoring.internal.MonitorsTest",
+    deps = [
+        "//dagger-producers/main/java/dagger/producers",
+        "//third_party/java/guava/collect",
+        "//third_party/java/junit",
+        "//third_party/java/mockito",
+        "//third_party/java/truth",
+    ],
+)
+
+java_test(
     name = "ProducedTest",
     srcs = ["ProducedTest.java"],
     javacopts = JAVA_RELEASE_MIN + DOCLINT_REFERENCES + DOCLINT_HTML_AND_SYNTAX,

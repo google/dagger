@@ -74,8 +74,7 @@ public final class Monitors {
    * A component monitor that delegates to a single monitor, and catches and logs all exceptions
    * that the delegate throws.
    */
-  private static final class NonThrowingProductionComponentMonitor
-      extends ProductionComponentMonitor {
+  static final class NonThrowingProductionComponentMonitor extends ProductionComponentMonitor {
     private final ProductionComponentMonitor delegate;
 
     NonThrowingProductionComponentMonitor(ProductionComponentMonitor delegate) {
@@ -86,7 +85,9 @@ public final class Monitors {
     public ProducerMonitor producerMonitorFor(ProducerToken token) {
       try {
         ProducerMonitor monitor = delegate.producerMonitorFor(token);
-        return monitor == null ? ProducerMonitor.noOp() : new NonThrowingProducerMonitor(monitor);
+        return isNullOrNoOp(monitor)
+            ? ProducerMonitor.noOp()
+            : new NonThrowingProducerMonitor(monitor);
       } catch (RuntimeException e) {
         logProducerMonitorForException(e, delegate, token);
         return ProducerMonitor.noOp();
@@ -104,7 +105,7 @@ public final class Monitors {
       public ProductionComponentMonitor create(Object component) {
         try {
           ProductionComponentMonitor monitor = delegate.create(component);
-          return monitor == null
+          return isNullOrNoOp(monitor)
               ? ProductionComponentMonitor.noOp()
               : new NonThrowingProductionComponentMonitor(monitor);
         } catch (RuntimeException e) {
@@ -116,10 +117,10 @@ public final class Monitors {
   }
 
   /**
-   * A producer monitor that delegates to a single monitor, and catches and logs all exceptions
-   * that the delegate throws.
+   * A producer monitor that delegates to a single monitor, and catches and logs all exceptions that
+   * the delegate throws.
    */
-  private static final class NonThrowingProducerMonitor extends ProducerMonitor {
+  static final class NonThrowingProducerMonitor extends ProducerMonitor {
     private final ProducerMonitor delegate;
 
     NonThrowingProducerMonitor(ProducerMonitor delegate) {
@@ -208,7 +209,7 @@ public final class Monitors {
       for (ProductionComponentMonitor delegate : delegates) {
         try {
           ProducerMonitor monitor = delegate.producerMonitorFor(token);
-          if (monitor != null) {
+          if (!isNullOrNoOp(monitor)) {
             monitorsBuilder.add(monitor);
           }
         } catch (RuntimeException e) {
@@ -238,7 +239,7 @@ public final class Monitors {
         for (ProductionComponentMonitor.Factory delegate : delegates) {
           try {
             ProductionComponentMonitor monitor = delegate.create(component);
-            if (monitor != null) {
+            if (!isNullOrNoOp(monitor)) {
               monitorsBuilder.add(monitor);
             }
           } catch (RuntimeException e) {
@@ -281,7 +282,10 @@ public final class Monitors {
 
     @Override
     public void dependenciesRequested() {
-      for (ProducerMonitor delegate : delegates.reverse()) {
+      // Iterate by index instead of delegates.reverse() because ReverseImmutableList does not
+      // override listIterator(int) and dispatches through AbstractIndexedListIterator.
+      for (int i = delegates.size() - 1; i >= 0; i--) {
+        ProducerMonitor delegate = delegates.get(i);
         try {
           delegate.dependenciesRequested();
         } catch (RuntimeException e) {
@@ -314,7 +318,8 @@ public final class Monitors {
 
     @Override
     public void methodFinished() {
-      for (ProducerMonitor delegate : delegates.reverse()) {
+      for (int i = delegates.size() - 1; i >= 0; i--) {
+        ProducerMonitor delegate = delegates.get(i);
         try {
           delegate.methodFinished();
         } catch (RuntimeException e) {
@@ -325,7 +330,8 @@ public final class Monitors {
 
     @Override
     public void succeeded(Object o) {
-      for (ProducerMonitor delegate : delegates.reverse()) {
+      for (int i = delegates.size() - 1; i >= 0; i--) {
+        ProducerMonitor delegate = delegates.get(i);
         try {
           delegate.succeeded(o);
         } catch (RuntimeException e) {
@@ -336,7 +342,8 @@ public final class Monitors {
 
     @Override
     public void failed(Throwable t) {
-      for (ProducerMonitor delegate : delegates.reverse()) {
+      for (int i = delegates.size() - 1; i >= 0; i--) {
+        ProducerMonitor delegate = delegates.get(i);
         try {
           delegate.failed(t);
         } catch (RuntimeException e) {
@@ -359,6 +366,16 @@ public final class Monitors {
               return ProductionComponentMonitor.noOp();
             }
           };
+
+  @SuppressWarnings("ReferenceEquality") // Comparing against the singleton NO_OP instance.
+  private static boolean isNullOrNoOp(ProducerMonitor monitor) {
+    return monitor == null || monitor == ProducerMonitor.noOp();
+  }
+
+  @SuppressWarnings("ReferenceEquality") // Comparing against the singleton NO_OP instance.
+  private static boolean isNullOrNoOp(ProductionComponentMonitor monitor) {
+    return monitor == null || monitor == ProductionComponentMonitor.noOp();
+  }
 
   private static void logCreateException(
       RuntimeException e, ProductionComponentMonitor.Factory factory, Object component) {

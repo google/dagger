@@ -1,0 +1,74 @@
+package test;
+
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.Provider;
+import dagger.internal.ProviderOfLazy;
+import dagger.producers.Producer;
+import dagger.producers.internal.AbstractProducesMethodProducer;
+import dagger.producers.internal.Producers;
+import dagger.producers.monitoring.ProducerToken;
+import dagger.producers.monitoring.ProductionComponentMonitor;
+import java.util.List;
+import java.util.concurrent.Executor;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "FutureReturnValueIgnored",
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation",
+    "nullness:initialization.field.uninitialized"
+})
+public final class ParameterizedModule_ProduceListTFactory<T> extends AbstractProducesMethodProducer<Void, List<T>> {
+  private final ParameterizedModule<T> module;
+
+  private final Producer<T> tProducer;
+
+  private final Provider<T> tProvider;
+
+  private final Provider<T> tLazyProvider;
+
+  private final Provider<T> tProviderOfLazyProvider;
+
+  private ParameterizedModule_ProduceListTFactory(ParameterizedModule<T> module,
+      Provider<Executor> executorProvider,
+      Provider<ProductionComponentMonitor> productionComponentMonitorProvider,
+      Producer<T> tProducer, Provider<T> tProvider, Provider<T> tLazyProvider,
+      Provider<T> tProviderOfLazyProvider) {
+    super(productionComponentMonitorProvider, ProducerToken.create(ParameterizedModule_ProduceListTFactory.class), executorProvider);
+    this.module = module;
+    this.tProducer = Producers.nonCancellationPropagatingViewOf(tProducer);
+    this.tProvider = tProvider;
+    this.tLazyProvider = tLazyProvider;
+    this.tProviderOfLazyProvider = tProviderOfLazyProvider;
+  }
+
+  @Override
+  protected ListenableFuture<Void> collectDependencies() {
+    return Futures.immediateFuture(null);
+  }
+
+  @Override
+  public ListenableFuture<List<T>> callProducesMethod(Void ignoredVoidArg) {
+    return module.produceListT(tProducer, tProvider, DoubleCheck.lazy(tLazyProvider), ProviderOfLazy.create(tProviderOfLazyProvider));
+  }
+
+  public static <T> ParameterizedModule_ProduceListTFactory<T> create(ParameterizedModule<T> module,
+      Provider<Executor> executorProvider,
+      Provider<ProductionComponentMonitor> productionComponentMonitorProvider,
+      Producer<T> tProducer, Provider<T> tProvider, Provider<T> tLazyProvider,
+      Provider<T> tProviderOfLazyProvider) {
+    return new ParameterizedModule_ProduceListTFactory<T>(module, executorProvider, productionComponentMonitorProvider, tProducer, tProvider, tLazyProvider, tProviderOfLazyProvider);
+  }
+}

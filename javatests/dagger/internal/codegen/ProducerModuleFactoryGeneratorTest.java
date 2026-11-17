@@ -565,6 +565,40 @@ public class ProducerModuleFactoryGeneratorTest {
         });
   }
 
+  @Test
+  public void parameterizedProducerModule_withFrameworkDependencies() {
+    Source moduleFile =
+        CompilerTests.javaSource(
+            "test.ParameterizedModule",
+            "package test;",
+            "",
+            "import com.google.common.util.concurrent.ListenableFuture;",
+            "import dagger.Lazy;",
+            "import dagger.producers.Producer;",
+            "import dagger.producers.ProducerModule;",
+            "import dagger.producers.Produces;",
+            "import java.util.List;",
+            "import javax.inject.Provider;",
+            "",
+            "@ProducerModule",
+            "abstract class ParameterizedModule<T> {",
+            "  @Produces",
+            "  ListenableFuture<List<T>> produceListT(",
+            "      Producer<T> tProducer,",
+            "      Provider<T> tProvider,",
+            "      Lazy<T> tLazy,",
+            "      Provider<Lazy<T>> tProviderOfLazy) {",
+            "    return null;",
+            "  }",
+            "}");
+    daggerCompiler(moduleFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              assertSourceMatchesGolden(subject, "test/ParameterizedModule_ProduceListTFactory");
+            });
+  }
+
   private void assertSourceMatchesGolden(CompilationResultSubject subject, String goldenName) {
     Source source = goldenFileRule.goldenSource(goldenName);
     subject.generatedSource(source);
